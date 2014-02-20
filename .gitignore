@@ -1,0 +1,17 @@
+#java specific
+*.class
+
+# Built application files
+*.apk
+*.ap_
+
+# Generated files
+bin/
+gen/
+
+## generic files to ignore
+*~
+*.lock
+*.DS_Store
+*.swp
+*.out
