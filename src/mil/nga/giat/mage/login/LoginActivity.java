@@ -5,6 +5,7 @@ import java.util.List;
 
 import mil.nga.giat.mage.R;
 import android.app.Activity;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
@@ -115,5 +116,17 @@ public class LoginActivity extends Activity {
 		credentials.add(server);
 
 		LoginTaskFactory.getInstance(getApplicationContext()).getLoginTask(this).execute(credentials.toArray(new String[credentials.size()]));
+	}
+	
+	
+	/**
+	 * Fired when user clicks signup
+	 * 
+	 * @param view
+	 */
+	public void signup(View view) {
+		Intent intent = new Intent(getApplicationContext(), SignupActivity.class);
+		startActivity(intent);
+		finish();
 	}
 }

@@ -5,13 +5,13 @@
     <solid android:color="#d0e7ff" />
 
     <padding
-        android:bottom="7dp"
-        android:left="7dp"
-        android:right="7dp"
-        android:top="7dp" />
+        android:bottom="7dip"
+        android:left="7dip"
+        android:right="7dip"
+        android:top="7dip" />
 
     <stroke
-        android:width="5px"
+        android:width="3dip"
         android:color="#6389b3" />
 
 </shape>

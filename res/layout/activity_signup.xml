@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/login"
+    android:id="@+id/signup"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
     android:fillViewport="true" >
@@ -12,20 +12,44 @@
         android:background="#d0e7ff" >
 
         <include
-            android:id="@+id/login_header"
+            android:id="@+id/signup_header"
             layout="@layout/mage_header" />
 
-        <!-- Login Form -->
+        <!-- Singup Form -->
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_below="@id/login_header"
+            android:layout_below="@id/signup_header"
             android:orientation="vertical"
             android:padding="24dip" >
 
             <EditText
-                android:id="@+id/login_username"
+                android:id="@+id/signup_firstname"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="15dip"
+                android:layout_marginTop="5dip"
+                android:background="#FFFFFF"
+                android:hint="First Name"
+                android:inputType="textPersonName|textCapSentences|textNoSuggestions"
+                android:singleLine="true"
+                android:textSize="26dip" />
+
+            <EditText
+                android:id="@+id/signup_lastname"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="15dip"
+                android:layout_marginTop="5dip"
+                android:background="#FFFFFF"
+                android:hint="Last Name"
+                android:inputType="textPersonName|textCapSentences|textNoSuggestions"
+                android:singleLine="true"
+                android:textSize="26dip" />
+
+            <EditText
+                android:id="@+id/signup_username"
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="15dip"
@@ -37,7 +61,19 @@
                 android:textSize="26dip" />
 
             <EditText
-                android:id="@+id/login_password"
+                android:id="@+id/signup_email"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="15dip"
+                android:layout_marginTop="5dip"
+                android:background="#FFFFFF"
+                android:hint="Email"
+                android:inputType="textEmailAddress"
+                android:singleLine="true"
+                android:textSize="26dip" />
+
+            <EditText
+                android:id="@+id/signup_password"
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="15dip"
@@ -49,7 +85,19 @@
                 android:textSize="26dip" />
 
             <EditText
-                android:id="@+id/login_server"
+                android:id="@+id/signup_confirmpassword"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="15dip"
+                android:layout_marginTop="5dip"
+                android:background="#FFFFFF"
+                android:hint="Confirm Password"
+                android:inputType="textPassword"
+                android:singleLine="true"
+                android:textSize="26dip" />
+
+            <EditText
+                android:id="@+id/signup_server"
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="15dip"
@@ -63,27 +111,27 @@
             <!-- Sign in button -->
 
             <Button
-                android:id="@+id/btnLogin"
+                android:id="@+id/btnSignup"
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="10dip"
                 android:background="@drawable/login_button"
-                android:onClick="login"
-                android:text="Login"
+                android:onClick="signup"
+                android:text="Signup"
                 android:textColor="#6389b3"
                 android:textSize="26dip" />
 
-            <!-- Link to Signup Screen? -->
+            <!-- Link to Login Screen? -->
 
             <TextView
-                android:id="@+id/link_to_signup"
+                android:id="@+id/link_to_login"
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="40dip"
                 android:clickable="true"
                 android:gravity="center"
-                android:onClick="signup"
-                android:text="New to MAGE? Signup here"
+                android:onClick="login"
+                android:text="Have an account? Login here"
                 android:textColor="#5278A2"
                 android:textSize="20dip" />
         </LinearLayout>
