@@ -1,7 +1,8 @@
-package mil.nga.giat.mage.login;
+package mil.nga.giat.mage.sdk.login;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+
 
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -26,26 +27,29 @@ public class LoginTaskFactory {
 		return loginTaskFactory;
 	}
 
-	public AbstractLoginTask getLoginTask(LoginActivity delegate) {
+	public AbstractAccountTask getLoginTask(AccountDelegate delegate, Context context) {
 		SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(mContext);
 		String className = sharedPreferences.getString("loginTask", FormAuthLoginTask.class.getCanonicalName());
 		try {
 			Class<?> c = Class.forName(className);
-			Constructor<?> ct = c.getConstructor(delegate.getClass());
-			return (AbstractLoginTask) ct.newInstance(delegate);
+			Constructor[] constructors = c.getConstructors();
+			for (Constructor constructor : constructors) {
+				Class<?>[] params = constructor.getParameterTypes();
+				if (params.length == 2 && params[0].isAssignableFrom(AccountDelegate.class) && params[1].isAssignableFrom(Context.class)) {
+					return (AbstractAccountTask) constructor.newInstance(delegate, context);
+				}
+			}
 		} catch (ClassNotFoundException e) {
 			e.printStackTrace();
 		} catch (InstantiationException e) {
 			e.printStackTrace();
 		} catch (IllegalAccessException e) {
 			e.printStackTrace();
-		} catch (NoSuchMethodException e) {
-			e.printStackTrace();
 		} catch (IllegalArgumentException e) {
 			e.printStackTrace();
 		} catch (InvocationTargetException e) {
 			e.printStackTrace();
 		}
-		return new FormAuthLoginTask(delegate);
+		return new FormAuthLoginTask(delegate, context);
 	}
 }

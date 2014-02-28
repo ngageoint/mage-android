@@ -4,6 +4,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import mil.nga.giat.mage.R;
+import mil.nga.giat.mage.sdk.login.AccountDelegate;
+import mil.nga.giat.mage.sdk.login.AccountStatus;
+import mil.nga.giat.mage.sdk.login.SignupTask;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -21,8 +24,9 @@ import android.view.Window;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 
-public class SignupActivity extends Activity {
+public class SignupActivity extends Activity implements AccountDelegate {
 
 	private EditText mFirstNameEditText;
 	private EditText mLastNameEditText;
@@ -136,7 +140,9 @@ public class SignupActivity extends Activity {
 				@Override
 				public boolean onTouch(View v, MotionEvent event) {
 					InputMethodManager inputMethodManager = (InputMethodManager) getSystemService(Activity.INPUT_METHOD_SERVICE);
-					inputMethodManager.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(), 0);
+					if (getCurrentFocus() != null) {
+						inputMethodManager.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(), 0);
+					}
 					return false;
 				}
 			});
@@ -209,7 +215,7 @@ public class SignupActivity extends Activity {
 			getEmailEditText().requestFocus();
 			return;
 		}
-		
+
 		// is email address the right syntax?
 		if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
 			getEmailEditText().setError("Not an Email address");
@@ -251,7 +257,70 @@ public class SignupActivity extends Activity {
 		accountInfo.add(email);
 		accountInfo.add(password);
 		accountInfo.add(server);
+
+		// show spinner, and hide form
+		findViewById(R.id.signup_form).setVisibility(View.GONE);
+		findViewById(R.id.signup_status).setVisibility(View.VISIBLE);
 		
-		new SignupTask(this).execute(accountInfo.toArray(new String[accountInfo.size()]));
+		new SignupTask(this, this.getApplicationContext()).execute(accountInfo.toArray(new String[accountInfo.size()]));
+	}
+	
+	/**
+	 * Fired when user clicks lock
+	 * 
+	 * @param view
+	 */
+	public void toggleLock(View view) {
+		getServerEditText().setEnabled(!getServerEditText().isEnabled());
+		ImageView lockImageView = ((ImageView)findViewById(R.id.signup_lock));
+		if(lockImageView.getTag().toString().equals("lock")) {
+			lockImageView.setTag("unlock");
+			lockImageView.setImageResource(R.drawable.unlock_108);	
+		} else {
+			lockImageView.setTag("lock");
+			lockImageView.setImageResource(R.drawable.lock_108);
+		}
+	}
+
+	@Override
+	public void finishAccount(AccountStatus accountStatus) {
+		if (accountStatus.getStatus()) {
+			// TODO: tell the user that the account was made!
+			finish();
+		} else if (accountStatus.getErrorIndices().isEmpty()) {
+			getServerEditText().setError("Unable to make your account at this time");
+			getServerEditText().requestFocus();
+			getUsernameEditText().requestFocus();
+		} else {
+			int errorMessageIndex = 0;
+			for (Integer errorIndex : accountStatus.getErrorIndices()) {
+				String message = "Error";
+				if (errorMessageIndex < accountStatus.getErrorMessages().size()) {
+					message = accountStatus.getErrorMessages().get(errorMessageIndex++);
+				}
+				if (errorIndex == 0) {
+					getFirstNameEditText().setError(message);
+					getFirstNameEditText().requestFocus();
+				} else if (errorIndex == 1) {
+					getLastNameEditText().setError(message);
+					getLastNameEditText().requestFocus();
+				} else if (errorIndex == 2) {
+					getUsernameEditText().setError(message);
+					getUsernameEditText().requestFocus();
+				} else if (errorIndex == 3) {
+					getEmailEditText().setError(message);
+					getEmailEditText().requestFocus();
+				} else if (errorIndex == 4) {
+					getPasswordEditText().setError(message);
+					getPasswordEditText().requestFocus();
+				} else if (errorIndex == 5) {
+					getServerEditText().setError(message);
+					getServerEditText().requestFocus();
+				}
+			}
+		}
+		// show form, and hide spinner
+		findViewById(R.id.signup_status).setVisibility(View.GONE);
+		findViewById(R.id.signup_form).setVisibility(View.VISIBLE);
 	}
 }

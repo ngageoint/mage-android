@@ -8,16 +8,44 @@
 
     <RelativeLayout
         android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="fill_parent"
         android:background="#d0e7ff" >
 
         <include
             android:id="@+id/signup_header"
             layout="@layout/mage_header" />
 
+        <!-- Loading spinner -->
+
+        <LinearLayout
+            android:id="@+id/signup_status"
+            android:layout_width="match_parent"
+            android:layout_height="fill_parent"
+            android:layout_below="@id/signup_header"
+            android:layout_gravity="center_horizontal|center_vertical"
+            android:gravity="center_horizontal|center_vertical"
+            android:orientation="vertical"
+            android:visibility="gone" >
+
+            <ProgressBar
+                style="?android:attr/progressBarStyleLarge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+
+            <TextView
+                android:id="@+id/login_message"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="sans-serif-light"
+                android:text="Creating account..."
+                android:textColor="#6389b3"
+                android:textSize="26dip" />
+        </LinearLayout>
+
         <!-- Singup Form -->
 
         <LinearLayout
+            android:id="@+id/signup_form"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_below="@id/signup_header"
@@ -34,7 +62,7 @@
                 android:hint="First Name"
                 android:inputType="textPersonName|textCapSentences|textNoSuggestions"
                 android:singleLine="true"
-                android:textSize="26dip" />
+                android:textSize="22dip" />
 
             <EditText
                 android:id="@+id/signup_lastname"
@@ -46,7 +74,7 @@
                 android:hint="Last Name"
                 android:inputType="textPersonName|textCapSentences|textNoSuggestions"
                 android:singleLine="true"
-                android:textSize="26dip" />
+                android:textSize="22dip" />
 
             <EditText
                 android:id="@+id/signup_username"
@@ -58,7 +86,7 @@
                 android:hint="Username"
                 android:inputType="textVisiblePassword|textNoSuggestions"
                 android:singleLine="true"
-                android:textSize="26dip" />
+                android:textSize="22dip" />
 
             <EditText
                 android:id="@+id/signup_email"
@@ -70,7 +98,7 @@
                 android:hint="Email"
                 android:inputType="textEmailAddress"
                 android:singleLine="true"
-                android:textSize="26dip" />
+                android:textSize="22dip" />
 
             <EditText
                 android:id="@+id/signup_password"
@@ -82,7 +110,7 @@
                 android:hint="Password"
                 android:inputType="textPassword"
                 android:singleLine="true"
-                android:textSize="26dip" />
+                android:textSize="22dip" />
 
             <EditText
                 android:id="@+id/signup_confirmpassword"
@@ -94,24 +122,40 @@
                 android:hint="Confirm Password"
                 android:inputType="textPassword"
                 android:singleLine="true"
-                android:textSize="26dip" />
+                android:textSize="22dip" />
 
-            <EditText
-                android:id="@+id/signup_server"
-                android:layout_width="fill_parent"
-                android:layout_height="wrap_content"
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
                 android:layout_marginBottom="15dip"
                 android:layout_marginTop="5dip"
-                android:background="#FFFFFF"
-                android:hint="Server URL"
-                android:inputType="textUri"
-                android:singleLine="true"
-                android:textSize="26dip" />
+                android:orientation="horizontal" >
+
+                <EditText
+                    android:id="@+id/signup_server"
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_weight=".70"
+                    android:background="#FFFFFF"
+                    android:enabled="false"
+                    android:hint="Server URL"
+                    android:inputType="textUri"
+                    android:singleLine="true"
+                    android:textSize="22dip" />
+
+                <ImageView
+                    android:id="@+id/signup_lock"
+                    android:layout_width="wrap_content"
+                    android:layout_height="26dip"
+                    android:layout_weight=".30"
+                    android:onClick="toggleLock"
+                    android:src="@drawable/lock_108"
+                    android:tag="lock" />
+            </LinearLayout>
 
             <!-- Sign in button -->
 
             <Button
-                android:id="@+id/btnSignup"
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="10dip"

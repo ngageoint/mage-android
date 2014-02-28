@@ -3,7 +3,11 @@ package mil.nga.giat.mage.login;
 import java.util.ArrayList;
 import java.util.List;
 
+import mil.nga.giat.mage.MainActivity;
 import mil.nga.giat.mage.R;
+import mil.nga.giat.mage.sdk.login.AccountDelegate;
+import mil.nga.giat.mage.sdk.login.AccountStatus;
+import mil.nga.giat.mage.sdk.login.LoginTaskFactory;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -18,8 +22,9 @@ import android.view.Window;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 
-public class LoginActivity extends Activity {
+public class LoginActivity extends Activity implements AccountDelegate {
 
 	private EditText mUsernameEditText;
 	private EditText mPasswordEditText;
@@ -67,7 +72,9 @@ public class LoginActivity extends Activity {
 				@Override
 				public boolean onTouch(View v, MotionEvent event) {
 					InputMethodManager inputMethodManager = (InputMethodManager) getSystemService(Activity.INPUT_METHOD_SERVICE);
-				    inputMethodManager.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(), 0);
+					if (getCurrentFocus() != null) {
+						inputMethodManager.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(), 0);
+					}
 					return false;
 				}
 			});
@@ -81,7 +88,7 @@ public class LoginActivity extends Activity {
 			}
 		}
 	}
-	
+
 	/**
 	 * Fired when user clicks login
 	 * 
@@ -115,10 +122,13 @@ public class LoginActivity extends Activity {
 		credentials.add(password);
 		credentials.add(server);
 
-		LoginTaskFactory.getInstance(getApplicationContext()).getLoginTask(this).execute(credentials.toArray(new String[credentials.size()]));
+		// show spinner, and hide form
+		findViewById(R.id.login_form).setVisibility(View.GONE);
+		findViewById(R.id.login_status).setVisibility(View.VISIBLE);
+
+		LoginTaskFactory.getInstance(getApplicationContext()).getLoginTask(this, this.getApplicationContext()).execute(credentials.toArray(new String[credentials.size()]));
 	}
-	
-	
+
 	/**
 	 * Fired when user clicks signup
 	 * 
@@ -128,5 +138,56 @@ public class LoginActivity extends Activity {
 		Intent intent = new Intent(getApplicationContext(), SignupActivity.class);
 		startActivity(intent);
 		finish();
+	}
+	
+	/**
+	 * Fired when user clicks lock
+	 * 
+	 * @param view
+	 */
+	public void toggleLock(View view) {
+		getServerEditText().setEnabled(!getServerEditText().isEnabled());
+		ImageView lockImageView = ((ImageView)findViewById(R.id.login_lock));
+		if(lockImageView.getTag().toString().equals("lock")) {
+			lockImageView.setTag("unlock");
+			lockImageView.setImageResource(R.drawable.unlock_108);	
+		} else {
+			lockImageView.setTag("lock");
+			lockImageView.setImageResource(R.drawable.lock_108);
+		}
+	}
+
+	@Override
+	public void finishAccount(AccountStatus accountStatus) {
+		if (accountStatus.getStatus()) {
+			Intent intent = new Intent(getApplicationContext(), MainActivity.class);
+			startActivity(intent);
+			finish();
+		} else if (accountStatus.getErrorIndices().isEmpty()) {
+			getUsernameEditText().setError("Check your username");
+			getPasswordEditText().setError("Check your password");
+			getUsernameEditText().requestFocus();
+		} else {
+			int errorMessageIndex = 0;
+			for (Integer errorIndex : accountStatus.getErrorIndices()) {
+				String message = "Error";
+				if (errorMessageIndex < accountStatus.getErrorMessages().size()) {
+					message = accountStatus.getErrorMessages().get(errorMessageIndex++);
+				}
+				if (errorIndex == 0) {
+					getUsernameEditText().setError(message);
+					getUsernameEditText().requestFocus();
+				} else if (errorIndex == 1) {
+					getPasswordEditText().setError(message);
+					getPasswordEditText().requestFocus();
+				} else if (errorIndex == 2) {
+					getServerEditText().setError(message);
+					getServerEditText().requestFocus();
+				}
+			}
+		}
+		// show form, and hide spinner
+		findViewById(R.id.login_status).setVisibility(View.GONE);
+		findViewById(R.id.login_form).setVisibility(View.VISIBLE);
 	}
 }

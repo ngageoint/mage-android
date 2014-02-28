@@ -1,4 +1,4 @@
-package mil.nga.giat.mage.utils;
+package mil.nga.giat.mage.sdk.utils;
 
 import android.content.Context;
 import android.net.ConnectivityManager;
