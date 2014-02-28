@@ -285,7 +285,7 @@ public class SignupActivity extends Activity implements AccountDelegate {
 	@Override
 	public void finishAccount(AccountStatus accountStatus) {
 		if (accountStatus.getStatus()) {
-			// TODO: tell the user that the account was made!
+			// TODO: tell the user that the account was made
 			finish();
 		} else if (accountStatus.getErrorIndices().isEmpty()) {
 			getServerEditText().setError("Unable to make your account at this time");
