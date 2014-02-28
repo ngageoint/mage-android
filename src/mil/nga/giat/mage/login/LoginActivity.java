@@ -139,7 +139,7 @@ public class LoginActivity extends Activity implements AccountDelegate {
 		startActivity(intent);
 		finish();
 	}
-	
+
 	/**
 	 * Fired when user clicks lock
 	 * 
@@ -147,10 +147,14 @@ public class LoginActivity extends Activity implements AccountDelegate {
 	 */
 	public void toggleLock(View view) {
 		getServerEditText().setEnabled(!getServerEditText().isEnabled());
-		ImageView lockImageView = ((ImageView)findViewById(R.id.login_lock));
-		if(lockImageView.getTag().toString().equals("lock")) {
+		ImageView lockImageView = ((ImageView) findViewById(R.id.login_lock));
+		if (lockImageView.getTag().toString().equals("lock")) {
 			lockImageView.setTag("unlock");
-			lockImageView.setImageResource(R.drawable.unlock_108);	
+			lockImageView.setImageResource(R.drawable.unlock_108);
+			InputMethodManager inputMethodManager = (InputMethodManager) getSystemService(Activity.INPUT_METHOD_SERVICE);
+			inputMethodManager.toggleSoftInput(InputMethodManager.SHOW_FORCED, 0);
+			getServerEditText().requestFocus();
+			getServerEditText().setSelection(getServerEditText().getText().length());
 		} else {
 			lockImageView.setTag("lock");
 			lockImageView.setImageResource(R.drawable.lock_108);
