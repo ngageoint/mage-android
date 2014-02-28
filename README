@@ -1,2 +1,4 @@
 MAGE Android README
 02/20/2014
+
+Depends on the MAGE Android SDK.  You must get the sdk to build this project.
