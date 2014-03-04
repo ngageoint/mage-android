@@ -8,6 +8,7 @@
         android:minSdkVersion="14"
         android:targetSdkVersion="18" />
 
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="android.permission.INTERNET" />
@@ -31,8 +32,12 @@
             android:windowSoftInputMode="adjustResize" >
         </activity>
         <activity
-            android:name=".MainActivity"
+            android:name="mil.nga.giat.mage.LandingActivity"
             android:label="@string/app_name" >
+        </activity>
+        <activity
+            android:name="mil.nga.giat.mage.preferences.PublicPreferencesActivity"
+            android:label="@string/menu_settings" >
         </activity>
     </application>
 

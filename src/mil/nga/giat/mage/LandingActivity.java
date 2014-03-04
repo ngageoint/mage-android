@@ -2,8 +2,12 @@ package mil.nga.giat.mage;
 
 import java.util.Locale;
 
+import mil.nga.giat.mage.preferences.PublicPreferencesActivity;
+import mil.nga.giat.mage.sdk.location.LocationService;
+
 import android.app.ActionBar;
 import android.app.FragmentTransaction;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
@@ -12,11 +16,20 @@ import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.view.LayoutInflater;
 import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
-public class MainActivity extends FragmentActivity implements ActionBar.TabListener {
+/**
+ * FIXME: Currently a mock of what a landing page might look like.
+ * 
+ * @author wiedemannse
+ * 
+ */
+public class LandingActivity extends FragmentActivity implements ActionBar.TabListener {
+
+	private static final int RESULT_PUBLIC_PREFERENCES = 1;
 
 	/**
 	 * The {@link android.support.v4.view.PagerAdapter} that will provide
@@ -71,8 +84,24 @@ public class MainActivity extends FragmentActivity implements ActionBar.TabListe
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		// Inflate the menu; this adds items to the action bar if it is present.
-		getMenuInflater().inflate(R.menu.main, menu);
+		getMenuInflater().inflate(R.menu.landing, menu);
 		return true;
+	}
+
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		switch (item.getItemId()) {
+		case R.id.menu_settings:
+			Intent i = new Intent(this, PublicPreferencesActivity.class);
+			startActivityForResult(i, RESULT_PUBLIC_PREFERENCES);
+			break;
+		case R.id.menu_logout:
+			// TODO : wipe user certs
+			finish();
+			break;
+		}
+
+		return super.onOptionsItemSelected(item);
 	}
 
 	@Override
@@ -88,6 +117,16 @@ public class MainActivity extends FragmentActivity implements ActionBar.TabListe
 
 	@Override
 	public void onTabReselected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
+	}
+
+	@Override
+	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+		super.onActivityResult(requestCode, resultCode, data);
+		switch (requestCode) {
+		case RESULT_PUBLIC_PREFERENCES:
+			System.out.println(RESULT_PUBLIC_PREFERENCES);
+			break;
+		}
 	}
 
 	/**
@@ -147,8 +186,10 @@ public class MainActivity extends FragmentActivity implements ActionBar.TabListe
 		@Override
 		public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 			View rootView = inflater.inflate(R.layout.fragment_main_dummy, container, false);
+
+			LocationService locationService = new LocationService(container.getContext());
 			TextView dummyTextView = (TextView) rootView.findViewById(R.id.section_label);
-			dummyTextView.setText("Viewing " + Integer.toString(getArguments().getInt(ARG_SECTION_NUMBER)));
+			dummyTextView.setText("Viewing " + Integer.toString(getArguments().getInt(ARG_SECTION_NUMBER)) + " " + locationService.getLocation().getLatitude() + ", " + locationService.getLocation().getLongitude());
 			return rootView;
 		}
 	}

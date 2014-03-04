@@ -3,7 +3,7 @@ package mil.nga.giat.mage.login;
 import java.util.ArrayList;
 import java.util.List;
 
-import mil.nga.giat.mage.MainActivity;
+import mil.nga.giat.mage.LandingActivity;
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.sdk.login.AccountDelegate;
 import mil.nga.giat.mage.sdk.login.AccountStatus;
@@ -24,6 +24,12 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 
+/**
+ * The login screen
+ * 
+ * @author wiedemannse
+ *
+ */
 public class LoginActivity extends Activity implements AccountDelegate {
 
 	private EditText mUsernameEditText;
@@ -45,8 +51,10 @@ public class LoginActivity extends Activity implements AccountDelegate {
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		// load the configuration from preferences.xml
-		PreferenceManager.setDefaultValues(getApplicationContext(), R.xml.preferences, true);
+		// IMPORTANT: load the configuration from preferences files
+		PreferenceManager.setDefaultValues(getApplicationContext(), R.xml.mdkpreferences, true);
+		PreferenceManager.setDefaultValues(getApplicationContext(), R.xml.privatepreferences, true);
+		PreferenceManager.setDefaultValues(getApplicationContext(), R.xml.publicpreferences, true);
 		// no title bar
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
 		setContentView(R.layout.activity_login);
@@ -56,8 +64,12 @@ public class LoginActivity extends Activity implements AccountDelegate {
 		mPasswordEditText = (EditText) findViewById(R.id.login_password);
 		mServerEditText = (EditText) findViewById(R.id.login_server);
 
+		// set the default values
 		SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-		getServerEditText().setText(sharedPreferences.getString("mServerEditText", ""));
+		getUsernameEditText().setText(sharedPreferences.getString("username", ""));
+		getUsernameEditText().setSelection(getUsernameEditText().getText().length());
+		getServerEditText().setText(sharedPreferences.getString("serverURL", ""));
+		getServerEditText().setSelection(getServerEditText().getText().length());
 	}
 
 	/**
@@ -154,7 +166,6 @@ public class LoginActivity extends Activity implements AccountDelegate {
 			InputMethodManager inputMethodManager = (InputMethodManager) getSystemService(Activity.INPUT_METHOD_SERVICE);
 			inputMethodManager.toggleSoftInput(InputMethodManager.SHOW_FORCED, 0);
 			getServerEditText().requestFocus();
-			getServerEditText().setSelection(getServerEditText().getText().length());
 		} else {
 			lockImageView.setTag("lock");
 			lockImageView.setImageResource(R.drawable.lock_108);
@@ -164,32 +175,43 @@ public class LoginActivity extends Activity implements AccountDelegate {
 	@Override
 	public void finishAccount(AccountStatus accountStatus) {
 		if (accountStatus.getStatus()) {
-			Intent intent = new Intent(getApplicationContext(), MainActivity.class);
+			Intent intent = new Intent(getApplicationContext(), LandingActivity.class);
 			startActivity(intent);
-			finish();
-		} else if (accountStatus.getErrorIndices().isEmpty()) {
-			getUsernameEditText().setError("Check your username");
-			getPasswordEditText().setError("Check your password");
-			getUsernameEditText().requestFocus();
 		} else {
-			int errorMessageIndex = 0;
-			for (Integer errorIndex : accountStatus.getErrorIndices()) {
-				String message = "Error";
-				if (errorMessageIndex < accountStatus.getErrorMessages().size()) {
-					message = accountStatus.getErrorMessages().get(errorMessageIndex++);
-				}
-				if (errorIndex == 0) {
-					getUsernameEditText().setError(message);
-					getUsernameEditText().requestFocus();
-				} else if (errorIndex == 1) {
-					getPasswordEditText().setError(message);
-					getPasswordEditText().requestFocus();
-				} else if (errorIndex == 2) {
-					getServerEditText().setError(message);
-					getServerEditText().requestFocus();
+			if (accountStatus.getErrorIndices().isEmpty()) {
+				getUsernameEditText().setError("Check your username");
+				getPasswordEditText().setError("Check your password");
+				getUsernameEditText().requestFocus();
+			} else {
+				int errorMessageIndex = 0;
+				for (Integer errorIndex : accountStatus.getErrorIndices()) {
+					String message = "Error";
+					if (errorMessageIndex < accountStatus.getErrorMessages().size()) {
+						message = accountStatus.getErrorMessages().get(errorMessageIndex++);
+					}
+					if (errorIndex == 0) {
+						getUsernameEditText().setError(message);
+						getUsernameEditText().requestFocus();
+					} else if (errorIndex == 1) {
+						getPasswordEditText().setError(message);
+						getPasswordEditText().requestFocus();
+					} else if (errorIndex == 2) {
+						getServerEditText().setError(message);
+						getServerEditText().requestFocus();
+					}
 				}
 			}
+			// show form, and hide spinner
+			findViewById(R.id.login_status).setVisibility(View.GONE);
+			findViewById(R.id.login_form).setVisibility(View.VISIBLE);
 		}
+	}
+	
+	@Override
+	protected void onResume() {
+		super.onResume();
+		// TODO : populate username and password from preferences
+		
 		// show form, and hide spinner
 		findViewById(R.id.login_status).setVisibility(View.GONE);
 		findViewById(R.id.login_form).setVisibility(View.VISIBLE);

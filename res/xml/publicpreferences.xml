@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" >
+
+    <PreferenceCategory android:title="DATA FETCH FREQUENCY" >
+        <ListPreference
+            android:defaultValue="30000"
+            android:entries="@array/userFetchFrequencies"
+            android:entryValues="@array/userFetchFrequencyValues"
+            android:key="userFetchFrequency"
+            android:title="Users" />
+        <ListPreference
+            android:defaultValue="30000"
+            android:entries="@array/observationFetchFrequencies"
+            android:entryValues="@array/observationFetchFrequencyValues"
+            android:key="observationFetchFrequency"
+            android:title="Observations" />
+    </PreferenceCategory>
+    
+    <PreferenceCategory android:title="DATA SYNC FREQUENCY" >
+        <ListPreference
+            android:defaultValue="30000"
+            android:entries="@array/userSyncFrequencies"
+            android:entryValues="@array/userSyncFrequencyValues"
+            android:key="userSyncFrequency"
+            android:title="My Location" />
+    </PreferenceCategory>
+
+</PreferenceScreen>

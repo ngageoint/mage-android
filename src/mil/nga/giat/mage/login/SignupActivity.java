@@ -8,8 +8,11 @@ import mil.nga.giat.mage.sdk.login.AccountDelegate;
 import mil.nga.giat.mage.sdk.login.AccountStatus;
 import mil.nga.giat.mage.sdk.login.SignupTask;
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.SharedPreferences.Editor;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.text.Editable;
@@ -26,6 +29,12 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 
+/**
+ * The signup screen
+ * 
+ * @author wiedemannse
+ *
+ */
 public class SignupActivity extends Activity implements AccountDelegate {
 
 	private EditText mFirstNameEditText;
@@ -68,7 +77,7 @@ public class SignupActivity extends Activity implements AccountDelegate {
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		// load the configuration from preferences.xml
-		PreferenceManager.setDefaultValues(getApplicationContext(), R.xml.preferences, true);
+		PreferenceManager.setDefaultValues(getApplicationContext(), R.xml.privatepreferences, true);
 		// no title bar
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
 		setContentView(R.layout.activity_signup);
@@ -125,7 +134,8 @@ public class SignupActivity extends Activity implements AccountDelegate {
 		mLastNameEditText.addTextChangedListener(lastnameWatcher);
 
 		SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-		getServerEditText().setText(sharedPreferences.getString("mServerEditText", ""));
+		getServerEditText().setText(sharedPreferences.getString("serverURL", ""));
+		getServerEditText().setSelection(getServerEditText().getText().length());
 	}
 
 	/**
@@ -261,7 +271,7 @@ public class SignupActivity extends Activity implements AccountDelegate {
 		// show spinner, and hide form
 		findViewById(R.id.signup_form).setVisibility(View.GONE);
 		findViewById(R.id.signup_status).setVisibility(View.VISIBLE);
-		
+
 		new SignupTask(this, this.getApplicationContext()).execute(accountInfo.toArray(new String[accountInfo.size()]));
 	}
 
@@ -279,7 +289,6 @@ public class SignupActivity extends Activity implements AccountDelegate {
 			InputMethodManager inputMethodManager = (InputMethodManager) getSystemService(Activity.INPUT_METHOD_SERVICE);
 			inputMethodManager.toggleSoftInput(InputMethodManager.SHOW_FORCED, 0);
 			getServerEditText().requestFocus();
-			getServerEditText().setSelection(getServerEditText().getText().length());
 		} else {
 			lockImageView.setTag("lock");
 			lockImageView.setImageResource(R.drawable.lock_108);
@@ -289,40 +298,62 @@ public class SignupActivity extends Activity implements AccountDelegate {
 	@Override
 	public void finishAccount(AccountStatus accountStatus) {
 		if (accountStatus.getStatus()) {
-			// TODO: tell the user that the account was made
-			finish();
-		} else if (accountStatus.getErrorIndices().isEmpty()) {
-			getServerEditText().setError("Unable to make your account at this time");
-			getServerEditText().requestFocus();
-			getUsernameEditText().requestFocus();
-		} else {
-			int errorMessageIndex = 0;
-			for (Integer errorIndex : accountStatus.getErrorIndices()) {
-				String message = "Error";
-				if (errorMessageIndex < accountStatus.getErrorMessages().size()) {
-					message = accountStatus.getErrorMessages().get(errorMessageIndex++);
+			Editor sharedPreferencesEditor = PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).edit();
+			sharedPreferencesEditor.putString("username", accountStatus.getAccountInformation().get(0));
+			sharedPreferencesEditor.commit();
+			
+			// Tell the user that their account was made
+			AlertDialog.Builder alertDialog = new AlertDialog.Builder(this);
+			alertDialog.setTitle("Account Created");
+			alertDialog.setMessage("Your account has been created, but it is not enabled.  An administrator needs to enable your account before you can log in.");
+			alertDialog.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+				public void onClick(DialogInterface dialog, int which) {
+					login(null);
 				}
-				if (errorIndex == 0) {
-					getFirstNameEditText().setError(message);
-					getFirstNameEditText().requestFocus();
-				} else if (errorIndex == 1) {
-					getLastNameEditText().setError(message);
-					getLastNameEditText().requestFocus();
-				} else if (errorIndex == 2) {
-					getUsernameEditText().setError(message);
-					getUsernameEditText().requestFocus();
-				} else if (errorIndex == 3) {
-					getEmailEditText().setError(message);
-					getEmailEditText().requestFocus();
-				} else if (errorIndex == 4) {
-					getPasswordEditText().setError(message);
-					getPasswordEditText().requestFocus();
-				} else if (errorIndex == 5) {
-					getServerEditText().setError(message);
-					getServerEditText().requestFocus();
+			});
+			alertDialog.show();
+		} else {
+			if (accountStatus.getErrorIndices().isEmpty()) {
+				getServerEditText().setError("Unable to make your account at this time");
+				getServerEditText().requestFocus();
+				getUsernameEditText().requestFocus();
+			} else {
+				int errorMessageIndex = 0;
+				for (Integer errorIndex : accountStatus.getErrorIndices()) {
+					String message = "Error";
+					if (errorMessageIndex < accountStatus.getErrorMessages().size()) {
+						message = accountStatus.getErrorMessages().get(errorMessageIndex++);
+					}
+					if (errorIndex == 0) {
+						getFirstNameEditText().setError(message);
+						getFirstNameEditText().requestFocus();
+					} else if (errorIndex == 1) {
+						getLastNameEditText().setError(message);
+						getLastNameEditText().requestFocus();
+					} else if (errorIndex == 2) {
+						getUsernameEditText().setError(message);
+						getUsernameEditText().requestFocus();
+					} else if (errorIndex == 3) {
+						getEmailEditText().setError(message);
+						getEmailEditText().requestFocus();
+					} else if (errorIndex == 4) {
+						getPasswordEditText().setError(message);
+						getPasswordEditText().requestFocus();
+					} else if (errorIndex == 5) {
+						getServerEditText().setError(message);
+						getServerEditText().requestFocus();
+					}
 				}
 			}
+			// show form, and hide spinner
+			findViewById(R.id.signup_status).setVisibility(View.GONE);
+			findViewById(R.id.signup_form).setVisibility(View.VISIBLE);
 		}
+	}
+	
+	@Override
+	protected void onResume() {
+		super.onResume();
 		// show form, and hide spinner
 		findViewById(R.id.signup_status).setVisibility(View.GONE);
 		findViewById(R.id.signup_form).setVisibility(View.VISIBLE);
