@@ -52,8 +52,9 @@ public class LoginActivity extends Activity implements AccountDelegate {
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		// IMPORTANT: load the configuration from preferences files
-		PreferenceManager.setDefaultValues(getApplicationContext(), R.xml.mdkpreferences, true);
+		PreferenceManager.setDefaultValues(getApplicationContext(), R.xml.mdkprivatepreferences, true);
 		PreferenceManager.setDefaultValues(getApplicationContext(), R.xml.privatepreferences, true);
+		PreferenceManager.setDefaultValues(getApplicationContext(), R.xml.mdkpublicpreferences, true);
 		PreferenceManager.setDefaultValues(getApplicationContext(), R.xml.publicpreferences, true);
 		// no title bar
 		requestWindowFeature(Window.FEATURE_NO_TITLE);

@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" >
 
-        <!-- Default server to connect to -->
+    <!-- The username field -->
     <EditTextPreference
         android:defaultValue=""
         android:key="username" />
-    
+
     <!-- Default server to connect to -->
     <EditTextPreference
         android:defaultValue="https://mage.geointapps.org"

@@ -3,6 +3,7 @@ package mil.nga.giat.mage;
 import java.util.Locale;
 
 import mil.nga.giat.mage.preferences.PublicPreferencesActivity;
+import mil.nga.giat.mage.sdk.database.UserDatabase;
 import mil.nga.giat.mage.sdk.location.LocationService;
 
 import android.app.ActionBar;
@@ -22,7 +23,8 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 /**
- * FIXME: Currently a mock of what a landing page might look like.
+ * FIXME: Currently a mock of what a landing page might look like. Could be
+ * replaced entirely if need be. Menu options do exist.
  * 
  * @author wiedemannse
  * 
@@ -45,6 +47,8 @@ public class LandingActivity extends FragmentActivity implements ActionBar.TabLi
 	 * The {@link ViewPager} that will host the section contents.
 	 */
 	ViewPager mViewPager;
+
+	protected LocationService locationService;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -79,6 +83,28 @@ public class LandingActivity extends FragmentActivity implements ActionBar.TabLi
 			// this tab is selected.
 			actionBar.addTab(actionBar.newTab().setText(mSectionsPagerAdapter.getPageTitle(i)).setTabListener(this));
 		}
+
+		////////////// FIXME: TESTING //////////////
+		
+		// Start the location services!
+//		if (locationService == null) {
+//			locationService = new LocationService(getApplicationContext());
+//		}
+//
+//		// TODO : is app configured to report location?!?
+//		if (!locationService.isPolling()) {
+//			locationService.start();
+//		}
+//		
+//		UserDatabase userDatabase = new UserDatabase(getApplicationContext());
+//		userDatabase.addUser("CoolBeans");
+		
+	}
+
+	@Override
+	protected void onDestroy() {
+		super.onDestroy();
+		locationService.stop();
 	}
 
 	@Override
@@ -187,9 +213,10 @@ public class LandingActivity extends FragmentActivity implements ActionBar.TabLi
 		public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 			View rootView = inflater.inflate(R.layout.fragment_main_dummy, container, false);
 
-			LocationService locationService = new LocationService(container.getContext());
+			// LocationService locationService = new
+			// LocationService(container.getContext());
 			TextView dummyTextView = (TextView) rootView.findViewById(R.id.section_label);
-			dummyTextView.setText("Viewing " + Integer.toString(getArguments().getInt(ARG_SECTION_NUMBER)) + " " + locationService.getLocation().getLatitude() + ", " + locationService.getLocation().getLongitude());
+			dummyTextView.setText("Viewing " + Integer.toString(getArguments().getInt(ARG_SECTION_NUMBER)));
 			return rootView;
 		}
 	}
