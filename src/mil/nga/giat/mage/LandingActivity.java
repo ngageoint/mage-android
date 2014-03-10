@@ -53,7 +53,7 @@ public class LandingActivity extends FragmentActivity implements ActionBar.TabLi
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		setContentView(R.layout.activity_main);
+		setContentView(R.layout.activity_landing);
 
 		// Set up the action bar.
 		final ActionBar actionBar = getActionBar();
