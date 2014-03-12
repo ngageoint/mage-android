@@ -8,6 +8,6 @@
         android:id="@+id/pin_tv"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Set your default map view" />
+        android:text="@string/title_mapViewDefault" />
 
 </LinearLayout>

@@ -2,6 +2,7 @@ package mil.nga.giat.mage;
 
 import java.util.Locale;
 
+import mil.nga.giat.mage.observation.ObservationViewActivity;
 import mil.nga.giat.mage.preferences.PublicPreferencesActivity;
 import mil.nga.giat.mage.sdk.database.UserDatabase;
 import mil.nga.giat.mage.sdk.location.LocationService;
@@ -124,6 +125,11 @@ public class LandingActivity extends FragmentActivity implements ActionBar.TabLi
 		case R.id.menu_logout:
 			// TODO : wipe user certs
 			finish();
+			break;
+		// TODO all of this is not to go here, just for debugging
+		case R.id.observation_view:
+			Intent o = new Intent(this, ObservationViewActivity.class);
+			startActivityForResult(o, 2);
 			break;
 		}
 

@@ -23,7 +23,7 @@
         android:theme="@style/AppTheme" >
         <activity
             android:name="mil.nga.giat.mage.login.LoginActivity"
-            android:windowSoftInputMode="adjustResize" >
+            android:windowSoftInputMode="adjustResize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -41,6 +41,10 @@
         <activity
             android:name="mil.nga.giat.mage.preferences.PublicPreferencesActivity"
             android:label="@string/menu_settings" >
+        </activity>
+        <activity
+            android:name="mil.nga.giat.mage.observation.ObservationViewActivity"
+            android:label="@string/observation_view" >
         </activity>
     </application>
 
