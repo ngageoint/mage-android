@@ -11,6 +11,8 @@ import mil.nga.giat.mage.sdk.login.LoginTaskFactory;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.SharedPreferences.Editor;
+import android.content.pm.PackageManager.NameNotFoundException;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.text.TextUtils;
@@ -71,6 +73,13 @@ public class LoginActivity extends Activity implements AccountDelegate {
 		getUsernameEditText().setSelection(getUsernameEditText().getText().length());
 		getServerEditText().setText(sharedPreferences.getString("serverURL", ""));
 		getServerEditText().setSelection(getServerEditText().getText().length());
+		Editor e = sharedPreferences.edit();
+		try {
+			e.putString("appVersion", getPackageManager().getPackageInfo(getPackageName(), 0).versionName);
+			e.commit();
+		} catch (NameNotFoundException nnfe) {
+			
+		}
 	}
 
 	/**
@@ -176,6 +185,12 @@ public class LoginActivity extends Activity implements AccountDelegate {
 	@Override
 	public void finishAccount(AccountStatus accountStatus) {
 		if (accountStatus.getStatus()) {
+			Editor sp = PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).edit();
+			sp.putString("username", getUsernameEditText().getText().toString());
+			// TODO should we store password, or some hash?
+//			sp.putString("password", getPasswordEditText().getText().toString());
+			sp.putString("serverURL", getServerEditText().getText().toString());
+			sp.commit();
 			Intent intent = new Intent(getApplicationContext(), LandingActivity.class);
 			startActivity(intent);
 		} else {

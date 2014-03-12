@@ -9,5 +9,24 @@
             android:key="layers"
             android:title="Layer" />
     </PreferenceCategory>
+    <PreferenceCategory android:title="ABOUT">
+        <EditTextPreference
+            android:key="serverURL"
+            android:title="URL"/>
+        <Preference
+            android:key="username"
+            android:title="Username"/>
+        <Preference
+            android:key="appVersion"
+            android:title="App Version"/>
+    </PreferenceCategory>
+    <PreferenceCategory android:title="MEDIA">
+        <ListPreference 
+            android:defaultValue="1"
+            android:entries="@array/imageUploadSize"
+            android:entryValues="@array/imageUploadSizeValues"
+            android:key="imageUploadSize"
+            android:title="Image Upload Size"/>
+    </PreferenceCategory>
 
 </PreferenceScreen>
