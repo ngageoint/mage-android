@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import mil.nga.giat.mage.LandingActivity;
+import mil.nga.giat.mage.MapActivity;
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.sdk.login.AccountDelegate;
 import mil.nga.giat.mage.sdk.login.AccountStatus;
@@ -175,7 +176,7 @@ public class LoginActivity extends Activity implements AccountDelegate {
 	@Override
 	public void finishAccount(AccountStatus accountStatus) {
 		if (accountStatus.getStatus()) {
-			Intent intent = new Intent(getApplicationContext(), LandingActivity.class);
+			Intent intent = new Intent(getApplicationContext(), MapActivity.class);
 			startActivity(intent);
 		} else {
 			if (accountStatus.getErrorIndices().isEmpty()) {
