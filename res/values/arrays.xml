@@ -9,5 +9,17 @@
         <item>1</item>
         <item>3</item>
     </string-array>
+    <string-array name="imageUploadSize">
+        <item>Small</item>
+        <item>Medium</item>
+        <item>Large</item>
+        <item>Original</item>
+    </string-array>
+    <string-array name="imageUploadSizeValues">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+    </string-array>
 
 </resources>
