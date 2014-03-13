@@ -12,6 +12,7 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.TileOverlayOptions;
 import com.google.android.gms.maps.model.UrlTileProvider;
 
+import mil.nga.giat.mage.observation.ObservationViewActivity;
 import mil.nga.giat.mage.preferences.PublicPreferencesActivity;
 import mil.nga.giat.mage.sdk.location.LocationService;
 
@@ -120,6 +121,7 @@ public class MapActivity extends FragmentActivity implements ActionBar.TabListen
 
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
+		System.out.println("STarting the observation view");
 		switch (item.getItemId()) {
 		case R.id.menu_settings:
 			Intent i = new Intent(this, PublicPreferencesActivity.class);
@@ -128,6 +130,12 @@ public class MapActivity extends FragmentActivity implements ActionBar.TabListen
 		case R.id.menu_logout:
 			// TODO : wipe user certs
 			finish();
+			break;
+		// TODO all of this is not to go here, just for debugging
+		case R.id.observation_view:
+			System.out.println("STarting the observation view");
+			Intent o = new Intent(this, ObservationViewActivity.class);
+			startActivityForResult(o, 2);
 			break;
 		}
 
