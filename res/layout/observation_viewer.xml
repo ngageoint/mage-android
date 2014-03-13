@@ -7,13 +7,66 @@
     <RelativeLayout 
         android:layout_width="match_parent"
         android:layout_height="0dip"
-        android:layout_weight="0.25">
-        <Gallery
-        android:id="@+id/gallery1"/>
-    </RelativeLayout>
-    <LinearLayout
-        android:layout_width="match_parent">
+        android:layout_weight="0.30">
+        <include
+            android:id="@+id/mini_map"
+            layout="@layout/fragment_map" 
+            />
+		<LinearLayout 
+		    android:layout_width="fill_parent"
+		    android:layout_height="fill_parent"
+		    android:background="@drawable/gradient_fade">
+
+		    <TextView
+		        android:id="@+id/username"
+		        android:layout_width="wrap_content"
+		        android:layout_height="wrap_content"
+		        android:text="Nancy Drew"
+		        android:textAppearance="?android:attr/textAppearanceSmall"
+		        android:textColor="#ffffff"/>
+
+		    <TextView
+		        android:id="@+id/location"
+		        android:layout_width="fill_parent"
+		        android:layout_height="wrap_content"
+		        android:gravity="right"
+		        android:text="-104.861, 39.665"
+		        android:textAppearance="?android:attr/textAppearanceSmall"
+		        android:textColor="#ffffff"/>
+
+		</LinearLayout>
         
+
+    </RelativeLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="0.70"
+        android:orientation="vertical" >
+
+        <TextView
+            android:id="@+id/textView1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Suspicious Individual"
+            android:layout_marginTop="10dp"
+            android:textAppearance="?android:attr/textAppearanceMedium" />
+        <TextView
+            android:id="@+id/textView1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="2 days ago"
+            android:layout_marginTop="5dp"
+            android:textAppearance="?android:attr/textAppearanceMedium" />
+        <TextView
+            android:id="@+id/textView1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="15dp"
+            android:text="This is a really long description about this suspicious individual.  He was walking around with a bat and yelling at people.  How long is this description.  It is getting pretty long."
+            android:textAppearance="?android:attr/textAppearanceSmall" />
+
     </LinearLayout>
     
 

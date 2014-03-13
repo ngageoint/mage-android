@@ -208,6 +208,7 @@ public class LandingActivity extends FragmentActivity implements ActionBar.TabLi
 			break;
 		// TODO all of this is not to go here, just for debugging
 		case R.id.observation_view:
+			
 			Intent o = new Intent(this, ObservationViewActivity.class);
 			startActivityForResult(o, 2);
 			break;
