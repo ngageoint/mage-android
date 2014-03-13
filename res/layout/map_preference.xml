@@ -4,10 +4,10 @@
     android:layout_height="match_parent"
     android:orientation="vertical" >
 
-    <TextView
-        android:id="@+id/pin_tv"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Set your default map view" />
+	<ListView
+	    android:layout_width="wrap_content"
+	    android:layout_height="wrap_content"
+	    android:entries="@array/baseLayers">
+	</ListView>
 
 </LinearLayout>

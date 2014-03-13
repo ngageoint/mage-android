@@ -3,14 +3,13 @@ package mil.nga.giat.mage.preferences;
 import mil.nga.giat.mage.R;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
-import android.content.pm.PackageManager.NameNotFoundException;
 import android.os.Bundle;
 import android.preference.EditTextPreference;
 import android.preference.ListPreference;
+import android.preference.MultiSelectListPreference;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceCategory;
-import android.preference.PreferenceManager;
 
 /**
  * Provides configuration driven settings that are available to the user. Check
@@ -67,12 +66,14 @@ public class PublicPreferencesActivity extends PreferenceActivity implements OnS
 
     private void updatePrefSummary(Preference p) {
         if (p instanceof ListPreference) {
-            ListPreference listPref = (ListPreference) p;
-            p.setSummary(listPref.getEntry());
+            ListPreference pref = (ListPreference) p;
+            p.setSummary(pref.getEntry());
         } else if (p instanceof EditTextPreference) {
-            EditTextPreference editTextPref = (EditTextPreference) p;
-            p.setSummary(editTextPref.getText());
-        } else {
+            EditTextPreference pref = (EditTextPreference) p;
+            p.setSummary(pref.getText());
+        } else if (p instanceof MultiSelectListPreference) {        	
+        	p.setSummary("Click to select options");
+    	} else {
         	p.setSummary(getPreferenceScreen().getSharedPreferences().getString(p.getKey(),""));
         }
     }

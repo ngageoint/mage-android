@@ -16,6 +16,7 @@ import mil.nga.giat.mage.preferences.PublicPreferencesActivity;
 import mil.nga.giat.mage.sdk.location.LocationService;
 
 import android.app.ActionBar;
+import android.app.Dialog;
 import android.app.FragmentTransaction;
 import android.content.Intent;
 import android.os.Bundle;
@@ -26,9 +27,14 @@ import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.view.LayoutInflater;
 import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
+import android.widget.Button;
+import android.widget.ImageButton;
+import android.widget.PopupMenu;
 import android.widget.TextView;
 
 /**
@@ -65,9 +71,8 @@ public class MapActivity extends FragmentActivity implements ActionBar.TabListen
 	protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.fragment_map);
-
+        
         map = ((SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map)).getMap();
-
 
         TileOverlayOptions options = new TileOverlayOptions();
         options.tileProvider(new UrlTileProvider(256, 256) {
@@ -96,6 +101,14 @@ public class MapActivity extends FragmentActivity implements ActionBar.TabListen
                 map.addMarker(marker);
             }
         });
+	}
+	
+	public void showLayersPopup(View view) {
+        Dialog dialog = new Dialog(this);
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        dialog.setContentView(R.layout.map_preference);
+        dialog.setCancelable(true);
+        dialog.show();
 	}
 
 	@Override
