@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+    <include
+	    android:id="@+id/background_map"
+	    layout="@layout/fragment_map" 
+	    />
+    <ScrollView android:fillViewport="true"
+        
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent">
+
+	<LinearLayout 
+	    android:orientation="vertical"
+	    android:background="@drawable/semi_see_through_background"
+	    android:layout_width="match_parent"
+	    android:layout_height="match_parent"
+	    android:padding="10dip">
+	    <TextView android:layout_width="fill_parent"
+	          android:layout_height="wrap_content"
+	          android:textColor="#372c24"
+	          android:text="Type"/>
+	    <Spinner
+		    android:id="@+id/type_spinner"
+		    android:layout_width="fill_parent"
+		    android:layout_height="wrap_content"
+		    android:layout_marginTop="5dip"
+	       	android:layout_marginBottom="20dip" 
+	       	android:entries="@array/types_array"/>
+	    <TextView android:layout_width="fill_parent"
+	          android:layout_height="wrap_content"
+	          android:textColor="#372c24"
+	          android:text="Level"/>
+	    <EditText android:layout_width="fill_parent"
+	          android:layout_height="wrap_content"
+	          android:layout_marginTop="5dip"
+	          android:layout_marginBottom="20dip"
+	          android:singleLine="true"/>
+	    <TextView android:layout_width="fill_parent"
+	          android:layout_height="wrap_content"
+	          android:textColor="#372c24"
+	          android:text="Team"/>
+	    <EditText android:layout_width="fill_parent"
+	          android:layout_height="wrap_content"
+	          android:layout_marginTop="5dip"
+	          android:layout_marginBottom="20dip"
+	          android:singleLine="true"/>
+	    <TextView android:layout_width="fill_parent"
+	          android:layout_height="wrap_content"
+	          android:textColor="#372c24"
+	          android:text="Description"/>
+	    <EditText android:layout_width="fill_parent"
+	          android:layout_height="wrap_content"
+	          android:hint="Description"
+	          android:layout_marginTop="5dip"
+	          android:maxLines="10"
+	          android:lines="8"
+	          android:minLines="4"/>
+	    <!-- Login button -->
+	    <!-- 
+	    <Button android:id="@+id/btnLogin"
+	          android:layout_width="fill_parent"
+	          android:layout_height="wrap_content"
+	          android:layout_marginTop="10dip"
+	          android:text="Login"/>
+	     -->
+	    <!-- Link to Registration Screen -->
+		<!-- 
+	    <TextView android:id="@+id/link_to_register"
+	          android:layout_width="fill_parent"
+	          android:layout_height="wrap_content"
+	          android:layout_marginTop="40dip"
+	          android:layout_marginBottom="40dip"
+	          android:text="New to Twitter? Register here"
+	          android:gravity="center"
+	          android:textSize="20dip"
+	          android:textColor="#0b84aa"/>
+		 -->
+	</LinearLayout>
+	        
+    </ScrollView>
+</RelativeLayout>

@@ -12,6 +12,7 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.TileOverlayOptions;
 import com.google.android.gms.maps.model.UrlTileProvider;
 
+import mil.nga.giat.mage.observation.ObservationEditActivity;
 import mil.nga.giat.mage.observation.ObservationViewActivity;
 import mil.nga.giat.mage.preferences.PublicPreferencesActivity;
 import mil.nga.giat.mage.sdk.location.LocationService;
@@ -117,6 +118,10 @@ public class MapActivity extends FragmentActivity implements ActionBar.TabListen
 		case R.id.menu_logout:
 			// TODO : wipe user certs
 			finish();
+			break;
+		case R.id.observation_new:
+			Intent c = new Intent(this, ObservationEditActivity.class);
+			startActivityForResult(c, 3);
 			break;
 		// TODO all of this is not to go here, just for debugging
 		case R.id.observation_view:

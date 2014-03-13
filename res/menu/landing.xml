@@ -18,5 +18,10 @@
         android:orderInCategory="100"
         android:showAsAction="never"
         android:title="@string/observation_view"/>
+    <item
+        android:id="@+id/observation_new"
+        android:orderInCategory="100"
+        android:showAsAction="ifRoom"
+        android:title="@string/observation_new"/>
 
 </menu>
