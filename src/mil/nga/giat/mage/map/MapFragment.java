@@ -9,7 +9,9 @@ import java.util.Set;
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.R.id;
 import mil.nga.giat.mage.R.layout;
+import mil.nga.giat.mage.observation.ObservationEditActivity;
 import android.app.Dialog;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
@@ -54,9 +56,10 @@ public class MapFragment extends Fragment {
           @Override
           public void onMapLongClick(LatLng point) {
               // TODO Auto-generated method stub
-              MarkerOptions marker = new MarkerOptions().position(
-                      new LatLng(point.latitude, point.longitude)).title("New Marker");
-              map.addMarker(marker);
+        	  Intent intent = new Intent(getActivity(), ObservationEditActivity.class);
+        	  intent.putExtra("latitude", point.latitude);
+        	  intent.putExtra("longitude", point.longitude);
+        	  startActivity(intent);
           }
       });
       
