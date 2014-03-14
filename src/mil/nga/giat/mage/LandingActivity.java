@@ -183,7 +183,10 @@ public class LandingActivity extends FragmentActivity implements ActionBar.TabLi
 	@Override
 	protected void onDestroy() {
 		super.onDestroy();
-		locationService.stop();
+		
+		if (locationService != null) {
+			locationService.stop();			
+		}
 	}
 
 	@Override
