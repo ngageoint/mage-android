@@ -16,5 +16,11 @@
     <style name="AppTheme" parent="AppBaseTheme">
         <!-- All customizations that are NOT specific to a particular API-level can go here. -->
     </style>
+    
+    <style name="EditTextView" parent="@android:style/TextAppearance.Small">
+        
+        <item name="android:textColor">#372c24</item>
+        <item name="android:textStyle">bold</item>
+    </style>
 
 </resources>

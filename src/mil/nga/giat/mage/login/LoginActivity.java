@@ -3,6 +3,7 @@ package mil.nga.giat.mage.login;
 import java.util.ArrayList;
 import java.util.List;
 
+import mil.nga.giat.mage.LandingActivity;
 import mil.nga.giat.mage.MapActivity;
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.sdk.login.AccountDelegate;
