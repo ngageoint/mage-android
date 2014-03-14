@@ -73,6 +73,7 @@ public class LoginActivity extends Activity implements AccountDelegate {
 		getUsernameEditText().setSelection(getUsernameEditText().getText().length());
 		getServerEditText().setText(sharedPreferences.getString("serverURL", ""));
 		getServerEditText().setSelection(getServerEditText().getText().length());
+		
 		Editor e = sharedPreferences.edit();
 		try {
 			e.putString("appVersion", getPackageManager().getPackageInfo(getPackageName(), 0).versionName);

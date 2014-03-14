@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="layerEntries">
+        <item>Normal</item>
+        <item>Hyrbid</item>
+        <item>Satellite</item>
+        <item>Terrain</item>
+    </string-array>
+    
+    <string-array name="layerValues">
+        <item>1</item>
+        <item>4</item>
+        <item>2</item>
+        <item>3</item>      
+    </string-array>
+    
+</resources>

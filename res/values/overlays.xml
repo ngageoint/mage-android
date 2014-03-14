@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    
+    <string-array name="worldCupOverlays">
+        <item>Sochi</item>
+    </string-array>
+    <string-array name="worldCupOverlayLocations">
+        <item>/storage/extSdCard/tiles</item>
+    </string-array>
+    
+</resources>

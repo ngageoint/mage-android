@@ -1,26 +1,22 @@
 package mil.nga.giat.mage;
 
-import java.net.MalformedURLException;
-import java.net.URL;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
 
-import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.GoogleMap.OnMapLongClickListener;
-import com.google.android.gms.maps.SupportMapFragment;
-import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.MarkerOptions;
-import com.google.android.gms.maps.model.TileOverlayOptions;
-import com.google.android.gms.maps.model.UrlTileProvider;
-
-import mil.nga.giat.mage.observation.ObservationViewActivity;
+import mil.nga.giat.mage.map.FileSystemTileProvider;
 import mil.nga.giat.mage.preferences.PublicPreferencesActivity;
 import mil.nga.giat.mage.sdk.location.LocationService;
-
 import android.app.ActionBar;
 import android.app.Dialog;
 import android.app.FragmentTransaction;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
@@ -28,15 +24,20 @@ import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.view.LayoutInflater;
 import android.view.Menu;
-import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
-import android.widget.Button;
-import android.widget.ImageButton;
-import android.widget.PopupMenu;
 import android.widget.TextView;
+
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.GoogleMap.OnMapLongClickListener;
+import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.TileOverlay;
+import com.google.android.gms.maps.model.TileOverlayOptions;
+import com.google.android.gms.maps.model.TileProvider;
 
 /**
  * FIXME: Currently a mock of what a landing page might look like.
@@ -47,9 +48,7 @@ import android.widget.TextView;
 public class MapActivity extends FragmentActivity implements ActionBar.TabListener {
 
 	private static final int RESULT_PUBLIC_PREFERENCES = 1;
-	
-    private static final String USER_CACHE_DIRECTORY = "/storage/extSdCard/tiles";
-	
+		
 	/**
 	 * The {@link android.support.v4.view.PagerAdapter} that will provide
 	 * fragments for each of the sections. We use a
@@ -66,7 +65,8 @@ public class MapActivity extends FragmentActivity implements ActionBar.TabListen
 	ViewPager mViewPager;
 	
     private GoogleMap map;
-
+    private int mapType = 1;
+    private Map<String, TileOverlay> tileOverlays = new HashMap<String, TileOverlay>();
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -74,24 +74,10 @@ public class MapActivity extends FragmentActivity implements ActionBar.TabListen
         setContentView(R.layout.fragment_map);
         
         map = ((SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map)).getMap();
-
-        TileOverlayOptions options = new TileOverlayOptions();
-        options.tileProvider(new UrlTileProvider(256, 256) {
-
-            @Override
-            public URL getTileUrl(int x, int y, int z) {
-                String tile = String.format("file://%s/%d/%d/%d.png", USER_CACHE_DIRECTORY, z, x, y);
-                URL fileURL = null;
-                try {
-                    fileURL = new URL(tile);
-                } catch (MalformedURLException e) {
-                }
-
-                return fileURL;
-            }
-        });
-
-        map.addTileOverlay(options);
+        
+		SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+		mapType = Integer.parseInt(preferences.getString("baseLayer", "1"));
+		map.setMapType(mapType);
 
         map.setOnMapLongClickListener(new OnMapLongClickListener() {
             @Override
@@ -102,6 +88,47 @@ public class MapActivity extends FragmentActivity implements ActionBar.TabListen
                 map.addMarker(marker);
             }
         });
+	}
+	
+	@Override
+	protected void onResume() {
+		super.onResume();
+
+		// Check if any map preferences changed that I care about
+		SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+		updateMapType(preferences);
+		updateMapOverlays(preferences);
+	}
+	
+	private void updateMapType(SharedPreferences preferences) {
+		int mapType = Integer.parseInt(preferences.getString("mapBaseLayer", "1"));
+		if (mapType != this.mapType) {
+			this.mapType = mapType;
+			map.setMapType(this.mapType);
+		}
+	}
+	
+	private void updateMapOverlays(SharedPreferences preferences) {
+		Set<String> overlays = preferences.getStringSet("mapTileOverlays", Collections.<String>emptySet());
+			
+		// Add all overlays that are in the preferences
+		// For now there is no ordering in how tile overlays are stacked
+		
+		Set<String> removedOverlays = new HashSet<String>(tileOverlays.keySet());
+		for (String overlay : overlays) {
+			if (!tileOverlays.keySet().contains(overlay)) {
+		        TileProvider tileProvider = new FileSystemTileProvider(256, 256, overlay);
+		        TileOverlay tileOverlay = map.addTileOverlay(new TileOverlayOptions().tileProvider(tileProvider));
+		        tileOverlays.put(overlay, tileOverlay);
+			}
+			
+	        removedOverlays.remove(overlay);	
+		}
+		
+		// Remove any overlays that are on the map but no longer in the preferences
+		for (String overlay : removedOverlays) {
+			tileOverlays.remove(overlay).remove();
+		}
 	}
 	
 	public void showLayersPopup(View view) {
@@ -121,7 +148,6 @@ public class MapActivity extends FragmentActivity implements ActionBar.TabListen
 
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
-		System.out.println("STarting the observation view");
 		switch (item.getItemId()) {
 		case R.id.menu_settings:
 			Intent i = new Intent(this, PublicPreferencesActivity.class);
@@ -130,12 +156,6 @@ public class MapActivity extends FragmentActivity implements ActionBar.TabListen
 		case R.id.menu_logout:
 			// TODO : wipe user certs
 			finish();
-			break;
-		// TODO all of this is not to go here, just for debugging
-		case R.id.observation_view:
-			System.out.println("STarting the observation view");
-			Intent o = new Intent(this, ObservationViewActivity.class);
-			startActivityForResult(o, 2);
 			break;
 		}
 
@@ -231,5 +251,4 @@ public class MapActivity extends FragmentActivity implements ActionBar.TabListen
 			return rootView;
 		}
 	}
-
 }
