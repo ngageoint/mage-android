@@ -4,8 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import mil.nga.giat.mage.LandingActivity;
-import mil.nga.giat.mage.MapFragment;
 import mil.nga.giat.mage.R;
+import mil.nga.giat.mage.map.MapFragment;
 import mil.nga.giat.mage.sdk.login.AccountDelegate;
 import mil.nga.giat.mage.sdk.login.AccountStatus;
 import mil.nga.giat.mage.sdk.login.LoginTaskFactory;

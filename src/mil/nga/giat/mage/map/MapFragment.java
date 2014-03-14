@@ -1,4 +1,4 @@
-package mil.nga.giat.mage;
+package mil.nga.giat.mage.map;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -6,7 +6,9 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import mil.nga.giat.mage.map.FileSystemTileProvider;
+import mil.nga.giat.mage.R;
+import mil.nga.giat.mage.R.id;
+import mil.nga.giat.mage.R.layout;
 import android.app.Dialog;
 import android.content.SharedPreferences;
 import android.os.Bundle;
