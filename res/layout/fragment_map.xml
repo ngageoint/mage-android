@@ -12,13 +12,4 @@
         map:mapType="normal"
         map:uiCompass="true"/>
 
-    <ImageButton
-        android:id="@+id/layersButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentTop="true"
-        android:src="@drawable/layers"
-        android:onClick="showLayersPopup" />
-
 </RelativeLayout>
