@@ -4,8 +4,42 @@
     android:layout_height="match_parent">
     <include
 	    android:id="@+id/background_map"
-	    layout="@layout/fragment_map" 
+	    layout="@layout/fragment_map"
+	    android:layout_width="fill_parent"
+	    android:layout_height="fill_parent" 
 	    />
+    <LinearLayout android:orientation="vertical"
+        android:background="@drawable/semi_see_through_background"
+        android:layout_height="fill_parent"
+        android:layout_width="fill_parent">
+        <LinearLayout 
+            style="?android:attr/buttonBarStyle"
+            android:background="@drawable/semi_see_through_background"
+            android:orientation="horizontal"
+            android:layout_height="wrap_content"
+            android:layout_width="fill_parent">
+            <ImageButton 
+                style="?android:attr/buttonBarButtonStyle"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:contentDescription="voice"
+                android:src="@drawable/ic_edit"/>
+            <ImageButton 
+                style="?android:attr/buttonBarButtonStyle"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:text="camera"
+                android:src="@drawable/ic_camera"/>
+            <ImageButton 
+                style="?android:attr/buttonBarButtonStyle"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:src="@drawable/ic_video"/>
+        </LinearLayout>
+    
     <ScrollView android:fillViewport="true"
         
     android:layout_width="fill_parent"
@@ -13,22 +47,23 @@
 
 	<LinearLayout 
 	    android:orientation="vertical"
-	    android:background="@drawable/semi_see_through_background"
 	    android:layout_width="match_parent"
-	    android:layout_height="match_parent"
+	    android:layout_height="wrap_content"
 	    android:padding="10dip">
 	    <LinearLayout
 	        android:layout_width="fill_parent"
 	        android:layout_height="wrap_content">
-	        <TextView android:layout_width="wrap_content"
+	        <TextView 
+	            android:id="@+id/date"
+	            android:layout_width="wrap_content"
+	          android:layout_height="wrap_content"
+	          style="@style/EditTextView"/>
+	        <TextView 
+	            android:id="@+id/location"
+	          android:layout_width="fill_parent"
 	          android:layout_height="wrap_content"
 	          style="@style/EditTextView"
-	          android:text="2014-01-17 04:32"/>
-	        <TextView android:layout_width="fill_parent"
-	          android:layout_height="wrap_content"
-	          style="@style/EditTextView"
-	          android:gravity="right"
-	          android:text="39.0 -104.0"/>
+	          android:gravity="right"/>
 	    </LinearLayout>
 	    <TextView android:layout_width="fill_parent"
 	          android:layout_height="wrap_content"
@@ -45,7 +80,9 @@
 	          android:layout_height="wrap_content"
 	          style="@style/EditTextView"
 	          android:text="Level"/>
-	    <EditText android:layout_width="fill_parent"
+	    <EditText 
+	        android:id="@+id/level"
+	        android:layout_width="fill_parent"
 	          android:layout_height="wrap_content"
 	          android:layout_marginTop="5dip"
 	          android:layout_marginBottom="20dip"
@@ -54,7 +91,9 @@
 	          android:layout_height="wrap_content"
 	          style="@style/EditTextView"
 	          android:text="Team"/>
-	    <EditText android:layout_width="fill_parent"
+	    <EditText 
+	        android:id="@+id/team"
+	        android:layout_width="fill_parent"
 	          android:layout_height="wrap_content"
 	          android:layout_marginTop="5dip"
 	          android:layout_marginBottom="20dip"
@@ -65,6 +104,7 @@
 	          android:text="Description"/>
 
 	    <EditText
+	        android:id="@+id/description"
 	        android:layout_width="fill_parent"
 	        android:layout_height="wrap_content"
 	        android:layout_marginTop="5dip"
@@ -94,5 +134,6 @@
 	</LinearLayout>
 	        
     </ScrollView>
+    </LinearLayout>
 
 </RelativeLayout>

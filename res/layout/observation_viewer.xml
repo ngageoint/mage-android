@@ -7,7 +7,8 @@
     <RelativeLayout 
         android:layout_width="match_parent"
         android:layout_height="0dip"
-        android:layout_weight="0.30">
+        android:minHeight="100dp"
+        android:layout_weight="1">
         <include
             android:id="@+id/mini_map"
             layout="@layout/fragment_map" 
@@ -30,7 +31,6 @@
 		        android:layout_width="fill_parent"
 		        android:layout_height="wrap_content"
 		        android:gravity="right"
-		        android:text="-104.861, 39.665"
 		        android:textAppearance="?android:attr/textAppearanceSmall"
 		        android:textColor="#ffffff"/>
 
@@ -42,7 +42,6 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_weight="0.70"
         android:orientation="vertical" >
 
         <TextView
