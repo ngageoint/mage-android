@@ -84,20 +84,14 @@ public class LandingActivity extends FragmentActivity implements ActionBar.TabLi
 			actionBar.addTab(actionBar.newTab().setText(mSectionsPagerAdapter.getPageTitle(i)).setTabListener(this));
 		}
 
-		////////////// FIXME: TESTING //////////////
-		
 		// Start the location services!
-//		if (locationService == null) {
-//			locationService = new LocationService(getApplicationContext());
-//		}
-//
-//		// TODO : is app configured to report location?!?
-//		if (!locationService.isPolling()) {
-//			locationService.start();
-//		}
-//		
-//		UserDatabase userDatabase = new UserDatabase(getApplicationContext());
-//		userDatabase.addUser("CoolBeans");
+		if (locationService == null) {
+			locationService = new LocationService(getApplicationContext());
+		}
+		locationService.start();
+		
+
+		////////////// FIXME: TESTING //////////////
 		
 		//ObservationDatabase obsDatabase = new ObservationDatabase(getApplicationContext());
 		//obsDatabase.onUpgrade(obsDatabase.getWritableDatabase(),1,1);
