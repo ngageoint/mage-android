@@ -15,5 +15,10 @@
         <item>2</item>
         <item>3</item>
     </string-array>
+    
+    <string-array name="staticFeatureEntries">
+    </string-array>
+    <string-array name="staticFeatureValues">
+    </string-array>
 
 </resources>

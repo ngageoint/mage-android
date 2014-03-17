@@ -1,6 +1,7 @@
-package mil.nga.giat.mage.preferences;
+package mil.nga.giat.mage.map;
 
 import mil.nga.giat.mage.R;
+import mil.nga.giat.mage.preferences.PreferenceFragmentSummary;
 import android.os.Bundle;
 import android.preference.PreferenceActivity;
 
@@ -11,16 +12,16 @@ import android.preference.PreferenceActivity;
  * @author wiedemannse
  * 
  */
-public class PublicPreferencesActivity extends PreferenceActivity {
-	
-	PublicPreferenceFragment preference = new PublicPreferenceFragment();
-	
-	public static class PublicPreferenceFragment extends PreferenceFragmentSummary  {
+public class MapPreferencesActivity extends PreferenceActivity {
+
+	MapPreferenceFragment preference = new MapPreferenceFragment();
+
+	public static class MapPreferenceFragment extends PreferenceFragmentSummary {
+
 		@Override
 		public void onCreate(final Bundle savedInstanceState) {
 			super.onCreate(savedInstanceState);
-			addPreferencesFromResource(R.xml.publicpreferences);
-			addPreferencesFromResource(R.xml.mdkpublicpreferences);
+			addPreferencesFromResource(R.xml.map_preferences);
 			
 			for (int i = 0; i < getPreferenceScreen().getPreferenceCount(); i++) {
 				setSummary(getPreferenceScreen().getPreference(i));			
@@ -32,7 +33,5 @@ public class PublicPreferencesActivity extends PreferenceActivity {
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		getFragmentManager().beginTransaction().replace(android.R.id.content, preference).commit();
-		
-
 	}
 }

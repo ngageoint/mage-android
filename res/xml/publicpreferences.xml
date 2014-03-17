@@ -1,20 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <PreferenceCategory android:title="MAPS" >
-        <ListPreference
-            android:entries="@array/layerEntries"
-            android:entryValues="@array/layerValues"
-            android:key="mapBaseLayer"
-            android:title="Base Layer"
-            android:defaultValue="1" />
-        <mil.nga.giat.mage.preferences.DialogPreference
-            android:defaultValue="@array/empty_array"
-            android:entries="@array/worldCupOverlays"
-            android:entryValues="@array/worldCupOverlayLocations"
-            android:key="mapTileOverlays"
-            android:title="Overlay Layers" />
-    </PreferenceCategory>
     <PreferenceCategory android:title="ABOUT">
         <EditTextPreference
             android:key="serverURL"
