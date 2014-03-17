@@ -7,8 +7,6 @@ import java.util.Map;
 import java.util.Set;
 
 import mil.nga.giat.mage.R;
-import mil.nga.giat.mage.R.id;
-import mil.nga.giat.mage.R.layout;
 import mil.nga.giat.mage.observation.ObservationEditActivity;
 import android.app.Dialog;
 import android.content.Intent;
@@ -18,14 +16,15 @@ import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.view.Window;
+import android.widget.ImageButton;
 
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.GoogleMap.OnMapLongClickListener;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.TileOverlay;
 import com.google.android.gms.maps.model.TileOverlayOptions;
 import com.google.android.gms.maps.model.TileProvider;
@@ -36,7 +35,7 @@ import com.google.android.gms.maps.model.TileProvider;
  * @author wiedemannse
  * 
  */
-public class MapFragment extends Fragment {
+public class MapFragment extends Fragment implements OnClickListener {
 	
     private GoogleMap map;
     private int mapType = 1;
@@ -63,6 +62,9 @@ public class MapFragment extends Fragment {
           }
       });
       
+      ImageButton mapSettings = (ImageButton) view.findViewById(R.id.map_settings);
+      mapSettings.setOnClickListener(this);
+             
       return view;
     }
     
@@ -74,6 +76,11 @@ public class MapFragment extends Fragment {
 		SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
 		updateMapType(preferences);
 		updateMapOverlays(preferences);
+	}
+	
+	public void onMapSettingsClick(View target) {
+		Intent i = new Intent(getActivity(), MapPreferencesActivity.class);
+		startActivity(i);
 	}
 	
 	private void updateMapType(SharedPreferences preferences) {
@@ -113,5 +120,16 @@ public class MapFragment extends Fragment {
         dialog.setContentView(R.layout.map_preference);
         dialog.setCancelable(true);
         dialog.show();
+	}
+
+	@Override
+	public void onClick(View view) {
+		switch(view.getId()) {
+			case R.id.map_settings: {
+				Intent i = new Intent(getActivity(), MapPreferencesActivity.class);
+				startActivity(i);
+				break;
+			}
+		}
 	}
 }

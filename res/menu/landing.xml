@@ -21,7 +21,7 @@
     <item
         android:id="@+id/observation_new"
         android:orderInCategory="100"
-        android:showAsAction="ifRoom"
+        android:showAsAction="always"
         android:icon="@drawable/ic_new_event"
         android:title="@string/observation_new"/>
 

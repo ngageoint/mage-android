@@ -1,10 +1,5 @@
 package mil.nga.giat.mage.observation;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.text.SimpleDateFormat;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -16,12 +11,12 @@ import java.util.List;
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.form.MageEditText;
 import mil.nga.giat.mage.sdk.database.orm.observation.Attachment;
-import mil.nga.giat.mage.sdk.database.orm.observation.Geometry;
-import mil.nga.giat.mage.sdk.database.orm.observation.GeometryType;
-import mil.nga.giat.mage.sdk.database.orm.observation.Observation;
-import mil.nga.giat.mage.sdk.database.orm.observation.ObservationHelper;
-import mil.nga.giat.mage.sdk.database.orm.observation.Property;
-import mil.nga.giat.mage.sdk.database.orm.observation.State;
+import mil.nga.giat.mage.sdk.datastore.common.Geometry;
+import mil.nga.giat.mage.sdk.datastore.common.GeometryType;
+import mil.nga.giat.mage.sdk.datastore.common.Property;
+import mil.nga.giat.mage.sdk.datastore.observation.Observation;
+import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
+import mil.nga.giat.mage.sdk.datastore.observation.State;
 import mil.nga.giat.mage.sdk.utils.GeometryUtil;
 import android.app.FragmentManager;
 import android.content.Intent;
@@ -138,12 +133,15 @@ public class ObservationEditActivity extends FragmentActivity {
 			Observation observation = new Observation();
 			observation.setState(new State("active"));
 			observation.setGeometry(new Geometry("[" + lat + "," + lon + "]", new GeometryType("point")));
+			
 			Collection<Property> properties = new ArrayList<Property>();
 			properties.add(new Property("OBSERVATION_DATE", String.valueOf(date.getTime())));
 			properties.add(new Property("TYPE", (String)((Spinner)findViewById(R.id.type_spinner)).getSelectedItem()));
 			properties.add(new Property("LEVEL", ((EditText)findViewById(R.id.level)).getText().toString()));
 			properties.add(new Property("TEAM", ((EditText)findViewById(R.id.team)).getText().toString()));
-			properties.add(new Property("DESCRIPTION", ((EditText)findViewById(R.id.description)).getText().toString()));
+			properties.add(new Property("DESCRIPTION", ((EditText)findViewById(R.id.description)).getText().toString()));			
+			obervation.setProperties(properties);
+			
 			observation.setProperties(properties);
 			Collection<Attachment> attachments = new ArrayList<Attachment>();
 			for (String uri : attachmentUris) {
@@ -156,7 +154,7 @@ public class ObservationEditActivity extends FragmentActivity {
 			ObservationHelper oh = ObservationHelper.getInstance(getApplicationContext());
 			try {
 				Observation newObs = oh.createObservation(observation);
-				System.out.println(newObs.getPk_id());
+				System.out.println(newObs);
 			} catch (Exception e) {
 				
 			}
