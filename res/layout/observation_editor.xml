@@ -20,6 +20,7 @@
             android:layout_width="fill_parent">
             <ImageButton 
                 style="?android:attr/buttonBarButtonStyle"
+                android:id="@+id/voice_btn"
                 android:layout_width="0dp"
                 android:layout_weight="1"
                 android:layout_height="wrap_content"
@@ -27,6 +28,8 @@
                 android:src="@drawable/ic_edit"/>
             <ImageButton 
                 style="?android:attr/buttonBarButtonStyle"
+                android:id="@+id/camera_btn"
+                android:onClick="cameraButtonPressed"
                 android:layout_width="0dp"
                 android:layout_weight="1"
                 android:layout_height="wrap_content"
@@ -34,6 +37,7 @@
                 android:src="@drawable/ic_camera"/>
             <ImageButton 
                 style="?android:attr/buttonBarButtonStyle"
+                android:id="@+id/video_btn"
                 android:layout_width="0dp"
                 android:layout_weight="1"
                 android:layout_height="wrap_content"
