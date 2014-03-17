@@ -6,12 +6,12 @@ import java.util.Collection;
 import java.util.Date;
 
 import mil.nga.giat.mage.R;
-import mil.nga.giat.mage.sdk.database.orm.observation.Geometry;
-import mil.nga.giat.mage.sdk.database.orm.observation.GeometryType;
-import mil.nga.giat.mage.sdk.database.orm.observation.Observation;
-import mil.nga.giat.mage.sdk.database.orm.observation.ObservationHelper;
-import mil.nga.giat.mage.sdk.database.orm.observation.Property;
-import mil.nga.giat.mage.sdk.database.orm.observation.State;
+import mil.nga.giat.mage.sdk.datastore.common.Geometry;
+import mil.nga.giat.mage.sdk.datastore.common.GeometryType;
+import mil.nga.giat.mage.sdk.datastore.common.Property;
+import mil.nga.giat.mage.sdk.datastore.observation.Observation;
+import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
+import mil.nga.giat.mage.sdk.datastore.observation.State;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
@@ -74,17 +74,20 @@ public class ObservationEditActivity extends FragmentActivity {
 			obervation = new Observation();
 			obervation.setState(new State("active"));
 			obervation.setGeometry(new Geometry("[" + lat + "," + lon + "]", new GeometryType("point")));
+			
 			Collection<Property> properties = new ArrayList<Property>();
 			properties.add(new Property("OBSERVATION_DATE", String.valueOf(date.getTime())));
 			properties.add(new Property("TYPE", (String)((Spinner)findViewById(R.id.type_spinner)).getSelectedItem()));
 			properties.add(new Property("LEVEL", ((EditText)findViewById(R.id.level)).getText().toString()));
 			properties.add(new Property("TEAM", ((EditText)findViewById(R.id.team)).getText().toString()));
-			properties.add(new Property("DESCRIPTION", ((EditText)findViewById(R.id.description)).getText().toString()));
+			properties.add(new Property("DESCRIPTION", ((EditText)findViewById(R.id.description)).getText().toString()));			
+			obervation.setProperties(properties);
+			
 			
 			ObservationHelper oh = ObservationHelper.getInstance(getApplicationContext());
 			try {
 				Observation newObs = oh.createObservation(obervation);
-				System.out.println(newObs.getPk_id());
+				System.out.println(newObs);
 			} catch (Exception e) {
 				
 			}
