@@ -1,5 +1,8 @@
 package mil.nga.giat.mage.observation;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -10,7 +13,7 @@ import java.util.List;
 
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.form.MageEditText;
-import mil.nga.giat.mage.sdk.database.orm.observation.Attachment;
+import mil.nga.giat.mage.sdk.datastore.observation.Attachment;
 import mil.nga.giat.mage.sdk.datastore.common.Geometry;
 import mil.nga.giat.mage.sdk.datastore.common.GeometryType;
 import mil.nga.giat.mage.sdk.datastore.common.Property;
@@ -140,7 +143,7 @@ public class ObservationEditActivity extends FragmentActivity {
 			properties.add(new Property("LEVEL", ((EditText)findViewById(R.id.level)).getText().toString()));
 			properties.add(new Property("TEAM", ((EditText)findViewById(R.id.team)).getText().toString()));
 			properties.add(new Property("DESCRIPTION", ((EditText)findViewById(R.id.description)).getText().toString()));			
-			obervation.setProperties(properties);
+			observation.setProperties(properties);
 			
 			observation.setProperties(properties);
 			Collection<Attachment> attachments = new ArrayList<Attachment>();
