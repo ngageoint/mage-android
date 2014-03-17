@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:mageForm="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
     <include
@@ -45,29 +46,41 @@
         </LinearLayout>
     
     <ScrollView android:fillViewport="true"
-        
     android:layout_width="fill_parent"
-    android:layout_height="fill_parent">
+    android:layout_height="fill_parent"
+    android:layout_weight="1">
 
 	<LinearLayout 
+	    android:id="@+id/form"
 	    android:orientation="vertical"
 	    android:layout_width="match_parent"
 	    android:layout_height="wrap_content"
 	    android:padding="10dip">
+	    <LinearLayout 
+		    android:id="@+id/image_gallery"
+		    android:layout_width="wrap_content" 
+		    android:layout_height="100dp" 
+		    android:orientation="horizontal">
+        </LinearLayout>
 	    <LinearLayout
 	        android:layout_width="fill_parent"
-	        android:layout_height="wrap_content">
+	        android:layout_height="wrap_content"
+	        android:orientation="vertical"
+	        android:paddingBottom="20dip">
 	        <TextView 
 	            android:id="@+id/date"
 	            android:layout_width="wrap_content"
-	          android:layout_height="wrap_content"
-	          style="@style/EditTextView"/>
+	            android:layout_height="wrap_content"
+	            android:paddingBottom="5dip"
+	            style="@style/EditTextView"/>
 	        <TextView 
 	            android:id="@+id/location"
 	          android:layout_width="fill_parent"
 	          android:layout_height="wrap_content"
-	          style="@style/EditTextView"
-	          android:gravity="right"/>
+	          android:textColor="#777777"
+	          android:textStyle="italic"
+	          android:textSize="13sp"
+	          style="@style/EditTextView"/>
 	    </LinearLayout>
 	    <TextView android:layout_width="fill_parent"
 	          android:layout_height="wrap_content"
@@ -84,12 +97,13 @@
 	          android:layout_height="wrap_content"
 	          style="@style/EditTextView"
 	          android:text="Level"/>
-	    <EditText 
+	    <mil.nga.giat.mage.form.MageEditText 
 	        android:id="@+id/level"
 	        android:layout_width="fill_parent"
 	          android:layout_height="wrap_content"
 	          android:layout_marginTop="5dip"
 	          android:layout_marginBottom="20dip"
+	          mageForm:propertyKey="LEVEL"
 	          android:singleLine="true"/>
 	    <TextView android:layout_width="fill_parent"
 	          android:layout_height="wrap_content"
@@ -138,6 +152,48 @@
 	</LinearLayout>
 	        
     </ScrollView>
+    <HorizontalScrollView 
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content">
+		<LinearLayout 
+		    android:id="@+id/image_gallery_bottom"
+		    android:layout_width="wrap_content" 
+		    android:layout_height="40dp" 
+		    android:orientation="horizontal">
+        </LinearLayout>
+    </HorizontalScrollView>
+    
+ <!--    <LinearLayout 
+            style="?android:attr/buttonBarStyle"
+            android:background="@drawable/semi_see_through_background"
+            android:orientation="horizontal"
+            android:layout_height="wrap_content"
+            android:layout_width="fill_parent">
+            <ImageButton 
+                style="?android:attr/buttonBarButtonStyle"
+                android:id="@+id/voice_btn"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:contentDescription="voice"
+                android:src="@drawable/ic_edit"/>
+            <ImageButton 
+                style="?android:attr/buttonBarButtonStyle"
+                android:id="@+id/camera_btn"
+                android:onClick="cameraButtonPressed"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:text="camera"
+                android:src="@drawable/ic_camera"/>
+            <ImageButton 
+                style="?android:attr/buttonBarButtonStyle"
+                android:id="@+id/video_btn"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:src="@drawable/ic_video"/>
+        </LinearLayout> -->
     </LinearLayout>
 
 </RelativeLayout>

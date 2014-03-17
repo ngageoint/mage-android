@@ -23,7 +23,7 @@ public class ObservationViewActivity extends FragmentActivity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.observation_viewer);
 		try {
-			Observation o = ObservationHelper.getInstance(getApplicationContext()).readObservation(1L);
+			Observation o = ObservationHelper.getInstance(getApplicationContext()).readObservation(2L);
 			System.out.println("Observation is");
 			System.out.println(o);
 			System.out.println("yep");
