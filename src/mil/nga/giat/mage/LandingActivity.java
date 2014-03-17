@@ -3,6 +3,7 @@
 import java.util.Locale;
 
 import mil.nga.giat.mage.map.MapFragment;
+import mil.nga.giat.mage.map.MapPreferencesActivity;
 import mil.nga.giat.mage.newsfeed.NewsFeedFragment;
 import mil.nga.giat.mage.observation.ObservationViewActivity;
 import mil.nga.giat.mage.preferences.PublicPreferencesActivity;
@@ -29,6 +30,8 @@ import android.view.MenuItem;
 public class LandingActivity extends FragmentActivity implements ActionBar.TabListener {
 
 	private static final int RESULT_PUBLIC_PREFERENCES = 1;
+	private static final int RESULT_MAP_PREFERENCES = 2;
+
 
 	/**
 	 * The {@link android.support.v4.view.PagerAdapter} that will provide
@@ -81,20 +84,14 @@ public class LandingActivity extends FragmentActivity implements ActionBar.TabLi
 			actionBar.addTab(actionBar.newTab().setText(mSectionsPagerAdapter.getPageTitle(i)).setTabListener(this));
 		}
 
-		////////////// FIXME: TESTING //////////////
-		
 		// Start the location services!
-//		if (locationService == null) {
-//			locationService = new LocationService(getApplicationContext());
-//		}
-//
-//		// TODO : is app configured to report location?!?
-//		if (!locationService.isPolling()) {
-//			locationService.start();
-//		}
-//		
-//		UserDatabase userDatabase = new UserDatabase(getApplicationContext());
-//		userDatabase.addUser("CoolBeans");
+		if (locationService == null) {
+			locationService = new LocationService(getApplicationContext());
+		}
+		locationService.start();
+		
+
+		////////////// FIXME: TESTING //////////////
 		
 		//ObservationDatabase obsDatabase = new ObservationDatabase(getApplicationContext());
 		//obsDatabase.onUpgrade(obsDatabase.getWritableDatabase(),1,1);
@@ -199,20 +196,22 @@ public class LandingActivity extends FragmentActivity implements ActionBar.TabLi
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
 		switch (item.getItemId()) {
-		case R.id.menu_settings:
-			Intent i = new Intent(this, PublicPreferencesActivity.class);
-			startActivityForResult(i, RESULT_PUBLIC_PREFERENCES);
-			break;
-		case R.id.menu_logout:
-			// TODO : wipe user certs
-			finish();
-			break;
-		// TODO all of this is not to go here, just for debugging
-		case R.id.observation_view:
-			
-			Intent o = new Intent(this, ObservationViewActivity.class);
-			startActivityForResult(o, 2);
-			break;
+			case R.id.menu_settings: {
+				Intent i = new Intent(this, PublicPreferencesActivity.class);
+				startActivityForResult(i, RESULT_PUBLIC_PREFERENCES);
+				break;
+			}
+			case R.id.menu_logout: {
+				// TODO : wipe user certs
+				finish();
+				break;
+			}
+			// TODO all of this is not to go here, just for debugging
+			case R.id.observation_view: {
+				Intent o = new Intent(this, ObservationViewActivity.class);
+				startActivityForResult(o, 2);
+				break;
+			}
 		}
 
 		return super.onOptionsItemSelected(item);
@@ -239,6 +238,9 @@ public class LandingActivity extends FragmentActivity implements ActionBar.TabLi
 		switch (requestCode) {
 		case RESULT_PUBLIC_PREFERENCES:
 			System.out.println(RESULT_PUBLIC_PREFERENCES);
+			break;
+		case RESULT_MAP_PREFERENCES:
+			System.out.println(RESULT_MAP_PREFERENCES);
 			break;
 		}
 	}
