@@ -3,20 +3,19 @@ package mil.nga.giat.mage.login;
 import java.util.ArrayList;
 import java.util.List;
 
-import mil.nga.giat.mage.DisclaimerActivity;
 import mil.nga.giat.mage.LandingActivity;
 import mil.nga.giat.mage.R;
+import mil.nga.giat.mage.disclaimer.DisclaimerActivity;
 import mil.nga.giat.mage.sdk.login.AccountDelegate;
 import mil.nga.giat.mage.sdk.login.AccountStatus;
 import mil.nga.giat.mage.sdk.login.LoginTaskFactory;
+import mil.nga.giat.mage.sdk.preferences.PreferenceColonization;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
-import android.content.pm.PackageManager.NameNotFoundException;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
-import android.support.v4.app.DialogFragment;
 import android.support.v4.app.FragmentActivity;
 import android.text.TextUtils;
 import android.view.MotionEvent;
@@ -57,18 +56,16 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		
+		// IMPORTANT: load the configuration from preferences files and server
+		PreferenceColonization.getInstance(getApplicationContext()).initializeAll(new int[]{R.xml.privatepreferences, R.xml.publicpreferences});
+		
+		// show the disclaimer?
 		SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-		boolean agree = sharedPreferences.getBoolean("disclaimerAgree", false);
-		if (!agree) {
+		if (Boolean.parseBoolean(sharedPreferences.getString("showDisclaimer", Boolean.TRUE.toString()))) {
 			Intent intent = new Intent(this, DisclaimerActivity.class);
 			startActivity(intent);
 		}
 		
-		// IMPORTANT: load the configuration from preferences files
-		PreferenceManager.setDefaultValues(getApplicationContext(), R.xml.mdkprivatepreferences, true);
-		PreferenceManager.setDefaultValues(getApplicationContext(), R.xml.privatepreferences, true);
-		PreferenceManager.setDefaultValues(getApplicationContext(), R.xml.mdkpublicpreferences, true);
-		PreferenceManager.setDefaultValues(getApplicationContext(), R.xml.publicpreferences, true);
 		// no title bar
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
 		setContentView(R.layout.activity_login);
@@ -83,14 +80,6 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 		getUsernameEditText().setSelection(getUsernameEditText().getText().length());
 		getServerEditText().setText(sharedPreferences.getString("serverURL", ""));
 		getServerEditText().setSelection(getServerEditText().getText().length());
-		
-		Editor e = sharedPreferences.edit();
-		try {
-			e.putString("appVersion", getPackageManager().getPackageInfo(getPackageName(), 0).versionName);
-			e.commit();
-		} catch (NameNotFoundException nnfe) {
-			
-		}
 	}
 
 	/**
