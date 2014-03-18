@@ -4,6 +4,7 @@ import java.util.Locale;
 
 import mil.nga.giat.mage.map.MapFragment;
 import mil.nga.giat.mage.newsfeed.NewsFeedFragment;
+import mil.nga.giat.mage.observation.ObservationEditActivity;
 import mil.nga.giat.mage.observation.ObservationViewActivity;
 import mil.nga.giat.mage.preferences.PublicPreferencesActivity;
 import mil.nga.giat.mage.sdk.location.LocationService;
@@ -83,20 +84,14 @@ public class LandingActivity extends FragmentActivity implements ActionBar.TabLi
 			actionBar.addTab(actionBar.newTab().setText(mSectionsPagerAdapter.getPageTitle(i)).setTabListener(this));
 		}
 
-		////////////// FIXME: TESTING //////////////
-		
 		// Start the location services!
-//		if (locationService == null) {
-//			locationService = new LocationService(getApplicationContext());
-//		}
-//
-//		// TODO : is app configured to report location?!?
-//		if (!locationService.isPolling()) {
-//			locationService.start();
-//		}
-//		
-//		UserDatabase userDatabase = new UserDatabase(getApplicationContext());
-//		userDatabase.addUser("CoolBeans");
+		if (locationService == null) {
+			locationService = new LocationService(getApplicationContext());
+		}
+		locationService.start();
+		
+
+		////////////// FIXME: TESTING //////////////
 		
 		//ObservationDatabase obsDatabase = new ObservationDatabase(getApplicationContext());
 		//obsDatabase.onUpgrade(obsDatabase.getWritableDatabase(),1,1);
@@ -217,6 +212,11 @@ public class LandingActivity extends FragmentActivity implements ActionBar.TabLi
 				startActivityForResult(o, 2);
 				break;
 			}
+		case R.id.observation_new:
+			 Intent intent = new Intent(this, ObservationEditActivity.class);
+//	       	 intent.putExtra("latitude", point.latitude);
+//	       	 intent.putExtra("longitude", point.longitude);
+	       	 startActivity(intent);
 		}
 
 		return super.onOptionsItemSelected(item);
