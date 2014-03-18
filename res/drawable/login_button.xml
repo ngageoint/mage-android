@@ -8,7 +8,7 @@
 
     <padding
         android:bottom="7dip"
-        android:left="7dip"
-        android:right="7dip"
+        android:left="3dip"
+        android:right="3dip"
         android:top="7dip" />
 </shape>

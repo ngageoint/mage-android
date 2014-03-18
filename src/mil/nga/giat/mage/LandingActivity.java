@@ -3,7 +3,6 @@
 import java.util.Locale;
 
 import mil.nga.giat.mage.map.MapFragment;
-import mil.nga.giat.mage.map.MapPreferencesActivity;
 import mil.nga.giat.mage.newsfeed.NewsFeedFragment;
 import mil.nga.giat.mage.observation.ObservationEditActivity;
 import mil.nga.giat.mage.observation.ObservationViewActivity;

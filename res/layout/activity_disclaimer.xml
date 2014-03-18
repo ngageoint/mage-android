@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout 
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/login"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:orientation="vertical"
+    android:fillViewport="true" 
+    android:background="@color/mageBackground">
+
+	<include
+	     android:id="@+id/login_header"
+	     layout="@layout/mage_header" />
+
+	<TextView 
+        android:id="@+id/disclaimer_text_view"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/disclaimerTitle"
+        android:textSize="26sp"
+        android:textColor="#111111"
+        android:gravity="center"
+        android:paddingBottom="10dp"
+        android:paddingTop="10dp" />
+	<ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dip"
+        android:layout_weight="1">
+	    <TextView 
+	        android:layout_width="match_parent"
+	        android:layout_height="wrap_content"
+	        android:text="@string/disclaimerText"
+	        android:gravity="center_vertical|left"
+	        android:textColor="#555555"
+	        android:paddingBottom="15dp"
+	        android:paddingTop="10dp"
+	        android:paddingLeft="20dp" 
+	        android:paddingRight="20dp"/>
+	</ScrollView>
+
+	<LinearLayout
+	    android:layout_width="fill_parent"
+	    android:layout_height="wrap_content"
+	    android:orientation="horizontal" 
+	    android:paddingBottom="10dp">
+
+	    <Button
+	        android:id="@+id/disclaimerExit"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:layout_weight="1"
+	        android:layout_marginLeft="5dp"
+	        android:layout_marginRight="5dp"
+	        android:textColor="#def3ff"
+	        android:textSize="16sp"
+	        android:background="@drawable/login_button"
+	        android:text="@string/disclaimerExit" />
+
+	    <Button
+	        android:id="@+id/disclaimerAgree"
+	        android:layout_weight="1"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:layout_marginLeft="5dp"
+	        android:layout_marginRight="5dp"
+	        android:textColor="#def3ff"
+	        android:textSize="16sp"
+	        android:background="@drawable/login_button"
+	        android:text="@string/disclaimerAgree" />
+	</LinearLayout>
+
+</LinearLayout>
