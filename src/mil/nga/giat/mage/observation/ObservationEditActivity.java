@@ -19,6 +19,8 @@ import mil.nga.giat.mage.sdk.datastore.observation.State;
 import mil.nga.giat.mage.sdk.utils.MediaUtils;
 import android.annotation.TargetApi;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.media.ThumbnailUtils;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -165,11 +167,13 @@ public class ObservationEditActivity extends FragmentActivity {
 	
 	
 	public void cameraButtonPressed(View v) {
-		Log.d("Observation Edit", "Camera button pressed");
 	    Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-	    Log.d("Observation Edit", "Starting Intent");
 	    startActivityForResult(intent, CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE);
-	    Log.d("Observation Edit", "Started camera");
+	}
+	
+	public void videoButtonPressed(View v) {
+	    Intent intent = new Intent(MediaStore.ACTION_VIDEO_CAPTURE);
+	    startActivityForResult(intent, CAPTURE_VIDEO_ACTIVITY_REQUEST_CODE);
 	}
 	
 	public void fromGalleryButtonPressed(View v) {
@@ -180,15 +184,22 @@ public class ObservationEditActivity extends FragmentActivity {
         intent.setAction(Intent.ACTION_GET_CONTENT);
         // TODO test when we get a 4.3 device
         // intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
-        startActivityForResult(Intent.createChooser(intent,
-                "Select Picture"), GALLERY_ACTIVITY_REQUEST_CODE);
+        startActivityForResult(intent, GALLERY_ACTIVITY_REQUEST_CODE);
 	}
 	
 	private void addImageToGallery(final Uri uri) {
 		LinearLayout l = (LinearLayout)findViewById(R.id.image_gallery);
         ImageView iv = new ImageView(getApplicationContext());
         try {
-            iv.setImageBitmap(MediaUtils.getThumbnailFromContent(uri, 100, getApplicationContext()));
+        	Bitmap thumb;
+        	String absPath = MediaUtils.getFileAbsolutePath(uri, getApplicationContext());
+        	Log.d("abs path", absPath);
+        	if (absPath.endsWith(".mp4")) {
+        		thumb = ThumbnailUtils.createVideoThumbnail(absPath, MediaStore.Video.Thumbnails.MICRO_KIND);
+        	} else {
+        		thumb = MediaUtils.getThumbnailFromContent(uri, 100, getApplicationContext());
+        	}
+            iv.setImageBitmap(thumb);
             LayoutParams lp = new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.MATCH_PARENT);
             iv.setLayoutParams(lp);
             iv.setPadding(0, 0, 10, 0);
@@ -213,8 +224,6 @@ public class ObservationEditActivity extends FragmentActivity {
 	    if (requestCode == CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE) {
 	        if (resultCode == RESULT_OK) {
 	            // Image captured and saved to fileUri specified in the Intent
-	            Toast.makeText(this, "Image saved to:\n" +
-	                     data.getData(), Toast.LENGTH_LONG).show();
 	            attachmentUris.add(data.getData().toString());
 	            addImageToGallery(data.getData());
 	            
@@ -225,9 +234,8 @@ public class ObservationEditActivity extends FragmentActivity {
 	        }
 	    } else if (requestCode == CAPTURE_VIDEO_ACTIVITY_REQUEST_CODE) {
 	        if (resultCode == RESULT_OK) {
-	            // Video captured and saved to fileUri specified in the Intent
-	            Toast.makeText(this, "Video saved to:\n" +
-	                     data.getData(), Toast.LENGTH_LONG).show();
+	        	attachmentUris.add(data.getData().toString());
+	            addImageToGallery(data.getData());
 	        } else if (resultCode == RESULT_CANCELED) {
 	            // User cancelled the video capture
 	        } else {

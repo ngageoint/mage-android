@@ -39,6 +39,7 @@
             <ImageButton 
                 style="?android:attr/buttonBarButtonStyle"
                 android:id="@+id/video_btn"
+                android:onClick="videoButtonPressed"
                 android:layout_width="0dp"
                 android:layout_weight="1"
                 android:layout_height="wrap_content"
