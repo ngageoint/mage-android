@@ -9,7 +9,7 @@
     <RelativeLayout
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:background="#d0e7ff" >
+        android:background="@color/mageBackground" >
 
         <include
             android:id="@+id/login_header"

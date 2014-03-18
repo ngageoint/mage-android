@@ -3,9 +3,9 @@ package mil.nga.giat.mage.login;
 import java.util.ArrayList;
 import java.util.List;
 
+import mil.nga.giat.mage.DisclaimerActivity;
 import mil.nga.giat.mage.LandingActivity;
 import mil.nga.giat.mage.R;
-import mil.nga.giat.mage.map.MapFragment;
 import mil.nga.giat.mage.sdk.login.AccountDelegate;
 import mil.nga.giat.mage.sdk.login.AccountStatus;
 import mil.nga.giat.mage.sdk.login.LoginTaskFactory;
@@ -16,6 +16,8 @@ import android.content.SharedPreferences.Editor;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.support.v4.app.DialogFragment;
+import android.support.v4.app.FragmentActivity;
 import android.text.TextUtils;
 import android.view.MotionEvent;
 import android.view.View;
@@ -33,7 +35,7 @@ import android.widget.ImageView;
  * @author wiedemannse
  *
  */
-public class LoginActivity extends Activity implements AccountDelegate {
+public class LoginActivity extends FragmentActivity implements AccountDelegate {
 
 	private EditText mUsernameEditText;
 	private EditText mPasswordEditText;
@@ -54,6 +56,14 @@ public class LoginActivity extends Activity implements AccountDelegate {
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		
+		SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+		boolean agree = sharedPreferences.getBoolean("disclaimerAgree", false);
+		if (!agree) {
+			Intent intent = new Intent(this, DisclaimerActivity.class);
+			startActivity(intent);
+		}
+		
 		// IMPORTANT: load the configuration from preferences files
 		PreferenceManager.setDefaultValues(getApplicationContext(), R.xml.mdkprivatepreferences, true);
 		PreferenceManager.setDefaultValues(getApplicationContext(), R.xml.privatepreferences, true);
@@ -69,7 +79,6 @@ public class LoginActivity extends Activity implements AccountDelegate {
 		mServerEditText = (EditText) findViewById(R.id.login_server);
 
 		// set the default values
-		SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
 		getUsernameEditText().setText(sharedPreferences.getString("username", ""));
 		getUsernameEditText().setSelection(getUsernameEditText().getText().length());
 		getServerEditText().setText(sharedPreferences.getString("serverURL", ""));
