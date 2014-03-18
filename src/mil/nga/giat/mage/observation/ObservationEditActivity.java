@@ -17,8 +17,10 @@ import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
 import mil.nga.giat.mage.sdk.datastore.observation.State;
 import mil.nga.giat.mage.sdk.utils.MediaUtils;
+import android.annotation.TargetApi;
 import android.content.Intent;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.support.v4.app.FragmentActivity;
@@ -44,6 +46,7 @@ public class ObservationEditActivity extends FragmentActivity {
 	
 	private static final int CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE = 100;
 	private static final int CAPTURE_VIDEO_ACTIVITY_REQUEST_CODE = 200;
+	private static final int GALLERY_ACTIVITY_REQUEST_CODE = 300;
 	
 	Date date;
 	DecimalFormat latLngFormat = new DecimalFormat("###.######");
@@ -169,13 +172,35 @@ public class ObservationEditActivity extends FragmentActivity {
 	    Log.d("Observation Edit", "Started camera");
 	}
 	
-	private void addImageToGallery(Uri uri) {
+	public void fromGalleryButtonPressed(View v) {
+		// in onCreate or any event where your want the user to
+        // select a file
+        Intent intent = new Intent();
+        intent.setType("image/*, video/*");
+        intent.setAction(Intent.ACTION_GET_CONTENT);
+        // TODO test when we get a 4.3 device
+        // intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+        startActivityForResult(Intent.createChooser(intent,
+                "Select Picture"), GALLERY_ACTIVITY_REQUEST_CODE);
+	}
+	
+	private void addImageToGallery(final Uri uri) {
 		LinearLayout l = (LinearLayout)findViewById(R.id.image_gallery);
         ImageView iv = new ImageView(getApplicationContext());
         try {
-            iv.setImageBitmap(MediaUtils.getThumbnailFromContent(uri, 50, getApplicationContext()));
+            iv.setImageBitmap(MediaUtils.getThumbnailFromContent(uri, 100, getApplicationContext()));
             LayoutParams lp = new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.MATCH_PARENT);
             iv.setLayoutParams(lp);
+            iv.setPadding(0, 0, 10, 0);
+            iv.setOnClickListener(new View.OnClickListener() {
+				
+				@Override
+				public void onClick(View v) {
+					Intent intent = new Intent(v.getContext(), ImageViewerActivity.class);
+					intent.setData(uri);
+					startActivity(intent);
+				}
+			});
             l.addView(iv);
             Log.d("image", "Set the image gallery to have an image with uri " + uri);
         } catch (Exception e) {
@@ -198,9 +223,7 @@ public class ObservationEditActivity extends FragmentActivity {
 	        } else {
 	            // Image capture failed, advise user
 	        }
-	    }
-
-	    if (requestCode == CAPTURE_VIDEO_ACTIVITY_REQUEST_CODE) {
+	    } else if (requestCode == CAPTURE_VIDEO_ACTIVITY_REQUEST_CODE) {
 	        if (resultCode == RESULT_OK) {
 	            // Video captured and saved to fileUri specified in the Intent
 	            Toast.makeText(this, "Video saved to:\n" +
@@ -210,7 +233,60 @@ public class ObservationEditActivity extends FragmentActivity {
 	        } else {
 	            // Video capture failed, advise user
 	        }
+	    } else if (requestCode == GALLERY_ACTIVITY_REQUEST_CODE) {
+	    	if (resultCode == RESULT_OK) {
+	    		Log.d("picker", "data is " + data.getData());
+	    		attachmentUris.add(data.getData().toString());
+	            addImageToGallery(data.getData());
+//	            if (requestCode == SELECT_PICTURE) {
+//	                Uri selectedImageUri = data.getData();
+//
+//	                //OI FILE Manager
+//	                filemanagerstring = selectedImageUri.getPath();
+//
+//	                //MEDIA GALLERY
+//	                selectedImagePath = getPath(selectedImageUri);
+//
+//	                //DEBUG PURPOSE - you can delete this if you want
+//	                if(selectedImagePath!=null)
+//	                    System.out.println(selectedImagePath);
+//	                else System.out.println("selectedImagePath is null");
+//	                if(filemanagerstring!=null)
+//	                    System.out.println(filemanagerstring);
+//	                else System.out.println("filemanagerstring is null");
+//
+//	                //NOW WE HAVE OUR WANTED STRING
+//	                if(selectedImagePath!=null)
+//	                    System.out.println("selectedImagePath is the right one for you!");
+//	                else
+//	                    System.out.println("filemanagerstring is the right one for you!");
+//	            }
+	        }
 	    }
 	}
+	
+	// TODO test when we get a 4.3 device
+	@TargetApi(16)
+	private void handleClipData(Intent data) {
+		if(Build.VERSION.SDK_INT >= 16 ){
+			Log.d("picker", "data 2 is " + data.getClipData());
+		}
+	}
+	
+//	//UPDATED!
+//    public String getPath(Uri uri) {
+//        String[] projection = { MediaStore.Images.Media.DATA };
+//        Cursor cursor = managedQuery(uri, projection, null, null, null);
+//        if(cursor!=null)
+//        {
+//            //HERE YOU WILL GET A NULLPOINTER IF CURSOR IS NULL
+//            //THIS CAN BE, IF YOU USED OI FILE MANAGER FOR PICKING THE MEDIA
+//            int column_index = cursor
+//            .getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
+//            cursor.moveToFirst();
+//            return cursor.getString(column_index);
+//        }
+//        else return null;
+//    }
 	
 }

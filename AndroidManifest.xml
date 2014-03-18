@@ -65,6 +65,9 @@
         <activity
             android:name="mil.nga.giat.mage.observation.ObservationEditActivity">
         </activity>
+        <activity
+            android:name="mil.nga.giat.mage.observation.ImageViewerActivity">
+        </activity>
         
         <meta-data
             android:name="com.google.android.maps.v2.API_KEY"
