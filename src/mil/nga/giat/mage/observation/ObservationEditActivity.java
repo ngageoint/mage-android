@@ -203,7 +203,7 @@ public class ObservationEditActivity extends FragmentActivity {
         	if (absPath.endsWith(".mp4")) {
         		thumb = ThumbnailUtils.createVideoThumbnail(absPath, MediaStore.Video.Thumbnails.MICRO_KIND);
         	} else if (absPath.endsWith(".mp3") || absPath.endsWith("m4a")) {
-        		thumb = BitmapFactory.decodeResource(getResources(), R.drawable.ic_edit);
+        		thumb = BitmapFactory.decodeResource(getResources(), R.drawable.ic_microphone);
         	} else {
         		thumb = MediaUtils.getThumbnailFromContent(uri, 100, getApplicationContext());
         	}

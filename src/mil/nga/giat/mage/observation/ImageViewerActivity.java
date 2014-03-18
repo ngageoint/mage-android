@@ -49,7 +49,7 @@ public class ImageViewerActivity extends Activity {
 				}
 			});
     	} else if (absPath.endsWith(".mp3") || absPath.endsWith(".m4a")) {
-    		thumb = BitmapFactory.decodeResource(getResources(), R.drawable.ic_edit);
+    		thumb = BitmapFactory.decodeResource(getResources(), R.drawable.ic_microphone);
     		findViewById(R.id.video_overlay_image).setVisibility(View.GONE);
     		iv.setOnClickListener(new View.OnClickListener() {
 				

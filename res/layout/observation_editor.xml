@@ -27,7 +27,7 @@
                 android:layout_weight="1"
                 android:layout_height="wrap_content"
                 android:contentDescription="voice"
-                android:src="@drawable/ic_edit"/>
+                android:src="@drawable/ic_microphone"/>
             <ImageButton 
                 style="?android:attr/buttonBarButtonStyle"
                 android:id="@+id/camera_btn"
@@ -142,62 +142,9 @@
 	        android:layout_marginTop="5dip"
 	        android:hint="Description"
 	        android:minLines="4" />
-
-	    <!-- Login button -->
-	    <!-- 
-	    <Button android:id="@+id/btnLogin"
-	          android:layout_width="fill_parent"
-	          android:layout_height="wrap_content"
-	          android:layout_marginTop="10dip"
-	          android:text="Login"/>
-	     -->
-	    <!-- Link to Registration Screen -->
-		<!-- 
-	    <TextView android:id="@+id/link_to_register"
-	          android:layout_width="fill_parent"
-	          android:layout_height="wrap_content"
-	          android:layout_marginTop="40dip"
-	          android:layout_marginBottom="40dip"
-	          android:text="New to Twitter? Register here"
-	          android:gravity="center"
-	          android:textSize="20dip"
-	          android:textColor="#0b84aa"/>
-		 -->
 	</LinearLayout>
 	        
     </ScrollView>
-    
- <!--    <LinearLayout 
-            style="?android:attr/buttonBarStyle"
-            android:background="@drawable/semi_see_through_background"
-            android:orientation="horizontal"
-            android:layout_height="wrap_content"
-            android:layout_width="fill_parent">
-            <ImageButton 
-                style="?android:attr/buttonBarButtonStyle"
-                android:id="@+id/voice_btn"
-                android:layout_width="0dp"
-                android:layout_weight="1"
-                android:layout_height="wrap_content"
-                android:contentDescription="voice"
-                android:src="@drawable/ic_edit"/>
-            <ImageButton 
-                style="?android:attr/buttonBarButtonStyle"
-                android:id="@+id/camera_btn"
-                android:onClick="cameraButtonPressed"
-                android:layout_width="0dp"
-                android:layout_weight="1"
-                android:layout_height="wrap_content"
-                android:text="camera"
-                android:src="@drawable/ic_camera"/>
-            <ImageButton 
-                style="?android:attr/buttonBarButtonStyle"
-                android:id="@+id/video_btn"
-                android:layout_width="0dp"
-                android:layout_weight="1"
-                android:layout_height="wrap_content"
-                android:src="@drawable/ic_video"/>
-        </LinearLayout> -->
     </LinearLayout>
 
 </RelativeLayout>
