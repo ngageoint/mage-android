@@ -22,6 +22,7 @@
             <ImageButton 
                 style="?android:attr/buttonBarButtonStyle"
                 android:id="@+id/voice_btn"
+                android:onClick="voiceButtonPressed"
                 android:layout_width="0dp"
                 android:layout_weight="1"
                 android:layout_height="wrap_content"

@@ -6,6 +6,7 @@ import mil.nga.giat.mage.sdk.utils.MediaUtils;
 import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Point;
 import android.graphics.drawable.BitmapDrawable;
 import android.media.ThumbnailUtils;
@@ -39,6 +40,16 @@ public class ImageViewerActivity extends Activity {
     		
     		thumb = ThumbnailUtils.createVideoThumbnail(absPath, MediaStore.Video.Thumbnails.FULL_SCREEN_KIND);
     		
+    		iv.setOnClickListener(new View.OnClickListener() {
+				
+				@Override
+				public void onClick(View v) {
+					Intent intent = new Intent(Intent.ACTION_VIEW, imageUri);
+					startActivity(intent);
+				}
+			});
+    	} else if (absPath.endsWith(".mp3") || absPath.endsWith(".m4a")) {
+    		thumb = BitmapFactory.decodeResource(getResources(), R.drawable.ic_edit);
     		iv.setOnClickListener(new View.OnClickListener() {
 				
 				@Override

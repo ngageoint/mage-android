@@ -20,6 +20,7 @@ import mil.nga.giat.mage.sdk.utils.MediaUtils;
 import android.annotation.TargetApi;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.media.ThumbnailUtils;
 import android.net.Uri;
 import android.os.Build;
@@ -36,7 +37,6 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -48,7 +48,8 @@ public class ObservationEditActivity extends FragmentActivity {
 	
 	private static final int CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE = 100;
 	private static final int CAPTURE_VIDEO_ACTIVITY_REQUEST_CODE = 200;
-	private static final int GALLERY_ACTIVITY_REQUEST_CODE = 300;
+	private static final int CAPTURE_VOICE_ACTIVITY_REQUEST_CODE = 300;
+	private static final int GALLERY_ACTIVITY_REQUEST_CODE = 400;
 	
 	Date date;
 	DecimalFormat latLngFormat = new DecimalFormat("###.######");
@@ -176,6 +177,11 @@ public class ObservationEditActivity extends FragmentActivity {
 	    startActivityForResult(intent, CAPTURE_VIDEO_ACTIVITY_REQUEST_CODE);
 	}
 	
+	public void voiceButtonPressed(View v) {
+		Intent intent = new Intent(MediaStore.Audio.Media.RECORD_SOUND_ACTION); 
+		startActivityForResult(intent, CAPTURE_VOICE_ACTIVITY_REQUEST_CODE);
+	}
+	
 	public void fromGalleryButtonPressed(View v) {
 		// in onCreate or any event where your want the user to
         // select a file
@@ -196,6 +202,8 @@ public class ObservationEditActivity extends FragmentActivity {
         	Log.d("abs path", absPath);
         	if (absPath.endsWith(".mp4")) {
         		thumb = ThumbnailUtils.createVideoThumbnail(absPath, MediaStore.Video.Thumbnails.MICRO_KIND);
+        	} else if (absPath.endsWith(".mp3") || absPath.endsWith("m4a")) {
+        		thumb = BitmapFactory.decodeResource(getResources(), R.drawable.ic_edit);
         	} else {
         		thumb = MediaUtils.getThumbnailFromContent(uri, 100, getApplicationContext());
         	}
@@ -270,6 +278,12 @@ public class ObservationEditActivity extends FragmentActivity {
 //	                    System.out.println("filemanagerstring is the right one for you!");
 //	            }
 	        }
+	    } else if (requestCode == CAPTURE_VOICE_ACTIVITY_REQUEST_CODE) {
+	    	if (resultCode == RESULT_OK) {
+	    		Log.d("picker", "data is " + data.getData());
+	    		attachmentUris.add(data.getData().toString());
+	            addImageToGallery(data.getData());
+	    	}
 	    }
 	}
 	
