@@ -17,10 +17,9 @@ import android.util.Log;
 import android.view.Display;
 import android.view.View;
 import android.widget.ImageView;
-import android.widget.VideoView;
 
 public class ImageViewerActivity extends Activity {
-	
+
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -91,6 +90,11 @@ public class ImageViewerActivity extends Activity {
 	
 	public void removeImage(View v) {
 		Log.d("Image viewer", "Remove the image");
+		Intent data = new Intent();
+		data.setData(getIntent().getData());
+		data.putExtra("REMOVE", true);
+		setResult(RESULT_OK, data);
+		finish();
 	}
 	
 	public void goBack(View v) {

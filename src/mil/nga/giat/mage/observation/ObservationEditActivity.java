@@ -50,6 +50,7 @@ public class ObservationEditActivity extends FragmentActivity {
 	private static final int CAPTURE_VIDEO_ACTIVITY_REQUEST_CODE = 200;
 	private static final int CAPTURE_VOICE_ACTIVITY_REQUEST_CODE = 300;
 	private static final int GALLERY_ACTIVITY_REQUEST_CODE = 400;
+	private static final int ATTACHMENT_VIEW_ACTIVITY_REQUEST_CODE = 500;
 
 	Date date;
 	DecimalFormat latLngFormat = new DecimalFormat("###.######");
@@ -241,7 +242,7 @@ public class ObservationEditActivity extends FragmentActivity {
 					Intent intent = new Intent(v.getContext(),
 							ImageViewerActivity.class);
 					intent.setData(uri);
-					startActivity(intent);
+					startActivityForResult(intent, ATTACHMENT_VIEW_ACTIVITY_REQUEST_CODE);
 				}
 			});
 			l.addView(iv);
@@ -270,6 +271,13 @@ public class ObservationEditActivity extends FragmentActivity {
 			Log.d("picker", "data is " + data.getData());
 			attachmentUris.add(data.getData().toString());
 			addImageToGallery(data.getData());
+		} else if (requestCode == ATTACHMENT_VIEW_ACTIVITY_REQUEST_CODE) {
+			if (data.getData() != null && data.getBooleanExtra("REMOVE", false)) {
+				int idx = attachmentUris.indexOf(data.getData().toString());
+				attachmentUris.remove(idx);
+				LinearLayout l = (LinearLayout) findViewById(R.id.image_gallery);
+				l.removeViewAt(idx);
+			}
 		}
 	}
 
