@@ -7,8 +7,6 @@
       android:layout_width="match_parent"
       android:layout_height="0dp"
       android:layout_weight="1">
-      
- 
   <ImageView
         android:id="@+id/image"
         android:layout_width="match_parent"
@@ -24,18 +22,19 @@
     <LinearLayout 
         android:layout_height="wrap_content"
         android:layout_width="match_parent"
+        style="@android:style/Widget.Holo.ActionBar"
         android:orientation="horizontal">
         <Button android:text="Remove"
             android:onClick="removeImage"
             android:layout_height="match_parent"
             android:layout_width="fill_parent"
-            style="@android:style/Widget.Holo.Button"
+            style="@android:style/Widget.Holo.ActionButton"
             android:layout_weight="1"/>
         <Button android:text="OK"
             android:onClick="goBack"
             android:layout_height="match_parent"
             android:layout_width="fill_parent"
-            style="@android:style/Widget.Holo.Button"
+            style="@android:style/Widget.Holo.ActionButton"
             android:layout_weight="1"/>
     </LinearLayout>
 </LinearLayout>
