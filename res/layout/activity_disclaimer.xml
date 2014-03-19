@@ -1,73 +1,75 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout 
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/login"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
+    android:background="@color/mageBackground"
+    android:fillViewport="true"
     android:orientation="vertical"
-    android:fillViewport="true" 
-    android:background="@color/mageBackground">
+    android:windowSoftInputMode="stateVisible" >
 
-	<include
-	     android:id="@+id/login_header"
-	     layout="@layout/mage_header" />
+    <include layout="@layout/mage_header" />
 
-	<TextView 
-        android:id="@+id/disclaimer_text_view"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="@string/disclaimerTitle"
-        android:textSize="26sp"
-        android:textColor="#111111"
-        android:gravity="center"
-        android:paddingBottom="10dp"
-        android:paddingTop="10dp" />
-	<ScrollView
-        android:layout_width="match_parent"
-        android:layout_height="0dip"
-        android:layout_weight="1">
-	    <TextView 
-	        android:layout_width="match_parent"
-	        android:layout_height="wrap_content"
-	        android:text="@string/disclaimerText"
-	        android:gravity="center_vertical|left"
-	        android:textColor="#555555"
-	        android:paddingBottom="15dp"
-	        android:paddingTop="10dp"
-	        android:paddingLeft="20dp" 
-	        android:paddingRight="20dp"/>
-	</ScrollView>
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:gravity="center_vertical"
+        android:orientation="vertical"
+        android:paddingBottom="24dip"
+        android:paddingLeft="24dip"
+        android:paddingRight="24dip"
+        android:paddingTop="20dip" >
 
-	<LinearLayout
-	    android:layout_width="fill_parent"
-	    android:layout_height="wrap_content"
-	    android:orientation="horizontal" 
-	    android:paddingBottom="10dp">
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:paddingBottom="20dip"
+            android:text="Consent to Monitoring"
+            android:textColor="#111111"
+            android:textSize="26sp" />
 
-	    <Button
-	        android:id="@+id/disclaimerExit"
-	        android:layout_width="wrap_content"
-	        android:layout_height="wrap_content"
-	        android:layout_weight="1"
-	        android:layout_marginLeft="5dp"
-	        android:layout_marginRight="5dp"
-	        android:textColor="#def3ff"
-	        android:textSize="16sp"
-	        android:background="@drawable/login_button"
-	        android:text="@string/disclaimerExit" />
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="0dip"
+            android:layout_weight="1" >
 
-	    <Button
-	        android:id="@+id/disclaimerAgree"
-	        android:layout_weight="1"
-	        android:layout_width="wrap_content"
-	        android:layout_height="wrap_content"
-	        android:layout_marginLeft="5dp"
-	        android:layout_marginRight="5dp"
-	        android:textColor="#def3ff"
-	        android:textSize="16sp"
-	        android:background="@drawable/login_button"
-	        android:text="@string/disclaimerAgree" />
-	</LinearLayout>
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical|left"
+                android:text="@string/disclaimerText"
+                android:textColor="#555555" />
+        </ScrollView>
+
+        <LinearLayout
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal" >
+
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="5dp"
+                android:layout_marginRight="5dp"
+                android:layout_weight="1"
+                android:background="@drawable/login_button"
+                android:onClick="exit"
+                android:text="Exit"
+                android:textColor="#def3ff"
+                android:textSize="26sp" />
+
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="5dp"
+                android:layout_marginRight="5dp"
+                android:layout_weight="1"
+                android:background="@drawable/login_button"
+                android:onClick="agree"
+                android:text="Agree"
+                android:textColor="#def3ff"
+                android:textSize="26sp" />
+        </LinearLayout>
+    </LinearLayout>
 
 </LinearLayout>

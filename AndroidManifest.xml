@@ -20,23 +20,24 @@
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="com.google.android.providers.gsf.permission.READ_GSERVICES" />
-    
-    <uses-feature android:name="android.hardware.camera" android:required="false" />
+
+    <uses-feature
+        android:name="android.hardware.camera"
+        android:required="false" />
 
     <application
         android:allowBackup="true"
         android:icon="@drawable/ic_launcher"
         android:label="@string/app_name"
         android:theme="@style/AppTheme" >
-       <activity
-            android:name="mil.nga.giat.mage.DisclaimerActivity"
-            android:label="@string/app_name" 
-            android:theme="@android:style/Theme.NoTitleBar.Fullscreen">
+        <activity
+            android:name="mil.nga.giat.mage.disclaimer.DisclaimerActivity"
+            android:windowSoftInputMode="adjustResize"
+            android:label="@string/app_name" >
         </activity>
         <activity
             android:name="mil.nga.giat.mage.login.LoginActivity"
-            android:windowSoftInputMode="adjustResize">
-            
+            android:windowSoftInputMode="stateVisible" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -57,28 +58,26 @@
         </activity>
         <activity
             android:name="mil.nga.giat.mage.map.MapPreferencesActivity"
-            android:label="@string/map_settings" 
-            android:parentActivityName="mil.nga.giat.mage.LandingActivity">
+            android:label="@string/map_settings"
+            android:parentActivityName="mil.nga.giat.mage.LandingActivity" >
+
             <!-- Parent activity meta-data to support 4.0 and lower -->
-	        <meta-data
-	            android:name="android.support.PARENT_ACTIVITY"
-	            android:value="mil.nga.giat.mage.LandingActivity" />
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="mil.nga.giat.mage.LandingActivity" />
         </activity>
         <activity
             android:name="mil.nga.giat.mage.observation.ObservationViewActivity"
             android:label="@string/observation_view" >
         </activity>
-        <activity
-            android:name="mil.nga.giat.mage.observation.ObservationEditActivity">
+        <activity android:name="mil.nga.giat.mage.observation.ObservationEditActivity" >
         </activity>
-        <activity
-            android:name="mil.nga.giat.mage.observation.ImageViewerActivity">
+        <activity android:name="mil.nga.giat.mage.observation.ImageViewerActivity" >
         </activity>
-        
+
         <meta-data
             android:name="com.google.android.maps.v2.API_KEY"
-            android:value="AIzaSyBJKJoprQ-J1NLYOv7v6dajsaykx7MwOpo" />
-
+            android:value="AIzaSyAH21OPUbMLMBjK971oKmFcH5Va8MrgQH4" />
         <meta-data
             android:name="com.google.android.gms.version"
             android:value="@integer/google_play_services_version" />
