@@ -72,10 +72,10 @@ public class ObservationEditActivity extends FragmentActivity {
 		lat = intent.getDoubleExtra("latitude", 0.0);
 		lon = intent.getDoubleExtra("longitude", 0.0);
 
-		GoogleMap map = ((SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map)).getMap();
+		GoogleMap map = ((SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.background_map)).getMap();
 
 		LatLng location = new LatLng(lat, lon);
-		map.moveCamera(CameraUpdateFactory.newLatLngZoom(location, 15));
+		map.moveCamera(CameraUpdateFactory.newLatLngZoom(location, 16));
 		map.addMarker(new MarkerOptions().position(location));
 
 		((TextView) findViewById(R.id.location)).setText(latLngFormat.format(location.latitude) + ", " + latLngFormat.format(location.longitude));
