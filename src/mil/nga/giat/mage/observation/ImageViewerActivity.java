@@ -1,9 +1,10 @@
 package mil.nga.giat.mage.observation;
 
 import mil.nga.giat.mage.R;
+import mil.nga.giat.mage.observation.RemoveAttachmentDialogFragment.RemoveAttachmentDialogListener;
 import mil.nga.giat.mage.sdk.utils.MediaUtils;
-//import mil.nga.giat.mage.sdk.utils.MediaUtils;
 import android.app.Activity;
+import android.support.v4.app.DialogFragment;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -13,18 +14,19 @@ import android.media.ThumbnailUtils;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.support.v4.app.FragmentActivity;
 import android.util.Log;
 import android.view.Display;
 import android.view.View;
 import android.widget.ImageView;
 
-public class ImageViewerActivity extends Activity {
+public class ImageViewerActivity extends FragmentActivity implements RemoveAttachmentDialogListener {
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.image_viewer);
-		this.setTitle("Image Viewer");
+		this.setTitle("Observation Attachment");
 		
 		
 		Intent intent = getIntent();
@@ -90,16 +92,27 @@ public class ImageViewerActivity extends Activity {
 	
 	public void removeImage(View v) {
 		Log.d("Image viewer", "Remove the image");
-		Intent data = new Intent();
-		data.setData(getIntent().getData());
-		data.putExtra("REMOVE", true);
-		setResult(RESULT_OK, data);
-		finish();
+		DialogFragment dialog = new RemoveAttachmentDialogFragment();
+		dialog.show(getSupportFragmentManager(), "RemoveAttachmentDialogFragment");
 	}
 	
 	public void goBack(View v) {
 		Log.d("Image Viewer", "Go back");
 		onBackPressed();
+	}
+
+	@Override
+	public void onDialogPositiveClick(DialogFragment dialog) {
+		Intent data = new Intent();
+		data.setData(getIntent().getData());
+		data.putExtra("REMOVE", true);
+		setResult(RESULT_OK, data);
+		finish();
+		
+	}
+
+	@Override
+	public void onDialogNegativeClick(DialogFragment dialog) {
 	}
 
 }

@@ -19,8 +19,12 @@ import mil.nga.giat.mage.sdk.datastore.observation.State;
 import mil.nga.giat.mage.sdk.utils.MediaUtils;
 import android.annotation.TargetApi;
 import android.content.Intent;
+import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.LayerDrawable;
 import android.media.ThumbnailUtils;
 import android.net.Uri;
 import android.os.Build;
@@ -68,17 +72,13 @@ public class ObservationEditActivity extends FragmentActivity {
 		lat = intent.getDoubleExtra("latitude", 0.0);
 		lon = intent.getDoubleExtra("longitude", 0.0);
 
-		GoogleMap map = ((SupportMapFragment) getSupportFragmentManager()
-				.findFragmentById(R.id.map)).getMap();
+		GoogleMap map = ((SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map)).getMap();
 
 		LatLng location = new LatLng(lat, lon);
 		map.moveCamera(CameraUpdateFactory.newLatLngZoom(location, 15));
 		map.addMarker(new MarkerOptions().position(location));
 
-		((TextView) findViewById(R.id.location)).setText(latLngFormat
-				.format(location.latitude)
-				+ ", "
-				+ latLngFormat.format(location.longitude));
+		((TextView) findViewById(R.id.location)).setText(latLngFormat.format(location.latitude) + ", " + latLngFormat.format(location.longitude));
 		date = new Date();
 		((TextView) findViewById(R.id.date)).setText(date.toString());
 	}
@@ -90,8 +90,7 @@ public class ObservationEditActivity extends FragmentActivity {
 
 		lat = savedInstanceState.getDouble("lat");
 		lon = savedInstanceState.getDouble("lon");
-		attachmentUris.addAll(Arrays.asList(savedInstanceState
-				.getStringArray("attachmentUris")));
+		attachmentUris.addAll(Arrays.asList(savedInstanceState.getStringArray("attachmentUris")));
 
 		for (String uri : attachmentUris) {
 			addImageToGallery(Uri.parse(uri));
@@ -111,20 +110,12 @@ public class ObservationEditActivity extends FragmentActivity {
 	protected void onSaveInstanceState(Bundle outState) {
 		outState.putDouble("lat", lat);
 		outState.putDouble("lon", lon);
-		outState.putStringArray("attachmentUris",
-				attachmentUris.toArray(new String[attachmentUris.size()]));
-		outState.putString("LEVEL", ((EditText) findViewById(R.id.level))
-				.getText().toString());
-		outState.putString("TYPE",
-				(String) ((Spinner) findViewById(R.id.type_spinner))
-						.getSelectedItem());
-		outState.putString("LEVEL", ((EditText) findViewById(R.id.level))
-				.getText().toString());
-		outState.putString("TEAM", ((EditText) findViewById(R.id.team))
-				.getText().toString());
-		outState.putString("DESCRIPTION",
-				((EditText) findViewById(R.id.description)).getText()
-						.toString());
+		outState.putStringArray("attachmentUris", attachmentUris.toArray(new String[attachmentUris.size()]));
+		outState.putString("LEVEL", ((EditText) findViewById(R.id.level)).getText().toString());
+		outState.putString("TYPE", (String) ((Spinner) findViewById(R.id.type_spinner)).getSelectedItem());
+		outState.putString("LEVEL", ((EditText) findViewById(R.id.level)).getText().toString());
+		outState.putString("TEAM", ((EditText) findViewById(R.id.team)).getText().toString());
+		outState.putString("DESCRIPTION", ((EditText) findViewById(R.id.description)).getText().toString());
 		super.onSaveInstanceState(outState);
 	}
 
@@ -145,24 +136,14 @@ public class ObservationEditActivity extends FragmentActivity {
 
 			Observation observation = new Observation();
 			observation.setState(new State("active"));
-			observation.setGeometry(new Geometry("[" + lat + "," + lon + "]",
-					new GeometryType("point")));
+			observation.setGeometry(new Geometry("[" + lat + "," + lon + "]", new GeometryType("point")));
 
 			Collection<Property> properties = new ArrayList<Property>();
-			properties.add(new Property("OBSERVATION_DATE", String.valueOf(date
-					.getTime())));
-			properties.add(new Property("TYPE",
-					(String) ((Spinner) findViewById(R.id.type_spinner))
-							.getSelectedItem()));
-			properties
-					.add(new Property("LEVEL",
-							((EditText) findViewById(R.id.level)).getText()
-									.toString()));
-			properties.add(new Property("TEAM",
-					((EditText) findViewById(R.id.team)).getText().toString()));
-			properties.add(new Property("DESCRIPTION",
-					((EditText) findViewById(R.id.description)).getText()
-							.toString()));
+			properties.add(new Property("OBSERVATION_DATE", String.valueOf(date.getTime())));
+			properties.add(new Property("TYPE", (String) ((Spinner) findViewById(R.id.type_spinner)).getSelectedItem()));
+			properties.add(new Property("LEVEL", ((EditText) findViewById(R.id.level)).getText().toString()));
+			properties.add(new Property("TEAM", ((EditText) findViewById(R.id.team)).getText().toString()));
+			properties.add(new Property("DESCRIPTION", ((EditText) findViewById(R.id.description)).getText().toString()));
 			observation.setProperties(properties);
 
 			observation.setProperties(properties);
@@ -174,8 +155,7 @@ public class ObservationEditActivity extends FragmentActivity {
 			}
 			observation.setAttachments(attachments);
 
-			ObservationHelper oh = ObservationHelper
-					.getInstance(getApplicationContext());
+			ObservationHelper oh = ObservationHelper.getInstance(getApplicationContext());
 			try {
 				Observation newObs = oh.createObservation(observation);
 				System.out.println(newObs);
@@ -217,37 +197,33 @@ public class ObservationEditActivity extends FragmentActivity {
 		LinearLayout l = (LinearLayout) findViewById(R.id.image_gallery);
 		ImageView iv = new ImageView(getApplicationContext());
 		try {
-			Bitmap thumb;
-			String absPath = MediaUtils.getFileAbsolutePath(uri,
-					getApplicationContext());
+			String absPath = MediaUtils.getFileAbsolutePath(uri, getApplicationContext());
 			if (absPath.endsWith(".mp4")) {
-				thumb = ThumbnailUtils.createVideoThumbnail(absPath,
-						MediaStore.Video.Thumbnails.MICRO_KIND);
+				Drawable[] layers = new Drawable[2];
+				Resources r = getResources();
+				layers[0] = new BitmapDrawable(r, ThumbnailUtils.createVideoThumbnail(absPath, MediaStore.Video.Thumbnails.MICRO_KIND));
+				layers[1] = r.getDrawable(R.drawable.ic_video_white);
+				LayerDrawable ld = new LayerDrawable(layers);
+				iv.setImageDrawable(ld);
 			} else if (absPath.endsWith(".mp3") || absPath.endsWith("m4a")) {
-				thumb = BitmapFactory.decodeResource(getResources(),
-						R.drawable.ic_microphone);
+				iv.setImageBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.ic_microphone));
 			} else {
-				thumb = MediaUtils.getThumbnailFromContent(uri, 100,
-						getApplicationContext());
+				iv.setImageBitmap(MediaUtils.getThumbnailFromContent(uri, 100, getApplicationContext()));
 			}
-			iv.setImageBitmap(thumb);
-			LayoutParams lp = new LayoutParams(LayoutParams.WRAP_CONTENT,
-					LayoutParams.MATCH_PARENT);
+			LayoutParams lp = new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.MATCH_PARENT);
 			iv.setLayoutParams(lp);
 			iv.setPadding(0, 0, 10, 0);
 			iv.setOnClickListener(new View.OnClickListener() {
 
 				@Override
 				public void onClick(View v) {
-					Intent intent = new Intent(v.getContext(),
-							ImageViewerActivity.class);
+					Intent intent = new Intent(v.getContext(), ImageViewerActivity.class);
 					intent.setData(uri);
 					startActivityForResult(intent, ATTACHMENT_VIEW_ACTIVITY_REQUEST_CODE);
 				}
 			});
 			l.addView(iv);
-			Log.d("image", "Set the image gallery to have an image with uri "
-					+ uri);
+			Log.d("image", "Set the image gallery to have an image with uri " + uri);
 		} catch (Exception e) {
 			Log.e("exception", "Error making image", e);
 		}

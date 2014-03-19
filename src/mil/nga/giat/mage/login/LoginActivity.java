@@ -89,10 +89,8 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 		CheckBox c = (CheckBox)v;
 		EditText pw = (EditText)findViewById(R.id.login_password);
 		if (c.isChecked()) {
-			Log.d("checked", "Checkbox checked");
 			pw.setInputType(InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD);
 		} else {
-			Log.d("checked", "NO checkbox checked");
 			pw.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
 		}
 		pw.setSelection(pw.getText().length());
