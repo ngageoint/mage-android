@@ -32,7 +32,7 @@ public class RemoveAttachmentDialogFragment extends DialogFragment {
         // Use the Builder class for convenient dialog construction
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
         builder.setTitle(R.string.remove_attachment_title)
-        		.setIcon(R.drawable.ic_camera)
+        		.setIcon(R.drawable.ic_discard)
         		.setMessage(R.string.remove_attachment_dialog_message)
                .setPositiveButton(R.string.remove_attachment_confirm, new DialogInterface.OnClickListener() {
 				@Override
