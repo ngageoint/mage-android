@@ -17,7 +17,9 @@ import android.content.SharedPreferences.Editor;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v4.app.FragmentActivity;
+import android.text.InputType;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnTouchListener;
@@ -25,6 +27,7 @@ import android.view.ViewGroup;
 import android.view.Window;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ImageView;
 
@@ -80,6 +83,19 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 		getUsernameEditText().setSelection(getUsernameEditText().getText().length());
 		getServerEditText().setText(sharedPreferences.getString("serverURL", ""));
 		getServerEditText().setSelection(getServerEditText().getText().length());
+	}
+	
+	public void togglePassword(View v) {
+		CheckBox c = (CheckBox)v;
+		EditText pw = (EditText)findViewById(R.id.login_password);
+		if (c.isChecked()) {
+			Log.d("checked", "Checkbox checked");
+			pw.setInputType(InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD);
+		} else {
+			Log.d("checked", "NO checkbox checked");
+			pw.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+		}
+		pw.setSelection(pw.getText().length());
 	}
 
 	/**
