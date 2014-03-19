@@ -4,12 +4,15 @@
     android:id="@+id/login"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
-    android:fillViewport="true" >
+    android:fillViewport="true"
+    android:background="#5278A2"
+    android:windowSoftInputMode="stateVisible" >
 
-    <RelativeLayout
+    <LinearLayout
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:background="#d0e7ff" >
+        android:orientation="vertical"
+        android:background="@drawable/mage_gradient" >
 
         <include
             android:id="@+id/login_header"
@@ -21,7 +24,6 @@
             android:id="@+id/login_status"
             android:layout_width="match_parent"
             android:layout_height="fill_parent"
-            android:layout_below="@id/login_header"
             android:layout_gravity="center_horizontal|center_vertical"
             android:gravity="center_horizontal|center_vertical"
             android:orientation="vertical"
@@ -37,7 +39,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:fontFamily="sans-serif-light"
-                android:text="@string/loggingIn"
+                android:text="Logging in..."
                 android:textColor="#6389b3"
                 android:textSize="26sp" />
         </LinearLayout>
@@ -48,12 +50,10 @@
             android:id="@+id/login_form"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_below="@id/login_header"
             android:orientation="vertical"
-            android:paddingLeft="24dip"
-            android:paddingRight="24dip"
             android:paddingBottom="24dip"
-            android:paddingTop="5dip">
+            android:paddingLeft="24dip"
+            android:paddingRight="24dip">
 
             <EditText
                 android:id="@+id/login_username"
@@ -62,7 +62,7 @@
                 android:layout_marginBottom="7dip"
                 android:layout_marginTop="7dip"
                 android:background="@drawable/form_field"
-                android:hint="@string/usernameHint"
+                android:hint="Username"
                 android:inputType="textVisiblePassword|textNoSuggestions"
                 android:singleLine="true"
                 android:textSize="22sp" />
@@ -74,10 +74,17 @@
                 android:layout_marginBottom="7dip"
                 android:layout_marginTop="7dip"
                 android:background="@drawable/form_field"
-                android:hint="@string/passwordHint"
+                android:hint="Password"
                 android:inputType="textPassword"
                 android:singleLine="true"
                 android:textSize="22sp" />
+
+			<CheckBox
+			    android:layout_width="wrap_content"
+			    android:layout_height="wrap_content"
+			    android:onClick="togglePassword"
+			    android:text="Show Password"
+			    android:textColor="#EEEEEE" />
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -93,19 +100,19 @@
                     android:layout_weight=".70"
                     android:background="@drawable/form_field"
                     android:enabled="false"
-                    android:hint="@string/serverUrl"
+                    android:hint="Server URL"
                     android:inputType="textUri"
                     android:singleLine="true"
-                    android:textSize="22sp" />
+                    android:textSize="16sp" />
 
                 <ImageView
                     android:id="@+id/login_lock"
                     android:layout_width="wrap_content"
                     android:layout_height="fill_parent"
                     android:layout_weight=".30"
+                    android:contentDescription="lock"
                     android:onClick="toggleLock"
-                    android:src="@drawable/lock_108"
-                    android:contentDescription="@string/lockContentDescription"
+                    android:src="@drawable/ic_lock_white"
                     android:tag="lock" />
             </LinearLayout>
 
@@ -117,9 +124,10 @@
                 android:layout_marginTop="10dip"
                 android:background="@drawable/login_button"
                 android:onClick="login"
-                android:text="@string/login"
-                android:textColor="#def3ff"
-                android:textSize="26sp" />
+                android:text="Log In"
+                android:textStyle="bold"
+                android:textColor="#EEEEEE"
+                android:textSize="21sp" />
 
             <!-- Link to Signup Screen? -->
 
@@ -131,11 +139,11 @@
                 android:clickable="true"
                 android:gravity="center"
                 android:onClick="signup"
-                android:text="@string/signup"
-                android:textColor="#5278A2"
+                android:text="New to MAGE? Signup here"
+                android:textColor="#EEEEEE"
                 android:textSize="20sp" />
         </LinearLayout>
         <!-- Login Form Ends -->
-    </RelativeLayout>
+    </LinearLayout>
 
 </ScrollView>

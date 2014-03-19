@@ -5,18 +5,21 @@ import java.util.List;
 
 import mil.nga.giat.mage.LandingActivity;
 import mil.nga.giat.mage.R;
-import mil.nga.giat.mage.map.MapFragment;
+import mil.nga.giat.mage.disclaimer.DisclaimerActivity;
 import mil.nga.giat.mage.sdk.login.AccountDelegate;
 import mil.nga.giat.mage.sdk.login.AccountStatus;
 import mil.nga.giat.mage.sdk.login.LoginTaskFactory;
+import mil.nga.giat.mage.sdk.preferences.PreferenceColonization;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
-import android.content.pm.PackageManager.NameNotFoundException;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.support.v4.app.FragmentActivity;
+import android.text.InputType;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnTouchListener;
@@ -24,6 +27,7 @@ import android.view.ViewGroup;
 import android.view.Window;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ImageView;
 
@@ -33,7 +37,7 @@ import android.widget.ImageView;
  * @author wiedemannse
  *
  */
-public class LoginActivity extends Activity implements AccountDelegate {
+public class LoginActivity extends FragmentActivity implements AccountDelegate {
 
 	private EditText mUsernameEditText;
 	private EditText mPasswordEditText;
@@ -54,11 +58,17 @@ public class LoginActivity extends Activity implements AccountDelegate {
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		// IMPORTANT: load the configuration from preferences files
-		PreferenceManager.setDefaultValues(getApplicationContext(), R.xml.mdkprivatepreferences, true);
-		PreferenceManager.setDefaultValues(getApplicationContext(), R.xml.privatepreferences, true);
-		PreferenceManager.setDefaultValues(getApplicationContext(), R.xml.mdkpublicpreferences, true);
-		PreferenceManager.setDefaultValues(getApplicationContext(), R.xml.publicpreferences, true);
+		
+		// IMPORTANT: load the configuration from preferences files and server
+		PreferenceColonization.getInstance(getApplicationContext()).initializeAll(new int[]{R.xml.privatepreferences, R.xml.publicpreferences});
+		
+		// show the disclaimer?
+		SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+		if (Boolean.parseBoolean(sharedPreferences.getString("showDisclaimer", Boolean.TRUE.toString()))) {
+			Intent intent = new Intent(this, DisclaimerActivity.class);
+			startActivity(intent);
+		}
+		
 		// no title bar
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
 		setContentView(R.layout.activity_login);
@@ -69,19 +79,21 @@ public class LoginActivity extends Activity implements AccountDelegate {
 		mServerEditText = (EditText) findViewById(R.id.login_server);
 
 		// set the default values
-		SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
 		getUsernameEditText().setText(sharedPreferences.getString("username", ""));
 		getUsernameEditText().setSelection(getUsernameEditText().getText().length());
 		getServerEditText().setText(sharedPreferences.getString("serverURL", ""));
 		getServerEditText().setSelection(getServerEditText().getText().length());
-		
-		Editor e = sharedPreferences.edit();
-		try {
-			e.putString("appVersion", getPackageManager().getPackageInfo(getPackageName(), 0).versionName);
-			e.commit();
-		} catch (NameNotFoundException nnfe) {
-			
+	}
+	
+	public void togglePassword(View v) {
+		CheckBox c = (CheckBox)v;
+		EditText pw = (EditText)findViewById(R.id.login_password);
+		if (c.isChecked()) {
+			pw.setInputType(InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD);
+		} else {
+			pw.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
 		}
+		pw.setSelection(pw.getText().length());
 	}
 
 	/**
@@ -174,13 +186,13 @@ public class LoginActivity extends Activity implements AccountDelegate {
 		ImageView lockImageView = ((ImageView) findViewById(R.id.login_lock));
 		if (lockImageView.getTag().toString().equals("lock")) {
 			lockImageView.setTag("unlock");
-			lockImageView.setImageResource(R.drawable.unlock_108);
+			lockImageView.setImageResource(R.drawable.ic_unlock_white);
 			InputMethodManager inputMethodManager = (InputMethodManager) getSystemService(Activity.INPUT_METHOD_SERVICE);
 			inputMethodManager.toggleSoftInput(InputMethodManager.SHOW_FORCED, 0);
 			getServerEditText().requestFocus();
 		} else {
 			lockImageView.setTag("lock");
-			lockImageView.setImageResource(R.drawable.lock_108);
+			lockImageView.setImageResource(R.drawable.ic_lock_white);
 		}
 	}
 
