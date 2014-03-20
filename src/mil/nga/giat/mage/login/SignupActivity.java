@@ -76,8 +76,7 @@ public class SignupActivity extends Activity implements AccountDelegate {
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		// load the configuration from preferences.xml
-		PreferenceManager.setDefaultValues(getApplicationContext(), R.xml.privatepreferences, true);
+
 		// no title bar
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
 		setContentView(R.layout.activity_signup);
@@ -300,8 +299,11 @@ public class SignupActivity extends Activity implements AccountDelegate {
 		if (accountStatus.getStatus()) {
 			// save the username
 			Editor sharedPreferencesEditor = PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).edit();
-			sharedPreferencesEditor.putString("username", accountStatus.getAccountInformation().get(0));
-			sharedPreferencesEditor.commit();
+			try {
+				sharedPreferencesEditor.putString("username", accountStatus.getAccountInformation().getString("username")).commit();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
 			
 			// Tell the user that their account was made
 			AlertDialog.Builder alertDialog = new AlertDialog.Builder(this);
