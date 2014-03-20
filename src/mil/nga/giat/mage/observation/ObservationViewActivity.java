@@ -77,13 +77,11 @@ public class ObservationViewActivity extends FragmentActivity {
 		this.setTitle("Observation Type");
 	}
 	
-	private void addImageToGallery(final String uriString) {
-		Uri uri = Uri.parse(uriString);
-		Log.d("view", "Abs path is: " + uri);
+	private void addImageToGallery(final String absPath) {
+		Log.d("view", "Abs path is: " + absPath);
 		LinearLayout l = (LinearLayout) findViewById(R.id.image_gallery);
 		ImageView iv = new ImageView(getApplicationContext());
 		try {
-			String absPath = MediaUtils.getFileAbsolutePath(uri, getApplicationContext());
 			if (absPath.endsWith(".mp4")) {
 				Drawable[] layers = new Drawable[2];
 				Resources r = getResources();
