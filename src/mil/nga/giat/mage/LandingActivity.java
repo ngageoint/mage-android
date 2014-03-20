@@ -48,8 +48,6 @@ public class LandingActivity extends FragmentActivity implements ActionBar.TabLi
 	 */
 	ViewPager mViewPager;
 
-	protected LocationService locationService;
-
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -74,7 +72,7 @@ public class LandingActivity extends FragmentActivity implements ActionBar.TabLi
 				actionBar.setSelectedNavigationItem(position);
 			}
 		});
-
+		
 		// For each of the sections in the app, add a tab to the action bar.
 		for (int i = 0; i < mSectionsPagerAdapter.getCount(); i++) {
 			// Create a tab with text corresponding to the page title defined by
@@ -83,13 +81,6 @@ public class LandingActivity extends FragmentActivity implements ActionBar.TabLi
 			// this tab is selected.
 			actionBar.addTab(actionBar.newTab().setText(mSectionsPagerAdapter.getPageTitle(i)).setTabListener(this));
 		}
-
-		// Start the location services!
-		if (locationService == null) {
-			locationService = new LocationService(getApplicationContext());
-		}
-		locationService.start();
-		
 
 		////////////// FIXME: TESTING //////////////
 		
@@ -180,10 +171,6 @@ public class LandingActivity extends FragmentActivity implements ActionBar.TabLi
 	@Override
 	protected void onDestroy() {
 		super.onDestroy();
-		
-		if (locationService != null) {
-			locationService.stop();			
-		}
 	}
 
 	@Override

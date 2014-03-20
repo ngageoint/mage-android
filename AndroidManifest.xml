@@ -26,6 +26,7 @@
         android:required="false" />
 
     <application
+        android:name="MAGE"
         android:allowBackup="true"
         android:icon="@drawable/ic_launcher"
         android:label="@string/app_name"
@@ -77,7 +78,7 @@
 
         <meta-data
             android:name="com.google.android.maps.v2.API_KEY"
-            android:value="AIzaSyAH21OPUbMLMBjK971oKmFcH5Va8MrgQH4" />
+            android:value="AIzaSyCU1-TpxcRoRkU5mbFKkTFOogExsHUxby8" />
         <meta-data
             android:name="com.google.android.gms.version"
             android:value="@integer/google_play_services_version" />
