@@ -202,7 +202,7 @@ public class ObservationEditActivity extends FragmentActivity {
 				Drawable[] layers = new Drawable[2];
 				Resources r = getResources();
 				layers[0] = new BitmapDrawable(r, ThumbnailUtils.createVideoThumbnail(absPath, MediaStore.Video.Thumbnails.MICRO_KIND));
-				layers[1] = r.getDrawable(R.drawable.ic_video_white);
+				layers[1] = r.getDrawable(R.drawable.ic_video_white_2x);
 				LayerDrawable ld = new LayerDrawable(layers);
 				iv.setImageDrawable(ld);
 			} else if (absPath.endsWith(".mp3") || absPath.endsWith("m4a")) {
