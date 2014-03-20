@@ -60,7 +60,7 @@ public class ObservationViewActivity extends FragmentActivity {
 						iv.setImageBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.ic_microphone));
 					} else {
 						try {
-						iv.setImageBitmap(MediaUtils.getThumbnail(new File(absPath), 100));
+							iv.setImageBitmap(MediaUtils.getThumbnail(new File(absPath), 100));
 						} catch (Exception e) {
 							
 						}
@@ -69,7 +69,6 @@ public class ObservationViewActivity extends FragmentActivity {
 					iv.setLayoutParams(lp);
 					iv.setPadding(0, 0, 10, 0);
 					iv.setOnClickListener(new View.OnClickListener() {
-	
 						@Override
 						public void onClick(View v) {
 							Intent intent = new Intent(v.getContext(), ImageViewerActivity.class);
@@ -115,20 +114,32 @@ public class ObservationViewActivity extends FragmentActivity {
 			map.addMarker(new MarkerOptions().position(location));
 			
 			LinearLayout propertyContainer = (LinearLayout)findViewById(R.id.propertyContainer);
-			for (int i = 0; i < propertyContainer.getChildCount(); i++) {
-				View v = propertyContainer.getChildAt(i);
-				if (v instanceof MageTextView) {
-					String propertyKey = ((MageTextView)v).getPropertyKey();
-					((MageTextView)v).setText(propertiesMap.get(propertyKey));
-				}
-			}
+			populatePropertyFields(propertyContainer);
 			
-			AttachmentGalleryTask task = new AttachmentGalleryTask();
-			task.execute(o.getAttachments().toArray(new Attachment[o.getAttachments().size()]));
+			populatePropertyFields((LinearLayout)findViewById(R.id.topPropertyContainer));
+			
+			if (o.getAttachments().size() == 0) {
+				findViewById(R.id.image_gallery).setVisibility(View.GONE);
+			} else {
+				AttachmentGalleryTask task = new AttachmentGalleryTask();
+				task.execute(o.getAttachments().toArray(new Attachment[o.getAttachments().size()]));
+			}
 		} catch (Exception e) {
 			
 		}
 		
 		this.setTitle(propertiesMap.get("TYPE"));
+	}
+	
+	private void populatePropertyFields(LinearLayout ll) {
+		for (int i = 0; i < ll.getChildCount(); i++) {
+			View v = ll.getChildAt(i);
+			if (v instanceof MageTextView) {
+				String propertyKey = ((MageTextView)v).getPropertyKey();
+				((MageTextView)v).setText(propertiesMap.get(propertyKey));
+			} else if (v instanceof LinearLayout) {
+				populatePropertyFields((LinearLayout)v);
+			}
+		}
 	}
 }
