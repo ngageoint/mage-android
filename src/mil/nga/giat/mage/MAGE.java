@@ -14,13 +14,6 @@ public class MAGE extends Application {
           }
     }
     
-    public void stopLocationService() {
-        if (locationService != null) {
-            locationService.stop();
-            locationService = null;
-        }
-    }
-    
     public LocationService getLocationService() {
         return locationService;
     }
