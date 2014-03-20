@@ -130,8 +130,9 @@
 	          android:layout_height="wrap_content"
 	          style="@style/EditTextView"
 	          android:text="Team"/>
-	    <EditText 
+	    <mil.nga.giat.mage.form.MageEditText  
 	        android:id="@+id/team"
+	        mageForm:propertyKey="TEAM"
 	        android:layout_width="fill_parent"
 	          android:layout_height="wrap_content"
 	          android:layout_marginTop="5dip"
@@ -142,8 +143,9 @@
 	          style="@style/EditTextView"
 	          android:text="Description"/>
 
-	    <EditText
+	    <mil.nga.giat.mage.form.MageEditText 
 	        android:id="@+id/description"
+	        mageForm:propertyKey="DESCRIPTION"
 	        android:layout_width="fill_parent"
 	        android:layout_height="wrap_content"
 	        android:layout_marginTop="5dip"

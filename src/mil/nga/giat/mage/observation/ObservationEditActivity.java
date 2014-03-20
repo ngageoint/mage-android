@@ -1,5 +1,6 @@
 package mil.nga.giat.mage.observation;
 
+import java.io.File;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -58,7 +59,7 @@ public class ObservationEditActivity extends FragmentActivity {
 
 	Date date;
 	DecimalFormat latLngFormat = new DecimalFormat("###.######");
-	List<String> attachmentUris = new ArrayList<String>();
+	List<String> attachmentPaths = new ArrayList<String>();
 	double lat;
 	double lon;
 
@@ -90,10 +91,10 @@ public class ObservationEditActivity extends FragmentActivity {
 
 		lat = savedInstanceState.getDouble("lat");
 		lon = savedInstanceState.getDouble("lon");
-		attachmentUris.addAll(Arrays.asList(savedInstanceState.getStringArray("attachmentUris")));
+		attachmentPaths.addAll(Arrays.asList(savedInstanceState.getStringArray("attachmentPaths")));
 
-		for (String uri : attachmentUris) {
-			addImageToGallery(Uri.parse(uri));
+		for (String path : attachmentPaths) {
+			addImageToGallery(path);
 		}
 
 		LinearLayout form = (LinearLayout) findViewById(R.id.form);
@@ -110,7 +111,7 @@ public class ObservationEditActivity extends FragmentActivity {
 	protected void onSaveInstanceState(Bundle outState) {
 		outState.putDouble("lat", lat);
 		outState.putDouble("lon", lon);
-		outState.putStringArray("attachmentUris", attachmentUris.toArray(new String[attachmentUris.size()]));
+		outState.putStringArray("attachmentPaths", attachmentPaths.toArray(new String[attachmentPaths.size()]));
 		outState.putString("LEVEL", ((EditText) findViewById(R.id.level)).getText().toString());
 		outState.putString("TYPE", (String) ((Spinner) findViewById(R.id.type_spinner)).getSelectedItem());
 		outState.putString("LEVEL", ((EditText) findViewById(R.id.level)).getText().toString());
@@ -148,9 +149,9 @@ public class ObservationEditActivity extends FragmentActivity {
 
 			observation.setProperties(properties);
 			Collection<Attachment> attachments = new ArrayList<Attachment>();
-			for (String uri : attachmentUris) {
+			for (String path : attachmentPaths) {
 				Attachment a = new Attachment();
-				a.setLocal_path(uri);
+				a.setLocal_path(path);
 				attachments.add(a);
 			}
 			observation.setAttachments(attachments);
@@ -193,11 +194,11 @@ public class ObservationEditActivity extends FragmentActivity {
 		startActivityForResult(intent, GALLERY_ACTIVITY_REQUEST_CODE);
 	}
 
-	private void addImageToGallery(final Uri uri) {
+	private void addImageToGallery(final String absPath) {
 		LinearLayout l = (LinearLayout) findViewById(R.id.image_gallery);
 		ImageView iv = new ImageView(getApplicationContext());
 		try {
-			String absPath = MediaUtils.getFileAbsolutePath(uri, getApplicationContext());
+			
 			if (absPath.endsWith(".mp4")) {
 				Drawable[] layers = new Drawable[2];
 				Resources r = getResources();
@@ -208,7 +209,7 @@ public class ObservationEditActivity extends FragmentActivity {
 			} else if (absPath.endsWith(".mp3") || absPath.endsWith("m4a")) {
 				iv.setImageBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.ic_microphone));
 			} else {
-				iv.setImageBitmap(MediaUtils.getThumbnailFromContent(uri, 100, getApplicationContext()));
+				iv.setImageBitmap(MediaUtils.getThumbnail(new File(absPath), 100));
 			}
 			LayoutParams lp = new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.MATCH_PARENT);
 			iv.setLayoutParams(lp);
@@ -218,12 +219,12 @@ public class ObservationEditActivity extends FragmentActivity {
 				@Override
 				public void onClick(View v) {
 					Intent intent = new Intent(v.getContext(), ImageViewerActivity.class);
-					intent.setData(uri);
+					intent.setData(Uri.fromFile(new File(absPath)));
 					startActivityForResult(intent, ATTACHMENT_VIEW_ACTIVITY_REQUEST_CODE);
 				}
 			});
 			l.addView(iv);
-			Log.d("image", "Set the image gallery to have an image with uri " + uri);
+			Log.d("image", "Set the image gallery to have an image with absolute path " + absPath);
 		} catch (Exception e) {
 			Log.e("exception", "Error making image", e);
 		}
@@ -233,27 +234,23 @@ public class ObservationEditActivity extends FragmentActivity {
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 		if (resultCode != RESULT_OK)
 			return;
-		if (requestCode == CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE) {
-			attachmentUris.add(data.getData().toString());
-			addImageToGallery(data.getData());
-		} else if (requestCode == CAPTURE_VIDEO_ACTIVITY_REQUEST_CODE) {
-			attachmentUris.add(data.getData().toString());
-			addImageToGallery(data.getData());
-		} else if (requestCode == GALLERY_ACTIVITY_REQUEST_CODE) {
-			Log.d("picker", "data is " + data.getData());
-			attachmentUris.add(data.getData().toString());
-			addImageToGallery(data.getData());
-		} else if (requestCode == CAPTURE_VOICE_ACTIVITY_REQUEST_CODE) {
-			Log.d("picker", "data is " + data.getData());
-			attachmentUris.add(data.getData().toString());
-			addImageToGallery(data.getData());
-		} else if (requestCode == ATTACHMENT_VIEW_ACTIVITY_REQUEST_CODE) {
+		switch (requestCode) {
+		case CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE:
+		case CAPTURE_VIDEO_ACTIVITY_REQUEST_CODE:
+		case GALLERY_ACTIVITY_REQUEST_CODE:
+		case CAPTURE_VOICE_ACTIVITY_REQUEST_CODE:
+			String path = MediaUtils.getFileAbsolutePath(data.getData(), getApplicationContext());
+			attachmentPaths.add(path);
+			addImageToGallery(path);
+			break;
+		case ATTACHMENT_VIEW_ACTIVITY_REQUEST_CODE:
 			if (data.getData() != null && data.getBooleanExtra("REMOVE", false)) {
-				int idx = attachmentUris.indexOf(data.getData().toString());
-				attachmentUris.remove(idx);
+				int idx = attachmentPaths.indexOf(data.getData().toString());
+				attachmentPaths.remove(idx);
 				LinearLayout l = (LinearLayout) findViewById(R.id.image_gallery);
 				l.removeViewAt(idx);
 			}
+			break;
 		}
 	}
 
