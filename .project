@@ -3,6 +3,7 @@
 	<name>MAGE</name>
 	<comment></comment>
 	<projects>
+		<project>MAGESDK</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>

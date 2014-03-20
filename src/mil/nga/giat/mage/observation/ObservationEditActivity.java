@@ -21,7 +21,6 @@ import mil.nga.giat.mage.sdk.utils.MediaUtils;
 import android.annotation.TargetApi;
 import android.content.Intent;
 import android.content.res.Resources;
-import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
@@ -220,6 +219,7 @@ public class ObservationEditActivity extends FragmentActivity {
 				public void onClick(View v) {
 					Intent intent = new Intent(v.getContext(), ImageViewerActivity.class);
 					intent.setData(Uri.fromFile(new File(absPath)));
+					intent.putExtra(ImageViewerActivity.EDITABLE, true);
 					startActivityForResult(intent, ATTACHMENT_VIEW_ACTIVITY_REQUEST_CODE);
 				}
 			});
@@ -245,7 +245,7 @@ public class ObservationEditActivity extends FragmentActivity {
 			break;
 		case ATTACHMENT_VIEW_ACTIVITY_REQUEST_CODE:
 			if (data.getData() != null && data.getBooleanExtra("REMOVE", false)) {
-				int idx = attachmentPaths.indexOf(data.getData().toString());
+				int idx = attachmentPaths.indexOf(MediaUtils.getFileAbsolutePath(data.getData(), getApplicationContext()));
 				attachmentPaths.remove(idx);
 				LinearLayout l = (LinearLayout) findViewById(R.id.image_gallery);
 				l.removeViewAt(idx);
