@@ -7,11 +7,11 @@ import mil.nga.giat.mage.newsfeed.NewsFeedFragment;
 import mil.nga.giat.mage.observation.ObservationEditActivity;
 import mil.nga.giat.mage.observation.ObservationViewActivity;
 import mil.nga.giat.mage.preferences.PublicPreferencesActivity;
-import mil.nga.giat.mage.sdk.location.LocationService;
 import mil.nga.giat.mage.sdk.utils.UserUtility;
 import android.app.ActionBar;
 import android.app.FragmentTransaction;
 import android.content.Intent;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
@@ -20,6 +20,9 @@ import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.view.Menu;
 import android.view.MenuItem;
+
+import com.nga.giat.mage.sdk.serverfetch.ObservationServerFetchAsyncTask;
+import com.nga.giat.mage.sdk.serverfetch.UserServerFetchAsyncTask;
 
 /**
  * FIXME: Currently a mock of what a landing page might look like. Could be
@@ -87,6 +90,14 @@ public class LandingActivity extends FragmentActivity implements ActionBar.TabLi
 		((MAGE) getApplication()).startLocationService();
 
 		
+		//start user sync
+		UserServerFetchAsyncTask userTask = new UserServerFetchAsyncTask(getApplicationContext());
+		userTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, "");
+		
+		//start observation sync
+		ObservationServerFetchAsyncTask observationTask = new ObservationServerFetchAsyncTask(getApplicationContext());
+		observationTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, "");
+	
 	}
 
 	@Override
