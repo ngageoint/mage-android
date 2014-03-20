@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:background="@drawable/mage_gradient"
+    android:fillViewport="true"
+    android:orientation="vertical"
+    android:windowSoftInputMode="stateVisible" >
+
+    <include layout="@layout/mage_header" />
+
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:gravity="center_vertical"
+        android:orientation="vertical"
+        android:paddingBottom="24dip"
+        android:paddingLeft="24dip"
+        android:paddingRight="24dip"
+        android:paddingTop="20dip" >
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:paddingBottom="20dip"
+            android:text="Consent to Monitoring"
+            android:textColor="#EEEEEE"
+            android:textSize="26sp" />
+
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="0dip"
+            android:layout_weight="1" >
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical|left"
+                android:text="@string/disclaimerText"
+                android:textColor="#DDDDDD" />
+        </ScrollView>
+
+        <LinearLayout
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal" >
+
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="5dp"
+                android:layout_marginRight="5dp"
+                android:layout_weight="1"
+                android:background="@drawable/login_button"
+                android:onClick="exit"
+                android:text="Exit"
+                android:textColor="#EEEEEE"
+                android:textSize="26sp" />
+
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="5dp"
+                android:layout_marginRight="5dp"
+                android:layout_weight="1"
+                android:background="@drawable/login_button"
+                android:onClick="agree"
+                android:text="Agree"
+                android:textColor="#EEEEEE"
+                android:textSize="26sp" />
+        </LinearLayout>
+    </LinearLayout>
+
+</LinearLayout>

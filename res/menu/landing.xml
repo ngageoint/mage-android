@@ -12,5 +12,17 @@
         android:orderInCategory="100"
         android:showAsAction="never"
         android:title="Logout"/>
+    <item
+        android:id="@+id/observation_view"
+        android:icon="@android:drawable/ic_menu_preferences"
+        android:orderInCategory="100"
+        android:showAsAction="never"
+        android:title="@string/observation_view"/>
+    <item
+        android:id="@+id/observation_new"
+        android:orderInCategory="100"
+        android:showAsAction="always"
+        android:icon="@drawable/ic_new_event"
+        android:title="@string/observation_new"/>
 
 </menu>

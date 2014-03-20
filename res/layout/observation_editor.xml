@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:map="http://schemas.android.com/apk/res-auto"
+    xmlns:mageForm="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+    <fragment
+        android:id="@+id/background_map"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:name="com.google.android.gms.maps.SupportMapFragment"
+        map:uiZoomControls="false"
+        map:uiZoomGestures="false"
+        map:uiScrollGestures="false"/>
+    <LinearLayout android:orientation="vertical"
+        android:background="@drawable/semi_see_through_background"
+        android:layout_height="fill_parent"
+        android:layout_width="fill_parent">
+        <LinearLayout 
+            style="?android:attr/buttonBarStyle"
+            android:background="@drawable/semi_see_through_background"
+            android:orientation="horizontal"
+            android:layout_height="wrap_content"
+            android:layout_width="fill_parent">
+            <ImageButton 
+                style="?android:attr/buttonBarButtonStyle"
+                android:id="@+id/voice_btn"
+                android:onClick="voiceButtonPressed"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:contentDescription="voice"
+                android:src="@drawable/ic_microphone"/>
+            <ImageButton 
+                style="?android:attr/buttonBarButtonStyle"
+                android:id="@+id/camera_btn"
+                android:onClick="cameraButtonPressed"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:text="camera"
+                android:src="@drawable/ic_camera"/>
+            <ImageButton 
+                style="?android:attr/buttonBarButtonStyle"
+                android:id="@+id/video_btn"
+                android:onClick="videoButtonPressed"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:src="@drawable/ic_video"/>
+
+            <ImageButton
+                android:id="@+id/from_gallery_btn"
+                style="?android:attr/buttonBarButtonStyle"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:onClick="fromGalleryButtonPressed"
+                android:src="@drawable/ic_picture" />
+
+        </LinearLayout>
+    
+    <ScrollView android:fillViewport="true"
+    android:layout_width="fill_parent"
+    android:layout_height="0dip"
+    android:layout_weight="1">
+
+	<LinearLayout 
+	    android:id="@+id/form"
+	    android:orientation="vertical"
+	    android:layout_width="match_parent"
+	    android:layout_height="wrap_content"
+	    android:focusable="true"
+	    android:focusableInTouchMode="true"
+	    android:padding="10dip">
+	    <HorizontalScrollView 
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content">
+		    <LinearLayout 
+			    android:id="@+id/image_gallery"
+			    android:layout_width="wrap_content" 
+			    android:layout_height="wrap_content" 
+			    android:orientation="horizontal">
+	        </LinearLayout>
+        </HorizontalScrollView>
+	    <LinearLayout
+	        android:layout_width="fill_parent"
+	        android:layout_height="wrap_content"
+	        android:orientation="vertical"
+	        android:paddingBottom="20dip">
+	        <TextView 
+	            android:id="@+id/date"
+	            android:layout_width="wrap_content"
+	            android:layout_height="wrap_content"
+	            android:paddingBottom="5dip"
+	            style="@style/EditTextView"/>
+	        <TextView 
+	            android:id="@+id/location"
+	          android:layout_width="fill_parent"
+	          android:layout_height="wrap_content"
+	          android:textColor="#777777"
+	          android:textStyle="italic"
+	          android:textSize="13sp"
+	          style="@style/EditTextView"/>
+	    </LinearLayout>
+	    <TextView android:layout_width="fill_parent"
+	          android:layout_height="wrap_content"
+	          style="@style/EditTextView"
+	          android:text="Type"/>
+	    <Spinner
+		    android:id="@+id/type_spinner"
+		    android:layout_width="fill_parent"
+		    android:layout_height="wrap_content"
+		    android:layout_marginTop="5dip"
+	       	android:layout_marginBottom="20dip" 
+	       	android:entries="@array/types_array"/>
+	    <TextView android:layout_width="fill_parent"
+	          android:layout_height="wrap_content"
+	          style="@style/EditTextView"
+	          android:text="Level"/>
+	    <mil.nga.giat.mage.form.MageEditText 
+	        android:id="@+id/level"
+	        android:layout_width="fill_parent"
+	          android:layout_height="wrap_content"
+	          android:layout_marginTop="5dip"
+	          android:layout_marginBottom="20dip"
+	          mageForm:propertyKey="LEVEL"
+	          android:singleLine="true"/>
+	    <TextView android:layout_width="fill_parent"
+	          android:layout_height="wrap_content"
+	          style="@style/EditTextView"
+	          android:text="Team"/>
+	    <mil.nga.giat.mage.form.MageEditText  
+	        android:id="@+id/team"
+	        mageForm:propertyKey="TEAM"
+	        android:layout_width="fill_parent"
+	          android:layout_height="wrap_content"
+	          android:layout_marginTop="5dip"
+	          android:layout_marginBottom="20dip"
+	          android:singleLine="true"/>
+	    <TextView android:layout_width="fill_parent"
+	          android:layout_height="wrap_content"
+	          style="@style/EditTextView"
+	          android:text="Description"/>
+
+	    <mil.nga.giat.mage.form.MageEditText 
+	        android:id="@+id/description"
+	        mageForm:propertyKey="DESCRIPTION"
+	        android:layout_width="fill_parent"
+	        android:layout_height="wrap_content"
+	        android:layout_marginTop="5dip"
+	        android:hint="Description"
+	        android:minLines="4" />
+	</LinearLayout>
+	        
+    </ScrollView>
+    </LinearLayout>
+
+</RelativeLayout>

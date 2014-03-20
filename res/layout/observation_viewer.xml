@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:map="http://schemas.android.com/apk/res-auto"
+    xmlns:mageForm="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical" >
+
+    <RelativeLayout 
+        android:layout_width="match_parent"
+        android:layout_height="0dip"
+        android:minHeight="100dp"
+        android:layout_weight="1">
+        
+        <fragment
+        android:id="@+id/mini_map"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:name="com.google.android.gms.maps.SupportMapFragment"
+        map:uiZoomControls="false"
+        map:uiZoomGestures="false"
+        map:uiScrollGestures="false"/>
+		<LinearLayout 
+		    android:layout_width="fill_parent"
+		    android:layout_height="fill_parent"
+		    android:background="@drawable/gradient_fade">
+
+		    <TextView
+		        android:id="@+id/username"
+		        android:layout_width="wrap_content"
+		        android:layout_height="wrap_content"
+		        android:text="Nancy Drew"
+		        android:textAppearance="?android:attr/textAppearanceSmall"
+		        android:textColor="#ffffff"/>
+
+		    <TextView
+		        android:id="@+id/location"
+		        android:layout_width="fill_parent"
+		        android:layout_height="wrap_content"
+		        android:gravity="right"
+		        android:textAppearance="?android:attr/textAppearanceSmall"
+		        android:textColor="#ffffff"/>
+
+		</LinearLayout>
+        
+		<HorizontalScrollView 
+		    android:layout_centerHorizontal="true"
+		    android:layout_alignParentBottom="true"
+	        android:layout_width="wrap_content"
+	        android:layout_height="100dp">
+		    <LinearLayout 
+			    android:id="@+id/image_gallery"
+			    android:layout_width="wrap_content" 
+			    android:layout_height="100dp" 
+			    android:orientation="horizontal">
+	        </LinearLayout>
+        </HorizontalScrollView>
+    </RelativeLayout>
+
+    <LinearLayout
+        android:id="@+id/propertyContainer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical" >
+
+        <mil.nga.giat.mage.form.MageTextView
+            android:id="@+id/type"
+            mageForm:propertyKey="TYPE"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:textAppearance="?android:attr/textAppearanceMedium" />
+        <mil.nga.giat.mage.form.MageTextView
+            android:id="@+id/date"
+            mageForm:propertyKey="OBSERVATION_DATE"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="5dp"
+            android:textAppearance="?android:attr/textAppearanceMedium" />
+        <mil.nga.giat.mage.form.MageTextView
+            android:id="@+id/description"
+            mageForm:propertyKey="DESCRIPTION"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="15dp"
+            android:textAppearance="?android:attr/textAppearanceSmall" />
+
+    </LinearLayout>
+    
+
+</LinearLayout>

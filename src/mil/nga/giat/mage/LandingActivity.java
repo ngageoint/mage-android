@@ -1,10 +1,13 @@
-package mil.nga.giat.mage;
+	package mil.nga.giat.mage;
 
 import java.util.Locale;
 
+import mil.nga.giat.mage.map.MapFragment;
+import mil.nga.giat.mage.newsfeed.NewsFeedFragment;
+import mil.nga.giat.mage.observation.ObservationEditActivity;
+import mil.nga.giat.mage.observation.ObservationViewActivity;
 import mil.nga.giat.mage.preferences.PublicPreferencesActivity;
 import mil.nga.giat.mage.sdk.location.LocationService;
-
 import android.app.ActionBar;
 import android.app.FragmentTransaction;
 import android.content.Intent;
@@ -14,15 +17,12 @@ import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
-import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.TextView;
 
 /**
- * FIXME: Currently a mock of what a landing page might look like.
+ * FIXME: Currently a mock of what a landing page might look like. Could be
+ * replaced entirely if need be. Menu options do exist.
  * 
  * @author wiedemannse
  * 
@@ -30,6 +30,8 @@ import android.widget.TextView;
 public class LandingActivity extends FragmentActivity implements ActionBar.TabListener {
 
 	private static final int RESULT_PUBLIC_PREFERENCES = 1;
+	private static final int RESULT_MAP_PREFERENCES = 2;
+
 
 	/**
 	 * The {@link android.support.v4.view.PagerAdapter} that will provide
@@ -49,7 +51,7 @@ public class LandingActivity extends FragmentActivity implements ActionBar.TabLi
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		setContentView(R.layout.activity_main);
+		setContentView(R.layout.activity_landing);
 
 		// Set up the action bar.
 		final ActionBar actionBar = getActionBar();
@@ -70,7 +72,7 @@ public class LandingActivity extends FragmentActivity implements ActionBar.TabLi
 				actionBar.setSelectedNavigationItem(position);
 			}
 		});
-
+		
 		// For each of the sections in the app, add a tab to the action bar.
 		for (int i = 0; i < mSectionsPagerAdapter.getCount(); i++) {
 			// Create a tab with text corresponding to the page title defined by
@@ -79,6 +81,99 @@ public class LandingActivity extends FragmentActivity implements ActionBar.TabLi
 			// this tab is selected.
 			actionBar.addTab(actionBar.newTab().setText(mSectionsPagerAdapter.getPageTitle(i)).setTabListener(this));
 		}
+		
+		// Start location services
+		((MAGE) getApplication()).startLocationService();
+
+		////////////// FIXME: TESTING //////////////
+		
+		//ObservationDatabase obsDatabase = new ObservationDatabase(getApplicationContext());
+		//obsDatabase.onUpgrade(obsDatabase.getWritableDatabase(),1,1);
+		//obsDatabase.onCreate(obsDatabase.getWritableDatabase());
+		
+		try {
+			/*
+			DBHelper helper = new DBHelper(getApplicationContext());
+			Dao<Observation, ?> observationDao = helper.getObservationDao();
+			Dao<State, ?> stateDao = helper.getStateDao();
+			Dao<Geometry, ?> geometryDao = helper.getGeometryDao();
+			Dao<GeometryType, ?> geometryTypeDao = helper.getGeometryTypeDao();
+			Dao<Property, ?> propertyDao = helper.getPropertyDao();
+			Dao<Attachment, ?> attachmentDao = helper.getAttachmentDao();
+			
+			State state = new State("active");
+			stateDao.create(state);			
+			
+			GeometryType geometryType = new GeometryType("POINT");
+			geometryTypeDao.create(geometryType);
+			
+			Geometry geometry = new Geometry("[33.33,44.44]", geometryType);
+			geometryDao.create(geometry);
+			
+			Property prop1 = new Property("HOTDOG_DATE",String.valueOf(new Date().getTime()));
+			Property prop2 = new Property("HAMBUR_DATE",String.valueOf(new Date().getTime()));
+			Collection<Property> properties = new ArrayList<Property>();
+			properties.add(prop1);
+			properties.add(prop2);
+			
+			Attachment attachment1 = new Attachment("png", 12345L, "test.png", "/a/b/c", "d/e/f");
+			Attachment attachment2 = new Attachment("jpg", 12345L, "fame.png", "/g/h/i", "j/k/l");
+			Collection<Attachment> attachments = new ArrayList<Attachment>();
+			attachments.add(attachment1);
+			attachments.add(attachment2);
+			
+			Observation obs = new Observation("123LMNOP",state,geometry,properties,attachments);	
+			
+			Observation o = observationDao.createIfNotExists(obs);
+			prop1.setObservation(o);
+			prop2.setObservation(o);
+			propertyDao.create(prop1);
+			propertyDao.create(prop2);
+			
+			attachment1.setObservation(o);
+			attachment2.setObservation(o);
+			attachmentDao.create(attachment1);
+			attachmentDao.create(attachment2);
+			
+			
+			
+			List<Observation> observations = observationDao.queryForAll();
+			for(Observation observation : observations) {
+				
+				stateDao.refresh(observation.getState());
+				geometryDao.refresh(observation.getGeometry());
+				geometryTypeDao.refresh(observation.getGeometry().getGeometryType());
+				
+				System.out.println("Observation: " + observation.getPk_id() + " " + observation.getRemote_id()); 
+				System.out.println("     State: " + observation.getState().getState());
+				System.out.println("     Geometry: " + observation.getGeometry().getCoordinates());
+				System.out.println("          GeometryType: " + observation.getGeometry().getGeometryType().getType());
+				System.out.println("     Properties: " + observation.getProperties().toArray().length);				
+				for(Property p : observation.getProperties()) {
+					System.out.println("         " + p.getKey() + "," + p.getValue());
+				}
+
+				System.out.println("     Attachments: " + observation.getAttachments().toArray().length);				
+				for(Attachment a : observation.getAttachments()) {
+					System.out.println("         " + a.getName() + "," + a.getSize() + "," + a.getContent_type() + "," + 
+				                       a.getLocal_path() + "," + a.getRemote_path());
+				}								
+				
+			}
+			*/
+			
+		}
+		catch(Exception e) {
+			e.printStackTrace();
+		}
+		
+		
+		
+	}
+
+	@Override
+	protected void onDestroy() {
+		super.onDestroy();
 	}
 
 	@Override
@@ -91,14 +186,27 @@ public class LandingActivity extends FragmentActivity implements ActionBar.TabLi
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
 		switch (item.getItemId()) {
-		case R.id.menu_settings:
-			Intent i = new Intent(this, PublicPreferencesActivity.class);
-			startActivityForResult(i, RESULT_PUBLIC_PREFERENCES);
-			break;
-		case R.id.menu_logout:
-			// TODO : wipe user certs
-			finish();
-			break;
+			case R.id.menu_settings: {
+				Intent i = new Intent(this, PublicPreferencesActivity.class);
+				startActivityForResult(i, RESULT_PUBLIC_PREFERENCES);
+				break;
+			}
+			case R.id.menu_logout: {
+				// TODO : wipe user certs
+				finish();
+				break;
+			}
+			// TODO all of this is not to go here, just for debugging
+			case R.id.observation_view: {
+				Intent o = new Intent(this, ObservationViewActivity.class);
+				startActivityForResult(o, 2);
+				break;
+			}
+		case R.id.observation_new:
+			 Intent intent = new Intent(this, ObservationEditActivity.class);
+//	       	 intent.putExtra("latitude", point.latitude);
+//	       	 intent.putExtra("longitude", point.longitude);
+	       	 startActivity(intent);
 		}
 
 		return super.onOptionsItemSelected(item);
@@ -126,6 +234,9 @@ public class LandingActivity extends FragmentActivity implements ActionBar.TabLi
 		case RESULT_PUBLIC_PREFERENCES:
 			System.out.println(RESULT_PUBLIC_PREFERENCES);
 			break;
+		case RESULT_MAP_PREFERENCES:
+			System.out.println(RESULT_MAP_PREFERENCES);
+			break;
 		}
 	}
 
@@ -141,13 +252,21 @@ public class LandingActivity extends FragmentActivity implements ActionBar.TabLi
 
 		@Override
 		public Fragment getItem(int position) {
-			// getItem is called to instantiate the fragment for the given page.
-			// Return a DummySectionFragment (defined as a static inner class
-			// below) with the page number as its lone argument.
-			Fragment fragment = new DummySectionFragment();
-			Bundle args = new Bundle();
-			args.putInt(DummySectionFragment.ARG_SECTION_NUMBER, position + 1);
-			fragment.setArguments(args);
+			Fragment fragment = null;
+			switch (position) {
+				case 0: {
+					fragment = new MapFragment();
+					break;
+				}
+				case 1: {
+					fragment = new NewsFeedFragment();
+					break;
+				}
+				default: {
+					// TODO not sure what to do here, if anything (fix your code)
+				}
+			}
+			
 			return fragment;
 		}
 
@@ -168,30 +287,4 @@ public class LandingActivity extends FragmentActivity implements ActionBar.TabLi
 			return null;
 		}
 	}
-
-	/**
-	 * A dummy fragment representing a section of the app, but that simply
-	 * displays dummy text.
-	 */
-	public static class DummySectionFragment extends Fragment {
-		/**
-		 * The fragment argument representing the section number for this
-		 * fragment.
-		 */
-		public static final String ARG_SECTION_NUMBER = "section_number";
-
-		public DummySectionFragment() {
-		}
-
-		@Override
-		public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-			View rootView = inflater.inflate(R.layout.fragment_main_dummy, container, false);
-
-			LocationService locationService = new LocationService(container.getContext());
-			TextView dummyTextView = (TextView) rootView.findViewById(R.id.section_label);
-			dummyTextView.setText("Viewing " + Integer.toString(getArguments().getInt(ARG_SECTION_NUMBER)) + " " + locationService.getLocation().getLatitude() + ", " + locationService.getLocation().getLongitude());
-			return rootView;
-		}
-	}
-
 }

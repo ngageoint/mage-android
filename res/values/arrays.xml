@@ -1,59 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+	<string-array name="empty_array"/>
 
-    <string-array name="userFetchFrequencies">
-        <item>15 seconds</item>
-        <item>30 seconds</item>
-        <item>1 minute</item>
-        <item>2 minutes</item>
-        <item>5 minutes</item>
-        <item>10 minutes</item>
-        <item>30 minutes</item>
+    <string-array name="imageUploadSize">
+        <item>Small</item>
+        <item>Medium</item>
+        <item>Large</item>
+        <item>Original</item>
     </string-array>
-    <string-array name="userFetchFrequencyValues">
-        <item>15000</item>
-        <item>30000</item>
-        <item>60000</item>
-        <item>120000</item>
-        <item>300000</item>
-        <item>600000</item>
-        <item>1800000</item>
+    
+    <string-array name="imageUploadSizeValues">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
     </string-array>
-    <string-array name="observationFetchFrequencies">
-        <item>15 seconds</item>
-        <item>30 seconds</item>
-        <item>1 minute</item>
-        <item>2 minutes</item>
-        <item>5 minutes</item>
-        <item>10 minutes</item>
-        <item>30 minutes</item>
+    
+    <string-array name="staticFeatureEntries">
     </string-array>
-    <string-array name="observationFetchFrequencyValues">
-        <item>15000</item>
-        <item>30000</item>
-        <item>60000</item>
-        <item>120000</item>
-        <item>300000</item>
-        <item>600000</item>
-        <item>1800000</item>
-    </string-array>
-    <string-array name="userSyncFrequencies">
-        <item>15 seconds</item>
-        <item>30 seconds</item>
-        <item>1 minute</item>
-        <item>2 minutes</item>
-        <item>5 minutes</item>
-        <item>10 minutes</item>
-        <item>30 minutes</item>
-    </string-array>
-    <string-array name="userSyncFrequencyValues">
-        <item>15000</item>
-        <item>30000</item>
-        <item>60000</item>
-        <item>120000</item>
-        <item>300000</item>
-        <item>600000</item>
-        <item>1800000</item>
+    <string-array name="staticFeatureValues">
     </string-array>
 
 </resources>
