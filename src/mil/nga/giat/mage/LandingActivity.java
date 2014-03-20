@@ -8,6 +8,7 @@ import mil.nga.giat.mage.observation.ObservationEditActivity;
 import mil.nga.giat.mage.observation.ObservationViewActivity;
 import mil.nga.giat.mage.preferences.PublicPreferencesActivity;
 import mil.nga.giat.mage.sdk.location.LocationService;
+import mil.nga.giat.mage.sdk.utils.UserUtility;
 import android.app.ActionBar;
 import android.app.FragmentTransaction;
 import android.content.Intent;
@@ -174,6 +175,7 @@ public class LandingActivity extends FragmentActivity implements ActionBar.TabLi
 	@Override
 	protected void onDestroy() {
 		super.onDestroy();
+		((MAGE) getApplication()).stopLocationService();
 	}
 
 	@Override
@@ -192,7 +194,8 @@ public class LandingActivity extends FragmentActivity implements ActionBar.TabLi
 				break;
 			}
 			case R.id.menu_logout: {
-				// TODO : wipe user certs
+				// TODO : wipe all user certs
+				UserUtility.getInstance(getApplicationContext()).clearTokenInformation();
 				finish();
 				break;
 			}
