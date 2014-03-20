@@ -9,10 +9,12 @@
         android:layout_height="0dip"
         android:minHeight="100dp"
         android:layout_weight="1">
-        <include
-            android:id="@+id/mini_map"
-            layout="@layout/fragment_map" 
-            />
+        
+        <fragment
+        android:id="@+id/mini_map"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:name="com.google.android.gms.maps.SupportMapFragment"/>
 		<LinearLayout 
 		    android:layout_width="fill_parent"
 		    android:layout_height="fill_parent"

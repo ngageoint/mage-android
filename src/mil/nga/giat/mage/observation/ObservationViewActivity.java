@@ -23,7 +23,7 @@ public class ObservationViewActivity extends FragmentActivity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.observation_viewer);
 		try {
-			Observation o = ObservationHelper.getInstance(getApplicationContext()).readObservation(2L);
+			Observation o = ObservationHelper.getInstance(getApplicationContext()).readObservation(3L);
 			System.out.println("Observation is");
 			System.out.println(o.toString());
 			System.out.println("yep");
@@ -35,14 +35,13 @@ public class ObservationViewActivity extends FragmentActivity {
 			System.out.println("split count: " + coordinateSplit.length);
 			System.out.println(coordinateSplit);
 			
-			
-			((TextView)findViewById(R.id.location)).setText(coordinateSplit[0] + ", " + coordinateSplit[1]);
-			GoogleMap map = ((SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map)).getMap();
+			((TextView)findViewById(R.id.location)).setText(coordinateSplit[1] + ", " + coordinateSplit[2]);
+			GoogleMap map = ((SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.mini_map)).getMap();
 			
 			// TODO debugging location
-			LatLng location = new LatLng(Double.parseDouble(coordinateSplit[0]), Double.parseDouble(coordinateSplit[1]));
+			LatLng location = new LatLng(Double.parseDouble(coordinateSplit[1]), Double.parseDouble(coordinateSplit[2]));
 			
-			map.moveCamera(CameraUpdateFactory.newLatLngZoom(location, 15));
+			map.animateCamera(CameraUpdateFactory.newLatLngZoom(location, 15));
 			
 			map.addMarker(new MarkerOptions().position(location));
 			
