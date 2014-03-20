@@ -81,6 +81,9 @@ public class LandingActivity extends FragmentActivity implements ActionBar.TabLi
 			// this tab is selected.
 			actionBar.addTab(actionBar.newTab().setText(mSectionsPagerAdapter.getPageTitle(i)).setTabListener(this));
 		}
+		
+		// Start location services
+		((MAGE) getApplication()).startLocationService();
 
 		////////////// FIXME: TESTING //////////////
 		

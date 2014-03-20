@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:map="http://schemas.android.com/apk/res-auto"
     xmlns:mageForm="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
@@ -7,7 +8,10 @@
         android:id="@+id/background_map"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:name="com.google.android.gms.maps.SupportMapFragment"/>
+        android:name="com.google.android.gms.maps.SupportMapFragment"
+        map:uiZoomControls="false"
+        map:uiZoomGestures="false"
+        map:uiScrollGestures="false"/>
     <LinearLayout android:orientation="vertical"
         android:background="@drawable/semi_see_through_background"
         android:layout_height="fill_parent"
