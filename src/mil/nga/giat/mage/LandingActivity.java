@@ -48,8 +48,6 @@ public class LandingActivity extends FragmentActivity implements ActionBar.TabLi
 	 */
 	ViewPager mViewPager;
 
-	protected LocationService locationService;
-
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -83,13 +81,6 @@ public class LandingActivity extends FragmentActivity implements ActionBar.TabLi
 			// this tab is selected.
 			actionBar.addTab(actionBar.newTab().setText(mSectionsPagerAdapter.getPageTitle(i)).setTabListener(this));
 		}
-
-
-		// Start the location services!
-		if (locationService == null) {
-			locationService = new LocationService(getApplicationContext());
-		}
-		locationService.start();
 
 		////////////// FIXME: TESTING //////////////
 		
