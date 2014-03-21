@@ -32,7 +32,5 @@ public class PublicPreferencesActivity extends PreferenceActivity {
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		getFragmentManager().beginTransaction().replace(android.R.id.content, preference).commit();
-		
-
 	}
 }
