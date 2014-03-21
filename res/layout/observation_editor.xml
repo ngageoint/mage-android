@@ -108,12 +108,14 @@
 	          android:layout_height="wrap_content"
 	          style="@style/EditTextView"
 	          android:text="Type"/>
-	    <Spinner
+	    <mil.nga.giat.mage.form.MageSpinner
 		    android:id="@+id/type_spinner"
 		    android:layout_width="fill_parent"
 		    android:layout_height="wrap_content"
 		    android:layout_marginTop="5dip"
 	       	android:layout_marginBottom="20dip" 
+	       	mageForm:propertyKey="TYPE"
+	       	mageForm:propertyType="multichoice"
 	       	android:entries="@array/types_array"/>
 	    <TextView android:layout_width="fill_parent"
 	          android:layout_height="wrap_content"

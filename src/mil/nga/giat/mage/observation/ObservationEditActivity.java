@@ -11,11 +11,10 @@ import java.util.List;
 import java.util.Map;
 
 import mil.nga.giat.mage.R;
-import mil.nga.giat.mage.form.MageEditText;
+import mil.nga.giat.mage.form.MageSpinner;
 import mil.nga.giat.mage.form.MageTextView;
 import mil.nga.giat.mage.sdk.datastore.common.Geometry;
 import mil.nga.giat.mage.sdk.datastore.common.GeometryType;
-import mil.nga.giat.mage.sdk.datastore.common.Property;
 import mil.nga.giat.mage.sdk.datastore.observation.Attachment;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
@@ -39,7 +38,6 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup.LayoutParams;
-import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Spinner;
@@ -110,11 +108,6 @@ public class ObservationEditActivity extends FragmentActivity {
 		outState.putStringArray("attachmentPaths", attachmentPaths.toArray(new String[attachmentPaths.size()]));
 		LinearLayout form = (LinearLayout) findViewById(R.id.form);
 		savePropertyFieldsToBundle(form, outState);
-//		outState.putString("LEVEL", ((EditText) findViewById(R.id.level)).getText().toString());
-//		outState.putString("TYPE", (String) ((Spinner) findViewById(R.id.type_spinner)).getSelectedItem());
-//		outState.putString("LEVEL", ((EditText) findViewById(R.id.level)).getText().toString());
-//		outState.putString("TEAM", ((EditText) findViewById(R.id.team)).getText().toString());
-//		outState.putString("DESCRIPTION", ((EditText) findViewById(R.id.description)).getText().toString());
 		super.onSaveInstanceState(outState);
 	}
 
@@ -131,6 +124,19 @@ public class ObservationEditActivity extends FragmentActivity {
 			if (v instanceof MageTextView) {
 				String propertyKey = ((MageTextView)v).getPropertyKey();
 				((MageTextView)v).setText(savedInstanceState.getString(propertyKey));
+			} else if (v instanceof MageSpinner) {
+				MageSpinner spinner = (MageSpinner)v;
+				String propertyKey = ((MageSpinner)v).getPropertyKey();
+				String value = savedInstanceState.getString(propertyKey);
+				int index = 0;
+				for (index = 0; index < spinner.getAdapter().getCount(); index++)
+			    {
+			        if (spinner.getAdapter().getItem(index).equals(value))
+			        {
+			            spinner.setSelection(index);
+			            break;
+			        }
+			    }
 			} else if (v instanceof LinearLayout) {
 				populatePropertyFieldsFromSaved((LinearLayout)v, savedInstanceState);
 			}
@@ -143,6 +149,9 @@ public class ObservationEditActivity extends FragmentActivity {
 			if (v instanceof MageTextView) {
 				String propertyKey = ((MageTextView)v).getPropertyKey();
 				outState.putString(propertyKey, ((MageTextView)v).getText().toString());
+			} else if (v instanceof MageSpinner) {
+				String propertyKey = ((MageSpinner)v).getPropertyKey();
+				outState.putString(propertyKey, (String) ((MageSpinner)v).getSelectedItem());
 			} else if (v instanceof LinearLayout) {
 				savePropertyFieldsToBundle((LinearLayout)v, outState);
 			}
@@ -155,6 +164,9 @@ public class ObservationEditActivity extends FragmentActivity {
 			if (v instanceof MageTextView) {
 				String propertyKey = ((MageTextView)v).getPropertyKey();
 				fields.put(propertyKey, ((MageTextView)v).getText().toString());
+			} else if (v instanceof MageSpinner) {
+				String propertyKey = ((MageSpinner)v).getPropertyKey();
+				fields.put(propertyKey, (String) ((MageSpinner)v).getSelectedItem());
 			} else if (v instanceof LinearLayout) {
 				savePropertyFieldsToMap((LinearLayout)v, fields);
 			}
@@ -180,14 +192,6 @@ public class ObservationEditActivity extends FragmentActivity {
 			propertyMap.put("OBSERVATION_DATE", String.valueOf(date.getTime()));
 			
 			observation.setPropertiesMap(propertyMap);
-
-//			Collection<Property> properties = new ArrayList<Property>();
-//			properties.add(new Property("OBSERVATION_DATE", String.valueOf(date.getTime())));
-//			properties.add(new Property("TYPE", (String) ((Spinner) findViewById(R.id.type_spinner)).getSelectedItem()));
-//			properties.add(new Property("LEVEL", ((EditText) findViewById(R.id.level)).getText().toString()));
-//			properties.add(new Property("TEAM", ((EditText) findViewById(R.id.team)).getText().toString()));
-//			properties.add(new Property("DESCRIPTION", ((EditText) findViewById(R.id.description)).getText().toString()));
-//			observation.setProperties(properties);
 
 			Collection<Attachment> attachments = new ArrayList<Attachment>();
 			for (String path : attachmentPaths) {
