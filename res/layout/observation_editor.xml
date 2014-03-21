@@ -8,10 +8,10 @@
         android:id="@+id/background_map"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:name="com.google.android.gms.maps.SupportMapFragment"
-        map:uiZoomControls="false"
+        android:name="com.google.android.gms.maps.SupportMapFragment"/>
+        <!-- map:uiZoomControls="false"
         map:uiZoomGestures="false"
-        map:uiScrollGestures="false"/>
+        map:uiScrollGestures="false"/> -->
     <LinearLayout android:orientation="vertical"
         android:background="@drawable/semi_see_through_background"
         android:layout_height="fill_parent"

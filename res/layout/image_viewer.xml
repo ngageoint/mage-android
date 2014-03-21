@@ -25,6 +25,7 @@
         style="@android:style/Widget.Holo.ActionBar"
         android:orientation="horizontal">
         <Button android:text="Remove"
+            android:id="@+id/remove_btn"
             android:onClick="removeImage"
             android:layout_height="match_parent"
             android:layout_width="fill_parent"

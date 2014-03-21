@@ -22,5 +22,11 @@
         <item name="android:textColor">#372c24</item>
         <item name="android:textStyle">bold</item>
     </style>
+    
+    <style name="ViewTextView" parent="@android:style/TextAppearance.Small">
+        
+        <item name="android:textColor">#999999</item>
+        <item name="android:textStyle">bold</item>
+    </style>
 
 </resources>

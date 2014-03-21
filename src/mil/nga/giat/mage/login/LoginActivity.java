@@ -10,6 +10,7 @@ import mil.nga.giat.mage.sdk.login.AccountDelegate;
 import mil.nga.giat.mage.sdk.login.AccountStatus;
 import mil.nga.giat.mage.sdk.login.LoginTaskFactory;
 import mil.nga.giat.mage.sdk.preferences.PreferenceColonization;
+import mil.nga.giat.mage.sdk.utils.UserUtility;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -82,8 +83,13 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 		getUsernameEditText().setSelection(getUsernameEditText().getText().length());
 		getServerEditText().setText(sharedPreferences.getString("serverURL", ""));
 		getServerEditText().setSelection(getServerEditText().getText().length());
+
+		// if token is not expired, then skip the login module
+		if (!UserUtility.getInstance(getApplicationContext()).isTokenExpired()) {
+			startActivity(new Intent(getApplicationContext(), LandingActivity.class));
+		}
 	}
-	
+
 	public void togglePassword(View v) {
 		CheckBox c = (CheckBox)v;
 		EditText pw = (EditText)findViewById(R.id.login_password);
@@ -204,8 +210,7 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 //			sp.putString("password", getPasswordEditText().getText().toString());
 			sp.putString("serverURL", getServerEditText().getText().toString());
 			sp.commit();
-			Intent intent = new Intent(getApplicationContext(), LandingActivity.class);
-			startActivity(intent);
+			startActivity(new Intent(getApplicationContext(), LandingActivity.class));
 		} else {
 			if (accountStatus.getErrorIndices().isEmpty()) {
 				getUsernameEditText().setError("Check your username");

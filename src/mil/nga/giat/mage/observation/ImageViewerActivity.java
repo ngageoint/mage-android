@@ -3,8 +3,6 @@ package mil.nga.giat.mage.observation;
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.observation.RemoveAttachmentDialogFragment.RemoveAttachmentDialogListener;
 import mil.nga.giat.mage.sdk.utils.MediaUtils;
-import android.app.Activity;
-import android.support.v4.app.DialogFragment;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -14,6 +12,7 @@ import android.media.ThumbnailUtils;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.support.v4.app.DialogFragment;
 import android.support.v4.app.FragmentActivity;
 import android.util.Log;
 import android.view.Display;
@@ -21,6 +20,8 @@ import android.view.View;
 import android.widget.ImageView;
 
 public class ImageViewerActivity extends FragmentActivity implements RemoveAttachmentDialogListener {
+	
+	public static String EDITABLE = "EDITABLE";
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -32,6 +33,10 @@ public class ImageViewerActivity extends FragmentActivity implements RemoveAttac
 		Intent intent = getIntent();
 		final Uri imageUri = intent.getData();
 		ImageView iv = (ImageView)findViewById(R.id.image);
+		
+		if (!intent.getBooleanExtra(EDITABLE, false)) {
+			findViewById(R.id.remove_btn).setVisibility(View.GONE);
+		}
 		
 		Bitmap thumb = null;
 		

@@ -7,9 +7,11 @@ import mil.nga.giat.mage.newsfeed.NewsFeedFragment;
 import mil.nga.giat.mage.observation.ObservationEditActivity;
 import mil.nga.giat.mage.observation.ObservationViewActivity;
 import mil.nga.giat.mage.preferences.PublicPreferencesActivity;
+import mil.nga.giat.mage.sdk.utils.UserUtility;
 import android.app.ActionBar;
 import android.app.FragmentTransaction;
 import android.content.Intent;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
@@ -18,6 +20,9 @@ import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.view.Menu;
 import android.view.MenuItem;
+
+import com.nga.giat.mage.sdk.serverfetch.ObservationServerFetchAsyncTask;
+import com.nga.giat.mage.sdk.serverfetch.UserServerFetchAsyncTask;
 
 /**
  * FIXME: Currently a mock of what a landing page might look like. Could be
@@ -84,90 +89,15 @@ public class LandingActivity extends FragmentActivity implements ActionBar.TabLi
 		// Start location services
 		((MAGE) getApplication()).startLocationService();
 
-		////////////// FIXME: TESTING //////////////
 		
-		//ObservationDatabase obsDatabase = new ObservationDatabase(getApplicationContext());
-		//obsDatabase.onUpgrade(obsDatabase.getWritableDatabase(),1,1);
-		//obsDatabase.onCreate(obsDatabase.getWritableDatabase());
+		//start user sync
+		UserServerFetchAsyncTask userTask = new UserServerFetchAsyncTask(getApplicationContext());
+		userTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, "");
 		
-		try {
-			/*
-			DBHelper helper = new DBHelper(getApplicationContext());
-			Dao<Observation, ?> observationDao = helper.getObservationDao();
-			Dao<State, ?> stateDao = helper.getStateDao();
-			Dao<Geometry, ?> geometryDao = helper.getGeometryDao();
-			Dao<GeometryType, ?> geometryTypeDao = helper.getGeometryTypeDao();
-			Dao<Property, ?> propertyDao = helper.getPropertyDao();
-			Dao<Attachment, ?> attachmentDao = helper.getAttachmentDao();
-			
-			State state = new State("active");
-			stateDao.create(state);			
-			
-			GeometryType geometryType = new GeometryType("POINT");
-			geometryTypeDao.create(geometryType);
-			
-			Geometry geometry = new Geometry("[33.33,44.44]", geometryType);
-			geometryDao.create(geometry);
-			
-			Property prop1 = new Property("HOTDOG_DATE",String.valueOf(new Date().getTime()));
-			Property prop2 = new Property("HAMBUR_DATE",String.valueOf(new Date().getTime()));
-			Collection<Property> properties = new ArrayList<Property>();
-			properties.add(prop1);
-			properties.add(prop2);
-			
-			Attachment attachment1 = new Attachment("png", 12345L, "test.png", "/a/b/c", "d/e/f");
-			Attachment attachment2 = new Attachment("jpg", 12345L, "fame.png", "/g/h/i", "j/k/l");
-			Collection<Attachment> attachments = new ArrayList<Attachment>();
-			attachments.add(attachment1);
-			attachments.add(attachment2);
-			
-			Observation obs = new Observation("123LMNOP",state,geometry,properties,attachments);	
-			
-			Observation o = observationDao.createIfNotExists(obs);
-			prop1.setObservation(o);
-			prop2.setObservation(o);
-			propertyDao.create(prop1);
-			propertyDao.create(prop2);
-			
-			attachment1.setObservation(o);
-			attachment2.setObservation(o);
-			attachmentDao.create(attachment1);
-			attachmentDao.create(attachment2);
-			
-			
-			
-			List<Observation> observations = observationDao.queryForAll();
-			for(Observation observation : observations) {
-				
-				stateDao.refresh(observation.getState());
-				geometryDao.refresh(observation.getGeometry());
-				geometryTypeDao.refresh(observation.getGeometry().getGeometryType());
-				
-				System.out.println("Observation: " + observation.getPk_id() + " " + observation.getRemote_id()); 
-				System.out.println("     State: " + observation.getState().getState());
-				System.out.println("     Geometry: " + observation.getGeometry().getCoordinates());
-				System.out.println("          GeometryType: " + observation.getGeometry().getGeometryType().getType());
-				System.out.println("     Properties: " + observation.getProperties().toArray().length);				
-				for(Property p : observation.getProperties()) {
-					System.out.println("         " + p.getKey() + "," + p.getValue());
-				}
-
-				System.out.println("     Attachments: " + observation.getAttachments().toArray().length);				
-				for(Attachment a : observation.getAttachments()) {
-					System.out.println("         " + a.getName() + "," + a.getSize() + "," + a.getContent_type() + "," + 
-				                       a.getLocal_path() + "," + a.getRemote_path());
-				}								
-				
-			}
-			*/
-			
-		}
-		catch(Exception e) {
-			e.printStackTrace();
-		}
-		
-		
-		
+		//start observation sync
+		ObservationServerFetchAsyncTask observationTask = new ObservationServerFetchAsyncTask(getApplicationContext());
+		observationTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, "");
+	
 	}
 
 	@Override
@@ -192,13 +122,15 @@ public class LandingActivity extends FragmentActivity implements ActionBar.TabLi
 				break;
 			}
 			case R.id.menu_logout: {
-				// TODO : wipe user certs, reall just wipe out the token from shared preferences
+				// TODO : wipe user certs, really just wipe out the token from shared preferences
+				UserUtility.getInstance(getApplicationContext()).clearTokenInformation();
 				finish();
 				break;
 			}
 			// TODO all of this is not to go here, just for debugging
 			case R.id.observation_view: {
 				Intent o = new Intent(this, ObservationViewActivity.class);
+				o.putExtra(ObservationViewActivity.OBSERVATION_ID, 1L);
 				startActivityForResult(o, 2);
 				break;
 			}
