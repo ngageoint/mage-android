@@ -9,7 +9,7 @@ import mil.nga.giat.mage.disclaimer.DisclaimerActivity;
 import mil.nga.giat.mage.sdk.login.AccountDelegate;
 import mil.nga.giat.mage.sdk.login.AccountStatus;
 import mil.nga.giat.mage.sdk.login.LoginTaskFactory;
-import mil.nga.giat.mage.sdk.preferences.PreferenceColonization;
+import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
 import mil.nga.giat.mage.sdk.utils.UserUtility;
 import android.app.Activity;
 import android.content.Intent;
@@ -60,11 +60,10 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 		super.onCreate(savedInstanceState);
 		
 		// IMPORTANT: load the configuration from preferences files and server
-		PreferenceColonization.getInstance(getApplicationContext()).initializeAll(new int[]{R.xml.privatepreferences, R.xml.publicpreferences});
+		PreferenceHelper.getInstance(getApplicationContext()).initializeAll(new int[]{R.xml.privatepreferences, R.xml.publicpreferences});
 		
 		// show the disclaimer?
-		SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-		if (Boolean.parseBoolean(sharedPreferences.getString("showDisclaimer", Boolean.TRUE.toString()))) {
+		if (PreferenceHelper.getInstance(getApplicationContext()).getValue(R.string.showDisclaimerKey, Boolean.class, Boolean.TRUE)) {
 			Intent intent = new Intent(this, DisclaimerActivity.class);
 			startActivity(intent);
 		}
@@ -79,6 +78,7 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 		mServerEditText = (EditText) findViewById(R.id.login_server);
 
 		// set the default values
+		SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
 		getUsernameEditText().setText(sharedPreferences.getString("username", ""));
 		getUsernameEditText().setSelection(getUsernameEditText().getText().length());
 		getServerEditText().setText(sharedPreferences.getString("serverURL", ""));
