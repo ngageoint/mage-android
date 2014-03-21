@@ -7,7 +7,6 @@ import mil.nga.giat.mage.newsfeed.NewsFeedFragment;
 import mil.nga.giat.mage.observation.ObservationEditActivity;
 import mil.nga.giat.mage.observation.ObservationViewActivity;
 import mil.nga.giat.mage.preferences.PublicPreferencesActivity;
-import mil.nga.giat.mage.sdk.location.LocationService;
 import android.app.ActionBar;
 import android.app.FragmentTransaction;
 import android.content.Intent;
@@ -193,7 +192,7 @@ public class LandingActivity extends FragmentActivity implements ActionBar.TabLi
 				break;
 			}
 			case R.id.menu_logout: {
-				// TODO : wipe user certs
+				// TODO : wipe user certs, reall just wipe out the token from shared preferences
 				finish();
 				break;
 			}
