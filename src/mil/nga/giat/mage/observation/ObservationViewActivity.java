@@ -1,6 +1,7 @@
 package mil.nga.giat.mage.observation;
 
 import java.io.File;
+import java.util.Date;
 import java.util.Map;
 
 import mil.nga.giat.mage.R;
@@ -8,6 +9,7 @@ import mil.nga.giat.mage.form.MageTextView;
 import mil.nga.giat.mage.sdk.datastore.observation.Attachment;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
+import mil.nga.giat.mage.sdk.utils.GeometryUtil;
 import mil.nga.giat.mage.sdk.utils.MediaUtils;
 import android.content.Intent;
 import android.content.res.Resources;
@@ -135,8 +137,26 @@ public class ObservationViewActivity extends FragmentActivity {
 		for (int i = 0; i < ll.getChildCount(); i++) {
 			View v = ll.getChildAt(i);
 			if (v instanceof MageTextView) {
-				String propertyKey = ((MageTextView)v).getPropertyKey();
-				((MageTextView)v).setText(propertiesMap.get(propertyKey));
+				MageTextView m = (MageTextView)v;
+				String propertyKey = m.getPropertyKey();
+				switch(m.getPropertyType()) {
+				case STRING:
+				case MULTILINE:
+					m.setText(propertiesMap.get(propertyKey));
+					break;
+				case USER:
+					
+					break;
+				case DATE:
+					m.setText(new Date(Long.parseLong(propertiesMap.get(propertyKey))).toString());
+					break;
+				case LOCATION:
+					
+					break;
+				case MULTICHOICE:
+					
+					break;
+				}
 			} else if (v instanceof LinearLayout) {
 				populatePropertyFields((LinearLayout)v);
 			}

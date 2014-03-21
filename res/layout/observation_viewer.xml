@@ -106,6 +106,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:textAppearance="?android:attr/textAppearanceMedium"
+                    mageForm:propertyType="string"
                     mageForm:propertyKey="TYPE" />
             </LinearLayout>
             
@@ -127,6 +128,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:textAppearance="?android:attr/textAppearanceMedium"
+                    mageForm:propertyType="string"
                     mageForm:propertyKey="LEVEL" />
             </LinearLayout>
 
@@ -148,6 +150,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:textAppearance="?android:attr/textAppearanceMedium"
+                    mageForm:propertyType="date"
                     mageForm:propertyKey="OBSERVATION_DATE" />
             </LinearLayout>
 
@@ -165,7 +168,7 @@
                 android:layout_marginTop="3dp"
                 android:background="@drawable/multi_line_text_view_gradient"
                 android:padding="5dp"
-                android:text="The Dialog class is the base class for dialogs, but you should avoid instantiating Dialog directly. Instead, use one of the following subclasses:AlertDialogA dialog that can show a title, up to three buttons, a list of selectable items, or a custom layout.DatePickerDialog or TimePickerDialogA dialog with a pre-defined UI that allows the user to select a date or time.Avoid ProgressDialogAndroid includes another dialog class called ProgressDialog that shows a dialog with a progress bar. However, if you need to indicate loading or indeterminate progress, you should instead follow the design guidelines for Progress  Activity and use a ProgressBar in your layoutThese classes define the style and structure for your dialog, but you should use a DialogFragment as a container for your dialog. The DialogFragment class provides all the controls you need to create your dialog and manage its appearance, instead of calling methods on the Dialog object.Using DialogFragment to manage the dialog ensures that it correctly handles lifecycle events such as when the user presses the Back button or rotates the screen. The DialogFragment class also allows you to reuse the dialog&apos;s UI as an embeddable component in a larger UI, just like a traditional Fragment (such as when you want the dialog UI to appear differently on large and small screens).The following sections in this guide describe how to use a DialogFragment in combination with an AlertDialog object. If you&apos;d like to create a date or time picker, you should instead read the Pickers guide.Note: Because the DialogFragment class was originally added with Android 3.0 (API level 11), this document describes how to use the DialogFragment class that&apos;s provided with the Support Library. By adding this library to your app, you can use DialogFragment and a variety of other APIs on devices running Android 1.6 or higher. If the minimum version your app supports is API level 11 or higher, then you can use the framework version of DialogFragment, but be aware that the links in this document are for the support library APIs. When using the support library, be sure that you import android.support.v4.app.DialogFragment class and not android.app.DialogFragment."
+                mageForm:propertyType="multiline"
                 android:textAppearance="?android:attr/textAppearanceSmall"
                 mageForm:propertyKey="DESCRIPTION" />
         </LinearLayout>

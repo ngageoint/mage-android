@@ -2,5 +2,13 @@
 <resources>
 	<declare-styleable name="MageFormElement">
 		<attr name="propertyKey" format="string"/>
+		<attr name="propertyType" format="enum">
+	        <enum name="string" value="0"/>
+	        <enum name="date" value="1"/>
+	        <enum name="multiline" value="2"/>
+	        <enum name="multichoice" value="3"/>
+	        <enum name="user" value="4"/>
+	        <enum name="location" value="5"/>
+		</attr>
 	</declare-styleable>
 </resources>

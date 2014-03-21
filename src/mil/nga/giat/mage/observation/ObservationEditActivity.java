@@ -6,10 +6,13 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.form.MageEditText;
+import mil.nga.giat.mage.form.MageTextView;
 import mil.nga.giat.mage.sdk.datastore.common.Geometry;
 import mil.nga.giat.mage.sdk.datastore.common.GeometryType;
 import mil.nga.giat.mage.sdk.datastore.common.Property;
@@ -97,13 +100,7 @@ public class ObservationEditActivity extends FragmentActivity {
 		}
 
 		LinearLayout form = (LinearLayout) findViewById(R.id.form);
-		for (int i = 0; i < form.getChildCount(); i++) {
-			View v = form.getChildAt(i);
-			if (v instanceof MageEditText) {
-				MageEditText text = (MageEditText) v;
-				text.setText(savedInstanceState.getString(text.getPropertyKey()));
-			}
-		}
+		populatePropertyFieldsFromSaved(form, savedInstanceState);
 	}
 
 	@Override
@@ -111,11 +108,13 @@ public class ObservationEditActivity extends FragmentActivity {
 		outState.putDouble("lat", lat);
 		outState.putDouble("lon", lon);
 		outState.putStringArray("attachmentPaths", attachmentPaths.toArray(new String[attachmentPaths.size()]));
-		outState.putString("LEVEL", ((EditText) findViewById(R.id.level)).getText().toString());
-		outState.putString("TYPE", (String) ((Spinner) findViewById(R.id.type_spinner)).getSelectedItem());
-		outState.putString("LEVEL", ((EditText) findViewById(R.id.level)).getText().toString());
-		outState.putString("TEAM", ((EditText) findViewById(R.id.team)).getText().toString());
-		outState.putString("DESCRIPTION", ((EditText) findViewById(R.id.description)).getText().toString());
+		LinearLayout form = (LinearLayout) findViewById(R.id.form);
+		savePropertyFieldsToBundle(form, outState);
+//		outState.putString("LEVEL", ((EditText) findViewById(R.id.level)).getText().toString());
+//		outState.putString("TYPE", (String) ((Spinner) findViewById(R.id.type_spinner)).getSelectedItem());
+//		outState.putString("LEVEL", ((EditText) findViewById(R.id.level)).getText().toString());
+//		outState.putString("TEAM", ((EditText) findViewById(R.id.team)).getText().toString());
+//		outState.putString("DESCRIPTION", ((EditText) findViewById(R.id.description)).getText().toString());
 		super.onSaveInstanceState(outState);
 	}
 
@@ -124,6 +123,42 @@ public class ObservationEditActivity extends FragmentActivity {
 		// Inflate the menu; this adds items to the action bar if it is present.
 		getMenuInflater().inflate(R.menu.observation_edit_menu, menu);
 		return true;
+	}
+	
+	private void populatePropertyFieldsFromSaved(LinearLayout ll, Bundle savedInstanceState) {
+		for (int i = 0; i < ll.getChildCount(); i++) {
+			View v = ll.getChildAt(i);
+			if (v instanceof MageTextView) {
+				String propertyKey = ((MageTextView)v).getPropertyKey();
+				((MageTextView)v).setText(savedInstanceState.getString(propertyKey));
+			} else if (v instanceof LinearLayout) {
+				populatePropertyFieldsFromSaved((LinearLayout)v, savedInstanceState);
+			}
+		}
+	}
+	
+	private void savePropertyFieldsToBundle(LinearLayout ll, Bundle outState) {
+		for (int i = 0; i < ll.getChildCount(); i++) {
+			View v = ll.getChildAt(i);
+			if (v instanceof MageTextView) {
+				String propertyKey = ((MageTextView)v).getPropertyKey();
+				outState.putString(propertyKey, ((MageTextView)v).getText().toString());
+			} else if (v instanceof LinearLayout) {
+				savePropertyFieldsToBundle((LinearLayout)v, outState);
+			}
+		}
+	}
+	
+	private void savePropertyFieldsToMap(LinearLayout ll, Map<String, String> fields) {
+		for (int i = 0; i < ll.getChildCount(); i++) {
+			View v = ll.getChildAt(i);
+			if (v instanceof MageTextView) {
+				String propertyKey = ((MageTextView)v).getPropertyKey();
+				fields.put(propertyKey, ((MageTextView)v).getText().toString());
+			} else if (v instanceof LinearLayout) {
+				savePropertyFieldsToMap((LinearLayout)v, fields);
+			}
+		}
 	}
 
 	@Override
@@ -137,16 +172,23 @@ public class ObservationEditActivity extends FragmentActivity {
 			Observation observation = new Observation();
 			observation.setState(new State("active"));
 			observation.setGeometry(new Geometry("[" + lat + "," + lon + "]", new GeometryType("point")));
+			
+			Map<String, String> propertyMap = new HashMap<String, String>();
+			LinearLayout form = (LinearLayout) findViewById(R.id.form);
+			savePropertyFieldsToMap(form, propertyMap);
+			propertyMap.put("TYPE", (String) ((Spinner) findViewById(R.id.type_spinner)).getSelectedItem());
+			propertyMap.put("OBSERVATION_DATE", String.valueOf(date.getTime()));
+			
+			observation.setPropertiesMap(propertyMap);
 
-			Collection<Property> properties = new ArrayList<Property>();
-			properties.add(new Property("OBSERVATION_DATE", String.valueOf(date.getTime())));
-			properties.add(new Property("TYPE", (String) ((Spinner) findViewById(R.id.type_spinner)).getSelectedItem()));
-			properties.add(new Property("LEVEL", ((EditText) findViewById(R.id.level)).getText().toString()));
-			properties.add(new Property("TEAM", ((EditText) findViewById(R.id.team)).getText().toString()));
-			properties.add(new Property("DESCRIPTION", ((EditText) findViewById(R.id.description)).getText().toString()));
-			observation.setProperties(properties);
+//			Collection<Property> properties = new ArrayList<Property>();
+//			properties.add(new Property("OBSERVATION_DATE", String.valueOf(date.getTime())));
+//			properties.add(new Property("TYPE", (String) ((Spinner) findViewById(R.id.type_spinner)).getSelectedItem()));
+//			properties.add(new Property("LEVEL", ((EditText) findViewById(R.id.level)).getText().toString()));
+//			properties.add(new Property("TEAM", ((EditText) findViewById(R.id.team)).getText().toString()));
+//			properties.add(new Property("DESCRIPTION", ((EditText) findViewById(R.id.description)).getText().toString()));
+//			observation.setProperties(properties);
 
-			observation.setProperties(properties);
 			Collection<Attachment> attachments = new ArrayList<Attachment>();
 			for (String path : attachmentPaths) {
 				Attachment a = new Attachment();
