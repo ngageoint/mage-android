@@ -21,7 +21,6 @@ public class DisclaimerActivity extends FragmentActivity {
 	public void agree(View view) {
 		Editor editor = PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).edit();
 		editor.putString("showDisclaimer", Boolean.FALSE.toString()).commit();
-		finish();
 	}
 
 	public void exit(View view) {

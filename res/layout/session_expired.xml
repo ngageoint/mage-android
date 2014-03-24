@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:background="@android:color/holo_red_light"
+    android:orientation="horizontal"
+    android:gravity="center_horizontal"
+    android:paddingRight="3dp"
+    android:paddingLeft="3dp" >
+
+    <Button
+     android:layout_height="wrap_content"
+     android:layout_width="wrap_content"
+     android:text="Your token has expired.  Please click to log in."
+     style="?android:attr/borderlessButtonStyle"
+     android:id="@+id/session_btn"/>
+
+</LinearLayout>

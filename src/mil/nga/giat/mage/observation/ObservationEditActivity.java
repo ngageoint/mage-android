@@ -103,7 +103,8 @@ public class ObservationEditActivity extends FragmentActivity {
 				Geometry geo = o.getObservationGeometry().getGeometry();
 				if(geo instanceof PointGeometry) {
 					PointGeometry point = (PointGeometry)geo;
-					
+					lat = point.getLatitude();
+					lon = point.getLongitude();
 					((TextView)findViewById(R.id.location)).setText(point.getLatitude() + ", " + point.getLongitude());
 					GoogleMap map = ((SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.mini_map)).getMap();
 					
@@ -225,10 +226,12 @@ public class ObservationEditActivity extends FragmentActivity {
 
 		case R.id.observation_save:
 			System.out.println("SAVE");
-
-			Observation observation = new Observation();
-			observation.setState(State.ACTIVE);
-			observation.setObservationGeometry(new ObservationGeometry(new PointGeometry(lat, lon)));
+			
+			if (o == null) {
+				o = new Observation();
+			}
+			o.setState(State.ACTIVE);
+			o.setObservationGeometry(new ObservationGeometry(new PointGeometry(lat, lon)));
 			
 			Map<String, String> propertyMap = new HashMap<String, String>();
 			LinearLayout form = (LinearLayout) findViewById(R.id.form);
@@ -236,7 +239,7 @@ public class ObservationEditActivity extends FragmentActivity {
 			propertyMap.put("TYPE", (String) ((Spinner) findViewById(R.id.type_spinner)).getSelectedItem());
 			propertyMap.put("OBSERVATION_DATE", String.valueOf(date.getTime()));
 			
-			observation.setPropertiesMap(propertyMap);
+			o.setPropertiesMap(propertyMap);
 
 			Collection<Attachment> attachments = new ArrayList<Attachment>();
 			for (String path : attachmentPaths) {
@@ -244,11 +247,11 @@ public class ObservationEditActivity extends FragmentActivity {
 				a.setLocal_path(path);
 				attachments.add(a);
 			}
-			observation.setAttachments(attachments);
+			o.setAttachments(attachments);
 
 			ObservationHelper oh = ObservationHelper.getInstance(getApplicationContext());
 			try {
-				Observation newObs = oh.createObservation(observation);
+				Observation newObs = oh.createObservation(o);
 				System.out.println(newObs);
 			} catch (Exception e) {
 
