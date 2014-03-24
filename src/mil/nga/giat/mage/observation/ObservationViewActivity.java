@@ -9,7 +9,6 @@ import mil.nga.giat.mage.form.MageTextView;
 import mil.nga.giat.mage.sdk.datastore.observation.Attachment;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
-import mil.nga.giat.mage.sdk.utils.GeometryUtil;
 import mil.nga.giat.mage.sdk.utils.MediaUtils;
 import android.content.Intent;
 import android.content.res.Resources;

@@ -43,14 +43,16 @@ public class ImageViewerActivity extends FragmentActivity implements RemoveAttac
 		String absPath = MediaUtils.getFileAbsolutePath(imageUri, getApplicationContext());
 
     	if (absPath.endsWith(".mp4")) {
-    		
+    		Log.d("viewer", "abs path is: " + absPath + " uri is: " + imageUri);
     		thumb = ThumbnailUtils.createVideoThumbnail(absPath, MediaStore.Video.Thumbnails.FULL_SCREEN_KIND);
     		
     		iv.setOnClickListener(new View.OnClickListener() {
 				
 				@Override
 				public void onClick(View v) {
-					Intent intent = new Intent(Intent.ACTION_VIEW, imageUri);
+					Log.d("viewer", "launching viewer for " + imageUri);
+					Intent intent = new Intent(Intent.ACTION_VIEW);
+					intent.setDataAndType(imageUri, "video/*");
 					startActivity(intent);
 				}
 			});
@@ -61,7 +63,8 @@ public class ImageViewerActivity extends FragmentActivity implements RemoveAttac
 				
 				@Override
 				public void onClick(View v) {
-					Intent intent = new Intent(Intent.ACTION_VIEW, imageUri);
+					Intent intent = new Intent(Intent.ACTION_VIEW);
+					intent.setDataAndType(imageUri, "audio/*");
 					startActivity(intent);
 				}
 			});
@@ -76,7 +79,15 @@ public class ImageViewerActivity extends FragmentActivity implements RemoveAttac
 				
 			}
 			findViewById(R.id.video_overlay_image).setVisibility(View.GONE);
-			
+			iv.setOnClickListener(new View.OnClickListener() {
+				
+				@Override
+				public void onClick(View v) {
+					Intent intent = new Intent(Intent.ACTION_VIEW);
+					intent.setDataAndType(imageUri, "image/*");
+					startActivity(intent);
+				}
+			});
     	}
     	
     	try {
