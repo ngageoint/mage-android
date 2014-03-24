@@ -10,9 +10,6 @@
 bin/
 gen/
 
-# Production key
-res/values/manifest.xml
-
 # generic files to ignore
 *~
 *.lock
