@@ -2,7 +2,7 @@ package mil.nga.giat.mage.observation;
 
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.observation.RemoveAttachmentDialogFragment.RemoveAttachmentDialogListener;
-import mil.nga.giat.mage.sdk.utils.MediaUtils;
+import mil.nga.giat.mage.sdk.utils.MediaUtility;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -40,7 +40,7 @@ public class ImageViewerActivity extends FragmentActivity implements RemoveAttac
 		
 		Bitmap thumb = null;
 		
-		String absPath = MediaUtils.getFileAbsolutePath(imageUri, getApplicationContext());
+		String absPath = MediaUtility.getFileAbsolutePath(imageUri, getApplicationContext());
 
     	if (absPath.endsWith(".mp4")) {
     		Log.d("viewer", "abs path is: " + absPath + " uri is: " + imageUri);
@@ -74,7 +74,7 @@ public class ImageViewerActivity extends FragmentActivity implements RemoveAttac
 			display.getSize(size);
 			int height = size.y;
 			try {
-				thumb = MediaUtils.getThumbnailFromContent(imageUri, height, getApplicationContext());
+				thumb = MediaUtility.getThumbnailFromContent(imageUri, height, getApplicationContext());
 			} catch (Exception e) {
 				
 			}

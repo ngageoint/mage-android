@@ -6,10 +6,10 @@ import android.os.Bundle;
 import android.preference.PreferenceActivity;
 
 /**
- * Provides configuration driven settings that are available to the user. Check
- * publicpreferences.xml for the configuration.
+ * Provides map configuration driven settings that are available to the user.
+ * Check mappreferences.xml for the configuration.
  * 
- * @author wiedemannse
+ * @author newmanw
  * 
  */
 public class MapPreferencesActivity extends PreferenceActivity {
@@ -21,14 +21,14 @@ public class MapPreferencesActivity extends PreferenceActivity {
 		@Override
 		public void onCreate(final Bundle savedInstanceState) {
 			super.onCreate(savedInstanceState);
-			addPreferencesFromResource(R.xml.map_preferences);
-			
+			addPreferencesFromResource(R.xml.mappreferences);
+
 			for (int i = 0; i < getPreferenceScreen().getPreferenceCount(); i++) {
-				setSummary(getPreferenceScreen().getPreference(i));			
+				setSummary(getPreferenceScreen().getPreference(i));
 			}
 		}
 	}
-	
+
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);

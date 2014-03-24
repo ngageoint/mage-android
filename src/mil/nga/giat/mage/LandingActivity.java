@@ -35,7 +35,6 @@ public class LandingActivity extends FragmentActivity implements ActionBar.TabLi
 	private static final int RESULT_PUBLIC_PREFERENCES = 1;
 	private static final int RESULT_MAP_PREFERENCES = 2;
 
-
 	/**
 	 * The {@link android.support.v4.view.PagerAdapter} that will provide
 	 * fragments for each of the sections. We use a
@@ -91,11 +90,11 @@ public class LandingActivity extends FragmentActivity implements ActionBar.TabLi
 		
 		//start user sync
 		UserServerFetchAsyncTask userTask = new UserServerFetchAsyncTask(getApplicationContext());
-		userTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, "");
+		userTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
 		
 		//start observation sync
 		ObservationServerFetchAsyncTask observationTask = new ObservationServerFetchAsyncTask(getApplicationContext());
-		observationTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, "");
+		observationTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
 	
 	}
 
@@ -217,5 +216,16 @@ public class LandingActivity extends FragmentActivity implements ActionBar.TabLi
 			}
 			return null;
 		}
+	}
+
+	/**
+	 * Takes you to the home screen
+	 */
+	@Override
+	public void onBackPressed() {
+		Intent startMain = new Intent(Intent.ACTION_MAIN);
+		startMain.addCategory(Intent.CATEGORY_HOME);
+		startMain.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+		startActivity(startMain);
 	}
 }

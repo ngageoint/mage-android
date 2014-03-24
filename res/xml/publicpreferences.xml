@@ -4,6 +4,7 @@
     <PreferenceCategory android:title="ABOUT">
         <EditTextPreference
             android:key="serverURL"
+            android:selectable="false"
             android:title="URL"/>
         <Preference
             android:key="username"

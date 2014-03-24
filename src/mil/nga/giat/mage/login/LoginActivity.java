@@ -68,6 +68,11 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 			startActivity(intent);
 		}
 		
+		// if token is not expired, then skip the login module
+		if (!UserUtility.getInstance(getApplicationContext()).isTokenExpired()) {
+			startActivity(new Intent(getApplicationContext(), LandingActivity.class));
+		}
+		
 		// no title bar
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
 		setContentView(R.layout.activity_login);
@@ -83,11 +88,6 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 		getUsernameEditText().setSelection(getUsernameEditText().getText().length());
 		getServerEditText().setText(sharedPreferences.getString("serverURL", ""));
 		getServerEditText().setSelection(getServerEditText().getText().length());
-
-		// if token is not expired, then skip the login module
-		if (!UserUtility.getInstance(getApplicationContext()).isTokenExpired()) {
-			startActivity(new Intent(getApplicationContext(), LandingActivity.class));
-		}
 	}
 
 	public void togglePassword(View v) {

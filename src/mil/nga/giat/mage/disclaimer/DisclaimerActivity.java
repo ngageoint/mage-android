@@ -30,4 +30,8 @@ public class DisclaimerActivity extends FragmentActivity {
 		intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 		startActivity(intent);
 	}
+
+	@Override
+	public void onBackPressed() {
+	}
 }
