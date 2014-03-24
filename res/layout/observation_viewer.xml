@@ -56,7 +56,6 @@
                 android:layout_height="wrap_content"
                 android:gravity="right"
                 android:textStyle="bold"
-                android:text="location"
                 android:textAppearance="?android:attr/textAppearanceSmall"
                 android:textColor="#ffffff" />
         </LinearLayout>
