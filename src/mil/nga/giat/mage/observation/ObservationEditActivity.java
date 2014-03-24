@@ -13,13 +13,13 @@ import java.util.Map;
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.form.MageSpinner;
 import mil.nga.giat.mage.form.MageTextView;
-import mil.nga.giat.mage.sdk.datastore.common.Geometry;
-import mil.nga.giat.mage.sdk.datastore.common.GeometryType;
+import mil.nga.giat.mage.sdk.datastore.common.PointGeometry;
 import mil.nga.giat.mage.sdk.datastore.observation.Attachment;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
+import mil.nga.giat.mage.sdk.datastore.observation.ObservationGeometry;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
-import mil.nga.giat.mage.sdk.datastore.observation.State;
-import mil.nga.giat.mage.sdk.utils.MediaUtils;
+import mil.nga.giat.mage.sdk.exceptions.ObservationException;
+import mil.nga.giat.mage.sdk.utils.MediaUtility;
 import android.annotation.TargetApi;
 import android.content.Intent;
 import android.content.res.Resources;
@@ -182,8 +182,7 @@ public class ObservationEditActivity extends FragmentActivity {
 			System.out.println("SAVE");
 
 			Observation observation = new Observation();
-			observation.setState(new State("active"));
-			observation.setGeometry(new Geometry("[" + lat + "," + lon + "]", new GeometryType("point")));
+			observation.setObservationGeometry(new ObservationGeometry(new PointGeometry(lat, lon)));
 			
 			Map<String, String> propertyMap = new HashMap<String, String>();
 			LinearLayout form = (LinearLayout) findViewById(R.id.form);
@@ -204,9 +203,10 @@ public class ObservationEditActivity extends FragmentActivity {
 			ObservationHelper oh = ObservationHelper.getInstance(getApplicationContext());
 			try {
 				Observation newObs = oh.createObservation(observation);
-				System.out.println(newObs);
-			} catch (Exception e) {
-
+				System.out.println("CREATE:\n" + newObs);
+				System.out.println("READ:\n" + oh.readObservation(newObs.getPk_id()));
+			} catch (ObservationException e) {
+				e.printStackTrace();
 			}
 
 			break;
@@ -254,7 +254,7 @@ public class ObservationEditActivity extends FragmentActivity {
 			} else if (absPath.endsWith(".mp3") || absPath.endsWith("m4a")) {
 				iv.setImageBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.ic_microphone));
 			} else {
-				iv.setImageBitmap(MediaUtils.getThumbnail(new File(absPath), 100));
+				iv.setImageBitmap(MediaUtility.getThumbnail(new File(absPath), 100));
 			}
 			LayoutParams lp = new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.MATCH_PARENT);
 			iv.setLayoutParams(lp);
@@ -285,13 +285,13 @@ public class ObservationEditActivity extends FragmentActivity {
 		case CAPTURE_VIDEO_ACTIVITY_REQUEST_CODE:
 		case GALLERY_ACTIVITY_REQUEST_CODE:
 		case CAPTURE_VOICE_ACTIVITY_REQUEST_CODE:
-			String path = MediaUtils.getFileAbsolutePath(data.getData(), getApplicationContext());
+			String path = MediaUtility.getFileAbsolutePath(data.getData(), getApplicationContext());
 			attachmentPaths.add(path);
 			addImageToGallery(path);
 			break;
 		case ATTACHMENT_VIEW_ACTIVITY_REQUEST_CODE:
 			if (data.getData() != null && data.getBooleanExtra("REMOVE", false)) {
-				int idx = attachmentPaths.indexOf(MediaUtils.getFileAbsolutePath(data.getData(), getApplicationContext()));
+				int idx = attachmentPaths.indexOf(MediaUtility.getFileAbsolutePath(data.getData(), getApplicationContext()));
 				attachmentPaths.remove(idx);
 				LinearLayout l = (LinearLayout) findViewById(R.id.image_gallery);
 				l.removeViewAt(idx);

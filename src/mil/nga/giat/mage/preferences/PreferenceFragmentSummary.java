@@ -11,16 +11,9 @@ import android.preference.Preference;
 import android.preference.PreferenceCategory;
 import android.preference.PreferenceFragment;
 
-/**
- * Provides configuration driven settings that are available to the user. Check
- * publicpreferences.xml for the configuration.
- * 
- * @author wiedemannse
- * 
- */
 public class PreferenceFragmentSummary extends PreferenceFragment implements OnSharedPreferenceChangeListener {
 
-	public void setSummary(Preference p) {		
+	public void setSummary(Preference p) {
 		if (p instanceof PreferenceCategory) {
 			PreferenceCategory pCat = (PreferenceCategory) p;
 			for (int i = 0; i < pCat.getPreferenceCount(); i++) {
@@ -42,11 +35,11 @@ public class PreferenceFragmentSummary extends PreferenceFragment implements OnS
 				String value = iterator.next();
 				summary.append(entries[pref.findIndexOfValue(value)]);
 
-				if (iterator.hasNext()) summary.append("\n");
+				if (iterator.hasNext())
+					summary.append("\n");
 			}
-
 			p.setSummary(summary);
-		} 
+		}
 		
 //		else {
 //			p.setSummary(getPreferenceScreen().getSharedPreferences().getString(p.getKey(), ""));
@@ -67,8 +60,7 @@ public class PreferenceFragmentSummary extends PreferenceFragment implements OnS
 
 	@Override
 	public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-		// TODO android HACK as MultiSelectListPreferences don't fire updates as
-		// they should
+		// TODO: android HACK as MultiSelectListPreferences don't fire updates as they should
 		Preference p = findPreference(key.split(DialogPreference.MultiSelectListPreferenceKey)[0]);
 		setSummary(p);
 	}

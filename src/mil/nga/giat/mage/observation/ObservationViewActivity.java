@@ -6,11 +6,12 @@ import java.util.Map;
 
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.form.MageTextView;
+import mil.nga.giat.mage.sdk.datastore.common.Geometry;
+import mil.nga.giat.mage.sdk.datastore.common.PointGeometry;
 import mil.nga.giat.mage.sdk.datastore.observation.Attachment;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
-import mil.nga.giat.mage.sdk.utils.GeometryUtil;
-import mil.nga.giat.mage.sdk.utils.MediaUtils;
+import mil.nga.giat.mage.sdk.utils.MediaUtility;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.graphics.BitmapFactory;
@@ -62,7 +63,7 @@ public class ObservationViewActivity extends FragmentActivity {
 						iv.setImageBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.ic_microphone));
 					} else {
 						try {
-							iv.setImageBitmap(MediaUtils.getThumbnail(new File(absPath), 100));
+							iv.setImageBitmap(MediaUtility.getThumbnail(new File(absPath), 100));
 						} catch (Exception e) {
 							
 						}
@@ -103,18 +104,19 @@ public class ObservationViewActivity extends FragmentActivity {
 		try {
 			o = ObservationHelper.getInstance(getApplicationContext()).readObservation(getIntent().getLongExtra(OBSERVATION_ID, 0L));
 			propertiesMap = o.getPropertiesMap();
-			String coordinates = o.getGeometry().getCoordinates();
-			String[] coordinateSplit = coordinates.split("\\[|,|\\]");
-			
-			((TextView)findViewById(R.id.location)).setText(coordinateSplit[1] + ", " + coordinateSplit[2]);
-			GoogleMap map = ((SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.mini_map)).getMap();
-			
-			LatLng location = new LatLng(Double.parseDouble(coordinateSplit[1]), Double.parseDouble(coordinateSplit[2]));
-			
-			map.animateCamera(CameraUpdateFactory.newLatLngZoom(location, 15));
-			
-			map.addMarker(new MarkerOptions().position(location));
-			
+			Geometry geo = o.getObservationGeometry().getGeometry();
+			if(geo instanceof PointGeometry) {
+				PointGeometry pointGeo = (PointGeometry)geo;
+				((TextView)findViewById(R.id.location)).setText(pointGeo.getLatitude() + ", " + pointGeo.getLongitude());
+				GoogleMap map = ((SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.mini_map)).getMap();
+				
+				LatLng location = new LatLng(pointGeo.getLatitude(), pointGeo.getLongitude());
+				
+				map.animateCamera(CameraUpdateFactory.newLatLngZoom(location, 15));
+				
+				map.addMarker(new MarkerOptions().position(location));				
+			}
+
 			LinearLayout propertyContainer = (LinearLayout)findViewById(R.id.propertyContainer);
 			populatePropertyFields(propertyContainer);
 			
