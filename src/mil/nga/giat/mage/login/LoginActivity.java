@@ -201,7 +201,6 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 	public void signup(View view) {
 		Intent intent = new Intent(getApplicationContext(), SignupActivity.class);
 		startActivity(intent);
-		finish();
 	}
 
 	/**
