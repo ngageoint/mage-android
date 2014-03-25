@@ -14,8 +14,8 @@ public class NewsFeedFragment extends Fragment {
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 		View rootView = inflater.inflate(R.layout.fragment_news_feed, container, false);
 
-		TextView dummyTextView = (TextView) rootView.findViewById(R.id.section_label);
-		dummyTextView.setText("News Feed");
+		//TextView dummyTextView = (TextView) rootView.findViewById(R.id.);
+		//dummyTextView.setText("News Feed");
 
 		return rootView;
 	}
