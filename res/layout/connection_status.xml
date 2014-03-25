@@ -8,7 +8,8 @@
     android:orientation="horizontal"
     android:gravity="center_horizontal"
     android:paddingRight="3dp"
-    android:paddingLeft="3dp" >
+    android:paddingLeft="3dp"
+    android:visibility="gone">
 
     <TextView 
         android:id="@+id/connection_status"
