@@ -70,6 +70,12 @@
             android:icon="@drawable/ic_settings_white"
             android:parentActivityName="mil.nga.giat.mage.LandingActivity">
         </activity>
+         <activity
+            android:name="mil.nga.giat.mage.preferences.LocationPreferencesActivity"
+            android:label="@string/menu_settings" 
+            android:icon="@drawable/ic_settings_white"
+            android:parentActivityName="mil.nga.giat.mage.preferences.PublicPreferencesActivity">
+        </activity>
         <activity
             android:name="mil.nga.giat.mage.map.MapPreferencesActivity"
             android:label="@string/map_settings"

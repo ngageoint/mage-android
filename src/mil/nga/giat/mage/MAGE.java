@@ -7,16 +7,16 @@ public class MAGE extends Application {
 
 	private LocationService locationService;
 
-	public void startLocationService() {
+	public void initLocationService() {
 		if (locationService == null) {
 			locationService = new LocationService(getApplicationContext());
-			locationService.start();
+			locationService.init();
 		}
 	}
 
-	public void stopLocationService() {
+	public void destroyLocationService() {
 		if (locationService != null) {
-			locationService.stop();
+			locationService.destroy();
 			locationService = null;
 		}
 	}
