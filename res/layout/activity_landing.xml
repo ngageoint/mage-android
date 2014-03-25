@@ -9,9 +9,21 @@
     android:layout_height="match_parent"
     android:layout_weight="1"
     tools:context=".LandingActivity" />
-<fragment android:id="@+id/session_expired_fragment"
+
+<fragment
+    android:id="@+id/connectivity_fragment"
+    android:name="mil.nga.giat.mage.connection.ConnectionStatusFragment"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:visibility="visible"
+    tools:layout="@layout/connection_status" />
+
+<fragment
+    android:id="@+id/session_expired_fragment"
     android:name="mil.nga.giat.mage.login.SessionExpiredFragment"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:visibility="visible"/>
+    android:visibility="visible"
+    tools:layout="@layout/session_expired" />
+
 </LinearLayout>
