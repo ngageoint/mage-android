@@ -14,12 +14,14 @@ import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.form.MageSpinner;
 import mil.nga.giat.mage.form.MageTextView;
 import mil.nga.giat.mage.sdk.datastore.common.Geometry;
-import mil.nga.giat.mage.sdk.datastore.common.GeometryType;
+import mil.nga.giat.mage.sdk.datastore.common.PointGeometry;
+import mil.nga.giat.mage.sdk.datastore.common.State;
 import mil.nga.giat.mage.sdk.datastore.observation.Attachment;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
+import mil.nga.giat.mage.sdk.datastore.observation.ObservationGeometry;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
-import mil.nga.giat.mage.sdk.datastore.observation.State;
-import mil.nga.giat.mage.sdk.utils.MediaUtils;
+import mil.nga.giat.mage.sdk.exceptions.ObservationException;
+import mil.nga.giat.mage.sdk.utils.MediaUtility;
 import android.annotation.TargetApi;
 import android.content.Intent;
 import android.content.res.Resources;
@@ -51,37 +53,81 @@ import com.google.android.gms.maps.model.MarkerOptions;
 
 public class ObservationEditActivity extends FragmentActivity {
 
+	public static String OBSERVATION_ID = "OBSERVATION_ID";
+	public static String LATITUDE = "LATITUDE";
+	public static String LONGITUDE = "LONGITUDE";
+	public static String ACCURACY = "ACCURACY";
+	public static String OBSERVATION_LOCATION_TYPE = "OBSERVATION_LOCATION_TYPE";
+	
+	public static String OBSERVATION_LOCATION_TYPE_MANUAL = "MANUAL";
+	public static String OBSERVATION_LOCATION_TYPE_GPS = "GPS";
+	
 	private static final int CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE = 100;
 	private static final int CAPTURE_VIDEO_ACTIVITY_REQUEST_CODE = 200;
 	private static final int CAPTURE_VOICE_ACTIVITY_REQUEST_CODE = 300;
 	private static final int GALLERY_ACTIVITY_REQUEST_CODE = 400;
 	private static final int ATTACHMENT_VIEW_ACTIVITY_REQUEST_CODE = 500;
+	
+	private static final long NEW_OBSERVATION = -1L;
 
 	Date date;
 	DecimalFormat latLngFormat = new DecimalFormat("###.######");
 	List<String> attachmentPaths = new ArrayList<String>();
 	double lat;
 	double lon;
+	long observationId;
+	Observation o;
+	Map<String, String> propertiesMap;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.observation_editor);
-		this.setTitle("Create New Observation");
-
+		
 		Intent intent = getIntent();
-		lat = intent.getDoubleExtra("latitude", 0.0);
-		lon = intent.getDoubleExtra("longitude", 0.0);
+		observationId = intent.getLongExtra(OBSERVATION_ID, NEW_OBSERVATION);
+		
+		if (observationId == NEW_OBSERVATION) {
+			this.setTitle("Create New Observation");
+			lat = intent.getDoubleExtra(LATITUDE, 0.0);
+			lon = intent.getDoubleExtra(LONGITUDE, 0.0);
+			date = new Date();
+			((TextView) findViewById(R.id.date)).setText(date.toString());
+			setupMap();
+		} else {
+			// this is an edit of an existing observation
+			try {
+				o = ObservationHelper.getInstance(getApplicationContext()).readObservation(getIntent().getLongExtra(OBSERVATION_ID, 0L));
+			
+				propertiesMap = o.getPropertiesMap();
+				Geometry geo = o.getObservationGeometry().getGeometry();
+				if(geo instanceof PointGeometry) {
+					PointGeometry point = (PointGeometry)geo;
+					lat = point.getLatitude();
+					lon = point.getLongitude();
+					((TextView)findViewById(R.id.location)).setText(point.getLatitude() + ", " + point.getLongitude());
+					GoogleMap map = ((SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.mini_map)).getMap();
+					
+					LatLng location = new LatLng(point.getLatitude(), point.getLongitude());
+					
+					map.animateCamera(CameraUpdateFactory.newLatLngZoom(location, 15));
+					
+					map.addMarker(new MarkerOptions().position(location));
+				}
+			} catch (ObservationException oe) {
+				
+			}
+		}
 
+	}
+	
+	private void setupMap() {
 		GoogleMap map = ((SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.background_map)).getMap();
 
 		LatLng location = new LatLng(lat, lon);
+		((TextView) findViewById(R.id.location)).setText(latLngFormat.format(location.latitude) + ", " + latLngFormat.format(location.longitude));
 		map.moveCamera(CameraUpdateFactory.newLatLngZoom(location, 16));
 		map.addMarker(new MarkerOptions().position(location));
-
-		((TextView) findViewById(R.id.location)).setText(latLngFormat.format(location.latitude) + ", " + latLngFormat.format(location.longitude));
-		date = new Date();
-		((TextView) findViewById(R.id.date)).setText(date.toString());
 	}
 
 	@Override
@@ -180,10 +226,12 @@ public class ObservationEditActivity extends FragmentActivity {
 
 		case R.id.observation_save:
 			System.out.println("SAVE");
-
-			Observation observation = new Observation();
-			observation.setState(new State("active"));
-			observation.setGeometry(new Geometry("[" + lat + "," + lon + "]", new GeometryType("point")));
+			
+			if (o == null) {
+				o = new Observation();
+			}
+			o.setState(State.ACTIVE);
+			o.setObservationGeometry(new ObservationGeometry(new PointGeometry(lat, lon)));
 			
 			Map<String, String> propertyMap = new HashMap<String, String>();
 			LinearLayout form = (LinearLayout) findViewById(R.id.form);
@@ -191,7 +239,7 @@ public class ObservationEditActivity extends FragmentActivity {
 			propertyMap.put("TYPE", (String) ((Spinner) findViewById(R.id.type_spinner)).getSelectedItem());
 			propertyMap.put("OBSERVATION_DATE", String.valueOf(date.getTime()));
 			
-			observation.setPropertiesMap(propertyMap);
+			o.setPropertiesMap(propertyMap);
 
 			Collection<Attachment> attachments = new ArrayList<Attachment>();
 			for (String path : attachmentPaths) {
@@ -199,11 +247,11 @@ public class ObservationEditActivity extends FragmentActivity {
 				a.setLocal_path(path);
 				attachments.add(a);
 			}
-			observation.setAttachments(attachments);
+			o.setAttachments(attachments);
 
 			ObservationHelper oh = ObservationHelper.getInstance(getApplicationContext());
 			try {
-				Observation newObs = oh.createObservation(observation);
+				Observation newObs = oh.createObservation(o);
 				System.out.println(newObs);
 			} catch (Exception e) {
 
@@ -254,7 +302,7 @@ public class ObservationEditActivity extends FragmentActivity {
 			} else if (absPath.endsWith(".mp3") || absPath.endsWith("m4a")) {
 				iv.setImageBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.ic_microphone));
 			} else {
-				iv.setImageBitmap(MediaUtils.getThumbnail(new File(absPath), 100));
+				iv.setImageBitmap(MediaUtility.getThumbnail(new File(absPath), 100));
 			}
 			LayoutParams lp = new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.MATCH_PARENT);
 			iv.setLayoutParams(lp);
@@ -285,13 +333,13 @@ public class ObservationEditActivity extends FragmentActivity {
 		case CAPTURE_VIDEO_ACTIVITY_REQUEST_CODE:
 		case GALLERY_ACTIVITY_REQUEST_CODE:
 		case CAPTURE_VOICE_ACTIVITY_REQUEST_CODE:
-			String path = MediaUtils.getFileAbsolutePath(data.getData(), getApplicationContext());
+			String path = MediaUtility.getFileAbsolutePath(data.getData(), getApplicationContext());
 			attachmentPaths.add(path);
 			addImageToGallery(path);
 			break;
 		case ATTACHMENT_VIEW_ACTIVITY_REQUEST_CODE:
 			if (data.getData() != null && data.getBooleanExtra("REMOVE", false)) {
-				int idx = attachmentPaths.indexOf(MediaUtils.getFileAbsolutePath(data.getData(), getApplicationContext()));
+				int idx = attachmentPaths.indexOf(MediaUtility.getFileAbsolutePath(data.getData(), getApplicationContext()));
 				attachmentPaths.remove(idx);
 				LinearLayout l = (LinearLayout) findViewById(R.id.image_gallery);
 				l.removeViewAt(idx);

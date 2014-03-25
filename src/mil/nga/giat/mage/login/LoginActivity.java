@@ -6,12 +6,16 @@ import java.util.List;
 import mil.nga.giat.mage.LandingActivity;
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.disclaimer.DisclaimerActivity;
+import mil.nga.giat.mage.sdk.datastore.DBHelper;
+import mil.nga.giat.mage.sdk.login.AbstractAccountTask;
 import mil.nga.giat.mage.sdk.login.AccountDelegate;
 import mil.nga.giat.mage.sdk.login.AccountStatus;
 import mil.nga.giat.mage.sdk.login.LoginTaskFactory;
 import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
 import mil.nga.giat.mage.sdk.utils.UserUtility;
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
@@ -60,12 +64,18 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 		super.onCreate(savedInstanceState);
 		
 		// IMPORTANT: load the configuration from preferences files and server
-		PreferenceHelper.getInstance(getApplicationContext()).initializeAll(new int[]{R.xml.privatepreferences, R.xml.publicpreferences});
+		PreferenceHelper preferenceHelper = PreferenceHelper.getInstance(getApplicationContext());
+		preferenceHelper.initializeAll(new int[]{R.xml.privatepreferences, R.xml.publicpreferences});
 		
 		// show the disclaimer?
 		if (PreferenceHelper.getInstance(getApplicationContext()).getValue(R.string.showDisclaimerKey, Boolean.class, Boolean.TRUE)) {
 			Intent intent = new Intent(this, DisclaimerActivity.class);
 			startActivity(intent);
+		}
+		
+		// if token is not expired, then skip the login module
+		if (!UserUtility.getInstance(getApplicationContext()).isTokenExpired()) {
+			startActivity(new Intent(getApplicationContext(), LandingActivity.class));
 		}
 		
 		// no title bar
@@ -78,16 +88,10 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 		mServerEditText = (EditText) findViewById(R.id.login_server);
 
 		// set the default values
-		SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-		getUsernameEditText().setText(sharedPreferences.getString("username", ""));
+		getUsernameEditText().setText(PreferenceHelper.getInstance(getApplicationContext()).getValue(R.string.usernameKey));
 		getUsernameEditText().setSelection(getUsernameEditText().getText().length());
-		getServerEditText().setText(sharedPreferences.getString("serverURL", ""));
+		getServerEditText().setText(PreferenceHelper.getInstance(getApplicationContext()).getValue(R.string.serverURLKey));
 		getServerEditText().setSelection(getServerEditText().getText().length());
-
-		// if token is not expired, then skip the login module
-		if (!UserUtility.getInstance(getApplicationContext()).isTokenExpired()) {
-			startActivity(new Intent(getApplicationContext(), LandingActivity.class));
-		}
 	}
 
 	public void togglePassword(View v) {
@@ -158,7 +162,7 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 			return;
 		}
 
-		List<String> credentials = new ArrayList<String>();
+		final List<String> credentials = new ArrayList<String>();
 		credentials.add(username);
 		credentials.add(password);
 		credentials.add(server);
@@ -167,7 +171,26 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 		findViewById(R.id.login_form).setVisibility(View.GONE);
 		findViewById(R.id.login_status).setVisibility(View.VISIBLE);
 
-		LoginTaskFactory.getInstance(getApplicationContext()).getLoginTask(this, this.getApplicationContext()).execute(credentials.toArray(new String[credentials.size()]));
+		// if the serverURL is different that before, cleared out database
+		String serverURLPref = PreferenceHelper.getInstance(getApplicationContext()).getValue(R.string.serverURLKey);
+		final DBHelper dbHelper = DBHelper.getInstance(getApplicationContext());
+		final AbstractAccountTask loginTask = LoginTaskFactory.getInstance(getApplicationContext()).getLoginTask(this, this.getApplicationContext());
+		if (!server.equals(serverURLPref) && !dbHelper.isDatabaseEmpty()) {
+			new AlertDialog.Builder(this).setTitle("Server URL").setMessage("The server URL has been changed.  If you continue, any previous local data will be deleted.  Do you want to continue?").setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+				public void onClick(DialogInterface dialog, int which) {
+					dbHelper.resetDatabase();
+					loginTask.execute(credentials.toArray(new String[credentials.size()]));	
+				}
+			}).setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
+				public void onClick(DialogInterface dialog, int which) {
+					// show form, and hide spinner
+					findViewById(R.id.login_status).setVisibility(View.GONE);
+					findViewById(R.id.login_form).setVisibility(View.VISIBLE);
+				}
+			}).show();
+		} else {
+			loginTask.execute(credentials.toArray(new String[credentials.size()]));	
+		}
 	}
 
 	/**
@@ -178,7 +201,6 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 	public void signup(View view) {
 		Intent intent = new Intent(getApplicationContext(), SignupActivity.class);
 		startActivity(intent);
-		finish();
 	}
 
 	/**

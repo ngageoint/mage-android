@@ -42,11 +42,13 @@
         <activity
             android:name="mil.nga.giat.mage.disclaimer.DisclaimerActivity"
             android:windowSoftInputMode="adjustResize"
+            android:noHistory="true"
             android:label="@string/app_name" >
         </activity>
         <activity
             android:name="mil.nga.giat.mage.login.LoginActivity"
-            android:windowSoftInputMode="stateVisible" >
+            android:windowSoftInputMode="stateVisible" 
+            android:noHistory="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -55,7 +57,8 @@
         </activity>
         <activity
             android:name="mil.nga.giat.mage.login.SignupActivity"
-            android:windowSoftInputMode="adjustResize" >
+            android:windowSoftInputMode="adjustResize"
+             >
         </activity>
         <activity
             android:name="mil.nga.giat.mage.LandingActivity"

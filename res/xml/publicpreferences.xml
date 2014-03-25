@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" >
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
 
     <PreferenceCategory
         android:order="2"
@@ -16,6 +16,7 @@
         android:title="ABOUT" >
         <EditTextPreference
             android:key="serverURL"
+            android:selectable="false"
             android:title="URL" />
 
         <Preference

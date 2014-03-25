@@ -5,7 +5,6 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical" >
-
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="0dip"
@@ -30,7 +29,6 @@
             android:layout_width="fill_parent"
             android:layout_height="fill_parent"
             android:background="@drawable/gradient_fade" >
-
             <LinearLayout 
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -58,7 +56,6 @@
                 android:layout_height="wrap_content"
                 android:gravity="right"
                 android:textStyle="bold"
-                android:text="location"
                 android:textAppearance="?android:attr/textAppearanceSmall"
                 android:textColor="#ffffff" />
         </LinearLayout>
@@ -83,7 +80,7 @@
                 <LinearLayout
                     android:id="@+id/image_gallery"
                     android:layout_width="wrap_content"
-                    android:layout_height="100dp"
+                    android:layout_height="wrap_content"
                     android:orientation="horizontal" >
                 </LinearLayout>
             </HorizontalScrollView>
@@ -91,7 +88,6 @@
             <LinearLayout
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
                 android:orientation="horizontal" >
 
                 <TextView

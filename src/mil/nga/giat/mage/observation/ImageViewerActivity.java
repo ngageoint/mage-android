@@ -2,7 +2,7 @@ package mil.nga.giat.mage.observation;
 
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.observation.RemoveAttachmentDialogFragment.RemoveAttachmentDialogListener;
-import mil.nga.giat.mage.sdk.utils.MediaUtils;
+import mil.nga.giat.mage.sdk.utils.MediaUtility;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -40,17 +40,19 @@ public class ImageViewerActivity extends FragmentActivity implements RemoveAttac
 		
 		Bitmap thumb = null;
 		
-		String absPath = MediaUtils.getFileAbsolutePath(imageUri, getApplicationContext());
+		String absPath = MediaUtility.getFileAbsolutePath(imageUri, getApplicationContext());
 
     	if (absPath.endsWith(".mp4")) {
-    		
+    		Log.d("viewer", "abs path is: " + absPath + " uri is: " + imageUri);
     		thumb = ThumbnailUtils.createVideoThumbnail(absPath, MediaStore.Video.Thumbnails.FULL_SCREEN_KIND);
     		
     		iv.setOnClickListener(new View.OnClickListener() {
 				
 				@Override
 				public void onClick(View v) {
-					Intent intent = new Intent(Intent.ACTION_VIEW, imageUri);
+					Log.d("viewer", "launching viewer for " + imageUri);
+					Intent intent = new Intent(Intent.ACTION_VIEW);
+					intent.setDataAndType(imageUri, "video/*");
 					startActivity(intent);
 				}
 			});
@@ -61,7 +63,8 @@ public class ImageViewerActivity extends FragmentActivity implements RemoveAttac
 				
 				@Override
 				public void onClick(View v) {
-					Intent intent = new Intent(Intent.ACTION_VIEW, imageUri);
+					Intent intent = new Intent(Intent.ACTION_VIEW);
+					intent.setDataAndType(imageUri, "audio/*");
 					startActivity(intent);
 				}
 			});
@@ -71,12 +74,20 @@ public class ImageViewerActivity extends FragmentActivity implements RemoveAttac
 			display.getSize(size);
 			int height = size.y;
 			try {
-				thumb = MediaUtils.getThumbnailFromContent(imageUri, height, getApplicationContext());
+				thumb = MediaUtility.getThumbnailFromContent(imageUri, height, getApplicationContext());
 			} catch (Exception e) {
 				
 			}
 			findViewById(R.id.video_overlay_image).setVisibility(View.GONE);
-			
+			iv.setOnClickListener(new View.OnClickListener() {
+				
+				@Override
+				public void onClick(View v) {
+					Intent intent = new Intent(Intent.ACTION_VIEW);
+					intent.setDataAndType(imageUri, "image/*");
+					startActivity(intent);
+				}
+			});
     	}
     	
     	try {

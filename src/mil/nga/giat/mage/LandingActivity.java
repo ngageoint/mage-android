@@ -2,6 +2,7 @@
 
 import java.util.Locale;
 
+import mil.nga.giat.mage.login.LoginActivity;
 import mil.nga.giat.mage.map.MapFragment;
 import mil.nga.giat.mage.newsfeed.NewsFeedFragment;
 import mil.nga.giat.mage.observation.ObservationEditActivity;
@@ -34,7 +35,6 @@ public class LandingActivity extends FragmentActivity implements ActionBar.TabLi
 
 	private static final int RESULT_PUBLIC_PREFERENCES = 1;
 	private static final int RESULT_MAP_PREFERENCES = 2;
-
 
 	/**
 	 * The {@link android.support.v4.view.PagerAdapter} that will provide
@@ -76,6 +76,7 @@ public class LandingActivity extends FragmentActivity implements ActionBar.TabLi
 			}
 		});
 		
+		
 		// For each of the sections in the app, add a tab to the action bar.
 		for (int i = 0; i < mSectionsPagerAdapter.getCount(); i++) {
 			// Create a tab with text corresponding to the page title defined by
@@ -91,11 +92,11 @@ public class LandingActivity extends FragmentActivity implements ActionBar.TabLi
 		
 		//start user sync
 		UserServerFetchAsyncTask userTask = new UserServerFetchAsyncTask(getApplicationContext());
-		userTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, "");
+		userTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
 		
 		//start observation sync
 		ObservationServerFetchAsyncTask observationTask = new ObservationServerFetchAsyncTask(getApplicationContext());
-		observationTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, "");
+		observationTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
 	
 	}
 
@@ -123,6 +124,7 @@ public class LandingActivity extends FragmentActivity implements ActionBar.TabLi
 			case R.id.menu_logout: {
 				// TODO : wipe user certs, really just wipe out the token from shared preferences
 				UserUtility.getInstance(getApplicationContext()).clearTokenInformation();
+				startActivity(new Intent(getApplicationContext(), LoginActivity.class));
 				finish();
 				break;
 			}
@@ -217,5 +219,16 @@ public class LandingActivity extends FragmentActivity implements ActionBar.TabLi
 			}
 			return null;
 		}
+	}
+
+	/**
+	 * Takes you to the home screen
+	 */
+	@Override
+	public void onBackPressed() {
+		Intent startMain = new Intent(Intent.ACTION_MAIN);
+		startMain.addCategory(Intent.CATEGORY_HOME);
+		startMain.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+		startActivity(startMain);
 	}
 }
