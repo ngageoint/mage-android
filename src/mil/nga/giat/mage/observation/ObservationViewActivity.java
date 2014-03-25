@@ -129,7 +129,7 @@ public class ObservationViewActivity extends FragmentActivity {
 				task.execute(o.getAttachments().toArray(new Attachment[o.getAttachments().size()]));
 			}
 		} catch (Exception e) {
-			
+			Log.e("observation view", e.getMessage(), e);
 		}
 		
 		this.setTitle(propertiesMap.get("TYPE"));
@@ -141,16 +141,18 @@ public class ObservationViewActivity extends FragmentActivity {
 			if (v instanceof MageTextView) {
 				MageTextView m = (MageTextView)v;
 				String propertyKey = m.getPropertyKey();
+				String propertyValue = propertiesMap.get(propertyKey);
+				if (propertyValue == null) continue;
 				switch(m.getPropertyType()) {
 				case STRING:
 				case MULTILINE:
-					m.setText(propertiesMap.get(propertyKey));
+					m.setText(propertyValue);
 					break;
 				case USER:
 					
 					break;
 				case DATE:
-					m.setText(new Date(Long.parseLong(propertiesMap.get(propertyKey))).toString());
+					m.setText(new Date(Long.parseLong(propertyValue)).toString());
 					break;
 				case LOCATION:
 					
