@@ -125,7 +125,7 @@
                     android:layout_height="wrap_content"
                     android:textAppearance="?android:attr/textAppearanceMedium"
                     mageForm:propertyType="string"
-                    mageForm:propertyKey="LEVEL" />
+                    mageForm:propertyKey="EVENTLEVEL" />
             </LinearLayout>
 
             <LinearLayout
@@ -147,7 +147,7 @@
                     android:layout_height="wrap_content"
                     android:textAppearance="?android:attr/textAppearanceMedium"
                     mageForm:propertyType="date"
-                    mageForm:propertyKey="OBSERVATION_DATE" />
+                    mageForm:propertyKey="EVENTDATE" />
             </LinearLayout>
 
             <TextView
