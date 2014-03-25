@@ -3,6 +3,7 @@ package mil.nga.giat.mage.preferences;
 import mil.nga.giat.mage.R;
 import android.os.Bundle;
 import android.preference.PreferenceActivity;
+import android.preference.SwitchPreference;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -13,6 +14,8 @@ public class PublicPreferencesActivity extends PreferenceActivity {
 	PublicPreferenceFragment preference = new PublicPreferenceFragment();
 	
 	public static class PublicPreferenceFragment extends PreferenceFragmentSummary {
+	    SwitchPreference locationServiceSwitch;
+	    
 		@Override
 		public void onCreate(final Bundle savedInstanceState) {
 			super.onCreate(savedInstanceState);
@@ -22,6 +25,8 @@ public class PublicPreferencesActivity extends PreferenceActivity {
 			for (int i = 0; i < getPreferenceScreen().getPreferenceCount(); i++) {
 				setSummary(getPreferenceScreen().getPreference(i));
 			}
+			
+			locationServiceSwitch = (SwitchPreference) getPreferenceManager().findPreference("locationServiceEnabled");
 		}
 		
 		@Override
@@ -34,6 +39,14 @@ public class PublicPreferencesActivity extends PreferenceActivity {
 		    		    
 		    return view;
 		}
+
+        @Override
+        public void onResume() {
+            super.onResume();
+            
+            boolean locationServiceEnabled = getPreferenceManager().getSharedPreferences().getBoolean("locationServiceEnabled", false);
+            locationServiceSwitch.setChecked(locationServiceEnabled);
+        }
 	}
 
 	@Override

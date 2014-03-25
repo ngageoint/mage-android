@@ -68,6 +68,7 @@
             android:name="mil.nga.giat.mage.preferences.PublicPreferencesActivity"
             android:label="@string/menu_settings" 
             android:icon="@drawable/ic_settings_white"
+            android:launchMode="singleTop"
             android:parentActivityName="mil.nga.giat.mage.LandingActivity">
         </activity>
          <activity
