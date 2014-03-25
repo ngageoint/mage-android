@@ -1,24 +1,29 @@
 <?xml version="1.0" encoding="utf-8"?>
-<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" >
 
-    <PreferenceCategory android:title="ABOUT">
-        <EditTextPreference
-            android:key="serverURL"
-            android:title="URL"/>
-        <Preference
-            android:key="username"
-            android:title="Username"/>
-        <Preference
-            android:key="appVersion"
-            android:title="App Version"/>
-    </PreferenceCategory>
-    <PreferenceCategory android:title="MEDIA">
-        <ListPreference 
+    <PreferenceCategory
+        android:order="2"
+        android:title="MEDIA" >
+        <ListPreference
             android:defaultValue="1"
             android:entries="@array/imageUploadSize"
             android:entryValues="@array/imageUploadSizeValues"
             android:key="imageUploadSize"
-            android:title="Image Upload Size"/>
+            android:title="Image Upload Size" />
+    </PreferenceCategory>
+    <PreferenceCategory
+        android:order="3"
+        android:title="ABOUT" >
+        <EditTextPreference
+            android:key="serverURL"
+            android:title="URL" />
+
+        <Preference
+            android:key="username"
+            android:title="Username" />
+        <Preference
+            android:key="appVersion"
+            android:title="App Version" />
     </PreferenceCategory>
 
 </PreferenceScreen>

@@ -92,7 +92,7 @@ public class MapFragment extends Fragment implements OnClickListener, LocationSo
         // Check if any map preferences changed that I care about        
         followMe = preferences.getBoolean("followMe", false);
         
-        boolean locationServiceEnabled = Integer.parseInt(preferences.getString("userReportingFrequency", "0")) > 0;
+        boolean locationServiceEnabled = preferences.getBoolean("locationServiceEnabled", false);
         map.setMyLocationEnabled(locationServiceEnabled);
 
         if (locationServiceEnabled) {

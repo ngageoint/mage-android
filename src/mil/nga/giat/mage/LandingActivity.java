@@ -86,7 +86,7 @@ public class LandingActivity extends FragmentActivity implements ActionBar.TabLi
 		}
 		
 		// Start location services
-		((MAGE) getApplication()).startLocationService();
+		((MAGE) getApplication()).initLocationService();
 
 		
 		//start user sync
@@ -102,7 +102,7 @@ public class LandingActivity extends FragmentActivity implements ActionBar.TabLi
 	@Override
 	protected void onDestroy() {
 		super.onDestroy();
-		((MAGE) getApplication()).stopLocationService();
+		((MAGE) getApplication()).destroyLocationService();
 	}
 
 	@Override
