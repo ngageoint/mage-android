@@ -17,14 +17,6 @@
             android:title="Overlay Layers" />
     </PreferenceCategory>
     
-   <PreferenceCategory android:title="MAP SETTINGS" >
-       <CheckBoxPreference
-          android:title="Follow Me"
-          android:defaultValue="false"
-          android:summary="Map follows my location"
-          android:key="followMe" />
-   </PreferenceCategory>
-    
    <PreferenceCategory android:title="DYNAMIC FEATURES" >
        <CheckBoxPreference
           android:title="Show Observations"
