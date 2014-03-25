@@ -1,6 +1,7 @@
 package mil.nga.giat.mage.disclaimer;
 
 import mil.nga.giat.mage.R;
+import mil.nga.giat.mage.login.LoginActivity;
 import android.content.Intent;
 import android.content.SharedPreferences.Editor;
 import android.os.Bundle;
@@ -21,6 +22,7 @@ public class DisclaimerActivity extends FragmentActivity {
 	public void agree(View view) {
 		Editor editor = PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).edit();
 		editor.putString("showDisclaimer", Boolean.FALSE.toString()).commit();
+		startActivity(new Intent(getApplicationContext(), LoginActivity.class));
 	}
 
 	public void exit(View view) {
