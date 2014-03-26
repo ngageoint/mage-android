@@ -9,11 +9,13 @@ import java.util.Map;
 
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.form.MageTextView;
+import mil.nga.giat.mage.observation.ObservationViewActivity;
 import mil.nga.giat.mage.sdk.datastore.common.Geometry;
 import mil.nga.giat.mage.sdk.datastore.common.PointGeometry;
 import mil.nga.giat.mage.sdk.datastore.observation.Attachment;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
+import android.content.Intent;
 import android.support.v4.app.FragmentActivity;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -63,29 +65,43 @@ public class NewsFeedObservationAdapter extends BaseAdapter {
 			v = inflater.inflate(R.layout.observation_list_item, null);
 		}
 		LinearLayout ll = (LinearLayout)v.findViewById(R.id.observation_list_container);
-		Observation o = getItem(position);
+		final Observation o = getItem(position);
 		populatePropertyFields(ll, o.getPropertiesMap());
 		
+		ll.setOnClickListener(new View.OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				Intent observationView = new Intent(activity.getApplicationContext(), ObservationViewActivity.class);
+				observationView.putExtra(ObservationViewActivity.OBSERVATION_ID, o.getPk_id());
+				activity.startActivityForResult(observationView, 2);
+			}
+		});
 		
-		Geometry geo = o.getObservationGeometry().getGeometry();
-		if(geo instanceof PointGeometry) {
-			PointGeometry pointGeo = (PointGeometry)geo;
-			((TextView)v.findViewById(R.id.location)).setText(latLngFormat.format(pointGeo.getLatitude()) + ", " + latLngFormat.format(pointGeo.getLongitude()));
-		}
+		
+//		Geometry geo = o.getObservationGeometry().getGeometry();
+//		if(geo instanceof PointGeometry) {
+//			PointGeometry pointGeo = (PointGeometry)geo;
+//			((TextView)v.findViewById(R.id.location)).setText(latLngFormat.format(pointGeo.getLatitude()) + ", " + latLngFormat.format(pointGeo.getLongitude()));
+//		}
 		
 		ImageView iv = ((ImageView)v.findViewById(R.id.observation_thumb));
 		Collection<Attachment> attachments = o.getAttachments();
 		Log.i("test", "there are " + attachments.size() + " attachments");
+		((TextView)v.findViewById(R.id.username)).setText("there are " + attachments.size() + " attachments");
 		//Glide.load("http://www.rosco.com/spectrum/wp-content/uploads/2011/06/Purple-loneliness-purple-18741803-1000-600.jpg").centerCrop().into(iv);
 		if (!attachments.isEmpty()) {
 			Attachment a = attachments.iterator().next();
 			String server = PreferenceHelper.getInstance(activity.getApplicationContext()).getValue(R.string.serverURLKey);
 			String token = PreferenceHelper.getInstance(activity.getApplicationContext()).getValue(R.string.tokenKey);
-			String url = server + "/FeatureServer/3/Features/" + o.getRemote_id() + "/attachments/";
+			String url = server + "/FeatureServer/3/Features/" + o.getRemote_id() + "/attachments/" + a.getRemote_id() + "?access_token=" + token;
+			Log.i("test", "URL: " + url);
 //			String url = server + "/" + a.getRemote_path() + "?access_token=" + token;
-//			Glide.load(url).centerCrop().into(iv);
-			Glide.load("http://www.rosco.com/spectrum/wp-content/uploads/2011/06/Purple-loneliness-purple-18741803-1000-600.jpg").into(iv);
+			Glide.load(url).placeholder(R.drawable.ic_camera).centerCrop().into(iv);
+//			Glide.load("http://www.wallpick.com/wp-content/uploads/2014/01/05/cool-purple-wallpaper-wallpaper-hd-background-pictures-abstract-pictures-purple-wallpaper.jpg").into(iv);
 //			http://www.rosco.com/spectrum/wp-content/uploads/2011/06/Purple-loneliness-purple-18741803-1000-600.jpg
+		} else {
+			iv.setImageDrawable(null);
 		}
 		
 		return v;
