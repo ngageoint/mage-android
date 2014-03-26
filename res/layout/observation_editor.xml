@@ -90,7 +90,7 @@
 	        android:paddingBottom="20dip">
 	        <mil.nga.giat.mage.form.MageEditText  
 	            android:id="@+id/date"
-	            mageForm:propertyKey="OBSERVATION_DATE"
+	            mageForm:propertyKey="EVENTDATE"
 	            android:layout_width="wrap_content"
 	            android:layout_height="wrap_content"
 	            android:paddingBottom="5dip"
@@ -127,7 +127,7 @@
 	          android:layout_height="wrap_content"
 	          android:layout_marginTop="5dip"
 	          android:layout_marginBottom="20dip"
-	          mageForm:propertyKey="LEVEL"
+	          mageForm:propertyKey="EVENTLEVEL"
 	          android:singleLine="true"/>
 	    <TextView android:layout_width="fill_parent"
 	          android:layout_height="wrap_content"

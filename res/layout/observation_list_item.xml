@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:mageForm="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/observation_list_container"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:paddingLeft="5dip"
+    android:paddingRight="5dip"
+    android:orientation="vertical" >
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="horizontal" >
+
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/ic_pinpoint" />
+
+        <mil.nga.giat.mage.form.MageTextView
+            android:layout_width="wrap_content"
+            android:layout_height="fill_parent"
+            android:gravity="center_vertical"
+            android:text="TYPE"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:textStyle="bold"
+            mageForm:propertyKey="TYPE" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="horizontal" >
+
+        <ImageView
+            android:id="@+id/observation_thumb"
+            android:layout_width="48dip"
+            android:layout_height="48dip" 
+    		android:paddingRight="5dip"/>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical" >
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" >
+
+                <mil.nga.giat.mage.form.MageTextView
+                    android:layout_width="fill_parent"
+                    android:layout_height="fill_parent"
+                    android:gravity="right|center_vertical"
+                    android:text="DATE"
+                    android:textAppearance="?android:attr/textAppearanceSmall"
+                    mageForm:propertyKey="EVENTDATE"
+                    mageForm:propertyType="date" />
+
+                <TextView
+                    android:id="@+id/location"
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="right"
+                    android:text="LAT, LON"
+                    android:textAppearance="?android:attr/textAppearanceSmall"/>
+
+                <mil.nga.giat.mage.form.MageTextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="DESCRIPTION"
+                    android:textAppearance="?android:attr/textAppearanceSmall"
+                    android:textStyle="bold"
+                    mageForm:propertyKey="DESCRIPTION" />
+            </LinearLayout>
+        </LinearLayout>
+    </LinearLayout>
+
+</LinearLayout>
