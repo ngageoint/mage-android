@@ -24,8 +24,11 @@ public class NewsFeedFragment extends Fragment {
 		List<Observation> observations = new ArrayList<Observation>();
 		ObservationHelper oh = ObservationHelper.getInstance(getActivity().getApplicationContext());
 		try {
-			for (long i = 1L; i <= 20L; i++) {
-				observations.add(oh.readObservation(i));
+			for (long i = 1L; i <= 100L; i++) {
+				Observation o = oh.readObservation(i);
+				if (o != null) {
+					observations.add(o);
+				}
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
