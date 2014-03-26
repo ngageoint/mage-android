@@ -7,10 +7,10 @@
     <uses-sdk
         android:minSdkVersion="14"
         android:targetSdkVersion="18" />
-    
+
     <permission
-	  android:name="mil.nga.giat.mage.permission.MAPS_RECEIVE"
-	  android:protectionLevel="signature" />
+        android:name="mil.nga.giat.mage.permission.MAPS_RECEIVE"
+        android:protectionLevel="signature" />
 
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_GPS" />
@@ -28,10 +28,9 @@
     <uses-feature
         android:name="android.hardware.camera"
         android:required="false" />
-    
     <uses-feature
-      android:glEsVersion="0x00020000"
-      android:required="true" />
+        android:glEsVersion="0x00020000"
+        android:required="true" />
 
     <application
         android:name="MAGE"
@@ -41,14 +40,14 @@
         android:theme="@style/AppTheme" >
         <activity
             android:name="mil.nga.giat.mage.disclaimer.DisclaimerActivity"
-            android:windowSoftInputMode="adjustResize"
+            android:label="@string/app_name"
             android:noHistory="true"
-            android:label="@string/app_name" >
+            android:windowSoftInputMode="adjustResize" >
         </activity>
         <activity
             android:name="mil.nga.giat.mage.login.LoginActivity"
-            android:windowSoftInputMode="stateVisible" 
-            android:noHistory="true">
+            android:noHistory="true"
+            android:windowSoftInputMode="stateVisible" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -57,8 +56,7 @@
         </activity>
         <activity
             android:name="mil.nga.giat.mage.login.SignupActivity"
-            android:windowSoftInputMode="adjustResize"
-             >
+            android:windowSoftInputMode="adjustResize" >
         </activity>
         <activity
             android:name="mil.nga.giat.mage.LandingActivity"
@@ -66,20 +64,21 @@
         </activity>
         <activity
             android:name="mil.nga.giat.mage.preferences.PublicPreferencesActivity"
-            android:label="@string/menu_settings" 
             android:icon="@drawable/ic_settings_white"
-            android:parentActivityName="mil.nga.giat.mage.LandingActivity">
+            android:label="@string/menu_settings"
+            android:launchMode="singleTop"
+            android:parentActivityName="mil.nga.giat.mage.LandingActivity" >
         </activity>
-         <activity
+        <activity
             android:name="mil.nga.giat.mage.preferences.LocationPreferencesActivity"
-            android:label="@string/menu_settings" 
             android:icon="@drawable/ic_settings_white"
-            android:parentActivityName="mil.nga.giat.mage.preferences.PublicPreferencesActivity">
+            android:label="@string/menu_settings"
+            android:parentActivityName="mil.nga.giat.mage.preferences.PublicPreferencesActivity" >
         </activity>
         <activity
             android:name="mil.nga.giat.mage.map.MapPreferencesActivity"
-            android:label="@string/map_settings"
             android:icon="@drawable/ic_map_white"
+            android:label="@string/map_settings"
             android:parentActivityName="mil.nga.giat.mage.LandingActivity" >
 
             <!-- Parent activity meta-data to support 4.0 and lower -->
@@ -95,6 +94,12 @@
         </activity>
         <activity android:name="mil.nga.giat.mage.observation.ImageViewerActivity" >
         </activity>
+
+        <receiver android:name="mil.nga.giat.mage.sdk.connectivity.NetworkChangeReceiver" >
+            <intent-filter>
+                <action android:name="android.net.conn.CONNECTIVITY_CHANGE" />
+            </intent-filter>
+        </receiver>
 
         <meta-data
             android:name="com.google.android.maps.v2.API_KEY"

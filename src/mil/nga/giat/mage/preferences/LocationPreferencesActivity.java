@@ -77,7 +77,7 @@ public class LocationPreferencesActivity extends PreferenceActivity {
 	        Editor editor = PreferenceManager.getDefaultSharedPreferences(getActivity()).edit();
 	        editor.putBoolean("locationServiceEnabled", isChecked);
 	        editor.commit();
-	        
+	        	        
 	        updateSettings();
 	    }
 	}
