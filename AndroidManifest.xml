@@ -92,7 +92,7 @@
         </activity>
         <activity android:name="mil.nga.giat.mage.observation.ObservationEditActivity" >
         </activity>
-        <activity android:name="mil.nga.giat.mage.observation.ImageViewerActivity" >
+        <activity android:name="mil.nga.giat.mage.observation.AttachmentViewerActivity" >
         </activity>
 
         <receiver android:name="mil.nga.giat.mage.sdk.connectivity.NetworkChangeReceiver" >

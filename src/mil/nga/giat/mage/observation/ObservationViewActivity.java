@@ -12,6 +12,7 @@ import mil.nga.giat.mage.sdk.datastore.observation.Attachment;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
 import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
+import mil.nga.giat.mage.sdk.utils.MediaUtility;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.graphics.drawable.BitmapDrawable;
@@ -60,9 +61,9 @@ public class ObservationViewActivity extends FragmentActivity {
 				iv.setOnClickListener(new View.OnClickListener() {
 					@Override
 					public void onClick(View v) {
-						Intent intent = new Intent(v.getContext(), ImageViewerActivity.class);
+						Intent intent = new Intent(v.getContext(), AttachmentViewerActivity.class);
 						intent.setData(Uri.fromFile(new File(absPath)));
-						intent.putExtra(ImageViewerActivity.EDITABLE, false);
+						intent.putExtra(AttachmentViewerActivity.EDITABLE, false);
 						startActivityForResult(intent, ATTACHMENT_VIEW_ACTIVITY_REQUEST_CODE);
 					}
 				});
@@ -105,7 +106,7 @@ public class ObservationViewActivity extends FragmentActivity {
 	private void createImageViews(ViewGroup gallery) {
 		String server = PreferenceHelper.getInstance(getApplicationContext()).getValue(R.string.serverURLKey);
 		String token = PreferenceHelper.getInstance(getApplicationContext()).getValue(R.string.tokenKey);
-		for (Attachment a : o.getAttachments()) {
+		for (final Attachment a : o.getAttachments()) {
 			final String absPath = a.getLocalPath();
 			final String remoteId = a.getRemoteId();
 			ImageView iv = new ImageView(getApplicationContext());
@@ -115,42 +116,46 @@ public class ObservationViewActivity extends FragmentActivity {
 			iv.setOnClickListener(new View.OnClickListener() {
 				@Override
 				public void onClick(View v) {
-					Intent intent = new Intent(v.getContext(), ImageViewerActivity.class);
-					intent.setData(Uri.fromFile(new File(absPath)));
-					intent.putExtra(ImageViewerActivity.EDITABLE, false);
+					Intent intent = new Intent(v.getContext(), AttachmentViewerActivity.class);
+					intent.putExtra("attachment", a);
+					intent.putExtra(AttachmentViewerActivity.EDITABLE, false);
 					startActivityForResult(intent, ATTACHMENT_VIEW_ACTIVITY_REQUEST_CODE);
 				}
 			});
 			gallery.addView(iv);
 			
-			
-			
-			
-			
-			try {
-				if (absPath != null && absPath.endsWith(".mp4")) {
-					Drawable[] layers = new Drawable[2];
-					Resources r = getResources();
-					layers[0] = new BitmapDrawable(r, ThumbnailUtils.createVideoThumbnail(absPath, MediaStore.Video.Thumbnails.MICRO_KIND));
-					layers[1] = r.getDrawable(R.drawable.ic_video_white_2x);
-					LayerDrawable ld = new LayerDrawable(layers);
-					iv.setImageDrawable(ld);
-				} else if (absPath != null && (absPath.endsWith(".mp3") || absPath.endsWith("m4a"))) {
-					Glide.load(R.drawable.ic_microphone).into(iv);
-	//				iv.setImageBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.ic_microphone));
-				} else {
-					Log.i("test", "Content type is: " + a.getContentType());
-					if (a.getRemoteId() != null && (a.getContentType().startsWith("image") || a.getName().endsWith(".jpg"))) {
-						String url = server + "/FeatureServer/3/Features/" + o.getRemoteId() + "/attachments/" + a.getRemoteId() + "?access_token=" + token;
-						Log.i("test", "URL: " + url);
-						Glide.load(url).placeholder(android.R.drawable.progress_indeterminate_horizontal).centerCrop().into(iv);
-					} /*else if (absPath != null) {
-						Glide.load(new File(absPath)).placeholder(android.R.drawable.progress_indeterminate_horizontal).centerCrop().into(iv);
-					}*/
+			// get content type from everywhere I can think of
+			String contentType = a.getContentType();
+			if (contentType == null || "".equalsIgnoreCase(contentType) || "application/octet-stream".equalsIgnoreCase(contentType)) {
+				String name = a.getName();
+				if (name == null) {
+					name = a.getLocalPath();
+					if (name == null) {
+						name = a.getRemotePath();
+					}
 				}
-				Log.d("image", "Set the image gallery to have an image with uri " + absPath);
-			} catch (Exception e) {
-				Log.e("exception", "Error making image", e);
+				contentType = MediaUtility.getMimeType(name);
+			}
+			
+			if (absPath != null) {
+				if (contentType.startsWith("image")) {
+					Glide.load(new File(absPath)).placeholder(android.R.drawable.progress_indeterminate_horizontal).centerCrop().into(iv);
+				} else if (contentType.startsWith("video")) {
+					Glide.load(R.drawable.ic_video_2x).into(iv);
+				} else if (contentType.startsWith("audio")) {
+					Glide.load(R.drawable.ic_microphone).into(iv);
+				}
+			} else if (remoteId != null) {
+				String url = server + "/FeatureServer/3/Features/" + o.getRemoteId() + "/attachments/" + a.getRemoteId() + "?access_token=" + token;
+				Log.i("test", "url to load is: " + url);
+				Log.i("test", "content type is: " + contentType + " name is: " + a.getName());
+				if (contentType.startsWith("image")) {
+					Glide.load(url).placeholder(android.R.drawable.progress_indeterminate_horizontal).centerCrop().into(iv);
+				} else if (contentType.startsWith("video")) {
+					Glide.load(R.drawable.ic_video_2x).into(iv);
+				} else if (contentType.startsWith("audio")) {
+					Glide.load(R.drawable.ic_microphone).into(iv);
+				}
 			}
 		}
 	}
