@@ -21,70 +21,71 @@ import android.widget.Switch;
  * 
  */
 public class LocationPreferencesActivity extends PreferenceActivity {
-	
-	LocationPreferenceFragment preference = new LocationPreferenceFragment();
-	
-	public static class LocationPreferenceFragment extends PreferenceFragmentSummary implements CompoundButton.OnCheckedChangeListener {
 
-	    private Switch locationSwitch;
-	    
-	    public void onCreate(final Bundle savedInstanceState) {
-	        super.onCreate(savedInstanceState);
+    LocationPreferenceFragment preference = new LocationPreferenceFragment();
 
-	        addPreferencesFromResource(R.xml.locationpreferences);
-	        
-	        PreferenceManager.getDefaultSharedPreferences(getActivity()).registerOnSharedPreferenceChangeListener(this);
+    public static class LocationPreferenceFragment extends PreferenceFragmentSummary implements CompoundButton.OnCheckedChangeListener {
 
-	        Activity activity = getActivity();
-	        ActionBar actionbar = activity.getActionBar();
-	        locationSwitch = new Switch(activity);
+        private Switch locationSwitch;
 
-	        actionbar.setDisplayOptions(ActionBar.DISPLAY_SHOW_CUSTOM, ActionBar.DISPLAY_SHOW_CUSTOM);
-	        actionbar.setCustomView(locationSwitch, new ActionBar.LayoutParams(ActionBar.LayoutParams.WRAP_CONTENT, ActionBar.LayoutParams.WRAP_CONTENT, Gravity.CENTER_VERTICAL | Gravity.RIGHT));
+        public void onCreate(final Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
 
-	        actionbar.setTitle("Location Services");
-	        actionbar.setLogo(R.drawable.ic_compass_white);
-	        
-	        updateSettings();
-	    }
-	   
-	    public void onResume() {
-	        super.onResume();
-	        locationSwitch.setOnCheckedChangeListener(this);
-	        updateSettings();
-	    }
+            addPreferencesFromResource(R.xml.locationpreferences);
 
-	    public void onPause() {
-	        super.onPause();
-	        locationSwitch.setOnCheckedChangeListener(null);
-	    }
+            PreferenceManager.getDefaultSharedPreferences(getActivity()).registerOnSharedPreferenceChangeListener(this);
 
-	    protected void updateSettings() {
-	        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
-	        boolean locationServiceEnabled = preferences.getBoolean("locationServiceEnabled", false);
-	        locationSwitch.setChecked(locationServiceEnabled);
-	        
-	        int count = getPreferenceScreen().getPreferenceCount();
-	        for (int i = 0; i < count; ++i) {
-	            Preference pref = getPreferenceScreen().getPreference(i);
-	            pref.setEnabled(locationServiceEnabled);
-	            setSummary(getPreferenceScreen().getPreference(i));         
-	        }
-	    }
+            Activity activity = getActivity();
+            ActionBar actionbar = activity.getActionBar();
+            locationSwitch = new Switch(activity);
 
-	    @Override
-	    public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-	        Editor editor = PreferenceManager.getDefaultSharedPreferences(getActivity()).edit();
-	        editor.putBoolean("locationServiceEnabled", isChecked);
-	        editor.commit();
-	        	        
-	        updateSettings();
-	    }
-	}
-	
-	@Override
-	public void onCreate(Bundle savedInstanceState) {
-		super.onCreate(savedInstanceState);
-		getFragmentManager().beginTransaction().replace(android.R.id.content, preference).commit();
-	}
+            actionbar.setDisplayOptions(ActionBar.DISPLAY_SHOW_CUSTOM, ActionBar.DISPLAY_SHOW_CUSTOM);
+            actionbar.setCustomView(locationSwitch, new ActionBar.LayoutParams(ActionBar.LayoutParams.WRAP_CONTENT, ActionBar.LayoutParams.WRAP_CONTENT, Gravity.CENTER_VERTICAL | Gravity.RIGHT));
+
+            actionbar.setTitle("Location Services");
+            actionbar.setLogo(R.drawable.ic_compass_white);
+            
+            updateSettings();
+        }
+        
+        @Override
+        public void onResume() {
+            super.onResume();
+            locationSwitch.setOnCheckedChangeListener(this);
+        }
+
+        @Override
+        public void onPause() {
+            super.onPause();
+            locationSwitch.setOnCheckedChangeListener(null);
+        }
+
+        @Override
+        public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+            Editor editor = PreferenceManager.getDefaultSharedPreferences(getActivity()).edit();
+            editor.putBoolean("locationServiceEnabled", isChecked);
+            editor.commit();
+
+            updateSettings();
+        }
+        
+        protected void updateSettings() {
+            SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
+            boolean locationServiceEnabled = preferences.getBoolean("locationServiceEnabled", false);
+            locationSwitch.setChecked(locationServiceEnabled);
+
+            int count = getPreferenceScreen().getPreferenceCount();
+            for (int i = 0; i < count; ++i) {
+                Preference pref = getPreferenceScreen().getPreference(i);
+                pref.setEnabled(locationServiceEnabled);
+                setSummary(getPreferenceScreen().getPreference(i));
+            }
+        }
+    }
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        getFragmentManager().beginTransaction().replace(android.R.id.content, preference).commit();
+    }
 }

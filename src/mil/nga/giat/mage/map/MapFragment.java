@@ -8,9 +8,9 @@ import java.util.Set;
 
 import mil.nga.giat.mage.MAGE;
 import mil.nga.giat.mage.R;
+import mil.nga.giat.mage.map.GoogleMapWrapper.OnMapPanListener;
 import mil.nga.giat.mage.observation.ObservationEditActivity;
 import mil.nga.giat.mage.sdk.location.LocationService;
-import android.app.Dialog;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.location.Location;
@@ -19,15 +19,18 @@ import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.view.View.OnTouchListener;
 import android.view.ViewGroup;
-import android.view.Window;
 import android.widget.ImageButton;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.GoogleMap.CancelableCallback;
 import com.google.android.gms.maps.GoogleMap.OnMapLongClickListener;
+import com.google.android.gms.maps.GoogleMap.OnMyLocationButtonClickListener;
 import com.google.android.gms.maps.LocationSource;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
@@ -43,21 +46,32 @@ import com.google.android.gms.maps.model.TileProvider;
  * 
  */
 
-public class MapFragment extends Fragment implements OnClickListener, LocationSource, LocationListener {
+public class MapFragment extends Fragment implements 
+    OnMapLongClickListener, 
+    OnMapPanListener,
+    OnMyLocationButtonClickListener,
+    OnClickListener, 
+    LocationSource, 
+    LocationListener {
 
     private GoogleMap map;
     private int mapType = 1;
+    private Location location;
     private boolean followMe = false;
+    private GoogleMapWrapper mapWrapper;
     private OnLocationChangedListener locationChangedListener;
     private Map<String, TileOverlay> tileOverlays = new HashMap<String, TileOverlay>();
         
     private LocationService locationService;
     
     SharedPreferences preferences;
-
+    
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_map, container, false);
+        
+        mapWrapper = new GoogleMapWrapper(getActivity());
+        mapWrapper.addView(view);
         
         preferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
 
@@ -66,23 +80,15 @@ public class MapFragment extends Fragment implements OnClickListener, LocationSo
         mapType = Integer.parseInt(preferences.getString("baseLayer", "1"));
         map.setMapType(mapType);
 
-        map.setOnMapLongClickListener(new OnMapLongClickListener() {
-            @Override
-            public void onMapLongClick(LatLng point) {
-                // TODO Auto-generated method stub
-                Intent intent = new Intent(getActivity(), ObservationEditActivity.class);
-                intent.putExtra("latitude", point.latitude);
-                intent.putExtra("longitude", point.longitude);
-                startActivity(intent);
-            }
-        });
+        map.setOnMapLongClickListener(this);
+        map.setOnMyLocationButtonClickListener(this);
 
         ImageButton mapSettings = (ImageButton) view.findViewById(R.id.map_settings);
         mapSettings.setOnClickListener(this);
         
         locationService = ((MAGE) getActivity().getApplication()).getLocationService();
 
-        return view;
+        return mapWrapper;
     }
 
     @Override
@@ -90,8 +96,6 @@ public class MapFragment extends Fragment implements OnClickListener, LocationSo
         super.onResume();
 
         // Check if any map preferences changed that I care about        
-        followMe = preferences.getBoolean("followMe", false);
-        
         boolean locationServiceEnabled = preferences.getBoolean("locationServiceEnabled", false);
         map.setMyLocationEnabled(locationServiceEnabled);
 
@@ -114,12 +118,94 @@ public class MapFragment extends Fragment implements OnClickListener, LocationSo
             locationService.unregisterOnLocationListener(this);
         }
     }
+    
+    @Override
+    public void onMapLongClick(LatLng point) {
+        // TODO Auto-generated method stub
+        Intent intent = new Intent(getActivity(), ObservationEditActivity.class);
+        intent.putExtra("latitude", point.latitude);
+        intent.putExtra("longitude", point.longitude);
+        startActivity(intent);        
+    }
+    
+    @Override
+    public void onClick(View view) {
+        switch (view.getId()) {
+            case R.id.map_settings: {
+                Intent i = new Intent(getActivity(), MapPreferencesActivity.class);
+                startActivity(i);
+                break;
+            }
+        }
+    }
+    
+    @Override
+    public boolean onMyLocationButtonClick() {
+        
+        if (location != null) {
+            LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
+            float zoom = map.getCameraPosition().zoom < 15 ? 15 : map.getCameraPosition().zoom;
+            map.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, zoom), new CancelableCallback() {
 
-    public void onMapSettingsClick(View target) {
-        Intent i = new Intent(getActivity(), MapPreferencesActivity.class);
-        startActivity(i);
+                @Override
+                public void onCancel() {
+                    mapWrapper.setOnMapPanListener(MapFragment.this);
+                    followMe = true;
+                }
+
+                @Override
+                public void onFinish() {
+                    mapWrapper.setOnMapPanListener(MapFragment.this);
+                    followMe = true;
+                }
+            });
+        }
+                
+        return true;
     }
 
+    @Override
+    public void activate(OnLocationChangedListener listener) {
+        locationChangedListener = listener;
+    }
+
+    @Override
+    public void deactivate() {
+        locationChangedListener = null;        
+    }
+    
+    @Override
+    public void onMapPan() {
+        mapWrapper.setOnMapPanListener(null);
+        followMe = false;
+    }
+    
+    @Override
+    public void onLocationChanged(Location location) {
+        this.location = location;
+        if (locationChangedListener != null) {
+            locationChangedListener.onLocationChanged(location);
+        }    
+        
+        if (followMe) {
+            LatLngBounds bounds = map.getProjection().getVisibleRegion().latLngBounds;
+            LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
+            if (!bounds.contains(latLng)) {
+                // Move the camera to the user's location once it's available!
+                map.animateCamera(CameraUpdateFactory.newLatLng(latLng));
+            }
+        }
+    }
+
+    @Override
+    public void onStatusChanged(String provider, int status, Bundle extras) {}
+
+    @Override
+    public void onProviderEnabled(String provider) {}
+
+    @Override
+    public void onProviderDisabled(String provider) {}
+    
     private void updateMapType() {
         int mapType = Integer.parseInt(preferences.getString("mapBaseLayer", "1"));
         if (mapType != this.mapType) {
@@ -151,58 +237,4 @@ public class MapFragment extends Fragment implements OnClickListener, LocationSo
             tileOverlays.remove(overlay).remove();
         }
     }
-
-    public void showLayersPopup(View view) {
-        Dialog dialog = new Dialog(getActivity());
-        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
-        dialog.setContentView(R.layout.map_preference);
-        dialog.setCancelable(true);
-        dialog.show();
-    }
-
-    @Override
-    public void onClick(View view) {
-        switch (view.getId()) {
-            case R.id.map_settings: {
-                Intent i = new Intent(getActivity(), MapPreferencesActivity.class);
-                startActivity(i);
-                break;
-            }
-        }
-    }
-
-    @Override
-    public void activate(OnLocationChangedListener listener) {
-        locationChangedListener = listener;
-    }
-
-    @Override
-    public void deactivate() {
-        locationChangedListener = null;        
-    }
-
-    @Override
-    public void onLocationChanged(Location location) {        
-        if (locationChangedListener != null) {
-            locationChangedListener.onLocationChanged(location);
-        }    
-        
-        if (!followMe) return;
-
-        LatLngBounds bounds = map.getProjection().getVisibleRegion().latLngBounds;
-        LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
-        if (!bounds.contains(latLng)) {
-            // Move the camera to the user's location once it's available!
-            map.animateCamera(CameraUpdateFactory.newLatLng(latLng));
-        }
-    }
-
-    @Override
-    public void onStatusChanged(String provider, int status, Bundle extras) {}
-
-    @Override
-    public void onProviderEnabled(String provider) {}
-
-    @Override
-    public void onProviderDisabled(String provider) {}
 }
