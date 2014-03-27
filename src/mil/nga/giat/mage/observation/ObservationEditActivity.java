@@ -244,7 +244,7 @@ public class ObservationEditActivity extends FragmentActivity {
 			Collection<Attachment> attachments = new ArrayList<Attachment>();
 			for (String path : attachmentPaths) {
 				Attachment a = new Attachment();
-				a.setLocal_path(path);
+				a.setLocalPath(path);
 				attachments.add(a);
 			}
 			o.setAttachments(attachments);

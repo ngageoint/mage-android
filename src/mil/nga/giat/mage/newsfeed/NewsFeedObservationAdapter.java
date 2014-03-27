@@ -55,7 +55,7 @@ public class NewsFeedObservationAdapter extends BaseAdapter {
 
 	@Override
 	public long getItemId(int index) {
-		return data.get(index).getPk_id();
+		return data.get(index).getId();
 	}
 
 	@Override
@@ -73,7 +73,7 @@ public class NewsFeedObservationAdapter extends BaseAdapter {
 			@Override
 			public void onClick(View v) {
 				Intent observationView = new Intent(activity.getApplicationContext(), ObservationViewActivity.class);
-				observationView.putExtra(ObservationViewActivity.OBSERVATION_ID, o.getPk_id());
+				observationView.putExtra(ObservationViewActivity.OBSERVATION_ID, o.getId());
 				activity.startActivityForResult(observationView, 2);
 			}
 		});
@@ -94,10 +94,10 @@ public class NewsFeedObservationAdapter extends BaseAdapter {
 			Attachment a = attachments.iterator().next();
 			String server = PreferenceHelper.getInstance(activity.getApplicationContext()).getValue(R.string.serverURLKey);
 			String token = PreferenceHelper.getInstance(activity.getApplicationContext()).getValue(R.string.tokenKey);
-			String url = server + "/FeatureServer/3/Features/" + o.getRemote_id() + "/attachments/" + a.getRemote_id() + "?access_token=" + token;
+			String url = server + "/FeatureServer/3/Features/" + o.getRemoteId() + "/attachments/" + a.getRemoteId() + "?access_token=" + token;
 			Log.i("test", "URL: " + url);
 //			String url = server + "/" + a.getRemote_path() + "?access_token=" + token;
-			Glide.load(url).placeholder(R.drawable.ic_camera).centerCrop().into(iv);
+			Glide.load(url).placeholder(android.R.drawable.progress_indeterminate_horizontal).centerCrop().into(iv);
 //			Glide.load("http://www.wallpick.com/wp-content/uploads/2014/01/05/cool-purple-wallpaper-wallpaper-hd-background-pictures-abstract-pictures-purple-wallpaper.jpg").into(iv);
 //			http://www.rosco.com/spectrum/wp-content/uploads/2011/06/Purple-loneliness-purple-18741803-1000-600.jpg
 		} else {
