@@ -13,13 +13,6 @@ import android.view.Gravity;
 import android.widget.CompoundButton;
 import android.widget.Switch;
 
-/**
- * Provides configuration driven settings that are available to the user. Check
- * publicpreferences.xml for the configuration.
- * 
- * @author wiedemannse
- * 
- */
 public class LocationPreferencesActivity extends PreferenceActivity {
 
     LocationPreferenceFragment preference = new LocationPreferenceFragment();
@@ -31,7 +24,7 @@ public class LocationPreferencesActivity extends PreferenceActivity {
         public void onCreate(final Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
 
-            addPreferencesFromResource(R.xml.locationpreferences);
+            addPreferencesFromResource(R.xml.overlaypreferences);
 
             PreferenceManager.getDefaultSharedPreferences(getActivity()).registerOnSharedPreferenceChangeListener(this);
 
@@ -42,8 +35,8 @@ public class LocationPreferencesActivity extends PreferenceActivity {
             actionbar.setDisplayOptions(ActionBar.DISPLAY_SHOW_CUSTOM, ActionBar.DISPLAY_SHOW_CUSTOM);
             actionbar.setCustomView(locationSwitch, new ActionBar.LayoutParams(ActionBar.LayoutParams.WRAP_CONTENT, ActionBar.LayoutParams.WRAP_CONTENT, Gravity.CENTER_VERTICAL | Gravity.RIGHT));
 
-            actionbar.setTitle("Location Services");
-            actionbar.setLogo(R.drawable.ic_compass_white);
+//            actionbar.setTitle("Location Services");
+//            actionbar.setLogo(R.drawable.ic_compass_white);
             
             updateSettings();
         }

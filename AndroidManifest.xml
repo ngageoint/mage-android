@@ -72,8 +72,8 @@
         </activity>
         <activity
             android:name="mil.nga.giat.mage.preferences.LocationPreferencesActivity"
-            android:icon="@drawable/ic_settings_white"
-            android:label="@string/menu_settings"
+            android:icon="@drawable/ic_compass_white"
+            android:label="@string/location_settings"
             android:parentActivityName="mil.nga.giat.mage.preferences.PublicPreferencesActivity" >
         </activity>
         <activity
@@ -86,6 +86,18 @@
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="mil.nga.giat.mage.LandingActivity" />
+        </activity>
+        <activity
+            android:name="mil.nga.giat.mage.preferences.OverlayPreferencesActivity"
+            android:icon="@drawable/ic_map_white"
+            android:label="@string/overlay_settings"
+            android:launchMode="singleTop"
+            android:parentActivityName="mil.nga.giat.mage.map.MapPreferencesActivity" >
+            
+            <!-- Parent activity meta-data to support 4.0 and lower -->
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="mil.nga.giat.mage.map.MapPreferencesActivity" />
         </activity>
         <activity
             android:name="mil.nga.giat.mage.observation.ObservationViewActivity"
