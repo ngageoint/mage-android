@@ -1,5 +1,6 @@
 package mil.nga.giat.mage.newsfeed;
 
+import java.io.File;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.Collection;
@@ -9,18 +10,22 @@ import java.util.Map;
 
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.form.MageTextView;
+import mil.nga.giat.mage.observation.AttachmentViewerActivity;
 import mil.nga.giat.mage.observation.ObservationViewActivity;
 import mil.nga.giat.mage.sdk.datastore.common.Geometry;
 import mil.nga.giat.mage.sdk.datastore.common.PointGeometry;
 import mil.nga.giat.mage.sdk.datastore.observation.Attachment;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
+import mil.nga.giat.mage.sdk.utils.MediaUtility;
 import android.content.Intent;
+import android.net.Uri;
 import android.support.v4.app.FragmentActivity;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewGroup.LayoutParams;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -78,29 +83,54 @@ public class NewsFeedObservationAdapter extends BaseAdapter {
 			}
 		});
 		
-		
-//		Geometry geo = o.getObservationGeometry().getGeometry();
-//		if(geo instanceof PointGeometry) {
-//			PointGeometry pointGeo = (PointGeometry)geo;
-//			((TextView)v.findViewById(R.id.location)).setText(latLngFormat.format(pointGeo.getLatitude()) + ", " + latLngFormat.format(pointGeo.getLongitude()));
-//		}
-		
 		ImageView iv = ((ImageView)v.findViewById(R.id.observation_thumb));
 		Collection<Attachment> attachments = o.getAttachments();
-		Log.i("test", "there are " + attachments.size() + " attachments");
 		((TextView)v.findViewById(R.id.username)).setText("there are " + attachments.size() + " attachments");
-		//Glide.load("http://www.rosco.com/spectrum/wp-content/uploads/2011/06/Purple-loneliness-purple-18741803-1000-600.jpg").centerCrop().into(iv);
-		if (!attachments.isEmpty()) {
+		if (attachments.size() != 0) {
+			iv.setVisibility(View.VISIBLE);
 			Attachment a = attachments.iterator().next();
+			
 			String server = PreferenceHelper.getInstance(activity.getApplicationContext()).getValue(R.string.serverURLKey);
 			String token = PreferenceHelper.getInstance(activity.getApplicationContext()).getValue(R.string.tokenKey);
-			String url = server + "/FeatureServer/3/Features/" + o.getRemoteId() + "/attachments/" + a.getRemoteId() + "?access_token=" + token;
-			Log.i("test", "URL: " + url);
-//			String url = server + "/" + a.getRemote_path() + "?access_token=" + token;
-			Glide.load(url).placeholder(android.R.drawable.progress_indeterminate_horizontal).centerCrop().into(iv);
-//			Glide.load("http://www.wallpick.com/wp-content/uploads/2014/01/05/cool-purple-wallpaper-wallpaper-hd-background-pictures-abstract-pictures-purple-wallpaper.jpg").into(iv);
-//			http://www.rosco.com/spectrum/wp-content/uploads/2011/06/Purple-loneliness-purple-18741803-1000-600.jpg
+			
+			final String absPath = a.getLocalPath();
+			final String remoteId = a.getRemoteId();
+			
+			// get content type from everywhere I can think of
+			String contentType = a.getContentType();
+			String name = null;
+			if (contentType == null || "".equalsIgnoreCase(contentType) || "application/octet-stream".equalsIgnoreCase(contentType)) {
+				name = a.getName();
+				if (name == null) {
+					name = a.getLocalPath();
+					if (name == null) {
+						name = a.getRemotePath();
+					}
+				}
+				contentType = MediaUtility.getMimeType(name);
+			}
+			
+			if (absPath != null) {
+				if (contentType.startsWith("image")) {
+					Glide.load(new File(absPath)).placeholder(android.R.drawable.progress_indeterminate_horizontal).centerCrop().into(iv);
+				} else if (contentType.startsWith("video")) {
+					Glide.load(R.drawable.ic_video_2x).into(iv);
+				} else if (contentType.startsWith("audio")) {
+					Glide.load(R.drawable.ic_microphone).into(iv);
+				}
+			} else if (remoteId != null) {
+				if (contentType.startsWith("image")) {
+					String url = server + "/FeatureServer/3/Features/" + o.getRemoteId() + "/attachments/" + a.getRemoteId() + "?access_token=" + token;
+					Log.i("test", "URL: " + url);
+					Glide.load(url).placeholder(android.R.drawable.progress_indeterminate_horizontal).centerCrop().into(iv);
+				} else if (contentType.startsWith("video")) {
+					Glide.load(R.drawable.ic_video_2x).into(iv);
+				} else if (contentType.startsWith("audio")) {
+					Glide.load(R.drawable.ic_microphone).into(iv);
+				}
+			}
 		} else {
+			iv.setVisibility(View.GONE);
 			iv.setImageDrawable(null);
 		}
 		

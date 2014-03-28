@@ -21,6 +21,7 @@ import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationGeometry;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
 import mil.nga.giat.mage.sdk.exceptions.ObservationException;
+import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
 import android.annotation.TargetApi;
 import android.content.Intent;
@@ -45,6 +46,7 @@ import android.widget.LinearLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
 
+import com.bumptech.glide.Glide;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.SupportMapFragment;
@@ -72,7 +74,7 @@ public class ObservationEditActivity extends FragmentActivity {
 
 	Date date;
 	DecimalFormat latLngFormat = new DecimalFormat("###.######");
-	List<String> attachmentPaths = new ArrayList<String>();
+	ArrayList<Attachment> attachments = new ArrayList<Attachment>();
 	double lat;
 	double lon;
 	long observationId;
@@ -98,6 +100,10 @@ public class ObservationEditActivity extends FragmentActivity {
 			// this is an edit of an existing observation
 			try {
 				o = ObservationHelper.getInstance(getApplicationContext()).readObservation(getIntent().getLongExtra(OBSERVATION_ID, 0L));
+				attachments.addAll(o.getAttachments());
+				for (Attachment a : attachments) {
+					addAttachmentToGallery(a);
+				}
 			
 				propertiesMap = o.getPropertiesMap();
 				Geometry geo = o.getObservationGeometry().getGeometry();
@@ -137,10 +143,10 @@ public class ObservationEditActivity extends FragmentActivity {
 
 		lat = savedInstanceState.getDouble("lat");
 		lon = savedInstanceState.getDouble("lon");
-		attachmentPaths.addAll(Arrays.asList(savedInstanceState.getStringArray("attachmentPaths")));
+		attachments = savedInstanceState.getParcelableArrayList("attachments");
 
-		for (String path : attachmentPaths) {
-			addImageToGallery(path);
+		for (Attachment a : attachments) {
+			addAttachmentToGallery(a);
 		}
 
 		LinearLayout form = (LinearLayout) findViewById(R.id.form);
@@ -151,7 +157,7 @@ public class ObservationEditActivity extends FragmentActivity {
 	protected void onSaveInstanceState(Bundle outState) {
 		outState.putDouble("lat", lat);
 		outState.putDouble("lon", lon);
-		outState.putStringArray("attachmentPaths", attachmentPaths.toArray(new String[attachmentPaths.size()]));
+		outState.putParcelableArrayList("attachments", new ArrayList<Attachment>(attachments));
 		LinearLayout form = (LinearLayout) findViewById(R.id.form);
 		savePropertyFieldsToBundle(form, outState);
 		super.onSaveInstanceState(outState);
@@ -240,13 +246,7 @@ public class ObservationEditActivity extends FragmentActivity {
 			propertyMap.put("OBSERVATION_DATE", String.valueOf(date.getTime()));
 			
 			o.setPropertiesMap(propertyMap);
-
-			Collection<Attachment> attachments = new ArrayList<Attachment>();
-			for (String path : attachmentPaths) {
-				Attachment a = new Attachment();
-				a.setLocalPath(path);
-				attachments.add(a);
-			}
+			
 			o.setAttachments(attachments);
 
 			ObservationHelper oh = ObservationHelper.getInstance(getApplicationContext());
@@ -287,41 +287,96 @@ public class ObservationEditActivity extends FragmentActivity {
 		startActivityForResult(intent, GALLERY_ACTIVITY_REQUEST_CODE);
 	}
 
-	private void addImageToGallery(final String absPath) {
+	private void addAttachmentToGallery(final Attachment a) {
+		String server = PreferenceHelper.getInstance(getApplicationContext()).getValue(R.string.serverURLKey);
+		String token = PreferenceHelper.getInstance(getApplicationContext()).getValue(R.string.tokenKey);
 		LinearLayout l = (LinearLayout) findViewById(R.id.image_gallery);
+		
+		final String absPath = a.getLocalPath();
+		final String remoteId = a.getRemoteId();
 		ImageView iv = new ImageView(getApplicationContext());
-		try {
-			
-			if (absPath.endsWith(".mp4")) {
-				Drawable[] layers = new Drawable[2];
-				Resources r = getResources();
-				layers[0] = new BitmapDrawable(r, ThumbnailUtils.createVideoThumbnail(absPath, MediaStore.Video.Thumbnails.MICRO_KIND));
-				layers[1] = r.getDrawable(R.drawable.ic_video_white_2x);
-				LayerDrawable ld = new LayerDrawable(layers);
-				iv.setImageDrawable(ld);
-			} else if (absPath.endsWith(".mp3") || absPath.endsWith("m4a")) {
-				iv.setImageBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.ic_microphone));
-			} else {
-				iv.setImageBitmap(MediaUtility.getThumbnail(new File(absPath), 100));
+		LayoutParams lp = new LayoutParams(100, 100);
+		iv.setLayoutParams(lp);
+		iv.setPadding(0, 0, 10, 0);
+		iv.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				Intent intent = new Intent(v.getContext(), AttachmentViewerActivity.class);
+				intent.putExtra("attachment", a);
+				intent.putExtra(AttachmentViewerActivity.EDITABLE, false);
+				startActivityForResult(intent, ATTACHMENT_VIEW_ACTIVITY_REQUEST_CODE);
 			}
-			LayoutParams lp = new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.MATCH_PARENT);
-			iv.setLayoutParams(lp);
-			iv.setPadding(0, 0, 10, 0);
-			iv.setOnClickListener(new View.OnClickListener() {
-
-				@Override
-				public void onClick(View v) {
-					Intent intent = new Intent(v.getContext(), ImageViewerActivity.class);
-					intent.setData(Uri.fromFile(new File(absPath)));
-					intent.putExtra(ImageViewerActivity.EDITABLE, true);
-					startActivityForResult(intent, ATTACHMENT_VIEW_ACTIVITY_REQUEST_CODE);
+		});
+		l.addView(iv);
+		
+		// get content type from everywhere I can think of
+		String contentType = a.getContentType();
+		if (contentType == null || "".equalsIgnoreCase(contentType) || "application/octet-stream".equalsIgnoreCase(contentType)) {
+			String name = a.getName();
+			if (name == null) {
+				name = a.getLocalPath();
+				if (name == null) {
+					name = a.getRemotePath();
 				}
-			});
-			l.addView(iv);
-			Log.d("image", "Set the image gallery to have an image with absolute path " + absPath);
-		} catch (Exception e) {
-			Log.e("exception", "Error making image", e);
+			}
+			contentType = MediaUtility.getMimeType(name);
 		}
+		
+		if (absPath != null) {
+			if (contentType.startsWith("image")) {
+				Glide.load(new File(absPath)).placeholder(android.R.drawable.progress_indeterminate_horizontal).centerCrop().into(iv);
+			} else if (contentType.startsWith("video")) {
+				Glide.load(R.drawable.ic_video_2x).into(iv);
+			} else if (contentType.startsWith("audio")) {
+				Glide.load(R.drawable.ic_microphone).into(iv);
+			}
+		} else if (remoteId != null) {
+			String url = server + "/FeatureServer/3/Features/" + o.getRemoteId() + "/attachments/" + a.getRemoteId() + "?access_token=" + token;
+			Log.i("test", "url to load is: " + url);
+			Log.i("test", "content type is: " + contentType + " name is: " + a.getName());
+			if (contentType.startsWith("image")) {
+				Glide.load(url).placeholder(android.R.drawable.progress_indeterminate_horizontal).centerCrop().into(iv);
+			} else if (contentType.startsWith("video")) {
+				Glide.load(R.drawable.ic_video_2x).into(iv);
+			} else if (contentType.startsWith("audio")) {
+				Glide.load(R.drawable.ic_microphone).into(iv);
+			}
+		}
+		
+		
+		
+//		try {
+//			
+//			if (absPath.endsWith(".mp4")) {
+//				Drawable[] layers = new Drawable[2];
+//				Resources r = getResources();
+//				layers[0] = new BitmapDrawable(r, ThumbnailUtils.createVideoThumbnail(absPath, MediaStore.Video.Thumbnails.MICRO_KIND));
+//				layers[1] = r.getDrawable(R.drawable.ic_video_white_2x);
+//				LayerDrawable ld = new LayerDrawable(layers);
+//				iv.setImageDrawable(ld);
+//			} else if (absPath.endsWith(".mp3") || absPath.endsWith("m4a")) {
+//				iv.setImageBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.ic_microphone));
+//			} else {
+//				iv.setImageBitmap(MediaUtility.getThumbnail(new File(absPath), 100));
+//			}
+//			LayoutParams lp = new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.MATCH_PARENT);
+//			iv.setLayoutParams(lp);
+//			iv.setPadding(0, 0, 10, 0);
+//			iv.setOnClickListener(new View.OnClickListener() {
+//
+//				@Override
+//				public void onClick(View v) {
+//					Intent intent = new Intent(v.getContext(), AttachmentViewerActivity.class);
+//					intent.setData(Uri.fromFile(new File(absPath)));
+//					intent.putExtra(AttachmentViewerActivity.EDITABLE, true);
+//					startActivityForResult(intent, ATTACHMENT_VIEW_ACTIVITY_REQUEST_CODE);
+//				}
+//			});
+//			l.addView(iv);
+//			Log.d("image", "Set the image gallery to have an image with absolute path " + absPath);
+//		} catch (Exception e) {
+//			Log.e("exception", "Error making image", e);
+//		}
 	}
 
 	@Override
@@ -333,14 +388,19 @@ public class ObservationEditActivity extends FragmentActivity {
 		case CAPTURE_VIDEO_ACTIVITY_REQUEST_CODE:
 		case GALLERY_ACTIVITY_REQUEST_CODE:
 		case CAPTURE_VOICE_ACTIVITY_REQUEST_CODE:
+			Log.i("test", "data returned is: " + data.getData());
+			//String path = MediaUtility.getPath(getApplicationContext(), data.getData());
 			String path = MediaUtility.getFileAbsolutePath(data.getData(), getApplicationContext());
-			attachmentPaths.add(path);
-			addImageToGallery(path);
+			Attachment a = new Attachment();
+			a.setLocalPath(path);
+			attachments.add(a);
+			addAttachmentToGallery(a);
 			break;
 		case ATTACHMENT_VIEW_ACTIVITY_REQUEST_CODE:
-			if (data.getData() != null && data.getBooleanExtra("REMOVE", false)) {
-				int idx = attachmentPaths.indexOf(MediaUtility.getFileAbsolutePath(data.getData(), getApplicationContext()));
-				attachmentPaths.remove(idx);
+			Attachment remove = data.getParcelableExtra("attachment");
+			if (remove != null && data.getBooleanExtra("REMOVE", false)) {
+				int idx = attachments.indexOf(remove);
+				attachments.remove(remove);
 				LinearLayout l = (LinearLayout) findViewById(R.id.image_gallery);
 				l.removeViewAt(idx);
 			}
