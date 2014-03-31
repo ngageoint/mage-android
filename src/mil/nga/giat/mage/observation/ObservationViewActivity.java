@@ -1,6 +1,8 @@
 package mil.nga.giat.mage.observation;
 
 import java.io.File;
+import java.text.DecimalFormat;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Map;
 
@@ -28,6 +30,7 @@ import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewGroup.LayoutParams;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -45,6 +48,8 @@ public class ObservationViewActivity extends FragmentActivity {
 	private static final int ATTACHMENT_VIEW_ACTIVITY_REQUEST_CODE = 500;
 	private Observation o;
 	private Map<String, String> propertiesMap;
+	DecimalFormat latLngFormat = new DecimalFormat("###.######");
+	private SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm zz");
 	
 	public class AttachmentGalleryTask extends AsyncTask<Attachment, ImageView, Boolean> {
 
@@ -165,7 +170,7 @@ public class ObservationViewActivity extends FragmentActivity {
 			Geometry geo = o.getObservationGeometry().getGeometry();
 			if(geo instanceof PointGeometry) {
 				PointGeometry pointGeo = (PointGeometry)geo;
-				((TextView)findViewById(R.id.location)).setText(pointGeo.getLatitude() + ", " + pointGeo.getLongitude());
+				((TextView)findViewById(R.id.location)).setText(latLngFormat.format(pointGeo.getLatitude()) + ", " + latLngFormat.format(pointGeo.getLongitude()));
 				GoogleMap map = ((SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.mini_map)).getMap();
 				
 				LatLng location = new LatLng(pointGeo.getLatitude(), pointGeo.getLongitude());
@@ -185,8 +190,18 @@ public class ObservationViewActivity extends FragmentActivity {
 			} else {
 				LinearLayout l = (LinearLayout) findViewById(R.id.image_gallery);
 				createImageViews(l);
-//				AttachmentGalleryTask task = new AttachmentGalleryTask();
-//				task.execute(o.getAttachments().toArray(new Attachment[o.getAttachments().size()]));
+			}
+			
+			TextView user = (TextView)findViewById(R.id.username);
+			user.setText(o.getPropertiesMap().get("userId"));
+			
+			FrameLayout fl = (FrameLayout)findViewById(R.id.sync_status);
+			if (o.getRemoteId() == null) {
+				View.inflate(getApplicationContext(), R.layout.saved_locally, fl);
+			} else {
+				View status = View.inflate(getApplicationContext(), R.layout.submitted_on, fl);
+				TextView syncDate = (TextView)status.findViewById(R.id.observation_sync_date);
+				syncDate.setText(sdf.format(o.getLastModified()));
 			}
 		} catch (Exception e) {
 			Log.e("observation view", e.getMessage(), e);
