@@ -24,6 +24,7 @@ import android.preference.PreferenceManager;
 import android.support.v4.app.FragmentActivity;
 import android.text.InputType;
 import android.text.TextUtils;
+import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnTouchListener;
@@ -92,6 +93,20 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 		getUsernameEditText().setSelection(getUsernameEditText().getText().length());
 		getServerEditText().setText(PreferenceHelper.getInstance(getApplicationContext()).getValue(R.string.serverURLKey));
 		getServerEditText().setSelection(getServerEditText().getText().length());
+		
+		//This is the relevant code
+		mPasswordEditText.setOnKeyListener(new View.OnKeyListener() {
+			
+			@Override
+			public boolean onKey(View v, int keyCode, KeyEvent event) {
+				 if (keyCode == KeyEvent.KEYCODE_ENTER) {
+	                    login(v);
+	                    return true;
+	                } else {
+	                    return false;
+	                }
+			}
+		});
 	}
 
 	public void togglePassword(View v) {
