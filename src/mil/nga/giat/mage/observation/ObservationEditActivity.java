@@ -24,6 +24,7 @@ import mil.nga.giat.mage.sdk.exceptions.ObservationException;
 import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
 import android.annotation.TargetApi;
+import android.content.ClipData;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.graphics.BitmapFactory;
@@ -282,8 +283,10 @@ public class ObservationEditActivity extends FragmentActivity {
 		Intent intent = new Intent();
 		intent.setType("image/*, video/*");
 		intent.setAction(Intent.ACTION_GET_CONTENT);
-		// TODO test when we get a 4.3 device
-		// intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+		Log.i("test", "build version sdk int: " + Build.VERSION.SDK_INT);
+		if (Build.VERSION.SDK_INT >= 18) {
+			intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+		}
 		startActivityForResult(intent, GALLERY_ACTIVITY_REQUEST_CODE);
 	}
 
@@ -388,13 +391,14 @@ public class ObservationEditActivity extends FragmentActivity {
 		case CAPTURE_VIDEO_ACTIVITY_REQUEST_CODE:
 		case GALLERY_ACTIVITY_REQUEST_CODE:
 		case CAPTURE_VOICE_ACTIVITY_REQUEST_CODE:
-			Log.i("test", "data returned is: " + data.getData());
-			String path = MediaUtility.getPath(getApplicationContext(), data.getData());
-			//String path = MediaUtility.getFileAbsolutePath(data.getData(), getApplicationContext());
-			Attachment a = new Attachment();
-			a.setLocalPath(path);
-			attachments.add(a);
-			addAttachmentToGallery(a);
+			ArrayList<Uri> uris = getUris(data);
+			for (Uri u : uris) {
+				String path = MediaUtility.getPath(getApplicationContext(), u);
+				Attachment a = new Attachment();
+				a.setLocalPath(path);
+				attachments.add(a);
+				addAttachmentToGallery(a);
+			}
 			break;
 		case ATTACHMENT_VIEW_ACTIVITY_REQUEST_CODE:
 			Attachment remove = data.getParcelableExtra("attachment");
@@ -408,11 +412,23 @@ public class ObservationEditActivity extends FragmentActivity {
 		}
 	}
 
-	// TODO test when we get a 4.3 device
+	private ArrayList<Uri> getUris(Intent intent) {
+		ArrayList<Uri> uris = new ArrayList<Uri>();
+		addClipDataUris(intent, uris);
+		if (intent.getData() != null) {
+			uris.add(intent.getData());
+		}
+		return uris;
+	}
+	
 	@TargetApi(16)
-	private void handleClipData(Intent data) {
+	private void addClipDataUris(Intent intent, ArrayList<Uri> uris) {
 		if (Build.VERSION.SDK_INT >= 16) {
-			Log.d("picker", "data 2 is " + data.getClipData());
+			ClipData cd = intent.getClipData();
+			if (cd == null) return;
+			for (int i = 0; i < cd.getItemCount(); i++) {
+				uris.add(cd.getItemAt(i).getUri());
+			}
 		}
 	}
 }
