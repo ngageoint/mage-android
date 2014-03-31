@@ -389,8 +389,8 @@ public class ObservationEditActivity extends FragmentActivity {
 		case GALLERY_ACTIVITY_REQUEST_CODE:
 		case CAPTURE_VOICE_ACTIVITY_REQUEST_CODE:
 			Log.i("test", "data returned is: " + data.getData());
-			//String path = MediaUtility.getPath(getApplicationContext(), data.getData());
-			String path = MediaUtility.getFileAbsolutePath(data.getData(), getApplicationContext());
+			String path = MediaUtility.getPath(getApplicationContext(), data.getData());
+			//String path = MediaUtility.getFileAbsolutePath(data.getData(), getApplicationContext());
 			Attachment a = new Attachment();
 			a.setLocalPath(path);
 			attachments.add(a);
