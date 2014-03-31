@@ -334,7 +334,7 @@ public class ObservationEditActivity extends FragmentActivity {
 				Glide.load(R.drawable.ic_microphone).into(iv);
 			}
 		} else if (remoteId != null) {
-			String url = server + "/FeatureServer/3/Features/" + o.getRemoteId() + "/attachments/" + a.getRemoteId() + "?access_token=" + token;
+			String url = a.getUrl() + "?access_token=" + token;
 			Log.i("test", "url to load is: " + url);
 			Log.i("test", "content type is: " + contentType + " name is: " + a.getName());
 			if (contentType.startsWith("image")) {

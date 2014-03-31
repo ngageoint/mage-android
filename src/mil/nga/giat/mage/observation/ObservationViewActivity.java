@@ -80,8 +80,7 @@ public class ObservationViewActivity extends FragmentActivity {
 //						iv.setImageBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.ic_microphone));
 					} else {
 						if (a.getRemoteId() != null) {
-							String url = server + "/FeatureServer/3/Features/" + o.getRemoteId() + "/attachments/" + a.getRemoteId() + "?access_token=" + token;
-							Log.i("test", "URL: " + url);
+							String url = a.getUrl() + "?access_token=" + token;
 							Glide.load(url).placeholder(android.R.drawable.progress_indeterminate_horizontal).centerCrop().into(iv);
 						} else {
 							Glide.load(new File(absPath)).placeholder(android.R.drawable.progress_indeterminate_horizontal).centerCrop().into(iv);
@@ -146,9 +145,7 @@ public class ObservationViewActivity extends FragmentActivity {
 					Glide.load(R.drawable.ic_microphone).into(iv);
 				}
 			} else if (remoteId != null) {
-				String url = server + "/FeatureServer/3/Features/" + o.getRemoteId() + "/attachments/" + a.getRemoteId() + "?access_token=" + token;
-				Log.i("test", "url to load is: " + url);
-				Log.i("test", "content type is: " + contentType + " name is: " + a.getName());
+				String url = a.getUrl() + "?access_token=" + token;
 				if (contentType.startsWith("image")) {
 					Glide.load(url).placeholder(android.R.drawable.progress_indeterminate_horizontal).centerCrop().into(iv);
 				} else if (contentType.startsWith("video")) {
