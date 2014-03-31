@@ -71,6 +71,7 @@
                 android:layout_marginTop="7dip"
                 android:background="@drawable/form_field"
                 android:hint="Username"
+                android:textColorHint="#CCCCCC"
                 android:inputType="textVisiblePassword|textNoSuggestions"
                 android:singleLine="true"
                 android:textSize="22sp" />
@@ -83,6 +84,7 @@
                 android:layout_marginTop="7dip"
                 android:background="@drawable/form_field"
                 android:hint="Password"
+                android:textColorHint="#CCCCCC"
                 android:inputType="textPassword"
                 android:singleLine="true"
                 android:textSize="22sp" />
