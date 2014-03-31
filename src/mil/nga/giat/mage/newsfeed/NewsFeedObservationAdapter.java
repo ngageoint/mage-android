@@ -10,22 +10,17 @@ import java.util.Map;
 
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.form.MageTextView;
-import mil.nga.giat.mage.observation.AttachmentViewerActivity;
 import mil.nga.giat.mage.observation.ObservationViewActivity;
-import mil.nga.giat.mage.sdk.datastore.common.Geometry;
-import mil.nga.giat.mage.sdk.datastore.common.PointGeometry;
 import mil.nga.giat.mage.sdk.datastore.observation.Attachment;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
 import android.content.Intent;
-import android.net.Uri;
 import android.support.v4.app.FragmentActivity;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.ViewGroup.LayoutParams;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -90,7 +85,6 @@ public class NewsFeedObservationAdapter extends BaseAdapter {
 			iv.setVisibility(View.VISIBLE);
 			Attachment a = attachments.iterator().next();
 			
-			String server = PreferenceHelper.getInstance(activity.getApplicationContext()).getValue(R.string.serverURLKey);
 			String token = PreferenceHelper.getInstance(activity.getApplicationContext()).getValue(R.string.tokenKey);
 			
 			final String absPath = a.getLocalPath();
@@ -120,7 +114,7 @@ public class NewsFeedObservationAdapter extends BaseAdapter {
 				}
 			} else if (remoteId != null) {
 				if (contentType.startsWith("image")) {
-					String url = server + "/FeatureServer/3/Features/" + o.getRemoteId() + "/attachments/" + a.getRemoteId() + "?access_token=" + token;
+					String url = a.getUrl() + "?access_token=" + token;
 					Log.i("test", "URL: " + url);
 					Glide.load(url).placeholder(android.R.drawable.progress_indeterminate_horizontal).centerCrop().into(iv);
 				} else if (contentType.startsWith("video")) {

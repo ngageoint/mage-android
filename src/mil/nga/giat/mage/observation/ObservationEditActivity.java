@@ -3,11 +3,8 @@ package mil.nga.giat.mage.observation;
 import java.io.File;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import mil.nga.giat.mage.R;
@@ -26,12 +23,6 @@ import mil.nga.giat.mage.sdk.utils.MediaUtility;
 import android.annotation.TargetApi;
 import android.content.ClipData;
 import android.content.Intent;
-import android.content.res.Resources;
-import android.graphics.BitmapFactory;
-import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.Drawable;
-import android.graphics.drawable.LayerDrawable;
-import android.media.ThumbnailUtils;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -228,11 +219,9 @@ public class ObservationEditActivity extends FragmentActivity {
 
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
-		System.out.println("STarting the observation view");
 		switch (item.getItemId()) {
 
 		case R.id.observation_save:
-			System.out.println("SAVE");
 			
 			if (o == null) {
 				o = new Observation();
@@ -291,7 +280,6 @@ public class ObservationEditActivity extends FragmentActivity {
 	}
 
 	private void addAttachmentToGallery(final Attachment a) {
-		String server = PreferenceHelper.getInstance(getApplicationContext()).getValue(R.string.serverURLKey);
 		String token = PreferenceHelper.getInstance(getApplicationContext()).getValue(R.string.tokenKey);
 		LinearLayout l = (LinearLayout) findViewById(R.id.image_gallery);
 		

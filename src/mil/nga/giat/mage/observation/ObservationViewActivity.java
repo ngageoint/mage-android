@@ -50,7 +50,6 @@ public class ObservationViewActivity extends FragmentActivity {
 
 		@Override
 		protected Boolean doInBackground(Attachment... params) {
-			String server = PreferenceHelper.getInstance(getApplicationContext()).getValue(R.string.serverURLKey);
 			String token = PreferenceHelper.getInstance(getApplicationContext()).getValue(R.string.tokenKey);
 			for (Attachment a : params) {
 				final String absPath = a.getLocalPath();
@@ -103,7 +102,6 @@ public class ObservationViewActivity extends FragmentActivity {
 	}
 	
 	private void createImageViews(ViewGroup gallery) {
-		String server = PreferenceHelper.getInstance(getApplicationContext()).getValue(R.string.serverURLKey);
 		String token = PreferenceHelper.getInstance(getApplicationContext()).getValue(R.string.tokenKey);
 		for (final Attachment a : o.getAttachments()) {
 			final String absPath = a.getLocalPath();
