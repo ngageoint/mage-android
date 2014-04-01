@@ -94,6 +94,7 @@ public class LandingActivity extends FragmentActivity implements ActionBar.TabLi
 	protected void onDestroy() {
 		super.onDestroy();
 		((MAGE) getApplication()).destroyLocationService();
+		((MAGE) getApplication()).destroyFetching();
 	}
 
 	@Override
