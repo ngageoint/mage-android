@@ -26,6 +26,7 @@ import android.app.AlertDialog;
 import android.content.ClipData;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.location.Location;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -52,13 +53,8 @@ import com.google.android.gms.maps.model.MarkerOptions;
 public class ObservationEditActivity extends FragmentActivity {
 
 	public static String OBSERVATION_ID = "OBSERVATION_ID";
-	public static String LATITUDE = "LATITUDE";
-	public static String LONGITUDE = "LONGITUDE";
-	public static String ACCURACY = "ACCURACY";
+	public static String LOCATION = "LOCATION";
 	public static String OBSERVATION_LOCATION_TYPE = "OBSERVATION_LOCATION_TYPE";
-	
-	public static String OBSERVATION_LOCATION_TYPE_MANUAL = "MANUAL";
-	public static String OBSERVATION_LOCATION_TYPE_GPS = "GPS";
 	
 	private static final int CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE = 100;
 	private static final int CAPTURE_VIDEO_ACTIVITY_REQUEST_CODE = 200;
@@ -71,8 +67,7 @@ public class ObservationEditActivity extends FragmentActivity {
 	Date date;
 	DecimalFormat latLngFormat = new DecimalFormat("###.######");
 	ArrayList<Attachment> attachments = new ArrayList<Attachment>();
-	double lat;
-	double lon;
+	Location l;
 	long observationId;
 	Observation o;
 	Map<String, String> propertiesMap;
@@ -88,8 +83,7 @@ public class ObservationEditActivity extends FragmentActivity {
 		
 		if (observationId == NEW_OBSERVATION) {
 			this.setTitle("Create New Observation");
-			lat = intent.getDoubleExtra(LATITUDE, 0.0);
-			lon = intent.getDoubleExtra(LONGITUDE, 0.0);
+			l = intent.getParcelableExtra(LOCATION);
 			date = new Date();
 			((TextView) findViewById(R.id.date)).setText(date.toString());
 			setupMap();
@@ -107,8 +101,9 @@ public class ObservationEditActivity extends FragmentActivity {
 				Geometry geo = o.getObservationGeometry().getGeometry();
 				if(geo instanceof PointGeometry) {
 					PointGeometry point = (PointGeometry)geo;
-					lat = point.getLatitude();
-					lon = point.getLongitude();
+					l = new Location("manual");
+					l.setLatitude(point.getLatitude());
+					l.setLongitude(point.getLongitude());
 					((TextView)findViewById(R.id.location)).setText(point.getLatitude() + ", " + point.getLongitude());
 					GoogleMap map = ((SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.mini_map)).getMap();
 					
@@ -128,7 +123,7 @@ public class ObservationEditActivity extends FragmentActivity {
 	private void setupMap() {
 		GoogleMap map = ((SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.background_map)).getMap();
 
-		LatLng location = new LatLng(lat, lon);
+		LatLng location = new LatLng(l.getLatitude(), l.getLongitude());
 		((TextView) findViewById(R.id.location)).setText(latLngFormat.format(location.latitude) + ", " + latLngFormat.format(location.longitude));
 		map.moveCamera(CameraUpdateFactory.newLatLngZoom(location, 16));
 		map.addMarker(new MarkerOptions().position(location));
@@ -139,8 +134,7 @@ public class ObservationEditActivity extends FragmentActivity {
 		// Always call the superclass so it can restore the view hierarchy
 		super.onRestoreInstanceState(savedInstanceState);
 
-		lat = savedInstanceState.getDouble("lat");
-		lon = savedInstanceState.getDouble("lon");
+		l = savedInstanceState.getParcelable("location");
 		attachments = savedInstanceState.getParcelableArrayList("attachments");
 
 		for (Attachment a : attachments) {
@@ -153,8 +147,7 @@ public class ObservationEditActivity extends FragmentActivity {
 
 	@Override
 	protected void onSaveInstanceState(Bundle outState) {
-		outState.putDouble("lat", lat);
-		outState.putDouble("lon", lon);
+		outState.putParcelable("location", l);
 		outState.putParcelableArrayList("attachments", new ArrayList<Attachment>(attachments));
 		LinearLayout form = (LinearLayout) findViewById(R.id.form);
 		savePropertyFieldsToBundle(form, outState);
@@ -233,7 +226,7 @@ public class ObservationEditActivity extends FragmentActivity {
 				o = new Observation();
 			}
 			o.setState(State.ACTIVE);
-			o.setObservationGeometry(new ObservationGeometry(new PointGeometry(lat, lon)));
+			o.setObservationGeometry(new ObservationGeometry(new PointGeometry(l.getLatitude(), l.getLongitude())));
 			
 			Map<String, String> propertyMap = new HashMap<String, String>();
 			LinearLayout form = (LinearLayout) findViewById(R.id.form);

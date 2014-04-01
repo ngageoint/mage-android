@@ -8,10 +8,12 @@ import mil.nga.giat.mage.newsfeed.NewsFeedFragment;
 import mil.nga.giat.mage.observation.ObservationEditActivity;
 import mil.nga.giat.mage.observation.ObservationViewActivity;
 import mil.nga.giat.mage.preferences.PublicPreferencesActivity;
+import mil.nga.giat.mage.sdk.location.LocationService;
 import mil.nga.giat.mage.sdk.utils.UserUtility;
 import android.app.ActionBar;
 import android.app.FragmentTransaction;
 import android.content.Intent;
+import android.location.Location;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
@@ -127,8 +129,9 @@ public class LandingActivity extends FragmentActivity implements ActionBar.TabLi
 			}
 		case R.id.observation_new:
 			 Intent intent = new Intent(this, ObservationEditActivity.class);
-//	       	 intent.putExtra("latitude", point.latitude);
-//	       	 intent.putExtra("longitude", point.longitude);
+			 LocationService ls = ((MAGE) getApplication()).getLocationService();
+			 Location l = ls.getLocation();
+			 intent.putExtra(ObservationEditActivity.LOCATION, l);
 	       	 startActivity(intent);
 		}
 
