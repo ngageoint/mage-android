@@ -8,13 +8,12 @@ import mil.nga.giat.mage.newsfeed.NewsFeedFragment;
 import mil.nga.giat.mage.observation.ObservationEditActivity;
 import mil.nga.giat.mage.observation.ObservationViewActivity;
 import mil.nga.giat.mage.preferences.PublicPreferencesActivity;
-import mil.nga.giat.mage.sdk.fetch.ObservationServerFetchAsyncTask;
-import mil.nga.giat.mage.sdk.fetch.UserServerFetchAsyncTask;
+import mil.nga.giat.mage.sdk.location.LocationService;
 import mil.nga.giat.mage.sdk.utils.UserUtility;
 import android.app.ActionBar;
 import android.app.FragmentTransaction;
 import android.content.Intent;
-import android.os.AsyncTask;
+import android.location.Location;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
@@ -32,7 +31,7 @@ import android.view.MenuItem;
  * 
  */
 public class LandingActivity extends FragmentActivity implements ActionBar.TabListener {
-
+	
 	private static final int RESULT_PUBLIC_PREFERENCES = 1;
 	private static final int RESULT_MAP_PREFERENCES = 2;
 
@@ -89,21 +88,15 @@ public class LandingActivity extends FragmentActivity implements ActionBar.TabLi
 		// Start location services
 		((MAGE) getApplication()).initLocationService();
 
-		
-		//start user sync
-		UserServerFetchAsyncTask userTask = new UserServerFetchAsyncTask(getApplicationContext());
-		userTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
-		
-		//start observation sync
-		ObservationServerFetchAsyncTask observationTask = new ObservationServerFetchAsyncTask(getApplicationContext());
-		observationTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
-	
+		// FIXME : need to consider connectivity before talking to the server!!!
+		((MAGE) getApplication()).startFetching();
 	}
 
 	@Override
 	protected void onDestroy() {
 		super.onDestroy();
 		((MAGE) getApplication()).destroyLocationService();
+		((MAGE) getApplication()).destroyFetching();
 	}
 
 	@Override
@@ -137,8 +130,9 @@ public class LandingActivity extends FragmentActivity implements ActionBar.TabLi
 			}
 		case R.id.observation_new:
 			 Intent intent = new Intent(this, ObservationEditActivity.class);
-//	       	 intent.putExtra("latitude", point.latitude);
-//	       	 intent.putExtra("longitude", point.longitude);
+			 LocationService ls = ((MAGE) getApplication()).getLocationService();
+			 Location l = ls.getLocation();
+			 intent.putExtra(ObservationEditActivity.LOCATION, l);
 	       	 startActivity(intent);
 		}
 

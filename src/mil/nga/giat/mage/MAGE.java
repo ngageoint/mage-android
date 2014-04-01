@@ -9,17 +9,22 @@ import java.util.Map;
 import mil.nga.giat.mage.file.Storage;
 import mil.nga.giat.mage.file.Storage.StorageType;
 import mil.nga.giat.mage.map.CacheOverlay;
+import mil.nga.giat.mage.sdk.fetch.RoleServerFetchAsyncTask;
 import mil.nga.giat.mage.sdk.location.LocationService;
 import android.app.Application;
 import android.os.AsyncTask;
+import android.util.Log;
 
 public class MAGE extends Application {
+
+    private static final String LOG_NAME = MAGE.class.getName();
 
     public interface OnCacheOverlayListener {
         public void onCacheOverlay(List<CacheOverlay> cacheOverlays);
     }
 
     private LocationService locationService;
+    private RoleServerFetchAsyncTask roleTask;
     private List<CacheOverlay> cacheOverlays = null;
     private Collection<OnCacheOverlayListener> cacheOverlayListeners = new ArrayList<OnCacheOverlayListener>();
 
@@ -48,13 +53,13 @@ public class MAGE extends Application {
 
     public void registerCacheOverlayListener(OnCacheOverlayListener listener) {
         cacheOverlayListeners.add(listener);
-        if (cacheOverlays != null) listener.onCacheOverlay(cacheOverlays);
+        if (cacheOverlays != null)
+            listener.onCacheOverlay(cacheOverlays);
     }
 
     public void unregisterCacheOverlayListener(OnCacheOverlayListener listener) {
         cacheOverlayListeners.remove(listener);
     }
-
 
     public void refreshTileOverlays() {
         TileOverlaysTask task = new TileOverlaysTask();
@@ -73,7 +78,7 @@ public class MAGE extends Application {
         @Override
         protected List<CacheOverlay> doInBackground(Void... params) {
             List<CacheOverlay> overlays = new ArrayList<CacheOverlay>();
-
+            
             Map<StorageType, File> storageLocations = Storage.getAllStorageLocations();
             for (File storageLocation : storageLocations.values()) {
                 File root = new File(storageLocation, "MapCache");
@@ -95,4 +100,18 @@ public class MAGE extends Application {
             setCacheOverlays(result);
         }
     }
+
+    public void startFetching() {
+        roleTask = new RoleServerFetchAsyncTask(getApplicationContext(), true);
+        try {
+            roleTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+        } catch (Exception e) {
+            Log.e(LOG_NAME, "Error fetching!  Could not populate role table!");
+        }
+    }
+
+    public void destroyFetching() {
+        roleTask.destroy();
+    }
+
 }

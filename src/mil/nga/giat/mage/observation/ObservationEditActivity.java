@@ -3,11 +3,8 @@ package mil.nga.giat.mage.observation;
 import java.io.File;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import mil.nga.giat.mage.R;
@@ -24,27 +21,36 @@ import mil.nga.giat.mage.sdk.exceptions.ObservationException;
 import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
 import android.annotation.TargetApi;
+import android.app.Activity;
+import android.app.AlertDialog;
+import android.app.DatePickerDialog;
+import android.app.Dialog;
+import android.content.ClipData;
+import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.res.Resources;
-import android.graphics.BitmapFactory;
-import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.Drawable;
-import android.graphics.drawable.LayerDrawable;
-import android.media.ThumbnailUtils;
+import android.location.Location;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.support.v4.app.FragmentActivity;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
+import android.view.View.OnTouchListener;
 import android.view.ViewGroup.LayoutParams;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.TimePicker;
 
 import com.bumptech.glide.Glide;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -56,13 +62,8 @@ import com.google.android.gms.maps.model.MarkerOptions;
 public class ObservationEditActivity extends FragmentActivity {
 
 	public static String OBSERVATION_ID = "OBSERVATION_ID";
-	public static String LATITUDE = "LATITUDE";
-	public static String LONGITUDE = "LONGITUDE";
-	public static String ACCURACY = "ACCURACY";
+	public static String LOCATION = "LOCATION";
 	public static String OBSERVATION_LOCATION_TYPE = "OBSERVATION_LOCATION_TYPE";
-	
-	public static String OBSERVATION_LOCATION_TYPE_MANUAL = "MANUAL";
-	public static String OBSERVATION_LOCATION_TYPE_GPS = "GPS";
 	
 	private static final int CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE = 100;
 	private static final int CAPTURE_VIDEO_ACTIVITY_REQUEST_CODE = 200;
@@ -75,8 +76,7 @@ public class ObservationEditActivity extends FragmentActivity {
 	Date date;
 	DecimalFormat latLngFormat = new DecimalFormat("###.######");
 	ArrayList<Attachment> attachments = new ArrayList<Attachment>();
-	double lat;
-	double lon;
+	Location l;
 	long observationId;
 	Observation o;
 	Map<String, String> propertiesMap;
@@ -84,22 +84,24 @@ public class ObservationEditActivity extends FragmentActivity {
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		
 		setContentView(R.layout.observation_editor);
+		hideKeyboardOnClick(findViewById(R.id.observation_edit));
 		
 		Intent intent = getIntent();
 		observationId = intent.getLongExtra(OBSERVATION_ID, NEW_OBSERVATION);
 		
 		if (observationId == NEW_OBSERVATION) {
 			this.setTitle("Create New Observation");
-			lat = intent.getDoubleExtra(LATITUDE, 0.0);
-			lon = intent.getDoubleExtra(LONGITUDE, 0.0);
+			l = intent.getParcelableExtra(LOCATION);
 			date = new Date();
 			((TextView) findViewById(R.id.date)).setText(date.toString());
-			setupMap();
+			
 		} else {
+			this.setTitle("Edit Observation");
 			// this is an edit of an existing observation
 			try {
-				o = ObservationHelper.getInstance(getApplicationContext()).readObservation(getIntent().getLongExtra(OBSERVATION_ID, 0L));
+				o = ObservationHelper.getInstance(getApplicationContext()).read(getIntent().getLongExtra(OBSERVATION_ID, 0L));
 				attachments.addAll(o.getAttachments());
 				for (Attachment a : attachments) {
 					addAttachmentToGallery(a);
@@ -109,30 +111,86 @@ public class ObservationEditActivity extends FragmentActivity {
 				Geometry geo = o.getObservationGeometry().getGeometry();
 				if(geo instanceof PointGeometry) {
 					PointGeometry point = (PointGeometry)geo;
-					lat = point.getLatitude();
-					lon = point.getLongitude();
-					((TextView)findViewById(R.id.location)).setText(point.getLatitude() + ", " + point.getLongitude());
-					GoogleMap map = ((SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.mini_map)).getMap();
-					
-					LatLng location = new LatLng(point.getLatitude(), point.getLongitude());
-					
-					map.animateCamera(CameraUpdateFactory.newLatLngZoom(location, 15));
-					
-					map.addMarker(new MarkerOptions().position(location));
+					l = new Location(propertiesMap.get("LOCATION_PROVIDER"));
+					l.setAccuracy(Float.parseFloat(propertiesMap.get("LOCATION_ACCURACY")));
+					l.setLatitude(point.getLatitude());
+					l.setLongitude(point.getLongitude());
 				}
 			} catch (ObservationException oe) {
 				
 			}
 		}
+		
+		findViewById(R.id.date).setOnClickListener(new View.OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				
+				AlertDialog.Builder builder = new AlertDialog.Builder(ObservationEditActivity.this);
+			    // Get the layout inflater
+			    LayoutInflater inflater = getLayoutInflater();
 
+			    // Inflate and set the layout for the dialog
+			    // Pass null as the parent view because its going in the dialog layout
+			    builder.setView(inflater.inflate(R.layout.date_time_dialog, null))
+			    // Add action buttons
+			           .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+			               @Override
+			               public void onClick(DialogInterface dialog, int id) {
+			                   // set the date and time to what they chose
+			               }
+			           })
+			           .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
+			               public void onClick(DialogInterface dialog, int id) {
+			                   
+			               }
+			           });      
+			    AlertDialog ad = builder.create();
+			    ad.show();
+
+			}
+		});
+		
+		setupMap();
 	}
 	
+	/**
+	 * Hides keyboard when clicking elsewhere
+	 * 
+	 * @param view
+	 */
+	private void hideKeyboardOnClick(View view) {
+		// Set up touch listener for non-text box views to hide keyboard.
+		if (!(view instanceof EditText) && !(view instanceof Button)) {
+			view.setOnTouchListener(new OnTouchListener() {
+				@Override
+				public boolean onTouch(View v, MotionEvent event) {
+					InputMethodManager inputMethodManager = (InputMethodManager) getSystemService(Activity.INPUT_METHOD_SERVICE);
+					if (getCurrentFocus() != null) {
+						inputMethodManager.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(), 0);
+					}
+					return false;
+				}
+			});
+		}
+
+		// If a layout container, iterate over children and seed recursion.
+		if (view instanceof ViewGroup) {
+			for (int i = 0; i < ((ViewGroup) view).getChildCount(); i++) {
+				View innerView = ((ViewGroup) view).getChildAt(i);
+				hideKeyboardOnClick(innerView);
+			}
+		}
+	}
+		
 	private void setupMap() {
 		GoogleMap map = ((SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.background_map)).getMap();
 
-		LatLng location = new LatLng(lat, lon);
-		((TextView) findViewById(R.id.location)).setText(latLngFormat.format(location.latitude) + ", " + latLngFormat.format(location.longitude));
-		map.moveCamera(CameraUpdateFactory.newLatLngZoom(location, 16));
+		LatLng location = new LatLng(l.getLatitude(), l.getLongitude());
+		((TextView) findViewById(R.id.location)).setText(latLngFormat.format(l.getLatitude()) + ", " + latLngFormat.format(l.getLongitude()));
+		((TextView)findViewById(R.id.location_provider)).setText("("+l.getProvider()+")");
+		((TextView)findViewById(R.id.location_accuracy)).setText("\u00B1" + l.getAccuracy() + "m");
+		map.animateCamera(CameraUpdateFactory.newLatLngZoom(location, 16));
 		map.addMarker(new MarkerOptions().position(location));
 	}
 
@@ -141,8 +199,7 @@ public class ObservationEditActivity extends FragmentActivity {
 		// Always call the superclass so it can restore the view hierarchy
 		super.onRestoreInstanceState(savedInstanceState);
 
-		lat = savedInstanceState.getDouble("lat");
-		lon = savedInstanceState.getDouble("lon");
+		l = savedInstanceState.getParcelable("location");
 		attachments = savedInstanceState.getParcelableArrayList("attachments");
 
 		for (Attachment a : attachments) {
@@ -155,8 +212,7 @@ public class ObservationEditActivity extends FragmentActivity {
 
 	@Override
 	protected void onSaveInstanceState(Bundle outState) {
-		outState.putDouble("lat", lat);
-		outState.putDouble("lon", lon);
+		outState.putParcelable("location", l);
 		outState.putParcelableArrayList("attachments", new ArrayList<Attachment>(attachments));
 		LinearLayout form = (LinearLayout) findViewById(R.id.form);
 		savePropertyFieldsToBundle(form, outState);
@@ -227,36 +283,47 @@ public class ObservationEditActivity extends FragmentActivity {
 
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
-		System.out.println("STarting the observation view");
 		switch (item.getItemId()) {
 
 		case R.id.observation_save:
-			System.out.println("SAVE");
 			
 			if (o == null) {
 				o = new Observation();
 			}
 			o.setState(State.ACTIVE);
-			o.setObservationGeometry(new ObservationGeometry(new PointGeometry(lat, lon)));
+			o.setObservationGeometry(new ObservationGeometry(new PointGeometry(l.getLatitude(), l.getLongitude())));
+			
 			
 			Map<String, String> propertyMap = new HashMap<String, String>();
 			LinearLayout form = (LinearLayout) findViewById(R.id.form);
 			savePropertyFieldsToMap(form, propertyMap);
 			propertyMap.put("TYPE", (String) ((Spinner) findViewById(R.id.type_spinner)).getSelectedItem());
-			propertyMap.put("OBSERVATION_DATE", String.valueOf(date.getTime()));
-			
+			propertyMap.put("EVENTDATE", String.valueOf(date.getTime()));
+			propertyMap.put("LOCATION_ACCURACY", Float.toString(l.getAccuracy()));
+			propertyMap.put("LOCATION_PROVIDER", l.getProvider());
 			o.setPropertiesMap(propertyMap);
 			
 			o.setAttachments(attachments);
 
 			ObservationHelper oh = ObservationHelper.getInstance(getApplicationContext());
 			try {
-				Observation newObs = oh.createObservation(o);
+				Observation newObs = oh.create(o);
 				System.out.println(newObs);
+				finish();
 			} catch (Exception e) {
-
+				Log.e("Observation Edit", e.getMessage(), e);
 			}
 
+			break;
+		case R.id.observation_cancel:
+			new AlertDialog.Builder(this).setTitle("Discard Changes").setMessage(R.string.cancel_edit).setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+				public void onClick(DialogInterface dialog, int which) {
+					finish();
+				}
+			}).setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
+				public void onClick(DialogInterface dialog, int which) {
+				}
+			}).show();
 			break;
 		}
 
@@ -282,13 +349,14 @@ public class ObservationEditActivity extends FragmentActivity {
 		Intent intent = new Intent();
 		intent.setType("image/*, video/*");
 		intent.setAction(Intent.ACTION_GET_CONTENT);
-		// TODO test when we get a 4.3 device
-		// intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+		Log.i("test", "build version sdk int: " + Build.VERSION.SDK_INT);
+		if (Build.VERSION.SDK_INT >= 18) {
+			intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+		}
 		startActivityForResult(intent, GALLERY_ACTIVITY_REQUEST_CODE);
 	}
 
 	private void addAttachmentToGallery(final Attachment a) {
-		String server = PreferenceHelper.getInstance(getApplicationContext()).getValue(R.string.serverURLKey);
 		String token = PreferenceHelper.getInstance(getApplicationContext()).getValue(R.string.tokenKey);
 		LinearLayout l = (LinearLayout) findViewById(R.id.image_gallery);
 		
@@ -331,7 +399,7 @@ public class ObservationEditActivity extends FragmentActivity {
 				Glide.load(R.drawable.ic_microphone).into(iv);
 			}
 		} else if (remoteId != null) {
-			String url = server + "/FeatureServer/3/Features/" + o.getRemoteId() + "/attachments/" + a.getRemoteId() + "?access_token=" + token;
+			String url = a.getUrl() + "?access_token=" + token;
 			Log.i("test", "url to load is: " + url);
 			Log.i("test", "content type is: " + contentType + " name is: " + a.getName());
 			if (contentType.startsWith("image")) {
@@ -388,13 +456,14 @@ public class ObservationEditActivity extends FragmentActivity {
 		case CAPTURE_VIDEO_ACTIVITY_REQUEST_CODE:
 		case GALLERY_ACTIVITY_REQUEST_CODE:
 		case CAPTURE_VOICE_ACTIVITY_REQUEST_CODE:
-			Log.i("test", "data returned is: " + data.getData());
-			//String path = MediaUtility.getPath(getApplicationContext(), data.getData());
-			String path = MediaUtility.getFileAbsolutePath(data.getData(), getApplicationContext());
-			Attachment a = new Attachment();
-			a.setLocalPath(path);
-			attachments.add(a);
-			addAttachmentToGallery(a);
+			ArrayList<Uri> uris = getUris(data);
+			for (Uri u : uris) {
+				String path = MediaUtility.getPath(getApplicationContext(), u);
+				Attachment a = new Attachment();
+				a.setLocalPath(path);
+				attachments.add(a);
+				addAttachmentToGallery(a);
+			}
 			break;
 		case ATTACHMENT_VIEW_ACTIVITY_REQUEST_CODE:
 			Attachment remove = data.getParcelableExtra("attachment");
@@ -408,11 +477,23 @@ public class ObservationEditActivity extends FragmentActivity {
 		}
 	}
 
-	// TODO test when we get a 4.3 device
+	private ArrayList<Uri> getUris(Intent intent) {
+		ArrayList<Uri> uris = new ArrayList<Uri>();
+		addClipDataUris(intent, uris);
+		if (intent.getData() != null) {
+			uris.add(intent.getData());
+		}
+		return uris;
+	}
+	
 	@TargetApi(16)
-	private void handleClipData(Intent data) {
+	private void addClipDataUris(Intent intent, ArrayList<Uri> uris) {
 		if (Build.VERSION.SDK_INT >= 16) {
-			Log.d("picker", "data 2 is " + data.getClipData());
+			ClipData cd = intent.getClipData();
+			if (cd == null) return;
+			for (int i = 0; i < cd.getItemCount(); i++) {
+				uris.add(cd.getItemAt(i).getUri());
+			}
 		}
 	}
 }

@@ -11,13 +11,14 @@
     <TextView 
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:textColor="#DDDDDD"
         android:text="Saved to the server:"/>
     <TextView
-        android:id="@+id/observation_date"
+        android:id="@+id/observation_sync_date"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
+        android:textColor="#DDDDDD"
         android:gravity="right"
-        android:textStyle="bold"
-        android:text="March 23, 16:01:23Z"/>
+        android:textStyle="bold"/>
 
 </LinearLayout>

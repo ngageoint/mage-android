@@ -132,9 +132,12 @@ public class MapFragment extends Fragment implements
     public void onMapLongClick(LatLng point) {
         // TODO Auto-generated method stub
         Intent intent = new Intent(getActivity(), ObservationEditActivity.class);
-        intent.putExtra("latitude", point.latitude);
-        intent.putExtra("longitude", point.longitude);
-        startActivity(intent);        
+        Location l = new Location("manual");
+        l.setAccuracy(0.0f);
+        l.setLatitude(point.latitude);
+        l.setLongitude(point.longitude);
+        intent.putExtra(ObservationEditActivity.LOCATION, l);
+        startActivity(intent);
     }
     
     @Override

@@ -11,10 +11,13 @@
     <TextView 
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:textColor="#DDDDDD"
         android:text="Saved locally. Will be submitted."/>
     <TextView
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
+        android:visibility="gone"
+        android:textColor="#DDDDDD"
         android:gravity="right"
         android:textStyle="bold"
         android:text="@string/force_submit"/>

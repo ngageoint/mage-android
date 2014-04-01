@@ -2,6 +2,7 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:map="http://schemas.android.com/apk/res-auto"
     xmlns:mageForm="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/observation_edit"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
     <fragment
@@ -88,21 +89,45 @@
 	        android:layout_height="wrap_content"
 	        android:orientation="vertical"
 	        android:paddingBottom="20dip">
-	        <mil.nga.giat.mage.form.MageEditText  
+	        <mil.nga.giat.mage.form.MageTextView  
 	            android:id="@+id/date"
 	            mageForm:propertyKey="EVENTDATE"
 	            android:layout_width="wrap_content"
 	            android:layout_height="wrap_content"
+	            android:textStyle="bold"
 	            android:paddingBottom="5dip"
 	            style="@style/EditTextView"/>
-	        <TextView 
-	            android:id="@+id/location"
-	          android:layout_width="fill_parent"
-	          android:layout_height="wrap_content"
-	          android:textColor="#777777"
-	          android:textStyle="italic"
-	          android:textSize="13sp"
-	          style="@style/EditTextView"/>
+	        <LinearLayout
+	            android:layout_width="fill_parent"
+	            android:layout_height="wrap_content"
+	            android:orientation="horizontal">
+		        <TextView 
+		            android:id="@+id/location"
+		          android:layout_width="wrap_content"
+		          android:layout_height="wrap_content"
+		          android:textColor="#777777"
+		          android:textStyle="italic"
+		          android:textSize="13sp"
+		          style="@style/EditTextView"/>
+		        <TextView 
+		            android:id="@+id/location_accuracy"
+		          android:layout_width="wrap_content"
+		          android:layout_height="wrap_content"
+		          android:textColor="#777777"
+		          android:textStyle="italic"
+		          android:textSize="13sp"
+		          android:paddingLeft="5dp"
+		          style="@style/EditTextView"/>
+		        <TextView 
+		            android:id="@+id/location_provider"
+		          android:layout_width="wrap_content"
+		          android:layout_height="wrap_content"
+		          android:textColor="#777777"
+		          android:textStyle="italic"
+		          android:textSize="13sp"
+		          android:paddingLeft="5dp"
+		          style="@style/EditTextView"/>
+	        </LinearLayout>
 	    </LinearLayout>
 	    <TextView android:layout_width="fill_parent"
 	          android:layout_height="wrap_content"
@@ -121,31 +146,32 @@
 	          android:layout_height="wrap_content"
 	          style="@style/EditTextView"
 	          android:text="Level"/>
-	    <mil.nga.giat.mage.form.MageEditText 
+	    <mil.nga.giat.mage.form.MageSpinner
 	        android:id="@+id/level"
 	        android:layout_width="fill_parent"
 	          android:layout_height="wrap_content"
 	          android:layout_marginTop="5dip"
 	          android:layout_marginBottom="20dip"
 	          mageForm:propertyKey="EVENTLEVEL"
+	          android:entries="@array/levels_array"
 	          android:singleLine="true"/>
 	    <TextView android:layout_width="fill_parent"
 	          android:layout_height="wrap_content"
 	          style="@style/EditTextView"
 	          android:text="Team"/>
-	    <mil.nga.giat.mage.form.MageEditText  
+	    <mil.nga.giat.mage.form.MageSpinner  
 	        android:id="@+id/team"
 	        mageForm:propertyKey="TEAM"
 	        android:layout_width="fill_parent"
 	          android:layout_height="wrap_content"
 	          android:layout_marginTop="5dip"
 	          android:layout_marginBottom="20dip"
+	          android:entries="@array/teams_array"
 	          android:singleLine="true"/>
 	    <TextView android:layout_width="fill_parent"
 	          android:layout_height="wrap_content"
 	          style="@style/EditTextView"
 	          android:text="Description"/>
-
 	    <mil.nga.giat.mage.form.MageEditText 
 	        android:id="@+id/description"
 	        mageForm:propertyKey="DESCRIPTION"

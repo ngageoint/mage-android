@@ -1,6 +1,8 @@
 package mil.nga.giat.mage.observation;
 
 import java.io.File;
+import java.text.DecimalFormat;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Map;
 
@@ -13,6 +15,7 @@ import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
 import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
+import android.app.ActionBar;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.graphics.drawable.BitmapDrawable;
@@ -25,9 +28,11 @@ import android.os.Bundle;
 import android.provider.MediaStore;
 import android.support.v4.app.FragmentActivity;
 import android.util.Log;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewGroup.LayoutParams;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -45,12 +50,13 @@ public class ObservationViewActivity extends FragmentActivity {
 	private static final int ATTACHMENT_VIEW_ACTIVITY_REQUEST_CODE = 500;
 	private Observation o;
 	private Map<String, String> propertiesMap;
+	DecimalFormat latLngFormat = new DecimalFormat("###.######");
+	private SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm zz");
 	
 	public class AttachmentGalleryTask extends AsyncTask<Attachment, ImageView, Boolean> {
 
 		@Override
 		protected Boolean doInBackground(Attachment... params) {
-			String server = PreferenceHelper.getInstance(getApplicationContext()).getValue(R.string.serverURLKey);
 			String token = PreferenceHelper.getInstance(getApplicationContext()).getValue(R.string.tokenKey);
 			for (Attachment a : params) {
 				final String absPath = a.getLocalPath();
@@ -80,8 +86,7 @@ public class ObservationViewActivity extends FragmentActivity {
 //						iv.setImageBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.ic_microphone));
 					} else {
 						if (a.getRemoteId() != null) {
-							String url = server + "/FeatureServer/3/Features/" + o.getRemoteId() + "/attachments/" + a.getRemoteId() + "?access_token=" + token;
-							Log.i("test", "URL: " + url);
+							String url = a.getUrl() + "?access_token=" + token;
 							Glide.load(url).placeholder(android.R.drawable.progress_indeterminate_horizontal).centerCrop().into(iv);
 						} else {
 							Glide.load(new File(absPath)).placeholder(android.R.drawable.progress_indeterminate_horizontal).centerCrop().into(iv);
@@ -104,7 +109,6 @@ public class ObservationViewActivity extends FragmentActivity {
 	}
 	
 	private void createImageViews(ViewGroup gallery) {
-		String server = PreferenceHelper.getInstance(getApplicationContext()).getValue(R.string.serverURLKey);
 		String token = PreferenceHelper.getInstance(getApplicationContext()).getValue(R.string.tokenKey);
 		for (final Attachment a : o.getAttachments()) {
 			final String absPath = a.getLocalPath();
@@ -146,9 +150,7 @@ public class ObservationViewActivity extends FragmentActivity {
 					Glide.load(R.drawable.ic_microphone).into(iv);
 				}
 			} else if (remoteId != null) {
-				String url = server + "/FeatureServer/3/Features/" + o.getRemoteId() + "/attachments/" + a.getRemoteId() + "?access_token=" + token;
-				Log.i("test", "url to load is: " + url);
-				Log.i("test", "content type is: " + contentType + " name is: " + a.getName());
+				String url = a.getUrl() + "?access_token=" + token;
 				if (contentType.startsWith("image")) {
 					Glide.load(url).placeholder(android.R.drawable.progress_indeterminate_horizontal).centerCrop().into(iv);
 				} else if (contentType.startsWith("video")) {
@@ -159,18 +161,39 @@ public class ObservationViewActivity extends FragmentActivity {
 			}
 		}
 	}
+	
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+	    switch (item.getItemId()) {
+	        case android.R.id.home:
+	            // app icon in action bar clicked; goto parent activity.
+	            this.finish();
+	            return true;
+	        default:
+	            return super.onOptionsItemSelected(item);
+	    }
+	}
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.observation_viewer);
+		ActionBar actionBar = getActionBar();
+
+		actionBar.setDisplayHomeAsUpEnabled(true);
 		try {
-			o = ObservationHelper.getInstance(getApplicationContext()).readObservation(getIntent().getLongExtra(OBSERVATION_ID, 0L));
+			o = ObservationHelper.getInstance(getApplicationContext()).read(getIntent().getLongExtra(OBSERVATION_ID, 0L));
 			propertiesMap = o.getPropertiesMap();
 			Geometry geo = o.getObservationGeometry().getGeometry();
 			if(geo instanceof PointGeometry) {
 				PointGeometry pointGeo = (PointGeometry)geo;
-				((TextView)findViewById(R.id.location)).setText(pointGeo.getLatitude() + ", " + pointGeo.getLongitude());
+				((TextView)findViewById(R.id.location)).setText(latLngFormat.format(pointGeo.getLatitude()) + ", " + latLngFormat.format(pointGeo.getLongitude()));
+				if(propertiesMap.containsKey("LOCATION_PROVIDER")) {
+					((TextView)findViewById(R.id.location_provider)).setText("("+propertiesMap.get("LOCATION_PROVIDER")+")");
+				}
+				if (propertiesMap.containsKey("LOCATION_ACCURACY")) {
+					((TextView)findViewById(R.id.location_accuracy)).setText("\u00B1" + propertiesMap.get("LOCATION_ACCURACY") + "m");
+				}
 				GoogleMap map = ((SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.mini_map)).getMap();
 				
 				LatLng location = new LatLng(pointGeo.getLatitude(), pointGeo.getLongitude());
@@ -190,8 +213,18 @@ public class ObservationViewActivity extends FragmentActivity {
 			} else {
 				LinearLayout l = (LinearLayout) findViewById(R.id.image_gallery);
 				createImageViews(l);
-//				AttachmentGalleryTask task = new AttachmentGalleryTask();
-//				task.execute(o.getAttachments().toArray(new Attachment[o.getAttachments().size()]));
+			}
+			
+			TextView user = (TextView)findViewById(R.id.username);
+			user.setText(o.getPropertiesMap().get("userId"));
+			
+			FrameLayout fl = (FrameLayout)findViewById(R.id.sync_status);
+			if (o.getRemoteId() == null) {
+				View.inflate(getApplicationContext(), R.layout.saved_locally, fl);
+			} else {
+				View status = View.inflate(getApplicationContext(), R.layout.submitted_on, fl);
+				TextView syncDate = (TextView)status.findViewById(R.id.observation_sync_date);
+				syncDate.setText(sdf.format(o.getLastModified()));
 			}
 		} catch (Exception e) {
 			Log.e("observation view", e.getMessage(), e);
