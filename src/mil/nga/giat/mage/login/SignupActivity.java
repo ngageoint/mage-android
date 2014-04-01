@@ -296,7 +296,7 @@ public class SignupActivity extends Activity implements AccountDelegate {
 
 	@Override
 	public void finishAccount(AccountStatus accountStatus) {
-		if (accountStatus.getStatus()) {
+		if (accountStatus.getStatus() == AccountStatus.Status.SUCCESSFUL_SIGNUP) {
 			// save the username
 			Editor sharedPreferencesEditor = PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).edit();
 			try {

@@ -15,6 +15,7 @@ import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
 import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
+import android.app.ActionBar;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.graphics.drawable.BitmapDrawable;
@@ -27,6 +28,7 @@ import android.os.Bundle;
 import android.provider.MediaStore;
 import android.support.v4.app.FragmentActivity;
 import android.util.Log;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewGroup.LayoutParams;
@@ -159,11 +161,26 @@ public class ObservationViewActivity extends FragmentActivity {
 			}
 		}
 	}
+	
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+	    switch (item.getItemId()) {
+	        case android.R.id.home:
+	            // app icon in action bar clicked; goto parent activity.
+	            this.finish();
+	            return true;
+	        default:
+	            return super.onOptionsItemSelected(item);
+	    }
+	}
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.observation_viewer);
+		ActionBar actionBar = getActionBar();
+
+		actionBar.setDisplayHomeAsUpEnabled(true);
 		try {
 			o = ObservationHelper.getInstance(getApplicationContext()).readObservation(getIntent().getLongExtra(OBSERVATION_ID, 0L));
 			propertiesMap = o.getPropertiesMap();

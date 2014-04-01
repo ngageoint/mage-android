@@ -17,7 +17,6 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
@@ -72,11 +71,13 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 		if (PreferenceHelper.getInstance(getApplicationContext()).getValue(R.string.showDisclaimerKey, Boolean.class, Boolean.TRUE)) {
 			Intent intent = new Intent(this, DisclaimerActivity.class);
 			startActivity(intent);
+			finish();
 		}
 		
 		// if token is not expired, then skip the login module
 		if (!UserUtility.getInstance(getApplicationContext()).isTokenExpired()) {
 			startActivity(new Intent(getApplicationContext(), LandingActivity.class));
+			finish();
 		}
 		
 		// no title bar
@@ -155,6 +156,12 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 	 * @param view
 	 */
 	public void login(View view) {
+		
+		InputMethodManager inputMethodManager = (InputMethodManager) getSystemService(Activity.INPUT_METHOD_SERVICE);
+		if (getCurrentFocus() != null) {
+			inputMethodManager.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(), 0);
+		}
+		
 		// reset errors
 		getUsernameEditText().setError(null);
 		getPasswordEditText().setError(null);
@@ -240,7 +247,7 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 
 	@Override
 	public void finishAccount(AccountStatus accountStatus) {
-		if (accountStatus.getStatus()) {
+		if (accountStatus.getStatus() == AccountStatus.Status.SUCCESSFUL_LOGIN) {
 			Editor sp = PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).edit();
 			sp.putString("username", getUsernameEditText().getText().toString());
 			// TODO should we store password, or some hash?
@@ -248,6 +255,20 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 			sp.putString("serverURL", getServerEditText().getText().toString());
 			sp.commit();
 			startActivity(new Intent(getApplicationContext(), LandingActivity.class));
+			finish();
+		} else if (accountStatus.getStatus() == AccountStatus.Status.SUCCESSFUL_REGISTRATION) {
+			Editor sp = PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).edit();
+			sp.putString("username", getUsernameEditText().getText().toString());
+			// TODO should we store password, or some hash?
+//			sp.putString("password", getPasswordEditText().getText().toString());
+			sp.putString("serverURL", getServerEditText().getText().toString());
+			sp.commit();
+			new AlertDialog.Builder(this).setTitle("Registration Sent").setMessage(R.string.device_registered_text).setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+				public void onClick(DialogInterface dialog, int which) {
+					findViewById(R.id.login_status).setVisibility(View.GONE);
+					findViewById(R.id.login_form).setVisibility(View.VISIBLE);
+				}
+			}).show();
 		} else {
 			if (accountStatus.getErrorIndices().isEmpty()) {
 				getUsernameEditText().setError("Check your username");

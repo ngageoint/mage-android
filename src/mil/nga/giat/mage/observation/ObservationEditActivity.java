@@ -21,6 +21,7 @@ import mil.nga.giat.mage.sdk.exceptions.ObservationException;
 import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
 import android.annotation.TargetApi;
+import android.app.ActionBar;
 import android.content.ClipData;
 import android.content.Intent;
 import android.net.Uri;
@@ -32,6 +33,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.Window;
 import android.view.ViewGroup.LayoutParams;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -76,6 +78,7 @@ public class ObservationEditActivity extends FragmentActivity {
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		
 		setContentView(R.layout.observation_editor);
 		
 		Intent intent = getIntent();
@@ -89,6 +92,7 @@ public class ObservationEditActivity extends FragmentActivity {
 			((TextView) findViewById(R.id.date)).setText(date.toString());
 			setupMap();
 		} else {
+			this.setTitle("Edit Observation");
 			// this is an edit of an existing observation
 			try {
 				o = ObservationHelper.getInstance(getApplicationContext()).readObservation(getIntent().getLongExtra(OBSERVATION_ID, 0L));
@@ -118,7 +122,7 @@ public class ObservationEditActivity extends FragmentActivity {
 		}
 
 	}
-	
+		
 	private void setupMap() {
 		GoogleMap map = ((SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.background_map)).getMap();
 
@@ -247,6 +251,10 @@ public class ObservationEditActivity extends FragmentActivity {
 
 			}
 
+			break;
+		case R.id.observation_cancel:
+			// TODO make sure they really want to cancel if they changed something
+			finish();
 			break;
 		}
 

@@ -91,7 +91,8 @@
             android:name="mil.nga.giat.mage.observation.ObservationViewActivity"
             android:label="@string/observation_view" >
         </activity>
-        <activity android:name="mil.nga.giat.mage.observation.ObservationEditActivity" >
+        <activity android:name="mil.nga.giat.mage.observation.ObservationEditActivity" 
+             android:uiOptions="splitActionBarWhenNarrow">
         </activity>
         <activity android:name="mil.nga.giat.mage.observation.AttachmentViewerActivity" >
         </activity>
