@@ -24,7 +24,7 @@ public class LocationPreferencesActivity extends PreferenceActivity {
         public void onCreate(final Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
 
-            addPreferencesFromResource(R.xml.overlaypreferences);
+            addPreferencesFromResource(R.xml.locationpreferences);
 
             PreferenceManager.getDefaultSharedPreferences(getActivity()).registerOnSharedPreferenceChangeListener(this);
 
@@ -33,10 +33,10 @@ public class LocationPreferencesActivity extends PreferenceActivity {
             locationSwitch = new Switch(activity);
 
             actionbar.setDisplayOptions(ActionBar.DISPLAY_SHOW_CUSTOM, ActionBar.DISPLAY_SHOW_CUSTOM);
-            actionbar.setCustomView(locationSwitch, new ActionBar.LayoutParams(ActionBar.LayoutParams.WRAP_CONTENT, ActionBar.LayoutParams.WRAP_CONTENT, Gravity.CENTER_VERTICAL | Gravity.RIGHT));
-
-//            actionbar.setTitle("Location Services");
-//            actionbar.setLogo(R.drawable.ic_compass_white);
+            actionbar.setCustomView(locationSwitch, 
+                    new ActionBar.LayoutParams(ActionBar.LayoutParams.WRAP_CONTENT, 
+                            ActionBar.LayoutParams.WRAP_CONTENT, 
+                            Gravity.CENTER_VERTICAL | Gravity.RIGHT));
             
             updateSettings();
         }

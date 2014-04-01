@@ -9,21 +9,10 @@
             android:entryValues="@array/layerValues"
             android:key="mapBaseLayer"
             android:title="Base Layer" />
-
-        <Preference android:title="Overlay Maps" >
-            <intent
-                android:action="android.intent.action.VIEW"
-                android:targetClass="mil.nga.giat.mage.preferences.OverlayPreferencesActivity"
-                android:targetPackage="mil.nga.giat.mage" />
-        </Preference>
-        <!--
-             <mil.nga.giat.mage.preferences.DialogPreference
-            android:defaultValue="@array/empty_array"
-            android:entries="@array/worldCupOverlays"
-            android:entryValues="@array/worldCupOverlayLocations"
-            android:key="mapTileOverlays"
-            android:title="Overlay Layers" />
-        -->
+        <mil.nga.giat.mage.map.preference.OverlayPreference
+            android:key="mapTileOverlays" 
+            android:title="Overlay Maps">
+        </mil.nga.giat.mage.map.preference.OverlayPreference>
     </PreferenceCategory>
     <PreferenceCategory android:title="DYNAMIC FEATURES" >
         <CheckBoxPreference
