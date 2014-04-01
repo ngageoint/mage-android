@@ -188,6 +188,12 @@ public class ObservationViewActivity extends FragmentActivity {
 			if(geo instanceof PointGeometry) {
 				PointGeometry pointGeo = (PointGeometry)geo;
 				((TextView)findViewById(R.id.location)).setText(latLngFormat.format(pointGeo.getLatitude()) + ", " + latLngFormat.format(pointGeo.getLongitude()));
+				if(propertiesMap.containsKey("LOCATION_PROVIDER")) {
+					((TextView)findViewById(R.id.location_provider)).setText("("+propertiesMap.get("LOCATION_PROVIDER")+")");
+				}
+				if (propertiesMap.containsKey("LOCATION_ACCURACY")) {
+					((TextView)findViewById(R.id.location_accuracy)).setText("\u00B1" + propertiesMap.get("LOCATION_ACCURACY") + "m");
+				}
 				GoogleMap map = ((SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.mini_map)).getMap();
 				
 				LatLng location = new LatLng(pointGeo.getLatitude(), pointGeo.getLongitude());

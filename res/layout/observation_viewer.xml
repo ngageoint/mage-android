@@ -52,15 +52,37 @@
 	                android:textAppearance="?android:attr/textAppearanceSmall"
 	                android:textColor="#ffffff" />
             </LinearLayout>
-
-            <TextView
-                android:id="@+id/location"
-                android:layout_width="fill_parent"
-                android:layout_height="wrap_content"
-                android:gravity="right"
-                android:textStyle="bold"
-                android:textAppearance="?android:attr/textAppearanceSmall"
-                android:textColor="#ffffff" />
+			<LinearLayout
+	            android:layout_width="fill_parent"
+	            android:layout_height="wrap_content"
+	            android:orientation="horizontal">
+		        <TextView 
+		            android:id="@+id/location"
+		          android:layout_width="wrap_content"
+		          android:layout_height="wrap_content"
+		          android:textColor="#777777"
+		          android:textStyle="italic"
+		          android:textSize="13sp"
+		          style="@style/EditTextView"/>
+		        <TextView 
+		            android:id="@+id/location_accuracy"
+		          android:layout_width="wrap_content"
+		          android:layout_height="wrap_content"
+		          android:textColor="#777777"
+		          android:textStyle="italic"
+		          android:textSize="13sp"
+		          android:paddingLeft="5dp"
+		          style="@style/EditTextView"/>
+		        <TextView 
+		            android:id="@+id/location_provider"
+		          android:layout_width="wrap_content"
+		          android:layout_height="wrap_content"
+		          android:textColor="#777777"
+		          android:textStyle="italic"
+		          android:textSize="13sp"
+		          android:paddingLeft="5dp"
+		          style="@style/EditTextView"/>
+	        </LinearLayout>
         </LinearLayout>
     </RelativeLayout>
 

@@ -127,6 +127,7 @@ public class MapFragment extends Fragment implements
         l.setAccuracy(0.0f);
         l.setLatitude(point.latitude);
         l.setLongitude(point.longitude);
+        intent.putExtra(ObservationEditActivity.LOCATION, l);
         startActivity(intent);
     }
     
