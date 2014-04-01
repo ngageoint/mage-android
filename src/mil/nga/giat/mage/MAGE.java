@@ -11,6 +11,8 @@ public class MAGE extends Application {
 	private static final String LOG_NAME = MAGE.class.getName();
 	
 	private LocationService locationService;
+	
+	private RoleServerFetchAsyncTask roleTask;
 
 	public void initLocationService() {
 		if (locationService == null) {
@@ -31,11 +33,16 @@ public class MAGE extends Application {
 	}
 
 	public void startFetching() {
-		RoleServerFetchAsyncTask roleTask = new RoleServerFetchAsyncTask(getApplicationContext());
+		roleTask = new RoleServerFetchAsyncTask(getApplicationContext(), true);
 		try {
 			roleTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
 		} catch (Exception e) {
 			Log.e(LOG_NAME, "Error fetching!  Could not populate role table!");
 		}
 	}
+	
+	public void destroyFetching() {
+		roleTask.destroy();
+	}
+	
 }

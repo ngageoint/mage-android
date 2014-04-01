@@ -182,7 +182,7 @@ public class ObservationViewActivity extends FragmentActivity {
 
 		actionBar.setDisplayHomeAsUpEnabled(true);
 		try {
-			o = ObservationHelper.getInstance(getApplicationContext()).readObservation(getIntent().getLongExtra(OBSERVATION_ID, 0L));
+			o = ObservationHelper.getInstance(getApplicationContext()).read(getIntent().getLongExtra(OBSERVATION_ID, 0L));
 			propertiesMap = o.getPropertiesMap();
 			Geometry geo = o.getObservationGeometry().getGeometry();
 			if(geo instanceof PointGeometry) {
