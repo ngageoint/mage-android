@@ -22,7 +22,9 @@ import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
 import android.annotation.TargetApi;
 import android.app.ActionBar;
+import android.app.AlertDialog;
 import android.content.ClipData;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
@@ -247,14 +249,21 @@ public class ObservationEditActivity extends FragmentActivity {
 			try {
 				Observation newObs = oh.createObservation(o);
 				System.out.println(newObs);
+				finish();
 			} catch (Exception e) {
-
+				Log.e("Observation Edit", e.getMessage(), e);
 			}
 
 			break;
 		case R.id.observation_cancel:
-			// TODO make sure they really want to cancel if they changed something
-			finish();
+			new AlertDialog.Builder(this).setTitle("Discard Changes").setMessage(R.string.cancel_edit).setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+				public void onClick(DialogInterface dialog, int which) {
+					finish();
+				}
+			}).setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
+				public void onClick(DialogInterface dialog, int which) {
+				}
+			}).show();
 			break;
 		}
 
