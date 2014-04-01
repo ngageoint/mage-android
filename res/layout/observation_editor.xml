@@ -121,31 +121,32 @@
 	          android:layout_height="wrap_content"
 	          style="@style/EditTextView"
 	          android:text="Level"/>
-	    <mil.nga.giat.mage.form.MageEditText 
+	    <mil.nga.giat.mage.form.MageSpinner
 	        android:id="@+id/level"
 	        android:layout_width="fill_parent"
 	          android:layout_height="wrap_content"
 	          android:layout_marginTop="5dip"
 	          android:layout_marginBottom="20dip"
 	          mageForm:propertyKey="EVENTLEVEL"
+	          android:entries="@array/levels_array"
 	          android:singleLine="true"/>
 	    <TextView android:layout_width="fill_parent"
 	          android:layout_height="wrap_content"
 	          style="@style/EditTextView"
 	          android:text="Team"/>
-	    <mil.nga.giat.mage.form.MageEditText  
+	    <mil.nga.giat.mage.form.MageSpinner  
 	        android:id="@+id/team"
 	        mageForm:propertyKey="TEAM"
 	        android:layout_width="fill_parent"
 	          android:layout_height="wrap_content"
 	          android:layout_marginTop="5dip"
 	          android:layout_marginBottom="20dip"
+	          android:entries="@array/teams_array"
 	          android:singleLine="true"/>
 	    <TextView android:layout_width="fill_parent"
 	          android:layout_height="wrap_content"
 	          style="@style/EditTextView"
 	          android:text="Description"/>
-
 	    <mil.nga.giat.mage.form.MageEditText 
 	        android:id="@+id/description"
 	        mageForm:propertyKey="DESCRIPTION"
