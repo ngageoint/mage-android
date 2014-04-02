@@ -11,7 +11,6 @@ import mil.nga.giat.mage.file.Storage.StorageType;
 import mil.nga.giat.mage.map.CacheOverlay;
 import mil.nga.giat.mage.sdk.fetch.LocationServerFetchAsyncTask;
 import mil.nga.giat.mage.sdk.fetch.ObservationServerFetchAsyncTask;
-import mil.nga.giat.mage.sdk.fetch.RoleServerFetchAsyncTask;
 import mil.nga.giat.mage.sdk.location.LocationService;
 import android.app.Application;
 import android.os.AsyncTask;
