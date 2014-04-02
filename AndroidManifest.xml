@@ -69,15 +69,25 @@
             android:label="@string/menu_settings"
             android:launchMode="singleTop"
             android:parentActivityName="mil.nga.giat.mage.LandingActivity" >
+                        
+            <!-- Parent activity meta-data to support 4.0 and lower -->
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="mil.nga.giat.mage.LandingActivity" />
         </activity>
         <activity
             android:name="mil.nga.giat.mage.preferences.LocationPreferencesActivity"
-            android:icon="@drawable/ic_settings_white"
-            android:label="@string/menu_settings"
+            android:icon="@drawable/ic_compass_white"
+            android:label="@string/location_settings"
             android:parentActivityName="mil.nga.giat.mage.preferences.PublicPreferencesActivity" >
+            
+            <!-- Parent activity meta-data to support 4.0 and lower -->
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="mil.nga.giat.mage.preferences.PublicPreferencesActivity" />
         </activity>
         <activity
-            android:name="mil.nga.giat.mage.map.MapPreferencesActivity"
+            android:name="mil.nga.giat.mage.map.preference.MapPreferencesActivity"
             android:icon="@drawable/ic_map_white"
             android:label="@string/map_settings"
             android:parentActivityName="mil.nga.giat.mage.LandingActivity" >
@@ -86,6 +96,20 @@
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="mil.nga.giat.mage.LandingActivity" />
+        </activity>
+        <activity
+            android:name="mil.nga.giat.mage.map.preference.OverlayPreferenceActivity"
+            android:theme="@style/AppBaseTheme.ActionBar.OverlayMap"
+            android:icon="@drawable/ic_map_white"
+            android:label="@string/overlay_settings"
+            android:launchMode="singleTop"
+            android:uiOptions="splitActionBarWhenNarrow"
+            android:parentActivityName="mil.nga.giat.mage.map.preference.MapPreferencesActivity" >
+            
+            <!-- Parent activity meta-data to support 4.0 and lower -->
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="mil.nga.giat.mage.map.MapPreferencesActivity" />
         </activity>
         <activity
             android:name="mil.nga.giat.mage.observation.ObservationViewActivity"

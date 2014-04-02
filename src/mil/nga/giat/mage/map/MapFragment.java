@@ -3,12 +3,15 @@ package mil.nga.giat.mage.map;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import mil.nga.giat.mage.MAGE;
+import mil.nga.giat.mage.MAGE.OnCacheOverlayListener;
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.map.GoogleMapWrapper.OnMapPanListener;
+import mil.nga.giat.mage.map.preference.MapPreferencesActivity;
 import mil.nga.giat.mage.observation.ObservationEditActivity;
 import mil.nga.giat.mage.sdk.location.LocationService;
 import android.content.Intent;
@@ -19,10 +22,8 @@ import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
-import android.view.View.OnTouchListener;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
 
@@ -52,8 +53,10 @@ public class MapFragment extends Fragment implements
     OnMyLocationButtonClickListener,
     OnClickListener, 
     LocationSource, 
-    LocationListener {
+    LocationListener,
+    OnCacheOverlayListener {
 
+    private MAGE mage;
     private GoogleMap map;
     private int mapType = 1;
     private Location location;
@@ -69,6 +72,8 @@ public class MapFragment extends Fragment implements
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_map, container, false);
+        mage = (MAGE)  getActivity().getApplication();
+        
         
         mapWrapper = new GoogleMapWrapper(getActivity());
         mapWrapper.addView(view);
@@ -86,7 +91,7 @@ public class MapFragment extends Fragment implements
         ImageButton mapSettings = (ImageButton) view.findViewById(R.id.map_settings);
         mapSettings.setOnClickListener(this);
         
-        locationService = ((MAGE) getActivity().getApplication()).getLocationService();
+        locationService = mage.getLocationService();
 
         return mapWrapper;
     }
@@ -94,6 +99,8 @@ public class MapFragment extends Fragment implements
     @Override
     public void onResume() {
         super.onResume();
+        
+        mage.registerCacheOverlayListener(this);
 
         // Check if any map preferences changed that I care about        
         boolean locationServiceEnabled = preferences.getBoolean("locationServiceEnabled", false);
@@ -105,13 +112,15 @@ public class MapFragment extends Fragment implements
         }
 
         updateMapType();
-        updateMapOverlays();
+//        updateMapOverlays();
     }
     
     @Override
     public void onPause() {
         super.onPause();
 
+        mage.unregisterCacheOverlayListener(this);
+        
         boolean locationServiceEnabled = Integer.parseInt(preferences.getString("userReportingFrequency", "0")) > 0;
         if (locationServiceEnabled) {
             map.setLocationSource(null);
@@ -209,35 +218,38 @@ public class MapFragment extends Fragment implements
     @Override
     public void onProviderDisabled(String provider) {}
     
+    @Override
+    public void onCacheOverlay(List<CacheOverlay> cacheOverlays) {
+        Set<String> overlays = preferences.getStringSet("mapTileOverlays", Collections.<String> emptySet());
+
+        // Add all overlays that are in the preferences
+        // For now there is no ordering in how tile overlays are stacked
+        Set<String> removedOverlays = new HashSet<String>(tileOverlays.keySet());
+
+        for (CacheOverlay cacheOverlay : cacheOverlays) {
+            // The user has asked for this overlay
+            if (overlays.contains(cacheOverlay.getName())) {
+                if (!tileOverlays.keySet().contains(cacheOverlay.getName())) {
+                    TileProvider tileProvider = new FileSystemTileProvider(256, 256, cacheOverlay.getDirectory().getAbsolutePath());
+                    TileOverlay tileOverlay = map.addTileOverlay(new TileOverlayOptions().tileProvider(tileProvider));
+                    tileOverlays.put(cacheOverlay.getName(), tileOverlay);
+                }
+
+                removedOverlays.remove(cacheOverlay.getName());
+            }
+        }
+
+        // Remove any overlays that are on the map but no longer selected in preferences
+        for (String overlay : removedOverlays) {
+            tileOverlays.remove(overlay).remove();
+        }
+    }
+    
     private void updateMapType() {
         int mapType = Integer.parseInt(preferences.getString("mapBaseLayer", "1"));
         if (mapType != this.mapType) {
             this.mapType = mapType;
             map.setMapType(this.mapType);
-        }
-    }
-
-    private void updateMapOverlays() {
-        Set<String> overlays = preferences.getStringSet("mapTileOverlays", Collections.<String> emptySet());
-
-        // Add all overlays that are in the preferences
-        // For now there is no ordering in how tile overlays are stacked
-
-        Set<String> removedOverlays = new HashSet<String>(tileOverlays.keySet());
-        for (String overlay : overlays) {
-            if (!tileOverlays.keySet().contains(overlay)) {
-                TileProvider tileProvider = new FileSystemTileProvider(256, 256, overlay);
-                TileOverlay tileOverlay = map.addTileOverlay(new TileOverlayOptions().tileProvider(tileProvider));
-                tileOverlays.put(overlay, tileOverlay);
-            }
-
-            removedOverlays.remove(overlay);
-        }
-
-        // Remove any overlays that are on the map but no longer in the
-        // preferences
-        for (String overlay : removedOverlays) {
-            tileOverlays.remove(overlay).remove();
         }
     }
 }

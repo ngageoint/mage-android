@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android" >
+    <item android:id="@+id/overlay_map_refresh"
+          android:title="@string/overlay_map_refresh_enabled"
+          android:showAsAction="always" />
+</menu>

@@ -1,35 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
-    android:title="@string/map_settings">
+    android:title="@string/map_settings" >
 
     <PreferenceCategory android:title="MAPS" >
         <ListPreference
+            android:defaultValue="1"
             android:entries="@array/layerEntries"
             android:entryValues="@array/layerValues"
             android:key="mapBaseLayer"
-            android:title="Base Layer"
-            android:defaultValue="1" />
-        <mil.nga.giat.mage.preferences.DialogPreference
-            android:defaultValue="@array/empty_array"
-            android:entries="@array/worldCupOverlays"
-            android:entryValues="@array/worldCupOverlayLocations"
-            android:key="mapTileOverlays"
-            android:title="Overlay Layers" />
+            android:title="Base Layer" />
+        <mil.nga.giat.mage.map.preference.OverlayPreference
+            android:key="mapTileOverlays" 
+            android:title="Overlay Maps">
+        </mil.nga.giat.mage.map.preference.OverlayPreference>
     </PreferenceCategory>
-    
-   <PreferenceCategory android:title="DYNAMIC FEATURES" >
-       <CheckBoxPreference
-          android:title="Show Observations"
-          android:defaultValue="true"
-          android:summary="Show observations on map"
-          android:key="observationFeature" />       
-       <CheckBoxPreference
-          android:title="Show People"
-          android:defaultValue="true"
-          android:summary="Show users locations on map"
-          android:key="peopleFeature" />
-   </PreferenceCategory>
-    
+    <PreferenceCategory android:title="DYNAMIC FEATURES" >
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:key="observationFeature"
+            android:summary="Show observations on map"
+            android:title="Show Observations" />
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:key="peopleFeature"
+            android:summary="Show users locations on map"
+            android:title="Show People" />
+    </PreferenceCategory>
     <PreferenceCategory android:title="STATIC FEATURES" >
         <mil.nga.giat.mage.preferences.DialogPreference
             android:defaultValue="@array/empty_array"
