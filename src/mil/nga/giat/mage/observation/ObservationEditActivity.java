@@ -31,6 +31,7 @@ import android.location.Location;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.provider.MediaStore;
 import android.support.v4.app.FragmentActivity;
 import android.util.Log;
@@ -56,6 +57,8 @@ import com.bumptech.glide.Glide;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.Circle;
+import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 
@@ -79,6 +82,7 @@ public class ObservationEditActivity extends FragmentActivity {
 	long observationId;
 	Observation o;
 	Map<String, String> propertiesMap;
+	long locationElapsedTimeNanos = 0;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -121,7 +125,7 @@ public class ObservationEditActivity extends FragmentActivity {
 			}
 		}
 		
-		findViewById(R.id.date).setOnClickListener(new View.OnClickListener() {
+		findViewById(R.id.date_edit).setOnClickListener(new View.OnClickListener() {
 			
 			@Override
 			public void onClick(View v) {
@@ -195,6 +199,23 @@ public class ObservationEditActivity extends FragmentActivity {
 			}
 		}
 	}
+	
+	private String elapsedTime(long timeNanos) {
+		String s = "";
+		long ms = timeNanos/1000000;
+		long sec = ms/1000;
+		long min = sec/60;
+		if (min == 0) {
+			s = sec + " secs ago";
+		} else {
+			s = min + " mins ago";
+		}
+		return s;
+	}
+	
+	private long timeMs(long timeNanos) {
+		return timeNanos/1000000;
+	}
 		
 	private void setupMap() {
 		GoogleMap map = ((SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.background_map)).getMap();
@@ -202,8 +223,24 @@ public class ObservationEditActivity extends FragmentActivity {
 		LatLng location = new LatLng(l.getLatitude(), l.getLongitude());
 		((TextView) findViewById(R.id.location)).setText(latLngFormat.format(l.getLatitude()) + ", " + latLngFormat.format(l.getLongitude()));
 		((TextView)findViewById(R.id.location_provider)).setText("("+l.getProvider()+")");
-		((TextView)findViewById(R.id.location_accuracy)).setText("\u00B1" + l.getAccuracy() + "m");
-		map.animateCamera(CameraUpdateFactory.newLatLngZoom(location, 16));
+		if (l.getAccuracy() != 0) {
+			((TextView)findViewById(R.id.location_accuracy)).setText("\u00B1" + l.getAccuracy() + "m");
+		}
+		if (l.getElapsedRealtimeNanos() == 0) {
+			locationElapsedTimeNanos = 0;
+		} else {
+			locationElapsedTimeNanos = SystemClock.elapsedRealtimeNanos() - l.getElapsedRealtimeNanos();
+			((TextView)findViewById(R.id.location_elapsed_time)).setText(elapsedTime(locationElapsedTimeNanos));
+		}
+		map.animateCamera(CameraUpdateFactory.newLatLngZoom(location, 18));
+		CircleOptions circleOptions = new CircleOptions()
+		.fillColor(getResources().getColor(R.color.accuracy_circle_fill))
+		.strokeColor(getResources().getColor(R.color.accuracy_circle_stroke))
+		.strokeWidth(5)
+	    .center(location)
+	    .radius(l.getAccuracy());
+
+		map.addCircle(circleOptions);
 		map.addMarker(new MarkerOptions().position(location));
 	}
 
@@ -314,6 +351,7 @@ public class ObservationEditActivity extends FragmentActivity {
 			propertyMap.put("EVENTDATE", String.valueOf(date.getTime()));
 			propertyMap.put("LOCATION_ACCURACY", Float.toString(l.getAccuracy()));
 			propertyMap.put("LOCATION_PROVIDER", l.getProvider());
+			propertyMap.put("LOCATION_TIME_DELTA", elapsedTime(locationElapsedTimeNanos));
 			o.setPropertiesMap(propertyMap);
 			
 			o.setAttachments(attachments);
