@@ -3,6 +3,7 @@ package mil.nga.giat.mage.observation;
 import java.io.File;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -23,8 +24,6 @@ import mil.nga.giat.mage.sdk.utils.MediaUtility;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.app.DatePickerDialog;
-import android.app.Dialog;
 import android.content.ClipData;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -40,11 +39,12 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.View.OnTouchListener;
+import android.view.ViewGroup;
 import android.view.ViewGroup.LayoutParams;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
+import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -63,7 +63,6 @@ public class ObservationEditActivity extends FragmentActivity {
 
 	public static String OBSERVATION_ID = "OBSERVATION_ID";
 	public static String LOCATION = "LOCATION";
-	public static String OBSERVATION_LOCATION_TYPE = "OBSERVATION_LOCATION_TYPE";
 	
 	private static final int CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE = 100;
 	private static final int CAPTURE_VIDEO_ACTIVITY_REQUEST_CODE = 200;
@@ -108,6 +107,7 @@ public class ObservationEditActivity extends FragmentActivity {
 				}
 			
 				propertiesMap = o.getPropertiesMap();
+				date = new Date(Long.parseLong(propertiesMap.get("EVENTDATE")));
 				Geometry geo = o.getObservationGeometry().getGeometry();
 				if(geo instanceof PointGeometry) {
 					PointGeometry point = (PointGeometry)geo;
@@ -129,20 +129,33 @@ public class ObservationEditActivity extends FragmentActivity {
 				AlertDialog.Builder builder = new AlertDialog.Builder(ObservationEditActivity.this);
 			    // Get the layout inflater
 			    LayoutInflater inflater = getLayoutInflater();
-
+			    View dialogView = inflater.inflate(R.layout.date_time_dialog, null);
+			    final DatePicker datePicker = (DatePicker) dialogView.findViewById(R.id.date_picker);
+			    final TimePicker timePicker = (TimePicker) dialogView.findViewById(R.id.time_picker);
 			    // Inflate and set the layout for the dialog
 			    // Pass null as the parent view because its going in the dialog layout
-			    builder.setView(inflater.inflate(R.layout.date_time_dialog, null))
+			    builder.setView(dialogView)
 			    // Add action buttons
 			           .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
 			               @Override
 			               public void onClick(DialogInterface dialog, int id) {
 			                   // set the date and time to what they chose
+			            	   int day = datePicker.getDayOfMonth();
+			            	   int month = datePicker.getMonth();
+			            	   int year = datePicker.getYear();
+			            	   int hour = timePicker.getCurrentHour();
+			            	   int minute = timePicker.getCurrentMinute();
+			            	   int second = 0;
+			            	   
+			            	   Calendar c = Calendar.getInstance();
+			            	   c.set(year, month, day, hour, minute, second);
+			            	   date = c.getTime();
+			            	   ((TextView) findViewById(R.id.date)).setText(date.toString());
 			               }
 			           })
 			           .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
 			               public void onClick(DialogInterface dialog, int id) {
-			                   
+			                   dialog.cancel();
 			               }
 			           });      
 			    AlertDialog ad = builder.create();
