@@ -9,6 +9,8 @@ import java.util.Map;
 import mil.nga.giat.mage.file.Storage;
 import mil.nga.giat.mage.file.Storage.StorageType;
 import mil.nga.giat.mage.map.CacheOverlay;
+import mil.nga.giat.mage.sdk.fetch.LocationServerFetchAsyncTask;
+import mil.nga.giat.mage.sdk.fetch.ObservationServerFetchAsyncTask;
 import mil.nga.giat.mage.sdk.fetch.RoleServerFetchAsyncTask;
 import mil.nga.giat.mage.sdk.location.LocationService;
 import android.app.Application;
@@ -24,7 +26,8 @@ public class MAGE extends Application {
     }
 
     private LocationService locationService;
-    private RoleServerFetchAsyncTask roleTask;
+	private LocationServerFetchAsyncTask locationTask = null;
+	private ObservationServerFetchAsyncTask observationTask = null;
     private List<CacheOverlay> cacheOverlays = null;
     private Collection<OnCacheOverlayListener> cacheOverlayListeners = new ArrayList<OnCacheOverlayListener>();
 
@@ -102,16 +105,24 @@ public class MAGE extends Application {
     }
 
     public void startFetching() {
-        roleTask = new RoleServerFetchAsyncTask(getApplicationContext(), true);
+        locationTask = new LocationServerFetchAsyncTask(getApplicationContext());
+		observationTask = new ObservationServerFetchAsyncTask(getApplicationContext());
         try {
-            roleTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+    		locationTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+    		observationTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
         } catch (Exception e) {
-            Log.e(LOG_NAME, "Error fetching!  Could not populate role table!");
+            Log.e(LOG_NAME, "Error starting fetching tasks!");
         }
     }
 
     public void destroyFetching() {
-        roleTask.destroy();
+    	if(locationTask != null) {
+			locationTask.destroy();
+		}
+		
+		if(observationTask != null) {
+			observationTask.destroy();
+		}
     }
 
 }
