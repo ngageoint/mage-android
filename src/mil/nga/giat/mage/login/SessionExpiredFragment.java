@@ -1,6 +1,5 @@
 package mil.nga.giat.mage.login;
 
-import mil.nga.giat.mage.LandingActivity;
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.sdk.utils.UserUtility;
 import android.content.Intent;
@@ -27,7 +26,7 @@ public class SessionExpiredFragment extends Fragment {
 			@Override
 			public void onClick(View v) {
 				getActivity().finish();
-				startActivity(new Intent(getActivity().getApplicationContext(), LandingActivity.class));
+				startActivity(new Intent(getActivity().getApplicationContext(), LoginActivity.class));
 			}
 		});
 		
