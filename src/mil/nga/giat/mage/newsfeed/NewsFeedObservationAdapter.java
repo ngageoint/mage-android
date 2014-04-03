@@ -8,15 +8,19 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.http.ParseException;
+
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.form.MageTextView;
 import mil.nga.giat.mage.observation.ObservationViewActivity;
 import mil.nga.giat.mage.sdk.datastore.observation.Attachment;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
+import mil.nga.giat.mage.sdk.utils.DateUtility;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
 import android.content.Intent;
 import android.support.v4.app.FragmentActivity;
+import android.text.format.DateUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -45,7 +49,7 @@ public class NewsFeedObservationAdapter extends BaseAdapter {
 
 	@Override
 	public int getCount() {
-		return data.size()-1;
+		return data.size();
 	}
 
 	@Override
@@ -148,7 +152,15 @@ public class NewsFeedObservationAdapter extends BaseAdapter {
 					
 					break;
 				case DATE:
+					try {
 					m.setText(sdf.format(new Date(Long.parseLong(propertyValue))));
+					} catch (NumberFormatException nfe) {
+						try {
+						m.setText(sdf.format(DateUtility.getISO8601().parse(propertyValue)));
+						} catch (java.text.ParseException pe) {
+							pe.printStackTrace();
+						}
+					}
 					break;
 				case LOCATION:
 					
