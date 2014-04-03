@@ -1,7 +1,9 @@
 package mil.nga.giat.mage.observation;
 
 import java.io.File;
+import java.io.IOException;
 import java.text.DecimalFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -31,6 +33,7 @@ import android.location.Location;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.SystemClock;
 import android.provider.MediaStore;
 import android.support.v4.app.FragmentActivity;
@@ -383,7 +386,18 @@ public class ObservationEditActivity extends FragmentActivity {
 
 	public void cameraButtonPressed(View v) {
 		Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-		startActivityForResult(intent, CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE);
+        try {
+            currentImageFile = MediaUtility.createImageFile();
+        } catch (IOException ex) {
+            // Error occurred while creating the File
+        	ex.printStackTrace();
+        }
+        // Continue only if the File was successfully created
+        if (currentImageFile != null) {
+            intent.putExtra(MediaStore.EXTRA_OUTPUT,
+                    Uri.fromFile(currentImageFile));
+            startActivityForResult(intent, CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE);  
+        }
 	}
 
 	public void videoButtonPressed(View v) {
@@ -497,6 +511,8 @@ public class ObservationEditActivity extends FragmentActivity {
 //			Log.e("exception", "Error making image", e);
 //		}
 	}
+	
+	File currentImageFile;
 
 	@Override
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -504,11 +520,19 @@ public class ObservationEditActivity extends FragmentActivity {
 			return;
 		switch (requestCode) {
 		case CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE:
+			MediaUtility.addImageToGallery(getApplicationContext(), currentImageFile);
+			Attachment capture = new Attachment();
+			capture.setLocalPath(currentImageFile.getAbsolutePath());
+			attachments.add(capture);
+			addAttachmentToGallery(capture);
+			break;
 		case CAPTURE_VIDEO_ACTIVITY_REQUEST_CODE:
 		case GALLERY_ACTIVITY_REQUEST_CODE:
 		case CAPTURE_VOICE_ACTIVITY_REQUEST_CODE:
 			ArrayList<Uri> uris = getUris(data);
+			Log.i("test", "found " + uris.size() + " uris");
 			for (Uri u : uris) {
+				Log.i("test", "adding uri: " + u);
 				String path = MediaUtility.getPath(getApplicationContext(), u);
 				Attachment a = new Attachment();
 				a.setLocalPath(path);
