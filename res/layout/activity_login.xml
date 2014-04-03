@@ -87,7 +87,7 @@
                 android:hint="Password"
                 android:textColorHint="#CCCCCC"
                 android:inputType="textPassword"
-                android:imeOptions="actionGo"
+                android:imeActionLabel="Log In"
                 android:singleLine="true"
                 android:textSize="22sp" />
 
