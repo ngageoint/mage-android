@@ -104,7 +104,7 @@ public class ObservationEditActivity extends FragmentActivity {
 			this.setTitle("Edit Observation");
 			// this is an edit of an existing observation
 			try {
-				o = ObservationHelper.getInstance(getApplicationContext()).read(getIntent().getLongExtra(OBSERVATION_ID, 0L));
+				o = ObservationHelper.getInstance(getApplicationContext()).readByPrimaryKey(getIntent().getLongExtra(OBSERVATION_ID, 0L));
 				attachments.addAll(o.getAttachments());
 				for (Attachment a : attachments) {
 					addAttachmentToGallery(a);
