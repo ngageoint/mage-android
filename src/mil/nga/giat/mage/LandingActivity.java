@@ -9,11 +9,13 @@ import mil.nga.giat.mage.observation.ObservationEditActivity;
 import mil.nga.giat.mage.observation.ObservationViewActivity;
 import mil.nga.giat.mage.preferences.PublicPreferencesActivity;
 import mil.nga.giat.mage.sdk.location.LocationService;
+import mil.nga.giat.mage.sdk.push.ObservationServerPushAsyncTask;
 import mil.nga.giat.mage.sdk.utils.UserUtility;
 import android.app.ActionBar;
 import android.app.FragmentTransaction;
 import android.content.Intent;
 import android.location.Location;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
@@ -90,6 +92,11 @@ public class LandingActivity extends FragmentActivity implements ActionBar.TabLi
 		
 		// Start location services
 		((MAGE) getApplication()).initLocationService();
+		
+		//TODO: FIX ME
+		ObservationServerPushAsyncTask obsPush = new ObservationServerPushAsyncTask(getApplicationContext());
+		obsPush.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+		
 	}
 
 	@Override
