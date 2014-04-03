@@ -28,6 +28,7 @@ import android.os.Bundle;
 import android.provider.MediaStore;
 import android.support.v4.app.FragmentActivity;
 import android.util.Log;
+import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
@@ -166,12 +167,23 @@ public class ObservationViewActivity extends FragmentActivity {
 	public boolean onOptionsItemSelected(MenuItem item) {
 	    switch (item.getItemId()) {
 	        case android.R.id.home:
-	            // app icon in action bar clicked; goto parent activity.
 	            this.finish();
 	            return true;
+	        case R.id.observation_edit:
+	        	Intent observationEdit = new Intent(this, ObservationEditActivity.class);
+				observationEdit.putExtra(ObservationEditActivity.OBSERVATION_ID, o.getId());
+				startActivityForResult(observationEdit, 2);
+	        	return true;
 	        default:
 	            return super.onOptionsItemSelected(item);
 	    }
+	}
+	
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+		// Inflate the menu; this adds items to the action bar if it is present.
+		getMenuInflater().inflate(R.menu.observation_view_menu, menu);
+		return true;
 	}
 
 	@Override

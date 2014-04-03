@@ -96,6 +96,7 @@
 	        <mil.nga.giat.mage.form.MageTextView  
 	            android:id="@+id/date"
 	            mageForm:propertyKey="EVENTDATE"
+	            mageForm:propertyType="date"
 	            android:layout_width="wrap_content"
 	            android:layout_height="wrap_content"
 	            android:textSize="16sp"
@@ -209,6 +210,7 @@
 	        android:layout_height="wrap_content"
 	        android:layout_marginTop="5dip"
 	        android:hint="Description"
+	        mageForm:propertyType="multiline"
 	        android:minLines="4" />
 	</LinearLayout>
 	        

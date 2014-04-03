@@ -12,8 +12,10 @@ public enum MagePropertyType {
 		case 2:
 			return MagePropertyType.MULTILINE;
 		case 3:
-			return MagePropertyType.USER;
+			return MagePropertyType.MULTICHOICE;
 		case 4:
+			return MagePropertyType.USER;
+		case 5:
 			return MagePropertyType.LOCATION;
 		default:
 			return MagePropertyType.STRING;

@@ -3,7 +3,6 @@ package mil.nga.giat.mage.observation;
 import java.io.File;
 import java.io.IOException;
 import java.text.DecimalFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -11,6 +10,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import mil.nga.giat.mage.R;
+import mil.nga.giat.mage.form.MageEditText;
 import mil.nga.giat.mage.form.MageSpinner;
 import mil.nga.giat.mage.form.MageTextView;
 import mil.nga.giat.mage.sdk.datastore.common.Geometry;
@@ -33,7 +33,6 @@ import android.location.Location;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
 import android.os.SystemClock;
 import android.provider.MediaStore;
 import android.support.v4.app.FragmentActivity;
@@ -60,7 +59,6 @@ import com.bumptech.glide.Glide;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.SupportMapFragment;
-import com.google.android.gms.maps.model.Circle;
 import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
@@ -115,14 +113,18 @@ public class ObservationEditActivity extends FragmentActivity {
 			
 				propertiesMap = o.getPropertiesMap();
 				date = new Date(Long.parseLong(propertiesMap.get("EVENTDATE")));
+				((TextView) findViewById(R.id.date)).setText(date.toString());
 				Geometry geo = o.getObservationGeometry().getGeometry();
 				if(geo instanceof PointGeometry) {
 					PointGeometry point = (PointGeometry)geo;
 					l = new Location(propertiesMap.get("LOCATION_PROVIDER"));
-					l.setAccuracy(Float.parseFloat(propertiesMap.get("LOCATION_ACCURACY")));
+					if (propertiesMap.containsKey("LOCATION_ACCURACY")) {
+						l.setAccuracy(Float.parseFloat(propertiesMap.get("LOCATION_ACCURACY")));
+					}
 					l.setLatitude(point.getLatitude());
 					l.setLongitude(point.getLongitude());
 				}
+				populatePropertyFieldsFromMap((LinearLayout)findViewById(R.id.form), propertiesMap);
 			} catch (ObservationException oe) {
 				
 			}
@@ -225,7 +227,9 @@ public class ObservationEditActivity extends FragmentActivity {
 
 		LatLng location = new LatLng(l.getLatitude(), l.getLongitude());
 		((TextView) findViewById(R.id.location)).setText(latLngFormat.format(l.getLatitude()) + ", " + latLngFormat.format(l.getLongitude()));
-		((TextView)findViewById(R.id.location_provider)).setText("("+l.getProvider()+")");
+		if (l.getProvider() != null) {
+			((TextView)findViewById(R.id.location_provider)).setText("("+l.getProvider()+")");
+		}
 		if (l.getAccuracy() != 0) {
 			((TextView)findViewById(R.id.location_accuracy)).setText("\u00B1" + l.getAccuracy() + "m");
 		}
@@ -285,6 +289,9 @@ public class ObservationEditActivity extends FragmentActivity {
 			if (v instanceof MageTextView) {
 				String propertyKey = ((MageTextView)v).getPropertyKey();
 				((MageTextView)v).setText(savedInstanceState.getString(propertyKey));
+			} else if (v instanceof MageEditText) {
+				String propertyKey = ((MageEditText)v).getPropertyKey();
+				((MageEditText)v).setText(savedInstanceState.getString(propertyKey));
 			} else if (v instanceof MageSpinner) {
 				MageSpinner spinner = (MageSpinner)v;
 				String propertyKey = ((MageSpinner)v).getPropertyKey();
@@ -310,6 +317,9 @@ public class ObservationEditActivity extends FragmentActivity {
 			if (v instanceof MageTextView) {
 				String propertyKey = ((MageTextView)v).getPropertyKey();
 				outState.putString(propertyKey, ((MageTextView)v).getText().toString());
+			} else if (v instanceof MageEditText) {
+				String propertyKey = ((MageEditText)v).getPropertyKey();
+				outState.putString(propertyKey, ((MageEditText)v).getText().toString());
 			} else if (v instanceof MageSpinner) {
 				String propertyKey = ((MageSpinner)v).getPropertyKey();
 				outState.putString(propertyKey, (String) ((MageSpinner)v).getSelectedItem());
@@ -325,11 +335,65 @@ public class ObservationEditActivity extends FragmentActivity {
 			if (v instanceof MageTextView) {
 				String propertyKey = ((MageTextView)v).getPropertyKey();
 				fields.put(propertyKey, ((MageTextView)v).getText().toString());
+			} else if (v instanceof MageEditText) {
+				String propertyKey = ((MageEditText)v).getPropertyKey();
+				fields.put(propertyKey, ((MageEditText)v).getText().toString());
 			} else if (v instanceof MageSpinner) {
 				String propertyKey = ((MageSpinner)v).getPropertyKey();
 				fields.put(propertyKey, (String) ((MageSpinner)v).getSelectedItem());
 			} else if (v instanceof LinearLayout) {
 				savePropertyFieldsToMap((LinearLayout)v, fields);
+			}
+		}
+	}
+	
+	private void populatePropertyFieldsFromMap(LinearLayout ll, Map<String, String> propertiesMap) {
+		for (int i = 0; i < ll.getChildCount(); i++) {
+			View v = ll.getChildAt(i);
+			if (v instanceof MageTextView) {
+				MageTextView m = (MageTextView)v;
+				String propertyKey = m.getPropertyKey();
+				String propertyValue = propertiesMap.get(propertyKey);
+				Log.i("test", "property key: " + propertyKey + " property value: " + propertyValue + " propertyType: " + m.getPropertyType());
+				if (propertyValue == null) continue;
+				switch(m.getPropertyType()) {
+				case STRING:
+				case MULTILINE:
+					m.setText(propertyValue);
+					break;
+				case USER:
+					
+					break;
+				case DATE:
+					m.setText(new Date(Long.parseLong(propertyValue)).toString());
+					break;
+				case LOCATION:
+					
+					break;
+				case MULTICHOICE:
+					
+					break;
+				}
+			} else if (v instanceof MageEditText) {
+				MageEditText m = (MageEditText)v;
+				String propertyKey = m.getPropertyKey();
+				String propertyValue = propertiesMap.get(propertyKey);
+				m.setText(propertyValue);
+			} else if (v instanceof MageSpinner) {
+				MageSpinner spinner = (MageSpinner)v;
+				String propertyKey = ((MageSpinner)v).getPropertyKey();
+				String value = propertiesMap.get(propertyKey);
+				int index = 0;
+				for (index = 0; index < spinner.getAdapter().getCount(); index++)
+			    {
+			        if (spinner.getAdapter().getItem(index).equals(value))
+			        {
+			            spinner.setSelection(index);
+			            break;
+			        }
+			    }
+			} else if (v instanceof LinearLayout) {
+				populatePropertyFieldsFromMap((LinearLayout)v, propertiesMap);
 			}
 		}
 	}
@@ -352,7 +416,9 @@ public class ObservationEditActivity extends FragmentActivity {
 			savePropertyFieldsToMap(form, propertyMap);
 			propertyMap.put("TYPE", (String) ((Spinner) findViewById(R.id.type_spinner)).getSelectedItem());
 			propertyMap.put("EVENTDATE", String.valueOf(date.getTime()));
-			propertyMap.put("LOCATION_ACCURACY", Float.toString(l.getAccuracy()));
+			if (propertyMap.containsKey("LOCATION_ACCURACY")) {
+				propertyMap.put("LOCATION_ACCURACY", Float.toString(l.getAccuracy()));
+			}
 			propertyMap.put("LOCATION_PROVIDER", l.getProvider());
 			propertyMap.put("LOCATION_TIME_DELTA", elapsedTime(locationElapsedTimeNanos));
 			o.setPropertiesMap(propertyMap);
