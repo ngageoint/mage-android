@@ -11,8 +11,14 @@ import mil.nga.giat.mage.MAGE;
 import mil.nga.giat.mage.MAGE.OnCacheOverlayListener;
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.map.GoogleMapWrapper.OnMapPanListener;
+import mil.nga.giat.mage.map.marker.ObservationClusterCollection;
+import mil.nga.giat.mage.map.marker.ObservationCollection;
 import mil.nga.giat.mage.map.preference.MapPreferencesActivity;
 import mil.nga.giat.mage.observation.ObservationEditActivity;
+import mil.nga.giat.mage.sdk.datastore.observation.Observation;
+import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
+import mil.nga.giat.mage.sdk.event.observation.IObservationEventListener;
+import mil.nga.giat.mage.sdk.exceptions.ObservationException;
 import mil.nga.giat.mage.sdk.location.LocationService;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -40,13 +46,6 @@ import com.google.android.gms.maps.model.TileOverlay;
 import com.google.android.gms.maps.model.TileOverlayOptions;
 import com.google.android.gms.maps.model.TileProvider;
 
-/**
- * TODO : What does this do?
- * 
- * @author newmanw
- * 
- */
-
 public class MapFragment extends Fragment implements 
     OnMapLongClickListener, 
     OnMapPanListener,
@@ -54,7 +53,8 @@ public class MapFragment extends Fragment implements
     OnClickListener, 
     LocationSource, 
     LocationListener,
-    OnCacheOverlayListener {
+    OnCacheOverlayListener,
+    IObservationEventListener {
 
     private MAGE mage;
     private GoogleMap map;
@@ -63,6 +63,13 @@ public class MapFragment extends Fragment implements
     private boolean followMe = false;
     private GoogleMapWrapper mapWrapper;
     private OnLocationChangedListener locationChangedListener;
+    
+    // Markers, marker collections and marker cluster
+    ObservationCollection observations;
+//    private MarkerManager observationMarkerManager;
+//    private MarkerManager.Collection observationMarkers;
+//    private ClusterManager<ObservationClusterItem> observationClusterManager;
+    
     private Map<String, TileOverlay> tileOverlays = new HashMap<String, TileOverlay>();
         
     private LocationService locationService;
@@ -73,7 +80,6 @@ public class MapFragment extends Fragment implements
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_map, container, false);
         mage = (MAGE)  getActivity().getApplication();
-        
         
         mapWrapper = new GoogleMapWrapper(getActivity());
         mapWrapper.addView(view);
@@ -87,6 +93,24 @@ public class MapFragment extends Fragment implements
 
         map.setOnMapLongClickListener(this);
         map.setOnMyLocationButtonClickListener(this);
+        
+        // We are going to cluster for now so create a clusterable collection
+        observations = new ObservationClusterCollection(getActivity(), map);
+        
+//        observationMarkerManager = new MarkerManager(map);
+//        observationMarkers = observationMarkerManager.newCollection("observations");
+//        observationClusterManager = new ClusterManager<ObservationClusterItem>(getActivity(), map);
+//        map.setOnCameraChangeListener(observationClusterManager);
+//        map.setOnMarkerClickListener(observationClusterManager);
+        
+        try {
+            List<Observation> observations = ObservationHelper.getInstance(getActivity()).addListener(this);
+            for (Observation o : observations) {
+                onObservationCreated(o);
+            }
+        } catch (ObservationException e) {
+            e.printStackTrace();
+        }
 
         ImageButton mapSettings = (ImageButton) view.findViewById(R.id.map_settings);
         mapSettings.setOnClickListener(this);
@@ -252,4 +276,28 @@ public class MapFragment extends Fragment implements
             map.setMapType(this.mapType);
         }
     }
+
+    @Override
+    public void onObservationCreated(Observation o) {
+        observations.add(o);
+    }
+    
+    @Override
+    public void onObservationUpdated(Observation o) {
+        // Observations updates happen so rarley lets just
+        // delete the old observation and insert the updated one.
+        observations.remove(o);
+        observations.add(o);
+    }
+
+    @Override
+    public void onObservationDeleted(Observation o) {
+        observations.remove(o);        
+    }
+
+    @Override
+    public void onComplete(Observation item) {}
+
+    @Override
+    public void onError(Throwable error) {}
 }
