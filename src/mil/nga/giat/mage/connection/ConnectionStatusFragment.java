@@ -1,9 +1,13 @@
 package mil.nga.giat.mage.connection;
 
 import mil.nga.giat.mage.R;
+import mil.nga.giat.mage.sdk.connectivity.ConnectivityUtility;
+import mil.nga.giat.mage.sdk.connectivity.NetworkChangeReceiver;
+import mil.nga.giat.mage.sdk.event.connectivity.IConnectivityEventListener;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v4.app.Fragment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -11,7 +15,7 @@ import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.TextView;
 
-public class ConnectionStatusFragment extends Fragment {
+public class ConnectionStatusFragment extends Fragment implements IConnectivityEventListener {
 	private Boolean connected = true;
 	@Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -39,11 +43,18 @@ public class ConnectionStatusFragment extends Fragment {
 			}
 		});
 		
-		// TODO set up the listener to just listen to the connectivity class
-		// don't show that we are connected if this is the first time and we are already connected
-		if (!connected) {
-			onConnectionChanged();
-		}
+//		NetworkChangeReceiver networkChangeReceiver = new NetworkChangeReceiver();
+//		networkChangeReceiver.addListener(this);
+//		
+//		//set up initial connection state
+//		connected = ConnectivityUtility.isOnline(getActivity().getApplicationContext());
+//		
+//		
+//		// TODO set up the listener to just listen to the connectivity class
+//		// don't show that we are connected if this is the first time and we are already connected
+//		if (!connected) {
+//			onConnectionChanged();
+//		}
 		super.onActivityCreated(savedInstanceState);
 	}
 	
@@ -52,7 +63,7 @@ public class ConnectionStatusFragment extends Fragment {
 		getActivity().findViewById(R.id.connection_background).setVisibility(View.VISIBLE);
 		Animation fadeIn = AnimationUtils.loadAnimation(getActivity().getApplicationContext(), android.R.anim.fade_in);
 		this.getView().setAnimation(fadeIn);
-		
+		Log.i("test", "connection changed to " + connected);
 		if (connected) {
 			t.setText(R.string.connected_mode);
 			getActivity().findViewById(R.id.connection_background).setBackgroundColor(getResources().getColor(android.R.color.holo_blue_light));
@@ -81,5 +92,47 @@ public class ConnectionStatusFragment extends Fragment {
 			}
 		});
 		getActivity().findViewById(R.id.connection_background).startAnimation(fadeOut);
+	}
+
+	@Override
+	public void onError(Throwable error) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void onAllDisconnected() {
+		connected = false;
+		onConnectionChanged();
+	}
+
+	@Override
+	public void onAnyConnected() {
+		connected = true;
+		onConnectionChanged();
+	}
+
+	@Override
+	public void onWifiConnected() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void onWifiDisconnected() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void onMobileDataConnected() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void onMobileDataDisconnected() {
+		// TODO Auto-generated method stub
+		
 	}
 }
