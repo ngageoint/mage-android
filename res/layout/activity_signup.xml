@@ -51,63 +51,29 @@
             android:layout_height="wrap_content"
             android:layout_below="@id/signup_header"
             android:orientation="vertical"
-            android:padding="24dip" >
-
-            <EditText
-                android:id="@+id/signup_firstname"
-                android:layout_width="fill_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="15dip"
-                android:layout_marginTop="5dip"
-                android:background="#FFFFFF"
-                android:hint="First Name"
-                android:inputType="textPersonName|textCapSentences|textNoSuggestions"
-                android:singleLine="true"
-                android:textSize="22sp" />
-
-            <EditText
-                android:id="@+id/signup_lastname"
-                android:layout_width="fill_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="15dip"
-                android:layout_marginTop="5dip"
-                android:background="#FFFFFF"
-                android:hint="Last Name"
-                android:inputType="textPersonName|textCapSentences|textNoSuggestions"
-                android:singleLine="true"
-                android:textSize="22sp" />
-
+            android:paddingBottom="24dip"
+            android:paddingLeft="24dip"
+            android:paddingRight="24dip">
+            
             <EditText
                 android:id="@+id/signup_username"
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="15dip"
-                android:layout_marginTop="5dip"
-                android:background="#FFFFFF"
+                android:layout_marginBottom="7dip"
+                android:layout_marginTop="7dip"
+                android:background="@drawable/form_field"
                 android:hint="Username"
                 android:inputType="textVisiblePassword|textNoSuggestions"
                 android:singleLine="true"
                 android:textSize="22sp" />
-
-            <EditText
-                android:id="@+id/signup_email"
-                android:layout_width="fill_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="15dip"
-                android:layout_marginTop="5dip"
-                android:background="#FFFFFF"
-                android:hint="Email"
-                android:inputType="textEmailAddress"
-                android:singleLine="true"
-                android:textSize="22sp" />
-
+            
             <EditText
                 android:id="@+id/signup_password"
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="15dip"
-                android:layout_marginTop="5dip"
-                android:background="#FFFFFF"
+                android:layout_marginBottom="7dip"
+                android:layout_marginTop="7dip"
+                android:background="@drawable/form_field"
                 android:hint="Password"
                 android:inputType="textPassword"
                 android:singleLine="true"
@@ -117,32 +83,68 @@
                 android:id="@+id/signup_confirmpassword"
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="15dip"
-                android:layout_marginTop="5dip"
-                android:background="#FFFFFF"
+                android:layout_marginBottom="7dip"
+                android:layout_marginTop="7dip"
+                android:background="@drawable/form_field"
                 android:hint="Confirm Password"
                 android:inputType="textPassword"
                 android:singleLine="true"
                 android:textSize="22sp" />
 
+            <EditText
+                android:id="@+id/signup_firstname"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="7dip"
+                android:layout_marginTop="7dip"
+                android:background="@drawable/form_field"
+                android:hint="First Name"
+                android:inputType="textPersonName|textCapSentences|textNoSuggestions"
+                android:singleLine="true"
+                android:textSize="22sp" />
+
+            <EditText
+                android:id="@+id/signup_lastname"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="7dip"
+                android:layout_marginTop="7dip"
+                android:background="@drawable/form_field"
+                android:hint="Last Name"
+                android:inputType="textPersonName|textCapSentences|textNoSuggestions"
+                android:singleLine="true"
+                android:textSize="22sp" />
+
+            <EditText
+                android:id="@+id/signup_email"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="7dip"
+                android:layout_marginTop="7dip"
+                android:background="@drawable/form_field"
+                android:hint="Email"
+                android:inputType="textEmailAddress"
+                android:singleLine="true"
+                android:textSize="22sp" />
+
+            
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:layout_marginBottom="15dip"
                 android:layout_marginTop="5dip"
                 android:orientation="horizontal" >
-
                 <EditText
                     android:id="@+id/signup_server"
                     android:layout_width="fill_parent"
                     android:layout_height="wrap_content"
                     android:layout_weight=".70"
-                    android:background="#FFFFFF"
+                    android:background="@drawable/form_field"
                     android:enabled="false"
                     android:hint="Server URL"
                     android:inputType="textUri"
                     android:singleLine="true"
-                    android:textSize="22sp" />
+                    android:textSize="16sp" />
 
                 <ImageView
                     android:id="@+id/signup_lock"

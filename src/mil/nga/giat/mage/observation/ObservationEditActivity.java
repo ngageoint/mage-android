@@ -13,7 +13,6 @@ import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.form.MageEditText;
 import mil.nga.giat.mage.form.MageSpinner;
 import mil.nga.giat.mage.form.MageTextView;
-import mil.nga.giat.mage.map.marker.ObservationBitmapFactory;
 import mil.nga.giat.mage.sdk.datastore.common.Geometry;
 import mil.nga.giat.mage.sdk.datastore.common.PointGeometry;
 import mil.nga.giat.mage.sdk.datastore.common.State;
@@ -80,13 +79,13 @@ public class ObservationEditActivity extends FragmentActivity {
 	private static final long NEW_OBSERVATION = -1L;
 
 	Date date;
-	DecimalFormat latLngFormat = new DecimalFormat("###.######");
+	DecimalFormat latLngFormat = new DecimalFormat("###.#####");
 	ArrayList<Attachment> attachments = new ArrayList<Attachment>();
 	Location l;
 	long observationId;
 	Observation o;
 	Map<String, String> propertiesMap;
-	long locationElapsedTimeNanos = 0;
+	long locationElapsedTimeMs = 0;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -208,21 +207,35 @@ public class ObservationEditActivity extends FragmentActivity {
 		}
 	}
 	
-	private String elapsedTime(long timeNanos) {
+	private String elapsedTime(long ms) {
 		String s = "";
-		long ms = timeNanos/1000000;
 		long sec = ms/1000;
 		long min = sec/60;
 		if (min == 0) {
-			s = sec + " secs ago";
+			s = sec + ((sec == 1) ? " sec ago" : " secs ago");
+		} else if (min < 60) {
+			s = min + ((min == 1) ? " min ago" : " mins ago");
 		} else {
-			s = min + " mins ago";
+			long hour = Math.round(Math.floor(min/60));
+			s = hour + ((hour == 1) ? " hour ago" : " hours ago");
 		}
 		return s;
 	}
 	
 	private long timeMs(long timeNanos) {
 		return timeNanos/1000000;
+	}
+	
+	
+	private long getElapsedTime() {
+		if (Build.VERSION.SDK_INT >= 17) {
+			if (l.getElapsedRealtimeNanos() == 0) {
+				return 0;
+			} else {
+				return timeMs(SystemClock.elapsedRealtimeNanos() - l.getElapsedRealtimeNanos());
+			}
+		}
+		return System.currentTimeMillis() - l.getTime();
 	}
 		
 	private void setupMap() {
@@ -236,12 +249,10 @@ public class ObservationEditActivity extends FragmentActivity {
 		if (l.getAccuracy() != 0) {
 			((TextView)findViewById(R.id.location_accuracy)).setText("\u00B1" + l.getAccuracy() + "m");
 		}
-		if (l.getElapsedRealtimeNanos() == 0) {
-			locationElapsedTimeNanos = 0;
-		} else {
-			locationElapsedTimeNanos = SystemClock.elapsedRealtimeNanos() - l.getElapsedRealtimeNanos();
-			((TextView)findViewById(R.id.location_elapsed_time)).setText(elapsedTime(locationElapsedTimeNanos));
-		}
+		
+		locationElapsedTimeMs = getElapsedTime();
+		((TextView)findViewById(R.id.location_elapsed_time)).setText(elapsedTime(locationElapsedTimeMs));
+		
 		
         LatLng latLng = getIntent().getParcelableExtra(INITIAL_LOCATION);
         if (latLng == null) {
@@ -434,7 +445,7 @@ public class ObservationEditActivity extends FragmentActivity {
 				propertyMap.put("LOCATION_ACCURACY", Float.toString(l.getAccuracy()));
 			}
 			propertyMap.put("LOCATION_PROVIDER", l.getProvider());
-			propertyMap.put("LOCATION_TIME_DELTA", elapsedTime(locationElapsedTimeNanos));
+			propertyMap.put("LOCATION_TIME_DELTA", Long.toString(timeMs(locationElapsedTimeMs)));
 			o.setPropertiesMap(propertyMap);
 			
 			o.setAttachments(attachments);

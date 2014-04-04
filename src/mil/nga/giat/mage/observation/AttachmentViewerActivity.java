@@ -181,15 +181,6 @@ public class AttachmentViewerActivity extends FragmentActivity implements Remove
 //		}
 	}
 	
-	@Override
-	public void onDestroy() {
-		ImageView imageView = (ImageView) findViewById(R.id.image);
-		BitmapDrawable bd = (BitmapDrawable)imageView.getDrawable();
-		bd.getBitmap().recycle();
-		imageView.setImageBitmap(null);
-		super.onDestroy();
-	}
-	
 	public void removeImage(View v) {
 		Log.d("Image viewer", "Remove the image");
 		DialogFragment dialog = new RemoveAttachmentDialogFragment();

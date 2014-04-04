@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" >
 
     <PreferenceCategory
         android:order="2"
@@ -21,9 +21,11 @@
 
         <Preference
             android:key="username"
+            android:selectable="false"
             android:title="Username" />
         <Preference
             android:key="appVersion"
+            android:selectable="false"
             android:title="App Version" />
     </PreferenceCategory>
 
