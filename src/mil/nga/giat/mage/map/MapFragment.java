@@ -60,7 +60,6 @@ public class MapFragment extends Fragment implements OnMapLongClickListener, OnM
     private GoogleMapWrapper mapWrapper;
     private OnLocationChangedListener locationChangedListener;
 
-    private Object observationLock = new Object();
     private ObservationCollection observations;
 
     private Map<String, TileOverlay> tileOverlays = new HashMap<String, TileOverlay>();
@@ -92,6 +91,13 @@ public class MapFragment extends Fragment implements OnMapLongClickListener, OnM
 
         locationService = mage.getLocationService();
 
+        observations = new ObservationMarkerCollection(getActivity(), map);
+        try {
+            ObservationHelper.getInstance(getActivity()).addListener(this);
+        } catch (ObservationException e) {
+            e.printStackTrace();
+        }
+
         return mapWrapper;
     }
 
@@ -111,7 +117,9 @@ public class MapFragment extends Fragment implements OnMapLongClickListener, OnM
         }
 
         updateMapType();
-        updateObservations();
+
+        // TODO don't do this for now
+        // updateObservations();
     }
 
     @Override
@@ -132,10 +140,7 @@ public class MapFragment extends Fragment implements OnMapLongClickListener, OnM
         getActivity().runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                synchronized (observationLock) {
-
-                    observations.addAll(o);
-                }
+                observations.addAll(o);
             }
         });
     }
@@ -145,13 +150,10 @@ public class MapFragment extends Fragment implements OnMapLongClickListener, OnM
         getActivity().runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                synchronized (observationLock) {
-
-                    // Observations updates happen so rarley lets just
-                    // delete the old observation and insert the updated one.
-                    observations.remove(o);
-                    observations.add(o);
-                }
+                // Observations updates happen so rarley lets just
+                // delete the old observation and insert the updated one.
+                observations.remove(o);
+                observations.add(o);
             }
         });
     }
@@ -163,15 +165,14 @@ public class MapFragment extends Fragment implements OnMapLongClickListener, OnM
             public void run() {
                 // Observations updates happen so rarley lets just
                 // delete the old observation and insert the updated one.
-                synchronized (observationLock) {
-                    observations.remove(o);
-                }
+                observations.remove(o);
             }
         });
     }
 
     @Override
     public void onMapLongClick(LatLng point) {
+        // TODO Auto-generated method stub
         Intent intent = new Intent(getActivity(), ObservationEditActivity.class);
         Location l = new Location("manual");
         l.setAccuracy(0.0f);
@@ -298,6 +299,8 @@ public class MapFragment extends Fragment implements OnMapLongClickListener, OnM
         }
     }
 
+    // TODO think of a way to fix this if we want users to be able to swap
+    // between clusters and not clusters
     private void updateObservations() {
         boolean cluster = preferences.getBoolean("clusterObservations", false);
         if (observations == null) {
@@ -306,28 +309,20 @@ public class MapFragment extends Fragment implements OnMapLongClickListener, OnM
             // Create the observations collection and start listening for
             // updates
             observations = cluster ? new ObservationClusterCollection(getActivity(), map) : new ObservationMarkerCollection(getActivity(), map);
-            map.setOnCameraChangeListener(observations);
-            map.setOnMarkerClickListener(observations);
-            
+
             try {
-            	ObservationHelper.getInstance(getActivity()).addListener(this);
+                ObservationHelper.getInstance(getActivity()).addListener(this);
             } catch (ObservationException e) {
                 e.printStackTrace();
             }
         } else if (this.cluster != cluster) {
             this.cluster = cluster;
 
-            synchronized (observationLock) {
-                Collection<Observation> existing = observations != null ? new ArrayList<Observation>(observations.getObservations()) : Collections.<Observation> emptyList();
-                observations.clear();
-                map.setOnCameraChangeListener(null);
-                map.setOnMarkerClickListener(null);
-                
-                observations = cluster ? new ObservationClusterCollection(getActivity(), map) : new ObservationMarkerCollection(getActivity(), map);
-                map.setOnCameraChangeListener(observations);
-                map.setOnMarkerClickListener(observations);
-                observations.addAll(existing);
-            }
+            Collection<Observation> existing = observations != null ? new ArrayList<Observation>(observations.getObservations()) : Collections.<Observation> emptyList();
+            observations.clear();
+            observations = cluster ? new ObservationClusterCollection(getActivity(), map) : new ObservationMarkerCollection(getActivity(), map);
+            observations.addAll(existing);
+
         }
     }
 

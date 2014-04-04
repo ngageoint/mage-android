@@ -21,11 +21,11 @@
             android:key="observationFeature"
             android:summary="Show observations on map"
             android:title="Show Observations" />
-        <CheckBoxPreference
+<!--         <CheckBoxPreference
             android:defaultValue="true"
             android:key="clusterObservations"
             android:summary="Cluster observation at higher zoom levels to reduce clutter"
-            android:title="Cluster Observations" />
+            android:title="Cluster Observations" /> -->
     </PreferenceCategory>
     <PreferenceCategory android:title="PEOPLE" >
         <CheckBoxPreference
