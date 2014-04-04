@@ -32,6 +32,7 @@ public class ObservationMarkerCollection implements ObservationCollection, OnMar
 
         MarkerManager markerManager = new MarkerManager(map);
         markerCollection = markerManager.newCollection();
+        map.setOnMarkerClickListener(this);
     }
 
     @Override
