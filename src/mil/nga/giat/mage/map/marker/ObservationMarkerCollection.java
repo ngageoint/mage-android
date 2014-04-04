@@ -9,6 +9,7 @@ import mil.nga.giat.mage.sdk.datastore.common.PointGeometry;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import android.content.Context;
 import android.content.Intent;
+import android.location.Location;
 
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.GoogleMap.OnMarkerClickListener;
@@ -20,6 +21,7 @@ import com.google.maps.android.MarkerManager;
 
 public class ObservationMarkerCollection implements ObservationCollection, OnMarkerClickListener {
 
+    private GoogleMap map;
     private Context context;
 
     private Map<Long, Marker> observationIdToMarker = new ConcurrentHashMap<Long, Marker>();
@@ -28,6 +30,7 @@ public class ObservationMarkerCollection implements ObservationCollection, OnMar
     private MarkerManager.Collection markerCollection;
 
     public ObservationMarkerCollection(Context context, GoogleMap map) {
+        this.map = map;
         this.context = context;
 
         MarkerManager markerManager = new MarkerManager(map);
@@ -38,9 +41,12 @@ public class ObservationMarkerCollection implements ObservationCollection, OnMar
     @Override
     public void add(Observation o) {
         PointGeometry point = (PointGeometry) o.getObservationGeometry().getGeometry();
-        MarkerOptions options = new MarkerOptions().position(new LatLng(point.getLatitude(), point.getLongitude()));
+        MarkerOptions options = new MarkerOptions()
+            .position(new LatLng(point.getLatitude(), point.getLongitude()))
+            .icon(ObservationBitmapFactory.bitmapDescriptor(context, o));       
 
-        Marker marker = markerCollection.addMarker(options);
+        Marker marker = markerCollection.addMarker(options);            
+
         observationIdToMarker.put(o.getId(), marker);
         markerIdToObservation.put(marker.getId(), o);
     }
@@ -76,9 +82,11 @@ public class ObservationMarkerCollection implements ObservationCollection, OnMar
     @Override
     public boolean onMarkerClick(Marker marker) {
         Observation o = markerIdToObservation.get(marker.getId());
-
+        
         Intent intent = new Intent(context, ObservationViewActivity.class);
         intent.putExtra(ObservationViewActivity.OBSERVATION_ID, o.getId());
+        intent.putExtra(ObservationViewActivity.INITIAL_LOCATION,  map.getCameraPosition().target);
+        intent.putExtra(ObservationViewActivity.INITIAL_ZOOM, map.getCameraPosition().zoom);
         context.startActivity(intent);
 
         return false;

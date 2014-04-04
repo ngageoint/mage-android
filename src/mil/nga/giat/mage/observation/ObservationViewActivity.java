@@ -8,6 +8,7 @@ import java.util.Map;
 
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.form.MageTextView;
+import mil.nga.giat.mage.map.marker.ObservationBitmapFactory;
 import mil.nga.giat.mage.sdk.datastore.common.Geometry;
 import mil.nga.giat.mage.sdk.datastore.common.PointGeometry;
 import mil.nga.giat.mage.sdk.datastore.observation.Attachment;
@@ -48,7 +49,11 @@ import com.google.android.gms.maps.model.MarkerOptions;
 public class ObservationViewActivity extends FragmentActivity {
 	
 	public static String OBSERVATION_ID = "OBSERVATION_ID";
+	public static String INITIAL_LOCATION = "INITIAL_LOCATION";
+	public static String INITIAL_ZOOM = "INITIAL_ZOOM";
+
 	private static final int ATTACHMENT_VIEW_ACTIVITY_REQUEST_CODE = 500;
+	GoogleMap map;
 	private Observation o;
 	private Map<String, String> propertiesMap;
 	DecimalFormat latLngFormat = new DecimalFormat("###.######");
@@ -170,9 +175,11 @@ public class ObservationViewActivity extends FragmentActivity {
 	            this.finish();
 	            return true;
 	        case R.id.observation_edit:
-	        	Intent observationEdit = new Intent(this, ObservationEditActivity.class);
-				observationEdit.putExtra(ObservationEditActivity.OBSERVATION_ID, o.getId());
-				startActivityForResult(observationEdit, 2);
+	        	Intent intent = new Intent(this, ObservationEditActivity.class);
+	        	intent.putExtra(ObservationEditActivity.OBSERVATION_ID, o.getId());
+		        intent.putExtra(ObservationViewActivity.INITIAL_LOCATION,  map.getCameraPosition().target);
+		        intent.putExtra(ObservationViewActivity.INITIAL_ZOOM, map.getCameraPosition().zoom);
+		        startActivityForResult(intent, 2);
 	        	return true;
 	        default:
 	            return super.onOptionsItemSelected(item);
@@ -206,13 +213,21 @@ public class ObservationViewActivity extends FragmentActivity {
 				if (propertiesMap.containsKey("LOCATION_ACCURACY")) {
 					((TextView)findViewById(R.id.location_accuracy)).setText("\u00B1" + propertiesMap.get("LOCATION_ACCURACY") + "m");
 				}
-				GoogleMap map = ((SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.mini_map)).getMap();
+				map = ((SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.mini_map)).getMap();
 				
-				LatLng location = new LatLng(pointGeo.getLatitude(), pointGeo.getLongitude());
+				LatLng latLng = getIntent().getParcelableExtra(INITIAL_LOCATION);
+				if (latLng == null) {
+				    latLng = new LatLng(0,0);
+				}
 				
+				float zoom = getIntent().getFloatExtra(INITIAL_ZOOM, 0);
+				
+				map.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, zoom));
+				
+                LatLng location = new LatLng(pointGeo.getLatitude(), pointGeo.getLongitude());
 				map.animateCamera(CameraUpdateFactory.newLatLngZoom(location, 15));
 				
-				map.addMarker(new MarkerOptions().position(location));				
+				map.addMarker(new MarkerOptions().position(location).icon(ObservationBitmapFactory.bitmapDescriptor(this, o)));				
 			}
 
 			LinearLayout propertyContainer = (LinearLayout)findViewById(R.id.propertyContainer);
