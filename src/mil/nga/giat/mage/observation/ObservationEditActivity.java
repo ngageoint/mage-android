@@ -83,7 +83,7 @@ public class ObservationEditActivity extends FragmentActivity {
 	long observationId;
 	Observation o;
 	Map<String, String> propertiesMap;
-	long locationElapsedTimeNanos = 0;
+	long locationElapsedTimeMs = 0;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -205,9 +205,8 @@ public class ObservationEditActivity extends FragmentActivity {
 		}
 	}
 	
-	private String elapsedTime(long timeNanos) {
+	private String elapsedTime(long ms) {
 		String s = "";
-		long ms = timeNanos/1000000;
 		long sec = ms/1000;
 		long min = sec/60;
 		if (min == 0) {
@@ -224,6 +223,18 @@ public class ObservationEditActivity extends FragmentActivity {
 	private long timeMs(long timeNanos) {
 		return timeNanos/1000000;
 	}
+	
+	
+	private long getElapsedTime() {
+		if (Build.VERSION.SDK_INT >= 17) {
+			if (l.getElapsedRealtimeNanos() == 0) {
+				return 0;
+			} else {
+				return timeMs(SystemClock.elapsedRealtimeNanos() - l.getElapsedRealtimeNanos());
+			}
+		}
+		return System.currentTimeMillis() - l.getTime();
+	}
 		
 	private void setupMap() {
 		GoogleMap map = ((SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.background_map)).getMap();
@@ -236,12 +247,10 @@ public class ObservationEditActivity extends FragmentActivity {
 		if (l.getAccuracy() != 0) {
 			((TextView)findViewById(R.id.location_accuracy)).setText("\u00B1" + l.getAccuracy() + "m");
 		}
-		if (l.getElapsedRealtimeNanos() == 0) {
-			locationElapsedTimeNanos = 0;
-		} else {
-			locationElapsedTimeNanos = SystemClock.elapsedRealtimeNanos() - l.getElapsedRealtimeNanos();
-			((TextView)findViewById(R.id.location_elapsed_time)).setText(elapsedTime(locationElapsedTimeNanos));
-		}
+		
+		locationElapsedTimeMs = getElapsedTime();
+		((TextView)findViewById(R.id.location_elapsed_time)).setText(elapsedTime(locationElapsedTimeMs));
+		
 		map.animateCamera(CameraUpdateFactory.newLatLngZoom(location, 18));
 		CircleOptions circleOptions = new CircleOptions()
 		.fillColor(getResources().getColor(R.color.accuracy_circle_fill))
@@ -423,7 +432,7 @@ public class ObservationEditActivity extends FragmentActivity {
 				propertyMap.put("LOCATION_ACCURACY", Float.toString(l.getAccuracy()));
 			}
 			propertyMap.put("LOCATION_PROVIDER", l.getProvider());
-			propertyMap.put("LOCATION_TIME_DELTA", Long.toString(timeMs(locationElapsedTimeNanos)));
+			propertyMap.put("LOCATION_TIME_DELTA", Long.toString(timeMs(locationElapsedTimeMs)));
 			o.setPropertiesMap(propertyMap);
 			
 			o.setAttachments(attachments);
