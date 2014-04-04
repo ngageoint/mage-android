@@ -211,9 +211,12 @@ public class ObservationEditActivity extends FragmentActivity {
 		long sec = ms/1000;
 		long min = sec/60;
 		if (min == 0) {
-			s = sec + " secs ago";
+			s = sec + ((sec == 1) ? " sec ago" : " secs ago");
+		} else if (min < 60) {
+			s = min + ((min == 1) ? " min ago" : " mins ago");
 		} else {
-			s = min + " mins ago";
+			long hour = Math.round(Math.floor(min/60));
+			s = hour + ((hour == 1) ? " hour ago" : " hours ago");
 		}
 		return s;
 	}
@@ -420,7 +423,7 @@ public class ObservationEditActivity extends FragmentActivity {
 				propertyMap.put("LOCATION_ACCURACY", Float.toString(l.getAccuracy()));
 			}
 			propertyMap.put("LOCATION_PROVIDER", l.getProvider());
-			propertyMap.put("LOCATION_TIME_DELTA", elapsedTime(locationElapsedTimeNanos));
+			propertyMap.put("LOCATION_TIME_DELTA", Long.toString(timeMs(locationElapsedTimeNanos)));
 			o.setPropertiesMap(propertyMap);
 			
 			o.setAttachments(attachments);
