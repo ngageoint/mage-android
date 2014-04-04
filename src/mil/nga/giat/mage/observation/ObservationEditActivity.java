@@ -13,6 +13,7 @@ import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.form.MageEditText;
 import mil.nga.giat.mage.form.MageSpinner;
 import mil.nga.giat.mage.form.MageTextView;
+import mil.nga.giat.mage.map.marker.ObservationBitmapFactory;
 import mil.nga.giat.mage.sdk.datastore.common.Geometry;
 import mil.nga.giat.mage.sdk.datastore.common.PointGeometry;
 import mil.nga.giat.mage.sdk.datastore.common.State;
