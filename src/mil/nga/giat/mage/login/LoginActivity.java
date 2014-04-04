@@ -63,6 +63,7 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		
+		// TODO: where does this go?
 		// IMPORTANT: load the configuration from preferences files and server
 		PreferenceHelper preferenceHelper = PreferenceHelper.getInstance(getApplicationContext());
 		preferenceHelper.initializeAll(new int[]{R.xml.privatepreferences, R.xml.publicpreferences});
@@ -90,9 +91,9 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 		mServerEditText = (EditText) findViewById(R.id.login_server);
 
 		// set the default values
-		getUsernameEditText().setText(PreferenceHelper.getInstance(getApplicationContext()).getValue(R.string.usernameKey));
+		getUsernameEditText().setText(preferenceHelper.getValue(R.string.usernameKey));
 		getUsernameEditText().setSelection(getUsernameEditText().getText().length());
-		getServerEditText().setText(PreferenceHelper.getInstance(getApplicationContext()).getValue(R.string.serverURLKey));
+		getServerEditText().setText(preferenceHelper.getValue(R.string.serverURLKey));
 		getServerEditText().setSelection(getServerEditText().getText().length());
 		
 		//This is the relevant code
@@ -249,7 +250,16 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 	public void finishAccount(AccountStatus accountStatus) {
 		if (accountStatus.getStatus() == AccountStatus.Status.SUCCESSFUL_LOGIN) {
 			Editor sp = PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).edit();
-			sp.putString("username", getUsernameEditText().getText().toString());
+			
+			// if the username is different, then clear the database
+			String oldUsername = PreferenceHelper.getInstance(getApplicationContext()).getValue(R.string.usernameKey);
+			String newUsername = getUsernameEditText().getText().toString();
+			if(oldUsername == null || !oldUsername.equals(newUsername)) {
+				// FIXME : where does this go?
+				//DaoStore.getInstance(getApplicationContext()).resetDatabase();	
+			}
+			
+			sp.putString("username", newUsername);
 			// TODO should we store password, or some hash?
 //			sp.putString("password", getPasswordEditText().getText().toString());
 			sp.putString("serverURL", getServerEditText().getText().toString());
