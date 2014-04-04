@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<previews>
+
+    <preview
+        name="Samsung Galaxy S4"
+        config="layout-ldltr-sw360dp-w360dp-h640dp-large-long-port-notnight-xxhdpi-finger-keyssoft-nokeys-navhidden-nonav-1920x1080-v18"
+        device="Samsung Galaxy S4"
+        devicestate="Portrait"
+        target="Android 4.3"
+        theme="@style/AppTheme" >
+    </preview>
+
+</previews>

@@ -7,6 +7,7 @@ import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.sdk.login.AccountDelegate;
 import mil.nga.giat.mage.sdk.login.AccountStatus;
 import mil.nga.giat.mage.sdk.login.SignupTask;
+import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
@@ -18,6 +19,7 @@ import android.preference.PreferenceManager;
 import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.util.Patterns;
 import android.view.MotionEvent;
 import android.view.View;
@@ -76,8 +78,7 @@ public class SignupActivity extends Activity implements AccountDelegate {
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		// load the configuration from preferences.xml
-		PreferenceManager.setDefaultValues(getApplicationContext(), R.xml.privatepreferences, true);
+
 		// no title bar
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
 		setContentView(R.layout.activity_signup);
@@ -239,9 +240,9 @@ public class SignupActivity extends Activity implements AccountDelegate {
 			return;
 		}
 
-		// TODO : config driven?
-		if (password.length() < 14) {
-			getPasswordEditText().setError("Password must be 14 characters");
+		Long passwordLength = PreferenceHelper.getInstance(getApplicationContext()).getValue(R.string.passwordMinLengthKey, Long.class, R.string.passwordMinLengthDefaultValue);
+		if (password.length() < passwordLength) {
+			getPasswordEditText().setError("Password must be " + passwordLength + " characters");
 			getPasswordEditText().requestFocus();
 			return;
 		}
@@ -297,16 +298,19 @@ public class SignupActivity extends Activity implements AccountDelegate {
 
 	@Override
 	public void finishAccount(AccountStatus accountStatus) {
-		if (accountStatus.getStatus()) {
+		if (accountStatus.getStatus() == AccountStatus.Status.SUCCESSFUL_SIGNUP) {
 			// save the username
 			Editor sharedPreferencesEditor = PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).edit();
-			sharedPreferencesEditor.putString("username", accountStatus.getAccountInformation().get(0));
-			sharedPreferencesEditor.commit();
+			try {
+				sharedPreferencesEditor.putString("username", accountStatus.getAccountInformation().getString("username")).commit();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
 			
 			// Tell the user that their account was made
 			AlertDialog.Builder alertDialog = new AlertDialog.Builder(this);
 			alertDialog.setTitle("Account Created");
-			alertDialog.setMessage("Your account has been created, but it is not enabled.  An administrator needs to enable your account before you can log in.");
+			alertDialog.setMessage("Your account has been created but it is not enabled.  An administrator needs to enable your account before you can log in.");
 			alertDialog.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
 				public void onClick(DialogInterface dialog, int which) {
 					login(null);

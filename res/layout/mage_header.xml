@@ -6,8 +6,8 @@
     android:gravity="center_horizontal" >
 
     <ImageView
-        android:paddingTop="10dp"
-        android:paddingBottom="10dp"
+        android:paddingTop="20dp"
+        android:paddingBottom="20dp"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:src="@drawable/mage_logo" />

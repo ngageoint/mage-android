@@ -2,15 +2,20 @@
 
 import java.util.Locale;
 
+import mil.nga.giat.mage.login.LoginActivity;
 import mil.nga.giat.mage.map.MapFragment;
 import mil.nga.giat.mage.newsfeed.NewsFeedFragment;
 import mil.nga.giat.mage.observation.ObservationEditActivity;
 import mil.nga.giat.mage.observation.ObservationViewActivity;
 import mil.nga.giat.mage.preferences.PublicPreferencesActivity;
 import mil.nga.giat.mage.sdk.location.LocationService;
+import mil.nga.giat.mage.sdk.push.ObservationServerPushAsyncTask;
+import mil.nga.giat.mage.sdk.utils.UserUtility;
 import android.app.ActionBar;
 import android.app.FragmentTransaction;
 import android.content.Intent;
+import android.location.Location;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
@@ -28,10 +33,9 @@ import android.view.MenuItem;
  * 
  */
 public class LandingActivity extends FragmentActivity implements ActionBar.TabListener {
-
+	
 	private static final int RESULT_PUBLIC_PREFERENCES = 1;
 	private static final int RESULT_MAP_PREFERENCES = 2;
-
 
 	/**
 	 * The {@link android.support.v4.view.PagerAdapter} that will provide
@@ -73,6 +77,7 @@ public class LandingActivity extends FragmentActivity implements ActionBar.TabLi
 			}
 		});
 		
+		
 		// For each of the sections in the app, add a tab to the action bar.
 		for (int i = 0; i < mSectionsPagerAdapter.getCount(); i++) {
 			// Create a tab with text corresponding to the page title defined by
@@ -81,99 +86,24 @@ public class LandingActivity extends FragmentActivity implements ActionBar.TabLi
 			// this tab is selected.
 			actionBar.addTab(actionBar.newTab().setText(mSectionsPagerAdapter.getPageTitle(i)).setTabListener(this));
 		}
+
+		// FIXME : need to consider connectivity before talking to the server!!!
+		((MAGE) getApplication()).startFetching();
 		
 		// Start location services
-		((MAGE) getApplication()).startLocationService();
-
-		////////////// FIXME: TESTING //////////////
+		((MAGE) getApplication()).initLocationService();
 		
-		//ObservationDatabase obsDatabase = new ObservationDatabase(getApplicationContext());
-		//obsDatabase.onUpgrade(obsDatabase.getWritableDatabase(),1,1);
-		//obsDatabase.onCreate(obsDatabase.getWritableDatabase());
-		
-		try {
-			/*
-			DBHelper helper = new DBHelper(getApplicationContext());
-			Dao<Observation, ?> observationDao = helper.getObservationDao();
-			Dao<State, ?> stateDao = helper.getStateDao();
-			Dao<Geometry, ?> geometryDao = helper.getGeometryDao();
-			Dao<GeometryType, ?> geometryTypeDao = helper.getGeometryTypeDao();
-			Dao<Property, ?> propertyDao = helper.getPropertyDao();
-			Dao<Attachment, ?> attachmentDao = helper.getAttachmentDao();
-			
-			State state = new State("active");
-			stateDao.create(state);			
-			
-			GeometryType geometryType = new GeometryType("POINT");
-			geometryTypeDao.create(geometryType);
-			
-			Geometry geometry = new Geometry("[33.33,44.44]", geometryType);
-			geometryDao.create(geometry);
-			
-			Property prop1 = new Property("HOTDOG_DATE",String.valueOf(new Date().getTime()));
-			Property prop2 = new Property("HAMBUR_DATE",String.valueOf(new Date().getTime()));
-			Collection<Property> properties = new ArrayList<Property>();
-			properties.add(prop1);
-			properties.add(prop2);
-			
-			Attachment attachment1 = new Attachment("png", 12345L, "test.png", "/a/b/c", "d/e/f");
-			Attachment attachment2 = new Attachment("jpg", 12345L, "fame.png", "/g/h/i", "j/k/l");
-			Collection<Attachment> attachments = new ArrayList<Attachment>();
-			attachments.add(attachment1);
-			attachments.add(attachment2);
-			
-			Observation obs = new Observation("123LMNOP",state,geometry,properties,attachments);	
-			
-			Observation o = observationDao.createIfNotExists(obs);
-			prop1.setObservation(o);
-			prop2.setObservation(o);
-			propertyDao.create(prop1);
-			propertyDao.create(prop2);
-			
-			attachment1.setObservation(o);
-			attachment2.setObservation(o);
-			attachmentDao.create(attachment1);
-			attachmentDao.create(attachment2);
-			
-			
-			
-			List<Observation> observations = observationDao.queryForAll();
-			for(Observation observation : observations) {
-				
-				stateDao.refresh(observation.getState());
-				geometryDao.refresh(observation.getGeometry());
-				geometryTypeDao.refresh(observation.getGeometry().getGeometryType());
-				
-				System.out.println("Observation: " + observation.getPk_id() + " " + observation.getRemote_id()); 
-				System.out.println("     State: " + observation.getState().getState());
-				System.out.println("     Geometry: " + observation.getGeometry().getCoordinates());
-				System.out.println("          GeometryType: " + observation.getGeometry().getGeometryType().getType());
-				System.out.println("     Properties: " + observation.getProperties().toArray().length);				
-				for(Property p : observation.getProperties()) {
-					System.out.println("         " + p.getKey() + "," + p.getValue());
-				}
-
-				System.out.println("     Attachments: " + observation.getAttachments().toArray().length);				
-				for(Attachment a : observation.getAttachments()) {
-					System.out.println("         " + a.getName() + "," + a.getSize() + "," + a.getContent_type() + "," + 
-				                       a.getLocal_path() + "," + a.getRemote_path());
-				}								
-				
-			}
-			*/
-			
-		}
-		catch(Exception e) {
-			e.printStackTrace();
-		}
-		
-		
+		//TODO: FIX ME
+		ObservationServerPushAsyncTask obsPush = new ObservationServerPushAsyncTask(getApplicationContext());
+		obsPush.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
 		
 	}
 
 	@Override
 	protected void onDestroy() {
 		super.onDestroy();
+		((MAGE) getApplication()).destroyLocationService();
+		((MAGE) getApplication()).destroyFetching();
 	}
 
 	@Override
@@ -192,20 +122,18 @@ public class LandingActivity extends FragmentActivity implements ActionBar.TabLi
 				break;
 			}
 			case R.id.menu_logout: {
-				// TODO : wipe user certs
+				// TODO : wipe user certs, really just wipe out the token from shared preferences
+				UserUtility.getInstance(getApplicationContext()).clearTokenInformation();
+				startActivity(new Intent(getApplicationContext(), LoginActivity.class));
 				finish();
 				break;
 			}
-			// TODO all of this is not to go here, just for debugging
-			case R.id.observation_view: {
-				Intent o = new Intent(this, ObservationViewActivity.class);
-				startActivityForResult(o, 2);
-				break;
-			}
+
 		case R.id.observation_new:
 			 Intent intent = new Intent(this, ObservationEditActivity.class);
-//	       	 intent.putExtra("latitude", point.latitude);
-//	       	 intent.putExtra("longitude", point.longitude);
+			 LocationService ls = ((MAGE) getApplication()).getLocationService();
+			 Location l = ls.getLocation();
+			 intent.putExtra(ObservationEditActivity.LOCATION, l);
 	       	 startActivity(intent);
 		}
 
@@ -286,5 +214,16 @@ public class LandingActivity extends FragmentActivity implements ActionBar.TabLi
 			}
 			return null;
 		}
+	}
+
+	/**
+	 * Takes you to the home screen
+	 */
+	@Override
+	public void onBackPressed() {
+		Intent startMain = new Intent(Intent.ACTION_MAIN);
+		startMain.addCategory(Intent.CATEGORY_HOME);
+		startMain.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+		startActivity(startMain);
 	}
 }

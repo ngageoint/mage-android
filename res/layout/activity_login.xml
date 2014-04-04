@@ -26,19 +26,27 @@
             android:layout_gravity="center_horizontal|center_vertical"
             android:gravity="center_horizontal|center_vertical"
             android:orientation="vertical"
-            android:visibility="visible" >
-
-            <ProgressBar
-                style="?android:attr/progressBarStyleLarge"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content" />
-
+            android:visibility="gone" >
+			<LinearLayout
+			    android:layout_width="150dip"
+			    android:layout_height="wrap_content"
+			    android:orientation="horizontal">
+		        <ImageView 
+		            android:layout_width="wrap_content" 
+		            android:layout_height="76dip" 
+		            android:src="@drawable/ic_launcher"/>
+	            <ProgressBar
+	                style="?android:attr/progressBarStyleLarge"
+	                android:indeterminateDrawable="@drawable/mage_progress_bar"
+	                android:layout_width="fill_parent"
+	                android:layout_height="76dip" />
+			</LinearLayout>
             <TextView
                 android:id="@+id/login_message"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:fontFamily="sans-serif-light"
-                android:text="Logging in..."
+                android:text="Logging in"
                 android:textColor="#EEEEEE"
                 android:textSize="26sp" />
         </LinearLayout>
@@ -46,7 +54,7 @@
         <!-- Login Form -->
 
         <LinearLayout
-            android:visibility="gone"
+            android:visibility="visible"
             android:id="@+id/login_form"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -63,6 +71,8 @@
                 android:layout_marginTop="7dip"
                 android:background="@drawable/form_field"
                 android:hint="Username"
+                android:textColorHint="#CCCCCC"
+                android:imeOptions="actionNext"
                 android:inputType="textVisiblePassword|textNoSuggestions"
                 android:singleLine="true"
                 android:textSize="22sp" />
@@ -75,7 +85,9 @@
                 android:layout_marginTop="7dip"
                 android:background="@drawable/form_field"
                 android:hint="Password"
+                android:textColorHint="#CCCCCC"
                 android:inputType="textPassword"
+                android:imeActionLabel="Log In"
                 android:singleLine="true"
                 android:textSize="22sp" />
 

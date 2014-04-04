@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    android:title="@string/map_settings" >
+
+    <PreferenceCategory android:title="MAPS" >
+        <ListPreference
+            android:defaultValue="1"
+            android:entries="@array/layerEntries"
+            android:entryValues="@array/layerValues"
+            android:key="mapBaseLayer"
+            android:title="Base Layer" />
+
+        <mil.nga.giat.mage.map.preference.OverlayPreference
+            android:key="mapTileOverlays"
+            android:title="Overlay Maps" >
+        </mil.nga.giat.mage.map.preference.OverlayPreference>
+    </PreferenceCategory>
+    <PreferenceCategory android:title="OBSERVATIONS" >
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:key="observationFeature"
+            android:summary="Show observations on map"
+            android:title="Show Observations" />
+<!--         <CheckBoxPreference
+            android:defaultValue="true"
+            android:key="clusterObservations"
+            android:summary="Cluster observation at higher zoom levels to reduce clutter"
+            android:title="Cluster Observations" /> -->
+    </PreferenceCategory>
+    <PreferenceCategory android:title="PEOPLE" >
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:key="peopleFeature"
+            android:summary="Show users locations on map"
+            android:title="Show People" />
+    </PreferenceCategory>
+    <PreferenceCategory android:title="STATIC FEATURES" >
+        <mil.nga.giat.mage.preferences.DialogPreference
+            android:defaultValue="@array/empty_array"
+            android:entries="@array/staticFeatureEntries"
+            android:entryValues="@array/staticFeatureValues"
+            android:key="staticFeature"
+            android:title="Static Features" />
+    </PreferenceCategory>
+
+</PreferenceScreen>

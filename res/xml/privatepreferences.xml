@@ -3,16 +3,16 @@
 
     <EditTextPreference
         android:defaultValue="true"
-        android:key="showDisclaimer" />
+        android:key="@string/showDisclaimerKey" />
 
     <!-- The username field -->
     <EditTextPreference
         android:defaultValue=""
-        android:key="username" />
+        android:key="@string/usernameKey" />
 
-    <!-- Default server to connect to -->
+    <!-- Signup password length -->
     <EditTextPreference
-        android:defaultValue="https://mage.geointapps.org"
-        android:key="serverURL" />
+        android:defaultValue="8"
+        android:key="gAuthenticationPasswordMinLength" />
 
 </PreferenceScreen>
