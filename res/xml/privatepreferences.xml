@@ -3,11 +3,16 @@
 
     <EditTextPreference
         android:defaultValue="true"
-        android:key="showDisclaimer" />
+        android:key="@string/showDisclaimerKey" />
 
     <!-- The username field -->
     <EditTextPreference
         android:defaultValue=""
-        android:key="username" />
+        android:key="@string/usernameKey" />
+
+    <!-- Signup password length -->
+    <EditTextPreference
+        android:defaultValue="8"
+        android:key="gAuthenticationPasswordMinLength" />
 
 </PreferenceScreen>

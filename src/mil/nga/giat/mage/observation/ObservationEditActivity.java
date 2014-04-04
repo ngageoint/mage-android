@@ -13,6 +13,7 @@ import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.form.MageEditText;
 import mil.nga.giat.mage.form.MageSpinner;
 import mil.nga.giat.mage.form.MageTextView;
+import mil.nga.giat.mage.map.marker.ObservationBitmapFactory;
 import mil.nga.giat.mage.sdk.datastore.common.Geometry;
 import mil.nga.giat.mage.sdk.datastore.common.PointGeometry;
 import mil.nga.giat.mage.sdk.datastore.common.State;
@@ -67,6 +68,8 @@ public class ObservationEditActivity extends FragmentActivity {
 
 	public static String OBSERVATION_ID = "OBSERVATION_ID";
 	public static String LOCATION = "LOCATION";
+	public static String INITIAL_LOCATION = "INITIAL_LOCATION";
+    public static String INITIAL_ZOOM = "INITIAL_ZOOM";
 	
 	private static final int CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE = 100;
 	private static final int CAPTURE_VIDEO_ACTIVITY_REQUEST_CODE = 200;
@@ -251,7 +254,18 @@ public class ObservationEditActivity extends FragmentActivity {
 		locationElapsedTimeMs = getElapsedTime();
 		((TextView)findViewById(R.id.location_elapsed_time)).setText(elapsedTime(locationElapsedTimeMs));
 		
+		
+        LatLng latLng = getIntent().getParcelableExtra(INITIAL_LOCATION);
+        if (latLng == null) {
+            latLng = new LatLng(0,0);
+        }
+        
+        float zoom = getIntent().getFloatExtra(INITIAL_ZOOM, 0);
+        
+        map.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, zoom));
+		
 		map.animateCamera(CameraUpdateFactory.newLatLngZoom(location, 18));
+		
 		CircleOptions circleOptions = new CircleOptions()
 		.fillColor(getResources().getColor(R.color.accuracy_circle_fill))
 		.strokeColor(getResources().getColor(R.color.accuracy_circle_stroke))
@@ -260,7 +274,7 @@ public class ObservationEditActivity extends FragmentActivity {
 	    .radius(l.getAccuracy());
 
 		map.addCircle(circleOptions);
-		map.addMarker(new MarkerOptions().position(location));
+        map.addMarker(new MarkerOptions().position(location).icon(ObservationBitmapFactory.bitmapDescriptor(this, o)));             
 	}
 
 	@Override
