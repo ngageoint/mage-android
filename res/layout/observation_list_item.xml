@@ -29,6 +29,7 @@
             android:layout_height="wrap_content"
             android:gravity="center_vertical"
             android:text="TYPE"
+            android:textColor="#999999"
             android:textAppearance="?android:attr/textAppearanceMedium"
             android:textStyle="bold"
             mageForm:propertyKey="TYPE" />
