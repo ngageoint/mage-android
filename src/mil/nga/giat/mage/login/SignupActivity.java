@@ -308,7 +308,7 @@ public class SignupActivity extends Activity implements AccountDelegate {
 			// Tell the user that their account was made
 			AlertDialog.Builder alertDialog = new AlertDialog.Builder(this);
 			alertDialog.setTitle("Account Created");
-			alertDialog.setMessage("Your account has been created, but it is not enabled.  An administrator needs to enable your account before you can log in.");
+			alertDialog.setMessage("Your account has been created but it is not enabled.  An administrator needs to enable your account before you can log in.");
 			alertDialog.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
 				public void onClick(DialogInterface dialog, int which) {
 					login(null);
