@@ -21,6 +21,7 @@ import mil.nga.giat.mage.sdk.datastore.observation.Attachment;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationGeometry;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
+import mil.nga.giat.mage.sdk.datastore.observation.ObservationProperty;
 import mil.nga.giat.mage.sdk.exceptions.ObservationException;
 import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
@@ -47,6 +48,8 @@ import android.view.View.OnTouchListener;
 import android.view.ViewGroup;
 import android.view.ViewGroup.LayoutParams;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemSelectedListener;
 import android.widget.Button;
 import android.widget.DatePicker;
 import android.widget.EditText;
@@ -62,6 +65,7 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
 public class ObservationEditActivity extends FragmentActivity {
@@ -85,14 +89,42 @@ public class ObservationEditActivity extends FragmentActivity {
 	Location l;
 	long observationId;
 	Observation o;
+	GoogleMap map;
+	Marker observationMarker;
 	Map<String, String> propertiesMap;
 	long locationElapsedTimeMs = 0;
+	
+	// View fields
+	Spinner typeSpinner;
+	Spinner levelSpinner;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		
 		setContentView(R.layout.observation_editor);
+		typeSpinner = (Spinner) findViewById(R.id.type_spinner);
+		typeSpinner.setOnItemSelectedListener(new OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                onTypeOrLevelChanged("TYPE", parent.getItemAtPosition(position).toString());
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {}
+        });
+		
+		levelSpinner = (Spinner) findViewById(R.id.level_spinner);
+		levelSpinner.setOnItemSelectedListener(new OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                onTypeOrLevelChanged("EVENTLEVEL", parent.getItemAtPosition(position).toString());
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {}
+        });
+		
 		hideKeyboardOnClick(findViewById(R.id.observation_edit));
 		
 		Intent intent = getIntent();
@@ -104,6 +136,10 @@ public class ObservationEditActivity extends FragmentActivity {
 			date = new Date();
 			((TextView) findViewById(R.id.date)).setText(date.toString());
 			
+	        // set default type and level values for map marker
+			o = new Observation();
+			o.getProperties().add(new ObservationProperty("TYPE", typeSpinner.getSelectedItem().toString()));
+	        o.getProperties().add(new ObservationProperty("EVENTLEVEL", levelSpinner.getSelectedItem().toString()));
 		} else {
 			this.setTitle("Edit Observation");
 			// this is an edit of an existing observation
@@ -240,7 +276,7 @@ public class ObservationEditActivity extends FragmentActivity {
 	}
 		
 	private void setupMap() {
-		GoogleMap map = ((SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.background_map)).getMap();
+		map = ((SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.background_map)).getMap();
 
 		LatLng location = new LatLng(l.getLatitude(), l.getLongitude());
 		((TextView) findViewById(R.id.location)).setText(latLngFormat.format(l.getLatitude()) + ", " + latLngFormat.format(l.getLongitude()));
@@ -274,7 +310,7 @@ public class ObservationEditActivity extends FragmentActivity {
 	    .radius(l.getAccuracy());
 
 		map.addCircle(circleOptions);
-        map.addMarker(new MarkerOptions().position(location).icon(ObservationBitmapFactory.bitmapDescriptor(this, o)));             
+		observationMarker = map.addMarker(new MarkerOptions().position(location).icon(ObservationBitmapFactory.bitmapDescriptor(this, o)));             
 	}
 
 	@Override
@@ -429,10 +465,6 @@ public class ObservationEditActivity extends FragmentActivity {
 		switch (item.getItemId()) {
 
 		case R.id.observation_save:
-			
-			if (o == null) {
-				o = new Observation();
-			}
 			o.setState(State.ACTIVE);
 			o.setObservationGeometry(new ObservationGeometry(new PointGeometry(l.getLatitude(), l.getLongitude())));
 			
@@ -440,7 +472,9 @@ public class ObservationEditActivity extends FragmentActivity {
 			Map<String, String> propertyMap = new HashMap<String, String>();
 			LinearLayout form = (LinearLayout) findViewById(R.id.form);
 			savePropertyFieldsToMap(form, propertyMap);
-			propertyMap.put("TYPE", (String) ((Spinner) findViewById(R.id.type_spinner)).getSelectedItem());
+			propertyMap.put("TYPE", typeSpinner.getSelectedItem().toString());
+	        propertyMap.put("EVENTLEVEL", levelSpinner.getSelectedItem().toString());
+
 			propertyMap.put("EVENTDATE", String.valueOf(date.getTime()));
 			if (propertyMap.containsKey("LOCATION_ACCURACY")) {
 				propertyMap.put("LOCATION_ACCURACY", Float.toString(l.getAccuracy()));
@@ -663,4 +697,14 @@ public class ObservationEditActivity extends FragmentActivity {
 			}
 		}
 	}
+
+    public void onTypeOrLevelChanged(String field, String value) {
+        Map<String, String> properties = o.getPropertiesMap();
+        properties.put(field, value);
+        o.setPropertiesMap(properties);
+        if (observationMarker != null) observationMarker.remove();
+        observationMarker = map.addMarker(new MarkerOptions()
+            .position(new LatLng(l.getLatitude(), l.getLongitude()))
+            .icon(ObservationBitmapFactory.bitmapDescriptor(this, o)));             
+    }
 }

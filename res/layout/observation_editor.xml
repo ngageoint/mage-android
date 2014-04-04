@@ -178,7 +178,7 @@
 	          style="@style/EditTextView"
 	          android:text="Level"/>
 	    <mil.nga.giat.mage.form.MageSpinner
-	        android:id="@+id/level"
+	        android:id="@+id/level_spinner"
 	        android:layout_width="fill_parent"
 	          android:layout_height="wrap_content"
 	          android:layout_marginTop="5dip"

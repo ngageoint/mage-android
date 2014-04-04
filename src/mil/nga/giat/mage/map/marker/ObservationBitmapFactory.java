@@ -20,6 +20,7 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 
 public class ObservationBitmapFactory {
 
+    private static final String DEFAULT_ASSET = "markers/default.png";
     private static final String TYPE_PROPERTY = "TYPE";
     private static final String LEVEL_PROPERTY = "EVENTLEVEL";
     
@@ -31,7 +32,7 @@ public class ObservationBitmapFactory {
         try {
             context.getAssets().openFd(asset).close();
         } catch (IOException e) {
-            asset = "markers/default.png";
+            asset = DEFAULT_ASSET;
         }
 
         return BitmapDescriptorFactory.fromAsset(asset);      
@@ -54,6 +55,10 @@ public class ObservationBitmapFactory {
     }
     
     private static String getAsset(Observation observation) {
+        if (observation == null) {
+            return DEFAULT_ASSET;
+        }
+        
         Map<String, String> properties = observation.getPropertiesMap();
         String level = properties.get(LEVEL_PROPERTY);     
         String type = properties.get(TYPE_PROPERTY);
