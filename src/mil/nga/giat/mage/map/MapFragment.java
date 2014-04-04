@@ -1,5 +1,7 @@
 package mil.nga.giat.mage.map;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -11,8 +13,15 @@ import mil.nga.giat.mage.MAGE;
 import mil.nga.giat.mage.MAGE.OnCacheOverlayListener;
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.map.GoogleMapWrapper.OnMapPanListener;
+import mil.nga.giat.mage.map.marker.ObservationClusterCollection;
+import mil.nga.giat.mage.map.marker.ObservationCollection;
+import mil.nga.giat.mage.map.marker.ObservationMarkerCollection;
 import mil.nga.giat.mage.map.preference.MapPreferencesActivity;
 import mil.nga.giat.mage.observation.ObservationEditActivity;
+import mil.nga.giat.mage.sdk.datastore.observation.Observation;
+import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
+import mil.nga.giat.mage.sdk.event.observation.IObservationEventListener;
+import mil.nga.giat.mage.sdk.exceptions.ObservationException;
 import mil.nga.giat.mage.sdk.location.LocationService;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -40,44 +49,34 @@ import com.google.android.gms.maps.model.TileOverlay;
 import com.google.android.gms.maps.model.TileOverlayOptions;
 import com.google.android.gms.maps.model.TileProvider;
 
-/**
- * TODO : What does this do?
- * 
- * @author newmanw
- * 
- */
-
-public class MapFragment extends Fragment implements 
-    OnMapLongClickListener, 
-    OnMapPanListener,
-    OnMyLocationButtonClickListener,
-    OnClickListener, 
-    LocationSource, 
-    LocationListener,
-    OnCacheOverlayListener {
+public class MapFragment extends Fragment implements OnMapLongClickListener, OnMapPanListener, OnMyLocationButtonClickListener, OnClickListener, LocationSource, LocationListener, OnCacheOverlayListener, IObservationEventListener {
 
     private MAGE mage;
     private GoogleMap map;
     private int mapType = 1;
     private Location location;
     private boolean followMe = false;
+    private boolean cluster = false;
     private GoogleMapWrapper mapWrapper;
     private OnLocationChangedListener locationChangedListener;
+
+    private Object observationLock = new Object();
+    private ObservationCollection observations;
+
     private Map<String, TileOverlay> tileOverlays = new HashMap<String, TileOverlay>();
-        
+
     private LocationService locationService;
-    
+
     SharedPreferences preferences;
-    
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_map, container, false);
-        mage = (MAGE)  getActivity().getApplication();
-        
-        
+        mage = (MAGE) getActivity().getApplication();
+
         mapWrapper = new GoogleMapWrapper(getActivity());
         mapWrapper.addView(view);
-        
+
         preferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
 
         map = ((SupportMapFragment) getFragmentManager().findFragmentById(R.id.map)).getMap();
@@ -90,7 +89,7 @@ public class MapFragment extends Fragment implements
 
         ImageButton mapSettings = (ImageButton) view.findViewById(R.id.map_settings);
         mapSettings.setOnClickListener(this);
-        
+
         locationService = mage.getLocationService();
 
         return mapWrapper;
@@ -99,10 +98,10 @@ public class MapFragment extends Fragment implements
     @Override
     public void onResume() {
         super.onResume();
-        
+
         mage.registerCacheOverlayListener(this);
 
-        // Check if any map preferences changed that I care about        
+        // Check if any map preferences changed that I care about
         boolean locationServiceEnabled = preferences.getBoolean("locationServiceEnabled", false);
         map.setMyLocationEnabled(locationServiceEnabled);
 
@@ -112,25 +111,67 @@ public class MapFragment extends Fragment implements
         }
 
         updateMapType();
-//        updateMapOverlays();
+        updateObservations();
     }
-    
+
     @Override
     public void onPause() {
         super.onPause();
 
         mage.unregisterCacheOverlayListener(this);
-        
+
         boolean locationServiceEnabled = Integer.parseInt(preferences.getString("userReportingFrequency", "0")) > 0;
         if (locationServiceEnabled) {
             map.setLocationSource(null);
             locationService.unregisterOnLocationListener(this);
         }
     }
-    
+
+    @Override
+    public void onObservationCreated(final Collection<Observation> o) {
+        getActivity().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                synchronized (observationLock) {
+
+                    observations.addAll(o);
+                }
+            }
+        });
+    }
+
+    @Override
+    public void onObservationUpdated(final Observation o) {
+        getActivity().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                synchronized (observationLock) {
+
+                    // Observations updates happen so rarley lets just
+                    // delete the old observation and insert the updated one.
+                    observations.remove(o);
+                    observations.add(o);
+                }
+            }
+        });
+    }
+
+    @Override
+    public void onObservationDeleted(final Observation o) {
+        getActivity().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                // Observations updates happen so rarley lets just
+                // delete the old observation and insert the updated one.
+                synchronized (observationLock) {
+                    observations.remove(o);
+                }
+            }
+        });
+    }
+
     @Override
     public void onMapLongClick(LatLng point) {
-        // TODO Auto-generated method stub
         Intent intent = new Intent(getActivity(), ObservationEditActivity.class);
         Location l = new Location("manual");
         l.setAccuracy(0.0f);
@@ -139,21 +180,21 @@ public class MapFragment extends Fragment implements
         intent.putExtra(ObservationEditActivity.LOCATION, l);
         startActivity(intent);
     }
-    
+
     @Override
     public void onClick(View view) {
         switch (view.getId()) {
-            case R.id.map_settings: {
-                Intent i = new Intent(getActivity(), MapPreferencesActivity.class);
-                startActivity(i);
-                break;
-            }
+        case R.id.map_settings: {
+            Intent i = new Intent(getActivity(), MapPreferencesActivity.class);
+            startActivity(i);
+            break;
+        }
         }
     }
-    
+
     @Override
     public boolean onMyLocationButtonClick() {
-        
+
         if (location != null) {
             LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
             float zoom = map.getCameraPosition().zoom < 15 ? 15 : map.getCameraPosition().zoom;
@@ -172,7 +213,7 @@ public class MapFragment extends Fragment implements
                 }
             });
         }
-                
+
         return true;
     }
 
@@ -183,22 +224,22 @@ public class MapFragment extends Fragment implements
 
     @Override
     public void deactivate() {
-        locationChangedListener = null;        
+        locationChangedListener = null;
     }
-    
+
     @Override
     public void onMapPan() {
         mapWrapper.setOnMapPanListener(null);
         followMe = false;
     }
-    
+
     @Override
     public void onLocationChanged(Location location) {
         this.location = location;
         if (locationChangedListener != null) {
             locationChangedListener.onLocationChanged(location);
-        }    
-        
+        }
+
         if (followMe) {
             LatLngBounds bounds = map.getProjection().getVisibleRegion().latLngBounds;
             LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
@@ -210,14 +251,17 @@ public class MapFragment extends Fragment implements
     }
 
     @Override
-    public void onStatusChanged(String provider, int status, Bundle extras) {}
+    public void onStatusChanged(String provider, int status, Bundle extras) {
+    }
 
     @Override
-    public void onProviderEnabled(String provider) {}
+    public void onProviderEnabled(String provider) {
+    }
 
     @Override
-    public void onProviderDisabled(String provider) {}
-    
+    public void onProviderDisabled(String provider) {
+    }
+
     @Override
     public void onCacheOverlay(List<CacheOverlay> cacheOverlays) {
         Set<String> overlays = preferences.getStringSet("mapTileOverlays", Collections.<String> emptySet());
@@ -239,17 +283,55 @@ public class MapFragment extends Fragment implements
             }
         }
 
-        // Remove any overlays that are on the map but no longer selected in preferences
+        // Remove any overlays that are on the map but no longer selected in
+        // preferences
         for (String overlay : removedOverlays) {
             tileOverlays.remove(overlay).remove();
         }
     }
-    
+
     private void updateMapType() {
         int mapType = Integer.parseInt(preferences.getString("mapBaseLayer", "1"));
         if (mapType != this.mapType) {
             this.mapType = mapType;
             map.setMapType(this.mapType);
         }
+    }
+
+    private void updateObservations() {
+        boolean cluster = preferences.getBoolean("clusterObservations", false);
+        if (observations == null) {
+            this.cluster = cluster;
+
+            // Create the observations collection and start listening for
+            // updates
+            observations = cluster ? new ObservationClusterCollection(getActivity(), map) : new ObservationMarkerCollection(getActivity(), map);
+            map.setOnCameraChangeListener(observations);
+            map.setOnMarkerClickListener(observations);
+            
+            try {
+            	ObservationHelper.getInstance(getActivity()).addListener(this);
+            } catch (ObservationException e) {
+                e.printStackTrace();
+            }
+        } else if (this.cluster != cluster) {
+            this.cluster = cluster;
+
+            synchronized (observationLock) {
+                Collection<Observation> existing = observations != null ? new ArrayList<Observation>(observations.getObservations()) : Collections.<Observation> emptyList();
+                observations.clear();
+                map.setOnCameraChangeListener(null);
+                map.setOnMarkerClickListener(null);
+                
+                observations = cluster ? new ObservationClusterCollection(getActivity(), map) : new ObservationMarkerCollection(getActivity(), map);
+                map.setOnCameraChangeListener(observations);
+                map.setOnMarkerClickListener(observations);
+                observations.addAll(existing);
+            }
+        }
+    }
+
+    @Override
+    public void onError(Throwable error) {
     }
 }

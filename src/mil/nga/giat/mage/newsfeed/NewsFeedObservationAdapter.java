@@ -5,10 +5,9 @@ import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Date;
-import java.util.List;
+import java.util.Iterator;
 import java.util.Map;
-
-import org.apache.http.ParseException;
+import java.util.concurrent.ConcurrentHashMap;
 
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.form.MageTextView;
@@ -20,7 +19,6 @@ import mil.nga.giat.mage.sdk.utils.DateUtility;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
 import android.content.Intent;
 import android.support.v4.app.FragmentActivity;
-import android.text.format.DateUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -36,13 +34,13 @@ import com.bumptech.glide.Glide;
 public class NewsFeedObservationAdapter extends BaseAdapter {
 	
 	private static LayoutInflater inflater = null;
-	private List<Observation> data;
 	private FragmentActivity activity;
 	DecimalFormat latLngFormat = new DecimalFormat("###.######");
 	private SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm zz");
-	
-	public NewsFeedObservationAdapter(FragmentActivity activity, List<Observation> data) {
-		this.data = data;
+	private Map<Integer, Observation> data = new ConcurrentHashMap<Integer, Observation>();
+	private Map<Long, Integer> dataIndexMap = new ConcurrentHashMap<Long, Integer>();
+
+	public NewsFeedObservationAdapter(FragmentActivity activity) {
 		this.activity = activity;
 		inflater = (LayoutInflater)activity.getLayoutInflater();//getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 	}
@@ -60,6 +58,28 @@ public class NewsFeedObservationAdapter extends BaseAdapter {
 	@Override
 	public long getItemId(int index) {
 		return data.get(index).getId();
+	}
+
+	public void add(Observation observation) {
+		int i = data.size();
+		data.put(i, observation);
+		dataIndexMap.put(observation.getId(), i);
+		notifyDataSetChanged();
+	}
+
+	public void addAll(Collection<Observation> observations) {
+		for (Iterator<Observation> iterator = observations.iterator(); iterator.hasNext();) {
+			Observation observation = (Observation) iterator.next();
+			int i = data.size();
+			data.put(i, observation);
+			dataIndexMap.put(observation.getId(), i);
+		}
+		notifyDataSetChanged();
+	}
+
+	public void remove(Observation observation) {
+		data.remove(dataIndexMap.remove(observation.getId()));
+		notifyDataSetChanged();
 	}
 
 	@Override
