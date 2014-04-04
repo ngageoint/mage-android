@@ -51,7 +51,7 @@ public class ObservationViewActivity extends FragmentActivity {
 	private static final int ATTACHMENT_VIEW_ACTIVITY_REQUEST_CODE = 500;
 	private Observation o;
 	private Map<String, String> propertiesMap;
-	DecimalFormat latLngFormat = new DecimalFormat("###.######");
+	DecimalFormat latLngFormat = new DecimalFormat("###.#####");
 	private SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm zz");
 	
 	public class AttachmentGalleryTask extends AsyncTask<Attachment, ImageView, Boolean> {

@@ -77,7 +77,7 @@ public class ObservationEditActivity extends FragmentActivity {
 	private static final long NEW_OBSERVATION = -1L;
 
 	Date date;
-	DecimalFormat latLngFormat = new DecimalFormat("###.######");
+	DecimalFormat latLngFormat = new DecimalFormat("###.#####");
 	ArrayList<Attachment> attachments = new ArrayList<Attachment>();
 	Location l;
 	long observationId;
