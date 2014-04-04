@@ -55,6 +55,13 @@ public class ObservationMarkerCollection implements ObservationCollection, OnMar
     public Collection<Observation> getObservations() {
         return markerIdToObservation.values();
     }
+    
+    @Override
+    public void setVisible(boolean visible) {
+        for (Marker m : observationIdToMarker.values()) {
+            m.setVisible(visible);
+        }
+    }
 
     @Override
     public void remove(Observation o) {
