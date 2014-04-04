@@ -128,13 +128,13 @@ public class MapFragment extends Fragment implements OnMapLongClickListener, OnM
     }
 
     @Override
-    public void onObservationCreated(final Observation o) {
+    public void onObservationCreated(final Collection<Observation> o) {
         getActivity().runOnUiThread(new Runnable() {
             @Override
             public void run() {
                 synchronized (observationLock) {
 
-                    observations.add(o);
+                    observations.addAll(o);
                 }
             }
         });
@@ -310,10 +310,7 @@ public class MapFragment extends Fragment implements OnMapLongClickListener, OnM
             map.setOnMarkerClickListener(observations);
             
             try {
-                List<Observation> observations = ObservationHelper.getInstance(getActivity()).addListener(this);
-                for (Observation o : observations) {
-                    onObservationCreated(o);
-                }
+            	ObservationHelper.getInstance(getActivity()).addListener(this);
             } catch (ObservationException e) {
                 e.printStackTrace();
             }
@@ -332,10 +329,6 @@ public class MapFragment extends Fragment implements OnMapLongClickListener, OnM
                 observations.addAll(existing);
             }
         }
-    }
-
-    @Override
-    public void onComplete(Observation item) {
     }
 
     @Override

@@ -6,7 +6,7 @@ import java.util.List;
 import mil.nga.giat.mage.LandingActivity;
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.disclaimer.DisclaimerActivity;
-import mil.nga.giat.mage.sdk.datastore.DBHelper;
+import mil.nga.giat.mage.sdk.datastore.DaoStore;
 import mil.nga.giat.mage.sdk.login.AbstractAccountTask;
 import mil.nga.giat.mage.sdk.login.AccountDelegate;
 import mil.nga.giat.mage.sdk.login.AccountStatus;
@@ -195,12 +195,12 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 
 		// if the serverURL is different that before, cleared out database
 		String serverURLPref = PreferenceHelper.getInstance(getApplicationContext()).getValue(R.string.serverURLKey);
-		final DBHelper dbHelper = DBHelper.getInstance(getApplicationContext());
+		final DaoStore daoStore = DaoStore.getInstance(getApplicationContext());
 		final AbstractAccountTask loginTask = LoginTaskFactory.getInstance(getApplicationContext()).getLoginTask(this, this.getApplicationContext());
-		if (!server.equals(serverURLPref) && !dbHelper.isDatabaseEmpty()) {
+		if (!server.equals(serverURLPref) && !daoStore.isDatabaseEmpty()) {
 			new AlertDialog.Builder(this).setTitle("Server URL").setMessage("The server URL has been changed.  If you continue, any previous local data will be deleted.  Do you want to continue?").setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
 				public void onClick(DialogInterface dialog, int which) {
-					dbHelper.resetDatabase();
+					daoStore.resetDatabase();
 					loginTask.execute(credentials.toArray(new String[credentials.size()]));	
 				}
 			}).setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
