@@ -12,6 +12,8 @@ import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import org.apache.commons.lang3.StringUtils;
 
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 
 import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
@@ -24,6 +26,34 @@ public class ObservationBitmapFactory {
     private static Pattern pattern = Pattern.compile("\\W");
        
     public static BitmapDescriptor bitmapDescriptor(Context context, Observation observation) {
+        String asset = getAsset(observation);
+
+        try {
+            context.getAssets().openFd(asset).close();
+        } catch (IOException e) {
+            asset = "markers/default.png";
+        }
+
+        return BitmapDescriptorFactory.fromAsset(asset);      
+    }
+    
+    public static Bitmap bitmap(Context context, Observation observation) {
+        String asset = getAsset(observation);
+
+        Bitmap bitmap = null;
+        try {
+            bitmap = BitmapFactory.decodeStream(context.getAssets().open(asset)); 
+        } catch (IOException e) {
+            try {
+                bitmap = BitmapFactory.decodeStream(context.getAssets().open("markers/default.png"));
+            } catch (IOException e1) {}
+            
+        }
+        
+        return bitmap;
+    }
+    
+    private static String getAsset(Observation observation) {
         Map<String, String> properties = observation.getPropertiesMap();
         String level = properties.get(LEVEL_PROPERTY);     
         String type = properties.get(TYPE_PROPERTY);
@@ -45,14 +75,6 @@ public class ObservationBitmapFactory {
             paths.add("default");
         }
  
-        String asset = StringUtils.join(paths, "/") + ".png";
-        try {
-            context.getAssets().openFd(asset).close();
-        } catch (IOException e) {
-            asset = "markers/default.png";
-        }
-
-        return BitmapDescriptorFactory.fromAsset(asset);      
+        return StringUtils.join(paths, "/") + ".png";
     }
-
 }

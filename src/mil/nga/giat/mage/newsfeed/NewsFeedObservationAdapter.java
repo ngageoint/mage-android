@@ -11,6 +11,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.form.MageTextView;
+import mil.nga.giat.mage.map.marker.ObservationBitmapFactory;
 import mil.nga.giat.mage.observation.ObservationViewActivity;
 import mil.nga.giat.mage.sdk.datastore.observation.Attachment;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
@@ -18,6 +19,7 @@ import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
 import mil.nga.giat.mage.sdk.utils.DateUtility;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.support.v4.app.FragmentActivity;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -102,7 +104,11 @@ public class NewsFeedObservationAdapter extends BaseAdapter {
 			}
 		});
 		
-		ImageView iv = ((ImageView)v.findViewById(R.id.observation_thumb));
+		ImageView markerView = (ImageView) v.findViewById(R.id.observation_marker);
+		Bitmap marker = ObservationBitmapFactory.bitmap(activity, o);
+		if (marker != null) markerView.setImageBitmap(marker);
+		
+		ImageView iv = (ImageView) v.findViewById(R.id.observation_thumb);
 		Collection<Attachment> attachments = o.getAttachments();
 		((TextView)v.findViewById(R.id.username)).setText("there are " + attachments.size() + " attachments");
 		if (attachments.size() != 0) {
