@@ -476,9 +476,7 @@ public class ObservationEditActivity extends FragmentActivity {
 	        propertyMap.put("EVENTLEVEL", levelSpinner.getSelectedItem().toString());
 
 			propertyMap.put("EVENTDATE", String.valueOf(date.getTime()));
-			if (propertyMap.containsKey("LOCATION_ACCURACY")) {
-				propertyMap.put("LOCATION_ACCURACY", Float.toString(l.getAccuracy()));
-			}
+			propertyMap.put("LOCATION_ACCURACY", Float.toString(l.getAccuracy()));
 			propertyMap.put("LOCATION_PROVIDER", l.getProvider());
 			propertyMap.put("LOCATION_TIME_DELTA", Long.toString(timeMs(locationElapsedTimeMs)));
 			o.setPropertiesMap(propertyMap);
