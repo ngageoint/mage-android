@@ -64,6 +64,7 @@ public class NewsFeedFragment extends Fragment implements IObservationEventListe
 		// build your query
 		QueryBuilder<Observation, Long> qb = oDao.queryBuilder();
 		qb.where().gt("id", 0);
+		// this is wrong.  need to figure out how to order on nested table or move the correct field up
 		qb.orderBy("last_modified", false);
 
 		Cursor c = null;
