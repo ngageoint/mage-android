@@ -117,7 +117,8 @@ public class NewsFeedCursorAdapter extends CursorAdapter {
 		
 		ImageView iv = ((ImageView)v.findViewById(R.id.observation_thumb));
 		Collection<Attachment> attachments = o.getAttachments();
-		((TextView)v.findViewById(R.id.username)).setText("there are " + attachments.size() + " attachments");
+		((TextView)v.findViewById(R.id.username)).setText(o.getPropertiesMap().get("userId"));
+		((TextView)v.findViewById(R.id.attachment_text)).setText(attachments.size() != 0 ? "1 of " + attachments.size() : "");
 		if (attachments.size() != 0) {
 			iv.setVisibility(View.VISIBLE);
 			Attachment a = attachments.iterator().next();
