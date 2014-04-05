@@ -51,7 +51,7 @@ public class NewsFeedCursorAdapter extends CursorAdapter {
 	  	this.activity = activity;
 	  	this.query = query;
 	 }
-	 
+
      private void populatePropertyFields(LinearLayout ll, Map<String, String> propertiesMap) {
  		for (int i = 0; i < ll.getChildCount(); i++) {
  			View v = ll.getChildAt(i);

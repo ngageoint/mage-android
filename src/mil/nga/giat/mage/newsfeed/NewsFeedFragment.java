@@ -1,5 +1,6 @@
 package mil.nga.giat.mage.newsfeed;
 
+import java.sql.SQLException;
 import java.util.Collection;
 
 import mil.nga.giat.mage.R;
@@ -11,6 +12,7 @@ import mil.nga.giat.mage.sdk.exceptions.ObservationException;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -24,6 +26,8 @@ import com.j256.ormlite.stmt.QueryBuilder;
 
 public class NewsFeedFragment extends Fragment implements IObservationEventListener {
 	private NewsFeedCursorAdapter adapter;
+	private PreparedQuery<Observation> query;
+	private Dao<Observation, Long> oDao;
 
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -31,34 +35,44 @@ public class NewsFeedFragment extends Fragment implements IObservationEventListe
 
 		ListView lv = (ListView) rootView.findViewById(R.id.news_feed_list);
 		try {
-		Dao<Observation, Long> oDao = DaoStore.getInstance(getActivity().getApplicationContext()).getObservationDao();
-		
-		// build your query
-		QueryBuilder<Observation, Long> qb = oDao.queryBuilder();
-		qb.where().gt("id", 0);
-		qb.orderBy("last_modified", false);
-		
-		Cursor c = null;
-		// when you are done, prepare your query and build an iterator
-		PreparedQuery<Observation> query = qb.prepare();
-		CloseableIterator<Observation> iterator = oDao.iterator(query);
-		
-		   // get the raw results which can be cast under Android
-		   AndroidDatabaseResults results =
-		       (AndroidDatabaseResults)iterator.getRawResults();
-		   	c = results.getRawCursor();
-		   	adapter = new NewsFeedCursorAdapter(getActivity().getApplicationContext(), c, query, getActivity());
+			oDao = DaoStore.getInstance(getActivity().getApplicationContext()).getObservationDao();
+			query = buildQuery(oDao);
+			Cursor c = obtainCursor(query, oDao);
+			adapter = new NewsFeedCursorAdapter(getActivity().getApplicationContext(), c, query, getActivity());
 			lv.setAdapter(adapter);
 			try {
 				ObservationHelper.getInstance(getActivity().getApplicationContext()).addListener(this);
 			} catch (ObservationException oe) {
 				oe.printStackTrace();
 			}
-			//iterator.closeQuietly();
+			// iterator.closeQuietly();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 		return rootView;
+	}
+
+	private PreparedQuery<Observation> buildQuery(Dao<Observation, Long> oDao) throws SQLException {
+		QueryBuilder<Observation, Long> qb = oDao.queryBuilder();
+		qb.where().gt("id", 0);
+		qb.orderBy("last_modified", false);
+
+		return qb.prepare();
+	}
+
+	private Cursor obtainCursor(PreparedQuery<Observation> query, Dao<Observation, Long> oDao) throws SQLException {
+		// build your query
+		QueryBuilder<Observation, Long> qb = oDao.queryBuilder();
+		qb.where().gt("id", 0);
+		qb.orderBy("last_modified", false);
+
+		Cursor c = null;
+		CloseableIterator<Observation> iterator = oDao.iterator(query);
+
+		// get the raw results which can be cast under Android
+		AndroidDatabaseResults results = (AndroidDatabaseResults) iterator.getRawResults();
+		c = results.getRawCursor();
+		return c;
 	}
 
 	@Override
@@ -69,34 +83,45 @@ public class NewsFeedFragment extends Fragment implements IObservationEventListe
 
 	@Override
 	public void onObservationCreated(final Collection<Observation> observations) {
-//		getActivity().runOnUiThread(new Runnable() {
-//			@Override
-//			public void run() {
-//				adapter.addAll(observations);
-//			}
-//		});
+		 getActivity().runOnUiThread(new Runnable() {
+		 @Override
+		 public void run() {
+			 try {
+			 adapter.changeCursor(obtainCursor(query, oDao));
+			 } catch (Exception e) {
+				 Log.e("NewsFeedFragment", "Unable to change cursor", e);
+			 }
+		 }
+		 });
 
 	}
 
 	@Override
 	public void onObservationDeleted(final Observation observation) {
-//		getActivity().runOnUiThread(new Runnable() {
-//			@Override
-//			public void run() {
-//				adapter.remove(observation);
-//			}
-//		});
+		getActivity().runOnUiThread(new Runnable() {
+		@Override
+		 public void run() {
+			 try {
+			 adapter.changeCursor(obtainCursor(query, oDao));
+			 } catch (Exception e) {
+				 Log.e("NewsFeedFragment", "Unable to change cursor", e);
+			 }
+		 }
+		 });
 	}
 
 	@Override
 	public void onObservationUpdated(final Observation observation) {
-//		getActivity().runOnUiThread(new Runnable() {
-//			@Override
-//			public void run() {
-//				adapter.remove(observation);
-//				adapter.add(observation);
-//			}
-//		});
+		getActivity().runOnUiThread(new Runnable() {
+		@Override
+		 public void run() {
+			 try {
+			 adapter.changeCursor(obtainCursor(query, oDao));
+			 } catch (Exception e) {
+				 Log.e("NewsFeedFragment", "Unable to change cursor", e);
+			 }
+		 }
+		 });
 
 	}
 }
