@@ -2,7 +2,6 @@
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/signup"
-    
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
     android:fillViewport="true" >
@@ -10,7 +9,7 @@
     <RelativeLayout
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
-        android:background="@drawable/mage_gradient">
+        android:background="@drawable/mage_gradient" >
 
         <include
             android:id="@+id/signup_header"
@@ -53,43 +52,7 @@
             android:orientation="vertical"
             android:paddingBottom="24dip"
             android:paddingLeft="24dip"
-            android:paddingRight="24dip">
-            
-            <EditText
-                android:id="@+id/signup_username"
-                android:layout_width="fill_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="7dip"
-                android:layout_marginTop="7dip"
-                android:background="@drawable/form_field"
-                android:hint="Username"
-                android:inputType="textVisiblePassword|textNoSuggestions"
-                android:singleLine="true"
-                android:textSize="22sp" />
-            
-            <EditText
-                android:id="@+id/signup_password"
-                android:layout_width="fill_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="7dip"
-                android:layout_marginTop="7dip"
-                android:background="@drawable/form_field"
-                android:hint="Password"
-                android:inputType="textPassword"
-                android:singleLine="true"
-                android:textSize="22sp" />
-
-            <EditText
-                android:id="@+id/signup_confirmpassword"
-                android:layout_width="fill_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="7dip"
-                android:layout_marginTop="7dip"
-                android:background="@drawable/form_field"
-                android:hint="Confirm Password"
-                android:inputType="textPassword"
-                android:singleLine="true"
-                android:textSize="22sp" />
+            android:paddingRight="24dip" >
 
             <EditText
                 android:id="@+id/signup_firstname"
@@ -116,6 +79,42 @@
                 android:textSize="22sp" />
 
             <EditText
+                android:id="@+id/signup_username"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="7dip"
+                android:layout_marginTop="7dip"
+                android:background="@drawable/form_field"
+                android:hint="Username"
+                android:inputType="textVisiblePassword|textNoSuggestions"
+                android:singleLine="true"
+                android:textSize="22sp" />
+
+            <EditText
+                android:id="@+id/signup_password"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="7dip"
+                android:layout_marginTop="7dip"
+                android:background="@drawable/form_field"
+                android:hint="Password"
+                android:inputType="textPassword"
+                android:singleLine="true"
+                android:textSize="22sp" />
+
+            <EditText
+                android:id="@+id/signup_confirmpassword"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="7dip"
+                android:layout_marginTop="7dip"
+                android:background="@drawable/form_field"
+                android:hint="Confirm Password"
+                android:inputType="textPassword"
+                android:singleLine="true"
+                android:textSize="22sp" />
+
+            <EditText
                 android:id="@+id/signup_email"
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
@@ -127,13 +126,13 @@
                 android:singleLine="true"
                 android:textSize="22sp" />
 
-            
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:layout_marginBottom="15dip"
                 android:layout_marginTop="5dip"
                 android:orientation="horizontal" >
+
                 <EditText
                     android:id="@+id/signup_server"
                     android:layout_width="fill_parent"
