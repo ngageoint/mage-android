@@ -12,116 +12,132 @@ import mil.nga.giat.mage.map.CacheOverlay;
 import mil.nga.giat.mage.sdk.fetch.LocationServerFetchAsyncTask;
 import mil.nga.giat.mage.sdk.fetch.ObservationServerFetchAsyncTask;
 import mil.nga.giat.mage.sdk.location.LocationService;
+import mil.nga.giat.mage.sdk.push.ObservationServerPushAsyncTask;
 import android.app.Application;
 import android.os.AsyncTask;
 import android.util.Log;
 
 public class MAGE extends Application {
 
-    private static final String LOG_NAME = MAGE.class.getName();
+	private static final String LOG_NAME = MAGE.class.getName();
 
-    public interface OnCacheOverlayListener {
-        public void onCacheOverlay(List<CacheOverlay> cacheOverlays);
-    }
+	public interface OnCacheOverlayListener {
+		public void onCacheOverlay(List<CacheOverlay> cacheOverlays);
+	}
 
-    private LocationService locationService;
+	private LocationService locationService;
 	private LocationServerFetchAsyncTask locationTask = null;
-	private ObservationServerFetchAsyncTask observationTask = null;
-    private List<CacheOverlay> cacheOverlays = null;
-    private Collection<OnCacheOverlayListener> cacheOverlayListeners = new ArrayList<OnCacheOverlayListener>();
+	private ObservationServerFetchAsyncTask observationFetchTask = null;
+	private ObservationServerPushAsyncTask observationPushTask = null;
+	private List<CacheOverlay> cacheOverlays = null;
+	private Collection<OnCacheOverlayListener> cacheOverlayListeners = new ArrayList<OnCacheOverlayListener>();
 
-    @Override
-    public void onCreate() {
-        refreshTileOverlays();
-    }
+	@Override
+	public void onCreate() {
+		refreshTileOverlays();
+	}
 
-    public void initLocationService() {
-        if (locationService == null) {
-            locationService = new LocationService(getApplicationContext());
-            locationService.init();
-        }
-    }
+	public void initLocationService() {
+		if (locationService == null) {
+			locationService = new LocationService(getApplicationContext());
+			locationService.init();
+		}
+	}
 
-    public void destroyLocationService() {
-        if (locationService != null) {
-            locationService.destroy();
-            locationService = null;
-        }
-    }
+	public void destroyLocationService() {
+		if (locationService != null) {
+			locationService.destroy();
+			locationService = null;
+		}
+	}
 
-    public LocationService getLocationService() {
-        return locationService;
-    }
+	public LocationService getLocationService() {
+		return locationService;
+	}
 
-    public void registerCacheOverlayListener(OnCacheOverlayListener listener) {
-        cacheOverlayListeners.add(listener);
-        if (cacheOverlays != null)
-            listener.onCacheOverlay(cacheOverlays);
-    }
+	public void registerCacheOverlayListener(OnCacheOverlayListener listener) {
+		cacheOverlayListeners.add(listener);
+		if (cacheOverlays != null)
+			listener.onCacheOverlay(cacheOverlays);
+	}
 
-    public void unregisterCacheOverlayListener(OnCacheOverlayListener listener) {
-        cacheOverlayListeners.remove(listener);
-    }
+	public void unregisterCacheOverlayListener(OnCacheOverlayListener listener) {
+		cacheOverlayListeners.remove(listener);
+	}
 
-    public void refreshTileOverlays() {
-        TileOverlaysTask task = new TileOverlaysTask();
-        task.execute();
-    }
+	public void refreshTileOverlays() {
+		TileOverlaysTask task = new TileOverlaysTask();
+		task.execute();
+	}
 
-    private void setCacheOverlays(List<CacheOverlay> cacheOverlays) {
-        this.cacheOverlays = cacheOverlays;
+	private void setCacheOverlays(List<CacheOverlay> cacheOverlays) {
+		this.cacheOverlays = cacheOverlays;
 
-        for (OnCacheOverlayListener listener : cacheOverlayListeners) {
-            listener.onCacheOverlay(cacheOverlays);
-        }
-    }
+		for (OnCacheOverlayListener listener : cacheOverlayListeners) {
+			listener.onCacheOverlay(cacheOverlays);
+		}
+	}
 
-    private class TileOverlaysTask extends AsyncTask<Void, Void, List<CacheOverlay>> {
-        @Override
-        protected List<CacheOverlay> doInBackground(Void... params) {
-            List<CacheOverlay> overlays = new ArrayList<CacheOverlay>();
-            
-            Map<StorageType, File> storageLocations = Storage.getAllStorageLocations();
-            for (File storageLocation : storageLocations.values()) {
-                File root = new File(storageLocation, "MapCache");
-                if (root.exists() && root.isDirectory() && root.canRead()) {
-                    for (File cache : root.listFiles()) {
-                        if (cache.isDirectory() && cache.canRead()) {
-                            // found a cache
-                            overlays.add(new CacheOverlay(cache.getName(), cache));
-                        }
-                    }
-                }
-            }
+	private class TileOverlaysTask extends AsyncTask<Void, Void, List<CacheOverlay>> {
+		@Override
+		protected List<CacheOverlay> doInBackground(Void... params) {
+			List<CacheOverlay> overlays = new ArrayList<CacheOverlay>();
 
-            return overlays;
-        }
+			Map<StorageType, File> storageLocations = Storage.getAllStorageLocations();
+			for (File storageLocation : storageLocations.values()) {
+				File root = new File(storageLocation, "MapCache");
+				if (root.exists() && root.isDirectory() && root.canRead()) {
+					for (File cache : root.listFiles()) {
+						if (cache.isDirectory() && cache.canRead()) {
+							// found a cache
+							overlays.add(new CacheOverlay(cache.getName(), cache));
+						}
+					}
+				}
+			}
 
-        @Override
-        protected void onPostExecute(List<CacheOverlay> result) {
-            setCacheOverlays(result);
-        }
-    }
+			return overlays;
+		}
 
-    public void startFetching() {
-        locationTask = new LocationServerFetchAsyncTask(getApplicationContext());
-		observationTask = new ObservationServerFetchAsyncTask(getApplicationContext());
-        try {
-    		locationTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
-    		observationTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
-        } catch (Exception e) {
-            Log.e(LOG_NAME, "Error starting fetching tasks!");
-        }
-    }
+		@Override
+		protected void onPostExecute(List<CacheOverlay> result) {
+			setCacheOverlays(result);
+		}
+	}
 
-    public void destroyFetching() {
-    	if(locationTask != null) {
+	public void startFetching() {
+		locationTask = new LocationServerFetchAsyncTask(getApplicationContext());
+		observationFetchTask = new ObservationServerFetchAsyncTask(getApplicationContext());
+		try {
+			locationTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+			observationFetchTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+		} catch (Exception e) {
+			Log.e(LOG_NAME, "Error starting fetching tasks!");
+		}
+	}
+
+	public void destroyFetching() {
+		if (locationTask != null) {
 			locationTask.destroy();
 		}
-		
-		if(observationTask != null) {
-			observationTask.destroy();
-		}
-    }
 
+		if (observationFetchTask != null) {
+			observationFetchTask.destroy();
+		}
+	}
+
+	public void startPushing() {
+		observationPushTask = new ObservationServerPushAsyncTask(getApplicationContext());
+		try {
+			observationPushTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+		} catch (Exception e) {
+			Log.e(LOG_NAME, "Error starting fetching tasks!");
+		}
+	}
+
+	public void destroyPushing() {
+		if (observationPushTask != null) {
+			observationPushTask.destroy();
+		}
+	}
 }
