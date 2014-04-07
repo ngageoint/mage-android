@@ -14,6 +14,7 @@ import org.apache.commons.lang3.StringUtils;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.util.DisplayMetrics;
 
 import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
@@ -35,7 +36,8 @@ public class ObservationBitmapFactory {
             asset = DEFAULT_ASSET;
         }
 
-        return BitmapDescriptorFactory.fromAsset(asset);      
+        Bitmap bitmap = bitmap(context, observation);
+        return BitmapDescriptorFactory.fromBitmap(bitmap);
     }
     
     public static Bitmap bitmap(Context context, Observation observation) {
@@ -50,6 +52,8 @@ public class ObservationBitmapFactory {
             } catch (IOException e1) {}
             
         }
+        
+        bitmap.setDensity(DisplayMetrics.DENSITY_XHIGH);
         
         return bitmap;
     }
