@@ -102,8 +102,10 @@ public class MapFragment extends Fragment implements OnMapLongClickListener, OnM
     }
     
     @Override
-    public void onDestroy() {
+    public void onDestroy() { 
         ObservationHelper.getInstance(getActivity()).removeListener(this);
+        
+        super.onDestroy();
     }
 
     @Override
@@ -142,37 +144,17 @@ public class MapFragment extends Fragment implements OnMapLongClickListener, OnM
 
     @Override
     public void onObservationCreated(final Collection<Observation> o) {
-        getActivity().runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                observations.addAll(o);
-            }
-        });
+        new AddObservationTask(observations).execute(o.toArray(new Observation[o.size()]));
     }
 
     @Override
     public void onObservationUpdated(final Observation o) {
-        getActivity().runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                // Observations updates happen so rarley lets just
-                // delete the old observation and insert the updated one.
-                observations.remove(o);
-                observations.add(o);
-            }
-        });
+        new UpdateObservationTask(observations).execute(o);
     }
 
     @Override
     public void onObservationDeleted(final Observation o) {
-        getActivity().runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                // Observations updates happen so rarley lets just
-                // delete the old observation and insert the updated one.
-                observations.remove(o);
-            }
-        });
+        new DeleteObservationTask(observations).execute(o);
     }
 
     @Override
