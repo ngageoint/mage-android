@@ -5,6 +5,7 @@ import java.util.Locale;
 import mil.nga.giat.mage.login.LoginActivity;
 import mil.nga.giat.mage.map.MapFragment;
 import mil.nga.giat.mage.newsfeed.NewsFeedFragment;
+import mil.nga.giat.mage.newsfeed.PeopleFeedFragment;
 import mil.nga.giat.mage.observation.ObservationEditActivity;
 import mil.nga.giat.mage.observation.ObservationViewActivity;
 import mil.nga.giat.mage.preferences.PublicPreferencesActivity;
@@ -21,6 +22,7 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
+import android.support.v4.view.PagerTabStrip;
 import android.support.v4.view.ViewPager;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -32,7 +34,7 @@ import android.view.MenuItem;
  * @author wiedemannse
  * 
  */
-public class LandingActivity extends FragmentActivity implements ActionBar.TabListener {
+public class LandingActivity extends FragmentActivity { //implements ActionBar.TabListener {
 	
 	private static final int RESULT_PUBLIC_PREFERENCES = 1;
 	private static final int RESULT_MAP_PREFERENCES = 2;
@@ -51,6 +53,7 @@ public class LandingActivity extends FragmentActivity implements ActionBar.TabLi
 	 * The {@link ViewPager} that will host the section contents.
 	 */
 	ViewPager mViewPager;
+	PagerTabStrip tabStrip;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -58,24 +61,27 @@ public class LandingActivity extends FragmentActivity implements ActionBar.TabLi
 		setContentView(R.layout.activity_landing);
 
 		// Set up the action bar.
-		final ActionBar actionBar = getActionBar();
-		actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
+//		final ActionBar actionBar = getActionBar();
+//		actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
 
 		mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
 
 		// Set up the ViewPager with the sections adapter.
 		mViewPager = (ViewPager) findViewById(R.id.pager);
+		tabStrip = (PagerTabStrip)findViewById(R.id.pager_tab_strip);
+		tabStrip.setTabIndicatorColor(getResources().getColor(android.R.color.holo_blue_bright));
+		
 		mViewPager.setAdapter(mSectionsPagerAdapter);
 
 		// When swiping between different sections, select the corresponding
 		// tab. We can also use ActionBar.Tab#select() to do this if we have
 		// a reference to the Tab.
-		mViewPager.setOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
-			@Override
-			public void onPageSelected(int position) {
-				actionBar.setSelectedNavigationItem(position);
-			}
-		});
+//		mViewPager.setOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
+//			@Override
+//			public void onPageSelected(int position) {
+//				actionBar.setSelectedNavigationItem(position);
+//			}
+//		});
 		
 		
 		// For each of the sections in the app, add a tab to the action bar.
@@ -84,7 +90,7 @@ public class LandingActivity extends FragmentActivity implements ActionBar.TabLi
 			// the adapter. Also specify this Activity object, which implements
 			// the TabListener interface, as the callback (listener) for when
 			// this tab is selected.
-			actionBar.addTab(actionBar.newTab().setText(mSectionsPagerAdapter.getPageTitle(i)).setTabListener(this));
+			//actionBar.addTab(actionBar.newTab().setText(mSectionsPagerAdapter.getPageTitle(i)).setTabListener(this));
 		}
 
 		// FIXME : need to consider connectivity before talking to the server!!!
@@ -140,20 +146,20 @@ public class LandingActivity extends FragmentActivity implements ActionBar.TabLi
 		return super.onOptionsItemSelected(item);
 	}
 
-	@Override
-	public void onTabSelected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
-		// When the given tab is selected, switch to the corresponding page in
-		// the ViewPager.
-		mViewPager.setCurrentItem(tab.getPosition());
-	}
-
-	@Override
-	public void onTabUnselected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
-	}
-
-	@Override
-	public void onTabReselected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
-	}
+//	@Override
+//	public void onTabSelected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
+//		// When the given tab is selected, switch to the corresponding page in
+//		// the ViewPager.
+//		mViewPager.setCurrentItem(tab.getPosition());
+//	}
+//
+//	@Override
+//	public void onTabUnselected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
+//	}
+//
+//	@Override
+//	public void onTabReselected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
+//	}
 
 	@Override
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -190,6 +196,10 @@ public class LandingActivity extends FragmentActivity implements ActionBar.TabLi
 					fragment = new NewsFeedFragment();
 					break;
 				}
+				case 2: {
+					fragment = new PeopleFeedFragment();
+					break;
+				}
 				default: {
 					// TODO not sure what to do here, if anything (fix your code)
 				}
@@ -200,7 +210,7 @@ public class LandingActivity extends FragmentActivity implements ActionBar.TabLi
 
 		@Override
 		public int getCount() {
-			return 2;
+			return 3;
 		}
 
 		@Override
@@ -210,7 +220,9 @@ public class LandingActivity extends FragmentActivity implements ActionBar.TabLi
 			case 0:
 				return getString(R.string.title_map).toUpperCase(l);
 			case 1:
-				return getString(R.string.title_newsfeed).toUpperCase(l);
+				return getString(R.string.title_observations).toUpperCase(l);
+			case 2:
+				return getString(R.string.title_people).toUpperCase(l);
 			}
 			return null;
 		}
