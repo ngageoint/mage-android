@@ -9,7 +9,6 @@ import mil.nga.giat.mage.sdk.datastore.common.PointGeometry;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import android.content.Context;
 import android.content.Intent;
-import android.location.Location;
 
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.GoogleMap.OnMarkerClickListener;
@@ -23,6 +22,8 @@ public class ObservationMarkerCollection implements ObservationCollection, OnMar
 
     private GoogleMap map;
     private Context context;
+    
+    private boolean visible = true;
 
     private Map<Long, Marker> observationIdToMarker = new ConcurrentHashMap<Long, Marker>();
     private Map<String, Observation> markerIdToObservation = new ConcurrentHashMap<String, Observation>();
@@ -43,9 +44,10 @@ public class ObservationMarkerCollection implements ObservationCollection, OnMar
         PointGeometry point = (PointGeometry) o.getObservationGeometry().getGeometry();
         MarkerOptions options = new MarkerOptions()
             .position(new LatLng(point.getLatitude(), point.getLongitude()))
-            .icon(ObservationBitmapFactory.bitmapDescriptor(context, o));       
+            .icon(ObservationBitmapFactory.bitmapDescriptor(context, o))
+            .visible(visible);       
 
-        Marker marker = markerCollection.addMarker(options);            
+        Marker marker = markerCollection.addMarker(options);
 
         observationIdToMarker.put(o.getId(), marker);
         markerIdToObservation.put(marker.getId(), o);
@@ -65,6 +67,10 @@ public class ObservationMarkerCollection implements ObservationCollection, OnMar
     
     @Override
     public void setVisible(boolean visible) {
+        if (this.visible == visible) return;
+        
+        this.visible = visible;
+        
         for (Marker m : observationIdToMarker.values()) {
             m.setVisible(visible);
         }

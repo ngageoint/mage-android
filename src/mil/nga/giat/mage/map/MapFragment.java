@@ -1,6 +1,5 @@
 package mil.nga.giat.mage.map;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -13,7 +12,6 @@ import mil.nga.giat.mage.MAGE;
 import mil.nga.giat.mage.MAGE.OnCacheOverlayListener;
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.map.GoogleMapWrapper.OnMapPanListener;
-import mil.nga.giat.mage.map.marker.ObservationClusterCollection;
 import mil.nga.giat.mage.map.marker.ObservationCollection;
 import mil.nga.giat.mage.map.marker.ObservationMarkerCollection;
 import mil.nga.giat.mage.map.preference.MapPreferencesActivity;
@@ -56,7 +54,6 @@ public class MapFragment extends Fragment implements OnMapLongClickListener, OnM
     private int mapType = 1;
     private Location location;
     private boolean followMe = false;
-    private boolean cluster = false;
     private GoogleMapWrapper mapWrapper;
     private OnLocationChangedListener locationChangedListener;
 
@@ -124,9 +121,7 @@ public class MapFragment extends Fragment implements OnMapLongClickListener, OnM
         }
 
         updateMapType();
-
-        // TODO don't do this for now
-        // updateObservations();
+        updateObservations();
     }
 
     @Override
@@ -286,31 +281,36 @@ public class MapFragment extends Fragment implements OnMapLongClickListener, OnM
         }
     }
 
-    // TODO think of a way to fix this if we want users to be able to swap
-    // between clusters and not clusters
+
     private void updateObservations() {
-        boolean cluster = preferences.getBoolean("clusterObservations", false);
-        if (observations == null) {
-            this.cluster = cluster;
+      boolean showObservations = preferences.getBoolean("showObservations", true);
+      observations.setVisible(showObservations);
 
-            // Create the observations collection and start listening for
-            // updates
-            observations = cluster ? new ObservationClusterCollection(getActivity(), map) : new ObservationMarkerCollection(getActivity(), map);
-
-            try {
-                ObservationHelper.getInstance(getActivity()).addListener(this);
-            } catch (ObservationException e) {
-                e.printStackTrace();
-            }
-        } else if (this.cluster != cluster) {
-            this.cluster = cluster;
-
-            Collection<Observation> existing = observations != null ? new ArrayList<Observation>(observations.getObservations()) : Collections.<Observation> emptyList();
-            observations.clear();
-            observations = cluster ? new ObservationClusterCollection(getActivity(), map) : new ObservationMarkerCollection(getActivity(), map);
-            observations.addAll(existing);
-
-        }
+        
+        // TODO think of a way to fix this if we want users to be able to swap
+        // between clusters and not clusters
+//        boolean cluster = preferences.getBoolean("clusterObservations", false);
+//        if (observations == null) {
+//            this.cluster = cluster;
+//
+//            // Create the observations collection and start listening for
+//            // updates
+//            observations = cluster ? new ObservationClusterCollection(getActivity(), map) : new ObservationMarkerCollection(getActivity(), map);
+//
+//            try {
+//                ObservationHelper.getInstance(getActivity()).addListener(this);
+//            } catch (ObservationException e) {
+//                e.printStackTrace();
+//            }
+//        } else if (this.cluster != cluster) {
+//            this.cluster = cluster;
+//
+//            Collection<Observation> existing = observations != null ? new ArrayList<Observation>(observations.getObservations()) : Collections.<Observation> emptyList();
+//            observations.clear();
+//            observations = cluster ? new ObservationClusterCollection(getActivity(), map) : new ObservationMarkerCollection(getActivity(), map);
+//            observations.addAll(existing);
+//
+//        }
     }
 
     @Override

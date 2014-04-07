@@ -3,6 +3,7 @@ package mil.nga.giat.mage.preferences;
 import mil.nga.giat.mage.R;
 import android.os.Bundle;
 import android.preference.PreferenceActivity;
+import android.preference.PreferenceManager;
 import android.preference.SwitchPreference;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -21,7 +22,7 @@ public class PublicPreferencesActivity extends PreferenceActivity {
 			super.onCreate(savedInstanceState);
 			addPreferencesFromResource(R.xml.publicpreferences);
 			addPreferencesFromResource(R.xml.mdkpublicpreferences);
-
+			
 			for (int i = 0; i < getPreferenceScreen().getPreferenceCount(); i++) {
 				setSummary(getPreferenceScreen().getPreference(i));
 			}

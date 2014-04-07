@@ -18,7 +18,7 @@
     <PreferenceCategory android:title="OBSERVATIONS" >
         <CheckBoxPreference
             android:defaultValue="true"
-            android:key="observationFeature"
+            android:key="showObservations"
             android:summary="Show observations on map"
             android:title="Show Observations" />
 <!--         <CheckBoxPreference

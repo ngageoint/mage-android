@@ -12,6 +12,7 @@ import android.os.Bundle;
 import android.preference.MultiSelectListPreference;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
+import android.preference.PreferenceManager;
 
 /**
  * Provides map configuration driven settings that are available to the user.
@@ -31,6 +32,8 @@ public class MapPreferencesActivity extends PreferenceActivity {
         public void onCreate(final Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
             addPreferencesFromResource(R.xml.mappreferences);
+            
+            PreferenceManager.setDefaultValues(getActivity(), R.xml.mappreferences, true);
         }
 
         @Override
