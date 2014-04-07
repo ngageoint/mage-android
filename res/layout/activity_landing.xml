@@ -9,7 +9,16 @@
         android:layout_width="match_parent"
         android:layout_height="0dip"
         android:layout_weight="1"
-        tools:context=".LandingActivity" />
+        tools:context=".LandingActivity" >
+        <android.support.v4.view.PagerTabStrip
+            android:id="@+id/pager_tab_strip"
+            android:layout_width="match_parent"
+	        android:layout_height="wrap_content"
+	        android:background="#000"
+	        android:textColor="#fff"
+	        android:paddingTop="10dip"
+	        android:layout_gravity="top"/>
+    </android.support.v4.view.ViewPager>
 
     <fragment
         android:id="@+id/connectivity_fragment"

@@ -67,7 +67,7 @@ public class LandingActivity extends FragmentActivity { //implements ActionBar.T
 		mViewPager = (ViewPager) findViewById(R.id.pager);
 		tabStrip = (PagerTabStrip)findViewById(R.id.pager_tab_strip);
 		tabStrip.setTabIndicatorColor(getResources().getColor(android.R.color.holo_blue_bright));
-		
+		mViewPager.setOffscreenPageLimit(2);
 		mViewPager.setAdapter(mSectionsPagerAdapter);
 
 		// When swiping between different sections, select the corresponding
