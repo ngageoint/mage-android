@@ -63,10 +63,9 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		
-		// TODO: where does this go?
 		// IMPORTANT: load the configuration from preferences files and server
 		PreferenceHelper preferenceHelper = PreferenceHelper.getInstance(getApplicationContext());
-		preferenceHelper.initializeAll(new int[]{R.xml.privatepreferences, R.xml.publicpreferences});
+		preferenceHelper.initialize(new int[]{R.xml.privatepreferences, R.xml.publicpreferences});
 		
 		// show the disclaimer?
 		if (PreferenceHelper.getInstance(getApplicationContext()).getValue(R.string.showDisclaimerKey, Boolean.class, Boolean.TRUE)) {
@@ -194,7 +193,13 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 		findViewById(R.id.login_form).setVisibility(View.GONE);
 		findViewById(R.id.login_status).setVisibility(View.VISIBLE);
 
-		// if the serverURL is different that before, cleared out database
+		// if the username is different, then clear the token information
+		String oldUsername = PreferenceHelper.getInstance(getApplicationContext()).getValue(R.string.usernameKey);
+		if(oldUsername == null || !oldUsername.equals(username)) {
+			UserUtility.getInstance(getApplicationContext()).clearTokenInformation();
+		}
+		
+		// if the serverURL is different that before, clear out the database
 		String serverURLPref = PreferenceHelper.getInstance(getApplicationContext()).getValue(R.string.serverURLKey);
 		final DaoStore daoStore = DaoStore.getInstance(getApplicationContext());
 		final AbstractAccountTask loginTask = LoginTaskFactory.getInstance(getApplicationContext()).getLoginTask(this, this.getApplicationContext());
@@ -249,17 +254,8 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 	@Override
 	public void finishAccount(AccountStatus accountStatus) {
 		if (accountStatus.getStatus() == AccountStatus.Status.SUCCESSFUL_LOGIN) {
-			Editor sp = PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).edit();
-			
-			// if the username is different, then clear the database
-			String oldUsername = PreferenceHelper.getInstance(getApplicationContext()).getValue(R.string.usernameKey);
-			String newUsername = getUsernameEditText().getText().toString();
-			if(oldUsername == null || !oldUsername.equals(newUsername)) {
-				// FIXME : where does this go?
-				//DaoStore.getInstance(getApplicationContext()).resetDatabase();	
-			}
-			
-			sp.putString("username", newUsername);
+			Editor sp = PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).edit();			
+			sp.putString("username", getUsernameEditText().getText().toString());
 			// TODO should we store password, or some hash?
 //			sp.putString("password", getPasswordEditText().getText().toString());
 			sp.putString("serverURL", getServerEditText().getText().toString());

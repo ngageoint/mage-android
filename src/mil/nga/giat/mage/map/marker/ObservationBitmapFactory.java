@@ -11,9 +11,12 @@ import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 
 import org.apache.commons.lang3.StringUtils;
 
+import android.annotation.TargetApi;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.os.Build;
+import android.util.DisplayMetrics;
 
 import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
@@ -26,32 +29,39 @@ public class ObservationBitmapFactory {
     
     private static Pattern pattern = Pattern.compile("\\W");
        
-    public static BitmapDescriptor bitmapDescriptor(Context context, Observation observation) {
-        String asset = getAsset(observation);
-
-        try {
-            context.getAssets().openFd(asset).close();
-        } catch (IOException e) {
-            asset = DEFAULT_ASSET;
-        }
-
-        return BitmapDescriptorFactory.fromAsset(asset);      
-    }
-    
+    @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
     public static Bitmap bitmap(Context context, Observation observation) {
         String asset = getAsset(observation);
 
         Bitmap bitmap = null;
         try {
             bitmap = BitmapFactory.decodeStream(context.getAssets().open(asset)); 
-        } catch (IOException e) {
+        } catch (IOException e1) {
             try {
                 bitmap = BitmapFactory.decodeStream(context.getAssets().open("markers/default.png"));
-            } catch (IOException e1) {}
+            } catch (IOException e2) {
+            }
             
         }
         
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+            bitmap.setDensity(DisplayMetrics.DENSITY_XXHIGH);
+        } else {
+            bitmap.setDensity(DisplayMetrics.DENSITY_XHIGH);
+
+        }
+        
         return bitmap;
+    }
+    
+    public static BitmapDescriptor bitmapDescriptor(Context context, Observation observation) {
+        Bitmap bitmap = bitmap(context, observation);
+        return BitmapDescriptorFactory.fromBitmap(bitmap);
+    }
+    
+    @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
+    private static void setDensity(Bitmap bitmap) {
+
     }
     
     private static String getAsset(Observation observation) {
