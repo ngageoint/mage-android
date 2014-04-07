@@ -5,11 +5,6 @@
         android:defaultValue="true"
         android:key="@string/showDisclaimerKey" />
 
-    <!-- The username field -->
-    <EditTextPreference
-        android:defaultValue=""
-        android:key="@string/usernameKey" />
-
     <!-- Signup password length -->
     <EditTextPreference
         android:defaultValue="8"

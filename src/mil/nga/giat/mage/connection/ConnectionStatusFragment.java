@@ -16,6 +16,9 @@ import android.view.animation.AnimationUtils;
 import android.widget.TextView;
 
 public class ConnectionStatusFragment extends Fragment implements IConnectivityEventListener {
+	
+	private static final String LOG_NAME = ConnectionStatusFragment.class.getName();
+	
 	private Boolean connected = true;
 	@Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -43,13 +46,11 @@ public class ConnectionStatusFragment extends Fragment implements IConnectivityE
 			}
 		});
 		
-//		NetworkChangeReceiver networkChangeReceiver = new NetworkChangeReceiver();
-//		networkChangeReceiver.addListener(this);
-//		
-//		//set up initial connection state
-//		connected = ConnectivityUtility.isOnline(getActivity().getApplicationContext());
-//		
-//		
+		//set up initial connection state
+		connected = ConnectivityUtility.isOnline(getActivity().getApplicationContext());
+		//enable connectivity event handling
+		NetworkChangeReceiver.getInstance().addListener(this);
+
 //		// TODO set up the listener to just listen to the connectivity class
 //		// don't show that we are connected if this is the first time and we are already connected
 //		if (!connected) {
@@ -63,7 +64,7 @@ public class ConnectionStatusFragment extends Fragment implements IConnectivityE
 		getActivity().findViewById(R.id.connection_background).setVisibility(View.VISIBLE);
 		Animation fadeIn = AnimationUtils.loadAnimation(getActivity().getApplicationContext(), android.R.anim.fade_in);
 		this.getView().setAnimation(fadeIn);
-		Log.i("test", "connection changed to " + connected);
+		Log.i(LOG_NAME, "connection changed to " + connected);
 		if (connected) {
 			t.setText(R.string.connected_mode);
 			getActivity().findViewById(R.id.connection_background).setBackgroundColor(getResources().getColor(android.R.color.holo_blue_light));

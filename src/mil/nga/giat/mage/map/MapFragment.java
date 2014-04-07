@@ -104,7 +104,10 @@ public class MapFragment extends Fragment implements OnMapLongClickListener, OnM
     @Override
     public void onDestroy() { 
         ObservationHelper.getInstance(getActivity()).removeListener(this);
+<<<<<<< HEAD
         
+=======
+>>>>>>> b9843fb95e580ff0b340d479860b3920c916aa10
         super.onDestroy();
     }
 
