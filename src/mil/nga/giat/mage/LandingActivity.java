@@ -10,8 +10,6 @@ import mil.nga.giat.mage.observation.ObservationEditActivity;
 import mil.nga.giat.mage.preferences.PublicPreferencesActivity;
 import mil.nga.giat.mage.sdk.location.LocationService;
 import mil.nga.giat.mage.sdk.utils.UserUtility;
-import android.app.ActionBar;
-import android.app.FragmentTransaction;
 import android.content.Intent;
 import android.location.Location;
 import android.os.Bundle;
@@ -31,7 +29,7 @@ import android.view.MenuItem;
  * @author wiedemannse
  * 
  */
-public class LandingActivity extends FragmentActivity { //implements ActionBar.TabListener {
+public class LandingActivity extends FragmentActivity {
 	
 	private static final int RESULT_PUBLIC_PREFERENCES = 1;
 	private static final int RESULT_MAP_PREFERENCES = 2;
@@ -57,10 +55,6 @@ public class LandingActivity extends FragmentActivity { //implements ActionBar.T
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_landing);
 
-		// Set up the action bar.
-//		final ActionBar actionBar = getActionBar();
-//		actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
-
 		mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
 
 		// Set up the ViewPager with the sections adapter.
@@ -69,26 +63,6 @@ public class LandingActivity extends FragmentActivity { //implements ActionBar.T
 		tabStrip.setTabIndicatorColor(getResources().getColor(android.R.color.holo_blue_bright));
 		mViewPager.setOffscreenPageLimit(2);
 		mViewPager.setAdapter(mSectionsPagerAdapter);
-
-		// When swiping between different sections, select the corresponding
-		// tab. We can also use ActionBar.Tab#select() to do this if we have
-		// a reference to the Tab.
-//		mViewPager.setOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
-//			@Override
-//			public void onPageSelected(int position) {
-//				actionBar.setSelectedNavigationItem(position);
-//			}
-//		});
-		
-		
-		// For each of the sections in the app, add a tab to the action bar.
-		for (int i = 0; i < mSectionsPagerAdapter.getCount(); i++) {
-			// Create a tab with text corresponding to the page title defined by
-			// the adapter. Also specify this Activity object, which implements
-			// the TabListener interface, as the callback (listener) for when
-			// this tab is selected.
-			//actionBar.addTab(actionBar.newTab().setText(mSectionsPagerAdapter.getPageTitle(i)).setTabListener(this));
-		}
 
 		// FIXME : need to consider connectivity before talking to the server!!!
 		((MAGE) getApplication()).startFetching();
@@ -141,21 +115,6 @@ public class LandingActivity extends FragmentActivity { //implements ActionBar.T
 
 		return super.onOptionsItemSelected(item);
 	}
-
-//	@Override
-//	public void onTabSelected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
-//		// When the given tab is selected, switch to the corresponding page in
-//		// the ViewPager.
-//		mViewPager.setCurrentItem(tab.getPosition());
-//	}
-//
-//	@Override
-//	public void onTabUnselected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
-//	}
-//
-//	@Override
-//	public void onTabReselected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
-//	}
 
 	@Override
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -234,4 +193,5 @@ public class LandingActivity extends FragmentActivity { //implements ActionBar.T
 		startMain.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 		startActivity(startMain);
 	}
+
 }
