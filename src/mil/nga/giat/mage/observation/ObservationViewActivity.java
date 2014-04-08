@@ -198,20 +198,25 @@ public class ObservationViewActivity extends FragmentActivity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.observation_viewer);
 		ActionBar actionBar = getActionBar();
-
+		Log.i("test", "observation id to load: " + getIntent().getLongExtra(OBSERVATION_ID, 0L));
 		actionBar.setDisplayHomeAsUpEnabled(true);
 		try {
 			o = ObservationHelper.getInstance(getApplicationContext()).readByPrimaryKey(getIntent().getLongExtra(OBSERVATION_ID, 0L));
 			propertiesMap = o.getPropertiesMap();
+			this.setTitle(propertiesMap.get("TYPE"));
 			Geometry geo = o.getObservationGeometry().getGeometry();
 			if(geo instanceof PointGeometry) {
 				PointGeometry pointGeo = (PointGeometry)geo;
 				((TextView)findViewById(R.id.location)).setText(latLngFormat.format(pointGeo.getLatitude()) + ", " + latLngFormat.format(pointGeo.getLongitude()));
 				if(propertiesMap.containsKey("LOCATION_PROVIDER")) {
 					((TextView)findViewById(R.id.location_provider)).setText("("+propertiesMap.get("LOCATION_PROVIDER")+")");
+				} else {
+					findViewById(R.id.location_provider).setVisibility(View.GONE);
 				}
 				if (propertiesMap.containsKey("LOCATION_ACCURACY")) {
 					((TextView)findViewById(R.id.location_accuracy)).setText("\u00B1" + propertiesMap.get("LOCATION_ACCURACY") + "m");
+				} else {
+					findViewById(R.id.location_accuracy).setVisibility(View.GONE);
 				}
 				map = ((SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.mini_map)).getMap();
 				
@@ -234,7 +239,7 @@ public class ObservationViewActivity extends FragmentActivity {
 			populatePropertyFields(propertyContainer);
 			
 			populatePropertyFields((LinearLayout)findViewById(R.id.topPropertyContainer));
-			
+			Log.i("test", "there are " + o.getAttachments().size() + " attachments");
 			if (o.getAttachments().size() == 0) {
 				findViewById(R.id.image_gallery).setVisibility(View.GONE);
 			} else {
@@ -257,7 +262,6 @@ public class ObservationViewActivity extends FragmentActivity {
 			Log.e("observation view", e.getMessage(), e);
 		}
 		
-		this.setTitle(propertiesMap.get("TYPE"));
 	}
 	
 	private void populatePropertyFields(LinearLayout ll) {

@@ -4,11 +4,13 @@ import java.sql.SQLException;
 import java.util.Collection;
 
 import mil.nga.giat.mage.R;
+import mil.nga.giat.mage.observation.ObservationViewActivity;
 import mil.nga.giat.mage.sdk.datastore.DaoStore;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
 import mil.nga.giat.mage.sdk.event.observation.IObservationEventListener;
 import mil.nga.giat.mage.sdk.exceptions.ObservationException;
+import android.content.Intent;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -16,6 +18,8 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ListView;
 
 import com.j256.ormlite.android.AndroidDatabaseResults;
@@ -24,7 +28,7 @@ import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.stmt.PreparedQuery;
 import com.j256.ormlite.stmt.QueryBuilder;
 
-public class NewsFeedFragment extends Fragment implements IObservationEventListener {
+public class NewsFeedFragment extends Fragment implements IObservationEventListener, OnItemClickListener {
 	private NewsFeedCursorAdapter adapter;
 	private PreparedQuery<Observation> query;
 	private Dao<Observation, Long> oDao;
@@ -40,6 +44,8 @@ public class NewsFeedFragment extends Fragment implements IObservationEventListe
 			Cursor c = obtainCursor(query, oDao);
 			adapter = new NewsFeedCursorAdapter(getActivity().getApplicationContext(), c, query, getActivity());
 			lv.setAdapter(adapter);
+			lv.setOnItemClickListener(this);
+			
 			try {
 				ObservationHelper.getInstance(getActivity().getApplicationContext()).addListener(this);
 			} catch (ObservationException oe) {
@@ -50,6 +56,22 @@ public class NewsFeedFragment extends Fragment implements IObservationEventListe
 			e.printStackTrace();
 		}
 		return rootView;
+	}
+	
+	@Override
+	public void onItemClick(AdapterView<?> adapter, View arg1, int position, long id) {
+		Cursor c = ((NewsFeedCursorAdapter) adapter.getAdapter()).getCursor();
+		c.moveToPosition(position);
+		try {
+			Observation o = query.mapRow(new AndroidDatabaseResults(c, null));
+			Intent observationView = new Intent(getActivity().getApplicationContext(), ObservationViewActivity.class);
+	        observationView.putExtra(ObservationViewActivity.OBSERVATION_ID, o.getId());
+	        getActivity().startActivityForResult(observationView, 2);
+		} catch (Exception e) {
+			
+		}
+		
+		
 	}
 
 	private PreparedQuery<Observation> buildQuery(Dao<Observation, Long> oDao) throws SQLException {

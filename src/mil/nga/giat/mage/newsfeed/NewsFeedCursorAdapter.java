@@ -35,7 +35,7 @@ import com.bumptech.glide.Glide;
 import com.j256.ormlite.android.AndroidDatabaseResults;
 import com.j256.ormlite.stmt.PreparedQuery;
 
-public class NewsFeedCursorAdapter extends CursorAdapter implements OnClickListener {
+public class NewsFeedCursorAdapter extends CursorAdapter {
 
     private LayoutInflater inflater = null;
     private PreparedQuery<Observation> query;
@@ -48,6 +48,10 @@ public class NewsFeedCursorAdapter extends CursorAdapter implements OnClickListe
         inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         this.activity = activity;
         this.query = query;
+    }
+    
+    public boolean hasStableIds() {
+    	return true;
     }
 
     private void populatePropertyFields(LinearLayout ll, Map<String, String> propertiesMap) {
@@ -98,7 +102,6 @@ public class NewsFeedCursorAdapter extends CursorAdapter implements OnClickListe
 
             LinearLayout ll = (LinearLayout) v.findViewById(R.id.observation_list_container);
             populatePropertyFields(ll, o.getPropertiesMap());
-            ll.setOnClickListener(this);
 
             ImageView markerView = (ImageView) v.findViewById(R.id.observation_marker);
             Bitmap marker = ObservationBitmapFactory.bitmap(activity, o);
@@ -165,10 +168,4 @@ public class NewsFeedCursorAdapter extends CursorAdapter implements OnClickListe
         return inflater.inflate(R.layout.observation_list_item, parentView, false);
     }
 
-    @Override
-    public void onClick(View v) {
-        Intent observationView = new Intent(activity.getApplicationContext(), ObservationViewActivity.class);
-        observationView.putExtra(ObservationViewActivity.OBSERVATION_ID, o.getId());
-        activity.startActivityForResult(observationView, 2);        
-    }
 }

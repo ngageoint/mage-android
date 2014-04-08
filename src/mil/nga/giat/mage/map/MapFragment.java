@@ -28,6 +28,8 @@ import android.location.LocationListener;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentTransaction;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -98,13 +100,36 @@ public class MapFragment extends Fragment implements OnMapLongClickListener, OnM
         return mapWrapper;
     }
     
+    private void killOldMap() {
+        SupportMapFragment mapFragment = ((SupportMapFragment) getFragmentManager().findFragmentById(R.id.map));
+
+        if(mapFragment != null && !getActivity().isDestroyed()) {
+            FragmentManager manager = getFragmentManager();
+            FragmentTransaction t = manager.beginTransaction();
+            FragmentTransaction t2 = t.remove(mapFragment).detach(mapFragment);
+            t2.commitAllowingStateLoss();
+        }
+    }
+    
     @Override
     public void onDestroy() { 
         ObservationHelper.getInstance(getActivity()).removeListener(this);
-        
+        killOldMap();
         super.onDestroy();
     }
+    
+    @Override
+    public void onDestroyView() {
+    	killOldMap();
+    	super.onDestroyView();
+    }
 
+    @Override
+    public void onDetach() {
+    	killOldMap();
+    	super.onDetach();
+    }
+    
     @Override
     public void onResume() {
         super.onResume();
