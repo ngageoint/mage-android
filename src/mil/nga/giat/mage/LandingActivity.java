@@ -2,6 +2,7 @@ package mil.nga.giat.mage;
 
 import mil.nga.giat.mage.login.LoginActivity;
 import mil.nga.giat.mage.map.MapFragment;
+import mil.nga.giat.mage.navigation.DrawerItem;
 import mil.nga.giat.mage.newsfeed.NewsFeedFragment;
 import mil.nga.giat.mage.newsfeed.PeopleFeedFragment;
 import mil.nga.giat.mage.observation.ObservationEditActivity;
@@ -39,7 +40,7 @@ import android.widget.TextView;
  */
 public class LandingActivity extends FragmentActivity implements ListView.OnItemClickListener {	
 	
-	private String[] drawerItems;
+	private DrawerItem[] drawerItems;
     private DrawerLayout drawerLayout;
     private ListView drawerList;
     private ActionBarDrawerToggle drawerToggle;
@@ -59,29 +60,29 @@ public class LandingActivity extends FragmentActivity implements ListView.OnItem
  		// Start location services
  		mage.initLocationService();
 
- 		drawerItems = new String[] {"Map", "Observations", "People", "Settings", "Logout"};
+ 		drawerItems = new DrawerItem[5];
+ 		drawerItems[0] = new DrawerItem("Map", R.drawable.ic_map_white);
+ 		drawerItems[1] = new DrawerItem("Observations", R.drawable.ic_compass_white);
+ 		drawerItems[2] = new DrawerItem("People", R.drawable.ic_settings_white);
+ 		drawerItems[3] = new DrawerItem("Settings", R.drawable.ic_settings_white);
+ 		drawerItems[4] = new DrawerItem("Logout", R.drawable.ic_settings_white);
 
         drawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawerList = (ListView) findViewById(R.id.left_drawer);
 
         // Set the adapter for the list view
-        drawerList.setAdapter(new ArrayAdapter<String>(this, R.layout.drawer_list_item, drawerItems) {
+        drawerList.setAdapter(new ArrayAdapter<DrawerItem>(this, R.layout.drawer_list_item, drawerItems) {
         	@Override
         	public View getView (int position, View view, ViewGroup parent) {
         		if (view == null) {
         			LayoutInflater inflater = (LayoutInflater)getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         			view = inflater.inflate(R.layout.drawer_list_item, null);
         		}
+        		DrawerItem item = getItem(position);
         		TextView text = (TextView)view.findViewById(R.id.drawer_item_text);
-        		text.setText(getItem(position));
+        		text.setText(item.getItemText());
         		ImageView iv = (ImageView)view.findViewById(R.id.drawer_item_icon);
-        		if (position == 0) {
-        			iv.setImageResource(R.drawable.ic_map_white);
-        		} else if (position == 1) {
-        			iv.setImageResource(R.drawable.ic_compass_white);
-        		} else if (position == 2) {
-        			iv.setImageResource(R.drawable.ic_settings_white);
-        		}
+        		iv.setImageResource(item.getDrawableId());
         		
         		return view;
         	}
