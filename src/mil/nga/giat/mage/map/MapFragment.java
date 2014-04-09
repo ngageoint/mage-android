@@ -16,21 +16,25 @@ import mil.nga.giat.mage.map.marker.ObservationCollection;
 import mil.nga.giat.mage.map.marker.ObservationMarkerCollection;
 import mil.nga.giat.mage.map.preference.MapPreferencesActivity;
 import mil.nga.giat.mage.observation.ObservationEditActivity;
+import mil.nga.giat.mage.observation.ObservationViewActivity;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
 import mil.nga.giat.mage.sdk.event.observation.IObservationEventListener;
 import mil.nga.giat.mage.sdk.exceptions.ObservationException;
 import mil.nga.giat.mage.sdk.location.LocationService;
+import android.app.Fragment;
+import android.app.FragmentManager;
+import android.app.FragmentTransaction;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.location.Location;
 import android.location.LocationListener;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
-import android.app.Fragment;
-import android.app.FragmentManager;
-import android.app.FragmentTransaction;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
@@ -69,6 +73,8 @@ public class MapFragment extends Fragment implements OnMapLongClickListener, OnM
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_map, container, false);
+        setHasOptionsMenu(true);
+        
         mage = (MAGE) getActivity().getApplication();
 
         mapWrapper = new GoogleMapWrapper(getActivity());
@@ -76,7 +82,6 @@ public class MapFragment extends Fragment implements OnMapLongClickListener, OnM
 
         preferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
 
-        Fragment f = getFragmentManager().findFragmentById(R.id.map);
         map = ((com.google.android.gms.maps.MapFragment) getFragmentManager().findFragmentById(R.id.map)).getMap();
         
         mapType = Integer.parseInt(preferences.getString("baseLayer", "1"));
@@ -161,6 +166,30 @@ public class MapFragment extends Fragment implements OnMapLongClickListener, OnM
             map.setLocationSource(null);
             locationService.unregisterOnLocationListener(this);
         }
+    }
+    
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        // TODO Add your menu entries here
+        super.onCreateOptionsMenu(menu, inflater);
+        
+        inflater.inflate(R.menu.landing, menu);
+    }
+    
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.observation_new:
+                 Intent intent = new Intent(getActivity(), ObservationEditActivity.class);
+                 LocationService ls = ((MAGE) getActivity().getApplication()).getLocationService();
+                 Location l = ls.getLocation();
+                 intent.putExtra(ObservationEditActivity.LOCATION, l);
+                 intent.putExtra(ObservationEditActivity.INITIAL_LOCATION,  map.getCameraPosition().target);
+                 intent.putExtra(ObservationEditActivity.INITIAL_ZOOM, map.getCameraPosition().zoom);
+                 startActivity(intent);
+        }
+
+        return super.onOptionsItemSelected(item);
     }
 
     @Override
