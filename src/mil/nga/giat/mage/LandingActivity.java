@@ -119,12 +119,16 @@ public class LandingActivity extends FragmentActivity implements ListView.OnItem
 
         actionbarToggleHandler();
         
-        // initialize with map
-        MapFragment mf = new MapFragment();
+        goToMap();
+    }
+    
+    private void goToMap() {
+    	MapFragment mf = new MapFragment();
         FragmentManager fragmentManager = getFragmentManager();
 	    fragmentManager.beginTransaction()
 	                   .replace(R.id.content_frame, mf)
 	                   .commit();
+	    getActionBar().setTitle("MAGE");
 	    currentActivity = 0;
     }
     
@@ -182,6 +186,11 @@ public class LandingActivity extends FragmentActivity implements ListView.OnItem
 	    	}
 	        //Put the code for an action menu from the top here
 	        return true;
+	    } else if (keyCode == KeyEvent.KEYCODE_BACK) {
+	    	if (currentActivity != 0) {
+	    		goToMap();
+	    		return true;
+	    	}
 	    }
 	    return super.onKeyDown(keyCode, event);
 	}
