@@ -113,7 +113,7 @@ public class ObservationEditActivity extends FragmentActivity {
 		typeSpinner.setOnItemSelectedListener(new OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                onTypeOrLevelChanged("TYPE", parent.getItemAtPosition(position).toString());
+                onTypeOrLevelChanged("type", parent.getItemAtPosition(position).toString());
             }
 
             @Override
@@ -144,7 +144,7 @@ public class ObservationEditActivity extends FragmentActivity {
 			
 	        // set default type and level values for map marker
 			o = new Observation();
-			o.getProperties().add(new ObservationProperty("TYPE", typeSpinner.getSelectedItem().toString()));
+			o.getProperties().add(new ObservationProperty("type", typeSpinner.getSelectedItem().toString()));
 	        o.getProperties().add(new ObservationProperty("EVENTLEVEL", levelSpinner.getSelectedItem().toString()));
 		} else {
 			this.setTitle("Edit Observation");
@@ -157,7 +157,7 @@ public class ObservationEditActivity extends FragmentActivity {
 				}
 			
 				propertiesMap = o.getPropertiesMap();
-				date = new Date(Long.parseLong(propertiesMap.get("EVENTDATE")));
+				date = new Date(Long.parseLong(propertiesMap.get("timestamp")));
 				((TextView) findViewById(R.id.date)).setText(date.toString());
 				Geometry geo = o.getObservationGeometry().getGeometry();
 				if(geo instanceof Point) {
@@ -478,10 +478,10 @@ public class ObservationEditActivity extends FragmentActivity {
 			Map<String, String> propertyMap = new HashMap<String, String>();
 			LinearLayout form = (LinearLayout) findViewById(R.id.form);
 			savePropertyFieldsToMap(form, propertyMap);
-			propertyMap.put("TYPE", typeSpinner.getSelectedItem().toString());
+			propertyMap.put("type", typeSpinner.getSelectedItem().toString());
 	        propertyMap.put("EVENTLEVEL", levelSpinner.getSelectedItem().toString());
 
-			propertyMap.put("EVENTDATE", String.valueOf(date.getTime()));
+			propertyMap.put("timestamp", String.valueOf(date.getTime()));
 			propertyMap.put("LOCATION_ACCURACY", Float.toString(l.getAccuracy()));
 			propertyMap.put("LOCATION_PROVIDER", l.getProvider());
 			propertyMap.put("LOCATION_TIME_DELTA", Long.toString(timeMs(locationElapsedTimeMs)));

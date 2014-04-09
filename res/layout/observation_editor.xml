@@ -95,7 +95,7 @@
 	            android:orientation="horizontal">
 	        <mil.nga.giat.mage.form.MageTextView  
 	            android:id="@+id/date"
-	            mageForm:propertyKey="EVENTDATE"
+	            mageForm:propertyKey="timestamp"
 	            mageForm:propertyType="date"
 	            android:layout_width="wrap_content"
 	            android:layout_height="wrap_content"
@@ -170,7 +170,7 @@
 		    android:layout_height="wrap_content"
 		    android:layout_marginTop="5dip"
 	       	android:layout_marginBottom="20dip" 
-	       	mageForm:propertyKey="TYPE"
+	       	mageForm:propertyKey="type"
 	       	mageForm:propertyType="multichoice"
 	       	android:entries="@array/types_array"/>
 	    <TextView android:layout_width="fill_parent"

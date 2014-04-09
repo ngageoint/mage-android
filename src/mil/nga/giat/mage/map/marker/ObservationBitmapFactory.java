@@ -24,7 +24,7 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 public class ObservationBitmapFactory {
 
     private static final String DEFAULT_ASSET = "markers/default.png";
-    private static final String TYPE_PROPERTY = "TYPE";
+    private static final String TYPE_PROPERTY = "type";
     private static final String LEVEL_PROPERTY = "EVENTLEVEL";
     
     private static Pattern pattern = Pattern.compile("\\W");
