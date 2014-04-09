@@ -76,11 +76,11 @@ public class LandingActivity extends FragmentActivity implements ListView.OnItem
         		text.setText(getItem(position));
         		ImageView iv = (ImageView)view.findViewById(R.id.drawer_item_icon);
         		if (position == 0) {
-        			iv.setImageResource(R.drawable.ic_map_white);
+        			iv.setImageResource(R.drawable.ic_globe_white);
         		} else if (position == 1) {
-        			iv.setImageResource(R.drawable.ic_compass_white);
+        			iv.setImageResource(R.drawable.ic_map_marker_white);
         		} else if (position == 2) {
-        			iv.setImageResource(R.drawable.ic_settings_white);
+        			iv.setImageResource(R.drawable.ic_users_white);
         		}
         		
         		return view;

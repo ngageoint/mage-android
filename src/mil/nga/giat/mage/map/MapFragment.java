@@ -104,7 +104,7 @@ public class MapFragment extends Fragment implements OnMapLongClickListener, OnM
         com.google.android.gms.maps.MapFragment mapFragment = 
                 ((com.google.android.gms.maps.MapFragment) getFragmentManager().findFragmentById(R.id.map));
 
-        if(mapFragment != null && !getActivity().isDestroyed()) {
+        if (mapFragment != null && !getActivity().isDestroyed()) {
             FragmentManager manager = getFragmentManager();
             FragmentTransaction t = manager.beginTransaction();
             FragmentTransaction t2 = t.remove(mapFragment).detach(mapFragment);
