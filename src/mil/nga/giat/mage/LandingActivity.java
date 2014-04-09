@@ -2,6 +2,8 @@ package mil.nga.giat.mage;
 
 import mil.nga.giat.mage.login.LoginActivity;
 import mil.nga.giat.mage.map.MapFragment;
+import mil.nga.giat.mage.navigation.DrawerItem;
+import mil.nga.giat.mage.newsfeed.NewsFeedCursorAdapter;
 import mil.nga.giat.mage.newsfeed.NewsFeedFragment;
 import mil.nga.giat.mage.newsfeed.PeopleFeedFragment;
 import mil.nga.giat.mage.observation.ObservationEditActivity;
@@ -39,7 +41,7 @@ import android.widget.TextView;
  */
 public class LandingActivity extends FragmentActivity implements ListView.OnItemClickListener {	
 	
-	private String[] drawerItems;
+	private DrawerItem[] drawerItems;
     private DrawerLayout drawerLayout;
     private ListView drawerList;
     private ActionBarDrawerToggle drawerToggle;
@@ -59,29 +61,30 @@ public class LandingActivity extends FragmentActivity implements ListView.OnItem
  		// Start location services
  		mage.initLocationService();
 
- 		drawerItems = new String[] {"Map", "Observations", "People", "Settings", "Logout"};
+ 		drawerItems = new DrawerItem[] {
+	        new DrawerItem("Map", R.drawable.ic_globe_white, new MapFragment()),
+	        new DrawerItem("Observations", R.drawable.ic_map_marker_white, new NewsFeedFragment()),
+	        new DrawerItem("People", R.drawable.ic_users_white, new PeopleFeedFragment()),
+	        new DrawerItem("Settings", R.drawable.ic_settings_white, new PublicPreferencesFragment()),
+	        new DrawerItem("Logout", R.drawable.ic_settings_white)
+ 		};
 
         drawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawerList = (ListView) findViewById(R.id.left_drawer);
 
         // Set the adapter for the list view
-        drawerList.setAdapter(new ArrayAdapter<String>(this, R.layout.drawer_list_item, drawerItems) {
+        drawerList.setAdapter(new ArrayAdapter<DrawerItem>(this, R.layout.drawer_list_item, drawerItems) {
         	@Override
         	public View getView (int position, View view, ViewGroup parent) {
         		if (view == null) {
         			LayoutInflater inflater = (LayoutInflater)getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         			view = inflater.inflate(R.layout.drawer_list_item, null);
         		}
+        		DrawerItem item = getItem(position);
         		TextView text = (TextView)view.findViewById(R.id.drawer_item_text);
-        		text.setText(getItem(position));
+        		text.setText(item.getItemText());
         		ImageView iv = (ImageView)view.findViewById(R.id.drawer_item_icon);
-        		if (position == 0) {
-        			iv.setImageResource(R.drawable.ic_globe_white);
-        		} else if (position == 1) {
-        			iv.setImageResource(R.drawable.ic_map_marker_white);
-        		} else if (position == 2) {
-        			iv.setImageResource(R.drawable.ic_users_white);
-        		}
+        		iv.setImageResource(item.getDrawableId());
         		
         		return view;
         	}
@@ -203,40 +206,24 @@ public class LandingActivity extends FragmentActivity implements ListView.OnItem
 	}
 
     @Override
-    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-        Fragment fragment = null;
-        String title = null;
-        switch (position) {
-            case 0: {
-                fragment = new MapFragment();
-                title = "MAGE";
-                break;
-            }
-            case 1: {
-                fragment = new NewsFeedFragment();
-                title = "Observations";
-                break;
-            }
-            case 2: {
-                fragment = new PeopleFeedFragment();
-                title = "People";
-                break;
-            }
-            case 3: {
-                fragment = new PublicPreferencesFragment();
-                title = "Settings";
-                break;
-            }
-            case 4: {
-                // TODO : wipe user certs, really just wipe out the token from shared preferences
-                UserUtility.getInstance(getApplicationContext()).clearTokenInformation();
-                startActivity(new Intent(getApplicationContext(), LoginActivity.class));
-                finish();
-                return;
-            }
-            default: {
-                // TODO not sure what to do here, if anything (fix your code)
-            }
+    public void onItemClick(AdapterView<?> adapterView, View view, int position, long id) {
+    	ArrayAdapter<DrawerItem> adapter = (ArrayAdapter<DrawerItem>) adapterView.getAdapter();
+    	DrawerItem item = adapter.getItem(position);
+        Fragment fragment = item.getFragment();
+        String title = item.getItemText();
+        if (fragment == null) {
+	        switch (position) {
+	            case 4: {
+	                // TODO : wipe user certs, really just wipe out the token from shared preferences
+	                UserUtility.getInstance(getApplicationContext()).clearTokenInformation();
+	                startActivity(new Intent(getApplicationContext(), LoginActivity.class));
+	                finish();
+	                return;
+	            }
+	            default: {
+	                // TODO not sure what to do here, if anything (fix your code)
+	            }
+	        }
         }
         
         Bundle args = new Bundle();
