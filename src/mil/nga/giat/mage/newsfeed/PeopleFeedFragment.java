@@ -1,22 +1,15 @@
 package mil.nga.giat.mage.newsfeed;
 
 import java.sql.SQLException;
-import java.util.Collection;
 
 import mil.nga.giat.mage.R;
-import mil.nga.giat.mage.sdk.datastore.DaoStore;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
-import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
-import mil.nga.giat.mage.sdk.event.observation.IObservationEventListener;
-import mil.nga.giat.mage.sdk.exceptions.ObservationException;
 import android.database.Cursor;
 import android.os.Bundle;
-import android.support.v4.app.Fragment;
-import android.util.Log;
+import android.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ListView;
 
 import com.j256.ormlite.android.AndroidDatabaseResults;
 import com.j256.ormlite.dao.CloseableIterator;

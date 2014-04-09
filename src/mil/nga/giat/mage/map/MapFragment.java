@@ -27,9 +27,9 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentTransaction;
+import android.app.Fragment;
+import android.app.FragmentManager;
+import android.app.FragmentTransaction;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -42,7 +42,6 @@ import com.google.android.gms.maps.GoogleMap.CancelableCallback;
 import com.google.android.gms.maps.GoogleMap.OnMapLongClickListener;
 import com.google.android.gms.maps.GoogleMap.OnMyLocationButtonClickListener;
 import com.google.android.gms.maps.LocationSource;
-import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.TileOverlay;
@@ -77,8 +76,9 @@ public class MapFragment extends Fragment implements OnMapLongClickListener, OnM
 
         preferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
 
-        map = ((SupportMapFragment) getFragmentManager().findFragmentById(R.id.map)).getMap();
-
+        Fragment f = getFragmentManager().findFragmentById(R.id.map);
+        map = ((com.google.android.gms.maps.MapFragment) getFragmentManager().findFragmentById(R.id.map)).getMap();
+        
         mapType = Integer.parseInt(preferences.getString("baseLayer", "1"));
         map.setMapType(mapType);
 
@@ -101,7 +101,8 @@ public class MapFragment extends Fragment implements OnMapLongClickListener, OnM
     }
     
     private void killOldMap() {
-        SupportMapFragment mapFragment = ((SupportMapFragment) getFragmentManager().findFragmentById(R.id.map));
+        com.google.android.gms.maps.MapFragment mapFragment = 
+                ((com.google.android.gms.maps.MapFragment) getFragmentManager().findFragmentById(R.id.map));
 
         if(mapFragment != null && !getActivity().isDestroyed()) {
             FragmentManager manager = getFragmentManager();

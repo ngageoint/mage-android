@@ -10,22 +10,19 @@ import java.util.Map;
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.form.MageTextView;
 import mil.nga.giat.mage.map.marker.ObservationBitmapFactory;
-import mil.nga.giat.mage.observation.ObservationViewActivity;
 import mil.nga.giat.mage.sdk.datastore.observation.Attachment;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
 import mil.nga.giat.mage.sdk.utils.DateUtility;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
+import android.app.Activity;
 import android.content.Context;
-import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Bitmap;
-import android.support.v4.app.FragmentActivity;
 import android.support.v4.widget.CursorAdapter;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -40,10 +37,10 @@ public class NewsFeedCursorAdapter extends CursorAdapter {
     private LayoutInflater inflater = null;
     private PreparedQuery<Observation> query;
     private SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm zz", Locale.ENGLISH);
-    private FragmentActivity activity;
+    private Activity activity;
     private Observation o;
 
-    public NewsFeedCursorAdapter(Context context, Cursor c, PreparedQuery<Observation> query, FragmentActivity activity) {
+    public NewsFeedCursorAdapter(Context context, Cursor c, PreparedQuery<Observation> query, Activity activity) {
         super(context, c, false);
         inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         this.activity = activity;

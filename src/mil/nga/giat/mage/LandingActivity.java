@@ -1,26 +1,22 @@
 package mil.nga.giat.mage;
 
-import java.util.Locale;
-
 import mil.nga.giat.mage.login.LoginActivity;
 import mil.nga.giat.mage.map.MapFragment;
 import mil.nga.giat.mage.newsfeed.NewsFeedFragment;
 import mil.nga.giat.mage.newsfeed.PeopleFeedFragment;
 import mil.nga.giat.mage.observation.ObservationEditActivity;
-import mil.nga.giat.mage.preferences.PublicPreferencesActivity;
+import mil.nga.giat.mage.preferences.PublicPreferencesFragment;
 import mil.nga.giat.mage.sdk.location.LocationService;
 import mil.nga.giat.mage.sdk.utils.UserUtility;
-import android.app.Activity;
+import android.app.Fragment;
+import android.app.FragmentManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.location.Location;
 import android.os.Bundle;
 import android.support.v4.app.ActionBarDrawerToggle;
-import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.widget.DrawerLayout;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
@@ -28,6 +24,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.ListView;
@@ -40,11 +37,7 @@ import android.widget.TextView;
  * @author wiedemannse
  * 
  */
-public class LandingActivity extends FragmentActivity {
-	
-	private static final int RESULT_PUBLIC_PREFERENCES = 1;
-	private static final int RESULT_MAP_PREFERENCES = 2;
-	
+public class LandingActivity extends FragmentActivity implements ListView.OnItemClickListener {	
 	
 	private String[] drawerItems;
     private DrawerLayout drawerLayout;
@@ -57,34 +50,31 @@ public class LandingActivity extends FragmentActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_landing);
         
+        MAGE mage = (MAGE) getApplication();
+        
         // FIXME : need to consider connectivity before talking to the server!!!
- 		((MAGE) getApplication()).startFetching();
- 		
- 		((MAGE) getApplication()).startPushing();
+ 		mage.startFetching();
+ 		mage.startPushing();
  		
  		// Start location services
- 		((MAGE) getApplication()).initLocationService();
+ 		mage.initLocationService();
 
- 		drawerItems = new String[3];
- 		drawerItems[0] = "Map";
- 		drawerItems[1] = "Observations";
- 		drawerItems[2] = "People";
+ 		drawerItems = new String[] {"Map", "Observations", "People", "Settings", "Logout"};
+
         drawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawerList = (ListView) findViewById(R.id.left_drawer);
 
         // Set the adapter for the list view
-        drawerList.setAdapter(new ArrayAdapter<String>(this,
-                R.layout.drawer_list_item, drawerItems) {
+        drawerList.setAdapter(new ArrayAdapter<String>(this, R.layout.drawer_list_item, drawerItems) {
         	@Override
-        	public View getView (int position, View convertView, ViewGroup parent) {
-        		View v = convertView;
-        		if (v == null) {
+        	public View getView (int position, View view, ViewGroup parent) {
+        		if (view == null) {
         			LayoutInflater inflater = (LayoutInflater)getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-        			v = inflater.inflate(R.layout.drawer_list_item, null);
+        			view = inflater.inflate(R.layout.drawer_list_item, null);
         		}
-        		TextView text = (TextView)v.findViewById(R.id.drawer_item_text);
+        		TextView text = (TextView)view.findViewById(R.id.drawer_item_text);
         		text.setText(getItem(position));
-        		ImageView iv = (ImageView)v.findViewById(R.id.drawer_item_icon);
+        		ImageView iv = (ImageView)view.findViewById(R.id.drawer_item_icon);
         		if (position == 0) {
         			iv.setImageResource(R.drawable.ic_map_white);
         		} else if (position == 1) {
@@ -92,18 +82,19 @@ public class LandingActivity extends FragmentActivity {
         		} else if (position == 2) {
         			iv.setImageResource(R.drawable.ic_settings_white);
         		}
-        		return v;
+        		
+        		return view;
         	}
         });
         
         // Set the list's click listener
-        drawerList.setOnItemClickListener(new DrawerItemClickListener(this, drawerList, drawerLayout));
+        drawerList.setOnItemClickListener(this);
 
         actionbarToggleHandler();
         
         // initialize with map
         MapFragment mf = new MapFragment();
-        FragmentManager fragmentManager = getSupportFragmentManager();
+        FragmentManager fragmentManager = getFragmentManager();
 	    fragmentManager.beginTransaction()
 	                   .replace(R.id.content_frame, mf)
 	                   .commit();
@@ -124,13 +115,11 @@ public class LandingActivity extends FragmentActivity {
              @Override  
              public void onDrawerOpened(View drawerView) { 
             	 super.onDrawerOpened(drawerView);
-                  getActionBar().setTitle("Navigation");
                   invalidateOptionsMenu();
              }  
         };
         drawerLayout.setDrawerListener(drawerToggle);  
    }
-    
     
     @Override
     protected void onPostCreate(Bundle savedInstanceState) {
@@ -143,48 +132,15 @@ public class LandingActivity extends FragmentActivity {
         super.onConfigurationChanged(newConfig);
         drawerToggle.onConfigurationChanged(newConfig);
     }
-	
-
-//	/**
-//	 * The {@link android.support.v4.view.PagerAdapter} that will provide
-//	 * fragments for each of the sections. We use a
-//	 * {@link android.support.v4.app.FragmentPagerAdapter} derivative, which
-//	 * will keep every loaded fragment in memory. If this becomes too memory
-//	 * intensive, it may be best to switch to a
-//	 * {@link android.support.v4.app.FragmentStatePagerAdapter}.
-//	 */
-//	SectionsPagerAdapter mSectionsPagerAdapter;
-//
-//	/**
-//	 * The {@link ViewPager} that will host the section contents.
-//	 */
-//	ViewPager mViewPager;
-//	PagerTabStrip tabStrip;
-//
-//	@Override
-//	protected void onCreate(Bundle savedInstanceState) {
-//		super.onCreate(savedInstanceState);
-//		setContentView(R.layout.activity_landing);
-//
-//		mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
-//
-//		// Set up the ViewPager with the sections adapter.
-//		mViewPager = (ViewPager) findViewById(R.id.pager);
-//		tabStrip = (PagerTabStrip)findViewById(R.id.pager_tab_strip);
-//		tabStrip.setTabIndicatorColor(getResources().getColor(android.R.color.holo_blue_bright));
-//		mViewPager.setOffscreenPageLimit(2);
-//		mViewPager.setAdapter(mSectionsPagerAdapter);
-//
-//		
-//		
-//	}
 
 	@Override
 	protected void onDestroy() {
 		super.onDestroy();
-		((MAGE) getApplication()).destroyFetching();
-		((MAGE) getApplication()).destroyPushing();
-		((MAGE) getApplication()).destroyLocationService();
+		
+		MAGE mage = (MAGE) getApplication();
+		mage.destroyFetching();
+		mage.destroyPushing();
+		mage.destroyLocationService();
 	}
 
 	@Override
@@ -216,25 +172,12 @@ public class LandingActivity extends FragmentActivity {
 			return true;
 		}
 		switch (item.getItemId()) {
-			case R.id.menu_settings: {
-				Intent i = new Intent(this, PublicPreferencesActivity.class);
-				startActivityForResult(i, RESULT_PUBLIC_PREFERENCES);
-				break;
-			}
-			case R.id.menu_logout: {
-				// TODO : wipe user certs, really just wipe out the token from shared preferences
-				UserUtility.getInstance(getApplicationContext()).clearTokenInformation();
-				startActivity(new Intent(getApplicationContext(), LoginActivity.class));
-				finish();
-				break;
-			}
-
-		case R.id.observation_new:
-			 Intent intent = new Intent(this, ObservationEditActivity.class);
-			 LocationService ls = ((MAGE) getApplication()).getLocationService();
-			 Location l = ls.getLocation();
-			 intent.putExtra(ObservationEditActivity.LOCATION, l);
-	       	 startActivity(intent);
+    		case R.id.observation_new:
+    			 Intent intent = new Intent(this, ObservationEditActivity.class);
+    			 LocationService ls = ((MAGE) getApplication()).getLocationService();
+    			 Location l = ls.getLocation();
+    			 intent.putExtra(ObservationEditActivity.LOCATION, l);
+    	       	 startActivity(intent);
 		}
 
 		return super.onOptionsItemSelected(item);
@@ -248,73 +191,6 @@ public class LandingActivity extends FragmentActivity {
         return super.onPrepareOptionsMenu(menu);
     }
 
-	@Override
-	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-		super.onActivityResult(requestCode, resultCode, data);
-		switch (requestCode) {
-		case RESULT_PUBLIC_PREFERENCES:
-			System.out.println(RESULT_PUBLIC_PREFERENCES);
-			break;
-		case RESULT_MAP_PREFERENCES:
-			System.out.println(RESULT_MAP_PREFERENCES);
-			break;
-		}
-	}
-
-	/**
-	 * A {@link FragmentPagerAdapter} that returns a fragment corresponding to
-	 * one of the sections/tabs/pages.
-	 */
-	public class SectionsPagerAdapter extends FragmentPagerAdapter {
-
-		public SectionsPagerAdapter(FragmentManager fm) {
-			super(fm);
-		}
-
-		@Override
-		public Fragment getItem(int position) {
-			Fragment fragment = null;
-			switch (position) {
-				case 0: {
-					fragment = new MapFragment();
-					break;
-				}
-				case 1: {
-					fragment = new NewsFeedFragment();
-					break;
-				}
-				case 2: {
-					fragment = new PeopleFeedFragment();
-					break;
-				}
-				default: {
-					// TODO not sure what to do here, if anything (fix your code)
-				}
-			}
-			
-			return fragment;
-		}
-
-		@Override
-		public int getCount() {
-			return 3;
-		}
-
-		@Override
-		public CharSequence getPageTitle(int position) {
-			Locale l = Locale.getDefault();
-			switch (position) {
-			case 0:
-				return getString(R.string.title_map).toUpperCase(l);
-			case 1:
-				return getString(R.string.title_observations).toUpperCase(l);
-			case 2:
-				return getString(R.string.title_people).toUpperCase(l);
-			}
-			return null;
-		}
-	}
-
 	/**
 	 * Takes you to the home screen
 	 */
@@ -326,4 +202,56 @@ public class LandingActivity extends FragmentActivity {
 		startActivity(startMain);
 	}
 
+    @Override
+    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+        Fragment fragment = null;
+        String title = null;
+        switch (position) {
+            case 0: {
+                fragment = new MapFragment();
+                title = "MAGE";
+                break;
+            }
+            case 1: {
+                fragment = new NewsFeedFragment();
+                title = "Observations";
+                break;
+            }
+            case 2: {
+                fragment = new PeopleFeedFragment();
+                title = "People";
+                break;
+            }
+            case 3: {
+                fragment = new PublicPreferencesFragment();
+                title = "Settings";
+                break;
+            }
+            case 4: {
+                // TODO : wipe user certs, really just wipe out the token from shared preferences
+                UserUtility.getInstance(getApplicationContext()).clearTokenInformation();
+                startActivity(new Intent(getApplicationContext(), LoginActivity.class));
+                finish();
+                return;
+            }
+            default: {
+                // TODO not sure what to do here, if anything (fix your code)
+            }
+        }
+        
+        Bundle args = new Bundle();
+        args.putInt("POSITION", position);
+        fragment.setArguments(args);
+
+        // Insert the fragment by replacing any existing fragment
+        FragmentManager fragmentManager = getFragmentManager();
+        fragmentManager.beginTransaction()
+                       .replace(R.id.content_frame, fragment)
+                       .commit();
+
+        // Highlight the selected item, update the title, and close the drawer
+        drawerList.setItemChecked(position, true);
+        getActionBar().setTitle(title);
+        drawerLayout.closeDrawer(drawerList);        
+    }
 }
