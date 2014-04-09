@@ -3,6 +3,7 @@ package mil.nga.giat.mage;
 import mil.nga.giat.mage.login.LoginActivity;
 import mil.nga.giat.mage.map.MapFragment;
 import mil.nga.giat.mage.navigation.DrawerItem;
+import mil.nga.giat.mage.newsfeed.NewsFeedCursorAdapter;
 import mil.nga.giat.mage.newsfeed.NewsFeedFragment;
 import mil.nga.giat.mage.newsfeed.PeopleFeedFragment;
 import mil.nga.giat.mage.observation.ObservationEditActivity;
@@ -61,10 +62,10 @@ public class LandingActivity extends FragmentActivity implements ListView.OnItem
  		mage.initLocationService();
 
  		drawerItems = new DrawerItem[5];
- 		drawerItems[0] = new DrawerItem("Map", R.drawable.ic_map_white);
- 		drawerItems[1] = new DrawerItem("Observations", R.drawable.ic_compass_white);
- 		drawerItems[2] = new DrawerItem("People", R.drawable.ic_settings_white);
- 		drawerItems[3] = new DrawerItem("Settings", R.drawable.ic_settings_white);
+ 		drawerItems[0] = new DrawerItem("Map", R.drawable.ic_map_white, new MapFragment());
+ 		drawerItems[1] = new DrawerItem("Observations", R.drawable.ic_compass_white, new NewsFeedFragment());
+ 		drawerItems[2] = new DrawerItem("People", R.drawable.ic_settings_white, new PeopleFeedFragment());
+ 		drawerItems[3] = new DrawerItem("Settings", R.drawable.ic_settings_white, new PublicPreferencesFragment());
  		drawerItems[4] = new DrawerItem("Logout", R.drawable.ic_settings_white);
 
         drawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -204,40 +205,24 @@ public class LandingActivity extends FragmentActivity implements ListView.OnItem
 	}
 
     @Override
-    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-        Fragment fragment = null;
-        String title = null;
-        switch (position) {
-            case 0: {
-                fragment = new MapFragment();
-                title = "MAGE";
-                break;
-            }
-            case 1: {
-                fragment = new NewsFeedFragment();
-                title = "Observations";
-                break;
-            }
-            case 2: {
-                fragment = new PeopleFeedFragment();
-                title = "People";
-                break;
-            }
-            case 3: {
-                fragment = new PublicPreferencesFragment();
-                title = "Settings";
-                break;
-            }
-            case 4: {
-                // TODO : wipe user certs, really just wipe out the token from shared preferences
-                UserUtility.getInstance(getApplicationContext()).clearTokenInformation();
-                startActivity(new Intent(getApplicationContext(), LoginActivity.class));
-                finish();
-                return;
-            }
-            default: {
-                // TODO not sure what to do here, if anything (fix your code)
-            }
+    public void onItemClick(AdapterView<?> adapterView, View view, int position, long id) {
+    	ArrayAdapter<DrawerItem> adapter = (ArrayAdapter<DrawerItem>) adapterView.getAdapter();
+    	DrawerItem item = adapter.getItem(position);
+        Fragment fragment = item.getFragment();
+        String title = item.getItemText();
+        if (fragment == null) {
+	        switch (position) {
+	            case 4: {
+	                // TODO : wipe user certs, really just wipe out the token from shared preferences
+	                UserUtility.getInstance(getApplicationContext()).clearTokenInformation();
+	                startActivity(new Intent(getApplicationContext(), LoginActivity.class));
+	                finish();
+	                return;
+	            }
+	            default: {
+	                // TODO not sure what to do here, if anything (fix your code)
+	            }
+	        }
         }
         
         Bundle args = new Bundle();

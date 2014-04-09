@@ -1,9 +1,21 @@
 package mil.nga.giat.mage.navigation;
 
+import android.app.Fragment;
+
 public class DrawerItem {
 	private String itemText;
 	private Integer drawableId;
 	private Boolean isHeader = false;
+	private Fragment fragment;
+	
+	public Fragment getFragment() {
+		return fragment;
+	}
+
+	public void setFragment(Fragment fragment) {
+		this.fragment = fragment;
+	}
+
 	public Boolean getIsHeader() {
 		return isHeader;
 	}
@@ -35,12 +47,22 @@ public class DrawerItem {
 	}
 	
 	public DrawerItem(String itemText) {
-		this(itemText, null);
+		this(itemText, null, null);
+	}
+	
+	public DrawerItem(String itemText, Fragment fragment) {
+		this(itemText, null, fragment);
 	}
 	
 	public DrawerItem(String itemText, Integer drawableId) {
 		this.itemText = itemText;
 		this.drawableId = drawableId;
+	}
+	
+	public DrawerItem(String itemText, Integer drawableId, Fragment fragment) {
+		this.itemText = itemText;
+		this.drawableId = drawableId;
+		this.fragment = fragment;
 	}
 
 	public String getItemText() {
