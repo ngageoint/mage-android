@@ -4,6 +4,7 @@ import java.io.File;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Locale;
 import java.util.Map;
 
 import mil.nga.giat.mage.R;
@@ -57,7 +58,7 @@ public class ObservationViewActivity extends FragmentActivity {
 	private Observation o;
 	private Map<String, String> propertiesMap;
 	DecimalFormat latLngFormat = new DecimalFormat("###.#####");
-	private SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm zz");
+	private SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm zz", Locale.getDefault());
 	
 	public class AttachmentGalleryTask extends AsyncTask<Attachment, ImageView, Boolean> {
 
@@ -203,7 +204,7 @@ public class ObservationViewActivity extends FragmentActivity {
 		try {
 			o = ObservationHelper.getInstance(getApplicationContext()).readByPrimaryKey(getIntent().getLongExtra(OBSERVATION_ID, 0L));
 			propertiesMap = o.getPropertiesMap();
-			this.setTitle(propertiesMap.get("TYPE"));
+			this.setTitle(propertiesMap.get("type"));
 			Geometry geo = o.getObservationGeometry().getGeometry();
 			if(geo instanceof PointGeometry) {
 				PointGeometry pointGeo = (PointGeometry)geo;

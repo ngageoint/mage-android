@@ -32,7 +32,7 @@
             android:textColor="#222222"
             android:textAppearance="?android:attr/textAppearanceMedium"
             android:textStyle="bold"
-            mageForm:propertyKey="TYPE" />
+            mageForm:propertyKey="type" />
     </LinearLayout>
     
     <LinearLayout
@@ -59,7 +59,7 @@
                 android:text="DATE"
                 style="@style/ViewTextView"
                 android:textAppearance="?android:attr/textAppearanceSmall"
-                mageForm:propertyKey="EVENTDATE"
+                mageForm:propertyKey="timestamp"
                 mageForm:propertyType="date" />
 
 
