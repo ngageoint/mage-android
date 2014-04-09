@@ -1,5 +1,6 @@
 package mil.nga.giat.mage;
 
+import mil.nga.giat.mage.help.HelpFragment;
 import mil.nga.giat.mage.login.LoginActivity;
 import mil.nga.giat.mage.map.MapFragment;
 import mil.nga.giat.mage.navigation.DrawerItem;
@@ -65,6 +66,7 @@ public class LandingActivity extends FragmentActivity implements ListView.OnItem
 	        new DrawerItem("Observations", R.drawable.ic_map_marker_white, new NewsFeedFragment()),
 	        new DrawerItem("People", R.drawable.ic_users_white, new PeopleFeedFragment()),
 	        new DrawerItem("Settings", R.drawable.ic_settings_white, new PublicPreferencesFragment()),
+	        new DrawerItem("Help", R.drawable.ic_question_circle_white, new HelpFragment()),
 	        new DrawerItem("Logout", R.drawable.ic_power_off_white)
  		};
 
@@ -145,13 +147,6 @@ public class LandingActivity extends FragmentActivity implements ListView.OnItem
 		mage.destroyPushing();
 		mage.destroyLocationService();
 	}
-
-	@Override
-	public boolean onCreateOptionsMenu(Menu menu) {
-		// Inflate the menu; this adds items to the action bar if it is present.
-		getMenuInflater().inflate(R.menu.landing, menu);
-		return true;
-	}
 	
 	@Override
 	public boolean onKeyDown(int keyCode, KeyEvent event) {
@@ -174,25 +169,9 @@ public class LandingActivity extends FragmentActivity implements ListView.OnItem
 			// drawer handled the event
 			return true;
 		}
-		switch (item.getItemId()) {
-    		case R.id.observation_new:
-    			 Intent intent = new Intent(this, ObservationEditActivity.class);
-    			 LocationService ls = ((MAGE) getApplication()).getLocationService();
-    			 Location l = ls.getLocation();
-    			 intent.putExtra(ObservationEditActivity.LOCATION, l);
-    	       	 startActivity(intent);
-		}
-
+		
 		return super.onOptionsItemSelected(item);
 	}
-	
-	 @Override
-    public boolean onPrepareOptionsMenu(Menu menu) {
-        // If the nav drawer is open, hide action items related to the content view
-        boolean drawerOpen = drawerLayout.isDrawerOpen(drawerList);
-        menu.findItem(R.id.observation_new).setVisible(!drawerOpen);
-        return super.onPrepareOptionsMenu(menu);
-    }
 
 	/**
 	 * Takes you to the home screen

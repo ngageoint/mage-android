@@ -3,19 +3,26 @@ package mil.nga.giat.mage.newsfeed;
 import java.sql.SQLException;
 import java.util.Collection;
 
+import mil.nga.giat.mage.MAGE;
 import mil.nga.giat.mage.R;
+import mil.nga.giat.mage.observation.ObservationEditActivity;
 import mil.nga.giat.mage.observation.ObservationViewActivity;
 import mil.nga.giat.mage.sdk.datastore.DaoStore;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
 import mil.nga.giat.mage.sdk.event.observation.IObservationEventListener;
 import mil.nga.giat.mage.sdk.exceptions.ObservationException;
+import mil.nga.giat.mage.sdk.location.LocationService;
 import android.content.Intent;
 import android.database.Cursor;
+import android.location.Location;
 import android.os.Bundle;
 import android.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
@@ -36,6 +43,7 @@ public class NewsFeedFragment extends Fragment implements IObservationEventListe
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 		View rootView = inflater.inflate(R.layout.fragment_news_feed, container, false);
+		setHasOptionsMenu(true);
 
 		ListView lv = (ListView) rootView.findViewById(R.id.news_feed_list);
 		try {
@@ -70,9 +78,29 @@ public class NewsFeedFragment extends Fragment implements IObservationEventListe
 		} catch (Exception e) {
 			
 		}
-		
-		
 	}
+	
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        // TODO Add your menu entries here
+        super.onCreateOptionsMenu(menu, inflater);
+        
+        inflater.inflate(R.menu.landing, menu);
+    }
+    
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.observation_new:
+                 Intent intent = new Intent(getActivity(), ObservationEditActivity.class);
+                 LocationService ls = ((MAGE) getActivity().getApplication()).getLocationService();
+                 Location l = ls.getLocation();
+                 intent.putExtra(ObservationEditActivity.LOCATION, l);
+                 startActivity(intent);
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
 
 	private PreparedQuery<Observation> buildQuery(Dao<Observation, Long> oDao) throws SQLException {
 		QueryBuilder<Observation, Long> qb = oDao.queryBuilder();
@@ -136,15 +164,14 @@ public class NewsFeedFragment extends Fragment implements IObservationEventListe
 	@Override
 	public void onObservationUpdated(final Observation observation) {
 		getActivity().runOnUiThread(new Runnable() {
-		@Override
-		 public void run() {
-			 try {
-			 adapter.changeCursor(obtainCursor(query, oDao));
-			 } catch (Exception e) {
-				 Log.e("NewsFeedFragment", "Unable to change cursor", e);
-			 }
-		 }
+    		@Override
+    		 public void run() {
+    			 try {
+    			 adapter.changeCursor(obtainCursor(query, oDao));
+    			 } catch (Exception e) {
+    				 Log.e("NewsFeedFragment", "Unable to change cursor", e);
+    			 }
+    		 }
 		 });
-
 	}
 }
