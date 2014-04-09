@@ -7,7 +7,16 @@ public class DrawerItem {
 	private Integer drawableId;
 	private Boolean isHeader = false;
 	private Fragment fragment;
+	private int id;
 	
+	public int getId() {
+		return id;
+	}
+
+	public void setId(int id) {
+		this.id = id;
+	}
+
 	public Fragment getFragment() {
 		return fragment;
 	}
@@ -16,20 +25,12 @@ public class DrawerItem {
 		this.fragment = fragment;
 	}
 
-	public Boolean getIsHeader() {
+	public Boolean isHeader() {
 		return isHeader;
 	}
 
-	public void setIsHeader(Boolean isHeader) {
+	public void isHeader(Boolean isHeader) {
 		this.isHeader = isHeader;
-	}
-
-	public Boolean getShowCounter() {
-		return showCounter;
-	}
-
-	public void setShowCounter(Boolean showCounter) {
-		this.showCounter = showCounter;
 	}
 
 	public Integer getCount() {
@@ -40,29 +41,31 @@ public class DrawerItem {
 		this.count = count;
 	}
 
-	private Boolean showCounter = false;
 	private Integer count = 0;
 	
-	public DrawerItem() {
+	public DrawerItem(int id) {
+		this.id = id;
 	}
 	
-	public DrawerItem(String itemText) {
-		this(itemText, null, null);
+	public DrawerItem(int id, String itemText) {
+		this(id, itemText, null, null);
 	}
 	
-	public DrawerItem(String itemText, Fragment fragment) {
-		this(itemText, null, fragment);
+	public DrawerItem(int id, String itemText, Fragment fragment) {
+		this(id, itemText, null, fragment);
 	}
 	
-	public DrawerItem(String itemText, Integer drawableId) {
+	public DrawerItem(int id, String itemText, Integer drawableId) {
 		this.itemText = itemText;
 		this.drawableId = drawableId;
+		this.id = id;
 	}
 	
-	public DrawerItem(String itemText, Integer drawableId, Fragment fragment) {
+	public DrawerItem(int id, String itemText, Integer drawableId, Fragment fragment) {
 		this.itemText = itemText;
 		this.drawableId = drawableId;
 		this.fragment = fragment;
+		this.id = id;
 	}
 
 	public String getItemText() {
