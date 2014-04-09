@@ -10,8 +10,6 @@ import java.util.Map;
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.form.MageTextView;
 import mil.nga.giat.mage.map.marker.ObservationBitmapFactory;
-import mil.nga.giat.mage.sdk.datastore.common.Geometry;
-import mil.nga.giat.mage.sdk.datastore.common.PointGeometry;
 import mil.nga.giat.mage.sdk.datastore.observation.Attachment;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
@@ -46,6 +44,8 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.vividsolutions.jts.geom.Geometry;
+import com.vividsolutions.jts.geom.Point;
 
 public class ObservationViewActivity extends FragmentActivity {
 	
@@ -206,9 +206,9 @@ public class ObservationViewActivity extends FragmentActivity {
 			propertiesMap = o.getPropertiesMap();
 			this.setTitle(propertiesMap.get("type"));
 			Geometry geo = o.getObservationGeometry().getGeometry();
-			if(geo instanceof PointGeometry) {
-				PointGeometry pointGeo = (PointGeometry)geo;
-				((TextView)findViewById(R.id.location)).setText(latLngFormat.format(pointGeo.getLatitude()) + ", " + latLngFormat.format(pointGeo.getLongitude()));
+			if(geo instanceof Point) {
+				Point pointGeo = (Point)geo;
+				((TextView)findViewById(R.id.location)).setText(latLngFormat.format(pointGeo.getY()) + ", " + latLngFormat.format(pointGeo.getX()));
 				if(propertiesMap.containsKey("LOCATION_PROVIDER")) {
 					((TextView)findViewById(R.id.location_provider)).setText("("+propertiesMap.get("LOCATION_PROVIDER")+")");
 				} else {
@@ -230,7 +230,7 @@ public class ObservationViewActivity extends FragmentActivity {
 				
 				map.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, zoom));
 				
-                LatLng location = new LatLng(pointGeo.getLatitude(), pointGeo.getLongitude());
+                LatLng location = new LatLng(pointGeo.getY(), pointGeo.getX());
 				map.animateCamera(CameraUpdateFactory.newLatLngZoom(location, 15));
 				
 				map.addMarker(new MarkerOptions().position(location).icon(ObservationBitmapFactory.bitmapDescriptor(this, o)));				

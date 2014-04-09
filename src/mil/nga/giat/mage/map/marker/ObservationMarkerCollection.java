@@ -5,7 +5,6 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import mil.nga.giat.mage.observation.ObservationViewActivity;
-import mil.nga.giat.mage.sdk.datastore.common.PointGeometry;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import android.content.Context;
 import android.content.Intent;
@@ -17,6 +16,7 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.maps.android.MarkerManager;
+import com.vividsolutions.jts.geom.Point;
 
 public class ObservationMarkerCollection implements ObservationCollection, OnMarkerClickListener {
 
@@ -41,9 +41,9 @@ public class ObservationMarkerCollection implements ObservationCollection, OnMar
 
     @Override
     public void add(Observation o) {
-        PointGeometry point = (PointGeometry) o.getObservationGeometry().getGeometry();
+        Point point = (Point) o.getObservationGeometry().getGeometry();
         MarkerOptions options = new MarkerOptions()
-            .position(new LatLng(point.getLatitude(), point.getLongitude()))
+            .position(new LatLng(point.getY(), point.getX()))
             .icon(ObservationBitmapFactory.bitmapDescriptor(context, o))
             .visible(visible);       
 

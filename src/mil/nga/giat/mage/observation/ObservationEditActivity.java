@@ -14,8 +14,6 @@ import mil.nga.giat.mage.form.MageEditText;
 import mil.nga.giat.mage.form.MageSpinner;
 import mil.nga.giat.mage.form.MageTextView;
 import mil.nga.giat.mage.map.marker.ObservationBitmapFactory;
-import mil.nga.giat.mage.sdk.datastore.common.Geometry;
-import mil.nga.giat.mage.sdk.datastore.common.PointGeometry;
 import mil.nga.giat.mage.sdk.datastore.common.State;
 import mil.nga.giat.mage.sdk.datastore.observation.Attachment;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
@@ -67,9 +65,15 @@ import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.vividsolutions.jts.geom.Coordinate;
+import com.vividsolutions.jts.geom.Geometry;
+import com.vividsolutions.jts.geom.GeometryFactory;
+import com.vividsolutions.jts.geom.Point;
 
 public class ObservationEditActivity extends FragmentActivity {
 
+	private static final String LOG_NAME = ObservationEditActivity.class.getName();
+	
 	public static String OBSERVATION_ID = "OBSERVATION_ID";
 	public static String LOCATION = "LOCATION";
 	public static String INITIAL_LOCATION = "INITIAL_LOCATION";
@@ -83,6 +87,8 @@ public class ObservationEditActivity extends FragmentActivity {
 	
 	private static final long NEW_OBSERVATION = -1L;
 
+	private final GeometryFactory geometryFactory = new GeometryFactory();
+	
 	Date date;
 	DecimalFormat latLngFormat = new DecimalFormat("###.#####");
 	ArrayList<Attachment> attachments = new ArrayList<Attachment>();
@@ -154,14 +160,14 @@ public class ObservationEditActivity extends FragmentActivity {
 				date = new Date(Long.parseLong(propertiesMap.get("timestamp")));
 				((TextView) findViewById(R.id.date)).setText(date.toString());
 				Geometry geo = o.getObservationGeometry().getGeometry();
-				if(geo instanceof PointGeometry) {
-					PointGeometry point = (PointGeometry)geo;
+				if(geo instanceof Point) {
+					Point point = (Point)geo;
 					l = new Location(propertiesMap.get("LOCATION_PROVIDER"));
 					if (propertiesMap.containsKey("LOCATION_ACCURACY")) {
 						l.setAccuracy(Float.parseFloat(propertiesMap.get("LOCATION_ACCURACY")));
 					}
-					l.setLatitude(point.getLatitude());
-					l.setLongitude(point.getLongitude());
+					l.setLatitude(point.getY());
+					l.setLongitude(point.getX());
 				}
 				populatePropertyFieldsFromMap((LinearLayout)findViewById(R.id.form), propertiesMap);
 			} catch (ObservationException oe) {
@@ -466,7 +472,7 @@ public class ObservationEditActivity extends FragmentActivity {
 
 		case R.id.observation_save:
 			o.setState(State.ACTIVE);
-			o.setObservationGeometry(new ObservationGeometry(new PointGeometry(l.getLatitude(), l.getLongitude())));
+			o.setObservationGeometry(new ObservationGeometry(geometryFactory.createPoint(new Coordinate(l.getLongitude(), l.getLatitude()))));
 			
 			
 			Map<String, String> propertyMap = new HashMap<String, String>();
@@ -486,10 +492,10 @@ public class ObservationEditActivity extends FragmentActivity {
 			ObservationHelper oh = ObservationHelper.getInstance(getApplicationContext());
 			try {
 				Observation newObs = oh.create(o);
-				System.out.println(newObs);
+				Log.i(LOG_NAME, "Created new observation: " + newObs.toString());
 				finish();
 			} catch (Exception e) {
-				Log.e("Observation Edit", e.getMessage(), e);
+				Log.e(LOG_NAME, e.getMessage(), e);
 			}
 
 			break;
@@ -538,7 +544,7 @@ public class ObservationEditActivity extends FragmentActivity {
 		Intent intent = new Intent();
 		intent.setType("image/*, video/*");
 		intent.setAction(Intent.ACTION_GET_CONTENT);
-		Log.i("test", "build version sdk int: " + Build.VERSION.SDK_INT);
+		Log.i(LOG_NAME, "build version sdk int: " + Build.VERSION.SDK_INT);
 		if (Build.VERSION.SDK_INT >= 18) {
 			intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
 		}
