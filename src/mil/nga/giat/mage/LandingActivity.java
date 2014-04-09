@@ -59,13 +59,21 @@ public class LandingActivity extends FragmentActivity implements ListView.OnItem
  		
  		// Start location services
  		mage.initLocationService();
+ 		
+ 		DrawerItem viewHeader = new DrawerItem(-1, "Views");
+ 		viewHeader.isHeader(true);
+ 		DrawerItem extraHeader = new DrawerItem(-1, "Extra");
+ 		extraHeader.isHeader(true);
+ 		DrawerItem observationsItem = new DrawerItem(1, "Observations", R.drawable.ic_map_marker_white, new NewsFeedFragment());
 
  		drawerItems = new DrawerItem[] {
-	        new DrawerItem("Map", R.drawable.ic_globe_white, new MapFragment()),
-	        new DrawerItem("Observations", R.drawable.ic_map_marker_white, new NewsFeedFragment()),
-	        new DrawerItem("People", R.drawable.ic_users_white, new PeopleFeedFragment()),
-	        new DrawerItem("Settings", R.drawable.ic_settings_white, new PublicPreferencesFragment()),
-	        new DrawerItem("Logout", R.drawable.ic_power_off_white)
+ 				viewHeader,
+	        new DrawerItem(0, "Map", R.drawable.ic_globe_white, new MapFragment()),
+	        observationsItem,
+	        new DrawerItem(2, "People", R.drawable.ic_users_white, new PeopleFeedFragment()),
+	        extraHeader,
+	        new DrawerItem(3, "Settings", R.drawable.ic_settings_white, new PublicPreferencesFragment()),
+	        new DrawerItem(4, "Logout", R.drawable.ic_power_off_white)
  		};
 
         drawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -80,10 +88,27 @@ public class LandingActivity extends FragmentActivity implements ListView.OnItem
         			view = inflater.inflate(R.layout.drawer_list_item, null);
         		}
         		DrawerItem item = getItem(position);
+        		
+		        if (item.isHeader()) {
+		        	view.findViewById(R.id.drawer_divider).setVisibility(View.GONE);
+		        	view.findViewById(R.id.header_divider).setVisibility(View.VISIBLE);
+		        } else {
+		        	view.findViewById(R.id.header_divider).setVisibility(View.GONE);
+		        	view.findViewById(R.id.drawer_divider).setVisibility(View.VISIBLE);
+		        }
         		TextView text = (TextView)view.findViewById(R.id.drawer_item_text);
         		text.setText(item.getItemText());
-        		ImageView iv = (ImageView)view.findViewById(R.id.drawer_item_icon);
-        		iv.setImageResource(item.getDrawableId());
+        		if (item.getDrawableId() != null) {
+	        		ImageView iv = (ImageView)view.findViewById(R.id.drawer_item_icon);
+	        		iv.setImageResource(item.getDrawableId());
+        		}
+        		TextView countView = (TextView)view.findViewById(R.id.drawer_count);
+        		if (item.getCount() != 0) {
+        			countView.setVisibility(View.VISIBLE);
+        			countView.setText("" + item.getCount());
+        		} else {
+        			countView.setVisibility(View.GONE);
+        		}
         		
         		return view;
         	}
@@ -223,11 +248,12 @@ public class LandingActivity extends FragmentActivity implements ListView.OnItem
 	            }
 	            default: {
 	                // TODO not sure what to do here, if anything (fix your code)
+	            	// could just be unclickable
 	            }
 	        }
         }
-        if (currentActivity != position) {
-	    	currentActivity = position;
+        if (currentActivity != item.getId() && fragment != null) {
+	    	currentActivity = item.getId();
 	        Bundle args = new Bundle();
 	        args.putInt("POSITION", position);
 	        fragment.setArguments(args);
