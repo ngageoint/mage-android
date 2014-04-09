@@ -3,7 +3,6 @@ package mil.nga.giat.mage;
 import mil.nga.giat.mage.login.LoginActivity;
 import mil.nga.giat.mage.map.MapFragment;
 import mil.nga.giat.mage.navigation.DrawerItem;
-import mil.nga.giat.mage.newsfeed.NewsFeedCursorAdapter;
 import mil.nga.giat.mage.newsfeed.NewsFeedFragment;
 import mil.nga.giat.mage.newsfeed.PeopleFeedFragment;
 import mil.nga.giat.mage.observation.ObservationEditActivity;
@@ -45,7 +44,7 @@ public class LandingActivity extends FragmentActivity implements ListView.OnItem
     private DrawerLayout drawerLayout;
     private ListView drawerList;
     private ActionBarDrawerToggle drawerToggle;
-    
+    private Integer currentActivity;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -101,6 +100,7 @@ public class LandingActivity extends FragmentActivity implements ListView.OnItem
 	    fragmentManager.beginTransaction()
 	                   .replace(R.id.content_frame, mf)
 	                   .commit();
+	    currentActivity = 0;
     }
     
     private void actionbarToggleHandler() {  
@@ -207,6 +207,7 @@ public class LandingActivity extends FragmentActivity implements ListView.OnItem
 
     @Override
     public void onItemClick(AdapterView<?> adapterView, View view, int position, long id) {
+    	
     	ArrayAdapter<DrawerItem> adapter = (ArrayAdapter<DrawerItem>) adapterView.getAdapter();
     	DrawerItem item = adapter.getItem(position);
         Fragment fragment = item.getFragment();
@@ -225,16 +226,18 @@ public class LandingActivity extends FragmentActivity implements ListView.OnItem
 	            }
 	        }
         }
-        
-        Bundle args = new Bundle();
-        args.putInt("POSITION", position);
-        fragment.setArguments(args);
-
-        // Insert the fragment by replacing any existing fragment
-        FragmentManager fragmentManager = getFragmentManager();
-        fragmentManager.beginTransaction()
-                       .replace(R.id.content_frame, fragment)
-                       .commit();
+        if (currentActivity != position) {
+	    	currentActivity = position;
+	        Bundle args = new Bundle();
+	        args.putInt("POSITION", position);
+	        fragment.setArguments(args);
+	
+	        // Insert the fragment by replacing any existing fragment
+	        FragmentManager fragmentManager = getFragmentManager();
+	        fragmentManager.beginTransaction()
+	                       .replace(R.id.content_frame, fragment)
+	                       .commit();
+        }
 
         // Highlight the selected item, update the title, and close the drawer
         drawerList.setItemChecked(position, true);
