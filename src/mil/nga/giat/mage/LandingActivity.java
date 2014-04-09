@@ -67,11 +67,9 @@ public class LandingActivity extends FragmentActivity implements ListView.OnItem
  		DrawerItem observationsItem = new DrawerItem(1, "Observations", R.drawable.ic_map_marker_white, new NewsFeedFragment());
 
  		drawerItems = new DrawerItem[] {
- 				viewHeader,
 	        new DrawerItem(0, "Map", R.drawable.ic_globe_white, new MapFragment()),
 	        observationsItem,
 	        new DrawerItem(2, "People", R.drawable.ic_users_white, new PeopleFeedFragment()),
-	        extraHeader,
 	        new DrawerItem(3, "Settings", R.drawable.ic_settings_white, new PublicPreferencesFragment()),
 	        new DrawerItem(4, "Logout", R.drawable.ic_power_off_white)
  		};
