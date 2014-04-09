@@ -6,23 +6,21 @@ import mil.nga.giat.mage.map.MapFragment;
 import mil.nga.giat.mage.navigation.DrawerItem;
 import mil.nga.giat.mage.newsfeed.NewsFeedFragment;
 import mil.nga.giat.mage.newsfeed.PeopleFeedFragment;
-import mil.nga.giat.mage.observation.ObservationEditActivity;
 import mil.nga.giat.mage.preferences.PublicPreferencesFragment;
-import mil.nga.giat.mage.sdk.location.LocationService;
 import mil.nga.giat.mage.sdk.utils.UserUtility;
 import android.app.Fragment;
 import android.app.FragmentManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.Configuration;
-import android.location.Location;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v4.app.ActionBarDrawerToggle;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.widget.DrawerLayout;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
-import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
@@ -30,6 +28,8 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.ListView;
+import android.widget.RadioGroup;
+import android.widget.RadioGroup.OnCheckedChangeListener;
 import android.widget.TextView;
 
 /**
@@ -46,6 +46,7 @@ public class LandingActivity extends FragmentActivity implements ListView.OnItem
     private ListView drawerList;
     private ActionBarDrawerToggle drawerToggle;
     private Integer currentActivity;
+    private int activeTimeFilter = 0;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -135,13 +136,22 @@ public class LandingActivity extends FragmentActivity implements ListView.OnItem
     private void actionbarToggleHandler() {  
         getActionBar().setHomeButtonEnabled(true);  
         getActionBar().setDisplayHomeAsUpEnabled(true);  
-//        getActionBar().setHomeAsUpIndicator(R.drawable.ic_drawer);
         drawerToggle = new ActionBarDrawerToggle(this, drawerLayout,  
                   R.drawable.ic_drawer, R.string.drawer_open,  
                   R.string.drawer_close) {  
              @Override  
              public void onDrawerClosed(View drawerView) {
             	 super.onDrawerClosed(drawerView);
+            	 Log.i("test", "drawer closed");
+            	 if (drawerView.getId() == R.id.filter_drawer) {
+            		 RadioGroup rg = (RadioGroup)findViewById(R.id.time_filter_radio_gorup);
+            		 
+            		 if (activeTimeFilter != rg.getCheckedRadioButtonId()) {
+            			 activeTimeFilter = rg.getCheckedRadioButtonId();
+            			 Log.i("test", "setting the time");
+            			 PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).edit().putInt("activeTimeFilter", rg.getCheckedRadioButtonId()).commit();
+            		 }
+            	 }
             	 invalidateOptionsMenu();
              }  
              @Override  
@@ -150,7 +160,7 @@ public class LandingActivity extends FragmentActivity implements ListView.OnItem
                   invalidateOptionsMenu();
              }  
         };
-        drawerLayout.setDrawerListener(drawerToggle);  
+        drawerLayout.setDrawerListener(drawerToggle);
    }
     
     @Override
@@ -200,6 +210,17 @@ public class LandingActivity extends FragmentActivity implements ListView.OnItem
 		if (drawerToggle.onOptionsItemSelected(item)) {
 			// drawer handled the event
 			return true;
+		}
+		switch(item.getItemId()) {
+		case R.id.filter_button:
+	    	DrawerLayout drawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
+	    	View filterDrawer = findViewById(R.id.filter_drawer);
+	    	if (!drawerLayout.isDrawerOpen(filterDrawer)) {
+	    		drawerLayout.openDrawer(filterDrawer);
+	    	} else {
+	    		drawerLayout.closeDrawer(filterDrawer);
+	    	}
+	    	break;
 		}
 		
 		return super.onOptionsItemSelected(item);

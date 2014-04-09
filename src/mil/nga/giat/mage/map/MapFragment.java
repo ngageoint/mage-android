@@ -27,10 +27,13 @@ import android.app.FragmentManager;
 import android.app.FragmentTransaction;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.location.Location;
 import android.location.LocationListener;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.support.v4.widget.DrawerLayout;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -39,6 +42,8 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
+import android.widget.RadioGroup;
+import android.widget.RadioGroup.OnCheckedChangeListener;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -52,7 +57,7 @@ import com.google.android.gms.maps.model.TileOverlay;
 import com.google.android.gms.maps.model.TileOverlayOptions;
 import com.google.android.gms.maps.model.TileProvider;
 
-public class MapFragment extends Fragment implements OnMapLongClickListener, OnMapPanListener, OnMyLocationButtonClickListener, OnClickListener, LocationSource, LocationListener, OnCacheOverlayListener, IObservationEventListener {
+public class MapFragment extends Fragment implements OnMapLongClickListener, OnMapPanListener, OnMyLocationButtonClickListener, OnClickListener, LocationSource, LocationListener, OnCacheOverlayListener, OnSharedPreferenceChangeListener, IObservationEventListener {
 
     private MAGE mage;
     private GoogleMap map;
@@ -101,11 +106,12 @@ public class MapFragment extends Fragment implements OnMapLongClickListener, OnM
         } catch (ObservationException e) {
             e.printStackTrace();
         }
-
+        PreferenceManager.getDefaultSharedPreferences(getActivity().getApplicationContext()).registerOnSharedPreferenceChangeListener(this);
         return mapWrapper;
     }
     
     private void killOldMap() {
+    	PreferenceManager.getDefaultSharedPreferences(getActivity().getApplicationContext()).unregisterOnSharedPreferenceChangeListener(this);
         com.google.android.gms.maps.MapFragment mapFragment = 
                 ((com.google.android.gms.maps.MapFragment) getFragmentManager().findFragmentById(R.id.map));
 
@@ -139,7 +145,7 @@ public class MapFragment extends Fragment implements OnMapLongClickListener, OnM
     @Override
     public void onResume() {
         super.onResume();
-
+        Log.i("map test", "on resume called");
         mage.registerCacheOverlayListener(this);
 
         // Check if any map preferences changed that I care about
@@ -187,6 +193,7 @@ public class MapFragment extends Fragment implements OnMapLongClickListener, OnM
                  intent.putExtra(ObservationEditActivity.INITIAL_LOCATION,  map.getCameraPosition().target);
                  intent.putExtra(ObservationEditActivity.INITIAL_ZOOM, map.getCameraPosition().zoom);
                  startActivity(intent);
+                 break;
         }
 
         return super.onOptionsItemSelected(item);
@@ -371,4 +378,39 @@ public class MapFragment extends Fragment implements OnMapLongClickListener, OnM
     @Override
     public void onError(Throwable error) {
     }
+
+	@Override
+	public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+		if ("activeTimeFilter".equalsIgnoreCase(key)) {
+			Log.i("map test", "Active filter changed to: " + sharedPreferences.getInt(key, 0));
+			updateTimeFilter(sharedPreferences.getInt(key, 0));
+		}
+		
+	}
+	
+	private void updateTimeFilter(int filterId) {
+		switch(filterId) {
+		case R.id.none_rb:
+			// no filter
+			break;
+		case R.id.last_hour_rb:
+			
+			break;
+		case R.id.last_six_hours_rb:
+			
+			break;
+		case R.id.last_twelve_hours_rb:
+			
+			break;
+		case R.id.last_24_hours_rb:
+			
+			break;
+		case R.id.since_midnight_rb:
+			
+			break;
+		default:
+			// just set no filter
+			break;
+		}
+	}
 }
