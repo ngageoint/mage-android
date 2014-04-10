@@ -30,7 +30,6 @@ import android.widget.ProgressBar;
 public class TileOverlayPreferenceActivity extends ListActivity implements OnCacheOverlayListener {
 
     private MAGE mage;
-    private OverlayAdapter overlayAdapter;
     private ProgressBar progressBar;
     private MenuItem refreshButton;
 
@@ -44,7 +43,6 @@ public class TileOverlayPreferenceActivity extends ListActivity implements OnCac
         
         ListView listView = getListView();
 
-        setListAdapter(overlayAdapter);
         listView.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);
     }
 

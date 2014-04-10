@@ -55,7 +55,6 @@ public class ObservationViewActivity extends FragmentActivity {
 	public static String INITIAL_LOCATION = "INITIAL_LOCATION";
 	public static String INITIAL_ZOOM = "INITIAL_ZOOM";
 	
-	public class AttachmentGalleryTask extends AsyncTask<Attachment, ImageView, Boolean> {
     private static final int ATTACHMENT_VIEW_ACTIVITY_REQUEST_CODE = 500;
     GoogleMap map;
     private Observation o;
