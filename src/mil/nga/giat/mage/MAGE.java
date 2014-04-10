@@ -144,11 +144,8 @@ public class MAGE extends Application {
 		}
 	}
 	
-	// FIXME : testing this stuff!
-	public void testingStaticFeatures() {
-
+	public void pullStaticFeaturesOneTime() {
 		Runnable runnable = new Runnable() {
-			
 			@Override
 			public void run() {
 				staticFeatureServerFetch = new StaticFeatureServerFetch(getApplicationContext());

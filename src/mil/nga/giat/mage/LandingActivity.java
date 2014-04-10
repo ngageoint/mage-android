@@ -51,17 +51,18 @@ public class LandingActivity extends FragmentActivity implements ListView.OnItem
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_landing);
-        
-        MAGE mage = (MAGE) getApplication();
-        
-        //mage.testingStaticFeatures();
-        
-        // FIXME : need to consider connectivity before talking to the server!!!
- 		mage.startFetching();
- 		mage.startPushing();
- 		
- 		// Start location services
- 		mage.initLocationService();
+
+		MAGE mage = (MAGE) getApplication();
+
+		// Start location services
+		mage.initLocationService();
+
+		// Start fetching and pushing observations and locations
+		mage.startFetching();
+		mage.startPushing();
+
+		// Pull static layers and features just once
+		//mage.pullStaticFeaturesOneTime();
  		
  		DrawerItem viewHeader = new DrawerItem(-1, "Views");
  		viewHeader.isHeader(true);
