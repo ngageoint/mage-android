@@ -2,10 +2,12 @@ package mil.nga.giat.mage.observation;
 
 import java.io.File;
 import java.text.DecimalFormat;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 import java.util.Map;
+import java.util.TimeZone;
 
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.form.MageTextView;
@@ -59,6 +61,7 @@ public class ObservationViewActivity extends FragmentActivity {
 	private Map<String, String> propertiesMap;
 	DecimalFormat latLngFormat = new DecimalFormat("###.#####");
 	private SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm zz", Locale.getDefault());
+	private SimpleDateFormat iso8601 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.getDefault());
 	
 	public class AttachmentGalleryTask extends AsyncTask<Attachment, ImageView, Boolean> {
 
@@ -197,6 +200,8 @@ public class ObservationViewActivity extends FragmentActivity {
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		iso8601.setTimeZone(TimeZone.getTimeZone("UTC"));
+		
 		setContentView(R.layout.observation_viewer);
 		ActionBar actionBar = getActionBar();
 		Log.i("test", "observation id to load: " + getIntent().getLongExtra(OBSERVATION_ID, 0L));
@@ -282,7 +287,14 @@ public class ObservationViewActivity extends FragmentActivity {
 					
 					break;
 				case DATE:
-					m.setText(new Date(Long.parseLong(propertyValue)).toString());
+				    String dateText = propertyValue;
+				    try {
+                        Date date = iso8601.parse(propertyValue);
+                        dateText = sdf.format(date);
+                    } catch (ParseException e) {
+                        e.printStackTrace();
+                    }
+					m.setText(dateText);
 					break;
 				case LOCATION:
 					

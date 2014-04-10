@@ -5,5 +5,12 @@
         android:orderInCategory="100"
         android:showAsAction="always"
         android:title="@string/observation_new"/>
+    
+    <item
+        android:id="@+id/filter_button"
+        android:orderInCategory="100"
+        android:showAsAction="always"
+        android:title="@string/filter"/>
+    
 
 </menu>

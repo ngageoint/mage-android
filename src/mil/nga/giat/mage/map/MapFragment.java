@@ -18,7 +18,7 @@ import mil.nga.giat.mage.map.preference.MapPreferencesActivity;
 import mil.nga.giat.mage.observation.ObservationEditActivity;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
-import mil.nga.giat.mage.sdk.event.observation.IObservationEventListener;
+import mil.nga.giat.mage.sdk.event.IObservationEventListener;
 import mil.nga.giat.mage.sdk.exceptions.ObservationException;
 import mil.nga.giat.mage.sdk.location.LocationService;
 import android.app.Fragment;
@@ -26,10 +26,12 @@ import android.app.FragmentManager;
 import android.app.FragmentTransaction;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.location.Location;
 import android.location.LocationListener;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -51,7 +53,7 @@ import com.google.android.gms.maps.model.TileOverlay;
 import com.google.android.gms.maps.model.TileOverlayOptions;
 import com.google.android.gms.maps.model.TileProvider;
 
-public class MapFragment extends Fragment implements OnMapLongClickListener, OnMapPanListener, OnMyLocationButtonClickListener, OnClickListener, LocationSource, LocationListener, OnCacheOverlayListener, IObservationEventListener {
+public class MapFragment extends Fragment implements OnMapLongClickListener, OnMapPanListener, OnMyLocationButtonClickListener, OnClickListener, LocationSource, LocationListener, OnCacheOverlayListener, OnSharedPreferenceChangeListener, IObservationEventListener {
 
     private MAGE mage;
     private GoogleMap map;
@@ -83,7 +85,7 @@ public class MapFragment extends Fragment implements OnMapLongClickListener, OnM
 
         map = ((com.google.android.gms.maps.MapFragment) getFragmentManager().findFragmentById(R.id.map)).getMap();
         
-        mapType = Integer.parseInt(preferences.getString("baseLayer", "1"));
+        mapType = Integer.parseInt(preferences.getString(getResources().getString(R.string.baseLayerKey), "1"));
         map.setMapType(mapType);
 
         map.setOnMapLongClickListener(this);
@@ -100,11 +102,12 @@ public class MapFragment extends Fragment implements OnMapLongClickListener, OnM
         } catch (ObservationException e) {
             e.printStackTrace();
         }
-
+        PreferenceManager.getDefaultSharedPreferences(getActivity().getApplicationContext()).registerOnSharedPreferenceChangeListener(this);
         return mapWrapper;
     }
     
     private void killOldMap() {
+    	PreferenceManager.getDefaultSharedPreferences(getActivity().getApplicationContext()).unregisterOnSharedPreferenceChangeListener(this);
         com.google.android.gms.maps.MapFragment mapFragment = 
                 ((com.google.android.gms.maps.MapFragment) getFragmentManager().findFragmentById(R.id.map));
 
@@ -138,11 +141,11 @@ public class MapFragment extends Fragment implements OnMapLongClickListener, OnM
     @Override
     public void onResume() {
         super.onResume();
-
+        Log.i("map test", "on resume called");
         mage.registerCacheOverlayListener(this);
 
         // Check if any map preferences changed that I care about
-        boolean locationServiceEnabled = preferences.getBoolean("locationServiceEnabled", false);
+        boolean locationServiceEnabled = preferences.getBoolean(getResources().getString(R.string.locationServiceEnabledKey), false);
         map.setMyLocationEnabled(locationServiceEnabled);
 
         if (locationServiceEnabled) {
@@ -160,7 +163,7 @@ public class MapFragment extends Fragment implements OnMapLongClickListener, OnM
 
         mage.unregisterCacheOverlayListener(this);
 
-        boolean locationServiceEnabled = Integer.parseInt(preferences.getString("userReportingFrequency", "0")) > 0;
+        boolean locationServiceEnabled = Integer.parseInt(preferences.getString(getResources().getString(R.string.userReportingFrequencyKey), "0")) > 0;
         if (locationServiceEnabled) {
             map.setLocationSource(null);
             locationService.unregisterOnLocationListener(this);
@@ -186,6 +189,7 @@ public class MapFragment extends Fragment implements OnMapLongClickListener, OnM
                  intent.putExtra(ObservationEditActivity.INITIAL_LOCATION,  map.getCameraPosition().target);
                  intent.putExtra(ObservationEditActivity.INITIAL_ZOOM, map.getCameraPosition().zoom);
                  startActivity(intent);
+                 break;
         }
 
         return super.onOptionsItemSelected(item);
@@ -301,7 +305,7 @@ public class MapFragment extends Fragment implements OnMapLongClickListener, OnM
 
     @Override
     public void onCacheOverlay(List<CacheOverlay> cacheOverlays) {
-        Set<String> overlays = preferences.getStringSet("tileOverlays", Collections.<String> emptySet());
+        Set<String> overlays = preferences.getStringSet(getResources().getString(R.string.mapTileOverlaysKey), Collections.<String> emptySet());
 
         // Add all overlays that are in the preferences
         // For now there is no ordering in how tile overlays are stacked
@@ -328,7 +332,7 @@ public class MapFragment extends Fragment implements OnMapLongClickListener, OnM
     }
 
     private void updateMapType() {
-        int mapType = Integer.parseInt(preferences.getString("mapBaseLayer", "1"));
+        int mapType = Integer.parseInt(preferences.getString(getResources().getString(R.string.baseLayerKey), "1"));
         if (mapType != this.mapType) {
             this.mapType = mapType;
             map.setMapType(this.mapType);
@@ -337,7 +341,7 @@ public class MapFragment extends Fragment implements OnMapLongClickListener, OnM
 
 
     private void updateObservations() {
-      boolean showObservations = preferences.getBoolean("showObservations", true);
+      boolean showObservations = preferences.getBoolean(getResources().getString(R.string.showObservationsKey), true);
       observations.setVisible(showObservations);
 
         
@@ -370,4 +374,39 @@ public class MapFragment extends Fragment implements OnMapLongClickListener, OnM
     @Override
     public void onError(Throwable error) {
     }
+
+	@Override
+	public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+		if (getResources().getString(R.string.activeTimeFilterKey).equalsIgnoreCase(key)) {
+			Log.i("map test", "Active filter changed to: " + sharedPreferences.getInt(key, 0));
+			updateTimeFilter(sharedPreferences.getInt(key, 0));
+		}
+		
+	}
+	
+	private void updateTimeFilter(int filterId) {
+		switch(filterId) {
+		case R.id.none_rb:
+			// no filter
+			break;
+		case R.id.last_hour_rb:
+			
+			break;
+		case R.id.last_six_hours_rb:
+			
+			break;
+		case R.id.last_twelve_hours_rb:
+			
+			break;
+		case R.id.last_24_hours_rb:
+			
+			break;
+		case R.id.since_midnight_rb:
+			
+			break;
+		default:
+			// just set no filter
+			break;
+		}
+	}
 }

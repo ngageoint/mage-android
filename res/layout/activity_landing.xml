@@ -17,4 +17,90 @@
         android:divider="@android:color/transparent"
         android:dividerHeight="0dp"
         android:background="#333"/>
+    
+    <LinearLayout android:id="@+id/filter_drawer"
+        android:layout_width="240dp"
+        android:layout_height="wrap_content"
+        android:layout_gravity="right"
+        android:orientation="vertical"
+        android:background="#EEE">
+        <RadioGroup 
+            android:id="@+id/time_filter_radio_gorup"
+            android:layout_width="wrap_content"
+	    	android:layout_height="wrap_content">
+            <RadioButton 
+                android:id="@+id/none_rb"
+                android:text="None"
+                android:layout_width="wrap_content"
+	    	    android:layout_height="wrap_content"
+	    	    android:textColor="#111"
+	    	    android:padding="7dp"
+	       		android:textSize="18sp"/>
+            <RadioButton 
+                android:id="@+id/last_hour_rb"
+                android:text="Last Hour"
+                android:layout_width="wrap_content"
+	    	    android:layout_height="wrap_content"
+	    	    android:textColor="#111"
+	    	    android:padding="7dp"
+	       		android:textSize="18sp"/>
+            <RadioButton 
+                android:id="@+id/last_six_hours_rb"
+                android:text="Last 6 Hours"
+                android:layout_width="wrap_content"
+	    	    android:layout_height="wrap_content"
+	    	    android:textColor="#111"
+	    	    android:padding="7dp"
+	       		android:textSize="18sp"/>
+            <RadioButton 
+                android:id="@+id/last_twelve_hours_rb"
+                android:text="Last 12 Hours"
+                android:layout_width="wrap_content"
+	    	    android:layout_height="wrap_content"
+	    	    android:textColor="#111"
+	    	    android:padding="7dp"
+	       		android:textSize="18sp"/>
+            <RadioButton 
+                android:id="@+id/last_24_hours_rb"
+                android:text="Last 24 Hours"
+                android:layout_width="wrap_content"
+	    	    android:layout_height="wrap_content"
+	    	    android:textColor="#111"
+	    	    android:padding="7dp"
+	       		android:textSize="18sp"/>
+            <RadioButton 
+                android:id="@+id/since_midnight_rb"
+                android:text="Since Midnight"
+                android:layout_width="wrap_content"
+	    	    android:layout_height="wrap_content"
+	    	    android:textColor="#111"
+	    	    android:padding="7dp"
+	       		android:textSize="18sp"/>
+        </RadioGroup>
+        <View
+		    android:layout_width="fill_parent"
+		    android:layout_height="1dip"
+		    android:background="?android:attr/dividerHorizontal" />
+		<LinearLayout 
+		    android:layout_width="fill_parent"
+		    android:layout_height="wrap_content"
+		    android:paddingTop="0dip"
+		    android:paddingLeft="2dip"
+		    android:paddingRight="2dip"
+		    android:measureWithLargestChild="true"
+		    style="?android:attr/buttonBarStyle"
+		    android:orientation="horizontal"
+		    android:gravity="center_horizontal">
+		    
+		    <Button
+		     android:layout_height="wrap_content"
+		     android:layout_width="0dip"
+		     android:layout_weight="1"
+		 	 android:textColor="#111"
+		     android:text="Done"
+		     android:onClick="filterOkClick"
+		     style="?android:attr/buttonBarButtonStyle"
+		     android:id="@+id/filter_ok_btn"/>
+		</LinearLayout>
+    </LinearLayout>
 </android.support.v4.widget.DrawerLayout>
