@@ -1,13 +1,13 @@
 package mil.nga.giat.mage.observation;
 
 import java.io.File;
+import java.text.DateFormat;
 import java.text.DecimalFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 import java.util.Map;
-import java.util.TimeZone;
 
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.form.MageTextView;
@@ -16,6 +16,7 @@ import mil.nga.giat.mage.sdk.datastore.observation.Attachment;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
 import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
+import mil.nga.giat.mage.sdk.utils.DateUtility;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
 import android.app.ActionBar;
 import android.content.Intent;
@@ -61,7 +62,7 @@ public class ObservationViewActivity extends FragmentActivity {
     private Map<String, String> propertiesMap;
     DecimalFormat latLngFormat = new DecimalFormat("###.#####");
     private SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm zz", Locale.getDefault());
-    private SimpleDateFormat iso8601 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.getDefault());
+    private DateFormat iso8601 =  DateUtility.getISO8601();
     
     public class AttachmentGalleryTask extends AsyncTask<Attachment, ImageView, Boolean> {
 
@@ -200,7 +201,6 @@ public class ObservationViewActivity extends FragmentActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        iso8601.setTimeZone(TimeZone.getTimeZone("UTC"));
         
         setContentView(R.layout.observation_viewer);
         ActionBar actionBar = getActionBar();
