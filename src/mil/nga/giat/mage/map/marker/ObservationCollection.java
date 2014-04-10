@@ -18,5 +18,9 @@ public interface ObservationCollection extends OnCameraChangeListener, OnMarkerC
     
     public void setVisible(boolean visible);
     
+    public void hide(Observation observation);
+    
+    public void show(Observation observation);
+    
     public void clear();
 }

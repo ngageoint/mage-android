@@ -77,6 +77,18 @@ public class ObservationClusterCollection implements ObservationCollection, OnCl
     }
     
     @Override
+    public void hide(Observation observation) {
+    	// TODO not even sure what to do here with ClusterItem
+        // its not a GoogleMap marker so you cannot hide it
+    }
+    
+    @Override
+    public void show(Observation observation) {
+    	// TODO not even sure what to do here with ClusterItem
+        // its not a GoogleMap marker so you cannot hide it
+    }
+    
+    @Override
     public void remove(Observation o) {
         observations.remove(o.getId());
         ObservationClusterItem item = items.remove(o.getId());
