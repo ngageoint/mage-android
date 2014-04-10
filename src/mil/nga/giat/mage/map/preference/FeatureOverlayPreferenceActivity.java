@@ -85,7 +85,7 @@ public class FeatureOverlayPreferenceActivity extends ListActivity implements On
 
     @Override
     public boolean onPrepareOptionsMenu(Menu menu) {
-//        refreshButton = menu.findItem(R.id.overlay_map_refresh);
+        refreshButton = menu.findItem(R.id.overlay_map_refresh);
 //        refreshButton.setEnabled(false);
 //        
 //        // This really should be done in the onResume, but I need to have my refreshButton

@@ -54,16 +54,17 @@ public class ObservationViewActivity extends FragmentActivity {
 	public static String OBSERVATION_ID = "OBSERVATION_ID";
 	public static String INITIAL_LOCATION = "INITIAL_LOCATION";
 	public static String INITIAL_ZOOM = "INITIAL_ZOOM";
-
-	private static final int ATTACHMENT_VIEW_ACTIVITY_REQUEST_CODE = 500;
-	GoogleMap map;
-	private Observation o;
-	private Map<String, String> propertiesMap;
-	DecimalFormat latLngFormat = new DecimalFormat("###.#####");
-	private SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm zz", Locale.getDefault());
-	private SimpleDateFormat iso8601 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.getDefault());
 	
 	public class AttachmentGalleryTask extends AsyncTask<Attachment, ImageView, Boolean> {
+    private static final int ATTACHMENT_VIEW_ACTIVITY_REQUEST_CODE = 500;
+    GoogleMap map;
+    private Observation o;
+    private Map<String, String> propertiesMap;
+    DecimalFormat latLngFormat = new DecimalFormat("###.#####");
+    private SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm zz", Locale.getDefault());
+    private SimpleDateFormat iso8601 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.getDefault());
+    
+    public class AttachmentGalleryTask extends AsyncTask<Attachment, ImageView, Boolean> {
 
 		@Override
 		protected Boolean doInBackground(Attachment... params) {
