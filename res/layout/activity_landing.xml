@@ -77,5 +77,30 @@
 	    	    android:padding="7dp"
 	       		android:textSize="18sp"/>
         </RadioGroup>
+        <View
+		    android:layout_width="fill_parent"
+		    android:layout_height="1dip"
+		    android:background="?android:attr/dividerHorizontal" />
+		<LinearLayout 
+		    android:layout_width="fill_parent"
+		    android:layout_height="wrap_content"
+		    android:paddingTop="0dip"
+		    android:paddingLeft="2dip"
+		    android:paddingRight="2dip"
+		    android:measureWithLargestChild="true"
+		    style="?android:attr/buttonBarStyle"
+		    android:orientation="horizontal"
+		    android:gravity="center_horizontal">
+		    
+		    <Button
+		     android:layout_height="wrap_content"
+		     android:layout_width="0dip"
+		     android:layout_weight="1"
+		 	 android:textColor="#111"
+		     android:text="Done"
+		     android:onClick="filterOkClick"
+		     style="?android:attr/buttonBarButtonStyle"
+		     android:id="@+id/filter_ok_btn"/>
+		</LinearLayout>
     </LinearLayout>
 </android.support.v4.widget.DrawerLayout>

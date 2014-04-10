@@ -45,6 +45,7 @@ public class LandingActivity extends FragmentActivity implements ListView.OnItem
     private Integer currentActivity;
     private int activeTimeFilter = 0;
     private String currentTitle = "";
+    private DrawerItem mapItem;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -67,9 +68,10 @@ public class LandingActivity extends FragmentActivity implements ListView.OnItem
  		DrawerItem extraHeader = new DrawerItem(-1, "Extra");
  		extraHeader.isHeader(true);
  		DrawerItem observationsItem = new DrawerItem(1, "Observations", R.drawable.ic_map_marker_white, new NewsFeedFragment());
+ 		mapItem = new DrawerItem(0, "Map", R.drawable.ic_globe_white, new MapFragment());
 
  		drawerItems = new DrawerItem[] {
-	        new DrawerItem(0, "Map", R.drawable.ic_globe_white, new MapFragment()),
+	        mapItem,
 	        observationsItem,
 	        new DrawerItem(2, "People", R.drawable.ic_users_white, new PeopleFeedFragment()),
 	        new DrawerItem(3, "Settings", R.drawable.ic_settings_white, new PublicPreferencesFragment()),
@@ -117,20 +119,19 @@ public class LandingActivity extends FragmentActivity implements ListView.OnItem
         
         // Set the list's click listener
         drawerList.setOnItemClickListener(this);
-
+        
         actionbarToggleHandler();
         
         goToMap();
     }
     
     private void goToMap() {
-    	MapFragment mf = new MapFragment();
         FragmentManager fragmentManager = getFragmentManager();
 	    fragmentManager.beginTransaction()
-	                   .replace(R.id.content_frame, mf)
+	                   .replace(R.id.content_frame, mapItem.getFragment())
 	                   .commit();
 	    getActionBar().setTitle("MAGE");
-	    currentActivity = 0;
+	    currentActivity = mapItem.getId();
     }
     
     private void actionbarToggleHandler() {  
@@ -142,14 +143,11 @@ public class LandingActivity extends FragmentActivity implements ListView.OnItem
              @Override  
              public void onDrawerClosed(View drawerView) {
             	 super.onDrawerClosed(drawerView);
-            	 getActionBar().setTitle(currentTitle);
+            	 if (drawerView.getId() == R.id.left_drawer) {
+            		 getActionBar().setTitle(currentTitle);
+            	 }
             	 if (drawerView.getId() == R.id.filter_drawer) {
-            		 RadioGroup rg = (RadioGroup)findViewById(R.id.time_filter_radio_gorup);
-            		 
-            		 if (activeTimeFilter != rg.getCheckedRadioButtonId()) {
-            			 activeTimeFilter = rg.getCheckedRadioButtonId();
-            			 PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).edit().putInt(getResources().getString(R.string.activeTimeFilterKey), rg.getCheckedRadioButtonId()).commit();
-            		 }
+            		 setFilter(); 
             	 }
             	 invalidateOptionsMenu();
              }  
@@ -162,11 +160,27 @@ public class LandingActivity extends FragmentActivity implements ListView.OnItem
                 	  getActionBar().setTitle("Navigation");
                   } else if (drawerView.getId() == R.id.filter_drawer) {
                 	  getActionBar().setTitle("Filter");
+                	  RadioGroup rg = (RadioGroup)findViewById(R.id.time_filter_radio_gorup);
+                	  int checkedFilter = PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).getInt(getResources().getString(R.string.activeTimeFilterKey), R.id.none_rb);
+                	  rg.check(checkedFilter); 
                   }
              }  
         };
         drawerLayout.setDrawerListener(drawerToggle);
    }
+    
+    public void filterOkClick(View v) {
+    	//setFilter();
+    	drawerLayout.closeDrawer(findViewById(R.id.filter_drawer));
+    }
+    
+    public void setFilter() {
+    	RadioGroup rg = (RadioGroup)findViewById(R.id.time_filter_radio_gorup);
+		 if (activeTimeFilter != rg.getCheckedRadioButtonId()) {
+			 activeTimeFilter = rg.getCheckedRadioButtonId();
+			 PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).edit().putInt(getResources().getString(R.string.activeTimeFilterKey), rg.getCheckedRadioButtonId()).commit();
+		 }
+    }
     
     @Override
     protected void onPostCreate(Bundle savedInstanceState) {
@@ -202,7 +216,7 @@ public class LandingActivity extends FragmentActivity implements ListView.OnItem
 	        //Put the code for an action menu from the top here
 	        return true;
 	    } else if (keyCode == KeyEvent.KEYCODE_BACK) {
-	    	if (currentActivity != 0) {
+	    	if (currentActivity != mapItem.getId()) {
 	    		goToMap();
 	    		return true;
 	    	}
