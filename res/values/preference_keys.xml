@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="serverURLKey">serverURL</string>
+    <string name="showDisclaimerKey">showDisclaimer</string>
+    <string name="passwordMinLengthKey">gAuthenticationPasswordMinLength</string>
+    <string name="baseLayerKey">baseLayer</string>
+    <string name="mapTileOverlaysKey">mapTileOverlays</string>
+    <string name="showObservationsKey">showObservations</string>
+    <string name="activeTimeFilterKey">activeTimeFilter</string>
+</resources>

@@ -18,7 +18,6 @@ import android.preference.PreferenceManager;
 import android.support.v4.app.ActionBarDrawerToggle;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.widget.DrawerLayout;
-import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
@@ -149,7 +148,7 @@ public class LandingActivity extends FragmentActivity implements ListView.OnItem
             		 
             		 if (activeTimeFilter != rg.getCheckedRadioButtonId()) {
             			 activeTimeFilter = rg.getCheckedRadioButtonId();
-            			 PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).edit().putInt("activeTimeFilter", rg.getCheckedRadioButtonId()).commit();
+            			 PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).edit().putInt(getResources().getString(R.string.activeTimeFilterKey), rg.getCheckedRadioButtonId()).commit();
             		 }
             	 }
             	 invalidateOptionsMenu();

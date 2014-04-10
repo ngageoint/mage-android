@@ -85,7 +85,7 @@ public class MapFragment extends Fragment implements OnMapLongClickListener, OnM
 
         map = ((com.google.android.gms.maps.MapFragment) getFragmentManager().findFragmentById(R.id.map)).getMap();
         
-        mapType = Integer.parseInt(preferences.getString("baseLayer", "1"));
+        mapType = Integer.parseInt(preferences.getString(getResources().getString(R.string.baseLayerKey), "1"));
         map.setMapType(mapType);
 
         map.setOnMapLongClickListener(this);
@@ -145,7 +145,7 @@ public class MapFragment extends Fragment implements OnMapLongClickListener, OnM
         mage.registerCacheOverlayListener(this);
 
         // Check if any map preferences changed that I care about
-        boolean locationServiceEnabled = preferences.getBoolean("locationServiceEnabled", false);
+        boolean locationServiceEnabled = preferences.getBoolean(getResources().getString(R.string.locationServiceEnabledKey), false);
         map.setMyLocationEnabled(locationServiceEnabled);
 
         if (locationServiceEnabled) {
@@ -163,7 +163,7 @@ public class MapFragment extends Fragment implements OnMapLongClickListener, OnM
 
         mage.unregisterCacheOverlayListener(this);
 
-        boolean locationServiceEnabled = Integer.parseInt(preferences.getString("userReportingFrequency", "0")) > 0;
+        boolean locationServiceEnabled = Integer.parseInt(preferences.getString(getResources().getString(R.string.userReportingFrequencyKey), "0")) > 0;
         if (locationServiceEnabled) {
             map.setLocationSource(null);
             locationService.unregisterOnLocationListener(this);
@@ -305,7 +305,7 @@ public class MapFragment extends Fragment implements OnMapLongClickListener, OnM
 
     @Override
     public void onCacheOverlay(List<CacheOverlay> cacheOverlays) {
-        Set<String> overlays = preferences.getStringSet("mapTileOverlays", Collections.<String> emptySet());
+        Set<String> overlays = preferences.getStringSet(getResources().getString(R.string.mapTileOverlaysKey), Collections.<String> emptySet());
 
         // Add all overlays that are in the preferences
         // For now there is no ordering in how tile overlays are stacked
@@ -332,7 +332,7 @@ public class MapFragment extends Fragment implements OnMapLongClickListener, OnM
     }
 
     private void updateMapType() {
-        int mapType = Integer.parseInt(preferences.getString("mapBaseLayer", "1"));
+        int mapType = Integer.parseInt(preferences.getString(getResources().getString(R.string.baseLayerKey), "1"));
         if (mapType != this.mapType) {
             this.mapType = mapType;
             map.setMapType(this.mapType);
@@ -341,7 +341,7 @@ public class MapFragment extends Fragment implements OnMapLongClickListener, OnM
 
 
     private void updateObservations() {
-      boolean showObservations = preferences.getBoolean("showObservations", true);
+      boolean showObservations = preferences.getBoolean(getResources().getString(R.string.showObservationsKey), true);
       observations.setVisible(showObservations);
 
         
@@ -377,7 +377,7 @@ public class MapFragment extends Fragment implements OnMapLongClickListener, OnM
 
 	@Override
 	public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-		if ("activeTimeFilter".equalsIgnoreCase(key)) {
+		if (getResources().getString(R.string.activeTimeFilterKey).equalsIgnoreCase(key)) {
 			Log.i("map test", "Active filter changed to: " + sharedPreferences.getInt(key, 0));
 			updateTimeFilter(sharedPreferences.getInt(key, 0));
 		}

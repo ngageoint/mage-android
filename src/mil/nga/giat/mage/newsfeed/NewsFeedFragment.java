@@ -56,7 +56,7 @@ public class NewsFeedFragment extends Fragment implements IObservationEventListe
 		ListView lv = (ListView) rootView.findViewById(R.id.news_feed_list);
 		try {
 			oDao = DaoStore.getInstance(getActivity().getApplicationContext()).getObservationDao();
-			query = buildQuery(oDao, sp.getInt("activeTimeFilter", R.id.none_rb));
+			query = buildQuery(oDao, sp.getInt(getResources().getString(R.string.activeTimeFilterKey), R.id.none_rb));
 			Cursor c = obtainCursor(query, oDao);
 			adapter = new NewsFeedCursorAdapter(getActivity().getApplicationContext(), c, query, getActivity());
 			lv.setAdapter(adapter);
@@ -117,13 +117,11 @@ public class NewsFeedFragment extends Fragment implements IObservationEventListe
     }
 
 	private PreparedQuery<Observation> buildQuery(Dao<Observation, Long> oDao, int filterId) throws SQLException {
-		Log.i("test", "build query filter id: " + filterId);
 		QueryBuilder<Observation, Long> qb = oDao.queryBuilder();
 		Calendar c = Calendar.getInstance();
 		String title = "";
 		switch(filterId) {
 		case R.id.none_rb:
-			Log.i("test", "no filter");
 			// no filter
 			title += "All Observations";
 			c.setTime(new Date(0));
@@ -158,7 +156,6 @@ public class NewsFeedFragment extends Fragment implements IObservationEventListe
 			break;
 		}
 		getActivity().getActionBar().setTitle(title);
-		Log.i("Test", "C.get time is: " + c.getTime());
 		qb.where().gt("last_modified", c.getTime());
 		qb.orderBy("last_modified", false);
 
@@ -233,7 +230,7 @@ public class NewsFeedFragment extends Fragment implements IObservationEventListe
 	@Override
 	public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
 		Log.i("test", "the key is: " + key);
-		if ("activeTimeFilter".equalsIgnoreCase(key)) { 
+		if (getResources().getString(R.string.activeTimeFilterKey).equalsIgnoreCase(key)) { 
 			Log.i("map test", "Active filter changed to: " + sharedPreferences.getInt(key, R.id.none_rb));
 			updateTimeFilter(sharedPreferences.getInt(key, 0));
 		}
