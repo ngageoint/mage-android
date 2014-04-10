@@ -100,10 +100,24 @@
                 android:value="mil.nga.giat.mage.LandingActivity" />
         </activity>
         <activity
-            android:name="mil.nga.giat.mage.map.preference.OverlayPreferenceActivity"
+            android:name="mil.nga.giat.mage.map.preference.TileOverlayPreferenceActivity"
             android:theme="@style/AppBaseTheme.ActionBar.OverlayMap"
             android:icon="@drawable/ic_map_white"
             android:label="@string/overlay_settings"
+            android:launchMode="singleTop"
+            android:uiOptions="splitActionBarWhenNarrow"
+            android:parentActivityName="mil.nga.giat.mage.map.preference.MapPreferencesActivity" >
+            
+            <!-- Parent activity meta-data to support 4.0 and lower -->
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="mil.nga.giat.mage.map.MapPreferencesActivity" />
+        </activity>
+        <activity
+            android:name="mil.nga.giat.mage.map.preference.FeatureOverlayPreferenceActivity"
+            android:theme="@style/AppBaseTheme.ActionBar.OverlayMap"
+            android:icon="@drawable/ic_map_white"
+            android:label="@string/feature_overlay_settings"
             android:launchMode="singleTop"
             android:uiOptions="splitActionBarWhenNarrow"
             android:parentActivityName="mil.nga.giat.mage.map.preference.MapPreferencesActivity" >

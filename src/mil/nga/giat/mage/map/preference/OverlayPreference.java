@@ -3,9 +3,7 @@ package mil.nga.giat.mage.map.preference;
 import java.util.HashSet;
 import java.util.Set;
 
-import android.app.Activity;
 import android.content.Context;
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Parcel;
 import android.os.Parcelable;
@@ -14,10 +12,7 @@ import android.util.AttributeSet;
 
 public class OverlayPreference extends Preference {
 
-    public static final String OVERLAY_EXTENDED_DATA_KEY = "overlay";
-    public static final int OVERLAY_ACTIVITY = 0;
-    
-    private Set<String> mValues = new HashSet<String>();
+    private Set<String> overlays = new HashSet<String>();
 
     public OverlayPreference(Context context) {
         super(context);
@@ -35,8 +30,8 @@ public class OverlayPreference extends Preference {
      *            The values to set for the key.
      */
     public void setValues(Set<String> values) {
-        mValues.clear();
-        mValues.addAll(values);
+        overlays.clear();
+        overlays.addAll(values);
 
         persistStringSet(values);
     }
@@ -45,19 +40,12 @@ public class OverlayPreference extends Preference {
      * Retrieves the current value of the key.
      */
     public Set<String> getValues() {
-        return mValues;
-    }
-
-    @Override
-    protected void onClick() {
-        Activity activity = (Activity) getContext();
-        Intent intent = new Intent(activity, OverlayPreferenceActivity.class);
-        activity.startActivityForResult(intent, OVERLAY_ACTIVITY);
+        return overlays;
     }
 
     @Override
     protected void onSetInitialValue(boolean restoreValue, Object defaultValue) {
-        setValues(restoreValue ? getPersistedStringSet(mValues) : (Set<String>) defaultValue);
+        setValues(restoreValue ? getPersistedStringSet(overlays) : (Set<String>) defaultValue);
     }
     
     protected Set<String> getPersistedStringSet(Set<String> defaultReturnValue) {

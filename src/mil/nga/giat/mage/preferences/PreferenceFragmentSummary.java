@@ -2,6 +2,7 @@ package mil.nga.giat.mage.preferences;
 
 import java.util.Iterator;
 
+import mil.nga.giat.mage.map.preference.OverlayPreference;
 import mil.nga.giat.mage.sdk.preferences.ListValuePreference;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
@@ -42,6 +43,20 @@ public class PreferenceFragmentSummary extends PreferenceFragment implements OnS
                 if (iterator.hasNext())
                     summary.append("\n");
             }
+            p.setSummary(summary);
+        } else if (preference instanceof OverlayPreference) {
+            OverlayPreference p = (OverlayPreference) preference;
+
+            StringBuffer summary = new StringBuffer();
+            Iterator<String> iterator = p.getValues().iterator();
+            while (iterator.hasNext()) {
+                String value = iterator.next();
+                summary.append(value);
+                
+                if (iterator.hasNext())
+                    summary.append("\n");
+            }
+            
             p.setSummary(summary);
         }
     }

@@ -1,7 +1,6 @@
 package mil.nga.giat.mage.map.preference;
 
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Set;
 
 import mil.nga.giat.mage.R;
@@ -9,8 +8,8 @@ import mil.nga.giat.mage.preferences.PreferenceFragmentSummary;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
-import android.preference.MultiSelectListPreference;
 import android.preference.Preference;
+import android.preference.Preference.OnPreferenceClickListener;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceManager;
 
@@ -23,15 +22,36 @@ import android.preference.PreferenceManager;
  */
 public class MapPreferencesActivity extends PreferenceActivity {
 
-    MapPreferenceFragment preference = new MapPreferenceFragment();
-
+    public static final int TILE_OVERLAY_ACTIVITY = 0;
+    public static final int FEATURE_OVERLAY_ACTIVITY = 1;
+    public static final String OVERLAY_EXTENDED_DATA_KEY = "overlay";
+    
+    private MapPreferenceFragment preference = new MapPreferenceFragment();
+    
     public static class MapPreferenceFragment extends PreferenceFragmentSummary {
-        MultiSelectListPreference overlayPreference;
-
+        
         @Override
         public void onCreate(final Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
             addPreferencesFromResource(R.xml.mappreferences);
+            
+            findPreference("tileOverlays").setOnPreferenceClickListener(new OnPreferenceClickListener() {
+                @Override
+                public boolean onPreferenceClick(Preference preference) {
+                    Intent intent = new Intent(getActivity(), TileOverlayPreferenceActivity.class);
+                    getActivity().startActivityForResult(intent, TILE_OVERLAY_ACTIVITY);
+                    return true;
+                }
+            });
+
+            findPreference("featureOverlays").setOnPreferenceClickListener(new OnPreferenceClickListener() {
+                @Override
+                public boolean onPreferenceClick(Preference preference) {
+                    Intent intent = new Intent(getActivity(), FeatureOverlayPreferenceActivity.class);
+                    getActivity().startActivityForResult(intent, FEATURE_OVERLAY_ACTIVITY);
+                    return true;
+                }
+            });
             
             PreferenceManager.setDefaultValues(getActivity(), R.xml.mappreferences, true);
         }
@@ -44,19 +64,6 @@ public class MapPreferencesActivity extends PreferenceActivity {
                 Preference preference = getPreferenceScreen().getPreference(i);
                 setSummary(preference);
             }
-            
-            OverlayPreference p = (OverlayPreference) findPreference("mapTileOverlays");
-            StringBuffer summary = new StringBuffer();
-            Iterator<String> iterator = p.getValues().iterator();
-            while (iterator.hasNext()) {
-                String value = iterator.next();
-                summary.append(value);
-                
-                if (iterator.hasNext())
-                    summary.append("\n");
-            }
-            
-            p.setSummary(summary);
         }
     }
 
@@ -69,10 +76,18 @@ public class MapPreferencesActivity extends PreferenceActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         switch (requestCode) {
-        case OverlayPreference.OVERLAY_ACTIVITY: {
+        case TILE_OVERLAY_ACTIVITY: {
             if (resultCode == Activity.RESULT_OK) {
-                Set<String> overlays = new HashSet<String>(data.getStringArrayListExtra(OverlayPreference.OVERLAY_EXTENDED_DATA_KEY));
-                OverlayPreference p = (OverlayPreference) preference.findPreference("mapTileOverlays");
+                Set<String> overlays = new HashSet<String>(data.getStringArrayListExtra(OVERLAY_EXTENDED_DATA_KEY));
+                OverlayPreference p = (OverlayPreference) preference.findPreference("tileOverlays");
+                p.setValues(overlays);
+            }
+            break;
+        }
+        case FEATURE_OVERLAY_ACTIVITY: {
+            if (resultCode == Activity.RESULT_OK) {
+                Set<String> overlays = new HashSet<String>(data.getStringArrayListExtra(OVERLAY_EXTENDED_DATA_KEY));
+                OverlayPreference p = (OverlayPreference) preference.findPreference("featureOverlays");
                 p.setValues(overlays);
             }
             break;

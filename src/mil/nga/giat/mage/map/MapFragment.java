@@ -301,7 +301,7 @@ public class MapFragment extends Fragment implements OnMapLongClickListener, OnM
 
     @Override
     public void onCacheOverlay(List<CacheOverlay> cacheOverlays) {
-        Set<String> overlays = preferences.getStringSet("mapTileOverlays", Collections.<String> emptySet());
+        Set<String> overlays = preferences.getStringSet("tileOverlays", Collections.<String> emptySet());
 
         // Add all overlays that are in the preferences
         // For now there is no ordering in how tile overlays are stacked
