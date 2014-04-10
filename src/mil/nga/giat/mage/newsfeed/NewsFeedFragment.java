@@ -12,7 +12,7 @@ import mil.nga.giat.mage.observation.ObservationViewActivity;
 import mil.nga.giat.mage.sdk.datastore.DaoStore;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
-import mil.nga.giat.mage.sdk.event.observation.IObservationEventListener;
+import mil.nga.giat.mage.sdk.event.IObservationEventListener;
 import mil.nga.giat.mage.sdk.exceptions.ObservationException;
 import mil.nga.giat.mage.sdk.location.LocationService;
 import android.app.Fragment;
@@ -77,6 +77,7 @@ public class NewsFeedFragment extends Fragment implements IObservationEventListe
 	@Override
 	public void onDestroy() {
 		sp.unregisterOnSharedPreferenceChangeListener(this);
+		super.onDestroy();
 	}
 	
 	@Override

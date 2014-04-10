@@ -3,7 +3,7 @@ package mil.nga.giat.mage.connection;
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.sdk.connectivity.ConnectivityUtility;
 import mil.nga.giat.mage.sdk.connectivity.NetworkChangeReceiver;
-import mil.nga.giat.mage.sdk.event.connectivity.IConnectivityEventListener;
+import mil.nga.giat.mage.sdk.event.IConnectivityEventListener;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v4.app.Fragment;
