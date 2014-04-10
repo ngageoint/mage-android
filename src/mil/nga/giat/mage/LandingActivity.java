@@ -45,6 +45,7 @@ public class LandingActivity extends FragmentActivity implements ListView.OnItem
     private ActionBarDrawerToggle drawerToggle;
     private Integer currentActivity;
     private int activeTimeFilter = 0;
+    private String currentTitle = "";
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -142,13 +143,12 @@ public class LandingActivity extends FragmentActivity implements ListView.OnItem
              @Override  
              public void onDrawerClosed(View drawerView) {
             	 super.onDrawerClosed(drawerView);
-            	 Log.i("test", "drawer closed");
+            	 getActionBar().setTitle(currentTitle);
             	 if (drawerView.getId() == R.id.filter_drawer) {
             		 RadioGroup rg = (RadioGroup)findViewById(R.id.time_filter_radio_gorup);
             		 
             		 if (activeTimeFilter != rg.getCheckedRadioButtonId()) {
             			 activeTimeFilter = rg.getCheckedRadioButtonId();
-            			 Log.i("test", "setting the time");
             			 PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).edit().putInt("activeTimeFilter", rg.getCheckedRadioButtonId()).commit();
             		 }
             	 }
@@ -158,6 +158,12 @@ public class LandingActivity extends FragmentActivity implements ListView.OnItem
              public void onDrawerOpened(View drawerView) { 
             	 super.onDrawerOpened(drawerView);
                   invalidateOptionsMenu();
+                  currentTitle = (String) getActionBar().getTitle();
+                  if (drawerView.getId() == R.id.left_drawer) {
+                	  getActionBar().setTitle("Navigation");
+                  } else if (drawerView.getId() == R.id.filter_drawer) {
+                	  getActionBar().setTitle("Filter");
+                  }
              }  
         };
         drawerLayout.setDrawerListener(drawerToggle);

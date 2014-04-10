@@ -120,25 +120,32 @@ public class NewsFeedFragment extends Fragment implements IObservationEventListe
 		Log.i("test", "build query filter id: " + filterId);
 		QueryBuilder<Observation, Long> qb = oDao.queryBuilder();
 		Calendar c = Calendar.getInstance();
+		String title = "";
 		switch(filterId) {
 		case R.id.none_rb:
 			Log.i("test", "no filter");
 			// no filter
+			title += "All Observations";
 			c.setTime(new Date(0));
 			break;
 		case R.id.last_hour_rb:
+			title += "Last Hour";
 			c.add(Calendar.HOUR, -1);
 			break;
 		case R.id.last_six_hours_rb:
+			title += "Last 6 Hours";
 			c.add(Calendar.HOUR, -6);
 			break;
 		case R.id.last_twelve_hours_rb:
+			title += "Last 12 Hours";
 			c.add(Calendar.HOUR, -12);
 			break;
 		case R.id.last_24_hours_rb:
+			title += "Last 24 Hours";
 			c.add(Calendar.HOUR, -24);
 			break;
 		case R.id.since_midnight_rb:
+			title += "Since Midnight";
 			c.set(Calendar.HOUR_OF_DAY, 0);
 			c.set(Calendar.MINUTE, 0);
 			c.set(Calendar.SECOND, 0);
@@ -146,9 +153,11 @@ public class NewsFeedFragment extends Fragment implements IObservationEventListe
 			break;
 		default:
 			// just set no filter
+			title += "All Observations";
 			c.setTime(new Date(0));
 			break;
 		}
+		getActivity().getActionBar().setTitle(title);
 		Log.i("Test", "C.get time is: " + c.getTime());
 		qb.where().gt("last_modified", c.getTime());
 		qb.orderBy("last_modified", false);
