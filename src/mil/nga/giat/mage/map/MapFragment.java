@@ -99,14 +99,21 @@ public class MapFragment extends Fragment implements OnMapLongClickListener, OnM
         locationService = mage.getLocationService();
 
         observations = new ObservationMarkerCollection(getActivity(), map);
+        
         try {
             ObservationHelper.getInstance(getActivity()).addListener(this);
         } catch (ObservationException e) {
             e.printStackTrace();
         }
+        
+        updateTimeFilter(getTimeFilterId());
         PreferenceManager.getDefaultSharedPreferences(getActivity().getApplicationContext()).registerOnSharedPreferenceChangeListener(this);
         return mapWrapper;
     }
+    
+    private int getTimeFilterId() {
+		return preferences.getInt(getResources().getString(R.string.activeTimeFilterKey), R.id.none_rb);
+	}
     
     private void killOldMap() {
     	PreferenceManager.getDefaultSharedPreferences(getActivity().getApplicationContext()).unregisterOnSharedPreferenceChangeListener(this);
@@ -199,12 +206,28 @@ public class MapFragment extends Fragment implements OnMapLongClickListener, OnM
 
     @Override
     public void onObservationCreated(final Collection<Observation> o) {
-        new AddObservationTask(observations).execute(o.toArray(new Observation[o.size()]));
+        new AddObservationTask(observations) {
+
+			@Override
+			protected void onPostExecute(Void result) {
+				updateTimeFilter(getTimeFilterId());
+				super.onPostExecute(result);
+			}
+        	
+        }.execute(o.toArray(new Observation[o.size()]));
     }
 
     @Override
     public void onObservationUpdated(final Observation o) {
-        new UpdateObservationTask(observations).execute(o);
+        new UpdateObservationTask(observations){
+
+			@Override
+			protected void onPostExecute(Void result) {
+				updateTimeFilter(getTimeFilterId());
+				super.onPostExecute(result);
+			}
+        	
+        }.execute(o);
     }
 
     @Override
