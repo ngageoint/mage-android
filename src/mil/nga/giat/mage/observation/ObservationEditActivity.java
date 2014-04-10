@@ -2,11 +2,15 @@ package mil.nga.giat.mage.observation;
 
 import java.io.File;
 import java.io.IOException;
+import java.text.DateFormat;
 import java.text.DecimalFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 import mil.nga.giat.mage.R;
@@ -22,6 +26,7 @@ import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationProperty;
 import mil.nga.giat.mage.sdk.exceptions.ObservationException;
 import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
+import mil.nga.giat.mage.sdk.utils.DateUtility;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
 import android.annotation.TargetApi;
 import android.app.Activity;
@@ -100,6 +105,9 @@ public class ObservationEditActivity extends FragmentActivity {
 	Map<String, String> propertiesMap;
 	long locationElapsedTimeMs = 0;
 	
+    private SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm zz", Locale.getDefault());
+    private DateFormat iso8601 = DateUtility.getISO8601();
+	
 	// View fields
 	Spinner typeSpinner;
 	Spinner levelSpinner;
@@ -140,7 +148,7 @@ public class ObservationEditActivity extends FragmentActivity {
 			this.setTitle("Create New Observation");
 			l = intent.getParcelableExtra(LOCATION);
 			date = new Date();
-			((TextView) findViewById(R.id.date)).setText(date.toString());
+			((TextView) findViewById(R.id.date)).setText(sdf.format(date));
 			
 	        // set default type and level values for map marker
 			o = new Observation();
@@ -157,8 +165,15 @@ public class ObservationEditActivity extends FragmentActivity {
 				}
 			
 				propertiesMap = o.getPropertiesMap();
-				date = new Date(Long.parseLong(propertiesMap.get("timestamp")));
-				((TextView) findViewById(R.id.date)).setText(date.toString());
+				String dateText = propertiesMap.get("timestamp");
+                try {
+                    date = iso8601.parse(dateText);
+                    dateText = sdf.format(date);
+                } catch (ParseException e) {
+                    e.printStackTrace();
+                }				
+				
+				((TextView) findViewById(R.id.date)).setText(dateText);
 				Geometry geo = o.getObservationGeometry().getGeometry();
 				if(geo instanceof Point) {
 					Point point = (Point)geo;
@@ -433,7 +448,14 @@ public class ObservationEditActivity extends FragmentActivity {
 					
 					break;
 				case DATE:
-					m.setText(new Date(Long.parseLong(propertyValue)).toString());
+                    String dateText = propertyValue;
+                    try {
+                        Date date = iso8601.parse(propertyValue);
+                        dateText = sdf.format(date);
+                    } catch (ParseException e) {
+                        e.printStackTrace();
+                    }
+                    m.setText(dateText);
 					break;
 				case LOCATION:
 					

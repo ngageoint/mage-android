@@ -75,6 +75,16 @@ public class ObservationMarkerCollection implements ObservationCollection, OnMar
             m.setVisible(visible);
         }
     }
+    
+    @Override
+    public void hide(Observation observation) {
+    	observationIdToMarker.get(observation.getId()).setVisible(false);
+    }
+    
+    @Override
+    public void show(Observation observation) {
+    	observationIdToMarker.get(observation.getId()).setVisible(true);
+    }
 
     @Override
     public void remove(Observation o) {

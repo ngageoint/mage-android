@@ -211,22 +211,19 @@ public class MAGE extends Application {
         }
     }
 
-    // FIXME : testing this stuff!
-    public void testingStaticFeatures() {
-
-        Runnable runnable = new Runnable() {
-
-            @Override
-            public void run() {
-                staticFeatureServerFetch = new StaticFeatureServerFetch(getApplicationContext());
-                try {
-                    staticFeatureServerFetch.fetch();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        };
-
-        new Thread(runnable).start();
-    }
+	public void pullStaticFeaturesOneTime() {
+		Runnable runnable = new Runnable() {
+			@Override
+			public void run() {
+				staticFeatureServerFetch = new StaticFeatureServerFetch(getApplicationContext());
+				try {
+					staticFeatureServerFetch.fetch();
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+		};
+		
+		new Thread(runnable).start();
+	}
 }

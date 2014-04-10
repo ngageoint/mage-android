@@ -83,6 +83,9 @@ public class NewsFeedFragment extends Fragment implements IObservationEventListe
 	@Override
 	public void onDestroy() {
 		sp.unregisterOnSharedPreferenceChangeListener(this);
+		if (queryUpdateHandle != null) {
+			queryUpdateHandle.cancel(true);
+		}
 		ObservationHelper.getInstance(getActivity().getApplicationContext()).removeListener(this);
 		super.onDestroy();
 	}
