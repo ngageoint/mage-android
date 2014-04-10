@@ -159,7 +159,7 @@ public class NewsFeedFragment extends Fragment implements IObservationEventListe
 	private Cursor obtainCursor(PreparedQuery<Observation> query, Dao<Observation, Long> oDao) throws SQLException {
 		// build your query
 		QueryBuilder<Observation, Long> qb = oDao.queryBuilder();
-		qb.where().gt("id", 0);
+		qb.where().gt("_id", 0);
 		// this is wrong.  need to figure out how to order on nested table or move the correct field up
 		qb.orderBy("last_modified", false);
 

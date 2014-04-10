@@ -29,14 +29,12 @@ import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.RadioGroup;
-import android.widget.RadioGroup.OnCheckedChangeListener;
 import android.widget.TextView;
 
 /**
  * FIXME: Currently a mock of what a landing page might look like. Could be
  * replaced entirely if need be. Menu options do exist.
  * 
- * @author wiedemannse
  * 
  */
 public class LandingActivity extends FragmentActivity implements ListView.OnItemClickListener {	
@@ -54,6 +52,8 @@ public class LandingActivity extends FragmentActivity implements ListView.OnItem
         setContentView(R.layout.activity_landing);
         
         MAGE mage = (MAGE) getApplication();
+        
+        //mage.testingStaticFeatures();
         
         // FIXME : need to consider connectivity before talking to the server!!!
  		mage.startFetching();

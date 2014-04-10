@@ -11,6 +11,7 @@ import mil.nga.giat.mage.file.Storage.StorageType;
 import mil.nga.giat.mage.map.CacheOverlay;
 import mil.nga.giat.mage.sdk.fetch.LocationServerFetchAsyncTask;
 import mil.nga.giat.mage.sdk.fetch.ObservationServerFetchAsyncTask;
+import mil.nga.giat.mage.sdk.fetch.StaticFeatureServerFetch;
 import mil.nga.giat.mage.sdk.location.LocationService;
 import mil.nga.giat.mage.sdk.push.ObservationServerPushAsyncTask;
 import android.app.Application;
@@ -32,6 +33,8 @@ public class MAGE extends Application {
 	private List<CacheOverlay> cacheOverlays = null;
 	private Collection<OnCacheOverlayListener> cacheOverlayListeners = new ArrayList<OnCacheOverlayListener>();
 
+	private StaticFeatureServerFetch staticFeatureServerFetch = null;
+	
 	@Override
 	public void onCreate() {
 		refreshTileOverlays();
@@ -139,5 +142,24 @@ public class MAGE extends Application {
 		if (observationPushTask != null) {
 			observationPushTask.destroy();
 		}
+	}
+	
+	// FIXME : testing this stuff!
+	public void testingStaticFeatures() {
+
+		Runnable runnable = new Runnable() {
+			
+			@Override
+			public void run() {
+				staticFeatureServerFetch = new StaticFeatureServerFetch(getApplicationContext());
+				try {
+					staticFeatureServerFetch.fetch();
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+		};
+		
+		new Thread(runnable).start();
 	}
 }
