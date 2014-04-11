@@ -62,7 +62,7 @@ public class LandingActivity extends FragmentActivity implements ListView.OnItem
 		mage.startPushing();
 
 		// Pull static layers and features just once
-		//mage.pullStaticFeaturesOneTime();
+		mage.pullStaticFeaturesOneTime();
  		
  		DrawerItem viewHeader = new DrawerItem(-1, "Views");
  		viewHeader.isHeader(true);
