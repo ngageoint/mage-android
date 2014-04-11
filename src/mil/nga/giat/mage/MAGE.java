@@ -66,9 +66,9 @@ public class MAGE extends Application {
         protected List<Layer> doInBackground(Void... params) {
             List<Layer> overlays = new ArrayList<Layer>();
 
-            overlays.add(new Layer("12345", "static", "Features"));
-            overlays.add(new Layer("12345", "static", "Roads"));
-            overlays.add(new Layer("12345", "static", "Rivers"));
+//            overlays.add(new Layer("12345", "static", "Features"));
+//            overlays.add(new Layer("12345", "static", "Roads"));
+//            overlays.add(new Layer("12345", "static", "Rivers"));
 
             try {
                 Thread.sleep(15000);
