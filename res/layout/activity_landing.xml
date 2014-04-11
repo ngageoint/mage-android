@@ -18,12 +18,23 @@
         android:dividerHeight="0dp"
         android:background="#333"/>
     
-    <LinearLayout android:id="@+id/filter_drawer"
+    <LinearLayout 
+        android:background="#EEE"
+        android:id="@+id/filter_drawer"
         android:layout_width="240dp"
         android:layout_height="wrap_content"
         android:layout_gravity="right"
-        android:orientation="vertical"
-        android:background="#EEE">
+        android:orientation="vertical">
+    <LinearLayout 
+        android:padding="7dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+        <TextView 
+            android:text="TIME"
+            style="?android:attr/listSeparatorTextViewStyle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"/>
         <RadioGroup 
             android:id="@+id/time_filter_radio_gorup"
             android:layout_width="wrap_content"
@@ -77,7 +88,8 @@
 	    	    android:padding="7dp"
 	       		android:textSize="18sp"/>
         </RadioGroup>
-        <View
+    </LinearLayout>
+    <View
 		    android:layout_width="fill_parent"
 		    android:layout_height="1dip"
 		    android:background="?android:attr/dividerHorizontal" />
