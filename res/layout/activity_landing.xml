@@ -70,7 +70,7 @@
 	       		android:textSize="18sp"/>
             <RadioButton 
                 android:id="@+id/since_midnight_rb"
-                android:text="Since Midnight"
+                android:text="Today"
                 android:layout_width="wrap_content"
 	    	    android:layout_height="wrap_content"
 	    	    android:textColor="#111"
