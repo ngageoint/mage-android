@@ -42,7 +42,6 @@ public class FeatureOverlayPreferenceActivity extends ListActivity implements On
         progressBar = (ProgressBar) findViewById(R.id.overlay_progress_bar);
         
         ListView listView = getListView();
-
         listView.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);
     }
 
@@ -115,7 +114,7 @@ public class FeatureOverlayPreferenceActivity extends ListActivity implements On
     public boolean onOptionsItemSelected(MenuItem item) {
         // Handle presses on the action bar items
         switch (item.getItemId()) {
-        case R.id.overlay_map_refresh:
+        case R.id.feature_overlay_refresh:
 //            item.setEnabled(false);
 //            progressBar.setVisibility(View.VISIBLE);
 //            getListView().setEnabled(false);
@@ -156,7 +155,6 @@ public class FeatureOverlayPreferenceActivity extends ListActivity implements On
 
         public OverlayAdapter(Context context, List<Layer> overlays) {
             super(context, R.layout.feature_layer_list_item, R.id.checkedTextView, overlays);
-//            super(context, android.R.layout.simple_list_item_multiple_choice, overlays);
 
             this.layers = overlays;
         }
@@ -167,8 +165,6 @@ public class FeatureOverlayPreferenceActivity extends ListActivity implements On
 
             String name = layers.get(position).getName();
             CheckedTextView checkedView = (CheckedTextView) view.findViewById(R.id.checkedTextView);
-//          CheckedTextView checkedView = (CheckedTextView) view;
-
             checkedView.setText(name);
 
             return view;

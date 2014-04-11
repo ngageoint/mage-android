@@ -84,7 +84,7 @@ public class TileOverlayPreferenceActivity extends ListActivity implements OnCac
 
     @Override
     public boolean onPrepareOptionsMenu(Menu menu) {
-        refreshButton = menu.findItem(R.id.feature_overlay_refresh);
+        refreshButton = menu.findItem(R.id.tile_overlay_refresh);
         refreshButton.setEnabled(false);
         
         // This really should be done in the onResume, but I need to have my refreshButton
@@ -109,7 +109,7 @@ public class TileOverlayPreferenceActivity extends ListActivity implements OnCac
     public boolean onOptionsItemSelected(MenuItem item) {
         // Handle presses on the action bar items
         switch (item.getItemId()) {
-        case R.id.overlay_map_refresh:
+        case R.id.tile_overlay_refresh:
             item.setEnabled(false);
             progressBar.setVisibility(View.VISIBLE);
             getListView().setEnabled(false);
