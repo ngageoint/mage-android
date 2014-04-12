@@ -13,6 +13,8 @@ import java.util.Set;
 import mil.nga.giat.mage.MAGE;
 import mil.nga.giat.mage.MAGE.OnCacheOverlayListener;
 import mil.nga.giat.mage.R;
+import mil.nga.giat.mage.filter.Filter;
+import mil.nga.giat.mage.filter.ObservationDateTimeFilter;
 import mil.nga.giat.mage.map.GoogleMapWrapper.OnMapPanListener;
 import mil.nga.giat.mage.map.marker.ObservationCollection;
 import mil.nga.giat.mage.map.marker.ObservationMarkerCollection;
@@ -89,7 +91,7 @@ public class MapFragment extends Fragment implements OnMapLongClickListener, OnM
         
         mapType = Integer.parseInt(preferences.getString(getResources().getString(R.string.baseLayerKey), "1"));
         map.setMapType(mapType);
-
+        
         map.setOnMapLongClickListener(this);
         map.setOnMyLocationButtonClickListener(this);
 
@@ -97,21 +99,11 @@ public class MapFragment extends Fragment implements OnMapLongClickListener, OnM
         mapSettings.setOnClickListener(this);
 
         locationService = mage.getLocationService();
-
-        observations = new ObservationMarkerCollection(getActivity(), map);
         
-        try {
-            ObservationHelper.getInstance(getActivity()).addListener(this);
-        } catch (ObservationException e) {
-            e.printStackTrace();
-        }
-        
-        updateTimeFilter(getTimeFilterId());
-        PreferenceManager.getDefaultSharedPreferences(getActivity().getApplicationContext()).registerOnSharedPreferenceChangeListener(this);
         return mapWrapper;
     }
     
-    private int getTimeFilterId() {
+    private int getTimeFilter() {
 		return preferences.getInt(getResources().getString(R.string.activeTimeFilterKey), R.id.none_rb);
 	}
     
@@ -129,8 +121,7 @@ public class MapFragment extends Fragment implements OnMapLongClickListener, OnM
     }
     
     @Override
-    public void onDestroy() { 
-        ObservationHelper.getInstance(getActivity()).removeListener(this);
+    public void onDestroy() {
         killOldMap();
         super.onDestroy();
     }
@@ -150,7 +141,20 @@ public class MapFragment extends Fragment implements OnMapLongClickListener, OnM
     @Override
     public void onResume() {
         super.onResume();
-        Log.i("map test", "on resume called");
+                
+        PreferenceManager.getDefaultSharedPreferences(getActivity().getApplicationContext()).registerOnSharedPreferenceChangeListener(this);
+        
+        observations = new ObservationMarkerCollection(getActivity(), map);
+        updateMapType();
+        updateObservations();
+        updateTimeFilter(getTimeFilter());
+        
+        try {
+            ObservationHelper.getInstance(getActivity()).addListener(this);
+        } catch (ObservationException e) {
+            e.printStackTrace();
+        }
+        
         mage.registerCacheOverlayListener(this);
 
         // Check if any map preferences changed that I care about
@@ -161,14 +165,16 @@ public class MapFragment extends Fragment implements OnMapLongClickListener, OnM
             map.setLocationSource(this);
             locationService.registerOnLocationListener(this);
         }
-
-        updateMapType();
-        updateObservations();
     }
 
     @Override
     public void onPause() {
         super.onPause();
+        
+        ObservationHelper.getInstance(getActivity()).removeListener(this);
+        observations.clear();
+
+        PreferenceManager.getDefaultSharedPreferences(getActivity().getApplicationContext()).unregisterOnSharedPreferenceChangeListener(this);
 
         mage.unregisterCacheOverlayListener(this);
 
@@ -181,7 +187,6 @@ public class MapFragment extends Fragment implements OnMapLongClickListener, OnM
     
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-        // TODO Add your menu entries here
         super.onCreateOptionsMenu(menu, inflater);
         
         inflater.inflate(R.menu.landing, menu);
@@ -205,39 +210,22 @@ public class MapFragment extends Fragment implements OnMapLongClickListener, OnM
     }
 
     @Override
-    public void onObservationCreated(final Collection<Observation> o) {
-        new AddObservationTask(observations) {
-
-			@Override
-			protected void onPostExecute(Void result) {
-				updateTimeFilter(getTimeFilterId());
-				super.onPostExecute(result);
-			}
-        	
-        }.execute(o.toArray(new Observation[o.size()]));
+    public void onObservationCreated(Collection<Observation> o) {        
+        new AddObservationTask(observations).execute(o.toArray(new Observation[o.size()]));
     }
 
     @Override
-    public void onObservationUpdated(final Observation o) {
-        new UpdateObservationTask(observations){
-
-			@Override
-			protected void onPostExecute(Void result) {
-				updateTimeFilter(getTimeFilterId());
-				super.onPostExecute(result);
-			}
-        	
-        }.execute(o);
+    public void onObservationUpdated(Observation o) {
+        new UpdateObservationTask(observations).execute(o);
     }
 
     @Override
-    public void onObservationDeleted(final Observation o) {
+    public void onObservationDeleted(Observation o) {
         new DeleteObservationTask(observations).execute(o);
     }
 
     @Override
     public void onMapLongClick(LatLng point) {
-        // TODO Auto-generated method stub
         Intent intent = new Intent(getActivity(), ObservationEditActivity.class);
         Location l = new Location("manual");
         l.setAccuracy(0.0f);
@@ -250,11 +238,11 @@ public class MapFragment extends Fragment implements OnMapLongClickListener, OnM
     @Override
     public void onClick(View view) {
         switch (view.getId()) {
-        case R.id.map_settings: {
-            Intent i = new Intent(getActivity(), MapPreferencesActivity.class);
-            startActivity(i);
-            break;
-        }
+            case R.id.map_settings: {
+                Intent i = new Intent(getActivity(), MapPreferencesActivity.class);
+                startActivity(i);
+                break;
+            }
         }
     }
 
@@ -403,55 +391,54 @@ public class MapFragment extends Fragment implements OnMapLongClickListener, OnM
 	@Override
 	public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
 		if (getResources().getString(R.string.activeTimeFilterKey).equalsIgnoreCase(key)) {
-			Log.i("map test", "Active filter changed to: " + sharedPreferences.getInt(key, 0));
 			updateTimeFilter(sharedPreferences.getInt(key, 0));
 		}
-		
 	}
 	
-	private void updateTimeFilter(int filterId) {
+	private void updateTimeFilter(int timeFilter) {
 		Calendar c = Calendar.getInstance();
-		String title = "";
-		switch (filterId) {
-		case R.id.none_rb:
-			// no filter
-			title += "All Observations";
-			c.setTime(new Date(0));
-			break;
-		case R.id.last_hour_rb:
-			title += "Last Hour";
-			c.add(Calendar.HOUR, -1);
-			break;
-		case R.id.last_six_hours_rb:
-			title += "Last 6 Hours";
-			c.add(Calendar.HOUR, -6);
-			break;
-		case R.id.last_twelve_hours_rb:
-			title += "Last 12 Hours";
-			c.add(Calendar.HOUR, -12);
-			break;
-		case R.id.last_24_hours_rb:
-			title += "Last 24 Hours";
-			c.add(Calendar.HOUR, -24);
-			break;
-		case R.id.since_midnight_rb:
-			title += "Since Midnight";
-			c.set(Calendar.HOUR_OF_DAY, 0);
-			c.set(Calendar.MINUTE, 0);
-			c.set(Calendar.SECOND, 0);
-			c.set(Calendar.MILLISECOND, 0);
-			break;
-		default:
-			// just set no filter
-			title += "All Observations";
-			c.setTime(new Date(0));
-			break;
+		String title = null;
+		switch (timeFilter) {
+    		case R.id.last_hour_rb:
+    			title = "Last Hour";
+    			c.add(Calendar.HOUR, -1);
+    			break;
+    		case R.id.last_six_hours_rb:
+    			title = "Last 6 Hours";
+    			c.add(Calendar.HOUR, -6);
+    			break;
+    		case R.id.last_twelve_hours_rb:
+    			title = "Last 12 Hours";
+    			c.add(Calendar.HOUR, -12);
+    			break;
+    		case R.id.last_24_hours_rb:
+    			title = "Last 24 Hours";
+    			c.add(Calendar.HOUR, -24);
+    			break;
+    		case R.id.since_midnight_rb:
+    			title = "Since Midnight";
+    			c.set(Calendar.HOUR_OF_DAY, 0);
+    			c.set(Calendar.MINUTE, 0);
+    			c.set(Calendar.SECOND, 0);
+    			c.set(Calendar.MILLISECOND, 0);
+    			break;
+    		default:
+    			// no filter
+    			title = "All Observations";
+    			c = null;
 		}
+		
 		getActivity().getActionBar().setTitle(title);
 		
-		Date start = c.getTime();
-		Date end = null;
-		
-		new FilterObservationsTask(observations, start, end).execute(observations.getObservations().toArray(new Observation[observations.getObservations().size()]));
+		if (c != null) {
+		    Date start = c.getTime();
+		    Date end = null;
+		    
+		    Filter<Observation> filter = new ObservationDateTimeFilter(start, end);
+		    observations.setFilters(Collections.singletonList(filter));
+		} else {
+		    // clear filters
+		    observations.setFilters(Collections.<Filter<Observation>>emptyList());
+		}
 	}
 }

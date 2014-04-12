@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import mil.nga.giat.mage.filter.Filter;
 import mil.nga.giat.mage.map.marker.ObservationClusterCollection.ObservationClusterItem;
 import mil.nga.giat.mage.observation.ObservationViewActivity;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
@@ -77,18 +78,6 @@ public class ObservationClusterCollection implements ObservationCollection, OnCl
     }
     
     @Override
-    public void hide(Observation observation) {
-    	// TODO not even sure what to do here with ClusterItem
-        // its not a GoogleMap marker so you cannot hide it
-    }
-    
-    @Override
-    public void show(Observation observation) {
-    	// TODO not even sure what to do here with ClusterItem
-        // its not a GoogleMap marker so you cannot hide it
-    }
-    
-    @Override
     public void remove(Observation o) {
         observations.remove(o.getId());
         ObservationClusterItem item = items.remove(o.getId());
@@ -139,5 +128,16 @@ public class ObservationClusterCollection implements ObservationCollection, OnCl
     @Override
     public void onCameraChange(CameraPosition cameraPosition) {
         clusterManager.onCameraChange(cameraPosition);
+    }
+
+    @Override
+    public void setFilters(Collection<Filter<Observation>> filters) {
+        // TODO Auto-generated method stub
+    }
+
+    @Override
+    public void setObservationVisibility(Observation observation, boolean visible) {
+        // TODO Auto-generated method stub
+        
     }
 }
