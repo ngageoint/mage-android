@@ -194,6 +194,10 @@ public class MAGE extends Application {
         if (observationFetchTask != null) {
             observationFetchTask.destroy();
         }
+        
+        if (staticFeatureServerFetch != null) {
+        	staticFeatureServerFetch.destroy();
+        }
     }
 
     public void startPushing() {

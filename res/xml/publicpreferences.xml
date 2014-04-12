@@ -15,16 +15,15 @@
         android:order="3"
         android:title="ABOUT" >
         <EditTextPreference
-            android:key="serverURL"
+            android:key="@string/serverURLKey"
             android:selectable="false"
             android:title="URL" />
-
-        <Preference
-            android:key="username"
+        <EditTextPreference
+            android:key="@string/usernameKey"
             android:selectable="false"
             android:title="Username" />
-        <Preference
-            android:key="appVersion"
+        <EditTextPreference
+            android:key="@string/buildVersionKey"
             android:selectable="false"
             android:title="App Version" />
     </PreferenceCategory>

@@ -128,18 +128,18 @@
                     android:tag="lock" />
             </LinearLayout>
 
-            <!-- Sign in button -->
-
+            <!-- Login button -->
             <Button
+                android:id="@+id/login_login_button"
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="10dip"
                 android:background="@drawable/login_button"
                 android:onClick="login"
                 android:text="Log In"
-                android:textStyle="bold"
                 android:textColor="#EEEEEE"
-                android:textSize="21sp" />
+                android:textSize="21sp"
+                android:textStyle="bold" />
 
             <!-- Link to Signup Screen? -->
 

@@ -1,11 +1,14 @@
 package mil.nga.giat.mage.login;
 
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
 import mil.nga.giat.mage.LandingActivity;
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.disclaimer.DisclaimerActivity;
+import mil.nga.giat.mage.sdk.connectivity.ConnectivityUtility;
 import mil.nga.giat.mage.sdk.datastore.DaoStore;
 import mil.nga.giat.mage.sdk.login.AbstractAccountTask;
 import mil.nga.giat.mage.sdk.login.AccountDelegate;
@@ -46,6 +49,7 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 	private EditText mUsernameEditText;
 	private EditText mPasswordEditText;
 	private EditText mServerEditText;
+	private Button mLoginButton;
 
 	public final EditText getUsernameEditText() {
 		return mUsernameEditText;
@@ -88,6 +92,8 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 		mUsernameEditText = (EditText) findViewById(R.id.login_username);
 		mPasswordEditText = (EditText) findViewById(R.id.login_password);
 		mServerEditText = (EditText) findViewById(R.id.login_server);
+		
+		mLoginButton = (Button) findViewById(R.id.login_login_button);
 
 		// set the default values
 		getUsernameEditText().setText(preferenceHelper.getValue(R.string.usernameKey));
@@ -237,18 +243,79 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 	 * @param view
 	 */
 	public void toggleLock(View view) {
-		getServerEditText().setEnabled(!getServerEditText().isEnabled());
 		ImageView lockImageView = ((ImageView) findViewById(R.id.login_lock));
 		if (lockImageView.getTag().toString().equals("lock")) {
+			getServerEditText().setEnabled(!getServerEditText().isEnabled());
+			mLoginButton.setEnabled(!mLoginButton.isEnabled());
 			lockImageView.setTag("unlock");
 			lockImageView.setImageResource(R.drawable.ic_unlock_white);
-			InputMethodManager inputMethodManager = (InputMethodManager) getSystemService(Activity.INPUT_METHOD_SERVICE);
-			inputMethodManager.toggleSoftInput(InputMethodManager.SHOW_FORCED, 0);
+			showKeyboard();
 			getServerEditText().requestFocus();
 		} else {
-			lockImageView.setTag("lock");
-			lockImageView.setImageResource(R.drawable.ic_lock_white);
+			try {
+				// TODO : add spinner.
+				// make sure the url syntax is good
+				String serverURL = getServerEditText().getText().toString();
+				URL sURL = new URL(serverURL);
+
+				// make sure you can get to the host!
+				try {
+					if (ConnectivityUtility.isResolvable(sURL.getHost())) {
+						try {
+							PreferenceHelper.getInstance(getApplicationContext()).readRemote(sURL);
+							// check versions
+							Integer compatibleMajorVersion = PreferenceHelper.getInstance(getApplicationContext()).getValue(R.string.compatibleVersionMajorKey, Integer.class, R.string.compatibleVersionMajorDefaultValue);
+							Integer compatibleMinorVersion = PreferenceHelper.getInstance(getApplicationContext()).getValue(R.string.compatibleVersionMinorKey, Integer.class, R.string.compatibleVersionMinorDefaultValue);
+
+							Integer serverMajorVersion = PreferenceHelper.getInstance(getApplicationContext()).getValue(R.string.serverVersionMajorKey, Integer.class, null);
+							Integer serverMinorVersion = PreferenceHelper.getInstance(getApplicationContext()).getValue(R.string.serverVersionMinorKey, Integer.class, null);
+
+							if (serverMajorVersion == null || serverMinorVersion == null) {
+								showKeyboard();
+								getServerEditText().setError("No server version");
+								getServerEditText().requestFocus();
+							} else {
+								if (!compatibleMajorVersion.equals(serverMajorVersion)) {
+									showKeyboard();
+									getServerEditText().setError("This app is not compatible with this server");
+									getServerEditText().requestFocus();
+								} else if (compatibleMinorVersion > serverMinorVersion) {
+									showKeyboard();
+									getServerEditText().setError("This app is not compatible with this server");
+									getServerEditText().requestFocus();
+								} else {
+									getServerEditText().setEnabled(!getServerEditText().isEnabled());
+									mLoginButton.setEnabled(!mLoginButton.isEnabled());
+									lockImageView.setTag("lock");
+									lockImageView.setImageResource(R.drawable.ic_lock_white);
+								}
+							}
+						} catch (Exception e) {
+							showKeyboard();
+							getServerEditText().setError("No server information");
+							getServerEditText().requestFocus();
+						}
+					} else {
+						showKeyboard();
+						getServerEditText().setError("Host does not resolve");
+						getServerEditText().requestFocus();
+					}
+				} catch (Exception e) {
+					showKeyboard();
+					getServerEditText().setError("Host does not resolve");
+					getServerEditText().requestFocus();
+				}
+			} catch (MalformedURLException mue) {
+				showKeyboard();
+				getServerEditText().setError("Bad URL");
+				getServerEditText().requestFocus();
+			}
 		}
+	}
+
+	private void showKeyboard() {
+		InputMethodManager inputMethodManager = (InputMethodManager) getSystemService(Activity.INPUT_METHOD_SERVICE);
+		inputMethodManager.toggleSoftInput(InputMethodManager.SHOW_FORCED, 0);
 	}
 
 	@Override

@@ -1,10 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="serverURLKey">serverURL</string>
+
+    <!-- privatepreferences.xml -->
     <string name="showDisclaimerKey">showDisclaimer</string>
     <string name="passwordMinLengthKey">gAuthenticationPasswordMinLength</string>
+    <string name="passwordMinLengthDefaultValue">5</string>
+    <string name="compatibleVersionMajorKey">compatibleVersionMajor</string>
+    <string name="compatibleVersionMajorDefaultValue">2</string>
+    <string name="compatibleVersionMinorKey">compatibleVersionMinor</string>
+    <string name="compatibleVersionMinorDefaultValue">0</string>
+    <!-- from the server api call -->
+    <string name="serverVersionMajorKey">gVersionMajor</string>
+    <string name="serverVersionMinorKey">gVersionMinor</string>
+    <!-- map stuff -->
     <string name="baseLayerKey">baseLayer</string>
     <string name="mapTileOverlaysKey">mapTileOverlays</string>
     <string name="showObservationsKey">showObservations</string>
     <string name="activeTimeFilterKey">activeTimeFilter</string>
+
 </resources>
