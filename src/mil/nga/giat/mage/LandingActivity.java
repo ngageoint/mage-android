@@ -144,9 +144,8 @@ public class LandingActivity extends FragmentActivity implements ListView.OnItem
              @Override  
              public void onDrawerClosed(View drawerView) {
             	 super.onDrawerClosed(drawerView);
-            	 if (drawerView.getId() == R.id.left_drawer) {
-            		 getActionBar().setTitle(currentTitle);
-            	 }
+            	 getActionBar().setTitle(currentTitle);
+    
             	 if (drawerView.getId() == R.id.filter_drawer) {
             		 setFilter(); 
             	 }
