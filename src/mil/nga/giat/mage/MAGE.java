@@ -14,6 +14,7 @@ import mil.nga.giat.mage.sdk.fetch.LocationServerFetchAsyncTask;
 import mil.nga.giat.mage.sdk.fetch.ObservationServerFetchAsyncTask;
 import mil.nga.giat.mage.sdk.fetch.StaticFeatureServerFetch;
 import mil.nga.giat.mage.sdk.location.LocationService;
+import mil.nga.giat.mage.sdk.push.LocationServerPushAsyncTask;
 import mil.nga.giat.mage.sdk.push.ObservationServerPushAsyncTask;
 import android.app.Application;
 import android.os.AsyncTask;
@@ -91,7 +92,8 @@ public class MAGE extends Application {
     // END temp UI code
 
     private LocationService locationService;
-    private LocationServerFetchAsyncTask locationTask = null;
+    private LocationServerFetchAsyncTask locationFetchTask = null;
+    private LocationServerPushAsyncTask locationPushTask = null;
     private ObservationServerFetchAsyncTask observationFetchTask = null;
     private ObservationServerPushAsyncTask observationPushTask = null;
     private List<CacheOverlay> cacheOverlays = null;
@@ -175,20 +177,26 @@ public class MAGE extends Application {
         }
     }
 
+    /**
+     * Start Tasks responsible for fetching Observations and Locations from the server.
+     */
     public void startFetching() {
-        locationTask = new LocationServerFetchAsyncTask(getApplicationContext());
+        locationFetchTask = new LocationServerFetchAsyncTask(getApplicationContext());
         observationFetchTask = new ObservationServerFetchAsyncTask(getApplicationContext());
         try {
-            locationTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+            locationFetchTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
             observationFetchTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
         } catch (Exception e) {
             Log.e(LOG_NAME, "Error starting fetching tasks!");
         }
     }
 
+    /**
+     * Stop Tasks responsible for fetching Observations and Locations from the server.
+     */
     public void destroyFetching() {
-        if (locationTask != null) {
-            locationTask.destroy();
+        if (locationFetchTask != null) {
+            locationFetchTask.destroy();
         }
 
         if (observationFetchTask != null) {
@@ -200,18 +208,30 @@ public class MAGE extends Application {
         }
     }
 
+    /**
+     * Start Tasks responsible for pushing Observations and Locations to the server.
+     */
     public void startPushing() {
         observationPushTask = new ObservationServerPushAsyncTask(getApplicationContext());
+        locationPushTask = new LocationServerPushAsyncTask(getApplicationContext());
+        
         try {
             observationPushTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+            locationPushTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
         } catch (Exception e) {
             Log.e(LOG_NAME, "Error starting fetching tasks!");
         }
     }
 
+    /**
+     * Stop Tasks responsible for pushing Observations and Locations to the server.
+     */
     public void destroyPushing() {
         if (observationPushTask != null) {
             observationPushTask.destroy();
+        }
+        if (locationPushTask != null) {
+        	locationPushTask.destroy();
         }
     }
 
