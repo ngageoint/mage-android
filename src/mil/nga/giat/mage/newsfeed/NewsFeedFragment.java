@@ -36,7 +36,9 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
+import android.widget.HeaderViewListAdapter;
 import android.widget.ListView;
+import android.widget.TextView;
 
 import com.j256.ormlite.android.AndroidDatabaseResults;
 import com.j256.ormlite.dao.CloseableIterator;
@@ -52,6 +54,7 @@ public class NewsFeedFragment extends Fragment implements IObservationEventListe
 	private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 	private ScheduledFuture<?> queryUpdateHandle;
 	private long requeryTime;
+	private ViewGroup footer;
 
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -61,11 +64,14 @@ public class NewsFeedFragment extends Fragment implements IObservationEventListe
 		sp = PreferenceManager.getDefaultSharedPreferences(getActivity().getApplicationContext());
 		sp.registerOnSharedPreferenceChangeListener(this);
 		ListView lv = (ListView) rootView.findViewById(R.id.news_feed_list);
+		footer = (ViewGroup) inflater.inflate(R.layout.feed_footer, lv,
+                false);
 		try {
 			oDao = DaoStore.getInstance(getActivity().getApplicationContext()).getObservationDao();
 			query = buildQuery(oDao, getTimeFilterId());
 			Cursor c = obtainCursor(query, oDao);
 			adapter = new NewsFeedCursorAdapter(getActivity().getApplicationContext(), c, query, getActivity());
+			lv.addFooterView(footer, null, false);
 			lv.setAdapter(adapter);
 			lv.setOnItemClickListener(this);
 
@@ -92,7 +98,8 @@ public class NewsFeedFragment extends Fragment implements IObservationEventListe
 
 	@Override
 	public void onItemClick(AdapterView<?> adapter, View arg1, int position, long id) {
-		Cursor c = ((NewsFeedCursorAdapter) adapter.getAdapter()).getCursor();
+		HeaderViewListAdapter headerAdapter = (HeaderViewListAdapter)adapter.getAdapter();
+		Cursor c = ((NewsFeedCursorAdapter) headerAdapter.getWrappedAdapter()).getCursor();
 		c.moveToPosition(position);
 		try {
 			Observation o = query.mapRow(new AndroidDatabaseResults(c, null));
@@ -130,30 +137,37 @@ public class NewsFeedFragment extends Fragment implements IObservationEventListe
 		QueryBuilder<Observation, Long> qb = oDao.queryBuilder();
 		Calendar c = Calendar.getInstance();
 		String title = "";
+		String footerText = "";
 		switch (filterId) {
 		case R.id.none_rb:
 			// no filter
 			title += "All Observations";
+			footerText = "All observations have been returned";
 			c.setTime(new Date(0));
 			break;
 		case R.id.last_hour_rb:
 			title += "Last Hour";
+			footerText = "End of results for Last Hour filter";
 			c.add(Calendar.HOUR, -1);
 			break;
 		case R.id.last_six_hours_rb:
 			title += "Last 6 Hours";
+			footerText = "End of results for Last 6 Hours filter";
 			c.add(Calendar.HOUR, -6);
 			break;
 		case R.id.last_twelve_hours_rb:
 			title += "Last 12 Hours";
+			footerText = "End of results for Last 12 Hours filter";
 			c.add(Calendar.HOUR, -12);
 			break;
 		case R.id.last_24_hours_rb:
 			title += "Last 24 Hours";
+			footerText = "End of results for Last 24 Hours filter";
 			c.add(Calendar.HOUR, -24);
 			break;
 		case R.id.since_midnight_rb:
 			title += "Since Midnight";
+			footerText = "End of results for Today filter";
 			c.set(Calendar.HOUR_OF_DAY, 0);
 			c.set(Calendar.MINUTE, 0);
 			c.set(Calendar.SECOND, 0);
@@ -162,10 +176,13 @@ public class NewsFeedFragment extends Fragment implements IObservationEventListe
 		default:
 			// just set no filter
 			title += "All Observations";
+			footerText = "All observations have been returned";
 			c.setTime(new Date(0));
 			break;
 		}
 		requeryTime = c.getTimeInMillis();
+		TextView footerTextView = (TextView)footer.findViewById(R.id.footer_text);
+		footerTextView.setText(footerText);
 		getActivity().getActionBar().setTitle(title);
 		qb.where().gt("last_modified", c.getTime());
 		qb.orderBy("last_modified", false);
