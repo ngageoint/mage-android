@@ -68,12 +68,11 @@ public class LandingActivity extends FragmentActivity implements ListView.OnItem
  		viewHeader.isHeader(true);
  		DrawerItem extraHeader = new DrawerItem(-1, "Extra");
  		extraHeader.isHeader(true);
- 		DrawerItem observationsItem = new DrawerItem(1, "Observations", R.drawable.ic_map_marker_white, new NewsFeedFragment());
  		mapItem = new DrawerItem(0, "Map", R.drawable.ic_globe_white, new MapFragment());
 
  		drawerItems = new DrawerItem[] {
 	        mapItem,
-	        observationsItem,
+	        new DrawerItem(1, "Observations", R.drawable.ic_map_marker_white, new NewsFeedFragment()),
 	        new DrawerItem(2, "People", R.drawable.ic_users_white, new PeopleFeedFragment()),
 	        new DrawerItem(3, "Settings", R.drawable.ic_settings_white, new PublicPreferencesFragment()),
 	        new DrawerItem(4, "Help", R.drawable.ic_question_circle_white, new HelpFragment()),

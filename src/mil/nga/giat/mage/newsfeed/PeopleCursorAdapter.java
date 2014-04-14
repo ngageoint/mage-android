@@ -7,11 +7,13 @@ import java.util.Date;
 import java.util.Locale;
 
 import mil.nga.giat.mage.R;
+import mil.nga.giat.mage.map.marker.LocationBitmapFactory;
 import mil.nga.giat.mage.sdk.datastore.location.Location;
 import mil.nga.giat.mage.sdk.utils.DateUtility;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
+import android.graphics.Bitmap;
 import android.net.Uri;
 import android.provider.ContactsContract.CommonDataKinds.Phone;
 import android.provider.ContactsContract.Contacts.Data;
@@ -20,6 +22,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CursorAdapter;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.j256.ormlite.android.AndroidDatabaseResults;
@@ -41,6 +44,11 @@ public class PeopleCursorAdapter extends CursorAdapter {
 	public void bindView(View v, final Context context, Cursor cursor) {
 		try {
             Location l = query.mapRow(new AndroidDatabaseResults(cursor, null));
+            
+            ImageView iconView = (ImageView) v.findViewById(R.id.iconImageView);
+            Bitmap iconMarker = LocationBitmapFactory.bitmap(context, l);
+            if (iconMarker != null)
+                iconView.setImageBitmap(iconMarker); 
             
             TextView user = (TextView)v.findViewById(R.id.username);
             TextView dateView = (TextView)v.findViewById(R.id.location_date);

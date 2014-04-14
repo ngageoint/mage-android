@@ -99,6 +99,8 @@ public class ObservationMarkerCollection implements ObservationCollection, OnMar
     @Override
     public boolean onMarkerClick(Marker marker) {
         Observation o = markerIdToObservation.get(marker.getId());
+        
+        if (o == null) return false;  // Not an observation let someone else handle it
 
         Intent intent = new Intent(context, ObservationViewActivity.class);
         intent.putExtra(ObservationViewActivity.OBSERVATION_ID, o.getId());

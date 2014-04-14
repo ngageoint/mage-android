@@ -16,13 +16,17 @@ import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.filter.Filter;
 import mil.nga.giat.mage.filter.ObservationDateTimeFilter;
 import mil.nga.giat.mage.map.GoogleMapWrapper.OnMapPanListener;
+import mil.nga.giat.mage.map.marker.LocationMarkerCollection;
 import mil.nga.giat.mage.map.marker.ObservationCollection;
 import mil.nga.giat.mage.map.marker.ObservationMarkerCollection;
 import mil.nga.giat.mage.map.preference.MapPreferencesActivity;
 import mil.nga.giat.mage.observation.ObservationEditActivity;
+import mil.nga.giat.mage.sdk.datastore.location.LocationHelper;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
+import mil.nga.giat.mage.sdk.event.ILocationEventListener;
 import mil.nga.giat.mage.sdk.event.IObservationEventListener;
+import mil.nga.giat.mage.sdk.exceptions.LocationException;
 import mil.nga.giat.mage.sdk.exceptions.ObservationException;
 import mil.nga.giat.mage.sdk.location.LocationService;
 import android.app.Fragment;
@@ -57,7 +61,17 @@ import com.google.android.gms.maps.model.TileOverlay;
 import com.google.android.gms.maps.model.TileOverlayOptions;
 import com.google.android.gms.maps.model.TileProvider;
 
-public class MapFragment extends Fragment implements OnMapLongClickListener, OnMapPanListener, OnMyLocationButtonClickListener, OnClickListener, LocationSource, LocationListener, OnCacheOverlayListener, OnSharedPreferenceChangeListener, IObservationEventListener {
+public class MapFragment extends Fragment implements 
+        OnMapLongClickListener, 
+        OnMapPanListener, 
+        OnMyLocationButtonClickListener, 
+        OnClickListener, 
+        LocationSource, 
+        LocationListener, 
+        OnCacheOverlayListener, 
+        OnSharedPreferenceChangeListener, 
+        IObservationEventListener,
+        ILocationEventListener {
 
     private MAGE mage;
     private GoogleMap map;
@@ -68,6 +82,7 @@ public class MapFragment extends Fragment implements OnMapLongClickListener, OnM
     private OnLocationChangedListener locationChangedListener;
 
     private ObservationCollection observations;
+    private LocationMarkerCollection locations;
 
     private Map<String, TileOverlay> tileOverlays = new HashMap<String, TileOverlay>();
 
@@ -78,6 +93,9 @@ public class MapFragment extends Fragment implements OnMapLongClickListener, OnM
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_map, container, false);
+        
+        // TODO see if there is a way to keep this guy alive such that I do not have to recreate markers and such
+//        setRetainInstance(true);  
         setHasOptionsMenu(true);
         
         mage = (MAGE) getActivity().getApplication();
@@ -155,6 +173,14 @@ public class MapFragment extends Fragment implements OnMapLongClickListener, OnM
             e.printStackTrace();
         }
         
+        locations = new LocationMarkerCollection(getActivity(), map);
+        
+        try {
+            LocationHelper.getInstance(getActivity()).addListener(this);
+        } catch (LocationException e) {
+            e.printStackTrace();
+        }
+        
         mage.registerCacheOverlayListener(this);
 
         // Check if any map preferences changed that I care about
@@ -173,6 +199,9 @@ public class MapFragment extends Fragment implements OnMapLongClickListener, OnM
         
         ObservationHelper.getInstance(getActivity()).removeListener(this);
         observations.clear();
+        
+        LocationHelper.getInstance(getActivity()).removeListener(this);
+        locations.clear();
 
         PreferenceManager.getDefaultSharedPreferences(getActivity().getApplicationContext()).unregisterOnSharedPreferenceChangeListener(this);
 
@@ -211,17 +240,36 @@ public class MapFragment extends Fragment implements OnMapLongClickListener, OnM
 
     @Override
     public void onObservationCreated(Collection<Observation> o) {        
-        new AddObservationTask(observations).execute(o.toArray(new Observation[o.size()]));
+        new ObservationTask(ObservationTask.Type.ADD, observations).execute(o.toArray(new Observation[o.size()]));
     }
 
     @Override
     public void onObservationUpdated(Observation o) {
-        new UpdateObservationTask(observations).execute(o);
+        new ObservationTask(ObservationTask.Type.UPDATE, observations).execute(o);
     }
 
     @Override
     public void onObservationDeleted(Observation o) {
-        new DeleteObservationTask(observations).execute(o);
+        new ObservationTask(ObservationTask.Type.DELETE, observations).execute(o);
+    }
+
+    @Override
+    public void onLocationCreated(Collection<mil.nga.giat.mage.sdk.datastore.location.Location> l) {
+        Log.i("BILLY", "BILLY just got some locations: " + l.size());
+        new LocationTask(LocationTask.Type.ADD, locations).execute(l.toArray(new mil.nga.giat.mage.sdk.datastore.location.Location[l.size()]));
+    }
+
+    @Override
+    public void onLocationUpdated(mil.nga.giat.mage.sdk.datastore.location.Location l) {
+        Log.i("BILLY", "BILLY just got location update");
+        new LocationTask(LocationTask.Type.UPDATE, locations).execute(l);        
+    }
+
+    @Override
+    public void onLocationDeleted(String pUserLocalId) {
+        Log.i("BILLY", "BILLY just got location delete");
+        // TODO travis why userId here but Location the rest of the time
+//        new LocationTask(LocationTask.Type.DELETE, locations).execute(l);        
     }
 
     @Override

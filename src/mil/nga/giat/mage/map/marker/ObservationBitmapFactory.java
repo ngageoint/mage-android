@@ -38,7 +38,7 @@ public class ObservationBitmapFactory {
             bitmap = BitmapFactory.decodeStream(context.getAssets().open(asset)); 
         } catch (IOException e1) {
             try {
-                bitmap = BitmapFactory.decodeStream(context.getAssets().open("markers/default.png"));
+                bitmap = BitmapFactory.decodeStream(context.getAssets().open(DEFAULT_ASSET));
             } catch (IOException e2) {
             }
             
