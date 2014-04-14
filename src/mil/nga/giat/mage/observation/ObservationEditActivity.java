@@ -239,74 +239,74 @@ public class ObservationEditActivity extends Activity {
 			@Override
 			public void onClick(View v) {
 				
-				AlertDialog.Builder builder = new AlertDialog.Builder(ObservationEditActivity.this);
-//			    // Get the layout inflater
-			    LayoutInflater inflater = getLayoutInflater();
-			    View dialogView = inflater.inflate(R.layout.location_edit, null);
-			    
-			    TextView longitudeEdit = (TextView)dialogView.findViewById(R.id.location_edit_longitude);
-			    TextView latitudeEdit = (TextView)dialogView.findViewById(R.id.location_edit_latitude);
-			    
-			    longitudeEdit.setText(Double.toString(l.getLongitude()));
-			    latitudeEdit.setText(Double.toString(l.getLatitude()));
-			    
-			    
-//			    final DatePicker datePicker = (DatePicker) dialogView.findViewById(R.id.date_picker);
-//			    final TimePicker timePicker = (TimePicker) dialogView.findViewById(R.id.time_picker);
-//			    // Inflate and set the layout for the dialog
-//			    // Pass null as the parent view because its going in the dialog layout
-			    
-			    final GoogleMap dialogMap = ((MapFragment) getFragmentManager().findFragmentById(R.id.location_edit_map)).getMap();
-
-				LatLng location = new LatLng(l.getLatitude(), l.getLongitude());
-				//((TextView) findViewById(R.id.location)).setText(latLngFormat.format(l.getLatitude()) + ", " + latLngFormat.format(l.getLongitude()));
-				
-				dialogMap.moveCamera(CameraUpdateFactory.newLatLngZoom(location, 18));
-				
-				ImageView iv = (ImageView)dialogView.findViewById(R.id.location_edit_marker);
-				iv.setImageBitmap(ObservationBitmapFactory.bitmap(ObservationEditActivity.this, o));
-			    
-			    builder.setView(dialogView)
-			    // Add action buttons
-			           .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
-			               @Override
-			               public void onClick(DialogInterface dialog, int id) {
-//			                   // set the date and time to what they chose
-			            	   LatLng center = dialogMap.getCameraPosition().target;
-			            	   l.setLatitude(center.latitude);
-			            	   l.setLongitude(center.longitude);
-			            	   l.setProvider("manual");
-			            	   l.setAccuracy(0.0f);
-			            	   l.setTime(System.currentTimeMillis());
-			            	   setupMap();
-
-			            	   com.google.android.gms.maps.MapFragment mapFragment = 
-			                           ((com.google.android.gms.maps.MapFragment) getFragmentManager().findFragmentById(R.id.location_edit_map));
-
-			                   if (mapFragment != null) {
-			                       FragmentManager manager = getFragmentManager();
-			                       FragmentTransaction t = manager.beginTransaction();
-			                       FragmentTransaction t2 = t.remove(mapFragment).detach(mapFragment);
-			                       t2.commitAllowingStateLoss();
-			                   }
-			               }
-			           })
-			           .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
-			               public void onClick(DialogInterface dialog, int id) {
-			            	   com.google.android.gms.maps.MapFragment mapFragment = 
-			                           ((com.google.android.gms.maps.MapFragment) getFragmentManager().findFragmentById(R.id.location_edit_map));
-
-			                   if (mapFragment != null) {
-			                       FragmentManager manager = getFragmentManager();
-			                       FragmentTransaction t = manager.beginTransaction();
-			                       FragmentTransaction t2 = t.remove(mapFragment).detach(mapFragment);
-			                       t2.commitAllowingStateLoss();
-			                   }
-			                   dialog.cancel();
-			               }
-			           });      
-			    AlertDialog ad = builder.create();
-			    ad.show();
+//				AlertDialog.Builder builder = new AlertDialog.Builder(ObservationEditActivity.this);
+////			    // Get the layout inflater
+//			    LayoutInflater inflater = getLayoutInflater();
+//			    View dialogView = inflater.inflate(R.layout.location_edit, null);
+//			    
+//			    TextView longitudeEdit = (TextView)dialogView.findViewById(R.id.location_edit_longitude);
+//			    TextView latitudeEdit = (TextView)dialogView.findViewById(R.id.location_edit_latitude);
+//			    
+//			    longitudeEdit.setText(Double.toString(l.getLongitude()));
+//			    latitudeEdit.setText(Double.toString(l.getLatitude()));
+//			    
+//			    
+////			    final DatePicker datePicker = (DatePicker) dialogView.findViewById(R.id.date_picker);
+////			    final TimePicker timePicker = (TimePicker) dialogView.findViewById(R.id.time_picker);
+////			    // Inflate and set the layout for the dialog
+////			    // Pass null as the parent view because its going in the dialog layout
+//			    
+//			    final GoogleMap dialogMap = ((MapFragment) getFragmentManager().findFragmentById(R.id.location_edit_map)).getMap();
+//
+//				LatLng location = new LatLng(l.getLatitude(), l.getLongitude());
+//				//((TextView) findViewById(R.id.location)).setText(latLngFormat.format(l.getLatitude()) + ", " + latLngFormat.format(l.getLongitude()));
+//				
+//				dialogMap.moveCamera(CameraUpdateFactory.newLatLngZoom(location, 18));
+//				
+//				ImageView iv = (ImageView)dialogView.findViewById(R.id.location_edit_marker);
+//				iv.setImageBitmap(ObservationBitmapFactory.bitmap(ObservationEditActivity.this, o));
+//			    
+//			    builder.setView(dialogView)
+//			    // Add action buttons
+//			           .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+//			               @Override
+//			               public void onClick(DialogInterface dialog, int id) {
+////			                   // set the date and time to what they chose
+//			            	   LatLng center = dialogMap.getCameraPosition().target;
+//			            	   l.setLatitude(center.latitude);
+//			            	   l.setLongitude(center.longitude);
+//			            	   l.setProvider("manual");
+//			            	   l.setAccuracy(0.0f);
+//			            	   l.setTime(System.currentTimeMillis());
+//			            	   setupMap();
+//
+//			            	   com.google.android.gms.maps.MapFragment mapFragment = 
+//			                           ((com.google.android.gms.maps.MapFragment) getFragmentManager().findFragmentById(R.id.location_edit_map));
+//
+//			                   if (mapFragment != null) {
+//			                       FragmentManager manager = getFragmentManager();
+//			                       FragmentTransaction t = manager.beginTransaction();
+//			                       FragmentTransaction t2 = t.remove(mapFragment).detach(mapFragment);
+//			                       t2.commitAllowingStateLoss();
+//			                   }
+//			               }
+//			           })
+//			           .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
+//			               public void onClick(DialogInterface dialog, int id) {
+//			            	   com.google.android.gms.maps.MapFragment mapFragment = 
+//			                           ((com.google.android.gms.maps.MapFragment) getFragmentManager().findFragmentById(R.id.location_edit_map));
+//
+//			                   if (mapFragment != null) {
+//			                       FragmentManager manager = getFragmentManager();
+//			                       FragmentTransaction t = manager.beginTransaction();
+//			                       FragmentTransaction t2 = t.remove(mapFragment).detach(mapFragment);
+//			                       t2.commitAllowingStateLoss();
+//			                   }
+//			                   dialog.cancel();
+//			               }
+//			           });      
+//			    AlertDialog ad = builder.create();
+//			    ad.show();
 			}
 		});
 		
