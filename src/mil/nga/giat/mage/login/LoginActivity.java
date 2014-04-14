@@ -334,7 +334,6 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 			} catch (JSONException je) {
 				je.printStackTrace();
 			}
-//			sp.putString("userId", accountStatus.getAccountInformation().getJSONObject("user").getString("_id"));
 			sp.commit();
 			startActivity(new Intent(getApplicationContext(), LandingActivity.class));
 			finish();

@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+    <TextView android:layout_width="fill_parent"
+          android:layout_height="wrap_content"
+          style="@style/EditTextView"
+          android:text="Latitude"/>
+    <EditText 
+        android:id="@+id/location_edit_latitude"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="5dip"
+        android:hint="Latitude"/>
+    <TextView android:layout_width="fill_parent"
+          android:layout_height="wrap_content"
+          style="@style/EditTextView"
+          android:text="Longitude"/>
+    <EditText 
+        android:id="@+id/location_edit_longitude"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="5dip"
+        android:hint="Longitude"/>
+    <TextView android:layout_width="fill_parent"
+          android:layout_height="wrap_content"
+          style="@style/EditTextView"
+          android:text="USNG"/>
+    <EditText 
+        android:id="@+id/location_edit_usng"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="5dip"
+        android:hint="USNG"/>
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+        <!-- <FrameLayout android:id="@+id/location_edit_map_holder"
+            android:layout_width="match_parent"
+        android:layout_height="match_parent"/> -->
+    <fragment
+        android:id="@+id/location_edit_map"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:name="com.google.android.gms.maps.MapFragment"/>
+    <ImageView 
+        android:id="@+id/location_edit_marker"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"/>
+    </RelativeLayout>
+
+</LinearLayout>
