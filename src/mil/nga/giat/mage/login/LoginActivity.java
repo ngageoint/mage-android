@@ -5,6 +5,8 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.json.JSONException;
+
 import mil.nga.giat.mage.LandingActivity;
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.disclaimer.DisclaimerActivity;
@@ -26,6 +28,7 @@ import android.preference.PreferenceManager;
 import android.support.v4.app.FragmentActivity;
 import android.text.InputType;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
@@ -326,6 +329,12 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 			// TODO should we store password, or some hash?
 //			sp.putString("password", getPasswordEditText().getText().toString());
 			sp.putString("serverURL", getServerEditText().getText().toString());
+			try {
+				sp.putString("userId", accountStatus.getAccountInformation().getJSONObject("user").getString("_id"));
+			} catch (JSONException je) {
+				je.printStackTrace();
+			}
+//			sp.putString("userId", accountStatus.getAccountInformation().getJSONObject("user").getString("_id"));
 			sp.commit();
 			startActivity(new Intent(getApplicationContext(), LandingActivity.class));
 			finish();
