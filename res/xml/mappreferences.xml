@@ -17,7 +17,7 @@
     <PreferenceCategory android:title="OBSERVATIONS" >
         <CheckBoxPreference
             android:defaultValue="true"
-            android:key="showObservations"
+            android:key="@string/showObservationsKey"
             android:summary="Show observations on map"
             android:title="Show Observations" />
         <!--
@@ -31,7 +31,7 @@
     <PreferenceCategory android:title="PEOPLE" >
         <CheckBoxPreference
             android:defaultValue="true"
-            android:key="peopleFeature"
+            android:key="@string/showLocationsKey"
             android:summary="Show users locations on map"
             android:title="Show People" />
     </PreferenceCategory>
