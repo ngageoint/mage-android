@@ -64,9 +64,8 @@ public class NewsFeedFragment extends Fragment implements IObservationEventListe
 		rootView = inflater.inflate(R.layout.fragment_news_feed, container, false);
 		setHasOptionsMenu(true);
 		lv = (ListView) rootView.findViewById(R.id.news_feed_list);
-		footer = (ViewGroup) inflater.inflate(R.layout.feed_footer, lv,
-                false);
-		
+		footer = (ViewGroup) inflater.inflate(R.layout.feed_footer, lv, false);
+        lv.addFooterView(footer, null, false);
 		
 		Log.i("test", "on start news feed fragment");
 		Log.i("test", "after super");
@@ -78,7 +77,6 @@ public class NewsFeedFragment extends Fragment implements IObservationEventListe
 			query = buildQuery(oDao, getTimeFilterId());
 			Cursor c = obtainCursor(query, oDao);
 			adapter = new NewsFeedCursorAdapter(getActivity().getApplicationContext(), c, query, getActivity());
-			lv.addFooterView(footer, null, false);
 			lv.setAdapter(adapter);
 			lv.setOnItemClickListener(this);
 
@@ -123,7 +121,8 @@ public class NewsFeedFragment extends Fragment implements IObservationEventListe
 		// TODO Add your menu entries here
 		super.onCreateOptionsMenu(menu, inflater);
 
-		inflater.inflate(R.menu.landing, menu);
+		inflater.inflate(R.menu.observation_new, menu);
+	    inflater.inflate(R.menu.filter, menu);
 	}
 
 	@Override
@@ -287,12 +286,9 @@ public class NewsFeedFragment extends Fragment implements IObservationEventListe
 
 	@Override
 	public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-		Log.i("test", "the key is: " + key);
 		if (getResources().getString(R.string.activeTimeFilterKey).equalsIgnoreCase(key)) {
-			Log.i("map test", "Active filter changed to: " + sharedPreferences.getInt(key, R.id.none_rb));
 			updateTimeFilter(sharedPreferences.getInt(key, 0));
 		}
-
 	}
 
 	private void updateTimeFilter(final int filterId) {

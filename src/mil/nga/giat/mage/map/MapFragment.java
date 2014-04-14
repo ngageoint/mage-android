@@ -219,7 +219,8 @@ public class MapFragment extends Fragment implements
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         super.onCreateOptionsMenu(menu, inflater);
         
-        inflater.inflate(R.menu.landing, menu);
+        inflater.inflate(R.menu.observation_new, menu);
+        inflater.inflate(R.menu.filter, menu);
     }
     
     @Override

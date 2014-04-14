@@ -15,8 +15,7 @@ public class LocationDateTimeFilter implements Filter<Location> {
 
     @Override
     public boolean passesFilter(Location location) {
-        Date timestamp = new Date(location.getLastModified());
-        return (start == null || timestamp.after(start) && 
-               (end == null || timestamp.before(end)));
+        return (start == null || location.getLastModified().after(start) && 
+               (end == null || location.getLastModified().before(end)));
     }
 }

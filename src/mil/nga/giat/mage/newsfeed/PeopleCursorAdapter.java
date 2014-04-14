@@ -1,23 +1,16 @@
 package mil.nga.giat.mage.newsfeed;
 
 import java.text.DateFormat;
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.Locale;
 
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.map.marker.LocationBitmapFactory;
 import mil.nga.giat.mage.sdk.datastore.location.Location;
 import mil.nga.giat.mage.sdk.utils.DateUtility;
-import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.graphics.Bitmap;
-import android.net.Uri;
-import android.provider.ContactsContract.CommonDataKinds.Phone;
-import android.provider.ContactsContract.Contacts.Data;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -82,14 +75,7 @@ public class PeopleCursorAdapter extends CursorAdapter {
 //			});
             
             user.setText(l.getUser().getFirstname() + " " + l.getUser().getLastname());
-            String dateText = l.getPropertiesMap().get("timestamp");
-            try {
-                Date date = iso8601.parse(l.getPropertiesMap().get("timestamp"));
-                dateText = sdf.format(date);
-            } catch (ParseException e) {
-                e.printStackTrace();
-            }
-            dateView.setText(dateText); 
+            dateView.setText(sdf.format(l.getLastModified())); 
         } catch (java.sql.SQLException e) {
             e.printStackTrace();
         }
