@@ -23,6 +23,7 @@ public class PeopleFeedFragment extends Fragment {
 	private PeopleCursorAdapter adapter;
 	private PreparedQuery<Location> query;
 	private Dao<Location, Long> lDao;
+	private ViewGroup footer;
 
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -35,6 +36,10 @@ public class PeopleFeedFragment extends Fragment {
 			query = buildQuery(lDao);
 			Cursor c = obtainCursor(query, lDao);
 			adapter = new PeopleCursorAdapter(getActivity().getApplicationContext(), c, query);
+			footer = (ViewGroup) inflater.inflate(R.layout.feed_footer, lv,
+	                false);
+			footer.setVisibility(View.GONE);
+			lv.addFooterView(footer, null, false);
 			lv.setAdapter(adapter);
 //			adapter = new NewsFeedCursorAdapter(getActivity().getApplicationContext(), c, query, getActivity());
 //			lv.setAdapter(adapter);
