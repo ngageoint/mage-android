@@ -163,13 +163,17 @@ public class MapFragment extends Fragment implements
                 
         PreferenceManager.getDefaultSharedPreferences(getActivity().getApplicationContext()).registerOnSharedPreferenceChangeListener(this);
         
-        observations = new ObservationMarkerCollection(getActivity(), map);
-        locations = new LocationMarkerCollection(getActivity(), map);
-
         updateMapType();
-        updateObservations();
-        updateTimeFilter(getTimeFilter());
         
+        observations = new ObservationMarkerCollection(getActivity(), map);
+        boolean showObservations = preferences.getBoolean(getResources().getString(R.string.showObservationsKey), true);
+        observations.setVisible(showObservations);
+        
+        locations = new LocationMarkerCollection(getActivity(), map);
+        boolean showLocations = preferences.getBoolean(getResources().getString(R.string.showLocationsKey), true);
+        locations.setVisible(showLocations);
+        
+        updateTimeFilter(getTimeFilter());
         try {
             ObservationHelper.getInstance(getActivity()).addListener(this);
         } catch (ObservationException e) {
@@ -403,13 +407,9 @@ public class MapFragment extends Fragment implements
     }
 
 
-    private void updateObservations() {
-      boolean showObservations = preferences.getBoolean(getResources().getString(R.string.showObservationsKey), true);
-      observations.setVisible(showObservations);
-
-        
-        // TODO think of a way to fix this if we want users to be able to swap
-        // between clusters and not clusters
+//    private void updateObservations() {        
+//        //TODO think of a way to fix this if we want users to be able to swap
+//        //between clusters and not clusters
 //        boolean cluster = preferences.getBoolean("clusterObservations", false);
 //        if (observations == null) {
 //            this.cluster = cluster;
@@ -432,7 +432,7 @@ public class MapFragment extends Fragment implements
 //            observations.addAll(existing);
 //
 //        }
-    }
+//    }
 
     @Override
     public void onError(Throwable error) {
