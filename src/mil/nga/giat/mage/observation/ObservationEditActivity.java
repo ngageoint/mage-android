@@ -31,6 +31,8 @@ import mil.nga.giat.mage.sdk.utils.MediaUtility;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.FragmentManager;
+import android.app.FragmentTransaction;
 import android.content.ClipData;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -40,7 +42,6 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.provider.MediaStore;
-import android.support.v4.app.FragmentActivity;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -65,7 +66,7 @@ import android.widget.TimePicker;
 import com.bumptech.glide.Glide;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
@@ -75,7 +76,7 @@ import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.GeometryFactory;
 import com.vividsolutions.jts.geom.Point;
 
-public class ObservationEditActivity extends FragmentActivity {
+public class ObservationEditActivity extends Activity {
 
 	private static final String LOG_NAME = ObservationEditActivity.class.getName();
 	
@@ -233,6 +234,82 @@ public class ObservationEditActivity extends FragmentActivity {
 			}
 		});
 		
+		findViewById(R.id.location_edit).setOnClickListener(new View.OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				
+				AlertDialog.Builder builder = new AlertDialog.Builder(ObservationEditActivity.this);
+//			    // Get the layout inflater
+			    LayoutInflater inflater = getLayoutInflater();
+			    View dialogView = inflater.inflate(R.layout.location_edit, null);
+			    
+			    TextView longitudeEdit = (TextView)dialogView.findViewById(R.id.location_edit_longitude);
+			    TextView latitudeEdit = (TextView)dialogView.findViewById(R.id.location_edit_latitude);
+			    
+			    longitudeEdit.setText(Double.toString(l.getLongitude()));
+			    latitudeEdit.setText(Double.toString(l.getLatitude()));
+			    
+			    
+//			    final DatePicker datePicker = (DatePicker) dialogView.findViewById(R.id.date_picker);
+//			    final TimePicker timePicker = (TimePicker) dialogView.findViewById(R.id.time_picker);
+//			    // Inflate and set the layout for the dialog
+//			    // Pass null as the parent view because its going in the dialog layout
+			    
+			    final GoogleMap dialogMap = ((MapFragment) getFragmentManager().findFragmentById(R.id.location_edit_map)).getMap();
+
+				LatLng location = new LatLng(l.getLatitude(), l.getLongitude());
+				//((TextView) findViewById(R.id.location)).setText(latLngFormat.format(l.getLatitude()) + ", " + latLngFormat.format(l.getLongitude()));
+				
+				dialogMap.moveCamera(CameraUpdateFactory.newLatLngZoom(location, 18));
+				
+				ImageView iv = (ImageView)dialogView.findViewById(R.id.location_edit_marker);
+				iv.setImageBitmap(ObservationBitmapFactory.bitmap(ObservationEditActivity.this, o));
+			    
+			    builder.setView(dialogView)
+			    // Add action buttons
+			           .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+			               @Override
+			               public void onClick(DialogInterface dialog, int id) {
+//			                   // set the date and time to what they chose
+			            	   LatLng center = dialogMap.getCameraPosition().target;
+			            	   l.setLatitude(center.latitude);
+			            	   l.setLongitude(center.longitude);
+			            	   l.setProvider("manual");
+			            	   l.setAccuracy(0.0f);
+			            	   l.setTime(System.currentTimeMillis());
+			            	   setupMap();
+
+			            	   com.google.android.gms.maps.MapFragment mapFragment = 
+			                           ((com.google.android.gms.maps.MapFragment) getFragmentManager().findFragmentById(R.id.location_edit_map));
+
+			                   if (mapFragment != null) {
+			                       FragmentManager manager = getFragmentManager();
+			                       FragmentTransaction t = manager.beginTransaction();
+			                       FragmentTransaction t2 = t.remove(mapFragment).detach(mapFragment);
+			                       t2.commitAllowingStateLoss();
+			                   }
+			               }
+			           })
+			           .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
+			               public void onClick(DialogInterface dialog, int id) {
+			            	   com.google.android.gms.maps.MapFragment mapFragment = 
+			                           ((com.google.android.gms.maps.MapFragment) getFragmentManager().findFragmentById(R.id.location_edit_map));
+
+			                   if (mapFragment != null) {
+			                       FragmentManager manager = getFragmentManager();
+			                       FragmentTransaction t = manager.beginTransaction();
+			                       FragmentTransaction t2 = t.remove(mapFragment).detach(mapFragment);
+			                       t2.commitAllowingStateLoss();
+			                   }
+			                   dialog.cancel();
+			               }
+			           });      
+			    AlertDialog ad = builder.create();
+			    ad.show();
+			}
+		});
+		
 		setupMap();
 	}
 	
@@ -297,7 +374,7 @@ public class ObservationEditActivity extends FragmentActivity {
 	}
 		
 	private void setupMap() {
-		map = ((SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.background_map)).getMap();
+		map = ((MapFragment) getFragmentManager().findFragmentById(R.id.background_map)).getMap();
 
 		LatLng location = new LatLng(l.getLatitude(), l.getLongitude());
 		((TextView) findViewById(R.id.location)).setText(latLngFormat.format(l.getLatitude()) + ", " + latLngFormat.format(l.getLongitude()));
@@ -503,18 +580,26 @@ public class ObservationEditActivity extends FragmentActivity {
 			propertyMap.put("type", typeSpinner.getSelectedItem().toString());
 	        propertyMap.put("EVENTLEVEL", levelSpinner.getSelectedItem().toString());
 
-			propertyMap.put("timestamp", String.valueOf(date.getTime()));
+			propertyMap.put("timestamp", iso8601.format(date));
 			propertyMap.put("LOCATION_ACCURACY", Float.toString(l.getAccuracy()));
 			propertyMap.put("LOCATION_PROVIDER", l.getProvider());
 			propertyMap.put("LOCATION_TIME_DELTA", Long.toString(timeMs(locationElapsedTimeMs)));
 			o.setPropertiesMap(propertyMap);
+			for (String key : o.getPropertiesMap().keySet()) {
+				Log.i("test", "key: " + key + " value: " + o.getPropertiesMap().get(key));
+			}
 			
 			o.setAttachments(attachments);
 
 			ObservationHelper oh = ObservationHelper.getInstance(getApplicationContext());
 			try {
-				Observation newObs = oh.create(o);
-				Log.i(LOG_NAME, "Created new observation: " + newObs.toString());
+				if (o.getRemoteId() == null) {
+					Observation newObs = oh.create(o);
+					Log.i(LOG_NAME, "Created new observation: " + newObs.toString());
+				} else {
+					o.setDirty(true);
+					oh.update(o, oh.read(o.getRemoteId()));
+				}
 				finish();
 			} catch (Exception e) {
 				Log.e(LOG_NAME, e.getMessage(), e);
