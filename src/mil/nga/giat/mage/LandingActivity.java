@@ -17,6 +17,7 @@ import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v4.app.ActionBarDrawerToggle;
 import android.support.v4.app.FragmentActivity;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v4.widget.DrawerLayout;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
@@ -42,10 +43,12 @@ public class LandingActivity extends FragmentActivity implements ListView.OnItem
     private DrawerLayout drawerLayout;
     private ListView drawerList;
     private ActionBarDrawerToggle drawerToggle;
-    private Integer currentActivity;
+    private DrawerItem currentActivity;
     private int activeTimeFilter = 0;
     private String currentTitle = "";
     private DrawerItem mapItem;
+    private boolean switchFragment;
+    private DrawerItem itemToSwitchTo;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -132,7 +135,7 @@ public class LandingActivity extends FragmentActivity implements ListView.OnItem
 	                   .replace(R.id.content_frame, mapItem.getFragment())
 	                   .commit();
 	    getActionBar().setTitle("MAGE");
-	    currentActivity = mapItem.getId();
+	    currentActivity = mapItem;
     }
     
     private void actionbarToggleHandler() {  
@@ -148,6 +151,16 @@ public class LandingActivity extends FragmentActivity implements ListView.OnItem
     
             	 if (drawerView.getId() == R.id.filter_drawer) {
             		 setFilter(); 
+            	 } else if (drawerView.getId() == R.id.left_drawer && switchFragment) {
+            		 switchFragment = false;
+         	
+         	        // Insert the fragment by replacing any existing fragment
+         	        FragmentManager fragmentManager = getFragmentManager();
+         	        fragmentManager.beginTransaction().setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN)
+         	                       .add(R.id.content_frame, itemToSwitchTo.getFragment())
+         	                       .commit();
+         	        currentActivity = itemToSwitchTo;
+         	        getActionBar().setTitle(itemToSwitchTo.getItemText());
             	 }
             	 invalidateOptionsMenu();
              }  
@@ -216,7 +229,7 @@ public class LandingActivity extends FragmentActivity implements ListView.OnItem
 	        //Put the code for an action menu from the top here
 	        return true;
 	    } else if (keyCode == KeyEvent.KEYCODE_BACK) {
-	    	if (currentActivity != mapItem.getId()) {
+	    	if (currentActivity != mapItem) {
 	    		goToMap();
 	    		return true;
 	    	}
@@ -260,11 +273,9 @@ public class LandingActivity extends FragmentActivity implements ListView.OnItem
     public void onItemClick(AdapterView<?> adapterView, View view, int position, long id) {
     	
     	ArrayAdapter<DrawerItem> adapter = (ArrayAdapter<DrawerItem>) adapterView.getAdapter();
-    	DrawerItem item = adapter.getItem(position);
-        Fragment fragment = item.getFragment();
-        String title = item.getItemText();
-        if (fragment == null) {
-	        switch (item.getId()) {
+    	itemToSwitchTo = adapter.getItem(position);
+        if (itemToSwitchTo.getFragment() == null) {
+	        switch (itemToSwitchTo.getId()) {
 	            case 5: {
 	                // TODO : wipe user certs, really just wipe out the token from shared preferences
 	                UserUtility.getInstance(getApplicationContext()).clearTokenInformation();
@@ -278,22 +289,17 @@ public class LandingActivity extends FragmentActivity implements ListView.OnItem
 	            }
 	        }
         }
-        if (currentActivity != item.getId() && fragment != null) {
-	    	currentActivity = item.getId();
-	        Bundle args = new Bundle();
-	        args.putInt("POSITION", position);
-	        fragment.setArguments(args);
-	
-	        // Insert the fragment by replacing any existing fragment
-	        FragmentManager fragmentManager = getFragmentManager();
-	        fragmentManager.beginTransaction()
-	                       .replace(R.id.content_frame, fragment)
-	                       .commit();
+        if (currentActivity != itemToSwitchTo && itemToSwitchTo.getFragment() != null) {
+        	switchFragment = true;
+        	
+        	FragmentManager fragmentManager = getFragmentManager();
+ 	        fragmentManager.beginTransaction()
+ 	                       .remove(currentActivity.getFragment())
+ 	                       .commit();
         }
 
         // Highlight the selected item, update the title, and close the drawer
         drawerList.setItemChecked(position, true);
-        getActionBar().setTitle(title);
         drawerLayout.closeDrawer(drawerList);        
     }
 }
