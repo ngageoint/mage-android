@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
@@ -579,12 +580,33 @@ public class ObservationEditActivity extends Activity {
 			savePropertyFieldsToMap(form, propertyMap);
 			propertyMap.put("type", typeSpinner.getSelectedItem().toString());
 	        propertyMap.put("EVENTLEVEL", levelSpinner.getSelectedItem().toString());
-
 			propertyMap.put("timestamp", iso8601.format(date));
 			propertyMap.put("LOCATION_ACCURACY", Float.toString(l.getAccuracy()));
-			propertyMap.put("LOCATION_PROVIDER", l.getProvider());
-			propertyMap.put("LOCATION_TIME_DELTA", Long.toString(timeMs(locationElapsedTimeMs)));
-			o.setPropertiesMap(propertyMap);
+			propertyMap.put("LOCATION_PROVIDER", "manual");
+			//propertyMap.put("LOCATION_TIME_DELTA", Long.toString(timeMs(locationElapsedTimeMs)));
+
+			List<ObservationProperty> newProperties = new ArrayList<ObservationProperty>();
+			for (String key : propertyMap.keySet()) {
+				String value = propertyMap.get(key);
+				
+				Boolean found = false;
+				for (ObservationProperty op : o.getProperties()) {
+					if (op.getKey().equalsIgnoreCase(key)) {
+						op.setValue(value);
+						found = true;
+						break;
+					}
+				}
+				if(!found) {
+					newProperties.add(new ObservationProperty(key, value));
+				}
+			}
+			
+			List<ObservationProperty> allProperties = new ArrayList<ObservationProperty>();
+			allProperties.addAll(o.getProperties());
+			allProperties.addAll(newProperties);
+			o.setProperties(allProperties);
+			
 			for (String key : o.getPropertiesMap().keySet()) {
 				Log.i("test", "key: " + key + " value: " + o.getPropertiesMap().get(key));
 			}
