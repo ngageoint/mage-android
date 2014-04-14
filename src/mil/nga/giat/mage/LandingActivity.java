@@ -8,7 +8,7 @@ import mil.nga.giat.mage.newsfeed.NewsFeedFragment;
 import mil.nga.giat.mage.newsfeed.PeopleFeedFragment;
 import mil.nga.giat.mage.preferences.PublicPreferencesFragment;
 import mil.nga.giat.mage.sdk.utils.UserUtility;
-import android.app.Fragment;
+import android.app.Activity;
 import android.app.FragmentManager;
 import android.content.Context;
 import android.content.Intent;
@@ -16,7 +16,6 @@ import android.content.res.Configuration;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v4.app.ActionBarDrawerToggle;
-import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.widget.DrawerLayout;
 import android.view.KeyEvent;
@@ -37,7 +36,7 @@ import android.widget.TextView;
  * 
  * 
  */
-public class LandingActivity extends FragmentActivity implements ListView.OnItemClickListener {	
+public class LandingActivity extends Activity implements ListView.OnItemClickListener {	
 	
 	private DrawerItem[] drawerItems;
     private DrawerLayout drawerLayout;

@@ -14,6 +14,7 @@ import mil.nga.giat.mage.MAGE;
 import mil.nga.giat.mage.MAGE.OnCacheOverlayListener;
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.filter.Filter;
+import mil.nga.giat.mage.filter.LocationDateTimeFilter;
 import mil.nga.giat.mage.filter.ObservationDateTimeFilter;
 import mil.nga.giat.mage.map.GoogleMapWrapper.OnMapPanListener;
 import mil.nga.giat.mage.map.marker.LocationMarkerCollection;
@@ -163,6 +164,8 @@ public class MapFragment extends Fragment implements
         PreferenceManager.getDefaultSharedPreferences(getActivity().getApplicationContext()).registerOnSharedPreferenceChangeListener(this);
         
         observations = new ObservationMarkerCollection(getActivity(), map);
+        locations = new LocationMarkerCollection(getActivity(), map);
+
         updateMapType();
         updateObservations();
         updateTimeFilter(getTimeFilter());
@@ -172,8 +175,6 @@ public class MapFragment extends Fragment implements
         } catch (ObservationException e) {
             e.printStackTrace();
         }
-        
-        locations = new LocationMarkerCollection(getActivity(), map);
         
         try {
             LocationHelper.getInstance(getActivity()).addListener(this);
@@ -482,11 +483,12 @@ public class MapFragment extends Fragment implements
 		    Date start = c.getTime();
 		    Date end = null;
 		    
-		    Filter<Observation> filter = new ObservationDateTimeFilter(start, end);
-		    observations.setFilters(Collections.singletonList(filter));
+		    observations.setFilters(Collections.<Filter<Observation>>singletonList(new ObservationDateTimeFilter(start, end)));
+	        locations.setFilters(Collections.<Filter<mil.nga.giat.mage.sdk.datastore.location.Location>>singletonList(new LocationDateTimeFilter(start, end)));
 		} else {
 		    // clear filters
 		    observations.setFilters(Collections.<Filter<Observation>>emptyList());
+	        locations.setFilters(Collections.<Filter<mil.nga.giat.mage.sdk.datastore.location.Location>>emptyList());
 		}
 	}
 }

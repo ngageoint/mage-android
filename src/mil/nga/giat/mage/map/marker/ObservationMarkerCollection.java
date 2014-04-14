@@ -108,7 +108,7 @@ public class ObservationMarkerCollection implements ObservationCollection, OnMar
         intent.putExtra(ObservationViewActivity.INITIAL_ZOOM, map.getCameraPosition().zoom);
         context.startActivity(intent);
 
-        return false;
+        return true;
     }
 
     @Override

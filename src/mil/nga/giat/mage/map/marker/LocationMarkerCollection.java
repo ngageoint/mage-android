@@ -21,19 +21,19 @@ import android.graphics.Bitmap;
 import android.os.AsyncTask;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.GoogleMap.InfoWindowAdapter;
+import com.google.android.gms.maps.GoogleMap.OnMarkerClickListener;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.maps.android.MarkerManager;
 import com.vividsolutions.jts.geom.Point;
 
-public class LocationMarkerCollection {
+public class LocationMarkerCollection implements OnMarkerClickListener {
 
     private Context context;
     private Collection<Filter<Location>> filters = new ArrayList<Filter<Location>>();
@@ -102,19 +102,15 @@ public class LocationMarkerCollection {
         }
     }
 
-//    @Override
-//    public boolean onMarkerClick(Marker marker) {
-//        Location l = markerIdToLocation.get(marker.getId());
-//
-//        // TODO pop-up info window
-////        Intent intent = new Intent(context, ObservationViewActivity.class);
-////        intent.putExtra(ObservationViewActivity.OBSERVATION_ID, o.getId());
-////        intent.putExtra(ObservationViewActivity.INITIAL_LOCATION, map.getCameraPosition().target);
-////        intent.putExtra(ObservationViewActivity.INITIAL_ZOOM, map.getCameraPosition().zoom);
-////        context.startActivity(intent);
-//
-//        return false;
-//    }
+    @Override
+    public boolean onMarkerClick(Marker marker) {
+        Location l = markerIdToLocation.get(marker.getId());
+        
+        if (l == null) return false;
+        
+        marker.showInfoWindow();
+        return true;
+    }
     
     public void clear() {
         locationIdToMarker.clear();
