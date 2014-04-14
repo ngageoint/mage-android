@@ -204,7 +204,8 @@ public class PeopleFeedFragment extends Fragment implements OnSharedPreferenceCh
         TextView footerTextView = (TextView)footer.findViewById(R.id.footer_text);
         footerTextView.setText(footerText);
         getActivity().getActionBar().setTitle(title);
-        qb.where().gt("lastModified", c.getTime());
+        qb.where().gt("lastModified", c.getTime()).and().eq("current_user", Boolean.FALSE).query(); 
+
         qb.orderBy("lastModified", false);
 
         return qb.prepare();
