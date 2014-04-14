@@ -261,19 +261,16 @@ public class MapFragment extends Fragment implements
 
     @Override
     public void onLocationCreated(Collection<mil.nga.giat.mage.sdk.datastore.location.Location> l) {
-        Log.i("BILLY", "BILLY just got some locations: " + l.size());
         new LocationTask(LocationTask.Type.ADD, locations).execute(l.toArray(new mil.nga.giat.mage.sdk.datastore.location.Location[l.size()]));
     }
 
     @Override
     public void onLocationUpdated(mil.nga.giat.mage.sdk.datastore.location.Location l) {
-        Log.i("BILLY", "BILLY just got location update");
         new LocationTask(LocationTask.Type.UPDATE, locations).execute(l);        
     }
 
     @Override
     public void onLocationDeleted(String pUserLocalId) {
-        Log.i("BILLY", "BILLY just got location delete");
         // TODO travis why userId here but Location the rest of the time
 //        new LocationTask(LocationTask.Type.DELETE, locations).execute(l);        
     }
