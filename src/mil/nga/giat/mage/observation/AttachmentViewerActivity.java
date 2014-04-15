@@ -2,18 +2,12 @@ package mil.nga.giat.mage.observation;
 
 import java.io.File;
 
-import com.bumptech.glide.Glide;
-
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.observation.RemoveAttachmentDialogFragment.RemoveAttachmentDialogListener;
 import mil.nga.giat.mage.sdk.datastore.observation.Attachment;
 import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
 import android.content.Intent;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.Point;
-import android.graphics.drawable.BitmapDrawable;
 import android.media.ThumbnailUtils;
 import android.net.Uri;
 import android.os.Bundle;
@@ -21,9 +15,10 @@ import android.provider.MediaStore;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.FragmentActivity;
 import android.util.Log;
-import android.view.Display;
 import android.view.View;
 import android.widget.ImageView;
+
+import com.bumptech.glide.Glide;
 
 public class AttachmentViewerActivity extends FragmentActivity implements RemoveAttachmentDialogListener {
 	

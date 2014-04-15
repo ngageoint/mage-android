@@ -1,219 +1,259 @@
-	package mil.nga.giat.mage;
+package mil.nga.giat.mage;
 
-import java.util.Locale;
-
+import mil.nga.giat.mage.help.HelpFragment;
 import mil.nga.giat.mage.login.LoginActivity;
 import mil.nga.giat.mage.map.MapFragment;
+import mil.nga.giat.mage.navigation.DrawerItem;
 import mil.nga.giat.mage.newsfeed.NewsFeedFragment;
-import mil.nga.giat.mage.observation.ObservationEditActivity;
-import mil.nga.giat.mage.observation.ObservationViewActivity;
-import mil.nga.giat.mage.preferences.PublicPreferencesActivity;
-import mil.nga.giat.mage.sdk.location.LocationService;
-import mil.nga.giat.mage.sdk.push.ObservationServerPushAsyncTask;
+import mil.nga.giat.mage.newsfeed.PeopleFeedFragment;
+import mil.nga.giat.mage.preferences.PublicPreferencesFragment;
 import mil.nga.giat.mage.sdk.utils.UserUtility;
-import android.app.ActionBar;
-import android.app.FragmentTransaction;
+import android.app.Activity;
+import android.app.FragmentManager;
+import android.content.Context;
 import android.content.Intent;
-import android.location.Location;
-import android.os.AsyncTask;
+import android.content.res.Configuration;
 import android.os.Bundle;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentActivity;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentPagerAdapter;
-import android.support.v4.view.ViewPager;
-import android.view.Menu;
+import android.preference.PreferenceManager;
+import android.support.v4.app.ActionBarDrawerToggle;
+import android.support.v4.app.FragmentTransaction;
+import android.support.v4.widget.DrawerLayout;
+import android.view.KeyEvent;
+import android.view.LayoutInflater;
 import android.view.MenuItem;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.ImageView;
+import android.widget.ListView;
+import android.widget.RadioGroup;
+import android.widget.TextView;
 
 /**
  * FIXME: Currently a mock of what a landing page might look like. Could be
  * replaced entirely if need be. Menu options do exist.
  * 
- * @author wiedemannse
  * 
  */
-public class LandingActivity extends FragmentActivity implements ActionBar.TabListener {
+public class LandingActivity extends Activity implements ListView.OnItemClickListener {	
 	
-	private static final int RESULT_PUBLIC_PREFERENCES = 1;
-	private static final int RESULT_MAP_PREFERENCES = 2;
+	private DrawerItem[] drawerItems;
+    private DrawerLayout drawerLayout;
+    private ListView drawerList;
+    private ActionBarDrawerToggle drawerToggle;
+    private DrawerItem currentActivity;
+    private int activeTimeFilter = 0;
+    private String currentTitle = "";
+    private DrawerItem mapItem;
+    private boolean switchFragment;
+    private DrawerItem itemToSwitchTo;
 
-	/**
-	 * The {@link android.support.v4.view.PagerAdapter} that will provide
-	 * fragments for each of the sections. We use a
-	 * {@link android.support.v4.app.FragmentPagerAdapter} derivative, which
-	 * will keep every loaded fragment in memory. If this becomes too memory
-	 * intensive, it may be best to switch to a
-	 * {@link android.support.v4.app.FragmentStatePagerAdapter}.
-	 */
-	SectionsPagerAdapter mSectionsPagerAdapter;
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_landing);
 
-	/**
-	 * The {@link ViewPager} that will host the section contents.
-	 */
-	ViewPager mViewPager;
+		MAGE mage = (MAGE) getApplication();
 
-	@Override
-	protected void onCreate(Bundle savedInstanceState) {
-		super.onCreate(savedInstanceState);
-		setContentView(R.layout.activity_landing);
-
-		// Set up the action bar.
-		final ActionBar actionBar = getActionBar();
-		actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
-
-		mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
-
-		// Set up the ViewPager with the sections adapter.
-		mViewPager = (ViewPager) findViewById(R.id.pager);
-		mViewPager.setAdapter(mSectionsPagerAdapter);
-
-		// When swiping between different sections, select the corresponding
-		// tab. We can also use ActionBar.Tab#select() to do this if we have
-		// a reference to the Tab.
-		mViewPager.setOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
-			@Override
-			public void onPageSelected(int position) {
-				actionBar.setSelectedNavigationItem(position);
-			}
-		});
-		
-		
-		// For each of the sections in the app, add a tab to the action bar.
-		for (int i = 0; i < mSectionsPagerAdapter.getCount(); i++) {
-			// Create a tab with text corresponding to the page title defined by
-			// the adapter. Also specify this Activity object, which implements
-			// the TabListener interface, as the callback (listener) for when
-			// this tab is selected.
-			actionBar.addTab(actionBar.newTab().setText(mSectionsPagerAdapter.getPageTitle(i)).setTabListener(this));
-		}
-
-		// FIXME : need to consider connectivity before talking to the server!!!
-		((MAGE) getApplication()).startFetching();
-		
 		// Start location services
-		((MAGE) getApplication()).initLocationService();
-		
-		//TODO: FIX ME
-		ObservationServerPushAsyncTask obsPush = new ObservationServerPushAsyncTask(getApplicationContext());
-		obsPush.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
-		
-	}
+		mage.initLocationService();
+
+		// Start fetching and pushing observations and locations
+		mage.startFetching();
+		mage.startPushing();
+
+		// Pull static layers and features just once
+		mage.pullStaticFeaturesOneTime();
+ 		
+ 		DrawerItem viewHeader = new DrawerItem(-1, "Views");
+ 		viewHeader.isHeader(true);
+ 		DrawerItem extraHeader = new DrawerItem(-1, "Extra");
+ 		extraHeader.isHeader(true);
+ 		mapItem = new DrawerItem(0, "Map", R.drawable.ic_globe_white, new MapFragment());
+
+ 		drawerItems = new DrawerItem[] {
+	        mapItem,
+	        new DrawerItem(1, "Observations", R.drawable.ic_map_marker_white, new NewsFeedFragment()),
+	        new DrawerItem(2, "People", R.drawable.ic_users_white, new PeopleFeedFragment()),
+	        new DrawerItem(3, "Settings", R.drawable.ic_settings_white, new PublicPreferencesFragment()),
+	        new DrawerItem(4, "Help", R.drawable.ic_question_circle_white, new HelpFragment()),
+	        new DrawerItem(5, "Logout", R.drawable.ic_power_off_white)
+ 		};
+
+        drawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
+        drawerList = (ListView) findViewById(R.id.left_drawer);
+
+        // Set the adapter for the list view
+        drawerList.setAdapter(new ArrayAdapter<DrawerItem>(this, R.layout.drawer_list_item, drawerItems) {
+        	@Override
+        	public View getView (int position, View view, ViewGroup parent) {
+        		if (view == null) {
+        			LayoutInflater inflater = (LayoutInflater)getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        			view = inflater.inflate(R.layout.drawer_list_item, null);
+        		}
+        		DrawerItem item = getItem(position);
+        		
+		        if (item.isHeader()) {
+		        	view.findViewById(R.id.drawer_divider).setVisibility(View.GONE);
+		        	view.findViewById(R.id.header_divider).setVisibility(View.VISIBLE);
+		        } else {
+		        	view.findViewById(R.id.header_divider).setVisibility(View.GONE);
+		        	view.findViewById(R.id.drawer_divider).setVisibility(View.VISIBLE);
+		        }
+        		TextView text = (TextView)view.findViewById(R.id.drawer_item_text);
+        		text.setText(item.getItemText());
+        		if (item.getDrawableId() != null) {
+	        		ImageView iv = (ImageView)view.findViewById(R.id.drawer_item_icon);
+	        		iv.setImageResource(item.getDrawableId());
+        		}
+        		TextView countView = (TextView)view.findViewById(R.id.drawer_count);
+        		if (item.getCount() != 0) {
+        			countView.setVisibility(View.VISIBLE);
+        			countView.setText("" + item.getCount());
+        		} else {
+        			countView.setVisibility(View.GONE);
+        		}
+        		
+        		return view;
+        	}
+        });
+        
+        // Set the list's click listener
+        drawerList.setOnItemClickListener(this);
+        
+        actionbarToggleHandler();
+        
+        goToMap();
+    }
+    
+    private void goToMap() {
+        FragmentManager fragmentManager = getFragmentManager();
+	    fragmentManager.beginTransaction()
+	                   .replace(R.id.content_frame, mapItem.getFragment())
+	                   .commit();
+	    getActionBar().setTitle("MAGE");
+	    currentActivity = mapItem;
+    }
+    
+    private void actionbarToggleHandler() {  
+        getActionBar().setHomeButtonEnabled(true);  
+        getActionBar().setDisplayHomeAsUpEnabled(true);  
+        drawerToggle = new ActionBarDrawerToggle(this, drawerLayout,  
+                  R.drawable.ic_drawer, R.string.drawer_open,  
+                  R.string.drawer_close) {  
+             @Override  
+             public void onDrawerClosed(View drawerView) {
+            	 super.onDrawerClosed(drawerView);
+            	 getActionBar().setTitle(currentTitle);
+    
+            	 if (drawerView.getId() == R.id.filter_drawer) {
+            		 setFilter(); 
+            	 } else if (drawerView.getId() == R.id.left_drawer && switchFragment) {
+            		 switchFragment = false;
+         	
+         	        // Insert the fragment by replacing any existing fragment
+         	        FragmentManager fragmentManager = getFragmentManager();
+         	        fragmentManager.beginTransaction().setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN)
+         	                       .add(R.id.content_frame, itemToSwitchTo.getFragment())
+         	                       .commit();
+         	        currentActivity = itemToSwitchTo;
+         	        getActionBar().setTitle(itemToSwitchTo.getItemText());
+            	 }
+            	 invalidateOptionsMenu();
+             }  
+             @Override  
+             public void onDrawerOpened(View drawerView) { 
+            	 super.onDrawerOpened(drawerView);
+                  invalidateOptionsMenu();
+                  currentTitle = (String) getActionBar().getTitle();
+                  if (drawerView.getId() == R.id.left_drawer) {
+                	  getActionBar().setTitle("Navigation");
+                  } else if (drawerView.getId() == R.id.filter_drawer) {
+                	  getActionBar().setTitle("Filter");
+                	  RadioGroup rg = (RadioGroup)findViewById(R.id.time_filter_radio_gorup);
+                	  int checkedFilter = PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).getInt(getResources().getString(R.string.activeTimeFilterKey), R.id.none_rb);
+                	  rg.check(checkedFilter); 
+                  }
+             }  
+        };
+        drawerLayout.setDrawerListener(drawerToggle);
+   }
+    
+    public void filterOkClick(View v) {
+    	//setFilter();
+    	drawerLayout.closeDrawer(findViewById(R.id.filter_drawer));
+    }
+    
+    public void setFilter() {
+    	RadioGroup rg = (RadioGroup)findViewById(R.id.time_filter_radio_gorup);
+		 if (activeTimeFilter != rg.getCheckedRadioButtonId()) {
+			 activeTimeFilter = rg.getCheckedRadioButtonId();
+			 PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).edit().putInt(getResources().getString(R.string.activeTimeFilterKey), rg.getCheckedRadioButtonId()).commit();
+		 }
+    }
+    
+    @Override
+    protected void onPostCreate(Bundle savedInstanceState) {
+    	drawerToggle.syncState();
+    	super.onPostCreate(savedInstanceState);
+    }
+    
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        drawerToggle.onConfigurationChanged(newConfig);
+    }
 
 	@Override
 	protected void onDestroy() {
 		super.onDestroy();
-		((MAGE) getApplication()).destroyLocationService();
-		((MAGE) getApplication()).destroyFetching();
+		
+		MAGE mage = (MAGE) getApplication();
+		mage.destroyFetching();
+		mage.destroyPushing();
+		mage.destroyLocationService();
 	}
-
+	
 	@Override
-	public boolean onCreateOptionsMenu(Menu menu) {
-		// Inflate the menu; this adds items to the action bar if it is present.
-		getMenuInflater().inflate(R.menu.landing, menu);
-		return true;
+	public boolean onKeyDown(int keyCode, KeyEvent event) {
+	    if ( keyCode == KeyEvent.KEYCODE_MENU ) {
+	    	boolean drawerOpen = drawerLayout.isDrawerOpen(drawerList);
+	    	if (!drawerOpen) {
+	    		drawerLayout.openDrawer(drawerList);
+	    	} else {
+	    		drawerLayout.closeDrawer(drawerList);
+	    	}
+	        //Put the code for an action menu from the top here
+	        return true;
+	    } else if (keyCode == KeyEvent.KEYCODE_BACK) {
+	    	if (currentActivity != mapItem) {
+	    		goToMap();
+	    		return true;
+	    	}
+	    }
+	    return super.onKeyDown(keyCode, event);
 	}
 
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
-		switch (item.getItemId()) {
-			case R.id.menu_settings: {
-				Intent i = new Intent(this, PublicPreferencesActivity.class);
-				startActivityForResult(i, RESULT_PUBLIC_PREFERENCES);
-				break;
-			}
-			case R.id.menu_logout: {
-				// TODO : wipe user certs, really just wipe out the token from shared preferences
-				UserUtility.getInstance(getApplicationContext()).clearTokenInformation();
-				startActivity(new Intent(getApplicationContext(), LoginActivity.class));
-				finish();
-				break;
-			}
-
-		case R.id.observation_new:
-			 Intent intent = new Intent(this, ObservationEditActivity.class);
-			 LocationService ls = ((MAGE) getApplication()).getLocationService();
-			 Location l = ls.getLocation();
-			 intent.putExtra(ObservationEditActivity.LOCATION, l);
-	       	 startActivity(intent);
+		if (drawerToggle.onOptionsItemSelected(item)) {
+			// drawer handled the event
+			return true;
 		}
-
+		switch(item.getItemId()) {
+		case R.id.filter_button:
+	    	DrawerLayout drawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
+	    	View filterDrawer = findViewById(R.id.filter_drawer);
+	    	if (!drawerLayout.isDrawerOpen(filterDrawer)) {
+	    		drawerLayout.openDrawer(filterDrawer);
+	    	} else {
+	    		drawerLayout.closeDrawer(filterDrawer);
+	    	}
+	    	break;
+		}
+		
 		return super.onOptionsItemSelected(item);
-	}
-
-	@Override
-	public void onTabSelected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
-		// When the given tab is selected, switch to the corresponding page in
-		// the ViewPager.
-		mViewPager.setCurrentItem(tab.getPosition());
-	}
-
-	@Override
-	public void onTabUnselected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
-	}
-
-	@Override
-	public void onTabReselected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
-	}
-
-	@Override
-	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-		super.onActivityResult(requestCode, resultCode, data);
-		switch (requestCode) {
-		case RESULT_PUBLIC_PREFERENCES:
-			System.out.println(RESULT_PUBLIC_PREFERENCES);
-			break;
-		case RESULT_MAP_PREFERENCES:
-			System.out.println(RESULT_MAP_PREFERENCES);
-			break;
-		}
-	}
-
-	/**
-	 * A {@link FragmentPagerAdapter} that returns a fragment corresponding to
-	 * one of the sections/tabs/pages.
-	 */
-	public class SectionsPagerAdapter extends FragmentPagerAdapter {
-
-		public SectionsPagerAdapter(FragmentManager fm) {
-			super(fm);
-		}
-
-		@Override
-		public Fragment getItem(int position) {
-			Fragment fragment = null;
-			switch (position) {
-				case 0: {
-					fragment = new MapFragment();
-					break;
-				}
-				case 1: {
-					fragment = new NewsFeedFragment();
-					break;
-				}
-				default: {
-					// TODO not sure what to do here, if anything (fix your code)
-				}
-			}
-			
-			return fragment;
-		}
-
-		@Override
-		public int getCount() {
-			return 2;
-		}
-
-		@Override
-		public CharSequence getPageTitle(int position) {
-			Locale l = Locale.getDefault();
-			switch (position) {
-			case 0:
-				return getString(R.string.title_map).toUpperCase(l);
-			case 1:
-				return getString(R.string.title_newsfeed).toUpperCase(l);
-			}
-			return null;
-		}
 	}
 
 	/**
@@ -226,4 +266,38 @@ public class LandingActivity extends FragmentActivity implements ActionBar.TabLi
 		startMain.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 		startActivity(startMain);
 	}
+
+    @Override
+    public void onItemClick(AdapterView<?> adapterView, View view, int position, long id) {
+    	
+    	ArrayAdapter<DrawerItem> adapter = (ArrayAdapter<DrawerItem>) adapterView.getAdapter();
+    	itemToSwitchTo = adapter.getItem(position);
+        if (itemToSwitchTo.getFragment() == null) {
+	        switch (itemToSwitchTo.getId()) {
+	            case 5: {
+	                // TODO : wipe user certs, really just wipe out the token from shared preferences
+	                UserUtility.getInstance(getApplicationContext()).clearTokenInformation();
+	                startActivity(new Intent(getApplicationContext(), LoginActivity.class));
+	                finish();
+	                return;
+	            }
+	            default: {
+	                // TODO not sure what to do here, if anything (fix your code)
+	            	// could just be unclickable
+	            }
+	        }
+        }
+        if (currentActivity != itemToSwitchTo && itemToSwitchTo.getFragment() != null) {
+        	switchFragment = true;
+        	
+        	FragmentManager fragmentManager = getFragmentManager();
+ 	        fragmentManager.beginTransaction()
+ 	                       .remove(currentActivity.getFragment())
+ 	                       .commit();
+        }
+
+        // Highlight the selected item, update the title, and close the drawer
+        drawerList.setItemChecked(position, true);
+        drawerLayout.closeDrawer(drawerList);        
+    }
 }

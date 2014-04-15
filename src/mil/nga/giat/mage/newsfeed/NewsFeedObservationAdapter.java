@@ -15,6 +15,7 @@ import mil.nga.giat.mage.map.marker.ObservationBitmapFactory;
 import mil.nga.giat.mage.observation.ObservationViewActivity;
 import mil.nga.giat.mage.sdk.datastore.observation.Attachment;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
+import mil.nga.giat.mage.sdk.datastore.observation.ObservationProperty;
 import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
 import mil.nga.giat.mage.sdk.utils.DateUtility;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
@@ -161,13 +162,13 @@ public class NewsFeedObservationAdapter extends BaseAdapter {
 		return v;
 	}
 	
-	private void populatePropertyFields(LinearLayout ll, Map<String, String> propertiesMap) {
+	private void populatePropertyFields(LinearLayout ll, Map<String, ObservationProperty> propertiesMap) {
 		for (int i = 0; i < ll.getChildCount(); i++) {
 			View v = ll.getChildAt(i);
 			if (v instanceof MageTextView) {
 				MageTextView m = (MageTextView)v;
 				String propertyKey = m.getPropertyKey();
-				String propertyValue = propertiesMap.get(propertyKey);
+				String propertyValue = propertiesMap.get(propertyKey).getValue();
 				if (propertyValue == null) continue;
 				switch(m.getPropertyType()) {
 				case STRING:

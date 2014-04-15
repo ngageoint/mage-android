@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mil.nga.giat.mage.widget.CheckedLinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal" >
+
+    <ProgressBar
+        android:id="@+id/progressBar"
+        style="?android:attr/progressBarStyleSmall"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:indeterminate="true"
+        android:visibility="visible" />
+
+    <ImageButton
+        android:id="@+id/refreshButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@null"
+        android:paddingRight="5dip"
+        android:src="@drawable/ic_pinpoint"
+        android:visibility="gone" />
+
+    <CheckedTextView
+        android:id="@+id/checkedTextView"
+        android:layout_width="fill_parent"
+        android:layout_height="?android:attr/listPreferredItemHeightSmall"
+        android:checkMark="?android:attr/listChoiceIndicatorMultiple"
+        android:gravity="center_vertical"
+        android:paddingLeft="6dip"
+        android:paddingRight="6dip"
+        android:text="Rivers"
+        android:textAppearance="?android:attr/textAppearanceMedium" />
+
+</mil.nga.giat.mage.widget.CheckedLinearLayout>

@@ -11,36 +11,34 @@
             android:title="Base Layer" />
 
         <mil.nga.giat.mage.map.preference.OverlayPreference
-            android:key="mapTileOverlays"
-            android:title="Overlay Maps" >
-        </mil.nga.giat.mage.map.preference.OverlayPreference>
+            android:key="@string/mapTileOverlaysKey"
+            android:title="Overlay Maps" />
     </PreferenceCategory>
     <PreferenceCategory android:title="OBSERVATIONS" >
         <CheckBoxPreference
             android:defaultValue="true"
-            android:key="observationFeature"
+            android:key="@string/showObservationsKey"
             android:summary="Show observations on map"
             android:title="Show Observations" />
-<!--         <CheckBoxPreference
+        <!--
+             <CheckBoxPreference
             android:defaultValue="true"
             android:key="clusterObservations"
             android:summary="Cluster observation at higher zoom levels to reduce clutter"
-            android:title="Cluster Observations" /> -->
+            android:title="Cluster Observations" />
+        -->
     </PreferenceCategory>
     <PreferenceCategory android:title="PEOPLE" >
         <CheckBoxPreference
             android:defaultValue="true"
-            android:key="peopleFeature"
+            android:key="@string/showLocationsKey"
             android:summary="Show users locations on map"
             android:title="Show People" />
     </PreferenceCategory>
     <PreferenceCategory android:title="STATIC FEATURES" >
-        <mil.nga.giat.mage.preferences.DialogPreference
-            android:defaultValue="@array/empty_array"
-            android:entries="@array/staticFeatureEntries"
-            android:entryValues="@array/staticFeatureValues"
-            android:key="staticFeature"
-            android:title="Static Features" />
+        <mil.nga.giat.mage.map.preference.OverlayPreference
+            android:key="@string/mapFeatureOverlaysKey"
+            android:title="Feature Overlays" />
     </PreferenceCategory>
 
 </PreferenceScreen>

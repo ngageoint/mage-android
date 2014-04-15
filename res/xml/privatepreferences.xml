@@ -5,14 +5,17 @@
         android:defaultValue="true"
         android:key="@string/showDisclaimerKey" />
 
-    <!-- The username field -->
-    <EditTextPreference
-        android:defaultValue=""
-        android:key="@string/usernameKey" />
-
     <!-- Signup password length -->
     <EditTextPreference
-        android:defaultValue="8"
-        android:key="gAuthenticationPasswordMinLength" />
+        android:defaultValue="@string/passwordMinLengthDefaultValue"
+        android:key="@string/passwordMinLengthKey" />
+
+    <!-- Is the client compatible with the server? -->
+    <EditTextPreference
+        android:defaultValue="@string/compatibleVersionMajorDefaultValue"
+        android:key="@string/compatibleVersionMajorKey" />
+    <EditTextPreference
+        android:defaultValue="@string/compatibleVersionMinorDefaultValue"
+        android:key="@string/compatibleVersionMinorKey" />
 
 </PreferenceScreen>

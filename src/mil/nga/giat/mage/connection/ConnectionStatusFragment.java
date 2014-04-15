@@ -3,7 +3,7 @@ package mil.nga.giat.mage.connection;
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.sdk.connectivity.ConnectivityUtility;
 import mil.nga.giat.mage.sdk.connectivity.NetworkChangeReceiver;
-import mil.nga.giat.mage.sdk.event.connectivity.IConnectivityEventListener;
+import mil.nga.giat.mage.sdk.event.IConnectivityEventListener;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v4.app.Fragment;
@@ -16,6 +16,9 @@ import android.view.animation.AnimationUtils;
 import android.widget.TextView;
 
 public class ConnectionStatusFragment extends Fragment implements IConnectivityEventListener {
+	
+	private static final String LOG_NAME = ConnectionStatusFragment.class.getName();
+	
 	private Boolean connected = true;
 	@Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -43,18 +46,16 @@ public class ConnectionStatusFragment extends Fragment implements IConnectivityE
 			}
 		});
 		
-//		NetworkChangeReceiver networkChangeReceiver = new NetworkChangeReceiver();
-//		networkChangeReceiver.addListener(this);
-//		
-//		//set up initial connection state
-//		connected = ConnectivityUtility.isOnline(getActivity().getApplicationContext());
-//		
-//		
-//		// TODO set up the listener to just listen to the connectivity class
-//		// don't show that we are connected if this is the first time and we are already connected
-//		if (!connected) {
-//			onConnectionChanged();
-//		}
+		//set up initial connection state
+		connected = ConnectivityUtility.isOnline(getActivity().getApplicationContext());
+		//enable connectivity event handling
+		NetworkChangeReceiver.getInstance().addListener(this);
+
+		// TODO set up the listener to just listen to the connectivity class
+		// don't show that we are connected if this is the first time and we are already connected
+		if (!connected) {
+			onConnectionChanged();
+		}
 		super.onActivityCreated(savedInstanceState);
 	}
 	
@@ -63,11 +64,11 @@ public class ConnectionStatusFragment extends Fragment implements IConnectivityE
 		getActivity().findViewById(R.id.connection_background).setVisibility(View.VISIBLE);
 		Animation fadeIn = AnimationUtils.loadAnimation(getActivity().getApplicationContext(), android.R.anim.fade_in);
 		this.getView().setAnimation(fadeIn);
-		Log.i("test", "connection changed to " + connected);
+		Log.i(LOG_NAME, "connection changed to " + connected);
 		if (connected) {
 			t.setText(R.string.connected_mode);
 			getActivity().findViewById(R.id.connection_background).setBackgroundColor(getResources().getColor(android.R.color.holo_blue_light));
-			handler.postDelayed(fadeOutConnectedRunnable, 2000);
+			handler.postDelayed(fadeOutConnectedRunnable, 30000);
 		} else {
 			t.setText(R.string.disconnected_mode);
 			getActivity().findViewById(R.id.connection_background).setBackgroundColor(getResources().getColor(android.R.color.holo_orange_light));
@@ -76,6 +77,7 @@ public class ConnectionStatusFragment extends Fragment implements IConnectivityE
 	
 	public void fadeOutConnected() {
 		Animation fadeOut = AnimationUtils.loadAnimation(getActivity().getApplicationContext(), android.R.anim.fade_out);
+		fadeOut.setDuration(5000);
 		fadeOut.setAnimationListener(new Animation.AnimationListener() {
 			
 			@Override
@@ -102,36 +104,60 @@ public class ConnectionStatusFragment extends Fragment implements IConnectivityE
 
 	@Override
 	public void onAllDisconnected() {
+		Log.i("test", "All disconnected");
 		connected = false;
-		onConnectionChanged();
+		getActivity().runOnUiThread(new Runnable() {
+			 @Override
+			 public void run() {
+				 try {
+					 onConnectionChanged();
+				 } catch (Exception e) {
+					 Log.e("NewsFeedFragment", "Unable to change cursor", e);
+				 }
+			 }
+		 });
 	}
 
 	@Override
 	public void onAnyConnected() {
+		Log.i("test", "Any connected");
 		connected = true;
-		onConnectionChanged();
+		getActivity().runOnUiThread(new Runnable() {
+			 @Override
+			 public void run() {
+				 try {
+					 onConnectionChanged();
+				 } catch (Exception e) {
+					 Log.e("NewsFeedFragment", "Unable to change cursor", e);
+				 }
+			 }
+		 });
 	}
 
 	@Override
 	public void onWifiConnected() {
+		Log.i("test", "wifi connected");
 		// TODO Auto-generated method stub
 		
 	}
 
 	@Override
 	public void onWifiDisconnected() {
+		Log.i("test", "wifi disconnected");
 		// TODO Auto-generated method stub
 		
 	}
 
 	@Override
 	public void onMobileDataConnected() {
+		Log.i("test", "mobile connected");
 		// TODO Auto-generated method stub
 		
 	}
 
 	@Override
 	public void onMobileDataDisconnected() {
+		Log.i("test", "mobile disconnected");
 		// TODO Auto-generated method stub
 		
 	}

@@ -9,9 +9,13 @@ import java.util.Map;
 import mil.nga.giat.mage.file.Storage;
 import mil.nga.giat.mage.file.Storage.StorageType;
 import mil.nga.giat.mage.map.CacheOverlay;
+import mil.nga.giat.mage.sdk.datastore.layer.Layer;
 import mil.nga.giat.mage.sdk.fetch.LocationServerFetchAsyncTask;
 import mil.nga.giat.mage.sdk.fetch.ObservationServerFetchAsyncTask;
+import mil.nga.giat.mage.sdk.fetch.StaticFeatureServerFetch;
 import mil.nga.giat.mage.sdk.location.LocationService;
+import mil.nga.giat.mage.sdk.push.LocationServerPushAsyncTask;
+import mil.nga.giat.mage.sdk.push.ObservationServerPushAsyncTask;
 import android.app.Application;
 import android.os.AsyncTask;
 import android.util.Log;
@@ -24,15 +28,85 @@ public class MAGE extends Application {
         public void onCacheOverlay(List<CacheOverlay> cacheOverlays);
     }
 
+    // TODO temp interface to start testing static overlays UI
+    //
+    //
+    private List<Layer> featureOverlays = null;
+
+    public interface OnStaticLayerListener {
+        public void onStaticLayer(List<Layer> layers);
+        public void onStaticLayerLoaded(Layer layer);
+    }
+    private Collection<OnStaticLayerListener> featureOverlayListeners = new ArrayList<OnStaticLayerListener>();
+    
+    public void registerStaticLayerListener(OnStaticLayerListener listener) {
+        featureOverlayListeners.add(listener);
+        if (featureOverlays != null)
+            listener.onStaticLayer(featureOverlays);
+    }
+
+    public void unregisterStaticLayerListener(OnStaticLayerListener listener) {
+        featureOverlayListeners.remove(listener);
+    }
+    
+    private void setStaticOverlays(List<Layer> featureOverlays) {
+        this.featureOverlays = featureOverlays;
+
+        for (OnStaticLayerListener listener : featureOverlayListeners) {
+            listener.onStaticLayer(featureOverlays);
+        }
+    }
+    
+    private void refreshStaticLayers() {
+        StaticOverlaysTask task = new StaticOverlaysTask();
+        task.execute();
+    }
+    
+    private class StaticOverlaysTask extends AsyncTask<Void, Void, List<Layer>> {
+        @Override
+        protected List<Layer> doInBackground(Void... params) {
+            List<Layer> overlays = new ArrayList<Layer>();
+
+//            overlays.add(new Layer("12345", "static", "Features"));
+//            overlays.add(new Layer("12345", "static", "Roads"));
+//            overlays.add(new Layer("12345", "static", "Rivers"));
+
+            try {
+                Thread.sleep(15000);
+            } catch (InterruptedException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+            
+            return overlays;
+        }
+
+        @Override
+        protected void onPostExecute(List<Layer> result) {
+            setStaticOverlays(result);
+        }
+    }
+    
+    //
+    //
+    // END temp UI code
+
     private LocationService locationService;
-	private LocationServerFetchAsyncTask locationTask = null;
-	private ObservationServerFetchAsyncTask observationTask = null;
+    private LocationServerFetchAsyncTask locationFetchTask = null;
+    private LocationServerPushAsyncTask locationPushTask = null;
+    private ObservationServerFetchAsyncTask observationFetchTask = null;
+    private ObservationServerPushAsyncTask observationPushTask = null;
     private List<CacheOverlay> cacheOverlays = null;
     private Collection<OnCacheOverlayListener> cacheOverlayListeners = new ArrayList<OnCacheOverlayListener>();
+
+    private StaticFeatureServerFetch staticFeatureServerFetch = null;
 
     @Override
     public void onCreate() {
         refreshTileOverlays();
+        
+        // temp UI stuff
+        refreshStaticLayers();
     }
 
     public void initLocationService() {
@@ -80,7 +154,7 @@ public class MAGE extends Application {
         @Override
         protected List<CacheOverlay> doInBackground(Void... params) {
             List<CacheOverlay> overlays = new ArrayList<CacheOverlay>();
-            
+
             Map<StorageType, File> storageLocations = Storage.getAllStorageLocations();
             for (File storageLocation : storageLocations.values()) {
                 File root = new File(storageLocation, "MapCache");
@@ -103,25 +177,77 @@ public class MAGE extends Application {
         }
     }
 
+    /**
+     * Start Tasks responsible for fetching Observations and Locations from the server.
+     */
     public void startFetching() {
-        locationTask = new LocationServerFetchAsyncTask(getApplicationContext());
-		observationTask = new ObservationServerFetchAsyncTask(getApplicationContext());
+        locationFetchTask = new LocationServerFetchAsyncTask(getApplicationContext());
+        observationFetchTask = new ObservationServerFetchAsyncTask(getApplicationContext());
         try {
-    		locationTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
-    		observationTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+            locationFetchTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+            observationFetchTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
         } catch (Exception e) {
             Log.e(LOG_NAME, "Error starting fetching tasks!");
         }
     }
 
+    /**
+     * Stop Tasks responsible for fetching Observations and Locations from the server.
+     */
     public void destroyFetching() {
-    	if(locationTask != null) {
-			locationTask.destroy();
-		}
-		
-		if(observationTask != null) {
-			observationTask.destroy();
-		}
+        if (locationFetchTask != null) {
+            locationFetchTask.destroy();
+        }
+
+        if (observationFetchTask != null) {
+            observationFetchTask.destroy();
+        }
+        
+        if (staticFeatureServerFetch != null) {
+        	staticFeatureServerFetch.destroy();
+        }
     }
 
+    /**
+     * Start Tasks responsible for pushing Observations and Locations to the server.
+     */
+    public void startPushing() {
+        observationPushTask = new ObservationServerPushAsyncTask(getApplicationContext());
+        locationPushTask = new LocationServerPushAsyncTask(getApplicationContext());
+        
+        try {
+            observationPushTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+            locationPushTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+        } catch (Exception e) {
+            Log.e(LOG_NAME, "Error starting fetching tasks!");
+        }
+    }
+
+    /**
+     * Stop Tasks responsible for pushing Observations and Locations to the server.
+     */
+    public void destroyPushing() {
+        if (observationPushTask != null) {
+            observationPushTask.destroy();
+        }
+        if (locationPushTask != null) {
+        	locationPushTask.destroy();
+        }
+    }
+
+	public void pullStaticFeaturesOneTime() {
+		Runnable runnable = new Runnable() {
+			@Override
+			public void run() {
+				staticFeatureServerFetch = new StaticFeatureServerFetch(getApplicationContext());
+				try {
+					staticFeatureServerFetch.fetch();
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+		};
+		
+		new Thread(runnable).start();
+	}
 }

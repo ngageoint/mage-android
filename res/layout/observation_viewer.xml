@@ -17,7 +17,7 @@
 
         <fragment
             android:id="@+id/mini_map"
-            android:name="com.google.android.gms.maps.SupportMapFragment"
+            android:name="com.google.android.gms.maps.MapFragment"
             android:layout_width="fill_parent"
             android:layout_height="fill_parent" />
 
@@ -34,7 +34,8 @@
             android:layout_height="match_parent"
             android:background="@drawable/gradient_fade" >
             <LinearLayout 
-                android:layout_width="wrap_content"
+                android:layout_width="0dp"
+                android:layout_weight="1"
                 android:layout_height="wrap_content"
                 android:orientation="vertical">
 	            <TextView
@@ -53,7 +54,7 @@
 	                android:textColor="#ffffff" />
             </LinearLayout>
 			<LinearLayout
-	            android:layout_width="fill_parent"
+	            android:layout_width="wrap_content"
 	            android:layout_height="wrap_content"
 	            android:orientation="horizontal">
 		        <TextView 
@@ -127,7 +128,7 @@
                     android:layout_height="wrap_content"
                     android:textAppearance="?android:attr/textAppearanceMedium"
                     mageForm:propertyType="string"
-                    mageForm:propertyKey="TYPE" />
+                    mageForm:propertyKey="type" />
             </LinearLayout>
             
             <LinearLayout
@@ -171,7 +172,7 @@
                     android:layout_height="wrap_content"
                     android:textAppearance="?android:attr/textAppearanceMedium"
                     mageForm:propertyType="date"
-                    mageForm:propertyKey="EVENTDATE" />
+                    mageForm:propertyKey="timestamp" />
             </LinearLayout>
 
             <TextView

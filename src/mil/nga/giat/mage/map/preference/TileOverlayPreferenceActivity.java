@@ -27,10 +27,9 @@ import android.widget.CheckedTextView;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 
-public class OverlayPreferenceActivity extends ListActivity implements OnCacheOverlayListener {
+public class TileOverlayPreferenceActivity extends ListActivity implements OnCacheOverlayListener {
 
     private MAGE mage;
-    private OverlayAdapter overlayAdapter;
     private ProgressBar progressBar;
     private MenuItem refreshButton;
 
@@ -44,7 +43,6 @@ public class OverlayPreferenceActivity extends ListActivity implements OnCacheOv
         
         ListView listView = getListView();
 
-        setListAdapter(overlayAdapter);
         listView.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);
     }
 
@@ -71,7 +69,8 @@ public class OverlayPreferenceActivity extends ListActivity implements OnCacheOv
         
         // Set what should be checked based on preferences.
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
-        Set<String> overlays = preferences.getStringSet("mapTileOverlays", Collections.<String> emptySet());
+        Set<String> overlays = preferences.getStringSet(getResources().getString(R.string.mapTileOverlaysKey), Collections.<String> emptySet());
+
         for (int i = 0; i < listView.getCount(); i++) {
             CacheOverlay tileOverlay = (CacheOverlay) listView.getItemAtPosition(i);
             if (overlays.contains(tileOverlay.getName())) {
@@ -86,7 +85,7 @@ public class OverlayPreferenceActivity extends ListActivity implements OnCacheOv
 
     @Override
     public boolean onPrepareOptionsMenu(Menu menu) {
-        refreshButton = menu.findItem(R.id.overlay_map_refresh);
+        refreshButton = menu.findItem(R.id.tile_overlay_refresh);
         refreshButton.setEnabled(false);
         
         // This really should be done in the onResume, but I need to have my refreshButton
@@ -102,7 +101,7 @@ public class OverlayPreferenceActivity extends ListActivity implements OnCacheOv
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu items for use in the action bar
         MenuInflater inflater = getMenuInflater();
-        inflater.inflate(R.menu.overlay_map_menu, menu);
+        inflater.inflate(R.menu.tile_overlay_menu, menu);
         
         return super.onCreateOptionsMenu(menu);
     }
@@ -111,7 +110,7 @@ public class OverlayPreferenceActivity extends ListActivity implements OnCacheOv
     public boolean onOptionsItemSelected(MenuItem item) {
         // Handle presses on the action bar items
         switch (item.getItemId()) {
-        case R.id.overlay_map_refresh:
+        case R.id.tile_overlay_refresh:
             item.setEnabled(false);
             progressBar.setVisibility(View.VISIBLE);
             getListView().setEnabled(false);
@@ -129,7 +128,7 @@ public class OverlayPreferenceActivity extends ListActivity implements OnCacheOv
     @Override
     public void onBackPressed() {
         Intent intent = new Intent();
-        intent.putStringArrayListExtra(OverlayPreference.OVERLAY_EXTENDED_DATA_KEY, getSelectedOverlays());
+        intent.putStringArrayListExtra(MapPreferencesActivity.OVERLAY_EXTENDED_DATA_KEY, getSelectedOverlays());
         setResult(Activity.RESULT_OK, intent);
         finish();
     }

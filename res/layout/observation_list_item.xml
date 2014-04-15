@@ -29,10 +29,10 @@
             android:layout_height="wrap_content"
             android:gravity="center_vertical"
             android:text="TYPE"
-            android:textColor="#999999"
+            android:textColor="#222222"
             android:textAppearance="?android:attr/textAppearanceMedium"
             android:textStyle="bold"
-            mageForm:propertyKey="TYPE" />
+            mageForm:propertyKey="type" />
     </LinearLayout>
     
     <LinearLayout
@@ -59,7 +59,7 @@
                 android:text="DATE"
                 style="@style/ViewTextView"
                 android:textAppearance="?android:attr/textAppearanceSmall"
-                mageForm:propertyKey="EVENTDATE"
+                mageForm:propertyKey="timestamp"
                 mageForm:propertyType="date" />
 
 
@@ -97,13 +97,29 @@
             android:layout_width="48dip"
             android:layout_height="48dip" 
     		android:paddingRight="5dip"/> -->
-        
-        <ImageView
-            android:id="@+id/observation_thumb"
-            android:layout_gravity="center_vertical|right"
+        <RelativeLayout
             android:layout_width="0dip"
             android:layout_weight="1"
             android:layout_height="fill_parent" 
-    		android:paddingRight="5dip"/>
+    		android:paddingRight="5dip"
+    		android:layout_gravity="center_vertical|right">
+            
+        <ImageView
+            android:id="@+id/observation_thumb"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"/>
+        <TextView 
+            android:id="@+id/attachment_text"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:gravity="center_horizontal"
+            android:textStyle="bold"
+            android:shadowColor="#000000"
+    		android:shadowDx="1"
+    		android:shadowDy="1"
+    		android:shadowRadius="1"
+            android:textColor="#FFFFFF"/>
+        </RelativeLayout>
     </LinearLayout>
 </LinearLayout>

@@ -2,11 +2,16 @@ package mil.nga.giat.mage.observation;
 
 import java.io.File;
 import java.io.IOException;
+import java.text.DateFormat;
 import java.text.DecimalFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 import mil.nga.giat.mage.R;
@@ -14,16 +19,17 @@ import mil.nga.giat.mage.form.MageEditText;
 import mil.nga.giat.mage.form.MageSpinner;
 import mil.nga.giat.mage.form.MageTextView;
 import mil.nga.giat.mage.map.marker.ObservationBitmapFactory;
-import mil.nga.giat.mage.sdk.datastore.common.Geometry;
-import mil.nga.giat.mage.sdk.datastore.common.PointGeometry;
 import mil.nga.giat.mage.sdk.datastore.common.State;
 import mil.nga.giat.mage.sdk.datastore.observation.Attachment;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationGeometry;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
+import mil.nga.giat.mage.sdk.datastore.observation.ObservationProperty;
 import mil.nga.giat.mage.sdk.exceptions.ObservationException;
 import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
+import mil.nga.giat.mage.sdk.utils.DateUtility;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
+import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -36,7 +42,6 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.provider.MediaStore;
-import android.support.v4.app.FragmentActivity;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -47,6 +52,8 @@ import android.view.View.OnTouchListener;
 import android.view.ViewGroup;
 import android.view.ViewGroup.LayoutParams;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemSelectedListener;
 import android.widget.Button;
 import android.widget.DatePicker;
 import android.widget.EditText;
@@ -59,13 +66,21 @@ import android.widget.TimePicker;
 import com.bumptech.glide.Glide;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.MapFragment;
+import com.google.android.gms.maps.model.Circle;
 import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.vividsolutions.jts.geom.Coordinate;
+import com.vividsolutions.jts.geom.Geometry;
+import com.vividsolutions.jts.geom.GeometryFactory;
+import com.vividsolutions.jts.geom.Point;
 
-public class ObservationEditActivity extends FragmentActivity {
+public class ObservationEditActivity extends Activity {
 
+	private static final String LOG_NAME = ObservationEditActivity.class.getName();
+	
 	public static String OBSERVATION_ID = "OBSERVATION_ID";
 	public static String LOCATION = "LOCATION";
 	public static String INITIAL_LOCATION = "INITIAL_LOCATION";
@@ -79,20 +94,53 @@ public class ObservationEditActivity extends FragmentActivity {
 	
 	private static final long NEW_OBSERVATION = -1L;
 
+	private final GeometryFactory geometryFactory = new GeometryFactory();
+	
 	Date date;
 	DecimalFormat latLngFormat = new DecimalFormat("###.#####");
 	ArrayList<Attachment> attachments = new ArrayList<Attachment>();
 	Location l;
 	long observationId;
 	Observation o;
-	Map<String, String> propertiesMap;
+	GoogleMap map;
+	Marker observationMarker;
+	Circle accuracyCircle;
 	long locationElapsedTimeMs = 0;
+	
+    private SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm zz", Locale.getDefault());
+    private DateFormat iso8601 = DateUtility.getISO8601();
+	
+	// View fields
+	Spinner typeSpinner;
+	Spinner levelSpinner;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		
 		setContentView(R.layout.observation_editor);
+		typeSpinner = (Spinner) findViewById(R.id.type_spinner);
+		typeSpinner.setOnItemSelectedListener(new OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                onTypeOrLevelChanged("type", parent.getItemAtPosition(position).toString());
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {}
+        });
+		
+		levelSpinner = (Spinner) findViewById(R.id.level_spinner);
+		levelSpinner.setOnItemSelectedListener(new OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                onTypeOrLevelChanged("EVENTLEVEL", parent.getItemAtPosition(position).toString());
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {}
+        });
+		
 		hideKeyboardOnClick(findViewById(R.id.observation_edit));
 		
 		Intent intent = getIntent();
@@ -102,8 +150,12 @@ public class ObservationEditActivity extends FragmentActivity {
 			this.setTitle("Create New Observation");
 			l = intent.getParcelableExtra(LOCATION);
 			date = new Date();
-			((TextView) findViewById(R.id.date)).setText(date.toString());
+			((TextView) findViewById(R.id.date)).setText(sdf.format(date));
 			
+	        // set default type and level values for map marker
+			o = new Observation();
+			o.getProperties().add(new ObservationProperty("type", typeSpinner.getSelectedItem().toString()));
+	        o.getProperties().add(new ObservationProperty("EVENTLEVEL", levelSpinner.getSelectedItem().toString()));
 		} else {
 			this.setTitle("Edit Observation");
 			// this is an edit of an existing observation
@@ -114,18 +166,29 @@ public class ObservationEditActivity extends FragmentActivity {
 					addAttachmentToGallery(a);
 				}
 			
-				propertiesMap = o.getPropertiesMap();
-				date = new Date(Long.parseLong(propertiesMap.get("EVENTDATE")));
-				((TextView) findViewById(R.id.date)).setText(date.toString());
+				Map<String, ObservationProperty> propertiesMap = o.getPropertiesMap();
+				String dateText = propertiesMap.get("timestamp").getValue();
+                try {
+                    date = iso8601.parse(dateText);
+                    dateText = sdf.format(date);
+                } catch (ParseException e) {
+                    e.printStackTrace();
+                }				
+				
+				((TextView) findViewById(R.id.date)).setText(dateText);
 				Geometry geo = o.getObservationGeometry().getGeometry();
-				if(geo instanceof PointGeometry) {
-					PointGeometry point = (PointGeometry)geo;
-					l = new Location(propertiesMap.get("LOCATION_PROVIDER"));
-					if (propertiesMap.containsKey("LOCATION_ACCURACY")) {
-						l.setAccuracy(Float.parseFloat(propertiesMap.get("LOCATION_ACCURACY")));
+				if(geo instanceof Point) {
+					Point point = (Point)geo;
+					String provider = "manual";
+					if(propertiesMap.get("LOCATION_PROVIDER") != null) {
+						provider = propertiesMap.get("LOCATION_PROVIDER").getValue();
 					}
-					l.setLatitude(point.getLatitude());
-					l.setLongitude(point.getLongitude());
+					l = new Location(provider);
+					if (propertiesMap.containsKey("LOCATION_ACCURACY")) {
+						l.setAccuracy(Float.parseFloat(propertiesMap.get("LOCATION_ACCURACY").getValue()));
+					}
+					l.setLatitude(point.getY());
+					l.setLongitude(point.getX());
 				}
 				populatePropertyFieldsFromMap((LinearLayout)findViewById(R.id.form), propertiesMap);
 			} catch (ObservationException oe) {
@@ -173,6 +236,128 @@ public class ObservationEditActivity extends FragmentActivity {
 			    AlertDialog ad = builder.create();
 			    ad.show();
 
+			}
+		});
+		
+		findViewById(R.id.location_edit).setOnClickListener(new View.OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				
+//				AlertDialog.Builder builder = new AlertDialog.Builder(ObservationEditActivity.this);
+////			    // Get the layout inflater
+//			    LayoutInflater inflater = getLayoutInflater();
+//			    View dialogView = inflater.inflate(R.layout.location_edit, null);
+//			    
+//			    final EditText longitudeEdit = (EditText)dialogView.findViewById(R.id.location_edit_longitude);
+//			    final EditText latitudeEdit = (EditText)dialogView.findViewById(R.id.location_edit_latitude);
+//			    
+//			    longitudeEdit.setText(Double.toString(l.getLongitude()));
+//			    latitudeEdit.setText(Double.toString(l.getLatitude()));
+//			    
+//			    
+//			    final GoogleMap dialogMap = ((MapFragment) getFragmentManager().findFragmentById(R.id.location_edit_map)).getMap();
+//			    dialogMap.setOnCameraChangeListener(new GoogleMap.OnCameraChangeListener() {
+//					
+//					@Override
+//					public void onCameraChange(CameraPosition position) {
+//						longitudeEdit.setText(Double.toString(position.target.longitude));
+//						latitudeEdit.setText(Double.toString(position.target.latitude));
+//					}
+//				});
+//			    
+//			    longitudeEdit.addTextChangedListener(new TextWatcher() {
+//					
+//					@Override
+//					public void onTextChanged(CharSequence s, int start, int before, int count) {}
+//					
+//					@Override
+//					public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+//					
+//					@Override
+//					public void afterTextChanged(Editable s) {
+//						try {
+//							double lon = Double.parseDouble(s.toString());
+//							LatLng location = new LatLng(l.getLatitude(), lon);
+//							dialogMap.moveCamera(CameraUpdateFactory.newLatLngZoom(location, dialogMap.getCameraPosition().zoom));
+//						} catch (NumberFormatException pe) {
+//							// typed wrong probably
+//							// warn the user TODO
+//						}
+//						
+//					}
+//				});
+//			    latitudeEdit.addTextChangedListener(new TextWatcher() {
+//					
+//					@Override
+//					public void onTextChanged(CharSequence s, int start, int before, int count) {}
+//					
+//					@Override
+//					public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+//					
+//					@Override
+//					public void afterTextChanged(Editable s) {
+//						try {
+//							double lat = Double.parseDouble(s.toString());
+//							LatLng location = new LatLng(lat, l.getLongitude());
+//							dialogMap.moveCamera(CameraUpdateFactory.newLatLngZoom(location, dialogMap.getCameraPosition().zoom));
+//						} catch (NumberFormatException pe) {
+//							// typed wrong probably
+//							// warn the user TODO
+//						}
+//						
+//					}
+//				});
+//
+//				LatLng location = new LatLng(l.getLatitude(), l.getLongitude());
+//				//((TextView) findViewById(R.id.location)).setText(latLngFormat.format(l.getLatitude()) + ", " + latLngFormat.format(l.getLongitude()));
+//				
+//				dialogMap.moveCamera(CameraUpdateFactory.newLatLngZoom(location, 18));
+//				
+//				ImageView iv = (ImageView)dialogView.findViewById(R.id.location_edit_marker);
+//				iv.setImageBitmap(ObservationBitmapFactory.bitmap(ObservationEditActivity.this, o));
+//			    
+//			    builder.setView(dialogView)
+//			    // Add action buttons
+//			           .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+//			               @Override
+//			               public void onClick(DialogInterface dialog, int id) {
+////			                   // set the date and time to what they chose
+//			            	   LatLng center = dialogMap.getCameraPosition().target;
+//			            	   l.setLatitude(center.latitude);
+//			            	   l.setLongitude(center.longitude);
+//			            	   l.setProvider("manual");
+//			            	   l.setAccuracy(0.0f);
+//			            	   l.setTime(System.currentTimeMillis());
+//			            	   setupMap();
+//
+//			            	   com.google.android.gms.maps.MapFragment mapFragment = 
+//			                           ((com.google.android.gms.maps.MapFragment) getFragmentManager().findFragmentById(R.id.location_edit_map));
+//
+//			                   if (mapFragment != null) {
+//			                       FragmentManager manager = getFragmentManager();
+//			                       FragmentTransaction t = manager.beginTransaction();
+//			                       FragmentTransaction t2 = t.remove(mapFragment).detach(mapFragment);
+//			                       t2.commitAllowingStateLoss();
+//			                   }
+//			               }
+//			           })
+//			           .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
+//			               public void onClick(DialogInterface dialog, int id) {
+//			            	   com.google.android.gms.maps.MapFragment mapFragment = 
+//			                           ((com.google.android.gms.maps.MapFragment) getFragmentManager().findFragmentById(R.id.location_edit_map));
+//
+//			                   if (mapFragment != null) {
+//			                       FragmentManager manager = getFragmentManager();
+//			                       FragmentTransaction t = manager.beginTransaction();
+//			                       FragmentTransaction t2 = t.remove(mapFragment).detach(mapFragment);
+//			                       t2.commitAllowingStateLoss();
+//			                   }
+//			                   dialog.cancel();
+//			               }
+//			           });      
+//			    AlertDialog ad = builder.create();
+//			    ad.show();
 			}
 		});
 		
@@ -228,6 +413,7 @@ public class ObservationEditActivity extends FragmentActivity {
 	}
 	
 	
+	@SuppressLint("NewApi")
 	private long getElapsedTime() {
 		if (Build.VERSION.SDK_INT >= 17) {
 			if (l.getElapsedRealtimeNanos() == 0) {
@@ -240,19 +426,27 @@ public class ObservationEditActivity extends FragmentActivity {
 	}
 		
 	private void setupMap() {
-		GoogleMap map = ((SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.background_map)).getMap();
+		map = ((MapFragment) getFragmentManager().findFragmentById(R.id.background_map)).getMap();
 
 		LatLng location = new LatLng(l.getLatitude(), l.getLongitude());
 		((TextView) findViewById(R.id.location)).setText(latLngFormat.format(l.getLatitude()) + ", " + latLngFormat.format(l.getLongitude()));
 		if (l.getProvider() != null) {
 			((TextView)findViewById(R.id.location_provider)).setText("("+l.getProvider()+")");
+		} else {
+			findViewById(R.id.location_provider).setVisibility(View.GONE);
 		}
 		if (l.getAccuracy() != 0) {
 			((TextView)findViewById(R.id.location_accuracy)).setText("\u00B1" + l.getAccuracy() + "m");
+		} else {
+			findViewById(R.id.location_accuracy).setVisibility(View.GONE);
 		}
 		
 		locationElapsedTimeMs = getElapsedTime();
-		((TextView)findViewById(R.id.location_elapsed_time)).setText(elapsedTime(locationElapsedTimeMs));
+		if (locationElapsedTimeMs != 0) {
+			((TextView)findViewById(R.id.location_elapsed_time)).setText(elapsedTime(locationElapsedTimeMs));
+		} else {
+			findViewById(R.id.location_elapsed_time).setVisibility(View.GONE);
+		}
 		
 		
         LatLng latLng = getIntent().getParcelableExtra(INITIAL_LOCATION);
@@ -266,15 +460,25 @@ public class ObservationEditActivity extends FragmentActivity {
 		
 		map.animateCamera(CameraUpdateFactory.newLatLngZoom(location, 18));
 		
+		if (accuracyCircle != null) {
+			accuracyCircle.remove();
+		}
+		
 		CircleOptions circleOptions = new CircleOptions()
 		.fillColor(getResources().getColor(R.color.accuracy_circle_fill))
 		.strokeColor(getResources().getColor(R.color.accuracy_circle_stroke))
 		.strokeWidth(5)
 	    .center(location)
 	    .radius(l.getAccuracy());
+		accuracyCircle = map.addCircle(circleOptions);
 
-		map.addCircle(circleOptions);
-        map.addMarker(new MarkerOptions().position(location).icon(ObservationBitmapFactory.bitmapDescriptor(this, o)));             
+		
+		if (observationMarker != null) {
+			observationMarker.setPosition(location);
+			observationMarker.setIcon(ObservationBitmapFactory.bitmapDescriptor(this, o));
+		} else {
+			observationMarker = map.addMarker(new MarkerOptions().position(location).icon(ObservationBitmapFactory.bitmapDescriptor(this, o)));
+		}
 	}
 
 	@Override
@@ -355,31 +559,45 @@ public class ObservationEditActivity extends FragmentActivity {
 		}
 	}
 	
-	private void savePropertyFieldsToMap(LinearLayout ll, Map<String, String> fields) {
-		for (int i = 0; i < ll.getChildCount(); i++) {
-			View v = ll.getChildAt(i);
-			if (v instanceof MageTextView) {
-				String propertyKey = ((MageTextView)v).getPropertyKey();
-				fields.put(propertyKey, ((MageTextView)v).getText().toString());
-			} else if (v instanceof MageEditText) {
-				String propertyKey = ((MageEditText)v).getPropertyKey();
-				fields.put(propertyKey, ((MageEditText)v).getText().toString());
-			} else if (v instanceof MageSpinner) {
-				String propertyKey = ((MageSpinner)v).getPropertyKey();
-				fields.put(propertyKey, (String) ((MageSpinner)v).getSelectedItem());
-			} else if (v instanceof LinearLayout) {
-				savePropertyFieldsToMap((LinearLayout)v, fields);
-			}
-		}
+	private Map<String, ObservationProperty> getPropertyFieldsAsMap(LinearLayout ll) {
+		 Map<String, ObservationProperty> properties = new HashMap<String, ObservationProperty>();
+		 return getPropertyFieldsAsMapRecurse(ll, properties);
 	}
 	
-	private void populatePropertyFieldsFromMap(LinearLayout ll, Map<String, String> propertiesMap) {
+	private final Map<String, ObservationProperty> getPropertyFieldsAsMapRecurse(LinearLayout ll, Map<String, ObservationProperty> fields) {
+		for (int i = 0; i < ll.getChildCount(); i++) {
+			View v = ll.getChildAt(i);
+			
+			if (v instanceof LinearLayout) {
+				fields.putAll(getPropertyFieldsAsMapRecurse((LinearLayout)v, fields));
+			} else {
+				String key = null;
+				String value = null;
+				if (v instanceof MageTextView) {
+					key = ((MageTextView)v).getPropertyKey();
+					value = ((MageTextView)v).getText().toString();
+				} else if (v instanceof MageEditText) {
+					key = ((MageEditText)v).getPropertyKey();
+					value = ((MageEditText)v).getText().toString();
+				} else if (v instanceof MageSpinner) {
+					key = ((MageSpinner)v).getPropertyKey();
+					value = (String) ((MageSpinner)v).getSelectedItem();
+				}
+				if (key != null && value != null) {
+					fields.put(key, new ObservationProperty(key, value));
+				}
+			}
+		}
+		return fields;
+	}
+	
+	private void populatePropertyFieldsFromMap(LinearLayout ll, Map<String, ObservationProperty> propertiesMap) {
 		for (int i = 0; i < ll.getChildCount(); i++) {
 			View v = ll.getChildAt(i);
 			if (v instanceof MageTextView) {
 				MageTextView m = (MageTextView)v;
 				String propertyKey = m.getPropertyKey();
-				String propertyValue = propertiesMap.get(propertyKey);
+				String propertyValue = propertiesMap.get(propertyKey).getValue();
 				Log.i("test", "property key: " + propertyKey + " property value: " + propertyValue + " propertyType: " + m.getPropertyType());
 				if (propertyValue == null) continue;
 				switch(m.getPropertyType()) {
@@ -391,7 +609,14 @@ public class ObservationEditActivity extends FragmentActivity {
 					
 					break;
 				case DATE:
-					m.setText(new Date(Long.parseLong(propertyValue)).toString());
+                    String dateText = propertyValue;
+                    try {
+                        Date date = iso8601.parse(propertyValue);
+                        dateText = sdf.format(date);
+                    } catch (ParseException e) {
+                        e.printStackTrace();
+                    }
+                    m.setText(dateText);
 					break;
 				case LOCATION:
 					
@@ -403,21 +628,21 @@ public class ObservationEditActivity extends FragmentActivity {
 			} else if (v instanceof MageEditText) {
 				MageEditText m = (MageEditText)v;
 				String propertyKey = m.getPropertyKey();
-				String propertyValue = propertiesMap.get(propertyKey);
+				String propertyValue = propertiesMap.get(propertyKey).getValue();
 				m.setText(propertyValue);
 			} else if (v instanceof MageSpinner) {
 				MageSpinner spinner = (MageSpinner)v;
 				String propertyKey = ((MageSpinner)v).getPropertyKey();
-				String value = propertiesMap.get(propertyKey);
-				int index = 0;
-				for (index = 0; index < spinner.getAdapter().getCount(); index++)
-			    {
-			        if (spinner.getAdapter().getItem(index).equals(value))
-			        {
-			            spinner.setSelection(index);
-			            break;
-			        }
-			    }
+				ObservationProperty property = propertiesMap.get(propertyKey);
+				if(property != null) {
+					int index = 0;
+					for (index = 0; index < spinner.getAdapter().getCount(); index++) {
+						if (spinner.getAdapter().getItem(index).equals(property.getValue())) {
+							spinner.setSelection(index);
+							break;
+						}
+					}
+				}
 			} else if (v instanceof LinearLayout) {
 				populatePropertyFieldsFromMap((LinearLayout)v, propertiesMap);
 			}
@@ -429,35 +654,40 @@ public class ObservationEditActivity extends FragmentActivity {
 		switch (item.getItemId()) {
 
 		case R.id.observation_save:
-			
-			if (o == null) {
-				o = new Observation();
-			}
 			o.setState(State.ACTIVE);
-			o.setObservationGeometry(new ObservationGeometry(new PointGeometry(l.getLatitude(), l.getLongitude())));
+			o.setObservationGeometry(new ObservationGeometry(geometryFactory.createPoint(new Coordinate(l.getLongitude(), l.getLatitude()))));
 			
-			
-			Map<String, String> propertyMap = new HashMap<String, String>();
 			LinearLayout form = (LinearLayout) findViewById(R.id.form);
-			savePropertyFieldsToMap(form, propertyMap);
-			propertyMap.put("TYPE", (String) ((Spinner) findViewById(R.id.type_spinner)).getSelectedItem());
-			propertyMap.put("EVENTDATE", String.valueOf(date.getTime()));
-			if (propertyMap.containsKey("LOCATION_ACCURACY")) {
-				propertyMap.put("LOCATION_ACCURACY", Float.toString(l.getAccuracy()));
+			
+			Map<String, ObservationProperty> propertyMap = getPropertyFieldsAsMap(form);
+			propertyMap.put("type", new ObservationProperty("type", typeSpinner.getSelectedItem().toString()));
+			propertyMap.put("EVENTLEVEL", new ObservationProperty("EVENTLEVEL", levelSpinner.getSelectedItem().toString()));
+			propertyMap.put("timestamp", new ObservationProperty("timestamp", iso8601.format(date)));
+			propertyMap.put("LOCATION_ACCURACY", new ObservationProperty("LOCATION_ACCURACY", Float.toString(l.getAccuracy())));
+			propertyMap.put("LOCATION_PROVIDER", new ObservationProperty("LOCATION_PROVIDER", "manual"));
+			propertyMap.put("LOCATION_TIME_DELTA", new ObservationProperty("LOCATION_TIME_DELTA", Long.toString(timeMs(locationElapsedTimeMs))));
+			
+			o.addProperties(propertyMap.values());
+			
+			for (String key : o.getPropertiesMap().keySet()) {
+				Log.i("test", "key: " + key + " value: " + o.getPropertiesMap().get(key).getValue());
 			}
-			propertyMap.put("LOCATION_PROVIDER", l.getProvider());
-			propertyMap.put("LOCATION_TIME_DELTA", Long.toString(timeMs(locationElapsedTimeMs)));
-			o.setPropertiesMap(propertyMap);
 			
 			o.setAttachments(attachments);
 
 			ObservationHelper oh = ObservationHelper.getInstance(getApplicationContext());
 			try {
-				Observation newObs = oh.create(o);
-				System.out.println(newObs);
+				if (o.getRemoteId() == null) {
+					Observation newObs = oh.create(o);
+					Log.i(LOG_NAME, "Created new observation with id: " + newObs.getId());
+				} else {
+					o.setDirty(true);
+					oh.update(o, oh.read(o.getRemoteId()));
+					Log.i(LOG_NAME, "Updated observation with remote id: " + o.getRemoteId());
+				}
 				finish();
 			} catch (Exception e) {
-				Log.e("Observation Edit", e.getMessage(), e);
+				Log.e(LOG_NAME, e.getMessage(), e);
 			}
 
 			break;
@@ -506,7 +736,7 @@ public class ObservationEditActivity extends FragmentActivity {
 		Intent intent = new Intent();
 		intent.setType("image/*, video/*");
 		intent.setAction(Intent.ACTION_GET_CONTENT);
-		Log.i("test", "build version sdk int: " + Build.VERSION.SDK_INT);
+		Log.i(LOG_NAME, "build version sdk int: " + Build.VERSION.SDK_INT);
 		if (Build.VERSION.SDK_INT >= 18) {
 			intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
 		}
@@ -662,5 +892,13 @@ public class ObservationEditActivity extends FragmentActivity {
 				uris.add(cd.getItemAt(i).getUri());
 			}
 		}
+	}
+
+	public void onTypeOrLevelChanged(String field, String value) {
+		o.addProperties(Collections.singleton(new ObservationProperty(field, value)));
+		if (observationMarker != null) {
+			observationMarker.remove();
+		}
+		observationMarker = map.addMarker(new MarkerOptions().position(new LatLng(l.getLatitude(), l.getLongitude())).icon(ObservationBitmapFactory.bitmapDescriptor(this, o)));
 	}
 }

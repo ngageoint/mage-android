@@ -4,9 +4,9 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import mil.nga.giat.mage.filter.Filter;
 import mil.nga.giat.mage.map.marker.ObservationClusterCollection.ObservationClusterItem;
 import mil.nga.giat.mage.observation.ObservationViewActivity;
-import mil.nga.giat.mage.sdk.datastore.common.PointGeometry;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import android.content.Context;
 import android.content.Intent;
@@ -20,6 +20,7 @@ import com.google.maps.android.clustering.ClusterManager;
 import com.google.maps.android.clustering.ClusterManager.OnClusterItemClickListener;
 import com.google.maps.android.clustering.algo.GridBasedAlgorithm;
 import com.google.maps.android.clustering.algo.PreCachingAlgorithmDecorator;
+import com.vividsolutions.jts.geom.Point;
 
 public class ObservationClusterCollection implements ObservationCollection, OnClusterItemClickListener<ObservationClusterItem> {
 
@@ -93,8 +94,8 @@ public class ObservationClusterCollection implements ObservationCollection, OnCl
 
         @Override
         public LatLng getPosition() {
-            PointGeometry point = (PointGeometry) observation.getObservationGeometry().getGeometry();
-            return new LatLng(point.getLatitude(), point.getLongitude());
+            Point point = (Point) observation.getObservationGeometry().getGeometry();
+            return new LatLng(point.getY(), point.getX());
         }
         
         public Long getId() {
@@ -127,5 +128,16 @@ public class ObservationClusterCollection implements ObservationCollection, OnCl
     @Override
     public void onCameraChange(CameraPosition cameraPosition) {
         clusterManager.onCameraChange(cameraPosition);
+    }
+
+    @Override
+    public void setFilters(Collection<Filter<Observation>> filters) {
+        // TODO Auto-generated method stub
+    }
+
+    @Override
+    public void setObservationVisibility(Observation observation, boolean visible) {
+        // TODO Auto-generated method stub
+        
     }
 }

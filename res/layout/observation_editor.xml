@@ -9,10 +9,7 @@
         android:id="@+id/background_map"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:name="com.google.android.gms.maps.SupportMapFragment"/>
-        <!-- map:uiZoomControls="false"
-        map:uiZoomGestures="false"
-        map:uiScrollGestures="false"/> -->
+        android:name="com.google.android.gms.maps.MapFragment"/>
     <LinearLayout android:orientation="vertical"
         android:background="@drawable/semi_see_through_background"
         android:layout_height="fill_parent"
@@ -93,9 +90,14 @@
 	            android:layout_width="fill_parent"
 	            android:layout_height="wrap_content"
 	            android:orientation="horizontal">
+            <ImageView
+	            android:layout_width="18dip"
+	            android:layout_height="18dip"
+	            android:layout_gravity="center_vertical"
+	            android:src="@drawable/ic_edit"/>
 	        <mil.nga.giat.mage.form.MageTextView  
 	            android:id="@+id/date"
-	            mageForm:propertyKey="EVENTDATE"
+	            mageForm:propertyKey="timestamp"
 	            mageForm:propertyType="date"
 	            android:layout_width="wrap_content"
 	            android:layout_height="wrap_content"
@@ -104,18 +106,19 @@
 	            android:paddingTop="3dip"
 	            android:paddingBottom="3dip"
 	            style="@style/EditTextView"/>
-	        <ImageView
-	            android:layout_width="18dip"
-	            android:layout_height="18dip"
-	            android:layout_gravity="center_vertical"
-	            android:src="@drawable/ic_edit"/>
 	        </LinearLayout>
 	        <LinearLayout
+	            android:id="@+id/location_edit"
 	            android:paddingTop="5dip"
 	            android:paddingBottom="5dip"
 	            android:layout_width="fill_parent"
 	            android:layout_height="wrap_content"
 	            android:orientation="horizontal">
+		        <ImageView
+		            android:layout_width="18dip"
+		            android:layout_height="18dip"
+		            android:layout_gravity="center_vertical"
+		            android:src="@drawable/ic_edit"/>
 		        <TextView 
 		            android:id="@+id/location"
 		          android:layout_width="wrap_content"
@@ -170,7 +173,7 @@
 		    android:layout_height="wrap_content"
 		    android:layout_marginTop="5dip"
 	       	android:layout_marginBottom="20dip" 
-	       	mageForm:propertyKey="TYPE"
+	       	mageForm:propertyKey="type"
 	       	mageForm:propertyType="multichoice"
 	       	android:entries="@array/types_array"/>
 	    <TextView android:layout_width="fill_parent"
@@ -178,7 +181,7 @@
 	          style="@style/EditTextView"
 	          android:text="Level"/>
 	    <mil.nga.giat.mage.form.MageSpinner
-	        android:id="@+id/level"
+	        android:id="@+id/level_spinner"
 	        android:layout_width="fill_parent"
 	          android:layout_height="wrap_content"
 	          android:layout_marginTop="5dip"
