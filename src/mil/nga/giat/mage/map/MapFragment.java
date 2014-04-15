@@ -108,11 +108,7 @@ public class MapFragment extends Fragment implements
         mapView = (MapView) view.findViewById(R.id.mapView);
         mapView.onCreate(savedInstanceState);
         
-		try {
-			MapsInitializer.initialize(getActivity());
-		} catch (GooglePlayServicesNotAvailableException e) {
-			e.printStackTrace();
-		}
+		MapsInitializer.initialize(getActivity());
         
         ImageButton mapSettings = (ImageButton) view.findViewById(R.id.map_settings);
         mapSettings.setOnClickListener(this);
