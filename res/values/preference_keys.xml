@@ -15,6 +15,7 @@
     <!-- map stuff -->
     <string name="baseLayerKey">baseLayer</string>
     <string name="mapTileOverlaysKey">mapTileOverlays</string>
+    <string name="mapFeatureOverlaysKey">mapFeatureOverlays</string>
     <string name="showObservationsKey">showObservations</string>
     <string name="showLocationsKey">showLocations</string>
     <string name="activeTimeFilterKey">activeTimeFilter</string>
