@@ -52,6 +52,7 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.Point;
@@ -65,6 +66,7 @@ public class ObservationViewActivity extends Activity {
     private static final int ATTACHMENT_VIEW_ACTIVITY_REQUEST_CODE = 500;
     GoogleMap map;
     private Observation o;
+    private Marker marker;
     private Map<String, ObservationProperty> propertiesMap;
     DecimalFormat latLngFormat = new DecimalFormat("###.#####");
     private SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm zz", Locale.getDefault());
@@ -251,8 +253,11 @@ public class ObservationViewActivity extends Activity {
                 
                 LatLng location = new LatLng(pointGeo.getY(), pointGeo.getX());
                 map.animateCamera(CameraUpdateFactory.newLatLngZoom(location, 15));
-                
-                map.addMarker(new MarkerOptions().position(location).icon(ObservationBitmapFactory.bitmapDescriptor(this, o)));             
+                if (marker != null) {
+                	marker.remove();
+                	marker = null;
+                }
+                marker = map.addMarker(new MarkerOptions().position(location).icon(ObservationBitmapFactory.bitmapDescriptor(this, o)));             
             }
 
             LinearLayout propertyContainer = (LinearLayout)findViewById(R.id.propertyContainer);
