@@ -58,7 +58,10 @@ public class NewsFeedCursorAdapter extends CursorAdapter {
             if (v instanceof MageTextView) {
                 MageTextView m = (MageTextView) v;
                 String propertyKey = m.getPropertyKey();
-                String propertyValue = propertiesMap.get(propertyKey).getValue();
+                String propertyValue = null;
+                if (propertiesMap.containsKey(propertyKey)) {
+                	propertyValue = propertiesMap.get(propertyKey).getValue();
+                }
                 if (propertyValue == null)
                     continue;
                 switch (m.getPropertyType()) {
@@ -108,7 +111,9 @@ public class NewsFeedCursorAdapter extends CursorAdapter {
 
             ImageView iv = ((ImageView) v.findViewById(R.id.observation_thumb));
             Collection<Attachment> attachments = o.getAttachments();
-            ((TextView) v.findViewById(R.id.username)).setText(o.getPropertiesMap().get("userId").getValue());
+            if (o.getPropertiesMap().containsKey("userId")) {
+            	((TextView) v.findViewById(R.id.username)).setText(o.getPropertiesMap().get("userId").getValue());
+            }
             ((TextView) v.findViewById(R.id.attachment_text)).setText(attachments.size() != 0 ? "1 of " + attachments.size() : "");
             if (attachments.size() != 0) {
                 iv.setVisibility(View.VISIBLE);
