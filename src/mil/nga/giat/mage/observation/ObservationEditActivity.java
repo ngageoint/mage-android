@@ -244,10 +244,10 @@ public class ObservationEditActivity extends Activity {
 			
 			@Override
 			public void onClick(View v) {
-//				Intent intent = new Intent(ObservationEditActivity.this, LocationEditActivity.class);
-//                intent.putExtra(LocationEditActivity.LOCATION, l);
-//                intent.putExtra(LocationEditActivity.MARKER_BITMAP, ObservationBitmapFactory.bitmap(ObservationEditActivity.this, o));
-//                startActivityForResult(intent, LOCATION_EDIT_ACTIVITY_REQUEST_CODE);
+				Intent intent = new Intent(ObservationEditActivity.this, LocationEditActivity.class);
+                intent.putExtra(LocationEditActivity.LOCATION, l);
+                intent.putExtra(LocationEditActivity.MARKER_BITMAP, ObservationBitmapFactory.bitmap(ObservationEditActivity.this, o));
+                startActivityForResult(intent, LOCATION_EDIT_ACTIVITY_REQUEST_CODE);
 
 //			    builder.setView(dialogView)
 //			    // Add action buttons
@@ -802,6 +802,10 @@ public class ObservationEditActivity extends Activity {
 				LinearLayout l = (LinearLayout) findViewById(R.id.image_gallery);
 				l.removeViewAt(idx);
 			}
+			break;
+		case LOCATION_EDIT_ACTIVITY_REQUEST_CODE:
+			l = data.getParcelableExtra(LocationEditActivity.LOCATION);
+			setupMap();
 			break;
 		}
 	}
