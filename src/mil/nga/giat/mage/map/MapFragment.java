@@ -47,6 +47,7 @@ import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
 
+import com.google.android.gms.common.GooglePlayServicesNotAvailableException;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.GoogleMap.CancelableCallback;
@@ -107,7 +108,7 @@ public class MapFragment extends Fragment implements
         mapView = (MapView) view.findViewById(R.id.mapView);
         mapView.onCreate(savedInstanceState);
         
-        MapsInitializer.initialize(getActivity());
+		MapsInitializer.initialize(getActivity());
         
         ImageButton mapSettings = (ImageButton) view.findViewById(R.id.map_settings);
         mapSettings.setOnClickListener(this);

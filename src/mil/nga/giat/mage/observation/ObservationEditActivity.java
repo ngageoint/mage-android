@@ -67,6 +67,7 @@ import com.bumptech.glide.Glide;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapFragment;
+import com.google.android.gms.maps.model.Circle;
 import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
@@ -103,6 +104,7 @@ public class ObservationEditActivity extends Activity {
 	Observation o;
 	GoogleMap map;
 	Marker observationMarker;
+	Circle accuracyCircle;
 	long locationElapsedTimeMs = 0;
 	
     private SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm zz", Locale.getDefault());
@@ -247,19 +249,65 @@ public class ObservationEditActivity extends Activity {
 //			    LayoutInflater inflater = getLayoutInflater();
 //			    View dialogView = inflater.inflate(R.layout.location_edit, null);
 //			    
-//			    TextView longitudeEdit = (TextView)dialogView.findViewById(R.id.location_edit_longitude);
-//			    TextView latitudeEdit = (TextView)dialogView.findViewById(R.id.location_edit_latitude);
+//			    final EditText longitudeEdit = (EditText)dialogView.findViewById(R.id.location_edit_longitude);
+//			    final EditText latitudeEdit = (EditText)dialogView.findViewById(R.id.location_edit_latitude);
 //			    
 //			    longitudeEdit.setText(Double.toString(l.getLongitude()));
 //			    latitudeEdit.setText(Double.toString(l.getLatitude()));
 //			    
 //			    
-////			    final DatePicker datePicker = (DatePicker) dialogView.findViewById(R.id.date_picker);
-////			    final TimePicker timePicker = (TimePicker) dialogView.findViewById(R.id.time_picker);
-////			    // Inflate and set the layout for the dialog
-////			    // Pass null as the parent view because its going in the dialog layout
-//			    
 //			    final GoogleMap dialogMap = ((MapFragment) getFragmentManager().findFragmentById(R.id.location_edit_map)).getMap();
+//			    dialogMap.setOnCameraChangeListener(new GoogleMap.OnCameraChangeListener() {
+//					
+//					@Override
+//					public void onCameraChange(CameraPosition position) {
+//						longitudeEdit.setText(Double.toString(position.target.longitude));
+//						latitudeEdit.setText(Double.toString(position.target.latitude));
+//					}
+//				});
+//			    
+//			    longitudeEdit.addTextChangedListener(new TextWatcher() {
+//					
+//					@Override
+//					public void onTextChanged(CharSequence s, int start, int before, int count) {}
+//					
+//					@Override
+//					public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+//					
+//					@Override
+//					public void afterTextChanged(Editable s) {
+//						try {
+//							double lon = Double.parseDouble(s.toString());
+//							LatLng location = new LatLng(l.getLatitude(), lon);
+//							dialogMap.moveCamera(CameraUpdateFactory.newLatLngZoom(location, dialogMap.getCameraPosition().zoom));
+//						} catch (NumberFormatException pe) {
+//							// typed wrong probably
+//							// warn the user TODO
+//						}
+//						
+//					}
+//				});
+//			    latitudeEdit.addTextChangedListener(new TextWatcher() {
+//					
+//					@Override
+//					public void onTextChanged(CharSequence s, int start, int before, int count) {}
+//					
+//					@Override
+//					public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+//					
+//					@Override
+//					public void afterTextChanged(Editable s) {
+//						try {
+//							double lat = Double.parseDouble(s.toString());
+//							LatLng location = new LatLng(lat, l.getLongitude());
+//							dialogMap.moveCamera(CameraUpdateFactory.newLatLngZoom(location, dialogMap.getCameraPosition().zoom));
+//						} catch (NumberFormatException pe) {
+//							// typed wrong probably
+//							// warn the user TODO
+//						}
+//						
+//					}
+//				});
 //
 //				LatLng location = new LatLng(l.getLatitude(), l.getLongitude());
 //				//((TextView) findViewById(R.id.location)).setText(latLngFormat.format(l.getLatitude()) + ", " + latLngFormat.format(l.getLongitude()));
@@ -384,13 +432,21 @@ public class ObservationEditActivity extends Activity {
 		((TextView) findViewById(R.id.location)).setText(latLngFormat.format(l.getLatitude()) + ", " + latLngFormat.format(l.getLongitude()));
 		if (l.getProvider() != null) {
 			((TextView)findViewById(R.id.location_provider)).setText("("+l.getProvider()+")");
+		} else {
+			findViewById(R.id.location_provider).setVisibility(View.GONE);
 		}
 		if (l.getAccuracy() != 0) {
 			((TextView)findViewById(R.id.location_accuracy)).setText("\u00B1" + l.getAccuracy() + "m");
+		} else {
+			findViewById(R.id.location_accuracy).setVisibility(View.GONE);
 		}
 		
 		locationElapsedTimeMs = getElapsedTime();
-		((TextView)findViewById(R.id.location_elapsed_time)).setText(elapsedTime(locationElapsedTimeMs));
+		if (locationElapsedTimeMs != 0) {
+			((TextView)findViewById(R.id.location_elapsed_time)).setText(elapsedTime(locationElapsedTimeMs));
+		} else {
+			findViewById(R.id.location_elapsed_time).setVisibility(View.GONE);
+		}
 		
 		
         LatLng latLng = getIntent().getParcelableExtra(INITIAL_LOCATION);
@@ -404,15 +460,25 @@ public class ObservationEditActivity extends Activity {
 		
 		map.animateCamera(CameraUpdateFactory.newLatLngZoom(location, 18));
 		
+		if (accuracyCircle != null) {
+			accuracyCircle.remove();
+		}
+		
 		CircleOptions circleOptions = new CircleOptions()
 		.fillColor(getResources().getColor(R.color.accuracy_circle_fill))
 		.strokeColor(getResources().getColor(R.color.accuracy_circle_stroke))
 		.strokeWidth(5)
 	    .center(location)
 	    .radius(l.getAccuracy());
+		accuracyCircle = map.addCircle(circleOptions);
 
-		map.addCircle(circleOptions);
-		observationMarker = map.addMarker(new MarkerOptions().position(location).icon(ObservationBitmapFactory.bitmapDescriptor(this, o)));             
+		
+		if (observationMarker != null) {
+			observationMarker.setPosition(location);
+			observationMarker.setIcon(ObservationBitmapFactory.bitmapDescriptor(this, o));
+		} else {
+			observationMarker = map.addMarker(new MarkerOptions().position(location).icon(ObservationBitmapFactory.bitmapDescriptor(this, o)));
+		}
 	}
 
 	@Override

@@ -5,7 +5,9 @@ import java.text.DateFormat;
 import java.text.DecimalFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Collection;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.Locale;
 import java.util.Map;
 
@@ -16,10 +18,14 @@ import mil.nga.giat.mage.sdk.datastore.observation.Attachment;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationProperty;
+import mil.nga.giat.mage.sdk.datastore.user.User;
+import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
+import mil.nga.giat.mage.sdk.event.IObservationEventListener;
 import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
 import mil.nga.giat.mage.sdk.utils.DateUtility;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
 import android.app.ActionBar;
+import android.app.Activity;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.graphics.drawable.BitmapDrawable;
@@ -30,7 +36,6 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.provider.MediaStore;
-import android.support.v4.app.FragmentActivity;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -45,13 +50,13 @@ import android.widget.TextView;
 import com.bumptech.glide.Glide;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.Point;
 
-public class ObservationViewActivity extends FragmentActivity {
+public class ObservationViewActivity extends Activity {
     
     public static String OBSERVATION_ID = "OBSERVATION_ID";
     public static String INITIAL_LOCATION = "INITIAL_LOCATION";
@@ -193,6 +198,13 @@ public class ObservationViewActivity extends FragmentActivity {
     }
     
     @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+    	if (requestCode == 2) {
+    		
+    	}
+    }
+    
+    @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.observation_view_menu, menu);
@@ -205,9 +217,17 @@ public class ObservationViewActivity extends FragmentActivity {
         
         setContentView(R.layout.observation_viewer);
         ActionBar actionBar = getActionBar();
-        Log.i("test", "observation id to load: " + getIntent().getLongExtra(OBSERVATION_ID, 0L));
         actionBar.setDisplayHomeAsUpEnabled(true);
-        try {
+    }
+    
+    @Override
+    public void onResume() {
+    	super.onResume();
+    	setupView();
+    }
+    
+    private void setupView() {
+    	try {
             o = ObservationHelper.getInstance(getApplicationContext()).readByPrimaryKey(getIntent().getLongExtra(OBSERVATION_ID, 0L));
             propertiesMap = o.getPropertiesMap();
             this.setTitle(propertiesMap.get("type").getValue());
@@ -220,12 +240,12 @@ public class ObservationViewActivity extends FragmentActivity {
                 } else {
                     findViewById(R.id.location_provider).setVisibility(View.GONE);
                 }
-                if (propertiesMap.containsKey("LOCATION_ACCURACY")) {
+                if (propertiesMap.containsKey("LOCATION_ACCURACY") && !"0.0".equals(propertiesMap.get("LOCATION_ACCURACY").getValue()) ) {
                     ((TextView)findViewById(R.id.location_accuracy)).setText("\u00B1" + propertiesMap.get("LOCATION_ACCURACY").getValue() + "m");
                 } else {
                     findViewById(R.id.location_accuracy).setVisibility(View.GONE);
                 }
-                map = ((SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.mini_map)).getMap();
+                map = ((MapFragment) getFragmentManager().findFragmentById(R.id.mini_map)).getMap();
                 
                 LatLng latLng = getIntent().getParcelableExtra(INITIAL_LOCATION);
                 if (latLng == null) {
@@ -246,7 +266,6 @@ public class ObservationViewActivity extends FragmentActivity {
             populatePropertyFields(propertyContainer);
             
             populatePropertyFields((LinearLayout)findViewById(R.id.topPropertyContainer));
-            Log.i("test", "there are " + o.getAttachments().size() + " attachments");
             if (o.getAttachments().size() == 0) {
                 findViewById(R.id.image_gallery).setVisibility(View.GONE);
             } else {
@@ -255,12 +274,57 @@ public class ObservationViewActivity extends FragmentActivity {
             }
             
             TextView user = (TextView)findViewById(R.id.username);
-            user.setText(o.getPropertiesMap().get("userId").getValue());
+            User u = UserHelper.getInstance(this).read(o.getPropertiesMap().get("userId").getValue());
+            user.setText(u.getFirstname() + " " + u.getLastname());
             
             FrameLayout fl = (FrameLayout)findViewById(R.id.sync_status);
-            if (o.getRemoteId() == null) {
+            fl.removeAllViews();
+            Log.i("test", "o.isDirty? " + o.isDirty());
+            if (o.isDirty()) {
+            	ObservationHelper.getInstance(getApplicationContext()).addListener(new IObservationEventListener() {
+					
+					@Override
+					public void onError(Throwable error) {
+					}
+					
+					@Override
+					public void onObservationUpdated(Observation observation) {
+						if (observation.getId() == o.getId() && !observation.isDirty()) {
+							ObservationViewActivity.this.runOnUiThread(new Runnable() {
+								@Override
+								public void run() {
+									setupView();
+								}
+							});
+							ObservationHelper.getInstance(getApplicationContext()).removeListener(this);
+						}
+						
+					}
+					
+					@Override
+					public void onObservationDeleted(Observation observation) {
+					}
+					
+					@Override
+					public void onObservationCreated(Collection<Observation> observations) {
+						for (Iterator<Observation> i = observations.iterator(); i.hasNext();) {
+							Observation observation = i.next();
+							if (observation.getId() == o.getId() && !observation.isDirty()) {
+								ObservationViewActivity.this.runOnUiThread(new Runnable() {
+									@Override
+									public void run() {
+										setupView();
+									}
+								});
+								ObservationHelper.getInstance(getApplicationContext()).removeListener(this);
+								break;
+							}
+						}
+					}
+				});
                 View.inflate(getApplicationContext(), R.layout.saved_locally, fl);
             } else {
+            	Log.i("test", "o.lastmodified: " + o.getLastModified());
                 View status = View.inflate(getApplicationContext(), R.layout.submitted_on, fl);
                 TextView syncDate = (TextView)status.findViewById(R.id.observation_sync_date);
                 syncDate.setText(sdf.format(o.getLastModified()));
@@ -268,7 +332,6 @@ public class ObservationViewActivity extends FragmentActivity {
         } catch (Exception e) {
             Log.e("observation view", e.getMessage(), e);
         }
-        
     }
     
     private void populatePropertyFields(LinearLayout ll) {
