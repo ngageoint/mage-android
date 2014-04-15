@@ -185,7 +185,7 @@ public class MapFragment extends Fragment implements
     public void onPause() {
         super.onPause();
         
-        mapView.onResume();
+        mapView.onPause();
         
         ObservationHelper.getInstance(getActivity()).removeListener(this);
         observations.clear();

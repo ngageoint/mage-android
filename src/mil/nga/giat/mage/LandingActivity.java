@@ -66,19 +66,16 @@ public class LandingActivity extends Activity implements ListView.OnItemClickLis
 		// Pull static layers and features just once
 		mage.pullStaticFeaturesOneTime();
  		
- 		DrawerItem viewHeader = new DrawerItem(-1, "Views");
- 		viewHeader.isHeader(true);
- 		DrawerItem extraHeader = new DrawerItem(-1, "Extra");
- 		extraHeader.isHeader(true);
- 		mapItem = new DrawerItem(0, "Map", R.drawable.ic_globe_white, new MapFragment());
+ 		mapItem = new DrawerItem.Builder("Map").id(0).drawableId(R.drawable.ic_globe_white).fragment(new MapFragment()).build();
 
  		drawerItems = new DrawerItem[] {
 	        mapItem,
-	        new DrawerItem(1, "Observations", R.drawable.ic_map_marker_white, new NewsFeedFragment()),
-	        new DrawerItem(2, "People", R.drawable.ic_users_white, new PeopleFeedFragment()),
-	        new DrawerItem(3, "Settings", R.drawable.ic_settings_white, new PublicPreferencesFragment()),
-	        new DrawerItem(4, "Help", R.drawable.ic_question_circle_white, new HelpFragment()),
-	        new DrawerItem(5, "Logout", R.drawable.ic_power_off_white)
+	        new DrawerItem.Builder("Observations").id(1).drawableId(R.drawable.ic_map_marker_white).fragment(new NewsFeedFragment()).build(),
+	        new DrawerItem.Builder("People").id(2).drawableId(R.drawable.ic_users_white).fragment(new PeopleFeedFragment()).build(),
+	        new DrawerItem.Builder("SETTINGS").header(true).build(),
+            new DrawerItem.Builder("Settings").id(3).secondary(true).fragment(new PublicPreferencesFragment()).build(),
+            new DrawerItem.Builder("Help").id(4).secondary(true).fragment(new HelpFragment()).build(),
+            new DrawerItem.Builder("Logout").id(5).secondary(true).build()
  		};
 
         drawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -88,32 +85,37 @@ public class LandingActivity extends Activity implements ListView.OnItemClickLis
         drawerList.setAdapter(new ArrayAdapter<DrawerItem>(this, R.layout.drawer_list_item, drawerItems) {
         	@Override
         	public View getView (int position, View view, ViewGroup parent) {
+                DrawerItem item = getItem(position);
+
         		if (view == null) {
-        			LayoutInflater inflater = (LayoutInflater)getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-        			view = inflater.inflate(R.layout.drawer_list_item, null);
+        			LayoutInflater inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        			if (item.isHeader()) {
+                        view = inflater.inflate(R.layout.drawer_list_header_item, null);
+                        view.setEnabled(false);
+                        view.setOnClickListener(null);
+        			}
+        			else if (item.isSecondary()) {
+                        view = inflater.inflate(R.layout.drawer_list_secondary_item, null);
+        			} else {
+                        view = inflater.inflate(R.layout.drawer_list_item, null);
+                        
+                        if (item.getDrawableId() != null) {
+                            ImageView iv = (ImageView) view.findViewById(R.id.drawer_item_icon);
+                            iv.setImageResource(item.getDrawableId());
+                        }
+                        
+                        TextView countView = (TextView)view.findViewById(R.id.drawer_count);
+                        if (item.getCount() != 0) {
+                            countView.setVisibility(View.VISIBLE);
+                            countView.setText("" + item.getCount());
+                        } else {
+                            countView.setVisibility(View.GONE);
+                        }
+        			}
         		}
-        		DrawerItem item = getItem(position);
         		
-		        if (item.isHeader()) {
-		        	view.findViewById(R.id.drawer_divider).setVisibility(View.GONE);
-		        	view.findViewById(R.id.header_divider).setVisibility(View.VISIBLE);
-		        } else {
-		        	view.findViewById(R.id.header_divider).setVisibility(View.GONE);
-		        	view.findViewById(R.id.drawer_divider).setVisibility(View.VISIBLE);
-		        }
-        		TextView text = (TextView)view.findViewById(R.id.drawer_item_text);
-        		text.setText(item.getItemText());
-        		if (item.getDrawableId() != null) {
-	        		ImageView iv = (ImageView)view.findViewById(R.id.drawer_item_icon);
-	        		iv.setImageResource(item.getDrawableId());
-        		}
-        		TextView countView = (TextView)view.findViewById(R.id.drawer_count);
-        		if (item.getCount() != 0) {
-        			countView.setVisibility(View.VISIBLE);
-        			countView.setText("" + item.getCount());
-        		} else {
-        			countView.setVisibility(View.GONE);
-        		}
+        		TextView text = (TextView) view.findViewById(R.id.text);
+        		text.setText(item.getText());
         		
         		return view;
         	}
@@ -158,7 +160,7 @@ public class LandingActivity extends Activity implements ListView.OnItemClickLis
          	                       .add(R.id.content_frame, itemToSwitchTo.getFragment())
          	                       .commit();
          	        currentActivity = itemToSwitchTo;
-         	        getActionBar().setTitle(itemToSwitchTo.getItemText());
+         	        getActionBar().setTitle(itemToSwitchTo.getText());
             	 }
             	 invalidateOptionsMenu();
              }  
@@ -269,7 +271,6 @@ public class LandingActivity extends Activity implements ListView.OnItemClickLis
 
     @Override
     public void onItemClick(AdapterView<?> adapterView, View view, int position, long id) {
-    	
     	ArrayAdapter<DrawerItem> adapter = (ArrayAdapter<DrawerItem>) adapterView.getAdapter();
     	itemToSwitchTo = adapter.getItem(position);
         if (itemToSwitchTo.getFragment() == null) {
