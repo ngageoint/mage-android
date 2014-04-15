@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.regex.Pattern;
 
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
+import mil.nga.giat.mage.sdk.datastore.observation.ObservationProperty;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -69,23 +70,23 @@ public class ObservationBitmapFactory {
             return DEFAULT_ASSET;
         }
         
-        Map<String, String> properties = observation.getPropertiesMap();
-        String level = properties.get(LEVEL_PROPERTY);     
-        String type = properties.get(TYPE_PROPERTY);
+		Map<String, ObservationProperty> properties = observation.getPropertiesMap();
+		ObservationProperty level = properties.get(LEVEL_PROPERTY);
+		ObservationProperty type = properties.get(TYPE_PROPERTY);
 
         Collection<String> paths = new ArrayList<String>();
         paths.add("markers");
         
         if (level != null) {
-            paths.add(level.replaceAll(pattern.pattern(), "_").toLowerCase(Locale.ENGLISH));
+            paths.add(level.getValue().replaceAll(pattern.pattern(), "_").toLowerCase(Locale.ENGLISH));
             
             if (type != null) {
-                paths.add(type.replaceAll(pattern.pattern(), "_").toLowerCase(Locale.ENGLISH));
+                paths.add(type.getValue().replaceAll(pattern.pattern(), "_").toLowerCase(Locale.ENGLISH));
             } else {
                 paths.add("default");
             }
         } else if (type != null) {
-            paths.add(type.replaceAll(pattern.pattern(), "_").toLowerCase(Locale.ENGLISH));
+            paths.add(type.getValue().replaceAll(pattern.pattern(), "_").toLowerCase(Locale.ENGLISH));
         } else {            
             paths.add("default");
         }

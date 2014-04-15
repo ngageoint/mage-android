@@ -15,6 +15,7 @@ import mil.nga.giat.mage.map.marker.ObservationBitmapFactory;
 import mil.nga.giat.mage.sdk.datastore.observation.Attachment;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
+import mil.nga.giat.mage.sdk.datastore.observation.ObservationProperty;
 import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
 import mil.nga.giat.mage.sdk.utils.DateUtility;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
@@ -59,7 +60,7 @@ public class ObservationViewActivity extends FragmentActivity {
     private static final int ATTACHMENT_VIEW_ACTIVITY_REQUEST_CODE = 500;
     GoogleMap map;
     private Observation o;
-    private Map<String, String> propertiesMap;
+    private Map<String, ObservationProperty> propertiesMap;
     DecimalFormat latLngFormat = new DecimalFormat("###.#####");
     private SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm zz", Locale.getDefault());
     private DateFormat iso8601 =  DateUtility.getISO8601();
@@ -209,18 +210,18 @@ public class ObservationViewActivity extends FragmentActivity {
         try {
             o = ObservationHelper.getInstance(getApplicationContext()).readByPrimaryKey(getIntent().getLongExtra(OBSERVATION_ID, 0L));
             propertiesMap = o.getPropertiesMap();
-            this.setTitle(propertiesMap.get("type"));
+            this.setTitle(propertiesMap.get("type").getValue());
             Geometry geo = o.getObservationGeometry().getGeometry();
             if(geo instanceof Point) {
                 Point pointGeo = (Point)geo;
                 ((TextView)findViewById(R.id.location)).setText(latLngFormat.format(pointGeo.getY()) + ", " + latLngFormat.format(pointGeo.getX()));
                 if(propertiesMap.containsKey("LOCATION_PROVIDER")) {
-                    ((TextView)findViewById(R.id.location_provider)).setText("("+propertiesMap.get("LOCATION_PROVIDER")+")");
+                    ((TextView)findViewById(R.id.location_provider)).setText("("+propertiesMap.get("LOCATION_PROVIDER").getValue()+")");
                 } else {
                     findViewById(R.id.location_provider).setVisibility(View.GONE);
                 }
                 if (propertiesMap.containsKey("LOCATION_ACCURACY")) {
-                    ((TextView)findViewById(R.id.location_accuracy)).setText("\u00B1" + propertiesMap.get("LOCATION_ACCURACY") + "m");
+                    ((TextView)findViewById(R.id.location_accuracy)).setText("\u00B1" + propertiesMap.get("LOCATION_ACCURACY").getValue() + "m");
                 } else {
                     findViewById(R.id.location_accuracy).setVisibility(View.GONE);
                 }
@@ -254,7 +255,7 @@ public class ObservationViewActivity extends FragmentActivity {
             }
             
             TextView user = (TextView)findViewById(R.id.username);
-            user.setText(o.getPropertiesMap().get("userId"));
+            user.setText(o.getPropertiesMap().get("userId").getValue());
             
             FrameLayout fl = (FrameLayout)findViewById(R.id.sync_status);
             if (o.getRemoteId() == null) {
@@ -276,8 +277,13 @@ public class ObservationViewActivity extends FragmentActivity {
             if (v instanceof MageTextView) {
                 MageTextView m = (MageTextView)v;
                 String propertyKey = m.getPropertyKey();
-                String propertyValue = propertiesMap.get(propertyKey);
-                if (propertyValue == null) continue;
+                String propertyValue = null;
+                ObservationProperty property = propertiesMap.get(propertyKey);
+                if (property == null) {
+                	continue;
+                } else {
+                	propertyValue = property.getValue();
+                }
                 switch(m.getPropertyType()) {
                 case STRING:
                 case MULTILINE:
