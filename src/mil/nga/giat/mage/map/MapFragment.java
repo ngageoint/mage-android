@@ -31,8 +31,6 @@ import mil.nga.giat.mage.sdk.exceptions.LocationException;
 import mil.nga.giat.mage.sdk.exceptions.ObservationException;
 import mil.nga.giat.mage.sdk.location.LocationService;
 import android.app.Fragment;
-import android.app.FragmentManager;
-import android.app.FragmentTransaction;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
@@ -40,7 +38,6 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -56,6 +53,8 @@ import com.google.android.gms.maps.GoogleMap.CancelableCallback;
 import com.google.android.gms.maps.GoogleMap.OnMapLongClickListener;
 import com.google.android.gms.maps.GoogleMap.OnMyLocationButtonClickListener;
 import com.google.android.gms.maps.LocationSource;
+import com.google.android.gms.maps.MapView;
+import com.google.android.gms.maps.MapsInitializer;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.TileOverlay;
@@ -75,6 +74,7 @@ public class MapFragment extends Fragment implements
         ILocationEventListener {
 
     private MAGE mage;
+    private MapView mapView;
     private GoogleMap map;
     private int mapType = 1;
     private Location location;
@@ -94,9 +94,7 @@ public class MapFragment extends Fragment implements
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_map, container, false);
-        
-        // TODO see if there is a way to keep this guy alive such that I do not have to recreate markers and such
-//        setRetainInstance(true);  
+
         setHasOptionsMenu(true);
         
         mage = (MAGE) getActivity().getApplication();
@@ -106,14 +104,11 @@ public class MapFragment extends Fragment implements
 
         preferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
 
-        map = ((com.google.android.gms.maps.MapFragment) getFragmentManager().findFragmentById(R.id.map)).getMap();
+        mapView = (MapView) view.findViewById(R.id.mapView);
+        mapView.onCreate(savedInstanceState);
         
-        mapType = Integer.parseInt(preferences.getString(getResources().getString(R.string.baseLayerKey), "1"));
-        map.setMapType(mapType);
+        MapsInitializer.initialize(getActivity());
         
-        map.setOnMapLongClickListener(this);
-        map.setOnMyLocationButtonClickListener(this);
-
         ImageButton mapSettings = (ImageButton) view.findViewById(R.id.map_settings);
         mapSettings.setOnClickListener(this);
 
@@ -125,45 +120,33 @@ public class MapFragment extends Fragment implements
     private int getTimeFilter() {
 		return preferences.getInt(getResources().getString(R.string.activeTimeFilterKey), R.id.none_rb);
 	}
-    
-    private void killOldMap() {
-    	PreferenceManager.getDefaultSharedPreferences(getActivity().getApplicationContext()).unregisterOnSharedPreferenceChangeListener(this);
-        com.google.android.gms.maps.MapFragment mapFragment = 
-                ((com.google.android.gms.maps.MapFragment) getFragmentManager().findFragmentById(R.id.map));
 
-        if (mapFragment != null && !getActivity().isDestroyed()) {
-            FragmentManager manager = getFragmentManager();
-            FragmentTransaction t = manager.beginTransaction();
-            FragmentTransaction t2 = t.remove(mapFragment).detach(mapFragment);
-            t2.commitAllowingStateLoss();
-        }
-    }
-    
     @Override
     public void onDestroy() {
-        killOldMap();
+        mapView.onDestroy();
         super.onDestroy();
-    }
-    
-    @Override
-    public void onDestroyView() {
-    	killOldMap();
-    	super.onDestroyView();
     }
 
     @Override
-    public void onDetach() {
-    	killOldMap();
-    	super.onDetach();
+    public void onLowMemory() {
+        super.onLowMemory();
+        mapView.onLowMemory();
     }
     
     @Override
     public void onResume() {
         super.onResume();
+        
+        mapView.onResume();
+        
+        map = mapView.getMap();
                 
         PreferenceManager.getDefaultSharedPreferences(getActivity().getApplicationContext()).registerOnSharedPreferenceChangeListener(this);
         
         updateMapType();
+        
+        map.setOnMapLongClickListener(this);
+        map.setOnMyLocationButtonClickListener(this);
         
         observations = new ObservationMarkerCollection(getActivity(), map);
         boolean showObservations = preferences.getBoolean(getResources().getString(R.string.showObservationsKey), true);
@@ -201,6 +184,8 @@ public class MapFragment extends Fragment implements
     @Override
     public void onPause() {
         super.onPause();
+        
+        mapView.onResume();
         
         ObservationHelper.getInstance(getActivity()).removeListener(this);
         observations.clear();
