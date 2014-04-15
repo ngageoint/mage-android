@@ -219,7 +219,7 @@ public class ObservationViewActivity extends FragmentActivity {
                 } else {
                     findViewById(R.id.location_provider).setVisibility(View.GONE);
                 }
-                if (propertiesMap.containsKey("LOCATION_ACCURACY")) {
+                if (propertiesMap.containsKey("LOCATION_ACCURACY") && !"0.0".equals(propertiesMap.get("LOCATION_ACCURACY")) ) {
                     ((TextView)findViewById(R.id.location_accuracy)).setText("\u00B1" + propertiesMap.get("LOCATION_ACCURACY") + "m");
                 } else {
                     findViewById(R.id.location_accuracy).setVisibility(View.GONE);
