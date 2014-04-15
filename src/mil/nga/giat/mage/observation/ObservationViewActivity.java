@@ -198,13 +198,6 @@ public class ObservationViewActivity extends Activity {
     }
     
     @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-    	if (requestCode == 2) {
-    		
-    	}
-    }
-    
-    @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.observation_view_menu, menu);
@@ -266,6 +259,7 @@ public class ObservationViewActivity extends Activity {
             populatePropertyFields(propertyContainer);
             
             populatePropertyFields((LinearLayout)findViewById(R.id.topPropertyContainer));
+            ((LinearLayout)findViewById(R.id.image_gallery)).removeAllViews();
             if (o.getAttachments().size() == 0) {
                 findViewById(R.id.image_gallery).setVisibility(View.GONE);
             } else {
