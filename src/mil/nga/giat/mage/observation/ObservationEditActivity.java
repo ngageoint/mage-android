@@ -8,9 +8,9 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
@@ -29,11 +29,10 @@ import mil.nga.giat.mage.sdk.exceptions.ObservationException;
 import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
 import mil.nga.giat.mage.sdk.utils.DateUtility;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
+import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.app.FragmentManager;
-import android.app.FragmentTransaction;
 import android.content.ClipData;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -104,7 +103,6 @@ public class ObservationEditActivity extends Activity {
 	Observation o;
 	GoogleMap map;
 	Marker observationMarker;
-	Map<String, String> propertiesMap;
 	long locationElapsedTimeMs = 0;
 	
     private SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm zz", Locale.getDefault());
@@ -166,8 +164,8 @@ public class ObservationEditActivity extends Activity {
 					addAttachmentToGallery(a);
 				}
 			
-				propertiesMap = o.getPropertiesMap();
-				String dateText = propertiesMap.get("timestamp");
+				Map<String, ObservationProperty> propertiesMap = o.getPropertiesMap();
+				String dateText = propertiesMap.get("timestamp").getValue();
                 try {
                     date = iso8601.parse(dateText);
                     dateText = sdf.format(date);
@@ -179,9 +177,13 @@ public class ObservationEditActivity extends Activity {
 				Geometry geo = o.getObservationGeometry().getGeometry();
 				if(geo instanceof Point) {
 					Point point = (Point)geo;
-					l = new Location(propertiesMap.get("LOCATION_PROVIDER"));
+					String provider = "manual";
+					if(propertiesMap.get("LOCATION_PROVIDER") != null) {
+						provider = propertiesMap.get("LOCATION_PROVIDER").getValue();
+					}
+					l = new Location(provider);
 					if (propertiesMap.containsKey("LOCATION_ACCURACY")) {
-						l.setAccuracy(Float.parseFloat(propertiesMap.get("LOCATION_ACCURACY")));
+						l.setAccuracy(Float.parseFloat(propertiesMap.get("LOCATION_ACCURACY").getValue()));
 					}
 					l.setLatitude(point.getY());
 					l.setLongitude(point.getX());
@@ -363,6 +365,7 @@ public class ObservationEditActivity extends Activity {
 	}
 	
 	
+	@SuppressLint("NewApi")
 	private long getElapsedTime() {
 		if (Build.VERSION.SDK_INT >= 17) {
 			if (l.getElapsedRealtimeNanos() == 0) {
@@ -490,31 +493,45 @@ public class ObservationEditActivity extends Activity {
 		}
 	}
 	
-	private void savePropertyFieldsToMap(LinearLayout ll, Map<String, String> fields) {
-		for (int i = 0; i < ll.getChildCount(); i++) {
-			View v = ll.getChildAt(i);
-			if (v instanceof MageTextView) {
-				String propertyKey = ((MageTextView)v).getPropertyKey();
-				fields.put(propertyKey, ((MageTextView)v).getText().toString());
-			} else if (v instanceof MageEditText) {
-				String propertyKey = ((MageEditText)v).getPropertyKey();
-				fields.put(propertyKey, ((MageEditText)v).getText().toString());
-			} else if (v instanceof MageSpinner) {
-				String propertyKey = ((MageSpinner)v).getPropertyKey();
-				fields.put(propertyKey, (String) ((MageSpinner)v).getSelectedItem());
-			} else if (v instanceof LinearLayout) {
-				savePropertyFieldsToMap((LinearLayout)v, fields);
-			}
-		}
+	private Map<String, ObservationProperty> getPropertyFieldsAsMap(LinearLayout ll) {
+		 Map<String, ObservationProperty> properties = new HashMap<String, ObservationProperty>();
+		 return getPropertyFieldsAsMapRecurse(ll, properties);
 	}
 	
-	private void populatePropertyFieldsFromMap(LinearLayout ll, Map<String, String> propertiesMap) {
+	private final Map<String, ObservationProperty> getPropertyFieldsAsMapRecurse(LinearLayout ll, Map<String, ObservationProperty> fields) {
+		for (int i = 0; i < ll.getChildCount(); i++) {
+			View v = ll.getChildAt(i);
+			
+			if (v instanceof LinearLayout) {
+				fields.putAll(getPropertyFieldsAsMapRecurse((LinearLayout)v, fields));
+			} else {
+				String key = null;
+				String value = null;
+				if (v instanceof MageTextView) {
+					key = ((MageTextView)v).getPropertyKey();
+					value = ((MageTextView)v).getText().toString();
+				} else if (v instanceof MageEditText) {
+					key = ((MageEditText)v).getPropertyKey();
+					value = ((MageEditText)v).getText().toString();
+				} else if (v instanceof MageSpinner) {
+					key = ((MageSpinner)v).getPropertyKey();
+					value = (String) ((MageSpinner)v).getSelectedItem();
+				}
+				if (key != null && value != null) {
+					fields.put(key, new ObservationProperty(key, value));
+				}
+			}
+		}
+		return fields;
+	}
+	
+	private void populatePropertyFieldsFromMap(LinearLayout ll, Map<String, ObservationProperty> propertiesMap) {
 		for (int i = 0; i < ll.getChildCount(); i++) {
 			View v = ll.getChildAt(i);
 			if (v instanceof MageTextView) {
 				MageTextView m = (MageTextView)v;
 				String propertyKey = m.getPropertyKey();
-				String propertyValue = propertiesMap.get(propertyKey);
+				String propertyValue = propertiesMap.get(propertyKey).getValue();
 				Log.i("test", "property key: " + propertyKey + " property value: " + propertyValue + " propertyType: " + m.getPropertyType());
 				if (propertyValue == null) continue;
 				switch(m.getPropertyType()) {
@@ -545,21 +562,21 @@ public class ObservationEditActivity extends Activity {
 			} else if (v instanceof MageEditText) {
 				MageEditText m = (MageEditText)v;
 				String propertyKey = m.getPropertyKey();
-				String propertyValue = propertiesMap.get(propertyKey);
+				String propertyValue = propertiesMap.get(propertyKey).getValue();
 				m.setText(propertyValue);
 			} else if (v instanceof MageSpinner) {
 				MageSpinner spinner = (MageSpinner)v;
 				String propertyKey = ((MageSpinner)v).getPropertyKey();
-				String value = propertiesMap.get(propertyKey);
-				int index = 0;
-				for (index = 0; index < spinner.getAdapter().getCount(); index++)
-			    {
-			        if (spinner.getAdapter().getItem(index).equals(value))
-			        {
-			            spinner.setSelection(index);
-			            break;
-			        }
-			    }
+				ObservationProperty property = propertiesMap.get(propertyKey);
+				if(property != null) {
+					int index = 0;
+					for (index = 0; index < spinner.getAdapter().getCount(); index++) {
+						if (spinner.getAdapter().getItem(index).equals(property.getValue())) {
+							spinner.setSelection(index);
+							break;
+						}
+					}
+				}
 			} else if (v instanceof LinearLayout) {
 				populatePropertyFieldsFromMap((LinearLayout)v, propertiesMap);
 			}
@@ -574,41 +591,20 @@ public class ObservationEditActivity extends Activity {
 			o.setState(State.ACTIVE);
 			o.setObservationGeometry(new ObservationGeometry(geometryFactory.createPoint(new Coordinate(l.getLongitude(), l.getLatitude()))));
 			
-			
-			Map<String, String> propertyMap = new HashMap<String, String>();
 			LinearLayout form = (LinearLayout) findViewById(R.id.form);
-			savePropertyFieldsToMap(form, propertyMap);
-			propertyMap.put("type", typeSpinner.getSelectedItem().toString());
-	        propertyMap.put("EVENTLEVEL", levelSpinner.getSelectedItem().toString());
-			propertyMap.put("timestamp", iso8601.format(date));
-			propertyMap.put("LOCATION_ACCURACY", Float.toString(l.getAccuracy()));
-			propertyMap.put("LOCATION_PROVIDER", "manual");
-			//propertyMap.put("LOCATION_TIME_DELTA", Long.toString(timeMs(locationElapsedTimeMs)));
-
-			List<ObservationProperty> newProperties = new ArrayList<ObservationProperty>();
-			for (String key : propertyMap.keySet()) {
-				String value = propertyMap.get(key);
-				
-				Boolean found = false;
-				for (ObservationProperty op : o.getProperties()) {
-					if (op.getKey().equalsIgnoreCase(key)) {
-						op.setValue(value);
-						found = true;
-						break;
-					}
-				}
-				if(!found) {
-					newProperties.add(new ObservationProperty(key, value));
-				}
-			}
 			
-			List<ObservationProperty> allProperties = new ArrayList<ObservationProperty>();
-			allProperties.addAll(o.getProperties());
-			allProperties.addAll(newProperties);
-			o.setProperties(allProperties);
+			Map<String, ObservationProperty> propertyMap = getPropertyFieldsAsMap(form);
+			propertyMap.put("type", new ObservationProperty("type", typeSpinner.getSelectedItem().toString()));
+			propertyMap.put("EVENTLEVEL", new ObservationProperty("EVENTLEVEL", levelSpinner.getSelectedItem().toString()));
+			propertyMap.put("timestamp", new ObservationProperty("timestamp", iso8601.format(date)));
+			propertyMap.put("LOCATION_ACCURACY", new ObservationProperty("LOCATION_ACCURACY", Float.toString(l.getAccuracy())));
+			propertyMap.put("LOCATION_PROVIDER", new ObservationProperty("LOCATION_PROVIDER", "manual"));
+			propertyMap.put("LOCATION_TIME_DELTA", new ObservationProperty("LOCATION_TIME_DELTA", Long.toString(timeMs(locationElapsedTimeMs))));
+			
+			o.addProperties(propertyMap.values());
 			
 			for (String key : o.getPropertiesMap().keySet()) {
-				Log.i("test", "key: " + key + " value: " + o.getPropertiesMap().get(key));
+				Log.i("test", "key: " + key + " value: " + o.getPropertiesMap().get(key).getValue());
 			}
 			
 			o.setAttachments(attachments);
@@ -617,10 +613,11 @@ public class ObservationEditActivity extends Activity {
 			try {
 				if (o.getRemoteId() == null) {
 					Observation newObs = oh.create(o);
-					Log.i(LOG_NAME, "Created new observation: " + newObs.toString());
+					Log.i(LOG_NAME, "Created new observation with id: " + newObs.getId());
 				} else {
 					o.setDirty(true);
 					oh.update(o, oh.read(o.getRemoteId()));
+					Log.i(LOG_NAME, "Updated observation with remote id: " + o.getRemoteId());
 				}
 				finish();
 			} catch (Exception e) {
@@ -831,13 +828,11 @@ public class ObservationEditActivity extends Activity {
 		}
 	}
 
-    public void onTypeOrLevelChanged(String field, String value) {
-        Map<String, String> properties = o.getPropertiesMap();
-        properties.put(field, value);
-        o.setPropertiesMap(properties);
-        if (observationMarker != null) observationMarker.remove();
-        observationMarker = map.addMarker(new MarkerOptions()
-            .position(new LatLng(l.getLatitude(), l.getLongitude()))
-            .icon(ObservationBitmapFactory.bitmapDescriptor(this, o)));             
-    }
+	public void onTypeOrLevelChanged(String field, String value) {
+		o.addProperties(Collections.singleton(new ObservationProperty(field, value)));
+		if (observationMarker != null) {
+			observationMarker.remove();
+		}
+		observationMarker = map.addMarker(new MarkerOptions().position(new LatLng(l.getLatitude(), l.getLongitude())).icon(ObservationBitmapFactory.bitmapDescriptor(this, o)));
+	}
 }
