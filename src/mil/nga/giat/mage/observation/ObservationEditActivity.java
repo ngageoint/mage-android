@@ -42,8 +42,6 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.provider.MediaStore;
-import android.text.Editable;
-import android.text.TextWatcher;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -69,7 +67,6 @@ import com.bumptech.glide.Glide;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapFragment;
-import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.Circle;
 import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
@@ -247,120 +244,120 @@ public class ObservationEditActivity extends Activity {
 			@Override
 			public void onClick(View v) {
 				
-				AlertDialog.Builder builder = new AlertDialog.Builder(ObservationEditActivity.this);
-//			    // Get the layout inflater
-			    LayoutInflater inflater = getLayoutInflater();
-			    View dialogView = inflater.inflate(R.layout.location_edit, null);
-			    
-			    final EditText longitudeEdit = (EditText)dialogView.findViewById(R.id.location_edit_longitude);
-			    final EditText latitudeEdit = (EditText)dialogView.findViewById(R.id.location_edit_latitude);
-			    
-			    longitudeEdit.setText(Double.toString(l.getLongitude()));
-			    latitudeEdit.setText(Double.toString(l.getLatitude()));
-			    
-			    
-			    final GoogleMap dialogMap = ((MapFragment) getFragmentManager().findFragmentById(R.id.location_edit_map)).getMap();
-			    dialogMap.setOnCameraChangeListener(new GoogleMap.OnCameraChangeListener() {
-					
-					@Override
-					public void onCameraChange(CameraPosition position) {
-						longitudeEdit.setText(Double.toString(position.target.longitude));
-						latitudeEdit.setText(Double.toString(position.target.latitude));
-					}
-				});
-			    
-			    longitudeEdit.addTextChangedListener(new TextWatcher() {
-					
-					@Override
-					public void onTextChanged(CharSequence s, int start, int before, int count) {}
-					
-					@Override
-					public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-					
-					@Override
-					public void afterTextChanged(Editable s) {
-						try {
-							double lon = Double.parseDouble(s.toString());
-							LatLng location = new LatLng(l.getLatitude(), lon);
-							dialogMap.moveCamera(CameraUpdateFactory.newLatLngZoom(location, dialogMap.getCameraPosition().zoom));
-						} catch (NumberFormatException pe) {
-							// typed wrong probably
-							// warn the user TODO
-						}
-						
-					}
-				});
-			    latitudeEdit.addTextChangedListener(new TextWatcher() {
-					
-					@Override
-					public void onTextChanged(CharSequence s, int start, int before, int count) {}
-					
-					@Override
-					public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-					
-					@Override
-					public void afterTextChanged(Editable s) {
-						try {
-							double lat = Double.parseDouble(s.toString());
-							LatLng location = new LatLng(lat, l.getLongitude());
-							dialogMap.moveCamera(CameraUpdateFactory.newLatLngZoom(location, dialogMap.getCameraPosition().zoom));
-						} catch (NumberFormatException pe) {
-							// typed wrong probably
-							// warn the user TODO
-						}
-						
-					}
-				});
-
-				LatLng location = new LatLng(l.getLatitude(), l.getLongitude());
-				//((TextView) findViewById(R.id.location)).setText(latLngFormat.format(l.getLatitude()) + ", " + latLngFormat.format(l.getLongitude()));
-				
-				dialogMap.moveCamera(CameraUpdateFactory.newLatLngZoom(location, 18));
-				
-				ImageView iv = (ImageView)dialogView.findViewById(R.id.location_edit_marker);
-				iv.setImageBitmap(ObservationBitmapFactory.bitmap(ObservationEditActivity.this, o));
-			    
-			    builder.setView(dialogView)
-			    // Add action buttons
-			           .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
-			               @Override
-			               public void onClick(DialogInterface dialog, int id) {
-//			                   // set the date and time to what they chose
-			            	   LatLng center = dialogMap.getCameraPosition().target;
-			            	   l.setLatitude(center.latitude);
-			            	   l.setLongitude(center.longitude);
-			            	   l.setProvider("manual");
-			            	   l.setAccuracy(0.0f);
-			            	   l.setTime(System.currentTimeMillis());
-			            	   setupMap();
-
-			            	   com.google.android.gms.maps.MapFragment mapFragment = 
-			                           ((com.google.android.gms.maps.MapFragment) getFragmentManager().findFragmentById(R.id.location_edit_map));
-
-			                   if (mapFragment != null) {
-			                       FragmentManager manager = getFragmentManager();
-			                       FragmentTransaction t = manager.beginTransaction();
-			                       FragmentTransaction t2 = t.remove(mapFragment).detach(mapFragment);
-			                       t2.commitAllowingStateLoss();
-			                   }
-			               }
-			           })
-			           .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
-			               public void onClick(DialogInterface dialog, int id) {
-			            	   com.google.android.gms.maps.MapFragment mapFragment = 
-			                           ((com.google.android.gms.maps.MapFragment) getFragmentManager().findFragmentById(R.id.location_edit_map));
-
-			                   if (mapFragment != null) {
-			                       FragmentManager manager = getFragmentManager();
-			                       FragmentTransaction t = manager.beginTransaction();
-			                       FragmentTransaction t2 = t.remove(mapFragment).detach(mapFragment);
-			                       t2.commitAllowingStateLoss();
-			                   }
-			                   dialog.cancel();
-			               }
-			           });      
-			    AlertDialog ad = builder.create();
-			    ad.show();
+//				AlertDialog.Builder builder = new AlertDialog.Builder(ObservationEditActivity.this);
+////			    // Get the layout inflater
+//			    LayoutInflater inflater = getLayoutInflater();
+//			    View dialogView = inflater.inflate(R.layout.location_edit, null);
+//			    
+//			    final EditText longitudeEdit = (EditText)dialogView.findViewById(R.id.location_edit_longitude);
+//			    final EditText latitudeEdit = (EditText)dialogView.findViewById(R.id.location_edit_latitude);
+//			    
+//			    longitudeEdit.setText(Double.toString(l.getLongitude()));
+//			    latitudeEdit.setText(Double.toString(l.getLatitude()));
+//			    
+//			    
+//			    final GoogleMap dialogMap = ((MapFragment) getFragmentManager().findFragmentById(R.id.location_edit_map)).getMap();
+//			    dialogMap.setOnCameraChangeListener(new GoogleMap.OnCameraChangeListener() {
+//					
+//					@Override
+//					public void onCameraChange(CameraPosition position) {
+//						longitudeEdit.setText(Double.toString(position.target.longitude));
+//						latitudeEdit.setText(Double.toString(position.target.latitude));
+//					}
+//				});
+//			    
+//			    longitudeEdit.addTextChangedListener(new TextWatcher() {
+//					
+//					@Override
+//					public void onTextChanged(CharSequence s, int start, int before, int count) {}
+//					
+//					@Override
+//					public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+//					
+//					@Override
+//					public void afterTextChanged(Editable s) {
+//						try {
+//							double lon = Double.parseDouble(s.toString());
+//							LatLng location = new LatLng(l.getLatitude(), lon);
+//							dialogMap.moveCamera(CameraUpdateFactory.newLatLngZoom(location, dialogMap.getCameraPosition().zoom));
+//						} catch (NumberFormatException pe) {
+//							// typed wrong probably
+//							// warn the user TODO
+//						}
+//						
+//					}
+//				});
+//			    latitudeEdit.addTextChangedListener(new TextWatcher() {
+//					
+//					@Override
+//					public void onTextChanged(CharSequence s, int start, int before, int count) {}
+//					
+//					@Override
+//					public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+//					
+//					@Override
+//					public void afterTextChanged(Editable s) {
+//						try {
+//							double lat = Double.parseDouble(s.toString());
+//							LatLng location = new LatLng(lat, l.getLongitude());
+//							dialogMap.moveCamera(CameraUpdateFactory.newLatLngZoom(location, dialogMap.getCameraPosition().zoom));
+//						} catch (NumberFormatException pe) {
+//							// typed wrong probably
+//							// warn the user TODO
+//						}
+//						
+//					}
+//				});
+//
+//				LatLng location = new LatLng(l.getLatitude(), l.getLongitude());
+//				//((TextView) findViewById(R.id.location)).setText(latLngFormat.format(l.getLatitude()) + ", " + latLngFormat.format(l.getLongitude()));
+//				
+//				dialogMap.moveCamera(CameraUpdateFactory.newLatLngZoom(location, 18));
+//				
+//				ImageView iv = (ImageView)dialogView.findViewById(R.id.location_edit_marker);
+//				iv.setImageBitmap(ObservationBitmapFactory.bitmap(ObservationEditActivity.this, o));
+//			    
+//			    builder.setView(dialogView)
+//			    // Add action buttons
+//			           .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+//			               @Override
+//			               public void onClick(DialogInterface dialog, int id) {
+////			                   // set the date and time to what they chose
+//			            	   LatLng center = dialogMap.getCameraPosition().target;
+//			            	   l.setLatitude(center.latitude);
+//			            	   l.setLongitude(center.longitude);
+//			            	   l.setProvider("manual");
+//			            	   l.setAccuracy(0.0f);
+//			            	   l.setTime(System.currentTimeMillis());
+//			            	   setupMap();
+//
+//			            	   com.google.android.gms.maps.MapFragment mapFragment = 
+//			                           ((com.google.android.gms.maps.MapFragment) getFragmentManager().findFragmentById(R.id.location_edit_map));
+//
+//			                   if (mapFragment != null) {
+//			                       FragmentManager manager = getFragmentManager();
+//			                       FragmentTransaction t = manager.beginTransaction();
+//			                       FragmentTransaction t2 = t.remove(mapFragment).detach(mapFragment);
+//			                       t2.commitAllowingStateLoss();
+//			                   }
+//			               }
+//			           })
+//			           .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
+//			               public void onClick(DialogInterface dialog, int id) {
+//			            	   com.google.android.gms.maps.MapFragment mapFragment = 
+//			                           ((com.google.android.gms.maps.MapFragment) getFragmentManager().findFragmentById(R.id.location_edit_map));
+//
+//			                   if (mapFragment != null) {
+//			                       FragmentManager manager = getFragmentManager();
+//			                       FragmentTransaction t = manager.beginTransaction();
+//			                       FragmentTransaction t2 = t.remove(mapFragment).detach(mapFragment);
+//			                       t2.commitAllowingStateLoss();
+//			                   }
+//			                   dialog.cancel();
+//			               }
+//			           });      
+//			    AlertDialog ad = builder.create();
+//			    ad.show();
 			}
 		});
 		
