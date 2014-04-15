@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.regex.Pattern;
 
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
+import mil.nga.giat.mage.sdk.datastore.observation.ObservationProperty;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -16,7 +17,6 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Build;
-import android.util.DisplayMetrics;
 
 import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
@@ -34,21 +34,17 @@ public class ObservationBitmapFactory {
         String asset = getAsset(observation);
 
         Bitmap bitmap = null;
+        BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inDensity = 480;
+        options.inTargetDensity = context.getResources().getDisplayMetrics().densityDpi;
         try {
-            bitmap = BitmapFactory.decodeStream(context.getAssets().open(asset)); 
+            bitmap = BitmapFactory.decodeStream(context.getAssets().open(asset), null, options); 
         } catch (IOException e1) {
             try {
-                bitmap = BitmapFactory.decodeStream(context.getAssets().open(DEFAULT_ASSET));
+                bitmap = BitmapFactory.decodeStream(context.getAssets().open(DEFAULT_ASSET), null, options);
             } catch (IOException e2) {
             }
             
-        }
-        
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-            bitmap.setDensity(DisplayMetrics.DENSITY_XXHIGH);
-        } else {
-            bitmap.setDensity(DisplayMetrics.DENSITY_XHIGH);
-
         }
         
         return bitmap;
@@ -69,23 +65,23 @@ public class ObservationBitmapFactory {
             return DEFAULT_ASSET;
         }
         
-        Map<String, String> properties = observation.getPropertiesMap();
-        String level = properties.get(LEVEL_PROPERTY);     
-        String type = properties.get(TYPE_PROPERTY);
+		Map<String, ObservationProperty> properties = observation.getPropertiesMap();
+		ObservationProperty level = properties.get(LEVEL_PROPERTY);
+		ObservationProperty type = properties.get(TYPE_PROPERTY);
 
         Collection<String> paths = new ArrayList<String>();
         paths.add("markers");
         
         if (level != null) {
-            paths.add(level.replaceAll(pattern.pattern(), "_").toLowerCase(Locale.ENGLISH));
+            paths.add(level.getValue().replaceAll(pattern.pattern(), "_").toLowerCase(Locale.ENGLISH));
             
             if (type != null) {
-                paths.add(type.replaceAll(pattern.pattern(), "_").toLowerCase(Locale.ENGLISH));
+                paths.add(type.getValue().replaceAll(pattern.pattern(), "_").toLowerCase(Locale.ENGLISH));
             } else {
                 paths.add("default");
             }
         } else if (type != null) {
-            paths.add(type.replaceAll(pattern.pattern(), "_").toLowerCase(Locale.ENGLISH));
+            paths.add(type.getValue().replaceAll(pattern.pattern(), "_").toLowerCase(Locale.ENGLISH));
         } else {            
             paths.add("default");
         }

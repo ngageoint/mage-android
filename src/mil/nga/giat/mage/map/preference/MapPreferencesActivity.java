@@ -1,5 +1,6 @@
 package mil.nga.giat.mage.map.preference;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -35,7 +36,7 @@ public class MapPreferencesActivity extends PreferenceActivity {
             super.onCreate(savedInstanceState);
             addPreferencesFromResource(R.xml.mappreferences);
             
-            findPreference("tileOverlays").setOnPreferenceClickListener(new OnPreferenceClickListener() {
+            findPreference(getResources().getString(R.string.mapTileOverlaysKey)).setOnPreferenceClickListener(new OnPreferenceClickListener() {
                 @Override
                 public boolean onPreferenceClick(Preference preference) {
                     Intent intent = new Intent(getActivity(), TileOverlayPreferenceActivity.class);
@@ -44,7 +45,7 @@ public class MapPreferencesActivity extends PreferenceActivity {
                 }
             });
 
-            findPreference("featureOverlays").setOnPreferenceClickListener(new OnPreferenceClickListener() {
+            findPreference(getResources().getString(R.string.mapFeatureOverlaysKey)).setOnPreferenceClickListener(new OnPreferenceClickListener() {
                 @Override
                 public boolean onPreferenceClick(Preference preference) {
                     Intent intent = new Intent(getActivity(), FeatureOverlayPreferenceActivity.class);
@@ -79,7 +80,7 @@ public class MapPreferencesActivity extends PreferenceActivity {
         case TILE_OVERLAY_ACTIVITY: {
             if (resultCode == Activity.RESULT_OK) {
                 Set<String> overlays = new HashSet<String>(data.getStringArrayListExtra(OVERLAY_EXTENDED_DATA_KEY));
-                OverlayPreference p = (OverlayPreference) preference.findPreference("tileOverlays");
+                OverlayPreference p = (OverlayPreference) preference.findPreference(getResources().getString(R.string.mapTileOverlaysKey));
                 p.setValues(overlays);
             }
             break;
@@ -87,7 +88,7 @@ public class MapPreferencesActivity extends PreferenceActivity {
         case FEATURE_OVERLAY_ACTIVITY: {
             if (resultCode == Activity.RESULT_OK) {
                 Set<String> overlays = new HashSet<String>(data.getStringArrayListExtra(OVERLAY_EXTENDED_DATA_KEY));
-                OverlayPreference p = (OverlayPreference) preference.findPreference("featureOverlays");
+                OverlayPreference p = (OverlayPreference) preference.findPreference(getResources().getString(R.string.mapFeatureOverlaysKey));
                 p.setValues(overlays);
             }
             break;

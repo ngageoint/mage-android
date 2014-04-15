@@ -68,7 +68,7 @@ public class FeatureOverlayPreferenceActivity extends ListActivity implements On
         
         // Set what should be checked based on preferences.
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
-        Set<String> overlays = preferences.getStringSet("featureOverlays", Collections.<String> emptySet());
+        Set<String> overlays = preferences.getStringSet(getResources().getString(R.string.mapFeatureOverlaysKey), Collections.<String> emptySet());
         for (int i = 0; i < listView.getCount(); i++) {
             Layer layer = (Layer) listView.getItemAtPosition(i);
             if (overlays.contains(layer.getName())) {
