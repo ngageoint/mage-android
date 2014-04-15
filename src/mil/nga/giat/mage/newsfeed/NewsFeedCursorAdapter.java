@@ -13,6 +13,8 @@ import mil.nga.giat.mage.map.marker.ObservationBitmapFactory;
 import mil.nga.giat.mage.sdk.datastore.observation.Attachment;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationProperty;
+import mil.nga.giat.mage.sdk.datastore.user.User;
+import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
 import mil.nga.giat.mage.sdk.utils.DateUtility;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
@@ -112,7 +114,15 @@ public class NewsFeedCursorAdapter extends CursorAdapter {
             ImageView iv = ((ImageView) v.findViewById(R.id.observation_thumb));
             Collection<Attachment> attachments = o.getAttachments();
             if (o.getPropertiesMap().containsKey("userId")) {
-            	((TextView) v.findViewById(R.id.username)).setText(o.getPropertiesMap().get("userId").getValue());
+            	String userId = o.getPropertiesMap().get("userId").getValue();
+            	try {
+	            	User u = UserHelper.getInstance(context).read(userId);
+	            	((TextView) v.findViewById(R.id.username)).setText(u.getFirstname() + " " + u.getLastname());
+            	} catch (Exception e) {
+            		((TextView) v.findViewById(R.id.username)).setText("Unknown");
+            	}
+            } else {
+            	((TextView) v.findViewById(R.id.username)).setText("Unknown");
             }
             ((TextView) v.findViewById(R.id.attachment_text)).setText(attachments.size() != 0 ? "1 of " + attachments.size() : "");
             if (attachments.size() != 0) {
