@@ -91,6 +91,17 @@
                 android:value="mil.nga.giat.mage.preferences.PublicPreferencesActivity" />
         </activity>
         <activity
+            android:name="mil.nga.giat.mage.preferences.FetchPreferencesActivity"
+            android:icon="@drawable/ic_download"
+            android:label="@string/fetch_settings"
+            android:parentActivityName="mil.nga.giat.mage.preferences.PublicPreferencesFragment" >
+            
+            <!-- Parent activity meta-data to support 4.0 and lower -->
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="mil.nga.giat.mage.preferences.PublicPreferencesActivity" />
+        </activity>
+        <activity
             android:name="mil.nga.giat.mage.map.preference.MapPreferencesActivity"
             android:icon="@drawable/ic_map_white"
             android:label="@string/map_settings"
