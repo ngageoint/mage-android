@@ -9,8 +9,11 @@ import android.view.ViewGroup;
 import android.widget.ListView;
 
 public class PublicPreferencesFragment extends PreferenceFragmentSummary {
-    SwitchPreference locationServiceSwitch;
+    
+	SwitchPreference locationServiceSwitch;
+    SwitchPreference dataFetchSwitch;
 
+    
     @Override
     public void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -22,6 +25,7 @@ public class PublicPreferencesFragment extends PreferenceFragmentSummary {
         }
 
         locationServiceSwitch = (SwitchPreference) getPreferenceManager().findPreference("locationServiceEnabled");
+        dataFetchSwitch = (SwitchPreference) getPreferenceManager().findPreference("dataFetchEnabled");
     }
 
     @Override
@@ -40,6 +44,10 @@ public class PublicPreferencesFragment extends PreferenceFragmentSummary {
         super.onResume();
 
         boolean locationServiceEnabled = getPreferenceManager().getSharedPreferences().getBoolean("locationServiceEnabled", false);
+        boolean dataFetchEnabled = getPreferenceManager().getSharedPreferences().getBoolean("dataFetchEnabled", false);
+    
         locationServiceSwitch.setChecked(locationServiceEnabled);
+        dataFetchSwitch.setChecked(dataFetchEnabled);
+
     }
 }

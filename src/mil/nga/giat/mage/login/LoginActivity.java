@@ -23,12 +23,12 @@ import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences.Editor;
+import android.graphics.Typeface;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v4.app.FragmentActivity;
 import android.text.InputType;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
@@ -94,6 +94,7 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 
 		mUsernameEditText = (EditText) findViewById(R.id.login_username);
 		mPasswordEditText = (EditText) findViewById(R.id.login_password);
+		mPasswordEditText.setTypeface(Typeface.DEFAULT);
 		mServerEditText = (EditText) findViewById(R.id.login_server);
 		
 		mLoginButton = (Button) findViewById(R.id.login_login_button);
