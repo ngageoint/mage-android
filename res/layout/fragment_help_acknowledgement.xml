@@ -1,0 +1,159 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/mage_gradient"
+    android:orientation="vertical"
+    tools:context=".MainActivity$DummySectionFragment" >
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:fontFamily="sans-serif-light"
+        android:paddingBottom="20dp"
+        android:text="Acknowledgements"
+        android:textColor="#EEEEEE"
+        android:textSize="30sp" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:fontFamily="sans-serif-light"
+        android:paddingLeft="10dp"
+        android:text="Software"
+        android:textColor="#EEEEEE"
+        android:textSize="28sp" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@android:color/white" />
+
+    <TableLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingBottom="20dp"
+        android:paddingLeft="10dp"
+        android:paddingRight="10dp"
+        android:stretchColumns="*" >
+
+        <TableRow
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:padding="5dp" >
+
+            <TextView
+                android:fontFamily="sans-serif-light"
+                android:text="google play services"
+                android:textColor="#EEEEEE"
+                android:textSize="18sp" />
+
+            <TextView
+                android:fontFamily="sans-serif-light"
+                android:text="MAGE sdk"
+                android:textColor="#EEEEEE"
+                android:textSize="18sp" />
+        </TableRow>
+
+        <TableRow
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:padding="5dp" >
+
+            <TextView
+                android:fontFamily="sans-serif-light"
+                android:text="Android sdk"
+                android:textColor="#EEEEEE"
+                android:textSize="18sp" />
+
+            <TextView
+                android:fontFamily="sans-serif-light"
+                android:text="google-gson"
+                android:textColor="#EEEEEE"
+                android:textSize="18sp" />
+        </TableRow>
+
+        <TableRow
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:padding="5dp" >
+
+            <TextView
+                android:fontFamily="sans-serif-light"
+                android:text="apache commons"
+                android:textColor="#EEEEEE"
+                android:textSize="18sp" />
+
+            <TextView
+                android:fontFamily="sans-serif-light"
+                android:text="glide"
+                android:textColor="#EEEEEE"
+                android:textSize="18sp" />
+        </TableRow>
+
+        <TableRow
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:padding="5dp" >
+
+            <TextView
+                android:fontFamily="sans-serif-light"
+                android:text="http mime"
+                android:textColor="#EEEEEE"
+                android:textSize="18sp" />
+
+            <TextView
+                android:fontFamily="sans-serif-light"
+                android:text="jts"
+                android:textColor="#EEEEEE"
+                android:textSize="18sp" />
+        </TableRow>
+
+        <TableRow
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:padding="5dp" >
+
+            <TextView
+                android:fontFamily="sans-serif-light"
+                android:text="orm lite"
+                android:textColor="#EEEEEE"
+                android:textSize="18sp" />
+        </TableRow>
+    </TableLayout>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:fontFamily="sans-serif-light"
+        android:paddingLeft="10dp"
+        android:text="Iconography"
+        android:textColor="#EEEEEE"
+        android:textSize="28sp" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@android:color/white" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:fontFamily="sans-serif-light"
+        android:paddingLeft="15dp"
+        android:paddingTop="5dp"
+        android:text="Androton Action Bar Icons v0.1 by Sven Kapuđija"
+        android:textColor="#EEEEEE"
+        android:textSize="18sp" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:fontFamily="sans-serif-light"
+        android:paddingLeft="15dp"
+        android:paddingTop="5dp"
+        android:text="Font Awesome by by Dave Gandy"
+        android:textColor="#EEEEEE"
+        android:textSize="18sp" />
+
+</LinearLayout>
