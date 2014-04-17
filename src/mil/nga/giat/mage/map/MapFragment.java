@@ -56,7 +56,9 @@ import android.widget.ImageButton;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.GoogleMap.CancelableCallback;
+import com.google.android.gms.maps.GoogleMap.OnMapClickListener;
 import com.google.android.gms.maps.GoogleMap.OnMapLongClickListener;
+import com.google.android.gms.maps.GoogleMap.OnMarkerClickListener;
 import com.google.android.gms.maps.GoogleMap.OnMyLocationButtonClickListener;
 import com.google.android.gms.maps.LocationSource;
 import com.google.android.gms.maps.MapView;
@@ -76,7 +78,9 @@ import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Geometry;
 
 public class MapFragment extends Fragment implements 
+        OnMapClickListener,
         OnMapLongClickListener, 
+        OnMarkerClickListener,
         OnMapPanListener, 
         OnMyLocationButtonClickListener, 
         OnClickListener, 
@@ -169,6 +173,8 @@ public class MapFragment extends Fragment implements
             e.printStackTrace();
         }
         
+        map.setOnMapClickListener(this);
+        map.setOnMarkerClickListener(this);
         map.setOnMapLongClickListener(this);
         map.setOnMyLocationButtonClickListener(this);
         
@@ -283,7 +289,24 @@ public class MapFragment extends Fragment implements
         // TODO travis why userId here but Location the rest of the time
 //        new LocationTask(LocationTask.Type.DELETE, locations).execute(l);        
     }
+    
 
+    @Override
+    public boolean onMarkerClick(Marker marker) {
+        // You can only have one marker click listener per map.
+        // Lets listen here and shell out the click event to all
+        // my marker collections.  Each one need to handle
+        // gracefully if it does not actually contain the marker
+        observations.onMarkerClick(marker);
+        
+        return true;
+    }
+    
+    @Override
+    public void onMapClick(LatLng latLng) {
+        // TODO Auto-generated method stub    
+    }
+    
     @Override
     public void onMapLongClick(LatLng point) {
         Intent intent = new Intent(getActivity(), ObservationEditActivity.class);

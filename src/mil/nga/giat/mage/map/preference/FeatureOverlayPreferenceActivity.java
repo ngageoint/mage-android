@@ -121,7 +121,7 @@ public class FeatureOverlayPreferenceActivity extends ListActivity implements IL
         boolean loaded = StaticFeatureHelper.getInstance(this).haveLayersBeenFetchedOnce();
         if (loaded) {
             try {
-                Collection<Layer> layers = LayerHelper.getInstance(this).readAll();
+                Collection<Layer> layers = LayerHelper.getInstance(this).readAllStaticLayers();
                 onLayersCreated(layers);
             } catch (LayerException e) {
                 e.printStackTrace();

@@ -42,7 +42,6 @@ public class ObservationMarkerCollection implements ObservationCollection, OnMar
 
         MarkerManager markerManager = new MarkerManager(map);
         markerCollection = markerManager.newCollection();
-        map.setOnMarkerClickListener(this);
     }
 
     @Override
@@ -99,8 +98,6 @@ public class ObservationMarkerCollection implements ObservationCollection, OnMar
 
     @Override
     public boolean onMarkerClick(Marker marker) {
-        Log.i("observation marker", "got observation marker click show info window");
-
         Observation o = markerIdToObservation.get(marker.getId());
         
         if (o == null) return false;  // Not an observation let someone else handle it

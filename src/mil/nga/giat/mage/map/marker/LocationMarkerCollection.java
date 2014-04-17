@@ -53,7 +53,6 @@ public class LocationMarkerCollection implements OnMarkerClickListener {
         markerCollection = markerManager.newCollection();
         
         map.setInfoWindowAdapter(new LocationInfoWindowAdapter());
-        map.setOnMarkerClickListener(this);
     }
 
     public void add(Location l) {
@@ -106,14 +105,9 @@ public class LocationMarkerCollection implements OnMarkerClickListener {
     @Override
     public boolean onMarkerClick(Marker marker) {
         Location l = markerIdToLocation.get(marker.getId());
+                
+        if (l == null) return true;
         
-        if (l == null) {
-            Log.i("location marker", "got location marker click wtf, doesnlt matter return true");
-            return true;
-        }
-        
-        Log.i("location marker", "got location marker click show info window");
-
         marker.showInfoWindow();
         return true;
     }
@@ -154,11 +148,14 @@ public class LocationMarkerCollection implements OnMarkerClickListener {
         
         @Override
         public View getInfoContents(Marker marker) {
+            Location location = markerIdToLocation.get(marker.getId());
+            Log.i("marker", "location marker getInfoContents event");
+            
+            if (location == null) return null;
+            
             LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
             View view = inflater.inflate(R.layout.people_list_item, null);    
 
-            Location location = markerIdToLocation.get(marker.getId());
-                    
             ImageView iconView = (ImageView) view.findViewById(R.id.iconImageView);
             Bitmap iconMarker = LocationBitmapFactory.bitmap(context, location);
             if (iconMarker != null)
