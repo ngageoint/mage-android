@@ -34,6 +34,8 @@ import mil.nga.giat.mage.sdk.event.ILocationEventListener;
 import mil.nga.giat.mage.sdk.event.IObservationEventListener;
 import mil.nga.giat.mage.sdk.event.IStaticFeatureEventListener;
 import mil.nga.giat.mage.sdk.exceptions.LayerException;
+import mil.nga.giat.mage.sdk.exceptions.LocationException;
+import mil.nga.giat.mage.sdk.exceptions.ObservationException;
 import mil.nga.giat.mage.sdk.location.LocationService;
 import android.app.Fragment;
 import android.content.Intent;
@@ -121,15 +123,15 @@ public class MapFragment extends Fragment implements
         
         mage = (MAGE) getActivity().getApplication();
 
-        mapWrapper = new GoogleMapWrapper(getActivity());
+        mapWrapper = new GoogleMapWrapper(getActivity().getApplicationContext());
         mapWrapper.addView(view);
 
-        preferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        preferences = PreferenceManager.getDefaultSharedPreferences(getActivity().getApplicationContext());
 
         mapView = (MapView) view.findViewById(R.id.mapView);
         mapView.onCreate(savedInstanceState);
         
-		MapsInitializer.initialize(getActivity());
+		MapsInitializer.initialize(getActivity().getApplicationContext());
         
         ImageButton mapSettings = (ImageButton) view.findViewById(R.id.map_settings);
         mapSettings.setOnClickListener(this);
@@ -173,26 +175,26 @@ public class MapFragment extends Fragment implements
         map.setOnMapLongClickListener(this);
         map.setOnMyLocationButtonClickListener(this);
         
-        observations = new ObservationMarkerCollection(getActivity(), map);
+        observations = new ObservationMarkerCollection(getActivity().getApplicationContext(), map);
         boolean showObservations = preferences.getBoolean(getResources().getString(R.string.showObservationsKey), true);
         observations.setVisible(showObservations);
         
-        locations = new LocationMarkerCollection(getActivity(), map);
+        locations = new LocationMarkerCollection(getActivity().getApplicationContext(), map);
         boolean showLocations = preferences.getBoolean(getResources().getString(R.string.showLocationsKey), true);
         locations.setVisible(showLocations);
         
         updateTimeFilter(getTimeFilter());
-//        try {
-//            ObservationHelper.getInstance(getActivity()).addListener(this);
-//        } catch (ObservationException e) {
-//            e.printStackTrace();
-//        }
-//        
-//        try {
-//            LocationHelper.getInstance(getActivity()).addListener(this);
-//        } catch (LocationException e) {
-//            e.printStackTrace();
-//        }
+        try {
+            ObservationHelper.getInstance(getActivity().getApplicationContext()).addListener(this);
+        } catch (ObservationException e) {
+            e.printStackTrace();
+        }
+        
+        try {
+            LocationHelper.getInstance(getActivity().getApplicationContext()).addListener(this);
+        } catch (LocationException e) {
+            e.printStackTrace();
+        }
         
         mage.registerCacheOverlayListener(this);
         StaticFeatureHelper.getInstance(getActivity().getApplicationContext()).addListener(this);
@@ -213,10 +215,10 @@ public class MapFragment extends Fragment implements
         
         mapView.onPause();
         
-        ObservationHelper.getInstance(getActivity()).removeListener(this);
+        ObservationHelper.getInstance(getActivity().getApplicationContext()).removeListener(this);
         observations.clear();
         
-        LocationHelper.getInstance(getActivity()).removeListener(this);
+        LocationHelper.getInstance(getActivity().getApplicationContext()).removeListener(this);
         locations.clear();
 
         PreferenceManager.getDefaultSharedPreferences(getActivity().getApplicationContext()).unregisterOnSharedPreferenceChangeListener(this);
@@ -243,7 +245,7 @@ public class MapFragment extends Fragment implements
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.observation_new:
-                 Intent intent = new Intent(getActivity(), ObservationEditActivity.class);
+                 Intent intent = new Intent(getActivity().getApplicationContext(), ObservationEditActivity.class);
                  LocationService ls = ((MAGE) getActivity().getApplication()).getLocationService();
                  Location l = ls.getLocation();
                  intent.putExtra(ObservationEditActivity.LOCATION, l);
@@ -307,7 +309,7 @@ public class MapFragment extends Fragment implements
     
     @Override
     public void onMapLongClick(LatLng point) {
-        Intent intent = new Intent(getActivity(), ObservationEditActivity.class);
+        Intent intent = new Intent(getActivity().getApplicationContext(), ObservationEditActivity.class);
         Location l = new Location("manual");
         l.setAccuracy(0.0f);
         l.setLatitude(point.latitude);
@@ -320,7 +322,7 @@ public class MapFragment extends Fragment implements
     public void onClick(View view) {
         switch (view.getId()) {
             case R.id.map_settings: {
-                Intent i = new Intent(getActivity(), MapPreferencesActivity.class);
+                Intent i = new Intent(getActivity().getApplicationContext(), MapPreferencesActivity.class);
                 startActivity(i);
                 break;
             }
@@ -429,7 +431,7 @@ public class MapFragment extends Fragment implements
         removeStaticFeatureLayers();
         
         try {
-            for (Layer l : LayerHelper.getInstance(getActivity()).readAllStaticLayers()) {
+            for (Layer l : LayerHelper.getInstance(getActivity().getApplicationContext()).readAllStaticLayers()) {
                 onStaticFeatureLayer(l);                
             }
         } catch (LayerException e) {
