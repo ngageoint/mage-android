@@ -235,7 +235,7 @@ public class MAGE extends Application {
         }
     }
 
-	public void pullStaticFeaturesOneTime() {
+	public void loadStaticFeatures() {
 		Runnable runnable = new Runnable() {
 			@Override
 			public void run() {

@@ -7,11 +7,13 @@
     android:paddingRight="8dp" >
 
     <LinearLayout
+        android:id="@+id/content"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:paddingBottom="15dp"
-        android:paddingTop="15dp" >
+        android:paddingTop="15dp"
+        android:visibility="gone" >
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -25,27 +27,55 @@
                 android:paddingBottom="4dp"
                 android:text="@string/features"
                 android:textSize="14sp" />
-
-            <ProgressBar
-                android:id="@+id/overlay_progress_bar"
-                style="?android:attr/progressBarStyle"
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:indeterminate="true"
-                android:visibility="gone" />
         </LinearLayout>
 
         <View
             android:layout_width="fill_parent"
             android:layout_height="2dip"
             android:background="?android:attr/dividerHorizontal" />
+
+        <ListView
+            android:id="@android:id/list"
+            android:layout_width="match_parent"
+            android:layout_height="0dip"
+            android:layout_weight="1"
+            android:drawSelectorOnTop="false" />
     </LinearLayout>
 
-    <ListView
-        android:id="@android:id/list"
-        android:layout_width="match_parent"
-        android:layout_height="0dip"
-        android:layout_weight="1"
-        android:drawSelectorOnTop="false" />
+    <LinearLayout
+        android:id="@+id/no_content"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:paddingBottom="15dp"
+        android:paddingTop="15dp">
+
+        <TextView
+            android:id="@+id/title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:paddingBottom="20dip"
+            android:text="@string/feature_overlay_no_content_loading"
+            android:textColor="#777"
+            android:textSize="22sp" />
+
+        <TextView
+            android:id="@+id/summary"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:text="@string/feature_overlay_no_content_text"
+            android:textColor="#999"
+            android:visibility="gone" />
+
+        <ProgressBar
+            android:id="@+id/progressBar"
+            style="?android:attr/progressBarStyleLarge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+
+    </LinearLayout>
 
 </LinearLayout>

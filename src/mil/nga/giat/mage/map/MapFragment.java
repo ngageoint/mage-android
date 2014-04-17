@@ -1,5 +1,6 @@
 package mil.nga.giat.mage.map;
 
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
@@ -22,11 +23,16 @@ import mil.nga.giat.mage.map.marker.ObservationCollection;
 import mil.nga.giat.mage.map.marker.ObservationMarkerCollection;
 import mil.nga.giat.mage.map.preference.MapPreferencesActivity;
 import mil.nga.giat.mage.observation.ObservationEditActivity;
+import mil.nga.giat.mage.sdk.datastore.layer.Layer;
+import mil.nga.giat.mage.sdk.datastore.layer.LayerHelper;
 import mil.nga.giat.mage.sdk.datastore.location.LocationHelper;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
+import mil.nga.giat.mage.sdk.datastore.staticfeature.StaticFeature;
 import mil.nga.giat.mage.sdk.event.ILocationEventListener;
 import mil.nga.giat.mage.sdk.event.IObservationEventListener;
+import mil.nga.giat.mage.sdk.event.IStaticFeatureEventListener;
+import mil.nga.giat.mage.sdk.exceptions.LayerException;
 import mil.nga.giat.mage.sdk.exceptions.LocationException;
 import mil.nga.giat.mage.sdk.exceptions.ObservationException;
 import mil.nga.giat.mage.sdk.location.LocationService;
@@ -47,7 +53,6 @@ import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
 
-import com.google.android.gms.common.GooglePlayServicesNotAvailableException;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.GoogleMap.CancelableCallback;
@@ -58,9 +63,17 @@ import com.google.android.gms.maps.MapView;
 import com.google.android.gms.maps.MapsInitializer;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
+import com.google.android.gms.maps.model.Marker;
+import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.Polygon;
+import com.google.android.gms.maps.model.PolygonOptions;
+import com.google.android.gms.maps.model.Polyline;
+import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.gms.maps.model.TileOverlay;
 import com.google.android.gms.maps.model.TileOverlayOptions;
 import com.google.android.gms.maps.model.TileProvider;
+import com.vividsolutions.jts.geom.Coordinate;
+import com.vividsolutions.jts.geom.Geometry;
 
 public class MapFragment extends Fragment implements 
         OnMapLongClickListener, 
@@ -72,7 +85,8 @@ public class MapFragment extends Fragment implements
         OnCacheOverlayListener, 
         OnSharedPreferenceChangeListener, 
         IObservationEventListener,
-        ILocationEventListener {
+        ILocationEventListener,
+        IStaticFeatureEventListener {
 
     private MAGE mage;
     private MapView mapView;
@@ -87,6 +101,10 @@ public class MapFragment extends Fragment implements
     private LocationMarkerCollection locations;
 
     private Map<String, TileOverlay> tileOverlays = new HashMap<String, TileOverlay>();
+    private Collection<String> featureIds = new ArrayList<String>();
+    private Map<String, Collection<Marker>> featureMarkers = new HashMap<String, Collection<Marker>>();
+    private Map<String, Collection<Polyline>> featurePolylines = new HashMap<String, Collection<Polyline>>();
+    private Map<String, Collection<Polygon>> featurePolygons = new HashMap<String, Collection<Polygon>>();
 
     private LocationService locationService;
 
@@ -145,6 +163,11 @@ public class MapFragment extends Fragment implements
         PreferenceManager.getDefaultSharedPreferences(getActivity().getApplicationContext()).registerOnSharedPreferenceChangeListener(this);
         
         updateMapType();
+        try {
+            onStaticFeatureLayer(LayerHelper.getInstance(getActivity()).readAll());
+        } catch (LayerException e) {
+            e.printStackTrace();
+        }
         
         map.setOnMapLongClickListener(this);
         map.setOnMyLocationButtonClickListener(this);
@@ -378,6 +401,87 @@ public class MapFragment extends Fragment implements
         // preferences
         for (String overlay : removedOverlays) {
             tileOverlays.remove(overlay).remove();
+        }
+    }
+    
+    @Override
+    public void onStaticFeaturesCreated(Collection<Layer> layers) {
+        onStaticFeatureLayer(layers);
+    }
+    
+    private void onStaticFeatureLayer(Collection<Layer> featureLayers) {
+        Set<String> layers = preferences.getStringSet(getResources().getString(R.string.mapFeatureOverlaysKey), Collections.<String> emptySet());
+
+        // Add all overlays that are in the preferences
+        // For now there is no ordering in how tile overlays are stacked
+        Set<String> removedLayers = new HashSet<String>(featureIds);
+
+        for (Layer layer : featureLayers) {
+            // The user has asked for this feature layer
+            String layerId = layer.getId().toString();
+            if (layers.contains(layerId)) {
+                if (!featureIds.contains(layerId)) {                    
+                    featureIds.add(layerId);
+                    featureMarkers.put(layerId, new ArrayList<Marker>());
+                    featurePolylines.put(layerId, new ArrayList<Polyline>());
+                    featurePolygons.put(layerId, new ArrayList<Polygon>());
+                    addFeatures(layer);
+                }
+
+                removedLayers.remove(layerId);
+            }
+        }
+
+        // Remove any overlays that are on the map but no longer 
+        // selected in preferences
+        for (String layerId : removedLayers) {
+            featureIds.remove(layerId);
+            removeFeatures(layerId);
+        }
+    }
+    
+    private void addFeatures(Layer layer) {
+        String layerId = layer.getId().toString();
+        
+        for (StaticFeature feature : layer.getStaticFeatures()) {
+            Geometry geometry = feature.getStaticFeatureGeometry().getGeometry();
+            String type = geometry.getGeometryType();            
+            if (type.equals("Point")) {
+                MarkerOptions options = new MarkerOptions()
+                    .position(new LatLng(geometry.getCoordinate().y, geometry.getCoordinate().x));
+                Marker m = map.addMarker(options);
+                featureMarkers.get(layerId).add(m);
+            } else if (type.equals("LineString")) {
+                PolylineOptions options = new PolylineOptions();
+                for (Coordinate c : geometry.getCoordinates()) {
+                    options.add(new LatLng(c.y, c.x));
+                }
+
+                Polyline p = map.addPolyline(options);
+                featurePolylines.get(layerId).add(p);
+            } else if (type.equals("Polygon")) {
+                PolygonOptions options = new PolygonOptions();
+                for (Coordinate c : geometry.getCoordinates()) {
+                    options.add(new LatLng(c.y, c.x));
+                }
+                
+                Polygon p = map.addPolygon(options);
+                featurePolygons.get(layerId).add(p);
+            }
+        }
+    }
+    
+    private void removeFeatures(String layerId) {
+        for (Marker m : featureMarkers.remove(layerId)) {
+            m.remove();
+        }
+        
+        for (Polyline p : featurePolylines.remove(layerId)) {
+            p.remove();
+        }
+        
+        for (Polygon p : featurePolygons.remove(layerId)) {
+            p.remove();
         }
     }
 

@@ -19,6 +19,7 @@ import mil.nga.giat.mage.sdk.utils.DateUtility;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.os.AsyncTask;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.ImageView;
@@ -51,8 +52,8 @@ public class LocationMarkerCollection implements OnMarkerClickListener {
         MarkerManager markerManager = new MarkerManager(map);
         markerCollection = markerManager.newCollection();
         
-        
         map.setInfoWindowAdapter(new LocationInfoWindowAdapter());
+        map.setOnMarkerClickListener(this);
     }
 
     public void add(Location l) {
@@ -106,8 +107,13 @@ public class LocationMarkerCollection implements OnMarkerClickListener {
     public boolean onMarkerClick(Marker marker) {
         Location l = markerIdToLocation.get(marker.getId());
         
-        if (l == null) return false;
+        if (l == null) {
+            Log.i("location marker", "got location marker click wtf, doesnlt matter return true");
+            return true;
+        }
         
+        Log.i("location marker", "got location marker click show info window");
+
         marker.showInfoWindow();
         return true;
     }
