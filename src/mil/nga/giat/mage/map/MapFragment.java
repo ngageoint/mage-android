@@ -175,11 +175,11 @@ public class MapFragment extends Fragment implements
         map.setOnMapLongClickListener(this);
         map.setOnMyLocationButtonClickListener(this);
         
-        observations = new ObservationMarkerCollection(getActivity().getApplicationContext(), map);
+        observations = new ObservationMarkerCollection(getActivity(), map);
         boolean showObservations = preferences.getBoolean(getResources().getString(R.string.showObservationsKey), true);
         observations.setVisible(showObservations);
         
-        locations = new LocationMarkerCollection(getActivity().getApplicationContext(), map);
+        locations = new LocationMarkerCollection(getActivity(), map);
         boolean showLocations = preferences.getBoolean(getResources().getString(R.string.showLocationsKey), true);
         locations.setVisible(showLocations);
         
