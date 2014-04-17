@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
+import mil.nga.giat.mage.MAGE;
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.sdk.datastore.layer.Layer;
 import mil.nga.giat.mage.sdk.datastore.layer.LayerHelper;
@@ -14,12 +15,15 @@ import mil.nga.giat.mage.sdk.event.ILayerEventListener;
 import mil.nga.giat.mage.sdk.event.IStaticFeatureEventListener;
 import mil.nga.giat.mage.sdk.exceptions.LayerException;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.ListActivity;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.util.Log;
 import android.util.SparseBooleanArray;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -60,47 +64,63 @@ public class FeatureOverlayPreferenceActivity extends ListActivity implements IL
     public void onPause() {
         super.onPause();
         LayerHelper.getInstance(this).removeListener(this);
+        StaticFeatureHelper.getInstance(this).removeListener(this);
     }
 
     @Override
-    public void onLayersCreated(Collection<Layer> layers) {
-        ListView listView = getListView();
-        listView.clearChoices();
+    public void onLayersCreated(final Collection<Layer> layers) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                ListView listView = getListView();
+                listView.clearChoices();
 
-        overlayAdapter = new OverlayAdapter(this, new ArrayList<Layer>(layers));
-        setListAdapter(overlayAdapter);
+                overlayAdapter = new OverlayAdapter(FeatureOverlayPreferenceActivity.this, new ArrayList<Layer>(layers));
+                setListAdapter(overlayAdapter);
 
-        // Set what should be checked based on preferences.
-        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
-        Set<String> overlays = preferences.getStringSet(getResources().getString(R.string.mapFeatureOverlaysKey), Collections.<String> emptySet());
-        for (int i = 0; i < listView.getCount(); i++) {
-            Layer layer = (Layer) listView.getItemAtPosition(i);
-            if (overlays.contains(layer.getId().toString())) {
-                listView.setItemChecked(i, true);
+                // Set what should be checked based on preferences.
+                SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(FeatureOverlayPreferenceActivity.this);
+                Set<String> overlays = preferences.getStringSet(getResources().getString(R.string.mapFeatureOverlaysKey), Collections.<String> emptySet());
+                for (int i = 0; i < listView.getCount(); i++) {
+                    Layer layer = (Layer) listView.getItemAtPosition(i);
+                    if (overlays.contains(layer.getId().toString())) {
+                        listView.setItemChecked(i, true);
+                    }
+                }
+
+                if (!layers.isEmpty()) {
+                    noContentView.setVisibility(View.GONE);
+                    contentView.setVisibility(View.VISIBLE);
+                } else {
+                    noContentView.setVisibility(View.VISIBLE);
+                    contentView.setVisibility(View.GONE);
+                    ((TextView) noContentView.findViewById(R.id.title)).setText(getResources().getString(R.string.feature_overlay_no_content_text));
+                    noContentView.findViewById(R.id.summary).setVisibility(View.VISIBLE);
+                    noContentView.findViewById(R.id.progressBar).setVisibility(View.GONE);
+                }
+
+                refreshButton.setEnabled(true);
+                getListView().setEnabled(true);
             }
-        }
-
-        if (!layers.isEmpty()) {
-            noContentView.setVisibility(View.GONE);
-            contentView.setVisibility(View.VISIBLE);
-        } else {
-            ((TextView) noContentView.findViewById(R.id.title)).setText(getResources().getString(R.string.feature_overlay_no_content_text));
-            noContentView.findViewById(R.id.text).setVisibility(View.VISIBLE);
-            noContentView.findViewById(R.id.progressBar).setVisibility(View.GONE);
-        }
-
-        refreshButton.setEnabled(true);
-        getListView().setEnabled(true);
+        });
     }
 
     @Override
-    public void onStaticFeaturesCreated(Collection<Layer> layers) {
-        for (Layer l : layers) {
-            int i = overlayAdapter.getPosition(l);
-            overlayAdapter.getItem(i).setLoaded(true);
-        }
-        
-        overlayAdapter.notifyDataSetChanged();
+    public void onStaticFeaturesCreated(final Layer layer) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                int i = overlayAdapter.getPosition(layer);
+                Layer l = overlayAdapter.getItem(i);
+                
+                if (l != null) {
+                    l.setLoaded(true);
+                    overlayAdapter.notifyDataSetChanged();
+                } else {
+                    Log.i("static layer", "static layer " + layer.getName() + ":" + layer.getId() + " is not availble, adapter size is: " + overlayAdapter.getCount());
+                }
+            }
+        });
     }
 
     @Override
@@ -129,6 +149,7 @@ public class FeatureOverlayPreferenceActivity extends ListActivity implements IL
         }
 
         LayerHelper.getInstance(this).addListener(this);
+        StaticFeatureHelper.getInstance(this).addListener(this);
 
         return super.onPrepareOptionsMenu(menu);
     }
@@ -147,11 +168,7 @@ public class FeatureOverlayPreferenceActivity extends ListActivity implements IL
         // Handle presses on the action bar items
         switch (item.getItemId()) {
         case R.id.feature_overlay_refresh:
-            // item.setEnabled(false);
-            // progressBar.setVisibility(View.VISIBLE);
-            // getListView().setEnabled(false);
-            //
-            // ((MAGE) getApplication()).refreshTileOverlays();
+            refreshOverlays();
             return true;
         case android.R.id.home:
             onBackPressed();
@@ -159,6 +176,30 @@ public class FeatureOverlayPreferenceActivity extends ListActivity implements IL
         default:
             return super.onOptionsItemSelected(item);
         }
+    }
+    
+    private void refreshOverlays() {
+        new AlertDialog.Builder(this)
+            .setTitle("Refresh Feature Overlays")
+            .setMessage(R.string.feature_overlay_refresh)
+            .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface dialog, int which) {
+                    refreshButton.setEnabled(false);
+                    getListView().setEnabled(false);
+                    noContentView.setVisibility(View.VISIBLE);
+                    contentView.setVisibility(View.GONE);
+                    ((TextView) noContentView.findViewById(R.id.title)).setText(getResources().getString(R.string.feature_overlay_no_content_loading));
+                    noContentView.findViewById(R.id.summary).setVisibility(View.GONE);
+                    noContentView.findViewById(R.id.progressBar).setVisibility(View.VISIBLE);
+                    
+                    overlayAdapter.clear();
+                    overlayAdapter.notifyDataSetChanged();
+                    ((MAGE) getApplication()).loadStaticFeatures(true);                
+                }
+            }).setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface dialog, int which) {
+                }
+            }).show();
     }
 
     @Override
@@ -199,7 +240,7 @@ public class FeatureOverlayPreferenceActivity extends ListActivity implements IL
             String name = layer.getName();
             CheckedTextView checkedView = (CheckedTextView) view.findViewById(R.id.checkedTextView);
             checkedView.setText(name);
-            
+
             View progressBar = view.findViewById(R.id.progressBar);
             progressBar.setVisibility(layer.isLoaded() ? View.GONE : View.VISIBLE);
 
@@ -207,8 +248,26 @@ public class FeatureOverlayPreferenceActivity extends ListActivity implements IL
         }
 
         @Override
+        public int getPosition(Layer layer) {
+            for (int i = 0; i < layers.size(); i++) {
+                if (layer.equals(layers.get(i))) {
+                    return i;
+                }
+            }
+
+            return -1;
+        }
+
+        @Override
         public Layer getItem(int index) {
-            return layers.get(index);
+            Layer layer = null;
+            
+            try {
+                layer = layers.get(index);
+
+            } catch (ArrayIndexOutOfBoundsException e) {}
+            
+            return layer;
         }
 
         @Override

@@ -65,7 +65,7 @@ public class LandingActivity extends Activity implements ListView.OnItemClickLis
         mage.startPushing();
 
         // Pull static layers and features just once
-        mage.loadStaticFeatures();
+        mage.loadStaticFeatures(false);
 
         mapItem = new DrawerItem.Builder("Map").id(0).drawableId(R.drawable.ic_globe_white).fragment(new MapFragment()).build();
 

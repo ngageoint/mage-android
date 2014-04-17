@@ -29,12 +29,11 @@ import mil.nga.giat.mage.sdk.datastore.location.LocationHelper;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
 import mil.nga.giat.mage.sdk.datastore.staticfeature.StaticFeature;
+import mil.nga.giat.mage.sdk.datastore.staticfeature.StaticFeatureHelper;
 import mil.nga.giat.mage.sdk.event.ILocationEventListener;
 import mil.nga.giat.mage.sdk.event.IObservationEventListener;
 import mil.nga.giat.mage.sdk.event.IStaticFeatureEventListener;
 import mil.nga.giat.mage.sdk.exceptions.LayerException;
-import mil.nga.giat.mage.sdk.exceptions.LocationException;
-import mil.nga.giat.mage.sdk.exceptions.ObservationException;
 import mil.nga.giat.mage.sdk.location.LocationService;
 import android.app.Fragment;
 import android.content.Intent;
@@ -167,11 +166,7 @@ public class MapFragment extends Fragment implements
         PreferenceManager.getDefaultSharedPreferences(getActivity().getApplicationContext()).registerOnSharedPreferenceChangeListener(this);
         
         updateMapType();
-        try {
-            onStaticFeatureLayer(LayerHelper.getInstance(getActivity()).readAll());
-        } catch (LayerException e) {
-            e.printStackTrace();
-        }
+        updateStaticFeatureLayers();
         
         map.setOnMapClickListener(this);
         map.setOnMarkerClickListener(this);
@@ -187,19 +182,20 @@ public class MapFragment extends Fragment implements
         locations.setVisible(showLocations);
         
         updateTimeFilter(getTimeFilter());
-        try {
-            ObservationHelper.getInstance(getActivity()).addListener(this);
-        } catch (ObservationException e) {
-            e.printStackTrace();
-        }
-        
-        try {
-            LocationHelper.getInstance(getActivity()).addListener(this);
-        } catch (LocationException e) {
-            e.printStackTrace();
-        }
+//        try {
+//            ObservationHelper.getInstance(getActivity()).addListener(this);
+//        } catch (ObservationException e) {
+//            e.printStackTrace();
+//        }
+//        
+//        try {
+//            LocationHelper.getInstance(getActivity()).addListener(this);
+//        } catch (LocationException e) {
+//            e.printStackTrace();
+//        }
         
         mage.registerCacheOverlayListener(this);
+        StaticFeatureHelper.getInstance(getActivity().getApplicationContext()).addListener(this);
 
         // Check if any map preferences changed that I care about
         boolean locationServiceEnabled = preferences.getBoolean(getResources().getString(R.string.locationServiceEnabledKey), false);
@@ -226,6 +222,7 @@ public class MapFragment extends Fragment implements
         PreferenceManager.getDefaultSharedPreferences(getActivity().getApplicationContext()).unregisterOnSharedPreferenceChangeListener(this);
 
         mage.unregisterCacheOverlayListener(this);
+        StaticFeatureHelper.getInstance(getActivity().getApplicationContext()).removeListener(this);
 
         boolean locationServiceEnabled = Integer.parseInt(preferences.getString(getResources().getString(R.string.userReportingFrequencyKey), "0")) > 0;
         if (locationServiceEnabled) {
@@ -428,39 +425,58 @@ public class MapFragment extends Fragment implements
         }
     }
     
-    @Override
-    public void onStaticFeaturesCreated(Collection<Layer> layers) {
-        onStaticFeatureLayer(layers);
+    private void updateStaticFeatureLayers() {
+        removeStaticFeatureLayers();
+        
+        try {
+            for (Layer l : LayerHelper.getInstance(getActivity()).readAllStaticLayers()) {
+                onStaticFeatureLayer(l);                
+            }
+        } catch (LayerException e) {
+            e.printStackTrace();
+        }
     }
     
-    private void onStaticFeatureLayer(Collection<Layer> featureLayers) {
-        Set<String> layers = preferences.getStringSet(getResources().getString(R.string.mapFeatureOverlaysKey), Collections.<String> emptySet());
-
-        // Add all overlays that are in the preferences
-        // For now there is no ordering in how tile overlays are stacked
-        Set<String> removedLayers = new HashSet<String>(featureIds);
-
-        for (Layer layer : featureLayers) {
-            // The user has asked for this feature layer
-            String layerId = layer.getId().toString();
-            if (layers.contains(layerId)) {
-                if (!featureIds.contains(layerId)) {                    
-                    featureIds.add(layerId);
-                    featureMarkers.put(layerId, new ArrayList<Marker>());
-                    featurePolylines.put(layerId, new ArrayList<Polyline>());
-                    featurePolygons.put(layerId, new ArrayList<Polygon>());
-                    addFeatures(layer);
-                }
-
-                removedLayers.remove(layerId);
+    private void removeStaticFeatureLayers() {
+        Set<String> selectedLayerIds = preferences.getStringSet(getResources().getString(R.string.mapFeatureOverlaysKey), Collections.<String> emptySet());
+        
+        Set<String> currentLayerIds = new HashSet<String>();
+        currentLayerIds.addAll(featureMarkers.keySet());
+        currentLayerIds.addAll(featurePolylines.keySet());
+        currentLayerIds.addAll(featurePolygons.keySet());
+        
+        for (String currentLayerId : currentLayerIds) {
+            if (!selectedLayerIds.contains(currentLayerId)) {
+              featureIds.remove(currentLayerId);
+              removeFeatures(currentLayerId);
             }
         }
+    }
+    
+    @Override
+    public void onStaticFeaturesCreated(final Layer layer) {
+        getActivity().runOnUiThread(new Runnable() {
+            
+            @Override
+            public void run() {
+                onStaticFeatureLayer(layer);               
+            }
+        });
+    }
+    
+    private void onStaticFeatureLayer(Layer layer) {
+        Set<String> layers = preferences.getStringSet(getResources().getString(R.string.mapFeatureOverlaysKey), Collections.<String> emptySet());
 
-        // Remove any overlays that are on the map but no longer 
-        // selected in preferences
-        for (String layerId : removedLayers) {
-            featureIds.remove(layerId);
-            removeFeatures(layerId);
+        // The user has asked for this feature layer
+        String layerId = layer.getId().toString();
+        if (layers.contains(layerId) && layer.isLoaded()) {
+            if (!featureIds.contains(layerId)) {                    
+                featureIds.add(layerId);
+                featureMarkers.put(layerId, new ArrayList<Marker>());
+                featurePolylines.put(layerId, new ArrayList<Polyline>());
+                featurePolygons.put(layerId, new ArrayList<Polygon>());
+                addFeatures(layer);
+            }
         }
     }
     

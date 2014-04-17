@@ -235,13 +235,13 @@ public class MAGE extends Application {
         }
     }
 
-	public void loadStaticFeatures() {
+	public void loadStaticFeatures(final boolean force) {
 		Runnable runnable = new Runnable() {
 			@Override
 			public void run() {
 				staticFeatureServerFetch = new StaticFeatureServerFetch(getApplicationContext());
 				try {
-					staticFeatureServerFetch.fetch();
+					staticFeatureServerFetch.fetch(force);
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
