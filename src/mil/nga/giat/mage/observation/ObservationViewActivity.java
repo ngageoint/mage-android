@@ -76,7 +76,6 @@ public class ObservationViewActivity extends Activity {
 
         @Override
         protected Boolean doInBackground(Attachment... params) {
-            String token = PreferenceHelper.getInstance(getApplicationContext()).getValue(R.string.tokenKey);
             for (Attachment a : params) {
                 final String absPath = a.getLocalPath();
                 ImageView iv = new ImageView(getApplicationContext());
@@ -105,7 +104,7 @@ public class ObservationViewActivity extends Activity {
 //                      iv.setImageBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.ic_microphone));
                     } else {
                         if (a.getRemoteId() != null) {
-                            String url = a.getUrl() + "?access_token=" + token;
+                            String url = a.getUrl();
                             Glide.load(url).placeholder(android.R.drawable.progress_indeterminate_horizontal).centerCrop().into(iv);
                         } else {
                             Glide.load(new File(absPath)).placeholder(android.R.drawable.progress_indeterminate_horizontal).centerCrop().into(iv);
@@ -128,7 +127,6 @@ public class ObservationViewActivity extends Activity {
     }
     
     private void createImageViews(ViewGroup gallery) {
-        String token = PreferenceHelper.getInstance(getApplicationContext()).getValue(R.string.tokenKey);
         for (final Attachment a : o.getAttachments()) {
             final String absPath = a.getLocalPath();
             final String remoteId = a.getRemoteId();
@@ -169,7 +167,7 @@ public class ObservationViewActivity extends Activity {
                     Glide.load(R.drawable.ic_microphone).into(iv);
                 }
             } else if (remoteId != null) {
-                String url = a.getUrl() + "?access_token=" + token;
+                String url = a.getUrl();
                 if (contentType.startsWith("image")) {
                     Glide.load(url).placeholder(android.R.drawable.progress_indeterminate_horizontal).centerCrop().into(iv);
                 } else if (contentType.startsWith("video")) {
