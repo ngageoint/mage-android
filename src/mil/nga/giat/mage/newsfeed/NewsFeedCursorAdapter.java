@@ -158,7 +158,7 @@ public class NewsFeedCursorAdapter extends CursorAdapter {
                     }
                 } else if (remoteId != null) {
                     if (contentType.startsWith("image")) {
-                        String url = a.getUrl() + "?access_token=" + token;
+                        String url = a.getUrl();
                         Log.i("News Feed", "Loading Image URL: " + url);
                         Glide.load(url).placeholder(android.R.drawable.progress_indeterminate_horizontal).centerCrop().into(iv);
                     } else if (contentType.startsWith("video")) {

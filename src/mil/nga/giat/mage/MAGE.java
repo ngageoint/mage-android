@@ -1,10 +1,13 @@
 package mil.nga.giat.mage;
 
 import java.io.File;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+
+import com.bumptech.glide.Glide;
 
 import mil.nga.giat.mage.file.Storage;
 import mil.nga.giat.mage.file.Storage.StorageType;
@@ -13,6 +16,7 @@ import mil.nga.giat.mage.sdk.datastore.layer.Layer;
 import mil.nga.giat.mage.sdk.fetch.LocationServerFetchAsyncTask;
 import mil.nga.giat.mage.sdk.fetch.ObservationServerFetchAsyncTask;
 import mil.nga.giat.mage.sdk.fetch.StaticFeatureServerFetch;
+import mil.nga.giat.mage.sdk.glide.MageUrlLoader;
 import mil.nga.giat.mage.sdk.location.LocationService;
 import mil.nga.giat.mage.sdk.push.LocationServerPushAsyncTask;
 import mil.nga.giat.mage.sdk.push.ObservationServerPushAsyncTask;
@@ -103,6 +107,7 @@ public class MAGE extends Application {
 
     @Override
     public void onCreate() {
+    	Glide.get().register(URL.class, new MageUrlLoader.Factory());
         refreshTileOverlays();
         
         // temp UI stuff

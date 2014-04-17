@@ -26,7 +26,6 @@ import mil.nga.giat.mage.sdk.datastore.observation.ObservationGeometry;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationProperty;
 import mil.nga.giat.mage.sdk.exceptions.ObservationException;
-import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
 import mil.nga.giat.mage.sdk.utils.DateUtility;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
 import android.annotation.SuppressLint;
@@ -530,7 +529,6 @@ public class ObservationEditActivity extends Activity {
 				MageTextView m = (MageTextView)v;
 				String propertyKey = m.getPropertyKey();
 				String propertyValue = propertiesMap.get(propertyKey).getValue();
-				Log.i("test", "property key: " + propertyKey + " property value: " + propertyValue + " propertyType: " + m.getPropertyType());
 				if (propertyValue == null) continue;
 				switch(m.getPropertyType()) {
 				case STRING:
@@ -600,10 +598,6 @@ public class ObservationEditActivity extends Activity {
 			propertyMap.put("LOCATION_TIME_DELTA", new ObservationProperty("LOCATION_TIME_DELTA", Long.toString(timeMs(locationElapsedTimeMs))));
 			
 			o.addProperties(propertyMap.values());
-			
-			for (String key : o.getPropertiesMap().keySet()) {
-				Log.i("test", "key: " + key + " value: " + o.getPropertiesMap().get(key).getValue());
-			}
 			
 			o.setAttachments(attachments);
 
@@ -676,7 +670,6 @@ public class ObservationEditActivity extends Activity {
 	}
 
 	private void addAttachmentToGallery(final Attachment a) {
-		String token = PreferenceHelper.getInstance(getApplicationContext()).getValue(R.string.tokenKey);
 		LinearLayout l = (LinearLayout) findViewById(R.id.image_gallery);
 		
 		final String absPath = a.getLocalPath();
@@ -718,7 +711,7 @@ public class ObservationEditActivity extends Activity {
 				Glide.load(R.drawable.ic_microphone).into(iv);
 			}
 		} else if (remoteId != null) {
-			String url = a.getUrl() + "?access_token=" + token;
+			String url = a.getUrl();
 			Log.i("test", "url to load is: " + url);
 			Log.i("test", "content type is: " + contentType + " name is: " + a.getName());
 			if (contentType.startsWith("image")) {

@@ -8,11 +8,12 @@
     android:paddingRight="3dp"
     android:paddingLeft="3dp" >
 
-    <TextView 
+    <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textColor="#DDDDDD"
-        android:text="Saved locally. Will be submitted."/>
+        android:text="Saved locally. Will be submitted."
+        android:textColor="#333333" />
+
     <TextView
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
