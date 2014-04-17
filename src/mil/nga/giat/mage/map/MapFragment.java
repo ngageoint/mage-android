@@ -298,6 +298,7 @@ public class MapFragment extends Fragment implements
         // my marker collections.  Each one need to handle
         // gracefully if it does not actually contain the marker
         observations.onMarkerClick(marker);
+        locations.onMarkerClick(marker);
         
         return true;
     }
