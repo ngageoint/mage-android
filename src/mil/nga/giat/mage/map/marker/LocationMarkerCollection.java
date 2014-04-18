@@ -36,8 +36,11 @@ import com.vividsolutions.jts.geom.Point;
 
 public class LocationMarkerCollection implements OnMarkerClickListener {
 
+    private GoogleMap map;
     private Context context;
     private Collection<Filter<Location>> filters = new ArrayList<Filter<Location>>();
+    
+    private InfoWindowAdapter infoWindowAdpater = new LocationInfoWindowAdapter();
 
     private boolean collectionVisible = true;
 
@@ -48,11 +51,10 @@ public class LocationMarkerCollection implements OnMarkerClickListener {
 
     public LocationMarkerCollection(Context context, GoogleMap map) {
         this.context = context;
+        this.map = map;
 
         MarkerManager markerManager = new MarkerManager(map);
-        markerCollection = markerManager.newCollection();
-        
-        map.setInfoWindowAdapter(new LocationInfoWindowAdapter());
+        markerCollection = markerManager.newCollection();        
     }
 
     public void add(Location l) {
@@ -106,8 +108,9 @@ public class LocationMarkerCollection implements OnMarkerClickListener {
     public boolean onMarkerClick(Marker marker) {
         Location l = markerIdToLocation.get(marker.getId());
                 
-        if (l == null) return true;
+        if (l == null) return false;
         
+        map.setInfoWindowAdapter(infoWindowAdpater);
         marker.showInfoWindow();
         return true;
     }

@@ -45,6 +45,7 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -75,6 +76,7 @@ import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.gms.maps.model.TileOverlay;
 import com.google.android.gms.maps.model.TileOverlayOptions;
 import com.google.android.gms.maps.model.TileProvider;
+import com.google.maps.android.PolyUtil;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Geometry;
 
@@ -296,15 +298,57 @@ public class MapFragment extends Fragment implements
         // Lets listen here and shell out the click event to all
         // my marker collections.  Each one need to handle
         // gracefully if it does not actually contain the marker
-        observations.onMarkerClick(marker);
-        locations.onMarkerClick(marker);
+        if (observations.onMarkerClick(marker)) {
+            return true;
+        }
         
+        if (locations.onMarkerClick(marker)) {
+            return true;
+        }
+        
+        map.setInfoWindowAdapter(null);
+        marker.showInfoWindow();
         return true;
     }
     
     @Override
     public void onMapClick(LatLng latLng) {
-        // TODO Auto-generated method stub    
+        Log.i("static feature", "map clicked at: " + latLng.toString());
+
+        
+        Polyline polyline = null;
+        for (Map.Entry<String, Collection<Polyline>> entry : featurePolylines.entrySet()) {
+            for (Polyline p : entry.getValue()) {
+                if (PolyUtil.isLocationOnPath(latLng, p.getPoints(), true)) {
+                    polyline = p;
+                    break;
+                }
+            }
+            
+            if (polyline != null) break;
+        }
+        if (polyline != null) {
+            // found it open a info window
+            Log.i("static feature", "static feature polyline clicked at: " + latLng.toString());
+            return;
+        }
+        
+        Polygon polygon = null;
+        for (Map.Entry<String, Collection<Polygon>> entry : featurePolygons.entrySet()) {
+            for (Polygon p : entry.getValue()) {
+                if (PolyUtil.containsLocation(latLng, p.getPoints(), true)) {
+                    polygon = p;
+                    break;
+                }
+            }
+            
+            if (polygon != null) break;
+        }
+        if (polygon != null) {
+            // found it open a info window
+            Log.i("static feature", "static feature polgon clicked at: " + latLng.toString());
+            return;
+        }
     }
     
     @Override
@@ -485,12 +529,16 @@ public class MapFragment extends Fragment implements
     private void addFeatures(Layer layer) {
         String layerId = layer.getId().toString();
         
+        Log.i("static feature", "static feature layer: " + layer.getName() + " is enabled, it has " + layer.getStaticFeatures().size() + " features");
+        
         for (StaticFeature feature : layer.getStaticFeatures()) {
             Geometry geometry = feature.getStaticFeatureGeometry().getGeometry();
             String type = geometry.getGeometryType();            
             if (type.equals("Point")) {
                 MarkerOptions options = new MarkerOptions()
-                    .position(new LatLng(geometry.getCoordinate().y, geometry.getCoordinate().x));
+                    .position(new LatLng(geometry.getCoordinate().y, geometry.getCoordinate().x))
+                    .title(layer.getName())
+                    .snippet("Temp static feature snippet");
                 Marker m = map.addMarker(options);
                 featureMarkers.get(layerId).add(m);
             } else if (type.equals("LineString")) {
@@ -603,7 +651,7 @@ public class MapFragment extends Fragment implements
     			break;
     		default:
     			// no filter
-    			title = "All Observations";
+    			title = "MAGE";
     			c = null;
 		}
 		
