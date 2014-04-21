@@ -593,9 +593,9 @@ public class ObservationEditActivity extends Activity {
 			propertyMap.put("type", new ObservationProperty("type", typeSpinner.getSelectedItem().toString()));
 			propertyMap.put("EVENTLEVEL", new ObservationProperty("EVENTLEVEL", levelSpinner.getSelectedItem().toString()));
 			propertyMap.put("timestamp", new ObservationProperty("timestamp", iso8601.format(date)));
-			propertyMap.put("LOCATION_ACCURACY", new ObservationProperty("LOCATION_ACCURACY", Float.toString(l.getAccuracy())));
-			propertyMap.put("LOCATION_PROVIDER", new ObservationProperty("LOCATION_PROVIDER", "manual"));
-			propertyMap.put("LOCATION_TIME_DELTA", new ObservationProperty("LOCATION_TIME_DELTA", Long.toString(timeMs(locationElapsedTimeMs))));
+			propertyMap.put("accuracy", new ObservationProperty("accuracy", Float.toString(l.getAccuracy())));
+			propertyMap.put("provider", new ObservationProperty("provider", "manual"));
+			propertyMap.put("delta", new ObservationProperty("delta", Long.toString(timeMs(locationElapsedTimeMs))));
 			
 			o.addProperties(propertyMap.values());
 			

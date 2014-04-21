@@ -21,7 +21,6 @@ import mil.nga.giat.mage.sdk.datastore.observation.ObservationProperty;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.event.IObservationEventListener;
-import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
 import mil.nga.giat.mage.sdk.utils.DateUtility;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
 import android.app.ActionBar;
@@ -228,13 +227,13 @@ public class ObservationViewActivity extends Activity {
             if(geo instanceof Point) {
                 Point pointGeo = (Point)geo;
                 ((TextView)findViewById(R.id.location)).setText(latLngFormat.format(pointGeo.getY()) + ", " + latLngFormat.format(pointGeo.getX()));
-                if(propertiesMap.containsKey("LOCATION_PROVIDER")) {
-                    ((TextView)findViewById(R.id.location_provider)).setText("("+propertiesMap.get("LOCATION_PROVIDER").getValue()+")");
+                if(propertiesMap.containsKey("provider")) {
+                    ((TextView)findViewById(R.id.location_provider)).setText("("+propertiesMap.get("provider").getValue()+")");
                 } else {
                     findViewById(R.id.location_provider).setVisibility(View.GONE);
                 }
-                if (propertiesMap.containsKey("LOCATION_ACCURACY") && !"0.0".equals(propertiesMap.get("LOCATION_ACCURACY").getValue()) ) {
-                    ((TextView)findViewById(R.id.location_accuracy)).setText("\u00B1" + propertiesMap.get("LOCATION_ACCURACY").getValue() + "m");
+                if (propertiesMap.containsKey("accuracy") && !"0.0".equals(propertiesMap.get("accuracy").getValue()) ) {
+                    ((TextView)findViewById(R.id.location_accuracy)).setText("\u00B1" + propertiesMap.get("accuracy").getValue() + "m");
                 } else {
                     findViewById(R.id.location_accuracy).setVisibility(View.GONE);
                 }
@@ -271,7 +270,7 @@ public class ObservationViewActivity extends Activity {
             }
             
             TextView user = (TextView)findViewById(R.id.username);
-            User u = UserHelper.getInstance(this).read(o.getPropertiesMap().get("userId").getValue());
+            User u = UserHelper.getInstance(this).read(o.getUserId());
             user.setText(u.getFirstname() + " " + u.getLastname());
             
             FrameLayout fl = (FrameLayout)findViewById(R.id.sync_status);
