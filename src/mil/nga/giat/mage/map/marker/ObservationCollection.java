@@ -1,6 +1,7 @@
 package mil.nga.giat.mage.map.marker;
 
 import java.util.Collection;
+import java.util.Date;
 
 import mil.nga.giat.mage.filter.Filter;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
@@ -18,7 +19,9 @@ public interface ObservationCollection extends OnCameraChangeListener, OnMarkerC
     public void remove(Observation observation);
     
     public void setVisible(boolean visible);
-    public void setObservationVisibility(Observation observation, boolean visible);    
+    public void setObservationVisibility(Observation observation, boolean visible);
+    
+    public Date getLatestObservationDate();
     
     public void clear();
     

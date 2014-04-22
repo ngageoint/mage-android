@@ -3,6 +3,7 @@ package mil.nga.giat.mage.map.marker;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -28,6 +29,7 @@ public class ObservationMarkerCollection implements ObservationCollection, OnMar
     private GoogleMap map;
     private Context context;
     private Collection<Filter<Observation>> filters = new ArrayList<Filter<Observation>>();
+    private Date latestObservationDate = new Date(0);
 
     private boolean collectionVisible = true;
 
@@ -56,6 +58,10 @@ public class ObservationMarkerCollection implements ObservationCollection, OnMar
 
         observationIdToMarker.put(o.getId(), marker);
         markerIdToObservation.put(marker.getId(), o);
+        
+        if (o.getLastModified().after(latestObservationDate)) {
+            latestObservationDate = o.getLastModified();
+        }
     }
 
     @Override
@@ -116,6 +122,11 @@ public class ObservationMarkerCollection implements ObservationCollection, OnMar
         observationIdToMarker.clear();
         markerIdToObservation.clear();
         markerCollection.clear();
+    }
+
+    @Override
+    public Date getLatestObservationDate() {
+        return latestObservationDate;
     }
 
     @Override

@@ -1,6 +1,7 @@
 package mil.nga.giat.mage.map.marker;
 
 import java.util.Collection;
+import java.util.Date;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -30,6 +31,8 @@ public class ObservationClusterCollection implements ObservationCollection, OnCl
     private Map<Long, ObservationClusterItem> items = new ConcurrentHashMap<Long, ObservationClusterItem>();
 
     private ClusterManager<ObservationClusterItem> clusterManager;
+    
+    private Date latestObservationDate = new Date(0);
 
     public ObservationClusterCollection(Context context, GoogleMap map) {
         this.context = context;
@@ -47,6 +50,10 @@ public class ObservationClusterCollection implements ObservationCollection, OnCl
         observations.put(o.getId(), o);
         clusterManager.addItem(item);
         clusterManager.cluster();
+        
+        if (o.getLastModified().after(latestObservationDate)) {
+            latestObservationDate = o.getLastModified();
+        }
     }
 
     @Override
@@ -139,5 +146,10 @@ public class ObservationClusterCollection implements ObservationCollection, OnCl
     public void setObservationVisibility(Observation observation, boolean visible) {
         // TODO Auto-generated method stub
         
+    }
+
+    @Override
+    public Date getLatestObservationDate() {
+        return latestObservationDate;
     }
 }

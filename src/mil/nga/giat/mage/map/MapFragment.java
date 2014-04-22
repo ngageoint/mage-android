@@ -10,12 +10,15 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 import mil.nga.giat.mage.MAGE;
 import mil.nga.giat.mage.MAGE.OnCacheOverlayListener;
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.filter.Filter;
-import mil.nga.giat.mage.filter.LocationDateTimeFilter;
 import mil.nga.giat.mage.filter.ObservationDateTimeFilter;
 import mil.nga.giat.mage.map.GoogleMapWrapper.OnMapPanListener;
 import mil.nga.giat.mage.map.marker.LocationMarkerCollection;
@@ -35,7 +38,6 @@ import mil.nga.giat.mage.sdk.event.IObservationEventListener;
 import mil.nga.giat.mage.sdk.event.IStaticFeatureEventListener;
 import mil.nga.giat.mage.sdk.exceptions.LayerException;
 import mil.nga.giat.mage.sdk.exceptions.LocationException;
-import mil.nga.giat.mage.sdk.exceptions.ObservationException;
 import mil.nga.giat.mage.sdk.location.LocationService;
 import android.app.Fragment;
 import android.content.Intent;
@@ -103,6 +105,9 @@ public class MapFragment extends Fragment implements
     private boolean followMe = false;
     private GoogleMapWrapper mapWrapper;
     private OnLocationChangedListener locationChangedListener;
+    
+    private final BlockingQueue<Runnable> queue = new ArrayBlockingQueue<Runnable>(5);
+    private final ThreadPoolExecutor executor = new ThreadPoolExecutor(3, 3, 10, TimeUnit.SECONDS, queue);
 
     private ObservationCollection observations;
     private LocationMarkerCollection locations;
@@ -137,19 +142,17 @@ public class MapFragment extends Fragment implements
         
         ImageButton mapSettings = (ImageButton) view.findViewById(R.id.map_settings);
         mapSettings.setOnClickListener(this);
-
-        locationService = mage.getLocationService();
         
+        locationService = mage.getLocationService();
+                
         return mapWrapper;
     }
     
-    private int getTimeFilter() {
-		return preferences.getInt(getResources().getString(R.string.activeTimeFilterKey), R.id.none_rb);
-	}
-
     @Override
     public void onDestroy() {
         mapView.onDestroy();
+        observations.clear();
+
         super.onDestroy();
     }
 
@@ -164,33 +167,33 @@ public class MapFragment extends Fragment implements
         super.onResume();
         
         mapView.onResume();
-        
-        map = mapView.getMap();
-                
+
         PreferenceManager.getDefaultSharedPreferences(getActivity().getApplicationContext()).registerOnSharedPreferenceChangeListener(this);
         
         updateMapType();
         updateStaticFeatureLayers();
         
+        map = mapView.getMap();
         map.setOnMapClickListener(this);
         map.setOnMarkerClickListener(this);
         map.setOnMapLongClickListener(this);
         map.setOnMyLocationButtonClickListener(this);
         
-        observations = new ObservationMarkerCollection(getActivity(), map);
+        ObservationHelper.getInstance(getActivity().getApplicationContext()).addListener(this);
+        if (observations == null) {
+            observations = new ObservationMarkerCollection(getActivity(), map);
+        }
+        Log.i("observation query", "BILLY observation query start execution of async task");
+        ObservationCursorTask task = new ObservationCursorTask(getActivity(), observations);
+        task.setFilter(getTimeFilter());
+        task.executeOnExecutor(executor);
+        
         boolean showObservations = preferences.getBoolean(getResources().getString(R.string.showObservationsKey), true);
-        observations.setVisible(showObservations);
+        observations.setVisible(showObservations); 
         
         locations = new LocationMarkerCollection(getActivity(), map);
         boolean showLocations = preferences.getBoolean(getResources().getString(R.string.showLocationsKey), true);
         locations.setVisible(showLocations);
-        
-        updateTimeFilter(getTimeFilter());
-        try {
-            ObservationHelper.getInstance(getActivity().getApplicationContext()).addListener(this);
-        } catch (ObservationException e) {
-            e.printStackTrace();
-        }
         
         try {
             LocationHelper.getInstance(getActivity().getApplicationContext()).addListener(this);
@@ -218,7 +221,6 @@ public class MapFragment extends Fragment implements
         mapView.onPause();
         
         ObservationHelper.getInstance(getActivity().getApplicationContext()).removeListener(this);
-        observations.clear();
         
         LocationHelper.getInstance(getActivity().getApplicationContext()).removeListener(this);
         locations.clear();
@@ -618,11 +620,17 @@ public class MapFragment extends Fragment implements
 	@Override
 	public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
 		if (getResources().getString(R.string.activeTimeFilterKey).equalsIgnoreCase(key)) {
-			updateTimeFilter(sharedPreferences.getInt(key, 0));
+//			updateTimeFilter(sharedPreferences.getInt(key, 0));
+		    
+		    // TODO get filter, clear collection and re-query
 		}
 	}
 	
-	private void updateTimeFilter(int timeFilter) {
+	private Filter<Observation> getTimeFilter() {
+	    int timeFilter = preferences.getInt(getResources().getString(R.string.activeTimeFilterKey), R.id.none_rb);
+	    
+	    Filter<Observation> filter = null;
+	    
 		Calendar c = Calendar.getInstance();
 		String title = null;
 		switch (timeFilter) {
@@ -661,12 +669,9 @@ public class MapFragment extends Fragment implements
 		    Date start = c.getTime();
 		    Date end = null;
 		    
-		    observations.setFilters(Collections.<Filter<Observation>>singletonList(new ObservationDateTimeFilter(start, end)));
-	        locations.setFilters(Collections.<Filter<mil.nga.giat.mage.sdk.datastore.location.Location>>singletonList(new LocationDateTimeFilter(start, end)));
-		} else {
-		    // clear filters
-		    observations.setFilters(Collections.<Filter<Observation>>emptyList());
-	        locations.setFilters(Collections.<Filter<mil.nga.giat.mage.sdk.datastore.location.Location>>emptyList());
+		    filter = new ObservationDateTimeFilter(start, end);
 		}
+		
+		return filter;
 	}
 }
