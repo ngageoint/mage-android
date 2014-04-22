@@ -2,7 +2,6 @@
 <resources>
 
     <!-- privatepreferences.xml -->
-    <string name="showDisclaimerKey">showDisclaimer</string>
     <string name="passwordMinLengthKey">gAuthenticationPasswordMinLength</string>
     <string name="passwordMinLengthDefaultValue">5</string>
     <string name="compatibleVersionMajorKey">compatibleVersionMajor</string>
