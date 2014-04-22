@@ -8,6 +8,7 @@ import java.util.List;
 import org.json.JSONException;
 
 import mil.nga.giat.mage.LandingActivity;
+import mil.nga.giat.mage.MAGE;
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.disclaimer.DisclaimerActivity;
 import mil.nga.giat.mage.sdk.connectivity.ConnectivityUtility;
@@ -75,15 +76,15 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 		preferenceHelper.initialize(new int[]{R.xml.privatepreferences, R.xml.publicpreferences});
 		
 		// show the disclaimer?
-		if (PreferenceHelper.getInstance(getApplicationContext()).getValue(R.string.showDisclaimerKey, Boolean.class, Boolean.TRUE)) {
+		if (UserUtility.getInstance(getApplicationContext()).isTokenExpired()) {
 			Intent intent = new Intent(this, DisclaimerActivity.class);
 			startActivity(intent);
-			finish();
 		}
 		
 		// if token is not expired, then skip the login module
 		if (!UserUtility.getInstance(getApplicationContext()).isTokenExpired()) {
 			startActivity(new Intent(getApplicationContext(), LandingActivity.class));
+			((MAGE)getApplication()).onLogin();
 			finish();
 		}
 		
@@ -319,7 +320,7 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 
 	private void showKeyboard() {
 		InputMethodManager inputMethodManager = (InputMethodManager) getSystemService(Activity.INPUT_METHOD_SERVICE);
-		inputMethodManager.toggleSoftInput(InputMethodManager.SHOW_FORCED, 0);
+		inputMethodManager.toggleSoftInput(InputMethodManager.SHOW_IMPLICIT, 0);
 	}
 
 	@Override
@@ -337,6 +338,7 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 			}
 			sp.commit();
 			startActivity(new Intent(getApplicationContext(), LandingActivity.class));
+			((MAGE)getApplication()).onLogin();
 			finish();
 		} else if (accountStatus.getStatus() == AccountStatus.Status.SUCCESSFUL_REGISTRATION) {
 			Editor sp = PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).edit();
@@ -385,7 +387,7 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 	protected void onResume() {
 		super.onResume();
 		// TODO : populate username and password from preferences
-		
+		showKeyboard();
 		// show form, and hide spinner
 		findViewById(R.id.login_status).setVisibility(View.GONE);
 		findViewById(R.id.login_form).setVisibility(View.VISIBLE);
