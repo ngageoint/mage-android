@@ -211,16 +211,7 @@ public class LandingActivity extends Activity implements ListView.OnItemClickLis
 
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
-        if (keyCode == KeyEvent.KEYCODE_MENU) {
-            boolean drawerOpen = drawerLayout.isDrawerOpen(drawerList);
-            if (!drawerOpen) {
-                drawerLayout.openDrawer(drawerList);
-            } else {
-                drawerLayout.closeDrawer(drawerList);
-            }
-            // Put the code for an action menu from the top here
-            return true;
-        } else if (keyCode == KeyEvent.KEYCODE_BACK) {
+        if (keyCode == KeyEvent.KEYCODE_BACK) {
             if (currentActivity != mapItem) {
                 goToMap();
                 return true;

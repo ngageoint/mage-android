@@ -1,0 +1,21 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+<item
+    android:id="@+id/about_button"
+    android:orderInCategory="100"
+    android:showAsAction="never"
+    android:title="@string/about"/>
+
+<item
+    android:id="@+id/disclaimer_button"
+    android:orderInCategory="100"
+    android:showAsAction="never"
+    android:title="@string/disclaimer"/>
+
+<item
+    android:id="@+id/acknowledgements_button"
+    android:orderInCategory="100"
+    android:showAsAction="never"
+    android:title="@string/acknowledgements"/>
+
+</menu>

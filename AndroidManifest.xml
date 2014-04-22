@@ -49,7 +49,6 @@
         </activity>
         <activity
             android:name="mil.nga.giat.mage.login.LoginActivity"
-            android:noHistory="true"
             android:windowSoftInputMode="stateVisible" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
