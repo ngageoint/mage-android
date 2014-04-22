@@ -138,7 +138,7 @@
         android:layout_height="wrap_content"        
         android:paddingLeft="15dp"
         android:paddingTop="5dp"
-        android:text="Font Awesome by by Dave Gandy"
+        android:text="Font Awesome by Dave Gandy"
         android:textColor="#EEEEEE"
         android:textSize="18sp" />
 
