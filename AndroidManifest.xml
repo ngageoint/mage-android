@@ -157,6 +157,24 @@
                 <action android:name="android.net.conn.CONNECTIVITY_CHANGE" />
             </intent-filter>
         </receiver>
+        
+        <receiver
+		    android:name="mil.nga.giat.mage.sdk.service.AttachmentAlarmReceiver"
+		    android:process=":remote" >
+		</receiver>
+		
+		<service
+		    android:name="mil.nga.giat.mage.sdk.service.AttachmentIntentService"
+		    android:exported="false" />
+		
+		<receiver
+		    android:name="mil.nga.giat.mage.sdk.service.ObservationAlarmReceiver"
+		    android:process=":remote" >
+		</receiver>
+		
+		<service
+		    android:name="mil.nga.giat.mage.sdk.service.ObservationIntentService"
+		    android:exported="false" />
 
         <meta-data
             android:name="com.google.android.maps.v2.API_KEY"

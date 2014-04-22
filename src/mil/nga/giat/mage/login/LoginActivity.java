@@ -8,6 +8,7 @@ import java.util.List;
 import org.json.JSONException;
 
 import mil.nga.giat.mage.LandingActivity;
+import mil.nga.giat.mage.MAGE;
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.disclaimer.DisclaimerActivity;
 import mil.nga.giat.mage.sdk.connectivity.ConnectivityUtility;
@@ -84,6 +85,7 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 		// if token is not expired, then skip the login module
 		if (!UserUtility.getInstance(getApplicationContext()).isTokenExpired()) {
 			startActivity(new Intent(getApplicationContext(), LandingActivity.class));
+			((MAGE)getApplication()).onLogin();
 			finish();
 		}
 		
@@ -337,6 +339,7 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 			}
 			sp.commit();
 			startActivity(new Intent(getApplicationContext(), LandingActivity.class));
+			((MAGE)getApplication()).onLogin();
 			finish();
 		} else if (accountStatus.getStatus() == AccountStatus.Status.SUCCESSFUL_REGISTRATION) {
 			Editor sp = PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).edit();

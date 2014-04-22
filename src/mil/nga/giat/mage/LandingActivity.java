@@ -122,7 +122,7 @@ public class LandingActivity extends Activity implements ListView.OnItemClickLis
 
         goToMap();
     }
-
+    
     private void goToMap() {
         FragmentManager fragmentManager = getFragmentManager();
         fragmentManager.beginTransaction().replace(R.id.content_frame, mapItem.getFragment()).commit();
@@ -284,6 +284,7 @@ public class LandingActivity extends Activity implements ListView.OnItemClickLis
                 // shared preferences
                 UserUtility.getInstance(getApplicationContext()).clearTokenInformation();
                 startActivity(new Intent(getApplicationContext(), LoginActivity.class));
+                ((MAGE)getApplication()).onLogout();
                 finish();
                 return;
             }
