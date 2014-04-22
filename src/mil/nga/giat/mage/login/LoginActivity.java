@@ -75,10 +75,9 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 		preferenceHelper.initialize(new int[]{R.xml.privatepreferences, R.xml.publicpreferences});
 		
 		// show the disclaimer?
-		if (PreferenceHelper.getInstance(getApplicationContext()).getValue(R.string.showDisclaimerKey, Boolean.class, Boolean.TRUE)) {
+		if (UserUtility.getInstance(getApplicationContext()).isTokenExpired()) {
 			Intent intent = new Intent(this, DisclaimerActivity.class);
 			startActivity(intent);
-			finish();
 		}
 		
 		// if token is not expired, then skip the login module
@@ -319,7 +318,7 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 
 	private void showKeyboard() {
 		InputMethodManager inputMethodManager = (InputMethodManager) getSystemService(Activity.INPUT_METHOD_SERVICE);
-		inputMethodManager.toggleSoftInput(InputMethodManager.SHOW_FORCED, 0);
+		inputMethodManager.toggleSoftInput(InputMethodManager.SHOW_IMPLICIT, 0);
 	}
 
 	@Override
@@ -385,7 +384,7 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 	protected void onResume() {
 		super.onResume();
 		// TODO : populate username and password from preferences
-		
+		showKeyboard();
 		// show form, and hide spinner
 		findViewById(R.id.login_status).setVisibility(View.GONE);
 		findViewById(R.id.login_form).setVisibility(View.VISIBLE);
