@@ -426,6 +426,7 @@ public class ObservationEditActivity extends Activity {
 
 		LinearLayout form = (LinearLayout) findViewById(R.id.form);
 		populatePropertyFieldsFromSaved(form, savedInstanceState);
+		currentImageUri = savedInstanceState.getParcelable("currentImageUri");
 	}
 
 	@Override
@@ -434,6 +435,7 @@ public class ObservationEditActivity extends Activity {
 		outState.putParcelableArrayList("attachments", new ArrayList<Attachment>(attachments));
 		LinearLayout form = (LinearLayout) findViewById(R.id.form);
 		savePropertyFieldsToBundle(form, outState);
+		outState.putParcelable("currentImageUri", currentImageUri);
 		super.onSaveInstanceState(outState);
 	}
 
@@ -634,17 +636,18 @@ public class ObservationEditActivity extends Activity {
 
 	public void cameraButtonPressed(View v) {
 		Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+		File f = null;
         try {
-            currentImageFile = MediaUtility.createImageFile();
+        	f = MediaUtility.createImageFile();
         } catch (IOException ex) {
             // Error occurred while creating the File
         	ex.printStackTrace();
         }
         // Continue only if the File was successfully created
-        if (currentImageFile != null) {
-            intent.putExtra(MediaStore.EXTRA_OUTPUT,
-                    Uri.fromFile(currentImageFile));
-            startActivityForResult(intent, CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE);  
+        if (f != null) {
+        	currentImageUri = Uri.fromFile(f);
+            intent.putExtra(MediaStore.EXTRA_OUTPUT, currentImageUri);
+            startActivityForResult(intent, CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE);
         }
 	}
 
@@ -759,7 +762,7 @@ public class ObservationEditActivity extends Activity {
 //		}
 	}
 	
-	File currentImageFile;
+	Uri currentImageUri;
 
 	@Override
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -767,9 +770,9 @@ public class ObservationEditActivity extends Activity {
 			return;
 		switch (requestCode) {
 		case CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE:
-			MediaUtility.addImageToGallery(getApplicationContext(), currentImageFile);
+			MediaUtility.addImageToGallery(getApplicationContext(), currentImageUri);
 			Attachment capture = new Attachment();
-			capture.setLocalPath(currentImageFile.getAbsolutePath());
+			capture.setLocalPath(MediaUtility.getFileAbsolutePath(currentImageUri, this));
 			attachments.add(capture);
 			addAttachmentToGallery(capture);
 			break;
