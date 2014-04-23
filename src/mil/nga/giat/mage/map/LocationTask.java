@@ -2,8 +2,8 @@ package mil.nga.giat.mage.map;
 
 import mil.nga.giat.mage.filter.Filter;
 import mil.nga.giat.mage.map.marker.PointCollection;
+import mil.nga.giat.mage.sdk.Temporal;
 import mil.nga.giat.mage.sdk.datastore.location.Location;
-import mil.nga.giat.mage.sdk.utils.Temporal;
 import android.os.AsyncTask;
 
 public class LocationTask extends AsyncTask<Location, Location, Void> {

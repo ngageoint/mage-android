@@ -4,9 +4,9 @@ import java.sql.SQLException;
 
 import mil.nga.giat.mage.filter.Filter;
 import mil.nga.giat.mage.map.marker.PointCollection;
+import mil.nga.giat.mage.sdk.Temporal;
 import mil.nga.giat.mage.sdk.datastore.DaoStore;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
-import mil.nga.giat.mage.sdk.utils.Temporal;
 import android.content.Context;
 import android.os.AsyncTask;
 import android.util.Log;

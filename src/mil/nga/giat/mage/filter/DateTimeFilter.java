@@ -3,7 +3,7 @@ package mil.nga.giat.mage.filter;
 import java.sql.SQLException;
 import java.util.Date;
 
-import mil.nga.giat.mage.sdk.utils.Temporal;
+import mil.nga.giat.mage.sdk.Temporal;
 
 import com.j256.ormlite.stmt.Where;
 
