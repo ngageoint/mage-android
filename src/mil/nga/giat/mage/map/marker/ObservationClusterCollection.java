@@ -5,7 +5,6 @@ import java.util.Date;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import mil.nga.giat.mage.filter.Filter;
 import mil.nga.giat.mage.map.marker.ObservationClusterCollection.ObservationClusterItem;
 import mil.nga.giat.mage.observation.ObservationViewActivity;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
@@ -23,7 +22,7 @@ import com.google.maps.android.clustering.algo.GridBasedAlgorithm;
 import com.google.maps.android.clustering.algo.PreCachingAlgorithmDecorator;
 import com.vividsolutions.jts.geom.Point;
 
-public class ObservationClusterCollection implements ObservationCollection, OnClusterItemClickListener<ObservationClusterItem> {
+public class ObservationClusterCollection implements PointCollection<Observation>, OnClusterItemClickListener<ObservationClusterItem> {
 
     private Context context;
     
@@ -71,11 +70,6 @@ public class ObservationClusterCollection implements ObservationCollection, OnCl
         clusterManager.cluster();
         System.out.println("DONE clustering " + all.size() + " observations");
 
-    }
-    
-    @Override
-    public Collection<Observation> getObservations() {
-        return observations.values();
     }
     
     @Override
@@ -138,19 +132,7 @@ public class ObservationClusterCollection implements ObservationCollection, OnCl
     }
 
     @Override
-    public Date getLatestObservationDate() {
+    public Date getLatestDate() {
         return latestObservationDate;
-    }
-
-    @Override
-    public void addFilter(Filter<Observation> filter) {
-        // TODO Auto-generated method stub
-        
-    }
-
-    @Override
-    public void removeFilters() {
-        // TODO Auto-generated method stub
-        
     }
 }

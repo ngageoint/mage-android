@@ -3,9 +3,10 @@ package mil.nga.giat.mage.map;
 import java.sql.SQLException;
 
 import mil.nga.giat.mage.filter.Filter;
-import mil.nga.giat.mage.map.marker.ObservationCollection;
+import mil.nga.giat.mage.map.marker.PointCollection;
 import mil.nga.giat.mage.sdk.datastore.DaoStore;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
+import mil.nga.giat.mage.sdk.utils.Temporal;
 import android.content.Context;
 import android.os.AsyncTask;
 import android.util.Log;
@@ -18,15 +19,15 @@ import com.j256.ormlite.stmt.Where;
 public class ObservationLoadTask extends AsyncTask<Void, Observation, Void> {
     
     private Context context;
-    private Filter<Observation> filter;
-    private ObservationCollection observationCollection;
+    private Filter<Temporal> filter;
+    private PointCollection<Observation> observationCollection;
 
-    public ObservationLoadTask(Context context, ObservationCollection observationCollection) {
+    public ObservationLoadTask(Context context, PointCollection<Observation> observationCollection) {
         this.context = context.getApplicationContext();
         this.observationCollection = observationCollection;
     }
        
-    public void setFilter(Filter<Observation> filter) {
+    public void setFilter(Filter<Temporal> filter) {
         this.filter = filter;
     }
     
@@ -59,26 +60,18 @@ public class ObservationLoadTask extends AsyncTask<Void, Observation, Void> {
         observationCollection.add(observations[0]);
     }
     
-    @Override
-    protected void onPostExecute(Void result) {
-        // TODO Auto-generated method stub
-        super.onPostExecute(result);
-    }
-    
     private CloseableIterator<Observation> iterator() throws SQLException {
         Dao<Observation, Long> dao = DaoStore.getInstance(context).getObservationDao();
         QueryBuilder<Observation, Long> query = dao.queryBuilder();
-        Where<Observation, Long> where = query
+        Where<? extends Temporal, Long> where = query
                 .orderBy("last_modified", false)
                 .where()
-                .ge("last_modified", observationCollection.getLatestObservationDate());   
+                .ge("last_modified", observationCollection.getLatestDate());   
 
         if (filter != null) {
-            where = filter.where(where.and());            
+            filter.where(where.and());            
         }
                 
-        Log.i("observation query", "observation query get all observations gte: " + observationCollection.getLatestObservationDate());
-
         return dao.iterator(query.prepare());
     }
 }

@@ -19,10 +19,10 @@ import mil.nga.giat.mage.MAGE;
 import mil.nga.giat.mage.MAGE.OnCacheOverlayListener;
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.filter.Filter;
-import mil.nga.giat.mage.filter.ObservationDateTimeFilter;
+import mil.nga.giat.mage.filter.DateTimeFilter;
 import mil.nga.giat.mage.map.GoogleMapWrapper.OnMapPanListener;
 import mil.nga.giat.mage.map.marker.LocationMarkerCollection;
-import mil.nga.giat.mage.map.marker.ObservationCollection;
+import mil.nga.giat.mage.map.marker.PointCollection;
 import mil.nga.giat.mage.map.marker.ObservationMarkerCollection;
 import mil.nga.giat.mage.map.preference.MapPreferencesActivity;
 import mil.nga.giat.mage.observation.ObservationEditActivity;
@@ -37,8 +37,8 @@ import mil.nga.giat.mage.sdk.event.ILocationEventListener;
 import mil.nga.giat.mage.sdk.event.IObservationEventListener;
 import mil.nga.giat.mage.sdk.event.IStaticFeatureEventListener;
 import mil.nga.giat.mage.sdk.exceptions.LayerException;
-import mil.nga.giat.mage.sdk.exceptions.LocationException;
 import mil.nga.giat.mage.sdk.location.LocationService;
+import mil.nga.giat.mage.sdk.utils.Temporal;
 import android.app.Fragment;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -109,9 +109,9 @@ public class MapFragment extends Fragment implements
     private final BlockingQueue<Runnable> queue = new ArrayBlockingQueue<Runnable>(5);
     private final ThreadPoolExecutor executor = new ThreadPoolExecutor(3, 3, 10, TimeUnit.SECONDS, queue);
 
-    private Filter<Observation> observationFilter;
-    private ObservationCollection observations;
-    private LocationMarkerCollection locations;
+    private Filter<Temporal> temporalFilter;
+    private PointCollection<Observation> observations;
+    private PointCollection<mil.nga.giat.mage.sdk.datastore.location.Location> locations;
 
     private Map<String, TileOverlay> tileOverlays = new HashMap<String, TileOverlay>();
     private Collection<String> featureIds = new ArrayList<String>();
@@ -156,6 +156,9 @@ public class MapFragment extends Fragment implements
         
         observations.clear();
         observations = null;
+        
+        locations.clear();
+        locations = null;
 
         super.onDestroy();
     }
@@ -185,27 +188,30 @@ public class MapFragment extends Fragment implements
         updateMapType();
         updateStaticFeatureLayers();
         
-        observationFilter = getObservationFilter();
+        temporalFilter = getTemporalFilter();
         if (observations == null) {
             observations = new ObservationMarkerCollection(getActivity(), map);
         }
         ObservationHelper.getInstance(getActivity().getApplicationContext()).addListener(this);
-        ObservationLoadTask task = new ObservationLoadTask(getActivity(), observations);
-        task.setFilter(observationFilter);
-        task.executeOnExecutor(executor);
+        ObservationLoadTask observationLoad = new ObservationLoadTask(getActivity(), observations);
+        observationLoad.setFilter(temporalFilter);
+        observationLoad.executeOnExecutor(executor);
         
         boolean showObservations = preferences.getBoolean(getResources().getString(R.string.showObservationsKey), true);
         observations.setVisibility(showObservations); 
         
-        locations = new LocationMarkerCollection(getActivity(), map);
-        boolean showLocations = preferences.getBoolean(getResources().getString(R.string.showLocationsKey), true);
-        locations.setVisible(showLocations);
-        
-        try {
-            LocationHelper.getInstance(getActivity().getApplicationContext()).addListener(this);
-        } catch (LocationException e) {
-            e.printStackTrace();
+        if (locations == null) {
+            locations = new LocationMarkerCollection(getActivity(), map);            
         }
+        LocationHelper.getInstance(getActivity().getApplicationContext()).addListener(this);
+        LocationLoadTask locationLoad = new LocationLoadTask(getActivity(), locations);
+        locationLoad.setFilter(temporalFilter);
+        locationLoad.executeOnExecutor(executor);
+        
+        boolean showLocations = preferences.getBoolean(getResources().getString(R.string.showLocationsKey), true);
+        locations.setVisibility(showLocations);
+        
+
         
         mage.registerCacheOverlayListener(this);
         StaticFeatureHelper.getInstance(getActivity().getApplicationContext()).addListener(this);
@@ -226,10 +232,8 @@ public class MapFragment extends Fragment implements
         
         mapView.onPause();
         
-        ObservationHelper.getInstance(getActivity().getApplicationContext()).removeListener(this);
-        
+        ObservationHelper.getInstance(getActivity().getApplicationContext()).removeListener(this);   
         LocationHelper.getInstance(getActivity().getApplicationContext()).removeListener(this);
-        locations.clear();
 
         PreferenceManager.getDefaultSharedPreferences(getActivity().getApplicationContext()).unregisterOnSharedPreferenceChangeListener(this);
 
@@ -271,13 +275,15 @@ public class MapFragment extends Fragment implements
     @Override
     public void onObservationCreated(Collection<Observation> o) {        
         ObservationTask task = new ObservationTask(ObservationTask.Type.ADD, observations);
-        task.setFilters(observationFilter);
+        task.setFilter(temporalFilter);
         task.execute(o.toArray(new Observation[o.size()]));
     }
 
     @Override
     public void onObservationUpdated(Observation o) {
-        new ObservationTask(ObservationTask.Type.UPDATE, observations).execute(o);
+        ObservationTask task = new ObservationTask(ObservationTask.Type.UPDATE, observations);
+        task.setFilter(temporalFilter);
+        task.execute(o);    
     }
 
     @Override
@@ -287,12 +293,16 @@ public class MapFragment extends Fragment implements
 
     @Override
     public void onLocationCreated(Collection<mil.nga.giat.mage.sdk.datastore.location.Location> l) {
-        new LocationTask(LocationTask.Type.ADD, locations).execute(l.toArray(new mil.nga.giat.mage.sdk.datastore.location.Location[l.size()]));
+        LocationTask task = new LocationTask(LocationTask.Type.ADD, locations);
+        task.setFilter(temporalFilter);
+        task.execute(l.toArray(new mil.nga.giat.mage.sdk.datastore.location.Location[l.size()]));  
     }
 
     @Override
     public void onLocationUpdated(mil.nga.giat.mage.sdk.datastore.location.Location l) {
-        new LocationTask(LocationTask.Type.UPDATE, locations).execute(l);        
+        LocationTask task = new LocationTask(LocationTask.Type.UPDATE, locations);
+        task.setFilter(temporalFilter);
+        task.execute(l);      
     }
 
     @Override
@@ -629,16 +639,21 @@ public class MapFragment extends Fragment implements
 	public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
 		if (getResources().getString(R.string.activeTimeFilterKey).equalsIgnoreCase(key)) {
 		    observations.clear();
-	        ObservationLoadTask task = new ObservationLoadTask(getActivity(), observations);
-	        task.setFilter(getObservationFilter());
-	        task.executeOnExecutor(executor);
+	        ObservationLoadTask observationLoad = new ObservationLoadTask(getActivity(), observations);
+	        observationLoad.setFilter(getTemporalFilter());
+	        observationLoad.executeOnExecutor(executor);
+	        
+	        locations.clear();
+            LocationLoadTask locationLoad = new LocationLoadTask(getActivity(), locations);
+            locationLoad.setFilter(getTemporalFilter());
+            locationLoad.executeOnExecutor(executor);
 		}
 	}
 	
-	private Filter<Observation> getObservationFilter() {
+	private Filter<Temporal> getTemporalFilter() {
 	    int timeFilter = preferences.getInt(getResources().getString(R.string.activeTimeFilterKey), R.id.none_rb);
 	    
-	    Filter<Observation> filter = null;
+	    Filter<Temporal> filter = null;
 	    
 		Calendar c = Calendar.getInstance();
 		String title = null;
@@ -678,7 +693,7 @@ public class MapFragment extends Fragment implements
 		    Date start = c.getTime();
 		    Date end = null;
 		    
-		    filter = new ObservationDateTimeFilter(start, end);
+		    filter = new DateTimeFilter(start, end);
 		}
 		
 		return filter;

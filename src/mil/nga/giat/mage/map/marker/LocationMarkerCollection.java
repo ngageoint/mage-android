@@ -24,17 +24,19 @@ import android.widget.TextView;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.GoogleMap.InfoWindowAdapter;
 import com.google.android.gms.maps.GoogleMap.OnMarkerClickListener;
+import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.maps.android.MarkerManager;
 import com.vividsolutions.jts.geom.Point;
 
-public class LocationMarkerCollection implements OnMarkerClickListener {
+public class LocationMarkerCollection implements PointCollection<Location>, OnMarkerClickListener {
 
     private GoogleMap map;
     private Context context;
-    
+    private Date latestLocationDate = new Date(0);
+
     private InfoWindowAdapter infoWindowAdpater = new LocationInfoWindowAdapter();
 
     private boolean visible = true;
@@ -52,7 +54,16 @@ public class LocationMarkerCollection implements OnMarkerClickListener {
         markerCollection = markerManager.newCollection();        
     }
 
+    @Override
     public void add(Location l) {
+        // If I got an observation that I already have in my list
+        // remove it from the map and clean-up my collections
+        Marker marker = locationIdToMarker.remove(l.getId());
+        if (marker != null) {
+            markerIdToLocation.remove(marker.getId());
+            marker.remove();
+        }
+        
         Point point = l.getLocationGeometry().getGeometry().getCentroid();
         
         MarkerOptions options = new MarkerOptions()
@@ -60,36 +71,24 @@ public class LocationMarkerCollection implements OnMarkerClickListener {
             .icon(LocationBitmapFactory.bitmapDescriptor(context, l))
             .visible(visible);
 
-        Marker marker = markerCollection.addMarker(options);
+        marker = markerCollection.addMarker(options);
 
         locationIdToMarker.put(l.getId(), marker);
         markerIdToLocation.put(marker.getId(), l);
+        
+        if (l.getLastModified().after(latestLocationDate)) {
+            latestLocationDate = l.getLastModified();
+        }
     }
 
+    @Override
     public void addAll(Collection<Location> locations) {
         for (Location l : locations) {
             add(l);
         }
     }
-
-    public Collection<Location> getLocations() {
-        return markerIdToLocation.values();
-    }
-
-    public void setVisible(boolean visible) {
-        if (this.visible == visible)
-            return;
-        
-        this.visible = visible;
-        for (Marker m : locationIdToMarker.values()) {
-            m.setVisible(visible);
-        }
-    }
-
-    public void setLocationVisibility(Location o, boolean visible) {        
-        locationIdToMarker.get(o.getId()).setVisible(this.visible && visible);
-    }
-
+    
+    @Override
     public void remove(Location l) {
         Marker marker = locationIdToMarker.remove(l.getId());
         if (marker != null) {
@@ -109,10 +108,33 @@ public class LocationMarkerCollection implements OnMarkerClickListener {
         return true;
     }
     
+    @Override
     public void clear() {
         locationIdToMarker.clear();
         markerIdToLocation.clear();
         markerCollection.clear();
+        latestLocationDate = new Date(0);
+    }   
+
+    @Override
+    public void onCameraChange(CameraPosition cameraPosition) {
+        // Don't care about this, I am not clustered
+    }
+
+    @Override
+    public void setVisibility(boolean visible) {
+        if (this.visible == visible)
+            return;
+        
+        this.visible = visible;
+        for (Marker m : locationIdToMarker.values()) {
+            m.setVisible(visible);
+        }        
+    }
+
+    @Override
+    public Date getLatestDate() {
+        return latestLocationDate;
     }
     
     private class LocationInfoWindowAdapter implements InfoWindowAdapter {

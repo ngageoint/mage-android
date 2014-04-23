@@ -1,12 +1,10 @@
 package mil.nga.giat.mage.map.marker;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import mil.nga.giat.mage.filter.Filter;
 import mil.nga.giat.mage.observation.ObservationViewActivity;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import android.content.Context;
@@ -21,12 +19,11 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.maps.android.MarkerManager;
 import com.vividsolutions.jts.geom.Point;
 
-public class ObservationMarkerCollection implements ObservationCollection, OnMarkerClickListener {
+public class ObservationMarkerCollection implements PointCollection<Observation>, OnMarkerClickListener {
 
     private GoogleMap map;
     private Context context;
     private Date latestObservationDate = new Date(0);
-    private Collection<Filter<Observation>> filters = new ArrayList<Filter<Observation>>();
 
     private boolean visible = true;
 
@@ -45,11 +42,6 @@ public class ObservationMarkerCollection implements ObservationCollection, OnMar
 
     @Override
     public void add(Observation o) {
-        // Verify the observation coming in passes all filters
-        for (Filter<Observation> filter : filters) {
-            if (!filter.passesFilter(o)) return;
-        }
-        
         // If I got an observation that I already have in my list
         // remove it from the map and clean-up my collections
         Marker marker = observationIdToMarker.remove(o.getId());
@@ -78,11 +70,6 @@ public class ObservationMarkerCollection implements ObservationCollection, OnMar
         for (Observation o : observations) {
             add(o);
         }
-    }
-
-    @Override
-    public Collection<Observation> getObservations() {
-        return markerIdToObservation.values();
     }
 
     @Override
@@ -129,22 +116,12 @@ public class ObservationMarkerCollection implements ObservationCollection, OnMar
     }
 
     @Override
-    public Date getLatestObservationDate() {
+    public Date getLatestDate() {
         return latestObservationDate;
     }
 
     @Override
     public void onCameraChange(CameraPosition cameraPosition) {
         // do nothing I don't care
-    }
-
-    @Override
-    public void addFilter(Filter<Observation> filter) {
-        filters.add(filter);
-    }
-
-    @Override
-    public void removeFilters() {
-        filters.clear();
     }
 }

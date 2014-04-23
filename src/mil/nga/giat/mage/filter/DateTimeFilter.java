@@ -3,21 +3,21 @@ package mil.nga.giat.mage.filter;
 import java.sql.SQLException;
 import java.util.Date;
 
-import mil.nga.giat.mage.sdk.datastore.observation.Observation;
+import mil.nga.giat.mage.sdk.utils.Temporal;
 
 import com.j256.ormlite.stmt.Where;
 
-public class ObservationDateTimeFilter implements Filter<Observation> {
+public class DateTimeFilter implements Filter<Temporal> {
     Date start;
     Date end;
     
-    public ObservationDateTimeFilter(Date start, Date end) {
+    public DateTimeFilter(Date start, Date end) {
         this.start = start;
         this.end = end;
     }
 
     @Override
-    public  Where<Observation, Long> where(Where<Observation, Long> where) throws SQLException {
+    public  Where<? extends Temporal, Long> where(Where<? extends Temporal, Long> where) throws SQLException {
         if (start != null && end != null) {
             where.between("last_modified", start, end);
         } else if (start != null) {
@@ -30,8 +30,8 @@ public class ObservationDateTimeFilter implements Filter<Observation> {
     }
 
     @Override
-    public boolean passesFilter(Observation observation) {
-        return (start == null || observation.getLastModified().after(start) && 
-               (end == null || observation.getLastModified().before(end)));
+    public boolean passesFilter(Temporal t) {
+        return (start == null || t.getTimestamp().after(start) && 
+               (end == null || t.getTimestamp().before(end)));
     }
 }

@@ -1,8 +1,9 @@
 package mil.nga.giat.mage.map;
 
 import mil.nga.giat.mage.filter.Filter;
-import mil.nga.giat.mage.map.marker.ObservationCollection;
+import mil.nga.giat.mage.map.marker.PointCollection;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
+import mil.nga.giat.mage.sdk.utils.Temporal;
 import android.os.AsyncTask;
 
 public class ObservationTask extends AsyncTask<Observation, Observation, Void> {
@@ -11,15 +12,15 @@ public class ObservationTask extends AsyncTask<Observation, Observation, Void> {
     }
 
     private Type type;
-    private ObservationCollection observationCollection;
-    private Filter<Observation> filter;
+    private PointCollection<Observation> observationCollection;
+    private Filter<Temporal> filter;
 
-    public ObservationTask(Type type, ObservationCollection observationCollection) {
+    public ObservationTask(Type type, PointCollection<Observation> observationCollection) {
         this.type = type;
         this.observationCollection = observationCollection;
     }
     
-    public void setFilters(Filter<Observation> filter) {
+    public void setFilter(Filter<Temporal> filter) {
         this.filter = filter;
     }
 
