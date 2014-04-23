@@ -290,11 +290,9 @@ public class MapFragment extends Fragment implements
     }
 
     @Override
-    public void onLocationDeleted(String pUserLocalId) {
-        // TODO travis why userId here but Location the rest of the time
-//        new LocationTask(LocationTask.Type.DELETE, locations).execute(l);        
-    }
-    
+    public void onLocationDeleted(mil.nga.giat.mage.sdk.datastore.location.Location l) {
+        // TODO BILLY do what you do... 
+    }    
 
     @Override
     public boolean onMarkerClick(Marker marker) {
