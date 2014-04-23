@@ -7,23 +7,19 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-import com.bumptech.glide.Glide;
-
 import mil.nga.giat.mage.file.Storage;
 import mil.nga.giat.mage.file.Storage.StorageType;
 import mil.nga.giat.mage.map.CacheOverlay;
+import mil.nga.giat.mage.sdk.R;
 import mil.nga.giat.mage.sdk.datastore.layer.Layer;
-import mil.nga.giat.mage.sdk.datastore.observation.Observation;
-import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
-import mil.nga.giat.mage.sdk.event.IObservationEventListener;
-import mil.nga.giat.mage.sdk.exceptions.ObservationException;
+import mil.nga.giat.mage.sdk.fetch.LocationFetchAlarmReciever;
 import mil.nga.giat.mage.sdk.fetch.LocationServerFetchAsyncTask;
-import mil.nga.giat.mage.sdk.fetch.ObservationServerFetchAsyncTask;
+import mil.nga.giat.mage.sdk.fetch.ObservationFetchAlarmReceiver;
 import mil.nga.giat.mage.sdk.fetch.StaticFeatureServerFetch;
 import mil.nga.giat.mage.sdk.glide.MageUrlLoader;
 import mil.nga.giat.mage.sdk.location.LocationService;
+import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
 import mil.nga.giat.mage.sdk.push.LocationServerPushAsyncTask;
-import mil.nga.giat.mage.sdk.push.ObservationServerPushAsyncTask;
 import mil.nga.giat.mage.sdk.service.AttachmentAlarmReceiver;
 import mil.nga.giat.mage.sdk.service.ObservationAlarmReceiver;
 import android.app.AlarmManager;
@@ -34,9 +30,13 @@ import android.content.Intent;
 import android.os.AsyncTask;
 import android.util.Log;
 
-public class MAGE extends Application implements IObservationEventListener {
+import com.bumptech.glide.Glide;
+
+public class MAGE extends Application {
 
     private static final String LOG_NAME = MAGE.class.getName();
+    
+    AlarmManager alarm;
 
     public interface OnCacheOverlayListener {
         public void onCacheOverlay(List<CacheOverlay> cacheOverlays);
@@ -108,8 +108,6 @@ public class MAGE extends Application implements IObservationEventListener {
     private LocationService locationService;
     private LocationServerFetchAsyncTask locationFetchTask = null;
     private LocationServerPushAsyncTask locationPushTask = null;
-    private ObservationServerFetchAsyncTask observationFetchTask = null;
-    private ObservationServerPushAsyncTask observationPushTask = null;
     private List<CacheOverlay> cacheOverlays = null;
     private Collection<OnCacheOverlayListener> cacheOverlayListeners = new ArrayList<OnCacheOverlayListener>();
 
@@ -117,34 +115,42 @@ public class MAGE extends Application implements IObservationEventListener {
 
     @Override
     public void onCreate() {
+    	alarm = (AlarmManager) this.getSystemService(Context.ALARM_SERVICE);
     	Glide.get().register(URL.class, new MageUrlLoader.Factory());
         refreshTileOverlays();
         
         // temp UI stuff
         refreshStaticLayers();
         
+        super.onCreate();
     }
     
     public void onLogin() {
-    	try {
-			ObservationHelper.getInstance(this).addListener(this);
-		} catch (ObservationException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
     	scheduleAlarms();
+    	// Start location services
+        initLocationService();
+
+        // Start fetching and pushing observations and locations
+        startFetching();
+        startPushing();
+
+        // Pull static layers and features just once
+        loadStaticFeatures(false);
     }
     
     public void onLogout() {
-		ObservationHelper.getInstance(this).removeListener(this);
     	cancelAlarms();
+    	destroyFetching();
+        destroyPushing();
+        destroyLocationService();
     }
     
     public void scheduleAlarms() {
     	Log.i(LOG_NAME, "Scheduling alarms");
-    	
         scheduleAttachmentAlarm();
         scheduleObservationAlarm();
+        scheduleObservationFetchAlarm();
+        scheduleLocationFetchAlarm();
       }
     
     public void scheduleAttachmentAlarm() {
@@ -154,35 +160,66 @@ public class MAGE extends Application implements IObservationEventListener {
             intent, PendingIntent.FLAG_UPDATE_CURRENT);
         long firstMillis = System.currentTimeMillis();
         int intervalMillis = 60000; 
-        AlarmManager alarm = (AlarmManager) this.getSystemService(Context.ALARM_SERVICE);
         alarm.setInexactRepeating(AlarmManager.RTC_WAKEUP, firstMillis, intervalMillis, pendingIntent);
     }
     
-    private void scheduleObservationAlarm() {
+    public void scheduleObservationAlarm() {
     	Log.i(LOG_NAME, "Scheduling new observation alarm.");
 		Intent observationAlarmIntent = new Intent(getApplicationContext(), ObservationAlarmReceiver.class);
         final PendingIntent observationAlarmPendingIntent = PendingIntent.getBroadcast(this, ObservationAlarmReceiver.REQUEST_CODE,
         		observationAlarmIntent, PendingIntent.FLAG_UPDATE_CURRENT);
-        AlarmManager observationAlarm = (AlarmManager) getApplicationContext().getSystemService(Context.ALARM_SERVICE);
-        observationAlarm.set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis(), observationAlarmPendingIntent);
+        alarm.set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis(), observationAlarmPendingIntent);
+    }
+    
+    public void scheduleObservationFetchAlarm() {
+    	long fetchFrequency = PreferenceHelper.getInstance(getApplicationContext()).getValue(R.string.observationFetchFrequencyKey, Long.class, R.string.observationFetchFrequencyDefaultValue);
+    	Log.i(LOG_NAME, "Scheduling new observation fetch alarm for every " + (fetchFrequency/1000) + " seconds.");
+        Intent intent = new Intent(getApplicationContext(), ObservationFetchAlarmReceiver.class);
+        final PendingIntent pendingIntent = PendingIntent.getBroadcast(this, ObservationFetchAlarmReceiver.REQUEST_CODE,
+            intent, PendingIntent.FLAG_UPDATE_CURRENT);
+        long firstMillis = System.currentTimeMillis();
+        alarm.setInexactRepeating(AlarmManager.RTC, firstMillis, fetchFrequency, pendingIntent);
+    }
+    
+    public void scheduleLocationFetchAlarm() {
+    	long fetchFrequency = PreferenceHelper.getInstance(getApplicationContext()).getValue(R.string.locationFetchFrequencyKey, Long.class, R.string.locationFetchFrequencyDefaultValue);
+    	Log.i(LOG_NAME, "Scheduling new location fetch alarm for every " + (fetchFrequency/1000) + " seconds.");
+        Intent intent = new Intent(getApplicationContext(), LocationFetchAlarmReciever.class);
+        final PendingIntent pendingIntent = PendingIntent.getBroadcast(this, LocationFetchAlarmReciever.REQUEST_CODE,
+            intent, PendingIntent.FLAG_UPDATE_CURRENT);
+        long firstMillis = System.currentTimeMillis();
+        alarm.setInexactRepeating(AlarmManager.RTC, firstMillis, fetchFrequency, pendingIntent);
     }
     
 	public void cancelAlarms() {
 		cancelAttachmentAlarm();
 		cancelObservationAlarm();
+		cancelObservationFetchAlarm();
+		cancelLocationFetchAlarm();
 	}
 	
 	private void cancelAttachmentAlarm() {
 		Intent intent = new Intent(getApplicationContext(), AttachmentAlarmReceiver.class);
 		final PendingIntent pIntent = PendingIntent.getBroadcast(this, AttachmentAlarmReceiver.REQUEST_CODE, intent, PendingIntent.FLAG_UPDATE_CURRENT);
-		AlarmManager alarm = (AlarmManager) this.getSystemService(Context.ALARM_SERVICE);
+		
 		alarm.cancel(pIntent);
 	}
 	
 	private void cancelObservationAlarm() {
-		Intent intent = new Intent(getApplicationContext(), AttachmentAlarmReceiver.class);
-		final PendingIntent pIntent = PendingIntent.getBroadcast(this, AttachmentAlarmReceiver.REQUEST_CODE, intent, PendingIntent.FLAG_UPDATE_CURRENT);
-		AlarmManager alarm = (AlarmManager) this.getSystemService(Context.ALARM_SERVICE);
+		Intent intent = new Intent(getApplicationContext(), ObservationAlarmReceiver.class);
+		final PendingIntent pIntent = PendingIntent.getBroadcast(this, ObservationAlarmReceiver.REQUEST_CODE, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+		alarm.cancel(pIntent);
+	}
+	
+	private void cancelObservationFetchAlarm() {
+		Intent intent = new Intent(getApplicationContext(), ObservationFetchAlarmReceiver.class);
+		final PendingIntent pIntent = PendingIntent.getBroadcast(this, ObservationFetchAlarmReceiver.REQUEST_CODE, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+		alarm.cancel(pIntent);
+	}
+	
+	private void cancelLocationFetchAlarm() {
+		Intent intent = new Intent(getApplicationContext(), LocationFetchAlarmReciever.class);
+		final PendingIntent pIntent = PendingIntent.getBroadcast(this, LocationFetchAlarmReciever.REQUEST_CODE, intent, PendingIntent.FLAG_UPDATE_CURRENT);
 		alarm.cancel(pIntent);
 	}
 
@@ -258,28 +295,24 @@ public class MAGE extends Application implements IObservationEventListener {
      * Start Tasks responsible for fetching Observations and Locations from the server.
      */
     public void startFetching() {
-        locationFetchTask = new LocationServerFetchAsyncTask(getApplicationContext());
-        observationFetchTask = new ObservationServerFetchAsyncTask(getApplicationContext());
-        try {
-            locationFetchTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
-            observationFetchTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
-        } catch (Exception e) {
-            Log.e(LOG_NAME, "Error starting fetching tasks!");
-        }
+        //locationFetchTask = new LocationServerFetchAsyncTask(getApplicationContext());
+        //observationFetchTask = new ObservationServerFetchAsyncTask(getApplicationContext());
+//        try {
+//            //locationFetchTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+//            //observationFetchTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+//        } catch (Exception e) {
+//            Log.e(LOG_NAME, "Error starting fetching tasks!");
+//        }
     }
 
     /**
      * Stop Tasks responsible for fetching Observations and Locations from the server.
      */
     public void destroyFetching() {
-        if (locationFetchTask != null) {
-            locationFetchTask.destroy();
-        }
+//        if (locationFetchTask != null) {
+//            locationFetchTask.destroy();
+//        }
 
-        if (observationFetchTask != null) {
-            observationFetchTask.destroy();
-        }
-        
         if (staticFeatureServerFetch != null) {
         	staticFeatureServerFetch.destroy();
         }
@@ -289,11 +322,9 @@ public class MAGE extends Application implements IObservationEventListener {
      * Start Tasks responsible for pushing Observations and Locations to the server.
      */
     public void startPushing() {
-        //observationPushTask = new ObservationServerPushAsyncTask(getApplicationContext());
         locationPushTask = new LocationServerPushAsyncTask(getApplicationContext());
         
         try {
-            //observationPushTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
             locationPushTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
         } catch (Exception e) {
             Log.e(LOG_NAME, "Error starting fetching tasks!");
@@ -304,9 +335,6 @@ public class MAGE extends Application implements IObservationEventListener {
      * Stop Tasks responsible for pushing Observations and Locations to the server.
      */
     public void destroyPushing() {
-//        if (observationPushTask != null) {
-//            observationPushTask.destroy();
-//        }
         if (locationPushTask != null) {
         	locationPushTask.destroy();
         }
@@ -326,34 +354,5 @@ public class MAGE extends Application implements IObservationEventListener {
 		};
 		
 		new Thread(runnable).start();
-	}
-	
-	@Override
-	public void onObservationCreated(Collection<Observation> observations) {
-		for (Observation observation : observations) {
-			if(observation.isDirty()) {
-				scheduleObservationAlarm();
-				break;
-			}
-		}
-	}
-
-	@Override
-	public void onObservationUpdated(Observation observation) {
-		if(observation.isDirty()) {
-			scheduleObservationAlarm();
-		}
-	}
-
-	@Override
-	public void onObservationDeleted(Observation observation) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void onError(Throwable error) {
-		// TODO Auto-generated method stub
-		
 	}
 }

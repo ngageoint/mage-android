@@ -55,18 +55,6 @@ public class LandingActivity extends Activity implements ListView.OnItemClickLis
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_landing);
 
-        MAGE mage = (MAGE) getApplication();
-
-        // Start location services
-        mage.initLocationService();
-
-        // Start fetching and pushing observations and locations
-        mage.startFetching();
-        mage.startPushing();
-
-        // Pull static layers and features just once
-        mage.loadStaticFeatures(false);
-
         mapItem = new DrawerItem.Builder("Map").id(0).drawableId(R.drawable.ic_globe_white).fragment(new MapFragment()).build();
 
         drawerItems = new DrawerItem[] { mapItem, new DrawerItem.Builder("Observations").id(1).drawableId(R.drawable.ic_map_marker_white).fragment(new NewsFeedFragment()).build(),
@@ -197,16 +185,6 @@ public class LandingActivity extends Activity implements ListView.OnItemClickLis
     public void onConfigurationChanged(Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
         drawerToggle.onConfigurationChanged(newConfig);
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-
-        MAGE mage = (MAGE) getApplication();
-        mage.destroyFetching();
-        mage.destroyPushing();
-        mage.destroyLocationService();
     }
 
     @Override

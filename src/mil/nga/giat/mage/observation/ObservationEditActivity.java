@@ -14,6 +14,7 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 
+import mil.nga.giat.mage.MAGE;
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.form.MageEditText;
 import mil.nga.giat.mage.form.MageSpinner;
@@ -613,6 +614,7 @@ public class ObservationEditActivity extends Activity {
 					oh.update(o, oh.read(o.getRemoteId()));
 					Log.i(LOG_NAME, "Updated observation with remote id: " + o.getRemoteId());
 				}
+				((MAGE)getApplication()).scheduleObservationAlarm();
 				finish();
 			} catch (Exception e) {
 				Log.e(LOG_NAME, e.getMessage(), e);
