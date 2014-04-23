@@ -88,7 +88,7 @@ public class PeopleFeedFragment extends Fragment implements OnSharedPreferenceCh
         qb.where().gt("_id", 0);
         // this is wrong. need to figure out how to order on nested table or
         // move the correct field up
-        qb.orderBy("lastModified", false);
+        qb.orderBy("last_modified", false);
 
         Cursor c = null;
         CloseableIterator<Location> iterator = lDao.iterator(query);
@@ -97,8 +97,8 @@ public class PeopleFeedFragment extends Fragment implements OnSharedPreferenceCh
         AndroidDatabaseResults results = (AndroidDatabaseResults) iterator.getRawResults();
         c = results.getRawCursor();
         if (c.moveToLast()) {
-            long oldestTime = c.getLong(c.getColumnIndex("lastModified"));
-            Log.i("test", "last modified is: " + c.getLong(c.getColumnIndex("lastModified")));
+            long oldestTime = c.getLong(c.getColumnIndex("last_modified"));
+            Log.i("test", "last modified is: " + c.getLong(c.getColumnIndex("last_modified")));
             Log.i("test", "querying again in: " + (oldestTime - requeryTime)/60000 + " minutes");
             if (queryUpdateHandle != null) {
                 queryUpdateHandle.cancel(true);
@@ -204,9 +204,9 @@ public class PeopleFeedFragment extends Fragment implements OnSharedPreferenceCh
         TextView footerTextView = (TextView)footer.findViewById(R.id.footer_text);
         footerTextView.setText(footerText);
         getActivity().getActionBar().setTitle(title);
-        qb.where().gt("lastModified", c.getTime()).and().eq("current_user", Boolean.FALSE).query(); 
+        qb.where().gt("last_modified", c.getTime()).and().eq("current_user", Boolean.FALSE).query(); 
 
-        qb.orderBy("lastModified", false);
+        qb.orderBy("last_modified", false);
 
         return qb.prepare();
     }

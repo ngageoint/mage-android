@@ -10,16 +10,19 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 import mil.nga.giat.mage.MAGE;
 import mil.nga.giat.mage.MAGE.OnCacheOverlayListener;
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.filter.Filter;
-import mil.nga.giat.mage.filter.LocationDateTimeFilter;
-import mil.nga.giat.mage.filter.ObservationDateTimeFilter;
+import mil.nga.giat.mage.filter.DateTimeFilter;
 import mil.nga.giat.mage.map.GoogleMapWrapper.OnMapPanListener;
 import mil.nga.giat.mage.map.marker.LocationMarkerCollection;
-import mil.nga.giat.mage.map.marker.ObservationCollection;
+import mil.nga.giat.mage.map.marker.PointCollection;
 import mil.nga.giat.mage.map.marker.ObservationMarkerCollection;
 import mil.nga.giat.mage.map.preference.MapPreferencesActivity;
 import mil.nga.giat.mage.observation.ObservationEditActivity;
@@ -30,17 +33,18 @@ import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
 import mil.nga.giat.mage.sdk.datastore.staticfeature.StaticFeature;
 import mil.nga.giat.mage.sdk.datastore.staticfeature.StaticFeatureHelper;
+import mil.nga.giat.mage.sdk.datastore.staticfeature.StaticFeatureProperty;
 import mil.nga.giat.mage.sdk.event.ILocationEventListener;
 import mil.nga.giat.mage.sdk.event.IObservationEventListener;
 import mil.nga.giat.mage.sdk.event.IStaticFeatureEventListener;
 import mil.nga.giat.mage.sdk.exceptions.LayerException;
-import mil.nga.giat.mage.sdk.exceptions.LocationException;
-import mil.nga.giat.mage.sdk.exceptions.ObservationException;
 import mil.nga.giat.mage.sdk.location.LocationService;
+import mil.nga.giat.mage.sdk.utils.Temporal;
 import android.app.Fragment;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
+import android.graphics.Color;
 import android.location.Location;
 import android.location.LocationListener;
 import android.os.Bundle;
@@ -95,6 +99,8 @@ public class MapFragment extends Fragment implements
         ILocationEventListener,
         IStaticFeatureEventListener {
 
+	private static final String LOG_NAME = MapFragment.class.getName();
+	
     private MAGE mage;
     private MapView mapView;
     private GoogleMap map;
@@ -103,9 +109,13 @@ public class MapFragment extends Fragment implements
     private boolean followMe = false;
     private GoogleMapWrapper mapWrapper;
     private OnLocationChangedListener locationChangedListener;
+    
+    private final BlockingQueue<Runnable> queue = new ArrayBlockingQueue<Runnable>(5);
+    private final ThreadPoolExecutor executor = new ThreadPoolExecutor(3, 3, 10, TimeUnit.SECONDS, queue);
 
-    private ObservationCollection observations;
-    private LocationMarkerCollection locations;
+    private Filter<Temporal> temporalFilter;
+    private PointCollection<Observation> observations;
+    private PointCollection<mil.nga.giat.mage.sdk.datastore.location.Location> locations;
 
     private Map<String, TileOverlay> tileOverlays = new HashMap<String, TileOverlay>();
     private Collection<String> featureIds = new ArrayList<String>();
@@ -137,19 +147,23 @@ public class MapFragment extends Fragment implements
         
         ImageButton mapSettings = (ImageButton) view.findViewById(R.id.map_settings);
         mapSettings.setOnClickListener(this);
-
-        locationService = mage.getLocationService();
         
+        locationService = mage.getLocationService();
+                
         return mapWrapper;
     }
     
-    private int getTimeFilter() {
-		return preferences.getInt(getResources().getString(R.string.activeTimeFilterKey), R.id.none_rb);
-	}
-
     @Override
     public void onDestroy() {
         mapView.onDestroy();
+        map = null;
+        
+        observations.clear();
+        observations = null;
+        
+        locations.clear();
+        locations = null;
+
         super.onDestroy();
     }
 
@@ -164,39 +178,44 @@ public class MapFragment extends Fragment implements
         super.onResume();
         
         mapView.onResume();
-        
-        map = mapView.getMap();
-                
+
         PreferenceManager.getDefaultSharedPreferences(getActivity().getApplicationContext()).registerOnSharedPreferenceChangeListener(this);
         
-        updateMapType();
-        updateStaticFeatureLayers();
-        
+        if (map == null) {
+            map = mapView.getMap();
+        }
         map.setOnMapClickListener(this);
         map.setOnMarkerClickListener(this);
         map.setOnMapLongClickListener(this);
         map.setOnMyLocationButtonClickListener(this);
         
-        observations = new ObservationMarkerCollection(getActivity(), map);
+        updateMapType();
+        updateStaticFeatureLayers();
+        
+        temporalFilter = getTemporalFilter();
+        if (observations == null) {
+            observations = new ObservationMarkerCollection(getActivity(), map);
+        }
+        ObservationHelper.getInstance(getActivity().getApplicationContext()).addListener(this);
+        ObservationLoadTask observationLoad = new ObservationLoadTask(getActivity(), observations);
+        observationLoad.setFilter(temporalFilter);
+        observationLoad.executeOnExecutor(executor);
+        
         boolean showObservations = preferences.getBoolean(getResources().getString(R.string.showObservationsKey), true);
-        observations.setVisible(showObservations);
+        observations.setVisibility(showObservations); 
         
-        locations = new LocationMarkerCollection(getActivity(), map);
+        if (locations == null) {
+            locations = new LocationMarkerCollection(getActivity(), map);            
+        }
+        LocationHelper.getInstance(getActivity().getApplicationContext()).addListener(this);
+        LocationLoadTask locationLoad = new LocationLoadTask(getActivity(), locations);
+        locationLoad.setFilter(temporalFilter);
+        locationLoad.executeOnExecutor(executor);
+        
         boolean showLocations = preferences.getBoolean(getResources().getString(R.string.showLocationsKey), true);
-        locations.setVisible(showLocations);
+        locations.setVisibility(showLocations);
         
-        updateTimeFilter(getTimeFilter());
-        try {
-            ObservationHelper.getInstance(getActivity().getApplicationContext()).addListener(this);
-        } catch (ObservationException e) {
-            e.printStackTrace();
-        }
-        
-        try {
-            LocationHelper.getInstance(getActivity().getApplicationContext()).addListener(this);
-        } catch (LocationException e) {
-            e.printStackTrace();
-        }
+
         
         mage.registerCacheOverlayListener(this);
         StaticFeatureHelper.getInstance(getActivity().getApplicationContext()).addListener(this);
@@ -217,11 +236,8 @@ public class MapFragment extends Fragment implements
         
         mapView.onPause();
         
-        ObservationHelper.getInstance(getActivity().getApplicationContext()).removeListener(this);
-        observations.clear();
-        
+        ObservationHelper.getInstance(getActivity().getApplicationContext()).removeListener(this);   
         LocationHelper.getInstance(getActivity().getApplicationContext()).removeListener(this);
-        locations.clear();
 
         PreferenceManager.getDefaultSharedPreferences(getActivity().getApplicationContext()).unregisterOnSharedPreferenceChangeListener(this);
 
@@ -262,12 +278,16 @@ public class MapFragment extends Fragment implements
 
     @Override
     public void onObservationCreated(Collection<Observation> o) {        
-        new ObservationTask(ObservationTask.Type.ADD, observations).execute(o.toArray(new Observation[o.size()]));
+        ObservationTask task = new ObservationTask(ObservationTask.Type.ADD, observations);
+        task.setFilter(temporalFilter);
+        task.execute(o.toArray(new Observation[o.size()]));
     }
 
     @Override
     public void onObservationUpdated(Observation o) {
-        new ObservationTask(ObservationTask.Type.UPDATE, observations).execute(o);
+        ObservationTask task = new ObservationTask(ObservationTask.Type.UPDATE, observations);
+        task.setFilter(temporalFilter);
+        task.execute(o);    
     }
 
     @Override
@@ -277,20 +297,22 @@ public class MapFragment extends Fragment implements
 
     @Override
     public void onLocationCreated(Collection<mil.nga.giat.mage.sdk.datastore.location.Location> l) {
-        new LocationTask(LocationTask.Type.ADD, locations).execute(l.toArray(new mil.nga.giat.mage.sdk.datastore.location.Location[l.size()]));
+        LocationTask task = new LocationTask(LocationTask.Type.ADD, locations);
+        task.setFilter(temporalFilter);
+        task.execute(l.toArray(new mil.nga.giat.mage.sdk.datastore.location.Location[l.size()]));  
     }
 
     @Override
     public void onLocationUpdated(mil.nga.giat.mage.sdk.datastore.location.Location l) {
-        new LocationTask(LocationTask.Type.UPDATE, locations).execute(l);        
+        LocationTask task = new LocationTask(LocationTask.Type.UPDATE, locations);
+        task.setFilter(temporalFilter);
+        task.execute(l);      
     }
 
     @Override
-    public void onLocationDeleted(String pUserLocalId) {
-        // TODO travis why userId here but Location the rest of the time
-//        new LocationTask(LocationTask.Type.DELETE, locations).execute(l);        
-    }
-    
+    public void onLocationDeleted(mil.nga.giat.mage.sdk.datastore.location.Location l) {
+        // TODO BILLY do what you do... 
+    }    
 
     @Override
     public boolean onMarkerClick(Marker marker) {
@@ -315,11 +337,17 @@ public class MapFragment extends Fragment implements
     public void onMapClick(LatLng latLng) {
         Log.i("static feature", "map clicked at: " + latLng.toString());
 
+        // how many meters away form the click can the geomerty be?
+        Double circumferenceOfEarthInMeters = 2*Math.PI*6371000;
+        //Double tileWidthAtZoomLevelAtEquatorInDegrees = 360.0/Math.pow(2.0, map.getCameraPosition().zoom);
+        Double pixelSizeInMetersAtLatitude = (circumferenceOfEarthInMeters*Math.cos(map.getCameraPosition().target.latitude * (Math.PI /180.0))) / Math.pow(2.0, map.getCameraPosition().zoom + 8.0);
+        Double tolerance = pixelSizeInMetersAtLatitude*Math.sqrt(2.0)*6.0;        
         
+        // TODO : find the 'closest' line or polygon to the click.
         Polyline polyline = null;
         for (Map.Entry<String, Collection<Polyline>> entry : featurePolylines.entrySet()) {
             for (Polyline p : entry.getValue()) {
-                if (PolyUtil.isLocationOnPath(latLng, p.getPoints(), true)) {
+                if (PolyUtil.isLocationOnPath(latLng, p.getPoints(), true, tolerance)) {
                     polyline = p;
                     break;
                 }
@@ -526,40 +554,43 @@ public class MapFragment extends Fragment implements
         }
     }
     
-    private void addFeatures(Layer layer) {
-        String layerId = layer.getId().toString();
-        
-        Log.i("static feature", "static feature layer: " + layer.getName() + " is enabled, it has " + layer.getStaticFeatures().size() + " features");
-        
-        for (StaticFeature feature : layer.getStaticFeatures()) {
-            Geometry geometry = feature.getStaticFeatureGeometry().getGeometry();
-            String type = geometry.getGeometryType();            
-            if (type.equals("Point")) {
-                MarkerOptions options = new MarkerOptions()
-                    .position(new LatLng(geometry.getCoordinate().y, geometry.getCoordinate().x))
-                    .title(layer.getName())
-                    .snippet("Temp static feature snippet");
-                Marker m = map.addMarker(options);
-                featureMarkers.get(layerId).add(m);
-            } else if (type.equals("LineString")) {
-                PolylineOptions options = new PolylineOptions();
-                for (Coordinate c : geometry.getCoordinates()) {
-                    options.add(new LatLng(c.y, c.x));
-                }
+	private void addFeatures(Layer layer) {
+		String layerId = layer.getId().toString();
 
-                Polyline p = map.addPolyline(options);
-                featurePolylines.get(layerId).add(p);
-            } else if (type.equals("Polygon")) {
-                PolygonOptions options = new PolygonOptions();
-                for (Coordinate c : geometry.getCoordinates()) {
-                    options.add(new LatLng(c.y, c.x));
-                }
-                
-                Polygon p = map.addPolygon(options);
-                featurePolygons.get(layerId).add(p);
-            }
-        }
-    }
+		Log.d(LOG_NAME, "static feature layer: " + layer.getName() + " is enabled, it has " + layer.getStaticFeatures().size() + " features");
+
+		// TODO : use html markup in an info window instead of a snippet?
+		for (StaticFeature feature : layer.getStaticFeatures()) {
+			Geometry geometry = feature.getStaticFeatureGeometry().getGeometry();
+			Map<String, StaticFeatureProperty> properties = feature.getPropertiesMap();
+			String name = properties.get("name") != null ? properties.get("name").getValue() : "Unknown";
+			String type = geometry.getGeometryType();
+			if (type.equals("Point")) {
+				MarkerOptions options = new MarkerOptions().position(new LatLng(geometry.getCoordinate().y, geometry.getCoordinate().x)).title(layer.getName()).snippet(name);
+				Marker m = map.addMarker(options);
+				featureMarkers.get(layerId).add(m);
+			} else if (type.equals("LineString")) {
+				String color = properties.get("stylelinestylecolorrgb").getValue();
+				PolylineOptions options = new PolylineOptions().color(Color.parseColor(color));
+				for (Coordinate coordinate : geometry.getCoordinates()) {
+					options.add(new LatLng(coordinate.y, coordinate.x));
+				}
+
+				Polyline p = map.addPolyline(options);
+				featurePolylines.get(layerId).add(p);
+			} else if (type.equals("Polygon")) {
+				String color = properties.get("stylepolystylecolorrgb").getValue();
+				int c = Color.parseColor(color);
+				PolygonOptions options = new PolygonOptions().fillColor(c).strokeColor(c);
+				for (Coordinate coordinate : geometry.getCoordinates()) {
+					options.add(new LatLng(coordinate.y, coordinate.x));
+				}
+
+				Polygon p = map.addPolygon(options);
+				featurePolygons.get(layerId).add(p);
+			}
+		}
+	}
     
     private void removeFeatures(String layerId) {
         for (Marker m : featureMarkers.remove(layerId)) {
@@ -618,11 +649,23 @@ public class MapFragment extends Fragment implements
 	@Override
 	public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
 		if (getResources().getString(R.string.activeTimeFilterKey).equalsIgnoreCase(key)) {
-			updateTimeFilter(sharedPreferences.getInt(key, 0));
+		    observations.clear();
+	        ObservationLoadTask observationLoad = new ObservationLoadTask(getActivity(), observations);
+	        observationLoad.setFilter(getTemporalFilter());
+	        observationLoad.executeOnExecutor(executor);
+	        
+	        locations.clear();
+            LocationLoadTask locationLoad = new LocationLoadTask(getActivity(), locations);
+            locationLoad.setFilter(getTemporalFilter());
+            locationLoad.executeOnExecutor(executor);
 		}
 	}
 	
-	private void updateTimeFilter(int timeFilter) {
+	private Filter<Temporal> getTemporalFilter() {
+	    int timeFilter = preferences.getInt(getResources().getString(R.string.activeTimeFilterKey), R.id.none_rb);
+	    
+	    Filter<Temporal> filter = null;
+	    
 		Calendar c = Calendar.getInstance();
 		String title = null;
 		switch (timeFilter) {
@@ -661,12 +704,9 @@ public class MapFragment extends Fragment implements
 		    Date start = c.getTime();
 		    Date end = null;
 		    
-		    observations.setFilters(Collections.<Filter<Observation>>singletonList(new ObservationDateTimeFilter(start, end)));
-	        locations.setFilters(Collections.<Filter<mil.nga.giat.mage.sdk.datastore.location.Location>>singletonList(new LocationDateTimeFilter(start, end)));
-		} else {
-		    // clear filters
-		    observations.setFilters(Collections.<Filter<Observation>>emptyList());
-	        locations.setFilters(Collections.<Filter<mil.nga.giat.mage.sdk.datastore.location.Location>>emptyList());
+		    filter = new DateTimeFilter(start, end);
 		}
+		
+		return filter;
 	}
 }

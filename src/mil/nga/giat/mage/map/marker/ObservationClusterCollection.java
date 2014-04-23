@@ -1,10 +1,10 @@
 package mil.nga.giat.mage.map.marker;
 
 import java.util.Collection;
+import java.util.Date;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import mil.nga.giat.mage.filter.Filter;
 import mil.nga.giat.mage.map.marker.ObservationClusterCollection.ObservationClusterItem;
 import mil.nga.giat.mage.observation.ObservationViewActivity;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
@@ -22,7 +22,7 @@ import com.google.maps.android.clustering.algo.GridBasedAlgorithm;
 import com.google.maps.android.clustering.algo.PreCachingAlgorithmDecorator;
 import com.vividsolutions.jts.geom.Point;
 
-public class ObservationClusterCollection implements ObservationCollection, OnClusterItemClickListener<ObservationClusterItem> {
+public class ObservationClusterCollection implements PointCollection<Observation>, OnClusterItemClickListener<ObservationClusterItem> {
 
     private Context context;
     
@@ -30,6 +30,8 @@ public class ObservationClusterCollection implements ObservationCollection, OnCl
     private Map<Long, ObservationClusterItem> items = new ConcurrentHashMap<Long, ObservationClusterItem>();
 
     private ClusterManager<ObservationClusterItem> clusterManager;
+    
+    private Date latestObservationDate = new Date(0);
 
     public ObservationClusterCollection(Context context, GoogleMap map) {
         this.context = context;
@@ -47,6 +49,10 @@ public class ObservationClusterCollection implements ObservationCollection, OnCl
         observations.put(o.getId(), o);
         clusterManager.addItem(item);
         clusterManager.cluster();
+        
+        if (o.getLastModified().after(latestObservationDate)) {
+            latestObservationDate = o.getLastModified();
+        }
     }
 
     @Override
@@ -65,14 +71,9 @@ public class ObservationClusterCollection implements ObservationCollection, OnCl
         System.out.println("DONE clustering " + all.size() + " observations");
 
     }
-
-    @Override
-    public Collection<Observation> getObservations() {
-        return observations.values();
-    }
     
     @Override
-    public void setVisible(boolean visible) {
+    public void setVisibility(boolean visible) {
         // TODO not even sure what to do here with ClusterItem
         // its not a GoogleMap marker so you cannot hide it
     }
@@ -131,13 +132,7 @@ public class ObservationClusterCollection implements ObservationCollection, OnCl
     }
 
     @Override
-    public void setFilters(Collection<Filter<Observation>> filters) {
-        // TODO Auto-generated method stub
-    }
-
-    @Override
-    public void setObservationVisibility(Observation observation, boolean visible) {
-        // TODO Auto-generated method stub
-        
+    public Date getLatestDate() {
+        return latestObservationDate;
     }
 }

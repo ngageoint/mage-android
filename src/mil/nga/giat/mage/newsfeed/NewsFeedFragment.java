@@ -80,11 +80,8 @@ public class NewsFeedFragment extends Fragment implements IObservationEventListe
 			lv.setAdapter(adapter);
 			lv.setOnItemClickListener(this);
 
-			try {
-				ObservationHelper.getInstance(getActivity().getApplicationContext()).addListener(this);
-			} catch (ObservationException oe) {
-				oe.printStackTrace();
-			}
+			ObservationHelper.getInstance(getActivity().getApplicationContext()).addListener(this);
+
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
