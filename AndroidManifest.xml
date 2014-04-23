@@ -180,6 +180,14 @@
 		<service
 		    android:name="mil.nga.giat.mage.sdk.fetch.ObservationFetchIntentService"
 		    android:exported="false" />
+		
+		<receiver
+		    android:name="mil.nga.giat.mage.sdk.fetch.LocationFetchAlarmReciever">
+		</receiver>
+		
+		<service
+		    android:name="mil.nga.giat.mage.sdk.fetch.LocationServerFetchIntentService"
+		    android:exported="false" />
 
         <meta-data
             android:name="com.google.android.maps.v2.API_KEY"
