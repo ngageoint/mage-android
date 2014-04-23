@@ -30,6 +30,7 @@ import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
 import mil.nga.giat.mage.sdk.datastore.staticfeature.StaticFeature;
 import mil.nga.giat.mage.sdk.datastore.staticfeature.StaticFeatureHelper;
+import mil.nga.giat.mage.sdk.datastore.staticfeature.StaticFeatureProperty;
 import mil.nga.giat.mage.sdk.event.ILocationEventListener;
 import mil.nga.giat.mage.sdk.event.IObservationEventListener;
 import mil.nga.giat.mage.sdk.event.IStaticFeatureEventListener;
@@ -41,6 +42,7 @@ import android.app.Fragment;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
+import android.graphics.Color;
 import android.location.Location;
 import android.location.LocationListener;
 import android.os.Bundle;
@@ -95,6 +97,8 @@ public class MapFragment extends Fragment implements
         ILocationEventListener,
         IStaticFeatureEventListener {
 
+	private static final String LOG_NAME = MapFragment.class.getName();
+	
     private MAGE mage;
     private MapView mapView;
     private GoogleMap map;
@@ -315,11 +319,17 @@ public class MapFragment extends Fragment implements
     public void onMapClick(LatLng latLng) {
         Log.i("static feature", "map clicked at: " + latLng.toString());
 
+        // how many meters away form the click can the geomerty be?
+        Double circumferenceOfEarthInMeters = 2*Math.PI*6371000;
+        //Double tileWidthAtZoomLevelAtEquatorInDegrees = 360.0/Math.pow(2.0, map.getCameraPosition().zoom);
+        Double pixelSizeInMetersAtLatitude = (circumferenceOfEarthInMeters*Math.cos(map.getCameraPosition().target.latitude * (Math.PI /180.0))) / Math.pow(2.0, map.getCameraPosition().zoom + 8.0);
+        Double tolerance = pixelSizeInMetersAtLatitude*Math.sqrt(2.0)*6.0;        
         
+        // TODO : find the 'closest' line or polygon to the click.
         Polyline polyline = null;
         for (Map.Entry<String, Collection<Polyline>> entry : featurePolylines.entrySet()) {
             for (Polyline p : entry.getValue()) {
-                if (PolyUtil.isLocationOnPath(latLng, p.getPoints(), true)) {
+                if (PolyUtil.isLocationOnPath(latLng, p.getPoints(), true, tolerance)) {
                     polyline = p;
                     break;
                 }
@@ -526,40 +536,43 @@ public class MapFragment extends Fragment implements
         }
     }
     
-    private void addFeatures(Layer layer) {
-        String layerId = layer.getId().toString();
-        
-        Log.i("static feature", "static feature layer: " + layer.getName() + " is enabled, it has " + layer.getStaticFeatures().size() + " features");
-        
-        for (StaticFeature feature : layer.getStaticFeatures()) {
-            Geometry geometry = feature.getStaticFeatureGeometry().getGeometry();
-            String type = geometry.getGeometryType();            
-            if (type.equals("Point")) {
-                MarkerOptions options = new MarkerOptions()
-                    .position(new LatLng(geometry.getCoordinate().y, geometry.getCoordinate().x))
-                    .title(layer.getName())
-                    .snippet("Temp static feature snippet");
-                Marker m = map.addMarker(options);
-                featureMarkers.get(layerId).add(m);
-            } else if (type.equals("LineString")) {
-                PolylineOptions options = new PolylineOptions();
-                for (Coordinate c : geometry.getCoordinates()) {
-                    options.add(new LatLng(c.y, c.x));
-                }
+	private void addFeatures(Layer layer) {
+		String layerId = layer.getId().toString();
 
-                Polyline p = map.addPolyline(options);
-                featurePolylines.get(layerId).add(p);
-            } else if (type.equals("Polygon")) {
-                PolygonOptions options = new PolygonOptions();
-                for (Coordinate c : geometry.getCoordinates()) {
-                    options.add(new LatLng(c.y, c.x));
-                }
-                
-                Polygon p = map.addPolygon(options);
-                featurePolygons.get(layerId).add(p);
-            }
-        }
-    }
+		Log.d(LOG_NAME, "static feature layer: " + layer.getName() + " is enabled, it has " + layer.getStaticFeatures().size() + " features");
+
+		// TODO : use html markup in an info window instead of a snippet?
+		for (StaticFeature feature : layer.getStaticFeatures()) {
+			Geometry geometry = feature.getStaticFeatureGeometry().getGeometry();
+			Map<String, StaticFeatureProperty> properties = feature.getPropertiesMap();
+			String name = properties.get("name") != null ? properties.get("name").getValue() : "Unknown";
+			String type = geometry.getGeometryType();
+			if (type.equals("Point")) {
+				MarkerOptions options = new MarkerOptions().position(new LatLng(geometry.getCoordinate().y, geometry.getCoordinate().x)).title(layer.getName()).snippet(name);
+				Marker m = map.addMarker(options);
+				featureMarkers.get(layerId).add(m);
+			} else if (type.equals("LineString")) {
+				String color = properties.get("stylelinestylecolorrgb").getValue();
+				PolylineOptions options = new PolylineOptions().color(Color.parseColor(color));
+				for (Coordinate coordinate : geometry.getCoordinates()) {
+					options.add(new LatLng(coordinate.y, coordinate.x));
+				}
+
+				Polyline p = map.addPolyline(options);
+				featurePolylines.get(layerId).add(p);
+			} else if (type.equals("Polygon")) {
+				String color = properties.get("stylepolystylecolorrgb").getValue();
+				int c = Color.parseColor(color);
+				PolygonOptions options = new PolygonOptions().fillColor(c).strokeColor(c);
+				for (Coordinate coordinate : geometry.getCoordinates()) {
+					options.add(new LatLng(coordinate.y, coordinate.x));
+				}
+
+				Polygon p = map.addPolygon(options);
+				featurePolygons.get(layerId).add(p);
+			}
+		}
+	}
     
     private void removeFeatures(String layerId) {
         for (Marker m : featureMarkers.remove(layerId)) {
