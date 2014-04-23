@@ -11,19 +11,17 @@ import com.google.android.gms.maps.GoogleMap.OnMarkerClickListener;
 
 public interface ObservationCollection extends OnCameraChangeListener, OnMarkerClickListener {
     public void add(Observation observation);
-    
     public void addAll(Collection<Observation> observations);
-    
-    public Collection<Observation> getObservations();
-
     public void remove(Observation observation);
     
-    public void setVisible(boolean visible);
-    public void setObservationVisibility(Observation observation, boolean visible);
+    public Collection<Observation> getObservations();
+    
+    public void setVisibility(boolean visible);
     
     public Date getLatestObservationDate();
     
-    public void clear();
+    public void addFilter(Filter<Observation> filter);
+    public void removeFilters();
     
-    public void setFilters(Collection<Filter<Observation>> filters);
+    public void clear();
 }

@@ -4,7 +4,7 @@ import java.util.Date;
 
 import mil.nga.giat.mage.sdk.datastore.location.Location;
 
-public class LocationDateTimeFilter implements Filter<Location> {
+public class LocationDateTimeFilter  {
     Date start;
     Date end;
     
@@ -13,7 +13,7 @@ public class LocationDateTimeFilter implements Filter<Location> {
         this.end = end;
     }
 
-    @Override
+    
     public boolean passesFilter(Location location) {
         return (start == null || location.getLastModified().after(start) && 
                (end == null || location.getLastModified().before(end)));

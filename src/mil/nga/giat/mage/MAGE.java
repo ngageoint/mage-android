@@ -7,8 +7,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-import com.bumptech.glide.Glide;
-
 import mil.nga.giat.mage.file.Storage;
 import mil.nga.giat.mage.file.Storage.StorageType;
 import mil.nga.giat.mage.map.CacheOverlay;
@@ -16,7 +14,6 @@ import mil.nga.giat.mage.sdk.datastore.layer.Layer;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
 import mil.nga.giat.mage.sdk.event.IObservationEventListener;
-import mil.nga.giat.mage.sdk.exceptions.ObservationException;
 import mil.nga.giat.mage.sdk.fetch.LocationServerFetchAsyncTask;
 import mil.nga.giat.mage.sdk.fetch.ObservationServerFetchAsyncTask;
 import mil.nga.giat.mage.sdk.fetch.StaticFeatureServerFetch;
@@ -33,6 +30,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.util.Log;
+
+import com.bumptech.glide.Glide;
 
 public class MAGE extends Application implements IObservationEventListener {
 
@@ -126,12 +125,7 @@ public class MAGE extends Application implements IObservationEventListener {
     }
     
     public void onLogin() {
-    	try {
-			ObservationHelper.getInstance(this).addListener(this);
-		} catch (ObservationException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+        ObservationHelper.getInstance(this).addListener(this);
     	scheduleAlarms();
     }
     

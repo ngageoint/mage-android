@@ -3,22 +3,18 @@ package mil.nga.giat.mage.map.marker;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Date;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import mil.nga.giat.mage.R;
-import mil.nga.giat.mage.filter.Filter;
 import mil.nga.giat.mage.sdk.datastore.location.Location;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.utils.DateUtility;
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.os.AsyncTask;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -38,11 +34,10 @@ public class LocationMarkerCollection implements OnMarkerClickListener {
 
     private GoogleMap map;
     private Context context;
-    private Collection<Filter<Location>> filters = new ArrayList<Filter<Location>>();
     
     private InfoWindowAdapter infoWindowAdpater = new LocationInfoWindowAdapter();
 
-    private boolean collectionVisible = true;
+    private boolean visible = true;
 
     private Map<Long, Marker> locationIdToMarker = new ConcurrentHashMap<Long, Marker>();
     private Map<String, Location> markerIdToLocation = new ConcurrentHashMap<String, Location>();
@@ -63,7 +58,7 @@ public class LocationMarkerCollection implements OnMarkerClickListener {
         MarkerOptions options = new MarkerOptions()
             .position(new LatLng(point.getY(), point.getX()))
             .icon(LocationBitmapFactory.bitmapDescriptor(context, l))
-            .visible(isLocationVisible(l));
+            .visible(visible);
 
         Marker marker = markerCollection.addMarker(options);
 
@@ -81,19 +76,18 @@ public class LocationMarkerCollection implements OnMarkerClickListener {
         return markerIdToLocation.values();
     }
 
-    public void setVisible(boolean collectionVisible) {
-        if (this.collectionVisible == collectionVisible)
+    public void setVisible(boolean visible) {
+        if (this.visible == visible)
             return;
         
-        this.collectionVisible = collectionVisible;
+        this.visible = visible;
         for (Marker m : locationIdToMarker.values()) {
-            Location l = markerIdToLocation.get(m.getId());
-            m.setVisible(isLocationVisible(l));
+            m.setVisible(visible);
         }
     }
 
     public void setLocationVisibility(Location o, boolean visible) {        
-        locationIdToMarker.get(o.getId()).setVisible(this.collectionVisible && visible);
+        locationIdToMarker.get(o.getId()).setVisible(this.visible && visible);
     }
 
     public void remove(Location l) {
@@ -119,29 +113,6 @@ public class LocationMarkerCollection implements OnMarkerClickListener {
         locationIdToMarker.clear();
         markerIdToLocation.clear();
         markerCollection.clear();
-    }
-
-    public void setFilters(Collection<Filter<Location>> filters) {
-        this.filters = filters;
-
-        // re-filter based on new filter
-        new FilterLocationsTask().execute();
-    }
-
-    private boolean isLocationVisible(Location l) {
-        boolean isVisible = collectionVisible;
-
-        // Only check filter if the collection is visible
-        if (isVisible) {
-            for (Filter<Location> filter : filters) {
-                if (!filter.passesFilter(l)) {
-                    isVisible = false;
-                    break;
-                }
-            }
-        }
-
-        return isVisible;
     }
     
     private class LocationInfoWindowAdapter implements InfoWindowAdapter {
@@ -184,25 +155,6 @@ public class LocationMarkerCollection implements OnMarkerClickListener {
         @Override
         public View getInfoWindow(Marker marker) {           
             return null;  // Use default info window for now
-        }
-    }
-
-    private class FilterLocationsTask extends AsyncTask<Void, Map<Location, Boolean>, Void> {
-
-        @Override
-        protected Void doInBackground(Void... params) {
-            for (Location l : markerIdToLocation.values()) {
-                publishProgress(Collections.<Location, Boolean> singletonMap(l, isLocationVisible(l)));
-            }
-
-            return null;
-        }
-
-        @Override
-        protected void onProgressUpdate(Map<Location, Boolean>... locations) {
-            for (Map.Entry<Location, Boolean> entry : locations[0].entrySet()) {
-                LocationMarkerCollection.this.setLocationVisibility(entry.getKey(), entry.getValue());
-            }            
         }
     }
 }

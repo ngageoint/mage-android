@@ -1,5 +1,6 @@
 package mil.nga.giat.mage.map;
 
+import mil.nga.giat.mage.filter.Filter;
 import mil.nga.giat.mage.map.marker.ObservationCollection;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import android.os.AsyncTask;
@@ -11,15 +12,22 @@ public class ObservationTask extends AsyncTask<Observation, Observation, Void> {
 
     private Type type;
     private ObservationCollection observationCollection;
+    private Filter<Observation> filter;
 
     public ObservationTask(Type type, ObservationCollection observationCollection) {
         this.type = type;
         this.observationCollection = observationCollection;
     }
+    
+    public void setFilters(Filter<Observation> filter) {
+        this.filter = filter;
+    }
 
     @Override
     protected Void doInBackground(Observation... observations) {
         for (Observation o : observations) {
+            if (filter != null && !filter.passesFilter(o)) continue;
+            
             publishProgress(o);
         }
 

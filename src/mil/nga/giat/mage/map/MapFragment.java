@@ -109,6 +109,7 @@ public class MapFragment extends Fragment implements
     private final BlockingQueue<Runnable> queue = new ArrayBlockingQueue<Runnable>(5);
     private final ThreadPoolExecutor executor = new ThreadPoolExecutor(3, 3, 10, TimeUnit.SECONDS, queue);
 
+    private Filter<Observation> observationFilter;
     private ObservationCollection observations;
     private LocationMarkerCollection locations;
 
@@ -151,7 +152,10 @@ public class MapFragment extends Fragment implements
     @Override
     public void onDestroy() {
         mapView.onDestroy();
+        map = null;
+        
         observations.clear();
+        observations = null;
 
         super.onDestroy();
     }
@@ -170,26 +174,28 @@ public class MapFragment extends Fragment implements
 
         PreferenceManager.getDefaultSharedPreferences(getActivity().getApplicationContext()).registerOnSharedPreferenceChangeListener(this);
         
-        updateMapType();
-        updateStaticFeatureLayers();
-        
-        map = mapView.getMap();
+        if (map == null) {
+            map = mapView.getMap();
+        }
         map.setOnMapClickListener(this);
         map.setOnMarkerClickListener(this);
         map.setOnMapLongClickListener(this);
         map.setOnMyLocationButtonClickListener(this);
         
-        ObservationHelper.getInstance(getActivity().getApplicationContext()).addListener(this);
+        updateMapType();
+        updateStaticFeatureLayers();
+        
+        observationFilter = getObservationFilter();
         if (observations == null) {
             observations = new ObservationMarkerCollection(getActivity(), map);
         }
-        Log.i("observation query", "BILLY observation query start execution of async task");
-        ObservationCursorTask task = new ObservationCursorTask(getActivity(), observations);
-        task.setFilter(getTimeFilter());
+        ObservationHelper.getInstance(getActivity().getApplicationContext()).addListener(this);
+        ObservationLoadTask task = new ObservationLoadTask(getActivity(), observations);
+        task.setFilter(observationFilter);
         task.executeOnExecutor(executor);
         
         boolean showObservations = preferences.getBoolean(getResources().getString(R.string.showObservationsKey), true);
-        observations.setVisible(showObservations); 
+        observations.setVisibility(showObservations); 
         
         locations = new LocationMarkerCollection(getActivity(), map);
         boolean showLocations = preferences.getBoolean(getResources().getString(R.string.showLocationsKey), true);
@@ -264,7 +270,9 @@ public class MapFragment extends Fragment implements
 
     @Override
     public void onObservationCreated(Collection<Observation> o) {        
-        new ObservationTask(ObservationTask.Type.ADD, observations).execute(o.toArray(new Observation[o.size()]));
+        ObservationTask task = new ObservationTask(ObservationTask.Type.ADD, observations);
+        task.setFilters(observationFilter);
+        task.execute(o.toArray(new Observation[o.size()]));
     }
 
     @Override
@@ -620,13 +628,14 @@ public class MapFragment extends Fragment implements
 	@Override
 	public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
 		if (getResources().getString(R.string.activeTimeFilterKey).equalsIgnoreCase(key)) {
-//			updateTimeFilter(sharedPreferences.getInt(key, 0));
-		    
-		    // TODO get filter, clear collection and re-query
+		    observations.clear();
+	        ObservationLoadTask task = new ObservationLoadTask(getActivity(), observations);
+	        task.setFilter(getObservationFilter());
+	        task.executeOnExecutor(executor);
 		}
 	}
 	
-	private Filter<Observation> getTimeFilter() {
+	private Filter<Observation> getObservationFilter() {
 	    int timeFilter = preferences.getInt(getResources().getString(R.string.activeTimeFilterKey), R.id.none_rb);
 	    
 	    Filter<Observation> filter = null;

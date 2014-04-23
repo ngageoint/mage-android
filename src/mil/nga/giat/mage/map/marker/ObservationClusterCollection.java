@@ -72,14 +72,14 @@ public class ObservationClusterCollection implements ObservationCollection, OnCl
         System.out.println("DONE clustering " + all.size() + " observations");
 
     }
-
+    
     @Override
     public Collection<Observation> getObservations() {
         return observations.values();
     }
     
     @Override
-    public void setVisible(boolean visible) {
+    public void setVisibility(boolean visible) {
         // TODO not even sure what to do here with ClusterItem
         // its not a GoogleMap marker so you cannot hide it
     }
@@ -138,18 +138,19 @@ public class ObservationClusterCollection implements ObservationCollection, OnCl
     }
 
     @Override
-    public void setFilters(Collection<Filter<Observation>> filters) {
-        // TODO Auto-generated method stub
+    public Date getLatestObservationDate() {
+        return latestObservationDate;
     }
 
     @Override
-    public void setObservationVisibility(Observation observation, boolean visible) {
+    public void addFilter(Filter<Observation> filter) {
         // TODO Auto-generated method stub
         
     }
 
     @Override
-    public Date getLatestObservationDate() {
-        return latestObservationDate;
+    public void removeFilters() {
+        // TODO Auto-generated method stub
+        
     }
 }
