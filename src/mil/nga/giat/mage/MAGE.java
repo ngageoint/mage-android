@@ -12,7 +12,7 @@ import mil.nga.giat.mage.file.Storage.StorageType;
 import mil.nga.giat.mage.map.CacheOverlay;
 import mil.nga.giat.mage.sdk.R;
 import mil.nga.giat.mage.sdk.datastore.layer.Layer;
-import mil.nga.giat.mage.sdk.fetch.LocationFetchAlarmReciever;
+import mil.nga.giat.mage.sdk.fetch.LocationFetchAlarmReceiver;
 import mil.nga.giat.mage.sdk.fetch.LocationServerFetchAsyncTask;
 import mil.nga.giat.mage.sdk.fetch.ObservationFetchAlarmReceiver;
 import mil.nga.giat.mage.sdk.fetch.StaticFeatureServerFetch;
@@ -184,8 +184,8 @@ public class MAGE extends Application {
     public void scheduleLocationFetchAlarm() {
     	long fetchFrequency = PreferenceHelper.getInstance(getApplicationContext()).getValue(R.string.locationFetchFrequencyKey, Long.class, R.string.locationFetchFrequencyDefaultValue);
     	Log.i(LOG_NAME, "Scheduling new location fetch alarm for every " + (fetchFrequency/1000) + " seconds.");
-        Intent intent = new Intent(getApplicationContext(), LocationFetchAlarmReciever.class);
-        final PendingIntent pendingIntent = PendingIntent.getBroadcast(this, LocationFetchAlarmReciever.REQUEST_CODE,
+        Intent intent = new Intent(getApplicationContext(), LocationFetchAlarmReceiver.class);
+        final PendingIntent pendingIntent = PendingIntent.getBroadcast(this, LocationFetchAlarmReceiver.REQUEST_CODE,
             intent, PendingIntent.FLAG_UPDATE_CURRENT);
         long firstMillis = System.currentTimeMillis();
         alarm.setInexactRepeating(AlarmManager.RTC, firstMillis, fetchFrequency, pendingIntent);
@@ -218,8 +218,8 @@ public class MAGE extends Application {
 	}
 	
 	private void cancelLocationFetchAlarm() {
-		Intent intent = new Intent(getApplicationContext(), LocationFetchAlarmReciever.class);
-		final PendingIntent pIntent = PendingIntent.getBroadcast(this, LocationFetchAlarmReciever.REQUEST_CODE, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+		Intent intent = new Intent(getApplicationContext(), LocationFetchAlarmReceiver.class);
+		final PendingIntent pIntent = PendingIntent.getBroadcast(this, LocationFetchAlarmReceiver.REQUEST_CODE, intent, PendingIntent.FLAG_UPDATE_CURRENT);
 		alarm.cancel(pIntent);
 	}
 

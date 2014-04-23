@@ -182,7 +182,7 @@
 		    android:exported="false" />
 		
 		<receiver
-		    android:name="mil.nga.giat.mage.sdk.fetch.LocationFetchAlarmReciever">
+		    android:name="mil.nga.giat.mage.sdk.fetch.LocationFetchAlarmReceiver">
 		</receiver>
 		
 		<service
