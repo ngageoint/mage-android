@@ -9,8 +9,9 @@ import java.util.Map;
 
 import mil.nga.giat.mage.file.Storage;
 import mil.nga.giat.mage.file.Storage.StorageType;
+import mil.nga.giat.mage.login.LoginActivity;
 import mil.nga.giat.mage.map.CacheOverlay;
-import mil.nga.giat.mage.sdk.R;
+import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.sdk.datastore.layer.Layer;
 import mil.nga.giat.mage.sdk.fetch.LocationFetchAlarmReceiver;
 import mil.nga.giat.mage.sdk.fetch.LocationServerFetchAsyncTask;
@@ -24,10 +25,13 @@ import mil.nga.giat.mage.sdk.service.AttachmentAlarmReceiver;
 import mil.nga.giat.mage.sdk.service.ObservationAlarmReceiver;
 import android.app.AlarmManager;
 import android.app.Application;
+import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.os.AsyncTask;
+import android.support.v4.app.NotificationCompat;
+import android.support.v4.app.TaskStackBuilder;
 import android.util.Log;
 
 import com.bumptech.glide.Glide;
@@ -37,6 +41,8 @@ public class MAGE extends Application {
     private static final String LOG_NAME = MAGE.class.getName();
     
     AlarmManager alarm;
+    
+    public static final int MAGE_NOTIFICATION_ID = 1414;
 
     public interface OnCacheOverlayListener {
         public void onCacheOverlay(List<CacheOverlay> cacheOverlays);
@@ -126,9 +132,10 @@ public class MAGE extends Application {
     }
     
     public void onLogin() {
+    	createNotification();
     	scheduleAlarms();
     	// Start location services
-        initLocationService();
+        initLocationService(); 
 
         // Start fetching and pushing observations and locations
         startFetching();
@@ -143,6 +150,56 @@ public class MAGE extends Application {
     	destroyFetching();
         destroyPushing();
         destroyLocationService();
+        NotificationManager notificationManager =
+                (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        notificationManager.cancel(MAGE_NOTIFICATION_ID);
+    }
+    
+    private void createNotification() {
+    	// this line is some magic for kitkat
+    	getLogoutPendingIntent().cancel();
+        
+        NotificationCompat.Builder builder =
+                new NotificationCompat.Builder(this)
+                .setSmallIcon(R.drawable.ic_launcher)
+                .setContentTitle("MAGE")
+                .setContentText("You are logged in. Slide down to logout.")
+                .setOngoing(true)
+                .setPriority(NotificationCompat.PRIORITY_MAX)
+                .addAction(R.drawable.ic_power_off_white, "Logout", getLogoutPendingIntent());
+        
+        NotificationCompat.BigTextStyle bigTextStyle = new NotificationCompat.BigTextStyle();
+        bigTextStyle.setBigContentTitle("MAGE");
+        bigTextStyle.bigText("You are logged in.  Tap to open MAGE.");
+        builder.setStyle(bigTextStyle);
+        
+        // Creates an explicit intent for an Activity in your app
+        Intent resultIntent = new Intent(this, LoginActivity.class);
+
+        // The stack builder object will contain an artificial back stack for the
+        // started Activity.
+        // This ensures that navigating backward from the Activity leads out of
+        // your application to the Home screen.
+        TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
+        // Adds the back stack for the Intent (but not the Intent itself)
+        stackBuilder.addParentStack(LoginActivity.class);
+        // Adds the Intent that starts the Activity to the top of the stack
+        stackBuilder.addNextIntent(resultIntent);
+        PendingIntent resultPendingIntent =
+                stackBuilder.getPendingIntent(
+                    0,
+                    PendingIntent.FLAG_UPDATE_CURRENT
+                );
+        builder.setContentIntent(resultPendingIntent);
+        NotificationManager notificationManager =
+            (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        notificationManager.notify(MAGE.MAGE_NOTIFICATION_ID, builder.build());
+    }
+    
+    private PendingIntent getLogoutPendingIntent() {
+    	Intent intent = new Intent(getApplicationContext(), LoginActivity.class);
+    	intent.putExtra("LOGOUT", true);
+        return PendingIntent.getActivity(getApplicationContext(), 1, intent, PendingIntent.FLAG_UPDATE_CURRENT);
     }
     
     public void scheduleAlarms() {

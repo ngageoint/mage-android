@@ -21,6 +21,8 @@ import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
 import mil.nga.giat.mage.sdk.utils.UserUtility;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.NotificationManager;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences.Editor;
@@ -30,6 +32,7 @@ import android.preference.PreferenceManager;
 import android.support.v4.app.FragmentActivity;
 import android.text.InputType;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
@@ -70,6 +73,13 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		
+		Log.i("test", "should i logout? " + getIntent().getBooleanExtra("LOGOUT", false));
+        
+        if (getIntent().getBooleanExtra("LOGOUT", false)) {
+        	UserUtility.getInstance(getApplicationContext()).clearTokenInformation();
+            ((MAGE)getApplication()).onLogout();
+        }
 		
 		// IMPORTANT: load the configuration from preferences files and server
 		PreferenceHelper preferenceHelper = PreferenceHelper.getInstance(getApplicationContext());
@@ -386,6 +396,14 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 	@Override
 	protected void onResume() {
 		super.onResume();
+		
+		Log.i("test", "should i logout? " + getIntent().getBooleanExtra("LOGOUT", false));
+        
+        if (getIntent().getBooleanExtra("LOGOUT", false)) {
+        	UserUtility.getInstance(getApplicationContext()).clearTokenInformation();
+            ((MAGE)getApplication()).onLogout();
+        }
+		
 		// TODO : populate username and password from preferences
 		showKeyboard();
 		// show form, and hide spinner
