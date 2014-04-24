@@ -49,12 +49,13 @@ public class LandingActivity extends Activity implements ListView.OnItemClickLis
     private DrawerItem mapItem;
     private boolean switchFragment;
     private DrawerItem itemToSwitchTo;
-
+    
+    
+    
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_landing);
-
         mapItem = new DrawerItem.Builder("Map").id(0).drawableId(R.drawable.ic_globe_white).fragment(new MapFragment()).build();
 
         drawerItems = new DrawerItem[] { mapItem, new DrawerItem.Builder("Observations").id(1).drawableId(R.drawable.ic_map_marker_white).fragment(new NewsFeedFragment()).build(),
