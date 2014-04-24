@@ -49,16 +49,27 @@ public class StaticFeatureLoadTask extends AsyncTask<Layer, Object, Void> {
 				MarkerOptions options = new MarkerOptions().position(new LatLng(geometry.getCoordinate().y, geometry.getCoordinate().x)).title(layer.getName()).snippet(description);
 				publishProgress(new Object[] { options, layerId, description });
 			} else if (type.equals("LineString")) {
-				String color = properties.get("stylelinestylecolorrgb").getValue();
-				PolylineOptions options = new PolylineOptions().color(Color.parseColor(color));
+				PolylineOptions options = new PolylineOptions();
+				
+				StaticFeatureProperty property = properties.get("stylelinestylecolorrgb");
+				if (property != null) {
+				    String color = property.getValue();
+				    options.color(Color.parseColor(color));
+				}
 				for (Coordinate coordinate : geometry.getCoordinates()) {
 					options.add(new LatLng(coordinate.y, coordinate.x));
 				}
 				publishProgress(new Object[] { options, layerId, description });
 			} else if (type.equals("Polygon")) {
-				String color = properties.get("stylepolystylecolorrgb").getValue();
-				int c = Color.parseColor(color);
-				PolygonOptions options = new PolygonOptions().fillColor(c).strokeColor(c);
+				PolygonOptions options = new PolygonOptions();
+				
+				StaticFeatureProperty property = properties.get("stylepolystylecolorrgb");
+				if (property != null) {
+				    String color = property.getValue();
+				    int c = Color.parseColor(color);				    
+				    options.fillColor(c).strokeColor(c);
+				}
+				
 				for (Coordinate coordinate : geometry.getCoordinates()) {
 					options.add(new LatLng(coordinate.y, coordinate.x));
 				}

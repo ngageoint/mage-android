@@ -11,8 +11,6 @@ import mil.nga.giat.mage.file.Storage;
 import mil.nga.giat.mage.file.Storage.StorageType;
 import mil.nga.giat.mage.login.LoginActivity;
 import mil.nga.giat.mage.map.CacheOverlay;
-import mil.nga.giat.mage.R;
-import mil.nga.giat.mage.sdk.datastore.layer.Layer;
 import mil.nga.giat.mage.sdk.fetch.LocationFetchAlarmReceiver;
 import mil.nga.giat.mage.sdk.fetch.LocationServerFetchAsyncTask;
 import mil.nga.giat.mage.sdk.fetch.ObservationFetchAlarmReceiver;
@@ -47,70 +45,7 @@ public class MAGE extends Application {
     public interface OnCacheOverlayListener {
         public void onCacheOverlay(List<CacheOverlay> cacheOverlays);
     }
-
-    // TODO temp interface to start testing static overlays UI
-    //
-    //
-    private List<Layer> featureOverlays = null;
-
-    public interface OnStaticLayerListener {
-        public void onStaticLayer(List<Layer> layers);
-        public void onStaticLayerLoaded(Layer layer);
-    }
-    private Collection<OnStaticLayerListener> featureOverlayListeners = new ArrayList<OnStaticLayerListener>();
     
-    public void registerStaticLayerListener(OnStaticLayerListener listener) {
-        featureOverlayListeners.add(listener);
-        if (featureOverlays != null)
-            listener.onStaticLayer(featureOverlays);
-    }
-
-    public void unregisterStaticLayerListener(OnStaticLayerListener listener) {
-        featureOverlayListeners.remove(listener);
-    }
-    
-    private void setStaticOverlays(List<Layer> featureOverlays) {
-        this.featureOverlays = featureOverlays;
-
-        for (OnStaticLayerListener listener : featureOverlayListeners) {
-            listener.onStaticLayer(featureOverlays);
-        }
-    }
-    
-    private void refreshStaticLayers() {
-        StaticOverlaysTask task = new StaticOverlaysTask();
-        task.execute();
-    }
-    
-    private class StaticOverlaysTask extends AsyncTask<Void, Void, List<Layer>> {
-        @Override
-        protected List<Layer> doInBackground(Void... params) {
-            List<Layer> overlays = new ArrayList<Layer>();
-
-//            overlays.add(new Layer("12345", "static", "Features"));
-//            overlays.add(new Layer("12345", "static", "Roads"));
-//            overlays.add(new Layer("12345", "static", "Rivers"));
-
-            try {
-                Thread.sleep(15000);
-            } catch (InterruptedException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-            }
-            
-            return overlays;
-        }
-
-        @Override
-        protected void onPostExecute(List<Layer> result) {
-            setStaticOverlays(result);
-        }
-    }
-    
-    //
-    //
-    // END temp UI code
-
     private LocationService locationService;
     private LocationServerFetchAsyncTask locationFetchTask = null;
     private LocationServerPushAsyncTask locationPushTask = null;
@@ -123,10 +58,7 @@ public class MAGE extends Application {
     public void onCreate() {
     	alarm = (AlarmManager) this.getSystemService(Context.ALARM_SERVICE);
     	Glide.get().register(URL.class, new MageUrlLoader.Factory());
-        refreshTileOverlays();
-        
-        // temp UI stuff
-        refreshStaticLayers();
+        refreshTileOverlays(); 
         
         super.onCreate();
     }
@@ -205,7 +137,7 @@ public class MAGE extends Application {
     public void scheduleAlarms() {
     	Log.i(LOG_NAME, "Scheduling alarms");
         scheduleAttachmentAlarm();
-        scheduleObservationAlarm();
+//        scheduleObservationAlarm();
         scheduleObservationFetchAlarm();
         scheduleLocationFetchAlarm();
       }
