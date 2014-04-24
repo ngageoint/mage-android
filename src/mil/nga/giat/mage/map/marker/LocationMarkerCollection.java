@@ -6,10 +6,12 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.sdk.datastore.location.Location;
+import mil.nga.giat.mage.sdk.datastore.location.LocationHelper;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.utils.DateUtility;
 import android.content.Context;
@@ -46,7 +48,7 @@ public class LocationMarkerCollection implements PointCollection<Location>, OnMa
     private Map<String, Location> markerIdToLocation = new ConcurrentHashMap<String, Location>();
 
     private MarkerManager.Collection markerCollection;
-
+    
     public LocationMarkerCollection(Context context, GoogleMap map) {
         this.context = context;
         this.map = map;
@@ -64,6 +66,8 @@ public class LocationMarkerCollection implements PointCollection<Location>, OnMa
             markerIdToLocation.remove(marker.getId());
             marker.remove();
         }
+        
+        removeOldMarkers();
         
         //TODO
         //THIS IS BAD.  WHY ARE LOCATION GEOs NULL?!?!?!
@@ -144,6 +148,25 @@ public class LocationMarkerCollection implements PointCollection<Location>, OnMa
     public Date getLatestDate() {
         return latestLocationDate;
     }
+    
+    /**
+     * Used to remove markers for locations that have been removed from the local datastore.
+     */
+    public void removeOldMarkers() {
+    	LocationHelper lh = LocationHelper.getInstance(context.getApplicationContext());
+    	Set<Long> locationIds = locationIdToMarker.keySet();
+    	for(Long locationId : locationIds) {    		    		    		
+  			Location locationExists = new Location();
+   			locationExists.setId(locationId);
+   			if(!lh.exists(locationExists)) {   				
+   				Marker marker = locationIdToMarker.remove(locationId);
+   		        if (marker != null) {
+   		            markerIdToLocation.remove(marker.getId());
+   		            marker.remove();
+   		        }   				
+   			}
+   		}   		
+   	}    	
     
     private class LocationInfoWindowAdapter implements InfoWindowAdapter {
         

@@ -16,4 +16,5 @@ public interface PointCollection<T> extends OnCameraChangeListener, OnMarkerClic
     public Date getLatestDate();
     
     public void clear();
+    
 }

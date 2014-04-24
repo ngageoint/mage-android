@@ -66,7 +66,9 @@ public class LocationLoadTask extends AsyncTask<Void, Location, Void> {
         Where<? extends Temporal, Long> where = query
                 .orderBy("last_modified", false)
                 .where()
-                .ge("last_modified", locationCollection.getLatestDate());   
+                .ge("last_modified", locationCollection.getLatestDate())
+                .and()
+                .eq("current_user", Boolean.FALSE);   
 
         if (filter != null) {
             where = filter.where(where.and());            
