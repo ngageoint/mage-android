@@ -24,6 +24,7 @@ import mil.nga.giat.mage.map.GoogleMapWrapper.OnMapPanListener;
 import mil.nga.giat.mage.map.marker.LocationMarkerCollection;
 import mil.nga.giat.mage.map.marker.ObservationMarkerCollection;
 import mil.nga.giat.mage.map.marker.PointCollection;
+import mil.nga.giat.mage.map.marker.StaticGeometryCollection;
 import mil.nga.giat.mage.map.preference.MapPreferencesActivity;
 import mil.nga.giat.mage.observation.ObservationEditActivity;
 import mil.nga.giat.mage.sdk.Temporal;
@@ -32,9 +33,7 @@ import mil.nga.giat.mage.sdk.datastore.layer.LayerHelper;
 import mil.nga.giat.mage.sdk.datastore.location.LocationHelper;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
-import mil.nga.giat.mage.sdk.datastore.staticfeature.StaticFeature;
 import mil.nga.giat.mage.sdk.datastore.staticfeature.StaticFeatureHelper;
-import mil.nga.giat.mage.sdk.datastore.staticfeature.StaticFeatureProperty;
 import mil.nga.giat.mage.sdk.event.ILocationEventListener;
 import mil.nga.giat.mage.sdk.event.IObservationEventListener;
 import mil.nga.giat.mage.sdk.event.IStaticFeatureEventListener;
@@ -46,9 +45,9 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
-import android.graphics.Color;
 import android.location.Location;
 import android.location.LocationListener;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.util.Log;
@@ -75,17 +74,12 @@ import com.google.android.gms.maps.MapsInitializer;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
-import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polygon;
-import com.google.android.gms.maps.model.PolygonOptions;
 import com.google.android.gms.maps.model.Polyline;
-import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.gms.maps.model.TileOverlay;
 import com.google.android.gms.maps.model.TileOverlayOptions;
 import com.google.android.gms.maps.model.TileProvider;
 import com.google.maps.android.PolyUtil;
-import com.vividsolutions.jts.geom.Coordinate;
-import com.vividsolutions.jts.geom.Geometry;
 
 public class MapFragment extends Fragment implements 
         OnMapClickListener,
@@ -119,15 +113,10 @@ public class MapFragment extends Fragment implements
     private Filter<Temporal> temporalFilter;
     private PointCollection<Observation> observations;
     private PointCollection<mil.nga.giat.mage.sdk.datastore.location.Location> locations;
+    private StaticGeometryCollection staticGeometryCollection;
 
     private Map<String, TileOverlay> tileOverlays = new HashMap<String, TileOverlay>();
     private Collection<String> featureIds = new ArrayList<String>();
-    private Map<String, Collection<Marker>> featureMarkers = new HashMap<String, Collection<Marker>>();
-    private Map<String, Collection<Polyline>> featurePolylines = new HashMap<String, Collection<Polyline>>();
-    private Map<String, Collection<Polygon>> featurePolygons = new HashMap<String, Collection<Polygon>>();
-
-	private Map<Polyline, String> featurePolylineDescriptions = new HashMap<Polyline, String>();
-	private Map<Polygon, String> featurePolygonDescriptions = new HashMap<Polygon, String>();
 
     private LocationService locationService;
 
@@ -169,6 +158,8 @@ public class MapFragment extends Fragment implements
         
         locations.clear();
         locations = null;
+        
+        staticGeometryCollection = null;
 
         super.onDestroy();
     }
@@ -196,6 +187,11 @@ public class MapFragment extends Fragment implements
         map.setOnMyLocationButtonClickListener(this);
         
         updateMapType();
+        
+        
+		if (staticGeometryCollection == null) {
+			staticGeometryCollection = new StaticGeometryCollection();
+		}
         updateStaticFeatureLayers();
         
         temporalFilter = getTemporalFilter();
@@ -220,8 +216,6 @@ public class MapFragment extends Fragment implements
         
         boolean showLocations = preferences.getBoolean(getResources().getString(R.string.showLocationsKey), true);
         locations.setVisibility(showLocations);
-        
-
         
         mage.registerCacheOverlayListener(this);
         StaticFeatureHelper.getInstance(getActivity().getApplicationContext()).addListener(this);
@@ -355,55 +349,36 @@ public class MapFragment extends Fragment implements
         Double tolerance = pixelSizeInMetersAtLatitude*Math.sqrt(2.0)*10.0;        
         
         // TODO : find the 'closest' line or polygon to the click.
-        Polyline polyline = null;
-        for (Map.Entry<String, Collection<Polyline>> entry : featurePolylines.entrySet()) {
-            for (Polyline p : entry.getValue()) {
-                if (PolyUtil.isLocationOnPath(latLng, p.getPoints(), true, tolerance)) {
-                    polyline = p;
-                    break;
-                }
-            }
-            
-            if (polyline != null) break;
-        }
-        if (polyline != null) {
-            // found it open a info window
-            Log.i("static feature", "static feature polyline clicked at: " + latLng.toString());
-			View markerInfoWindow = LayoutInflater.from(getActivity()).inflate(R.layout.marker_infowindow, null, false);
-			WebView webView = ((WebView) markerInfoWindow.findViewById(R.id.infowindowcontent));
-			webView.loadData(featurePolylineDescriptions.get(polyline), "text/html; charset=UTF-8", null);
-			new AlertDialog.Builder(getActivity()).setView(markerInfoWindow).setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
-				public void onClick(DialogInterface dialog, int which) {
-				}
-			}).show();
-            
-            return;
-        }
-        
-        Polygon polygon = null;
-        for (Map.Entry<String, Collection<Polygon>> entry : featurePolygons.entrySet()) {
-            for (Polygon p : entry.getValue()) {
-                if (PolyUtil.containsLocation(latLng, p.getPoints(), true)) {
-                    polygon = p;
-                    break;
-                }
-            }
-            
-            if (polygon != null) break;
-        }
-        if (polygon != null) {
-			// found it open a info window
-			Log.i("static feature", "static feature polgon clicked at: " + latLng.toString());
+		for (Polyline p : staticGeometryCollection.getPolylines()) {
+			if (PolyUtil.isLocationOnPath(latLng, p.getPoints(), true, tolerance)) {
+	            // found it open a info window
+				Log.i("static feature", "static feature polyline clicked at: " + latLng.toString());
+				View markerInfoWindow = LayoutInflater.from(getActivity()).inflate(R.layout.marker_infowindow, null, false);
+				WebView webView = ((WebView) markerInfoWindow.findViewById(R.id.infowindowcontent));
+				webView.loadData(staticGeometryCollection.getPopupHTML(p), "text/html; charset=UTF-8", null);
+				new AlertDialog.Builder(getActivity()).setView(markerInfoWindow).setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+					public void onClick(DialogInterface dialog, int which) {
+					}
+				}).show();
+	            return;
+			}
+		}
 
-			View markerInfoWindow = LayoutInflater.from(getActivity()).inflate(R.layout.marker_infowindow, null, false);
-			WebView webView = ((WebView) markerInfoWindow.findViewById(R.id.infowindowcontent));
-			webView.loadData(featurePolygonDescriptions.get(polygon), "text/html; charset=UTF-8", null);
-			new AlertDialog.Builder(getActivity()).setView(markerInfoWindow).setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
-				public void onClick(DialogInterface dialog, int which) {
-				}
-			}).show();
-            return;
-        }
+		for (Polygon p : staticGeometryCollection.getPolygons()) {
+			if (PolyUtil.containsLocation(latLng, p.getPoints(), true)) {
+				// found it open a info window
+				Log.i("static feature", "static feature polgon clicked at: " + latLng.toString());
+
+				View markerInfoWindow = LayoutInflater.from(getActivity()).inflate(R.layout.marker_infowindow, null, false);
+				WebView webView = ((WebView) markerInfoWindow.findViewById(R.id.infowindowcontent));
+				webView.loadData(staticGeometryCollection.getPopupHTML(p), "text/html; charset=UTF-8", null);
+				new AlertDialog.Builder(getActivity()).setView(markerInfoWindow).setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+					public void onClick(DialogInterface dialog, int which) {
+					}
+				}).show();
+				return;
+			}
+		}
     }
     
     @Override
@@ -541,15 +516,10 @@ public class MapFragment extends Fragment implements
     private void removeStaticFeatureLayers() {
         Set<String> selectedLayerIds = preferences.getStringSet(getResources().getString(R.string.mapFeatureOverlaysKey), Collections.<String> emptySet());
         
-        Set<String> currentLayerIds = new HashSet<String>();
-        currentLayerIds.addAll(featureMarkers.keySet());
-        currentLayerIds.addAll(featurePolylines.keySet());
-        currentLayerIds.addAll(featurePolygons.keySet());
-        
-        for (String currentLayerId : currentLayerIds) {
+        for (String currentLayerId : staticGeometryCollection.getLayers()) {
             if (!selectedLayerIds.contains(currentLayerId)) {
               featureIds.remove(currentLayerId);
-              removeFeatures(currentLayerId);
+              staticGeometryCollection.removeLayer(currentLayerId);
             }
         }
     }
@@ -566,73 +536,15 @@ public class MapFragment extends Fragment implements
     }
     
     private void onStaticFeatureLayer(Layer layer) {
-        Set<String> layers = preferences.getStringSet(getResources().getString(R.string.mapFeatureOverlaysKey), Collections.<String> emptySet());
+        Set<String> layers = PreferenceManager.getDefaultSharedPreferences(getActivity().getApplicationContext()).getStringSet(getResources().getString(R.string.mapFeatureOverlaysKey), Collections.<String> emptySet());
 
         // The user has asked for this feature layer
         String layerId = layer.getId().toString();
         if (layers.contains(layerId) && layer.isLoaded()) {
-            if (!featureIds.contains(layerId)) {                    
+            if (!featureIds.contains(layerId)) {
                 featureIds.add(layerId);
-                featureMarkers.put(layerId, new ArrayList<Marker>());
-                featurePolylines.put(layerId, new ArrayList<Polyline>());
-                featurePolygons.put(layerId, new ArrayList<Polygon>());
-                addFeatures(layer);
+                new StaticFeatureLoadTask(staticGeometryCollection, map).executeOnExecutor(executor, new Layer[]{ layer });
             }
-        }
-    }
-    
-	private void addFeatures(Layer layer) {
-		String layerId = layer.getId().toString();
-
-		Log.d(LOG_NAME, "static feature layer: " + layer.getName() + " is enabled, it has " + layer.getStaticFeatures().size() + " features");
-
-		for (StaticFeature feature : layer.getStaticFeatures()) {
-			Geometry geometry = feature.getStaticFeatureGeometry().getGeometry();
-			Map<String, StaticFeatureProperty> properties = feature.getPropertiesMap();
-			String description = properties.get("description") != null ? properties.get("description").getValue() : "Unknown";
-			String type = geometry.getGeometryType();
-			if (type.equals("Point")) {
-				MarkerOptions options = new MarkerOptions().position(new LatLng(geometry.getCoordinate().y, geometry.getCoordinate().x)).title(layer.getName()).snippet(description);
-				Marker m = map.addMarker(options);
-				featureMarkers.get(layerId).add(m);
-			} else if (type.equals("LineString")) {
-				String color = properties.get("stylelinestylecolorrgb").getValue();
-				PolylineOptions options = new PolylineOptions().color(Color.parseColor(color));
-				for (Coordinate coordinate : geometry.getCoordinates()) {
-					options.add(new LatLng(coordinate.y, coordinate.x));
-				}
-
-				Polyline p = map.addPolyline(options);
-				featurePolylines.get(layerId).add(p);
-				featurePolylineDescriptions.put(p, description);
-			} else if (type.equals("Polygon")) {
-				String color = properties.get("stylepolystylecolorrgb").getValue();
-				int c = Color.parseColor(color);
-				PolygonOptions options = new PolygonOptions().fillColor(c).strokeColor(c);
-				for (Coordinate coordinate : geometry.getCoordinates()) {
-					options.add(new LatLng(coordinate.y, coordinate.x));
-				}
-
-				Polygon p = map.addPolygon(options);
-				featurePolygons.get(layerId).add(p);
-				featurePolygonDescriptions.put(p, description);
-			}
-		}
-	}
-    
-    private void removeFeatures(String layerId) {
-        for (Marker m : featureMarkers.remove(layerId)) {
-            m.remove();
-        }
-        
-        for (Polyline p : featurePolylines.remove(layerId)) {
-        	featurePolylineDescriptions.remove(p);
-            p.remove();
-        }
-        
-        for (Polygon p : featurePolygons.remove(layerId)) {
-        	featurePolygonDescriptions.remove(p);
-            p.remove();
         }
     }
 
