@@ -40,7 +40,9 @@ import mil.nga.giat.mage.sdk.event.IObservationEventListener;
 import mil.nga.giat.mage.sdk.event.IStaticFeatureEventListener;
 import mil.nga.giat.mage.sdk.exceptions.LayerException;
 import mil.nga.giat.mage.sdk.location.LocationService;
+import android.app.AlertDialog;
 import android.app.Fragment;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
@@ -57,6 +59,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
+import android.webkit.WebView;
 import android.widget.ImageButton;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -122,6 +125,9 @@ public class MapFragment extends Fragment implements
     private Map<String, Collection<Marker>> featureMarkers = new HashMap<String, Collection<Marker>>();
     private Map<String, Collection<Polyline>> featurePolylines = new HashMap<String, Collection<Polyline>>();
     private Map<String, Collection<Polygon>> featurePolygons = new HashMap<String, Collection<Polygon>>();
+
+	private Map<Polyline, String> featurePolylineDescriptions = new HashMap<Polyline, String>();
+	private Map<Polygon, String> featurePolygonDescriptions = new HashMap<Polygon, String>();
 
     private LocationService locationService;
 
@@ -328,8 +334,13 @@ public class MapFragment extends Fragment implements
             return true;
         }
         
-        map.setInfoWindowAdapter(null);
-        marker.showInfoWindow();
+        View markerInfoWindow = LayoutInflater.from(getActivity()).inflate(R.layout.marker_infowindow, null, false);
+		WebView webView = ((WebView) markerInfoWindow.findViewById(R.id.infowindowcontent));
+		webView.loadData(marker.getSnippet(), "text/html; charset=UTF-8", null);
+		new AlertDialog.Builder(getActivity()).setView(markerInfoWindow).setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+			public void onClick(DialogInterface dialog, int which) {
+			}
+		}).show();
         return true;
     }
     
@@ -341,7 +352,7 @@ public class MapFragment extends Fragment implements
         Double circumferenceOfEarthInMeters = 2*Math.PI*6371000;
         //Double tileWidthAtZoomLevelAtEquatorInDegrees = 360.0/Math.pow(2.0, map.getCameraPosition().zoom);
         Double pixelSizeInMetersAtLatitude = (circumferenceOfEarthInMeters*Math.cos(map.getCameraPosition().target.latitude * (Math.PI /180.0))) / Math.pow(2.0, map.getCameraPosition().zoom + 8.0);
-        Double tolerance = pixelSizeInMetersAtLatitude*Math.sqrt(2.0)*6.0;        
+        Double tolerance = pixelSizeInMetersAtLatitude*Math.sqrt(2.0)*10.0;        
         
         // TODO : find the 'closest' line or polygon to the click.
         Polyline polyline = null;
@@ -358,6 +369,14 @@ public class MapFragment extends Fragment implements
         if (polyline != null) {
             // found it open a info window
             Log.i("static feature", "static feature polyline clicked at: " + latLng.toString());
+			View markerInfoWindow = LayoutInflater.from(getActivity()).inflate(R.layout.marker_infowindow, null, false);
+			WebView webView = ((WebView) markerInfoWindow.findViewById(R.id.infowindowcontent));
+			webView.loadData(featurePolylineDescriptions.get(polyline), "text/html; charset=UTF-8", null);
+			new AlertDialog.Builder(getActivity()).setView(markerInfoWindow).setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+				public void onClick(DialogInterface dialog, int which) {
+				}
+			}).show();
+            
             return;
         }
         
@@ -373,8 +392,16 @@ public class MapFragment extends Fragment implements
             if (polygon != null) break;
         }
         if (polygon != null) {
-            // found it open a info window
-            Log.i("static feature", "static feature polgon clicked at: " + latLng.toString());
+			// found it open a info window
+			Log.i("static feature", "static feature polgon clicked at: " + latLng.toString());
+
+			View markerInfoWindow = LayoutInflater.from(getActivity()).inflate(R.layout.marker_infowindow, null, false);
+			WebView webView = ((WebView) markerInfoWindow.findViewById(R.id.infowindowcontent));
+			webView.loadData(featurePolygonDescriptions.get(polygon), "text/html; charset=UTF-8", null);
+			new AlertDialog.Builder(getActivity()).setView(markerInfoWindow).setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+				public void onClick(DialogInterface dialog, int which) {
+				}
+			}).show();
             return;
         }
     }
@@ -559,14 +586,13 @@ public class MapFragment extends Fragment implements
 
 		Log.d(LOG_NAME, "static feature layer: " + layer.getName() + " is enabled, it has " + layer.getStaticFeatures().size() + " features");
 
-		// TODO : use html markup in an info window instead of a snippet?
 		for (StaticFeature feature : layer.getStaticFeatures()) {
 			Geometry geometry = feature.getStaticFeatureGeometry().getGeometry();
 			Map<String, StaticFeatureProperty> properties = feature.getPropertiesMap();
-			String name = properties.get("name") != null ? properties.get("name").getValue() : "Unknown";
+			String description = properties.get("description") != null ? properties.get("description").getValue() : "Unknown";
 			String type = geometry.getGeometryType();
 			if (type.equals("Point")) {
-				MarkerOptions options = new MarkerOptions().position(new LatLng(geometry.getCoordinate().y, geometry.getCoordinate().x)).title(layer.getName()).snippet(name);
+				MarkerOptions options = new MarkerOptions().position(new LatLng(geometry.getCoordinate().y, geometry.getCoordinate().x)).title(layer.getName()).snippet(description);
 				Marker m = map.addMarker(options);
 				featureMarkers.get(layerId).add(m);
 			} else if (type.equals("LineString")) {
@@ -578,6 +604,7 @@ public class MapFragment extends Fragment implements
 
 				Polyline p = map.addPolyline(options);
 				featurePolylines.get(layerId).add(p);
+				featurePolylineDescriptions.put(p, description);
 			} else if (type.equals("Polygon")) {
 				String color = properties.get("stylepolystylecolorrgb").getValue();
 				int c = Color.parseColor(color);
@@ -588,6 +615,7 @@ public class MapFragment extends Fragment implements
 
 				Polygon p = map.addPolygon(options);
 				featurePolygons.get(layerId).add(p);
+				featurePolygonDescriptions.put(p, description);
 			}
 		}
 	}
@@ -598,10 +626,12 @@ public class MapFragment extends Fragment implements
         }
         
         for (Polyline p : featurePolylines.remove(layerId)) {
+        	featurePolylineDescriptions.remove(p);
             p.remove();
         }
         
         for (Polygon p : featurePolygons.remove(layerId)) {
+        	featurePolygonDescriptions.remove(p);
             p.remove();
         }
     }
