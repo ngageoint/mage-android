@@ -1,7 +1,6 @@
 package mil.nga.giat.mage.map.marker;
 
 import java.text.DateFormat;
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Date;
@@ -33,6 +32,8 @@ import com.vividsolutions.jts.geom.Point;
 
 public class LocationMarkerCollection implements PointCollection<Location>, OnMarkerClickListener {
 
+	private static final String LOG_NAME = LocationMarkerCollection.class.getName();
+	
     private GoogleMap map;
     private Context context;
     private Date latestLocationDate = new Date(0);
@@ -62,6 +63,13 @@ public class LocationMarkerCollection implements PointCollection<Location>, OnMa
         if (marker != null) {
             markerIdToLocation.remove(marker.getId());
             marker.remove();
+        }
+        
+        //TODO
+        //THIS IS BAD.  WHY ARE LOCATION GEOs NULL?!?!?!
+        if(l.getLocationGeometry() == null) {        	
+        	Log.e(LOG_NAME,"This location doesn't have a geometry! " + l);
+        	return;        	
         }
         
         Point point = l.getLocationGeometry().getGeometry().getCentroid();
@@ -163,13 +171,16 @@ public class LocationMarkerCollection implements PointCollection<Location>, OnMa
             
             TextView dateView = (TextView) view.findViewById(R.id.location_date);
             String dateText = location.getPropertiesMap().get("timestamp");
-            try {
-                Date date = iso8601.parse(dateText);
-                dateText = sdf.format(date);
-            } catch (ParseException e) {
-                e.printStackTrace();
-            }
             dateView.setText(dateText);
+			try {
+				Date date = iso8601.parse(dateText);
+				dateText = sdf.format(date);
+			} 
+			catch (Exception e) {
+				Log.w(LOG_NAME, "Unable to parse date: " + dateText
+						+ ". For location: " + location, e);
+			}
+            
             
             return view;
         }
