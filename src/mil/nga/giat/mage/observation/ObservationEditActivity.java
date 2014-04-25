@@ -622,11 +622,11 @@ public class ObservationEditActivity extends Activity {
 
 			break;
 		case R.id.observation_cancel:
-			new AlertDialog.Builder(this).setTitle("Discard Changes").setMessage(R.string.cancel_edit).setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+			new AlertDialog.Builder(this).setTitle("Discard Changes").setMessage(R.string.cancel_edit).setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
 				public void onClick(DialogInterface dialog, int which) {
 					finish();
 				}
-			}).setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
+			}).setNegativeButton(R.string.no, new DialogInterface.OnClickListener() {
 				public void onClick(DialogInterface dialog, int which) {
 				}
 			}).show();
