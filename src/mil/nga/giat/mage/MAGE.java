@@ -13,11 +13,13 @@ import mil.nga.giat.mage.login.LoginActivity;
 import mil.nga.giat.mage.map.CacheOverlay;
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.sdk.datastore.layer.Layer;
+import mil.nga.giat.mage.sdk.event.IUserEventListener;
 import mil.nga.giat.mage.sdk.fetch.LocationFetchAlarmReceiver;
 import mil.nga.giat.mage.sdk.fetch.LocationServerFetchAsyncTask;
 import mil.nga.giat.mage.sdk.fetch.ObservationFetchAlarmReceiver;
 import mil.nga.giat.mage.sdk.fetch.StaticFeatureServerFetch;
 import mil.nga.giat.mage.sdk.glide.MageUrlLoader;
+import mil.nga.giat.mage.sdk.http.client.HttpClientManager;
 import mil.nga.giat.mage.sdk.location.LocationService;
 import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
 import mil.nga.giat.mage.sdk.push.LocationServerPushAsyncTask;
@@ -36,7 +38,7 @@ import android.util.Log;
 
 import com.bumptech.glide.Glide;
 
-public class MAGE extends Application {
+public class MAGE extends Application implements IUserEventListener {
 
     private static final String LOG_NAME = MAGE.class.getName();
     
@@ -128,11 +130,13 @@ public class MAGE extends Application {
         // temp UI stuff
         refreshStaticLayers();
         
+        HttpClientManager.getInstance(getApplicationContext()).addListener(this);
+        
         super.onCreate();
     }
     
     public void onLogin() {
-    	createNotification();
+    	createNotification(false);
     	scheduleAlarms();
     	// Start location services
         initLocationService(); 
@@ -155,7 +159,7 @@ public class MAGE extends Application {
         notificationManager.cancel(MAGE_NOTIFICATION_ID);
     }
     
-    private void createNotification() {
+    private void createNotification(boolean tokenExpired) {
     	// this line is some magic for kitkat
     	getLogoutPendingIntent().cancel();
         
@@ -163,14 +167,14 @@ public class MAGE extends Application {
                 new NotificationCompat.Builder(this)
                 .setSmallIcon(R.drawable.ic_launcher)
                 .setContentTitle("MAGE")
-                .setContentText("You are logged in. Slide down to logout.")
+                .setContentText(tokenExpired ? "Your token has expired, please tap to login." : "You are logged in. Slide down to logout.")
                 .setOngoing(true)
                 .setPriority(NotificationCompat.PRIORITY_MAX)
                 .addAction(R.drawable.ic_power_off_white, "Logout", getLogoutPendingIntent());
         
         NotificationCompat.BigTextStyle bigTextStyle = new NotificationCompat.BigTextStyle();
         bigTextStyle.setBigContentTitle("MAGE");
-        bigTextStyle.bigText("You are logged in.  Tap to open MAGE.");
+        bigTextStyle.bigText(tokenExpired ? "Your token has expired, please tap to login." : "You are logged in.  Tap to open MAGE.");
         builder.setStyle(bigTextStyle);
         
         // Creates an explicit intent for an Activity in your app
@@ -411,5 +415,19 @@ public class MAGE extends Application {
 		};
 		
 		new Thread(runnable).start();
+	}
+
+	@Override
+	public void onError(Throwable error) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void onTokenExpired() {
+		cancelAlarms();
+    	destroyFetching();
+        destroyPushing();
+		createNotification(true);
 	}
 }

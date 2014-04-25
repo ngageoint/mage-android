@@ -1,5 +1,6 @@
 package mil.nga.giat.mage.disclaimer;
 
+import mil.nga.giat.mage.MAGE;
 import mil.nga.giat.mage.R;
 import android.content.Intent;
 import android.os.Bundle;
@@ -16,6 +17,7 @@ public class DisclaimerActivity extends FragmentActivity {
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
 		setContentView(R.layout.activity_disclaimer);
 		getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
+		((MAGE) getApplication()).onLogout();
 	}
 
 	public void agree(View view) {
