@@ -192,7 +192,6 @@ public class LocationMarkerCollection implements PointCollection<Location>, OnMa
             
             TextView dateView = (TextView) view.findViewById(R.id.location_date);
             String dateText = location.getPropertiesMap().get("timestamp");
-            dateView.setText(dateText);
 			try {
 				Date date = iso8601.parse(dateText);
 				dateText = sdf.format(date);
@@ -201,7 +200,7 @@ public class LocationMarkerCollection implements PointCollection<Location>, OnMa
 				Log.w(LOG_NAME, "Unable to parse date: " + dateText
 						+ ". For location: " + location, e);
 			}
-            
+			dateView.setText(dateText);
             
             return view;
         }
