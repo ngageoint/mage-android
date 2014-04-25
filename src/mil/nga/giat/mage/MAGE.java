@@ -137,7 +137,7 @@ public class MAGE extends Application {
     public void scheduleAlarms() {
     	Log.i(LOG_NAME, "Scheduling alarms");
         scheduleAttachmentAlarm();
-//        scheduleObservationAlarm();
+        scheduleObservationAlarm();
         scheduleObservationFetchAlarm();
         scheduleLocationFetchAlarm();
       }
