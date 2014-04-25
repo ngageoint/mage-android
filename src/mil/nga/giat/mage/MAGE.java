@@ -11,16 +11,22 @@ import mil.nga.giat.mage.file.Storage;
 import mil.nga.giat.mage.file.Storage.StorageType;
 import mil.nga.giat.mage.login.LoginActivity;
 import mil.nga.giat.mage.map.CacheOverlay;
+import mil.nga.giat.mage.R;
+import mil.nga.giat.mage.sdk.event.IUserEventListener;
 import mil.nga.giat.mage.sdk.fetch.LocationFetchAlarmReceiver;
-import mil.nga.giat.mage.sdk.fetch.LocationServerFetchAsyncTask;
+import mil.nga.giat.mage.sdk.fetch.LocationServerFetchIntentService;
 import mil.nga.giat.mage.sdk.fetch.ObservationFetchAlarmReceiver;
+import mil.nga.giat.mage.sdk.fetch.ObservationFetchIntentService;
 import mil.nga.giat.mage.sdk.fetch.StaticFeatureServerFetch;
 import mil.nga.giat.mage.sdk.glide.MageUrlLoader;
+import mil.nga.giat.mage.sdk.http.client.HttpClientManager;
 import mil.nga.giat.mage.sdk.location.LocationService;
 import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
 import mil.nga.giat.mage.sdk.push.LocationServerPushAsyncTask;
 import mil.nga.giat.mage.sdk.service.AttachmentAlarmReceiver;
+import mil.nga.giat.mage.sdk.service.AttachmentIntentService;
 import mil.nga.giat.mage.sdk.service.ObservationAlarmReceiver;
+import mil.nga.giat.mage.sdk.service.ObservationIntentService;
 import android.app.AlarmManager;
 import android.app.Application;
 import android.app.NotificationManager;
@@ -34,7 +40,7 @@ import android.util.Log;
 
 import com.bumptech.glide.Glide;
 
-public class MAGE extends Application {
+public class MAGE extends Application implements IUserEventListener {
 
     private static final String LOG_NAME = MAGE.class.getName();
     
@@ -47,7 +53,6 @@ public class MAGE extends Application {
     }
     
     private LocationService locationService;
-    private LocationServerFetchAsyncTask locationFetchTask = null;
     private LocationServerPushAsyncTask locationPushTask = null;
     private List<CacheOverlay> cacheOverlays = null;
     private Collection<OnCacheOverlayListener> cacheOverlayListeners = new ArrayList<OnCacheOverlayListener>();
@@ -60,11 +65,13 @@ public class MAGE extends Application {
     	Glide.get().register(URL.class, new MageUrlLoader.Factory());
         refreshTileOverlays(); 
         
+        HttpClientManager.getInstance(getApplicationContext()).addListener(this);
+        
         super.onCreate();
     }
     
     public void onLogin() {
-    	createNotification();
+    	createNotification(false);
     	scheduleAlarms();
     	// Start location services
         initLocationService(); 
@@ -87,7 +94,7 @@ public class MAGE extends Application {
         notificationManager.cancel(MAGE_NOTIFICATION_ID);
     }
     
-    private void createNotification() {
+    private void createNotification(boolean tokenExpired) {
     	// this line is some magic for kitkat
     	getLogoutPendingIntent().cancel();
         
@@ -95,14 +102,14 @@ public class MAGE extends Application {
                 new NotificationCompat.Builder(this)
                 .setSmallIcon(R.drawable.ic_launcher)
                 .setContentTitle("MAGE")
-                .setContentText("You are logged in. Slide down to logout.")
+                .setContentText(tokenExpired ? "Your token has expired, please tap to login." : "You are logged in. Slide down to logout.")
                 .setOngoing(true)
                 .setPriority(NotificationCompat.PRIORITY_MAX)
                 .addAction(R.drawable.ic_power_off_white, "Logout", getLogoutPendingIntent());
         
         NotificationCompat.BigTextStyle bigTextStyle = new NotificationCompat.BigTextStyle();
         bigTextStyle.setBigContentTitle("MAGE");
-        bigTextStyle.bigText("You are logged in.  Tap to open MAGE.");
+        bigTextStyle.bigText(tokenExpired ? "Your token has expired, please tap to login." : "You are logged in.  Tap to open MAGE.");
         builder.setStyle(bigTextStyle);
         
         // Creates an explicit intent for an Activity in your app
@@ -190,26 +197,35 @@ public class MAGE extends Application {
 	private void cancelAttachmentAlarm() {
 		Intent intent = new Intent(getApplicationContext(), AttachmentAlarmReceiver.class);
 		final PendingIntent pIntent = PendingIntent.getBroadcast(this, AttachmentAlarmReceiver.REQUEST_CODE, intent, PendingIntent.FLAG_UPDATE_CURRENT);
-		
 		alarm.cancel(pIntent);
+		
+		Intent attachmentIntent = new Intent(this, AttachmentIntentService.class);
+		this.stopService(attachmentIntent);
 	}
 	
 	private void cancelObservationAlarm() {
 		Intent intent = new Intent(getApplicationContext(), ObservationAlarmReceiver.class);
 		final PendingIntent pIntent = PendingIntent.getBroadcast(this, ObservationAlarmReceiver.REQUEST_CODE, intent, PendingIntent.FLAG_UPDATE_CURRENT);
 		alarm.cancel(pIntent);
+		
+		Intent intentService = new Intent(this, ObservationIntentService.class);
+		this.stopService(intentService);
 	}
 	
 	private void cancelObservationFetchAlarm() {
 		Intent intent = new Intent(getApplicationContext(), ObservationFetchAlarmReceiver.class);
 		final PendingIntent pIntent = PendingIntent.getBroadcast(this, ObservationFetchAlarmReceiver.REQUEST_CODE, intent, PendingIntent.FLAG_UPDATE_CURRENT);
 		alarm.cancel(pIntent);
+		Intent intentService = new Intent(this, ObservationFetchIntentService.class);
+		this.stopService(intentService);
 	}
 	
 	private void cancelLocationFetchAlarm() {
 		Intent intent = new Intent(getApplicationContext(), LocationFetchAlarmReceiver.class);
 		final PendingIntent pIntent = PendingIntent.getBroadcast(this, LocationFetchAlarmReceiver.REQUEST_CODE, intent, PendingIntent.FLAG_UPDATE_CURRENT);
 		alarm.cancel(pIntent);
+		Intent intentService = new Intent(this, LocationServerFetchIntentService.class);
+		this.stopService(intentService);
 	}
 
     public void initLocationService() {
@@ -343,5 +359,19 @@ public class MAGE extends Application {
 		};
 		
 		new Thread(runnable).start();
+	}
+
+	@Override
+	public void onError(Throwable error) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void onTokenExpired() {
+		cancelAlarms();
+    	destroyFetching();
+        destroyPushing();
+		createNotification(true);
 	}
 }
