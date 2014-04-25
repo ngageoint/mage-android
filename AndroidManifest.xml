@@ -160,7 +160,8 @@
         </receiver>
         
         <receiver
-		    android:name="mil.nga.giat.mage.sdk.service.AttachmentAlarmReceiver">
+		    android:name="mil.nga.giat.mage.sdk.service.AttachmentAlarmReceiver"
+		    android:exported="true">
 		</receiver>
 		
 		<service
@@ -168,7 +169,8 @@
 		    android:exported="true" />
 		
 		<receiver
-		    android:name="mil.nga.giat.mage.sdk.service.ObservationAlarmReceiver">
+		    android:name="mil.nga.giat.mage.sdk.service.ObservationAlarmReceiver"
+		    android:exported="true">
 		</receiver>
 		
 		<service
@@ -176,7 +178,8 @@
 		    android:exported="true" />
 		
 		<receiver
-		    android:name="mil.nga.giat.mage.sdk.fetch.ObservationFetchAlarmReceiver">
+		    android:name="mil.nga.giat.mage.sdk.fetch.ObservationFetchAlarmReceiver"
+		    android:exported="true">
 		</receiver>
 		
 		<service
@@ -184,7 +187,8 @@
 		    android:exported="true" />
 		
 		<receiver
-		    android:name="mil.nga.giat.mage.sdk.fetch.LocationFetchAlarmReceiver">
+		    android:name="mil.nga.giat.mage.sdk.fetch.LocationFetchAlarmReceiver"
+		    android:exported="true">
 		</receiver>
 		
 		<service
