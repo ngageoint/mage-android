@@ -13,6 +13,7 @@ import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.sdk.datastore.location.Location;
 import mil.nga.giat.mage.sdk.datastore.location.LocationHelper;
 import mil.nga.giat.mage.sdk.datastore.user.User;
+import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.utils.DateUtility;
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -69,28 +70,25 @@ public class LocationMarkerCollection implements PointCollection<Location>, OnMa
         
         removeOldMarkers();
         
-        //TODO
-        //THIS IS BAD.  WHY ARE LOCATION GEOs NULL?!?!?!
-        if(l.getLocationGeometry() == null) {        	
-        	Log.e(LOG_NAME,"This location doesn't have a geometry! " + l);
-        	return;        	
-        }
-        
-        Point point = l.getLocationGeometry().getGeometry().getCentroid();
-        
-        MarkerOptions options = new MarkerOptions()
-            .position(new LatLng(point.getY(), point.getX()))
-            .icon(LocationBitmapFactory.bitmapDescriptor(context, l))
-            .visible(visible);
+        //only add markers that are NOT the current user
+		if (!UserHelper.getInstance(context.getApplicationContext()).USER_ID.equals(l.getUser().getRemoteId())) {
+		
+			Point point = l.getLocationGeometry().getGeometry().getCentroid();
 
-        marker = markerCollection.addMarker(options);
+			MarkerOptions options = new MarkerOptions()
+					.position(new LatLng(point.getY(), point.getX()))
+					.icon(LocationBitmapFactory.bitmapDescriptor(context, l))
+					.visible(visible);
 
-        locationIdToMarker.put(l.getId(), marker);
-        markerIdToLocation.put(marker.getId(), l);
-        
-        if (l.getLastModified().after(latestLocationDate)) {
-            latestLocationDate = l.getLastModified();
-        }
+			marker = markerCollection.addMarker(options);
+
+			locationIdToMarker.put(l.getId(), marker);
+			markerIdToLocation.put(marker.getId(), l);
+
+			if (l.getLastModified().after(latestLocationDate)) {
+				latestLocationDate = l.getLastModified();
+			}
+		}
     }
 
     @Override

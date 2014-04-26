@@ -7,8 +7,11 @@ import mil.nga.giat.mage.map.marker.PointCollection;
 import mil.nga.giat.mage.sdk.Temporal;
 import mil.nga.giat.mage.sdk.datastore.DaoStore;
 import mil.nga.giat.mage.sdk.datastore.location.Location;
+import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.AsyncTask;
+import android.preference.PreferenceManager;
 import android.util.Log;
 
 import com.j256.ormlite.dao.CloseableIterator;
@@ -21,10 +24,10 @@ public class LocationLoadTask extends AsyncTask<Void, Location, Void> {
     private Context context;
     private Filter<Temporal> filter;
     private PointCollection<Location> locationCollection;
-
+	    
     public LocationLoadTask(Context context, PointCollection<Location> locationCollection) {
         this.context = context.getApplicationContext();
-        this.locationCollection = locationCollection;
+        this.locationCollection = locationCollection;        
     }
        
     public void setFilter(Filter<Temporal> filter) {
@@ -68,7 +71,9 @@ public class LocationLoadTask extends AsyncTask<Void, Location, Void> {
                 .where()
                 .ge("last_modified", locationCollection.getLatestDate())
                 .and()
-                .eq("current_user", Boolean.FALSE);   
+                .eq("current_user", Boolean.FALSE)
+                .and()
+                .ne("remote_id", UserHelper.getInstance(context.getApplicationContext()).USER_ID);   
 
         if (filter != null) {
             where = filter.where(where.and());            
