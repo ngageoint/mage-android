@@ -15,6 +15,8 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.commons.lang3.StringUtils;
+
 import mil.nga.giat.mage.MAGE;
 import mil.nga.giat.mage.MAGE.OnCacheOverlayListener;
 import mil.nga.giat.mage.R;
@@ -47,7 +49,6 @@ import android.content.SharedPreferences;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.location.Location;
 import android.location.LocationListener;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.util.Log;
@@ -71,6 +72,7 @@ import com.google.android.gms.maps.GoogleMap.OnMyLocationButtonClickListener;
 import com.google.android.gms.maps.LocationSource;
 import com.google.android.gms.maps.MapView;
 import com.google.android.gms.maps.MapsInitializer;
+import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
@@ -186,8 +188,7 @@ public class MapFragment extends Fragment implements
         map.setOnMapLongClickListener(this);
         map.setOnMyLocationButtonClickListener(this);
         
-        updateMapType();
-        
+        updateMapView();
         
 		if (staticGeometryCollection == null) {
 			staticGeometryCollection = new StaticGeometryCollection();
@@ -235,6 +236,8 @@ public class MapFragment extends Fragment implements
         super.onPause();
         
         mapView.onPause();
+        
+        saveMapView();
         
         ObservationHelper.getInstance(getActivity().getApplicationContext()).removeListener(this);   
         LocationHelper.getInstance(getActivity().getApplicationContext()).removeListener(this);
@@ -311,7 +314,7 @@ public class MapFragment extends Fragment implements
 
     @Override
     public void onLocationDeleted(mil.nga.giat.mage.sdk.datastore.location.Location l) {
-        // TODO BILLY do what you do... 
+        new LocationTask(LocationTask.Type.DELETE, locations).execute(l);
     }    
 
     @Override
@@ -405,7 +408,6 @@ public class MapFragment extends Fragment implements
 
     @Override
     public boolean onMyLocationButtonClick() {
-
         if (location != null) {
             LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
             float zoom = map.getCameraPosition().zoom < 15 ? 15 : map.getCameraPosition().zoom;
@@ -431,6 +433,9 @@ public class MapFragment extends Fragment implements
     @Override
     public void activate(OnLocationChangedListener listener) {
         locationChangedListener = listener;
+        if (location != null) {
+            locationChangedListener.onLocationChanged(location);
+        }
     }
 
     @Override
@@ -445,7 +450,7 @@ public class MapFragment extends Fragment implements
     }
 
     @Override
-    public void onLocationChanged(Location location) {
+    public void onLocationChanged(Location location) {        
         this.location = location;
         if (locationChangedListener != null) {
             locationChangedListener.onLocationChanged(location);
@@ -548,12 +553,36 @@ public class MapFragment extends Fragment implements
         }
     }
 
-    private void updateMapType() {
+    private void updateMapView() {
+        // Check the map type
         int mapType = Integer.parseInt(preferences.getString(getResources().getString(R.string.baseLayerKey), "1"));
         if (mapType != this.mapType) {
             this.mapType = mapType;
             map.setMapType(this.mapType);
         }
+        
+        // Check the map location and zoom
+        String xyz = preferences.getString(getResources().getString(R.string.mapXYZKey), null);
+        if (xyz != null) {
+            String[] values = StringUtils.split(xyz, ",");
+            LatLng latLng = new LatLng(Double.valueOf(values[1]), Double.valueOf(values[0]));
+            Float zoom = Float.valueOf(values[2]);
+            map.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, zoom));                
+        }
+    }
+    
+    private void saveMapView() {
+        CameraPosition position = map.getCameraPosition();
+        
+        String xyz = new StringBuilder()
+            .append(Double.valueOf(position.target.longitude).toString()).append(",")
+            .append(Double.valueOf(position.target.latitude).toString()).append(",")
+            .append(Float.valueOf(position.zoom).toString())
+            .toString();
+        
+        SharedPreferences.Editor editor = preferences.edit();
+        editor.putString(getResources().getString(R.string.mapXYZKey), xyz);
+        editor.commit();
     }
 
 

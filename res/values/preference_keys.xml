@@ -12,6 +12,7 @@
     <string name="serverVersionMajorKey">gVersionMajor</string>
     <string name="serverVersionMinorKey">gVersionMinor</string>
     <!-- map stuff -->
+    <string name="mapXYZKey">mapXYZ</string>
     <string name="baseLayerKey">baseLayer</string>
     <string name="mapTileOverlaysKey">mapTileOverlays</string>
     <string name="mapFeatureOverlaysKey">mapFeatureOverlays</string>
