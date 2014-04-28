@@ -50,8 +50,8 @@ public class ObservationClusterCollection implements PointCollection<Observation
         clusterManager.addItem(item);
         clusterManager.cluster();
         
-        if (o.getLastModified().after(latestObservationDate)) {
-            latestObservationDate = o.getLastModified();
+        if (o.getLocalLastModified().after(latestObservationDate)) {
+            latestObservationDate = o.getLocalLastModified();
         }
     }
 

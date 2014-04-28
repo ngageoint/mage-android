@@ -220,7 +220,7 @@ public class ObservationViewActivity extends Activity {
     
     private void setupView() {
     	try {
-            o = ObservationHelper.getInstance(getApplicationContext()).readByPrimaryKey(getIntent().getLongExtra(OBSERVATION_ID, 0L));
+            o = ObservationHelper.getInstance(getApplicationContext()).read(getIntent().getLongExtra(OBSERVATION_ID, 0L));
             propertiesMap = o.getPropertiesMap();
             this.setTitle(propertiesMap.get("type").getValue());
             Geometry geo = o.getObservationGeometry().getGeometry();

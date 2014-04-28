@@ -16,7 +16,7 @@ public class ObservationPushReceiver extends BroadcastReceiver {
 		Long primaryKey = intent.getLongExtra(ObservationIntentService.OBSERVATION_ID, -1);
 		Observation o;
 		try {
-			o = ObservationHelper.getInstance(context).readByPrimaryKey(primaryKey);
+			o = ObservationHelper.getInstance(context).read(primaryKey);
 			if (o.getAttachments().size() != 0) {
 				Toast.makeText(context, "Pushed observation " + o.getId(), Toast.LENGTH_SHORT).show();
 			}

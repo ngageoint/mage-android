@@ -64,9 +64,9 @@ public class ObservationLoadTask extends AsyncTask<Void, Observation, Void> {
         Dao<Observation, Long> dao = DaoStore.getInstance(context).getObservationDao();
         QueryBuilder<Observation, Long> query = dao.queryBuilder();
         Where<? extends Temporal, Long> where = query
-                .orderBy("last_modified", false)
+                .orderBy("local_last_modified", false)
                 .where()
-                .ge("last_modified", observationCollection.getLatestDate());   
+                .ge("local_last_modified", observationCollection.getLatestDate());   
 
         if (filter != null) {
             filter.where(where.and());            

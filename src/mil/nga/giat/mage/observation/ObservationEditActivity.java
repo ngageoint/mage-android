@@ -161,7 +161,7 @@ public class ObservationEditActivity extends Activity {
 			this.setTitle("Edit Observation");
 			// this is an edit of an existing observation
 			try {
-				o = ObservationHelper.getInstance(getApplicationContext()).readByPrimaryKey(getIntent().getLongExtra(OBSERVATION_ID, 0L));
+				o = ObservationHelper.getInstance(getApplicationContext()).read(getIntent().getLongExtra(OBSERVATION_ID, 0L));
 				attachments.addAll(o.getAttachments());
 				for (Attachment a : attachments) {
 					addAttachmentToGallery(a);
@@ -606,12 +606,12 @@ public class ObservationEditActivity extends Activity {
 
 			ObservationHelper oh = ObservationHelper.getInstance(getApplicationContext());
 			try {
-				if (o.getRemoteId() == null) {
+				if (o.getId() == null) {
 					Observation newObs = oh.create(o);
 					Log.i(LOG_NAME, "Created new observation with id: " + newObs.getId());
 				} else {
 					o.setDirty(true);
-					oh.update(o, oh.read(o.getRemoteId()));
+					oh.update(o);
 					Log.i(LOG_NAME, "Updated observation with remote id: " + o.getRemoteId());
 				}
 				((MAGE)getApplication()).scheduleObservationAlarm();

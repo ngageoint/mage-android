@@ -15,8 +15,6 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.commons.lang3.StringUtils;
-
 import mil.nga.giat.mage.MAGE;
 import mil.nga.giat.mage.MAGE.OnCacheOverlayListener;
 import mil.nga.giat.mage.R;
@@ -41,6 +39,9 @@ import mil.nga.giat.mage.sdk.event.IObservationEventListener;
 import mil.nga.giat.mage.sdk.event.IStaticFeatureEventListener;
 import mil.nga.giat.mage.sdk.exceptions.LayerException;
 import mil.nga.giat.mage.sdk.location.LocationService;
+
+import org.apache.commons.lang3.StringUtils;
+
 import android.app.AlertDialog;
 import android.app.Fragment;
 import android.content.DialogInterface;
@@ -432,14 +433,17 @@ public class MapFragment extends Fragment implements
 
     @Override
     public void activate(OnLocationChangedListener listener) {
+        Log.i(LOG_NAME, "map location, activate");
         locationChangedListener = listener;
         if (location != null) {
+            Log.i(LOG_NAME, "map location, activate we have a location, let our listener know");
             locationChangedListener.onLocationChanged(location);
         }
     }
 
     @Override
     public void deactivate() {
+        Log.i(LOG_NAME, "map location, deactivate");
         locationChangedListener = null;
     }
 
@@ -450,9 +454,12 @@ public class MapFragment extends Fragment implements
     }
 
     @Override
-    public void onLocationChanged(Location location) {        
+    public void onLocationChanged(Location location) {
+        Log.i(LOG_NAME, "map location, location changed");
+        
         this.location = location;
         if (locationChangedListener != null) {
+            Log.i(LOG_NAME, "map location, location changed we have a listener let them know");
             locationChangedListener.onLocationChanged(location);
         }
 

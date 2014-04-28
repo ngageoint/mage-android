@@ -187,8 +187,8 @@ public class NewsFeedFragment extends Fragment implements IObservationEventListe
 		TextView footerTextView = (TextView)footer.findViewById(R.id.footer_text);
 		footerTextView.setText(footerText);
 		getActivity().getActionBar().setTitle(title);
-		qb.where().gt("last_modified", c.getTime());
-		qb.orderBy("last_modified", false);
+		qb.where().gt("local_last_modified", c.getTime());
+		qb.orderBy("local_last_modified", false);
 
 		return qb.prepare();
 	}
@@ -208,8 +208,8 @@ public class NewsFeedFragment extends Fragment implements IObservationEventListe
 		AndroidDatabaseResults results = (AndroidDatabaseResults) iterator.getRawResults();
 		c = results.getRawCursor();
 		if (c.moveToLast()) {
-			long oldestTime = c.getLong(c.getColumnIndex("last_modified"));
-			Log.i("test", "last modified is: " + c.getLong(c.getColumnIndex("last_modified")));
+			long oldestTime = c.getLong(c.getColumnIndex("local_last_modified"));
+			Log.i("test", "last modified is: " + c.getLong(c.getColumnIndex("local_last_modified")));
 			Log.i("test", "querying again in: " + (oldestTime - requeryTime)/60000 + " minutes");
 			if (queryUpdateHandle != null) {
 				queryUpdateHandle.cancel(true);
