@@ -32,9 +32,8 @@ import android.widget.RadioGroup;
 import android.widget.TextView;
 
 /**
- * FIXME: Currently a mock of what a landing page might look like. Could be
- * replaced entirely if need be. Menu options do exist.
- * 
+ * This is the Activity that holds other fragments. Map, feeds, etc. It 
+ * starts and stops much of the application. It also contains menus.
  * 
  */
 public class LandingActivity extends Activity implements ListView.OnItemClickListener {
