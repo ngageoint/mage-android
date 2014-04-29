@@ -614,7 +614,6 @@ public class ObservationEditActivity extends Activity {
 					oh.update(o);
 					Log.i(LOG_NAME, "Updated observation with remote id: " + o.getRemoteId());
 				}
-				((MAGE)getApplication()).scheduleObservationAlarm();
 				finish();
 			} catch (Exception e) {
 				Log.e(LOG_NAME, e.getMessage(), e);
