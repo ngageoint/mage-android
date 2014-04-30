@@ -11,6 +11,9 @@ import java.util.concurrent.TimeUnit;
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.sdk.datastore.DaoStore;
 import mil.nga.giat.mage.sdk.datastore.location.Location;
+import mil.nga.giat.mage.sdk.datastore.user.User;
+import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
+import mil.nga.giat.mage.sdk.exceptions.UserException;
 import android.app.Fragment;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
@@ -31,6 +34,7 @@ import com.j256.ormlite.dao.CloseableIterator;
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.stmt.PreparedQuery;
 import com.j256.ormlite.stmt.QueryBuilder;
+import com.j256.ormlite.stmt.Where;
 
 public class PeopleFeedFragment extends Fragment implements OnSharedPreferenceChangeListener {
     private PeopleCursorAdapter adapter;
@@ -88,7 +92,7 @@ public class PeopleFeedFragment extends Fragment implements OnSharedPreferenceCh
         qb.where().gt("_id", 0);
         // this is wrong. need to figure out how to order on nested table or
         // move the correct field up
-        qb.orderBy("last_modified", false);
+        qb.orderBy("timestamp", false);
 
         Cursor c = null;
         CloseableIterator<Location> iterator = lDao.iterator(query);
@@ -97,8 +101,8 @@ public class PeopleFeedFragment extends Fragment implements OnSharedPreferenceCh
         AndroidDatabaseResults results = (AndroidDatabaseResults) iterator.getRawResults();
         c = results.getRawCursor();
         if (c.moveToLast()) {
-            long oldestTime = c.getLong(c.getColumnIndex("last_modified"));
-            Log.i("test", "last modified is: " + c.getLong(c.getColumnIndex("last_modified")));
+            long oldestTime = c.getLong(c.getColumnIndex("timestamp"));
+            Log.i("test", "last modified is: " + c.getLong(c.getColumnIndex("timestamp")));
             Log.i("test", "querying again in: " + (oldestTime - requeryTime)/60000 + " minutes");
             if (queryUpdateHandle != null) {
                 queryUpdateHandle.cancel(true);
@@ -203,10 +207,19 @@ public class PeopleFeedFragment extends Fragment implements OnSharedPreferenceCh
         requeryTime = c.getTimeInMillis();
         TextView footerTextView = (TextView)footer.findViewById(R.id.footer_text);
         footerTextView.setText(footerText);
-        getActivity().getActionBar().setTitle(title);
-        qb.where().gt("last_modified", c.getTime()).and().eq("current_user", Boolean.FALSE).query(); 
+		getActivity().getActionBar().setTitle(title);
+		User currentUser = null;
+		try {
+			currentUser = UserHelper.getInstance(getActivity().getApplicationContext()).readCurrentUser();
+		} catch (UserException e) {
+			e.printStackTrace();
+		}
+		Where<Location, Long> where = qb.where().gt("timestamp", c.getTime());
+		if (currentUser != null) {
+			where.and().ne("user_id", currentUser.getId()).query();
+		}
 
-        qb.orderBy("last_modified", false);
+		qb.orderBy("timestamp", false);
 
         return qb.prepare();
     }

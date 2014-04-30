@@ -17,7 +17,6 @@ import mil.nga.giat.mage.sdk.datastore.DaoStore;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
 import mil.nga.giat.mage.sdk.event.IObservationEventListener;
-import mil.nga.giat.mage.sdk.exceptions.ObservationException;
 import mil.nga.giat.mage.sdk.location.LocationService;
 import android.app.Fragment;
 import android.content.Intent;
@@ -46,6 +45,7 @@ import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.stmt.PreparedQuery;
 import com.j256.ormlite.stmt.QueryBuilder;
 
+// FIXME : Figure out where to use local_last_modified and where to use last_modified!
 public class NewsFeedFragment extends Fragment implements IObservationEventListener, OnItemClickListener, OnSharedPreferenceChangeListener {
 	private NewsFeedCursorAdapter adapter;
 	private PreparedQuery<Observation> query;
@@ -187,8 +187,8 @@ public class NewsFeedFragment extends Fragment implements IObservationEventListe
 		TextView footerTextView = (TextView)footer.findViewById(R.id.footer_text);
 		footerTextView.setText(footerText);
 		getActivity().getActionBar().setTitle(title);
-		qb.where().gt("local_last_modified", c.getTime());
-		qb.orderBy("local_last_modified", false);
+		qb.where().gt("last_modified", c.getTime());
+		qb.orderBy("last_modified", false);
 
 		return qb.prepare();
 	}
@@ -199,7 +199,7 @@ public class NewsFeedFragment extends Fragment implements IObservationEventListe
 		qb.where().gt("_id", 0);
 		// this is wrong. need to figure out how to order on nested table or
 		// move the correct field up
-		qb.orderBy("last_modified", false);
+		qb.orderBy("local_last_modified", false);
 
 		Cursor c = null;
 		CloseableIterator<Observation> iterator = oDao.iterator(query);

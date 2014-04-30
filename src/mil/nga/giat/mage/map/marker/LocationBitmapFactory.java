@@ -55,7 +55,7 @@ public class LocationBitmapFactory {
         Collection<String> paths = new ArrayList<String>();
         paths.add("people");
         
-        Long interval = System.currentTimeMillis() - location.getLastModified().getTime();
+        Long interval = System.currentTimeMillis() - location.getTimestamp().getTime();
         if (interval < 600000) {  // 10 minutes
             paths.add("low");
         } else if (interval < 1800000) { // 30 minutes

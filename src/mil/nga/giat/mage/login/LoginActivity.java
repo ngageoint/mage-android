@@ -73,8 +73,6 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		
-		Log.i("test", "should i logout? " + getIntent().getBooleanExtra("LOGOUT", false));
         
         if (getIntent().getBooleanExtra("LOGOUT", false)) {
         	UserUtility.getInstance(getApplicationContext()).clearTokenInformation();
@@ -396,8 +394,6 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 	@Override
 	protected void onResume() {
 		super.onResume();
-		
-		Log.i("test", "should i logout? " + getIntent().getBooleanExtra("LOGOUT", false));
         
         if (getIntent().getBooleanExtra("LOGOUT", false)) {
         	UserUtility.getInstance(getApplicationContext()).clearTokenInformation();

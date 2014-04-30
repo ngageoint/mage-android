@@ -8,30 +8,31 @@ import mil.nga.giat.mage.sdk.Temporal;
 import com.j256.ormlite.stmt.Where;
 
 public class DateTimeFilter implements Filter<Temporal> {
-    Date start;
-    Date end;
-    
-    public DateTimeFilter(Date start, Date end) {
-        this.start = start;
-        this.end = end;
-    }
+	private Date start;
+	private Date end;
+	private String columnName;
 
-    @Override
-    public  Where<? extends Temporal, Long> where(Where<? extends Temporal, Long> where) throws SQLException {
-        if (start != null && end != null) {
-            where.between("last_modified", start, end);
-        } else if (start != null) {
-            where.ge("last_modified", start);
-        } else {
-            where.lt("last_modified", end);            
-        }
-        
-        return where;
-    }
+	public DateTimeFilter(Date start, Date end, String columnName) {
+		this.start = start;
+		this.end = end;
+		this.columnName = columnName;
+	}
 
-    @Override
-    public boolean passesFilter(Temporal t) {
-        return (start == null || t.getTimestamp().after(start) && 
-               (end == null || t.getTimestamp().before(end)));
-    }
+	@Override
+	public Where<? extends Temporal, Long> where(Where<? extends Temporal, Long> where) throws SQLException {
+		if (start != null && end != null) {
+			where.between(columnName, start, end);
+		} else if (start != null) {
+			where.ge(columnName, start);
+		} else {
+			where.lt(columnName, end);
+		}
+
+		return where;
+	}
+
+	@Override
+	public boolean passesFilter(Temporal t) {
+		return (start == null || t.getTimestamp().after(start) && (end == null || t.getTimestamp().before(end)));
+	}
 }

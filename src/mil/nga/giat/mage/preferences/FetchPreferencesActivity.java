@@ -56,7 +56,7 @@ public class FetchPreferencesActivity extends PreferenceActivity {
         @Override
         public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
             Editor editor = PreferenceManager.getDefaultSharedPreferences(getActivity()).edit();
-            editor.putBoolean("dataFetchEnabled", isChecked);
+            editor.putBoolean(getResources().getString(R.string.dataFetchEnabledKey), isChecked);
             editor.commit();
 
             updateSettings();
@@ -64,7 +64,7 @@ public class FetchPreferencesActivity extends PreferenceActivity {
         
         protected void updateSettings() {
             SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
-            boolean dataFetchEnabled = preferences.getBoolean("dataFetchEnabled", false);
+            boolean dataFetchEnabled = preferences.getBoolean(getResources().getString(R.string.dataFetchEnabledKey), false);
             fetchSwitch.setChecked(dataFetchEnabled);
 
             int count = getPreferenceScreen().getPreferenceCount();

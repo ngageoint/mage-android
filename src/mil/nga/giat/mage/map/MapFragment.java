@@ -113,7 +113,8 @@ public class MapFragment extends Fragment implements
     private final BlockingQueue<Runnable> queue = new ArrayBlockingQueue<Runnable>(5);
     private final ThreadPoolExecutor executor = new ThreadPoolExecutor(3, 3, 10, TimeUnit.SECONDS, queue);
 
-    private Filter<Temporal> temporalFilter;
+    private Filter<Temporal> observationTemporalFilter;
+    private Filter<Temporal> locationTemporalFilter;
     private PointCollection<Observation> observations;
     private PointCollection<mil.nga.giat.mage.sdk.datastore.location.Location> locations;
     private StaticGeometryCollection staticGeometryCollection;
@@ -196,13 +197,14 @@ public class MapFragment extends Fragment implements
 		}
         updateStaticFeatureLayers();
         
-        temporalFilter = getTemporalFilter();
+        observationTemporalFilter = getTemporalFilter("last_modified");
+        locationTemporalFilter = getTemporalFilter("timestamp");
         if (observations == null) {
             observations = new ObservationMarkerCollection(getActivity(), map);
         }
         ObservationHelper.getInstance(getActivity().getApplicationContext()).addListener(this);
         ObservationLoadTask observationLoad = new ObservationLoadTask(getActivity(), observations);
-        observationLoad.setFilter(temporalFilter);
+        observationLoad.setFilter(observationTemporalFilter);
         observationLoad.executeOnExecutor(executor);
         
         boolean showObservations = preferences.getBoolean(getResources().getString(R.string.showObservationsKey), true);
@@ -213,7 +215,7 @@ public class MapFragment extends Fragment implements
         }
         LocationHelper.getInstance(getActivity().getApplicationContext()).addListener(this);
         LocationLoadTask locationLoad = new LocationLoadTask(getActivity(), locations);
-        locationLoad.setFilter(temporalFilter);
+        locationLoad.setFilter(locationTemporalFilter);
         locationLoad.executeOnExecutor(executor);
         
         boolean showLocations = preferences.getBoolean(getResources().getString(R.string.showLocationsKey), true);
@@ -283,14 +285,14 @@ public class MapFragment extends Fragment implements
     @Override
     public void onObservationCreated(Collection<Observation> o) {        
         ObservationTask task = new ObservationTask(ObservationTask.Type.ADD, observations);
-        task.setFilter(temporalFilter);
+        task.setFilter(observationTemporalFilter);
         task.execute(o.toArray(new Observation[o.size()]));
     }
 
     @Override
     public void onObservationUpdated(Observation o) {
         ObservationTask task = new ObservationTask(ObservationTask.Type.UPDATE, observations);
-        task.setFilter(temporalFilter);
+        task.setFilter(observationTemporalFilter);
         task.execute(o);    
     }
 
@@ -302,14 +304,14 @@ public class MapFragment extends Fragment implements
     @Override
     public void onLocationCreated(Collection<mil.nga.giat.mage.sdk.datastore.location.Location> l) {
         LocationTask task = new LocationTask(LocationTask.Type.ADD, locations);
-        task.setFilter(temporalFilter);
+        task.setFilter(locationTemporalFilter);
         task.execute(l.toArray(new mil.nga.giat.mage.sdk.datastore.location.Location[l.size()]));  
     }
 
     @Override
     public void onLocationUpdated(mil.nga.giat.mage.sdk.datastore.location.Location l) {
         LocationTask task = new LocationTask(LocationTask.Type.UPDATE, locations);
-        task.setFilter(temporalFilter);
+        task.setFilter(locationTemporalFilter);
         task.execute(l);      
     }
 
@@ -453,25 +455,23 @@ public class MapFragment extends Fragment implements
         followMe = false;
     }
 
-    @Override
-    public void onLocationChanged(Location location) {
-        Log.i(LOG_NAME, "map location, location changed");
-        
-        this.location = location;
-        if (locationChangedListener != null) {
-            Log.i(LOG_NAME, "map location, location changed we have a listener let them know");
-            locationChangedListener.onLocationChanged(location);
-        }
+	@Override
+	public void onLocationChanged(Location location) {
+		this.location = location;
+		Log.d(LOG_NAME, "Map location updated.");
+		if (locationChangedListener != null) {
+			locationChangedListener.onLocationChanged(location);
+		}
 
-        if (followMe) {
-            LatLngBounds bounds = map.getProjection().getVisibleRegion().latLngBounds;
-            LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
-            if (!bounds.contains(latLng)) {
-                // Move the camera to the user's location once it's available!
-                map.animateCamera(CameraUpdateFactory.newLatLng(latLng));
-            }
-        }
-    }
+		if (followMe) {
+			LatLngBounds bounds = map.getProjection().getVisibleRegion().latLngBounds;
+			LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
+			if (!bounds.contains(latLng)) {
+				// Move the camera to the user's location once it's available!
+				map.animateCamera(CameraUpdateFactory.newLatLng(latLng));
+			}
+		}
+	}
 
     @Override
     public void onStatusChanged(String provider, int status, Bundle extras) {
@@ -629,17 +629,17 @@ public class MapFragment extends Fragment implements
 		if (getResources().getString(R.string.activeTimeFilterKey).equalsIgnoreCase(key)) {
 		    observations.clear();
 	        ObservationLoadTask observationLoad = new ObservationLoadTask(getActivity(), observations);
-	        observationLoad.setFilter(getTemporalFilter());
+	        observationLoad.setFilter(getTemporalFilter("last_modified"));
 	        observationLoad.executeOnExecutor(executor);
 	        
 	        locations.clear();
             LocationLoadTask locationLoad = new LocationLoadTask(getActivity(), locations);
-            locationLoad.setFilter(getTemporalFilter());
+            locationLoad.setFilter(getTemporalFilter("timestamp"));
             locationLoad.executeOnExecutor(executor);
 		}
 	}
 	
-	private Filter<Temporal> getTemporalFilter() {
+	private Filter<Temporal> getTemporalFilter(String columnName) {
 	    int timeFilter = preferences.getInt(getResources().getString(R.string.activeTimeFilterKey), R.id.none_rb);
 	    
 	    Filter<Temporal> filter = null;
@@ -682,7 +682,7 @@ public class MapFragment extends Fragment implements
 		    Date start = c.getTime();
 		    Date end = null;
 		    
-		    filter = new DateTimeFilter(start, end);
+		    filter = new DateTimeFilter(start, end, columnName);
 		}
 		
 		return filter;

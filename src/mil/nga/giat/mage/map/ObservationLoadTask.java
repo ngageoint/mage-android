@@ -42,7 +42,6 @@ public class ObservationLoadTask extends AsyncTask<Void, Observation, Void> {
                 i++;
                 publishProgress(iterator.next());
             }
-            Log.i("observation query", "observation query get all observations: " + i);
 
         } catch (SQLException e) {
             e.printStackTrace();

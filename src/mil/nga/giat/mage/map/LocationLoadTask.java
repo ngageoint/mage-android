@@ -7,7 +7,9 @@ import mil.nga.giat.mage.map.marker.PointCollection;
 import mil.nga.giat.mage.sdk.Temporal;
 import mil.nga.giat.mage.sdk.datastore.DaoStore;
 import mil.nga.giat.mage.sdk.datastore.location.Location;
+import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
+import mil.nga.giat.mage.sdk.exceptions.UserException;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
@@ -45,7 +47,6 @@ public class LocationLoadTask extends AsyncTask<Void, Location, Void> {
                 i++;
                 publishProgress(iterator.next());
             }
-            Log.i("location query", "location query get all locations: " + i);
 
         } catch (SQLException e) {
             e.printStackTrace();
@@ -63,22 +64,24 @@ public class LocationLoadTask extends AsyncTask<Void, Location, Void> {
         locationCollection.add(locations[0]);
     }
     
-    private CloseableIterator<Location> iterator() throws SQLException {
-        Dao<Location, Long> dao = DaoStore.getInstance(context).getLocationDao();
-        QueryBuilder<Location, Long> query = dao.queryBuilder();
-        Where<? extends Temporal, Long> where = query
-                .orderBy("last_modified", false)
-                .where()
-                .ge("last_modified", locationCollection.getLatestDate())
-                .and()
-                .eq("current_user", Boolean.FALSE)
-                .and()
-                .ne("remote_id", UserHelper.getInstance(context.getApplicationContext()).USER_ID);   
+	private CloseableIterator<Location> iterator() throws SQLException {
+		Dao<Location, Long> dao = DaoStore.getInstance(context).getLocationDao();
+		QueryBuilder<Location, Long> query = dao.queryBuilder();
+		Where<? extends Temporal, Long> where = query.where().ge("timestamp", locationCollection.getLatestDate());
+		User currentUser = null;
+		try {
+			currentUser = UserHelper.getInstance(context.getApplicationContext()).readCurrentUser();
+		} catch (UserException e) {
+			e.printStackTrace();
+		}
+		if (currentUser != null) {
+			where.and().ne("user_id", currentUser.getId());
+		}
+		if (filter != null) {
+			where = filter.where(where.and());
+		}
+		query.orderBy("timestamp", false);
 
-        if (filter != null) {
-            where = filter.where(where.and());            
-        }
-                
-        return dao.iterator(query.prepare());
-    }
+		return dao.iterator(query.prepare());
+	}
 }

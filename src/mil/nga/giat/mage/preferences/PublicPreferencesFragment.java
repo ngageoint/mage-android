@@ -24,8 +24,8 @@ public class PublicPreferencesFragment extends PreferenceFragmentSummary {
             setSummary(getPreferenceScreen().getPreference(i));
         }
 
-        locationServiceSwitch = (SwitchPreference) getPreferenceManager().findPreference("locationServiceEnabled");
-        dataFetchSwitch = (SwitchPreference) getPreferenceManager().findPreference("dataFetchEnabled");
+        locationServiceSwitch = (SwitchPreference) getPreferenceManager().findPreference(getResources().getString(R.string.locationServiceEnabledKey));
+        dataFetchSwitch = (SwitchPreference) getPreferenceManager().findPreference(getResources().getString(R.string.dataFetchEnabledKey));
     }
 
     @Override
@@ -43,8 +43,8 @@ public class PublicPreferencesFragment extends PreferenceFragmentSummary {
     public void onResume() {
         super.onResume();
 
-        boolean locationServiceEnabled = getPreferenceManager().getSharedPreferences().getBoolean("locationServiceEnabled", false);
-        boolean dataFetchEnabled = getPreferenceManager().getSharedPreferences().getBoolean("dataFetchEnabled", false);
+        boolean locationServiceEnabled = getPreferenceManager().getSharedPreferences().getBoolean(getResources().getString(R.string.locationServiceEnabledKey), false);
+        boolean dataFetchEnabled = getPreferenceManager().getSharedPreferences().getBoolean(getResources().getString(R.string.dataFetchEnabledKey), false);
     
         locationServiceSwitch.setChecked(locationServiceEnabled);
         dataFetchSwitch.setChecked(dataFetchEnabled);

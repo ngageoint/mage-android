@@ -1,6 +1,5 @@
 package mil.nga.giat.mage.map.marker;
 
-import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Date;
@@ -14,7 +13,7 @@ import mil.nga.giat.mage.sdk.datastore.location.Location;
 import mil.nga.giat.mage.sdk.datastore.location.LocationHelper;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
-import mil.nga.giat.mage.sdk.utils.DateUtility;
+import mil.nga.giat.mage.sdk.exceptions.UserException;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.util.Log;
@@ -50,12 +49,20 @@ public class LocationMarkerCollection implements PointCollection<Location>, OnMa
 
     private MarkerManager.Collection markerCollection;
     
+    protected User currentUser = null;
+    
     public LocationMarkerCollection(Context context, GoogleMap map) {
         this.context = context;
         this.map = map;
 
         MarkerManager markerManager = new MarkerManager(map);
-        markerCollection = markerManager.newCollection();        
+        markerCollection = markerManager.newCollection();
+        
+		try {
+			currentUser = UserHelper.getInstance(context.getApplicationContext()).readCurrentUser();
+		} catch (UserException e) {
+			e.printStackTrace();
+		}
     }
 
     @Override
@@ -69,9 +76,8 @@ public class LocationMarkerCollection implements PointCollection<Location>, OnMa
         }
         
         removeOldMarkers();
-        
         //only add markers that are NOT the current user
-		if (!UserHelper.getInstance(context.getApplicationContext()).USER_ID.equals(l.getUser().getRemoteId())) {
+		if (currentUser != null && !currentUser.getRemoteId().equals(l.getUser().getRemoteId())) {
 		
 			Point point = l.getLocationGeometry().getGeometry().getCentroid();
 
@@ -85,8 +91,8 @@ public class LocationMarkerCollection implements PointCollection<Location>, OnMa
 			locationIdToMarker.put(l.getId(), marker);
 			markerIdToLocation.put(marker.getId(), l);
 
-			if (l.getLastModified().after(latestLocationDate)) {
-				latestLocationDate = l.getLastModified();
+			if (l.getTimestamp().after(latestLocationDate)) {
+				latestLocationDate = l.getTimestamp();
 			}
 		}
     }
@@ -114,6 +120,7 @@ public class LocationMarkerCollection implements PointCollection<Location>, OnMa
         if (l == null) return false;
         
         map.setInfoWindowAdapter(infoWindowAdpater);
+        marker.setIcon(LocationBitmapFactory.bitmapDescriptor(context, l));
         marker.showInfoWindow();
         return true;
     }
@@ -168,7 +175,6 @@ public class LocationMarkerCollection implements PointCollection<Location>, OnMa
     
     private class LocationInfoWindowAdapter implements InfoWindowAdapter {
         
-        private DateFormat iso8601 =  DateUtility.getISO8601();
         private SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm zz", Locale.ENGLISH);
         
         @Override
@@ -191,16 +197,8 @@ public class LocationMarkerCollection implements PointCollection<Location>, OnMa
 
             
             TextView dateView = (TextView) view.findViewById(R.id.location_date);
-            String dateText = location.getPropertiesMap().get("timestamp");
-			try {
-				Date date = iso8601.parse(dateText);
-				dateText = sdf.format(date);
-			} 
-			catch (Exception e) {
-				Log.w(LOG_NAME, "Unable to parse date: " + dateText
-						+ ". For location: " + location, e);
-			}
-			dateView.setText(dateText);
+            Date date = location.getTimestamp();
+			dateView.setText(sdf.format(date));
             
             return view;
         }
