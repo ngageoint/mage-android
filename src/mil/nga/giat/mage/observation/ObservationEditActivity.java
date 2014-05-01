@@ -180,12 +180,12 @@ public class ObservationEditActivity extends Activity {
 				if(geo instanceof Point) {
 					Point point = (Point)geo;
 					String provider = "manual";
-					if(propertiesMap.get("LOCATION_PROVIDER") != null) {
-						provider = propertiesMap.get("LOCATION_PROVIDER").getValue();
+					if(propertiesMap.get("provider") != null) {
+						provider = propertiesMap.get("provider").getValue();
 					}
 					l = new Location(provider);
-					if (propertiesMap.containsKey("LOCATION_ACCURACY")) {
-						l.setAccuracy(Float.parseFloat(propertiesMap.get("LOCATION_ACCURACY").getValue()));
+					if (propertiesMap.containsKey("accuracy")) {
+						l.setAccuracy(Float.parseFloat(propertiesMap.get("accuracy").getValue()));
 					}
 					l.setLatitude(point.getY());
 					l.setLongitude(point.getX());
@@ -597,7 +597,11 @@ public class ObservationEditActivity extends Activity {
 			propertyMap.put("EVENTLEVEL", new ObservationProperty("EVENTLEVEL", levelSpinner.getSelectedItem().toString()));
 			propertyMap.put("timestamp", new ObservationProperty("timestamp", iso8601.format(date)));
 			propertyMap.put("accuracy", new ObservationProperty("accuracy", Float.toString(l.getAccuracy())));
-			propertyMap.put("provider", new ObservationProperty("provider", "manual"));
+			String provider = l.getProvider();
+			if(provider == null || provider.trim().isEmpty()) {
+				provider = "manual";
+			}
+			propertyMap.put("provider", new ObservationProperty("provider", provider));
 			propertyMap.put("delta", new ObservationProperty("delta", Long.toString(timeMs(locationElapsedTimeMs))));
 			
 			o.addProperties(propertyMap.values());

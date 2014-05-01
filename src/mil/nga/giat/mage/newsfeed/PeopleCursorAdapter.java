@@ -1,13 +1,11 @@
 package mil.nga.giat.mage.newsfeed;
 
-import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Locale;
 
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.map.marker.LocationBitmapFactory;
 import mil.nga.giat.mage.sdk.datastore.location.Location;
-import mil.nga.giat.mage.sdk.utils.DateUtility;
 import android.content.Context;
 import android.database.Cursor;
 import android.graphics.Bitmap;
@@ -22,7 +20,6 @@ import com.j256.ormlite.android.AndroidDatabaseResults;
 import com.j256.ormlite.stmt.PreparedQuery;
 
 public class PeopleCursorAdapter extends CursorAdapter {
-	private DateFormat iso8601 =  DateUtility.getISO8601();
 	private LayoutInflater inflater = null;
     private PreparedQuery<Location> query;
     private SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm zz", Locale.ENGLISH);

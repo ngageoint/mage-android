@@ -129,8 +129,6 @@ public class NewsFeedCursorAdapter extends CursorAdapter {
                 iv.setVisibility(View.VISIBLE);
                 Attachment a = attachments.iterator().next();
 
-                String token = PreferenceHelper.getInstance(activity.getApplicationContext()).getValue(R.string.tokenKey);
-
                 final String absPath = a.getLocalPath();
                 final String remoteId = a.getRemoteId();
 
