@@ -7,7 +7,7 @@
             android:defaultValue="1"
             android:entries="@array/layerEntries"
             android:entryValues="@array/layerValues"
-            android:key="mapBaseLayer"
+            android:key="@string/baseLayerKey"
             android:title="Base Layer" />
 
         <mil.nga.giat.mage.map.preference.OverlayPreference

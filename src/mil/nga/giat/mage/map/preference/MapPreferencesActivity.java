@@ -1,11 +1,18 @@
 package mil.nga.giat.mage.map.preference;
 
-import java.util.Collections;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Set;
+
+import org.apache.commons.lang3.StringUtils;
 
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.preferences.PreferenceFragmentSummary;
+import mil.nga.giat.mage.sdk.datastore.layer.Layer;
+import mil.nga.giat.mage.sdk.datastore.layer.LayerHelper;
+import mil.nga.giat.mage.sdk.exceptions.LayerException;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
@@ -26,16 +33,16 @@ public class MapPreferencesActivity extends PreferenceActivity {
     public static final int TILE_OVERLAY_ACTIVITY = 0;
     public static final int FEATURE_OVERLAY_ACTIVITY = 1;
     public static final String OVERLAY_EXTENDED_DATA_KEY = "overlay";
-    
+
     private MapPreferenceFragment preference = new MapPreferenceFragment();
-    
+
     public static class MapPreferenceFragment extends PreferenceFragmentSummary {
-        
+
         @Override
         public void onCreate(final Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
             addPreferencesFromResource(R.xml.mappreferences);
-            
+
             findPreference(getResources().getString(R.string.mapTileOverlaysKey)).setOnPreferenceClickListener(new OnPreferenceClickListener() {
                 @Override
                 public boolean onPreferenceClick(Preference preference) {
@@ -53,17 +60,44 @@ public class MapPreferencesActivity extends PreferenceActivity {
                     return true;
                 }
             });
-            
+
             PreferenceManager.setDefaultValues(getActivity(), R.xml.mappreferences, true);
         }
 
         @Override
         public void onResume() {
             super.onResume();
-            
+
             for (int i = 0; i < getPreferenceScreen().getPreferenceCount(); i++) {
                 Preference preference = getPreferenceScreen().getPreference(i);
                 setSummary(preference);
+            }
+            
+            OverlayPreference p = (OverlayPreference) findPreference(getResources().getString(R.string.mapTileOverlaysKey));
+            StringBuffer summary = new StringBuffer();
+            Iterator<String> iterator = p.getValues().iterator();
+            while (iterator.hasNext()) {
+                String value = iterator.next();
+                summary.append(value);
+
+                if (iterator.hasNext())
+                    summary.append("\n");
+            }
+            p.setSummary(summary);
+            
+                
+            p = (OverlayPreference) findPreference(getResources().getString(R.string.mapFeatureOverlaysKey));
+            try {
+                Set<String> layerIds = p.getValues();
+                Collection<String> values = new ArrayList<String>(layerIds.size());
+                for (Layer l : LayerHelper.getInstance(getActivity()).readAll()) {
+                    if (layerIds.contains(l.getId().toString())) {
+                        values.add(l.getName());
+                    }
+                }
+                p.setSummary(StringUtils.join(values, "\n"));
+            } catch (LayerException e) {
+                e.printStackTrace();
             }
         }
     }

@@ -3,84 +3,90 @@ package mil.nga.giat.mage.navigation;
 import android.app.Fragment;
 
 public class DrawerItem {
-	private String itemText;
-	private Integer drawableId;
-	private Boolean isHeader = false;
-	private Fragment fragment;
-	private int id;
-	
-	public int getId() {
-		return id;
-	}
+    private int id;
+    private String text;
+    private Integer drawableId;
+    private Fragment fragment;
+    private boolean isHeader;
+    private boolean isSecondary;
+    private Integer count = 0;
 
-	public void setId(int id) {
-		this.id = id;
-	}
+    public String getText() {
+        return text;
+    }
 
-	public Fragment getFragment() {
-		return fragment;
-	}
+    public Integer getDrawableId() {
+        return drawableId;
+    }
 
-	public void setFragment(Fragment fragment) {
-		this.fragment = fragment;
-	}
+    public Boolean isHeader() {
+        return isHeader;
+    }
+    
+    public Boolean isSecondary() {
+        return isSecondary;
+    }
 
-	public Boolean isHeader() {
-		return isHeader;
-	}
+    public Fragment getFragment() {
+        return fragment;
+    }
 
-	public void isHeader(Boolean isHeader) {
-		this.isHeader = isHeader;
-	}
+    public int getId() {
+        return id;
+    }
 
-	public Integer getCount() {
-		return count;
-	}
+    public Integer getCount() {
+        return count;
+    }
 
-	public void setCount(Integer count) {
-		this.count = count;
-	}
+    private DrawerItem(Builder builder) {
+        this.id = builder.id;
+        this.text = builder.text;
+        this.isHeader = builder.isHeader;
+        this.isSecondary = builder.isSecondary;
+        this.drawableId = builder.drawableId;
+        this.fragment = builder.fragment;
+    }
 
-	private Integer count = 0;
-	
-	public DrawerItem(int id) {
-		this.id = id;
-	}
-	
-	public DrawerItem(int id, String itemText) {
-		this(id, itemText, null, null);
-	}
-	
-	public DrawerItem(int id, String itemText, Fragment fragment) {
-		this(id, itemText, null, fragment);
-	}
-	
-	public DrawerItem(int id, String itemText, Integer drawableId) {
-		this.itemText = itemText;
-		this.drawableId = drawableId;
-		this.id = id;
-	}
-	
-	public DrawerItem(int id, String itemText, Integer drawableId, Fragment fragment) {
-		this.itemText = itemText;
-		this.drawableId = drawableId;
-		this.fragment = fragment;
-		this.id = id;
-	}
+    public static class Builder {
+        private int id;
+        private String text;
+        private boolean isHeader = false;
+        private boolean isSecondary = false;
+        private Integer drawableId;
+        private Fragment fragment;
 
-	public String getItemText() {
-		return itemText;
-	}
+        public Builder(String text) {
+            this.text = text;
+        }
 
-	public void setItemText(String itemText) {
-		this.itemText = itemText;
-	}
+        public Builder id(int id) {
+            this.id = id;
+            return this;
+        }
+     
+        public Builder header(boolean isHeader) {
+            this.isHeader = isHeader;
+            return this;
+        }
+        
+        public Builder secondary(boolean isSecondary) {
+            this.isSecondary = isSecondary;
+            return this;
+        }
+        
+        public Builder drawableId(int drawableId) {
+            this.drawableId = drawableId;
+            return this;
+        }
+        
+        public Builder fragment(Fragment fragment) {
+            this.fragment = fragment;
+            return this;
+        }
 
-	public Integer getDrawableId() {
-		return drawableId;
-	}
-
-	public void setDrawableId(Integer drawableId) {
-		this.drawableId = drawableId;
-	}
+        public DrawerItem build() {
+            return new DrawerItem(this);
+        }
+    }
 }

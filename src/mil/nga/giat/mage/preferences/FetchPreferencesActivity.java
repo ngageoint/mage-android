@@ -13,27 +13,27 @@ import android.view.Gravity;
 import android.widget.CompoundButton;
 import android.widget.Switch;
 
-public class LocationPreferencesActivity extends PreferenceActivity {
+public class FetchPreferencesActivity extends PreferenceActivity {
 
-    LocationPreferenceFragment preference = new LocationPreferenceFragment();
+    FetchPreferenceFragment preference = new FetchPreferenceFragment();
 
-    public static class LocationPreferenceFragment extends PreferenceFragmentSummary implements CompoundButton.OnCheckedChangeListener {
+    public static class FetchPreferenceFragment extends PreferenceFragmentSummary implements CompoundButton.OnCheckedChangeListener {
 
-        private Switch locationSwitch;
+        private Switch fetchSwitch;
 
         public void onCreate(final Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
 
-            addPreferencesFromResource(R.xml.locationpreferences);
+            addPreferencesFromResource(R.xml.fetchpreferences);
 
             PreferenceManager.getDefaultSharedPreferences(getActivity()).registerOnSharedPreferenceChangeListener(this);
 
             Activity activity = getActivity();
             ActionBar actionbar = activity.getActionBar();
-            locationSwitch = new Switch(activity);
+            fetchSwitch = new Switch(activity);
 
             actionbar.setDisplayOptions(ActionBar.DISPLAY_SHOW_CUSTOM, ActionBar.DISPLAY_SHOW_CUSTOM);
-            actionbar.setCustomView(locationSwitch, 
+            actionbar.setCustomView(fetchSwitch, 
                     new ActionBar.LayoutParams(ActionBar.LayoutParams.WRAP_CONTENT, 
                             ActionBar.LayoutParams.WRAP_CONTENT, 
                             Gravity.CENTER_VERTICAL | Gravity.RIGHT));
@@ -44,19 +44,19 @@ public class LocationPreferencesActivity extends PreferenceActivity {
         @Override
         public void onResume() {
             super.onResume();
-            locationSwitch.setOnCheckedChangeListener(this);
+            fetchSwitch.setOnCheckedChangeListener(this);
         }
 
         @Override
         public void onPause() {
             super.onPause();
-            locationSwitch.setOnCheckedChangeListener(null);
+            fetchSwitch.setOnCheckedChangeListener(null);
         }
 
         @Override
         public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
             Editor editor = PreferenceManager.getDefaultSharedPreferences(getActivity()).edit();
-            editor.putBoolean(getResources().getString(R.string.locationServiceEnabledKey), isChecked);
+            editor.putBoolean(getResources().getString(R.string.dataFetchEnabledKey), isChecked);
             editor.commit();
 
             updateSettings();
@@ -64,13 +64,13 @@ public class LocationPreferencesActivity extends PreferenceActivity {
         
         protected void updateSettings() {
             SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
-            boolean locationServiceEnabled = preferences.getBoolean(getResources().getString(R.string.locationServiceEnabledKey), false);
-            locationSwitch.setChecked(locationServiceEnabled);
+            boolean dataFetchEnabled = preferences.getBoolean(getResources().getString(R.string.dataFetchEnabledKey), false);
+            fetchSwitch.setChecked(dataFetchEnabled);
 
             int count = getPreferenceScreen().getPreferenceCount();
             for (int i = 0; i < count; ++i) {
                 Preference pref = getPreferenceScreen().getPreference(i);
-                pref.setEnabled(locationServiceEnabled);
+                pref.setEnabled(dataFetchEnabled);
                 setSummary(getPreferenceScreen().getPreference(i));
             }
         }

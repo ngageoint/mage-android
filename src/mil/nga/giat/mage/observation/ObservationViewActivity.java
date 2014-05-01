@@ -21,7 +21,6 @@ import mil.nga.giat.mage.sdk.datastore.observation.ObservationProperty;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.event.IObservationEventListener;
-import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
 import mil.nga.giat.mage.sdk.utils.DateUtility;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
 import android.app.ActionBar;
@@ -52,12 +51,15 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.Point;
 
 public class ObservationViewActivity extends Activity {
     
+	private static final String LOG_NAME = ObservationViewActivity.class.getName();
+	
     public static String OBSERVATION_ID = "OBSERVATION_ID";
     public static String INITIAL_LOCATION = "INITIAL_LOCATION";
     public static String INITIAL_ZOOM = "INITIAL_ZOOM";
@@ -65,6 +67,7 @@ public class ObservationViewActivity extends Activity {
     private static final int ATTACHMENT_VIEW_ACTIVITY_REQUEST_CODE = 500;
     GoogleMap map;
     private Observation o;
+    private Marker marker;
     private Map<String, ObservationProperty> propertiesMap;
     DecimalFormat latLngFormat = new DecimalFormat("###.#####");
     private SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm zz", Locale.getDefault());
@@ -74,7 +77,6 @@ public class ObservationViewActivity extends Activity {
 
         @Override
         protected Boolean doInBackground(Attachment... params) {
-            String token = PreferenceHelper.getInstance(getApplicationContext()).getValue(R.string.tokenKey);
             for (Attachment a : params) {
                 final String absPath = a.getLocalPath();
                 ImageView iv = new ImageView(getApplicationContext());
@@ -103,15 +105,15 @@ public class ObservationViewActivity extends Activity {
 //                      iv.setImageBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.ic_microphone));
                     } else {
                         if (a.getRemoteId() != null) {
-                            String url = a.getUrl() + "?access_token=" + token;
+                            String url = a.getUrl();
                             Glide.load(url).placeholder(android.R.drawable.progress_indeterminate_horizontal).centerCrop().into(iv);
                         } else {
                             Glide.load(new File(absPath)).placeholder(android.R.drawable.progress_indeterminate_horizontal).centerCrop().into(iv);
                         }
                     }
-                    Log.d("image", "Set the image gallery to have an image with uri " + absPath);
+                    Log.d(LOG_NAME, "Set the image gallery to have an image with uri " + absPath);
                 } catch (Exception e) {
-                    Log.e("exception", "Error making image", e);
+                    Log.e(LOG_NAME, "Error making image", e);
                 }
                 
                 publishProgress(iv);
@@ -126,7 +128,6 @@ public class ObservationViewActivity extends Activity {
     }
     
     private void createImageViews(ViewGroup gallery) {
-        String token = PreferenceHelper.getInstance(getApplicationContext()).getValue(R.string.tokenKey);
         for (final Attachment a : o.getAttachments()) {
             final String absPath = a.getLocalPath();
             final String remoteId = a.getRemoteId();
@@ -167,7 +168,7 @@ public class ObservationViewActivity extends Activity {
                     Glide.load(R.drawable.ic_microphone).into(iv);
                 }
             } else if (remoteId != null) {
-                String url = a.getUrl() + "?access_token=" + token;
+                String url = a.getUrl();
                 if (contentType.startsWith("image")) {
                     Glide.load(url).placeholder(android.R.drawable.progress_indeterminate_horizontal).centerCrop().into(iv);
                 } else if (contentType.startsWith("video")) {
@@ -198,13 +199,6 @@ public class ObservationViewActivity extends Activity {
     }
     
     @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-    	if (requestCode == 2) {
-    		
-    	}
-    }
-    
-    @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.observation_view_menu, menu);
@@ -223,25 +217,68 @@ public class ObservationViewActivity extends Activity {
     @Override
     public void onResume() {
     	super.onResume();
-    	setupView();
+    	setupView(true);
     }
     
-    private void setupView() {
+    private void setupView(Boolean addListeners) {
     	try {
-            o = ObservationHelper.getInstance(getApplicationContext()).readByPrimaryKey(getIntent().getLongExtra(OBSERVATION_ID, 0L));
+            o = ObservationHelper.getInstance(getApplicationContext()).read(getIntent().getLongExtra(OBSERVATION_ID, 0L));
+            if(addListeners) {
+	            ObservationHelper.getInstance(getApplicationContext()).addListener(new IObservationEventListener() {
+					@Override
+					public void onError(Throwable error) {
+					}
+					
+					@Override
+					public void onObservationUpdated(Observation observation) {
+						if (observation.getId().equals(o.getId()) && !observation.isDirty()) {
+							ObservationViewActivity.this.runOnUiThread(new Runnable() {
+								@Override
+								public void run() {
+									setupView(false);
+								}
+							});
+							ObservationHelper.getInstance(getApplicationContext()).removeListener(this);
+						}
+					}
+					
+					@Override
+					public void onObservationDeleted(Observation observation) {
+					}
+					
+					@Override
+					public void onObservationCreated(Collection<Observation> observations) {
+						for (Iterator<Observation> i = observations.iterator(); i.hasNext();) {
+							Observation observation = i.next();
+							if (observation.getId().equals(o.getId()) && !observation.isDirty()) {
+								ObservationViewActivity.this.runOnUiThread(new Runnable() {
+									@Override
+									public void run() {
+										setupView(false);
+									}
+								});
+								ObservationHelper.getInstance(getApplicationContext()).removeListener(this);
+								break;
+							}
+						}
+					}
+				});
+            }
+            o = ObservationHelper.getInstance(getApplicationContext()).read(getIntent().getLongExtra(OBSERVATION_ID, 0L));
+            
             propertiesMap = o.getPropertiesMap();
             this.setTitle(propertiesMap.get("type").getValue());
             Geometry geo = o.getObservationGeometry().getGeometry();
             if(geo instanceof Point) {
                 Point pointGeo = (Point)geo;
                 ((TextView)findViewById(R.id.location)).setText(latLngFormat.format(pointGeo.getY()) + ", " + latLngFormat.format(pointGeo.getX()));
-                if(propertiesMap.containsKey("LOCATION_PROVIDER")) {
-                    ((TextView)findViewById(R.id.location_provider)).setText("("+propertiesMap.get("LOCATION_PROVIDER").getValue()+")");
+                if(propertiesMap.containsKey("provider")) {
+                    ((TextView)findViewById(R.id.location_provider)).setText("("+propertiesMap.get("provider").getValue()+")");
                 } else {
                     findViewById(R.id.location_provider).setVisibility(View.GONE);
                 }
-                if (propertiesMap.containsKey("LOCATION_ACCURACY") && !"0.0".equals(propertiesMap.get("LOCATION_ACCURACY").getValue()) ) {
-                    ((TextView)findViewById(R.id.location_accuracy)).setText("\u00B1" + propertiesMap.get("LOCATION_ACCURACY").getValue() + "m");
+                if (propertiesMap.containsKey("accuracy") && !"0.0".equals(propertiesMap.get("accuracy").getValue()) ) {
+                    ((TextView)findViewById(R.id.location_accuracy)).setText("\u00B1" + propertiesMap.get("accuracy").getValue() + "m");
                 } else {
                     findViewById(R.id.location_accuracy).setVisibility(View.GONE);
                 }
@@ -258,14 +295,18 @@ public class ObservationViewActivity extends Activity {
                 
                 LatLng location = new LatLng(pointGeo.getY(), pointGeo.getX());
                 map.animateCamera(CameraUpdateFactory.newLatLngZoom(location, 15));
-                
-                map.addMarker(new MarkerOptions().position(location).icon(ObservationBitmapFactory.bitmapDescriptor(this, o)));             
+                if (marker != null) {
+                	marker.remove();
+                	marker = null;
+                }
+                marker = map.addMarker(new MarkerOptions().position(location).icon(ObservationBitmapFactory.bitmapDescriptor(this, o)));             
             }
 
             LinearLayout propertyContainer = (LinearLayout)findViewById(R.id.propertyContainer);
             populatePropertyFields(propertyContainer);
             
             populatePropertyFields((LinearLayout)findViewById(R.id.topPropertyContainer));
+            ((LinearLayout)findViewById(R.id.image_gallery)).removeAllViews();
             if (o.getAttachments().size() == 0) {
                 findViewById(R.id.image_gallery).setVisibility(View.GONE);
             } else {
@@ -274,63 +315,20 @@ public class ObservationViewActivity extends Activity {
             }
             
             TextView user = (TextView)findViewById(R.id.username);
-            User u = UserHelper.getInstance(this).read(o.getPropertiesMap().get("userId").getValue());
+            User u = UserHelper.getInstance(this).read(o.getUserId());
             user.setText(u.getFirstname() + " " + u.getLastname());
             
             FrameLayout fl = (FrameLayout)findViewById(R.id.sync_status);
             fl.removeAllViews();
-            Log.i("test", "o.isDirty? " + o.isDirty());
             if (o.isDirty()) {
-            	ObservationHelper.getInstance(getApplicationContext()).addListener(new IObservationEventListener() {
-					
-					@Override
-					public void onError(Throwable error) {
-					}
-					
-					@Override
-					public void onObservationUpdated(Observation observation) {
-						if (observation.getId() == o.getId() && !observation.isDirty()) {
-							ObservationViewActivity.this.runOnUiThread(new Runnable() {
-								@Override
-								public void run() {
-									setupView();
-								}
-							});
-							ObservationHelper.getInstance(getApplicationContext()).removeListener(this);
-						}
-						
-					}
-					
-					@Override
-					public void onObservationDeleted(Observation observation) {
-					}
-					
-					@Override
-					public void onObservationCreated(Collection<Observation> observations) {
-						for (Iterator<Observation> i = observations.iterator(); i.hasNext();) {
-							Observation observation = i.next();
-							if (observation.getId() == o.getId() && !observation.isDirty()) {
-								ObservationViewActivity.this.runOnUiThread(new Runnable() {
-									@Override
-									public void run() {
-										setupView();
-									}
-								});
-								ObservationHelper.getInstance(getApplicationContext()).removeListener(this);
-								break;
-							}
-						}
-					}
-				});
                 View.inflate(getApplicationContext(), R.layout.saved_locally, fl);
             } else {
-            	Log.i("test", "o.lastmodified: " + o.getLastModified());
                 View status = View.inflate(getApplicationContext(), R.layout.submitted_on, fl);
                 TextView syncDate = (TextView)status.findViewById(R.id.observation_sync_date);
                 syncDate.setText(sdf.format(o.getLastModified()));
             }
         } catch (Exception e) {
-            Log.e("observation view", e.getMessage(), e);
+            Log.e(LOG_NAME, e.getMessage(), e);
         }
     }
     
@@ -361,7 +359,7 @@ public class ObservationViewActivity extends Activity {
                         Date date = iso8601.parse(propertyValue);
                         dateText = sdf.format(date);
                     } catch (ParseException e) {
-                        e.printStackTrace();
+                        Log.e(LOG_NAME, "Problem parsing date", e);
                     }
                     m.setText(dateText);
                     break;

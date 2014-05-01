@@ -40,8 +40,6 @@ public class AttachmentViewerActivity extends FragmentActivity implements Remove
 		
 		final Attachment a = intent.getParcelableExtra("attachment");
 		
-		String token = PreferenceHelper.getInstance(getApplicationContext()).getValue(R.string.tokenKey);
-		
 		String absPath = a.getLocalPath();
 		String url = a.getUrl();
 		
@@ -79,7 +77,6 @@ public class AttachmentViewerActivity extends FragmentActivity implements Remove
 				finalType = null;
 			}
 		} else if (url != null) {
-			url = url + "?access_token="+token;
 			uri = Uri.parse(url);
 			if (contentType.startsWith("image")) {
 				finalType = "image/*";

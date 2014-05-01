@@ -26,7 +26,6 @@ import mil.nga.giat.mage.sdk.datastore.observation.ObservationGeometry;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationProperty;
 import mil.nga.giat.mage.sdk.exceptions.ObservationException;
-import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
 import mil.nga.giat.mage.sdk.utils.DateUtility;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
 import android.annotation.SuppressLint;
@@ -91,6 +90,7 @@ public class ObservationEditActivity extends Activity {
 	private static final int CAPTURE_VOICE_ACTIVITY_REQUEST_CODE = 300;
 	private static final int GALLERY_ACTIVITY_REQUEST_CODE = 400;
 	private static final int ATTACHMENT_VIEW_ACTIVITY_REQUEST_CODE = 500;
+	private static final int LOCATION_EDIT_ACTIVITY_REQUEST_CODE = 600;
 	
 	private static final long NEW_OBSERVATION = -1L;
 
@@ -160,7 +160,7 @@ public class ObservationEditActivity extends Activity {
 			this.setTitle("Edit Observation");
 			// this is an edit of an existing observation
 			try {
-				o = ObservationHelper.getInstance(getApplicationContext()).readByPrimaryKey(getIntent().getLongExtra(OBSERVATION_ID, 0L));
+				o = ObservationHelper.getInstance(getApplicationContext()).read(getIntent().getLongExtra(OBSERVATION_ID, 0L));
 				attachments.addAll(o.getAttachments());
 				for (Attachment a : attachments) {
 					addAttachmentToGallery(a);
@@ -243,80 +243,11 @@ public class ObservationEditActivity extends Activity {
 			
 			@Override
 			public void onClick(View v) {
-				
-//				AlertDialog.Builder builder = new AlertDialog.Builder(ObservationEditActivity.this);
-////			    // Get the layout inflater
-//			    LayoutInflater inflater = getLayoutInflater();
-//			    View dialogView = inflater.inflate(R.layout.location_edit, null);
-//			    
-//			    final EditText longitudeEdit = (EditText)dialogView.findViewById(R.id.location_edit_longitude);
-//			    final EditText latitudeEdit = (EditText)dialogView.findViewById(R.id.location_edit_latitude);
-//			    
-//			    longitudeEdit.setText(Double.toString(l.getLongitude()));
-//			    latitudeEdit.setText(Double.toString(l.getLatitude()));
-//			    
-//			    
-//			    final GoogleMap dialogMap = ((MapFragment) getFragmentManager().findFragmentById(R.id.location_edit_map)).getMap();
-//			    dialogMap.setOnCameraChangeListener(new GoogleMap.OnCameraChangeListener() {
-//					
-//					@Override
-//					public void onCameraChange(CameraPosition position) {
-//						longitudeEdit.setText(Double.toString(position.target.longitude));
-//						latitudeEdit.setText(Double.toString(position.target.latitude));
-//					}
-//				});
-//			    
-//			    longitudeEdit.addTextChangedListener(new TextWatcher() {
-//					
-//					@Override
-//					public void onTextChanged(CharSequence s, int start, int before, int count) {}
-//					
-//					@Override
-//					public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-//					
-//					@Override
-//					public void afterTextChanged(Editable s) {
-//						try {
-//							double lon = Double.parseDouble(s.toString());
-//							LatLng location = new LatLng(l.getLatitude(), lon);
-//							dialogMap.moveCamera(CameraUpdateFactory.newLatLngZoom(location, dialogMap.getCameraPosition().zoom));
-//						} catch (NumberFormatException pe) {
-//							// typed wrong probably
-//							// warn the user TODO
-//						}
-//						
-//					}
-//				});
-//			    latitudeEdit.addTextChangedListener(new TextWatcher() {
-//					
-//					@Override
-//					public void onTextChanged(CharSequence s, int start, int before, int count) {}
-//					
-//					@Override
-//					public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-//					
-//					@Override
-//					public void afterTextChanged(Editable s) {
-//						try {
-//							double lat = Double.parseDouble(s.toString());
-//							LatLng location = new LatLng(lat, l.getLongitude());
-//							dialogMap.moveCamera(CameraUpdateFactory.newLatLngZoom(location, dialogMap.getCameraPosition().zoom));
-//						} catch (NumberFormatException pe) {
-//							// typed wrong probably
-//							// warn the user TODO
-//						}
-//						
-//					}
-//				});
-//
-//				LatLng location = new LatLng(l.getLatitude(), l.getLongitude());
-//				//((TextView) findViewById(R.id.location)).setText(latLngFormat.format(l.getLatitude()) + ", " + latLngFormat.format(l.getLongitude()));
-//				
-//				dialogMap.moveCamera(CameraUpdateFactory.newLatLngZoom(location, 18));
-//				
-//				ImageView iv = (ImageView)dialogView.findViewById(R.id.location_edit_marker);
-//				iv.setImageBitmap(ObservationBitmapFactory.bitmap(ObservationEditActivity.this, o));
-//			    
+				Intent intent = new Intent(ObservationEditActivity.this, LocationEditActivity.class);
+                intent.putExtra(LocationEditActivity.LOCATION, l);
+                intent.putExtra(LocationEditActivity.MARKER_BITMAP, ObservationBitmapFactory.bitmap(ObservationEditActivity.this, o));
+                startActivityForResult(intent, LOCATION_EDIT_ACTIVITY_REQUEST_CODE);
+
 //			    builder.setView(dialogView)
 //			    // Add action buttons
 //			           .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
@@ -495,6 +426,7 @@ public class ObservationEditActivity extends Activity {
 
 		LinearLayout form = (LinearLayout) findViewById(R.id.form);
 		populatePropertyFieldsFromSaved(form, savedInstanceState);
+		currentImageUri = savedInstanceState.getParcelable("currentImageUri");
 	}
 
 	@Override
@@ -503,6 +435,7 @@ public class ObservationEditActivity extends Activity {
 		outState.putParcelableArrayList("attachments", new ArrayList<Attachment>(attachments));
 		LinearLayout form = (LinearLayout) findViewById(R.id.form);
 		savePropertyFieldsToBundle(form, outState);
+		outState.putParcelable("currentImageUri", currentImageUri);
 		super.onSaveInstanceState(outState);
 	}
 
@@ -598,7 +531,6 @@ public class ObservationEditActivity extends Activity {
 				MageTextView m = (MageTextView)v;
 				String propertyKey = m.getPropertyKey();
 				String propertyValue = propertiesMap.get(propertyKey).getValue();
-				Log.i("test", "property key: " + propertyKey + " property value: " + propertyValue + " propertyType: " + m.getPropertyType());
 				if (propertyValue == null) continue;
 				switch(m.getPropertyType()) {
 				case STRING:
@@ -655,6 +587,7 @@ public class ObservationEditActivity extends Activity {
 
 		case R.id.observation_save:
 			o.setState(State.ACTIVE);
+			o.setDirty(true);
 			o.setObservationGeometry(new ObservationGeometry(geometryFactory.createPoint(new Coordinate(l.getLongitude(), l.getLatitude()))));
 			
 			LinearLayout form = (LinearLayout) findViewById(R.id.form);
@@ -663,26 +596,21 @@ public class ObservationEditActivity extends Activity {
 			propertyMap.put("type", new ObservationProperty("type", typeSpinner.getSelectedItem().toString()));
 			propertyMap.put("EVENTLEVEL", new ObservationProperty("EVENTLEVEL", levelSpinner.getSelectedItem().toString()));
 			propertyMap.put("timestamp", new ObservationProperty("timestamp", iso8601.format(date)));
-			propertyMap.put("LOCATION_ACCURACY", new ObservationProperty("LOCATION_ACCURACY", Float.toString(l.getAccuracy())));
-			propertyMap.put("LOCATION_PROVIDER", new ObservationProperty("LOCATION_PROVIDER", "manual"));
-			propertyMap.put("LOCATION_TIME_DELTA", new ObservationProperty("LOCATION_TIME_DELTA", Long.toString(timeMs(locationElapsedTimeMs))));
+			propertyMap.put("accuracy", new ObservationProperty("accuracy", Float.toString(l.getAccuracy())));
+			propertyMap.put("provider", new ObservationProperty("provider", "manual"));
+			propertyMap.put("delta", new ObservationProperty("delta", Long.toString(timeMs(locationElapsedTimeMs))));
 			
 			o.addProperties(propertyMap.values());
-			
-			for (String key : o.getPropertiesMap().keySet()) {
-				Log.i("test", "key: " + key + " value: " + o.getPropertiesMap().get(key).getValue());
-			}
 			
 			o.setAttachments(attachments);
 
 			ObservationHelper oh = ObservationHelper.getInstance(getApplicationContext());
 			try {
-				if (o.getRemoteId() == null) {
+				if (o.getId() == null) {
 					Observation newObs = oh.create(o);
 					Log.i(LOG_NAME, "Created new observation with id: " + newObs.getId());
 				} else {
-					o.setDirty(true);
-					oh.update(o, oh.read(o.getRemoteId()));
+					oh.update(o);
 					Log.i(LOG_NAME, "Updated observation with remote id: " + o.getRemoteId());
 				}
 				finish();
@@ -692,11 +620,11 @@ public class ObservationEditActivity extends Activity {
 
 			break;
 		case R.id.observation_cancel:
-			new AlertDialog.Builder(this).setTitle("Discard Changes").setMessage(R.string.cancel_edit).setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+			new AlertDialog.Builder(this).setTitle("Discard Changes").setMessage(R.string.cancel_edit).setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
 				public void onClick(DialogInterface dialog, int which) {
 					finish();
 				}
-			}).setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
+			}).setNegativeButton(R.string.no, new DialogInterface.OnClickListener() {
 				public void onClick(DialogInterface dialog, int which) {
 				}
 			}).show();
@@ -708,17 +636,18 @@ public class ObservationEditActivity extends Activity {
 
 	public void cameraButtonPressed(View v) {
 		Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+		File f = null;
         try {
-            currentImageFile = MediaUtility.createImageFile();
+        	f = MediaUtility.createImageFile();
         } catch (IOException ex) {
             // Error occurred while creating the File
         	ex.printStackTrace();
         }
         // Continue only if the File was successfully created
-        if (currentImageFile != null) {
-            intent.putExtra(MediaStore.EXTRA_OUTPUT,
-                    Uri.fromFile(currentImageFile));
-            startActivityForResult(intent, CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE);  
+        if (f != null) {
+        	currentImageUri = Uri.fromFile(f);
+            intent.putExtra(MediaStore.EXTRA_OUTPUT, currentImageUri);
+            startActivityForResult(intent, CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE);
         }
 	}
 
@@ -744,7 +673,6 @@ public class ObservationEditActivity extends Activity {
 	}
 
 	private void addAttachmentToGallery(final Attachment a) {
-		String token = PreferenceHelper.getInstance(getApplicationContext()).getValue(R.string.tokenKey);
 		LinearLayout l = (LinearLayout) findViewById(R.id.image_gallery);
 		
 		final String absPath = a.getLocalPath();
@@ -758,7 +686,7 @@ public class ObservationEditActivity extends Activity {
 			public void onClick(View v) {
 				Intent intent = new Intent(v.getContext(), AttachmentViewerActivity.class);
 				intent.putExtra("attachment", a);
-				intent.putExtra(AttachmentViewerActivity.EDITABLE, false);
+				intent.putExtra(AttachmentViewerActivity.EDITABLE, true);
 				startActivityForResult(intent, ATTACHMENT_VIEW_ACTIVITY_REQUEST_CODE);
 			}
 		});
@@ -786,7 +714,7 @@ public class ObservationEditActivity extends Activity {
 				Glide.load(R.drawable.ic_microphone).into(iv);
 			}
 		} else if (remoteId != null) {
-			String url = a.getUrl() + "?access_token=" + token;
+			String url = a.getUrl();
 			Log.i("test", "url to load is: " + url);
 			Log.i("test", "content type is: " + contentType + " name is: " + a.getName());
 			if (contentType.startsWith("image")) {
@@ -834,7 +762,7 @@ public class ObservationEditActivity extends Activity {
 //		}
 	}
 	
-	File currentImageFile;
+	Uri currentImageUri;
 
 	@Override
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -842,9 +770,9 @@ public class ObservationEditActivity extends Activity {
 			return;
 		switch (requestCode) {
 		case CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE:
-			MediaUtility.addImageToGallery(getApplicationContext(), currentImageFile);
+			MediaUtility.addImageToGallery(getApplicationContext(), currentImageUri);
 			Attachment capture = new Attachment();
-			capture.setLocalPath(currentImageFile.getAbsolutePath());
+			capture.setLocalPath(MediaUtility.getFileAbsolutePath(currentImageUri, this));
 			attachments.add(capture);
 			addAttachmentToGallery(capture);
 			break;
@@ -870,6 +798,10 @@ public class ObservationEditActivity extends Activity {
 				LinearLayout l = (LinearLayout) findViewById(R.id.image_gallery);
 				l.removeViewAt(idx);
 			}
+			break;
+		case LOCATION_EDIT_ACTIVITY_REQUEST_CODE:
+			l = data.getParcelableExtra(LocationEditActivity.LOCATION);
+			setupMap();
 			break;
 		}
 	}

@@ -17,7 +17,6 @@ import mil.nga.giat.mage.sdk.datastore.DaoStore;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
 import mil.nga.giat.mage.sdk.event.IObservationEventListener;
-import mil.nga.giat.mage.sdk.exceptions.ObservationException;
 import mil.nga.giat.mage.sdk.location.LocationService;
 import android.app.Fragment;
 import android.content.Intent;
@@ -45,8 +44,12 @@ import com.j256.ormlite.dao.CloseableIterator;
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.stmt.PreparedQuery;
 import com.j256.ormlite.stmt.QueryBuilder;
+import com.j256.ormlite.stmt.Where;
 
 public class NewsFeedFragment extends Fragment implements IObservationEventListener, OnItemClickListener, OnSharedPreferenceChangeListener {
+
+	private static final String LOG_NAME = NewsFeedFragment.class.getName();
+	
 	private NewsFeedCursorAdapter adapter;
 	private PreparedQuery<Observation> query;
 	private Dao<Observation, Long> oDao;
@@ -67,8 +70,6 @@ public class NewsFeedFragment extends Fragment implements IObservationEventListe
 		footer = (ViewGroup) inflater.inflate(R.layout.feed_footer, lv, false);
         lv.addFooterView(footer, null, false);
 		
-		Log.i("test", "on start news feed fragment");
-		Log.i("test", "after super");
 		sp = PreferenceManager.getDefaultSharedPreferences(getActivity().getApplicationContext());
 		sp.registerOnSharedPreferenceChangeListener(this);
 		
@@ -80,14 +81,11 @@ public class NewsFeedFragment extends Fragment implements IObservationEventListe
 			lv.setAdapter(adapter);
 			lv.setOnItemClickListener(this);
 
-			try {
-				ObservationHelper.getInstance(getActivity().getApplicationContext()).addListener(this);
-			} catch (ObservationException oe) {
-				oe.printStackTrace();
-			}
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+			ObservationHelper.getInstance(getActivity().getApplicationContext()).addListener(this);
+
+        } catch (Exception e) {
+        	Log.e(LOG_NAME, "Problem getting cursor or setting adapter.", e);
+        }
 		return rootView;
 	}
 
@@ -112,13 +110,12 @@ public class NewsFeedFragment extends Fragment implements IObservationEventListe
 			observationView.putExtra(ObservationViewActivity.OBSERVATION_ID, o.getId());
 			getActivity().startActivityForResult(observationView, 2);
 		} catch (Exception e) {
-
+			Log.e(LOG_NAME, "Problem.", e);
 		}
 	}
 
 	@Override
 	public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-		// TODO Add your menu entries here
 		super.onCreateOptionsMenu(menu, inflater);
 
 		inflater.inflate(R.menu.observation_new, menu);
@@ -142,48 +139,41 @@ public class NewsFeedFragment extends Fragment implements IObservationEventListe
 	private PreparedQuery<Observation> buildQuery(Dao<Observation, Long> oDao, int filterId) throws SQLException {
 		QueryBuilder<Observation, Long> qb = oDao.queryBuilder();
 		Calendar c = Calendar.getInstance();
-		String title = "";
-		String footerText = "";
+		String title = "All Observations";
+		String footerText = "All observations have been returned";
 		switch (filterId) {
+		default:
 		case R.id.none_rb:
 			// no filter
-			title += "All Observations";
-			footerText = "All observations have been returned";
 			c.setTime(new Date(0));
 			break;
 		case R.id.last_hour_rb:
-			title += "Last Hour";
+			title = "Last Hour";
 			footerText = "End of results for Last Hour filter";
 			c.add(Calendar.HOUR, -1);
 			break;
 		case R.id.last_six_hours_rb:
-			title += "Last 6 Hours";
+			title = "Last 6 Hours";
 			footerText = "End of results for Last 6 Hours filter";
 			c.add(Calendar.HOUR, -6);
 			break;
 		case R.id.last_twelve_hours_rb:
-			title += "Last 12 Hours";
+			title = "Last 12 Hours";
 			footerText = "End of results for Last 12 Hours filter";
 			c.add(Calendar.HOUR, -12);
 			break;
 		case R.id.last_24_hours_rb:
-			title += "Last 24 Hours";
+			title = "Last 24 Hours";
 			footerText = "End of results for Last 24 Hours filter";
 			c.add(Calendar.HOUR, -24);
 			break;
 		case R.id.since_midnight_rb:
-			title += "Since Midnight";
+			title = "Since Midnight";
 			footerText = "End of results for Today filter";
 			c.set(Calendar.HOUR_OF_DAY, 0);
 			c.set(Calendar.MINUTE, 0);
 			c.set(Calendar.SECOND, 0);
 			c.set(Calendar.MILLISECOND, 0);
-			break;
-		default:
-			// just set no filter
-			title += "All Observations";
-			footerText = "All observations have been returned";
-			c.setTime(new Date(0));
 			break;
 		}
 		requeryTime = c.getTimeInMillis();
@@ -197,13 +187,6 @@ public class NewsFeedFragment extends Fragment implements IObservationEventListe
 	}
 
 	private Cursor obtainCursor(PreparedQuery<Observation> query, Dao<Observation, Long> oDao) throws SQLException {
-		// build your query
-		QueryBuilder<Observation, Long> qb = oDao.queryBuilder();
-		qb.where().gt("_id", 0);
-		// this is wrong. need to figure out how to order on nested table or
-		// move the correct field up
-		qb.orderBy("last_modified", false);
-
 		Cursor c = null;
 		CloseableIterator<Observation> iterator = oDao.iterator(query);
 
@@ -233,8 +216,6 @@ public class NewsFeedFragment extends Fragment implements IObservationEventListe
 
 	@Override
 	public void onError(Throwable error) {
-		// TODO Auto-generated method stub
-
 	}
 
 	@Override
@@ -246,7 +227,7 @@ public class NewsFeedFragment extends Fragment implements IObservationEventListe
 					query = buildQuery(oDao, getTimeFilterId());
 					adapter.changeCursor(obtainCursor(query, oDao));
 				} catch (Exception e) {
-					Log.e("NewsFeedFragment", "Unable to change cursor", e);
+					Log.e(LOG_NAME, "Unable to change cursor", e);
 				}
 			}
 		});
@@ -262,7 +243,7 @@ public class NewsFeedFragment extends Fragment implements IObservationEventListe
 					query = buildQuery(oDao, getTimeFilterId());
 					adapter.changeCursor(obtainCursor(query, oDao));
 				} catch (Exception e) {
-					Log.e("NewsFeedFragment", "Unable to change cursor", e);
+					Log.e(LOG_NAME, "Unable to change cursor", e);
 				}
 			}
 		});
@@ -274,11 +255,10 @@ public class NewsFeedFragment extends Fragment implements IObservationEventListe
 			@Override
 			public void run() {
 				try {
-					Log.i("test", "observation updated");
 					query = buildQuery(oDao, getTimeFilterId());
 					adapter.changeCursor(obtainCursor(query, oDao));
 				} catch (Exception e) {
-					Log.e("NewsFeedFragment", "Unable to change cursor", e);
+					Log.e(LOG_NAME, "Unable to change cursor", e);
 				}
 			}
 		});
@@ -299,7 +279,7 @@ public class NewsFeedFragment extends Fragment implements IObservationEventListe
 					query = buildQuery(oDao, filterId);
 					adapter.changeCursor(obtainCursor(query, oDao));
 				} catch (Exception e) {
-					Log.e("NewsFeedFragment", "Unable to change cursor", e);
+					Log.e(LOG_NAME, "Unable to change cursor", e);
 				}
 			}
 		});

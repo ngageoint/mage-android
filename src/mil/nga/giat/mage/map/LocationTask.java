@@ -1,6 +1,8 @@
 package mil.nga.giat.mage.map;
 
-import mil.nga.giat.mage.map.marker.LocationMarkerCollection;
+import mil.nga.giat.mage.filter.Filter;
+import mil.nga.giat.mage.map.marker.PointCollection;
+import mil.nga.giat.mage.sdk.Temporal;
 import mil.nga.giat.mage.sdk.datastore.location.Location;
 import android.os.AsyncTask;
 
@@ -12,16 +14,23 @@ public class LocationTask extends AsyncTask<Location, Location, Void> {
     }
     
     private Type type;
-    private LocationMarkerCollection locationCollection;
-    
-    public LocationTask(Type type, LocationMarkerCollection locationCollection) {
+    private PointCollection<Location> locationCollection;
+    private Filter<Temporal> filter;
+
+    public LocationTask(Type type, PointCollection<Location> locationCollection) {
         this.type = type;
         this.locationCollection = locationCollection;
     }
 
+    public void setFilter(Filter<Temporal> filter) {
+        this.filter = filter;
+    }
+    
     @Override
-    protected Void doInBackground(Location... locations) {
-        for (Location l : locations) {
+    protected Void doInBackground(Location... locations) {        
+    	for (Location l : locations) {
+            if (filter != null && !filter.passesFilter(l)) continue;
+
             publishProgress(l);
         }
         

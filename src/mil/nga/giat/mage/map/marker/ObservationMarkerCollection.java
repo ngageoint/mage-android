@@ -1,17 +1,14 @@
 package mil.nga.giat.mage.map.marker;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
+import java.util.Date;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import mil.nga.giat.mage.filter.Filter;
 import mil.nga.giat.mage.observation.ObservationViewActivity;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import android.content.Context;
 import android.content.Intent;
-import android.os.AsyncTask;
 
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.GoogleMap.OnMarkerClickListener;
@@ -22,13 +19,13 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.maps.android.MarkerManager;
 import com.vividsolutions.jts.geom.Point;
 
-public class ObservationMarkerCollection implements ObservationCollection, OnMarkerClickListener {
+public class ObservationMarkerCollection implements PointCollection<Observation>, OnMarkerClickListener {
 
     private GoogleMap map;
     private Context context;
-    private Collection<Filter<Observation>> filters = new ArrayList<Filter<Observation>>();
+    private Date latestObservationDate = new Date(0);
 
-    private boolean collectionVisible = true;
+    private boolean visible = true;
 
     private Map<Long, Marker> observationIdToMarker = new ConcurrentHashMap<Long, Marker>();
     private Map<String, Observation> markerIdToObservation = new ConcurrentHashMap<String, Observation>();
@@ -41,21 +38,31 @@ public class ObservationMarkerCollection implements ObservationCollection, OnMar
 
         MarkerManager markerManager = new MarkerManager(map);
         markerCollection = markerManager.newCollection();
-        map.setOnMarkerClickListener(this);
     }
 
     @Override
     public void add(Observation o) {
+        // If I got an observation that I already have in my list
+        // remove it from the map and clean-up my collections
+        Marker marker = observationIdToMarker.remove(o.getId());
+        if (marker != null) {
+            markerIdToObservation.remove(marker.getId());
+            marker.remove();
+        }
+
         Point point = (Point) o.getObservationGeometry().getGeometry();
         MarkerOptions options = new MarkerOptions()
             .position(new LatLng(point.getY(), point.getX()))
             .icon(ObservationBitmapFactory.bitmapDescriptor(context, o))
-            .visible(isObservationVisible(o));
+            .visible(visible);
 
-        Marker marker = markerCollection.addMarker(options);
-
+        marker = markerCollection.addMarker(options);
         observationIdToMarker.put(o.getId(), marker);
         markerIdToObservation.put(marker.getId(), o);
+        
+        if (o.getLastModified().after(latestObservationDate)) {
+            latestObservationDate = o.getLastModified();
+        }
     }
 
     @Override
@@ -66,25 +73,14 @@ public class ObservationMarkerCollection implements ObservationCollection, OnMar
     }
 
     @Override
-    public Collection<Observation> getObservations() {
-        return markerIdToObservation.values();
-    }
-
-    @Override
-    public void setVisible(boolean collectionVisible) {
-        if (this.collectionVisible == collectionVisible)
+    public void setVisibility(boolean visible) {
+        if (this.visible == visible)
             return;
         
-        this.collectionVisible = collectionVisible;
+        this.visible = visible;
         for (Marker m : observationIdToMarker.values()) {
-            Observation o = markerIdToObservation.get(m.getId());
-            m.setVisible(isObservationVisible(o));
+            m.setVisible(visible);
         }
-    }
-
-    @Override
-    public void setObservationVisibility(Observation o, boolean visible) {        
-        observationIdToMarker.get(o.getId()).setVisible(this.collectionVisible && visible);
     }
 
     @Override
@@ -116,53 +112,16 @@ public class ObservationMarkerCollection implements ObservationCollection, OnMar
         observationIdToMarker.clear();
         markerIdToObservation.clear();
         markerCollection.clear();
+        latestObservationDate = new Date(0);
+    }
+
+    @Override
+    public Date getLatestDate() {
+        return latestObservationDate;
     }
 
     @Override
     public void onCameraChange(CameraPosition cameraPosition) {
         // do nothing I don't care
-    }
-
-    @Override
-    public void setFilters(Collection<Filter<Observation>> filters) {
-        this.filters = filters;
-
-        // re-filter based on new filter
-        new FilterObservationsTask().execute();
-    }
-
-    private boolean isObservationVisible(Observation o) {
-        boolean isVisible = collectionVisible;
-
-        // Only check filter if the collection is visible
-        if (isVisible) {
-            for (Filter<Observation> filter : filters) {
-                if (!filter.passesFilter(o)) {
-                    isVisible = false;
-                    break;
-                }
-            }
-        }
-
-        return isVisible;
-    }
-
-    private class FilterObservationsTask extends AsyncTask<Void, Map<Observation, Boolean>, Void> {
-
-        @Override
-        protected Void doInBackground(Void... params) {
-            for (Observation o : markerIdToObservation.values()) {
-                publishProgress(Collections.<Observation, Boolean> singletonMap(o, isObservationVisible(o)));
-            }
-
-            return null;
-        }
-
-        @Override
-        protected void onProgressUpdate(Map<Observation, Boolean>... observations) {
-            for (Map.Entry<Observation, Boolean> entry : observations[0].entrySet()) {
-                ObservationMarkerCollection.this.setObservationVisibility(entry.getKey(), entry.getValue());
-            }            
-        }
     }
 }

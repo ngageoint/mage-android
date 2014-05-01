@@ -23,7 +23,12 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <!--
+    <uses-permission android:name="android.permission.READ_CONTACTS" />
+    <uses-permission android:name="android.permission.WRITE_CONTACTS" />
+    -->
     <uses-permission android:name="com.google.android.providers.gsf.permission.READ_GSERVICES" />
 
     <uses-feature
@@ -47,7 +52,7 @@
         </activity>
         <activity
             android:name="mil.nga.giat.mage.login.LoginActivity"
-            android:noHistory="true"
+            android:configChanges="keyboardHidden|orientation|screenSize"
             android:windowSoftInputMode="stateVisible" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -61,9 +66,9 @@
         </activity>
         <activity
             android:name="mil.nga.giat.mage.LandingActivity"
+            android:label="@string/app_name"
             android:launchMode="singleTop"
-            android:label="@string/app_name" 
-            android:screenOrientation="portrait">
+            android:screenOrientation="portrait" >
         </activity>
         <activity
             android:name="mil.nga.giat.mage.preferences.PublicPreferencesFragment"
@@ -71,7 +76,7 @@
             android:label="@string/menu_settings"
             android:launchMode="singleTop"
             android:parentActivityName="mil.nga.giat.mage.LandingActivity" >
-                        
+
             <!-- Parent activity meta-data to support 4.0 and lower -->
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
@@ -82,7 +87,18 @@
             android:icon="@drawable/ic_compass_white"
             android:label="@string/location_settings"
             android:parentActivityName="mil.nga.giat.mage.preferences.PublicPreferencesFragment" >
-            
+
+            <!-- Parent activity meta-data to support 4.0 and lower -->
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="mil.nga.giat.mage.preferences.PublicPreferencesActivity" />
+        </activity>
+        <activity
+            android:name="mil.nga.giat.mage.preferences.FetchPreferencesActivity"
+            android:icon="@drawable/ic_download"
+            android:label="@string/fetch_settings"
+            android:parentActivityName="mil.nga.giat.mage.preferences.PublicPreferencesFragment" >
+
             <!-- Parent activity meta-data to support 4.0 and lower -->
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
@@ -101,13 +117,13 @@
         </activity>
         <activity
             android:name="mil.nga.giat.mage.map.preference.TileOverlayPreferenceActivity"
-            android:theme="@style/AppBaseTheme.ActionBar.OverlayMap"
             android:icon="@drawable/ic_map_white"
             android:label="@string/overlay_settings"
             android:launchMode="singleTop"
-            android:uiOptions="splitActionBarWhenNarrow"
-            android:parentActivityName="mil.nga.giat.mage.map.preference.MapPreferencesActivity" >
-            
+            android:parentActivityName="mil.nga.giat.mage.map.preference.MapPreferencesActivity"
+            android:theme="@style/AppBaseTheme.ActionBar.OverlayMap"
+            android:uiOptions="splitActionBarWhenNarrow" >
+
             <!-- Parent activity meta-data to support 4.0 and lower -->
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
@@ -115,13 +131,13 @@
         </activity>
         <activity
             android:name="mil.nga.giat.mage.map.preference.FeatureOverlayPreferenceActivity"
-            android:theme="@style/AppBaseTheme.ActionBar.OverlayMap"
             android:icon="@drawable/ic_map_white"
             android:label="@string/feature_overlay_settings"
             android:launchMode="singleTop"
-            android:uiOptions="splitActionBarWhenNarrow"
-            android:parentActivityName="mil.nga.giat.mage.map.preference.MapPreferencesActivity" >
-            
+            android:parentActivityName="mil.nga.giat.mage.map.preference.MapPreferencesActivity"
+            android:theme="@style/AppBaseTheme.ActionBar.OverlayMap"
+            android:uiOptions="splitActionBarWhenNarrow" >
+
             <!-- Parent activity meta-data to support 4.0 and lower -->
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
@@ -131,10 +147,13 @@
             android:name="mil.nga.giat.mage.observation.ObservationViewActivity"
             android:label="@string/observation_view" >
         </activity>
-        <activity android:name="mil.nga.giat.mage.observation.ObservationEditActivity" 
-             android:uiOptions="splitActionBarWhenNarrow">
+        <activity
+            android:name="mil.nga.giat.mage.observation.ObservationEditActivity"
+            android:uiOptions="splitActionBarWhenNarrow" >
         </activity>
         <activity android:name="mil.nga.giat.mage.observation.AttachmentViewerActivity" >
+        </activity>
+        <activity android:name="mil.nga.giat.mage.observation.LocationEditActivity" >
         </activity>
 
         <receiver android:name="mil.nga.giat.mage.sdk.connectivity.NetworkChangeReceiver" >
@@ -142,6 +161,45 @@
                 <action android:name="android.net.conn.CONNECTIVITY_CHANGE" />
             </intent-filter>
         </receiver>
+        <receiver
+            android:name="mil.nga.giat.mage.sdk.fetch.LocationFetchAlarmReceiver"
+            android:exported="true" />
+
+        <service
+            android:name="mil.nga.giat.mage.sdk.fetch.LocationFetchIntentService"
+            android:exported="true" />
+
+        <receiver
+            android:name="mil.nga.giat.mage.sdk.fetch.ObservationFetchAlarmReceiver"
+            android:exported="true" />
+
+        <service
+            android:name="mil.nga.giat.mage.sdk.fetch.ObservationFetchIntentService"
+            android:exported="true" />
+
+        <receiver
+            android:name="mil.nga.giat.mage.sdk.push.LocationPushAlarmReceiver"
+            android:exported="true" />
+
+        <service
+            android:name="mil.nga.giat.mage.sdk.push.LocationPushIntentService"
+            android:exported="true" />
+
+        <receiver
+            android:name="mil.nga.giat.mage.sdk.push.ObservationPushAlarmReceiver"
+            android:exported="true" />
+
+        <service
+            android:name="mil.nga.giat.mage.sdk.push.ObservationPushIntentService"
+            android:exported="true" />
+
+        <receiver
+            android:name="mil.nga.giat.mage.sdk.push.AttachmentPushAlarmReceiver"
+            android:exported="true" />
+
+        <service
+            android:name="mil.nga.giat.mage.sdk.push.AttachmentPushIntentService"
+            android:exported="true" />
 
         <meta-data
             android:name="com.google.android.maps.v2.API_KEY"

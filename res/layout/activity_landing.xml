@@ -16,7 +16,8 @@
         android:choiceMode="singleChoice"
         android:divider="@android:color/transparent"
         android:dividerHeight="0dp"
-        android:background="#333"/>
+        android:background="#333"
+        android:paddingTop="10dp"/>
     
     <LinearLayout 
         android:background="#EEE"
@@ -45,7 +46,6 @@
                 android:layout_width="wrap_content"
 	    	    android:layout_height="wrap_content"
 	    	    android:textColor="#111"
-	    	    android:padding="7dp"
 	       		android:textSize="18sp"/>
             <RadioButton 
                 android:id="@+id/last_hour_rb"
@@ -53,7 +53,6 @@
                 android:layout_width="wrap_content"
 	    	    android:layout_height="wrap_content"
 	    	    android:textColor="#111"
-	    	    android:padding="7dp"
 	       		android:textSize="18sp"/>
             <RadioButton 
                 android:id="@+id/last_six_hours_rb"
@@ -61,7 +60,6 @@
                 android:layout_width="wrap_content"
 	    	    android:layout_height="wrap_content"
 	    	    android:textColor="#111"
-	    	    android:padding="7dp"
 	       		android:textSize="18sp"/>
             <RadioButton 
                 android:id="@+id/last_twelve_hours_rb"
@@ -69,7 +67,6 @@
                 android:layout_width="wrap_content"
 	    	    android:layout_height="wrap_content"
 	    	    android:textColor="#111"
-	    	    android:padding="7dp"
 	       		android:textSize="18sp"/>
             <RadioButton 
                 android:id="@+id/last_24_hours_rb"
@@ -77,7 +74,6 @@
                 android:layout_width="wrap_content"
 	    	    android:layout_height="wrap_content"
 	    	    android:textColor="#111"
-	    	    android:padding="7dp"
 	       		android:textSize="18sp"/>
             <RadioButton 
                 android:id="@+id/since_midnight_rb"
@@ -85,7 +81,6 @@
                 android:layout_width="wrap_content"
 	    	    android:layout_height="wrap_content"
 	    	    android:textColor="#111"
-	    	    android:padding="7dp"
 	       		android:textSize="18sp"/>
         </RadioGroup>
     </LinearLayout>

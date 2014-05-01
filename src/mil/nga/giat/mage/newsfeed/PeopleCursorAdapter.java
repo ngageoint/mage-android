@@ -75,7 +75,7 @@ public class PeopleCursorAdapter extends CursorAdapter {
 //			});
             
             user.setText(l.getUser().getFirstname() + " " + l.getUser().getLastname());
-            dateView.setText(sdf.format(l.getLastModified())); 
+            dateView.setText(sdf.format(l.getTimestamp())); 
         } catch (java.sql.SQLException e) {
             e.printStackTrace();
         }

@@ -44,7 +44,6 @@ public class ObservationBitmapFactory {
                 bitmap = BitmapFactory.decodeStream(context.getAssets().open(DEFAULT_ASSET), null, options);
             } catch (IOException e2) {
             }
-            
         }
         
         return bitmap;
@@ -53,11 +52,6 @@ public class ObservationBitmapFactory {
     public static BitmapDescriptor bitmapDescriptor(Context context, Observation observation) {
         Bitmap bitmap = bitmap(context, observation);
         return BitmapDescriptorFactory.fromBitmap(bitmap);
-    }
-    
-    @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
-    private static void setDensity(Bitmap bitmap) {
-
     }
     
     private static String getAsset(Observation observation) {

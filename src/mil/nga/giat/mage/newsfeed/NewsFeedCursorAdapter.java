@@ -13,6 +13,9 @@ import mil.nga.giat.mage.map.marker.ObservationBitmapFactory;
 import mil.nga.giat.mage.sdk.datastore.observation.Attachment;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationProperty;
+import mil.nga.giat.mage.sdk.datastore.user.User;
+import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
+import mil.nga.giat.mage.sdk.exceptions.UserException;
 import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
 import mil.nga.giat.mage.sdk.utils.DateUtility;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
@@ -58,7 +61,10 @@ public class NewsFeedCursorAdapter extends CursorAdapter {
             if (v instanceof MageTextView) {
                 MageTextView m = (MageTextView) v;
                 String propertyKey = m.getPropertyKey();
-                String propertyValue = propertiesMap.get(propertyKey).getValue();
+                String propertyValue = null;
+                if (propertiesMap.containsKey(propertyKey)) {
+                	propertyValue = propertiesMap.get(propertyKey).getValue();
+                }
                 if (propertyValue == null)
                     continue;
                 switch (m.getPropertyType()) {
@@ -108,7 +114,16 @@ public class NewsFeedCursorAdapter extends CursorAdapter {
 
             ImageView iv = ((ImageView) v.findViewById(R.id.observation_thumb));
             Collection<Attachment> attachments = o.getAttachments();
-            ((TextView) v.findViewById(R.id.username)).setText(o.getPropertiesMap().get("userId").getValue());
+            
+            String user = "Unkown User";
+        	try {
+            	User u = UserHelper.getInstance(context).read(o.getUserId());
+            	user = u.getFirstname() + " " + u.getLastname();
+        	} catch (UserException e) {
+        	}
+
+            ((TextView) v.findViewById(R.id.username)).setText(user);
+            
             ((TextView) v.findViewById(R.id.attachment_text)).setText(attachments.size() != 0 ? "1 of " + attachments.size() : "");
             if (attachments.size() != 0) {
                 iv.setVisibility(View.VISIBLE);
@@ -143,7 +158,7 @@ public class NewsFeedCursorAdapter extends CursorAdapter {
                     }
                 } else if (remoteId != null) {
                     if (contentType.startsWith("image")) {
-                        String url = a.getUrl() + "?access_token=" + token;
+                        String url = a.getUrl();
                         Log.i("News Feed", "Loading Image URL: " + url);
                         Glide.load(url).placeholder(android.R.drawable.progress_indeterminate_horizontal).centerCrop().into(iv);
                     } else if (contentType.startsWith("video")) {
