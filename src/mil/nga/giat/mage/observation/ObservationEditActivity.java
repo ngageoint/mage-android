@@ -14,7 +14,6 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 
-import mil.nga.giat.mage.MAGE;
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.form.MageEditText;
 import mil.nga.giat.mage.form.MageSpinner;
@@ -588,6 +587,7 @@ public class ObservationEditActivity extends Activity {
 
 		case R.id.observation_save:
 			o.setState(State.ACTIVE);
+			o.setDirty(true);
 			o.setObservationGeometry(new ObservationGeometry(geometryFactory.createPoint(new Coordinate(l.getLongitude(), l.getLatitude()))));
 			
 			LinearLayout form = (LinearLayout) findViewById(R.id.form);
@@ -610,7 +610,6 @@ public class ObservationEditActivity extends Activity {
 					Observation newObs = oh.create(o);
 					Log.i(LOG_NAME, "Created new observation with id: " + newObs.getId());
 				} else {
-					o.setDirty(true);
 					oh.update(o);
 					Log.i(LOG_NAME, "Updated observation with remote id: " + o.getRemoteId());
 				}

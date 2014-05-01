@@ -11,10 +11,7 @@ import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.os.AsyncTask;
-import android.preference.PreferenceManager;
-import android.util.Log;
 
 import com.j256.ormlite.dao.CloseableIterator;
 import com.j256.ormlite.dao.Dao;
@@ -42,9 +39,7 @@ public class LocationLoadTask extends AsyncTask<Void, Location, Void> {
         try {
             iterator = iterator();
 
-            int i = 0;
             while (iterator.hasNext()) {
-                i++;
                 publishProgress(iterator.next());
             }
 

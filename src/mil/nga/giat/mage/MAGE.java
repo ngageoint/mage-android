@@ -12,18 +12,14 @@ import mil.nga.giat.mage.file.Storage.StorageType;
 import mil.nga.giat.mage.login.LoginActivity;
 import mil.nga.giat.mage.map.CacheOverlay;
 import mil.nga.giat.mage.sdk.event.IUserEventListener;
-import mil.nga.giat.mage.sdk.fetch.LocationFetchAlarmReceiver;
 import mil.nga.giat.mage.sdk.fetch.LocationFetchIntentService;
-import mil.nga.giat.mage.sdk.fetch.ObservationFetchAlarmReceiver;
 import mil.nga.giat.mage.sdk.fetch.ObservationFetchIntentService;
 import mil.nga.giat.mage.sdk.fetch.StaticFeatureServerFetch;
 import mil.nga.giat.mage.sdk.glide.MageUrlLoader;
 import mil.nga.giat.mage.sdk.http.client.HttpClientManager;
 import mil.nga.giat.mage.sdk.location.LocationService;
 import mil.nga.giat.mage.sdk.push.AttachmentPushAlarmReceiver;
-import mil.nga.giat.mage.sdk.push.AttachmentPushIntentService;
-import mil.nga.giat.mage.sdk.push.LocationPushAlarmReceiver;
-import mil.nga.giat.mage.sdk.push.ObservationPushAlarmReceiver;
+import mil.nga.giat.mage.sdk.push.LocationPushIntentService;
 import mil.nga.giat.mage.sdk.push.ObservationPushIntentService;
 import android.app.AlarmManager;
 import android.app.Application;
@@ -51,6 +47,11 @@ public class MAGE extends Application implements IUserEventListener {
 	}
 
 	private LocationService locationService;
+	private Intent locationFetchIntent;
+	private Intent observationFetchIntent;
+	private Intent locationPushIntent;
+	private Intent observationPushIntent;
+	private Intent attachmentPushIntent;
 	private List<CacheOverlay> cacheOverlays = null;
 	private Collection<OnCacheOverlayListener> cacheOverlayListeners = new ArrayList<OnCacheOverlayListener>();
 
@@ -144,22 +145,14 @@ public class MAGE extends Application implements IUserEventListener {
 	 * Start Tasks responsible for fetching Observations and Locations from the server.
 	 */
 	private void startFetching() {
-		startLocationFetch();
-		startObservationFetch();
-	}
-
-	private void startObservationFetch() {
-		Intent intent = new Intent(getApplicationContext(), ObservationFetchAlarmReceiver.class);
-		final PendingIntent pendingIntent = PendingIntent.getBroadcast(this, ObservationFetchAlarmReceiver.REQUEST_CODE, intent, PendingIntent.FLAG_UPDATE_CURRENT);
-		alarm.cancel(pendingIntent);
-		alarm.set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis(), pendingIntent);
-	}
-
-	private void startLocationFetch() {
-		Intent intent = new Intent(getApplicationContext(), LocationFetchAlarmReceiver.class);
-		final PendingIntent pendingIntent = PendingIntent.getBroadcast(this, LocationFetchAlarmReceiver.REQUEST_CODE, intent, PendingIntent.FLAG_UPDATE_CURRENT);
-		alarm.cancel(pendingIntent);
-		alarm.set(AlarmManager.RTC, System.currentTimeMillis(), pendingIntent);
+		if(locationFetchIntent == null) {
+			locationFetchIntent = new Intent(getApplicationContext(), LocationFetchIntentService.class);
+			startService(locationFetchIntent);
+		}
+		if(observationFetchIntent == null) {
+			observationFetchIntent = new Intent(getApplicationContext(), ObservationFetchIntentService.class);
+			startService(observationFetchIntent);
+		}
 	}
 
 	/**
@@ -169,84 +162,50 @@ public class MAGE extends Application implements IUserEventListener {
 		if (staticFeatureServerFetch != null) {
 			staticFeatureServerFetch.destroy();
 		}
-		cancelLocationFetch();
-		cancelObservationFetch();
-	}
-
-	private void cancelObservationFetch() {
-		Intent intent = new Intent(getApplicationContext(), ObservationFetchAlarmReceiver.class);
-		final PendingIntent pIntent = PendingIntent.getBroadcast(this, ObservationFetchAlarmReceiver.REQUEST_CODE, intent, PendingIntent.FLAG_UPDATE_CURRENT);
-		alarm.cancel(pIntent);
-
-		Intent intentService = new Intent(this, ObservationFetchIntentService.class);
-		this.stopService(intentService);
-	}
-
-	private void cancelLocationFetch() {
-		Intent intent = new Intent(getApplicationContext(), LocationFetchAlarmReceiver.class);
-		final PendingIntent pIntent = PendingIntent.getBroadcast(this, LocationFetchAlarmReceiver.REQUEST_CODE, intent, PendingIntent.FLAG_UPDATE_CURRENT);
-		alarm.cancel(pIntent);
-
-		Intent intentService = new Intent(this, LocationFetchIntentService.class);
-		this.stopService(intentService);
+		if(locationFetchIntent != null) {
+			stopService(locationFetchIntent);
+		}
+		if(observationFetchIntent != null) {
+			stopService(observationFetchIntent);
+		}
 	}
 
 	/**
 	 * Start Tasks responsible for pushing Observations, Attachments and Locations to the server.
 	 */
 	private void startPushing() {
-		startLocationPush();
-		startObservationPush();
+		if (locationPushIntent == null) {
+			locationPushIntent = new Intent(getApplicationContext(), LocationPushIntentService.class);
+			startService(locationPushIntent);
+		}
+		if (observationPushIntent == null) {
+			observationPushIntent = new Intent(getApplicationContext(), ObservationPushIntentService.class);
+			startService(observationPushIntent);
+		}
 		startAttachmentPushing();
 	}
 
-	private void startLocationPush() {
-		Intent locationIntent = new Intent(getApplicationContext(), LocationPushAlarmReceiver.class);
-		final PendingIntent pendingIntent = PendingIntent.getBroadcast(this, LocationPushAlarmReceiver.REQUEST_CODE, locationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
-		alarm.cancel(pendingIntent);
-		alarm.set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis(), pendingIntent);
-	}
-	
-	private void startObservationPush() {
-		Intent observationIntent = new Intent(getApplicationContext(), ObservationPushAlarmReceiver.class);
-		final PendingIntent pendingIntent = PendingIntent.getBroadcast(this, ObservationPushAlarmReceiver.REQUEST_CODE, observationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
-		alarm.cancel(pendingIntent);
-		alarm.set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis(), pendingIntent);
-	}
-
 	private void startAttachmentPushing() {
-		Intent intent = new Intent(getApplicationContext(), AttachmentPushAlarmReceiver.class);
-		final PendingIntent pendingIntent = PendingIntent.getBroadcast(this, AttachmentPushAlarmReceiver.REQUEST_CODE, intent, PendingIntent.FLAG_UPDATE_CURRENT);
-		long firstMillis = System.currentTimeMillis();
-		int intervalMillis = 60000;
-		alarm.setInexactRepeating(AlarmManager.RTC_WAKEUP, firstMillis, intervalMillis, pendingIntent);
+		if(attachmentPushIntent == null) {
+			attachmentPushIntent = new Intent(getApplicationContext(), AttachmentPushAlarmReceiver.class);
+			final PendingIntent pendingIntent = PendingIntent.getBroadcast(this, AttachmentPushAlarmReceiver.REQUEST_CODE, attachmentPushIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+			long firstMillis = System.currentTimeMillis();
+			int intervalMillis = 60000;
+			alarm.setInexactRepeating(AlarmManager.RTC_WAKEUP, firstMillis, intervalMillis, pendingIntent);
+		}
 	}
 
 	/**
 	 * Stop Tasks responsible for pushing Observations and Locations to the server.
 	 */
 	private void destroyPushing() {
-		cancelLocationPush();
-		cancelObservationPush();
+		if (locationPushIntent != null) {
+			stopService(locationPushIntent);
+		}
+		if (observationPushIntent != null) {
+			stopService(observationPushIntent);
+		}
 		cancelAttachmentPush();
-	}
-
-	private void cancelLocationPush() {
-		Intent intent = new Intent(getApplicationContext(), LocationPushAlarmReceiver.class);
-		final PendingIntent pIntent = PendingIntent.getBroadcast(this, LocationPushAlarmReceiver.REQUEST_CODE, intent, PendingIntent.FLAG_UPDATE_CURRENT);
-		alarm.cancel(pIntent);
-
-		Intent intentService = new Intent(this, ObservationPushIntentService.class);
-		this.stopService(intentService);
-	}
-	
-	private void cancelObservationPush() {
-		Intent intent = new Intent(getApplicationContext(), ObservationPushAlarmReceiver.class);
-		final PendingIntent pIntent = PendingIntent.getBroadcast(this, ObservationPushAlarmReceiver.REQUEST_CODE, intent, PendingIntent.FLAG_UPDATE_CURRENT);
-		alarm.cancel(pIntent);
-
-		Intent intentService = new Intent(this, ObservationPushIntentService.class);
-		this.stopService(intentService);
 	}
 	
 	private void cancelAttachmentPush() {
@@ -254,8 +213,9 @@ public class MAGE extends Application implements IUserEventListener {
 		final PendingIntent pIntent = PendingIntent.getBroadcast(this, AttachmentPushAlarmReceiver.REQUEST_CODE, intent, PendingIntent.FLAG_UPDATE_CURRENT);
 		alarm.cancel(pIntent);
 
-		Intent attachmentIntent = new Intent(this, AttachmentPushIntentService.class);
-		this.stopService(attachmentIntent);
+		if(attachmentPushIntent != null) {
+			this.stopService(attachmentPushIntent);
+		}
 	}
 
 	private void initLocationService() {

@@ -58,6 +58,8 @@ import com.vividsolutions.jts.geom.Point;
 
 public class ObservationViewActivity extends Activity {
     
+	private static final String LOG_NAME = ObservationViewActivity.class.getName();
+	
     public static String OBSERVATION_ID = "OBSERVATION_ID";
     public static String INITIAL_LOCATION = "INITIAL_LOCATION";
     public static String INITIAL_ZOOM = "INITIAL_ZOOM";
@@ -109,9 +111,9 @@ public class ObservationViewActivity extends Activity {
                             Glide.load(new File(absPath)).placeholder(android.R.drawable.progress_indeterminate_horizontal).centerCrop().into(iv);
                         }
                     }
-                    Log.d("image", "Set the image gallery to have an image with uri " + absPath);
+                    Log.d(LOG_NAME, "Set the image gallery to have an image with uri " + absPath);
                 } catch (Exception e) {
-                    Log.e("exception", "Error making image", e);
+                    Log.e(LOG_NAME, "Error making image", e);
                 }
                 
                 publishProgress(iv);
@@ -215,12 +217,55 @@ public class ObservationViewActivity extends Activity {
     @Override
     public void onResume() {
     	super.onResume();
-    	setupView();
+    	setupView(true);
     }
     
-    private void setupView() {
+    private void setupView(Boolean addListeners) {
     	try {
             o = ObservationHelper.getInstance(getApplicationContext()).read(getIntent().getLongExtra(OBSERVATION_ID, 0L));
+            if(addListeners) {
+	            ObservationHelper.getInstance(getApplicationContext()).addListener(new IObservationEventListener() {
+					@Override
+					public void onError(Throwable error) {
+					}
+					
+					@Override
+					public void onObservationUpdated(Observation observation) {
+						if (observation.getId().equals(o.getId()) && !observation.isDirty()) {
+							ObservationViewActivity.this.runOnUiThread(new Runnable() {
+								@Override
+								public void run() {
+									setupView(false);
+								}
+							});
+							ObservationHelper.getInstance(getApplicationContext()).removeListener(this);
+						}
+					}
+					
+					@Override
+					public void onObservationDeleted(Observation observation) {
+					}
+					
+					@Override
+					public void onObservationCreated(Collection<Observation> observations) {
+						for (Iterator<Observation> i = observations.iterator(); i.hasNext();) {
+							Observation observation = i.next();
+							if (observation.getId().equals(o.getId()) && !observation.isDirty()) {
+								ObservationViewActivity.this.runOnUiThread(new Runnable() {
+									@Override
+									public void run() {
+										setupView(false);
+									}
+								});
+								ObservationHelper.getInstance(getApplicationContext()).removeListener(this);
+								break;
+							}
+						}
+					}
+				});
+            }
+            o = ObservationHelper.getInstance(getApplicationContext()).read(getIntent().getLongExtra(OBSERVATION_ID, 0L));
+            
             propertiesMap = o.getPropertiesMap();
             this.setTitle(propertiesMap.get("type").getValue());
             Geometry geo = o.getObservationGeometry().getGeometry();
@@ -275,58 +320,15 @@ public class ObservationViewActivity extends Activity {
             
             FrameLayout fl = (FrameLayout)findViewById(R.id.sync_status);
             fl.removeAllViews();
-            Log.i("test", "o.isDirty? " + o.isDirty());
             if (o.isDirty()) {
-            	ObservationHelper.getInstance(getApplicationContext()).addListener(new IObservationEventListener() {
-					
-					@Override
-					public void onError(Throwable error) {
-					}
-					
-					@Override
-					public void onObservationUpdated(Observation observation) {
-						if (observation.getId() == o.getId() && !observation.isDirty()) {
-							ObservationViewActivity.this.runOnUiThread(new Runnable() {
-								@Override
-								public void run() {
-									setupView();
-								}
-							});
-							ObservationHelper.getInstance(getApplicationContext()).removeListener(this);
-						}
-						
-					}
-					
-					@Override
-					public void onObservationDeleted(Observation observation) {
-					}
-					
-					@Override
-					public void onObservationCreated(Collection<Observation> observations) {
-						for (Iterator<Observation> i = observations.iterator(); i.hasNext();) {
-							Observation observation = i.next();
-							if (observation.getId() == o.getId() && !observation.isDirty()) {
-								ObservationViewActivity.this.runOnUiThread(new Runnable() {
-									@Override
-									public void run() {
-										setupView();
-									}
-								});
-								ObservationHelper.getInstance(getApplicationContext()).removeListener(this);
-								break;
-							}
-						}
-					}
-				});
                 View.inflate(getApplicationContext(), R.layout.saved_locally, fl);
             } else {
-            	Log.i("test", "o.lastmodified: " + o.getLastModified());
                 View status = View.inflate(getApplicationContext(), R.layout.submitted_on, fl);
                 TextView syncDate = (TextView)status.findViewById(R.id.observation_sync_date);
                 syncDate.setText(sdf.format(o.getLastModified()));
             }
         } catch (Exception e) {
-            Log.e("observation view", e.getMessage(), e);
+            Log.e(LOG_NAME, e.getMessage(), e);
         }
     }
     
@@ -357,7 +359,7 @@ public class ObservationViewActivity extends Activity {
                         Date date = iso8601.parse(propertyValue);
                         dateText = sdf.format(date);
                     } catch (ParseException e) {
-                        e.printStackTrace();
+                        Log.e(LOG_NAME, "Problem parsing date", e);
                     }
                     m.setText(dateText);
                     break;

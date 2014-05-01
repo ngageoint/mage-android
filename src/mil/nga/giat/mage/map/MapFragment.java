@@ -521,7 +521,7 @@ public class MapFragment extends Fragment implements
                 onStaticFeatureLayer(l);                
             }
         } catch (LayerException e) {
-            e.printStackTrace();
+        	Log.e(LOG_NAME, "Problem updating static features.", e);
         }
     }
     
@@ -591,34 +591,6 @@ public class MapFragment extends Fragment implements
         editor.putString(getResources().getString(R.string.mapXYZKey), xyz);
         editor.commit();
     }
-
-
-//    private void updateObservations() {        
-//        //TODO think of a way to fix this if we want users to be able to swap
-//        //between clusters and not clusters
-//        boolean cluster = preferences.getBoolean("clusterObservations", false);
-//        if (observations == null) {
-//            this.cluster = cluster;
-//
-//            // Create the observations collection and start listening for
-//            // updates
-//            observations = cluster ? new ObservationClusterCollection(getActivity(), map) : new ObservationMarkerCollection(getActivity(), map);
-//
-//            try {
-//                ObservationHelper.getInstance(getActivity()).addListener(this);
-//            } catch (ObservationException e) {
-//                e.printStackTrace();
-//            }
-//        } else if (this.cluster != cluster) {
-//            this.cluster = cluster;
-//
-//            Collection<Observation> existing = observations != null ? new ArrayList<Observation>(observations.getObservations()) : Collections.<Observation> emptyList();
-//            observations.clear();
-//            observations = cluster ? new ObservationClusterCollection(getActivity(), map) : new ObservationMarkerCollection(getActivity(), map);
-//            observations.addAll(existing);
-//
-//        }
-//    }
 
     @Override
     public void onError(Throwable error) {

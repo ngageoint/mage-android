@@ -60,8 +60,8 @@ public class ObservationMarkerCollection implements PointCollection<Observation>
         observationIdToMarker.put(o.getId(), marker);
         markerIdToObservation.put(marker.getId(), o);
         
-        if (o.getLocalLastModified().after(latestObservationDate)) {
-            latestObservationDate = o.getLocalLastModified();
+        if (o.getLastModified().after(latestObservationDate)) {
+            latestObservationDate = o.getLastModified();
         }
     }
 

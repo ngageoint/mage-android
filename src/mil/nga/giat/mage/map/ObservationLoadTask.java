@@ -9,7 +9,6 @@ import mil.nga.giat.mage.sdk.datastore.DaoStore;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import android.content.Context;
 import android.os.AsyncTask;
-import android.util.Log;
 
 import com.j256.ormlite.dao.CloseableIterator;
 import com.j256.ormlite.dao.Dao;
@@ -37,9 +36,7 @@ public class ObservationLoadTask extends AsyncTask<Void, Observation, Void> {
         try {
             iterator = iterator();
 
-            int i = 0;
             while (iterator.hasNext()) {
-                i++;
                 publishProgress(iterator.next());
             }
 
@@ -63,9 +60,9 @@ public class ObservationLoadTask extends AsyncTask<Void, Observation, Void> {
         Dao<Observation, Long> dao = DaoStore.getInstance(context).getObservationDao();
         QueryBuilder<Observation, Long> query = dao.queryBuilder();
         Where<? extends Temporal, Long> where = query
-                .orderBy("local_last_modified", false)
+                .orderBy("last_modified", false)
                 .where()
-                .ge("local_last_modified", observationCollection.getLatestDate());   
+                .ge("last_modified", observationCollection.getLatestDate());   
 
         if (filter != null) {
             filter.where(where.and());            

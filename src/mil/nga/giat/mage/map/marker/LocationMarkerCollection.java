@@ -61,7 +61,7 @@ public class LocationMarkerCollection implements PointCollection<Location>, OnMa
 		try {
 			currentUser = UserHelper.getInstance(context.getApplicationContext()).readCurrentUser();
 		} catch (UserException e) {
-			e.printStackTrace();
+			Log.e(LOG_NAME, "Problem retriving current user.", e);
 		}
     }
 
