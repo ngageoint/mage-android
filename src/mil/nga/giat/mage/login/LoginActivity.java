@@ -22,6 +22,7 @@ import mil.nga.giat.mage.sdk.utils.UserUtility;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
+import android.content.DialogInterface.OnClickListener;
 import android.content.Intent;
 import android.content.SharedPreferences.Editor;
 import android.graphics.Typeface;
@@ -361,9 +362,15 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 			}).show();
 		} else {
 			if (accountStatus.getErrorIndices().isEmpty()) {
-				getUsernameEditText().setError("Check your username");
-				getPasswordEditText().setError("Check your password");
-				getUsernameEditText().requestFocus();
+				getUsernameEditText().setError(null);
+				getPasswordEditText().setError(null);
+				new AlertDialog.Builder(this).setTitle("Incorrect Credentials").setMessage("The username or password you entered was incorrect.").setPositiveButton(android.R.string.ok, new OnClickListener() {
+					@Override
+					public void onClick(DialogInterface dialog, int which) {
+						dialog.dismiss();
+					}
+				}).show();
+				getPasswordEditText().requestFocus();
 			} else {
 				int errorMessageIndex = 0;
 				for (Integer errorIndex : accountStatus.getErrorIndices()) {
