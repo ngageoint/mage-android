@@ -36,7 +36,7 @@ import com.bumptech.glide.Glide;
 import com.j256.ormlite.android.AndroidDatabaseResults;
 import com.j256.ormlite.stmt.PreparedQuery;
 
-public class NewsFeedCursorAdapter extends CursorAdapter {
+public class ObservationFeedCursorAdapter extends CursorAdapter {
 
     private LayoutInflater inflater = null;
     private PreparedQuery<Observation> query;
@@ -44,7 +44,7 @@ public class NewsFeedCursorAdapter extends CursorAdapter {
     private Activity activity;
     private Observation o;
 
-    public NewsFeedCursorAdapter(Context context, Cursor c, PreparedQuery<Observation> query, Activity activity) {
+    public ObservationFeedCursorAdapter(Context context, Cursor c, PreparedQuery<Observation> query, Activity activity) {
         super(context, c, false);
         inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         this.activity = activity;

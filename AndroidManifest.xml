@@ -161,32 +161,16 @@
                 <action android:name="android.net.conn.CONNECTIVITY_CHANGE" />
             </intent-filter>
         </receiver>
-        <receiver
-            android:name="mil.nga.giat.mage.sdk.fetch.LocationFetchAlarmReceiver"
-            android:exported="true" />
-
         <service
             android:name="mil.nga.giat.mage.sdk.fetch.LocationFetchIntentService"
-            android:exported="true" />
-
-        <receiver
-            android:name="mil.nga.giat.mage.sdk.fetch.ObservationFetchAlarmReceiver"
             android:exported="true" />
 
         <service
             android:name="mil.nga.giat.mage.sdk.fetch.ObservationFetchIntentService"
             android:exported="true" />
 
-        <receiver
-            android:name="mil.nga.giat.mage.sdk.push.LocationPushAlarmReceiver"
-            android:exported="true" />
-
         <service
             android:name="mil.nga.giat.mage.sdk.push.LocationPushIntentService"
-            android:exported="true" />
-
-        <receiver
-            android:name="mil.nga.giat.mage.sdk.push.ObservationPushAlarmReceiver"
             android:exported="true" />
 
         <service

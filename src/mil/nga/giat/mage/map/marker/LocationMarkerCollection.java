@@ -180,27 +180,36 @@ public class LocationMarkerCollection implements PointCollection<Location>, OnMa
         @Override
         public View getInfoContents(Marker marker) {
             Location location = markerIdToLocation.get(marker.getId());
-            Log.i("marker", "location marker getInfoContents event");
-            
-            if (location == null) return null;
+            if (location == null) {
+            	return null;
+            }
+            User user = location.getUser();
             
             LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-            View view = inflater.inflate(R.layout.people_list_item, null);    
+            View v = inflater.inflate(R.layout.people_list_item, null);    
 
-            ImageView iconView = (ImageView) view.findViewById(R.id.iconImageView);
+            ImageView iconView = (ImageView) v.findViewById(R.id.iconImageView);
             Bitmap iconMarker = LocationBitmapFactory.bitmap(context, location);
-            if (iconMarker != null)
+            if (iconMarker != null) {
                 iconView.setImageBitmap(iconMarker);            
-            TextView userView = (TextView) view.findViewById(R.id.username);
-            User user = location.getUser();
-            if (user != null) userView.setText(user.getFirstname() + " " + user.getLastname());
+            }
+           
+			TextView location_name = (TextView) v.findViewById(R.id.location_name);
+			location_name.setText(user.getFirstname() + " " + user.getLastname());
 
+			TextView location_email = (TextView) v.findViewById(R.id.location_email);
+			String email = user.getEmail();
+			if (email != null && !email.trim().isEmpty()) {
+				location_email.setVisibility(View.VISIBLE);
+				location_email.setText(email);
+			} else {
+				location_email.setVisibility(View.GONE);
+			}
+
+			TextView location_date = (TextView) v.findViewById(R.id.location_date);
+			location_date.setText(sdf.format(location.getTimestamp()));
             
-            TextView dateView = (TextView) view.findViewById(R.id.location_date);
-            Date date = location.getTimestamp();
-			dateView.setText(sdf.format(date));
-            
-            return view;
+            return v;
         }
 
         @Override

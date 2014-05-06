@@ -45,11 +45,11 @@ import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.stmt.PreparedQuery;
 import com.j256.ormlite.stmt.QueryBuilder;
 
-public class NewsFeedFragment extends Fragment implements IObservationEventListener, OnItemClickListener, OnSharedPreferenceChangeListener {
+public class ObservationFeedFragment extends Fragment implements IObservationEventListener, OnItemClickListener, OnSharedPreferenceChangeListener {
 
-	private static final String LOG_NAME = NewsFeedFragment.class.getName();
+	private static final String LOG_NAME = ObservationFeedFragment.class.getName();
 	
-	private NewsFeedCursorAdapter adapter;
+	private ObservationFeedCursorAdapter adapter;
 	private PreparedQuery<Observation> query;
 	private Dao<Observation, Long> oDao;
 	private SharedPreferences sp;
@@ -76,7 +76,7 @@ public class NewsFeedFragment extends Fragment implements IObservationEventListe
 			oDao = DaoStore.getInstance(getActivity().getApplicationContext()).getObservationDao();
 			query = buildQuery(oDao, getTimeFilterId());
 			Cursor c = obtainCursor(query, oDao);
-			adapter = new NewsFeedCursorAdapter(getActivity().getApplicationContext(), c, query, getActivity());
+			adapter = new ObservationFeedCursorAdapter(getActivity().getApplicationContext(), c, query, getActivity());
 			lv.setAdapter(adapter);
 			lv.setOnItemClickListener(this);
 
@@ -101,7 +101,7 @@ public class NewsFeedFragment extends Fragment implements IObservationEventListe
 	@Override
 	public void onItemClick(AdapterView<?> adapter, View arg1, int position, long id) {
 		HeaderViewListAdapter headerAdapter = (HeaderViewListAdapter)adapter.getAdapter();
-		Cursor c = ((NewsFeedCursorAdapter) headerAdapter.getWrappedAdapter()).getCursor();
+		Cursor c = ((ObservationFeedCursorAdapter) headerAdapter.getWrappedAdapter()).getCursor();
 		c.moveToPosition(position);
 		try {
 			Observation o = query.mapRow(new AndroidDatabaseResults(c, null));

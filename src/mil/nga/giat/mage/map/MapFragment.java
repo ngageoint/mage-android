@@ -47,6 +47,7 @@ import android.app.Fragment;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.SharedPreferences.Editor;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.location.Location;
 import android.location.LocationListener;
@@ -123,6 +124,8 @@ public class MapFragment extends Fragment implements
     private Collection<String> featureIds = new ArrayList<String>();
 
     private LocationService locationService;
+    
+	public static String INITIAL_LOCATION = "INITIAL_LOCATION";
 
     SharedPreferences preferences;
 
@@ -231,6 +234,19 @@ public class MapFragment extends Fragment implements
         if (locationServiceEnabled) {
             map.setLocationSource(this);
             locationService.registerOnLocationListener(this);
+        }
+        
+        // zoom to location if told to
+        Float zoomLat = preferences.getFloat(getResources().getString(R.string.mapZoomLatKey), Float.MAX_VALUE);
+        Float zoomLon = preferences.getFloat(getResources().getString(R.string.mapZoomLonKey), Float.MAX_VALUE);
+        if(zoomLat != null && zoomLon != null && !zoomLat.equals(Float.MAX_VALUE) && !zoomLon.equals(Float.MAX_VALUE)) {
+            Editor e = preferences.edit();
+            e.putFloat(getResources().getString(R.string.mapZoomLatKey), Float.MAX_VALUE).commit();
+            e.putFloat(getResources().getString(R.string.mapZoomLonKey), Float.MAX_VALUE).commit();
+            android.location.Location tl = new android.location.Location("");
+            tl.setLatitude(zoomLat.doubleValue());
+            tl.setLongitude(zoomLon.doubleValue());
+            zoomToLocation(tl);
         }
     }
 
@@ -411,7 +427,7 @@ public class MapFragment extends Fragment implements
 
     @Override
     public boolean onMyLocationButtonClick() {
-        if (location != null) {
+    	if (location != null) {
             LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
             float zoom = map.getCameraPosition().zoom < 15 ? 15 : map.getCameraPosition().zoom;
             map.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, zoom), new CancelableCallback() {
@@ -429,7 +445,15 @@ public class MapFragment extends Fragment implements
                 }
             });
         }
-
+        return true;
+    }
+    
+    private boolean zoomToLocation(Location pLocation) {
+        if (pLocation != null) {
+            LatLng latLng = new LatLng(pLocation.getLatitude(), pLocation.getLongitude());
+            float zoom = map.getCameraPosition().zoom < 15 ? 15 : map.getCameraPosition().zoom;
+            map.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, zoom));
+        }
         return true;
     }
 

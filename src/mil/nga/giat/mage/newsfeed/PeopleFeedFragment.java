@@ -8,14 +8,19 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
+import mil.nga.giat.mage.LandingActivity;
 import mil.nga.giat.mage.R;
+import mil.nga.giat.mage.map.MapFragment;
+import mil.nga.giat.mage.navigation.DrawerItem;
 import mil.nga.giat.mage.sdk.datastore.DaoStore;
 import mil.nga.giat.mage.sdk.datastore.location.Location;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
 import android.app.Fragment;
+import android.app.FragmentManager;
 import android.content.SharedPreferences;
+import android.content.SharedPreferences.Editor;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.database.Cursor;
 import android.os.Bundle;
@@ -26,6 +31,9 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemClickListener;
+import android.widget.HeaderViewListAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 
@@ -35,12 +43,14 @@ import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.stmt.PreparedQuery;
 import com.j256.ormlite.stmt.QueryBuilder;
 import com.j256.ormlite.stmt.Where;
+import com.vividsolutions.jts.geom.Point;
 
-public class PeopleFeedFragment extends Fragment implements OnSharedPreferenceChangeListener {
+public class PeopleFeedFragment extends Fragment implements OnSharedPreferenceChangeListener, OnItemClickListener {
 	
 	private static final String LOG_NAME = PeopleFeedFragment.class.getName();
 	
     private PeopleCursorAdapter adapter;
+    private PreparedQuery<Location> query;
     private ViewGroup footer;
     private SharedPreferences sp;
     private long requeryTime;
@@ -61,12 +71,13 @@ public class PeopleFeedFragment extends Fragment implements OnSharedPreferenceCh
         
         try {
         	Dao<Location, Long> locationDao = DaoStore.getInstance(getActivity().getApplicationContext()).getLocationDao();
-            PreparedQuery<Location> query = buildQuery(locationDao, getTimeFilterId());
+            query = buildQuery(locationDao, getTimeFilterId());
             Cursor c = obtainCursor(query, locationDao);
             adapter = new PeopleCursorAdapter(getActivity().getApplicationContext(), c, query);
             footer = (ViewGroup) inflater.inflate(R.layout.feed_footer, lv, false);
             footer.setVisibility(View.GONE);
             lv.setAdapter(adapter);
+            lv.setOnItemClickListener(this);
         } catch (Exception e) {
         	Log.e(LOG_NAME, "Problem getting cursor or setting adapter.", e);
         }
@@ -196,4 +207,29 @@ public class PeopleFeedFragment extends Fragment implements OnSharedPreferenceCh
 
         return qb.prepare();
     }
+    
+    /**
+     * Zoom to map.
+     * 
+     */
+	@Override
+	public void onItemClick(AdapterView<?> adapter, View arg1, int position, long id) {
+		HeaderViewListAdapter headerAdapter = (HeaderViewListAdapter)adapter.getAdapter();
+		Cursor c = ((PeopleCursorAdapter) headerAdapter.getWrappedAdapter()).getCursor();
+		c.moveToPosition(position);
+		try {
+			Location l = query.mapRow(new AndroidDatabaseResults(c, null));
+			Point p = (Point)l.getLocationGeometry().getGeometry();
+            Editor e = sp.edit();
+            e.putFloat(getResources().getString(R.string.mapZoomLatKey), Double.valueOf(p.getY()).floatValue()).commit();
+            e.putFloat(getResources().getString(R.string.mapZoomLonKey), Double.valueOf(p.getX()).floatValue()).commit();
+            FragmentManager fragmentManager = getFragmentManager();
+            fragmentManager.beginTransaction().remove(this).commit();
+            DrawerItem mapItem = ((LandingActivity)getActivity()).getMapItem();
+            fragmentManager.beginTransaction().add(R.id.content_frame, ((MapFragment)mapItem.getFragment())).commit();
+            ((LandingActivity)getActivity()).setCurrentItem(mapItem);
+		} catch (Exception e) {
+			Log.e(LOG_NAME, "Problem.", e);
+		}
+	}
 }
