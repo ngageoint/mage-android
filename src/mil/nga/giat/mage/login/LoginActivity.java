@@ -80,7 +80,7 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 		
 		// IMPORTANT: load the configuration from preferences files and server
 		PreferenceHelper preferenceHelper = PreferenceHelper.getInstance(getApplicationContext());
-		preferenceHelper.initialize(new int[]{R.xml.privatepreferences, R.xml.publicpreferences});
+		preferenceHelper.initialize(new Integer[]{R.xml.privatepreferences, R.xml.publicpreferences});
 		
 		// show the disclaimer?
 		if (UserUtility.getInstance(getApplicationContext()).isTokenExpired()) {
