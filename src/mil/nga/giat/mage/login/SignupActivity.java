@@ -301,13 +301,6 @@ public class SignupActivity extends Activity implements AccountDelegate {
 	@Override
 	public void finishAccount(AccountStatus accountStatus) {
 		if (accountStatus.getStatus() == AccountStatus.Status.SUCCESSFUL_SIGNUP) {
-			// save the username
-			Editor sharedPreferencesEditor = PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).edit();
-			try {
-				sharedPreferencesEditor.putString("username", accountStatus.getAccountInformation().getString("username")).commit();
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
 			
 			// Tell the user that their account was made
 			AlertDialog.Builder alertDialog = new AlertDialog.Builder(this);
