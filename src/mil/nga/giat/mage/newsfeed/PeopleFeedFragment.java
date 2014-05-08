@@ -53,7 +53,6 @@ public class PeopleFeedFragment extends Fragment implements OnSharedPreferenceCh
     private PreparedQuery<Location> query;
     private ViewGroup footer;
     private SharedPreferences sp;
-    private long requeryTime;
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
     private ScheduledFuture<?> queryUpdateHandle;
 
@@ -104,7 +103,7 @@ public class PeopleFeedFragment extends Fragment implements OnSharedPreferenceCh
                 public void run() {
                     updateTimeFilter(getTimeFilterId());
                 }
-            }, oldestTime - requeryTime, TimeUnit.MILLISECONDS);
+            }, 30*1000, TimeUnit.MILLISECONDS);
             c.moveToFirst();
         }
         return c;
@@ -188,7 +187,6 @@ public class PeopleFeedFragment extends Fragment implements OnSharedPreferenceCh
             break;
         }
         
-        requeryTime = c.getTimeInMillis();
         TextView footerTextView = (TextView)footer.findViewById(R.id.footer_text);
         footerTextView.setText(footerText);
 		getActivity().getActionBar().setTitle(title);

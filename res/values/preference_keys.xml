@@ -8,6 +8,8 @@
     <string name="compatibleVersionMajorDefaultValue">2</string>
     <string name="compatibleVersionMinorKey">compatibleVersionMinor</string>
     <string name="compatibleVersionMinorDefaultValue">0</string>
+    <string name="prettyPrintLocationDatesKey">prettyPrintLocationDates</string>
+    <string name="prettyPrintLocationDatesDefaultValue">true</string>
     <!-- from the server api call -->
     <string name="serverVersionMajorKey">gVersionMajor</string>
     <string name="serverVersionMinorKey">gVersionMinor</string>

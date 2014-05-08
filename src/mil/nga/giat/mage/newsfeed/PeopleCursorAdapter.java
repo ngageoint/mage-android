@@ -4,10 +4,13 @@ import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.Locale;
 
+import org.ocpsoft.prettytime.PrettyTime;
+
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.map.marker.LocationBitmapFactory;
 import mil.nga.giat.mage.sdk.datastore.location.Location;
 import mil.nga.giat.mage.sdk.datastore.user.User;
+import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
 import android.content.Context;
 import android.database.Cursor;
 import android.graphics.Bitmap;
@@ -58,9 +61,17 @@ public class PeopleCursorAdapter extends CursorAdapter {
 			} else {
 				location_email.setVisibility(View.GONE);
 			}
-
+			
+			// set date
 			TextView location_date = (TextView) v.findViewById(R.id.location_date);
-			location_date.setText(sdf.format(location.getTimestamp()));
+
+			String timeText = sdf.format(location.getTimestamp());
+			Boolean prettyPrint = PreferenceHelper.getInstance(context).getValue(R.string.prettyPrintLocationDatesKey, Boolean.class, R.string.prettyPrintLocationDatesDefaultValue);
+			if(prettyPrint) {
+				timeText = new PrettyTime().format(location.getTimestamp());
+			}
+
+			location_date.setText(timeText);
 		} catch (SQLException sqle) {
 			Log.e(LOG_NAME, "Could not set location view informaiton.", sqle);
 		}

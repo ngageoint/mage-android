@@ -8,12 +8,15 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.ocpsoft.prettytime.PrettyTime;
+
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.sdk.datastore.location.Location;
 import mil.nga.giat.mage.sdk.datastore.location.LocationHelper;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
+import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.util.Log;
@@ -206,8 +209,15 @@ public class LocationMarkerCollection implements PointCollection<Location>, OnMa
 				location_email.setVisibility(View.GONE);
 			}
 
+			// set date
 			TextView location_date = (TextView) v.findViewById(R.id.location_date);
-			location_date.setText(sdf.format(location.getTimestamp()));
+
+			String timeText = sdf.format(location.getTimestamp());
+			Boolean prettyPrint = PreferenceHelper.getInstance(context).getValue(R.string.prettyPrintLocationDatesKey, Boolean.class, R.string.prettyPrintLocationDatesDefaultValue);
+			if(prettyPrint) {
+				timeText = new PrettyTime().format(location.getTimestamp());
+			}
+			location_date.setText(timeText);
             
             return v;
         }

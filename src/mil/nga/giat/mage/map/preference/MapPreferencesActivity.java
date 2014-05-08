@@ -60,8 +60,6 @@ public class MapPreferencesActivity extends PreferenceActivity {
                     return true;
                 }
             });
-
-            PreferenceManager.setDefaultValues(getActivity(), R.xml.mappreferences, true);
         }
 
         @Override

@@ -25,6 +25,7 @@ import mil.nga.giat.mage.sdk.utils.DateUtility;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
 import android.app.ActionBar;
 import android.app.Activity;
+import android.app.Fragment;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.graphics.drawable.BitmapDrawable;
@@ -65,11 +66,12 @@ public class ObservationViewActivity extends Activity {
     public static String INITIAL_ZOOM = "INITIAL_ZOOM";
 
     private static final int ATTACHMENT_VIEW_ACTIVITY_REQUEST_CODE = 500;
-    GoogleMap map;
+    private GoogleMap miniMap;
+    private IObservationEventListener observationEventListener;
     private Observation o;
     private Marker marker;
     private Map<String, ObservationProperty> propertiesMap;
-    DecimalFormat latLngFormat = new DecimalFormat("###.#####");
+    private DecimalFormat latLngFormat = new DecimalFormat("###.#####");
     private SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm zz", Locale.getDefault());
     private DateFormat iso8601 =  DateUtility.getISO8601();
     
@@ -189,8 +191,8 @@ public class ObservationViewActivity extends Activity {
             case R.id.observation_edit:
                 Intent intent = new Intent(this, ObservationEditActivity.class);
                 intent.putExtra(ObservationEditActivity.OBSERVATION_ID, o.getId());
-                intent.putExtra(ObservationViewActivity.INITIAL_LOCATION,  map.getCameraPosition().target);
-                intent.putExtra(ObservationViewActivity.INITIAL_ZOOM, map.getCameraPosition().zoom);
+                intent.putExtra(ObservationViewActivity.INITIAL_LOCATION,  miniMap.getCameraPosition().target);
+                intent.putExtra(ObservationViewActivity.INITIAL_ZOOM, miniMap.getCameraPosition().zoom);
                 startActivityForResult(intent, 2);
                 return true;
             default:
@@ -215,6 +217,14 @@ public class ObservationViewActivity extends Activity {
     }
     
     @Override
+    protected void onDestroy() {
+    	if(observationEventListener != null) {
+    		ObservationHelper.getInstance(getApplicationContext()).removeListener(observationEventListener);
+    	}
+    	super.onDestroy();
+    }
+    
+    @Override
     public void onResume() {
     	super.onResume();
     	setupView(true);
@@ -224,7 +234,7 @@ public class ObservationViewActivity extends Activity {
     	try {
             o = ObservationHelper.getInstance(getApplicationContext()).read(getIntent().getLongExtra(OBSERVATION_ID, 0L));
             if(addListeners) {
-	            ObservationHelper.getInstance(getApplicationContext()).addListener(new IObservationEventListener() {
+            	observationEventListener = new IObservationEventListener() {
 					@Override
 					public void onError(Throwable error) {
 					}
@@ -262,7 +272,8 @@ public class ObservationViewActivity extends Activity {
 							}
 						}
 					}
-				});
+				};
+	            ObservationHelper.getInstance(getApplicationContext()).addListener(observationEventListener);
             }
             o = ObservationHelper.getInstance(getApplicationContext()).read(getIntent().getLongExtra(OBSERVATION_ID, 0L));
             
@@ -282,24 +293,27 @@ public class ObservationViewActivity extends Activity {
                 } else {
                     findViewById(R.id.location_accuracy).setVisibility(View.GONE);
                 }
-                map = ((MapFragment) getFragmentManager().findFragmentById(R.id.mini_map)).getMap();
-                
-                LatLng latLng = getIntent().getParcelableExtra(INITIAL_LOCATION);
-                if (latLng == null) {
-                    latLng = new LatLng(0,0);
+                Fragment tempFragment = getFragmentManager().findFragmentById(R.id.mini_map);
+                if(tempFragment != null) {
+	                miniMap = ((MapFragment) tempFragment).getMap();
+	                
+	                LatLng latLng = getIntent().getParcelableExtra(INITIAL_LOCATION);
+	                if (latLng == null) {
+	                    latLng = new LatLng(0,0);
+	                }
+	                
+	                float zoom = getIntent().getFloatExtra(INITIAL_ZOOM, 0);
+	                
+	                miniMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, zoom));
+	                
+	                LatLng location = new LatLng(pointGeo.getY(), pointGeo.getX());
+	                miniMap.animateCamera(CameraUpdateFactory.newLatLngZoom(location, 15));
+	                if (marker != null) {
+	                	marker.remove();
+	                	marker = null;
+	                }
+	                marker = miniMap.addMarker(new MarkerOptions().position(location).icon(ObservationBitmapFactory.bitmapDescriptor(this, o)));
                 }
-                
-                float zoom = getIntent().getFloatExtra(INITIAL_ZOOM, 0);
-                
-                map.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, zoom));
-                
-                LatLng location = new LatLng(pointGeo.getY(), pointGeo.getX());
-                map.animateCamera(CameraUpdateFactory.newLatLngZoom(location, 15));
-                if (marker != null) {
-                	marker.remove();
-                	marker = null;
-                }
-                marker = map.addMarker(new MarkerOptions().position(location).icon(ObservationBitmapFactory.bitmapDescriptor(this, o)));             
             }
 
             LinearLayout propertyContainer = (LinearLayout)findViewById(R.id.propertyContainer);

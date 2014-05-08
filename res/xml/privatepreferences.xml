@@ -6,6 +6,11 @@
         android:defaultValue="@string/passwordMinLengthDefaultValue"
         android:key="@string/passwordMinLengthKey" />
 
+    <!-- Pretty print location dates -->
+    <EditTextPreference
+        android:defaultValue="@string/prettyPrintLocationDatesDefaultValue"
+        android:key="@string/prettyPrintLocationDatesKey" />
+
     <!-- Is the client compatible with the server? -->
     <EditTextPreference
         android:defaultValue="@string/compatibleVersionMajorDefaultValue"

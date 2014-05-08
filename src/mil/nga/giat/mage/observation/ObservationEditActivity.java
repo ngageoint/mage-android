@@ -25,7 +25,10 @@ import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationGeometry;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationProperty;
+import mil.nga.giat.mage.sdk.datastore.user.User;
+import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.exceptions.ObservationException;
+import mil.nga.giat.mage.sdk.exceptions.UserException;
 import mil.nga.giat.mage.sdk.utils.DateUtility;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
 import android.annotation.SuppressLint;
@@ -156,6 +159,14 @@ public class ObservationEditActivity extends Activity {
 			o = new Observation();
 			o.getProperties().add(new ObservationProperty("type", typeSpinner.getSelectedItem().toString()));
 	        o.getProperties().add(new ObservationProperty("EVENTLEVEL", levelSpinner.getSelectedItem().toString()));
+	        try {
+	        	User u = UserHelper.getInstance(getApplicationContext()).readCurrentUser();
+	        	if(u != null) {
+	        		o.setUserId(u.getRemoteId());
+	        	}
+			} catch (UserException ue) {
+				ue.printStackTrace();
+			}
 		} else {
 			this.setTitle("Edit Observation");
 			// this is an edit of an existing observation
