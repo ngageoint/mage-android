@@ -31,8 +31,10 @@ import mil.nga.giat.mage.sdk.Temporal;
 import mil.nga.giat.mage.sdk.datastore.layer.Layer;
 import mil.nga.giat.mage.sdk.datastore.layer.LayerHelper;
 import mil.nga.giat.mage.sdk.datastore.location.LocationHelper;
+import mil.nga.giat.mage.sdk.datastore.location.LocationProperty;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
+import mil.nga.giat.mage.sdk.datastore.observation.ObservationProperty;
 import mil.nga.giat.mage.sdk.datastore.staticfeature.StaticFeatureHelper;
 import mil.nga.giat.mage.sdk.event.ILocationEventListener;
 import mil.nga.giat.mage.sdk.event.IObservationEventListener;
@@ -84,6 +86,8 @@ import com.google.android.gms.maps.model.TileOverlay;
 import com.google.android.gms.maps.model.TileOverlayOptions;
 import com.google.android.gms.maps.model.TileProvider;
 import com.google.maps.android.PolyUtil;
+import com.vividsolutions.jts.geom.Geometry;
+import com.vividsolutions.jts.geom.Point;
 
 public class MapFragment extends Fragment implements 
         OnMapClickListener,
@@ -281,22 +285,46 @@ public class MapFragment extends Fragment implements
         inflater.inflate(R.menu.filter, menu);
     }
     
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case R.id.observation_new:
-                 Intent intent = new Intent(getActivity().getApplicationContext(), ObservationEditActivity.class);
-                 LocationService ls = ((MAGE) getActivity().getApplication()).getLocationService();
-                 Location l = ls.getLocation();
-                 intent.putExtra(ObservationEditActivity.LOCATION, l);
-                 intent.putExtra(ObservationEditActivity.INITIAL_LOCATION,  map.getCameraPosition().target);
-                 intent.putExtra(ObservationEditActivity.INITIAL_ZOOM, map.getCameraPosition().zoom);
-                 startActivity(intent);
-                 break;
-        }
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		switch (item.getItemId()) {
+		case R.id.observation_new:
+			Intent intent = new Intent(getActivity().getApplicationContext(), ObservationEditActivity.class);
+			LocationService ls = ((MAGE) getActivity().getApplication()).getLocationService();
+			Location l = ls.getLocation();
+			if (l == null) {
+				List<mil.nga.giat.mage.sdk.datastore.location.Location> tLocations = LocationHelper.getInstance(getActivity().getApplicationContext()).getCurrentUserLocations(getActivity().getApplicationContext(), 1);
+				if (!tLocations.isEmpty()) {
+					mil.nga.giat.mage.sdk.datastore.location.Location tLocation = tLocations.get(0);
+					Geometry geo = tLocation.getLocationGeometry().getGeometry();
+					Map<String, LocationProperty> propertiesMap = tLocation.getPropertiesMap();
+					if (geo instanceof Point) {
+						Point point = (Point) geo;
+						String provider = "manual";
+						if (propertiesMap.get("provider").getValue() != null) {
+							provider = propertiesMap.get("provider").getValue().toString();
+						}
+						l = new Location(provider);
+						l.setTime(tLocation.getTimestamp().getTime());
+						if (propertiesMap.get("accuracy").getValue() != null) {
+							l.setAccuracy((Float) propertiesMap.get("accuracy").getValue());
+						}
+						l.setLatitude(point.getY());
+						l.setLongitude(point.getX());
+					}
+				}
+			}
+			if(l != null) {
+				intent.putExtra(ObservationEditActivity.LOCATION, l);
+				intent.putExtra(ObservationEditActivity.INITIAL_LOCATION, map.getCameraPosition().target);
+				intent.putExtra(ObservationEditActivity.INITIAL_ZOOM, map.getCameraPosition().zoom);
+				startActivity(intent);
+			}
+			break;
+		}
 
-        return super.onOptionsItemSelected(item);
-    }
+		return super.onOptionsItemSelected(item);
+	}
 
     @Override
     public void onObservationCreated(Collection<Observation> o) {        
@@ -410,6 +438,7 @@ public class MapFragment extends Fragment implements
         l.setAccuracy(0.0f);
         l.setLatitude(point.latitude);
         l.setLongitude(point.longitude);
+        l.setTime(new Date().getTime());
         intent.putExtra(ObservationEditActivity.LOCATION, l);
         startActivity(intent);
     }

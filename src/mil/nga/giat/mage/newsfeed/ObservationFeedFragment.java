@@ -4,6 +4,8 @@ import java.sql.SQLException;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -14,6 +16,8 @@ import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.observation.ObservationEditActivity;
 import mil.nga.giat.mage.observation.ObservationViewActivity;
 import mil.nga.giat.mage.sdk.datastore.DaoStore;
+import mil.nga.giat.mage.sdk.datastore.location.LocationHelper;
+import mil.nga.giat.mage.sdk.datastore.location.LocationProperty;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
 import mil.nga.giat.mage.sdk.event.IObservationEventListener;
@@ -44,6 +48,8 @@ import com.j256.ormlite.dao.CloseableIterator;
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.stmt.PreparedQuery;
 import com.j256.ormlite.stmt.QueryBuilder;
+import com.vividsolutions.jts.geom.Geometry;
+import com.vividsolutions.jts.geom.Point;
 
 public class ObservationFeedFragment extends Fragment implements IObservationEventListener, OnItemClickListener, OnSharedPreferenceChangeListener {
 
@@ -128,8 +134,32 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 			Intent intent = new Intent(getActivity(), ObservationEditActivity.class);
 			LocationService ls = ((MAGE) getActivity().getApplication()).getLocationService();
 			Location l = ls.getLocation();
-			intent.putExtra(ObservationEditActivity.LOCATION, l);
-			startActivity(intent);
+			if (l == null) {
+				List<mil.nga.giat.mage.sdk.datastore.location.Location> tLocations = LocationHelper.getInstance(getActivity().getApplicationContext()).getCurrentUserLocations(getActivity().getApplicationContext(), 1);
+				if (!tLocations.isEmpty()) {
+					mil.nga.giat.mage.sdk.datastore.location.Location tLocation = tLocations.get(0);
+					Geometry geo = tLocation.getLocationGeometry().getGeometry();
+					Map<String, LocationProperty> propertiesMap = tLocation.getPropertiesMap();
+					if (geo instanceof Point) {
+						Point point = (Point) geo;
+						String provider = "manual";
+						if (propertiesMap.get("provider").getValue() != null) {
+							provider = propertiesMap.get("provider").getValue().toString();
+						}
+						l = new Location(provider);
+						l.setTime(tLocation.getTimestamp().getTime());
+						if (propertiesMap.get("accuracy").getValue() != null) {
+							l.setAccuracy((Float) propertiesMap.get("accuracy").getValue());
+						}
+						l.setLatitude(point.getY());
+						l.setLongitude(point.getX());
+					}
+				}
+			}
+			if(l != null) {
+				intent.putExtra(ObservationEditActivity.LOCATION, l);
+				startActivity(intent);
+			}
 		}
 
 		return super.onOptionsItemSelected(item);

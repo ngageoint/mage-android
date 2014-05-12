@@ -2,7 +2,6 @@ package mil.nga.giat.mage.observation;
 
 import java.io.File;
 import java.io.IOException;
-import java.text.DateFormat;
 import java.text.DecimalFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -61,7 +60,6 @@ import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.TimePicker;
 
@@ -82,88 +80,98 @@ import com.vividsolutions.jts.geom.Point;
 public class ObservationEditActivity extends Activity {
 
 	private static final String LOG_NAME = ObservationEditActivity.class.getName();
-	
-	public static String OBSERVATION_ID = "OBSERVATION_ID";
-	public static String LOCATION = "LOCATION";
-	public static String INITIAL_LOCATION = "INITIAL_LOCATION";
-    public static String INITIAL_ZOOM = "INITIAL_ZOOM";
-	
+
+	public static final String OBSERVATION_ID = "OBSERVATION_ID";
+	public static final String LOCATION = "LOCATION";
+	public static final String INITIAL_LOCATION = "INITIAL_LOCATION";
+	public static final String INITIAL_ZOOM = "INITIAL_ZOOM";
+
 	private static final int CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE = 100;
 	private static final int CAPTURE_VIDEO_ACTIVITY_REQUEST_CODE = 200;
 	private static final int CAPTURE_VOICE_ACTIVITY_REQUEST_CODE = 300;
 	private static final int GALLERY_ACTIVITY_REQUEST_CODE = 400;
 	private static final int ATTACHMENT_VIEW_ACTIVITY_REQUEST_CODE = 500;
 	private static final int LOCATION_EDIT_ACTIVITY_REQUEST_CODE = 600;
-	
+
 	private static final long NEW_OBSERVATION = -1L;
 
-	private final GeometryFactory geometryFactory = new GeometryFactory();
-	
-	Date date;
-	DecimalFormat latLngFormat = new DecimalFormat("###.#####");
-	ArrayList<Attachment> attachments = new ArrayList<Attachment>();
-	Location l;
-	long observationId;
-	Observation o;
-	GoogleMap map;
-	Marker observationMarker;
-	Circle accuracyCircle;
-	long locationElapsedTimeMs = 0;
-	
-    private SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm zz", Locale.getDefault());
-    private DateFormat iso8601 = DateUtility.getISO8601();
-	
-	// View fields
-	Spinner typeSpinner;
-	Spinner levelSpinner;
+	private Date date;
+	private DecimalFormat latLngFormat = new DecimalFormat("###.#####");
+	private ArrayList<Attachment> attachments = new ArrayList<Attachment>();
+	private Location l;
+	private Observation o;
+	private GoogleMap map;
+	private Marker observationMarker;
+	private Circle accuracyCircle;
+	private long locationElapsedTimeMilliseconds = 0;
 
+	private final static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm zz", Locale.getDefault());
+
+	// View fields
+	private MageSpinner typeSpinner;
+	private MageSpinner levelSpinner;
+
+	private static int typeSpinnerLastPosition = 0;
+	private static int levelSpinnerLastPosition = 0;
+	
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		
+
 		setContentView(R.layout.observation_editor);
-		typeSpinner = (Spinner) findViewById(R.id.type_spinner);
-		typeSpinner.setOnItemSelectedListener(new OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                onTypeOrLevelChanged("type", parent.getItemAtPosition(position).toString());
-            }
 
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {}
-        });
-		
-		levelSpinner = (Spinner) findViewById(R.id.level_spinner);
-		levelSpinner.setOnItemSelectedListener(new OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                onTypeOrLevelChanged("EVENTLEVEL", parent.getItemAtPosition(position).toString());
-            }
-
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {}
-        });
-		
-		hideKeyboardOnClick(findViewById(R.id.observation_edit));
-		
 		Intent intent = getIntent();
-		observationId = intent.getLongExtra(OBSERVATION_ID, NEW_OBSERVATION);
-		
+		final long observationId = intent.getLongExtra(OBSERVATION_ID, NEW_OBSERVATION);
+
+		typeSpinner = (MageSpinner) findViewById(R.id.type_spinner);
+		typeSpinner.setSelection(typeSpinnerLastPosition);
+		typeSpinner.setOnItemSelectedListener(new OnItemSelectedListener() {
+			@Override
+			public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+				if (observationId == NEW_OBSERVATION) {
+					typeSpinnerLastPosition = position;
+				}
+				onTypeOrLevelChanged("type", parent.getItemAtPosition(position).toString());
+			}
+
+			@Override
+			public void onNothingSelected(AdapterView<?> parent) {
+			}
+		});
+
+		levelSpinner = (MageSpinner) findViewById(R.id.level_spinner);
+		levelSpinner.setSelection(levelSpinnerLastPosition);
+		levelSpinner.setOnItemSelectedListener(new OnItemSelectedListener() {
+			@Override
+			public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+				if (observationId == NEW_OBSERVATION) {
+					levelSpinnerLastPosition = position;
+				}
+				onTypeOrLevelChanged("EVENTLEVEL", parent.getItemAtPosition(position).toString());
+			}
+
+			@Override
+			public void onNothingSelected(AdapterView<?> parent) {
+			}
+		});
+
+		hideKeyboardOnClick(findViewById(R.id.observation_edit));
+
 		if (observationId == NEW_OBSERVATION) {
 			this.setTitle("Create New Observation");
 			l = intent.getParcelableExtra(LOCATION);
 			date = new Date();
 			((TextView) findViewById(R.id.date)).setText(sdf.format(date));
-			
-	        // set default type and level values for map marker
+
+			// set default type and level values for map marker
 			o = new Observation();
 			o.getProperties().add(new ObservationProperty("type", typeSpinner.getSelectedItem().toString()));
-	        o.getProperties().add(new ObservationProperty("EVENTLEVEL", levelSpinner.getSelectedItem().toString()));
-	        try {
-	        	User u = UserHelper.getInstance(getApplicationContext()).readCurrentUser();
-	        	if(u != null) {
-	        		o.setUserId(u.getRemoteId());
-	        	}
+			o.getProperties().add(new ObservationProperty("EVENTLEVEL", levelSpinner.getSelectedItem().toString()));
+			try {
+				User u = UserHelper.getInstance(getApplicationContext()).readCurrentUser();
+				if (u != null) {
+					o.setUserId(u.getRemoteId());
+				}
 			} catch (UserException ue) {
 				ue.printStackTrace();
 			}
@@ -176,22 +184,22 @@ public class ObservationEditActivity extends Activity {
 				for (Attachment a : attachments) {
 					addAttachmentToGallery(a);
 				}
-			
+
 				Map<String, ObservationProperty> propertiesMap = o.getPropertiesMap();
 				String dateText = propertiesMap.get("timestamp").getValue();
-                try {
-                    date = iso8601.parse(dateText);
-                    dateText = sdf.format(date);
-                } catch (ParseException e) {
-                    e.printStackTrace();
-                }				
-				
+				try {
+					date = DateUtility.getISO8601().parse(dateText);
+					dateText = sdf.format(date);
+				} catch (ParseException e) {
+					e.printStackTrace();
+				}
+
 				((TextView) findViewById(R.id.date)).setText(dateText);
 				Geometry geo = o.getObservationGeometry().getGeometry();
-				if(geo instanceof Point) {
-					Point point = (Point)geo;
+				if (geo instanceof Point) {
+					Point point = (Point) geo;
 					String provider = "manual";
-					if(propertiesMap.get("provider") != null) {
+					if (propertiesMap.get("provider") != null) {
 						provider = propertiesMap.get("provider").getValue();
 					}
 					l = new Location(provider);
@@ -201,108 +209,52 @@ public class ObservationEditActivity extends Activity {
 					l.setLatitude(point.getY());
 					l.setLongitude(point.getX());
 				}
-				populatePropertyFieldsFromMap((LinearLayout)findViewById(R.id.form), propertiesMap);
+				populatePropertyFieldsFromMap((LinearLayout) findViewById(R.id.form), propertiesMap);
 			} catch (ObservationException oe) {
-				
-			}
-		}
-		
-		findViewById(R.id.date_edit).setOnClickListener(new View.OnClickListener() {
-			
-			@Override
-			public void onClick(View v) {
-				
-				AlertDialog.Builder builder = new AlertDialog.Builder(ObservationEditActivity.this);
-			    // Get the layout inflater
-			    LayoutInflater inflater = getLayoutInflater();
-			    View dialogView = inflater.inflate(R.layout.date_time_dialog, null);
-			    final DatePicker datePicker = (DatePicker) dialogView.findViewById(R.id.date_picker);
-			    final TimePicker timePicker = (TimePicker) dialogView.findViewById(R.id.time_picker);
-			    // Inflate and set the layout for the dialog
-			    // Pass null as the parent view because its going in the dialog layout
-			    builder.setView(dialogView)
-			    // Add action buttons
-			           .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
-			               @Override
-			               public void onClick(DialogInterface dialog, int id) {
-			                   // set the date and time to what they chose
-			            	   int day = datePicker.getDayOfMonth();
-			            	   int month = datePicker.getMonth();
-			            	   int year = datePicker.getYear();
-			            	   int hour = timePicker.getCurrentHour();
-			            	   int minute = timePicker.getCurrentMinute();
-			            	   int second = 0;
-			            	   
-			            	   Calendar c = Calendar.getInstance();
-			            	   c.set(year, month, day, hour, minute, second);
-			            	   date = c.getTime();
-			            	   ((TextView) findViewById(R.id.date)).setText(date.toString());
-			               }
-			           })
-			           .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
-			               public void onClick(DialogInterface dialog, int id) {
-			                   dialog.cancel();
-			               }
-			           });      
-			    AlertDialog ad = builder.create();
-			    ad.show();
 
 			}
+		}
+
+		findViewById(R.id.date_edit).setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				AlertDialog.Builder builder = new AlertDialog.Builder(ObservationEditActivity.this);
+				// Get the layout inflater
+				LayoutInflater inflater = getLayoutInflater();
+				View dialogView = inflater.inflate(R.layout.date_time_dialog, null);
+				final DatePicker datePicker = (DatePicker) dialogView.findViewById(R.id.date_picker);
+				final TimePicker timePicker = (TimePicker) dialogView.findViewById(R.id.time_picker);
+				// Inflate and set the layout for the dialog
+				// Pass null as the parent view because its going in the dialog layout
+				builder.setView(dialogView).setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+					@Override
+					public void onClick(DialogInterface dialog, int id) {
+						Calendar c = Calendar.getInstance();
+						c.set(datePicker.getYear(), datePicker.getMonth(), datePicker.getDayOfMonth(), timePicker.getCurrentHour(), timePicker.getCurrentMinute(), 0);
+						date = c.getTime();
+						((TextView) findViewById(R.id.date)).setText(date.toString());
+					}
+				}).setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
+					public void onClick(DialogInterface dialog, int id) {
+						dialog.cancel();
+					}
+				});
+				AlertDialog ad = builder.create();
+				ad.show();
+			}
 		});
-		
+
 		findViewById(R.id.location_edit).setOnClickListener(new View.OnClickListener() {
-			
+
 			@Override
 			public void onClick(View v) {
 				Intent intent = new Intent(ObservationEditActivity.this, LocationEditActivity.class);
-                intent.putExtra(LocationEditActivity.LOCATION, l);
-                intent.putExtra(LocationEditActivity.MARKER_BITMAP, ObservationBitmapFactory.bitmap(ObservationEditActivity.this, o));
-                startActivityForResult(intent, LOCATION_EDIT_ACTIVITY_REQUEST_CODE);
-
-//			    builder.setView(dialogView)
-//			    // Add action buttons
-//			           .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
-//			               @Override
-//			               public void onClick(DialogInterface dialog, int id) {
-////			                   // set the date and time to what they chose
-//			            	   LatLng center = dialogMap.getCameraPosition().target;
-//			            	   l.setLatitude(center.latitude);
-//			            	   l.setLongitude(center.longitude);
-//			            	   l.setProvider("manual");
-//			            	   l.setAccuracy(0.0f);
-//			            	   l.setTime(System.currentTimeMillis());
-//			            	   setupMap();
-//
-//			            	   com.google.android.gms.maps.MapFragment mapFragment = 
-//			                           ((com.google.android.gms.maps.MapFragment) getFragmentManager().findFragmentById(R.id.location_edit_map));
-//
-//			                   if (mapFragment != null) {
-//			                       FragmentManager manager = getFragmentManager();
-//			                       FragmentTransaction t = manager.beginTransaction();
-//			                       FragmentTransaction t2 = t.remove(mapFragment).detach(mapFragment);
-//			                       t2.commitAllowingStateLoss();
-//			                   }
-//			               }
-//			           })
-//			           .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
-//			               public void onClick(DialogInterface dialog, int id) {
-//			            	   com.google.android.gms.maps.MapFragment mapFragment = 
-//			                           ((com.google.android.gms.maps.MapFragment) getFragmentManager().findFragmentById(R.id.location_edit_map));
-//
-//			                   if (mapFragment != null) {
-//			                       FragmentManager manager = getFragmentManager();
-//			                       FragmentTransaction t = manager.beginTransaction();
-//			                       FragmentTransaction t2 = t.remove(mapFragment).detach(mapFragment);
-//			                       t2.commitAllowingStateLoss();
-//			                   }
-//			                   dialog.cancel();
-//			               }
-//			           });      
-//			    AlertDialog ad = builder.create();
-//			    ad.show();
+				intent.putExtra(LocationEditActivity.LOCATION, l);
+				intent.putExtra(LocationEditActivity.MARKER_BITMAP, ObservationBitmapFactory.bitmap(ObservationEditActivity.this, o));
+				startActivityForResult(intent, LOCATION_EDIT_ACTIVITY_REQUEST_CODE);
 			}
 		});
-		
+
 		setupMap();
 	}
 	
@@ -335,38 +287,32 @@ public class ObservationEditActivity extends Activity {
 		}
 	}
 	
+	@SuppressLint("NewApi")
+	private long getElapsedTimeInMilliseconds() {
+		long elapsedTimeInMilliseconds = 0;
+		if (Build.VERSION.SDK_INT >= 17 && l.getElapsedRealtimeNanos() != 0) {
+			elapsedTimeInMilliseconds = ((SystemClock.elapsedRealtimeNanos() - l.getElapsedRealtimeNanos()) / (1000000l));
+		} else {
+			elapsedTimeInMilliseconds = System.currentTimeMillis() - l.getTime();
+		}
+		return Math.max(0l, elapsedTimeInMilliseconds);
+	}
+
 	private String elapsedTime(long ms) {
 		String s = "";
-		long sec = ms/1000;
-		long min = sec/60;
+		long sec = ms / 1000;
+		long min = sec / 60;
 		if (min == 0) {
 			s = sec + ((sec == 1) ? " sec ago" : " secs ago");
 		} else if (min < 60) {
 			s = min + ((min == 1) ? " min ago" : " mins ago");
 		} else {
-			long hour = Math.round(Math.floor(min/60));
+			long hour = Math.round(Math.floor(min / 60));
 			s = hour + ((hour == 1) ? " hour ago" : " hours ago");
 		}
 		return s;
 	}
-	
-	private long timeMs(long timeNanos) {
-		return timeNanos/1000000;
-	}
-	
-	
-	@SuppressLint("NewApi")
-	private long getElapsedTime() {
-		if (Build.VERSION.SDK_INT >= 17) {
-			if (l.getElapsedRealtimeNanos() == 0) {
-				return 0;
-			} else {
-				return timeMs(SystemClock.elapsedRealtimeNanos() - l.getElapsedRealtimeNanos());
-			}
-		}
-		return System.currentTimeMillis() - l.getTime();
-	}
-		
+
 	private void setupMap() {
 		map = ((MapFragment) getFragmentManager().findFragmentById(R.id.background_map)).getMap();
 
@@ -383,9 +329,11 @@ public class ObservationEditActivity extends Activity {
 			findViewById(R.id.location_accuracy).setVisibility(View.GONE);
 		}
 		
-		locationElapsedTimeMs = getElapsedTime();
-		if (locationElapsedTimeMs != 0) {
-			((TextView)findViewById(R.id.location_elapsed_time)).setText(elapsedTime(locationElapsedTimeMs));
+		locationElapsedTimeMilliseconds = getElapsedTimeInMilliseconds();
+		if (locationElapsedTimeMilliseconds != 0) {
+			//String dateText = DateUtils.getRelativeTimeSpanString(System.currentTimeMillis() - locationElapsedTimeMilliseconds, System.currentTimeMillis(), 0).toString();
+			String dateText = elapsedTime(locationElapsedTimeMilliseconds);
+			((TextView)findViewById(R.id.location_elapsed_time)).setText(dateText);
 		} else {
 			findViewById(R.id.location_elapsed_time).setVisibility(View.GONE);
 		}
@@ -461,30 +409,28 @@ public class ObservationEditActivity extends Activity {
 		for (int i = 0; i < ll.getChildCount(); i++) {
 			View v = ll.getChildAt(i);
 			if (v instanceof MageTextView) {
-				String propertyKey = ((MageTextView)v).getPropertyKey();
-				((MageTextView)v).setText(savedInstanceState.getString(propertyKey));
+				String propertyKey = ((MageTextView) v).getPropertyKey();
+				((MageTextView) v).setText(savedInstanceState.getString(propertyKey));
 			} else if (v instanceof MageEditText) {
-				String propertyKey = ((MageEditText)v).getPropertyKey();
-				((MageEditText)v).setText(savedInstanceState.getString(propertyKey));
+				String propertyKey = ((MageEditText) v).getPropertyKey();
+				((MageEditText) v).setText(savedInstanceState.getString(propertyKey));
 			} else if (v instanceof MageSpinner) {
-				MageSpinner spinner = (MageSpinner)v;
-				String propertyKey = ((MageSpinner)v).getPropertyKey();
+				MageSpinner spinner = (MageSpinner) v;
+				String propertyKey = ((MageSpinner) v).getPropertyKey();
 				String value = savedInstanceState.getString(propertyKey);
 				int index = 0;
-				for (index = 0; index < spinner.getAdapter().getCount(); index++)
-			    {
-			        if (spinner.getAdapter().getItem(index).equals(value))
-			        {
-			            spinner.setSelection(index);
-			            break;
-			        }
-			    }
+				for (index = 0; index < spinner.getAdapter().getCount(); index++) {
+					if (spinner.getAdapter().getItem(index).equals(value)) {
+						spinner.setSelection(index);
+						break;
+					}
+				}
 			} else if (v instanceof LinearLayout) {
-				populatePropertyFieldsFromSaved((LinearLayout)v, savedInstanceState);
+				populatePropertyFieldsFromSaved((LinearLayout) v, savedInstanceState);
 			}
 		}
 	}
-	
+
 	private void savePropertyFieldsToBundle(LinearLayout ll, Bundle outState) {
 		for (int i = 0; i < ll.getChildCount(); i++) {
 			View v = ll.getChildAt(i);
@@ -554,7 +500,7 @@ public class ObservationEditActivity extends Activity {
 				case DATE:
                     String dateText = propertyValue;
                     try {
-                        Date date = iso8601.parse(propertyValue);
+                        Date date = DateUtility.getISO8601().parse(propertyValue);
                         dateText = sdf.format(date);
                     } catch (ParseException e) {
                         e.printStackTrace();
@@ -599,24 +545,24 @@ public class ObservationEditActivity extends Activity {
 		case R.id.observation_save:
 			o.setState(State.ACTIVE);
 			o.setDirty(true);
-			o.setObservationGeometry(new ObservationGeometry(geometryFactory.createPoint(new Coordinate(l.getLongitude(), l.getLatitude()))));
-			
+			o.setObservationGeometry(new ObservationGeometry(new GeometryFactory().createPoint(new Coordinate(l.getLongitude(), l.getLatitude()))));
+
 			LinearLayout form = (LinearLayout) findViewById(R.id.form);
-			
+
 			Map<String, ObservationProperty> propertyMap = getPropertyFieldsAsMap(form);
 			propertyMap.put("type", new ObservationProperty("type", typeSpinner.getSelectedItem().toString()));
 			propertyMap.put("EVENTLEVEL", new ObservationProperty("EVENTLEVEL", levelSpinner.getSelectedItem().toString()));
-			propertyMap.put("timestamp", new ObservationProperty("timestamp", iso8601.format(date)));
+			propertyMap.put("timestamp", new ObservationProperty("timestamp", DateUtility.getISO8601().format(date)));
 			propertyMap.put("accuracy", new ObservationProperty("accuracy", Float.toString(l.getAccuracy())));
 			String provider = l.getProvider();
-			if(provider == null || provider.trim().isEmpty()) {
+			if (provider == null || provider.trim().isEmpty()) {
 				provider = "manual";
 			}
 			propertyMap.put("provider", new ObservationProperty("provider", provider));
-			propertyMap.put("delta", new ObservationProperty("delta", Long.toString(timeMs(locationElapsedTimeMs))));
-			
+			propertyMap.put("delta", new ObservationProperty("delta", Long.toString(locationElapsedTimeMilliseconds)));
+
 			o.addProperties(propertyMap.values());
-			
+
 			o.setAttachments(attachments);
 
 			ObservationHelper oh = ObservationHelper.getInstance(getApplicationContext());

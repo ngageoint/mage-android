@@ -68,6 +68,7 @@ public class PeopleCursorAdapter extends CursorAdapter {
 			String timeText = sdf.format(location.getTimestamp());
 			Boolean prettyPrint = PreferenceHelper.getInstance(context).getValue(R.string.prettyPrintLocationDatesKey, Boolean.class, R.string.prettyPrintLocationDatesDefaultValue);
 			if(prettyPrint) {
+				//timeText = DateUtils.getRelativeTimeSpanString(location.getTimestamp().getTime(), System.currentTimeMillis(), 0, DateUtils.FORMAT_ABBREV_ALL).toString();
 				timeText = new PrettyTime().format(location.getTimestamp());
 			}
 
