@@ -198,7 +198,7 @@ public class PeopleFeedFragment extends Fragment implements OnSharedPreferenceCh
 		}
 		Where<Location, Long> where = qb.where().gt("timestamp", c.getTime());
 		if (currentUser != null) {
-			where.and().ne("user_id", currentUser.getId()).query();
+			where.and().ne("user_id", currentUser.getId());
 		}
 
 		qb.orderBy("timestamp", false);

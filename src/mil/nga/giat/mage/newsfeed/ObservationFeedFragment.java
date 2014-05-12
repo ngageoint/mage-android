@@ -135,7 +135,7 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 			LocationService ls = ((MAGE) getActivity().getApplication()).getLocationService();
 			Location l = ls.getLocation();
 			if (l == null) {
-				List<mil.nga.giat.mage.sdk.datastore.location.Location> tLocations = LocationHelper.getInstance(getActivity().getApplicationContext()).getCurrentUserLocations(getActivity().getApplicationContext(), 1);
+				List<mil.nga.giat.mage.sdk.datastore.location.Location> tLocations = LocationHelper.getInstance(getActivity().getApplicationContext()).getCurrentUserLocations(getActivity().getApplicationContext(), 1, true);
 				if (!tLocations.isEmpty()) {
 					mil.nga.giat.mage.sdk.datastore.location.Location tLocation = tLocations.get(0);
 					Geometry geo = tLocation.getLocationGeometry().getGeometry();
