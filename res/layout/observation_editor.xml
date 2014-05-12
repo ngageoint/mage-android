@@ -4,48 +4,55 @@
     xmlns:mageForm="http://schemas.android.com/apk/res-auto"
     android:id="@+id/observation_edit"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent" >
+
     <fragment
         android:id="@+id/background_map"
+        android:name="com.google.android.gms.maps.MapFragment"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:name="com.google.android.gms.maps.MapFragment"/>
-    <LinearLayout android:orientation="vertical"
-        android:background="@drawable/semi_see_through_background"
+        android:layout_height="match_parent" />
+
+    <LinearLayout
+        android:layout_width="fill_parent"
         android:layout_height="fill_parent"
-        android:layout_width="fill_parent">
-        <LinearLayout 
+        android:background="@drawable/semi_see_through_background"
+        android:orientation="vertical" >
+
+        <LinearLayout
             style="?android:attr/buttonBarStyle"
-            android:background="@drawable/semi_see_through_background"
-            android:orientation="horizontal"
+            android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:layout_width="fill_parent">
-            <ImageButton 
-                style="?android:attr/buttonBarButtonStyle"
+            android:background="@drawable/semi_see_through_background"
+            android:orientation="horizontal" >
+
+            <ImageButton
                 android:id="@+id/voice_btn"
-                android:onClick="voiceButtonPressed"
+                style="?android:attr/buttonBarButtonStyle"
                 android:layout_width="0dp"
-                android:layout_weight="1"
                 android:layout_height="wrap_content"
+                android:layout_weight="1"
                 android:contentDescription="voice"
-                android:src="@drawable/ic_microphone"/>
-            <ImageButton 
-                style="?android:attr/buttonBarButtonStyle"
+                android:onClick="voiceButtonPressed"
+                android:src="@drawable/ic_microphone" />
+
+            <ImageButton
                 android:id="@+id/camera_btn"
-                android:onClick="cameraButtonPressed"
-                android:layout_width="0dp"
-                android:layout_weight="1"
-                android:layout_height="wrap_content"
-                android:text="camera"
-                android:src="@drawable/ic_camera"/>
-            <ImageButton 
                 style="?android:attr/buttonBarButtonStyle"
-                android:id="@+id/video_btn"
-                android:onClick="videoButtonPressed"
                 android:layout_width="0dp"
-                android:layout_weight="1"
                 android:layout_height="wrap_content"
-                android:src="@drawable/ic_video"/>
+                android:layout_weight="1"
+                android:onClick="cameraButtonPressed"
+                android:src="@drawable/ic_camera"
+                android:text="camera" />
+
+            <ImageButton
+                android:id="@+id/video_btn"
+                style="?android:attr/buttonBarButtonStyle"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:onClick="videoButtonPressed"
+                android:src="@drawable/ic_video" />
 
             <ImageButton
                 android:id="@+id/from_gallery_btn"
@@ -55,169 +62,186 @@
                 android:layout_weight="1"
                 android:onClick="fromGalleryButtonPressed"
                 android:src="@drawable/ic_picture" />
-
         </LinearLayout>
-    
-    <ScrollView android:fillViewport="true"
-    android:layout_width="fill_parent"
-    android:layout_height="0dip"
-    android:layout_weight="1">
 
-	<LinearLayout 
-	    android:id="@+id/form"
-	    android:orientation="vertical"
-	    android:layout_width="match_parent"
-	    android:layout_height="wrap_content"
-	    android:focusable="true"
-	    android:focusableInTouchMode="true"
-	    android:padding="10dip">
-	    <HorizontalScrollView 
-	        android:layout_width="wrap_content"
-	        android:layout_height="wrap_content">
-		    <LinearLayout 
-			    android:id="@+id/image_gallery"
-			    android:layout_width="wrap_content" 
-			    android:layout_height="wrap_content" 
-			    android:orientation="horizontal">
-	        </LinearLayout>
-        </HorizontalScrollView>
-	    <LinearLayout
-	        android:layout_width="fill_parent"
-	        android:layout_height="wrap_content"
-	        android:orientation="vertical">
-		    <LinearLayout
-		        android:id="@+id/date_edit"
-	            android:layout_width="fill_parent"
-	            android:layout_height="wrap_content"
-	            android:orientation="horizontal">
-            <ImageView
-	            android:layout_width="18dip"
-	            android:layout_height="18dip"
-	            android:layout_gravity="center_vertical"
-	            android:src="@drawable/ic_edit"/>
-	        <mil.nga.giat.mage.form.MageTextView  
-	            android:id="@+id/date"
-	            mageForm:propertyKey="timestamp"
-	            mageForm:propertyType="date"
-	            android:layout_width="wrap_content"
-	            android:layout_height="wrap_content"
-	            android:textSize="16sp"
-	            android:textStyle="bold"
-	            android:paddingTop="3dip"
-	            android:paddingBottom="3dip"
-	            style="@style/EditTextView"/>
-	        </LinearLayout>
-	        <LinearLayout
-	            android:id="@+id/location_edit"
-	            android:paddingTop="5dip"
-	            android:paddingBottom="5dip"
-	            android:layout_width="fill_parent"
-	            android:layout_height="wrap_content"
-	            android:orientation="horizontal">
-		        <ImageView
-		            android:layout_width="18dip"
-		            android:layout_height="18dip"
-		            android:layout_gravity="center_vertical"
-		            android:src="@drawable/ic_edit"/>
-		        <TextView 
-		            android:id="@+id/location"
-		          android:layout_width="wrap_content"
-		          android:layout_height="wrap_content"
-		          android:textColor="#777777"
-		          android:textStyle="italic"
-		          android:textSize="16sp"
-		          style="@style/EditTextView"/>
-		        <TextView 
-		            android:id="@+id/location_accuracy"
-		          android:layout_width="wrap_content"
-		          android:layout_height="wrap_content"
-		          android:textColor="@color/accuracy_circle_stroke"
-		          android:textStyle="italic"
-		          android:textSize="13sp"
-		          android:paddingLeft="5dp"
-		          style="@style/EditTextView"/>
-		        <TextView 
-		            android:id="@+id/location_provider"
-		          android:layout_width="wrap_content"
-		          android:layout_height="wrap_content"
-		          android:textColor="#777777"
-		          android:textStyle="italic"
-		          android:textSize="13sp"
-		          android:paddingLeft="5dp"
-		          style="@style/EditTextView"/>
-		        <TextView 
-		            android:id="@+id/location_elapsed_time"
-		            android:textColor="@color/accuracy_circle_stroke"
-		          android:layout_width="wrap_content"
-		          android:layout_height="wrap_content"
-		          android:textStyle="italic"
-		          android:textSize="13sp"
-		          android:paddingLeft="5dp"
-		          style="@style/EditTextView"/>
-		        <!-- 
-		        <ImageView
-		            android:layout_width="18dip"
-		            android:layout_height="18dip"
-		            android:layout_gravity="center_vertical"
-		            android:src="@drawable/ic_edit"/>
-		         -->
-	        </LinearLayout>
-	    </LinearLayout>
-	    <TextView android:layout_width="fill_parent"
-	          android:layout_height="wrap_content"
-	          style="@style/EditTextView"
-	          android:text="Type"/>
-	    <mil.nga.giat.mage.form.MageSpinner
-		    android:id="@+id/type_spinner"
-		    android:layout_width="fill_parent"
-		    android:layout_height="wrap_content"
-		    android:layout_marginTop="5dip"
-	       	android:layout_marginBottom="20dip" 
-	       	mageForm:propertyKey="type"
-	       	mageForm:propertyType="multichoice"
-	       	android:entries="@array/types_array"/>
-	    <TextView android:layout_width="fill_parent"
-	          android:layout_height="wrap_content"
-	          style="@style/EditTextView"
-	          android:text="Level"/>
-	    <mil.nga.giat.mage.form.MageSpinner
-	        android:id="@+id/level_spinner"
-	        android:layout_width="fill_parent"
-	          android:layout_height="wrap_content"
-	          android:layout_marginTop="5dip"
-	          android:layout_marginBottom="20dip"
-	          mageForm:propertyKey="EVENTLEVEL"
-	          android:entries="@array/levels_array"
-	          android:singleLine="true"/>
-	    <TextView android:layout_width="fill_parent"
-	          android:layout_height="wrap_content"
-	          style="@style/EditTextView"
-	          android:text="Team"/>
-	    <mil.nga.giat.mage.form.MageSpinner  
-	        android:id="@+id/team"
-	        mageForm:propertyKey="TEAM"
-	        android:layout_width="fill_parent"
-	          android:layout_height="wrap_content"
-	          android:layout_marginTop="5dip"
-	          android:layout_marginBottom="20dip"
-	          android:entries="@array/teams_array"
-	          android:singleLine="true"/>
-	    <TextView android:layout_width="fill_parent"
-	          android:layout_height="wrap_content"
-	          style="@style/EditTextView"
-	          android:text="Description"/>
-	    <mil.nga.giat.mage.form.MageEditText 
-	        android:id="@+id/description"
-	        mageForm:propertyKey="DESCRIPTION"
-	        android:layout_width="fill_parent"
-	        android:layout_height="wrap_content"
-	        android:layout_marginTop="5dip"
-	        android:hint="Description"
-	        mageForm:propertyType="multiline"
-	        android:minLines="4" />
-	</LinearLayout>
-	        
-    </ScrollView>
+        <ScrollView
+            android:layout_width="fill_parent"
+            android:layout_height="0dip"
+            android:layout_weight="1"
+            android:fillViewport="true" >
+
+            <LinearLayout
+                android:id="@+id/form"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:focusable="true"
+                android:focusableInTouchMode="true"
+                android:orientation="vertical"
+                android:padding="10dip" >
+
+                <HorizontalScrollView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" >
+
+                    <LinearLayout
+                        android:id="@+id/image_gallery"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal" >
+                    </LinearLayout>
+                </HorizontalScrollView>
+
+                <LinearLayout
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical" >
+
+                    <LinearLayout
+                        android:id="@+id/date_edit"
+                        android:layout_width="fill_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal" >
+
+                        <ImageView
+                            android:layout_width="18dip"
+                            android:layout_height="18dip"
+                            android:layout_gravity="center_vertical"
+                            android:src="@drawable/ic_edit" />
+
+                        <mil.nga.giat.mage.form.MageTextView
+                            android:id="@+id/date"
+                            style="@style/EditTextView"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:paddingBottom="3dip"
+                            android:paddingTop="3dip"
+                            android:textSize="16sp"
+                            android:textStyle="bold"
+                            mageForm:propertyKey="timestamp"
+                            mageForm:propertyType="date" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:id="@+id/location_edit"
+                        android:layout_width="fill_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:paddingBottom="5dip"
+                        android:paddingTop="5dip" >
+
+                        <ImageView
+                            android:layout_width="18dip"
+                            android:layout_height="18dip"
+                            android:layout_gravity="center_vertical"
+                            android:src="@drawable/ic_edit" />
+
+                        <TextView
+                            android:id="@+id/location"
+                            style="@style/EditTextView"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textColor="#777777"
+                            android:textSize="16sp"
+                            android:textStyle="italic" />
+
+                        <TextView
+                            android:id="@+id/location_accuracy"
+                            style="@style/EditTextView"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:paddingLeft="5dp"
+                            android:textColor="@color/accuracy_circle_stroke"
+                            android:textSize="13sp"
+                            android:textStyle="italic" />
+
+                        <TextView
+                            android:id="@+id/location_provider"
+                            style="@style/EditTextView"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:paddingLeft="5dp"
+                            android:textColor="#777777"
+                            android:textSize="13sp"
+                            android:textStyle="italic" />
+
+                        <TextView
+                            android:id="@+id/location_elapsed_time"
+                            style="@style/EditTextView"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:paddingLeft="5dp"
+                            android:textColor="@color/accuracy_circle_stroke"
+                            android:textSize="13sp"
+                            android:textStyle="italic" />
+                    </LinearLayout>
+                </LinearLayout>
+
+                <TextView
+                    style="@style/EditTextView"
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Type" />
+
+                <mil.nga.giat.mage.form.MageSpinner
+                    android:id="@+id/type_spinner"
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="20dip"
+                    android:layout_marginTop="5dip"
+                    android:entries="@array/types_array"
+                    mageForm:propertyKey="type"
+                    mageForm:propertyType="multichoice" />
+
+                <TextView
+                    style="@style/EditTextView"
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Level" />
+
+                <mil.nga.giat.mage.form.MageSpinner
+                    android:id="@+id/level_spinner"
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="20dip"
+                    android:layout_marginTop="5dip"
+                    android:entries="@array/levels_array"
+                    android:singleLine="true"
+                    mageForm:propertyKey="EVENTLEVEL" />
+
+                <!-- TODO: The team information is part of the dynamic form and should come from the server and be built programatically. -->
+                <TextView
+                    style="@style/EditTextView"
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Team" />
+
+                <mil.nga.giat.mage.form.MageSpinner
+                    android:id="@+id/team"
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="20dip"
+                    android:layout_marginTop="5dip"
+                    android:entries="@array/teams_array"
+                    android:singleLine="true"
+                    mageForm:propertyKey="TEAM" />
+
+                <TextView
+                    style="@style/EditTextView"
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Description" />
+
+                <mil.nga.giat.mage.form.MageEditText
+                    android:id="@+id/description"
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="5dip"
+                    android:hint="Description"
+                    android:minLines="4"
+                    mageForm:propertyKey="DESCRIPTION"
+                    mageForm:propertyType="multiline" />
+            </LinearLayout>
+        </ScrollView>
     </LinearLayout>
 
 </RelativeLayout>
