@@ -43,11 +43,14 @@ public class StaticFeatureLoadTask extends AsyncTask<Layer, Object, Void> {
 		for (StaticFeature feature : layer.getStaticFeatures()) {
 			Geometry geometry = feature.getStaticFeatureGeometry().getGeometry();
 			Map<String, StaticFeatureProperty> properties = feature.getPropertiesMap();
-			String description = properties.get("description") != null ? properties.get("description").getValue() : "Unknown";
+			
+		    StringBuilder content = new StringBuilder();
+	        if (properties.get("name") != null) content.append("<h5>").append(properties.get("name").getValue()).append("</h5>");
+	        if (properties.get("description") != null) content.append("<div>").append(properties.get("description").getValue()).append("</div>");
 			String type = geometry.getGeometryType();
 			if (type.equals("Point")) {
-				MarkerOptions options = new MarkerOptions().position(new LatLng(geometry.getCoordinate().y, geometry.getCoordinate().x)).title(layer.getName()).snippet(description);
-				publishProgress(new Object[] { options, layerId, description });
+				MarkerOptions options = new MarkerOptions().position(new LatLng(geometry.getCoordinate().y, geometry.getCoordinate().x)).snippet(content.toString());
+				publishProgress(new Object[] { options, layerId, content.toString() });
 			} else if (type.equals("LineString")) {
 				PolylineOptions options = new PolylineOptions();
 				
@@ -59,7 +62,7 @@ public class StaticFeatureLoadTask extends AsyncTask<Layer, Object, Void> {
 				for (Coordinate coordinate : geometry.getCoordinates()) {
 					options.add(new LatLng(coordinate.y, coordinate.x));
 				}
-				publishProgress(new Object[] { options, layerId, description });
+				publishProgress(new Object[] { options, layerId, content.toString() });
 			} else if (type.equals("Polygon")) {
 				PolygonOptions options = new PolygonOptions();
 				
@@ -73,7 +76,7 @@ public class StaticFeatureLoadTask extends AsyncTask<Layer, Object, Void> {
 				for (Coordinate coordinate : geometry.getCoordinates()) {
 					options.add(new LatLng(coordinate.y, coordinate.x));
 				}
-				publishProgress(new Object[] { options, layerId, description });
+				publishProgress(new Object[] { options, layerId, content.toString() });
 			}
 		}
 		return null;
@@ -83,16 +86,16 @@ public class StaticFeatureLoadTask extends AsyncTask<Layer, Object, Void> {
 	protected void onProgressUpdate(Object... para) {
 		Object options = para[0];
 		String layerId = para[1].toString();
-		String description = para[2].toString();
+		String content = para[2].toString();
 		if (options instanceof MarkerOptions) {
 			Marker m = map.addMarker((MarkerOptions) options);
 			staticGeometryCollection.addMarker(layerId, m);
 		} else if (options instanceof PolylineOptions) {
 			Polyline p = map.addPolyline((PolylineOptions) options);
-			staticGeometryCollection.addPolyline(layerId, p, description);
+			staticGeometryCollection.addPolyline(layerId, p, content);
 		} else if (options instanceof PolygonOptions) {
 			Polygon p = map.addPolygon((PolygonOptions) options);
-			staticGeometryCollection.addPolygon(layerId, p, description);
+			staticGeometryCollection.addPolygon(layerId, p, content);
 		}
 	}
 }
