@@ -134,6 +134,7 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 			Intent intent = new Intent(getActivity(), ObservationEditActivity.class);
 			LocationService ls = ((MAGE) getActivity().getApplication()).getLocationService();
 			Location l = ls.getLocation();
+			// if there is not a location from the location service, then try to pull one from the database.
 			if (l == null) {
 				List<mil.nga.giat.mage.sdk.datastore.location.Location> tLocations = LocationHelper.getInstance(getActivity().getApplicationContext()).getCurrentUserLocations(getActivity().getApplicationContext(), 1, true);
 				if (!tLocations.isEmpty()) {

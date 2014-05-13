@@ -106,6 +106,16 @@ public class ObservationMarkerCollection implements PointCollection<Observation>
 
         return true;
     }
+    
+	@Override
+	public void refreshMarkerIcons() {
+		for (Marker m : markerCollection.getMarkers()) {
+			Observation to = markerIdToObservation.get(m.getId());
+			if (to != null) {
+				m.setIcon(ObservationBitmapFactory.bitmapDescriptor(context, markerIdToObservation.get(m.getId())));
+			}
+		}
+	}
 
     @Override
     public void clear() {

@@ -10,7 +10,9 @@ public interface PointCollection<T> extends OnCameraChangeListener, OnMarkerClic
     public void add(T point);
     public void addAll(Collection<T> points);
     public void remove(T point);
-        
+    
+    public void refreshMarkerIcons();
+    
     public void setVisibility(boolean visible);
     
     public Date getLatestDate();

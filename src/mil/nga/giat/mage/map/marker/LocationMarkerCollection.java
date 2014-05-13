@@ -128,6 +128,16 @@ public class LocationMarkerCollection implements PointCollection<Location>, OnMa
         return true;
     }
     
+	@Override
+	public void refreshMarkerIcons() {
+		for (Marker m : markerCollection.getMarkers()) {
+			Location tl = markerIdToLocation.get(m.getId());
+			if (tl != null) {
+				m.setIcon(LocationBitmapFactory.bitmapDescriptor(context, tl));
+			}
+		}
+	}
+    
     @Override
     public void clear() {
         locationIdToMarker.clear();

@@ -34,7 +34,6 @@ import mil.nga.giat.mage.sdk.datastore.location.LocationHelper;
 import mil.nga.giat.mage.sdk.datastore.location.LocationProperty;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
-import mil.nga.giat.mage.sdk.datastore.observation.ObservationProperty;
 import mil.nga.giat.mage.sdk.datastore.staticfeature.StaticFeatureHelper;
 import mil.nga.giat.mage.sdk.event.ILocationEventListener;
 import mil.nga.giat.mage.sdk.event.IObservationEventListener;
@@ -114,6 +113,8 @@ public class MapFragment extends Fragment implements
     private boolean followMe = false;
     private GoogleMapWrapper mapWrapper;
     private OnLocationChangedListener locationChangedListener;
+    
+    private RefreshMarkersTask refreshMarkersTask;
     
     private final BlockingQueue<Runnable> queue = new ArrayBlockingQueue<Runnable>(5);
     private final ThreadPoolExecutor executor = new ThreadPoolExecutor(3, 3, 10, TimeUnit.SECONDS, queue);
@@ -240,6 +241,14 @@ public class MapFragment extends Fragment implements
             locationService.registerOnLocationListener(this);
         }
         
+        // TODO: setup a task to refresh markers every x seconds
+/*        if(refreshMarkersTask == null) {
+        	refreshMarkersTask = new RefreshMarkersTask(locations);
+        }
+        if(!refreshMarkersTask.isCancelled()) {
+        	refreshMarkersTask.executeOnExecutor(executor, 30);
+        }*/
+        
         // zoom to location if told to
         Float zoomLat = preferences.getFloat(getResources().getString(R.string.mapZoomLatKey), Float.MAX_VALUE);
         Float zoomLon = preferences.getFloat(getResources().getString(R.string.mapZoomLonKey), Float.MAX_VALUE);
@@ -257,6 +266,11 @@ public class MapFragment extends Fragment implements
     @Override
     public void onPause() {
         super.onPause();
+        
+        if(refreshMarkersTask != null) {
+        	refreshMarkersTask.cancel(true);
+        	refreshMarkersTask = null;
+        }
         
         mapView.onPause();
         
@@ -292,6 +306,7 @@ public class MapFragment extends Fragment implements
 			Intent intent = new Intent(getActivity().getApplicationContext(), ObservationEditActivity.class);
 			LocationService ls = ((MAGE) getActivity().getApplication()).getLocationService();
 			Location l = ls.getLocation();
+			// if there is not a location from the location service, then try to pull one from the database.
 			if (l == null) {
 				List<mil.nga.giat.mage.sdk.datastore.location.Location> tLocations = LocationHelper.getInstance(getActivity().getApplicationContext()).getCurrentUserLocations(getActivity().getApplicationContext(), 1, true);
 				if (!tLocations.isEmpty()) {

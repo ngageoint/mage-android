@@ -10,6 +10,7 @@ import mil.nga.giat.mage.observation.ObservationViewActivity;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import android.content.Context;
 import android.content.Intent;
+import android.util.Log;
 
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.CameraPosition;
@@ -25,6 +26,8 @@ import com.vividsolutions.jts.geom.Point;
 public class ObservationClusterCollection implements PointCollection<Observation>, OnClusterItemClickListener<ObservationClusterItem> {
 
     private Context context;
+    
+    private static final String LOG_NAME = ObservationClusterCollection.class.getName();
     
     private Map<Long, Observation> observations = new ConcurrentHashMap<Long, Observation>();
     private Map<Long, ObservationClusterItem> items = new ConcurrentHashMap<Long, ObservationClusterItem>();
@@ -70,6 +73,12 @@ public class ObservationClusterCollection implements PointCollection<Observation
         clusterManager.cluster();
         System.out.println("DONE clustering " + all.size() + " observations");
 
+    }
+    
+    @Override    
+    public void refreshMarkerIcons() {
+    	// TODO : figure this out?
+    	Log.d(LOG_NAME, "TODO: refreshme");
     }
     
     @Override
