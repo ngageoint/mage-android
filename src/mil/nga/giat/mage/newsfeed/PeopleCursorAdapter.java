@@ -28,6 +28,9 @@ import com.j256.ormlite.stmt.PreparedQuery;
 public class PeopleCursorAdapter extends CursorAdapter {
 	private static final String LOG_NAME = PeopleCursorAdapter.class.getName();
 
+	private static final String ASSET = "people/person.png";
+	private static final String DEFAULT_ASSET = "people/high/person.png";
+	
 	private LayoutInflater inflater = null;
 	private PreparedQuery<Location> query;
 	private SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm zz", Locale.ENGLISH);
@@ -45,7 +48,7 @@ public class PeopleCursorAdapter extends CursorAdapter {
 			User user = location.getUser();
 
 			ImageView iconView = (ImageView) v.findViewById(R.id.iconImageView);
-			Bitmap iconMarker = LocationBitmapFactory.bitmap(context, location);
+			Bitmap iconMarker = LocationBitmapFactory.bitmap(context, location, ASSET, DEFAULT_ASSET);
 			if (iconMarker != null) {
 				iconView.setImageBitmap(iconMarker);
 			}

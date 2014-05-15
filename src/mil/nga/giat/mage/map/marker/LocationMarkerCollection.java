@@ -12,14 +12,12 @@ import org.ocpsoft.prettytime.PrettyTime;
 
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.sdk.datastore.location.Location;
+import mil.nga.giat.mage.sdk.datastore.location.LocationGeometry;
 import mil.nga.giat.mage.sdk.datastore.location.LocationHelper;
 import mil.nga.giat.mage.sdk.datastore.user.User;
-import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
-import mil.nga.giat.mage.sdk.exceptions.UserException;
 import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.ImageView;
@@ -38,21 +36,22 @@ import com.vividsolutions.jts.geom.Point;
 public class LocationMarkerCollection implements PointCollection<Location>, OnMarkerClickListener {
 
 	private static final String LOG_NAME = LocationMarkerCollection.class.getName();
+
+	private static final String ASSET = "people/person.png";
+	private static final String DEFAULT_ASSET = "people/high/person.png";
 	
-    private GoogleMap map;
-    private Context context;
-    private Date latestLocationDate = new Date(0);
+	protected GoogleMap map;
+    protected Context context;
+    protected Date latestLocationDate = new Date(0);
 
-    private InfoWindowAdapter infoWindowAdpater = new LocationInfoWindowAdapter();
+    protected InfoWindowAdapter infoWindowAdpater = new LocationInfoWindowAdapter();
 
-    private boolean visible = true;
+    protected boolean visible = true;
 
-    private Map<Long, Marker> locationIdToMarker = new ConcurrentHashMap<Long, Marker>();
-    private Map<String, Location> markerIdToLocation = new ConcurrentHashMap<String, Location>();
+    protected Map<Long, Marker> locationIdToMarker = new ConcurrentHashMap<Long, Marker>();
+    protected Map<String, Location> markerIdToLocation = new ConcurrentHashMap<String, Location>();
 
-    private MarkerManager.Collection markerCollection;
-    
-    protected User currentUser = null;
+    protected MarkerManager.Collection markerCollection;
     
     public LocationMarkerCollection(Context context, GoogleMap map) {
         this.context = context;
@@ -60,40 +59,34 @@ public class LocationMarkerCollection implements PointCollection<Location>, OnMa
 
         MarkerManager markerManager = new MarkerManager(map);
         markerCollection = markerManager.newCollection();
-        
-		try {
-			currentUser = UserHelper.getInstance(context.getApplicationContext()).readCurrentUser();
-		} catch (UserException e) {
-			Log.e(LOG_NAME, "Problem retriving current user.", e);
-		}
     }
 
     @Override
     public void add(Location l) {
-        // If I got an observation that I already have in my list
-        // remove it from the map and clean-up my collections
-        Marker marker = locationIdToMarker.remove(l.getId());
-        if (marker != null) {
-            markerIdToLocation.remove(marker.getId());
-            marker.remove();
-        }
-        
-        removeOldMarkers();
-        //only add markers that are NOT the current user
-		if (currentUser != null && !currentUser.getRemoteId().equals(l.getUser().getRemoteId())) {
-		
-			Point point = l.getLocationGeometry().getGeometry().getCentroid();
-
+    	final LocationGeometry lg = l.getLocationGeometry();
+		if(lg != null) {
+	        // If I got an observation that I already have in my list
+	        // remove it from the map and clean-up my collections
+	        Marker marker = locationIdToMarker.remove(l.getId());
+	        if (marker != null) {
+	            markerIdToLocation.remove(marker.getId());
+	            marker.remove();
+	        }
+	        
+	        removeOldMarkers();
+			
+			Point point = lg.getGeometry().getCentroid();
+	
 			MarkerOptions options = new MarkerOptions()
 					.position(new LatLng(point.getY(), point.getX()))
-					.icon(LocationBitmapFactory.bitmapDescriptor(context, l))
+					.icon(LocationBitmapFactory.bitmapDescriptor(context, l, ASSET, DEFAULT_ASSET))
 					.visible(visible);
-
+	
 			marker = markerCollection.addMarker(options);
-
+	
 			locationIdToMarker.put(l.getId(), marker);
 			markerIdToLocation.put(marker.getId(), l);
-
+	
 			if (l.getTimestamp().after(latestLocationDate)) {
 				latestLocationDate = l.getTimestamp();
 			}
@@ -123,7 +116,7 @@ public class LocationMarkerCollection implements PointCollection<Location>, OnMa
         if (l == null) return false;
         
         map.setInfoWindowAdapter(infoWindowAdpater);
-        marker.setIcon(LocationBitmapFactory.bitmapDescriptor(context, l));
+        marker.setIcon(LocationBitmapFactory.bitmapDescriptor(context, l, ASSET, DEFAULT_ASSET));
         marker.showInfoWindow();
         return true;
     }
@@ -133,7 +126,11 @@ public class LocationMarkerCollection implements PointCollection<Location>, OnMa
 		for (Marker m : markerCollection.getMarkers()) {
 			Location tl = markerIdToLocation.get(m.getId());
 			if (tl != null) {
-				m.setIcon(LocationBitmapFactory.bitmapDescriptor(context, tl));
+				boolean showWindow = m.isInfoWindowShown();
+				m.setIcon(LocationBitmapFactory.bitmapDescriptor(context, tl, ASSET, DEFAULT_ASSET));
+				if(showWindow) {
+					m.showInfoWindow();
+				}
 			}
 		}
 	}
@@ -160,6 +157,11 @@ public class LocationMarkerCollection implements PointCollection<Location>, OnMa
         for (Marker m : locationIdToMarker.values()) {
             m.setVisible(visible);
         }        
+    }
+    
+    @Override
+    public boolean isVisible() {
+    	return this.visible;
     }
 
     @Override
@@ -202,7 +204,7 @@ public class LocationMarkerCollection implements PointCollection<Location>, OnMa
             View v = inflater.inflate(R.layout.people_list_item, null);    
 
             ImageView iconView = (ImageView) v.findViewById(R.id.iconImageView);
-            Bitmap iconMarker = LocationBitmapFactory.bitmap(context, location);
+            Bitmap iconMarker = LocationBitmapFactory.bitmap(context, location, ASSET, DEFAULT_ASSET);
             if (iconMarker != null) {
                 iconView.setImageBitmap(iconMarker);            
             }

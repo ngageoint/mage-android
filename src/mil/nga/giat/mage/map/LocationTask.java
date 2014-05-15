@@ -39,20 +39,22 @@ public class LocationTask extends AsyncTask<Location, Location, Void> {
 
     @Override
     protected void onProgressUpdate(Location... locations) {
-        switch (type) {
-            case ADD: {
-                locationCollection.add(locations[0]);
-                break;
-            }
-            case UPDATE : {
-                locationCollection.remove(locations[0]);
-                locationCollection.add(locations[0]);
-                break;
-            }
-            case DELETE : {
-                locationCollection.remove(locations[0]);
-                break;
-            }
-        }
+    	synchronized (locationCollection) {
+	        switch (type) {
+	            case ADD: {
+	                locationCollection.add(locations[0]);
+	                break;
+	            }
+	            case UPDATE : {
+	                locationCollection.remove(locations[0]);
+	                locationCollection.add(locations[0]);
+	                break;
+	            }
+	            case DELETE : {
+	                locationCollection.remove(locations[0]);
+	                break;
+	            }
+	        }
+		}
     }
 }

@@ -88,6 +88,13 @@ public class ObservationClusterCollection implements PointCollection<Observation
     }
     
     @Override
+    public boolean isVisible() {
+    	// TODO not even sure what to do here with ClusterItem
+        // its not a GoogleMap marker so you cannot hide it
+    	return true;
+    }
+    
+    @Override
     public void remove(Observation o) {
         observations.remove(o.getId());
         ObservationClusterItem item = items.remove(o.getId());

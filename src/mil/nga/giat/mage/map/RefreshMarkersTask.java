@@ -33,7 +33,9 @@ public class RefreshMarkersTask extends AsyncTask<Integer, Void, Void> {
 	@Override
 	protected void onProgressUpdate(Void... values) {
 		super.onProgressUpdate(values);
-		colleciton.refreshMarkerIcons();
+		if(colleciton.isVisible()) {
+			colleciton.refreshMarkerIcons();
+		}
 	}
 
 }
