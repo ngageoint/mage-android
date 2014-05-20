@@ -72,8 +72,6 @@ public class LocationMarkerCollection implements PointCollection<Location>, OnMa
 	            markerIdToLocation.remove(marker.getId());
 	            marker.remove();
 	        }
-	        
-	        removeOldMarkers();
 			
 			Point point = lg.getGeometry().getCentroid();
 	
@@ -90,6 +88,7 @@ public class LocationMarkerCollection implements PointCollection<Location>, OnMa
 			if (l.getTimestamp().after(latestLocationDate)) {
 				latestLocationDate = l.getTimestamp();
 			}
+	        removeOldMarkers();
 		}
     }
 
@@ -100,6 +99,7 @@ public class LocationMarkerCollection implements PointCollection<Location>, OnMa
         }
     }
     
+    // TODO: this should preserve latestLocationDate
     @Override
     public void remove(Location l) {
         Marker marker = locationIdToMarker.remove(l.getId());
