@@ -1,5 +1,11 @@
 package mil.nga.giat.mage.form;
 
+/**
+ * This needs to match MageFormElement in attrs.xml.
+ * 
+ * @author wiedemanns
+ * 
+ */
 public enum MagePropertyType {
 	STRING, DATE, MULTILINE, MULTICHOICE, USER, LOCATION;
 

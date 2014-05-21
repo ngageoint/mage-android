@@ -9,14 +9,13 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
-import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
 import mil.nga.giat.mage.R;
-import mil.nga.giat.mage.form.MageEditText;
+import mil.nga.giat.mage.form.LayoutBaker;
 import mil.nga.giat.mage.form.MageSpinner;
-import mil.nga.giat.mage.form.MageTextView;
 import mil.nga.giat.mage.map.marker.ObservationBitmapFactory;
 import mil.nga.giat.mage.sdk.datastore.common.State;
 import mil.nga.giat.mage.sdk.datastore.observation.Attachment;
@@ -209,7 +208,7 @@ public class ObservationEditActivity extends Activity {
 					l.setLatitude(point.getY());
 					l.setLongitude(point.getX());
 				}
-				populatePropertyFieldsFromMap((LinearLayout) findViewById(R.id.form), propertiesMap);
+				LayoutBaker.populateLayoutFromMap((LinearLayout) findViewById(R.id.form), propertiesMap);
 			} catch (ObservationException oe) {
 
 			}
@@ -384,16 +383,15 @@ public class ObservationEditActivity extends Activity {
 		}
 
 		LinearLayout form = (LinearLayout) findViewById(R.id.form);
-		populatePropertyFieldsFromSaved(form, savedInstanceState);
+		LayoutBaker.populateLayoutFromBundle(form, savedInstanceState);
 		currentImageUri = savedInstanceState.getParcelable("currentImageUri");
 	}
 
 	@Override
 	protected void onSaveInstanceState(Bundle outState) {
+		LayoutBaker.populateBundleFromLayout((LinearLayout) findViewById(R.id.form), outState);
 		outState.putParcelable("location", l);
 		outState.putParcelableArrayList("attachments", new ArrayList<Attachment>(attachments));
-		LinearLayout form = (LinearLayout) findViewById(R.id.form);
-		savePropertyFieldsToBundle(form, outState);
 		outState.putParcelable("currentImageUri", currentImageUri);
 		super.onSaveInstanceState(outState);
 	}
@@ -405,138 +403,6 @@ public class ObservationEditActivity extends Activity {
 		return true;
 	}
 	
-	private void populatePropertyFieldsFromSaved(LinearLayout ll, Bundle savedInstanceState) {
-		for (int i = 0; i < ll.getChildCount(); i++) {
-			View v = ll.getChildAt(i);
-			if (v instanceof MageTextView) {
-				String propertyKey = ((MageTextView) v).getPropertyKey();
-				((MageTextView) v).setText(savedInstanceState.getString(propertyKey));
-			} else if (v instanceof MageEditText) {
-				String propertyKey = ((MageEditText) v).getPropertyKey();
-				((MageEditText) v).setText(savedInstanceState.getString(propertyKey));
-			} else if (v instanceof MageSpinner) {
-				MageSpinner spinner = (MageSpinner) v;
-				String propertyKey = ((MageSpinner) v).getPropertyKey();
-				String value = savedInstanceState.getString(propertyKey);
-				int index = 0;
-				for (index = 0; index < spinner.getAdapter().getCount(); index++) {
-					if (spinner.getAdapter().getItem(index).equals(value)) {
-						spinner.setSelection(index);
-						break;
-					}
-				}
-			} else if (v instanceof LinearLayout) {
-				populatePropertyFieldsFromSaved((LinearLayout) v, savedInstanceState);
-			}
-		}
-	}
-
-	private void savePropertyFieldsToBundle(LinearLayout ll, Bundle outState) {
-		for (int i = 0; i < ll.getChildCount(); i++) {
-			View v = ll.getChildAt(i);
-			if (v instanceof MageTextView) {
-				String propertyKey = ((MageTextView)v).getPropertyKey();
-				outState.putString(propertyKey, ((MageTextView)v).getText().toString());
-			} else if (v instanceof MageEditText) {
-				String propertyKey = ((MageEditText)v).getPropertyKey();
-				outState.putString(propertyKey, ((MageEditText)v).getText().toString());
-			} else if (v instanceof MageSpinner) {
-				String propertyKey = ((MageSpinner)v).getPropertyKey();
-				outState.putString(propertyKey, (String) ((MageSpinner)v).getSelectedItem());
-			} else if (v instanceof LinearLayout) {
-				savePropertyFieldsToBundle((LinearLayout)v, outState);
-			}
-		}
-	}
-	
-	private Map<String, ObservationProperty> getPropertyFieldsAsMap(LinearLayout ll) {
-		 Map<String, ObservationProperty> properties = new HashMap<String, ObservationProperty>();
-		 return getPropertyFieldsAsMapRecurse(ll, properties);
-	}
-	
-	private final Map<String, ObservationProperty> getPropertyFieldsAsMapRecurse(LinearLayout ll, Map<String, ObservationProperty> fields) {
-		for (int i = 0; i < ll.getChildCount(); i++) {
-			View v = ll.getChildAt(i);
-			
-			if (v instanceof LinearLayout) {
-				fields.putAll(getPropertyFieldsAsMapRecurse((LinearLayout)v, fields));
-			} else {
-				String key = null;
-				String value = null;
-				if (v instanceof MageTextView) {
-					key = ((MageTextView)v).getPropertyKey();
-					value = ((MageTextView)v).getText().toString();
-				} else if (v instanceof MageEditText) {
-					key = ((MageEditText)v).getPropertyKey();
-					value = ((MageEditText)v).getText().toString();
-				} else if (v instanceof MageSpinner) {
-					key = ((MageSpinner)v).getPropertyKey();
-					value = (String) ((MageSpinner)v).getSelectedItem();
-				}
-				if (key != null && value != null) {
-					fields.put(key, new ObservationProperty(key, value));
-				}
-			}
-		}
-		return fields;
-	}
-	
-	private void populatePropertyFieldsFromMap(LinearLayout ll, Map<String, ObservationProperty> propertiesMap) {
-		for (int i = 0; i < ll.getChildCount(); i++) {
-			View v = ll.getChildAt(i);
-			if (v instanceof MageTextView) {
-				MageTextView m = (MageTextView)v;
-				String propertyKey = m.getPropertyKey();
-				String propertyValue = propertiesMap.get(propertyKey).getValue();
-				if (propertyValue == null) continue;
-				switch(m.getPropertyType()) {
-				case STRING:
-				case MULTILINE:
-					m.setText(propertyValue);
-					break;
-				case USER:
-					
-					break;
-				case DATE:
-                    String dateText = propertyValue;
-                    try {
-                        Date date = DateUtility.getISO8601().parse(propertyValue);
-                        dateText = sdf.format(date);
-                    } catch (ParseException e) {
-                        e.printStackTrace();
-                    }
-                    m.setText(dateText);
-					break;
-				case LOCATION:
-					
-					break;
-				case MULTICHOICE:
-					
-					break;
-				}
-			} else if (v instanceof MageEditText) {
-				MageEditText m = (MageEditText)v;
-				String propertyKey = m.getPropertyKey();
-				String propertyValue = propertiesMap.get(propertyKey).getValue();
-				m.setText(propertyValue);
-			} else if (v instanceof MageSpinner) {
-				MageSpinner spinner = (MageSpinner)v;
-				String propertyKey = ((MageSpinner)v).getPropertyKey();
-				ObservationProperty property = propertiesMap.get(propertyKey);
-				if(property != null) {
-					int index = 0;
-					for (index = 0; index < spinner.getAdapter().getCount(); index++) {
-						if (spinner.getAdapter().getItem(index).equals(property.getValue())) {
-							spinner.setSelection(index);
-							break;
-						}
-					}
-				}
-			} else if (v instanceof LinearLayout) {
-				populatePropertyFieldsFromMap((LinearLayout)v, propertiesMap);
-			}
-		}
-	}
 
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
@@ -547,12 +413,9 @@ public class ObservationEditActivity extends Activity {
 			o.setDirty(true);
 			o.setObservationGeometry(new ObservationGeometry(new GeometryFactory().createPoint(new Coordinate(l.getLongitude(), l.getLatitude()))));
 
-			LinearLayout form = (LinearLayout) findViewById(R.id.form);
-
-			Map<String, ObservationProperty> propertyMap = getPropertyFieldsAsMap(form);
-			propertyMap.put("type", new ObservationProperty("type", typeSpinner.getSelectedItem().toString()));
-			propertyMap.put("EVENTLEVEL", new ObservationProperty("EVENTLEVEL", levelSpinner.getSelectedItem().toString()));
-			propertyMap.put("timestamp", new ObservationProperty("timestamp", DateUtility.getISO8601().format(date)));
+			Map<String, ObservationProperty> propertyMap = LayoutBaker.populateMapFromLayout((LinearLayout) findViewById(R.id.form));
+			
+			// Add properties that weren't part of the layout
 			propertyMap.put("accuracy", new ObservationProperty("accuracy", Float.toString(l.getAccuracy())));
 			String provider = l.getProvider();
 			if (provider == null || provider.trim().isEmpty()) {
@@ -740,10 +603,8 @@ public class ObservationEditActivity extends Activity {
 		case CAPTURE_VIDEO_ACTIVITY_REQUEST_CODE:
 		case GALLERY_ACTIVITY_REQUEST_CODE:
 		case CAPTURE_VOICE_ACTIVITY_REQUEST_CODE:
-			ArrayList<Uri> uris = getUris(data);
-			Log.i("test", "found " + uris.size() + " uris");
+			List<Uri> uris = getUris(data);
 			for (Uri u : uris) {
-				Log.i("test", "adding uri: " + u);
 				String path = MediaUtility.getPath(getApplicationContext(), u);
 				Attachment a = new Attachment();
 				a.setLocalPath(path);
@@ -767,8 +628,8 @@ public class ObservationEditActivity extends Activity {
 		}
 	}
 
-	private ArrayList<Uri> getUris(Intent intent) {
-		ArrayList<Uri> uris = new ArrayList<Uri>();
+	private List<Uri> getUris(Intent intent) {
+		List<Uri> uris = new ArrayList<Uri>();
 		addClipDataUris(intent, uris);
 		if (intent.getData() != null) {
 			uris.add(intent.getData());
@@ -777,7 +638,7 @@ public class ObservationEditActivity extends Activity {
 	}
 	
 	@TargetApi(16)
-	private void addClipDataUris(Intent intent, ArrayList<Uri> uris) {
+	private void addClipDataUris(Intent intent, List<Uri> uris) {
 		if (Build.VERSION.SDK_INT >= 16) {
 			ClipData cd = intent.getClipData();
 			if (cd == null) return;
