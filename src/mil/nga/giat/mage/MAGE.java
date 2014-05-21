@@ -161,12 +161,15 @@ public class MAGE extends Application implements IUserEventListener {
 	private void destroyFetching() {
 		if (staticFeatureServerFetch != null) {
 			staticFeatureServerFetch.destroy();
+			staticFeatureServerFetch = null;
 		}
 		if(locationFetchIntent != null) {
 			stopService(locationFetchIntent);
+			locationFetchIntent = null;
 		}
 		if(observationFetchIntent != null) {
 			stopService(observationFetchIntent);
+			observationFetchIntent = null;
 		}
 	}
 
@@ -201,9 +204,11 @@ public class MAGE extends Application implements IUserEventListener {
 	private void destroyPushing() {
 		if (locationPushIntent != null) {
 			stopService(locationPushIntent);
+			locationPushIntent = null;
 		}
 		if (observationPushIntent != null) {
 			stopService(observationPushIntent);
+			observationPushIntent = null;
 		}
 		cancelAttachmentPush();
 	}
@@ -215,6 +220,7 @@ public class MAGE extends Application implements IUserEventListener {
 
 		if(attachmentPushIntent != null) {
 			this.stopService(attachmentPushIntent);
+			attachmentPushIntent = null;
 		}
 	}
 

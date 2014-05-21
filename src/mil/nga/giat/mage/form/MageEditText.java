@@ -6,34 +6,41 @@ import android.content.res.TypedArray;
 import android.util.AttributeSet;
 import android.widget.EditText;
 
-public class MageEditText extends EditText {
+public class MageEditText extends EditText implements MageControl {
 
 	private String propertyKey;
-	private int propertyType;
+	private MagePropertyType propertyType;
 
 	public MageEditText(Context context, AttributeSet attrs) {
 		super(context, attrs);
 		TypedArray typedArray = context.obtainStyledAttributes(attrs, R.styleable.MageFormElement);
-		String propertyKey = typedArray.getString(R.styleable.MageFormElement_propertyKey);
-		setPropertyType(typedArray.getInt(R.styleable.MageFormElement_propertyType, 0));
-		setPropertyKey(propertyKey);
+		setPropertyKey(typedArray.getString(R.styleable.MageFormElement_propertyKey));
+		setPropertyType(MagePropertyType.getPropertyType(typedArray.getInt(R.styleable.MageFormElement_propertyType, 0)));
 		typedArray.recycle();
 	}
 
+	@Override
 	public void setPropertyKey(String propertyKey) {
 		this.propertyKey = propertyKey;
 	}
 
+	@Override
 	public String getPropertyKey() {
 		return this.propertyKey;
 	}
 
-	public void setPropertyType(int propertyType) {
+	@Override
+	public void setPropertyType(MagePropertyType propertyType) {
 		this.propertyType = propertyType;
 	}
 
+	@Override
 	public MagePropertyType getPropertyType() {
-		return MagePropertyType.getPropertyType(this.propertyType);
+		return this.propertyType;
 	}
 
+	@Override
+	public String getPropertyValue() {
+		return getText().toString();
+	}
 }

@@ -4,7 +4,7 @@ import mil.nga.giat.mage.help.HelpFragment;
 import mil.nga.giat.mage.login.LoginActivity;
 import mil.nga.giat.mage.map.MapFragment;
 import mil.nga.giat.mage.navigation.DrawerItem;
-import mil.nga.giat.mage.newsfeed.NewsFeedFragment;
+import mil.nga.giat.mage.newsfeed.ObservationFeedFragment;
 import mil.nga.giat.mage.newsfeed.PeopleFeedFragment;
 import mil.nga.giat.mage.preferences.PublicPreferencesFragment;
 import mil.nga.giat.mage.sdk.utils.UserUtility;
@@ -49,7 +49,13 @@ public class LandingActivity extends Activity implements ListView.OnItemClickLis
     private boolean switchFragment;
     private DrawerItem itemToSwitchTo;
     
-    
+    public final DrawerItem getMapItem() {
+    	return mapItem;
+    }
+
+    public void setCurrentItem(DrawerItem item) {
+    	currentActivity = item;
+    }
     
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -57,9 +63,12 @@ public class LandingActivity extends Activity implements ListView.OnItemClickLis
         setContentView(R.layout.activity_landing);
         mapItem = new DrawerItem.Builder("Map").id(0).drawableId(R.drawable.ic_globe_white).fragment(new MapFragment()).build();
 
-        drawerItems = new DrawerItem[] { mapItem, new DrawerItem.Builder("Observations").id(1).drawableId(R.drawable.ic_map_marker_white).fragment(new NewsFeedFragment()).build(),
-                new DrawerItem.Builder("People").id(2).drawableId(R.drawable.ic_users_white).fragment(new PeopleFeedFragment()).build(), new DrawerItem.Builder("SETTINGS").header(true).build(),
-                new DrawerItem.Builder("Settings").id(3).secondary(true).fragment(new PublicPreferencesFragment()).build(), new DrawerItem.Builder("Help").id(4).secondary(true).fragment(new HelpFragment()).build(), new DrawerItem.Builder("Logout").id(5).secondary(true).build() };
+        drawerItems = new DrawerItem[] { mapItem, 
+        		new DrawerItem.Builder("Observations").id(1).drawableId(R.drawable.ic_map_marker_white).fragment(new ObservationFeedFragment()).build(),
+                new DrawerItem.Builder("People").id(2).drawableId(R.drawable.ic_users_white).fragment(new PeopleFeedFragment()).build(), 
+                new DrawerItem.Builder("Settings").id(3).secondary(true).fragment(new PublicPreferencesFragment()).build(), 
+                new DrawerItem.Builder("Help").id(4).secondary(true).fragment(new HelpFragment()).build(), 
+                new DrawerItem.Builder("Logout").id(5).secondary(true).build() };
 
         drawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawerList = (ListView) findViewById(R.id.left_drawer);

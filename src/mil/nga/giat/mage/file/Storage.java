@@ -76,6 +76,7 @@ public class Storage {
                             mMounts.add(element);
                     }
                 }
+                scanner.close();
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -97,6 +98,7 @@ public class Storage {
                             mVold.add(element);
                     }
                 }
+                scanner.close();
             }
         } catch (Exception e) {
             e.printStackTrace();

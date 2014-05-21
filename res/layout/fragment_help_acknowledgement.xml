@@ -2,30 +2,22 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/mage_gradient"
     android:orientation="vertical"
     tools:context=".MainActivity$DummySectionFragment" >
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:paddingBottom="20dp"
-        android:text="Acknowledgements"
-        android:textColor="#EEEEEE"
-        android:textSize="30sp" />
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
         android:paddingLeft="10dp"
         android:text="Software"
-        android:textColor="#EEEEEE"
+        android:textColor="@android:color/black"
         android:textSize="28sp" />
 
     <View
         android:layout_width="match_parent"
         android:layout_height="1dp"
-        android:background="@android:color/white" />
+        android:background="@android:color/black" />
+`
 
     <TableLayout
         android:layout_width="match_parent"
@@ -40,14 +32,14 @@
             android:layout_height="wrap_content"
             android:padding="5dp" >
 
-            <TextView                
+            <TextView
                 android:text="Google Play Services"
-                android:textColor="#EEEEEE"
+                android:textColor="@android:color/black"
                 android:textSize="18sp" />
 
-            <TextView                
+            <TextView
                 android:text="MAGE SDK"
-                android:textColor="#EEEEEE"
+                android:textColor="@android:color/black"
                 android:textSize="18sp" />
         </TableRow>
 
@@ -56,14 +48,14 @@
             android:layout_height="wrap_content"
             android:padding="5dp" >
 
-            <TextView                
+            <TextView
                 android:text="Android SDK"
-                android:textColor="#EEEEEE"
+                android:textColor="@android:color/black"
                 android:textSize="18sp" />
 
-            <TextView                
+            <TextView
                 android:text="Google-Gson"
-                android:textColor="#EEEEEE"
+                android:textColor="@android:color/black"
                 android:textSize="18sp" />
         </TableRow>
 
@@ -72,14 +64,14 @@
             android:layout_height="wrap_content"
             android:padding="5dp" >
 
-            <TextView                
+            <TextView
                 android:text="Apache Commons"
-                android:textColor="#EEEEEE"
+                android:textColor="@android:color/black"
                 android:textSize="18sp" />
 
-            <TextView                
+            <TextView
                 android:text="Glide"
-                android:textColor="#EEEEEE"
+                android:textColor="@android:color/black"
                 android:textSize="18sp" />
         </TableRow>
 
@@ -88,14 +80,14 @@
             android:layout_height="wrap_content"
             android:padding="5dp" >
 
-            <TextView                
+            <TextView
                 android:text="Http Mime"
-                android:textColor="#EEEEEE"
+                android:textColor="@android:color/black"
                 android:textSize="18sp" />
 
-            <TextView                
+            <TextView
                 android:text="Jts"
-                android:textColor="#EEEEEE"
+                android:textColor="@android:color/black"
                 android:textSize="18sp" />
         </TableRow>
 
@@ -104,42 +96,42 @@
             android:layout_height="wrap_content"
             android:padding="5dp" >
 
-            <TextView            
+            <TextView
                 android:text="Orm-lite"
-                android:textColor="#EEEEEE"
+                android:textColor="@android:color/black"
                 android:textSize="18sp" />
         </TableRow>
     </TableLayout>
 
     <TextView
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"        
+        android:layout_height="wrap_content"
         android:paddingLeft="10dp"
         android:text="Iconography"
-        android:textColor="#EEEEEE"
+        android:textColor="@android:color/black"
         android:textSize="28sp" />
 
     <View
         android:layout_width="match_parent"
         android:layout_height="1dp"
-        android:background="@android:color/white" />
+        android:background="@android:color/black" />
 
     <TextView
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"        
+        android:layout_height="wrap_content"
         android:paddingLeft="15dp"
         android:paddingTop="5dp"
         android:text="Androton Action Bar Icons v0.1 by Sven Kapuđija"
-        android:textColor="#EEEEEE"
+        android:textColor="@android:color/black"
         android:textSize="18sp" />
 
     <TextView
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"        
+        android:layout_height="wrap_content"
         android:paddingLeft="15dp"
         android:paddingTop="5dp"
         android:text="Font Awesome by Dave Gandy"
-        android:textColor="#EEEEEE"
+        android:textColor="@android:color/black"
         android:textSize="18sp" />
 
 </LinearLayout>

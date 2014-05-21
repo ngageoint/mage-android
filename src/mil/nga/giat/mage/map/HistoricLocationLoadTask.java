@@ -18,15 +18,15 @@ import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.stmt.QueryBuilder;
 import com.j256.ormlite.stmt.Where;
 
-public class LocationLoadTask extends AsyncTask<Void, Location, Void> {
+public class HistoricLocationLoadTask extends AsyncTask<Void, Location, Void> {
     
     private Context context;
     private Filter<Temporal> filter;
-    private PointCollection<Location> locationCollection;
+    private PointCollection<Location> historicLocationCollection;
 	    
-    public LocationLoadTask(Context context, PointCollection<Location> locationCollection) {
+    public HistoricLocationLoadTask(Context context, PointCollection<Location> historicLocationCollection) {
         this.context = context.getApplicationContext();
-        this.locationCollection = locationCollection;        
+        this.historicLocationCollection = historicLocationCollection;        
     }
        
     public void setFilter(Filter<Temporal> filter) {
@@ -56,23 +56,23 @@ public class LocationLoadTask extends AsyncTask<Void, Location, Void> {
 
     @Override
     protected void onProgressUpdate(Location... locations) {
-    	synchronized (locationCollection) {
-    		locationCollection.add(locations[0]);
+    	synchronized (historicLocationCollection) {
+    		historicLocationCollection.add(locations[0]);
     	}
     }
     
 	private CloseableIterator<Location> iterator() throws SQLException {
 		Dao<Location, Long> dao = DaoStore.getInstance(context).getLocationDao();
 		QueryBuilder<Location, Long> query = dao.queryBuilder();
-		Where<? extends Temporal, Long> where = query.where().ge("timestamp", locationCollection.getLatestDate());
 		User currentUser = null;
 		try {
 			currentUser = UserHelper.getInstance(context.getApplicationContext()).readCurrentUser();
 		} catch (UserException e) {
 			e.printStackTrace();
 		}
+		Where<? extends Temporal, Long> where = query.where();
 		if (currentUser != null) {
-			where.and().ne("user_id", currentUser.getId());
+			where.eq("user_id", currentUser.getId());
 		}
 		if (filter != null) {
 			where = filter.where(where.and());

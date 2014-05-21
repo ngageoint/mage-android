@@ -122,6 +122,7 @@
                 android:layout_marginTop="7dip"
                 android:background="@drawable/form_field"
                 android:hint="Email"
+                android:imeActionLabel="Sign up"
                 android:inputType="textEmailAddress"
                 android:singleLine="true"
                 android:textSize="22sp" />

@@ -34,6 +34,11 @@
             android:key="@string/showLocationsKey"
             android:summary="Show users locations on map"
             android:title="Show People" />
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:key="@string/showMyLocationHistoryKey"
+            android:summary="Show your history on the map"
+            android:title="Show My Location History" />
     </PreferenceCategory>
     <PreferenceCategory android:title="STATIC FEATURES" >
         <mil.nga.giat.mage.map.preference.OverlayPreference

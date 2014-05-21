@@ -2,6 +2,7 @@ package mil.nga.giat.mage.login;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.sdk.login.AccountDelegate;
@@ -13,7 +14,6 @@ import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.SharedPreferences.Editor;
 import android.graphics.Typeface;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
@@ -21,6 +21,7 @@ import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.util.Patterns;
+import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnTouchListener;
@@ -108,7 +109,7 @@ public class SignupActivity extends Activity implements AccountDelegate {
 			public void afterTextChanged(Editable s) {
 				String firstname = s.toString();
 				String lastname = mLastNameEditText.getText().toString();
-				String username = (lastname + ((firstname.length() > 0) ? firstname.substring(0, 1) : "")).toLowerCase();
+				String username = (lastname + ((firstname.length() > 0) ? firstname.substring(0, 1) : "")).toLowerCase(Locale.getDefault());
 				mUsernameEditText.setText(username);
 				mUsernameEditText.setSelection(username.length());
 			}
@@ -127,7 +128,7 @@ public class SignupActivity extends Activity implements AccountDelegate {
 			public void afterTextChanged(Editable s) {
 				String firstname = mFirstNameEditText.getText().toString();
 				String lastname = s.toString();
-				String username = (lastname + ((firstname.length() > 0) ? firstname.substring(0, 1) : "")).toLowerCase();
+				String username = (lastname + ((firstname.length() > 0) ? firstname.substring(0, 1) : "")).toLowerCase(Locale.getDefault());
 				mUsernameEditText.setText(username);
 				mUsernameEditText.setSelection(username.length());
 			}
@@ -139,6 +140,18 @@ public class SignupActivity extends Activity implements AccountDelegate {
 		SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
 		getServerEditText().setText(sharedPreferences.getString("serverURL", ""));
 		getServerEditText().setSelection(getServerEditText().getText().length());
+		
+		mEmailEditText.setOnKeyListener(new View.OnKeyListener() {
+			@Override
+			public boolean onKey(View v, int keyCode, KeyEvent event) {
+				if (keyCode == KeyEvent.KEYCODE_ENTER) {
+					signup(v);
+					return true;
+				} else {
+					return false;
+				}
+			}
+		});
 	}
 
 	/**
@@ -301,13 +314,6 @@ public class SignupActivity extends Activity implements AccountDelegate {
 	@Override
 	public void finishAccount(AccountStatus accountStatus) {
 		if (accountStatus.getStatus() == AccountStatus.Status.SUCCESSFUL_SIGNUP) {
-			// save the username
-			Editor sharedPreferencesEditor = PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).edit();
-			try {
-				sharedPreferencesEditor.putString("username", accountStatus.getAccountInformation().getString("username")).commit();
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
 			
 			// Tell the user that their account was made
 			AlertDialog.Builder alertDialog = new AlertDialog.Builder(this);

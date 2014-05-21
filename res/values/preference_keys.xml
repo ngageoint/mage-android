@@ -8,6 +8,8 @@
     <string name="compatibleVersionMajorDefaultValue">2</string>
     <string name="compatibleVersionMinorKey">compatibleVersionMinor</string>
     <string name="compatibleVersionMinorDefaultValue">0</string>
+    <string name="prettyPrintLocationDatesKey">prettyPrintLocationDates</string>
+    <string name="prettyPrintLocationDatesDefaultValue">true</string>
     <!-- from the server api call -->
     <string name="serverVersionMajorKey">gVersionMajor</string>
     <string name="serverVersionMinorKey">gVersionMinor</string>
@@ -18,6 +20,9 @@
     <string name="mapFeatureOverlaysKey">mapFeatureOverlays</string>
     <string name="showObservationsKey">showObservations</string>
     <string name="showLocationsKey">showLocations</string>
+    <string name="showMyLocationHistoryKey">showMyLocationHistory</string>
     <string name="activeTimeFilterKey">activeTimeFilter</string>
+    <string name="mapZoomLatKey">mapZoomLatKey</string>
+    <string name="mapZoomLonKey">mapZoomLonKey</string>
 
 </resources>

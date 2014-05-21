@@ -82,6 +82,11 @@ public class ObservationMarkerCollection implements PointCollection<Observation>
             m.setVisible(visible);
         }
     }
+    
+    @Override
+    public boolean isVisible() {
+    	return this.visible;
+    }
 
     @Override
     public void remove(Observation o) {
@@ -106,6 +111,20 @@ public class ObservationMarkerCollection implements PointCollection<Observation>
 
         return true;
     }
+    
+	@Override
+	public void refreshMarkerIcons() {
+		for (Marker m : markerCollection.getMarkers()) {
+			Observation to = markerIdToObservation.get(m.getId());
+			if (to != null) {
+				boolean showWindow = m.isInfoWindowShown();
+				m.setIcon(ObservationBitmapFactory.bitmapDescriptor(context, markerIdToObservation.get(m.getId())));
+				if(showWindow) {
+					m.showInfoWindow();
+				}
+			}
+		}
+	}
 
     @Override
     public void clear() {
