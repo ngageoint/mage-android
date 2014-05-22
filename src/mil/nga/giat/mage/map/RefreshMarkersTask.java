@@ -24,7 +24,6 @@ public class RefreshMarkersTask extends AsyncTask<Integer, Void, Void> {
 			try {
 				Thread.sleep(sleepTimeInMilli);
 			} catch (InterruptedException e) {
-				e.printStackTrace();
 			}
 		}
 		return null;

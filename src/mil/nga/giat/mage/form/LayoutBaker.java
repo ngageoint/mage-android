@@ -14,6 +14,12 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.LinearLayout;
 
+/**
+ * Use this class to build and populate the views concerned with form like information.
+ * 
+ * @author wiedemanns
+ *
+ */
 public class LayoutBaker {
 	
 	// TODO : store json in shared preferences
@@ -63,7 +69,7 @@ public class LayoutBaker {
 								m.setText(dateText);
 								break;
 							case LOCATION:
-	
+								// location is not a property, it lives in the parent
 								break;
 							case MULTICHOICE:
 	
