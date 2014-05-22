@@ -8,16 +8,57 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+
+import mil.nga.giat.mage.sdk.R;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationProperty;
+import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
 import mil.nga.giat.mage.sdk.utils.DateUtility;
+import android.content.Context;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.LinearLayout;
 
+/**
+ * Use this class to build and populate the views concerned with form like information.
+ * 
+ * @author wiedemanns
+ *
+ */
 public class LayoutBaker {
 	
-	// TODO : store json in shared preferences
-	public static List<View> createControlsFromJson() {
+	public static List<View> createControlsFromJson(Context context) {
+		
+		String dynamicFormString = PreferenceHelper.getInstance(context).getValue(R.string.dynamicFormKey);
+		JsonObject dynamicFormJson = new JsonParser().parse(dynamicFormString).getAsJsonObject();
+		
+		JsonArray dynamicFormFields = dynamicFormJson.get("fields").getAsJsonArray();
+		
+		for (int i = 0; i < dynamicFormFields.size(); i++) {
+			JsonObject field = dynamicFormFields.get(i).getAsJsonObject();
+			
+			// get members
+			Integer id = field.get("id").getAsInt();
+			String title = field.get("title").getAsString();
+			DynamicFormType type = DynamicFormType.TEXTAREA;
+			String typeString = field.get("type").getAsString();
+			if (typeString != null) {
+				try {
+					type = DynamicFormType.valueOf(typeString.toUpperCase());
+				} catch (IllegalArgumentException iae) {
+					type = DynamicFormType.TEXTAREA;
+				}
+			}
+			Boolean required = field.get("required").getAsBoolean();
+			String name = field.get("name").getAsString();
+			JsonArray choices = field.get("choices").getAsJsonArray();
+			
+		}
+		
+		// TODO : create controls
+		
 		return null;
 	}
 
@@ -63,7 +104,7 @@ public class LayoutBaker {
 								m.setText(dateText);
 								break;
 							case LOCATION:
-	
+								// location is not a property, it lives in the parent
 								break;
 							case MULTICHOICE:
 	

@@ -118,6 +118,9 @@ public class ObservationEditActivity extends Activity {
 		super.onCreate(savedInstanceState);
 
 		setContentView(R.layout.observation_editor);
+		
+		// TODO : add dynamic content to view
+		LayoutBaker.createControlsFromJson(getApplicationContext());
 
 		Intent intent = getIntent();
 		final long observationId = intent.getLongExtra(OBSERVATION_ID, NEW_OBSERVATION);
