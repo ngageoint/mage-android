@@ -688,23 +688,20 @@ public class MapFragment extends Fragment implements
         }
     }
 
-    private void updateMapView() {
-        // Check the map type
-        int mapType = Integer.parseInt(preferences.getString(getResources().getString(R.string.baseLayerKey), "1"));
-        if (mapType != this.mapType) {
-            this.mapType = mapType;
-            map.setMapType(this.mapType);
-        }
-        
-        // Check the map location and zoom
-        String xyz = preferences.getString(getResources().getString(R.string.mapXYZKey), null);
-        if (xyz != null) {
-            String[] values = StringUtils.split(xyz, ",");
-            LatLng latLng = new LatLng(Double.valueOf(values[1]), Double.valueOf(values[0]));
-            Float zoom = Float.valueOf(values[2]);
-            map.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, zoom));                
-        }
-    }
+	private void updateMapView() {
+		// Check the map type
+		this.mapType = Integer.parseInt(preferences.getString(getResources().getString(R.string.baseLayerKey), "1"));
+		map.setMapType(this.mapType);
+
+		// Check the map location and zoom
+		String xyz = preferences.getString(getResources().getString(R.string.mapXYZKey), null);
+		if (xyz != null) {
+			String[] values = StringUtils.split(xyz, ",");
+			LatLng latLng = new LatLng(Double.valueOf(values[1]), Double.valueOf(values[0]));
+			Float zoom = Float.valueOf(values[2]);
+			map.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, zoom));
+		}
+	}
     
     private void saveMapView() {
         CameraPosition position = map.getCameraPosition();

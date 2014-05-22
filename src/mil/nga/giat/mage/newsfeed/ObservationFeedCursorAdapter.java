@@ -68,7 +68,9 @@ public class ObservationFeedCursorAdapter extends CursorAdapter {
 			String user = "Unknown User";
 			try {
 				User u = UserHelper.getInstance(context).read(o.getUserId());
-				user = u.getFirstname() + " " + u.getLastname();
+				if(u != null) {
+					user = u.getFirstname() + " " + u.getLastname();
+				}
 			} catch (UserException e) {
 				Log.e(LOG_NAME, "Could not get user", e);
 			}
