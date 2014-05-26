@@ -40,6 +40,7 @@ import android.location.Location;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.SystemClock;
 import android.provider.MediaStore;
 import android.util.Log;
@@ -104,6 +105,8 @@ public class ObservationEditActivity extends Activity {
 	private Circle accuracyCircle;
 	private long locationElapsedTimeMilliseconds = 0;
 
+	private Uri currentImageUri;
+	
 	private final static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm zz", Locale.getDefault());
 
 	// View fields
@@ -483,7 +486,28 @@ public class ObservationEditActivity extends Activity {
 
 	public void videoButtonPressed(View v) {
 		Intent intent = new Intent(MediaStore.ACTION_VIDEO_CAPTURE);
+		Uri uri = getOutputVideoUri(); // create a file to save the video in specific folder
+		if (uri != null) {
+			intent.putExtra(MediaStore.EXTRA_OUTPUT, uri);
+		}
 		startActivityForResult(intent, CAPTURE_VIDEO_ACTIVITY_REQUEST_CODE);
+	}
+	
+	private static Uri getOutputVideoUri() {
+		if (Environment.getExternalStorageState() == null) {
+			return null;
+		}
+
+		File mediaStorage = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM), "MAGE_VIDEO");
+		if (!mediaStorage.exists() && !mediaStorage.mkdirs()) {
+			Log.e(LOG_NAME, "failed to create directory: " + mediaStorage);
+			return null;
+		}
+
+		// Create a media file name
+		String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(new Date());
+		File mediaFile = new File(mediaStorage, "VID_" + timeStamp + ".mp4");
+		return Uri.fromFile(mediaFile);
 	}
 
 	public void voiceButtonPressed(View v) {
@@ -545,8 +569,6 @@ public class ObservationEditActivity extends Activity {
 			}
 		} else if (remoteId != null) {
 			String url = a.getUrl();
-			Log.i("test", "url to load is: " + url);
-			Log.i("test", "content type is: " + contentType + " name is: " + a.getName());
 			if (contentType.startsWith("image")) {
 				Glide.load(url).placeholder(android.R.drawable.progress_indeterminate_horizontal).centerCrop().into(iv);
 			} else if (contentType.startsWith("video")) {
@@ -555,49 +577,13 @@ public class ObservationEditActivity extends Activity {
 				Glide.load(R.drawable.ic_microphone).into(iv);
 			}
 		}
-		
-		
-		
-//		try {
-//			
-//			if (absPath.endsWith(".mp4")) {
-//				Drawable[] layers = new Drawable[2];
-//				Resources r = getResources();
-//				layers[0] = new BitmapDrawable(r, ThumbnailUtils.createVideoThumbnail(absPath, MediaStore.Video.Thumbnails.MICRO_KIND));
-//				layers[1] = r.getDrawable(R.drawable.ic_video_white_2x);
-//				LayerDrawable ld = new LayerDrawable(layers);
-//				iv.setImageDrawable(ld);
-//			} else if (absPath.endsWith(".mp3") || absPath.endsWith("m4a")) {
-//				iv.setImageBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.ic_microphone));
-//			} else {
-//				iv.setImageBitmap(MediaUtility.getThumbnail(new File(absPath), 100));
-//			}
-//			LayoutParams lp = new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.MATCH_PARENT);
-//			iv.setLayoutParams(lp);
-//			iv.setPadding(0, 0, 10, 0);
-//			iv.setOnClickListener(new View.OnClickListener() {
-//
-//				@Override
-//				public void onClick(View v) {
-//					Intent intent = new Intent(v.getContext(), AttachmentViewerActivity.class);
-//					intent.setData(Uri.fromFile(new File(absPath)));
-//					intent.putExtra(AttachmentViewerActivity.EDITABLE, true);
-//					startActivityForResult(intent, ATTACHMENT_VIEW_ACTIVITY_REQUEST_CODE);
-//				}
-//			});
-//			l.addView(iv);
-//			Log.d("image", "Set the image gallery to have an image with absolute path " + absPath);
-//		} catch (Exception e) {
-//			Log.e("exception", "Error making image", e);
-//		}
 	}
-	
-	Uri currentImageUri;
 
 	@Override
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-		if (resultCode != RESULT_OK)
+		if (resultCode != RESULT_OK) {
 			return;
+		}
 		switch (requestCode) {
 		case CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE:
 			MediaUtility.addImageToGallery(getApplicationContext(), currentImageUri);
@@ -610,8 +596,8 @@ public class ObservationEditActivity extends Activity {
 		case GALLERY_ACTIVITY_REQUEST_CODE:
 		case CAPTURE_VOICE_ACTIVITY_REQUEST_CODE:
 			List<Uri> uris = getUris(data);
-			for (Uri u : uris) {
-				String path = MediaUtility.getPath(getApplicationContext(), u);
+			for (Uri uri : uris) {
+				String path = MediaUtility.getPath(getApplicationContext(), uri);
 				Attachment a = new Attachment();
 				a.setLocalPath(path);
 				attachments.add(a);
@@ -636,7 +622,7 @@ public class ObservationEditActivity extends Activity {
 
 	private List<Uri> getUris(Intent intent) {
 		List<Uri> uris = new ArrayList<Uri>();
-		addClipDataUris(intent, uris);
+		uris.addAll(getClipDataUris(intent));
 		if (intent.getData() != null) {
 			uris.add(intent.getData());
 		}
@@ -644,14 +630,17 @@ public class ObservationEditActivity extends Activity {
 	}
 	
 	@TargetApi(16)
-	private void addClipDataUris(Intent intent, List<Uri> uris) {
+	private List<Uri> getClipDataUris(Intent intent) {
+		List<Uri> uris = new ArrayList<Uri>();
 		if (Build.VERSION.SDK_INT >= 16) {
 			ClipData cd = intent.getClipData();
-			if (cd == null) return;
-			for (int i = 0; i < cd.getItemCount(); i++) {
-				uris.add(cd.getItemAt(i).getUri());
+			if (cd != null) {
+				for (int i = 0; i < cd.getItemCount(); i++) {
+					uris.add(cd.getItemAt(i).getUri());
+				}
 			}
 		}
+		return uris;
 	}
 
 	public void onTypeOrLevelChanged(String field, String value) {
