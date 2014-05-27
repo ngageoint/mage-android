@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 
+import android.os.Build;
 import android.os.Environment;
 
 public class Storage {
@@ -49,10 +50,34 @@ public class Storage {
         return null;
     }
     
+    public static Map<StorageType, File> getAllStorageLocations() {
+        if (Build.VERSION.SDK_INT >=  Build.VERSION_CODES.KITKAT) {
+            return getAllNewStorageLocations();
+        } else {
+            return getAllLegacyStorageLocations();
+        }
+    }
+    
+    private static Map<StorageType, File> getAllNewStorageLocations() {
+        Map<StorageType, File> locations = new LinkedHashMap<StorageType, File>();
+        String externalStorage = System.getenv("EXTERNAL_STORAGE");
+        if (externalStorage != null) {
+            File externalStorageDir = new File(externalStorage);
+            if (externalStorageDir.exists() && externalStorageDir.canWrite()) locations.put(StorageType.LOCAL, externalStorageDir);
+        }
+        String secondaryStorage = System.getenv("SECONDARY_STORAGE");
+        if (secondaryStorage != null){
+            File secondaryStorageDir = new File(secondaryStorage);
+            if (secondaryStorageDir.exists() && secondaryStorageDir.canWrite()) locations.put(StorageType.EXTERNAL, secondaryStorageDir);
+        }
+
+        return locations;
+    }
+    
     /**
      * @return A map of all storage locations available
      */
-    public static Map<StorageType, File> getAllStorageLocations() {
+    private static Map<StorageType, File> getAllLegacyStorageLocations() {
         Map<StorageType, File> map = new LinkedHashMap<StorageType, File>();
 
         List<String> mMounts = new ArrayList<String>();
