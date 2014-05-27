@@ -215,13 +215,13 @@
                         android:entries="@array/levels_array"
                         android:singleLine="true"
                         mageForm:propertyKey="EVENTLEVEL" />
-
+<!--
                     <TextView
                         style="@style/EditTextView"
                         android:layout_width="fill_parent"
                         android:layout_height="wrap_content"
                         android:text="Team" />
-
+ 
                     <mil.nga.giat.mage.form.MageSpinner
                         android:id="@+id/team"
                         android:layout_width="fill_parent"
@@ -231,7 +231,7 @@
                         android:entries="@array/teams_array"
                         android:singleLine="true"
                         mageForm:propertyKey="TEAM" />
-
+ -->
                     <TextView
                         style="@style/EditTextView"
                         android:layout_width="fill_parent"

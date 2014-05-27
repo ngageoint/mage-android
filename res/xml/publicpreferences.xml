@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" >
-
+<!-- 
     <PreferenceCategory
         android:order="2"
         android:title="MEDIA" >
@@ -11,6 +11,7 @@
             android:key="imageUploadSize"
             android:title="Image Upload Size" />
     </PreferenceCategory>
+     -->
     <PreferenceCategory
         android:order="3"
         android:title="ABOUT" >
