@@ -43,7 +43,7 @@ public class MyHistoricalLocationMarkerCollection extends LocationMarkerCollecti
 
 	@Override
 	public boolean onMarkerClick(Marker marker) {
-		return true;
+		return false;
 	}
 
 	@Override
