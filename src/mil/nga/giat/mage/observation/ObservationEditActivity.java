@@ -296,6 +296,9 @@ public class ObservationEditActivity extends Activity {
 	@SuppressLint("NewApi")
 	private long getElapsedTimeInMilliseconds() {
 		long elapsedTimeInMilliseconds = 0;
+		if (o.getPropertiesMap().containsKey("delta")) {
+			elapsedTimeInMilliseconds = Long.parseLong(o.getPropertiesMap().get("delta").getValue());
+		}
 		if (Build.VERSION.SDK_INT >= 17 && l.getElapsedRealtimeNanos() != 0) {
 			elapsedTimeInMilliseconds = ((SystemClock.elapsedRealtimeNanos() - l.getElapsedRealtimeNanos()) / (1000000l));
 		} else {
@@ -306,15 +309,24 @@ public class ObservationEditActivity extends Activity {
 
 	private String elapsedTime(long ms) {
 		String s = "";
+		
 		long sec = ms / 1000;
 		long min = sec / 60;
-		if (min == 0) {
-			s = sec + ((sec == 1) ? " sec ago" : " secs ago");
-		} else if (min < 60) {
-			s = min + ((min == 1) ? " min ago" : " mins ago");
+		
+		if (o.getRemoteId() == null) {
+			if (ms < 1000) {
+				return "now";
+			}
+			if (min == 0) {
+				s = sec + ((sec == 1) ? " sec ago" : " secs ago");
+			} else if (min < 60) {
+				s = min + ((min == 1) ? " min ago" : " mins ago");
+			} else {
+				long hour = Math.round(Math.floor(min / 60));
+				s = hour + ((hour == 1) ? " hour ago" : " hours ago");
+			}
 		} else {
-			long hour = Math.round(Math.floor(min / 60));
-			s = hour + ((hour == 1) ? " hour ago" : " hours ago");
+			return "";
 		}
 		return s;
 	}
@@ -336,7 +348,7 @@ public class ObservationEditActivity extends Activity {
 		}
 		
 		locationElapsedTimeMilliseconds = getElapsedTimeInMilliseconds();
-		if (locationElapsedTimeMilliseconds != 0) {
+		if (locationElapsedTimeMilliseconds != 0 && !("manual".equalsIgnoreCase(l.getProvider()))) {
 			//String dateText = DateUtils.getRelativeTimeSpanString(System.currentTimeMillis() - locationElapsedTimeMilliseconds, System.currentTimeMillis(), 0).toString();
 			String dateText = elapsedTime(locationElapsedTimeMilliseconds);
 			((TextView)findViewById(R.id.location_elapsed_time)).setText(dateText);
@@ -431,8 +443,11 @@ public class ObservationEditActivity extends Activity {
 			if (provider == null || provider.trim().isEmpty()) {
 				provider = "manual";
 			}
+			
 			propertyMap.put("provider", new ObservationProperty("provider", provider));
-			propertyMap.put("delta", new ObservationProperty("delta", Long.toString(locationElapsedTimeMilliseconds)));
+			if (!"manual".equalsIgnoreCase(provider)) {
+				propertyMap.put("delta", new ObservationProperty("delta", Long.toString(locationElapsedTimeMilliseconds)));
+			}
 
 			o.addProperties(propertyMap.values());
 
