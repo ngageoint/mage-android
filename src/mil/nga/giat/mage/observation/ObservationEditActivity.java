@@ -85,6 +85,7 @@ public class ObservationEditActivity extends Activity {
 	public static final String LOCATION = "LOCATION";
 	public static final String INITIAL_LOCATION = "INITIAL_LOCATION";
 	public static final String INITIAL_ZOOM = "INITIAL_ZOOM";
+	private static final String CURRENT_MEDIA_URI = "CURRENT_MEDIA_URI";
 
 	private static final int CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE = 100;
 	private static final int CAPTURE_VIDEO_ACTIVITY_REQUEST_CODE = 200;
@@ -105,7 +106,7 @@ public class ObservationEditActivity extends Activity {
 	private Circle accuracyCircle;
 	private long locationElapsedTimeMilliseconds = 0;
 
-	private Uri currentImageUri;
+	private Uri currentMediaUri;
 	
 	private final static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm zz", Locale.getDefault());
 
@@ -390,7 +391,7 @@ public class ObservationEditActivity extends Activity {
 
 		LinearLayout form = (LinearLayout) findViewById(R.id.form);
 		LayoutBaker.populateLayoutFromBundle(form, savedInstanceState);
-		currentImageUri = savedInstanceState.getParcelable("currentImageUri");
+		currentMediaUri = savedInstanceState.getParcelable(CURRENT_MEDIA_URI);
 	}
 
 	@Override
@@ -398,7 +399,7 @@ public class ObservationEditActivity extends Activity {
 		LayoutBaker.populateBundleFromLayout((LinearLayout) findViewById(R.id.form), outState);
 		outState.putParcelable("location", l);
 		outState.putParcelableArrayList("attachments", new ArrayList<Attachment>(attachments));
-		outState.putParcelable("currentImageUri", currentImageUri);
+		outState.putParcelable(CURRENT_MEDIA_URI, currentMediaUri);
 		super.onSaveInstanceState(outState);
 	}
 
@@ -478,17 +479,18 @@ public class ObservationEditActivity extends Activity {
         }
         // Continue only if the File was successfully created
         if (f != null) {
-        	currentImageUri = Uri.fromFile(f);
-            intent.putExtra(MediaStore.EXTRA_OUTPUT, currentImageUri);
+        	currentMediaUri = Uri.fromFile(f);
+            intent.putExtra(MediaStore.EXTRA_OUTPUT, currentMediaUri);
             startActivityForResult(intent, CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE);
         }
 	}
 
 	public void videoButtonPressed(View v) {
 		Intent intent = new Intent(MediaStore.ACTION_VIDEO_CAPTURE);
-		Uri uri = getOutputVideoUri(); // create a file to save the video in specific folder
-		if (uri != null) {
-			intent.putExtra(MediaStore.EXTRA_OUTPUT, uri);
+		currentMediaUri = getOutputVideoUri(); // create a file to save the video in specific folder
+		
+		if (currentMediaUri != null) {
+			intent.putExtra(MediaStore.EXTRA_OUTPUT, currentMediaUri);
 		}
 		startActivityForResult(intent, CAPTURE_VIDEO_ACTIVITY_REQUEST_CODE);
 	}
@@ -506,8 +508,18 @@ public class ObservationEditActivity extends Activity {
 
 		// Create a media file name
 		String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(new Date());
-		File mediaFile = new File(mediaStorage, "VID_" + timeStamp + ".mp4");
-		return Uri.fromFile(mediaFile);
+		//File mediaFile = new File(mediaStorage, "VID_" + timeStamp + ".mp4");
+		try {
+			File mediaFile = File.createTempFile(
+				"VID_" + timeStamp,  /* prefix */
+				".mp4",         /* suffix */
+				mediaStorage      /* directory */
+		    );
+			return Uri.fromFile(mediaFile);
+		} catch (Exception e) {
+			Log.e(LOG_NAME, "failed to create temp video file: " + mediaStorage + "/VID_" + timeStamp + ".mp4", e);
+			return null;
+		}
 	}
 
 	public void voiceButtonPressed(View v) {
@@ -560,7 +572,9 @@ public class ObservationEditActivity extends Activity {
 		}
 		
 		if (absPath != null) {
-			if (contentType.startsWith("image")) {
+			if (contentType == null) {
+				Glide.load(R.drawable.ic_email_attachment).into(iv);
+			} else if (contentType.startsWith("image")) {
 				Glide.load(new File(absPath)).placeholder(android.R.drawable.progress_indeterminate_horizontal).centerCrop().into(iv);
 			} else if (contentType.startsWith("video")) {
 				Glide.load(R.drawable.ic_video_2x).into(iv);
@@ -569,13 +583,15 @@ public class ObservationEditActivity extends Activity {
 			}
 		} else if (remoteId != null) {
 			String url = a.getUrl();
-			if (contentType.startsWith("image")) {
+			if (contentType == null) {
+				Glide.load(R.drawable.ic_email_attachment).into(iv);
+			} else if (contentType.startsWith("image")) {
 				Glide.load(url).placeholder(android.R.drawable.progress_indeterminate_horizontal).centerCrop().into(iv);
 			} else if (contentType.startsWith("video")) {
 				Glide.load(R.drawable.ic_video_2x).into(iv);
 			} else if (contentType.startsWith("audio")) {
 				Glide.load(R.drawable.ic_microphone).into(iv);
-			}
+			} 
 		}
 	}
 
@@ -586,13 +602,13 @@ public class ObservationEditActivity extends Activity {
 		}
 		switch (requestCode) {
 		case CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE:
-			MediaUtility.addImageToGallery(getApplicationContext(), currentImageUri);
+		case CAPTURE_VIDEO_ACTIVITY_REQUEST_CODE:
+			MediaUtility.addImageToGallery(getApplicationContext(), currentMediaUri);
 			Attachment capture = new Attachment();
-			capture.setLocalPath(MediaUtility.getFileAbsolutePath(currentImageUri, this));
+			capture.setLocalPath(MediaUtility.getFileAbsolutePath(currentMediaUri, this));
 			attachments.add(capture);
 			addAttachmentToGallery(capture);
 			break;
-		case CAPTURE_VIDEO_ACTIVITY_REQUEST_CODE:
 		case GALLERY_ACTIVITY_REQUEST_CODE:
 		case CAPTURE_VOICE_ACTIVITY_REQUEST_CODE:
 			List<Uri> uris = getUris(data);
