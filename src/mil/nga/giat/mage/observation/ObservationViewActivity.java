@@ -141,7 +141,7 @@ public class ObservationViewActivity extends Activity {
                 @Override
                 public void onClick(View v) {
                     Intent intent = new Intent(v.getContext(), AttachmentViewerActivity.class);
-                    intent.putExtra("attachment", a);
+                    intent.putExtra(AttachmentViewerActivity.ATTACHMENT, a);
                     intent.putExtra(AttachmentViewerActivity.EDITABLE, false);
                     startActivityForResult(intent, ATTACHMENT_VIEW_ACTIVITY_REQUEST_CODE);
                 }
