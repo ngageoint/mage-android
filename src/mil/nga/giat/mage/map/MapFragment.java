@@ -123,11 +123,9 @@ public class MapFragment extends Fragment implements
     private RefreshMarkersTask refreshLocationsMarkersTask;
     private RefreshMarkersTask refreshMyHistoricLocationsMarkersTask;
     
-    private final BlockingQueue<Runnable> queue = new ArrayBlockingQueue<Runnable>(5);
-    private final ThreadPoolExecutor executor = new ThreadPoolExecutor(4, 4, 10, TimeUnit.SECONDS, queue);
+    private final BlockingQueue<Runnable> queue = new ArrayBlockingQueue<Runnable>(64);
+    private final ThreadPoolExecutor executor = new ThreadPoolExecutor(8, 8, 10, TimeUnit.SECONDS, queue);
 
-    private Filter<Temporal> observationTemporalFilter;
-    private Filter<Temporal> locationTemporalFilter;
     private PointCollection<Observation> observations;
     private PointCollection<mil.nga.giat.mage.sdk.datastore.location.Location> locations;
     private PointCollection<mil.nga.giat.mage.sdk.datastore.location.Location> myHistoricLocations;
@@ -222,14 +220,14 @@ public class MapFragment extends Fragment implements
 		}
         updateStaticFeatureLayers();
         
-        observationTemporalFilter = getTemporalFilter("last_modified");
-        locationTemporalFilter = getTemporalFilter("timestamp");
         if (observations == null) {
             observations = new ObservationMarkerCollection(getActivity(), map);
         }
         ObservationHelper.getInstance(getActivity().getApplicationContext()).addListener(this);
+        
+		getActivity().getActionBar().setTitle(getTemporalFilterTitle());
         ObservationLoadTask observationLoad = new ObservationLoadTask(getActivity(), observations);
-        observationLoad.setFilter(observationTemporalFilter);
+        observationLoad.setFilter(getTemporalFilter("last_modified"));
         observationLoad.executeOnExecutor(executor);
         
         boolean showObservations = preferences.getBoolean(getResources().getString(R.string.showObservationsKey), true);
@@ -240,7 +238,7 @@ public class MapFragment extends Fragment implements
         }
         LocationHelper.getInstance(getActivity().getApplicationContext()).addListener(this);
         LocationLoadTask locationLoad = new LocationLoadTask(getActivity(), locations);
-        locationLoad.setFilter(locationTemporalFilter);
+        locationLoad.setFilter(getTemporalFilter("timestamp"));
         locationLoad.executeOnExecutor(executor);
         
         boolean showLocations = preferences.getBoolean(getResources().getString(R.string.showLocationsKey), true);
@@ -384,14 +382,14 @@ public class MapFragment extends Fragment implements
     @Override
     public void onObservationCreated(Collection<Observation> o) {        
         ObservationTask task = new ObservationTask(ObservationTask.Type.ADD, observations);
-        task.setFilter(observationTemporalFilter);
+        task.setFilter(getTemporalFilter("last_modified"));
         task.execute(o.toArray(new Observation[o.size()]));
     }
 
     @Override
     public void onObservationUpdated(Observation o) {
         ObservationTask task = new ObservationTask(ObservationTask.Type.UPDATE, observations);
-        task.setFilter(observationTemporalFilter);
+        task.setFilter(getTemporalFilter("last_modified"));
         task.execute(o);    
     }
 
@@ -405,7 +403,7 @@ public class MapFragment extends Fragment implements
 		for (mil.nga.giat.mage.sdk.datastore.location.Location l : ls) {
 			if (currentUser != null && !currentUser.getRemoteId().equals(l.getUser().getRemoteId())) {
 				LocationTask task = new LocationTask(LocationTask.Type.ADD, locations);
-				task.setFilter(locationTemporalFilter);
+				task.setFilter(getTemporalFilter("timestamp"));
 				task.execute(l);
 			} else {
 				LocationTask task = new LocationTask(LocationTask.Type.ADD, myHistoricLocations);
@@ -418,7 +416,7 @@ public class MapFragment extends Fragment implements
 	public void onLocationUpdated(mil.nga.giat.mage.sdk.datastore.location.Location l) {
 		if (currentUser != null && !currentUser.getRemoteId().equals(l.getUser().getRemoteId())) {
 			LocationTask task = new LocationTask(LocationTask.Type.UPDATE, locations);
-			task.setFilter(locationTemporalFilter);
+			task.setFilter(getTemporalFilter("timestamp"));
 			task.execute(l);
 		} else {
 			LocationTask task = new LocationTask(LocationTask.Type.UPDATE, myHistoricLocations);
@@ -453,6 +451,7 @@ public class MapFragment extends Fragment implements
         	return true;
         }        
         
+        // static layer
         View markerInfoWindow = LayoutInflater.from(getActivity()).inflate(R.layout.marker_infowindow, null, false);
 		WebView webView = ((WebView) markerInfoWindow.findViewById(R.id.infowindowcontent));
 		webView.loadData(marker.getSnippet(), "text/html; charset=UTF-8", null);
@@ -733,55 +732,74 @@ public class MapFragment extends Fragment implements
             LocationLoadTask locationLoad = new LocationLoadTask(getActivity(), locations);
             locationLoad.setFilter(getTemporalFilter("timestamp"));
             locationLoad.executeOnExecutor(executor);
+            
+			getActivity().getActionBar().setTitle(getTemporalFilterTitle());
 		}
 	}
 	
 	private Filter<Temporal> getTemporalFilter(String columnName) {
-	    int timeFilter = preferences.getInt(getResources().getString(R.string.activeTimeFilterKey), R.id.none_rb);
-	    
-	    Filter<Temporal> filter = null;
-	    
+		int timeFilter = preferences.getInt(getResources().getString(R.string.activeTimeFilterKey), R.id.none_rb);
+
+		Filter<Temporal> filter = null;
+
 		Calendar c = Calendar.getInstance();
-		String title = null;
 		switch (timeFilter) {
-    		case R.id.last_hour_rb:
-    			title = "Last Hour";
-    			c.add(Calendar.HOUR, -1);
-    			break;
-    		case R.id.last_six_hours_rb:
-    			title = "Last 6 Hours";
-    			c.add(Calendar.HOUR, -6);
-    			break;
-    		case R.id.last_twelve_hours_rb:
-    			title = "Last 12 Hours";
-    			c.add(Calendar.HOUR, -12);
-    			break;
-    		case R.id.last_24_hours_rb:
-    			title = "Last 24 Hours";
-    			c.add(Calendar.HOUR, -24);
-    			break;
-    		case R.id.since_midnight_rb:
-    			title = "Since Midnight";
-    			c.set(Calendar.HOUR_OF_DAY, 0);
-    			c.set(Calendar.MINUTE, 0);
-    			c.set(Calendar.SECOND, 0);
-    			c.set(Calendar.MILLISECOND, 0);
-    			break;
-    		default:
-    			// no filter
-    			title = "MAGE";
-    			c = null;
+		case R.id.last_hour_rb:
+			c.add(Calendar.HOUR, -1);
+			break;
+		case R.id.last_six_hours_rb:
+			c.add(Calendar.HOUR, -6);
+			break;
+		case R.id.last_twelve_hours_rb:
+			c.add(Calendar.HOUR, -12);
+			break;
+		case R.id.last_24_hours_rb:
+			c.add(Calendar.HOUR, -24);
+			break;
+		case R.id.since_midnight_rb:
+			c.set(Calendar.HOUR_OF_DAY, 0);
+			c.set(Calendar.MINUTE, 0);
+			c.set(Calendar.SECOND, 0);
+			c.set(Calendar.MILLISECOND, 0);
+			break;
+		default:
+			// no filter
+			c = null;
 		}
-		
-		getActivity().getActionBar().setTitle(title);
-		
+
 		if (c != null) {
-		    Date start = c.getTime();
-		    Date end = null;
-		    
-		    filter = new DateTimeFilter(start, end, columnName);
+			Date start = c.getTime();
+			Date end = null;
+
+			filter = new DateTimeFilter(start, end, columnName);
 		}
-		
+
 		return filter;
+	}
+	
+	private String getTemporalFilterTitle() {
+		String title = "MAGE";
+		int timeFilter = preferences.getInt(getResources().getString(R.string.activeTimeFilterKey), R.id.none_rb);
+		switch (timeFilter) {
+		case R.id.last_hour_rb:
+			title = "Last Hour";
+			break;
+		case R.id.last_six_hours_rb:
+			title = "Last 6 Hours";
+			break;
+		case R.id.last_twelve_hours_rb:
+			title = "Last 12 Hours";
+			break;
+		case R.id.last_24_hours_rb:
+			title = "Last 24 Hours";
+			break;
+		case R.id.since_midnight_rb:
+			title = "Since Midnight";
+			break;
+		default:
+			break;
+		}
+
+		return title;
 	}
 }

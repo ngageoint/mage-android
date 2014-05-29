@@ -138,7 +138,8 @@ public class PeopleFeedFragment extends Fragment implements OnSharedPreferenceCh
             public void run() {
                 try {
                 	Dao<Location, Long> locationDao = DaoStore.getInstance(getActivity().getApplicationContext()).getLocationDao();
-                    adapter.changeCursor(obtainCursor(buildQuery(locationDao, filterId), locationDao));
+                    query = buildQuery(locationDao, filterId);
+                    adapter.changeCursor(obtainCursor(query, locationDao));
                 } catch (Exception e) {
                     Log.e(LOG_NAME, "Unable to change cursor", e);
                 }

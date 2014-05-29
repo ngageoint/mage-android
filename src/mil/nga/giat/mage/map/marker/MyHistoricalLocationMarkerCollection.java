@@ -43,7 +43,8 @@ public class MyHistoricalLocationMarkerCollection extends LocationMarkerCollecti
 
 	@Override
 	public boolean onMarkerClick(Marker marker) {
-		return false;
+		Location l = markerIdToLocation.get(marker.getId());
+        return (l != null);
 	}
 
 	@Override

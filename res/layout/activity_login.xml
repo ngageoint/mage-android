@@ -120,11 +120,11 @@
                 <ImageView
                     android:id="@+id/login_lock"
                     android:layout_width="wrap_content"
-                    android:layout_height="fill_parent"
+                    android:layout_height="26dip"
                     android:layout_weight=".30"
                     android:contentDescription="lock"
                     android:onClick="toggleLock"
-                    android:src="@drawable/ic_lock_white"
+                    android:src="@drawable/lock_108"
                     android:tag="lock" />
             </LinearLayout>
 
@@ -134,7 +134,7 @@
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="10dip"
-                android:background="@drawable/login_button"
+                android:background="@drawable/login_button_states"
                 android:onClick="login"
                 android:text="Log In"
                 android:textColor="#EEEEEE"

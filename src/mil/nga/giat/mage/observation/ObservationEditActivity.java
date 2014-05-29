@@ -566,8 +566,8 @@ public class ObservationEditActivity extends Activity {
 			@Override
 			public void onClick(View v) {
 				Intent intent = new Intent(v.getContext(), AttachmentViewerActivity.class);
-				intent.putExtra("attachment", a);
-				intent.putExtra(AttachmentViewerActivity.EDITABLE, true);
+				intent.putExtra(AttachmentViewerActivity.ATTACHMENT, a);
+				intent.putExtra(AttachmentViewerActivity.EDITABLE, (o.getRemoteId() == null));
 				startActivityForResult(intent, ATTACHMENT_VIEW_ACTIVITY_REQUEST_CODE);
 			}
 		});
@@ -636,8 +636,9 @@ public class ObservationEditActivity extends Activity {
 			}
 			break;
 		case ATTACHMENT_VIEW_ACTIVITY_REQUEST_CODE:
-			Attachment remove = data.getParcelableExtra("attachment");
-			if (remove != null && data.getBooleanExtra("REMOVE", false)) {
+			Attachment remove = data.getParcelableExtra(AttachmentViewerActivity.ATTACHMENT);
+			Boolean shouldRemove = data.getBooleanExtra(AttachmentViewerActivity.SHOULD_REMOVE, false);
+			if (remove != null && shouldRemove) {
 				int idx = attachments.indexOf(remove);
 				attachments.remove(remove);
 				LinearLayout l = (LinearLayout) findViewById(R.id.image_gallery);

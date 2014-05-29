@@ -160,10 +160,11 @@
             <!-- Sign in button -->
 
             <Button
+                android:id="@+id/signup_signup_button"
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="10dip"
-                android:background="@drawable/login_button"
+                android:background="@drawable/login_button_states"
                 android:onClick="signup"
                 android:text="Signup"
                 android:textColor="#def3ff"

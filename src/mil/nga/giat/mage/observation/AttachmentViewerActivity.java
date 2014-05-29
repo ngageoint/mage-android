@@ -21,8 +21,11 @@ import com.bumptech.glide.Glide;
 
 public class AttachmentViewerActivity extends FragmentActivity implements RemoveAttachmentDialogListener {
 	
-	public static String EDITABLE = "EDITABLE";
-	public static String ATTACHMENT = "ATTACHMENT";
+	private static final String LOG_NAME = AttachmentViewerActivity.class.getName();
+	
+	public final static String EDITABLE = "EDITABLE";
+	public final static String ATTACHMENT = "ATTACHMENT";
+	public final static String SHOULD_REMOVE = "SHOULD_REMOVE";
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -37,7 +40,7 @@ public class AttachmentViewerActivity extends FragmentActivity implements Remove
 			findViewById(R.id.remove_btn).setVisibility(View.GONE);
 		}
 		
-		final Attachment a = intent.getParcelableExtra("attachment");
+		final Attachment a = intent.getParcelableExtra(ATTACHMENT);
 		
 		String absPath = a.getLocalPath();
 		String url = a.getUrl();
@@ -99,95 +102,29 @@ public class AttachmentViewerActivity extends FragmentActivity implements Remove
 			iv.setOnClickListener(new View.OnClickListener() {
 				@Override
 				public void onClick(View v) {
-					Log.i("viewer", "launching viewer for " + uri + " type " + finalType);
+					Log.i(LOG_NAME, "launching viewer for " + uri + " type " + finalType);
 					Intent intent = new Intent(Intent.ACTION_VIEW);
 					intent.setDataAndType(uri, finalType);
 					startActivity(intent);
 				}
 			});
 		}
-		
-//
-//		
-//		
-//		
-//		
-//
-//		
-//		Bitmap thumb = null;
-//		
-//
-//    	if (absPath.endsWith(".mp4")) {
-//    		Log.d("viewer", "abs path is: " + absPath + " uri is: " + imageUri);
-//    		thumb = ThumbnailUtils.createVideoThumbnail(absPath, MediaStore.Video.Thumbnails.FULL_SCREEN_KIND);
-//    		
-//    		iv.setOnClickListener(new View.OnClickListener() {
-//				
-//				@Override
-//				public void onClick(View v) {
-//					Log.d("viewer", "launching viewer for " + imageUri);
-//					Intent intent = new Intent(Intent.ACTION_VIEW);
-//					intent.setDataAndType(imageUri, "video/*");
-//					startActivity(intent);
-//				}
-//			});
-//    	} else if (absPath.endsWith(".mp3") || absPath.endsWith(".m4a")) {
-//    		thumb = BitmapFactory.decodeResource(getResources(), R.drawable.ic_microphone);
-//    		
-//    		iv.setOnClickListener(new View.OnClickListener() {
-//				
-//				@Override
-//				public void onClick(View v) {
-//					Intent intent = new Intent(Intent.ACTION_VIEW);
-//					intent.setDataAndType(imageUri, "audio/*");
-//					startActivity(intent);
-//				}
-//			});
-//    	} else {
-//			Display display = getWindowManager().getDefaultDisplay();
-//			Point size = new Point();
-//			display.getSize(size);
-//			int height = size.y;
-//			try {
-//				thumb = MediaUtility.getThumbnailFromContent(imageUri, height, getApplicationContext());
-//			} catch (Exception e) {
-//				
-//			}
-//			findViewById(R.id.video_overlay_image).setVisibility(View.GONE);
-//			iv.setOnClickListener(new View.OnClickListener() {
-//				
-//				@Override
-//				public void onClick(View v) {
-//					Intent intent = new Intent(Intent.ACTION_VIEW);
-//					intent.setDataAndType(imageUri, "image/*");
-//					startActivity(intent);
-//				}
-//			});
-//    	}
-//    	
-//    	try {
-//			iv.setImageBitmap(thumb);
-//		} catch (Exception e) {
-//			Log.e("Image viewer", "Error viewing image", e);
-//		}
 	}
 	
 	public void removeImage(View v) {
-		Log.d("Image viewer", "Remove the image");
 		DialogFragment dialog = new RemoveAttachmentDialogFragment();
 		dialog.show(getSupportFragmentManager(), "RemoveAttachmentDialogFragment");
 	}
 	
 	public void goBack(View v) {
-		Log.d("Image Viewer", "Go back");
 		onBackPressed();
 	}
 
 	@Override
 	public void onDialogPositiveClick(DialogFragment dialog) {
 		Intent data = new Intent();
-		data.setData(getIntent().getData());
-		data.putExtra("REMOVE", true);
+		data.putExtra(SHOULD_REMOVE, true);
+		data.putExtra(ATTACHMENT, getIntent().getParcelableExtra(ATTACHMENT));
 		setResult(RESULT_OK, data);
 		finish();
 		

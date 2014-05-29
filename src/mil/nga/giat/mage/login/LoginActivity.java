@@ -259,7 +259,7 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 			getServerEditText().setEnabled(!getServerEditText().isEnabled());
 			mLoginButton.setEnabled(!mLoginButton.isEnabled());
 			lockImageView.setTag("unlock");
-			lockImageView.setImageResource(R.drawable.ic_unlock_white);
+			lockImageView.setImageResource(R.drawable.unlock_108);
 			showKeyboard();
 			getServerEditText().requestFocus();
 		} else {
@@ -298,7 +298,7 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 									getServerEditText().setEnabled(!getServerEditText().isEnabled());
 									mLoginButton.setEnabled(!mLoginButton.isEnabled());
 									lockImageView.setTag("lock");
-									lockImageView.setImageResource(R.drawable.ic_lock_white);
+									lockImageView.setImageResource(R.drawable.lock_108);
 								}
 							}
 						} catch (Exception e) {
