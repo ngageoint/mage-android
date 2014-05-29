@@ -18,7 +18,7 @@
         <EditTextPreference
             android:key="@string/serverURLKey"
             android:selectable="false"
-            android:title="URL" />
+            android:title="Server URL" />
         <EditTextPreference
             android:key="@string/usernameKey"
             android:selectable="false"
@@ -26,7 +26,7 @@
         <EditTextPreference
             android:key="@string/buildVersionKey"
             android:selectable="false"
-            android:title="App Version" />
+            android:title="MAGE App Version" />
     </PreferenceCategory>
 
 </PreferenceScreen>
