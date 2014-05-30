@@ -436,7 +436,7 @@ public class ObservationEditActivity extends Activity {
 			
 			// set the correct iso8601 date!
 			propertyMap.put("timestamp", new ObservationProperty("timestamp", DateUtility.getISO8601().format(date)));
-			
+			o.setTimestamp(date);
 			// Add properties that weren't part of the layout
 			propertyMap.put("accuracy", new ObservationProperty("accuracy", Float.toString(l.getAccuracy())));
 			String provider = l.getProvider();

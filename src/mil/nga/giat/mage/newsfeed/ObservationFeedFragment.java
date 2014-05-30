@@ -211,7 +211,7 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 		footerTextView.setText(footerText);
 		getActivity().getActionBar().setTitle(title);
 		qb.where().gt("last_modified", c.getTime());
-		qb.orderBy("last_modified", false);
+		qb.orderBy("timestamp", false);
 
 		return qb.prepare();
 	}
