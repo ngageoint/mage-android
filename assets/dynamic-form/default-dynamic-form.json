@@ -128,7 +128,7 @@
         "type": "dropdown",
         "value": "None",
         "required": true,
-        "name": "field4",
+        "name": "EVENTLEVEL",
         "choices": [{
             "id": 1,
             "title": "None",
@@ -148,39 +148,11 @@
         }]
     }, {
         "id": 5,
-        "title": "Team",
-        "type": "dropdown",
-        "value": "Coastal Cluster",
-        "required": true,
-        "name": "field5",
-        "choices": [{
-            "id": 1,
-            "title": "Coastal Olympic Village",
-            "value": 1
-        }, {
-            "id": 2,
-            "title": "Mountain Cluster",
-            "value": 2
-        }, {
-            "id": 3,
-            "title": "Mountain Olympic Village",
-            "value": 3
-        }, {
-            "id": 4,
-            "title": "Mountain Endurance",
-            "value": 4
-        }, {
-            "id": 5,
-            "title": "ISEG JOC",
-            "value": 5
-        }]
-    }, {
-        "id": 6,
         "title": "Description",
         "type": "textarea",
         "value": "",
         "required": false,
-        "name": "field6",
+        "name": "DESCRIPTION",
         "choices": []
     }],
     "id": "537b695b6df06ebb48c76150"

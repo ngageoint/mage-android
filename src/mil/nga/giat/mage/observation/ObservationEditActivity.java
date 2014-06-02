@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -110,12 +111,8 @@ public class ObservationEditActivity extends Activity {
 	
 	private final static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm zz", Locale.getDefault());
 
-	// View fields
-	private MageSpinner typeSpinner;
-	private MageSpinner levelSpinner;
-
-	private static int typeSpinnerLastPosition = 0;
-	private static int levelSpinnerLastPosition = 0;
+	// control key to default position
+	private static Map<String, Integer> spinnersLastPositions = new HashMap<String, Integer>();
 	
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -123,56 +120,64 @@ public class ObservationEditActivity extends Activity {
 
 		setContentView(R.layout.observation_editor);
 		
-		// TODO : add dynamic content to view
-		LayoutBaker.createControlsFromJson(getApplicationContext());
+		final long observationId = getIntent().getLongExtra(OBSERVATION_ID, NEW_OBSERVATION);
 
-		Intent intent = getIntent();
-		final long observationId = intent.getLongExtra(OBSERVATION_ID, NEW_OBSERVATION);
+		List<View> controls = LayoutBaker.createControlsFromJson(getApplicationContext());
 
-		typeSpinner = (MageSpinner) findViewById(R.id.type_spinner);
-		typeSpinner.setSelection(typeSpinnerLastPosition);
-		typeSpinner.setOnItemSelectedListener(new OnItemSelectedListener() {
-			@Override
-			public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-				if (observationId == NEW_OBSERVATION) {
-					typeSpinnerLastPosition = position;
+		for (View view : controls) {
+			if (view instanceof MageSpinner) {
+				MageSpinner mageSpinner = (MageSpinner) view;
+				String key = mageSpinner.getPropertyKey();
+				Integer spinnerPosition = spinnersLastPositions.get(key);
+				if (spinnerPosition == null) {
+					spinnerPosition = 0;
 				}
-				onTypeOrLevelChanged("type", parent.getItemAtPosition(position).toString());
-			}
+				spinnerPosition = Math.min(Math.max(0, spinnerPosition), mageSpinner.getAdapter().getCount());
+				spinnersLastPositions.put(key, spinnerPosition);
 
-			@Override
-			public void onNothingSelected(AdapterView<?> parent) {
-			}
-		});
+				mageSpinner.setSelection(spinnerPosition);
+				mageSpinner.setOnItemSelectedListener(new OnItemSelectedListener() {
+					@Override
+					public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+						MageSpinner ms = ((MageSpinner) parent);
+						String k = ms.getPropertyKey();
+						if (observationId == NEW_OBSERVATION) {
+							spinnersLastPositions.put(k, position);
+						}
+						if (k.equals("EVENTLEVEL") || k.equals("type")) {
+							onTypeOrLevelChanged(k, parent.getItemAtPosition(position).toString());
+						}
+					}
 
-		levelSpinner = (MageSpinner) findViewById(R.id.level_spinner);
-		levelSpinner.setSelection(levelSpinnerLastPosition);
-		levelSpinner.setOnItemSelectedListener(new OnItemSelectedListener() {
-			@Override
-			public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-				if (observationId == NEW_OBSERVATION) {
-					levelSpinnerLastPosition = position;
-				}
-				onTypeOrLevelChanged("EVENTLEVEL", parent.getItemAtPosition(position).toString());
+					@Override
+					public void onNothingSelected(AdapterView<?> parent) {
+					}
+				});
 			}
+		}
 
-			@Override
-			public void onNothingSelected(AdapterView<?> parent) {
-			}
-		});
+		// add dynamic content to view
+		LayoutBaker.populateLayoutWithControls((LinearLayout) findViewById(R.id.location_dynamic_form), controls);
 
 		hideKeyboardOnClick(findViewById(R.id.observation_edit));
 
 		if (observationId == NEW_OBSERVATION) {
 			this.setTitle("Create New Observation");
-			l = intent.getParcelableExtra(LOCATION);
+			l = getIntent().getParcelableExtra(LOCATION);
 			date = new Date();
 			((TextView) findViewById(R.id.date)).setText(sdf.format(date));
 
 			// set default type and level values for map marker
 			o = new Observation();
-			o.getProperties().add(new ObservationProperty("type", typeSpinner.getSelectedItem().toString()));
-			o.getProperties().add(new ObservationProperty("EVENTLEVEL", levelSpinner.getSelectedItem().toString()));
+			List<ObservationProperty> properties = new ArrayList<ObservationProperty>();
+			for (View view : controls) {
+				if (view instanceof MageSpinner) {
+					MageSpinner mageSpinner = (MageSpinner) view;
+					String key = mageSpinner.getPropertyKey();
+					properties.add(new ObservationProperty(key, mageSpinner.getSelectedItem().toString()));
+				}
+			}
+			o.addProperties(properties);
 			try {
 				User u = UserHelper.getInstance(getApplicationContext()).readCurrentUser();
 				if (u != null) {
