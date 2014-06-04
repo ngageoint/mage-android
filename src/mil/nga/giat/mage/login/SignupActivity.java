@@ -17,6 +17,7 @@ import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.SharedPreferences.Editor;
 import android.graphics.Typeface;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
@@ -327,7 +328,7 @@ public class SignupActivity extends Activity implements AccountDelegate {
 				try {
 					if (ConnectivityUtility.isResolvable(sURL.getHost())) {
 						try {
-							PreferenceHelper.getInstance(getApplicationContext()).readRemote(sURL);
+							PreferenceHelper.getInstance(getApplicationContext()).readRemoteApi(sURL);
 							// check versions
 							Integer compatibleMajorVersion = PreferenceHelper.getInstance(getApplicationContext()).getValue(R.string.compatibleVersionMajorKey, Integer.class, R.string.compatibleVersionMajorDefaultValue);
 							Integer compatibleMinorVersion = PreferenceHelper.getInstance(getApplicationContext()).getValue(R.string.compatibleVersionMinorKey, Integer.class, R.string.compatibleVersionMinorDefaultValue);
@@ -386,7 +387,8 @@ public class SignupActivity extends Activity implements AccountDelegate {
 	@Override
 	public void finishAccount(AccountStatus accountStatus) {
 		if (accountStatus.getStatus() == AccountStatus.Status.SUCCESSFUL_SIGNUP) {
-			
+			Editor sp = PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).edit();
+			sp.putString(getApplicationContext().getString(R.string.serverURLKey), getServerEditText().getText().toString()).commit();
 			// Tell the user that their account was made
 			AlertDialog.Builder alertDialog = new AlertDialog.Builder(this);
 			alertDialog.setTitle("Account Created");

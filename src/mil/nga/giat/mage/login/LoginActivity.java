@@ -31,6 +31,7 @@ import android.preference.PreferenceManager;
 import android.support.v4.app.FragmentActivity;
 import android.text.InputType;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
@@ -50,6 +51,8 @@ import android.widget.ImageView;
  *
  */
 public class LoginActivity extends FragmentActivity implements AccountDelegate {
+
+	private static final String LOG_NAME = LoginActivity.class.getName();
 
 	private EditText mUsernameEditText;
 	private EditText mPasswordEditText;
@@ -208,16 +211,17 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 		findViewById(R.id.login_form).setVisibility(View.GONE);
 		findViewById(R.id.login_status).setVisibility(View.VISIBLE);
 
+		String serverURLPref = PreferenceHelper.getInstance(getApplicationContext()).getValue(R.string.serverURLKey);
+
 		// if the username is different, then clear the token information
 		String oldUsername = PreferenceHelper.getInstance(getApplicationContext()).getValue(R.string.usernameKey);
-		if(oldUsername == null || !oldUsername.equals(username)) {
+		if(oldUsername == null || !oldUsername.equals(username) || !server.equals(serverURLPref)) {
 			PreferenceHelper preferenceHelper = PreferenceHelper.getInstance(getApplicationContext());
 			preferenceHelper.initialize(true, new Integer[]{R.xml.privatepreferences, R.xml.publicpreferences, R.xml.mappreferences});
 			UserUtility.getInstance(getApplicationContext()).clearTokenInformation();
 		}
 		
 		// if the serverURL is different that before, clear out the database
-		String serverURLPref = PreferenceHelper.getInstance(getApplicationContext()).getValue(R.string.serverURLKey);
 		final DaoStore daoStore = DaoStore.getInstance(getApplicationContext());
 		final AbstractAccountTask loginTask = LoginTaskFactory.getInstance(getApplicationContext()).getLoginTask(this, this.getApplicationContext());
 		if (!server.equals(serverURLPref) && !daoStore.isDatabaseEmpty()) {
@@ -273,7 +277,7 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 				try {
 					if (ConnectivityUtility.isResolvable(sURL.getHost())) {
 						try {
-							PreferenceHelper.getInstance(getApplicationContext()).readRemote(sURL);
+							PreferenceHelper.getInstance(getApplicationContext()).readRemoteApi(sURL);
 							// check versions
 							Integer compatibleMajorVersion = PreferenceHelper.getInstance(getApplicationContext()).getValue(R.string.compatibleVersionMajorKey, Integer.class, R.string.compatibleVersionMajorDefaultValue);
 							Integer compatibleMinorVersion = PreferenceHelper.getInstance(getApplicationContext()).getValue(R.string.compatibleVersionMinorKey, Integer.class, R.string.compatibleVersionMinorDefaultValue);
@@ -333,26 +337,31 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 	public void finishAccount(AccountStatus accountStatus) {
 		if (accountStatus.getStatus() == AccountStatus.Status.SUCCESSFUL_LOGIN) {
 			Editor sp = PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).edit();			
-			sp.putString("username", getUsernameEditText().getText().toString());
+			sp.putString(getApplicationContext().getString(R.string.usernameKey), getUsernameEditText().getText().toString()).commit();
 			// TODO should we store password, or some hash?
-//			sp.putString("password", getPasswordEditText().getText().toString());
-			sp.putString("serverURL", getServerEditText().getText().toString());
+			// sp.putString("password", getPasswordEditText().getText().toString()).commit();
+			sp.putString(getApplicationContext().getString(R.string.serverURLKey), getServerEditText().getText().toString()).commit();
 			try {
-				sp.putString("userId", accountStatus.getAccountInformation().getJSONObject("user").getString("_id"));
+				sp.putString("userId", accountStatus.getAccountInformation().getJSONObject("user").getString("_id")).commit();
 			} catch (JSONException je) {
 				je.printStackTrace();
 			}
-			sp.commit();
+
+			try {
+				PreferenceHelper.getInstance(getApplicationContext()).readRemoteForm();
+			} catch (Exception e) {
+				Log.e(LOG_NAME, "Problem reading server form.", e);
+			}
+
 			startActivity(new Intent(getApplicationContext(), LandingActivity.class));
 			((MAGE)getApplication()).onLogin();
 			finish();
 		} else if (accountStatus.getStatus() == AccountStatus.Status.SUCCESSFUL_REGISTRATION) {
 			Editor sp = PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).edit();
-			sp.putString("username", getUsernameEditText().getText().toString());
+			sp.putString(getApplicationContext().getString(R.string.usernameKey), getUsernameEditText().getText().toString()).commit();
 			// TODO should we store password, or some hash?
-//			sp.putString("password", getPasswordEditText().getText().toString());
-			sp.putString("serverURL", getServerEditText().getText().toString());
-			sp.commit();
+			// sp.putString("password", getPasswordEditText().getText().toString()).commit();
+			sp.putString(getApplicationContext().getString(R.string.serverURLKey), getServerEditText().getText().toString()).commit();
 			new AlertDialog.Builder(this).setTitle("Registration Sent").setMessage(R.string.device_registered_text).setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
 				public void onClick(DialogInterface dialog, int which) {
 					findViewById(R.id.login_status).setVisibility(View.GONE);
