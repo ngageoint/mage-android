@@ -7,8 +7,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-import mil.nga.giat.mage.file.Storage;
-import mil.nga.giat.mage.file.Storage.StorageType;
 import mil.nga.giat.mage.login.LoginActivity;
 import mil.nga.giat.mage.map.CacheOverlay;
 import mil.nga.giat.mage.sdk.event.IUserEventListener;
@@ -21,6 +19,8 @@ import mil.nga.giat.mage.sdk.location.LocationService;
 import mil.nga.giat.mage.sdk.push.AttachmentPushAlarmReceiver;
 import mil.nga.giat.mage.sdk.push.LocationPushIntentService;
 import mil.nga.giat.mage.sdk.push.ObservationPushIntentService;
+import mil.nga.giat.mage.sdk.utils.StorageUtility;
+import mil.nga.giat.mage.sdk.utils.StorageUtility.StorageType;
 import android.app.AlarmManager;
 import android.app.Application;
 import android.app.NotificationManager;
@@ -270,7 +270,7 @@ public class MAGE extends Application implements IUserEventListener {
 		protected List<CacheOverlay> doInBackground(Void... params) {
 			List<CacheOverlay> overlays = new ArrayList<CacheOverlay>();
 
-			Map<StorageType, File> storageLocations = Storage.getAllStorageLocations();
+			Map<StorageType, File> storageLocations = StorageUtility.getAllStorageLocations();
 			for (File storageLocation : storageLocations.values()) {
 				File root = new File(storageLocation, "MapCache");
 				if (root.exists() && root.isDirectory() && root.canRead()) {
