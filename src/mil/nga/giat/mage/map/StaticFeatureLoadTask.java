@@ -1,16 +1,21 @@
 package mil.nga.giat.mage.map;
 
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.Map;
 
 import mil.nga.giat.mage.map.marker.StaticGeometryCollection;
 import mil.nga.giat.mage.sdk.datastore.layer.Layer;
 import mil.nga.giat.mage.sdk.datastore.staticfeature.StaticFeature;
 import mil.nga.giat.mage.sdk.datastore.staticfeature.StaticFeatureProperty;
+import android.content.Context;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.os.AsyncTask;
 import android.util.Log;
 
 import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
@@ -27,8 +32,10 @@ public class StaticFeatureLoadTask extends AsyncTask<Layer, Object, Void> {
 
 	private StaticGeometryCollection staticGeometryCollection;
 	private GoogleMap map;
+	private Context context;
 
-	public StaticFeatureLoadTask(StaticGeometryCollection staticGeometryCollection, GoogleMap map) {
+	public StaticFeatureLoadTask(Context context, StaticGeometryCollection staticGeometryCollection, GoogleMap map) {
+		this.context = context;
 		this.staticGeometryCollection = staticGeometryCollection;
 		this.map = map;
 	}
@@ -50,6 +57,20 @@ public class StaticFeatureLoadTask extends AsyncTask<Layer, Object, Void> {
 			String type = geometry.getGeometryType();
 			if (type.equals("Point")) {
 				MarkerOptions options = new MarkerOptions().position(new LatLng(geometry.getCoordinate().y, geometry.getCoordinate().x)).snippet(content.toString());
+				StaticFeatureProperty property = properties.get("styleiconstyleiconhref");
+				if (property != null) {
+					try {
+						URL url = new URL(property.getValue());
+						String iconFile = url.getFile().replaceAll(".*/", "");
+						
+						BitmapFactory.Options o = new BitmapFactory.Options();
+						o.inDensity = 480;
+						o.inTargetDensity = context.getResources().getDisplayMetrics().densityDpi;
+						options.icon(BitmapDescriptorFactory.fromBitmap(BitmapFactory.decodeStream(context.getAssets().open("wc_static_features/" + iconFile), null, o)));
+					} catch (Exception e) {
+						Log.w(LOG_NAME, "Could not set icon image.", e);
+					}
+				}
 				publishProgress(new Object[] { options, layerId, content.toString() });
 			} else if (type.equals("LineString")) {
 				PolylineOptions options = new PolylineOptions();

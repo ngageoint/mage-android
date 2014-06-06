@@ -682,7 +682,7 @@ public class MapFragment extends Fragment implements
         if (layers.contains(layerId) && layer.isLoaded()) {
             if (!featureIds.contains(layerId)) {
                 featureIds.add(layerId);
-                new StaticFeatureLoadTask(staticGeometryCollection, map).executeOnExecutor(executor, new Layer[]{ layer });
+                new StaticFeatureLoadTask(getActivity().getApplicationContext(), staticGeometryCollection, map).executeOnExecutor(executor, new Layer[]{ layer });
             }
         }
     }
