@@ -43,21 +43,25 @@ public class StaticFeatureLoadTask extends AsyncTask<Layer, Object, Void> {
 		for (StaticFeature feature : layer.getStaticFeatures()) {
 			Geometry geometry = feature.getStaticFeatureGeometry().getGeometry();
 			Map<String, StaticFeatureProperty> properties = feature.getPropertiesMap();
-			
-		    StringBuilder content = new StringBuilder();
-	        if (properties.get("name") != null) content.append("<h5>").append(properties.get("name").getValue()).append("</h5>");
-	        if (properties.get("description") != null) content.append("<div>").append(properties.get("description").getValue()).append("</div>");
+
+			StringBuilder content = new StringBuilder();
+			if (properties.get("name") != null) {
+				content.append("<h5>").append(properties.get("name").getValue()).append("</h5>");
+			}
+			if (properties.get("description") != null) {
+				content.append("<div>").append(properties.get("description").getValue()).append("</div>");
+			}
 			String type = geometry.getGeometryType();
 			if (type.equals("Point")) {
 				MarkerOptions options = new MarkerOptions().position(new LatLng(geometry.getCoordinate().y, geometry.getCoordinate().x)).snippet(content.toString());
 				publishProgress(new Object[] { options, layerId, content.toString() });
 			} else if (type.equals("LineString")) {
 				PolylineOptions options = new PolylineOptions();
-				
+
 				StaticFeatureProperty property = properties.get("stylelinestylecolorrgb");
 				if (property != null) {
-				    String color = property.getValue();
-				    options.color(Color.parseColor(color));
+					String color = property.getValue();
+					options.color(Color.parseColor(color));
 				}
 				for (Coordinate coordinate : geometry.getCoordinates()) {
 					options.add(new LatLng(coordinate.y, coordinate.x));
@@ -65,14 +69,21 @@ public class StaticFeatureLoadTask extends AsyncTask<Layer, Object, Void> {
 				publishProgress(new Object[] { options, layerId, content.toString() });
 			} else if (type.equals("Polygon")) {
 				PolygonOptions options = new PolygonOptions();
-				
+
 				StaticFeatureProperty property = properties.get("stylepolystylecolorrgb");
 				if (property != null) {
-				    String color = property.getValue();
-				    int c = Color.parseColor(color);				    
-				    options.fillColor(c).strokeColor(c);
+					String color = property.getValue();
+					int c = Color.parseColor(color);
+					options.fillColor(c).strokeColor(c);
+				} else {
+					property = properties.get("stylelinestylecolorrgb");
+					if (property != null) {
+						String color = property.getValue();
+						int c = Color.parseColor(color);
+						options.fillColor(c).strokeColor(c);
+					}
 				}
-				
+
 				for (Coordinate coordinate : geometry.getCoordinates()) {
 					options.add(new LatLng(coordinate.y, coordinate.x));
 				}
