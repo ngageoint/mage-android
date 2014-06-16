@@ -16,6 +16,7 @@ import java.util.Map;
 
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.form.LayoutBaker;
+import mil.nga.giat.mage.form.LayoutBaker.ControlGenerationType;
 import mil.nga.giat.mage.form.MageSpinner;
 import mil.nga.giat.mage.map.marker.ObservationBitmapFactory;
 import mil.nga.giat.mage.sdk.datastore.common.State;
@@ -28,6 +29,7 @@ import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.exceptions.ObservationException;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
+import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
 import mil.nga.giat.mage.sdk.utils.DateUtility;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
 import android.annotation.SuppressLint;
@@ -73,6 +75,9 @@ import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.GeometryFactory;
@@ -97,8 +102,7 @@ public class ObservationEditActivity extends Activity {
 
 	private static final long NEW_OBSERVATION = -1L;
 
-	private Date date;
-	private DecimalFormat latLngFormat = new DecimalFormat("###.#####");
+	private final DecimalFormat latLngFormat = new DecimalFormat("###.#####");
 	private ArrayList<Attachment> attachments = new ArrayList<Attachment>();
 	private Location l;
 	private Observation o;
@@ -108,8 +112,6 @@ public class ObservationEditActivity extends Activity {
 	private long locationElapsedTimeMilliseconds = 0;
 
 	private Uri currentMediaUri;
-	
-	private final static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm zz", Locale.getDefault());
 
 	// control key to default position
 	private static Map<String, Integer> spinnersLastPositions = new HashMap<String, Integer>();
@@ -122,7 +124,7 @@ public class ObservationEditActivity extends Activity {
 		
 		final long observationId = getIntent().getLongExtra(OBSERVATION_ID, NEW_OBSERVATION);
 
-		List<View> controls = LayoutBaker.createControlsFromJson(getApplicationContext());
+		List<View> controls = LayoutBaker.createControlsFromJson(this, ControlGenerationType.EDIT);
 
 		for (View view : controls) {
 			if (view instanceof MageSpinner) {
@@ -130,7 +132,7 @@ public class ObservationEditActivity extends Activity {
 				String key = mageSpinner.getPropertyKey();
 				Integer spinnerPosition = spinnersLastPositions.get(key);
 				if (spinnerPosition == null) {
-					spinnerPosition = 0;
+					spinnerPosition = mageSpinner.getSelectedItemPosition();
 				}
 				spinnerPosition = Math.min(Math.max(0, spinnerPosition), mageSpinner.getAdapter().getCount());
 				spinnersLastPositions.put(key, spinnerPosition);
@@ -144,8 +146,19 @@ public class ObservationEditActivity extends Activity {
 						if (observationId == NEW_OBSERVATION) {
 							spinnersLastPositions.put(k, position);
 						}
-						if (k.equals("EVENTLEVEL") || k.equals("type")) {
-							onTypeOrLevelChanged(k, parent.getItemAtPosition(position).toString());
+						
+						String dynamicFormString = PreferenceHelper.getInstance(getApplicationContext()).getValue(R.string.dynamicFormKey);
+						JsonObject dynamicFormJson = new JsonParser().parse(dynamicFormString).getAsJsonObject();
+						
+						// get variantField
+						JsonElement variantField = dynamicFormJson.get("variantField");
+						String variantFieldString = null;
+						if(variantField != null && !variantField.isJsonNull()) {
+							variantFieldString = variantField.getAsString();
+						}
+						
+						if (k.equals("type") || (variantFieldString != null && k.equals(variantFieldString))) {
+							onTypeOrVariantChanged(k, parent.getItemAtPosition(position).toString());
 						}
 					}
 
@@ -164,17 +177,18 @@ public class ObservationEditActivity extends Activity {
 		if (observationId == NEW_OBSERVATION) {
 			this.setTitle("Create New Observation");
 			l = getIntent().getParcelableExtra(LOCATION);
-			date = new Date();
-			((TextView) findViewById(R.id.date)).setText(sdf.format(date));
 
-			// set default type and level values for map marker
 			o = new Observation();
+			o.setTimestamp(new Date());
 			List<ObservationProperty> properties = new ArrayList<ObservationProperty>();
+			properties.add(new ObservationProperty("timestamp", DateUtility.getISO8601().format(o.getTimestamp())));
 			for (View view : controls) {
 				if (view instanceof MageSpinner) {
 					MageSpinner mageSpinner = (MageSpinner) view;
 					String key = mageSpinner.getPropertyKey();
-					properties.add(new ObservationProperty(key, mageSpinner.getSelectedItem().toString()));
+					if(mageSpinner.getSelectedItem() != null) {
+						properties.add(new ObservationProperty(key, mageSpinner.getSelectedItem().toString()));
+					}
 				}
 			}
 			o.addProperties(properties);
@@ -186,6 +200,7 @@ public class ObservationEditActivity extends Activity {
 			} catch (UserException ue) {
 				ue.printStackTrace();
 			}
+			LayoutBaker.populateLayoutFromMap((LinearLayout) findViewById(R.id.form), o.getPropertiesMap());
 		} else {
 			this.setTitle("Edit Observation");
 			// this is an edit of an existing observation
@@ -197,15 +212,6 @@ public class ObservationEditActivity extends Activity {
 				}
 
 				Map<String, ObservationProperty> propertiesMap = o.getPropertiesMap();
-				String dateText = propertiesMap.get("timestamp").getValue();
-				try {
-					date = DateUtility.getISO8601().parse(dateText);
-					dateText = sdf.format(date);
-				} catch (ParseException e) {
-					e.printStackTrace();
-				}
-
-				((TextView) findViewById(R.id.date)).setText(dateText);
 				Geometry geo = o.getObservationGeometry().getGeometry();
 				if (geo instanceof Point) {
 					Point point = (Point) geo;
@@ -225,7 +231,7 @@ public class ObservationEditActivity extends Activity {
 
 			}
 		}
-
+		
 		findViewById(R.id.date_edit).setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
@@ -242,8 +248,7 @@ public class ObservationEditActivity extends Activity {
 					public void onClick(DialogInterface dialog, int id) {
 						Calendar c = Calendar.getInstance();
 						c.set(datePicker.getYear(), datePicker.getMonth(), datePicker.getDayOfMonth(), timePicker.getCurrentHour(), timePicker.getCurrentMinute(), 0);
-						date = c.getTime();
-						((TextView) findViewById(R.id.date)).setText(date.toString());
+						((TextView) findViewById(R.id.date)).setText(LayoutBaker.sdf.format(c.getTime()));
 					}
 				}).setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
 					public void onClick(DialogInterface dialog, int id) {
@@ -361,7 +366,6 @@ public class ObservationEditActivity extends Activity {
 			findViewById(R.id.location_elapsed_time).setVisibility(View.GONE);
 		}
 		
-		
         LatLng latLng = getIntent().getParcelableExtra(INITIAL_LOCATION);
         if (latLng == null) {
             latLng = new LatLng(0,0);
@@ -438,10 +442,12 @@ public class ObservationEditActivity extends Activity {
 			o.setObservationGeometry(new ObservationGeometry(new GeometryFactory().createPoint(new Coordinate(l.getLongitude(), l.getLatitude()))));
 
 			Map<String, ObservationProperty> propertyMap = LayoutBaker.populateMapFromLayout((LinearLayout) findViewById(R.id.form));
-			
-			// set the correct iso8601 date!
-			propertyMap.put("timestamp", new ObservationProperty("timestamp", DateUtility.getISO8601().format(date)));
-			o.setTimestamp(date);
+
+			try {
+				o.setTimestamp(DateUtility.getISO8601().parse(propertyMap.get("timestamp").getValue().toString()));
+			} catch (ParseException pe) {
+				Log.e(LOG_NAME, "Could not parse timestamp", pe);
+			}
 			// Add properties that weren't part of the layout
 			propertyMap.put("accuracy", new ObservationProperty("accuracy", Float.toString(l.getAccuracy())));
 			String provider = l.getProvider();
@@ -680,7 +686,7 @@ public class ObservationEditActivity extends Activity {
 		return uris;
 	}
 
-	public void onTypeOrLevelChanged(String field, String value) {
+	public void onTypeOrVariantChanged(String field, String value) {
 		o.addProperties(Collections.singleton(new ObservationProperty(field, value)));
 		if (observationMarker != null) {
 			observationMarker.remove();

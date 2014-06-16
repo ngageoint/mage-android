@@ -1,85 +1,130 @@
 package mil.nga.giat.mage.map.marker;
 
+import java.io.File;
+import java.io.FileFilter;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Locale;
+import java.io.InputStream;
 import java.util.Map;
-import java.util.regex.Pattern;
 
+import mil.nga.giat.mage.sdk.R;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationProperty;
-
-import org.apache.commons.lang3.StringUtils;
-
+import mil.nga.giat.mage.sdk.http.get.MageServerGetRequests;
+import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
 import android.annotation.TargetApi;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Build;
+import android.util.Log;
 
 import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
 public class ObservationBitmapFactory {
+	
+	private static final String LOG_NAME = ObservationBitmapFactory.class.getName();
 
-    private static final String DEFAULT_ASSET = "markers/default.png";
-    private static final String TYPE_PROPERTY = "type";
-    private static final String LEVEL_PROPERTY = "EVENTLEVEL";
-    
-    private static Pattern pattern = Pattern.compile("\\W");
-       
-    @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
-    public static Bitmap bitmap(Context context, Observation observation) {
-        String asset = getAsset(observation);
+	private static final String DEFAULT_ASSET = "markers/default.png";
+	private static final String TYPE_PROPERTY = "type";
 
-        Bitmap bitmap = null;
-        BitmapFactory.Options options = new BitmapFactory.Options();
-        options.inDensity = 480;
-        options.inTargetDensity = context.getResources().getDisplayMetrics().densityDpi;
-        try {
-            bitmap = BitmapFactory.decodeStream(context.getAssets().open(asset), null, options); 
-        } catch (IOException e1) {
-            try {
-                bitmap = BitmapFactory.decodeStream(context.getAssets().open(DEFAULT_ASSET), null, options);
-            } catch (IOException e2) {
-            }
-        }
-        
-        return bitmap;
-    }
-    
-    public static BitmapDescriptor bitmapDescriptor(Context context, Observation observation) {
-        Bitmap bitmap = bitmap(context, observation);
-        return BitmapDescriptorFactory.fromBitmap(bitmap);
-    }
-    
-    private static String getAsset(Observation observation) {
-        if (observation == null) {
-            return DEFAULT_ASSET;
-        }
-        
-		Map<String, ObservationProperty> properties = observation.getPropertiesMap();
-		ObservationProperty level = properties.get(LEVEL_PROPERTY);
-		ObservationProperty type = properties.get(TYPE_PROPERTY);
+	@TargetApi(Build.VERSION_CODES.JELLY_BEAN)
+	public static Bitmap bitmap(Context context, Observation observation) {
+		InputStream iconStream = getIconStream(context, observation);
 
-        Collection<String> paths = new ArrayList<String>();
-        paths.add("markers");
-        
-        if (level != null) {
-            paths.add(level.getValue().replaceAll(pattern.pattern(), "_").toLowerCase(Locale.ENGLISH));
-            
-            if (type != null) {
-                paths.add(type.getValue().replaceAll(pattern.pattern(), "_").toLowerCase(Locale.ENGLISH));
-            } else {
-                paths.add("default");
-            }
-        } else if (type != null) {
-            paths.add(type.getValue().replaceAll(pattern.pattern(), "_").toLowerCase(Locale.ENGLISH));
-        } else {            
-            paths.add("default");
-        }
- 
-        return StringUtils.join(paths, "/") + ".png";
-    }
+		Bitmap bitmap = null;
+		BitmapFactory.Options options = new BitmapFactory.Options();
+		options.inDensity = 480;
+		options.inTargetDensity = context.getResources().getDisplayMetrics().densityDpi;
+
+		bitmap = BitmapFactory.decodeStream(iconStream, null, options);
+
+		return bitmap;
+	}
+
+	public static BitmapDescriptor bitmapDescriptor(Context context, Observation observation) {
+		Bitmap bitmap = bitmap(context, observation);
+		return BitmapDescriptorFactory.fromBitmap(bitmap);
+	}
+
+	private static final FileFilter fileFilter = new FileFilter() {
+	    @Override
+	    public boolean accept(File pathname) {
+	        return pathname.isFile();
+	    }
+	};
+	
+	/**
+	 * Figure out which icon to navigate to
+	 * 
+	 * @param observation
+	 * @return
+	 */
+	private static InputStream getIconStream(Context context, Observation observation) {
+		InputStream iconStream = null;
+		if (observation != null) {
+	
+			Map<String, ObservationProperty> properties = observation.getPropertiesMap();
+			// get type
+			ObservationProperty type = properties.get(TYPE_PROPERTY);
+			// get variantField
+			String dynamicFormString = PreferenceHelper.getInstance(context).getValue(R.string.dynamicFormKey);
+			JsonObject dynamicFormJson = new JsonParser().parse(dynamicFormString).getAsJsonObject();
+			
+			// get variant
+			ObservationProperty variant = null;
+			JsonElement variantField = dynamicFormJson.get("variantField");
+			if(variantField != null && !variantField.isJsonNull()) {
+				variant = properties.get(variantField.getAsString());
+			}
+	
+			String formId = dynamicFormJson.get("id").getAsString();
+			// make path from type and variant
+			File path = new File(new File(new File(context.getFilesDir() + MageServerGetRequests.OBSERVATION_ICON_PATH), formId), "icons");
+	
+			if (type != null) {
+				String typeString = type.getValue();
+				if (typeString != null && !typeString.trim().isEmpty() && new File(path, typeString).exists()) {
+					path = new File(path, typeString);
+					if (variant != null) {
+						String variantString = variant.getValue();
+						if (variantString != null && !variantString.trim().isEmpty() && new File(path, variantString).exists()) {
+							path = new File(path, variantString).listFiles()[0];
+						} else {
+							path = path.listFiles(fileFilter)[0];
+						}
+					} else {
+						path = path.listFiles(fileFilter)[0];
+					}
+				} else {
+					path = path.listFiles(fileFilter)[0];
+				}
+			} else {
+				path = path.listFiles(fileFilter)[0];
+			}
+	
+
+			if (path.exists() && path.isFile()) {
+				try {
+					iconStream = new FileInputStream(path);
+				} catch (FileNotFoundException e) {
+					Log.e(LOG_NAME, "Can find icon.", e);
+				}
+			}
+		}
+		if(iconStream == null) {
+			try {
+				iconStream = context.getAssets().open(DEFAULT_ASSET);
+			} catch (IOException e) {
+				Log.e(LOG_NAME, "Can find default icon.", e);
+			}
+		}
+
+		return iconStream;
+	}
 }

@@ -7,6 +7,9 @@ import java.util.List;
 
 import org.json.JSONException;
 
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GooglePlayServicesUtil;
+
 import mil.nga.giat.mage.LandingActivity;
 import mil.nga.giat.mage.MAGE;
 import mil.nga.giat.mage.R;
@@ -21,6 +24,7 @@ import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
 import mil.nga.giat.mage.sdk.utils.UserUtility;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.Dialog;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnClickListener;
 import android.content.Intent;
@@ -83,6 +87,30 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 		// IMPORTANT: load the configuration from preferences files and server
 		PreferenceHelper preferenceHelper = PreferenceHelper.getInstance(getApplicationContext());
 		preferenceHelper.initialize(false, new Integer[]{R.xml.privatepreferences, R.xml.publicpreferences, R.xml.mappreferences});
+		
+		// check google play services verison
+		int isGooglePlayServicesAvailable = GooglePlayServicesUtil.isGooglePlayServicesAvailable(getApplicationContext());
+		if (isGooglePlayServicesAvailable != ConnectionResult.SUCCESS) {
+			if (GooglePlayServicesUtil.isUserRecoverableError(isGooglePlayServicesAvailable)) {
+				Dialog dialog = GooglePlayServicesUtil.getErrorDialog(isGooglePlayServicesAvailable, this, 1);
+				dialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
+					@Override
+					public void onCancel(DialogInterface dialog) {
+						dialog.dismiss();
+						finish();
+					}
+				});
+				dialog.show();
+			} else {
+				new AlertDialog.Builder(this).setTitle("Google Play Services").setMessage("Google Play Services is not installed, or needs to be updated.  Please update Google Play Services before continuing.").setPositiveButton(android.R.string.ok, new OnClickListener() {
+					@Override
+					public void onClick(DialogInterface dialog, int which) {
+						dialog.dismiss();
+						finish();
+					}
+				}).show();
+			}
+		}
 		
 		// show the disclaimer?
 		if (UserUtility.getInstance(getApplicationContext()).isTokenExpired()) {

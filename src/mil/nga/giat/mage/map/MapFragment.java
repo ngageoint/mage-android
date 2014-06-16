@@ -464,7 +464,8 @@ public class MapFragment extends Fragment implements
     
     @Override
     public void onMapClick(LatLng latLng) {
-        Log.i("static feature", "map clicked at: " + latLng.toString());
+		// remove old accuracy circle
+		((LocationMarkerCollection) locations).offMarkerClick();
 
         // how many meters away form the click can the geomerty be?
         Double circumferenceOfEarthInMeters = 2*Math.PI*6371000;
@@ -663,16 +664,18 @@ public class MapFragment extends Fragment implements
         }
     }
     
-    @Override
-    public void onStaticFeaturesCreated(final Layer layer) {
-        getActivity().runOnUiThread(new Runnable() {
-            
-            @Override
-            public void run() {
-                onStaticFeatureLayer(layer);               
-            }
-        });
-    }
+	@Override
+	public void onStaticFeaturesCreated(final Collection<Layer> layers) {
+		getActivity().runOnUiThread(new Runnable() {
+
+			@Override
+			public void run() {
+				for (Layer layer : layers) {
+					onStaticFeatureLayer(layer);
+				}
+			}
+		});
+	}
     
     private void onStaticFeatureLayer(Layer layer) {
         Set<String> layers = PreferenceManager.getDefaultSharedPreferences(getActivity().getApplicationContext()).getStringSet(getResources().getString(R.string.mapFeatureOverlaysKey), Collections.<String> emptySet());
@@ -682,7 +685,7 @@ public class MapFragment extends Fragment implements
         if (layers.contains(layerId) && layer.isLoaded()) {
             if (!featureIds.contains(layerId)) {
                 featureIds.add(layerId);
-                new StaticFeatureLoadTask(staticGeometryCollection, map).executeOnExecutor(executor, new Layer[]{ layer });
+                new StaticFeatureLoadTask(getActivity().getApplicationContext(), staticGeometryCollection, map).executeOnExecutor(executor, new Layer[]{ layer });
             }
         }
     }

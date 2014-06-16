@@ -1,16 +1,22 @@
 package mil.nga.giat.mage.map;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.util.Map;
 
 import mil.nga.giat.mage.map.marker.StaticGeometryCollection;
 import mil.nga.giat.mage.sdk.datastore.layer.Layer;
 import mil.nga.giat.mage.sdk.datastore.staticfeature.StaticFeature;
 import mil.nga.giat.mage.sdk.datastore.staticfeature.StaticFeatureProperty;
+import android.content.Context;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.os.AsyncTask;
 import android.util.Log;
 
 import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
@@ -27,8 +33,10 @@ public class StaticFeatureLoadTask extends AsyncTask<Layer, Object, Void> {
 
 	private StaticGeometryCollection staticGeometryCollection;
 	private GoogleMap map;
+	private Context context;
 
-	public StaticFeatureLoadTask(StaticGeometryCollection staticGeometryCollection, GoogleMap map) {
+	public StaticFeatureLoadTask(Context context, StaticGeometryCollection staticGeometryCollection, GoogleMap map) {
+		this.context = context;
 		this.staticGeometryCollection = staticGeometryCollection;
 		this.map = map;
 	}
@@ -54,6 +62,23 @@ public class StaticFeatureLoadTask extends AsyncTask<Layer, Object, Void> {
 			String type = geometry.getGeometryType();
 			if (type.equals("Point")) {
 				MarkerOptions options = new MarkerOptions().position(new LatLng(geometry.getCoordinate().y, geometry.getCoordinate().x)).snippet(content.toString());
+
+				// check to see if there's an icon
+				String iconPath = feature.getLocalPath();
+				if (iconPath != null) {
+					File iconFile = new File(iconPath);
+					if (iconFile.exists()) {
+						BitmapFactory.Options o = new BitmapFactory.Options();
+						o.inDensity = 480;
+						o.inTargetDensity = context.getResources().getDisplayMetrics().densityDpi;
+						try {
+							options.icon(BitmapDescriptorFactory.fromBitmap(BitmapFactory.decodeStream(new FileInputStream(iconFile), null, o)));
+						} catch (FileNotFoundException fnfe) {
+							Log.e(LOG_NAME, "Could not set icon.", fnfe);
+						}
+					}
+				}
+
 				publishProgress(new Object[] { options, layerId, content.toString() });
 			} else if (type.equals("LineString")) {
 				PolylineOptions options = new PolylineOptions();

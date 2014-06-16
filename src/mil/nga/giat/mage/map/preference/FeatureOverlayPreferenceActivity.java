@@ -105,23 +105,25 @@ public class FeatureOverlayPreferenceActivity extends ListActivity implements IL
         });
     }
 
-    @Override
-    public void onStaticFeaturesCreated(final Layer layer) {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                int i = overlayAdapter.getPosition(layer);
-                Layer l = overlayAdapter.getItem(i);
-                
-                if (l != null) {
-                    l.setLoaded(true);
-                    overlayAdapter.notifyDataSetChanged();
-                } else {
-                    Log.i("static layer", "static layer " + layer.getName() + ":" + layer.getId() + " is not availble, adapter size is: " + overlayAdapter.getCount());
-                }
-            }
-        });
-    }
+	@Override
+	public void onStaticFeaturesCreated(final Collection<Layer> layers) {
+		runOnUiThread(new Runnable() {
+			@Override
+			public void run() {
+				for (Layer layer : layers) {
+					int i = overlayAdapter.getPosition(layer);
+					Layer l = overlayAdapter.getItem(i);
+
+					if (l != null) {
+						l.setLoaded(true);
+						overlayAdapter.notifyDataSetChanged();
+					} else {
+						Log.i("static layer", "static layer " + layer.getName() + ":" + layer.getId() + " is not availble, adapter size is: " + overlayAdapter.getCount());
+					}
+				}
+			}
+		});
+	}
 
     @Override
     public void onError(Throwable error) {

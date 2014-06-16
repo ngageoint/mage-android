@@ -1,18 +1,17 @@
 package mil.nga.giat.mage.observation;
 
 import java.io.File;
-import java.text.DateFormat;
 import java.text.DecimalFormat;
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Collection;
-import java.util.Date;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
 import mil.nga.giat.mage.R;
-import mil.nga.giat.mage.form.MageTextView;
+import mil.nga.giat.mage.form.LayoutBaker;
+import mil.nga.giat.mage.form.LayoutBaker.ControlGenerationType;
 import mil.nga.giat.mage.map.marker.ObservationBitmapFactory;
 import mil.nga.giat.mage.sdk.datastore.observation.Attachment;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
@@ -21,7 +20,6 @@ import mil.nga.giat.mage.sdk.datastore.observation.ObservationProperty;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.event.IObservationEventListener;
-import mil.nga.giat.mage.sdk.utils.DateUtility;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
 import android.app.ActionBar;
 import android.app.Activity;
@@ -70,10 +68,9 @@ public class ObservationViewActivity extends Activity {
 	private IObservationEventListener observationEventListener;
 	private Observation o;
 	private Marker marker;
-	private Map<String, ObservationProperty> propertiesMap;
 	private DecimalFormat latLngFormat = new DecimalFormat("###.#####");
-	private SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm zz", Locale.getDefault());
-	private DateFormat iso8601 = DateUtility.getISO8601();
+	
+	private final static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm zz", Locale.getDefault());
 
 	public class AttachmentGalleryTask extends AsyncTask<Attachment, ImageView, Boolean> {
 
@@ -214,6 +211,8 @@ public class ObservationViewActivity extends Activity {
 		setContentView(R.layout.observation_viewer);
 		ActionBar actionBar = getActionBar();
 		actionBar.setDisplayHomeAsUpEnabled(true);
+
+		LayoutBaker.populateLayoutWithControls((LinearLayout) findViewById(R.id.propertyContainer), LayoutBaker.createControlsFromJson(this, ControlGenerationType.VIEW));
 	}
 
 	@Override
@@ -276,9 +275,13 @@ public class ObservationViewActivity extends Activity {
 				ObservationHelper.getInstance(getApplicationContext()).addListener(observationEventListener);
 			}
 			o = ObservationHelper.getInstance(getApplicationContext()).read(getIntent().getLongExtra(OBSERVATION_ID, 0L));
-
-			propertiesMap = o.getPropertiesMap();
-			this.setTitle(propertiesMap.get("type").getValue());
+			
+			Map<String, ObservationProperty> propertiesMap = o.getPropertiesMap();
+			
+			ObservationProperty observationProperty = propertiesMap.get("type");
+			if(observationProperty != null) {
+				this.setTitle(observationProperty.getValue());
+			}
 			Geometry geo = o.getObservationGeometry().getGeometry();
 			if (geo instanceof Point) {
 				Point pointGeo = (Point) geo;
@@ -316,10 +319,9 @@ public class ObservationViewActivity extends Activity {
 				}
 			}
 
-			LinearLayout propertyContainer = (LinearLayout) findViewById(R.id.propertyContainer);
-			populatePropertyFields(propertyContainer);
-
-			populatePropertyFields((LinearLayout) findViewById(R.id.topPropertyContainer));
+			LayoutBaker.populateLayoutFromMap((LinearLayout) findViewById(R.id.propertyContainer), o.getPropertiesMap());
+			LayoutBaker.populateLayoutFromMap((LinearLayout) findViewById(R.id.topPropertyContainer), o.getPropertiesMap());
+			
 			((LinearLayout) findViewById(R.id.image_gallery)).removeAllViews();
 			if (o.getAttachments().size() == 0) {
 				findViewById(R.id.image_gallery).setVisibility(View.GONE);
@@ -334,7 +336,7 @@ public class ObservationViewActivity extends Activity {
 			if (u != null) {
 				userText = u.getFirstname() + " " + u.getLastname();
 			}
-			user.setText(userText);
+			user.setText(userText); 
 
 			FrameLayout fl = (FrameLayout) findViewById(R.id.sync_status);
 			fl.removeAllViews();
@@ -347,50 +349,6 @@ public class ObservationViewActivity extends Activity {
 			}
 		} catch (Exception e) {
 			Log.e(LOG_NAME, e.getMessage(), e);
-		}
-	}
-
-	private void populatePropertyFields(LinearLayout ll) {
-		for (int i = 0; i < ll.getChildCount(); i++) {
-			View v = ll.getChildAt(i);
-			if (v instanceof MageTextView) {
-				MageTextView m = (MageTextView) v;
-				String propertyKey = m.getPropertyKey();
-				String propertyValue = null;
-				ObservationProperty property = propertiesMap.get(propertyKey);
-				if (property == null) {
-					continue;
-				} else {
-					propertyValue = property.getValue();
-				}
-				switch (m.getPropertyType()) {
-				case STRING:
-				case MULTILINE:
-					m.setText(propertyValue);
-					break;
-				case USER:
-
-					break;
-				case DATE:
-					String dateText = propertyValue;
-					try {
-						Date date = iso8601.parse(propertyValue);
-						dateText = sdf.format(date);
-					} catch (ParseException e) {
-						Log.e(LOG_NAME, "Problem parsing date", e);
-					}
-					m.setText(dateText);
-					break;
-				case LOCATION:
-
-					break;
-				case MULTICHOICE:
-
-					break;
-				}
-			} else if (v instanceof LinearLayout) {
-				populatePropertyFields((LinearLayout) v);
-			}
 		}
 	}
 }

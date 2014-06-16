@@ -3,6 +3,7 @@ package mil.nga.giat.mage.form;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
@@ -11,6 +12,7 @@ import java.util.Locale;
 import java.util.Map;
 
 import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
@@ -18,17 +20,23 @@ import mil.nga.giat.mage.sdk.R;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationProperty;
 import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
 import mil.nga.giat.mage.sdk.utils.DateUtility;
+import android.app.AlertDialog;
 import android.content.Context;
-import android.graphics.Color;
+import android.content.DialogInterface;
 import android.os.Bundle;
+import android.text.InputType;
+import android.util.Log;
 import android.view.ContextThemeWrapper;
+import android.view.Gravity;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup.LayoutParams;
-import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.DatePicker;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.TimePicker;
 
 /**
  * Use this class to build and populate the views concerned with form like information.
@@ -38,10 +46,18 @@ import android.widget.TextView;
  */
 public class LayoutBaker {
 
-	public static List<View> createControlsFromJson(Context context) {
+	private static final String LOG_NAME = LayoutBaker.class.getName();
+
+	public final static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm zz", Locale.getDefault());
+
+	public enum ControlGenerationType {
+		VIEW, EDIT;
+	}
+
+	public static List<View> createControlsFromJson(Context pContext, ControlGenerationType controlGenerationType) {
 		// add the theme to the context
-		context = new ContextThemeWrapper(context, R.style.AppTheme);
-		
+		final Context context = new ContextThemeWrapper(pContext, R.style.AppTheme);
+
 		List<View> views = new ArrayList<View>();
 
 		String dynamicFormString = PreferenceHelper.getInstance(context).getValue(R.string.dynamicFormKey);
@@ -55,17 +71,23 @@ public class LayoutBaker {
 			// get members
 			Integer id = field.get("id").getAsInt();
 			String title = field.get("title").getAsString();
-			DynamicFormType type = DynamicFormType.TEXTAREA;
+			DynamicFormType type = DynamicFormType.TEXTFIELD;
 			String typeString = field.get("type").getAsString();
 			if (typeString != null) {
 				try {
 					type = DynamicFormType.valueOf(typeString.toUpperCase());
 				} catch (IllegalArgumentException iae) {
-					type = DynamicFormType.TEXTAREA;
+					Log.e(LOG_NAME, "Unknown type: " + typeString, iae);
+					type = DynamicFormType.TEXTFIELD;
 				}
 			}
 
 			Boolean required = field.get("required").getAsBoolean();
+			String value = null;
+			JsonElement jsonValue = field.get("value");
+			if (jsonValue != null && !jsonValue.isJsonNull()) {
+				value = jsonValue.getAsString();
+			}
 			String name = field.get("name").getAsString();
 			JsonArray choicesJson = field.get("choices").getAsJsonArray();
 			Collection<String> choices = new ArrayList<String>();
@@ -79,54 +101,214 @@ public class LayoutBaker {
 				}
 			}
 
-			float density = context.getResources().getDisplayMetrics().density;
-			int marginTop = (int) (5 * density);
-			int marginBottom = (int) (20 * density);
-			if (i == dynamicFormFields.size() - 1) {
-				marginBottom = (int) (0 * density);
-			}
+			final float density = context.getResources().getDisplayMetrics().density;
+
+			LinearLayout.LayoutParams textParams = new LinearLayout.LayoutParams((int) LayoutParams.FILL_PARENT, (int) LayoutParams.WRAP_CONTENT);
+			LinearLayout.LayoutParams controlParams = new LinearLayout.LayoutParams((int) LayoutParams.FILL_PARENT, (int) LayoutParams.WRAP_CONTENT);
 
 			TextView textView = new TextView(context);
 			textView.setText(title);
-			textView.setLayoutParams(new RelativeLayout.LayoutParams((int) LayoutParams.FILL_PARENT, (int) LayoutParams.WRAP_CONTENT));
-			textView.setTextAppearance(context, mil.nga.giat.mage.R.style.EditTextView);
+			switch (controlGenerationType) {
+			case EDIT:
+				int controlMarginTop = (int) (5 * density);
+				int controlMarginBottom = (i == dynamicFormFields.size() - 1) ? (int) (0 * density) : (int) (15 * density);
+				int controlMarginLeft = (int) (0 * density);
+				int controlMarginRight = (int) (0 * density);
+				controlParams.setMargins(controlMarginLeft, controlMarginTop, controlMarginRight, controlMarginBottom);
 
-			MageControl mageControl = null;
-			LinearLayout.LayoutParams params = new LinearLayout.LayoutParams((int) LayoutParams.FILL_PARENT, (int) LayoutParams.WRAP_CONTENT);
-			params.setMargins(0, marginTop, 0, marginBottom);
-
-			// TODO: set required
-			switch (type) {
-			case TEXTAREA:
-				MageEditText mageEditText = new MageEditText(context, null);
-				mageEditText.setId(id);
-				mageEditText.setLayoutParams(params);
-				mageEditText.setHint(title);
-				mageEditText.setMinLines(4);
-				mageEditText.setPropertyKey(name);
-				mageEditText.setPropertyType(MagePropertyType.MULTILINE);
-				mageControl = mageEditText;
-				break;
-			case DROPDOWN:
-				MageSpinner mageSpinner = new MageSpinner(context, null);
-				mageSpinner.setId(id);
-				mageSpinner.setLayoutParams(params);
-				mageSpinner.setPropertyKey(name);
-				mageSpinner.setPropertyType(MagePropertyType.MULTICHOICE);
-
-				ArrayAdapter<String> spinnerArrayAdapter = new ArrayAdapter<String>(context, android.R.layout.simple_spinner_item, choices.toArray(new String[choices.size()]));
-				spinnerArrayAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-				mageSpinner.setAdapter(spinnerArrayAdapter);
-				mageControl = mageSpinner;
+				int textMarginTop = (int) (5 * density);
+				int textMarginBottom = (int) (0 * density);
+				int textMarginLeft = (int) (0 * density);
+				int textMarginRight = (int) (0 * density);
+				textParams.setMargins(textMarginLeft, textMarginTop, textMarginRight, textMarginBottom);
+				textView.setTextAppearance(context, mil.nga.giat.mage.R.style.EditTextView);
 				break;
 			default:
-				mageControl = null;
+			case VIEW:
+				controlMarginTop = (int) (5 * density);
+				controlMarginBottom = (i == dynamicFormFields.size() - 1) ? (int) (0 * density) : (int) (10 * density);
+				controlMarginLeft = (int) (0 * density);
+				controlMarginRight = (int) (0 * density);
+				controlParams.setMargins(controlMarginLeft, controlMarginTop, controlMarginRight, controlMarginBottom);
+
+				textMarginTop = (int) (5 * density);
+				textMarginBottom = (int) (0 * density);
+				textMarginLeft = (int) (0 * density);
+				textMarginRight = (int) (5 * density);
+				textParams.setMargins(textMarginLeft, textMarginTop, textMarginRight, textMarginBottom);
+				textView.setTextAppearance(context, mil.nga.giat.mage.R.style.ViewTextView);
 				break;
 			}
-			if (mageControl != null) {
-				// add both the text and control here!
-				views.add(textView);
-				views.add((View) mageControl);
+			textView.setLayoutParams(textParams);
+
+			// FIXME: set required, add remaining controls
+			switch (controlGenerationType) {
+			case EDIT:
+				MageEditText mageEditText = new MageEditText(context, null);
+				mageEditText.setId(id);
+				mageEditText.setLayoutParams(controlParams);
+				mageEditText.setHint(title);
+				mageEditText.setPropertyKey(name);
+				if (value != null && !value.trim().isEmpty()) {
+					mageEditText.setText(value);
+				}
+				switch (type) {
+				case TEXTFIELD:
+				case EMAIL:
+					mageEditText.setPropertyType(MagePropertyType.STRING);
+					views.add(textView);
+					views.add((View) mageEditText);
+					break;
+				case PASSWORD:
+					mageEditText.setPropertyType(MagePropertyType.STRING);
+					views.add(textView);
+					mageEditText.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+					views.add((View) mageEditText);
+					break;
+				case TEXTAREA:
+					mageEditText.setMinLines(2);
+					mageEditText.setPropertyType(MagePropertyType.MULTILINE);
+					views.add(textView);
+					views.add((View) mageEditText);
+					break;
+				case DROPDOWN:
+					MageSpinner mageSpinner = new MageSpinner(context, null);
+					mageSpinner.setId(id);
+					mageSpinner.setLayoutParams(controlParams);
+					mageSpinner.setPropertyKey(name);
+					mageSpinner.setPropertyType(MagePropertyType.MULTICHOICE);
+
+					ArrayAdapter<String> spinnerArrayAdapter = new ArrayAdapter<String>(context, android.R.layout.simple_spinner_item, choices.toArray(new String[choices.size()]));
+					spinnerArrayAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+					mageSpinner.setAdapter(spinnerArrayAdapter);
+
+					if (value != null && !value.trim().isEmpty()) {
+						mageSpinner.setSelection(Math.max(0, spinnerArrayAdapter.getPosition(value)));
+					}
+
+					views.add(textView);
+					views.add((View) mageSpinner);
+					break;
+				case DATE:
+					// don't create the timestamp control on the edit page
+					if (name.equals("timestamp")) {
+						break;
+					}
+
+					ImageView imageView = new ImageView(context);
+					// dip?
+					LinearLayout.LayoutParams imageViewLayoutParams = new LinearLayout.LayoutParams((int) (18 * density), (int) (18 * density));
+					imageViewLayoutParams.gravity = Gravity.LEFT;
+					imageView.setLayoutParams(imageViewLayoutParams);
+					imageView.setFocusable(false);
+					imageView.setImageResource(mil.nga.giat.mage.R.drawable.ic_edit);
+
+					final MageTextView mageDateText = new MageTextView(context, null);
+					mageDateText.setId(id);
+					LinearLayout.LayoutParams mageDateTextLayoutParams = new LinearLayout.LayoutParams((int) LayoutParams.FILL_PARENT, (int) LayoutParams.WRAP_CONTENT);
+					mageDateText.setLayoutParams(mageDateTextLayoutParams);
+					mageDateText.setTextAppearance(context, mil.nga.giat.mage.R.style.EditTextView);
+					mageDateText.setPropertyKey(name);
+					mageDateText.setPropertyType(MagePropertyType.DATE);
+					mageDateText.setTextSize(16);
+
+					if (value != null && !value.trim().isEmpty()) {
+						try {
+							mageDateText.setText(sdf.format(DateUtility.getISO8601().parse(value)));
+						} catch (ParseException pe) {
+							Log.e(LOG_NAME, "Problem parsing date.", pe);
+						}
+					}
+
+					LinearLayout linearLayout = new LinearLayout(context);
+					linearLayout.setFocusable(false);
+					linearLayout.setLayoutParams(controlParams);
+					linearLayout.setOrientation(LinearLayout.HORIZONTAL);
+					linearLayout.addView(imageView);
+					linearLayout.addView((View) mageDateText);
+					linearLayout.setOnClickListener(new View.OnClickListener() {
+						@Override
+						public void onClick(View v) {
+							AlertDialog.Builder builder = new AlertDialog.Builder(context);
+							// Get the layout inflater
+							LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+							View dialogView = inflater.inflate(mil.nga.giat.mage.R.layout.date_time_dialog, null);
+							final DatePicker datePicker = (DatePicker) dialogView.findViewById(mil.nga.giat.mage.R.id.date_picker);
+							final TimePicker timePicker = (TimePicker) dialogView.findViewById(mil.nga.giat.mage.R.id.time_picker);
+							// Inflate and set the layout for the dialog
+							// Pass null as the parent view because its going in the dialog layout
+							builder.setView(dialogView).setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+								@Override
+								public void onClick(DialogInterface dialog, int id) {
+									Calendar c = Calendar.getInstance();
+									c.set(datePicker.getYear(), datePicker.getMonth(), datePicker.getDayOfMonth(), timePicker.getCurrentHour(), timePicker.getCurrentMinute(), 0);
+									mageDateText.setText(sdf.format(c.getTime()));
+								}
+							}).setNegativeButton(mil.nga.giat.mage.R.string.cancel, new DialogInterface.OnClickListener() {
+								public void onClick(DialogInterface dialog, int id) {
+									dialog.cancel();
+								}
+							});
+							AlertDialog ad = builder.create();
+							ad.show();
+						}
+					});
+
+					views.add(textView);
+					views.add(linearLayout);
+
+					break;
+				default:
+					break;
+				}
+				break;
+			case VIEW:
+			default:
+				MageTextView mageTextView = new MageTextView(context, null);
+				mageTextView.setId(id);
+				mageTextView.setLayoutParams(controlParams);
+				mageTextView.setTextSize(18);
+				mageTextView.setPropertyKey(name);
+				mageTextView.setPropertyType(MagePropertyType.STRING);
+				LinearLayout linearLayout = new LinearLayout(context);
+				linearLayout.setLayoutParams(new LinearLayout.LayoutParams((int) LayoutParams.WRAP_CONTENT, (int) LayoutParams.WRAP_CONTENT));
+				switch (type) {
+				case TEXTFIELD:
+				case EMAIL:
+					linearLayout.addView(textView);
+					linearLayout.addView((View) mageTextView);
+					views.add(linearLayout);
+					break;
+				case PASSWORD:
+					linearLayout.addView(textView);
+					mageTextView.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+					linearLayout.addView((View) mageTextView);
+					views.add(linearLayout);
+					break;
+				case TEXTAREA:
+					mageTextView.setPropertyType(MagePropertyType.MULTILINE);
+					mageTextView.setPadding((int) (5 * density), (int) (5 * density), (int) (5 * density), (int) (5 * density));
+					mageTextView.setBackgroundResource(mil.nga.giat.mage.R.drawable.multi_line_text_view_gradient);
+					mageTextView.setTextSize(14);
+					linearLayout.addView(textView);
+					linearLayout.addView((View) mageTextView);
+					views.add(linearLayout);
+					break;
+				case DROPDOWN:
+					linearLayout.addView(textView);
+					linearLayout.addView((View) mageTextView);
+					views.add(linearLayout);
+					break;
+				case DATE:
+					mageTextView.setPropertyType(MagePropertyType.DATE);
+					linearLayout.addView(textView);
+					linearLayout.addView((View) mageTextView);
+					views.add(linearLayout);
+					break;
+				default:
+					break;
+				}
+				break;
 			}
 		}
 
@@ -169,9 +351,9 @@ public class LayoutBaker {
 								String dateText = propertyValue;
 								try {
 									Date date = DateUtility.getISO8601().parse(propertyValue);
-									dateText = new SimpleDateFormat("yyyy-MM-dd HH:mm zz", Locale.getDefault()).format(date);
-								} catch (ParseException e) {
-									e.printStackTrace();
+									dateText = sdf.format(date);
+								} catch (ParseException pe) {
+									Log.e(LOG_NAME, "Problem parsing date.", pe);
 								}
 								m.setText(dateText);
 								break;
@@ -232,6 +414,13 @@ public class LayoutBaker {
 				String key = mageControl.getPropertyKey();
 				String value = mageControl.getPropertyValue();
 				if (key != null && value != null) {
+					if(mageControl.getPropertyType().equals(MagePropertyType.DATE)) {
+						try {
+							value = DateUtility.getISO8601().format(sdf.parse(value));
+						} catch (ParseException pe) {
+							pe.printStackTrace();
+						}
+					}
 					fields.put(key, new ObservationProperty(key, value));
 				}
 			}
