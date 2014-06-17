@@ -111,6 +111,9 @@ public class LayoutBaker {
 
 			TextView textView = new TextView(context);
 			textView.setText(title);
+			textView.setFocusable(false);
+			textView.setTextIsSelectable(false);
+			textView.setClickable(false);
 			switch (controlGenerationType) {
 			case EDIT:
 				int controlMarginTop = (int) (5 * density);
@@ -311,6 +314,9 @@ public class LayoutBaker {
 				mageTextView.setId(id);
 				mageTextView.setLayoutParams(controlParams);
 				mageTextView.setTextSize(18);
+				mageTextView.setFocusable(false);
+				mageTextView.setTextIsSelectable(false);
+				mageTextView.setClickable(false);
 				mageTextView.setPropertyKey(name);
 				mageTextView.setPropertyType(MagePropertyType.STRING);
 				LinearLayout linearLayout = new LinearLayout(context);
@@ -345,8 +351,6 @@ public class LayoutBaker {
 				case TEXTAREA:
 					mageTextView.setPropertyType(MagePropertyType.MULTILINE);
 					mageTextView.setPadding((int) (5 * density), (int) (5 * density), (int) (5 * density), (int) (5 * density));
-					mageTextView.setBackgroundResource(mil.nga.giat.mage.R.drawable.multi_line_text_view_gradient);
-					mageTextView.setTextSize(14);
 					linearLayout.addView(textView);
 					linearLayout.addView((View) mageTextView);
 					views.add(linearLayout);

@@ -5,6 +5,7 @@ import java.util.Collection;
 
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.form.LayoutBaker;
+import mil.nga.giat.mage.form.LayoutBaker.ControlGenerationType;
 import mil.nga.giat.mage.map.marker.ObservationBitmapFactory;
 import mil.nga.giat.mage.sdk.datastore.observation.Attachment;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
@@ -21,6 +22,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewGroup.LayoutParams;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -118,7 +120,9 @@ public class ObservationFeedCursorAdapter extends CursorAdapter {
 						Glide.load(R.drawable.ic_microphone).into(iv);
 					}
 				}
+				v.findViewById(R.id.observation_list_text_content).setLayoutParams(new LinearLayout.LayoutParams((int) LayoutParams.WRAP_CONTENT, (int) LayoutParams.WRAP_CONTENT, 7.0f));
 			} else {
+				v.findViewById(R.id.observation_list_text_content).setLayoutParams(new LinearLayout.LayoutParams((int) LayoutParams.FILL_PARENT, (int) LayoutParams.WRAP_CONTENT, 7.0f));
 				iv.setVisibility(View.GONE);
 				iv.setImageDrawable(null);
 			}
@@ -129,7 +133,9 @@ public class ObservationFeedCursorAdapter extends CursorAdapter {
 
 	@Override
 	public View newView(Context context, Cursor cursor, ViewGroup parentView) {
-		return inflater.inflate(R.layout.observation_list_item, parentView, false);
+		View v = inflater.inflate(R.layout.observation_list_item, parentView, false);
+		LayoutBaker.populateLayoutWithControls((LinearLayout) v.findViewById(R.id.observation_list_dynamic_content), LayoutBaker.createControlsFromJson(v.getContext(), ControlGenerationType.VIEW));
+		return v;
 	}
 
 }

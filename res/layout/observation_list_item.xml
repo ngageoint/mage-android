@@ -5,12 +5,12 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:background="@drawable/list_background"
+    android:descendantFocusability="blocksDescendants"
+    android:orientation="vertical"
+    android:paddingBottom="13dip"
     android:paddingLeft="5dip"
     android:paddingRight="5dip"
-    android:paddingTop="5dip"
-    android:paddingBottom="13dip"
-    android:orientation="vertical" >
-
+    android:paddingTop="5dip" >
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -28,97 +28,69 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:gravity="center_vertical"
-            android:text="TYPE"
-            android:textColor="#222222"
             android:textAppearance="?android:attr/textAppearanceMedium"
+            android:textColor="#222222"
             android:textStyle="bold"
             mageForm:propertyKey="type" />
     </LinearLayout>
-    
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal" >
-    <LinearLayout 
-        android:layout_width="0dip"
-        android:layout_weight="1"
-        android:layout_height="wrap_content"
-        android:orientation="vertical">
-        <TextView
-            android:id="@+id/username"
+
+        <LinearLayout
+            android:id="@+id/observation_list_text_content"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:gravity="center_vertical"
-            android:textStyle="bold"
-            android:text="Nancy Drew"
-            android:textAppearance="?android:attr/textAppearanceSmall"/>
-        <mil.nga.giat.mage.form.MageTextView
+            android:layout_weight="7"
+            android:orientation="vertical" >
+
+            <TextView
+                android:id="@+id/username"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:gravity="right|center_vertical"
-                android:text="DATE"
-                style="@style/ViewTextView"
+                android:gravity="center_vertical"
                 android:textAppearance="?android:attr/textAppearanceSmall"
-                mageForm:propertyKey="timestamp"
-                mageForm:propertyType="date" />
+                android:textStyle="bold" />
 
+            <LinearLayout
+                android:id="@+id/observation_list_dynamic_content"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:focusableInTouchMode="true"
+                android:orientation="vertical" >
 
-<!--     <LinearLayout
-        android:layout_width="0dip"
-        android:layout_weight="1"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="5dip"
-        android:orientation="horizontal" > -->
+                <!-- This will get populated programmatically -->
 
-                <TextView
-                    style="@style/ViewTextView"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginRight="5dp"
-                    android:text="Description" />
+            </LinearLayout>
+        </LinearLayout>
 
-                <mil.nga.giat.mage.form.MageTextView
-                    android:id="@+id/type"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textAppearance="?android:attr/textAppearanceSmall"
-                    mageForm:propertyType="string"
-                    mageForm:propertyKey="DESCRIPTION" />
-
-              
-
-       
- <!--        </LinearLayout> -->
-        </LinearLayout> 
-<!--         <ImageView
-            android:id="@+id/observation_thumb"
-            android:layout_gravity="center_vertical|right"
-            android:layout_width="48dip"
-            android:layout_height="48dip" 
-    		android:paddingRight="5dip"/> -->
         <RelativeLayout
             android:layout_width="0dip"
-            android:layout_weight="1"
-            android:layout_height="fill_parent" 
-    		android:paddingRight="5dip"
-    		android:layout_gravity="center_vertical|right">
-            
-        <ImageView
-            android:id="@+id/observation_thumb"
-            android:layout_width="fill_parent"
-            android:layout_height="fill_parent"/>
-        <TextView 
-            android:id="@+id/attachment_text"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:layout_alignParentBottom="true"
-            android:gravity="center_horizontal"
-            android:textStyle="bold"
-            android:shadowColor="#000000"
-    		android:shadowDx="1"
-    		android:shadowDy="1"
-    		android:shadowRadius="1"
-            android:textColor="#FFFFFF"/>
+            android:layout_height="fill_parent"
+            android:layout_gravity="center_vertical|right"
+            android:layout_weight="5"
+            android:paddingRight="5dip" >
+
+            <ImageView
+                android:id="@+id/observation_thumb"
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent" />
+
+            <TextView
+                android:id="@+id/attachment_text"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:layout_alignParentBottom="true"
+                android:gravity="center_horizontal"
+                android:shadowColor="#000000"
+                android:shadowDx="1"
+                android:shadowDy="1"
+                android:shadowRadius="1"
+                android:textColor="#FFFFFF"
+                android:textStyle="bold" />
         </RelativeLayout>
     </LinearLayout>
+
 </LinearLayout>

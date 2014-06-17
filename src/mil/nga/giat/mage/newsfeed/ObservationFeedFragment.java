@@ -68,7 +68,6 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-		Log.i("Test", "On create view called in news feed fragment");
 		rootView = inflater.inflate(R.layout.fragment_news_feed, container, false);
 		setHasOptionsMenu(true);
 		lv = (ListView) rootView.findViewById(R.id.news_feed_list);
