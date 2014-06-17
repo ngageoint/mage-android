@@ -35,6 +35,7 @@ import android.widget.ArrayAdapter;
 import android.widget.DatePicker;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.RadioButton;
 import android.widget.TextView;
 import android.widget.TimePicker;
 
@@ -64,6 +65,8 @@ public class LayoutBaker {
 		JsonObject dynamicFormJson = new JsonParser().parse(dynamicFormString).getAsJsonObject();
 
 		JsonArray dynamicFormFields = dynamicFormJson.get("fields").getAsJsonArray();
+
+		int uniqueChildIdIndex = 10000;
 
 		for (int i = 0; i < dynamicFormFields.size(); i++) {
 			JsonObject field = dynamicFormFields.get(i).getAsJsonObject();
@@ -148,6 +151,7 @@ public class LayoutBaker {
 				mageEditText.setId(id);
 				mageEditText.setLayoutParams(controlParams);
 				mageEditText.setHint(title);
+				mageEditText.setRequired(required);
 				mageEditText.setPropertyKey(name);
 				if (value != null && !value.trim().isEmpty()) {
 					mageEditText.setText(value);
@@ -171,10 +175,48 @@ public class LayoutBaker {
 					views.add(textView);
 					views.add((View) mageEditText);
 					break;
+				case RADIO:
+					MageRadioGroup mageRadioGroup = new MageRadioGroup(context, null);
+					mageRadioGroup.setId(id);
+					mageRadioGroup.setLayoutParams(controlParams);
+					mageRadioGroup.setRequired(required);
+					mageRadioGroup.setPropertyKey(name);
+					mageRadioGroup.setPropertyType(MagePropertyType.MULTICHOICE);
+
+					int j = 0;
+					for (String choice : choices) {
+						RadioButton radioButton = new RadioButton(context);
+						radioButton.setId(uniqueChildIdIndex++);
+						radioButton.setText(choice);
+						if (j++ == 0) {
+							radioButton.setChecked(true);
+						}
+						if (value != null && !value.trim().isEmpty() && value.equals(choice)) {
+							radioButton.setChecked(true);
+						}
+						mageRadioGroup.addView(radioButton);
+					}
+
+					views.add(textView);
+					views.add((View) mageRadioGroup);
+					break;
+				case CHECKBOX:
+					MageCheckBox mageCheckBox = new MageCheckBox(context, null);
+					mageCheckBox.setId(id);
+					mageCheckBox.setLayoutParams(controlParams);
+					mageCheckBox.setRequired(required);
+					mageCheckBox.setPropertyKey(name);
+					mageCheckBox.setPropertyType(MagePropertyType.STRING);
+					mageCheckBox.setChecked((value != null && !value.trim().isEmpty() && value.equals(MageCheckBox.YES)));
+
+					views.add(textView);
+					views.add((View) mageCheckBox);
+					break;
 				case DROPDOWN:
 					MageSpinner mageSpinner = new MageSpinner(context, null);
 					mageSpinner.setId(id);
 					mageSpinner.setLayoutParams(controlParams);
+					mageSpinner.setRequired(required);
 					mageSpinner.setPropertyKey(name);
 					mageSpinner.setPropertyType(MagePropertyType.MULTICHOICE);
 
@@ -208,6 +250,7 @@ public class LayoutBaker {
 					LinearLayout.LayoutParams mageDateTextLayoutParams = new LinearLayout.LayoutParams((int) LayoutParams.FILL_PARENT, (int) LayoutParams.WRAP_CONTENT);
 					mageDateText.setLayoutParams(mageDateTextLayoutParams);
 					mageDateText.setTextAppearance(context, mil.nga.giat.mage.R.style.EditTextView);
+					mageDateText.setRequired(required);
 					mageDateText.setPropertyKey(name);
 					mageDateText.setPropertyType(MagePropertyType.DATE);
 					mageDateText.setTextSize(16);
@@ -275,8 +318,22 @@ public class LayoutBaker {
 				switch (type) {
 				case TEXTFIELD:
 				case EMAIL:
+				case DROPDOWN:
+				case RADIO:
 					linearLayout.addView(textView);
 					linearLayout.addView((View) mageTextView);
+					views.add(linearLayout);
+					break;
+				case CHECKBOX:
+					MageCheckBox mageCheckBox = new MageCheckBox(context, null);
+					mageCheckBox.setId(id);
+					mageCheckBox.setLayoutParams(controlParams);
+					mageCheckBox.setPropertyKey(name);
+					mageCheckBox.setPropertyType(MagePropertyType.STRING);
+					mageCheckBox.setChecked((value != null && !value.trim().isEmpty() && value.equals(MageCheckBox.YES)));
+					mageCheckBox.setEnabled(false);
+					linearLayout.addView(textView);
+					linearLayout.addView((View) mageCheckBox);
 					views.add(linearLayout);
 					break;
 				case PASSWORD:
@@ -290,11 +347,6 @@ public class LayoutBaker {
 					mageTextView.setPadding((int) (5 * density), (int) (5 * density), (int) (5 * density), (int) (5 * density));
 					mageTextView.setBackgroundResource(mil.nga.giat.mage.R.drawable.multi_line_text_view_gradient);
 					mageTextView.setTextSize(14);
-					linearLayout.addView(textView);
-					linearLayout.addView((View) mageTextView);
-					views.add(linearLayout);
-					break;
-				case DROPDOWN:
 					linearLayout.addView(textView);
 					linearLayout.addView((View) mageTextView);
 					views.add(linearLayout);
@@ -338,11 +390,11 @@ public class LayoutBaker {
 					String propertyValue = property.getValue();
 					if (propertyValue != null) {
 						if (v instanceof MageTextView) {
-							MageTextView m = (MageTextView) v;
-							switch (m.getPropertyType()) {
+							MageTextView textView = (MageTextView) v;
+							switch (textView.getPropertyType()) {
 							case STRING:
 							case MULTILINE:
-								m.setText(propertyValue);
+								textView.setText(propertyValue);
 								break;
 							case USER:
 
@@ -355,7 +407,7 @@ public class LayoutBaker {
 								} catch (ParseException pe) {
 									Log.e(LOG_NAME, "Problem parsing date.", pe);
 								}
-								m.setText(dateText);
+								textView.setText(dateText);
 								break;
 							case LOCATION:
 								// location is not a property, it lives in the parent
@@ -365,8 +417,8 @@ public class LayoutBaker {
 								break;
 							}
 						} else if (v instanceof MageEditText) {
-							MageEditText m = (MageEditText) v;
-							m.setText(propertyValue);
+							MageEditText editText = (MageEditText) v;
+							editText.setText(propertyValue);
 						} else if (v instanceof MageSpinner) {
 							MageSpinner spinner = (MageSpinner) v;
 							for (int index = 0; index < spinner.getAdapter().getCount(); index++) {
@@ -375,6 +427,15 @@ public class LayoutBaker {
 									break;
 								}
 							}
+						} else if (v instanceof MageRadioGroup) {
+							MageRadioGroup radioGroup = (MageRadioGroup) v;
+							for (int index = 0; index < radioGroup.getChildCount(); index++) {
+								RadioButton radioButton = (RadioButton) radioGroup.getChildAt(index);
+								radioButton.setChecked(radioButton.getText().equals(propertyValue));
+							}
+						} else if (v instanceof MageCheckBox) {
+							MageCheckBox checkBox = (MageCheckBox) v;
+							checkBox.setChecked(propertyValue.equals(MageCheckBox.YES));
 						}
 					}
 				}
@@ -407,14 +468,12 @@ public class LayoutBaker {
 		for (int i = 0; i < linearLayout.getChildCount(); i++) {
 			View v = linearLayout.getChildAt(i);
 
-			if (v instanceof LinearLayout) {
-				fields.putAll(populateMapFromLayout((LinearLayout) v, fields));
-			} else if (v instanceof MageControl) {
+			if (v instanceof MageControl) {
 				MageControl mageControl = (MageControl) v;
 				String key = mageControl.getPropertyKey();
 				String value = mageControl.getPropertyValue();
 				if (key != null && value != null) {
-					if(mageControl.getPropertyType().equals(MagePropertyType.DATE)) {
+					if (mageControl.getPropertyType().equals(MagePropertyType.DATE)) {
 						try {
 							value = DateUtility.getISO8601().format(sdf.parse(value));
 						} catch (ParseException pe) {
@@ -423,6 +482,8 @@ public class LayoutBaker {
 					}
 					fields.put(key, new ObservationProperty(key, value));
 				}
+			} else if (v instanceof LinearLayout) {
+				fields.putAll(populateMapFromLayout((LinearLayout) v, fields));
 			}
 		}
 		return fields;
@@ -434,4 +495,55 @@ public class LayoutBaker {
 			outState.putString(key, properties.get(key).getValue());
 		}
 	}
+
+	/**
+	 * 
+	 * @param linearLayout
+	 * @return true if there were no issues with the form, false otherwise
+	 */
+	public static Boolean checkAndFlagRequiredFields(LinearLayout linearLayout) {
+		final String error = "Can not be blank";
+		Boolean status = true;
+		for (int i = linearLayout.getChildCount() - 1; i >= 0; i--) {
+			View v = linearLayout.getChildAt(i);
+
+			if (v instanceof MageControl) {
+				MageControl mageControl = (MageControl) v;
+				if (mageControl.isRequired()) {
+					String value = mageControl.getPropertyValue();
+					Boolean controlStatus = !(value == null || value.isEmpty());
+					if (!controlStatus) {
+						status = false;
+					}
+					if (mageControl instanceof MageTextView) {
+						MageTextView textView = (MageTextView) v;
+						if (!controlStatus) {
+							textView.requestFocus();
+						}
+						textView.setError(controlStatus ? null : error);
+					} else if (mageControl instanceof MageEditText) {
+						MageEditText editText = (MageEditText) v;
+						if (!controlStatus) {
+							editText.requestFocus();
+						}
+						editText.setError(controlStatus ? null : error);
+					} else if (mageControl instanceof MageSpinner) {
+						// Don't need to check this, as one will already be selected
+					} else if (mageControl instanceof MageRadioGroup) {
+						// Don't need to check this, as one will already be selected
+					} else if (mageControl instanceof MageCheckBox) {
+						MageCheckBox checkBox = (MageCheckBox) v;
+						if (!controlStatus) {
+							checkBox.requestFocus();
+						}
+						checkBox.setError(controlStatus ? null : error);
+					}
+				}
+			} else if (v instanceof LinearLayout) {
+				status = status && checkAndFlagRequiredFields((LinearLayout) v);
+			}
+		}
+		return status;
+	}
+
 }

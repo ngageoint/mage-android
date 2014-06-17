@@ -4,15 +4,16 @@ import mil.nga.giat.mage.R;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.util.AttributeSet;
-import android.widget.EditText;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
 
-public class MageEditText extends EditText implements MageControl {
+public class MageRadioGroup extends RadioGroup implements MageControl {
 
 	private String propertyKey;
 	private MagePropertyType propertyType;
 	protected Boolean isRequired = Boolean.FALSE;
 
-	public MageEditText(Context context, AttributeSet attrs) {
+	public MageRadioGroup(Context context, AttributeSet attrs) {
 		super(context, attrs);
 		TypedArray typedArray = context.obtainStyledAttributes(attrs, R.styleable.MageFormElement);
 		setPropertyKey(typedArray.getString(R.styleable.MageFormElement_propertyKey));
@@ -42,7 +43,12 @@ public class MageEditText extends EditText implements MageControl {
 
 	@Override
 	public String getPropertyValue() {
-		return getText().toString();
+		String value = null;
+		RadioButton radioButton = (RadioButton) findViewById(getCheckedRadioButtonId());
+		if(radioButton != null) {
+			value = (String) radioButton.getText();
+		}
+		return value;
 	}
 
 	@Override

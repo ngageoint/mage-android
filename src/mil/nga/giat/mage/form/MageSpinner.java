@@ -10,6 +10,7 @@ public class MageSpinner extends Spinner implements MageControl {
 
 	private String propertyKey;
 	private MagePropertyType propertyType;
+	protected Boolean isRequired = Boolean.FALSE;
 
 	public MageSpinner(Context context, AttributeSet attrs) {
 		super(context, attrs);
@@ -42,5 +43,15 @@ public class MageSpinner extends Spinner implements MageControl {
 	@Override
 	public String getPropertyValue() {
 		return (String) getSelectedItem();
+	}
+
+	@Override
+	public Boolean isRequired() {
+		return isRequired;
+	}
+
+	@Override
+	public void setRequired(Boolean isRequired) {
+		this.isRequired = isRequired;
 	}
 }

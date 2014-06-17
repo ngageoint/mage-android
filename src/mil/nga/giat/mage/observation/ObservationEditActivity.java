@@ -441,6 +441,10 @@ public class ObservationEditActivity extends Activity {
 			o.setDirty(true);
 			o.setObservationGeometry(new ObservationGeometry(new GeometryFactory().createPoint(new Coordinate(l.getLongitude(), l.getLatitude()))));
 
+			if (!LayoutBaker.checkAndFlagRequiredFields((LinearLayout) findViewById(R.id.form))) {
+				return super.onOptionsItemSelected(item);
+			}
+
 			Map<String, ObservationProperty> propertyMap = LayoutBaker.populateMapFromLayout((LinearLayout) findViewById(R.id.form));
 
 			try {

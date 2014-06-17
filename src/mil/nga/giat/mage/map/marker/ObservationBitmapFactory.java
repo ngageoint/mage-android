@@ -18,6 +18,7 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Build;
+import android.util.DisplayMetrics;
 import android.util.Log;
 
 import com.google.android.gms.maps.model.BitmapDescriptor;
@@ -37,12 +38,15 @@ public class ObservationBitmapFactory {
 	public static Bitmap bitmap(Context context, Observation observation) {
 		InputStream iconStream = getIconStream(context, observation);
 
-		Bitmap bitmap = null;
-		BitmapFactory.Options options = new BitmapFactory.Options();
-		options.inDensity = 480;
-		options.inTargetDensity = context.getResources().getDisplayMetrics().densityDpi;
-
-		bitmap = BitmapFactory.decodeStream(iconStream, null, options);
+		// scale the image to a good size
+		Bitmap bitmap = BitmapFactory.decodeStream(iconStream);
+		Integer inLength = Math.max(bitmap.getWidth(), bitmap.getHeight());
+		Integer density = context.getResources().getDisplayMetrics().densityDpi;
+		Integer outLength = Math.max(context.getResources().getDisplayMetrics().widthPixels, context.getResources().getDisplayMetrics().heightPixels);
+		Double scale = Double.valueOf((outLength.doubleValue()/inLength.doubleValue()))*(density.doubleValue()/Double.valueOf(DisplayMetrics.DENSITY_LOW)) * 1.0/40.0;
+		int outWidth = Double.valueOf(scale*Integer.valueOf(bitmap.getWidth()).doubleValue()).intValue();
+		int outHeight = Double.valueOf(scale*Integer.valueOf(bitmap.getHeight()).doubleValue()).intValue();
+		bitmap = Bitmap.createScaledBitmap(bitmap, outWidth, outHeight, true);
 
 		return bitmap;
 	}

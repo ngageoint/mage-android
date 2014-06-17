@@ -10,6 +10,7 @@ public class MageTextView extends TextView implements MageControl {
 
 	private String propertyKey;
 	private MagePropertyType propertyType;
+	protected Boolean isRequired = Boolean.FALSE;
 
 	public MageTextView(Context context, AttributeSet attrs) {
 		super(context, attrs);
@@ -42,5 +43,15 @@ public class MageTextView extends TextView implements MageControl {
 	@Override
 	public String getPropertyValue() {
 		return getText().toString();
+	}
+
+	@Override
+	public Boolean isRequired() {
+		return isRequired;
+	}
+
+	@Override
+	public void setRequired(Boolean isRequired) {
+		this.isRequired = isRequired;
 	}
 }

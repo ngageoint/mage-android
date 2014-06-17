@@ -4,15 +4,17 @@ import mil.nga.giat.mage.R;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.util.AttributeSet;
-import android.widget.EditText;
+import android.widget.CheckBox;
 
-public class MageEditText extends EditText implements MageControl {
+public class MageCheckBox extends CheckBox implements MageControl {
 
 	private String propertyKey;
 	private MagePropertyType propertyType;
 	protected Boolean isRequired = Boolean.FALSE;
+	public final static String YES = "true";
+	public final static String NO = "false";
 
-	public MageEditText(Context context, AttributeSet attrs) {
+	public MageCheckBox(Context context, AttributeSet attrs) {
 		super(context, attrs);
 		TypedArray typedArray = context.obtainStyledAttributes(attrs, R.styleable.MageFormElement);
 		setPropertyKey(typedArray.getString(R.styleable.MageFormElement_propertyKey));
@@ -42,7 +44,7 @@ public class MageEditText extends EditText implements MageControl {
 
 	@Override
 	public String getPropertyValue() {
-		return getText().toString();
+		return isChecked() ? YES : NO;
 	}
 
 	@Override
