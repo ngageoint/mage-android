@@ -91,7 +91,7 @@ public class ObservationBitmapFactory {
 			// make path from type and variant
 			File path = new File(new File(new File(context.getFilesDir() + MageServerGetRequests.OBSERVATION_ICON_PATH), formId), "icons");
 	
-			if (type != null) {
+			if (type != null && path.exists()) {
 				String typeString = type.getValue();
 				if (typeString != null && !typeString.trim().isEmpty() && new File(path, typeString).exists()) {
 					path = new File(path, typeString);
