@@ -38,7 +38,6 @@ public class ObservationFeedCursorAdapter extends CursorAdapter {
 	private LayoutInflater inflater = null;
 	private PreparedQuery<Observation> query;
 	private Activity activity;
-	private Observation o;
 
 	public ObservationFeedCursorAdapter(Context context, Cursor c, PreparedQuery<Observation> query, Activity activity) {
 		super(context, c, false);
@@ -55,7 +54,7 @@ public class ObservationFeedCursorAdapter extends CursorAdapter {
 	@Override
 	public void bindView(View v, Context context, Cursor cursor) {
 		try {
-			o = query.mapRow(new AndroidDatabaseResults(cursor, null));
+			Observation o = query.mapRow(new AndroidDatabaseResults(cursor, null));
 
 			LayoutBaker.populateLayoutFromMap((LinearLayout) v.findViewById(R.id.observation_list_container), o.getPropertiesMap());
 
@@ -122,9 +121,8 @@ public class ObservationFeedCursorAdapter extends CursorAdapter {
 				}
 				v.findViewById(R.id.observation_list_text_content).setLayoutParams(new LinearLayout.LayoutParams((int) LayoutParams.WRAP_CONTENT, (int) LayoutParams.WRAP_CONTENT, 7.0f));
 			} else {
-				v.findViewById(R.id.observation_list_text_content).setLayoutParams(new LinearLayout.LayoutParams((int) LayoutParams.FILL_PARENT, (int) LayoutParams.WRAP_CONTENT, 7.0f));
+				v.findViewById(R.id.observation_list_text_content).setLayoutParams(new LinearLayout.LayoutParams((int) LayoutParams.MATCH_PARENT, (int) LayoutParams.WRAP_CONTENT, 7.0f));
 				iv.setVisibility(View.GONE);
-				iv.setImageDrawable(null);
 			}
 		} catch (java.sql.SQLException e) {
 			e.printStackTrace();

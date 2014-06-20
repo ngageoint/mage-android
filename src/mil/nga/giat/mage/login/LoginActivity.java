@@ -1,14 +1,13 @@
 package mil.nga.giat.mage.login;
 
+import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
-
-import org.json.JSONException;
-
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.GooglePlayServicesUtil;
 
 import mil.nga.giat.mage.LandingActivity;
 import mil.nga.giat.mage.MAGE;
@@ -48,11 +47,14 @@ import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ImageView;
 
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GooglePlayServicesUtil;
+
 /**
  * The login screen
  * 
  * @author wiedemannse
- *
+ * 
  */
 public class LoginActivity extends FragmentActivity implements AccountDelegate {
 
@@ -78,16 +80,16 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-        
-        if (getIntent().getBooleanExtra("LOGOUT", false)) {
-        	UserUtility.getInstance(getApplicationContext()).clearTokenInformation();
-            ((MAGE)getApplication()).onLogout();
-        }
-		
+
+		if (getIntent().getBooleanExtra("LOGOUT", false)) {
+			UserUtility.getInstance(getApplicationContext()).clearTokenInformation();
+			((MAGE) getApplication()).onLogout();
+		}
+
 		// IMPORTANT: load the configuration from preferences files and server
 		PreferenceHelper preferenceHelper = PreferenceHelper.getInstance(getApplicationContext());
-		preferenceHelper.initialize(false, new Integer[]{R.xml.privatepreferences, R.xml.publicpreferences, R.xml.mappreferences});
-		
+		preferenceHelper.initialize(false, new Integer[] { R.xml.privatepreferences, R.xml.publicpreferences, R.xml.mappreferences });
+
 		// check google play services verison
 		int isGooglePlayServicesAvailable = GooglePlayServicesUtil.isGooglePlayServicesAvailable(getApplicationContext());
 		if (isGooglePlayServicesAvailable != ConnectionResult.SUCCESS) {
@@ -111,20 +113,20 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 				}).show();
 			}
 		}
-		
+
 		// show the disclaimer?
 		if (UserUtility.getInstance(getApplicationContext()).isTokenExpired()) {
 			Intent intent = new Intent(this, DisclaimerActivity.class);
 			startActivity(intent);
 		}
-		
+
 		// if token is not expired, then skip the login module
 		if (!UserUtility.getInstance(getApplicationContext()).isTokenExpired()) {
 			startActivity(new Intent(getApplicationContext(), LandingActivity.class));
-			((MAGE)getApplication()).onLogin();
+			((MAGE) getApplication()).onLogin();
 			finish();
 		}
-		
+
 		// no title bar
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
 		setContentView(R.layout.activity_login);
@@ -134,7 +136,7 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 		mPasswordEditText = (EditText) findViewById(R.id.login_password);
 		mPasswordEditText.setTypeface(Typeface.DEFAULT);
 		mServerEditText = (EditText) findViewById(R.id.login_server);
-		
+
 		mLoginButton = (Button) findViewById(R.id.login_login_button);
 
 		// set the default values
@@ -142,7 +144,7 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 		getUsernameEditText().setSelection(getUsernameEditText().getText().length());
 		getServerEditText().setText(preferenceHelper.getValue(R.string.serverURLKey));
 		getServerEditText().setSelection(getServerEditText().getText().length());
-		
+
 		mPasswordEditText.setOnKeyListener(new View.OnKeyListener() {
 			@Override
 			public boolean onKey(View v, int keyCode, KeyEvent event) {
@@ -202,12 +204,12 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 	 * @param view
 	 */
 	public void login(View view) {
-		
+
 		InputMethodManager inputMethodManager = (InputMethodManager) getSystemService(Activity.INPUT_METHOD_SERVICE);
 		if (getCurrentFocus() != null) {
 			inputMethodManager.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(), 0);
 		}
-		
+
 		// reset errors
 		getUsernameEditText().setError(null);
 		getPasswordEditText().setError(null);
@@ -243,12 +245,12 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 
 		// if the username is different, then clear the token information
 		String oldUsername = PreferenceHelper.getInstance(getApplicationContext()).getValue(R.string.usernameKey);
-		if(oldUsername == null || !oldUsername.equals(username) || !server.equals(serverURLPref)) {
+		if (oldUsername == null || !oldUsername.equals(username) || !server.equals(serverURLPref)) {
 			PreferenceHelper preferenceHelper = PreferenceHelper.getInstance(getApplicationContext());
-			preferenceHelper.initialize(true, new Integer[]{R.xml.privatepreferences, R.xml.publicpreferences, R.xml.mappreferences});
+			preferenceHelper.initialize(true, new Integer[] { R.xml.privatepreferences, R.xml.publicpreferences, R.xml.mappreferences });
 			UserUtility.getInstance(getApplicationContext()).clearTokenInformation();
 		}
-		
+
 		// if the serverURL is different that before, clear out the database
 		final DaoStore daoStore = DaoStore.getInstance(getApplicationContext());
 		final AbstractAccountTask loginTask = LoginTaskFactory.getInstance(getApplicationContext()).getLoginTask(this, this.getApplicationContext());
@@ -256,7 +258,7 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 			new AlertDialog.Builder(this).setTitle("Server URL").setMessage("The server URL has been changed.  If you continue, any previous local data will be deleted.  Do you want to continue?").setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
 				public void onClick(DialogInterface dialog, int which) {
 					daoStore.resetDatabase();
-					loginTask.execute(credentials.toArray(new String[credentials.size()]));	
+					loginTask.execute(credentials.toArray(new String[credentials.size()]));
 				}
 			}).setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
 				public void onClick(DialogInterface dialog, int which) {
@@ -266,7 +268,7 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 				}
 			}).show();
 		} else {
-			loginTask.execute(credentials.toArray(new String[credentials.size()]));	
+			loginTask.execute(credentials.toArray(new String[credentials.size()]));
 		}
 	}
 
@@ -363,32 +365,44 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 
 	@Override
 	public void finishAccount(AccountStatus accountStatus) {
-		if (accountStatus.getStatus() == AccountStatus.Status.SUCCESSFUL_LOGIN) {
-			Editor sp = PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).edit();			
+		if (accountStatus.getStatus() == AccountStatus.Status.SUCCESSFUL_LOGIN || accountStatus.getStatus() == AccountStatus.Status.DISCONNECTED_LOGIN) {
+			Editor sp = PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).edit();
 			sp.putString(getApplicationContext().getString(R.string.usernameKey), getUsernameEditText().getText().toString()).commit();
-			// TODO should we store password, or some hash?
-			// sp.putString("password", getPasswordEditText().getText().toString()).commit();
+			try {
+				String md5Password = Arrays.toString(MessageDigest.getInstance("MD5").digest(getPasswordEditText().getText().toString().getBytes("UTF-8")));
+				sp.putString(getApplicationContext().getString(R.string.passwordHashKey), md5Password).commit();
+			} catch (NoSuchAlgorithmException nsae) {
+				nsae.printStackTrace();
+			} catch (UnsupportedEncodingException uee) {
+				uee.printStackTrace();
+			}
 			sp.putString(getApplicationContext().getString(R.string.serverURLKey), getServerEditText().getText().toString()).commit();
-			try {
-				sp.putString("userId", accountStatus.getAccountInformation().getJSONObject("user").getString("_id")).commit();
-			} catch (JSONException je) {
-				je.printStackTrace();
-			}
 
-			try {
-				PreferenceHelper.getInstance(getApplicationContext()).readRemoteForm();
-			} catch (Exception e) {
-				Log.e(LOG_NAME, "Problem reading server form.", e);
+			if (accountStatus.getStatus() == AccountStatus.Status.DISCONNECTED_LOGIN) {
+				new AlertDialog.Builder(this).setTitle("Disconnected Login").setMessage("You are logging into MAGE in disconnected mode.  You must re-establish a connection in order to push and pull information to and from your server.").setPositiveButton(android.R.string.ok, new OnClickListener() {
+					@Override
+					public void onClick(DialogInterface dialog, int which) {
+						dialog.dismiss();
+						startActivity(new Intent(getApplicationContext(), LandingActivity.class));
+						((MAGE) getApplication()).onLogin();
+						finish();
+					}
+				}).show();
+			} else {
+				try {
+					PreferenceHelper.getInstance(getApplicationContext()).readRemoteForm();
+				} catch (Exception e) {
+					Log.e(LOG_NAME, "Problem reading server form.", e);
+				}
+				
+				startActivity(new Intent(getApplicationContext(), LandingActivity.class));
+				((MAGE) getApplication()).onLogin();
+				finish();
 			}
-
-			startActivity(new Intent(getApplicationContext(), LandingActivity.class));
-			((MAGE)getApplication()).onLogin();
-			finish();
 		} else if (accountStatus.getStatus() == AccountStatus.Status.SUCCESSFUL_REGISTRATION) {
 			Editor sp = PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).edit();
 			sp.putString(getApplicationContext().getString(R.string.usernameKey), getUsernameEditText().getText().toString()).commit();
-			// TODO should we store password, or some hash?
-			// sp.putString("password", getPasswordEditText().getText().toString()).commit();
+			// don't store password hash this time
 			sp.putString(getApplicationContext().getString(R.string.serverURLKey), getServerEditText().getText().toString()).commit();
 			new AlertDialog.Builder(this).setTitle("Registration Sent").setMessage(R.string.device_registered_text).setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
 				public void onClick(DialogInterface dialog, int which) {
@@ -431,16 +445,16 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 			findViewById(R.id.login_form).setVisibility(View.VISIBLE);
 		}
 	}
-	
+
 	@Override
 	protected void onResume() {
 		super.onResume();
-        
-        if (getIntent().getBooleanExtra("LOGOUT", false)) {
-        	UserUtility.getInstance(getApplicationContext()).clearTokenInformation();
-            ((MAGE)getApplication()).onLogout();
-        }
-		
+
+		if (getIntent().getBooleanExtra("LOGOUT", false)) {
+			UserUtility.getInstance(getApplicationContext()).clearTokenInformation();
+			((MAGE) getApplication()).onLogout();
+		}
+
 		// TODO : populate username and password from preferences
 		showKeyboard();
 		// show form, and hide spinner

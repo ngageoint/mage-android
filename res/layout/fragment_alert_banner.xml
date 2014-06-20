@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/alert_banner"
+    style="?android:attr/buttonBarStyle"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_alignParentBottom="true"
+    android:layout_gravity="bottom"
+    android:layout_marginBottom="2dip"
+    android:background="@android:color/holo_red_light"
+    android:orientation="horizontal"
+    android:padding="1dip" >
+
+    <Button
+        android:id="@+id/alert_banner_button"
+        style="?android:attr/buttonBarButtonStyle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:textColor="#EEEEEE" />
+
+</RelativeLayout>

@@ -1,6 +1,7 @@
 package mil.nga.giat.mage;
 
 import mil.nga.giat.mage.help.HelpFragment;
+import mil.nga.giat.mage.login.AlertBannerFragment;
 import mil.nga.giat.mage.login.LoginActivity;
 import mil.nga.giat.mage.map.MapFragment;
 import mil.nga.giat.mage.navigation.DrawerItem;
@@ -9,6 +10,7 @@ import mil.nga.giat.mage.newsfeed.PeopleFeedFragment;
 import mil.nga.giat.mage.preferences.PublicPreferencesFragment;
 import mil.nga.giat.mage.sdk.utils.UserUtility;
 import android.app.Activity;
+import android.app.Fragment;
 import android.app.FragmentManager;
 import android.content.Context;
 import android.content.Intent;
@@ -116,6 +118,12 @@ public class LandingActivity extends Activity implements ListView.OnItemClickLis
         drawerList.setOnItemClickListener(this);
 
         actionbarToggleHandler();
+
+		if (savedInstanceState == null) {
+			Fragment alertBannerFragment = new AlertBannerFragment();
+			android.app.FragmentTransaction ft = getFragmentManager().beginTransaction();
+			ft.add(android.R.id.content, alertBannerFragment).commit();
+		}
 
         goToMap();
     }
@@ -257,10 +265,8 @@ public class LandingActivity extends Activity implements ListView.OnItemClickLis
         itemToSwitchTo = adapter.getItem(position);
         if (itemToSwitchTo.getFragment() == null) {
             switch (itemToSwitchTo.getId()) {
-            case 5: {
-                // TODO : wipe user certs, really just wipe out the token from
-                // shared preferences
-                UserUtility.getInstance(getApplicationContext()).clearTokenInformation();
+			case 5: {
+				UserUtility.getInstance(getApplicationContext()).clearTokenInformation();
                 startActivity(new Intent(getApplicationContext(), LoginActivity.class));
                 ((MAGE)getApplication()).onLogout();
                 finish();

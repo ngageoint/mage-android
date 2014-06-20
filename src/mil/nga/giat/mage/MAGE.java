@@ -20,6 +20,7 @@ import mil.nga.giat.mage.sdk.push.AttachmentPushAlarmReceiver;
 import mil.nga.giat.mage.sdk.push.LocationPushIntentService;
 import mil.nga.giat.mage.sdk.push.ObservationPushIntentService;
 import mil.nga.giat.mage.sdk.utils.StorageUtility;
+import mil.nga.giat.mage.sdk.utils.UserUtility;
 import mil.nga.giat.mage.sdk.utils.StorageUtility.StorageType;
 import android.app.AlarmManager;
 import android.app.Application;
@@ -69,7 +70,7 @@ public class MAGE extends Application implements IUserEventListener {
 	}
 
 	public void onLogin() {
-		createNotification(false);
+		createNotification();
 		// Start location services
 		initLocationService();
 
@@ -105,9 +106,10 @@ public class MAGE extends Application implements IUserEventListener {
 		notificationManager.cancel(MAGE_NOTIFICATION_ID);
 	}
 
-	private void createNotification(boolean tokenExpired) {
+	private void createNotification() {
 		// this line is some magic for kitkat
 		getLogoutPendingIntent().cancel();
+		boolean tokenExpired = UserUtility.getInstance(getApplicationContext()).isTokenExpired();
 
 		NotificationCompat.Builder builder = new NotificationCompat.Builder(this).setSmallIcon(R.drawable.ic_launcher).setContentTitle("MAGE").setContentText(tokenExpired ? "Your token has expired, please tap to login." : "You are logged in. Slide down to logout.").setOngoing(true)
 				.setPriority(NotificationCompat.PRIORITY_MAX).addAction(R.drawable.ic_power_off_white, "Logout", getLogoutPendingIntent());
@@ -301,6 +303,6 @@ public class MAGE extends Application implements IUserEventListener {
 	public void onTokenExpired() {
 		destroyFetching();
 		destroyPushing();
-		createNotification(true);
+		createNotification();
 	}
 }
