@@ -19,6 +19,7 @@ import mil.nga.giat.mage.sdk.location.LocationService;
 import mil.nga.giat.mage.sdk.push.AttachmentPushAlarmReceiver;
 import mil.nga.giat.mage.sdk.push.LocationPushIntentService;
 import mil.nga.giat.mage.sdk.push.ObservationPushIntentService;
+import mil.nga.giat.mage.sdk.screen.ScreenChangeReceiver;
 import mil.nga.giat.mage.sdk.utils.StorageUtility;
 import mil.nga.giat.mage.sdk.utils.UserUtility;
 import mil.nga.giat.mage.sdk.utils.StorageUtility.StorageType;
@@ -28,6 +29,7 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.AsyncTask;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.TaskStackBuilder;
@@ -64,6 +66,9 @@ public class MAGE extends Application implements IUserEventListener {
 		Glide.get().register(URL.class, new MageUrlLoader.Factory());
 		refreshTileOverlays();
 
+		// setup the screen unlock stuff
+		registerReceiver(ScreenChangeReceiver.getInstance(), new IntentFilter(Intent.ACTION_SCREEN_ON));
+		
 		HttpClientManager.getInstance(getApplicationContext()).addListener(this);
 
 		super.onCreate();
