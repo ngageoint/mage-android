@@ -11,8 +11,6 @@ public class MageCheckBox extends CheckBox implements MageControl {
 	private String propertyKey;
 	private MagePropertyType propertyType;
 	protected Boolean isRequired = Boolean.FALSE;
-	public final static String YES = "true";
-	public final static String NO = "false";
 
 	public MageCheckBox(Context context, AttributeSet attrs) {
 		super(context, attrs);
@@ -43,8 +41,8 @@ public class MageCheckBox extends CheckBox implements MageControl {
 	}
 
 	@Override
-	public String getPropertyValue() {
-		return isChecked() ? YES : NO;
+	public Boolean getPropertyValue() {
+		return isChecked();
 	}
 
 	@Override

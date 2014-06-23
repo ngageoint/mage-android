@@ -1,5 +1,6 @@
 package mil.nga.giat.mage.form;
 
+import java.io.Serializable;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -88,7 +89,7 @@ public class LayoutBaker {
 			Boolean required = field.get("required").getAsBoolean();
 			String value = null;
 			JsonElement jsonValue = field.get("value");
-			if (jsonValue != null && !jsonValue.isJsonNull()) {
+			if (jsonValue != null && !jsonValue.isJsonNull() && jsonValue.isJsonPrimitive()) {
 				value = jsonValue.getAsString();
 			}
 			String name = field.get("name").getAsString();
@@ -210,7 +211,7 @@ public class LayoutBaker {
 					mageCheckBox.setRequired(required);
 					mageCheckBox.setPropertyKey(name);
 					mageCheckBox.setPropertyType(MagePropertyType.STRING);
-					mageCheckBox.setChecked((value != null && !value.trim().isEmpty() && value.equals(MageCheckBox.YES)));
+					mageCheckBox.setChecked((value != null && !value.trim().isEmpty() && value.equals("true")));
 
 					views.add(textView);
 					views.add((View) mageCheckBox);
@@ -336,7 +337,7 @@ public class LayoutBaker {
 					mageCheckBox.setLayoutParams(controlParams);
 					mageCheckBox.setPropertyKey(name);
 					mageCheckBox.setPropertyType(MagePropertyType.STRING);
-					mageCheckBox.setChecked((value != null && !value.trim().isEmpty() && value.equals(MageCheckBox.YES)));
+					mageCheckBox.setChecked((value != null && !value.trim().isEmpty() && value.equals("true")));
 					mageCheckBox.setEnabled(false);
 					linearLayout.addView(textView);
 					linearLayout.addView((View) mageCheckBox);
@@ -392,7 +393,7 @@ public class LayoutBaker {
 				ObservationProperty property = propertiesMap.get(propertyKey);
 				
 				// important: set the values to blank if property is not found!
-				String propertyValue = "";
+				Serializable propertyValue = "";
 				if (property != null && property.getValue() != null) {
 					propertyValue = property.getValue();	
 				}
@@ -402,16 +403,16 @@ public class LayoutBaker {
 					switch (textView.getPropertyType()) {
 					case STRING:
 					case MULTILINE:
-						textView.setText(propertyValue);
+						textView.setText(propertyValue.toString());
 						break;
 					case USER:
 	
 						break;
 					case DATE:
-						String dateText = propertyValue;
+						String dateText = propertyValue.toString();
 						if(propertyValue != "") {
 							try {
-								Date date = DateUtility.getISO8601().parse(propertyValue);
+								Date date = DateUtility.getISO8601().parse(propertyValue.toString());
 								dateText = sdf.format(date);
 							} catch (ParseException pe) {
 								Log.e(LOG_NAME, "Problem parsing date.", pe);
@@ -428,7 +429,7 @@ public class LayoutBaker {
 					}
 				} else if (v instanceof MageEditText) {
 					MageEditText editText = (MageEditText) v;
-					editText.setText(propertyValue);
+					editText.setText(propertyValue.toString());
 				} else if (v instanceof MageSpinner) {
 					MageSpinner spinner = (MageSpinner) v;
 					for (int index = 0; index < spinner.getAdapter().getCount(); index++) {
@@ -445,7 +446,7 @@ public class LayoutBaker {
 					}
 				} else if (v instanceof MageCheckBox) {
 					MageCheckBox checkBox = (MageCheckBox) v;
-					checkBox.setChecked(propertyValue.equals(MageCheckBox.YES));
+					checkBox.setChecked(Boolean.valueOf(propertyValue.toString()));
 				}
 			} else if (v instanceof LinearLayout) {
 				populateLayoutFromMap((LinearLayout) v, propertiesMap);
@@ -456,7 +457,7 @@ public class LayoutBaker {
 	public static void populateLayoutFromBundle(final LinearLayout linearLayout, Bundle savedInstanceState) {
 		Map<String, ObservationProperty> propertiesMap = new HashMap<String, ObservationProperty>();
 		for (String key : savedInstanceState.keySet()) {
-			propertiesMap.put(key, new ObservationProperty(key, savedInstanceState.getString(key)));
+			propertiesMap.put(key, new ObservationProperty(key, savedInstanceState.getSerializable(key)));
 		}
 		populateLayoutFromMap(linearLayout, propertiesMap);
 	}
@@ -479,11 +480,11 @@ public class LayoutBaker {
 			if (v instanceof MageControl) {
 				MageControl mageControl = (MageControl) v;
 				String key = mageControl.getPropertyKey();
-				String value = mageControl.getPropertyValue();
+				Serializable value = mageControl.getPropertyValue();
 				if (key != null && value != null) {
 					if (mageControl.getPropertyType().equals(MagePropertyType.DATE)) {
 						try {
-							value = DateUtility.getISO8601().format(sdf.parse(value));
+							value = DateUtility.getISO8601().format(sdf.parse(value.toString()));
 						} catch (ParseException pe) {
 							pe.printStackTrace();
 						}
@@ -500,7 +501,7 @@ public class LayoutBaker {
 	public static void populateBundleFromLayout(LinearLayout linearLayout, Bundle outState) {
 		Map<String, ObservationProperty> properties = populateMapFromLayout(linearLayout);
 		for (String key : properties.keySet()) {
-			outState.putString(key, properties.get(key).getValue());
+			outState.putSerializable(key, properties.get(key).getValue());
 		}
 	}
 
@@ -518,7 +519,7 @@ public class LayoutBaker {
 			if (v instanceof MageControl) {
 				MageControl mageControl = (MageControl) v;
 				if (mageControl.isRequired()) {
-					String value = mageControl.getPropertyValue();
+					String value = (mageControl.getPropertyValue()==null)?null:mageControl.getPropertyValue().toString();
 					Boolean controlStatus = !(value == null || value.isEmpty());
 					if (!controlStatus) {
 						status = false;

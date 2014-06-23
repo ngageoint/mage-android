@@ -365,7 +365,7 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 
 	@Override
 	public void finishAccount(AccountStatus accountStatus) {
-		if (accountStatus.getStatus() == AccountStatus.Status.SUCCESSFUL_LOGIN || accountStatus.getStatus() == AccountStatus.Status.DISCONNECTED_LOGIN) {
+		if (accountStatus.getStatus().equals(AccountStatus.Status.SUCCESSFUL_LOGIN) || accountStatus.getStatus().equals(AccountStatus.Status.DISCONNECTED_LOGIN)) {
 			Editor sp = PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).edit();
 			sp.putString(getApplicationContext().getString(R.string.usernameKey), getUsernameEditText().getText().toString()).commit();
 			try {
@@ -378,7 +378,7 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 			}
 			sp.putString(getApplicationContext().getString(R.string.serverURLKey), getServerEditText().getText().toString()).commit();
 
-			if (accountStatus.getStatus() == AccountStatus.Status.DISCONNECTED_LOGIN) {
+			if (accountStatus.getStatus().equals(AccountStatus.Status.DISCONNECTED_LOGIN)) {
 				new AlertDialog.Builder(this).setTitle("Disconnected Login").setMessage("You are logging into MAGE in disconnected mode.  You must re-establish a connection in order to push and pull information to and from your server.").setPositiveButton(android.R.string.ok, new OnClickListener() {
 					@Override
 					public void onClick(DialogInterface dialog, int which) {
@@ -399,7 +399,7 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 				((MAGE) getApplication()).onLogin();
 				finish();
 			}
-		} else if (accountStatus.getStatus() == AccountStatus.Status.SUCCESSFUL_REGISTRATION) {
+		} else if (accountStatus.getStatus().equals(AccountStatus.Status.SUCCESSFUL_REGISTRATION)) {
 			Editor sp = PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).edit();
 			sp.putString(getApplicationContext().getString(R.string.usernameKey), getUsernameEditText().getText().toString()).commit();
 			// don't store password hash this time

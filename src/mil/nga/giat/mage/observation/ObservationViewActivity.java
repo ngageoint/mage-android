@@ -279,7 +279,7 @@ public class ObservationViewActivity extends Activity {
 			
 			ObservationProperty observationProperty = propertiesMap.get("type");
 			if(observationProperty != null) {
-				this.setTitle(observationProperty.getValue());
+				this.setTitle(observationProperty.getValue().toString());
 			}
 			Geometry geo = o.getObservationGeometry().getGeometry();
 			if (geo instanceof Point) {
@@ -290,8 +290,8 @@ public class ObservationViewActivity extends Activity {
 				} else {
 					findViewById(R.id.location_provider).setVisibility(View.GONE);
 				}
-				if (propertiesMap.containsKey("accuracy") && !"0.0".equals(propertiesMap.get("accuracy").getValue())) {
-					((TextView) findViewById(R.id.location_accuracy)).setText("\u00B1" + propertiesMap.get("accuracy").getValue() + "m");
+				if (propertiesMap.containsKey("accuracy") && Float.parseFloat(propertiesMap.get("accuracy").getValue().toString()) > 0f) {
+					((TextView) findViewById(R.id.location_accuracy)).setText("\u00B1" + propertiesMap.get("accuracy").getValue().toString() + "m");
 				} else {
 					findViewById(R.id.location_accuracy).setVisibility(View.GONE);
 				}

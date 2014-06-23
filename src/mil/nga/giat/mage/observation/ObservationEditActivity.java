@@ -217,11 +217,11 @@ public class ObservationEditActivity extends Activity {
 					Point point = (Point) geo;
 					String provider = "manual";
 					if (propertiesMap.get("provider") != null) {
-						provider = propertiesMap.get("provider").getValue();
+						provider = propertiesMap.get("provider").getValue().toString();
 					}
 					l = new Location(provider);
 					if (propertiesMap.containsKey("accuracy")) {
-						l.setAccuracy(Float.parseFloat(propertiesMap.get("accuracy").getValue()));
+						l.setAccuracy(Float.parseFloat(propertiesMap.get("accuracy").getValue().toString()));
 					}
 					l.setLatitude(point.getY());
 					l.setLongitude(point.getX());
@@ -307,7 +307,7 @@ public class ObservationEditActivity extends Activity {
 	private long getElapsedTimeInMilliseconds() {
 		long elapsedTimeInMilliseconds = 0;
 		if (o.getPropertiesMap().containsKey("delta")) {
-			elapsedTimeInMilliseconds = Long.parseLong(o.getPropertiesMap().get("delta").getValue());
+			elapsedTimeInMilliseconds = Long.parseLong(o.getPropertiesMap().get("delta").getValue().toString());
 		}
 		if (Build.VERSION.SDK_INT >= 17 && l.getElapsedRealtimeNanos() != 0) {
 			elapsedTimeInMilliseconds = ((SystemClock.elapsedRealtimeNanos() - l.getElapsedRealtimeNanos()) / (1000000l));
@@ -453,7 +453,7 @@ public class ObservationEditActivity extends Activity {
 				Log.e(LOG_NAME, "Could not parse timestamp", pe);
 			}
 			// Add properties that weren't part of the layout
-			propertyMap.put("accuracy", new ObservationProperty("accuracy", Float.toString(l.getAccuracy())));
+			propertyMap.put("accuracy", new ObservationProperty("accuracy", l.getAccuracy()));
 			String provider = l.getProvider();
 			if (provider == null || provider.trim().isEmpty()) {
 				provider = "manual";

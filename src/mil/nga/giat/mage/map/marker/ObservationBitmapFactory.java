@@ -92,11 +92,11 @@ public class ObservationBitmapFactory {
 			File path = new File(new File(new File(context.getFilesDir() + MageServerGetRequests.OBSERVATION_ICON_PATH), formId), "icons");
 	
 			if (type != null && path.exists()) {
-				String typeString = type.getValue();
+				String typeString = type.getValue().toString();
 				if (typeString != null && !typeString.trim().isEmpty() && new File(path, typeString).exists()) {
 					path = new File(path, typeString);
 					if (variant != null) {
-						String variantString = variant.getValue();
+						String variantString = variant.getValue().toString();
 						if (variantString != null && !variantString.trim().isEmpty() && new File(path, variantString).exists()) {
 							path = new File(path, variantString).listFiles()[0];
 						} else {
