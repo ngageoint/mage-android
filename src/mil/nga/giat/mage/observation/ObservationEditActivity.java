@@ -248,6 +248,7 @@ public class ObservationEditActivity extends Activity {
 					public void onClick(DialogInterface dialog, int id) {
 						Calendar c = Calendar.getInstance();
 						c.set(datePicker.getYear(), datePicker.getMonth(), datePicker.getDayOfMonth(), timePicker.getCurrentHour(), timePicker.getCurrentMinute(), 0);
+						c.set(Calendar.MILLISECOND, 0);
 						((TextView) findViewById(R.id.date)).setText(LayoutBaker.sdf.format(c.getTime()));
 					}
 				}).setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {

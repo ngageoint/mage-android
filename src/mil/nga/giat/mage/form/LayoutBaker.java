@@ -11,6 +11,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.TimeZone;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -50,7 +51,11 @@ public class LayoutBaker {
 
 	private static final String LOG_NAME = LayoutBaker.class.getName();
 
-	public final static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm zz", Locale.getDefault());
+	public final static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS zz", Locale.getDefault());
+	
+	static {
+		sdf.setTimeZone(TimeZone.getTimeZone("Zulu"));
+	}
 
 	public enum ControlGenerationType {
 		VIEW, EDIT;
@@ -289,6 +294,7 @@ public class LayoutBaker {
 								public void onClick(DialogInterface dialog, int id) {
 									Calendar c = Calendar.getInstance();
 									c.set(datePicker.getYear(), datePicker.getMonth(), datePicker.getDayOfMonth(), timePicker.getCurrentHour(), timePicker.getCurrentMinute(), 0);
+									c.set(Calendar.MILLISECOND, 0);
 									mageDateText.setText(sdf.format(c.getTime()));
 								}
 							}).setNegativeButton(mil.nga.giat.mage.R.string.cancel, new DialogInterface.OnClickListener() {
