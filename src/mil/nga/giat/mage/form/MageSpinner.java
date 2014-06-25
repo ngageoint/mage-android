@@ -1,9 +1,12 @@
 package mil.nga.giat.mage.form;
 
+import java.io.Serializable;
+
 import mil.nga.giat.mage.R;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.util.AttributeSet;
+import android.widget.ArrayAdapter;
 import android.widget.Spinner;
 
 public class MageSpinner extends Spinner implements MageControl {
@@ -53,5 +56,14 @@ public class MageSpinner extends Spinner implements MageControl {
 	@Override
 	public void setRequired(Boolean isRequired) {
 		this.isRequired = isRequired;
+	}
+
+	@Override
+	public void setPropertyValue(Serializable value) {
+		if (value != null) {
+			setSelection(Math.max(0, ((ArrayAdapter<String>) getAdapter()).getPosition(value.toString())));
+		} else {
+			setSelection(0);
+		}
 	}
 }

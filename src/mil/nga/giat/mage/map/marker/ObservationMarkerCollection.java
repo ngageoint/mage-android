@@ -94,6 +94,7 @@ public class ObservationMarkerCollection implements PointCollection<Observation>
         if (marker != null) {
             markerIdToObservation.remove(marker.getId());
             markerCollection.remove(marker);
+            marker.remove();
         }
     }
 

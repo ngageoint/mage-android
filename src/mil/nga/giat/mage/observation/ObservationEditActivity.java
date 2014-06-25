@@ -18,6 +18,7 @@ import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.form.LayoutBaker;
 import mil.nga.giat.mage.form.LayoutBaker.ControlGenerationType;
 import mil.nga.giat.mage.form.MageSpinner;
+import mil.nga.giat.mage.form.MageTextView;
 import mil.nga.giat.mage.map.marker.ObservationBitmapFactory;
 import mil.nga.giat.mage.sdk.datastore.common.State;
 import mil.nga.giat.mage.sdk.datastore.observation.Attachment;
@@ -249,7 +250,7 @@ public class ObservationEditActivity extends Activity {
 						Calendar c = Calendar.getInstance();
 						c.set(datePicker.getYear(), datePicker.getMonth(), datePicker.getDayOfMonth(), timePicker.getCurrentHour(), timePicker.getCurrentMinute(), 0);
 						c.set(Calendar.MILLISECOND, 0);
-						((TextView) findViewById(R.id.date)).setText(LayoutBaker.sdf.format(c.getTime()));
+						((MageTextView) findViewById(R.id.date)).setPropertyValue(c.getTime());
 					}
 				}).setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
 					public void onClick(DialogInterface dialog, int id) {

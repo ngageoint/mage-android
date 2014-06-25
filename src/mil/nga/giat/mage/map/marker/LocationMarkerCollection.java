@@ -110,6 +110,7 @@ public class LocationMarkerCollection implements PointCollection<Location>, OnMa
 		if (marker != null) {
 			markerIdToLocation.remove(marker.getId());
 			markerCollection.remove(marker);
+			marker.remove();
 		}
 	}
 

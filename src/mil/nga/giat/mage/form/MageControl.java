@@ -10,6 +10,8 @@ public interface MageControl {
 
 	public Serializable getPropertyValue();
 
+	public void setPropertyValue(Serializable value);
+
 	public void setPropertyType(MagePropertyType propertyType);
 
 	public MagePropertyType getPropertyType();

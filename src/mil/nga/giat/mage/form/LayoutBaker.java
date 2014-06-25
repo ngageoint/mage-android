@@ -2,21 +2,12 @@ package mil.nga.giat.mage.form;
 
 import java.io.Serializable;
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
-import java.util.TimeZone;
-
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 
 import mil.nga.giat.mage.sdk.R;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationProperty;
@@ -41,6 +32,11 @@ import android.widget.RadioButton;
 import android.widget.TextView;
 import android.widget.TimePicker;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+
 /**
  * Use this class to build and populate the views concerned with form like information.
  * 
@@ -50,12 +46,6 @@ import android.widget.TimePicker;
 public class LayoutBaker {
 
 	private static final String LOG_NAME = LayoutBaker.class.getName();
-
-	public final static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS zz", Locale.getDefault());
-	
-	static {
-		sdf.setTimeZone(TimeZone.getTimeZone("Zulu"));
-	}
 
 	public enum ControlGenerationType {
 		VIEW, EDIT;
@@ -162,9 +152,7 @@ public class LayoutBaker {
 				mageEditText.setHint(title);
 				mageEditText.setRequired(required);
 				mageEditText.setPropertyKey(name);
-				if (value != null && !value.trim().isEmpty()) {
-					mageEditText.setText(value);
-				}
+				mageEditText.setPropertyValue(value);
 				switch (type) {
 				case TEXTFIELD:
 				case EMAIL:
@@ -192,19 +180,13 @@ public class LayoutBaker {
 					mageRadioGroup.setPropertyKey(name);
 					mageRadioGroup.setPropertyType(MagePropertyType.MULTICHOICE);
 
-					int j = 0;
 					for (String choice : choices) {
 						RadioButton radioButton = new RadioButton(context);
 						radioButton.setId(uniqueChildIdIndex++);
 						radioButton.setText(choice);
-						if (j++ == 0) {
-							radioButton.setChecked(true);
-						}
-						if (value != null && !value.trim().isEmpty() && value.equals(choice)) {
-							radioButton.setChecked(true);
-						}
 						mageRadioGroup.addView(radioButton);
 					}
+					mageRadioGroup.setPropertyValue(value);
 
 					views.add(textView);
 					views.add((View) mageRadioGroup);
@@ -216,7 +198,9 @@ public class LayoutBaker {
 					mageCheckBox.setRequired(required);
 					mageCheckBox.setPropertyKey(name);
 					mageCheckBox.setPropertyType(MagePropertyType.STRING);
-					mageCheckBox.setChecked((value != null && !value.trim().isEmpty() && value.equals("true")));
+					if(value != null && !value.trim().isEmpty()) {
+						mageCheckBox.setPropertyValue(Boolean.valueOf(value));
+					}
 
 					views.add(textView);
 					views.add((View) mageCheckBox);
@@ -232,10 +216,7 @@ public class LayoutBaker {
 					ArrayAdapter<String> spinnerArrayAdapter = new ArrayAdapter<String>(context, android.R.layout.simple_spinner_item, choices.toArray(new String[choices.size()]));
 					spinnerArrayAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 					mageSpinner.setAdapter(spinnerArrayAdapter);
-
-					if (value != null && !value.trim().isEmpty()) {
-						mageSpinner.setSelection(Math.max(0, spinnerArrayAdapter.getPosition(value)));
-					}
+					mageSpinner.setPropertyValue(value);
 
 					views.add(textView);
 					views.add((View) mageSpinner);
@@ -266,7 +247,7 @@ public class LayoutBaker {
 
 					if (value != null && !value.trim().isEmpty()) {
 						try {
-							mageDateText.setText(sdf.format(DateUtility.getISO8601().parse(value)));
+							mageDateText.setPropertyValue(DateUtility.getISO8601().parse(value));
 						} catch (ParseException pe) {
 							Log.e(LOG_NAME, "Problem parsing date.", pe);
 						}
@@ -295,7 +276,7 @@ public class LayoutBaker {
 									Calendar c = Calendar.getInstance();
 									c.set(datePicker.getYear(), datePicker.getMonth(), datePicker.getDayOfMonth(), timePicker.getCurrentHour(), timePicker.getCurrentMinute(), 0);
 									c.set(Calendar.MILLISECOND, 0);
-									mageDateText.setText(sdf.format(c.getTime()));
+									mageDateText.setPropertyValue(c.getTime());
 								}
 							}).setNegativeButton(mil.nga.giat.mage.R.string.cancel, new DialogInterface.OnClickListener() {
 								public void onClick(DialogInterface dialog, int id) {
@@ -343,7 +324,9 @@ public class LayoutBaker {
 					mageCheckBox.setLayoutParams(controlParams);
 					mageCheckBox.setPropertyKey(name);
 					mageCheckBox.setPropertyType(MagePropertyType.STRING);
-					mageCheckBox.setChecked((value != null && !value.trim().isEmpty() && value.equals("true")));
+					if(value != null && !value.trim().isEmpty()) {
+						mageCheckBox.setPropertyValue(Boolean.valueOf(value));
+					}
 					mageCheckBox.setEnabled(false);
 					linearLayout.addView(textView);
 					linearLayout.addView((View) mageCheckBox);
@@ -398,62 +381,12 @@ public class LayoutBaker {
 				String propertyKey = mageControl.getPropertyKey();
 				ObservationProperty property = propertiesMap.get(propertyKey);
 				
-				// important: set the values to blank if property is not found!
-				Serializable propertyValue = "";
+				Serializable propertyValue = null;
 				if (property != null && property.getValue() != null) {
-					propertyValue = property.getValue();	
+					propertyValue = property.getValue();
 				}
 				
-				if (v instanceof MageTextView) {
-					MageTextView textView = (MageTextView) v;
-					switch (textView.getPropertyType()) {
-					case STRING:
-					case MULTILINE:
-						textView.setText(propertyValue.toString());
-						break;
-					case USER:
-	
-						break;
-					case DATE:
-						String dateText = propertyValue.toString();
-						if(propertyValue != "") {
-							try {
-								Date date = DateUtility.getISO8601().parse(propertyValue.toString());
-								dateText = sdf.format(date);
-							} catch (ParseException pe) {
-								Log.e(LOG_NAME, "Problem parsing date.", pe);
-							}
-						}
-						textView.setText(dateText);
-						break;
-					case LOCATION:
-						// location is not a property, it lives in the parent
-						break;
-					case MULTICHOICE:
-	
-						break;
-					}
-				} else if (v instanceof MageEditText) {
-					MageEditText editText = (MageEditText) v;
-					editText.setText(propertyValue.toString());
-				} else if (v instanceof MageSpinner) {
-					MageSpinner spinner = (MageSpinner) v;
-					for (int index = 0; index < spinner.getAdapter().getCount(); index++) {
-						if (spinner.getAdapter().getItem(index).equals(propertyValue)) {
-							spinner.setSelection(index);
-							break;
-						}
-					}
-				} else if (v instanceof MageRadioGroup) {
-					MageRadioGroup radioGroup = (MageRadioGroup) v;
-					for (int index = 0; index < radioGroup.getChildCount(); index++) {
-						RadioButton radioButton = (RadioButton) radioGroup.getChildAt(index);
-						radioButton.setChecked(radioButton.getText().equals(propertyValue));
-					}
-				} else if (v instanceof MageCheckBox) {
-					MageCheckBox checkBox = (MageCheckBox) v;
-					checkBox.setChecked(Boolean.valueOf(propertyValue.toString()));
-				}
+				((MageControl) v).setPropertyValue(propertyValue);
 			} else if (v instanceof LinearLayout) {
 				populateLayoutFromMap((LinearLayout) v, propertiesMap);
 			}
@@ -488,13 +421,6 @@ public class LayoutBaker {
 				String key = mageControl.getPropertyKey();
 				Serializable value = mageControl.getPropertyValue();
 				if (key != null && value != null) {
-					if (mageControl.getPropertyType().equals(MagePropertyType.DATE)) {
-						try {
-							value = DateUtility.getISO8601().format(sdf.parse(value.toString()));
-						} catch (ParseException pe) {
-							pe.printStackTrace();
-						}
-					}
 					fields.put(key, new ObservationProperty(key, value));
 				}
 			} else if (v instanceof LinearLayout) {

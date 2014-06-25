@@ -1,5 +1,7 @@
 package mil.nga.giat.mage.form;
 
+import java.io.Serializable;
+
 import mil.nga.giat.mage.R;
 import android.content.Context;
 import android.content.res.TypedArray;
@@ -53,5 +55,17 @@ public class MageCheckBox extends CheckBox implements MageControl {
 	@Override
 	public void setRequired(Boolean isRequired) {
 		this.isRequired = isRequired;
+	}
+
+	@Override
+	public void setPropertyValue(Serializable value) {
+		if(value == null) {
+			return;
+		}
+		if (value instanceof Boolean) {
+			setChecked((Boolean) value);
+		} else if (value instanceof String) {
+			setChecked(Boolean.valueOf((String) value));
+		}
 	}
 }

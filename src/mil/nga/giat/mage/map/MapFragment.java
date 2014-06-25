@@ -92,82 +92,80 @@ import com.google.maps.android.PolyUtil;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.Point;
 
-public class MapFragment extends Fragment implements 
-        OnMapClickListener,
-        OnMapLongClickListener, 
-        OnMarkerClickListener,
-        OnMapPanListener, 
-        OnMyLocationButtonClickListener, 
-        OnClickListener, 
-        LocationSource, 
-        LocationListener, 
-        OnCacheOverlayListener, 
-        OnSharedPreferenceChangeListener, 
-        IObservationEventListener,
-        ILocationEventListener,
-        IStaticFeatureEventListener {
+public class MapFragment extends Fragment implements OnMapClickListener, OnMapLongClickListener, OnMarkerClickListener, OnMapPanListener, OnMyLocationButtonClickListener, OnClickListener, LocationSource, LocationListener, OnCacheOverlayListener, OnSharedPreferenceChangeListener,
+		IObservationEventListener, ILocationEventListener, IStaticFeatureEventListener {
 
 	private static final String LOG_NAME = MapFragment.class.getName();
-	
-    private MAGE mage;
-    private MapView mapView;
-    private GoogleMap map;
-    private int mapType = 1;
-    private Location location;
-    private boolean followMe = false;
-    private GoogleMapWrapper mapWrapper;
-    protected User currentUser = null;
-    private OnLocationChangedListener locationChangedListener;
-    
-    private static final int REFRESHMARKERINTERVALINSECONDS = 30;
-    private RefreshMarkersTask refreshLocationsMarkersTask;
-    private RefreshMarkersTask refreshMyHistoricLocationsMarkersTask;
-    
-    private final BlockingQueue<Runnable> queue = new ArrayBlockingQueue<Runnable>(64);
-    private final ThreadPoolExecutor executor = new ThreadPoolExecutor(8, 8, 10, TimeUnit.SECONDS, queue);
 
-    private PointCollection<Observation> observations;
-    private PointCollection<mil.nga.giat.mage.sdk.datastore.location.Location> locations;
-    private PointCollection<mil.nga.giat.mage.sdk.datastore.location.Location> myHistoricLocations;
-    private StaticGeometryCollection staticGeometryCollection;
+	private MAGE mage;
+	private MapView mapView;
+	private GoogleMap map;
+	private int mapType = 1;
+	private Location location;
+	private boolean followMe = false;
+	private GoogleMapWrapper mapWrapper;
+	protected User currentUser = null;
+	private OnLocationChangedListener locationChangedListener;
 
-    private Map<String, TileOverlay> tileOverlays = new HashMap<String, TileOverlay>();
-    private Collection<String> featureIds = new ArrayList<String>();
+	private static final int REFRESHMARKERINTERVALINSECONDS = 30;
+	private RefreshMarkersTask refreshLocationsMarkersTask;
+	private RefreshMarkersTask refreshMyHistoricLocationsMarkersTask;
 
-    private LocationService locationService;
-    
+	private final BlockingQueue<Runnable> queue = new ArrayBlockingQueue<Runnable>(64);
+	private final ThreadPoolExecutor executor = new ThreadPoolExecutor(8, 8, 10, TimeUnit.SECONDS, queue);
+
+	private PointCollection<Observation> observations;
+	private PointCollection<mil.nga.giat.mage.sdk.datastore.location.Location> locations;
+	private PointCollection<mil.nga.giat.mage.sdk.datastore.location.Location> myHistoricLocations;
+	private StaticGeometryCollection staticGeometryCollection;
+
+	private Map<String, TileOverlay> tileOverlays = new HashMap<String, TileOverlay>();
+	private Collection<String> featureIds = new ArrayList<String>();
+
+	private LocationService locationService;
+
 	public static String INITIAL_LOCATION = "INITIAL_LOCATION";
 
-    SharedPreferences preferences;
+	SharedPreferences preferences;
 
-    @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.fragment_map, container, false);
+	@Override
+	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+		View view = inflater.inflate(R.layout.fragment_map, container, false);
 
-        setHasOptionsMenu(true);
-        
-        mage = (MAGE) getActivity().getApplication();
+		setHasOptionsMenu(true);
 
-        mapWrapper = new GoogleMapWrapper(getActivity().getApplicationContext());
-        mapWrapper.addView(view);
+		mage = (MAGE) getActivity().getApplication();
 
-        preferences = PreferenceManager.getDefaultSharedPreferences(getActivity().getApplicationContext());
+		mapWrapper = new GoogleMapWrapper(getActivity().getApplicationContext());
+		mapWrapper.addView(view);
 
-        mapView = (MapView) view.findViewById(R.id.mapView);
-        mapView.onCreate(savedInstanceState);
-        
+		preferences = PreferenceManager.getDefaultSharedPreferences(getActivity().getApplicationContext());
+
+		mapView = (MapView) view.findViewById(R.id.mapView);
+		mapView.onCreate(savedInstanceState);
+
 		MapsInitializer.initialize(getActivity().getApplicationContext());
-        
-        ImageButton mapSettings = (ImageButton) view.findViewById(R.id.map_settings);
-        mapSettings.setOnClickListener(this);
-        
-        locationService = mage.getLocationService();
-                
-        return mapWrapper;
-    }
-    
+
+		ImageButton mapSettings = (ImageButton) view.findViewById(R.id.map_settings);
+		mapSettings.setOnClickListener(this);
+
+		locationService = mage.getLocationService();
+
+		return mapWrapper;
+	}
+
+	@Override
+	public void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		ObservationHelper.getInstance(getActivity().getApplicationContext()).addListener(this);
+		LocationHelper.getInstance(getActivity().getApplicationContext()).addListener(this);
+	}
+
 	@Override
 	public void onDestroy() {
+		ObservationHelper.getInstance(getActivity().getApplicationContext()).removeListener(this);
+		LocationHelper.getInstance(getActivity().getApplicationContext()).removeListener(this);
+
 		mapView.onDestroy();
 		map = null;
 
@@ -185,64 +183,62 @@ public class MapFragment extends Fragment implements
 		super.onDestroy();
 	}
 
-    @Override
-    public void onLowMemory() {
-        super.onLowMemory();
-        mapView.onLowMemory();
-    }
-    
-    @Override
-    public void onResume() {
-        super.onResume();
-        
+	@Override
+	public void onLowMemory() {
+		super.onLowMemory();
+		mapView.onLowMemory();
+	}
+
+	@Override
+	public void onResume() {
+		super.onResume();
+
 		try {
 			currentUser = UserHelper.getInstance(getActivity().getApplicationContext()).readCurrentUser();
 		} catch (UserException ue) {
 			Log.e(LOG_NAME, "Could not find current user.", ue);
 		}
-        
-        mapView.onResume();
 
-        PreferenceManager.getDefaultSharedPreferences(getActivity().getApplicationContext()).registerOnSharedPreferenceChangeListener(this);
-        
-        if (map == null) {
-            map = mapView.getMap();
-        }
-        map.setOnMapClickListener(this);
-        map.setOnMarkerClickListener(this);
-        map.setOnMapLongClickListener(this);
-        map.setOnMyLocationButtonClickListener(this);
-        
-        updateMapView();
-        
+		mapView.onResume();
+
+		PreferenceManager.getDefaultSharedPreferences(getActivity().getApplicationContext()).registerOnSharedPreferenceChangeListener(this);
+
+		if (map == null) {
+			map = mapView.getMap();
+		}
+		map.setOnMapClickListener(this);
+		map.setOnMarkerClickListener(this);
+		map.setOnMapLongClickListener(this);
+		map.setOnMyLocationButtonClickListener(this);
+
+		updateMapView();
+
 		if (staticGeometryCollection == null) {
 			staticGeometryCollection = new StaticGeometryCollection();
 		}
-        updateStaticFeatureLayers();
-        
-        if (observations == null) {
-            observations = new ObservationMarkerCollection(getActivity(), map);
-        }
-        ObservationHelper.getInstance(getActivity().getApplicationContext()).addListener(this);
-        
+		updateStaticFeatureLayers();
+
+		if (observations == null) {
+			observations = new ObservationMarkerCollection(getActivity(), map);
+		}
+
 		getActivity().getActionBar().setTitle(getTemporalFilterTitle());
-        ObservationLoadTask observationLoad = new ObservationLoadTask(getActivity(), observations);
-        observationLoad.setFilter(getTemporalFilter("last_modified"));
-        observationLoad.executeOnExecutor(executor);
-        
-        boolean showObservations = preferences.getBoolean(getResources().getString(R.string.showObservationsKey), true);
-        observations.setVisibility(showObservations); 
-        
-        if (locations == null) {
-            locations = new LocationMarkerCollection(getActivity(), map);
-        }
-        LocationHelper.getInstance(getActivity().getApplicationContext()).addListener(this);
-        LocationLoadTask locationLoad = new LocationLoadTask(getActivity(), locations);
-        locationLoad.setFilter(getTemporalFilter("timestamp"));
-        locationLoad.executeOnExecutor(executor);
-        
-        boolean showLocations = preferences.getBoolean(getResources().getString(R.string.showLocationsKey), true);
-        locations.setVisibility(showLocations);
+		ObservationLoadTask observationLoad = new ObservationLoadTask(getActivity(), observations);
+		observationLoad.setFilter(getTemporalFilter("last_modified"));
+		observationLoad.executeOnExecutor(executor);
+
+		boolean showObservations = preferences.getBoolean(getResources().getString(R.string.showObservationsKey), true);
+		observations.setVisibility(showObservations);
+
+		if (locations == null) {
+			locations = new LocationMarkerCollection(getActivity(), map);
+		}
+		LocationLoadTask locationLoad = new LocationLoadTask(getActivity(), locations);
+		locationLoad.setFilter(getTemporalFilter("timestamp"));
+		locationLoad.executeOnExecutor(executor);
+
+		boolean showLocations = preferences.getBoolean(getResources().getString(R.string.showLocationsKey), true);
+		locations.setVisibility(showLocations);
 
 		if (myHistoricLocations == null) {
 			myHistoricLocations = new MyHistoricalLocationMarkerCollection(getActivity(), map);
@@ -253,90 +249,87 @@ public class MapFragment extends Fragment implements
 
 		boolean showMyLocationHistory = preferences.getBoolean(getResources().getString(R.string.showMyLocationHistoryKey), false);
 		myHistoricLocations.setVisibility(showMyLocationHistory);
-        
-        mage.registerCacheOverlayListener(this);
-        StaticFeatureHelper.getInstance(getActivity().getApplicationContext()).addListener(this);
 
-        // Check if any map preferences changed that I care about
-        boolean locationServiceEnabled = preferences.getBoolean(getResources().getString(R.string.locationServiceEnabledKey), false);
-        map.setMyLocationEnabled(locationServiceEnabled);
+		mage.registerCacheOverlayListener(this);
+		StaticFeatureHelper.getInstance(getActivity().getApplicationContext()).addListener(this);
 
-        if (locationServiceEnabled) {
-            map.setLocationSource(this);
-            locationService.registerOnLocationListener(this);
-        }
-        
-        // task to refresh location markers every x seconds
-        if(refreshLocationsMarkersTask == null) {
-        	refreshLocationsMarkersTask = new RefreshMarkersTask(locations);
-        }
-        if(!refreshLocationsMarkersTask.isCancelled()) {
-        	refreshLocationsMarkersTask.executeOnExecutor(executor, REFRESHMARKERINTERVALINSECONDS);
-        }
-        
-        // task to refresh my historic location markers every x seconds
-        if(refreshMyHistoricLocationsMarkersTask == null) {
-        	refreshMyHistoricLocationsMarkersTask = new RefreshMarkersTask(myHistoricLocations);
-        }
-        if(!refreshMyHistoricLocationsMarkersTask.isCancelled()) {
-        	refreshMyHistoricLocationsMarkersTask.executeOnExecutor(executor, REFRESHMARKERINTERVALINSECONDS);
-        }
-        
-        // zoom to location if told to
-        Float zoomLat = preferences.getFloat(getResources().getString(R.string.mapZoomLatKey), Float.MAX_VALUE);
-        Float zoomLon = preferences.getFloat(getResources().getString(R.string.mapZoomLonKey), Float.MAX_VALUE);
-        if(zoomLat != null && zoomLon != null && !zoomLat.equals(Float.MAX_VALUE) && !zoomLon.equals(Float.MAX_VALUE)) {
-            Editor e = preferences.edit();
-            e.putFloat(getResources().getString(R.string.mapZoomLatKey), Float.MAX_VALUE).commit();
-            e.putFloat(getResources().getString(R.string.mapZoomLonKey), Float.MAX_VALUE).commit();
-            android.location.Location tl = new android.location.Location("");
-            tl.setLatitude(zoomLat.doubleValue());
-            tl.setLongitude(zoomLon.doubleValue());
-            zoomToLocation(tl);
-        }
-    }
+		// Check if any map preferences changed that I care about
+		boolean locationServiceEnabled = preferences.getBoolean(getResources().getString(R.string.locationServiceEnabledKey), false);
+		map.setMyLocationEnabled(locationServiceEnabled);
 
-    @Override
-    public void onPause() {
-        super.onPause();
-        
-        if(refreshLocationsMarkersTask != null) {
-        	refreshLocationsMarkersTask.cancel(true);
-        	refreshLocationsMarkersTask = null;
-        }
-        
-        if(refreshMyHistoricLocationsMarkersTask != null) {
-        	refreshMyHistoricLocationsMarkersTask.cancel(true);
-        	refreshMyHistoricLocationsMarkersTask = null;
-        }
-        
-        mapView.onPause();
-        
-        saveMapView();
-        
-        ObservationHelper.getInstance(getActivity().getApplicationContext()).removeListener(this);   
-        LocationHelper.getInstance(getActivity().getApplicationContext()).removeListener(this);
+		if (locationServiceEnabled) {
+			map.setLocationSource(this);
+			locationService.registerOnLocationListener(this);
+		}
 
-        PreferenceManager.getDefaultSharedPreferences(getActivity().getApplicationContext()).unregisterOnSharedPreferenceChangeListener(this);
+		// task to refresh location markers every x seconds
+		if (refreshLocationsMarkersTask == null) {
+			refreshLocationsMarkersTask = new RefreshMarkersTask(locations);
+		}
+		if (!refreshLocationsMarkersTask.isCancelled()) {
+			refreshLocationsMarkersTask.executeOnExecutor(executor, REFRESHMARKERINTERVALINSECONDS);
+		}
 
-        mage.unregisterCacheOverlayListener(this);
-        StaticFeatureHelper.getInstance(getActivity().getApplicationContext()).removeListener(this);
+		// task to refresh my historic location markers every x seconds
+		if (refreshMyHistoricLocationsMarkersTask == null) {
+			refreshMyHistoricLocationsMarkersTask = new RefreshMarkersTask(myHistoricLocations);
+		}
+		if (!refreshMyHistoricLocationsMarkersTask.isCancelled()) {
+			refreshMyHistoricLocationsMarkersTask.executeOnExecutor(executor, REFRESHMARKERINTERVALINSECONDS);
+		}
 
-        boolean locationServiceEnabled = Integer.parseInt(preferences.getString(getResources().getString(R.string.userReportingFrequencyKey), "0")) > 0;
-        if (locationServiceEnabled) {
-            map.setLocationSource(null);
-            locationService.unregisterOnLocationListener(this);
-        }
-    }
-    
-    @Override
-    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-        super.onCreateOptionsMenu(menu, inflater);
-        
-        inflater.inflate(R.menu.observation_new, menu);
-        inflater.inflate(R.menu.filter, menu);
-    }
-    
+		// zoom to location if told to
+		Float zoomLat = preferences.getFloat(getResources().getString(R.string.mapZoomLatKey), Float.MAX_VALUE);
+		Float zoomLon = preferences.getFloat(getResources().getString(R.string.mapZoomLonKey), Float.MAX_VALUE);
+		if (zoomLat != null && zoomLon != null && !zoomLat.equals(Float.MAX_VALUE) && !zoomLon.equals(Float.MAX_VALUE)) {
+			Editor e = preferences.edit();
+			e.putFloat(getResources().getString(R.string.mapZoomLatKey), Float.MAX_VALUE).commit();
+			e.putFloat(getResources().getString(R.string.mapZoomLonKey), Float.MAX_VALUE).commit();
+			android.location.Location tl = new android.location.Location("");
+			tl.setLatitude(zoomLat.doubleValue());
+			tl.setLongitude(zoomLon.doubleValue());
+			zoomToLocation(tl);
+		}
+	}
+
+	@Override
+	public void onPause() {
+		super.onPause();
+
+		if (refreshLocationsMarkersTask != null) {
+			refreshLocationsMarkersTask.cancel(true);
+			refreshLocationsMarkersTask = null;
+		}
+
+		if (refreshMyHistoricLocationsMarkersTask != null) {
+			refreshMyHistoricLocationsMarkersTask.cancel(true);
+			refreshMyHistoricLocationsMarkersTask = null;
+		}
+
+		mapView.onPause();
+
+		saveMapView();
+
+		PreferenceManager.getDefaultSharedPreferences(getActivity().getApplicationContext()).unregisterOnSharedPreferenceChangeListener(this);
+
+		mage.unregisterCacheOverlayListener(this);
+		StaticFeatureHelper.getInstance(getActivity().getApplicationContext()).removeListener(this);
+
+		boolean locationServiceEnabled = Integer.parseInt(preferences.getString(getResources().getString(R.string.userReportingFrequencyKey), "0")) > 0;
+		if (locationServiceEnabled) {
+			map.setLocationSource(null);
+			locationService.unregisterOnLocationListener(this);
+		}
+	}
+
+	@Override
+	public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+		super.onCreateOptionsMenu(menu, inflater);
+
+		inflater.inflate(R.menu.observation_new, menu);
+		inflater.inflate(R.menu.filter, menu);
+	}
+
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
 		switch (item.getItemId()) {
@@ -367,7 +360,7 @@ public class MapFragment extends Fragment implements
 					}
 				}
 			}
-			if(l != null) {
+			if (l != null) {
 				intent.putExtra(ObservationEditActivity.LOCATION, l);
 				intent.putExtra(ObservationEditActivity.INITIAL_LOCATION, map.getCameraPosition().target);
 				intent.putExtra(ObservationEditActivity.INITIAL_ZOOM, map.getCameraPosition().zoom);
@@ -379,35 +372,44 @@ public class MapFragment extends Fragment implements
 		return super.onOptionsItemSelected(item);
 	}
 
-    @Override
-    public void onObservationCreated(Collection<Observation> o) {        
-        ObservationTask task = new ObservationTask(ObservationTask.Type.ADD, observations);
-        task.setFilter(getTemporalFilter("last_modified"));
-        task.execute(o.toArray(new Observation[o.size()]));
-    }
+	@Override
+	public void onObservationCreated(Collection<Observation> o) {
+		if (observations != null) {
+			ObservationTask task = new ObservationTask(ObservationTask.Type.ADD, observations);
+			task.setFilter(getTemporalFilter("last_modified"));
+			task.execute(o.toArray(new Observation[o.size()]));
+		}
+	}
 
-    @Override
-    public void onObservationUpdated(Observation o) {
-        ObservationTask task = new ObservationTask(ObservationTask.Type.UPDATE, observations);
-        task.setFilter(getTemporalFilter("last_modified"));
-        task.execute(o);    
-    }
+	@Override
+	public void onObservationUpdated(Observation o) {
+		if (observations != null) {
+			ObservationTask task = new ObservationTask(ObservationTask.Type.UPDATE, observations);
+			task.setFilter(getTemporalFilter("last_modified"));
+			task.execute(o);
+		}
+	}
 
-    @Override
-    public void onObservationDeleted(Observation o) {
-        new ObservationTask(ObservationTask.Type.DELETE, observations).execute(o);
-    }
+	@Override
+	public void onObservationDeleted(Observation o) {
+		if (observations != null) {
+			new ObservationTask(ObservationTask.Type.DELETE, observations).execute(o);
+		}
+	}
 
 	@Override
 	public void onLocationCreated(Collection<mil.nga.giat.mage.sdk.datastore.location.Location> ls) {
 		for (mil.nga.giat.mage.sdk.datastore.location.Location l : ls) {
 			if (currentUser != null && !currentUser.getRemoteId().equals(l.getUser().getRemoteId())) {
-				LocationTask task = new LocationTask(LocationTask.Type.ADD, locations);
-				task.setFilter(getTemporalFilter("timestamp"));
-				task.execute(l);
+				if (locations != null) {
+					LocationTask task = new LocationTask(LocationTask.Type.ADD, locations);
+					task.setFilter(getTemporalFilter("timestamp"));
+					task.execute(l);
+				}
 			} else {
-				LocationTask task = new LocationTask(LocationTask.Type.ADD, myHistoricLocations);
-				task.execute(l);
+				if (myHistoricLocations != null) {
+					new LocationTask(LocationTask.Type.ADD, myHistoricLocations).execute(l);
+				}
 			}
 		}
 	}
@@ -415,68 +417,75 @@ public class MapFragment extends Fragment implements
 	@Override
 	public void onLocationUpdated(mil.nga.giat.mage.sdk.datastore.location.Location l) {
 		if (currentUser != null && !currentUser.getRemoteId().equals(l.getUser().getRemoteId())) {
-			LocationTask task = new LocationTask(LocationTask.Type.UPDATE, locations);
-			task.setFilter(getTemporalFilter("timestamp"));
-			task.execute(l);
+			if (locations != null) {
+				LocationTask task = new LocationTask(LocationTask.Type.UPDATE, locations);
+				task.setFilter(getTemporalFilter("timestamp"));
+				task.execute(l);
+			}
 		} else {
-			LocationTask task = new LocationTask(LocationTask.Type.UPDATE, myHistoricLocations);
-			task.execute(l);
+			if (myHistoricLocations != null) {
+				new LocationTask(LocationTask.Type.UPDATE, myHistoricLocations).execute(l);
+			}
 		}
 	}
 
 	@Override
 	public void onLocationDeleted(mil.nga.giat.mage.sdk.datastore.location.Location l) {
 		if (currentUser != null && !currentUser.getRemoteId().equals(l.getUser().getRemoteId())) {
-			new LocationTask(LocationTask.Type.DELETE, locations).execute(l);
+			if (locations != null) {
+				new LocationTask(LocationTask.Type.DELETE, locations).execute(l);
+			}
 		} else {
-			new LocationTask(LocationTask.Type.DELETE, myHistoricLocations).execute(l);
+			if (myHistoricLocations != null) {
+				new LocationTask(LocationTask.Type.DELETE, myHistoricLocations).execute(l);
+			}
 		}
 	}
 
-    @Override
-    public boolean onMarkerClick(Marker marker) {
-        // You can only have one marker click listener per map.
-        // Lets listen here and shell out the click event to all
-        // my marker collections.  Each one need to handle
-        // gracefully if it does not actually contain the marker
-        if (observations.onMarkerClick(marker)) {
-            return true;
-        }
-        
-        if (locations.onMarkerClick(marker)) {
-            return true;
-        }
-        
-        if(myHistoricLocations.onMarkerClick(marker)) {
-        	return true;
-        }        
-        
-        // static layer
-        View markerInfoWindow = LayoutInflater.from(getActivity()).inflate(R.layout.marker_infowindow, null, false);
+	@Override
+	public boolean onMarkerClick(Marker marker) {
+		// You can only have one marker click listener per map.
+		// Lets listen here and shell out the click event to all
+		// my marker collections. Each one need to handle
+		// gracefully if it does not actually contain the marker
+		if (observations.onMarkerClick(marker)) {
+			return true;
+		}
+
+		if (locations.onMarkerClick(marker)) {
+			return true;
+		}
+
+		if (myHistoricLocations.onMarkerClick(marker)) {
+			return true;
+		}
+
+		// static layer
+		View markerInfoWindow = LayoutInflater.from(getActivity()).inflate(R.layout.marker_infowindow, null, false);
 		WebView webView = ((WebView) markerInfoWindow.findViewById(R.id.infowindowcontent));
 		webView.loadData(marker.getSnippet(), "text/html; charset=UTF-8", null);
 		new AlertDialog.Builder(getActivity()).setView(markerInfoWindow).setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
 			public void onClick(DialogInterface dialog, int which) {
 			}
 		}).show();
-        return true;
-    }
-    
-    @Override
-    public void onMapClick(LatLng latLng) {
+		return true;
+	}
+
+	@Override
+	public void onMapClick(LatLng latLng) {
 		// remove old accuracy circle
 		((LocationMarkerCollection) locations).offMarkerClick();
 
-        // how many meters away form the click can the geomerty be?
-        Double circumferenceOfEarthInMeters = 2*Math.PI*6371000;
-        //Double tileWidthAtZoomLevelAtEquatorInDegrees = 360.0/Math.pow(2.0, map.getCameraPosition().zoom);
-        Double pixelSizeInMetersAtLatitude = (circumferenceOfEarthInMeters*Math.cos(map.getCameraPosition().target.latitude * (Math.PI /180.0))) / Math.pow(2.0, map.getCameraPosition().zoom + 8.0);
-        Double tolerance = pixelSizeInMetersAtLatitude*Math.sqrt(2.0)*10.0;        
-        
-        // TODO : find the 'closest' line or polygon to the click.
+		// how many meters away form the click can the geomerty be?
+		Double circumferenceOfEarthInMeters = 2 * Math.PI * 6371000;
+		// Double tileWidthAtZoomLevelAtEquatorInDegrees = 360.0/Math.pow(2.0, map.getCameraPosition().zoom);
+		Double pixelSizeInMetersAtLatitude = (circumferenceOfEarthInMeters * Math.cos(map.getCameraPosition().target.latitude * (Math.PI / 180.0))) / Math.pow(2.0, map.getCameraPosition().zoom + 8.0);
+		Double tolerance = pixelSizeInMetersAtLatitude * Math.sqrt(2.0) * 10.0;
+
+		// TODO : find the 'closest' line or polygon to the click.
 		for (Polyline p : staticGeometryCollection.getPolylines()) {
 			if (PolyUtil.isLocationOnPath(latLng, p.getPoints(), true, tolerance)) {
-	            // found it open a info window
+				// found it open a info window
 				Log.i("static feature", "static feature polyline clicked at: " + latLng.toString());
 				View markerInfoWindow = LayoutInflater.from(getActivity()).inflate(R.layout.marker_infowindow, null, false);
 				WebView webView = ((WebView) markerInfoWindow.findViewById(R.id.infowindowcontent));
@@ -485,7 +494,7 @@ public class MapFragment extends Fragment implements
 					public void onClick(DialogInterface dialog, int which) {
 					}
 				}).show();
-	            return;
+				return;
 			}
 		}
 
@@ -504,84 +513,84 @@ public class MapFragment extends Fragment implements
 				return;
 			}
 		}
-    }
-    
-    @Override
-    public void onMapLongClick(LatLng point) {
-        Intent intent = new Intent(getActivity().getApplicationContext(), ObservationEditActivity.class);
-        Location l = new Location("manual");
-        l.setAccuracy(0.0f);
-        l.setLatitude(point.latitude);
-        l.setLongitude(point.longitude);
-        l.setTime(new Date().getTime());
-        intent.putExtra(ObservationEditActivity.LOCATION, l);
-        startActivity(intent);
-    }
+	}
 
-    @Override
-    public void onClick(View view) {
-        switch (view.getId()) {
-            case R.id.map_settings: {
-                Intent i = new Intent(getActivity().getApplicationContext(), MapPreferencesActivity.class);
-                startActivity(i);
-                break;
-            }
-        }
-    }
+	@Override
+	public void onMapLongClick(LatLng point) {
+		Intent intent = new Intent(getActivity().getApplicationContext(), ObservationEditActivity.class);
+		Location l = new Location("manual");
+		l.setAccuracy(0.0f);
+		l.setLatitude(point.latitude);
+		l.setLongitude(point.longitude);
+		l.setTime(new Date().getTime());
+		intent.putExtra(ObservationEditActivity.LOCATION, l);
+		startActivity(intent);
+	}
 
-    @Override
-    public boolean onMyLocationButtonClick() {
-    	if (location != null) {
-            LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
-            float zoom = map.getCameraPosition().zoom < 15 ? 15 : map.getCameraPosition().zoom;
-            map.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, zoom), new CancelableCallback() {
+	@Override
+	public void onClick(View view) {
+		switch (view.getId()) {
+		case R.id.map_settings: {
+			Intent i = new Intent(getActivity().getApplicationContext(), MapPreferencesActivity.class);
+			startActivity(i);
+			break;
+		}
+		}
+	}
 
-                @Override
-                public void onCancel() {
-                    mapWrapper.setOnMapPanListener(MapFragment.this);
-                    followMe = true;
-                }
+	@Override
+	public boolean onMyLocationButtonClick() {
+		if (location != null) {
+			LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
+			float zoom = map.getCameraPosition().zoom < 15 ? 15 : map.getCameraPosition().zoom;
+			map.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, zoom), new CancelableCallback() {
 
-                @Override
-                public void onFinish() {
-                    mapWrapper.setOnMapPanListener(MapFragment.this);
-                    followMe = true;
-                }
-            });
-        }
-        return true;
-    }
-    
-    private boolean zoomToLocation(Location pLocation) {
-        if (pLocation != null) {
-            LatLng latLng = new LatLng(pLocation.getLatitude(), pLocation.getLongitude());
-            float zoom = map.getCameraPosition().zoom < 15 ? 15 : map.getCameraPosition().zoom;
-            map.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, zoom));
-        }
-        return true;
-    }
+				@Override
+				public void onCancel() {
+					mapWrapper.setOnMapPanListener(MapFragment.this);
+					followMe = true;
+				}
 
-    @Override
-    public void activate(OnLocationChangedListener listener) {
-        Log.i(LOG_NAME, "map location, activate");
-        locationChangedListener = listener;
-        if (location != null) {
-            Log.i(LOG_NAME, "map location, activate we have a location, let our listener know");
-            locationChangedListener.onLocationChanged(location);
-        }
-    }
+				@Override
+				public void onFinish() {
+					mapWrapper.setOnMapPanListener(MapFragment.this);
+					followMe = true;
+				}
+			});
+		}
+		return true;
+	}
 
-    @Override
-    public void deactivate() {
-        Log.i(LOG_NAME, "map location, deactivate");
-        locationChangedListener = null;
-    }
+	private boolean zoomToLocation(Location pLocation) {
+		if (pLocation != null) {
+			LatLng latLng = new LatLng(pLocation.getLatitude(), pLocation.getLongitude());
+			float zoom = map.getCameraPosition().zoom < 15 ? 15 : map.getCameraPosition().zoom;
+			map.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, zoom));
+		}
+		return true;
+	}
 
-    @Override
-    public void onMapPan() {
-        mapWrapper.setOnMapPanListener(null);
-        followMe = false;
-    }
+	@Override
+	public void activate(OnLocationChangedListener listener) {
+		Log.i(LOG_NAME, "map location, activate");
+		locationChangedListener = listener;
+		if (location != null) {
+			Log.i(LOG_NAME, "map location, activate we have a location, let our listener know");
+			locationChangedListener.onLocationChanged(location);
+		}
+	}
+
+	@Override
+	public void deactivate() {
+		Log.i(LOG_NAME, "map location, deactivate");
+		locationChangedListener = null;
+	}
+
+	@Override
+	public void onMapPan() {
+		mapWrapper.setOnMapPanListener(null);
+		followMe = false;
+	}
 
 	@Override
 	public void onLocationChanged(Location location) {
@@ -601,69 +610,69 @@ public class MapFragment extends Fragment implements
 		}
 	}
 
-    @Override
-    public void onStatusChanged(String provider, int status, Bundle extras) {
-    }
+	@Override
+	public void onStatusChanged(String provider, int status, Bundle extras) {
+	}
 
-    @Override
-    public void onProviderEnabled(String provider) {
-    }
+	@Override
+	public void onProviderEnabled(String provider) {
+	}
 
-    @Override
-    public void onProviderDisabled(String provider) {
-    }
+	@Override
+	public void onProviderDisabled(String provider) {
+	}
 
-    @Override
-    public void onCacheOverlay(List<CacheOverlay> cacheOverlays) {
-        Set<String> overlays = preferences.getStringSet(getResources().getString(R.string.mapTileOverlaysKey), Collections.<String> emptySet());
+	@Override
+	public void onCacheOverlay(List<CacheOverlay> cacheOverlays) {
+		Set<String> overlays = preferences.getStringSet(getResources().getString(R.string.mapTileOverlaysKey), Collections.<String> emptySet());
 
-        // Add all overlays that are in the preferences
-        // For now there is no ordering in how tile overlays are stacked
-        Set<String> removedOverlays = new HashSet<String>(tileOverlays.keySet());
+		// Add all overlays that are in the preferences
+		// For now there is no ordering in how tile overlays are stacked
+		Set<String> removedOverlays = new HashSet<String>(tileOverlays.keySet());
 
-        for (CacheOverlay cacheOverlay : cacheOverlays) {
-            // The user has asked for this overlay
-            if (overlays.contains(cacheOverlay.getName())) {
-                if (!tileOverlays.keySet().contains(cacheOverlay.getName())) {
-                    TileProvider tileProvider = new FileSystemTileProvider(256, 256, cacheOverlay.getDirectory().getAbsolutePath());
-                    TileOverlay tileOverlay = map.addTileOverlay(new TileOverlayOptions().tileProvider(tileProvider));
-                    tileOverlays.put(cacheOverlay.getName(), tileOverlay);
-                }
+		for (CacheOverlay cacheOverlay : cacheOverlays) {
+			// The user has asked for this overlay
+			if (overlays.contains(cacheOverlay.getName())) {
+				if (!tileOverlays.keySet().contains(cacheOverlay.getName())) {
+					TileProvider tileProvider = new FileSystemTileProvider(256, 256, cacheOverlay.getDirectory().getAbsolutePath());
+					TileOverlay tileOverlay = map.addTileOverlay(new TileOverlayOptions().tileProvider(tileProvider));
+					tileOverlays.put(cacheOverlay.getName(), tileOverlay);
+				}
 
-                removedOverlays.remove(cacheOverlay.getName());
-            }
-        }
+				removedOverlays.remove(cacheOverlay.getName());
+			}
+		}
 
-        // Remove any overlays that are on the map but no longer selected in
-        // preferences
-        for (String overlay : removedOverlays) {
-            tileOverlays.remove(overlay).remove();
-        }
-    }
-    
-    private void updateStaticFeatureLayers() {
-        removeStaticFeatureLayers();
-        
-        try {
-            for (Layer l : LayerHelper.getInstance(getActivity().getApplicationContext()).readAllStaticLayers()) {
-                onStaticFeatureLayer(l);                
-            }
-        } catch (LayerException e) {
-        	Log.e(LOG_NAME, "Problem updating static features.", e);
-        }
-    }
-    
-    private void removeStaticFeatureLayers() {
-        Set<String> selectedLayerIds = preferences.getStringSet(getResources().getString(R.string.mapFeatureOverlaysKey), Collections.<String> emptySet());
-        
-        for (String currentLayerId : staticGeometryCollection.getLayers()) {
-            if (!selectedLayerIds.contains(currentLayerId)) {
-              featureIds.remove(currentLayerId);
-              staticGeometryCollection.removeLayer(currentLayerId);
-            }
-        }
-    }
-    
+		// Remove any overlays that are on the map but no longer selected in
+		// preferences
+		for (String overlay : removedOverlays) {
+			tileOverlays.remove(overlay).remove();
+		}
+	}
+
+	private void updateStaticFeatureLayers() {
+		removeStaticFeatureLayers();
+
+		try {
+			for (Layer l : LayerHelper.getInstance(getActivity().getApplicationContext()).readAllStaticLayers()) {
+				onStaticFeatureLayer(l);
+			}
+		} catch (LayerException e) {
+			Log.e(LOG_NAME, "Problem updating static features.", e);
+		}
+	}
+
+	private void removeStaticFeatureLayers() {
+		Set<String> selectedLayerIds = preferences.getStringSet(getResources().getString(R.string.mapFeatureOverlaysKey), Collections.<String> emptySet());
+
+		for (String currentLayerId : staticGeometryCollection.getLayers()) {
+			if (!selectedLayerIds.contains(currentLayerId)) {
+				featureIds.remove(currentLayerId);
+				staticGeometryCollection.removeLayer(currentLayerId);
+			}
+		}
+	}
+
 	@Override
 	public void onStaticFeaturesCreated(final Collection<Layer> layers) {
 		getActivity().runOnUiThread(new Runnable() {
@@ -676,19 +685,19 @@ public class MapFragment extends Fragment implements
 			}
 		});
 	}
-    
-    private void onStaticFeatureLayer(Layer layer) {
-        Set<String> layers = PreferenceManager.getDefaultSharedPreferences(getActivity().getApplicationContext()).getStringSet(getResources().getString(R.string.mapFeatureOverlaysKey), Collections.<String> emptySet());
 
-        // The user has asked for this feature layer
-        String layerId = layer.getId().toString();
-        if (layers.contains(layerId) && layer.isLoaded()) {
-            if (!featureIds.contains(layerId)) {
-                featureIds.add(layerId);
-                new StaticFeatureLoadTask(getActivity().getApplicationContext(), staticGeometryCollection, map).executeOnExecutor(executor, new Layer[]{ layer });
-            }
-        }
-    }
+	private void onStaticFeatureLayer(Layer layer) {
+		Set<String> layers = PreferenceManager.getDefaultSharedPreferences(getActivity().getApplicationContext()).getStringSet(getResources().getString(R.string.mapFeatureOverlaysKey), Collections.<String> emptySet());
+
+		// The user has asked for this feature layer
+		String layerId = layer.getId().toString();
+		if (layers.contains(layerId) && layer.isLoaded()) {
+			if (!featureIds.contains(layerId)) {
+				featureIds.add(layerId);
+				new StaticFeatureLoadTask(getActivity().getApplicationContext(), staticGeometryCollection, map).executeOnExecutor(executor, new Layer[] { layer });
+			}
+		}
+	}
 
 	private void updateMapView() {
 		// Check the map type
@@ -704,42 +713,38 @@ public class MapFragment extends Fragment implements
 			map.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, zoom));
 		}
 	}
-    
-    private void saveMapView() {
-        CameraPosition position = map.getCameraPosition();
-        
-        String xyz = new StringBuilder()
-            .append(Double.valueOf(position.target.longitude).toString()).append(",")
-            .append(Double.valueOf(position.target.latitude).toString()).append(",")
-            .append(Float.valueOf(position.zoom).toString())
-            .toString();
-        
-        SharedPreferences.Editor editor = preferences.edit();
-        editor.putString(getResources().getString(R.string.mapXYZKey), xyz);
-        editor.commit();
-    }
 
-    @Override
-    public void onError(Throwable error) {
-    }
+	private void saveMapView() {
+		CameraPosition position = map.getCameraPosition();
+
+		String xyz = new StringBuilder().append(Double.valueOf(position.target.longitude).toString()).append(",").append(Double.valueOf(position.target.latitude).toString()).append(",").append(Float.valueOf(position.zoom).toString()).toString();
+
+		SharedPreferences.Editor editor = preferences.edit();
+		editor.putString(getResources().getString(R.string.mapXYZKey), xyz);
+		editor.commit();
+	}
+
+	@Override
+	public void onError(Throwable error) {
+	}
 
 	@Override
 	public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
 		if (getResources().getString(R.string.activeTimeFilterKey).equalsIgnoreCase(key)) {
-		    observations.clear();
-	        ObservationLoadTask observationLoad = new ObservationLoadTask(getActivity(), observations);
-	        observationLoad.setFilter(getTemporalFilter("last_modified"));
-	        observationLoad.executeOnExecutor(executor);
-	        
-	        locations.clear();
-            LocationLoadTask locationLoad = new LocationLoadTask(getActivity(), locations);
-            locationLoad.setFilter(getTemporalFilter("timestamp"));
-            locationLoad.executeOnExecutor(executor);
-            
+			observations.clear();
+			ObservationLoadTask observationLoad = new ObservationLoadTask(getActivity(), observations);
+			observationLoad.setFilter(getTemporalFilter("last_modified"));
+			observationLoad.executeOnExecutor(executor);
+
+			locations.clear();
+			LocationLoadTask locationLoad = new LocationLoadTask(getActivity(), locations);
+			locationLoad.setFilter(getTemporalFilter("timestamp"));
+			locationLoad.executeOnExecutor(executor);
+
 			getActivity().getActionBar().setTitle(getTemporalFilterTitle());
 		}
 	}
-	
+
 	private Filter<Temporal> getTemporalFilter(String columnName) {
 		int timeFilter = preferences.getInt(getResources().getString(R.string.activeTimeFilterKey), R.id.none_rb);
 
@@ -779,7 +784,7 @@ public class MapFragment extends Fragment implements
 
 		return filter;
 	}
-	
+
 	private String getTemporalFilterTitle() {
 		String title = "MAGE";
 		int timeFilter = preferences.getInt(getResources().getString(R.string.activeTimeFilterKey), R.id.none_rb);

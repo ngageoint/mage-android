@@ -1,5 +1,7 @@
 package mil.nga.giat.mage.form;
 
+import java.io.Serializable;
+
 import mil.nga.giat.mage.R;
 import android.content.Context;
 import android.content.res.TypedArray;
@@ -53,5 +55,13 @@ public class MageEditText extends EditText implements MageControl {
 	@Override
 	public void setRequired(Boolean isRequired) {
 		this.isRequired = isRequired;
+	}
+
+	@Override
+	public void setPropertyValue(Serializable value) {
+		if(value == null) {
+			return;
+		}
+		setText(value.toString());
 	}
 }

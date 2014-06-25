@@ -35,7 +35,6 @@ public class ObservationLoadTask extends AsyncTask<Void, Observation, Void> {
         CloseableIterator<Observation> iterator = null;
         try {
             iterator = iterator();
-
             while (iterator.hasNext()) {
                 publishProgress(iterator.next());
             }

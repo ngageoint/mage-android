@@ -1,5 +1,7 @@
 package mil.nga.giat.mage.form;
 
+import java.io.Serializable;
+
 import mil.nga.giat.mage.R;
 import android.content.Context;
 import android.content.res.TypedArray;
@@ -45,7 +47,7 @@ public class MageRadioGroup extends RadioGroup implements MageControl {
 	public String getPropertyValue() {
 		String value = null;
 		RadioButton radioButton = (RadioButton) findViewById(getCheckedRadioButtonId());
-		if(radioButton != null) {
+		if (radioButton != null) {
 			value = (String) radioButton.getText();
 		}
 		return value;
@@ -59,5 +61,22 @@ public class MageRadioGroup extends RadioGroup implements MageControl {
 	@Override
 	public void setRequired(Boolean isRequired) {
 		this.isRequired = isRequired;
+	}
+
+	@Override
+	public void setPropertyValue(Serializable value) {
+		if(value == null) {
+			return;
+		}
+		int j = 0;
+		for (int index = 0; index < getChildCount(); index++) {
+			RadioButton radioButton = (RadioButton) getChildAt(index);
+			// default
+			if(j++ == 0) {
+				radioButton.setChecked(true);	
+			} else {
+				radioButton.setChecked(radioButton.getText().equals(value));
+			}
+		}
 	}
 }

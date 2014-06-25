@@ -1,15 +1,33 @@
 package mil.nga.giat.mage.form;
 
+import java.io.Serializable;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
+import java.util.TimeZone;
+
 import mil.nga.giat.mage.R;
+import mil.nga.giat.mage.sdk.utils.DateUtility;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.widget.TextView;
 
 public class MageTextView extends TextView implements MageControl {
 
+	private static final String LOG_NAME = MageTextView.class.getName();
+
+	public final static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm zz", Locale.getDefault());
+
+	static {
+		sdf.setTimeZone(TimeZone.getTimeZone("Zulu"));
+	}
+
 	private String propertyKey;
 	private MagePropertyType propertyType;
+	private Date propertyDate = new Date();
 	protected Boolean isRequired = Boolean.FALSE;
 
 	public MageTextView(Context context, AttributeSet attrs) {
@@ -42,7 +60,29 @@ public class MageTextView extends TextView implements MageControl {
 
 	@Override
 	public String getPropertyValue() {
-		return getText().toString();
+		String value = "";
+
+		switch (getPropertyType()) {
+		case STRING:
+		case MULTILINE:
+			value = getText().toString();
+			break;
+		case USER:
+
+			break;
+		case DATE:
+			value = DateUtility.getISO8601().format(propertyDate);
+			break;
+		case LOCATION:
+			break;
+		case MULTICHOICE:
+
+			break;
+		default:
+			break;
+		}
+
+		return value;
 	}
 
 	@Override
@@ -53,5 +93,41 @@ public class MageTextView extends TextView implements MageControl {
 	@Override
 	public void setRequired(Boolean isRequired) {
 		this.isRequired = isRequired;
+	}
+
+	@Override
+	public void setPropertyValue(Serializable value) {
+		if(value == null) {
+			value = "";
+		}
+		switch (getPropertyType()) {
+		case STRING:
+		case MULTILINE:
+			setText(value.toString());
+			break;
+		case USER:
+
+			break;
+		case DATE:
+			if (value instanceof Date) {
+				propertyDate = (Date) value;
+			} else if (value instanceof String) {
+				try {
+					propertyDate = DateUtility.getISO8601().parse((String) value);
+				} catch (ParseException e) {
+					Log.e(LOG_NAME, "Could not parse date.");
+				}
+			}
+			setText(sdf.format(propertyDate));
+			break;
+		case LOCATION:
+			// location is not a property, it lives in the parent
+			break;
+		case MULTICHOICE:
+
+			break;
+		default:
+			break;
+		}
 	}
 }
