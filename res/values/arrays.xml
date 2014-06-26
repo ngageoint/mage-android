@@ -11,9 +11,9 @@
     
     <string-array name="imageUploadSizeValues">
         <item>0</item>
-        <item>1</item>
-        <item>2</item>
-        <item>3</item>
+        <item>256</item>
+        <item>512</item>
+        <item>1024</item>
     </string-array>
     
     <string-array name="staticFeatureEntries">

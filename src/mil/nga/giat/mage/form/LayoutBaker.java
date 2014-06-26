@@ -87,6 +87,17 @@ public class LayoutBaker {
 			if (jsonValue != null && !jsonValue.isJsonNull() && jsonValue.isJsonPrimitive()) {
 				value = jsonValue.getAsString();
 			}
+			
+
+			Boolean archived = false;
+			JsonElement jsonArchived = field.get("archived");
+			if (jsonArchived != null && !jsonArchived.isJsonNull() && jsonArchived.isJsonPrimitive()) {
+				archived = jsonArchived.getAsBoolean();
+			}
+			if(archived) {
+				continue;
+			}
+			
 			String name = field.get("name").getAsString();
 			JsonArray choicesJson = field.get("choices").getAsJsonArray();
 			Collection<String> choices = new ArrayList<String>();

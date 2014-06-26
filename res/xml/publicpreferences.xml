@@ -4,7 +4,7 @@
         android:order="2"
         android:title="MEDIA" >
         <ListPreference
-            android:defaultValue="1"
+            android:defaultValue="0"
             android:entries="@array/imageUploadSize"
             android:entryValues="@array/imageUploadSizeValues"
             android:key="imageUploadSize"
