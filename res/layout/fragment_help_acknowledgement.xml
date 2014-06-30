@@ -33,12 +33,12 @@
             android:padding="5dp" >
 
             <TextView
-                android:text="Google Play Services"
+                android:text="Android Sanselan"
                 android:textColor="@android:color/black"
                 android:textSize="18sp" />
 
             <TextView
-                android:text="MAGE SDK"
+                android:text="Google Play Services"
                 android:textColor="@android:color/black"
                 android:textSize="18sp" />
         </TableRow>
@@ -54,7 +54,7 @@
                 android:textSize="18sp" />
 
             <TextView
-                android:text="Google-Gson"
+                android:text="Http Mime"
                 android:textColor="@android:color/black"
                 android:textSize="18sp" />
         </TableRow>
@@ -70,22 +70,6 @@
                 android:textSize="18sp" />
 
             <TextView
-                android:text="Glide"
-                android:textColor="@android:color/black"
-                android:textSize="18sp" />
-        </TableRow>
-
-        <TableRow
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:padding="5dp" >
-
-            <TextView
-                android:text="Http Mime"
-                android:textColor="@android:color/black"
-                android:textSize="18sp" />
-
-            <TextView
                 android:text="Jts"
                 android:textColor="@android:color/black"
                 android:textSize="18sp" />
@@ -97,7 +81,39 @@
             android:padding="5dp" >
 
             <TextView
+                android:text="Glide"
+                android:textColor="@android:color/black"
+                android:textSize="18sp" />
+
+            <TextView
+                android:text="MAGE SDK"
+                android:textColor="@android:color/black"
+                android:textSize="18sp" />
+        </TableRow>
+
+        <TableRow
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:padding="5dp" >
+
+            <TextView
+                android:text="Google Gson"
+                android:textColor="@android:color/black"
+                android:textSize="18sp" />
+
+            <TextView
                 android:text="Orm-lite"
+                android:textColor="@android:color/black"
+                android:textSize="18sp" />
+        </TableRow>
+
+        <TableRow
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:padding="5dp" >
+
+            <TextView
+                android:text="Google Guava"
                 android:textColor="@android:color/black"
                 android:textSize="18sp" />
         </TableRow>

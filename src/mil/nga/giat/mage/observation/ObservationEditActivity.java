@@ -455,7 +455,7 @@ public class ObservationEditActivity extends Activity {
 				Log.e(LOG_NAME, "Could not parse timestamp", pe);
 			}
 			// Add properties that weren't part of the layout
-			propertyMap.put("accuracy", new ObservationProperty("accuracy", l.getAccuracy()));
+			propertyMap.put("accuracy", new ObservationProperty("accuracy", Float.valueOf(l.getAccuracy())));
 			String provider = l.getProvider();
 			if (provider == null || provider.trim().isEmpty()) {
 				provider = "manual";

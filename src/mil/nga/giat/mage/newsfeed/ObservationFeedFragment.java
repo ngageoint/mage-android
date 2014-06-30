@@ -22,7 +22,9 @@ import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
 import mil.nga.giat.mage.sdk.event.IObservationEventListener;
 import mil.nga.giat.mage.sdk.location.LocationService;
+import android.app.AlertDialog;
 import android.app.Fragment;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
@@ -149,7 +151,7 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 						l = new Location(provider);
 						l.setTime(tLocation.getTimestamp().getTime());
 						if (propertiesMap.get("accuracy").getValue() != null) {
-							l.setAccuracy((Float) propertiesMap.get("accuracy").getValue());
+							l.setAccuracy(Float.valueOf(propertiesMap.get("accuracy").getValue().toString()));
 						}
 						l.setLatitude(point.getY());
 						l.setLongitude(point.getX());
@@ -159,6 +161,12 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 			if(l != null) {
 				intent.putExtra(ObservationEditActivity.LOCATION, l);
 				startActivity(intent);
+			} else {
+				new AlertDialog.Builder(getActivity()).setTitle("No Location Available").setMessage("The device has not received a location yet.  To make an observation manually, long press on the map.").setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+					public void onClick(DialogInterface dialog, int which) {
+						dialog.dismiss();
+					}
+				}).show();
 			}
 		}
 

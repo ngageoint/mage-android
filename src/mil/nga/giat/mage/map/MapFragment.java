@@ -353,7 +353,7 @@ public class MapFragment extends Fragment implements OnMapClickListener, OnMapLo
 						l = new Location(provider);
 						l.setTime(tLocation.getTimestamp().getTime());
 						if (propertiesMap.get("accuracy").getValue() != null) {
-							l.setAccuracy((Float) propertiesMap.get("accuracy").getValue());
+							l.setAccuracy(Float.valueOf(propertiesMap.get("accuracy").getValue().toString()));
 						}
 						l.setLatitude(point.getY());
 						l.setLongitude(point.getX());
@@ -365,6 +365,12 @@ public class MapFragment extends Fragment implements OnMapClickListener, OnMapLo
 				intent.putExtra(ObservationEditActivity.INITIAL_LOCATION, map.getCameraPosition().target);
 				intent.putExtra(ObservationEditActivity.INITIAL_ZOOM, map.getCameraPosition().zoom);
 				startActivity(intent);
+			} else {
+				new AlertDialog.Builder(getActivity()).setTitle("No Location Available").setMessage("The device has not received a location yet.  To make an observation manually, long press on the map.").setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+					public void onClick(DialogInterface dialog, int which) {
+						dialog.dismiss();
+					}
+				}).show();
 			}
 			break;
 		}
