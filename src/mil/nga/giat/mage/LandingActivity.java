@@ -1,5 +1,10 @@
 package mil.nga.giat.mage;
 
+import java.io.File;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+
 import mil.nga.giat.mage.help.HelpFragment;
 import mil.nga.giat.mage.login.AlertBannerFragment;
 import mil.nga.giat.mage.login.LoginActivity;
@@ -8,11 +13,16 @@ import mil.nga.giat.mage.navigation.DrawerItem;
 import mil.nga.giat.mage.newsfeed.ObservationFeedFragment;
 import mil.nga.giat.mage.newsfeed.PeopleFeedFragment;
 import mil.nga.giat.mage.preferences.PublicPreferencesFragment;
+import mil.nga.giat.mage.sdk.datastore.DaoStore;
+import mil.nga.giat.mage.sdk.utils.MediaUtility;
 import mil.nga.giat.mage.sdk.utils.UserUtility;
+import mil.nga.giat.mage.status.StatusFragment;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.Fragment;
 import android.app.FragmentManager;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.os.Bundle;
@@ -20,6 +30,7 @@ import android.preference.PreferenceManager;
 import android.support.v4.app.ActionBarDrawerToggle;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.widget.DrawerLayout;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -40,6 +51,8 @@ import android.widget.TextView;
  */
 public class LandingActivity extends Activity implements ListView.OnItemClickListener {
 
+	private static final String LOG_NAME = LandingActivity.class.getName();
+	
     private DrawerItem[] drawerItems;
     private DrawerLayout drawerLayout;
     private ListView drawerList;
@@ -69,6 +82,7 @@ public class LandingActivity extends Activity implements ListView.OnItemClickLis
         		new DrawerItem.Builder("Observations").id(1).drawableId(R.drawable.ic_map_marker_white).fragment(new ObservationFeedFragment()).build(),
                 new DrawerItem.Builder("People").id(2).drawableId(R.drawable.ic_users_white).fragment(new PeopleFeedFragment()).build(), 
                 new DrawerItem.Builder("Settings").id(3).secondary(true).fragment(new PublicPreferencesFragment()).build(), 
+                new DrawerItem.Builder("Status").id(6).secondary(true).fragment(new StatusFragment()).build(), 
                 new DrawerItem.Builder("Help").id(4).secondary(true).fragment(new HelpFragment()).build(), 
                 new DrawerItem.Builder("Logout").id(5).secondary(true).build() };
 
@@ -289,4 +303,97 @@ public class LandingActivity extends Activity implements ListView.OnItemClickLis
         drawerList.setItemChecked(position, true);
         drawerLayout.closeDrawer(drawerList);
     }
+
+	public void deleteDataDialog(final View view) {
+
+		final String[] items = { "Database", "Preferences", "Attachments", "App Filesystem" };
+		final boolean[] defaultItems = new boolean[items.length];
+		Arrays.fill(defaultItems, true);
+		// arraylist to keep the selected items
+		final Set<Integer> seletedItems = new HashSet<Integer>();
+		for (int i = 0; i < items.length; i++) {
+			seletedItems.add(i);
+		}
+
+		new AlertDialog.Builder(view.getContext()).setTitle("Delete All Data").setMultiChoiceItems(items, defaultItems, new DialogInterface.OnMultiChoiceClickListener() {
+			@Override
+			public void onClick(DialogInterface dialog, int indexSelected, boolean isChecked) {
+				if (isChecked) {
+					seletedItems.add(indexSelected);
+					if (indexSelected == 0 || indexSelected == 3) {
+						((AlertDialog) dialog).getListView().setItemChecked(1, true);
+						seletedItems.add(1);
+					}
+				} else if (seletedItems.contains(indexSelected)) {
+					if (indexSelected == 1) {
+						if (seletedItems.contains(0) || seletedItems.contains(3)) {
+							((AlertDialog) dialog).getListView().setItemChecked(1, true);
+							return;
+						}
+					}
+					seletedItems.remove(Integer.valueOf(indexSelected));
+				}
+			}
+		}).setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+			public void onClick(DialogInterface dialog, int which) {
+				// stop doing stuff
+				((MAGE) getApplication()).onLogout();
+
+				if (seletedItems.contains(0)) {
+					// delete database
+					DaoStore.getInstance(view.getContext()).resetDatabase();
+				}
+
+				if (seletedItems.contains(1)) {
+					// clear preferences
+					PreferenceManager.getDefaultSharedPreferences(view.getContext()).edit().clear().commit();
+				}
+
+				if (seletedItems.contains(2)) {
+					// delete attachments
+					deleteDir(MediaUtility.getMediaStageDirectory());
+				}
+
+				if (seletedItems.contains(3)) {
+					// delete the application contents on the filesystem
+					clearApplicationData(getApplicationContext());
+				}
+
+				// finish the activity
+				finish();
+			}
+		}).setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
+			public void onClick(DialogInterface dialog, int which) {
+				dialog.dismiss();
+			}
+		}).show();
+	}
+
+	private void clearApplicationData(Context context) {
+		File cache = context.getCacheDir();
+		File appDir = new File(cache.getParent());
+		if (appDir.exists()) {
+			String[] children = appDir.list();
+			for (String s : children) {
+				if (!s.equals("lib") && !s.equals("databases")) {
+					File f = new File(appDir, s);
+					Log.d(LOG_NAME, "Deleting " + f.getAbsolutePath());
+					deleteDir(f);
+				}
+			}
+		}
+	}
+
+	private static boolean deleteDir(File dir) {
+		if (dir != null && dir.isDirectory()) {
+			String[] children = dir.list();
+			for (int i = 0; i < children.length; i++) {
+				boolean success = deleteDir(new File(dir, children[i]));
+				if (!success) {
+					return false;
+				}
+			}
+		}
+		return dir.delete();
+	}
 }
