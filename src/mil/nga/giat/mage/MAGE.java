@@ -16,6 +16,7 @@ import mil.nga.giat.mage.sdk.fetch.StaticFeatureServerFetch;
 import mil.nga.giat.mage.sdk.glide.MageUrlLoader;
 import mil.nga.giat.mage.sdk.http.client.HttpClientManager;
 import mil.nga.giat.mage.sdk.location.LocationService;
+import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
 import mil.nga.giat.mage.sdk.push.AttachmentPushAlarmReceiver;
 import mil.nga.giat.mage.sdk.push.LocationPushIntentService;
 import mil.nga.giat.mage.sdk.push.ObservationPushIntentService;
@@ -109,6 +110,10 @@ public class MAGE extends Application implements IUserEventListener {
 		destroyLocationService();
 		NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 		notificationManager.cancel(MAGE_NOTIFICATION_ID);
+		
+		if(PreferenceHelper.getInstance(getApplicationContext()).getValue(R.string.deleteAllDataOnLogoutKey, Boolean.class, R.string.deleteAllDataOnLogoutDefaultValue)) {
+			LandingActivity.deleteAllData(getApplicationContext());
+		}		
 	}
 
 	private void createNotification() {

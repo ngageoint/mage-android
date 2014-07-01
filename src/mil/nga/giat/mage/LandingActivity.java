@@ -359,6 +359,9 @@ public class LandingActivity extends Activity implements ListView.OnItemClickLis
 					clearApplicationData(getApplicationContext());
 				}
 
+				// go to login activity
+                startActivity(new Intent(getApplicationContext(), LoginActivity.class));
+                
 				// finish the activity
 				finish();
 			}
@@ -368,8 +371,15 @@ public class LandingActivity extends Activity implements ListView.OnItemClickLis
 			}
 		}).show();
 	}
+	
+	public static void deleteAllData(Context context) {
+		DaoStore.getInstance(context).resetDatabase();
+		PreferenceManager.getDefaultSharedPreferences(context).edit().clear().commit();
+		deleteDir(MediaUtility.getMediaStageDirectory());
+		clearApplicationData(context);
+	}
 
-	private void clearApplicationData(Context context) {
+	private static void clearApplicationData(Context context) {
 		File cache = context.getCacheDir();
 		File appDir = new File(cache.getParent());
 		if (appDir.exists()) {
