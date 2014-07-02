@@ -87,18 +87,24 @@ public class ObservationBitmapFactory {
 				variant = properties.get(variantField.getAsString());
 			}
 	
-			String formId = dynamicFormJson.get("id").getAsString();
-			// make path from type and variant
-			File path = new File(new File(new File(context.getFilesDir() + MageServerGetRequests.OBSERVATION_ICON_PATH), formId), "icons");
-	
-			if (type != null && path.exists()) {
-				String typeString = type.getValue().toString();
-				if (typeString != null && !typeString.trim().isEmpty() && new File(path, typeString).exists()) {
-					path = new File(path, typeString);
-					if (variant != null) {
-						String variantString = variant.getValue().toString();
-						if (variantString != null && !variantString.trim().isEmpty() && new File(path, variantString).exists()) {
-							path = new File(path, variantString).listFiles()[0];
+			JsonElement jsonFormId = dynamicFormJson.get("id");
+			
+			if(jsonFormId != null && !jsonFormId.isJsonNull()) {
+				String formId = jsonFormId.getAsString();
+				// make path from type and variant
+				File path = new File(new File(new File(context.getFilesDir() + MageServerGetRequests.OBSERVATION_ICON_PATH), formId), "icons");
+		
+				if (type != null && path.exists()) {
+					String typeString = type.getValue().toString();
+					if (typeString != null && !typeString.trim().isEmpty() && new File(path, typeString).exists()) {
+						path = new File(path, typeString);
+						if (variant != null) {
+							String variantString = variant.getValue().toString();
+							if (variantString != null && !variantString.trim().isEmpty() && new File(path, variantString).exists()) {
+								path = new File(path, variantString).listFiles()[0];
+							} else {
+								path = path.listFiles(fileFilter)[0];
+							}
 						} else {
 							path = path.listFiles(fileFilter)[0];
 						}
@@ -108,16 +114,13 @@ public class ObservationBitmapFactory {
 				} else {
 					path = path.listFiles(fileFilter)[0];
 				}
-			} else {
-				path = path.listFiles(fileFilter)[0];
-			}
-	
 
-			if (path.exists() && path.isFile()) {
-				try {
-					iconStream = new FileInputStream(path);
-				} catch (FileNotFoundException e) {
-					Log.e(LOG_NAME, "Can find icon.", e);
+				if (path.exists() && path.isFile()) {
+					try {
+						iconStream = new FileInputStream(path);
+					} catch (FileNotFoundException e) {
+						Log.e(LOG_NAME, "Can find icon.", e);
+					}
 				}
 			}
 		}

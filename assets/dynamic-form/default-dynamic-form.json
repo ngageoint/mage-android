@@ -1,0 +1,30 @@
+{
+    name: "Default",
+    variantField: null,
+    fields: [{
+        id: 1,
+        title: "Date",
+        type: "date",
+        required: true,
+        name: "timestamp",
+        choices: []
+    }, {
+        id: 2,
+        title: "Location",
+        type: "geometry",
+        required: true,
+        name: "geometry",
+        choices: []
+    }, {
+        id: 3,
+        title: "Type",
+        type: "dropdown",
+        required: true,
+        name: "type",
+        choices: [{
+            id: 0,
+            title: "Normal",
+            value: 0
+        }]
+    }]
+}
