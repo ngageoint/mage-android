@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -100,14 +101,20 @@ public class LayoutBaker {
 			
 			String name = field.get("name").getAsString();
 			JsonArray choicesJson = field.get("choices").getAsJsonArray();
-			Collection<String> choices = new ArrayList<String>();
+			Collection<String> choices = new HashSet<String>();
 			if (choicesJson != null && !choicesJson.isJsonNull()) {
 				for (int j = 0; j < choicesJson.size(); j++) {
 					JsonObject choiceJson = choicesJson.get(j).getAsJsonObject();
-					String choiceTitle = choiceJson.get("title").getAsString();
-					if (choiceTitle != null && !choiceTitle.trim().isEmpty()) {
-						choices.add(choiceTitle);
+					JsonElement choiceElement = choiceJson.get("title");
+					if (choiceElement != null) {
+	                   String choiceTitle = choiceElement.getAsString();
+	                    if (choiceTitle != null && !choiceTitle.trim().isEmpty()) {
+	                        choices.add(choiceTitle);
+	                    }
+					} else {
+					    choices.add("");
 					}
+
 				}
 			}
 
