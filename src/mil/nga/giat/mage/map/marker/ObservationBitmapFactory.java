@@ -7,6 +7,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Map;
+import java.util.Stack;
 
 import mil.nga.giat.mage.sdk.R;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
@@ -94,28 +95,13 @@ public class ObservationBitmapFactory {
 				// make path from type and variant
 				File path = new File(new File(new File(context.getFilesDir() + MageServerGetRequests.OBSERVATION_ICON_PATH), formId), "icons");
 		
-				if (type != null && path.exists()) {
-					String typeString = type.getValue().toString();
-					if (typeString != null && !typeString.trim().isEmpty() && new File(path, typeString).exists()) {
-						path = new File(path, typeString);
-						if (variant != null) {
-							String variantString = variant.getValue().toString();
-							if (variantString != null && !variantString.trim().isEmpty() && new File(path, variantString).exists()) {
-								path = new File(path, variantString).listFiles()[0];
-							} else {
-								path = path.listFiles(fileFilter)[0];
-							}
-						} else {
-							path = path.listFiles(fileFilter)[0];
-						}
-					} else {
-						path = path.listFiles(fileFilter)[0];
-					}
-				} else {
-					path = path.listFiles(fileFilter)[0];
-				}
+				Stack<ObservationProperty> iconProperties = new Stack<ObservationProperty>();
+				iconProperties.add(variant);
+				iconProperties.add(type);
+				
+				path = recurseGetIconPath(iconProperties, path, 0);
 
-				if (path.exists() && path.isFile()) {
+				if (path != null && path.exists() && path.isFile()) {
 					try {
 						iconStream = new FileInputStream(path);
 					} catch (FileNotFoundException e) {
@@ -133,5 +119,22 @@ public class ObservationBitmapFactory {
 		}
 
 		return iconStream;
+	}
+	
+	private static File recurseGetIconPath(Stack<ObservationProperty> iconProperties, File path, int i) {
+		if (iconProperties.size() > 0) {
+			ObservationProperty property = iconProperties.pop();
+			if (property != null && path.exists()) {
+				String propertyString = property.getValue().toString();
+				if (propertyString != null && !propertyString.trim().isEmpty() && new File(path, propertyString).exists()) {
+					return recurseGetIconPath(iconProperties, new File(path, propertyString), i + 1);
+				}
+			}
+		}
+		while (path != null && path.listFiles(fileFilter).length == 0 && i >= 0) {
+			path = path.getParentFile();
+			i--;
+		}
+		return (path == null) ? null : path.listFiles(fileFilter)[0];
 	}
 }
