@@ -95,19 +95,28 @@ public class StaticFeatureLoadTask extends AsyncTask<Layer, Object, Void> {
 			} else if (type.equals("Polygon")) {
 				PolygonOptions options = new PolygonOptions();
 
-				StaticFeatureProperty property = properties.get("stylepolystylecolorrgb");
+				Integer color = null;
+				StaticFeatureProperty property = properties.get("stylelinestylecolorrgb");
 				if (property != null) {
-					String color = property.getValue();
-					int c = Color.parseColor(color);
-					options.fillColor(c).strokeColor(c);
+					String colorProperty = property.getValue();
+					color = Color.parseColor(colorProperty);
+					options.strokeColor(color);
 				} else {
-					property = properties.get("stylelinestylecolorrgb");
+					property = properties.get("stylepolystylecolorrgb");
 					if (property != null) {
-						String color = property.getValue();
-						int c = Color.parseColor(color);
-						options.fillColor(c).strokeColor(c);
+					    String colorProperty = property.getValue();
+						color = Color.parseColor(colorProperty);
+						options.strokeColor(color);
 					}
 				}
+				
+                property = properties.get("stylepolystylefill");
+                if (property != null) {
+                    String fill = property.getValue();
+                    if ("1".equals(fill) && color != null) {
+                        options.fillColor(color);
+                    }
+                }
 
 				for (Coordinate coordinate : geometry.getCoordinates()) {
 					options.add(new LatLng(coordinate.y, coordinate.x));
