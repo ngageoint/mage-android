@@ -5,6 +5,7 @@ import java.io.File;
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.observation.RemoveAttachmentDialogFragment.RemoveAttachmentDialogListener;
 import mil.nga.giat.mage.sdk.datastore.observation.Attachment;
+import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
 import android.content.Intent;
 import android.media.ThumbnailUtils;
@@ -79,6 +80,7 @@ public class AttachmentViewerActivity extends FragmentActivity implements Remove
 				finalType = null;
 			}
 		} else if (url != null) {
+			url = url + "?access_token=" + PreferenceHelper.getInstance(getApplicationContext()).getValue(R.string.tokenKey);
 			uri = Uri.parse(url);
 			if (contentType.startsWith("image")) {
 				finalType = "image/*";
