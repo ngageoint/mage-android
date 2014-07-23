@@ -93,7 +93,6 @@ public class AttachmentViewerActivity extends FragmentActivity implements Remove
 				finalType = null;
 			}
 		} else if (url != null) {
-			url = url + "?access_token=" + PreferenceHelper.getInstance(getApplicationContext()).getValue(R.string.tokenKey);
 			uri = Uri.parse(url);
 			if (contentType.startsWith("image")) {
 				finalType = "image/*";
@@ -117,7 +116,7 @@ public class AttachmentViewerActivity extends FragmentActivity implements Remove
 			iv.setOnClickListener(new View.OnClickListener() {
 				@Override
 				public void onClick(View v) {
-					if (finalType == "video/*" && a.getLocalPath() == null) {
+					if (a.getLocalPath() == null) {
 						progressDialog = new ProgressDialog(AttachmentViewerActivity.this);
 						progressDialog.setMessage("Downloading file..");
 						progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
