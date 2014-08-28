@@ -135,6 +135,9 @@ public class ObservationBitmapFactory {
 			path = path.getParentFile();
 			i--;
 		}
-		return (path == null || path.listFiles(fileFilter).length == 0) ? null : path.listFiles(fileFilter)[0];
+		if (path == null) return null;
+		
+		File[] files = path.listFiles(fileFilter);
+		return files.length == 0 ? null : files[0];
 	}
 }
