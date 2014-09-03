@@ -1,6 +1,7 @@
 package mil.nga.giat.mage;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -14,6 +15,7 @@ import mil.nga.giat.mage.sdk.fetch.LocationFetchIntentService;
 import mil.nga.giat.mage.sdk.fetch.ObservationFetchIntentService;
 import mil.nga.giat.mage.sdk.fetch.StaticFeatureServerFetch;
 import mil.nga.giat.mage.sdk.glide.MageUrlLoader;
+import mil.nga.giat.mage.sdk.glide.MageDiskCache;
 import mil.nga.giat.mage.sdk.http.client.HttpClientManager;
 import mil.nga.giat.mage.sdk.location.LocationService;
 import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
@@ -37,6 +39,7 @@ import android.support.v4.app.TaskStackBuilder;
 import android.util.Log;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.resize.ImageManager;
 
 public class MAGE extends Application implements IUserEventListener {
 
@@ -65,6 +68,13 @@ public class MAGE extends Application implements IUserEventListener {
 	public void onCreate() {
 		alarm = (AlarmManager) this.getSystemService(Context.ALARM_SERVICE);
 		Glide.get().register(URL.class, new MageUrlLoader.Factory());
+		ImageManager.Builder builder = new ImageManager.Builder(getApplicationContext());
+		try {
+		builder.setDiskCache(new MageDiskCache(getApplicationContext()));
+		} catch (IOException e) {
+			Log.e(LOG_NAME, "Unable to create Mage disk cache", e);
+		}
+		Glide.get().setImageManager(builder);
 		refreshTileOverlays();
 
 		// setup the screen unlock stuff
