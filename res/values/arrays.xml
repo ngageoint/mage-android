@@ -16,6 +16,11 @@
         <item>1024</item>
     </string-array>
     
+    <string-array name="profileImageChoices">
+        <item>View profile photo</item>
+        <item>Edit</item>
+    </string-array>
+    
     <string-array name="staticFeatureEntries">
     </string-array>
     <string-array name="staticFeatureValues">
