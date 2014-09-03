@@ -1,31 +1,39 @@
 package mil.nga.giat.mage.profile;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
-import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 
-import com.bumptech.glide.Glide;
 import com.google.android.gms.maps.CameraUpdateFactory;
-import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.MapFragment;
+import com.google.android.gms.maps.MapView;
+import com.google.android.gms.maps.MapsInitializer;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.observation.AttachmentViewerActivity;
+import mil.nga.giat.mage.observation.LocationEditActivity;
+import mil.nga.giat.mage.sdk.datastore.observation.Attachment;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
+import mil.nga.giat.mage.sdk.http.post.MageServerPostRequests;
 import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
+import mil.nga.giat.mage.sdk.profile.UpdateProfileTask;
+import mil.nga.giat.mage.sdk.utils.MediaUtility;
+import android.annotation.TargetApi;
 import android.app.AlertDialog;
 import android.app.Fragment;
+import android.content.ClipData;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
+import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.PorterDuff.Mode;
 import android.graphics.PorterDuffXfermode;
@@ -33,13 +41,14 @@ import android.graphics.Rect;
 import android.graphics.RectF;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
-import android.webkit.WebView.FindListener;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -47,19 +56,47 @@ public class MyProfileFragment extends Fragment {
 
 	private static final String LOG_NAME = MyProfileFragment.class.getName();
 	
+	private static final int CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE = 100;
+	private static final int GALLERY_ACTIVITY_REQUEST_CODE = 400;
+	
 	public static String INITIAL_LOCATION = "INITIAL_LOCATION";
 	public static String INITIAL_ZOOM = "INITIAL_ZOOM";
 	public static String USER_ID = "USER_ID";
 	
+	private Uri currentMediaUri;
+	private User user;
+	
+	private MapView mapView;
 	private View rootView;
-	private Marker marker;
-	private GoogleMap miniMap;
+	
+	@Override
+	public void onDestroy() {
+		mapView.onDestroy();
+		super.onDestroy();
+	}
+	
+	@Override
+	public void onLowMemory() {
+		super.onLowMemory();
+		mapView.onLowMemory();
+	}
+	
+	@Override
+	public void onResume() {
+		super.onResume();
+		mapView.onResume();
+	}
+	
+	@Override
+	public void onPause() {
+		super.onPause();
+		mapView.onPause();
+	}
 	
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 		rootView = inflater.inflate(R.layout.fragment_profile, container, false);
 		
-		User user = null;
 		String userToLoad = getActivity().getIntent().getStringExtra(USER_ID);
 		try {
 			if (userToLoad != null) {
@@ -72,27 +109,20 @@ public class MyProfileFragment extends Fragment {
 			e.printStackTrace();
 		}
 		final Long userId = user.getId();
-		Fragment tempFragment = getFragmentManager().findFragmentById(R.id.mini_map);
-		if (tempFragment != null) {
-			miniMap = ((MapFragment) tempFragment).getMap();
-
-			LatLng latLng = getActivity().getIntent().getParcelableExtra(INITIAL_LOCATION);
-			if (latLng == null) {
-				latLng = new LatLng(0, 0);
-			}
-
-			float zoom = getActivity().getIntent().getFloatExtra(INITIAL_ZOOM, 0);
-
-			miniMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, zoom));
-
-			LatLng location = new LatLng(0,0);//pointGeo.getY(), pointGeo.getX());
-			miniMap.animateCamera(CameraUpdateFactory.newLatLngZoom(location, 15));
-			if (marker != null) {
-				marker.remove();
-				marker = null;
-			}
-			marker = miniMap.addMarker(new MarkerOptions().position(location));//.icon(ObservationBitmapFactory.bitmapDescriptor(this, o)));
+		
+		mapView = (MapView) rootView.findViewById(R.id.mapView);
+		mapView.onCreate(savedInstanceState);
+		MapsInitializer.initialize(getActivity().getApplicationContext());
+		
+		LatLng latLng = getActivity().getIntent().getParcelableExtra(INITIAL_LOCATION);
+		if (latLng == null) {
+			latLng = new LatLng(0, 0);
 		}
+		float zoom = getActivity().getIntent().getFloatExtra(INITIAL_ZOOM, 0);
+		mapView.getMap().moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, zoom));
+		LatLng location = new LatLng(0,0);
+		mapView.getMap().addMarker(new MarkerOptions().position(location));
+		mapView.getMap().animateCamera(CameraUpdateFactory.newLatLngZoom(location, 15));
 		
 		TextView realName = (TextView)rootView.findViewById(R.id.realName);
 		TextView username = (TextView)rootView.findViewById(R.id.username);
@@ -118,8 +148,12 @@ public class MyProfileFragment extends Fragment {
 		final String avatarUrl = user.getAvatarUrl() + "?access_token=" + PreferenceHelper.getInstance(getActivity().getApplicationContext()).getValue(R.string.tokenKey);
 		new DownloadImageTask(iv).execute(avatarUrl);
 		
+		final Intent intent = new Intent(getActivity().getApplicationContext(), ProfilePictureViewerActivity.class);
+		intent.putExtra(ProfilePictureViewerActivity.IMAGE_URL, avatarUrl);
+		intent.putExtra(ProfilePictureViewerActivity.USER_FIRSTNAME, user.getFirstname());
+		intent.putExtra(ProfilePictureViewerActivity.USER_LASTNAME, user.getLastname());
+		
 //		Glide.load(user.getAvatarUrl()).placeholder(R.drawable.missing_avatar).centerCrop().into(iv);
-		Log.e(LOG_NAME, "Current user id: " + user.getFirstname());
 		rootView.findViewById(R.id.profile_picture).setOnClickListener(new OnClickListener() {
 			
 			@Override
@@ -128,10 +162,40 @@ public class MyProfileFragment extends Fragment {
 					if (userId == UserHelper.getInstance(getActivity().getApplicationContext()).readCurrentUser().getId()) {
 						AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
 					    builder.setItems(R.array.profileImageChoices, new DialogInterface.OnClickListener() {
-					               public void onClick(DialogInterface dialog, int which) {
-					               // The 'which' argument contains the index position
-					               // of the selected item
-					           }
+						   public void onClick(DialogInterface dialog, int which) {
+							   switch (which) {
+							   case 0:
+									startActivityForResult(intent, 1);
+									break;
+							   case 1:
+								   // change the picture from the gallery
+								   Intent intent = new Intent();
+									intent.setType("image/*");
+									intent.setAction(Intent.ACTION_GET_CONTENT);
+									if (Build.VERSION.SDK_INT >= 18) {
+										intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, false);
+									}
+									startActivityForResult(intent, GALLERY_ACTIVITY_REQUEST_CODE);
+								   break;
+							   case 2:
+								   // change the picture from the camera
+								   Intent caputreIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+									File f = null;
+							        try {
+							        	f = MediaUtility.createImageFile();
+							        } catch (IOException ex) {
+							            // Error occurred while creating the File
+							        	ex.printStackTrace();
+							        }
+							        // Continue only if the File was successfully created
+							        if (f != null) {
+							        	currentMediaUri = Uri.fromFile(f);
+							        	caputreIntent.putExtra(MediaStore.EXTRA_OUTPUT, currentMediaUri);
+							            startActivityForResult(caputreIntent, CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE);
+							        }
+								   break;
+							   }
+						   }
 					    });
 						AlertDialog d = builder.create();
 						d.show();
@@ -149,6 +213,55 @@ public class MyProfileFragment extends Fragment {
 		
 		return rootView;
 	}
+	
+	@Override
+	public void onActivityResult(int requestCode, int resultCode, Intent data) {
+		if (resultCode != getActivity().RESULT_OK) {
+			return;
+		}
+		String filePath = null;
+		switch (requestCode) {
+		case CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE:
+			MediaUtility.addImageToGallery(getActivity().getApplicationContext(), currentMediaUri);
+			filePath = MediaUtility.getFileAbsolutePath(currentMediaUri, getActivity());
+			
+			break;
+		case GALLERY_ACTIVITY_REQUEST_CODE:
+			List<Uri> uris = getUris(data);
+			for (Uri uri : uris) {
+				filePath = MediaUtility.getPath(getActivity().getApplicationContext(), uri);
+			}
+			break;
+		}
+		if (filePath != null) {
+			UpdateProfileTask task = new UpdateProfileTask(user, getActivity());
+			task.execute(filePath);
+		}
+	}
+
+	private List<Uri> getUris(Intent intent) {
+		List<Uri> uris = new ArrayList<Uri>();
+		uris.addAll(getClipDataUris(intent));
+		if (intent.getData() != null) {
+			uris.add(intent.getData());
+		}
+		return uris;
+	}
+	
+	@TargetApi(16)
+	private List<Uri> getClipDataUris(Intent intent) {
+		List<Uri> uris = new ArrayList<Uri>();
+		if (Build.VERSION.SDK_INT >= 16) {
+			ClipData cd = intent.getClipData();
+			if (cd != null) {
+				for (int i = 0; i < cd.getItemCount(); i++) {
+					uris.add(cd.getItemAt(i).getUri());
+				}
+			}
+		}
+		return uris;
+	}
+
 	
 	private class DownloadImageTask extends AsyncTask<String, Void, Bitmap> {
 	    ImageView bmImage;
@@ -171,15 +284,28 @@ public class MyProfileFragment extends Fragment {
 	    }
 
 	    protected void onPostExecute(Bitmap bitmap) {
-	    	Bitmap result = Bitmap.createBitmap(bitmap.getWidth(), bitmap
+	    	
+	    	int width = bitmap.getWidth();
+	        int height = bitmap.getHeight();
+	        float scaleWidth = ((float) 100) / width;
+	        float scaleHeight = ((float) 100) / height;
+	        // CREATE A MATRIX FOR THE MANIPULATION
+	        Matrix matrix = new Matrix();
+	        // RESIZE THE BIT MAP
+	        matrix.postScale(scaleWidth, scaleHeight);
+
+	        // "RECREATE" THE NEW BITMAP
+	        Bitmap resizedBitmap = Bitmap.createBitmap(bitmap, 0, 0, width, height, matrix, false);
+	    	
+	    	Bitmap result = Bitmap.createBitmap(resizedBitmap.getWidth(), resizedBitmap
 	                .getHeight(), Config.ARGB_8888);
 	        Canvas canvas = new Canvas(result);
 
 	        final int color = 0xff424242;
 	        final Paint paint = new Paint();
-	        final Rect rect = new Rect(0, 0, bitmap.getWidth(), bitmap.getHeight());
+	        final Rect rect = new Rect(0, 0, resizedBitmap.getWidth(), resizedBitmap.getHeight());
 	        final RectF rectF = new RectF(rect);
-	        final float roundPx = 40.0f;
+	        final float roundPx = 7.0f;
 
 	        paint.setAntiAlias(true);
 	        canvas.drawARGB(0, 0, 0, 0);
@@ -187,7 +313,7 @@ public class MyProfileFragment extends Fragment {
 	        canvas.drawRoundRect(rectF, roundPx, roundPx, paint);
 
 	        paint.setXfermode(new PorterDuffXfermode(Mode.SRC_IN));
-	        canvas.drawBitmap(bitmap, rect, rect, paint);
+	        canvas.drawBitmap(resizedBitmap, rect, rect, paint);
 
 	        bmImage.setImageBitmap(result);
 	    }
