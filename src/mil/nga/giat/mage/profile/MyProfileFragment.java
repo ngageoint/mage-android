@@ -6,20 +6,13 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.google.android.gms.maps.CameraUpdateFactory;
-import com.google.android.gms.maps.MapView;
-import com.google.android.gms.maps.MapsInitializer;
-import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.MarkerOptions;
-
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.observation.AttachmentViewerActivity;
-import mil.nga.giat.mage.observation.LocationEditActivity;
-import mil.nga.giat.mage.sdk.datastore.observation.Attachment;
+import mil.nga.giat.mage.sdk.datastore.location.Location;
+import mil.nga.giat.mage.sdk.datastore.location.LocationHelper;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
-import mil.nga.giat.mage.sdk.http.post.MageServerPostRequests;
 import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
 import mil.nga.giat.mage.sdk.profile.UpdateProfileTask;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
@@ -51,6 +44,14 @@ import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
+
+import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.MapView;
+import com.google.android.gms.maps.MapsInitializer;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.MarkerOptions;
+import com.vividsolutions.jts.geom.Geometry;
+import com.vividsolutions.jts.geom.Point;
 
 public class MyProfileFragment extends Fragment {
 
@@ -120,7 +121,18 @@ public class MyProfileFragment extends Fragment {
 		}
 		float zoom = getActivity().getIntent().getFloatExtra(INITIAL_ZOOM, 0);
 		mapView.getMap().moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, zoom));
+		List<Location> lastLocation = LocationHelper.getInstance(getActivity()).getUserLocations(userId, getActivity(), 1, true);
+		
 		LatLng location = new LatLng(0,0);
+		
+		if (!lastLocation.isEmpty()) {
+			Geometry geo = lastLocation.get(0).getLocationGeometry().getGeometry();
+			if (geo instanceof Point) {
+				Point point = (Point) geo;
+				location = new LatLng(point.getY(), point.getX());
+			}
+		}
+		
 		mapView.getMap().addMarker(new MarkerOptions().position(location));
 		mapView.getMap().animateCamera(CameraUpdateFactory.newLatLngZoom(location, 15));
 		
