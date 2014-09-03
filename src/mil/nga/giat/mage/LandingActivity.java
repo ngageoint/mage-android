@@ -38,6 +38,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ImageView;
@@ -176,6 +177,11 @@ public class LandingActivity extends Activity implements ListView.OnItemClickLis
             @Override
             public void onDrawerOpened(View drawerView) {
                 super.onDrawerOpened(drawerView);
+                // hide keyboard
+				InputMethodManager inputMethodManager = (InputMethodManager) getSystemService(Activity.INPUT_METHOD_SERVICE);
+				if (getCurrentFocus() != null) {
+					inputMethodManager.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(), 0);
+				}
                 currentTitle = (String) getActionBar().getTitle();
                 if (drawerView.getId() == R.id.left_drawer) {
                     getActionBar().setTitle("Navigation");
