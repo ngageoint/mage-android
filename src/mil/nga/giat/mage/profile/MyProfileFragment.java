@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import mil.nga.giat.mage.R;
+import mil.nga.giat.mage.map.marker.LocationBitmapFactory;
 import mil.nga.giat.mage.observation.AttachmentViewerActivity;
 import mil.nga.giat.mage.sdk.datastore.location.Location;
 import mil.nga.giat.mage.sdk.datastore.location.LocationHelper;
@@ -49,6 +50,7 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.MapView;
 import com.google.android.gms.maps.MapsInitializer;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.Point;
@@ -63,6 +65,9 @@ public class MyProfileFragment extends Fragment {
 	public static String INITIAL_LOCATION = "INITIAL_LOCATION";
 	public static String INITIAL_ZOOM = "INITIAL_ZOOM";
 	public static String USER_ID = "USER_ID";
+	
+	private static final String ASSET = "people/person.png";
+	private static final String DEFAULT_ASSET = "people/high/person.png";
 	
 	private Uri currentMediaUri;
 	private User user;
@@ -130,11 +135,16 @@ public class MyProfileFragment extends Fragment {
 			if (geo instanceof Point) {
 				Point point = (Point) geo;
 				location = new LatLng(point.getY(), point.getX());
+				MarkerOptions options = new MarkerOptions().position(location).visible(true);
+				//icon(LocationBitmapFactory.bitmapDescriptor(getActivity(), lastLocation.get(0), lastLocation.get(0).getUser())).;
+				
+				Marker marker = mapView.getMap().addMarker(options);
+				
+				LocationBitmapFactory.bitmapDescriptor(getActivity(), lastLocation.get(0), lastLocation.get(0).getUser(), marker);
+				mapView.getMap().animateCamera(CameraUpdateFactory.newLatLngZoom(location, 15));
 			}
+			
 		}
-		
-		mapView.getMap().addMarker(new MarkerOptions().position(location));
-		mapView.getMap().animateCamera(CameraUpdateFactory.newLatLngZoom(location, 15));
 		
 		TextView realName = (TextView)rootView.findViewById(R.id.realName);
 		TextView username = (TextView)rootView.findViewById(R.id.username);
@@ -289,7 +299,7 @@ public class MyProfileFragment extends Fragment {
 
         // "RECREATE" THE NEW BITMAP
         Bitmap resizedBitmap = Bitmap.createBitmap(bitmap, 0, 0, width, height, matrix, false);
-    	
+        
     	Bitmap result = Bitmap.createBitmap(resizedBitmap.getWidth(), resizedBitmap
                 .getHeight(), Config.ARGB_8888);
         Canvas canvas = new Canvas(result);

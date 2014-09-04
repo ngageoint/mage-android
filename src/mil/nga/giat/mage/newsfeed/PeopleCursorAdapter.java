@@ -14,6 +14,7 @@ import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
 import android.content.Context;
 import android.database.Cursor;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -48,9 +49,9 @@ public class PeopleCursorAdapter extends CursorAdapter {
 			User user = location.getUser();
 
 			ImageView iconView = (ImageView) v.findViewById(R.id.iconImageView);
-			Bitmap iconMarker = LocationBitmapFactory.bitmap(context, location, ASSET, DEFAULT_ASSET);
-			if (iconMarker != null) {
-				iconView.setImageBitmap(iconMarker);
+//			Bitmap iconMarker = LocationBitmapFactory.bitmap(context, location, location.getUser(), null);
+			if (location.getUser().getLocalIconPath() != null) {
+				iconView.setImageBitmap(BitmapFactory.decodeFile(location.getUser().getLocalIconPath()));
 			}
 
 			TextView location_name = (TextView) v.findViewById(R.id.location_name);

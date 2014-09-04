@@ -82,9 +82,10 @@ public class LocationMarkerCollection implements PointCollection<Location>, OnMa
 			Point point = lg.getGeometry().getCentroid();
 
 			LatLng latLng = new LatLng(point.getY(), point.getX());
-			MarkerOptions options = new MarkerOptions().position(latLng).icon(LocationBitmapFactory.bitmapDescriptor(context, l, ASSET, DEFAULT_ASSET)).visible(visible);
+			MarkerOptions options = new MarkerOptions().position(latLng).visible(visible);//.icon(LocationBitmapFactory.bitmapDescriptor(context, l, l.getUser())).visible(visible);
 
 			marker = markerCollection.addMarker(options);
+			LocationBitmapFactory.bitmapDescriptor(context, l, l.getUser(), marker);
 
 			locationIdToMarker.put(l.getId(), marker);
 			markerIdToLocation.put(marker.getId(), l);
@@ -142,7 +143,8 @@ public class LocationMarkerCollection implements PointCollection<Location>, OnMa
 		}
 
 		map.setInfoWindowAdapter(infoWindowAdpater);
-		marker.setIcon(LocationBitmapFactory.bitmapDescriptor(context, l, ASSET, DEFAULT_ASSET));
+		//marker.setIcon(LocationBitmapFactory.bitmapDescriptor(context, l, l.getUser()));
+		LocationBitmapFactory.bitmapDescriptor(context, l, l.getUser(), marker);
 		marker.showInfoWindow();
 		return true;
 	}
@@ -161,7 +163,8 @@ public class LocationMarkerCollection implements PointCollection<Location>, OnMa
 			Location tl = markerIdToLocation.get(m.getId());
 			if (tl != null) {
 				boolean showWindow = m.isInfoWindowShown();
-				m.setIcon(LocationBitmapFactory.bitmapDescriptor(context, tl, ASSET, DEFAULT_ASSET));
+//				m.setIcon(LocationBitmapFactory.bitmapDescriptor(context, tl, tl.getUser()));
+				LocationBitmapFactory.bitmapDescriptor(context, tl, tl.getUser(), m);
 				if (showWindow) {
 					m.showInfoWindow();
 				}
@@ -249,7 +252,7 @@ public class LocationMarkerCollection implements PointCollection<Location>, OnMa
 			View v = inflater.inflate(R.layout.people_list_item, null);
 
 			ImageView iconView = (ImageView) v.findViewById(R.id.iconImageView);
-			Bitmap iconMarker = LocationBitmapFactory.bitmap(context, location, ASSET, DEFAULT_ASSET);
+			Bitmap iconMarker = LocationBitmapFactory.bitmap(context, location, location.getUser(), marker);
 			if (iconMarker != null) {
 				iconView.setImageBitmap(iconMarker);
 			}

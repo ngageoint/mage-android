@@ -60,9 +60,11 @@ public class MyHistoricalLocationMarkerCollection extends LocationMarkerCollecti
 			}
 
 			Point point = lg.getGeometry().getCentroid();
-			MarkerOptions options = new MarkerOptions().position(new LatLng(point.getY(), point.getX())).icon(LocationBitmapFactory.bitmapDescriptor(context, l, ASSET, DEFAULT_ASSET)).visible(visible);
+			MarkerOptions options = new MarkerOptions().position(new LatLng(point.getY(), point.getX())).visible(visible);
+			//.icon(LocationBitmapFactory.bitmapDescriptor(context, l, l.getUser())).visible(visible);
 
 			marker = markerCollection.addMarker(options);
+			LocationBitmapFactory.bitmapDescriptor(context, l, l.getUser(), marker);
 
 			locationIdToMarker.put(l.getId(), marker);
 			markerIdToLocation.put(marker.getId(), l);
@@ -87,7 +89,8 @@ public class MyHistoricalLocationMarkerCollection extends LocationMarkerCollecti
 			Location tl = markerIdToLocation.get(m.getId());
 			if (tl != null) {
 				boolean showWindow = m.isInfoWindowShown();
-				m.setIcon(LocationBitmapFactory.bitmapDescriptor(context, tl, ASSET, DEFAULT_ASSET));
+				//m.setIcon(LocationBitmapFactory.bitmapDescriptor(context, tl, tl.getUser()));
+				LocationBitmapFactory.bitmapDescriptor(context, tl, tl.getUser(), m);
 				if (showWindow) {
 					m.showInfoWindow();
 				}
