@@ -136,14 +136,12 @@ public class MyProfileFragment extends Fragment {
 				Point point = (Point) geo;
 				location = new LatLng(point.getY(), point.getX());
 				MarkerOptions options = new MarkerOptions().position(location).visible(true);
-				//icon(LocationBitmapFactory.bitmapDescriptor(getActivity(), lastLocation.get(0), lastLocation.get(0).getUser())).;
 				
 				Marker marker = mapView.getMap().addMarker(options);
 				
 				LocationBitmapFactory.bitmapDescriptor(getActivity(), lastLocation.get(0), lastLocation.get(0).getUser(), marker);
 				mapView.getMap().animateCamera(CameraUpdateFactory.newLatLngZoom(location, 15));
 			}
-			
 		}
 		
 		TextView realName = (TextView)rootView.findViewById(R.id.realName);
@@ -175,7 +173,6 @@ public class MyProfileFragment extends Fragment {
 		intent.putExtra(ProfilePictureViewerActivity.USER_FIRSTNAME, user.getFirstname());
 		intent.putExtra(ProfilePictureViewerActivity.USER_LASTNAME, user.getLastname());
 		
-//		Glide.load(user.getAvatarUrl()).placeholder(R.drawable.missing_avatar).centerCrop().into(iv);
 		rootView.findViewById(R.id.profile_picture).setOnClickListener(new OnClickListener() {
 			
 			@Override

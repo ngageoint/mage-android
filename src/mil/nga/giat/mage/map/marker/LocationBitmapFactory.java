@@ -111,7 +111,6 @@ public class LocationBitmapFactory {
 			if (user.getLocalIconPath() != null) {
 				Log.d("LocationBitmapFactory", "Using the locally stored icon file " + user.getLocalIconPath());
 				File f = new File(user.getLocalIconPath());
-				Log.d("test", "file length: " + f.length());
 				Bitmap combined = combineIconAndDot(dotBitmap.copy(Bitmap.Config.ARGB_8888, true), BitmapFactory.decodeFile(user.getLocalIconPath()));
 				m.setIcon(BitmapDescriptorFactory.fromBitmap(combined));
 			} else if (user.getIconUrl() != null) {
@@ -121,7 +120,7 @@ public class LocationBitmapFactory {
 					new DownloadImageTask(dotBitmap.copy(Bitmap.Config.ARGB_8888, true), m, user, context).execute(user.getIconUrl() + "?access_token=" + token);
 				}
 			} else {
-				Log.d("location marker", "icon for user " + user.getUsername() + " is null");
+				Log.d("LocationBitmapFactory", "icon for user " + user.getUsername() + " is null");
 			}
 
 		} catch (IOException e1) {
@@ -135,49 +134,13 @@ public class LocationBitmapFactory {
 	}
 	
 	private static Bitmap combineIconAndDot(Bitmap dot, Bitmap icon) {
-		Log.d("test", "dot is " + dot + " icon is " + icon);
-		Bitmap combined = Bitmap.createBitmap(96, 131, Config.ARGB_8888);
+		Bitmap combined = Bitmap.createBitmap(96, 127, Config.ARGB_8888);
 		Canvas c = new Canvas(combined);
 		
-		c.drawBitmap(dot, (96-dot.getWidth())/2, 99, null);
+		c.drawBitmap(dot, (96-dot.getWidth())/2, 95, null);
 		
+		Bitmap roundedProfile = MediaUtility.resizeAndRoundCorners(icon, 96);
 		
-		boolean isLandscape = icon.getWidth() > icon.getHeight();
-
-        int newWidth, newHeight;
-        if (isLandscape)
-        {
-            newWidth = 96;
-            newHeight = Math.round(((float) newWidth / icon.getWidth()) * icon.getHeight());
-        } else
-        {
-            newHeight = 96;
-            newWidth = Math.round(((float) newHeight / icon.getHeight()) * icon.getWidth());
-        }
-
-        Bitmap resizedBitmap = Bitmap.createScaledBitmap(icon, newWidth, newHeight, false);
-
-        if (resizedBitmap != icon)
-        	icon.recycle();
-    	
-        Bitmap roundedProfile = Bitmap.createBitmap(resizedBitmap.getWidth(), resizedBitmap
-                .getHeight(), Config.ARGB_8888);
-        
-        Canvas roundedCanvas = new Canvas(roundedProfile);
-        final int color = 0xff424242;
-        final Paint paint = new Paint();
-        final Rect rect = new Rect(0, 0, roundedProfile.getWidth(), roundedProfile.getHeight());
-        final RectF rectF = new RectF(rect);
-        final float roundPx = 7.0f;
-        
-        paint.setAntiAlias(true);
-        roundedCanvas.drawARGB(0, 0, 0, 0);
-        paint.setColor(color);
-        roundedCanvas.drawRoundRect(rectF, roundPx, roundPx, paint);
-
-        paint.setXfermode(new PorterDuffXfermode(Mode.SRC_IN));
-        roundedCanvas.drawBitmap(resizedBitmap, rect, rect, paint);
-        
 		c.drawBitmap(roundedProfile, (96-roundedProfile.getWidth())/2, 0, null);
 		
 		return combined;
@@ -208,102 +171,34 @@ public class LocationBitmapFactory {
 	            Log.e("Error", e.getMessage());
 	            e.printStackTrace();
 	        }
-	            
-	            
-	            
-	            
-	            
-	            //combined = combineIconAndDot(dotBitmap.copy(Bitmap.Config.ARGB_8888, true), icon.copy(Bitmap.Config.ARGB_8888, true));
-	            
-	            
-	            
-	            
-	            
-
-//	        } catch (Exception e) {
-//	            Log.e("Error", e.getMessage());
-//	            e.printStackTrace();
-//	        }
 	        return icon;
 	    }
 
 	    protected void onPostExecute(Bitmap icon) {
 	    	
-	    	Bitmap combined = null;
-	        try {
-	            
-	            
-	            combined = Bitmap.createBitmap(96, 131, Config.ARGB_8888);
-	    		Canvas c = new Canvas(combined);
-	    		
-	    		c.drawBitmap(dotBitmap, (96-dotBitmap.getWidth())/2, 99, null);
-	    		
-	    		
-	    		boolean isLandscape = icon.getWidth() > icon.getHeight();
-
-	            int newWidth, newHeight;
-	            if (isLandscape)
-	            {
-	                newWidth = 96;
-	                newHeight = Math.round(((float) newWidth / icon.getWidth()) * icon.getHeight());
-	            } else
-	            {
-	                newHeight = 96;
-	                newWidth = Math.round(((float) newHeight / icon.getHeight()) * icon.getWidth());
-	            }
-
-	            Bitmap resizedBitmap = Bitmap.createScaledBitmap(icon, newWidth, newHeight, false);
-
-	            if (resizedBitmap != icon)
-	            	icon.recycle();
-	        	
-	            Bitmap roundedProfile = Bitmap.createBitmap(resizedBitmap.getWidth(), resizedBitmap
-	                    .getHeight(), Config.ARGB_8888);
-	            
-	            Canvas roundedCanvas = new Canvas(roundedProfile);
-	            final int color = 0xff424242;
-	            final Paint paint = new Paint();
-	            final Rect rect = new Rect(0, 0, roundedProfile.getWidth(), roundedProfile.getHeight());
-	            final RectF rectF = new RectF(rect);
-	            final float roundPx = 7.0f;
-	            
-	            paint.setAntiAlias(true);
-	            roundedCanvas.drawARGB(0, 0, 0, 0);
-	            paint.setColor(color);
-	            roundedCanvas.drawRoundRect(rectF, roundPx, roundPx, paint);
-
-	            paint.setXfermode(new PorterDuffXfermode(Mode.SRC_IN));
-	            roundedCanvas.drawBitmap(resizedBitmap, rect, rect, paint);
-	            
-	    		c.drawBitmap(roundedProfile, (96-roundedProfile.getWidth())/2, 0, null);
-	    		
-	            FileOutputStream out = null;
-	    		try {
-	    			String localPath = MediaUtility.getUserIconDirectory() + "/" + user.getId();
-	    		    out = new FileOutputStream(localPath);
-	    		    roundedProfile.compress(Bitmap.CompressFormat.PNG, 90, out);
-	    		    user.setLocalIconPath(localPath);
-	    		    UserHelper.getInstance(context).update(user);
-	    		} catch (Exception e) {
-	    		    e.printStackTrace();
-	    		} finally {
-	    		    try {
-	    		        if (out != null) {
-	    		            out.close();
-	    		        }
-	    		    } catch (IOException e) {
-	    		        e.printStackTrace();
-	    		    }
-	    		}
-	    		
+	    	FileOutputStream out = null;
+    		try {
+    			String localPath = MediaUtility.getUserIconDirectory() + "/" + user.getId();
+    		    out = new FileOutputStream(localPath);
+    		    icon.compress(Bitmap.CompressFormat.PNG, 90, out);
+    		    user.setLocalIconPath(localPath);
+    		    UserHelper.getInstance(context).update(user);
+    		} catch (Exception e) {
+    		    e.printStackTrace();
+    		} finally {
+    		    try {
+    		        if (out != null) {
+    		            out.close();
+    		        }
+    		    } catch (IOException e) {
+    		        e.printStackTrace();
+    		    }
+    		}
+	    	
+	    	Bitmap combined = combineIconAndDot(dotBitmap.copy(Bitmap.Config.ARGB_8888, true), icon.copy(Bitmap.Config.ARGB_8888, true));;
 	    	if (marker != null) {
-	    		Log.d("test", "setting marker bitmap to "+ combined);
 				marker.setIcon(BitmapDescriptorFactory.fromBitmap(combined));
 			}
-	        } catch (Exception e) {
-	            Log.e("Error", e.getMessage());
-	            e.printStackTrace();
-	        }
 	    }
 	}
 
