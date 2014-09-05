@@ -47,6 +47,7 @@ import mil.nga.giat.mage.sdk.location.LocationService;
 
 import org.apache.commons.lang3.StringUtils;
 
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Fragment;
 import android.content.DialogInterface;
@@ -58,20 +59,26 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.view.inputmethod.InputMethodManager;
 import android.view.ViewGroup;
 import android.webkit.WebView;
+import android.widget.EditText;
 import android.widget.ImageButton;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.GoogleMap.CancelableCallback;
+import com.google.android.gms.maps.GoogleMap.OnInfoWindowClickListener;
 import com.google.android.gms.maps.GoogleMap.OnMapClickListener;
 import com.google.android.gms.maps.GoogleMap.OnMapLongClickListener;
 import com.google.android.gms.maps.GoogleMap.OnMarkerClickListener;
@@ -92,7 +99,7 @@ import com.google.maps.android.PolyUtil;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.Point;
 
-public class MapFragment extends Fragment implements OnMapClickListener, OnMapLongClickListener, OnMarkerClickListener, OnMapPanListener, OnMyLocationButtonClickListener, OnClickListener, LocationSource, LocationListener, OnCacheOverlayListener, OnSharedPreferenceChangeListener,
+public class MapFragment extends Fragment implements OnMapClickListener, OnMapLongClickListener, OnMarkerClickListener, OnInfoWindowClickListener, OnMapPanListener, OnMyLocationButtonClickListener, OnClickListener, LocationSource, LocationListener, OnCacheOverlayListener, OnSharedPreferenceChangeListener,
 		IObservationEventListener, ILocationEventListener, IStaticFeatureEventListener {
 
 	private static final String LOG_NAME = MapFragment.class.getName();
@@ -100,6 +107,8 @@ public class MapFragment extends Fragment implements OnMapClickListener, OnMapLo
 	private MAGE mage;
 	private MapView mapView;
 	private GoogleMap map;
+	private View searchLayout;
+	private EditText edittextSearch;
 	private int mapType = 1;
 	private Location location;
 	private boolean followMe = false;
@@ -118,6 +127,7 @@ public class MapFragment extends Fragment implements OnMapClickListener, OnMapLo
 	private PointCollection<mil.nga.giat.mage.sdk.datastore.location.Location> locations;
 	private PointCollection<mil.nga.giat.mage.sdk.datastore.location.Location> myHistoricLocations;
 	private StaticGeometryCollection staticGeometryCollection;
+	private List<Marker> searchMarkes = new ArrayList<Marker>();
 
 	private Map<String, TileOverlay> tileOverlays = new HashMap<String, TileOverlay>();
 	private Collection<String> featureIds = new ArrayList<String>();
@@ -143,6 +153,9 @@ public class MapFragment extends Fragment implements OnMapClickListener, OnMapLo
 
 		mapView = (MapView) view.findViewById(R.id.mapView);
 		mapView.onCreate(savedInstanceState);
+
+		searchLayout = (View) view.findViewById(R.id.search_layout);
+		edittextSearch = (EditText) view.findViewById(R.id.edittext_search);
 
 		MapsInitializer.initialize(getActivity().getApplicationContext());
 
@@ -178,6 +191,13 @@ public class MapFragment extends Fragment implements OnMapClickListener, OnMapLo
 		myHistoricLocations.clear();
 		myHistoricLocations = null;
 
+		if (searchMarkes != null) {
+			for (Marker m : searchMarkes) {
+				m.remove();
+			}
+			searchMarkes.clear();
+		}
+		
 		staticGeometryCollection = null;
 		currentUser = null;
 		super.onDestroy();
@@ -210,6 +230,7 @@ public class MapFragment extends Fragment implements OnMapClickListener, OnMapLo
 		map.setOnMarkerClickListener(this);
 		map.setOnMapLongClickListener(this);
 		map.setOnMyLocationButtonClickListener(this);
+		map.setOnInfoWindowClickListener(this);
 
 		updateMapView();
 
@@ -249,7 +270,7 @@ public class MapFragment extends Fragment implements OnMapClickListener, OnMapLo
 
 		boolean showMyLocationHistory = preferences.getBoolean(getResources().getString(R.string.showMyLocationHistoryKey), false);
 		myHistoricLocations.setVisibility(showMyLocationHistory);
-
+		
 		mage.registerCacheOverlayListener(this);
 		StaticFeatureHelper.getInstance(getActivity().getApplicationContext()).addListener(this);
 
@@ -277,6 +298,46 @@ public class MapFragment extends Fragment implements OnMapClickListener, OnMapLo
 		if (!refreshMyHistoricLocationsMarkersTask.isCancelled()) {
 			refreshMyHistoricLocationsMarkersTask.executeOnExecutor(executor, REFRESHMARKERINTERVALINSECONDS);
 		}
+
+		edittextSearch.setOnKeyListener(new View.OnKeyListener() {
+			@Override
+			public boolean onKey(View v, int keyCode, KeyEvent event) {
+				if (keyCode == KeyEvent.KEYCODE_ENTER) {
+					search(v);
+					return true;
+				} else {
+					return false;
+				}
+			}
+		});
+		
+		edittextSearch.addTextChangedListener(new TextWatcher() {
+
+			@Override
+			public void afterTextChanged(Editable s) {
+				// TODO Auto-generated method stub
+
+			}
+
+			@Override
+			public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+				// TODO Auto-generated method stub
+
+			}
+
+			@Override
+			public void onTextChanged(CharSequence s, int start, int before, int count) {
+				if(s == null || s.toString().trim().isEmpty()) {
+					if (searchMarkes != null) {
+						for (Marker m : searchMarkes) {
+							m.remove();
+						}
+						searchMarkes.clear();
+					}
+				}
+			}
+
+		});
 
 		// zoom to location if told to
 		Float zoomLat = preferences.getFloat(getResources().getString(R.string.mapZoomLatKey), Float.MAX_VALUE);
@@ -326,6 +387,7 @@ public class MapFragment extends Fragment implements OnMapClickListener, OnMapLo
 	public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
 		super.onCreateOptionsMenu(menu, inflater);
 
+		inflater.inflate(R.menu.search, menu);
 		inflater.inflate(R.menu.observation_new, menu);
 		inflater.inflate(R.menu.filter, menu);
 	}
@@ -372,6 +434,19 @@ public class MapFragment extends Fragment implements OnMapClickListener, OnMapLo
 					}
 				}).show();
 			}
+			break;
+		case R.id.search:
+			boolean isVisible = searchLayout.getVisibility() == View.VISIBLE;
+			searchLayout.setVisibility(isVisible ? View.GONE : View.VISIBLE);
+
+			if (isVisible) {
+				hideKeyboard();
+			} else {
+				edittextSearch.requestFocus();
+				InputMethodManager inputMethodManager = (InputMethodManager) getActivity().getSystemService(Activity.INPUT_METHOD_SERVICE);
+				inputMethodManager.toggleSoftInput(InputMethodManager.SHOW_IMPLICIT, 0);
+			}
+
 			break;
 		}
 
@@ -447,9 +522,26 @@ public class MapFragment extends Fragment implements OnMapClickListener, OnMapLo
 			}
 		}
 	}
+	
+	@Override
+	public void onInfoWindowClick(Marker marker) {
+		// for now the only one that cares about info window clicks is the location marker window
+		locations.onInfoWindowClick(marker);
+	}
 
 	@Override
 	public boolean onMarkerClick(Marker marker) {
+		hideKeyboard();
+		// search marker
+		if(searchMarkes != null) {
+			for(Marker m :searchMarkes) {
+				 if(marker.getId().equals(m.getId())) {
+						m.showInfoWindow();
+						return true;		 
+				 }
+			}
+		}
+		
 		// You can only have one marker click listener per map.
 		// Lets listen here and shell out the click event to all
 		// my marker collections. Each one need to handle
@@ -479,6 +571,7 @@ public class MapFragment extends Fragment implements OnMapClickListener, OnMapLo
 
 	@Override
 	public void onMapClick(LatLng latLng) {
+		hideKeyboard();
 		// remove old accuracy circle
 		((LocationMarkerCollection) locations).offMarkerClick();
 
@@ -523,6 +616,7 @@ public class MapFragment extends Fragment implements OnMapClickListener, OnMapLo
 
 	@Override
 	public void onMapLongClick(LatLng point) {
+		hideKeyboard();
 		Intent intent = new Intent(getActivity().getApplicationContext(), ObservationEditActivity.class);
 		Location l = new Location("manual");
 		l.setAccuracy(0.0f);
@@ -535,6 +629,8 @@ public class MapFragment extends Fragment implements OnMapClickListener, OnMapLo
 
 	@Override
 	public void onClick(View view) {
+		// close keboard
+		hideKeyboard();
 		switch (view.getId()) {
 		case R.id.map_settings: {
 			Intent i = new Intent(getActivity().getApplicationContext(), MapPreferencesActivity.class);
@@ -730,6 +826,19 @@ public class MapFragment extends Fragment implements OnMapClickListener, OnMapLo
 		editor.commit();
 	}
 
+	private void search(View v) {
+		String searchString = edittextSearch.getText().toString();
+		if (searchString != null && !searchString.equals("")) {
+
+			InputMethodManager inputMethodManager = (InputMethodManager) getActivity().getSystemService(Activity.INPUT_METHOD_SERVICE);
+			if (getActivity().getCurrentFocus() != null) {
+				inputMethodManager.hideSoftInputFromWindow(getActivity().getCurrentFocus().getWindowToken(), 0);
+			}
+
+			new GeocoderTask(getActivity(), map, searchMarkes).execute(searchString);
+		}
+	}
+
 	@Override
 	public void onError(Throwable error) {
 	}
@@ -816,4 +925,13 @@ public class MapFragment extends Fragment implements OnMapClickListener, OnMapLo
 
 		return title;
 	}
+
+	private void hideKeyboard() {
+		InputMethodManager inputMethodManager = (InputMethodManager) getActivity().getSystemService(Activity.INPUT_METHOD_SERVICE);
+		if (getActivity().getCurrentFocus() != null) {
+			inputMethodManager.hideSoftInputFromWindow(getActivity().getCurrentFocus().getWindowToken(), 0);
+		}
+	}
+
+
 }

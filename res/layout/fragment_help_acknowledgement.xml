@@ -116,6 +116,11 @@
                 android:text="Google Guava"
                 android:textColor="@android:color/black"
                 android:textSize="18sp" />
+
+            <TextView
+                android:text="Bricolsoft GeocoderPlus"
+                android:textColor="@android:color/black"
+                android:textSize="18sp" />
         </TableRow>
     </TableLayout>
 

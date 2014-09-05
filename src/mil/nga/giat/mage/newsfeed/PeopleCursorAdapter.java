@@ -4,16 +4,17 @@ import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.Locale;
 
-import org.ocpsoft.prettytime.PrettyTime;
-
 import mil.nga.giat.mage.R;
-import mil.nga.giat.mage.map.marker.LocationBitmapFactory;
 import mil.nga.giat.mage.sdk.datastore.location.Location;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
+import mil.nga.giat.mage.sdk.utils.MediaUtility;
+
+import org.ocpsoft.prettytime.PrettyTime;
+
 import android.content.Context;
 import android.database.Cursor;
-import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -27,9 +28,6 @@ import com.j256.ormlite.stmt.PreparedQuery;
 
 public class PeopleCursorAdapter extends CursorAdapter {
 	private static final String LOG_NAME = PeopleCursorAdapter.class.getName();
-
-	private static final String ASSET = "people/person.png";
-	private static final String DEFAULT_ASSET = "people/high/person.png";
 	
 	private LayoutInflater inflater = null;
 	private PreparedQuery<Location> query;
@@ -48,9 +46,8 @@ public class PeopleCursorAdapter extends CursorAdapter {
 			User user = location.getUser();
 
 			ImageView iconView = (ImageView) v.findViewById(R.id.iconImageView);
-			Bitmap iconMarker = LocationBitmapFactory.bitmap(context, location, ASSET, DEFAULT_ASSET);
-			if (iconMarker != null) {
-				iconView.setImageBitmap(iconMarker);
+			if (location.getUser().getLocalIconPath() != null) {
+				iconView.setImageBitmap(MediaUtility.resizeAndRoundCorners(BitmapFactory.decodeFile(location.getUser().getLocalIconPath()), 128));
 			}
 
 			TextView location_name = (TextView) v.findViewById(R.id.location_name);
@@ -71,7 +68,6 @@ public class PeopleCursorAdapter extends CursorAdapter {
 			String timeText = sdf.format(location.getTimestamp());
 			Boolean prettyPrint = PreferenceHelper.getInstance(context).getValue(R.string.prettyPrintLocationDatesKey, Boolean.class, R.string.prettyPrintLocationDatesDefaultValue);
 			if(prettyPrint) {
-				//timeText = DateUtils.getRelativeTimeSpanString(location.getTimestamp().getTime(), System.currentTimeMillis(), 0, DateUtils.FORMAT_ABBREV_ALL).toString();
 				timeText = new PrettyTime().format(location.getTimestamp());
 			}
 

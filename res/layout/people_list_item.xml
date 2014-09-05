@@ -4,6 +4,7 @@
     android:id="@+id/people_list_container"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:padding="7dp"
     android:background="@drawable/list_background"
     android:orientation="vertical" >
 
@@ -18,6 +19,7 @@
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal|center_vertical"
             android:gravity="center_horizontal|center_vertical"
+            android:paddingRight="7dp"
             android:src="@drawable/ic_pinpoint" />
 
         <LinearLayout

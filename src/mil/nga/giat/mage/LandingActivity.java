@@ -13,6 +13,7 @@ import mil.nga.giat.mage.navigation.DrawerItem;
 import mil.nga.giat.mage.newsfeed.ObservationFeedFragment;
 import mil.nga.giat.mage.newsfeed.PeopleFeedFragment;
 import mil.nga.giat.mage.preferences.PublicPreferencesFragment;
+import mil.nga.giat.mage.profile.MyProfileFragment;
 import mil.nga.giat.mage.sdk.datastore.DaoStore;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
 import mil.nga.giat.mage.sdk.utils.UserUtility;
@@ -37,6 +38,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ImageView;
@@ -80,7 +82,8 @@ public class LandingActivity extends Activity implements ListView.OnItemClickLis
 
         drawerItems = new DrawerItem[] { mapItem, 
         		new DrawerItem.Builder("Observations").id(1).drawableId(R.drawable.ic_map_marker_white).fragment(new ObservationFeedFragment()).build(),
-                new DrawerItem.Builder("People").id(2).drawableId(R.drawable.ic_users_white).fragment(new PeopleFeedFragment()).build(), 
+                new DrawerItem.Builder("People").id(2).drawableId(R.drawable.ic_users_white).fragment(new PeopleFeedFragment()).build(),
+                new DrawerItem.Builder("My Profile").id(7).drawableId(R.drawable.ic_fa_user).fragment(new MyProfileFragment()).build(),
                 new DrawerItem.Builder("Settings").id(3).secondary(true).fragment(new PublicPreferencesFragment()).build(), 
                 new DrawerItem.Builder("Status").id(6).secondary(true).fragment(new StatusFragment()).build(), 
                 new DrawerItem.Builder("Help").id(4).secondary(true).fragment(new HelpFragment()).build(), 
@@ -174,6 +177,11 @@ public class LandingActivity extends Activity implements ListView.OnItemClickLis
             @Override
             public void onDrawerOpened(View drawerView) {
                 super.onDrawerOpened(drawerView);
+                // hide keyboard
+				InputMethodManager inputMethodManager = (InputMethodManager) getSystemService(Activity.INPUT_METHOD_SERVICE);
+				if (getCurrentFocus() != null) {
+					inputMethodManager.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(), 0);
+				}
                 currentTitle = (String) getActionBar().getTitle();
                 if (drawerView.getId() == R.id.left_drawer) {
                     getActionBar().setTitle("Navigation");

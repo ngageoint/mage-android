@@ -144,4 +144,10 @@ public class ObservationMarkerCollection implements PointCollection<Observation>
     public void onCameraChange(CameraPosition cameraPosition) {
         // do nothing I don't care
     }
+
+	@Override
+	public void onInfoWindowClick(Marker arg0) {
+		// TODO Auto-generated method stub
+		
+	}
 }

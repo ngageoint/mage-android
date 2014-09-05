@@ -16,6 +16,12 @@
         <item>1024</item>
     </string-array>
     
+    <string-array name="profileImageChoices">
+        <item>View Profile Photo</item>
+        <item>Choose New Photo From Gallery</item>
+        <item>Take New Photo</item>
+    </string-array>
+    
     <string-array name="staticFeatureEntries">
     </string-array>
     <string-array name="staticFeatureValues">
