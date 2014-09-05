@@ -12,13 +12,18 @@ import mil.nga.giat.mage.LandingActivity;
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.map.MapFragment;
 import mil.nga.giat.mage.navigation.DrawerItem;
+import mil.nga.giat.mage.observation.ObservationViewActivity;
+import mil.nga.giat.mage.profile.MyProfileFragment;
+import mil.nga.giat.mage.profile.ProfileActivity;
 import mil.nga.giat.mage.sdk.datastore.DaoStore;
 import mil.nga.giat.mage.sdk.datastore.location.Location;
+import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
 import android.app.Fragment;
 import android.app.FragmentManager;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
@@ -218,17 +223,21 @@ public class PeopleFeedFragment extends Fragment implements OnSharedPreferenceCh
 		c.moveToPosition(position);
 		try {
 			Location l = query.mapRow(new AndroidDatabaseResults(c, null));
-			Point p = (Point)l.getLocationGeometry().getGeometry();
-            Editor e = sp.edit();
-            e.putFloat(getResources().getString(R.string.mapZoomLatKey), Double.valueOf(p.getY()).floatValue()).commit();
-            e.putFloat(getResources().getString(R.string.mapZoomLonKey), Double.valueOf(p.getX()).floatValue()).commit();
-            FragmentManager fragmentManager = getFragmentManager();
-            fragmentManager.beginTransaction().remove(this).commit();
-            DrawerItem mapItem = ((LandingActivity)getActivity()).getMapItem();
-            fragmentManager.beginTransaction().add(R.id.content_frame, ((MapFragment)mapItem.getFragment())).commit();
-            ((LandingActivity)getActivity()).setCurrentItem(mapItem);
+			Intent profileView = new Intent(getActivity().getApplicationContext(), ProfileActivity.class);
+			profileView.putExtra(MyProfileFragment.USER_ID, l.getUser().getRemoteId());
+			getActivity().startActivityForResult(profileView, 2);
 		} catch (Exception e) {
 			Log.e(LOG_NAME, "Problem.", e);
 		}
+			
+//			  Point p = (Point)l.getLocationGeometry().getGeometry();
+//            Editor e = sp.edit();
+//            e.putFloat(getResources().getString(R.string.mapZoomLatKey), Double.valueOf(p.getY()).floatValue()).commit();
+//            e.putFloat(getResources().getString(R.string.mapZoomLonKey), Double.valueOf(p.getX()).floatValue()).commit();
+//            FragmentManager fragmentManager = getFragmentManager();
+//            fragmentManager.beginTransaction().remove(this).commit();
+//            DrawerItem mapItem = ((LandingActivity)getActivity()).getMapItem();
+//            fragmentManager.beginTransaction().add(R.id.content_frame, ((MapFragment)mapItem.getFragment())).commit();
+//            ((LandingActivity)getActivity()).setCurrentItem(mapItem);
 	}
 }

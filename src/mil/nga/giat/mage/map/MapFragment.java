@@ -78,6 +78,7 @@ import android.widget.ImageButton;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.GoogleMap.CancelableCallback;
+import com.google.android.gms.maps.GoogleMap.OnInfoWindowClickListener;
 import com.google.android.gms.maps.GoogleMap.OnMapClickListener;
 import com.google.android.gms.maps.GoogleMap.OnMapLongClickListener;
 import com.google.android.gms.maps.GoogleMap.OnMarkerClickListener;
@@ -98,7 +99,7 @@ import com.google.maps.android.PolyUtil;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.Point;
 
-public class MapFragment extends Fragment implements OnMapClickListener, OnMapLongClickListener, OnMarkerClickListener, OnMapPanListener, OnMyLocationButtonClickListener, OnClickListener, LocationSource, LocationListener, OnCacheOverlayListener, OnSharedPreferenceChangeListener,
+public class MapFragment extends Fragment implements OnMapClickListener, OnMapLongClickListener, OnMarkerClickListener, OnInfoWindowClickListener, OnMapPanListener, OnMyLocationButtonClickListener, OnClickListener, LocationSource, LocationListener, OnCacheOverlayListener, OnSharedPreferenceChangeListener,
 		IObservationEventListener, ILocationEventListener, IStaticFeatureEventListener {
 
 	private static final String LOG_NAME = MapFragment.class.getName();
@@ -229,6 +230,7 @@ public class MapFragment extends Fragment implements OnMapClickListener, OnMapLo
 		map.setOnMarkerClickListener(this);
 		map.setOnMapLongClickListener(this);
 		map.setOnMyLocationButtonClickListener(this);
+		map.setOnInfoWindowClickListener(this);
 
 		updateMapView();
 
@@ -519,6 +521,12 @@ public class MapFragment extends Fragment implements OnMapClickListener, OnMapLo
 				new LocationTask(LocationTask.Type.DELETE, myHistoricLocations).execute(l);
 			}
 		}
+	}
+	
+	@Override
+	public void onInfoWindowClick(Marker marker) {
+		// for now the only one that cares about info window clicks is the location marker window
+		locations.onInfoWindowClick(marker);
 	}
 
 	@Override
@@ -924,4 +932,6 @@ public class MapFragment extends Fragment implements OnMapClickListener, OnMapLo
 			inputMethodManager.hideSoftInputFromWindow(getActivity().getCurrentFocus().getWindowToken(), 0);
 		}
 	}
+
+
 }

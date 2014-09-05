@@ -11,22 +11,29 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.ocpsoft.prettytime.PrettyTime;
 
 import mil.nga.giat.mage.R;
+import mil.nga.giat.mage.profile.MyProfileFragment;
+import mil.nga.giat.mage.profile.ProfileActivity;
 import mil.nga.giat.mage.sdk.datastore.location.Location;
 import mil.nga.giat.mage.sdk.datastore.location.LocationGeometry;
 import mil.nga.giat.mage.sdk.datastore.location.LocationHelper;
 import mil.nga.giat.mage.sdk.datastore.location.LocationProperty;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
+import mil.nga.giat.mage.sdk.utils.MediaUtility;
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.View.OnClickListener;
 import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.GoogleMap.InfoWindowAdapter;
+import com.google.android.gms.maps.GoogleMap.OnInfoWindowClickListener;
 import com.google.android.gms.maps.GoogleMap.OnMarkerClickListener;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.Circle;
@@ -35,9 +42,10 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.maps.android.MarkerManager;
+import com.j256.ormlite.android.AndroidDatabaseResults;
 import com.vividsolutions.jts.geom.Point;
 
-public class LocationMarkerCollection implements PointCollection<Location>, OnMarkerClickListener {
+public class LocationMarkerCollection implements PointCollection<Location>, OnMarkerClickListener, OnInfoWindowClickListener {
 
 	private static final String LOG_NAME = LocationMarkerCollection.class.getName();
 
@@ -113,6 +121,19 @@ public class LocationMarkerCollection implements PointCollection<Location>, OnMa
 			markerCollection.remove(marker);
 			marker.remove();
 		}
+	}
+	
+	@Override
+	public void onInfoWindowClick(Marker marker) {
+		Location l = markerIdToLocation.get(marker.getId());
+
+		if (l == null) {
+			return;
+		}
+		
+		Intent profileView = new Intent(context, ProfileActivity.class);
+		profileView.putExtra(MyProfileFragment.USER_ID, l.getUser().getRemoteId());
+		context.startActivity(profileView);
 	}
 
 	@Override
@@ -242,7 +263,7 @@ public class LocationMarkerCollection implements PointCollection<Location>, OnMa
 
 		@Override
 		public View getInfoContents(Marker marker) {
-			Location location = markerIdToLocation.get(marker.getId());
+			final Location location = markerIdToLocation.get(marker.getId());
 			if (location == null) {
 				return null;
 			}
@@ -250,11 +271,10 @@ public class LocationMarkerCollection implements PointCollection<Location>, OnMa
 
 			LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 			View v = inflater.inflate(R.layout.people_list_item, null);
-
+			
 			ImageView iconView = (ImageView) v.findViewById(R.id.iconImageView);
-			Bitmap iconMarker = LocationBitmapFactory.bitmap(context, location, location.getUser(), marker);
-			if (iconMarker != null) {
-				iconView.setImageBitmap(iconMarker);
+			if (location.getUser().getLocalIconPath() != null) {
+				iconView.setImageBitmap(MediaUtility.resizeAndRoundCorners(BitmapFactory.decodeFile(location.getUser().getLocalIconPath()), 128));
 			}
 
 			TextView location_name = (TextView) v.findViewById(R.id.location_name);

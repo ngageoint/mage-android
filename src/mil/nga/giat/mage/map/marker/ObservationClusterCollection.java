@@ -151,4 +151,10 @@ public class ObservationClusterCollection implements PointCollection<Observation
     public Date getLatestDate() {
         return latestObservationDate;
     }
+
+	@Override
+	public void onInfoWindowClick(Marker arg0) {
+		// TODO Auto-generated method stub
+		
+	}
 }

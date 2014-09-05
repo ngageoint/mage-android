@@ -9,6 +9,8 @@ import java.util.List;
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.map.marker.LocationBitmapFactory;
 import mil.nga.giat.mage.observation.AttachmentViewerActivity;
+import mil.nga.giat.mage.observation.ObservationEditActivity;
+import mil.nga.giat.mage.observation.ObservationViewActivity;
 import mil.nga.giat.mage.sdk.datastore.location.Location;
 import mil.nga.giat.mage.sdk.datastore.location.LocationHelper;
 import mil.nga.giat.mage.sdk.datastore.user.User;
@@ -40,6 +42,7 @@ import android.os.Bundle;
 import android.provider.MediaStore;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
@@ -219,9 +222,6 @@ public class MyProfileFragment extends Fragment {
 						AlertDialog d = builder.create();
 						d.show();
 					} else {
-						Intent intent = new Intent(v.getContext(), AttachmentViewerActivity.class);
-						intent.setData(Uri.parse(avatarUrl));
-						intent.putExtra(AttachmentViewerActivity.EDITABLE, false);
 						startActivityForResult(intent, 1);
 					}
 				} catch (Exception e) {
