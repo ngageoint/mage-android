@@ -168,8 +168,11 @@ public class MyProfileFragment extends Fragment {
 			email.setVisibility(View.GONE);
 		}
 		ImageView iv = (ImageView)rootView.findViewById(R.id.profile_picture);
-		final String avatarUrl = user.getAvatarUrl() + "?access_token=" + PreferenceHelper.getInstance(getActivity().getApplicationContext()).getValue(R.string.tokenKey);
-		new DownloadImageTask(iv).execute(avatarUrl);
+		String avatarUrl = null;
+		if (user.getAvatarUrl() != null) {
+			avatarUrl = user.getAvatarUrl() + "?access_token=" + PreferenceHelper.getInstance(getActivity().getApplicationContext()).getValue(R.string.tokenKey);
+			new DownloadImageTask(iv).execute(avatarUrl);
+		}
 		
 		final Intent intent = new Intent(getActivity().getApplicationContext(), ProfilePictureViewerActivity.class);
 		intent.putExtra(ProfilePictureViewerActivity.IMAGE_URL, avatarUrl);
@@ -339,7 +342,9 @@ public class MyProfileFragment extends Fragment {
 	    }
 
 	    protected void onPostExecute(Bitmap bitmap) {
-	    	bmImage.setImageBitmap(createProfileImageBitmap(bitmap));
+	    	if (bitmap != null) {
+	    		bmImage.setImageBitmap(createProfileImageBitmap(bitmap));
+	    	}
 	    }
 	}
 }
