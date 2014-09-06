@@ -75,6 +75,8 @@ public class LocationBitmapFactory {
 			}
 		} else {
 			Log.d("LocationBitmapFactory", "icon for user " + user.getUsername() + " is null");
+			finalBitmap = dotBitmap;
+			m.setIcon(BitmapDescriptorFactory.fromBitmap(finalBitmap));
 		}
 
 

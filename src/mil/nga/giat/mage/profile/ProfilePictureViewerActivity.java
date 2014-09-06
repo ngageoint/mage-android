@@ -33,7 +33,9 @@ public class ProfilePictureViewerActivity extends Activity {
 		findViewById(R.id.remove_btn).setVisibility(View.GONE);
 		
 		final String avatarUrl = intent.getStringExtra(IMAGE_URL);
-		new DownloadImageTask(iv).execute(avatarUrl);
+		if (avatarUrl != null) {
+			new DownloadImageTask(iv).execute(avatarUrl);
+		}
 	}
 	
 	public void goBack(View v) {
