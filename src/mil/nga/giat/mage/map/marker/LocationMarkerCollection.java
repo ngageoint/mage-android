@@ -1,5 +1,8 @@
 package mil.nga.giat.mage.map.marker;
 
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Date;
@@ -18,12 +21,14 @@ import mil.nga.giat.mage.sdk.datastore.location.LocationGeometry;
 import mil.nga.giat.mage.sdk.datastore.location.LocationHelper;
 import mil.nga.giat.mage.sdk.datastore.location.LocationProperty;
 import mil.nga.giat.mage.sdk.datastore.user.User;
+import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.os.AsyncTask;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -273,10 +278,12 @@ public class LocationMarkerCollection implements PointCollection<Location>, OnMa
 			View v = inflater.inflate(R.layout.people_list_item, null);
 			
 			ImageView iconView = (ImageView) v.findViewById(R.id.iconImageView);
-			if (location.getUser().getLocalIconPath() != null) {
-				iconView.setImageBitmap(MediaUtility.resizeAndRoundCorners(BitmapFactory.decodeFile(location.getUser().getLocalIconPath()), 128));
+			if (location.getUser().getLocalAvatarPath() != null) {
+				iconView.setImageBitmap(MediaUtility.resizeAndRoundCorners(BitmapFactory.decodeFile(location.getUser().getLocalAvatarPath()), 128));
+			} else if (location.getUser().getAvatarUrl() != null) {
+				new DownloadImageTask(marker, context, user).execute(location.getUser().getAvatarUrl() + "?access_token=" + PreferenceHelper.getInstance(context).getValue(R.string.tokenKey));
 			}
-
+			
 			TextView location_name = (TextView) v.findViewById(R.id.location_name);
 			location_name.setText(user.getFirstname() + " " + user.getLastname());
 
@@ -307,5 +314,54 @@ public class LocationMarkerCollection implements PointCollection<Location>, OnMa
 		public View getInfoWindow(Marker marker) {
 			return null; // Use default info window for now
 		}
+	}
+	
+	private class DownloadImageTask extends AsyncTask<String, Void, Bitmap> {
+	    Marker marker;
+	    Context context;
+	    User user;
+
+	    public DownloadImageTask(Marker marker, Context c, User u) {
+	        this.marker = marker;
+	        this.context = c;
+	        this.user = u;
+	    }
+
+	    protected Bitmap doInBackground(String... urls) {
+	        String urldisplay = urls[0];
+	        Bitmap mIcon11 = null;
+	        try {
+	            InputStream in = new java.net.URL(urldisplay).openStream();
+	            mIcon11 = BitmapFactory.decodeStream(in);
+	        } catch (Exception e) {
+	            Log.e("Error", e.getMessage());
+	            e.printStackTrace();
+	        }
+	        return mIcon11;
+	    }
+
+	    protected void onPostExecute(Bitmap bitmap) {
+	    	if (bitmap != null) {
+	    		FileOutputStream out = null;
+	    		try {
+	    			String localPath = MediaUtility.getAvatarDirectory() + "/" + user.getId();
+	    		    out = new FileOutputStream(localPath);
+	    		    bitmap.compress(Bitmap.CompressFormat.PNG, 90, out);
+	    		    user.setLocalAvatarPath(localPath);
+	    		    UserHelper.getInstance(context).update(user);
+		    		marker.showInfoWindow();
+	    		} catch (Exception e) {
+	    		    e.printStackTrace();
+	    		} finally {
+	    		    try {
+	    		        if (out != null) {
+	    		            out.close();
+	    		        }
+	    		    } catch (IOException e) {
+	    		        e.printStackTrace();
+	    		    }
+	    		}
+	    	}
+	    }
 	}
 }

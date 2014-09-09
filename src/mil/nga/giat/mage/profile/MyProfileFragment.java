@@ -252,7 +252,7 @@ public class MyProfileFragment extends Fragment {
 			break;
 		}
 		if (filePath != null) {
-			Bitmap b = createProfileImageBitmap(MediaUtility.orientImage(new File(filePath)));
+			Bitmap b = MediaUtility.resizeAndRoundCorners((MediaUtility.orientImage(new File(filePath))), 150);
 			ImageView iv = (ImageView)getActivity().findViewById(R.id.profile_picture);
 			iv.setImageBitmap(b);
 			user.setLocalAvatarPath(filePath);
@@ -284,40 +284,6 @@ public class MyProfileFragment extends Fragment {
 		return uris;
 	}
 	
-	private Bitmap createProfileImageBitmap(Bitmap bitmap) {
-		int width = bitmap.getWidth();
-        int height = bitmap.getHeight();
-        float scaleWidth = ((float) 100) / width;
-        float scaleHeight = ((float) 100) / height;
-        // CREATE A MATRIX FOR THE MANIPULATION
-        Matrix matrix = new Matrix();
-        // RESIZE THE BIT MAP
-        matrix.postScale(scaleWidth, scaleHeight);
-
-        // "RECREATE" THE NEW BITMAP
-        Bitmap resizedBitmap = Bitmap.createBitmap(bitmap, 0, 0, width, height, matrix, false);
-        
-    	Bitmap result = Bitmap.createBitmap(resizedBitmap.getWidth(), resizedBitmap
-                .getHeight(), Config.ARGB_8888);
-        Canvas canvas = new Canvas(result);
-
-        final int color = 0xff424242;
-        final Paint paint = new Paint();
-        final Rect rect = new Rect(0, 0, resizedBitmap.getWidth(), resizedBitmap.getHeight());
-        final RectF rectF = new RectF(rect);
-        final float roundPx = 7.0f;
-
-        paint.setAntiAlias(true);
-        canvas.drawARGB(0, 0, 0, 0);
-        paint.setColor(color);
-        canvas.drawRoundRect(rectF, roundPx, roundPx, paint);
-
-        paint.setXfermode(new PorterDuffXfermode(Mode.SRC_IN));
-        canvas.drawBitmap(resizedBitmap, rect, rect, paint);
-        return result;
-	}
-
-	
 	private class DownloadImageTask extends AsyncTask<String, Void, Bitmap> {
 	    ImageView bmImage;
 
@@ -340,7 +306,7 @@ public class MyProfileFragment extends Fragment {
 
 	    protected void onPostExecute(Bitmap bitmap) {
 	    	if (bitmap != null) {
-	    		bmImage.setImageBitmap(createProfileImageBitmap(bitmap));
+	    		bmImage.setImageBitmap(MediaUtility.resizeAndRoundCorners(bitmap, 150));
 	    	}
 	    }
 	}
