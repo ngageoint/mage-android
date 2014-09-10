@@ -14,6 +14,7 @@ import mil.nga.giat.mage.sdk.event.IUserEventListener;
 import mil.nga.giat.mage.sdk.fetch.LocationFetchIntentService;
 import mil.nga.giat.mage.sdk.fetch.ObservationFetchIntentService;
 import mil.nga.giat.mage.sdk.fetch.StaticFeatureServerFetch;
+import mil.nga.giat.mage.sdk.fetch.UserFetchIntentService;
 import mil.nga.giat.mage.sdk.glide.MageUrlLoader;
 import mil.nga.giat.mage.sdk.glide.MageDiskCache;
 import mil.nga.giat.mage.sdk.http.client.HttpClientManager;
@@ -56,6 +57,7 @@ public class MAGE extends Application implements IUserEventListener {
 	private LocationService locationService;
 	private Intent locationFetchIntent;
 	private Intent observationFetchIntent;
+	private Intent userFetchIntent;
 	private Intent locationPushIntent;
 	private Intent observationPushIntent;
 	private Intent attachmentPushIntent;
@@ -167,6 +169,11 @@ public class MAGE extends Application implements IUserEventListener {
 	 * Start Tasks responsible for fetching Observations and Locations from the server.
 	 */
 	private void startFetching() {
+		if (userFetchIntent == null) {
+			userFetchIntent = new Intent(getApplicationContext(), UserFetchIntentService.class);
+			startService(userFetchIntent);
+		}
+		
 		if(locationFetchIntent == null) {
 			locationFetchIntent = new Intent(getApplicationContext(), LocationFetchIntentService.class);
 			startService(locationFetchIntent);
@@ -184,6 +191,10 @@ public class MAGE extends Application implements IUserEventListener {
 		if (staticFeatureServerFetch != null) {
 			staticFeatureServerFetch.destroy();
 			staticFeatureServerFetch = null;
+		}
+		if (userFetchIntent != null) {
+			stopService(userFetchIntent);
+			userFetchIntent = null;
 		}
 		if(locationFetchIntent != null) {
 			stopService(locationFetchIntent);

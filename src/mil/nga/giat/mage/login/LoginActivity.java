@@ -25,6 +25,7 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.DialogInterface;
+import android.content.SharedPreferences;
 import android.content.DialogInterface.OnClickListener;
 import android.content.Intent;
 import android.content.SharedPreferences.Editor;
@@ -80,7 +81,7 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-
+		
 		if (getIntent().getBooleanExtra("LOGOUT", false)) {
 			UserUtility.getInstance(getApplicationContext()).clearTokenInformation();
 			((MAGE) getApplication()).onLogout();
@@ -89,6 +90,19 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 		// IMPORTANT: load the configuration from preferences files and server
 		PreferenceHelper preferenceHelper = PreferenceHelper.getInstance(getApplicationContext());
 		preferenceHelper.initialize(false, new Integer[] { R.xml.privatepreferences, R.xml.publicpreferences, R.xml.mappreferences });
+		
+		SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+		
+		// check if the database needs to be upgraded, and if so log them out
+		if (DaoStore.DATABASE_VERSION != sharedPreferences.getInt(getResources().getString(R.string.databaseVersionKey), 0)) {
+			UserUtility.getInstance(getApplicationContext()).clearTokenInformation();
+			((MAGE) getApplication()).onLogout();
+		}
+		
+		
+		Editor e = sharedPreferences.edit();
+		e.putInt(getResources().getString(R.string.databaseVersionKey), DaoStore.DATABASE_VERSION);
+		e.commit(); 
 
 		// check google play services verison
 		int isGooglePlayServicesAvailable = GooglePlayServicesUtil.isGooglePlayServicesAvailable(getApplicationContext());
