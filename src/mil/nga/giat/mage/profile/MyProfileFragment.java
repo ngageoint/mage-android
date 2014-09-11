@@ -95,6 +95,7 @@ public class MyProfileFragment extends Fragment {
 	@Override
 	public void onPause() {
 		super.onPause();
+		LocationBitmapFactory.cancelDownloadTasks();
 		mapView.onPause();
 	}
 	

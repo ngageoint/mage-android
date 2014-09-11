@@ -1,6 +1,5 @@
 package mil.nga.giat.mage.map.marker;
 
-import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -40,6 +39,8 @@ import com.google.android.gms.maps.model.Marker;
 public class LocationBitmapFactory {
 
 	private static Long upperBoundTimeInSeconds = 1800L;
+	
+	private static ArrayList<DownloadImageTask> downloadTasks = new ArrayList<DownloadImageTask>();
 
 	// TODO : SCOTT UFM
 	private static final Integer[] colorGradient = { 0xff0000ff, 0xffffff00 ,0xffffa500 };
@@ -59,14 +60,16 @@ public class LocationBitmapFactory {
 		Bitmap dotBitmap = createDot(context, location, user);
 		
 		if (user.getLocalIconPath() != null) {
-			File f = new File(user.getLocalIconPath());
 			Bitmap combined = combineIconAndDot(dotBitmap.copy(Bitmap.Config.ARGB_8888, true), BitmapFactory.decodeFile(user.getLocalIconPath()));
 			m.setIcon(BitmapDescriptorFactory.fromBitmap(combined));
 		} else if (user.getIconUrl() != null) {
 			// if there is supposed to be an icon but we don't have it, go get it
 			if (ConnectivityUtility.isOnline(context)) {
 				String token = PreferenceHelper.getInstance(context).getValue(R.string.tokenKey);
-				new DownloadImageTask(dotBitmap.copy(Bitmap.Config.ARGB_8888, true), m, user, context).execute(user.getIconUrl() + "?access_token=" + token);
+				DownloadImageTask task = new DownloadImageTask(dotBitmap.copy(Bitmap.Config.ARGB_8888, true), m, user, context);
+				downloadTasks.add(task);
+				task.execute(user.getIconUrl() + "?access_token=" + token);
+				m.setIcon(BitmapDescriptorFactory.fromBitmap(dotBitmap));
 			}
 		} else {
 			finalBitmap = dotBitmap;
@@ -75,6 +78,16 @@ public class LocationBitmapFactory {
 
 
 		return finalBitmap;
+	}
+	
+	public static void cancelDownloadTasks() {
+		Log.d("LocationBitmapFactory", "Cancelling " + downloadTasks.size() + " tasks");
+		for (DownloadImageTask task : downloadTasks) {
+			task.cancel(true);
+			task = null;
+		}
+		downloadTasks.clear();
+		Log.d("LocationBitmapFactory", "Cleared all of the download tasks");
 	}
 	
 	private static Bitmap combineIconAndDot(Bitmap dot, Bitmap icon) {
@@ -138,8 +151,8 @@ public class LocationBitmapFactory {
     		    }
     		}
 	    	
-	    	Bitmap combined = combineIconAndDot(dotBitmap.copy(Bitmap.Config.ARGB_8888, true), icon.copy(Bitmap.Config.ARGB_8888, true));;
-	    	if (marker != null) {
+	    	Bitmap combined = combineIconAndDot(dotBitmap.copy(Bitmap.Config.ARGB_8888, true), icon.copy(Bitmap.Config.ARGB_8888, true));
+	    	if (marker != null && combined != null && !this.isCancelled()) {
 				marker.setIcon(BitmapDescriptorFactory.fromBitmap(combined));
 			}
 	    }
