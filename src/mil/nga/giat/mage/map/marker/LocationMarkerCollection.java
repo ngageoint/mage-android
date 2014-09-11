@@ -22,6 +22,7 @@ import mil.nga.giat.mage.sdk.datastore.location.LocationHelper;
 import mil.nga.giat.mage.sdk.datastore.location.LocationProperty;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
+import mil.nga.giat.mage.sdk.exceptions.UserException;
 import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
 import android.content.Context;
@@ -98,7 +99,7 @@ public class LocationMarkerCollection implements PointCollection<Location>, OnMa
 			MarkerOptions options = new MarkerOptions().position(latLng).visible(visible);//.icon(LocationBitmapFactory.bitmapDescriptor(context, l, l.getUser())).visible(visible);
 
 			marker = markerCollection.addMarker(options);
-			LocationBitmapFactory.bitmapDescriptor(context, l, l.getUser(), marker);
+			marker.setIcon(LocationBitmapFactory.bitmapDescriptor(context, l, l.getUser()));
 
 			locationIdToMarker.put(l.getId(), marker);
 			markerIdToLocation.put(marker.getId(), l);
@@ -169,8 +170,8 @@ public class LocationMarkerCollection implements PointCollection<Location>, OnMa
 		}
 
 		map.setInfoWindowAdapter(infoWindowAdpater);
-		//marker.setIcon(LocationBitmapFactory.bitmapDescriptor(context, l, l.getUser()));
-		LocationBitmapFactory.bitmapDescriptor(context, l, l.getUser(), marker);
+		marker.setIcon(LocationBitmapFactory.bitmapDescriptor(context, l, l.getUser()));
+//		LocationBitmapFactory.bitmapDescriptor(context, l, l.getUser(), marker);
 		marker.showInfoWindow();
 		return true;
 	}
@@ -189,8 +190,12 @@ public class LocationMarkerCollection implements PointCollection<Location>, OnMa
 			Location tl = markerIdToLocation.get(m.getId());
 			if (tl != null) {
 				boolean showWindow = m.isInfoWindowShown();
-//				m.setIcon(LocationBitmapFactory.bitmapDescriptor(context, tl, tl.getUser()));
-				LocationBitmapFactory.bitmapDescriptor(context, tl, tl.getUser(), m);
+				try {
+				m.setIcon(LocationBitmapFactory.bitmapDescriptor(context, tl, UserHelper.getInstance(context).read(tl.getUser().getId())));
+				} catch (UserException ue) {
+					Log.e(LOG_NAME, "Error refreshing the icon for user: " + tl.getUser().getId(), ue);
+				}
+//				LocationBitmapFactory.bitmapDescriptor(context, tl, tl.getUser(), m);
 				if (showWindow) {
 					m.showInfoWindow();
 				}

@@ -368,8 +368,6 @@ public class MapFragment extends Fragment implements OnMapClickListener, OnMapLo
 			refreshMyHistoricLocationsMarkersTask = null;
 		}
 		
-		LocationBitmapFactory.cancelDownloadTasks();
-
 		mapView.onPause();
 
 		saveMapView();
