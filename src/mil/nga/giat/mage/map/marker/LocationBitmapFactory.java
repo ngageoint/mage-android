@@ -29,10 +29,6 @@ import android.graphics.ColorMatrix;
 import android.graphics.ColorMatrixColorFilter;
 import android.graphics.LightingColorFilter;
 import android.graphics.Paint;
-import android.graphics.PorterDuff.Mode;
-import android.graphics.PorterDuffXfermode;
-import android.graphics.Rect;
-import android.graphics.RectF;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.util.Log;
@@ -63,7 +59,6 @@ public class LocationBitmapFactory {
 		Bitmap dotBitmap = createDot(context, location, user);
 		
 		if (user.getLocalIconPath() != null) {
-			Log.d("LocationBitmapFactory", "Using the locally stored icon file " + user.getLocalIconPath());
 			File f = new File(user.getLocalIconPath());
 			Bitmap combined = combineIconAndDot(dotBitmap.copy(Bitmap.Config.ARGB_8888, true), BitmapFactory.decodeFile(user.getLocalIconPath()));
 			m.setIcon(BitmapDescriptorFactory.fromBitmap(combined));
@@ -74,7 +69,6 @@ public class LocationBitmapFactory {
 				new DownloadImageTask(dotBitmap.copy(Bitmap.Config.ARGB_8888, true), m, user, context).execute(user.getIconUrl() + "?access_token=" + token);
 			}
 		} else {
-			Log.d("LocationBitmapFactory", "icon for user " + user.getUsername() + " is null");
 			finalBitmap = dotBitmap;
 			m.setIcon(BitmapDescriptorFactory.fromBitmap(finalBitmap));
 		}
@@ -110,7 +104,6 @@ public class LocationBitmapFactory {
 	    }
 
 	    protected Bitmap doInBackground(String... urls) {
-	    	Log.d("downloader", "Downloading " + urls[0]);
 	        String urldisplay = urls[0];
 	        Bitmap icon = null;
 	        try {

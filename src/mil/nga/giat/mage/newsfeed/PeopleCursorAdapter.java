@@ -48,6 +48,9 @@ public class PeopleCursorAdapter extends CursorAdapter {
 			ImageView iconView = (ImageView) v.findViewById(R.id.iconImageView);
 			if (location.getUser().getLocalIconPath() != null) {
 				iconView.setImageBitmap(MediaUtility.resizeAndRoundCorners(BitmapFactory.decodeFile(location.getUser().getLocalIconPath()), 128));
+				iconView.setVisibility(View.VISIBLE);
+			} else {
+				iconView.setVisibility(View.GONE);
 			}
 
 			TextView location_name = (TextView) v.findViewById(R.id.location_name);
