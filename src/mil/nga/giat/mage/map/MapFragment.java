@@ -21,6 +21,7 @@ import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.filter.DateTimeFilter;
 import mil.nga.giat.mage.filter.Filter;
 import mil.nga.giat.mage.map.GoogleMapWrapper.OnMapPanListener;
+import mil.nga.giat.mage.map.marker.LocationBitmapFactory;
 import mil.nga.giat.mage.map.marker.LocationMarkerCollection;
 import mil.nga.giat.mage.map.marker.MyHistoricalLocationMarkerCollection;
 import mil.nga.giat.mage.map.marker.ObservationMarkerCollection;
@@ -366,7 +367,7 @@ public class MapFragment extends Fragment implements OnMapClickListener, OnMapLo
 			refreshMyHistoricLocationsMarkersTask.cancel(true);
 			refreshMyHistoricLocationsMarkersTask = null;
 		}
-
+		
 		mapView.onPause();
 
 		saveMapView();

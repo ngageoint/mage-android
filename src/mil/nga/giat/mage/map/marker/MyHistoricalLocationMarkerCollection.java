@@ -87,8 +87,8 @@ public class MyHistoricalLocationMarkerCollection extends LocationMarkerCollecti
 			Location tl = markerIdToLocation.get(m.getId());
 			if (tl != null) {
 				boolean showWindow = m.isInfoWindowShown();
-				//m.setIcon(LocationBitmapFactory.bitmapDescriptor(context, tl, tl.getUser()));
-				LocationBitmapFactory.bitmapDescriptor(context, tl, tl.getUser(), m);
+				m.setIcon(LocationBitmapFactory.bitmapDescriptor(context, tl, tl.getUser()));
+//				LocationBitmapFactory.bitmapDescriptor(context, tl, tl.getUser(), m);
 				if (showWindow) {
 					m.showInfoWindow();
 				}

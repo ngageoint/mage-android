@@ -137,8 +137,8 @@ public class MyProfileFragment extends Fragment {
 				MarkerOptions options = new MarkerOptions().position(location).visible(true);
 				
 				Marker marker = mapView.getMap().addMarker(options);
-				
-				LocationBitmapFactory.bitmapDescriptor(getActivity(), lastLocation.get(0), lastLocation.get(0).getUser(), marker);
+				marker.setIcon(LocationBitmapFactory.bitmapDescriptor(getActivity(), lastLocation.get(0), lastLocation.get(0).getUser()));
+//				LocationBitmapFactory.bitmapDescriptor(getActivity(), lastLocation.get(0), lastLocation.get(0).getUser(), marker);
 				mapView.getMap().animateCamera(CameraUpdateFactory.newLatLngZoom(location, 15));
 			}
 		}
