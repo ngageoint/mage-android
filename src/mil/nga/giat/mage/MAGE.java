@@ -178,6 +178,7 @@ public class MAGE extends Application implements IUserEventListener {
 			locationFetchIntent = new Intent(getApplicationContext(), LocationFetchIntentService.class);
 			startService(locationFetchIntent);
 		}
+		
 		if(observationFetchIntent == null) {
 			observationFetchIntent = new Intent(getApplicationContext(), ObservationFetchIntentService.class);
 			startService(observationFetchIntent);
