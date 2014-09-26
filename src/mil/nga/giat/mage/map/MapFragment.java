@@ -188,6 +188,8 @@ public class MapFragment extends Fragment implements OnMapClickListener, OnMapLo
 
 		locations.clear();
 		locations = null;
+		
+		featureIds.clear();
 
 		myHistoricLocations.clear();
 		myHistoricLocations = null;
