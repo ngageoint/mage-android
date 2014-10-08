@@ -40,6 +40,8 @@ import android.app.AlertDialog;
 import android.content.ClipData;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.location.Location;
 import android.net.Uri;
 import android.os.Build;
@@ -66,6 +68,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.TimePicker;
+import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -556,7 +559,12 @@ public class ObservationEditActivity extends Activity {
 
 	public void voiceButtonPressed(View v) {
 		Intent intent = new Intent(MediaStore.Audio.Media.RECORD_SOUND_ACTION);
-		startActivityForResult(intent, CAPTURE_VOICE_ACTIVITY_REQUEST_CODE);
+		List<ResolveInfo> resolveInfo = getApplicationContext().getPackageManager().queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY);
+		if (resolveInfo.size() > 0) {
+			startActivityForResult(intent, CAPTURE_VOICE_ACTIVITY_REQUEST_CODE);
+		} else {
+			Toast.makeText(getApplicationContext(), "Device has no voice recorder.", Toast.LENGTH_SHORT).show();
+		}
 	}
 
 	public void fromGalleryButtonPressed(View v) {
