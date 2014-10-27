@@ -2,6 +2,7 @@ package mil.nga.giat.mage.newsfeed;
 
 import java.sql.SQLException;
 import java.util.Calendar;
+import java.util.Collection;
 import java.util.Date;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -17,9 +18,11 @@ import mil.nga.giat.mage.profile.MyProfileFragment;
 import mil.nga.giat.mage.profile.ProfileActivity;
 import mil.nga.giat.mage.sdk.datastore.DaoStore;
 import mil.nga.giat.mage.sdk.datastore.location.Location;
+import mil.nga.giat.mage.sdk.datastore.location.LocationHelper;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
+import mil.nga.giat.mage.sdk.event.ILocationEventListener;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
 import android.app.Fragment;
 import android.app.FragmentManager;
@@ -50,7 +53,7 @@ import com.j256.ormlite.stmt.QueryBuilder;
 import com.j256.ormlite.stmt.Where;
 import com.vividsolutions.jts.geom.Point;
 
-public class PeopleFeedFragment extends Fragment implements OnSharedPreferenceChangeListener, OnItemClickListener {
+public class PeopleFeedFragment extends Fragment implements OnSharedPreferenceChangeListener, OnItemClickListener, ILocationEventListener {
 	
 	private static final String LOG_NAME = PeopleFeedFragment.class.getName();
 	
@@ -82,6 +85,7 @@ public class PeopleFeedFragment extends Fragment implements OnSharedPreferenceCh
             footer.setVisibility(View.GONE);
             lv.setAdapter(adapter);
             lv.setOnItemClickListener(this);
+            LocationHelper.getInstance(getActivity()).addListener(this);
         } catch (Exception e) {
         	Log.e(LOG_NAME, "Problem getting cursor or setting adapter.", e);
         }
@@ -100,12 +104,12 @@ public class PeopleFeedFragment extends Fragment implements OnSharedPreferenceCh
         AndroidDatabaseResults results = (AndroidDatabaseResults) iterator.getRawResults();
         c = results.getRawCursor();
         if (c.moveToLast()) {
-            long oldestTime = c.getLong(c.getColumnIndex("timestamp"));
             if (queryUpdateHandle != null) {
                 queryUpdateHandle.cancel(true);
             }
             queryUpdateHandle = scheduler.schedule(new Runnable() {
                 public void run() {
+                	Log.i(PeopleFeedFragment.LOG_NAME, "LocationBug Scheduler to update time filter running");
                     updateTimeFilter(getTimeFilterId());
                 }
             }, 30*1000, TimeUnit.MILLISECONDS);
@@ -239,5 +243,28 @@ public class PeopleFeedFragment extends Fragment implements OnSharedPreferenceCh
 //            DrawerItem mapItem = ((LandingActivity)getActivity()).getMapItem();
 //            fragmentManager.beginTransaction().add(R.id.content_frame, ((MapFragment)mapItem.getFragment())).commit();
 //            ((LandingActivity)getActivity()).setCurrentItem(mapItem);
+	}
+
+	@Override
+	public void onError(Throwable error) {
+		
+	}
+
+	@Override
+	public void onLocationCreated(Collection<Location> location) {
+		updateTimeFilter(getTimeFilterId());
+		Log.i(LOG_NAME, "LocationBug Data set of locations created");
+	}
+
+	@Override
+	public void onLocationUpdated(Location location) {
+		updateTimeFilter(getTimeFilterId());
+		Log.i(LOG_NAME, "LocationBug Data set of locations updated");
+	}
+
+	@Override
+	public void onLocationDeleted(Location location) {
+		updateTimeFilter(getTimeFilterId());
+		Log.i(LOG_NAME, "LocationBug Location deleted");
 	}
 }

@@ -41,6 +41,7 @@ public class PeopleCursorAdapter extends CursorAdapter {
 
 	@Override
 	public void bindView(View v, final Context context, Cursor cursor) {
+		Log.i(LOG_NAME, "LocationBug bind view");
 		try {
 			Location location = query.mapRow(new AndroidDatabaseResults(cursor, null));
 			User user = location.getUser();
