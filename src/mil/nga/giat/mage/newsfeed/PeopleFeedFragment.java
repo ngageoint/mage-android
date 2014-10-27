@@ -85,7 +85,7 @@ public class PeopleFeedFragment extends Fragment implements OnSharedPreferenceCh
             footer.setVisibility(View.GONE);
             lv.setAdapter(adapter);
             lv.setOnItemClickListener(this);
-            LocationHelper.getInstance(getActivity()).addListener(this);
+            
         } catch (Exception e) {
         	Log.e(LOG_NAME, "Problem getting cursor or setting adapter.", e);
         }
@@ -122,6 +122,16 @@ public class PeopleFeedFragment extends Fragment implements OnSharedPreferenceCh
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         super.onCreateOptionsMenu(menu, inflater);
         inflater.inflate(R.menu.filter, menu);
+    }
+    
+    public void onResume() {
+    	super.onResume();
+    	LocationHelper.getInstance(getActivity()).addListener(this);
+    }
+    
+    public void onPause() {
+    	super.onPause();
+    	LocationHelper.getInstance(getActivity()).removeListener(this);
     }
     
     @Override
