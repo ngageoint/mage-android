@@ -60,7 +60,7 @@ public class MyHistoricalLocationMarkerCollection extends LocationMarkerCollecti
 			}
 
 			Point point = lg.getGeometry().getCentroid();
-			MarkerOptions options = new MarkerOptions().position(new LatLng(point.getY(), point.getX())).icon(LocationBitmapFactory.dotBitmapDescriptor(context, l, l.getUser())).visible(visible);
+			MarkerOptions options = new MarkerOptions().position(new LatLng(point.getY(), point.getX())).icon(LocationBitmapFactory.bitmapDescriptor(context, l, l.getUser())).visible(visible);
 
 			marker = markerCollection.addMarker(options);
 
