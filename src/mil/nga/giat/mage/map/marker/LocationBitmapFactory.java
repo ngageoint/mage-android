@@ -77,11 +77,13 @@ public class LocationBitmapFactory {
 		return BitmapDescriptorFactory.fromBitmap(bitmap);
 	}
 	
+	public static BitmapDescriptor dotBitmapDescriptor(Context context, Location location, User user) {
+		Bitmap bitmap = createDot(context, location, user);
+		return BitmapDescriptorFactory.fromBitmap(bitmap);
+	}
+	
 	public static Bitmap createDot(Context context, Location location, User user) {
 		Bitmap dotBitmap = null;
-		BitmapFactory.Options options = new BitmapFactory.Options();
-		options.inDensity = DisplayMetrics.DENSITY_XHIGH;
-		options.inTargetDensity = (int) context.getResources().getDisplayMetrics().xdpi;
 		
 		try {
 			Long interval = (System.currentTimeMillis() - location.getTimestamp().getTime()) / 1000l;
@@ -113,7 +115,15 @@ public class LocationBitmapFactory {
 			float[] colorMatrix_Negative = { -1.0f, 0, 0, 0, 255, 0, -1.0f, 0, 0, 255, 0, 0, -1.0f, 0, 255, 0, 0, 0, 1.0f, 0 };
 
 			// make a mutable copy of the bitmap
-			Bitmap bitmapFile = BitmapFactory.decodeStream(context.getAssets().open("dots/black_dot.png"), null, options);
+			Bitmap bitmapFile = BitmapFactory.decodeStream(context.getAssets().open("dots/black_dot.png"));
+			// scale the image to a good size
+			Integer maxDimension = Math.max(bitmapFile.getWidth(), bitmapFile.getHeight());
+			float density = context.getResources().getDisplayMetrics().xdpi; //context.getResources().getDisplayMetrics().densityDpi;
+			double scale = (density/10.0) / maxDimension;
+			int outWidth = Double.valueOf(scale*Integer.valueOf(bitmapFile.getWidth()).doubleValue()).intValue();
+			int outHeight = Double.valueOf(scale*Integer.valueOf(bitmapFile.getHeight()).doubleValue()).intValue();
+			bitmapFile = Bitmap.createScaledBitmap(bitmapFile, outWidth, outHeight, true);
+			
 			dotBitmap = bitmapFile.copy(Bitmap.Config.ARGB_8888, true);
 
 			Canvas myCanvas = new Canvas(dotBitmap);
@@ -127,7 +137,15 @@ public class LocationBitmapFactory {
 			myCanvas.drawBitmap(dotBitmap, 0, 0, negativePaint);
 		} catch (IOException e1) {
 			try {
-				dotBitmap = BitmapFactory.decodeStream(context.getAssets().open("dots/maps_dav_bw_dot.png"), null, options);
+				dotBitmap = BitmapFactory.decodeStream(context.getAssets().open("dots/maps_dav_bw_dot.png"));
+				
+				// scale the image to a good size
+				Integer maxDimension = Math.max(dotBitmap.getWidth(), dotBitmap.getHeight());
+				float density = context.getResources().getDisplayMetrics().xdpi; //context.getResources().getDisplayMetrics().densityDpi;
+				double scale = (density/3.5) / maxDimension;
+				int outWidth = Double.valueOf(scale*Integer.valueOf(dotBitmap.getWidth()).doubleValue()).intValue();
+				int outHeight = Double.valueOf(scale*Integer.valueOf(dotBitmap.getHeight()).doubleValue()).intValue();
+				dotBitmap = Bitmap.createScaledBitmap(dotBitmap, outWidth, outHeight, true);
 			} catch (IOException e2) {
 			}
 		}
