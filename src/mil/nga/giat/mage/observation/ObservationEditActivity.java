@@ -613,24 +613,24 @@ public class ObservationEditActivity extends Activity {
 		
 		if (absPath != null) {
 			if (contentType == null) {
-				Glide.load(R.drawable.ic_email_attachment).into(iv);
+				Glide.with(getApplicationContext()).load(R.drawable.ic_email_attachment).into(iv);
 			} else if (contentType.startsWith("image")) {
-				Glide.load(new File(absPath)).placeholder(android.R.drawable.progress_indeterminate_horizontal).centerCrop().into(iv);
+				Glide.with(getApplicationContext()).load(new File(absPath)).placeholder(android.R.drawable.progress_indeterminate_horizontal).centerCrop().into(iv);
 			} else if (contentType.startsWith("video")) {
-				Glide.load(R.drawable.ic_video_2x).into(iv);
+				Glide.with(getApplicationContext()).load(R.drawable.ic_video_2x).into(iv);
 			} else if (contentType.startsWith("audio")) {
-				Glide.load(R.drawable.ic_microphone).into(iv);
+				Glide.with(getApplicationContext()).load(R.drawable.ic_microphone).into(iv);
 			}
 		} else if (remoteId != null) {
 			String url = a.getUrl();
 			if (contentType == null) {
-				Glide.load(R.drawable.ic_email_attachment).into(iv);
+				Glide.with(getApplicationContext()).load(R.drawable.ic_email_attachment).into(iv);
 			} else if (contentType.startsWith("image")) {
-				Glide.load(url).placeholder(android.R.drawable.progress_indeterminate_horizontal).centerCrop().into(iv);
+				Glide.with(getApplicationContext()).load(url).placeholder(android.R.drawable.progress_indeterminate_horizontal).centerCrop().into(iv);
 			} else if (contentType.startsWith("video")) {
-				Glide.load(R.drawable.ic_video_2x).into(iv);
+				Glide.with(getApplicationContext()).load(R.drawable.ic_video_2x).into(iv);
 			} else if (contentType.startsWith("audio")) {
-				Glide.load(R.drawable.ic_microphone).into(iv);
+				Glide.with(getApplicationContext()).load(R.drawable.ic_microphone).into(iv);
 			} 
 		}
 	}

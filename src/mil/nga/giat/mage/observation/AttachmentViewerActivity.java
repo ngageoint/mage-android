@@ -81,14 +81,14 @@ public class AttachmentViewerActivity extends FragmentActivity implements Remove
 			uri = Uri.fromFile(f);
 			if (contentType.startsWith("image")) {
 				finalType = "image/*";
-				Glide.load(f).placeholder(android.R.drawable.progress_indeterminate_horizontal).centerCrop().into(iv);
+				Glide.with(getApplicationContext()).load(f).placeholder(android.R.drawable.progress_indeterminate_horizontal).centerCrop().into(iv);
 			} else if (contentType.startsWith("video")) {
 				finalType = "video/*";
 				iv.setImageBitmap(ThumbnailUtils.createVideoThumbnail(absPath, MediaStore.Video.Thumbnails.FULL_SCREEN_KIND));
 				findViewById(R.id.video_overlay_image).setVisibility(View.VISIBLE);
 			} else if (contentType.startsWith("audio")) {
 				finalType = "audio/*";
-				Glide.load(R.drawable.ic_microphone).into(iv);
+				Glide.with(getApplicationContext()).load(R.drawable.ic_microphone).into(iv);
 			} else {
 				finalType = null;
 			}
@@ -96,15 +96,15 @@ public class AttachmentViewerActivity extends FragmentActivity implements Remove
 			uri = Uri.parse(url);
 			if (contentType.startsWith("image")) {
 				finalType = "image/*";
-				Glide.load(url).placeholder(android.R.drawable.progress_indeterminate_horizontal).centerCrop().into(iv);
+				Glide.with(getApplicationContext()).load(url).placeholder(android.R.drawable.progress_indeterminate_horizontal).centerCrop().into(iv);
 			} else if (contentType.startsWith("video")) {
 				finalType = "video/*";
 				// TODO figure out how to set accepts to image/jpeg to ask the server for a thumbnail for the video
-				Glide.load(R.drawable.ic_video_2x).into(iv);
+				Glide.with(getApplicationContext()).load(R.drawable.ic_video_2x).into(iv);
 				findViewById(R.id.video_overlay_image).setVisibility(View.VISIBLE);
 			} else if (contentType.startsWith("audio")) {
 				finalType = "audio/*";
-				Glide.load(R.drawable.ic_microphone).into(iv);
+				Glide.with(getApplicationContext()).load(R.drawable.ic_microphone).into(iv);
 			} else {
 				finalType = null;
 			}

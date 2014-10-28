@@ -99,14 +99,14 @@ public class ObservationViewActivity extends Activity {
 						LayerDrawable ld = new LayerDrawable(layers);
 						iv.setImageDrawable(ld);
 					} else if (absPath != null && (absPath.endsWith(".mp3") || absPath.endsWith("m4a"))) {
-						Glide.load(R.drawable.ic_microphone).into(iv);
+						Glide.with(getApplicationContext()).load(R.drawable.ic_microphone).into(iv);
 						// iv.setImageBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.ic_microphone));
 					} else {
 						if (a.getRemoteId() != null) {
 							String url = a.getUrl();
-							Glide.load(url).placeholder(android.R.drawable.progress_indeterminate_horizontal).centerCrop().into(iv);
+							Glide.with(getApplicationContext()).load(url).placeholder(android.R.drawable.progress_indeterminate_horizontal).centerCrop().into(iv);
 						} else {
-							Glide.load(new File(absPath)).placeholder(android.R.drawable.progress_indeterminate_horizontal).centerCrop().into(iv);
+							Glide.with(getApplicationContext()).load(new File(absPath)).placeholder(android.R.drawable.progress_indeterminate_horizontal).centerCrop().into(iv);
 						}
 					}
 					Log.d(LOG_NAME, "Set the image gallery to have an image with uri " + absPath);
@@ -159,20 +159,20 @@ public class ObservationViewActivity extends Activity {
 
 			if (absPath != null) {
 				if (contentType.startsWith("image")) {
-					Glide.load(new File(absPath)).placeholder(android.R.drawable.progress_indeterminate_horizontal).centerCrop().into(iv);
+					Glide.with(getApplicationContext()).load(new File(absPath)).placeholder(android.R.drawable.progress_indeterminate_horizontal).centerCrop().into(iv);
 				} else if (contentType.startsWith("video")) {
-					Glide.load(R.drawable.ic_video_2x).into(iv);
+					Glide.with(getApplicationContext()).load(R.drawable.ic_video_2x).into(iv);
 				} else if (contentType.startsWith("audio")) {
-					Glide.load(R.drawable.ic_microphone).into(iv);
+					Glide.with(getApplicationContext()).load(R.drawable.ic_microphone).into(iv);
 				}
 			} else if (remoteId != null) {
 				String url = a.getUrl();
 				if (contentType.startsWith("image")) {
-					Glide.load(url).placeholder(android.R.drawable.progress_indeterminate_horizontal).centerCrop().into(iv);
+					Glide.with(getApplicationContext()).load(url).placeholder(android.R.drawable.progress_indeterminate_horizontal).centerCrop().into(iv);
 				} else if (contentType.startsWith("video")) {
-					Glide.load(R.drawable.ic_video_2x).into(iv);
+					Glide.with(getApplicationContext()).load(R.drawable.ic_video_2x).into(iv);
 				} else if (contentType.startsWith("audio")) {
-					Glide.load(R.drawable.ic_microphone).into(iv);
+					Glide.with(getApplicationContext()).load(R.drawable.ic_microphone).into(iv);
 				}
 			}
 		}

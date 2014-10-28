@@ -2,7 +2,7 @@ package mil.nga.giat.mage;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URL;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -40,7 +40,8 @@ import android.support.v4.app.TaskStackBuilder;
 import android.util.Log;
 
 import com.bumptech.glide.Glide;
-import com.bumptech.glide.resize.ImageManager;
+import com.bumptech.glide.GlideBuilder;
+import com.bumptech.glide.load.model.GlideUrl;
 
 public class MAGE extends Application implements IUserEventListener {
 
@@ -69,14 +70,12 @@ public class MAGE extends Application implements IUserEventListener {
 	@Override
 	public void onCreate() {
 		alarm = (AlarmManager) this.getSystemService(Context.ALARM_SERVICE);
-		Glide.get().register(URL.class, new MageUrlLoader.Factory());
-		ImageManager.Builder builder = new ImageManager.Builder(getApplicationContext());
 		try {
-		builder.setDiskCache(new MageDiskCache(getApplicationContext()));
+			Glide.setup(new GlideBuilder(getApplicationContext()).setDiskCache(new MageDiskCache(getApplicationContext())));
+			Glide.get(getApplicationContext()).register(GlideUrl.class, InputStream.class, new MageUrlLoader.Factory());
 		} catch (IOException e) {
 			Log.e(LOG_NAME, "Unable to create Mage disk cache", e);
 		}
-		Glide.get().setImageManager(builder);
 		refreshTileOverlays();
 
 		// setup the screen unlock stuff

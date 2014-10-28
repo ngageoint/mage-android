@@ -2,12 +2,8 @@ package mil.nga.giat.mage.map.marker;
 
 import java.io.IOException;
 
-import com.google.android.gms.maps.model.BitmapDescriptor;
-import com.google.android.gms.maps.model.BitmapDescriptorFactory;
-
 import mil.nga.giat.mage.sdk.datastore.location.Location;
 import mil.nga.giat.mage.sdk.datastore.user.User;
-import mil.nga.giat.mage.sdk.utils.MediaUtility;
 import android.animation.ArgbEvaluator;
 import android.annotation.TargetApi;
 import android.content.Context;
@@ -21,8 +17,10 @@ import android.graphics.ColorMatrixColorFilter;
 import android.graphics.LightingColorFilter;
 import android.graphics.Paint;
 import android.os.Build;
-import android.util.DisplayMetrics;
 import android.util.Log;
+
+import com.google.android.gms.maps.model.BitmapDescriptor;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 
 public class LocationBitmapFactory {
 
@@ -33,17 +31,13 @@ public class LocationBitmapFactory {
 	
 	@TargetApi(Build.VERSION_CODES.JELLY_BEAN)
 	public static Bitmap bitmap(Context context, Location location, User user) {
-		Bitmap finalBitmap = null;
-		Bitmap dotBitmap = createDot(context, location, user);
+		Bitmap bitmap = createDot(context, location, user);
 		Log.d("LocationBitmapFactory", "Drawing the bitmap for user " + user.getUsername());
 		if (user.getLocalIconPath() != null) {
-			finalBitmap = combineIconAndDot(dotBitmap.copy(Bitmap.Config.ARGB_8888, true), bitmapUser(context, user));
-		} else {
-			finalBitmap = dotBitmap;
+			bitmap = combineIconAndDot(bitmap.copy(Bitmap.Config.ARGB_8888, true), bitmapUser(context, user));
 		}
-
-
-		return finalBitmap;
+		
+		return bitmap;
 	}
 
 	private static Bitmap combineIconAndDot(Bitmap dot, Bitmap icon) {
