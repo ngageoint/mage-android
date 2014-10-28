@@ -54,7 +54,7 @@ import com.google.android.gms.common.GooglePlayServicesUtil;
 /**
  * The login screen
  * 
- * @author wiedemannse
+ * @author wiedemanns
  * 
  */
 public class LoginActivity extends FragmentActivity implements AccountDelegate {
@@ -173,14 +173,14 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 	}
 
 	public void togglePassword(View v) {
-		CheckBox c = (CheckBox) v;
-		EditText pw = (EditText) findViewById(R.id.login_password);
-		if (c.isChecked()) {
-			pw.setInputType(InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD);
+		CheckBox checkbox = (CheckBox) v;
+		if (checkbox.isChecked()) {
+			mPasswordEditText.setInputType(InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD);
 		} else {
-			pw.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+			mPasswordEditText.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
 		}
-		pw.setSelection(pw.getText().length());
+		mPasswordEditText.setSelection(mPasswordEditText.getText().length());
+		mPasswordEditText.setTypeface(Typeface.DEFAULT);
 	}
 
 	/**
