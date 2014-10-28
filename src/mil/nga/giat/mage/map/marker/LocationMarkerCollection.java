@@ -185,7 +185,6 @@ public class LocationMarkerCollection implements PointCollection<Location>, OnMa
 
 		map.setInfoWindowAdapter(infoWindowAdpater);
 		marker.setIcon(LocationBitmapFactory.bitmapDescriptor(context, l, l.getUser()));
-//		LocationBitmapFactory.bitmapDescriptor(context, l, l.getUser(), marker);
 		marker.showInfoWindow();
 		return true;
 	}
