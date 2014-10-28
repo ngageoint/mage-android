@@ -2,6 +2,9 @@ package mil.nga.giat.mage.map.marker;
 
 import java.io.IOException;
 
+import com.google.android.gms.maps.model.BitmapDescriptor;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
+
 import mil.nga.giat.mage.sdk.datastore.location.Location;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
@@ -18,10 +21,8 @@ import android.graphics.ColorMatrixColorFilter;
 import android.graphics.LightingColorFilter;
 import android.graphics.Paint;
 import android.os.Build;
+import android.util.DisplayMetrics;
 import android.util.Log;
-
-import com.google.android.gms.maps.model.BitmapDescriptor;
-import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 
 public class LocationBitmapFactory {
 
@@ -36,7 +37,7 @@ public class LocationBitmapFactory {
 		Bitmap dotBitmap = createDot(context, location, user);
 		Log.d("LocationBitmapFactory", "Drawing the bitmap for user " + user.getUsername());
 		if (user.getLocalIconPath() != null) {
-			finalBitmap = combineIconAndDot(dotBitmap.copy(Bitmap.Config.ARGB_8888, true), BitmapFactory.decodeFile(user.getLocalIconPath()));
+			finalBitmap = combineIconAndDot(dotBitmap.copy(Bitmap.Config.ARGB_8888, true), bitmapUser(context, user));
 		} else {
 			finalBitmap = dotBitmap;
 		}
@@ -44,20 +45,33 @@ public class LocationBitmapFactory {
 
 		return finalBitmap;
 	}
-	
+
 	private static Bitmap combineIconAndDot(Bitmap dot, Bitmap icon) {
-		Bitmap combined = Bitmap.createBitmap(96, 127, Config.ARGB_8888);
+		Integer width = Math.max(dot.getWidth(), icon.getWidth());
+		Integer height = (dot.getHeight() / 2) + icon.getHeight();		
+		
+		Bitmap combined = Bitmap.createBitmap(width, height, Config.ARGB_8888);
 		Canvas c = new Canvas(combined);
 		
-		c.drawBitmap(dot, (96-dot.getWidth())/2, 95, null);
-		
-		Bitmap roundedProfile = MediaUtility.resizeAndRoundCorners(icon, 96);
-		
-		c.drawBitmap(roundedProfile, (96-roundedProfile.getWidth())/2, 0, null);
+		c.drawBitmap(dot, (width-dot.getWidth())/2, height - dot.getHeight(), null);		
+		c.drawBitmap(icon, (width-icon.getWidth())/2, 0, null);
 		
 		return combined;
 	}
+	
+	@TargetApi(Build.VERSION_CODES.JELLY_BEAN)
+	public static Bitmap bitmapUser(Context context, User user) {
+		Bitmap bitmap = BitmapFactory.decodeFile(user.getLocalIconPath());
+		Integer maxDimension = Math.max(bitmap.getWidth(), bitmap.getHeight());
+		float density = context.getResources().getDisplayMetrics().xdpi;
+		double scale = (density/3.5) / maxDimension;
+		int outWidth = Double.valueOf(scale*Integer.valueOf(bitmap.getWidth()).doubleValue()).intValue();
+		int outHeight = Double.valueOf(scale*Integer.valueOf(bitmap.getHeight()).doubleValue()).intValue();
+		bitmap = Bitmap.createScaledBitmap(bitmap, outWidth, outHeight, true);
 
+		return bitmap;
+	}
+	
 	public static BitmapDescriptor bitmapDescriptor(Context context, Location location, User user) {
 		Bitmap bitmap = bitmap(context, location, user);
 		return BitmapDescriptorFactory.fromBitmap(bitmap);
@@ -70,10 +84,7 @@ public class LocationBitmapFactory {
 	
 	public static Bitmap createDot(Context context, Location location, User user) {
 		Bitmap dotBitmap = null;
-		BitmapFactory.Options options = new BitmapFactory.Options();
-		options.inDensity = 480;
-		options.inTargetDensity = context.getResources().getDisplayMetrics().densityDpi;
-
+		
 		try {
 			Long interval = (System.currentTimeMillis() - location.getTimestamp().getTime()) / 1000l;
 			// max out at 30 minutes
@@ -104,7 +115,15 @@ public class LocationBitmapFactory {
 			float[] colorMatrix_Negative = { -1.0f, 0, 0, 0, 255, 0, -1.0f, 0, 0, 255, 0, 0, -1.0f, 0, 255, 0, 0, 0, 1.0f, 0 };
 
 			// make a mutable copy of the bitmap
-			Bitmap bitmapFile = BitmapFactory.decodeStream(context.getAssets().open("dots/black_dot.png"), null, options);
+			Bitmap bitmapFile = BitmapFactory.decodeStream(context.getAssets().open("dots/black_dot.png"));
+			// scale the image to a good size
+			Integer maxDimension = Math.max(bitmapFile.getWidth(), bitmapFile.getHeight());
+			float density = context.getResources().getDisplayMetrics().xdpi; //context.getResources().getDisplayMetrics().densityDpi;
+			double scale = (density/10.0) / maxDimension;
+			int outWidth = Double.valueOf(scale*Integer.valueOf(bitmapFile.getWidth()).doubleValue()).intValue();
+			int outHeight = Double.valueOf(scale*Integer.valueOf(bitmapFile.getHeight()).doubleValue()).intValue();
+			bitmapFile = Bitmap.createScaledBitmap(bitmapFile, outWidth, outHeight, true);
+			
 			dotBitmap = bitmapFile.copy(Bitmap.Config.ARGB_8888, true);
 
 			Canvas myCanvas = new Canvas(dotBitmap);
@@ -118,7 +137,15 @@ public class LocationBitmapFactory {
 			myCanvas.drawBitmap(dotBitmap, 0, 0, negativePaint);
 		} catch (IOException e1) {
 			try {
-				dotBitmap = BitmapFactory.decodeStream(context.getAssets().open("dots/maps_dav_bw_dot.png"), null, options);
+				dotBitmap = BitmapFactory.decodeStream(context.getAssets().open("dots/maps_dav_bw_dot.png"));
+				
+				// scale the image to a good size
+				Integer maxDimension = Math.max(dotBitmap.getWidth(), dotBitmap.getHeight());
+				float density = context.getResources().getDisplayMetrics().xdpi; //context.getResources().getDisplayMetrics().densityDpi;
+				double scale = (density/3.5) / maxDimension;
+				int outWidth = Double.valueOf(scale*Integer.valueOf(dotBitmap.getWidth()).doubleValue()).intValue();
+				int outHeight = Double.valueOf(scale*Integer.valueOf(dotBitmap.getHeight()).doubleValue()).intValue();
+				dotBitmap = Bitmap.createScaledBitmap(dotBitmap, outWidth, outHeight, true);
 			} catch (IOException e2) {
 			}
 		}

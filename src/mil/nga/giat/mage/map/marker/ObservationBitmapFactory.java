@@ -38,13 +38,12 @@ public class ObservationBitmapFactory {
 	@TargetApi(Build.VERSION_CODES.JELLY_BEAN)
 	public static Bitmap bitmap(Context context, Observation observation) {
 		InputStream iconStream = getIconStream(context, observation);
-
+		
 		// scale the image to a good size
 		Bitmap bitmap = BitmapFactory.decodeStream(iconStream);
-		Integer inLength = Math.max(bitmap.getWidth(), bitmap.getHeight());
-		Integer density = context.getResources().getDisplayMetrics().densityDpi;
-		Integer outLength = Math.max(context.getResources().getDisplayMetrics().widthPixels, context.getResources().getDisplayMetrics().heightPixels);
-		Double scale = Double.valueOf((outLength.doubleValue()/inLength.doubleValue()))*(density.doubleValue()/Double.valueOf(DisplayMetrics.DENSITY_LOW)) * 1.0/50.0;
+		Integer maxDimension = Math.max(bitmap.getWidth(), bitmap.getHeight());
+		float density = context.getResources().getDisplayMetrics().xdpi; //context.getResources().getDisplayMetrics().densityDpi;
+		double scale = (density/3.5) / maxDimension;
 		int outWidth = Double.valueOf(scale*Integer.valueOf(bitmap.getWidth()).doubleValue()).intValue();
 		int outHeight = Double.valueOf(scale*Integer.valueOf(bitmap.getHeight()).doubleValue()).intValue();
 		bitmap = Bitmap.createScaledBitmap(bitmap, outWidth, outHeight, true);

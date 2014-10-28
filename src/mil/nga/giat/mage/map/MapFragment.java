@@ -515,6 +515,8 @@ public class MapFragment extends Fragment implements OnMapClickListener, OnMapLo
 
 	@Override
 	public void onLocationDeleted(mil.nga.giat.mage.sdk.datastore.location.Location l) {
+		// this is slowing the app down a lot!  Moving the delete like code into the add methods of the collections
+		/*
 		if (currentUser != null && !currentUser.getRemoteId().equals(l.getUser().getRemoteId())) {
 			if (locations != null) {
 				new LocationTask(LocationTask.Type.DELETE, locations).execute(l);
@@ -524,6 +526,7 @@ public class MapFragment extends Fragment implements OnMapClickListener, OnMapLo
 				new LocationTask(LocationTask.Type.DELETE, myHistoricLocations).execute(l);
 			}
 		}
+		*/
 	}
 	
 	@Override

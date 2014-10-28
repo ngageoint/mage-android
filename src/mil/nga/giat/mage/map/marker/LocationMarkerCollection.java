@@ -68,6 +68,7 @@ public class LocationMarkerCollection implements PointCollection<Location>, OnMa
 
 	protected boolean visible = true;
 
+	protected Map<Long, Long> userIdToLocationId = new ConcurrentHashMap<Long, Long>();
 	protected Map<Long, Marker> locationIdToMarker = new ConcurrentHashMap<Long, Marker>();
 	protected Map<String, Location> markerIdToLocation = new ConcurrentHashMap<String, Location>();
 
@@ -85,22 +86,35 @@ public class LocationMarkerCollection implements PointCollection<Location>, OnMa
 	public void add(Location l) {
 		final LocationGeometry lg = l.getLocationGeometry();
 		if (lg != null) {
+			
+			// one user has one location
+			Long locId = userIdToLocationId.get(l.getUser().getId());
+			if(locId != null) {
+				if(locationIdToMarker.get(locId) != null) {
+					Location oldLoc = markerIdToLocation.get(locationIdToMarker.get(locId).getId());
+					if(oldLoc.getTimestamp().before(l.getTimestamp())) {
+						remove(oldLoc);
+					} else {
+						removeOldMarkers();
+						return;
+					}
+				}
+			}
+			
 			// If I got an observation that I already have in my list
 			// remove it from the map and clean-up my collections
-			Marker marker = locationIdToMarker.remove(l.getId());
-			if (marker != null) {
-				markerIdToLocation.remove(marker.getId());
-				marker.remove();
-			}
+			remove(l);
 
 			Point point = lg.getGeometry().getCentroid();
 
 			LatLng latLng = new LatLng(point.getY(), point.getX());
-			MarkerOptions options = new MarkerOptions().position(latLng).visible(visible);//.icon(LocationBitmapFactory.bitmapDescriptor(context, l, l.getUser())).visible(visible);
+			MarkerOptions options = new MarkerOptions().position(latLng).visible(visible);
 
-			marker = markerCollection.addMarker(options);
+			Marker marker = markerCollection.addMarker(options);
 			marker.setIcon(LocationBitmapFactory.bitmapDescriptor(context, l, l.getUser()));
 
+			userIdToLocationId.put(l.getUser().getId(), l.getId());
+			
 			locationIdToMarker.put(l.getId(), marker);
 			markerIdToLocation.put(marker.getId(), l);
 
@@ -171,7 +185,6 @@ public class LocationMarkerCollection implements PointCollection<Location>, OnMa
 
 		map.setInfoWindowAdapter(infoWindowAdpater);
 		marker.setIcon(LocationBitmapFactory.bitmapDescriptor(context, l, l.getUser()));
-//		LocationBitmapFactory.bitmapDescriptor(context, l, l.getUser(), marker);
 		marker.showInfoWindow();
 		return true;
 	}
@@ -191,11 +204,10 @@ public class LocationMarkerCollection implements PointCollection<Location>, OnMa
 			if (tl != null) {
 				boolean showWindow = m.isInfoWindowShown();
 				try {
-				m.setIcon(LocationBitmapFactory.bitmapDescriptor(context, tl, UserHelper.getInstance(context).read(tl.getUser().getId())));
+					m.setIcon(LocationBitmapFactory.bitmapDescriptor(context, tl, UserHelper.getInstance(context).read(tl.getUser().getId())));
 				} catch (UserException ue) {
 					Log.e(LOG_NAME, "Error refreshing the icon for user: " + tl.getUser().getId(), ue);
 				}
-//				LocationBitmapFactory.bitmapDescriptor(context, tl, tl.getUser(), m);
 				if (showWindow) {
 					m.showInfoWindow();
 				}
