@@ -11,8 +11,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.ocpsoft.prettytime.PrettyTime;
-
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.profile.MyProfileFragment;
 import mil.nga.giat.mage.profile.ProfileActivity;
@@ -25,6 +23,9 @@ import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
 import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
+
+import org.ocpsoft.prettytime.PrettyTime;
+
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -33,7 +34,6 @@ import android.os.AsyncTask;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.view.View.OnClickListener;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -48,15 +48,11 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.maps.android.MarkerManager;
-import com.j256.ormlite.android.AndroidDatabaseResults;
 import com.vividsolutions.jts.geom.Point;
 
 public class LocationMarkerCollection implements PointCollection<Location>, OnMarkerClickListener, OnInfoWindowClickListener {
 
 	private static final String LOG_NAME = LocationMarkerCollection.class.getName();
-
-	private static final String ASSET = "people/person.png";
-	private static final String DEFAULT_ASSET = "people/high/person.png";
 
 	protected GoogleMap map;
 	protected Context context;
@@ -351,7 +347,7 @@ public class LocationMarkerCollection implements PointCollection<Location>, OnMa
 	            InputStream in = new java.net.URL(urldisplay).openStream();
 	            mIcon11 = BitmapFactory.decodeStream(in);
 	        } catch (Exception e) {
-	            Log.e("Error", e.getMessage());
+	            Log.e(LOG_NAME, e.getMessage());
 	            e.printStackTrace();
 	        }
 	        return mIcon11;

@@ -27,7 +27,9 @@ public class ObservationTask extends AsyncTask<Observation, Observation, Void> {
     @Override
     protected Void doInBackground(Observation... observations) {
         for (Observation o : observations) {
-            if (filter != null && !filter.passesFilter(o)) continue;
+            if (filter != null && !filter.passesFilter(o)) {
+            	continue;
+            }
             
             publishProgress(o);
         }

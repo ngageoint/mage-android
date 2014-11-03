@@ -111,7 +111,7 @@ public class ObservationFeedCursorAdapter extends CursorAdapter {
 				} else if (remoteId != null) {
 					if (contentType.startsWith("image")) {
 						String url = a.getUrl();
-						Log.i("News Feed", "Loading Image URL: " + url);
+						Log.i(LOG_NAME, "Loading Image URL: " + url);
 						Glide.with(activity).load(url).placeholder(android.R.drawable.progress_indeterminate_horizontal).centerCrop().into(iv);
 					} else if (contentType.startsWith("video")) {
 						Glide.with(activity).load(R.drawable.ic_video_2x).into(iv);

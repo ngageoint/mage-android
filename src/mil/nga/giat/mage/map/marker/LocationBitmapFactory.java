@@ -26,13 +26,15 @@ public class LocationBitmapFactory {
 
 	private static Long upperBoundTimeInSeconds = 1800L;
 	
+	private static final String LOG_NAME = LocationBitmapFactory.class.getName();
+	
 	// TODO : SCOTT UFM
 	private static final Integer[] colorGradient = { 0xff0000ff, 0xffffff00 ,0xffffa500 };
 	
 	@TargetApi(Build.VERSION_CODES.JELLY_BEAN)
 	public static Bitmap bitmap(Context context, Location location, User user) {
 		Bitmap bitmap = createDot(context, location, user);
-		Log.d("LocationBitmapFactory", "Drawing the bitmap for user " + user.getUsername());
+		Log.d(LOG_NAME, "Drawing the bitmap for user " + user.getUsername());
 		if (user.getLocalIconPath() != null) {
 			bitmap = combineIconAndDot(bitmap.copy(Bitmap.Config.ARGB_8888, true), bitmapUser(context, user));
 		}

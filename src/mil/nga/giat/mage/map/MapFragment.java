@@ -21,7 +21,6 @@ import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.filter.DateTimeFilter;
 import mil.nga.giat.mage.filter.Filter;
 import mil.nga.giat.mage.map.GoogleMapWrapper.OnMapPanListener;
-import mil.nga.giat.mage.map.marker.LocationBitmapFactory;
 import mil.nga.giat.mage.map.marker.LocationMarkerCollection;
 import mil.nga.giat.mage.map.marker.MyHistoricalLocationMarkerCollection;
 import mil.nga.giat.mage.map.marker.ObservationMarkerCollection;
@@ -514,7 +513,7 @@ public class MapFragment extends Fragment implements OnMapClickListener, OnMapLo
 	}
 
 	@Override
-	public void onLocationDeleted(mil.nga.giat.mage.sdk.datastore.location.Location l) {
+	public void onLocationDeleted(Collection<mil.nga.giat.mage.sdk.datastore.location.Location> l) {
 		// this is slowing the app down a lot!  Moving the delete like code into the add methods of the collections
 		/*
 		if (currentUser != null && !currentUser.getRemoteId().equals(l.getUser().getRemoteId())) {
@@ -591,7 +590,7 @@ public class MapFragment extends Fragment implements OnMapClickListener, OnMapLo
 		for (Polyline p : staticGeometryCollection.getPolylines()) {
 			if (PolyUtil.isLocationOnPath(latLng, p.getPoints(), true, tolerance)) {
 				// found it open a info window
-				Log.i("static feature", "static feature polyline clicked at: " + latLng.toString());
+				Log.i(LOG_NAME, "static feature polyline clicked at: " + latLng.toString());
 				View markerInfoWindow = LayoutInflater.from(getActivity()).inflate(R.layout.marker_infowindow, null, false);
 				WebView webView = ((WebView) markerInfoWindow.findViewById(R.id.infowindowcontent));
 				webView.loadData(staticGeometryCollection.getPopupHTML(p), "text/html; charset=UTF-8", null);
@@ -606,7 +605,7 @@ public class MapFragment extends Fragment implements OnMapClickListener, OnMapLo
 		for (Polygon p : staticGeometryCollection.getPolygons()) {
 			if (PolyUtil.containsLocation(latLng, p.getPoints(), true)) {
 				// found it open a info window
-				Log.i("static feature", "static feature polgon clicked at: " + latLng.toString());
+				Log.i(LOG_NAME, "static feature polgon clicked at: " + latLng.toString());
 
 				View markerInfoWindow = LayoutInflater.from(getActivity()).inflate(R.layout.marker_infowindow, null, false);
 				WebView webView = ((WebView) markerInfoWindow.findViewById(R.id.infowindowcontent));

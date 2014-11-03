@@ -26,9 +26,6 @@ import com.vividsolutions.jts.geom.Point;
  */
 public class MyHistoricalLocationMarkerCollection extends LocationMarkerCollection {
 
-	private static final String ASSET = "dots/maps_dav_bw_dot.png";
-	private static final String DEFAULT_ASSET = "dots/maps_dav_blue_dot.png";
-
 	// use a queue like structure to limit the Collection size
 	protected MinMaxPriorityQueue<Location> locationQueue = MinMaxPriorityQueue.orderedBy(new Comparator<Location>() {
 		@Override
