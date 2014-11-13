@@ -102,21 +102,21 @@ public class ObservationFeedCursorAdapter extends CursorAdapter {
 
 				if (absPath != null) {
 					if (contentType.startsWith("image")) {
-						Glide.load(new File(absPath)).placeholder(android.R.drawable.progress_indeterminate_horizontal).centerCrop().into(iv);
+						Glide.with(activity).load(new File(absPath)).placeholder(android.R.drawable.progress_indeterminate_horizontal).centerCrop().into(iv);
 					} else if (contentType.startsWith("video")) {
-						Glide.load(R.drawable.ic_video_2x).into(iv);
+						Glide.with(activity).load(R.drawable.ic_video_2x).into(iv);
 					} else if (contentType.startsWith("audio")) {
-						Glide.load(R.drawable.ic_microphone).into(iv);
+						Glide.with(activity).load(R.drawable.ic_microphone).into(iv);
 					}
 				} else if (remoteId != null) {
 					if (contentType.startsWith("image")) {
 						String url = a.getUrl();
-						Log.i("News Feed", "Loading Image URL: " + url);
-						Glide.load(url).placeholder(android.R.drawable.progress_indeterminate_horizontal).centerCrop().into(iv);
+						Log.i(LOG_NAME, "Loading Image URL: " + url);
+						Glide.with(activity).load(url).placeholder(android.R.drawable.progress_indeterminate_horizontal).centerCrop().into(iv);
 					} else if (contentType.startsWith("video")) {
-						Glide.load(R.drawable.ic_video_2x).into(iv);
+						Glide.with(activity).load(R.drawable.ic_video_2x).into(iv);
 					} else if (contentType.startsWith("audio")) {
-						Glide.load(R.drawable.ic_microphone).into(iv);
+						Glide.with(activity).load(R.drawable.ic_microphone).into(iv);
 					}
 				}
 				v.findViewById(R.id.observation_list_text_content).setLayoutParams(new LinearLayout.LayoutParams((int) LayoutParams.WRAP_CONTENT, (int) LayoutParams.WRAP_CONTENT, 7.0f));

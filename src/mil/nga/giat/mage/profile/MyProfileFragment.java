@@ -17,21 +17,14 @@ import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
 import mil.nga.giat.mage.sdk.profile.UpdateProfileTask;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
 import android.annotation.TargetApi;
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Fragment;
 import android.content.ClipData;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
-import android.graphics.Bitmap.Config;
 import android.graphics.BitmapFactory;
-import android.graphics.Canvas;
-import android.graphics.Matrix;
-import android.graphics.Paint;
-import android.graphics.PorterDuff.Mode;
-import android.graphics.PorterDuffXfermode;
-import android.graphics.Rect;
-import android.graphics.RectF;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
@@ -64,9 +57,6 @@ public class MyProfileFragment extends Fragment {
 	public static String INITIAL_LOCATION = "INITIAL_LOCATION";
 	public static String INITIAL_ZOOM = "INITIAL_ZOOM";
 	public static String USER_ID = "USER_ID";
-	
-	private static final String ASSET = "people/person.png";
-	private static final String DEFAULT_ASSET = "people/high/person.png";
 	
 	private Uri currentMediaUri;
 	private User user;
@@ -233,7 +223,7 @@ public class MyProfileFragment extends Fragment {
 	
 	@Override
 	public void onActivityResult(int requestCode, int resultCode, Intent data) {
-		if (resultCode != getActivity().RESULT_OK) {
+		if (resultCode != Activity.RESULT_OK) {
 			return;
 		}
 		String filePath = null;
@@ -297,7 +287,7 @@ public class MyProfileFragment extends Fragment {
 	            InputStream in = new java.net.URL(urldisplay).openStream();
 	            mIcon11 = BitmapFactory.decodeStream(in);
 	        } catch (Exception e) {
-	            Log.e("Error", e.getMessage());
+	            Log.e(LOG_NAME, e.getMessage());
 	            e.printStackTrace();
 	        }
 	        return mIcon11;

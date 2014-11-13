@@ -29,7 +29,9 @@ public class LocationTask extends AsyncTask<Location, Location, Void> {
     @Override
     protected Void doInBackground(Location... locations) {        
     	for (Location l : locations) {
-            if (filter != null && !filter.passesFilter(l)) continue;
+            if (filter != null && !filter.passesFilter(l)) {
+            	continue;
+            }
 
             publishProgress(l);
         }

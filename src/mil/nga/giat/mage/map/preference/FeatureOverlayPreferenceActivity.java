@@ -37,6 +37,8 @@ import android.widget.TextView;
 
 public class FeatureOverlayPreferenceActivity extends ListActivity implements ILayerEventListener, IStaticFeatureEventListener {
 
+	private static final String LOG_NAME = FeatureOverlayPreferenceActivity.class.getName();
+	
     private OverlayAdapter overlayAdapter;
     private MenuItem refreshButton;
     private View contentView;
@@ -118,7 +120,7 @@ public class FeatureOverlayPreferenceActivity extends ListActivity implements IL
 						l.setLoaded(true);
 						overlayAdapter.notifyDataSetChanged();
 					} else {
-						Log.i("static layer", "static layer " + layer.getName() + ":" + layer.getId() + " is not availble, adapter size is: " + overlayAdapter.getCount());
+						Log.i(LOG_NAME, "static layer " + layer.getName() + ":" + layer.getId() + " is not availble, adapter size is: " + overlayAdapter.getCount());
 					}
 				}
 			}

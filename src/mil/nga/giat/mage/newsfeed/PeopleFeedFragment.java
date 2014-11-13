@@ -9,26 +9,19 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
-import mil.nga.giat.mage.LandingActivity;
 import mil.nga.giat.mage.R;
-import mil.nga.giat.mage.map.MapFragment;
-import mil.nga.giat.mage.navigation.DrawerItem;
-import mil.nga.giat.mage.observation.ObservationViewActivity;
 import mil.nga.giat.mage.profile.MyProfileFragment;
 import mil.nga.giat.mage.profile.ProfileActivity;
 import mil.nga.giat.mage.sdk.datastore.DaoStore;
 import mil.nga.giat.mage.sdk.datastore.location.Location;
 import mil.nga.giat.mage.sdk.datastore.location.LocationHelper;
-import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.event.ILocationEventListener;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
 import android.app.Fragment;
-import android.app.FragmentManager;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.SharedPreferences.Editor;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.database.Cursor;
 import android.os.Bundle;
@@ -51,7 +44,6 @@ import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.stmt.PreparedQuery;
 import com.j256.ormlite.stmt.QueryBuilder;
 import com.j256.ormlite.stmt.Where;
-import com.vividsolutions.jts.geom.Point;
 
 public class PeopleFeedFragment extends Fragment implements OnSharedPreferenceChangeListener, OnItemClickListener, ILocationEventListener {
 	
@@ -109,7 +101,7 @@ public class PeopleFeedFragment extends Fragment implements OnSharedPreferenceCh
             }
             queryUpdateHandle = scheduler.schedule(new Runnable() {
                 public void run() {
-                	Log.i(PeopleFeedFragment.LOG_NAME, "LocationBug Scheduler to update time filter running");
+                	Log.i(LOG_NAME, "LocationBug Scheduler to update time filter running");
                     updateTimeFilter(getTimeFilterId());
                 }
             }, 30*1000, TimeUnit.MILLISECONDS);
@@ -273,7 +265,7 @@ public class PeopleFeedFragment extends Fragment implements OnSharedPreferenceCh
 	}
 
 	@Override
-	public void onLocationDeleted(Location location) {
+	public void onLocationDeleted(Collection<Location> location) {
 		updateTimeFilter(getTimeFilterId());
 		Log.i(LOG_NAME, "LocationBug Location deleted");
 	}

@@ -104,61 +104,49 @@ public class ConnectionStatusFragment extends Fragment implements IConnectivityE
 
 	@Override
 	public void onAllDisconnected() {
-		Log.i("test", "All disconnected");
 		connected = false;
 		getActivity().runOnUiThread(new Runnable() {
-			 @Override
-			 public void run() {
-				 try {
-					 onConnectionChanged();
-				 } catch (Exception e) {
-					 Log.e("NewsFeedFragment", "Unable to change cursor", e);
-				 }
-			 }
-		 });
+			@Override
+			public void run() {
+				try {
+					onConnectionChanged();
+				} catch (Exception e) {
+					Log.e(LOG_NAME, "Unable to change cursor", e);
+				}
+			}
+		});
 	}
 
 	@Override
 	public void onAnyConnected() {
-		Log.i("test", "Any connected");
 		connected = true;
 		getActivity().runOnUiThread(new Runnable() {
-			 @Override
-			 public void run() {
-				 try {
-					 onConnectionChanged();
-				 } catch (Exception e) {
-					 Log.e("NewsFeedFragment", "Unable to change cursor", e);
-				 }
-			 }
-		 });
+			@Override
+			public void run() {
+				try {
+					onConnectionChanged();
+				} catch (Exception e) {
+					Log.e(LOG_NAME, "Unable to change cursor", e);
+				}
+			}
+		});
 	}
 
 	@Override
 	public void onWifiConnected() {
-		Log.i("test", "wifi connected");
-		// TODO Auto-generated method stub
-		
 	}
 
 	@Override
 	public void onWifiDisconnected() {
-		Log.i("test", "wifi disconnected");
-		// TODO Auto-generated method stub
-		
+
 	}
 
 	@Override
 	public void onMobileDataConnected() {
-		Log.i("test", "mobile connected");
-		// TODO Auto-generated method stub
-		
 	}
 
 	@Override
 	public void onMobileDataDisconnected() {
-		Log.i("test", "mobile disconnected");
-		// TODO Auto-generated method stub
-		
+
 	}
 }
