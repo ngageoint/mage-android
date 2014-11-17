@@ -423,6 +423,8 @@ public class MapFragment extends Fragment implements OnMapClickListener, OnMapLo
 						l.setLongitude(point.getX());
 					}
 				}
+			} else {
+				l = new Location(l);
 			}
 			if (l != null) {
 				intent.putExtra(ObservationEditActivity.LOCATION, l);

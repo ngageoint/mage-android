@@ -157,6 +157,8 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 						l.setLongitude(point.getX());
 					}
 				}
+			} else {
+				l = new Location(l);
 			}
 			if(l != null) {
 				intent.putExtra(ObservationEditActivity.LOCATION, l);
