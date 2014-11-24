@@ -20,3 +20,4 @@
 #}
 -dontwarn com.google.**
 -dontwarn com.fasterxml.**
+-dontwarn org.apache.**
