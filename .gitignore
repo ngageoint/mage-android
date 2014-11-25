@@ -7,8 +7,11 @@
 *.ap_
 
 # Generated files
+.gradle/
+build/
 bin/
 gen/
+local.properties
 
 # generic files to ignore
 *~
@@ -16,3 +19,7 @@ gen/
 *.DS_Store
 *.swp
 *.out
+
+# IDE files
+.idea/
+*.iml

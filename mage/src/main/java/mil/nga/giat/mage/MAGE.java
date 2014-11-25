@@ -1,5 +1,21 @@
 package mil.nga.giat.mage;
 
+import android.app.AlarmManager;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.os.AsyncTask;
+import android.support.multidex.MultiDexApplication;
+import android.support.v4.app.NotificationCompat;
+import android.support.v4.app.TaskStackBuilder;
+import android.util.Log;
+
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.GlideBuilder;
+import com.bumptech.glide.load.model.GlideUrl;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -15,8 +31,8 @@ import mil.nga.giat.mage.sdk.fetch.LocationFetchIntentService;
 import mil.nga.giat.mage.sdk.fetch.ObservationFetchIntentService;
 import mil.nga.giat.mage.sdk.fetch.StaticFeatureServerFetch;
 import mil.nga.giat.mage.sdk.fetch.UserFetchIntentService;
-import mil.nga.giat.mage.sdk.glide.MageUrlLoader;
 import mil.nga.giat.mage.sdk.glide.MageDiskCache;
+import mil.nga.giat.mage.sdk.glide.MageUrlLoader;
 import mil.nga.giat.mage.sdk.http.client.HttpClientManager;
 import mil.nga.giat.mage.sdk.location.LocationService;
 import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
@@ -25,25 +41,10 @@ import mil.nga.giat.mage.sdk.push.LocationPushIntentService;
 import mil.nga.giat.mage.sdk.push.ObservationPushIntentService;
 import mil.nga.giat.mage.sdk.screen.ScreenChangeReceiver;
 import mil.nga.giat.mage.sdk.utils.StorageUtility;
-import mil.nga.giat.mage.sdk.utils.UserUtility;
 import mil.nga.giat.mage.sdk.utils.StorageUtility.StorageType;
-import android.app.AlarmManager;
-import android.app.Application;
-import android.app.NotificationManager;
-import android.app.PendingIntent;
-import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
-import android.os.AsyncTask;
-import android.support.v4.app.NotificationCompat;
-import android.support.v4.app.TaskStackBuilder;
-import android.util.Log;
+import mil.nga.giat.mage.sdk.utils.UserUtility;
 
-import com.bumptech.glide.Glide;
-import com.bumptech.glide.GlideBuilder;
-import com.bumptech.glide.load.model.GlideUrl;
-
-public class MAGE extends Application implements IUserEventListener {
+public class MAGE extends MultiDexApplication implements IUserEventListener {
 
 	private static final String LOG_NAME = MAGE.class.getName();
 
