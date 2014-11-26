@@ -24,5 +24,7 @@
     <string name="activeTimeFilterKey">activeTimeFilter</string>
     <string name="mapZoomLatKey">mapZoomLatKey</string>
     <string name="mapZoomLonKey">mapZoomLonKey</string>
+    <!-- Notifications -->
+    <string name="notificationsEnabledKey">notificationsEnabled</string>
 
 </resources>

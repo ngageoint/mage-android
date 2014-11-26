@@ -26,6 +26,8 @@ import java.util.Map;
 
 import mil.nga.giat.mage.login.LoginActivity;
 import mil.nga.giat.mage.map.CacheOverlay;
+import mil.nga.giat.mage.observation.ObservationNotificationListener;
+import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
 import mil.nga.giat.mage.sdk.event.IUserEventListener;
 import mil.nga.giat.mage.sdk.fetch.LocationFetchIntentService;
 import mil.nga.giat.mage.sdk.fetch.ObservationFetchIntentService;
@@ -81,8 +83,12 @@ public class MAGE extends MultiDexApplication implements IUserEventListener {
 
 		// setup the screen unlock stuff
 		registerReceiver(ScreenChangeReceiver.getInstance(), new IntentFilter(Intent.ACTION_SCREEN_ON));
-		
-		HttpClientManager.getInstance(getApplicationContext()).addListener(this);
+
+        //set up Observation notifications
+        ObservationHelper oh = ObservationHelper.getInstance(getApplicationContext());
+        oh.addListener(new ObservationNotificationListener(getApplicationContext()));
+
+        HttpClientManager.getInstance(getApplicationContext()).addListener(this);
 
 		super.onCreate();
 	}
@@ -122,7 +128,8 @@ public class MAGE extends MultiDexApplication implements IUserEventListener {
 		destroyLocationService();
 		NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 		notificationManager.cancel(MAGE_NOTIFICATION_ID);
-		
+        notificationManager.cancel(ObservationNotificationListener.OBSERVATION_NOTIFICATION_ID);
+
 		if(PreferenceHelper.getInstance(getApplicationContext()).getValue(R.string.deleteAllDataOnLogoutKey, Boolean.class, R.string.deleteAllDataOnLogoutDefaultValue)) {
 			LandingActivity.deleteAllData(getApplicationContext());
 		}		
