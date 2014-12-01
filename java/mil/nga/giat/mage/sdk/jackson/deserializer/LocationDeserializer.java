@@ -1,8 +1,15 @@
 package mil.nga.giat.mage.sdk.jackson.deserializer;
 
+import android.util.Log;
+
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonToken;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serializable;
+import java.text.DateFormat;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -13,18 +20,14 @@ import java.util.Map;
 import mil.nga.giat.mage.sdk.datastore.location.Location;
 import mil.nga.giat.mage.sdk.datastore.location.LocationGeometry;
 import mil.nga.giat.mage.sdk.datastore.location.LocationProperty;
-import mil.nga.giat.mage.sdk.utils.DateUtility;
-import android.util.Log;
-
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonToken;
+import mil.nga.giat.mage.sdk.utils.DateFormatFactory;
 
 public class LocationDeserializer extends Deserializer {
 
     private static final String LOG_NAME = LocationDeserializer.class.getName();
 	
 	private GeometryDeserializer geometryDeserializer = new GeometryDeserializer();
+    private DateFormat iso8601Format = DateFormatFactory.ISO8601();
 
 	public List<Location> parseUserLocations(InputStream is) throws JsonParseException, IOException {
 		JsonParser parser = factory.createParser(is);
@@ -117,7 +120,7 @@ public class LocationDeserializer extends Deserializer {
 		LocationProperty timestamp = properties.get("timestamp");
 		if (timestamp != null) {
 			try {
-				Date d = DateUtility.getISO8601().parse(timestamp.getValue().toString());
+				Date d = iso8601Format.parse(timestamp.getValue().toString());
 				location.setTimestamp(d);
 			} catch (ParseException pe) {
 				Log.w(LOG_NAME, "Unable to parse date: " + timestamp + " for location: " + location.getRemoteId(), pe);

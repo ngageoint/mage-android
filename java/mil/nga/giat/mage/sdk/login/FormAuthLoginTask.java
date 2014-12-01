@@ -1,10 +1,31 @@
 package mil.nga.giat.mage.sdk.login;
 
+import android.content.Context;
+import android.content.SharedPreferences;
+import android.content.SharedPreferences.Editor;
+import android.content.pm.PackageManager.NameNotFoundException;
+import android.preference.PreferenceManager;
+import android.util.Log;
+
+import com.google.gson.Gson;
+
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.HttpStatus;
+import org.apache.http.NameValuePair;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.message.BasicNameValuePair;
+import org.apache.http.util.EntityUtils;
+import org.json.JSONObject;
+
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -19,27 +40,7 @@ import mil.nga.giat.mage.sdk.exceptions.UserException;
 import mil.nga.giat.mage.sdk.gson.deserializer.UserDeserializer;
 import mil.nga.giat.mage.sdk.http.client.HttpClientManager;
 import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
-import mil.nga.giat.mage.sdk.utils.DateUtility;
-
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.HttpStatus;
-import org.apache.http.NameValuePair;
-import org.apache.http.client.entity.UrlEncodedFormEntity;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.message.BasicNameValuePair;
-import org.apache.http.util.EntityUtils;
-import org.json.JSONObject;
-
-import android.content.Context;
-import android.content.SharedPreferences;
-import android.content.SharedPreferences.Editor;
-import android.content.pm.PackageManager.NameNotFoundException;
-import android.preference.PreferenceManager;
-import android.util.Log;
-
-import com.google.gson.Gson;
+import mil.nga.giat.mage.sdk.utils.DateFormatFactory;
 
 /**
  * Performs login to specified server with username and password. TODO: Should
@@ -51,6 +52,7 @@ import com.google.gson.Gson;
 public class FormAuthLoginTask extends AbstractAccountTask {
 
 	private static final String LOG_NAME = FormAuthLoginTask.class.getName();
+    private DateFormat iso8601Format = DateFormatFactory.ISO8601();
 	
 	public FormAuthLoginTask(AccountDelegate delegate, Context context) {
 		super(delegate, context);
@@ -191,7 +193,7 @@ public class FormAuthLoginTask extends AbstractAccountTask {
 				editor.putString(mApplicationContext.getString(R.string.tokenKey), json.getString("token").trim()).commit();
 				Log.d(LOG_NAME, "Storing token: " + PreferenceHelper.getInstance(mApplicationContext).getValue(R.string.tokenKey));
 				try {
-					editor.putString(mApplicationContext.getString(R.string.tokenExpirationDateKey), DateUtility.getISO8601().format(DateUtility.getISO8601().parse(json.getString("expirationDate").trim()))).commit();
+					editor.putString(mApplicationContext.getString(R.string.tokenExpirationDateKey), iso8601Format.format(iso8601Format.parse(json.getString("expirationDate").trim()))).commit();
 				} catch (java.text.ParseException e) {
 					Log.e(LOG_NAME, "Problem parsing token expiration date.", e);
 				}

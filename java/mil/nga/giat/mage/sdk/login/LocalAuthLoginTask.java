@@ -1,8 +1,15 @@
 package mil.nga.giat.mage.sdk.login;
 
+import android.content.Context;
+import android.content.SharedPreferences;
+import android.content.SharedPreferences.Editor;
+import android.preference.PreferenceManager;
+import android.util.Log;
+
 import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.text.DateFormat;
 import java.util.Arrays;
 import java.util.Date;
 
@@ -12,12 +19,7 @@ import mil.nga.giat.mage.sdk.datastore.user.Role;
 import mil.nga.giat.mage.sdk.datastore.user.RoleHelper;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.exceptions.LoginException;
-import mil.nga.giat.mage.sdk.utils.DateUtility;
-import android.content.Context;
-import android.content.SharedPreferences;
-import android.content.SharedPreferences.Editor;
-import android.preference.PreferenceManager;
-import android.util.Log;
+import mil.nga.giat.mage.sdk.utils.DateFormatFactory;
 
 /**
  * A Task intended to be used for local authentication only. Testing or off-line
@@ -29,6 +31,7 @@ import android.util.Log;
 public class LocalAuthLoginTask extends AbstractAccountTask {
 
 	private static final String LOG_NAME = LocalAuthLoginTask.class.getName();
+    private DateFormat iso8601Format = DateFormatFactory.ISO8601();
 
 	protected RoleHelper roleHelper;
 	protected LocationHelper locationHelper;
@@ -60,7 +63,7 @@ public class LocalAuthLoginTask extends AbstractAccountTask {
 			Editor editor = sharedPreferences.edit();
 			editor.putString(mApplicationContext.getString(R.string.tokenKey), md5Password).commit();
 			// FIXME : 8 hours for now?
-			editor.putString(mApplicationContext.getString(R.string.tokenExpirationDateKey), DateUtility.getISO8601().format(new Date(new Date().getTime() + 8 * 60 * 60 * 1000))).commit();
+			editor.putString(mApplicationContext.getString(R.string.tokenExpirationDateKey), iso8601Format.format(new Date(new Date().getTime() + 8 * 60 * 60 * 1000))).commit();
 		} catch (NoSuchAlgorithmException nsae) {
 			nsae.printStackTrace();
 		} catch (UnsupportedEncodingException uee) {

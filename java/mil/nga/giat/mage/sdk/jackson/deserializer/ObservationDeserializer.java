@@ -1,5 +1,12 @@
 package mil.nga.giat.mage.sdk.jackson.deserializer;
 
+import android.util.Log;
+
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonToken;
+import com.vividsolutions.jts.geom.Geometry;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serializable;
@@ -16,13 +23,7 @@ import mil.nga.giat.mage.sdk.datastore.observation.Attachment;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationGeometry;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationProperty;
-import mil.nga.giat.mage.sdk.utils.DateUtility;
-import android.util.Log;
-
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonToken;
-import com.vividsolutions.jts.geom.Geometry;
+import mil.nga.giat.mage.sdk.utils.DateFormatFactory;
 
 public class ObservationDeserializer extends Deserializer {
 
@@ -30,7 +31,7 @@ public class ObservationDeserializer extends Deserializer {
 
 	private GeometryDeserializer geometryDeserializer = new GeometryDeserializer();
 	private AttachmentDeserializer attachmentDeserializer = new AttachmentDeserializer();
-	private DateFormat iso8601Format = DateUtility.getISO8601();
+	private DateFormat iso8601Format = DateFormatFactory.ISO8601();
 
 	public List<Observation> parseObservations(InputStream is) throws JsonParseException, IOException {
 		List<Observation> observations = new ArrayList<Observation>();
@@ -122,7 +123,7 @@ public class ObservationDeserializer extends Deserializer {
 		ObservationProperty timestamp = properties.get("timestamp");
 		if (timestamp != null) {
 			try {
-				Date d = DateUtility.getISO8601().parse(timestamp.getValue().toString());
+				Date d = iso8601Format.parse(timestamp.getValue().toString());
 				observation.setTimestamp(d);
 			} catch (ParseException pe) {
 				Log.w(LOG_NAME, "Unable to parse date: " + timestamp + " for location: " + observation.getRemoteId(), pe);

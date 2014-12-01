@@ -1,9 +1,28 @@
 package mil.nga.giat.mage.sdk.http.get;
 
+import android.content.Context;
+import android.net.Uri;
+import android.util.Log;
+
+import com.google.common.io.ByteStreams;
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.HttpStatus;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.util.EntityUtils;
+import org.json.JSONArray;
+import org.json.JSONObject;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.net.URI;
 import java.net.URL;
+import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -23,26 +42,8 @@ import mil.nga.giat.mage.sdk.jackson.deserializer.LocationDeserializer;
 import mil.nga.giat.mage.sdk.jackson.deserializer.ObservationDeserializer;
 import mil.nga.giat.mage.sdk.jackson.deserializer.StaticFeatureDeserializer;
 import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
-import mil.nga.giat.mage.sdk.utils.DateUtility;
+import mil.nga.giat.mage.sdk.utils.DateFormatFactory;
 import mil.nga.giat.mage.sdk.utils.ZipUtility;
-
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.HttpStatus;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.util.EntityUtils;
-import org.json.JSONArray;
-import org.json.JSONObject;
-
-import android.content.Context;
-import android.net.Uri;
-import android.util.Log;
-
-import com.google.common.io.ByteStreams;
-import com.google.gson.Gson;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 
 /**
  * A class that contains common GET requests to the MAGE server.
@@ -56,7 +57,7 @@ public class MageServerGetRequests {
 	private static ObservationDeserializer observationDeserializer = new ObservationDeserializer();
 	private static StaticFeatureDeserializer featureDeserializer = new StaticFeatureDeserializer();
 	private static LocationDeserializer locationDeserializer = new LocationDeserializer();
-	
+
 	public static final String OBSERVATION_ICON_PATH = "/icons/observations";
 
 	public static void getAndSaveObservationIcons(Context context) {
@@ -123,11 +124,6 @@ public class MageServerGetRequests {
 	
 	/**
 	 * Gets layers from the server.
-	 * 
-	 * @param context
-	 * @param key
-	 * @param value
-	 * @return
 	 */
 	public static List<Layer> getFeatureLayers(Context context) {
 		List<Layer> layers = new ArrayList<Layer>();
@@ -307,8 +303,9 @@ public class MageServerGetRequests {
 	 */
 	public static List<Observation> getObservations(Context context) {
 		long start = 0;
+        DateFormat iso8601Format = DateFormatFactory.ISO8601();
 
-		List<Observation> observations = new ArrayList<Observation>();
+        List<Observation> observations = new ArrayList<Observation>();
 		String fieldObservationLayerId = MageServerGetRequests.getFieldObservationLayerId(context);
 		HttpEntity entity = null;
 		try {
@@ -320,10 +317,10 @@ public class MageServerGetRequests {
 
 			URL observationURL = new URL(serverURL, "/FeatureServer/" + fieldObservationLayerId + "/features");
 			Uri.Builder uriBuilder = Uri.parse(observationURL.toURI().toString()).buildUpon();
-			uriBuilder.appendQueryParameter("startDate", DateUtility.getISO8601().format(lastModifiedDate));
+			uriBuilder.appendQueryParameter("startDate", iso8601Format.format(lastModifiedDate));
 
 			DefaultHttpClient httpclient = HttpClientManager.getInstance(context).getHttpClient();
-			Log.d(LOG_NAME, "Fetching all observations after: " + DateUtility.getISO8601().format(lastModifiedDate));
+			Log.d(LOG_NAME, "Fetching all observations after: " + iso8601Format.format(lastModifiedDate));
 			Log.d(LOG_NAME, uriBuilder.build().toString());
 			HttpGet get = new HttpGet(new URI(uriBuilder.build().toString()));
 			HttpResponse response = httpclient.execute(get);

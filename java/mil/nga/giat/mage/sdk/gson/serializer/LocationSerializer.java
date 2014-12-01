@@ -1,14 +1,5 @@
 package mil.nga.giat.mage.sdk.gson.serializer;
 
-import java.io.Serializable;
-import java.lang.reflect.Type;
-import java.util.Collection;
-import java.util.List;
-
-import mil.nga.giat.mage.sdk.datastore.location.Location;
-import mil.nga.giat.mage.sdk.datastore.location.LocationProperty;
-import mil.nga.giat.mage.sdk.datastore.observation.Observation;
-import mil.nga.giat.mage.sdk.utils.DateUtility;
 import android.content.Context;
 
 import com.google.gson.Gson;
@@ -22,6 +13,17 @@ import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
 import com.google.gson.reflect.TypeToken;
 
+import java.io.Serializable;
+import java.lang.reflect.Type;
+import java.text.DateFormat;
+import java.util.Collection;
+import java.util.List;
+
+import mil.nga.giat.mage.sdk.datastore.location.Location;
+import mil.nga.giat.mage.sdk.datastore.location.LocationProperty;
+import mil.nga.giat.mage.sdk.datastore.observation.Observation;
+import mil.nga.giat.mage.sdk.utils.DateFormatFactory;
+
 /**
  * Used to convert a Location object into a json String.
  * 
@@ -29,6 +31,8 @@ import com.google.gson.reflect.TypeToken;
  * 
  */
 public class LocationSerializer implements JsonSerializer<Collection<Location>> {
+
+    private DateFormat iso8601Format = DateFormatFactory.ISO8601();
 
 	public LocationSerializer(Context context) {
 		super();
@@ -45,7 +49,7 @@ public class LocationSerializer implements JsonSerializer<Collection<Location>> 
 
 			jsonLocation.add("geometry", new JsonParser().parse(GeometrySerializer.getGsonBuilder().toJson(location.getLocationGeometry().getGeometry())));
 			jsonLocation.add("properties", jsonProperties);
-			jsonProperties.add("timestamp", new JsonPrimitive(DateUtility.getISO8601().format(location.getTimestamp())));
+			jsonProperties.add("timestamp", new JsonPrimitive(iso8601Format.format(location.getTimestamp())));
 			jsonProperties.add("timestampUnformattedDuringSerialization", new JsonPrimitive(location.getTimestamp().toString()));
 			jsonProperties.add("timeNowDuringSerialization", new JsonPrimitive(System.currentTimeMillis()));
 			jsonProperties.add("user", new JsonPrimitive(location.getUser().getId()));

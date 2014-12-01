@@ -1,15 +1,17 @@
 package mil.nga.giat.mage.sdk.utils;
 
-import java.text.ParseException;
-import java.util.Date;
-
-import mil.nga.giat.mage.sdk.R;
-import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.preference.PreferenceManager;
 import android.util.Log;
+
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.util.Date;
+
+import mil.nga.giat.mage.sdk.R;
+import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
 
 /**
  * Utility that currently deals mostly with the user's token information.
@@ -20,6 +22,7 @@ import android.util.Log;
 public class UserUtility {
 
 	private static final String LOG_NAME = UserUtility.class.getName();
+    private DateFormat iso8601Format = DateFormatFactory.ISO8601();
 
 	private UserUtility() {
 	}
@@ -47,7 +50,7 @@ public class UserUtility {
 		if (!tokenExpirationDateString.isEmpty()) {
 
 			try {
-				return new Date().after(DateUtility.getISO8601().parse(tokenExpirationDateString));
+				return new Date().after(iso8601Format.parse(tokenExpirationDateString));
 			} catch (ParseException pe) {
 				Log.e(LOG_NAME, "Problem paring token date.", pe);
 			}
