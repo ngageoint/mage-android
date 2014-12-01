@@ -11,11 +11,6 @@
         android:defaultValue=""
         android:key="@string/usernameKey" />
 
-    <!-- Default server to connect to -->
-    <EditTextPreference
-        android:defaultValue="https://mage.geointapps.org"
-        android:key="@string/serverURLKey" />
-
     <!-- How often to push obersvations? -->
     <EditTextPreference
         android:defaultValue="@string/observationPushFrequencyDefaultValue"
