@@ -20,6 +20,7 @@ public class MageTextView extends TextView implements MageControl {
 
 	private static final String LOG_NAME = MageTextView.class.getName();
 
+    public final DateFormat iso8601Format = DateFormatFactory.ISO8601();
     public final DateFormat dateFormat = DateFormatFactory.format("yyyy-MM-dd HH:mm zz", Locale.getDefault(), TimeZone.getTimeZone("Zulu"));
 
 	private String propertyKey;
@@ -68,7 +69,7 @@ public class MageTextView extends TextView implements MageControl {
 
 			break;
 		case DATE:
-			value = dateFormat.format(propertyDate);
+			value = iso8601Format.format(propertyDate);
 			break;
 		case LOCATION:
 			break;
@@ -110,7 +111,7 @@ public class MageTextView extends TextView implements MageControl {
 				propertyDate = (Date) value;
 			} else if (value instanceof String) {
 				try {
-					propertyDate = dateFormat.parse((String) value);
+					propertyDate = iso8601Format.parse((String) value);
 				} catch (ParseException e) {
 					Log.e(LOG_NAME, "Could not parse date.");
 				}

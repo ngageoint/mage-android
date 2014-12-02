@@ -41,7 +41,6 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.Locale;
 import java.util.Map;
-import java.util.TimeZone;
 
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.form.LayoutBaker;
@@ -72,7 +71,7 @@ public class ObservationViewActivity extends Activity {
 	private Marker marker;
 	private DecimalFormat latLngFormat = new DecimalFormat("###.#####");
 	
-    private final DateFormat dateFormat = DateFormatFactory.format("yyyy-MM-dd HH:mm zz", Locale.getDefault(), TimeZone.getTimeZone("Zulu"));
+    private final DateFormat dateFormat = DateFormatFactory.format("yyyy-MM-dd HH:mm zz", Locale.getDefault());
 
 	public class AttachmentGalleryTask extends AsyncTask<Attachment, ImageView, Boolean> {
 
