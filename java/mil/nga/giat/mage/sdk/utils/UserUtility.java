@@ -41,28 +41,29 @@ public class UserUtility {
 		return userUtility;
 	}
 
+    // TODO token info is really a function of login type
+    // this should probably be in the auth module as something more generic,
+    // in case we ever go to a different login module
 	public synchronized final Boolean isTokenExpired() {
-		String token = PreferenceHelper.getInstance(mContext).getValue(R.string.tokenKey);
-		if (token == null || token.trim().isEmpty()) {
-			return true;
-		}
 		String tokenExpirationDateString = PreferenceHelper.getInstance(mContext).getValue(R.string.tokenExpirationDateKey);
-		if (!tokenExpirationDateString.isEmpty()) {
-
+		if (tokenExpirationDateString != null && !tokenExpirationDateString.isEmpty()) {
 			try {
 				return new Date().after(iso8601Format.parse(tokenExpirationDateString));
 			} catch (ParseException pe) {
 				Log.e(LOG_NAME, "Problem paring token date.", pe);
 			}
-
 		}
 		return true;
 	}
 
+    // TODO token info is really a function of login type
+    // this should probably be in the auth module as something more generic,
+    // in case we ever go to a different login module
 	public synchronized final void clearTokenInformation() {
 		SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(mContext);
 		Editor editor = sharedPreferences.edit();
-		editor.putString(mContext.getString(R.string.tokenKey), "").commit();
-		editor.putString(mContext.getString(R.string.tokenExpirationDateKey), "").commit();
+		editor.remove(mContext.getString(R.string.tokenKey));
+        editor.remove(mContext.getString(R.string.tokenExpirationDateKey));
+        editor.commit();
 	}
 }

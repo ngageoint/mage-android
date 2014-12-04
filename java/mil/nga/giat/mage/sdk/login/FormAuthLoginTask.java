@@ -77,8 +77,10 @@ public class FormAuthLoginTask extends AbstractAccountTask {
 		String username = params[0];
 		String password = params[1];
 		String serverURL = params[2];
-		
-		// Make sure you have connectivity
+
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(mApplicationContext);
+
+        // Make sure you have connectivity
 		if (!ConnectivityUtility.isOnline(mApplicationContext)) {
 
 			try {
@@ -88,6 +90,11 @@ public class FormAuthLoginTask extends AbstractAccountTask {
 				String md5Password = Arrays.toString(MessageDigest.getInstance("MD5").digest(password.getBytes("UTF-8")));
 				// TODO : check token expiration against current time?
 				if (oldUsername != null && oldPasswordHash != null && !oldPasswordHash.trim().isEmpty() && oldUsername.equals(username) && md5Password.equals(oldPasswordHash) && serverURL.equals(serverURLPref)) {
+                    // put the token expiration information in the shared preferences
+                    long tokenExpirationLength = sharedPreferences.getLong(mApplicationContext.getString(R.string.tokenExpirationLengthKey), 0);
+                    Date tokenExpiration = new Date(System.currentTimeMillis() + tokenExpirationLength);
+                    sharedPreferences.edit().putString(mApplicationContext.getString(R.string.tokenExpirationDateKey), iso8601Format.format(tokenExpiration)).commit();
+
 					return new AccountStatus(AccountStatus.Status.DISCONNECTED_LOGIN, new ArrayList<Integer>(), new ArrayList<String>(), null);
 				}
 			} catch (NoSuchAlgorithmException nsae) {
@@ -150,7 +157,6 @@ public class FormAuthLoginTask extends AbstractAccountTask {
 			return new AccountStatus(AccountStatus.Status.FAILED_LOGIN, errorIndices, errorMessages);
 		}
 
-		SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(mApplicationContext);
 		HttpEntity entity = null;
 		try {
 			DefaultHttpClient httpClient = HttpClientManager.getInstance(mApplicationContext).getHttpClient();
@@ -193,7 +199,10 @@ public class FormAuthLoginTask extends AbstractAccountTask {
 				editor.putString(mApplicationContext.getString(R.string.tokenKey), json.getString("token").trim()).commit();
 				Log.d(LOG_NAME, "Storing token: " + PreferenceHelper.getInstance(mApplicationContext).getValue(R.string.tokenKey));
 				try {
-					editor.putString(mApplicationContext.getString(R.string.tokenExpirationDateKey), iso8601Format.format(iso8601Format.parse(json.getString("expirationDate").trim()))).commit();
+                    Date tokenExpiration = iso8601Format.parse(json.getString("expirationDate").trim());
+                    long tokenExpirationLength = tokenExpiration.getTime() - (new Date()).getTime();
+					editor.putString(mApplicationContext.getString(R.string.tokenExpirationDateKey), iso8601Format.format(tokenExpiration)).commit();
+                    editor.putLong(mApplicationContext.getString(R.string.tokenExpirationLengthKey), tokenExpirationLength).commit();
 				} catch (java.text.ParseException e) {
 					Log.e(LOG_NAME, "Problem parsing token expiration date.", e);
 				}
