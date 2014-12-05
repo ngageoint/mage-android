@@ -88,7 +88,6 @@ public class FormAuthLoginTask extends AbstractAccountTask {
 				String serverURLPref = PreferenceHelper.getInstance(mApplicationContext).getValue(R.string.serverURLKey);
 				String oldPasswordHash = PreferenceHelper.getInstance(mApplicationContext).getValue(R.string.passwordHashKey);
 				String md5Password = Arrays.toString(MessageDigest.getInstance("MD5").digest(password.getBytes("UTF-8")));
-				// TODO : check token expiration against current time?
 				if (oldUsername != null && oldPasswordHash != null && !oldPasswordHash.trim().isEmpty() && oldUsername.equals(username) && md5Password.equals(oldPasswordHash) && serverURL.equals(serverURLPref)) {
                     // put the token expiration information in the shared preferences
                     long tokenExpirationLength = sharedPreferences.getLong(mApplicationContext.getString(R.string.tokenExpirationLengthKey), 0);
@@ -103,11 +102,7 @@ public class FormAuthLoginTask extends AbstractAccountTask {
 				uee.printStackTrace();
 			}
 
-			List<Integer> errorIndices = new ArrayList<Integer>();
-			errorIndices.add(2);
-			List<String> errorMessages = new ArrayList<String>();
-			errorMessages.add("No connection");
-			return new AccountStatus(AccountStatus.Status.FAILED_LOGIN, errorIndices, errorMessages);
+			return new AccountStatus(AccountStatus.Status.FAILED_LOGIN);
 		}
 
 		String macAddress = ConnectivityUtility.getMacAddress(mApplicationContext);
