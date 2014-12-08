@@ -1,38 +1,5 @@
 package mil.nga.giat.mage.observation;
 
-import java.io.File;
-import java.io.IOException;
-import java.text.DecimalFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-
-import mil.nga.giat.mage.R;
-import mil.nga.giat.mage.form.LayoutBaker;
-import mil.nga.giat.mage.form.LayoutBaker.ControlGenerationType;
-import mil.nga.giat.mage.form.MageSpinner;
-import mil.nga.giat.mage.form.MageTextView;
-import mil.nga.giat.mage.map.marker.ObservationBitmapFactory;
-import mil.nga.giat.mage.sdk.datastore.common.State;
-import mil.nga.giat.mage.sdk.datastore.observation.Attachment;
-import mil.nga.giat.mage.sdk.datastore.observation.Observation;
-import mil.nga.giat.mage.sdk.datastore.observation.ObservationGeometry;
-import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
-import mil.nga.giat.mage.sdk.datastore.observation.ObservationProperty;
-import mil.nga.giat.mage.sdk.datastore.user.User;
-import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
-import mil.nga.giat.mage.sdk.exceptions.ObservationException;
-import mil.nga.giat.mage.sdk.exceptions.UserException;
-import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
-import mil.nga.giat.mage.sdk.utils.DateUtility;
-import mil.nga.giat.mage.sdk.utils.MediaUtility;
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.Activity;
@@ -87,9 +54,45 @@ import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.GeometryFactory;
 import com.vividsolutions.jts.geom.Point;
 
+import java.io.File;
+import java.io.IOException;
+import java.text.DateFormat;
+import java.text.DecimalFormat;
+import java.text.ParseException;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+
+import mil.nga.giat.mage.R;
+import mil.nga.giat.mage.form.LayoutBaker;
+import mil.nga.giat.mage.form.LayoutBaker.ControlGenerationType;
+import mil.nga.giat.mage.form.MageSpinner;
+import mil.nga.giat.mage.form.MageTextView;
+import mil.nga.giat.mage.map.marker.ObservationBitmapFactory;
+import mil.nga.giat.mage.sdk.datastore.common.State;
+import mil.nga.giat.mage.sdk.datastore.observation.Attachment;
+import mil.nga.giat.mage.sdk.datastore.observation.Observation;
+import mil.nga.giat.mage.sdk.datastore.observation.ObservationGeometry;
+import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
+import mil.nga.giat.mage.sdk.datastore.observation.ObservationProperty;
+import mil.nga.giat.mage.sdk.datastore.user.User;
+import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
+import mil.nga.giat.mage.sdk.exceptions.ObservationException;
+import mil.nga.giat.mage.sdk.exceptions.UserException;
+import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
+import mil.nga.giat.mage.sdk.utils.DateFormatFactory;
+import mil.nga.giat.mage.sdk.utils.MediaUtility;
+
 public class ObservationEditActivity extends Activity {
 
 	private static final String LOG_NAME = ObservationEditActivity.class.getName();
+
+    private final DateFormat iso8601Format = DateFormatFactory.ISO8601();
 
 	public static final String OBSERVATION_ID = "OBSERVATION_ID";
 	public static final String LOCATION = "LOCATION";
@@ -185,7 +188,7 @@ public class ObservationEditActivity extends Activity {
 			o = new Observation();
 			o.setTimestamp(new Date());
 			List<ObservationProperty> properties = new ArrayList<ObservationProperty>();
-			properties.add(new ObservationProperty("timestamp", DateUtility.getISO8601().format(o.getTimestamp())));
+			properties.add(new ObservationProperty("timestamp", iso8601Format.format(o.getTimestamp())));
 			for (View view : controls) {
 				if (view instanceof MageSpinner) {
 					MageSpinner mageSpinner = (MageSpinner) view;
@@ -453,7 +456,7 @@ public class ObservationEditActivity extends Activity {
 			Map<String, ObservationProperty> propertyMap = LayoutBaker.populateMapFromLayout((LinearLayout) findViewById(R.id.form));
 
 			try {
-				o.setTimestamp(DateUtility.getISO8601().parse(propertyMap.get("timestamp").getValue().toString()));
+				o.setTimestamp(iso8601Format.parse(propertyMap.get("timestamp").getValue().toString()));
 			} catch (ParseException pe) {
 				Log.e(LOG_NAME, "Could not parse timestamp", pe);
 			}
@@ -542,7 +545,8 @@ public class ObservationEditActivity extends Activity {
 		}
 
 		// Create a media file name
-		String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(new Date());
+        DateFormat dateFormat = DateFormatFactory.format("yyyyMMdd_HHmmss", Locale.getDefault());
+		String timeStamp = dateFormat.format(new Date());
 		//File mediaFile = new File(mediaStorage, "VID_" + timeStamp + ".mp4");
 		try {
 			File mediaFile = File.createTempFile(

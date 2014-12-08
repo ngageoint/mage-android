@@ -1,33 +1,12 @@
 package mil.nga.giat.mage.login;
 
-import java.io.UnsupportedEncodingException;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
-import mil.nga.giat.mage.LandingActivity;
-import mil.nga.giat.mage.MAGE;
-import mil.nga.giat.mage.R;
-import mil.nga.giat.mage.disclaimer.DisclaimerActivity;
-import mil.nga.giat.mage.sdk.connectivity.ConnectivityUtility;
-import mil.nga.giat.mage.sdk.datastore.DaoStore;
-import mil.nga.giat.mage.sdk.login.AbstractAccountTask;
-import mil.nga.giat.mage.sdk.login.AccountDelegate;
-import mil.nga.giat.mage.sdk.login.AccountStatus;
-import mil.nga.giat.mage.sdk.login.LoginTaskFactory;
-import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
-import mil.nga.giat.mage.sdk.utils.UserUtility;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.DialogInterface;
-import android.content.SharedPreferences;
 import android.content.DialogInterface.OnClickListener;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.graphics.Typeface;
 import android.os.Bundle;
@@ -50,6 +29,30 @@ import android.widget.ImageView;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
+
+import org.apache.commons.lang3.StringUtils;
+
+import java.io.UnsupportedEncodingException;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+import mil.nga.giat.mage.LandingActivity;
+import mil.nga.giat.mage.MAGE;
+import mil.nga.giat.mage.R;
+import mil.nga.giat.mage.disclaimer.DisclaimerActivity;
+import mil.nga.giat.mage.sdk.connectivity.ConnectivityUtility;
+import mil.nga.giat.mage.sdk.datastore.DaoStore;
+import mil.nga.giat.mage.sdk.login.AbstractAccountTask;
+import mil.nga.giat.mage.sdk.login.AccountDelegate;
+import mil.nga.giat.mage.sdk.login.AccountStatus;
+import mil.nga.giat.mage.sdk.login.LoginTaskFactory;
+import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
+import mil.nga.giat.mage.sdk.utils.UserUtility;
 
 /**
  * The login screen
@@ -259,7 +262,7 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 
 		// if the username is different, then clear the token information
 		String oldUsername = PreferenceHelper.getInstance(getApplicationContext()).getValue(R.string.usernameKey);
-		if (oldUsername == null || !oldUsername.equals(username) || !server.equals(serverURLPref)) {
+		if (StringUtils.isNotEmpty(oldUsername) && (!username.equals(oldUsername) || !server.equals(serverURLPref))) {
 			PreferenceHelper preferenceHelper = PreferenceHelper.getInstance(getApplicationContext());
 			preferenceHelper.initialize(true, new Integer[] { R.xml.privatepreferences, R.xml.publicpreferences, R.xml.mappreferences });
 			UserUtility.getInstance(getApplicationContext()).clearTokenInformation();

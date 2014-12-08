@@ -1,19 +1,5 @@
 package mil.nga.giat.mage.form;
 
-import java.io.Serializable;
-import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-
-import mil.nga.giat.mage.sdk.R;
-import mil.nga.giat.mage.sdk.datastore.observation.ObservationProperty;
-import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
-import mil.nga.giat.mage.sdk.utils.DateUtility;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -37,6 +23,22 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+
+import java.io.Serializable;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+
+import mil.nga.giat.mage.sdk.R;
+import mil.nga.giat.mage.sdk.datastore.observation.ObservationProperty;
+import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
+import mil.nga.giat.mage.sdk.utils.DateFormatFactory;
 
 /**
  * Use this class to build and populate the views concerned with form like information.
@@ -265,7 +267,8 @@ public class LayoutBaker {
 
 					if (value != null && !value.trim().isEmpty()) {
 						try {
-							mageDateText.setPropertyValue(DateUtility.getISO8601().parse(value));
+                            DateFormat dateFormat = DateFormatFactory.ISO8601();
+							mageDateText.setPropertyValue(dateFormat.parse(value));
 						} catch (ParseException pe) {
 							Log.e(LOG_NAME, "Problem parsing date.", pe);
 						}

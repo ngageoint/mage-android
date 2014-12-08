@@ -1,25 +1,5 @@
 package mil.nga.giat.mage.observation;
 
-import java.io.File;
-import java.text.DecimalFormat;
-import java.text.SimpleDateFormat;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.Locale;
-import java.util.Map;
-
-import mil.nga.giat.mage.R;
-import mil.nga.giat.mage.form.LayoutBaker;
-import mil.nga.giat.mage.form.LayoutBaker.ControlGenerationType;
-import mil.nga.giat.mage.map.marker.ObservationBitmapFactory;
-import mil.nga.giat.mage.sdk.datastore.observation.Attachment;
-import mil.nga.giat.mage.sdk.datastore.observation.Observation;
-import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
-import mil.nga.giat.mage.sdk.datastore.observation.ObservationProperty;
-import mil.nga.giat.mage.sdk.datastore.user.User;
-import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
-import mil.nga.giat.mage.sdk.event.IObservationEventListener;
-import mil.nga.giat.mage.sdk.utils.MediaUtility;
 import android.app.ActionBar;
 import android.app.Activity;
 import android.app.Fragment;
@@ -54,6 +34,28 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.Point;
 
+import java.io.File;
+import java.text.DateFormat;
+import java.text.DecimalFormat;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.Locale;
+import java.util.Map;
+
+import mil.nga.giat.mage.R;
+import mil.nga.giat.mage.form.LayoutBaker;
+import mil.nga.giat.mage.form.LayoutBaker.ControlGenerationType;
+import mil.nga.giat.mage.map.marker.ObservationBitmapFactory;
+import mil.nga.giat.mage.sdk.datastore.observation.Attachment;
+import mil.nga.giat.mage.sdk.datastore.observation.Observation;
+import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
+import mil.nga.giat.mage.sdk.datastore.observation.ObservationProperty;
+import mil.nga.giat.mage.sdk.datastore.user.User;
+import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
+import mil.nga.giat.mage.sdk.event.IObservationEventListener;
+import mil.nga.giat.mage.sdk.utils.DateFormatFactory;
+import mil.nga.giat.mage.sdk.utils.MediaUtility;
+
 public class ObservationViewActivity extends Activity {
 
 	private static final String LOG_NAME = ObservationViewActivity.class.getName();
@@ -69,7 +71,7 @@ public class ObservationViewActivity extends Activity {
 	private Marker marker;
 	private DecimalFormat latLngFormat = new DecimalFormat("###.#####");
 	
-	private final static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm zz", Locale.getDefault());
+    private final DateFormat dateFormat = DateFormatFactory.format("yyyy-MM-dd HH:mm zz", Locale.getDefault());
 
 	public class AttachmentGalleryTask extends AsyncTask<Attachment, ImageView, Boolean> {
 
@@ -344,7 +346,7 @@ public class ObservationViewActivity extends Activity {
 			} else {
 				View status = View.inflate(getApplicationContext(), R.layout.submitted_on, fl);
 				TextView syncDate = (TextView) status.findViewById(R.id.observation_sync_date);
-				syncDate.setText(sdf.format(o.getLastModified()));
+				syncDate.setText(dateFormat.format(o.getLastModified()));
 			}
 		} catch (Exception e) {
 			Log.e(LOG_NAME, e.getMessage(), e);

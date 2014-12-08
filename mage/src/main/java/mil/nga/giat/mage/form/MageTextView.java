@@ -1,29 +1,27 @@
 package mil.nga.giat.mage.form;
 
-import java.io.Serializable;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Locale;
-import java.util.TimeZone;
-
-import mil.nga.giat.mage.R;
-import mil.nga.giat.mage.sdk.utils.DateUtility;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.widget.TextView;
 
+import java.io.Serializable;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.util.Date;
+import java.util.Locale;
+import java.util.TimeZone;
+
+import mil.nga.giat.mage.R;
+import mil.nga.giat.mage.sdk.utils.DateFormatFactory;
+
 public class MageTextView extends TextView implements MageControl {
 
 	private static final String LOG_NAME = MageTextView.class.getName();
 
-	public final static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm zz", Locale.getDefault());
-
-	static {
-		sdf.setTimeZone(TimeZone.getTimeZone("Zulu"));
-	}
+    public final DateFormat iso8601Format = DateFormatFactory.ISO8601();
+    public final DateFormat dateFormat = DateFormatFactory.format("yyyy-MM-dd HH:mm zz", Locale.getDefault(), TimeZone.getTimeZone("Zulu"));
 
 	private String propertyKey;
 	private MagePropertyType propertyType;
@@ -71,7 +69,7 @@ public class MageTextView extends TextView implements MageControl {
 
 			break;
 		case DATE:
-			value = DateUtility.getISO8601().format(propertyDate);
+			value = iso8601Format.format(propertyDate);
 			break;
 		case LOCATION:
 			break;
@@ -113,12 +111,12 @@ public class MageTextView extends TextView implements MageControl {
 				propertyDate = (Date) value;
 			} else if (value instanceof String) {
 				try {
-					propertyDate = DateUtility.getISO8601().parse((String) value);
+					propertyDate = iso8601Format.parse((String) value);
 				} catch (ParseException e) {
 					Log.e(LOG_NAME, "Could not parse date.");
 				}
 			}
-			setText(sdf.format(propertyDate));
+			setText(dateFormat.format(propertyDate));
 			break;
 		case LOCATION:
 			// location is not a property, it lives in the parent

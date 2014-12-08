@@ -1,17 +1,5 @@
 package mil.nga.giat.mage.newsfeed;
 
-import java.sql.SQLException;
-import java.text.SimpleDateFormat;
-import java.util.Locale;
-
-import mil.nga.giat.mage.R;
-import mil.nga.giat.mage.sdk.datastore.location.Location;
-import mil.nga.giat.mage.sdk.datastore.user.User;
-import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
-import mil.nga.giat.mage.sdk.utils.MediaUtility;
-
-import org.ocpsoft.prettytime.PrettyTime;
-
 import android.content.Context;
 import android.database.Cursor;
 import android.graphics.BitmapFactory;
@@ -26,12 +14,26 @@ import android.widget.TextView;
 import com.j256.ormlite.android.AndroidDatabaseResults;
 import com.j256.ormlite.stmt.PreparedQuery;
 
+import org.ocpsoft.prettytime.PrettyTime;
+
+import java.sql.SQLException;
+import java.text.DateFormat;
+import java.util.Locale;
+import java.util.TimeZone;
+
+import mil.nga.giat.mage.R;
+import mil.nga.giat.mage.sdk.datastore.location.Location;
+import mil.nga.giat.mage.sdk.datastore.user.User;
+import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
+import mil.nga.giat.mage.sdk.utils.DateFormatFactory;
+import mil.nga.giat.mage.sdk.utils.MediaUtility;
+
 public class PeopleCursorAdapter extends CursorAdapter {
 	private static final String LOG_NAME = PeopleCursorAdapter.class.getName();
 	
 	private LayoutInflater inflater = null;
 	private PreparedQuery<Location> query;
-	private SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm zz", Locale.ENGLISH);
+    private final DateFormat dateFormat = DateFormatFactory.format("yyyy-MM-dd HH:mm zz", Locale.getDefault(), TimeZone.getTimeZone("Zulu"));
 
 	public PeopleCursorAdapter(Context context, Cursor c, PreparedQuery<Location> query) {
 		super(context, c, false);
@@ -69,7 +71,7 @@ public class PeopleCursorAdapter extends CursorAdapter {
 			// set date
 			TextView location_date = (TextView) v.findViewById(R.id.location_date);
 
-			String timeText = sdf.format(location.getTimestamp());
+			String timeText = dateFormat.format(location.getTimestamp());
 			Boolean prettyPrint = PreferenceHelper.getInstance(context).getValue(R.string.prettyPrintLocationDatesKey, Boolean.class, R.string.prettyPrintLocationDatesDefaultValue);
 			if(prettyPrint) {
 				timeText = new PrettyTime().format(location.getTimestamp());
