@@ -1,7 +1,5 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="mil.nga.giat.mage.sdk"
-    android:versionCode="3"
-    android:versionName="3.0.12" >
+    package="mil.nga.giat.mage.sdk">
 
     <uses-sdk
         android:minSdkVersion="14"
