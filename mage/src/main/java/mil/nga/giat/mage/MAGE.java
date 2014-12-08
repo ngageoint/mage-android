@@ -140,25 +140,17 @@ public class MAGE extends MultiDexApplication implements IUserEventListener {
 		getLogoutPendingIntent().cancel();
 		boolean tokenExpired = UserUtility.getInstance(getApplicationContext()).isTokenExpired();
 
+        String notificationMsg = tokenExpired ? "Your token has expired, please tap to login." : "You are logged in. Slide down to logout.";
 		NotificationCompat.Builder builder = new NotificationCompat.Builder(this)
                 .setSmallIcon(R.drawable.ic_launcher)
                 .setContentTitle("MAGE")
                 .setOngoing(true)
 				.setPriority(NotificationCompat.PRIORITY_MAX)
+                .setContentText(notificationMsg)
                 .addAction(R.drawable.ic_power_off_white, "Logout", getLogoutPendingIntent());
 
         NotificationCompat.BigTextStyle bigTextStyle = new NotificationCompat.BigTextStyle();
-        bigTextStyle.setBigContentTitle("MAGE");
-
-        if (tokenExpired) {
-            String msg = "Your token has expired, please tap to login.";
-            bigTextStyle.bigText(msg);
-            builder.setContentText(msg);
-        } else {
-            String msg = "You are logged in. Slide down to logout.";
-            bigTextStyle.bigText(msg);
-            builder.setContentText(msg);
-        }
+        bigTextStyle.setBigContentTitle("MAGE").bigText(notificationMsg);
 
 		builder.setStyle(bigTextStyle);
 
