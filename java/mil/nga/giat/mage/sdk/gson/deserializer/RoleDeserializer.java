@@ -46,7 +46,7 @@ public class RoleDeserializer implements JsonDeserializer<Role> {
 
 		JsonObject feature = json.getAsJsonObject();
 
-		String remoteId = feature.get("_id").getAsString();
+		String remoteId = feature.get("id").getAsString();
 		String name = feature.get("name").getAsString();
 		String description = feature.get("description").getAsString();
 		

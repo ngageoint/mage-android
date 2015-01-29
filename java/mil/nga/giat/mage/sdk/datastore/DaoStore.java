@@ -15,6 +15,8 @@ import mil.nga.giat.mage.sdk.datastore.staticfeature.StaticFeatureGeometry;
 import mil.nga.giat.mage.sdk.datastore.staticfeature.StaticFeatureProperty;
 import mil.nga.giat.mage.sdk.datastore.user.Role;
 import mil.nga.giat.mage.sdk.datastore.user.User;
+import mil.nga.giat.mage.sdk.datastore.user.Event;
+import mil.nga.giat.mage.sdk.datastore.user.Team;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
@@ -39,7 +41,7 @@ public class DaoStore extends OrmLiteSqliteOpenHelper {
 	private static final String DATABASE_NAME = "mage.db";
 	private static final String LOG_NAME = DaoStore.class.getName();
 	// Making this public so we can check if it has been upgraded and log the user out
-	public static final int DATABASE_VERSION = 6;
+	public static final int DATABASE_VERSION = 7;
 
 	// Observation DAOS
 	private Dao<Observation, Long> observationDao;
@@ -50,6 +52,8 @@ public class DaoStore extends OrmLiteSqliteOpenHelper {
 	// User and Location DAOS
 	private Dao<User, Long> userDao;
 	private Dao<Role, Long> roleDao;
+    private Dao<Event, Long> eventDao;
+    private Dao<Team, Long> teamDao;
 	private Dao<Location, Long> locationDao;
 	private Dao<LocationGeometry, Long> locationGeometryDao;
 	private Dao<LocationProperty, Long> locationPropertyDao;
@@ -91,6 +95,8 @@ public class DaoStore extends OrmLiteSqliteOpenHelper {
 			getAttachmentDao();
 			getUserDao();
 			getRoleDao();
+            getEventDao();
+            getTeamDao();
 			getLocationDao();
 			getLocationGeometryDao();
 			getLocationPropertyDao();
@@ -114,6 +120,8 @@ public class DaoStore extends OrmLiteSqliteOpenHelper {
 			countOfAllRecords += getAttachmentDao().countOf();
 			countOfAllRecords += getUserDao().countOf();
 			countOfAllRecords += getRoleDao().countOf();
+            countOfAllRecords += getEventDao().countOf();
+            countOfAllRecords += getTeamDao().countOf();
 			countOfAllRecords += getLocationDao().countOf();
 			countOfAllRecords += getLocationGeometryDao().countOf();
 			countOfAllRecords += getLocationPropertyDao().countOf();
@@ -136,6 +144,8 @@ public class DaoStore extends OrmLiteSqliteOpenHelper {
 
 		TableUtils.createTable(connectionSource, User.class);
 		TableUtils.createTable(connectionSource, Role.class);
+        TableUtils.createTable(connectionSource, Event.class);
+        TableUtils.createTable(connectionSource, Team.class);
 		TableUtils.createTable(connectionSource, Location.class);
 		TableUtils.createTable(connectionSource, LocationGeometry.class);
 		TableUtils.createTable(connectionSource, LocationProperty.class);
@@ -164,6 +174,8 @@ public class DaoStore extends OrmLiteSqliteOpenHelper {
 
 		TableUtils.dropTable(connectionSource, User.class, Boolean.TRUE);
 		TableUtils.dropTable(connectionSource, Role.class, Boolean.TRUE);
+        TableUtils.dropTable(connectionSource, Event.class, Boolean.TRUE);
+        TableUtils.dropTable(connectionSource, Team.class, Boolean.TRUE);
 		TableUtils.dropTable(connectionSource, Location.class, Boolean.TRUE);
 		TableUtils.dropTable(connectionSource, LocationGeometry.class, Boolean.TRUE);
 		TableUtils.dropTable(connectionSource, LocationProperty.class, Boolean.TRUE);
@@ -276,6 +288,32 @@ public class DaoStore extends OrmLiteSqliteOpenHelper {
 		}
 		return roleDao;
 	}
+
+    /**
+     * Getter for the EventDao
+     *
+     * @return This instance's EventDao
+     * @throws SQLException
+     */
+    public Dao<Event, Long> getEventDao() throws SQLException {
+        if (eventDao == null) {
+            eventDao = getDao(Event.class);
+        }
+        return eventDao;
+    }
+
+    /**
+     * Getter for the TeamDao
+     *
+     * @return This instance's TeamDao
+     * @throws SQLException
+     */
+    public Dao<Team, Long> getTeamDao() throws SQLException {
+        if (teamDao == null) {
+            teamDao = getDao(Team.class);
+        }
+        return teamDao;
+    }
 
 	/**
 	 * Getter for the LocationDao

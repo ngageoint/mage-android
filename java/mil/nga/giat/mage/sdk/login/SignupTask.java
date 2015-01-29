@@ -7,6 +7,7 @@ import java.util.List;
 
 import mil.nga.giat.mage.sdk.connectivity.ConnectivityUtility;
 import mil.nga.giat.mage.sdk.http.client.HttpClientManager;
+import mil.nga.giat.mage.sdk.utils.DeviceUuidFactory;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -65,12 +66,12 @@ public class SignupTask extends AbstractAccountTask {
 			return new AccountStatus(AccountStatus.Status.FAILED_SIGNUP, errorIndices, errorMessages);
 		}
 
-		String macAddress = ConnectivityUtility.getMacAddress(mApplicationContext);
-		if (macAddress == null) {
+        String uuid = new DeviceUuidFactory(mApplicationContext).getDeviceUuid().toString();
+		if (uuid == null) {
 			List<Integer> errorIndices = new ArrayList<Integer>();
 			errorIndices.add(5);
 			List<String> errorMessages = new ArrayList<String>();
-			errorMessages.add("No mac address found on device. Try again when wifi is on");
+			errorMessages.add("Problem generating device uuid");
 			return new AccountStatus(AccountStatus.Status.FAILED_SIGNUP, errorIndices, errorMessages);
 		}
 
@@ -92,7 +93,7 @@ public class SignupTask extends AbstractAccountTask {
 			List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>(3);
 			nameValuePairs.add(new BasicNameValuePair("password", password));
 			nameValuePairs.add(new BasicNameValuePair("passwordconfirm", password));
-			nameValuePairs.add(new BasicNameValuePair("uid", macAddress));
+			nameValuePairs.add(new BasicNameValuePair("uid", uuid));
 			nameValuePairs.add(new BasicNameValuePair("username", username));
 			nameValuePairs.add(new BasicNameValuePair("email", email));
 			nameValuePairs.add(new BasicNameValuePair("firstname", firstname));

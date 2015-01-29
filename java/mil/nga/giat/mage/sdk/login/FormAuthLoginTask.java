@@ -41,6 +41,7 @@ import mil.nga.giat.mage.sdk.gson.deserializer.UserDeserializer;
 import mil.nga.giat.mage.sdk.http.client.HttpClientManager;
 import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
 import mil.nga.giat.mage.sdk.utils.DateFormatFactory;
+import mil.nga.giat.mage.sdk.utils.DeviceUuidFactory;
 
 /**
  * Performs login to specified server with username and password. TODO: Should
@@ -60,7 +61,6 @@ public class FormAuthLoginTask extends AbstractAccountTask {
 
 	/**
 	 * Called from execute
-	 * 
 	 * @param params
 	 *            Should contain username, password, and serverURL; in that
 	 *            order.
@@ -105,12 +105,12 @@ public class FormAuthLoginTask extends AbstractAccountTask {
 			return new AccountStatus(AccountStatus.Status.FAILED_LOGIN);
 		}
 
-		String macAddress = ConnectivityUtility.getMacAddress(mApplicationContext);
-		if (macAddress == null) {
+		String uuid = new DeviceUuidFactory(mApplicationContext).getDeviceUuid().toString();
+		if (uuid == null) {
 			List<Integer> errorIndices = new ArrayList<Integer>();
 			errorIndices.add(2);
 			List<String> errorMessages = new ArrayList<String>();
-			errorMessages.add("No mac address found on device.  Try again when wifi is on.");
+			errorMessages.add("Problem generating device uuid");
 			return new AccountStatus(AccountStatus.Status.FAILED_LOGIN, errorIndices, errorMessages);
 		}
 
@@ -157,7 +157,7 @@ public class FormAuthLoginTask extends AbstractAccountTask {
 			DefaultHttpClient httpClient = HttpClientManager.getInstance(mApplicationContext).getHttpClient();
 			List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>(3);
 			nameValuePairs.add(new BasicNameValuePair("password", password));
-			nameValuePairs.add(new BasicNameValuePair("uid", macAddress));
+			nameValuePairs.add(new BasicNameValuePair("uid", uuid));
 			nameValuePairs.add(new BasicNameValuePair("username", username));
 			
 			//adding MAGE version from AndroidManifest

@@ -34,7 +34,7 @@ public class User {
 	@DatabaseField(canBeNull = false, columnName = "fetched_date")
 	private Date fetchedDate = new Date(0);
 
-	@DatabaseField(canBeNull = true, foreign = true, foreignAutoRefresh = true)
+	@DatabaseField(canBeNull = false, foreign = true, foreignAutoRefresh = true)
 	private Role role;
 	
 	@DatabaseField

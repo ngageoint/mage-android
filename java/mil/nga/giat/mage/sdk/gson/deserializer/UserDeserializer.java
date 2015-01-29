@@ -55,7 +55,7 @@ public class UserDeserializer implements JsonDeserializer<User> {
 
 		JsonObject feature = json.getAsJsonObject();
 
-		String remoteId = feature.get("_id").getAsString();
+		String remoteId = feature.get("id").getAsString();
 		
 		String email = "";
 		JsonElement emailElement = feature.get("email");
@@ -70,7 +70,7 @@ public class UserDeserializer implements JsonDeserializer<User> {
 		if (feature.get("role") != null && feature.get("role").isJsonObject()) {
 			JsonObject roleJSON = feature.get("role").getAsJsonObject();
 			if (roleJSON != null) {
-				String roleId = roleJSON.get("_id").getAsString();
+				String roleId = roleJSON.get("id").getAsString();
 				try {
 					// see if roles exists already
 					role = RoleHelper.getInstance(mContext).read(roleId);
