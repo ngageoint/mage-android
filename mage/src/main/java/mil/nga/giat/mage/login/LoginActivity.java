@@ -107,7 +107,7 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 		e.putInt(getResources().getString(R.string.databaseVersionKey), DaoStore.DATABASE_VERSION);
 		e.commit(); 
 
-		// check google play services verison
+		// check google play services version
 		int isGooglePlayServicesAvailable = GooglePlayServicesUtil.isGooglePlayServicesAvailable(getApplicationContext());
 		if (isGooglePlayServicesAvailable != ConnectionResult.SUCCESS) {
 			if (GooglePlayServicesUtil.isUserRecoverableError(isGooglePlayServicesAvailable)) {
