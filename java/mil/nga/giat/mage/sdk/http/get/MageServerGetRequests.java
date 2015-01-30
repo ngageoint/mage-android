@@ -34,8 +34,10 @@ import mil.nga.giat.mage.sdk.datastore.location.Location;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
 import mil.nga.giat.mage.sdk.datastore.staticfeature.StaticFeature;
+import mil.nga.giat.mage.sdk.datastore.user.Role;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.gson.deserializer.LayerDeserializer;
+import mil.nga.giat.mage.sdk.gson.deserializer.RoleDeserializer;
 import mil.nga.giat.mage.sdk.gson.deserializer.UserDeserializer;
 import mil.nga.giat.mage.sdk.http.client.HttpClientManager;
 import mil.nga.giat.mage.sdk.jackson.deserializer.LocationDeserializer;
@@ -95,7 +97,7 @@ public class MageServerGetRequests {
 					// copy stream to file
 					ByteStreams.copy(entity.getContent(), new FileOutputStream(zipFile));
 
-					Log.d(LOG_NAME, "Unziping " + zipFile.getAbsolutePath() + " to " + zipDirectory.getAbsolutePath() + ".");
+					Log.d(LOG_NAME, "Unzipping " + zipFile.getAbsolutePath() + " to " + zipDirectory.getAbsolutePath() + ".");
 					// unzip file
 					ZipUtility.unzip(zipFile, zipDirectory);
 					// delete the zip
@@ -397,10 +399,10 @@ public class MageServerGetRequests {
 		HttpEntity entity = null;
 		try {
 			URL serverURL = new URL(PreferenceHelper.getInstance(context).getValue(R.string.serverURLKey));
-			URL locationURL = new URL(serverURL, "/api/users");
+			URL userURL = new URL(serverURL, "/api/users");
 
 			DefaultHttpClient httpclient = HttpClientManager.getInstance(context).getHttpClient();
-			HttpGet get = new HttpGet(locationURL.toURI());
+			HttpGet get = new HttpGet(userURL.toURI());
 			HttpResponse response = httpclient.execute(get);
 
 			if (HttpStatus.SC_OK == response.getStatusLine().getStatusCode()) {
@@ -432,4 +434,56 @@ public class MageServerGetRequests {
 
 		return users;
 	}
+
+    public static Collection<Role> getAllRoles(Context context, List<Exception> exceptions) {
+        final Gson roleDeserializer = RoleDeserializer.getGsonBuilder();
+        Collection<Role> roles = new ArrayList<Role>();
+
+        HttpEntity entity = null;
+        try {
+            URL serverURL = new URL(PreferenceHelper.getInstance(context).getValue(R.string.serverURLKey));
+            URL roleURL = new URL(serverURL, "api/roles");
+
+            DefaultHttpClient httpclient = HttpClientManager.getInstance(context).getHttpClient();
+            HttpGet get = new HttpGet(roleURL.toURI());
+            HttpResponse response = httpclient.execute(get);
+            if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
+                entity = response.getEntity();
+                JSONArray json = new JSONArray(EntityUtils.toString(entity));
+                if (json != null) {
+                    for (int i = 0; i < json.length(); i++) {
+                        JSONObject roleJson = (JSONObject) json.get(i);
+                        if (roleJson != null) {
+                            Role role = roleDeserializer.fromJson(roleJson.toString(), Role.class);
+
+                            if (role != null) {
+                                roles.add(role);
+                            } else {
+                                // ignore updates
+                            }
+                        }
+                    }
+                }
+            } else {
+                entity = response.getEntity();
+                String error = EntityUtils.toString(entity);
+                Log.e(LOG_NAME, "Bad request.");
+                Log.e(LOG_NAME, error);
+                exceptions.add(new Exception("Bad request: " + error));
+            }
+        } catch (Exception e) {
+            Log.e(LOG_NAME, "There was a failure when fetching roles.", e);
+            exceptions.add(e);
+        } finally {
+            try {
+                if (entity != null) {
+                    entity.consumeContent();
+                }
+            } catch (Exception e) {
+                Log.w(LOG_NAME, "Trouble cleaning up after GET request.", e);
+            }
+        }
+
+        return roles;
+    }
 }
