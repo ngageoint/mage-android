@@ -3,6 +3,7 @@ package mil.nga.giat.mage;
 import android.app.AlarmManager;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -10,6 +11,7 @@ import android.os.AsyncTask;
 import android.support.multidex.MultiDexApplication;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.TaskStackBuilder;
+import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
 import com.bumptech.glide.Glide;
@@ -32,7 +34,7 @@ import mil.nga.giat.mage.sdk.event.IUserEventListener;
 import mil.nga.giat.mage.sdk.fetch.LocationFetchIntentService;
 import mil.nga.giat.mage.sdk.fetch.ObservationFetchIntentService;
 import mil.nga.giat.mage.sdk.fetch.StaticFeatureServerFetch;
-import mil.nga.giat.mage.sdk.fetch.UserFetchIntentService;
+import mil.nga.giat.mage.sdk.fetch.InitialFetchIntentService;
 import mil.nga.giat.mage.sdk.glide.MageDiskCache;
 import mil.nga.giat.mage.sdk.glide.MageUrlLoader;
 import mil.nga.giat.mage.sdk.http.client.HttpClientManager;
@@ -61,7 +63,7 @@ public class MAGE extends MultiDexApplication implements IUserEventListener {
 	private LocationService locationService;
 	private Intent locationFetchIntent;
 	private Intent observationFetchIntent;
-	private Intent userFetchIntent;
+	private Intent initialFetchIntent;
 	private Intent locationPushIntent;
 	private Intent observationPushIntent;
 	private Intent attachmentPushIntent;
@@ -83,6 +85,12 @@ public class MAGE extends MultiDexApplication implements IUserEventListener {
 
 		// setup the screen unlock stuff
 		registerReceiver(ScreenChangeReceiver.getInstance(), new IntentFilter(Intent.ACTION_SCREEN_ON));
+
+        // receive response from initial pull
+        IntentFilter statusIntentFilter = new IntentFilter(InitialFetchIntentService.InitialFetchIntentServiceAction);
+        statusIntentFilter.addCategory(Intent.CATEGORY_DEFAULT);
+        InitialFetchReceiver initialFetchReceiver = new InitialFetchReceiver();
+        LocalBroadcastManager.getInstance(this).registerReceiver(initialFetchReceiver, statusIntentFilter);
 
         //set up Observation notifications
         ObservationHelper oh = ObservationHelper.getInstance(getApplicationContext());
@@ -182,23 +190,43 @@ public class MAGE extends MultiDexApplication implements IUserEventListener {
 	 * Start Tasks responsible for fetching Observations and Locations from the server.
 	 */
 	private void startFetching() {
-		if (userFetchIntent == null) {
-			userFetchIntent = new Intent(getApplicationContext(), UserFetchIntentService.class);
-			startService(userFetchIntent);
-		}
-		
-		if(locationFetchIntent == null) {
-			locationFetchIntent = new Intent(getApplicationContext(), LocationFetchIntentService.class);
-			startService(locationFetchIntent);
-		}
-		
-		if(observationFetchIntent == null) {
-			observationFetchIntent = new Intent(getApplicationContext(), ObservationFetchIntentService.class);
-			startService(observationFetchIntent);
+		if (initialFetchIntent == null) {
+            initialFetchIntent = new Intent(getApplicationContext(), InitialFetchIntentService.class);
+			startService(initialFetchIntent);
 		}
 	}
 
-	/**
+    private class InitialFetchReceiver extends BroadcastReceiver {
+
+        private InitialFetchReceiver() {
+            // prevents instantiation by other packages.
+        }
+        /**
+         *
+         * This method is called by the system when a broadcast Intent is matched by this class'
+         * intent filters
+         *
+         * @param context An Android context
+         * @param intent The incoming broadcast Intent
+         */
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (intent.getBooleanExtra("status", false)) {
+                if(locationFetchIntent == null) {
+                    locationFetchIntent = new Intent(getApplicationContext(), LocationFetchIntentService.class);
+                    startService(locationFetchIntent);
+                }
+
+                if(observationFetchIntent == null) {
+                    observationFetchIntent = new Intent(getApplicationContext(), ObservationFetchIntentService.class);
+                    startService(observationFetchIntent);
+                }
+            }
+        }
+    }
+
+
+    /**
 	 * Stop Tasks responsible for fetching Observations and Locations from the server.
 	 */
 	private void destroyFetching() {
@@ -206,9 +234,9 @@ public class MAGE extends MultiDexApplication implements IUserEventListener {
 			staticFeatureServerFetch.destroy();
 			staticFeatureServerFetch = null;
 		}
-		if (userFetchIntent != null) {
-			stopService(userFetchIntent);
-			userFetchIntent = null;
+		if (initialFetchIntent != null) {
+			stopService(initialFetchIntent);
+            initialFetchIntent = null;
 		}
 		if(locationFetchIntent != null) {
 			stopService(locationFetchIntent);

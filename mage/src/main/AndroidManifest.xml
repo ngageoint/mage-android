@@ -91,7 +91,7 @@
             <!-- Parent activity meta-data to support 4.0 and lower -->
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value="mil.nga.giat.mage.preferences.PublicPreferencesActivity" />
+                android:value="mil.nga.giat.mage.preferences.PublicPreferencesFragment" />
         </activity>
         <activity
             android:name="mil.nga.giat.mage.preferences.FetchPreferencesActivity"
@@ -102,7 +102,7 @@
             <!-- Parent activity meta-data to support 4.0 and lower -->
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value="mil.nga.giat.mage.preferences.PublicPreferencesActivity" />
+                android:value="mil.nga.giat.mage.preferences.PublicPreferencesFragment" />
         </activity>
         <activity
             android:name="mil.nga.giat.mage.map.preference.MapPreferencesActivity"
@@ -127,7 +127,7 @@
             <!-- Parent activity meta-data to support 4.0 and lower -->
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value="mil.nga.giat.mage.map.MapPreferencesActivity" />
+                android:value="mil.nga.giat.mage.map.preference.MapPreferencesActivity" />
         </activity>
         <activity
             android:name="mil.nga.giat.mage.map.preference.FeatureOverlayPreferenceActivity"
@@ -141,7 +141,7 @@
             <!-- Parent activity meta-data to support 4.0 and lower -->
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value="mil.nga.giat.mage.map.MapPreferencesActivity" />
+                android:value="mil.nga.giat.mage.map.preference.MapPreferencesActivity" />
         </activity>
         <activity
             android:name="mil.nga.giat.mage.observation.ObservationViewActivity"
@@ -174,7 +174,7 @@
             android:exported="true" />
 
         <service
-            android:name="mil.nga.giat.mage.sdk.fetch.UserFetchIntentService"
+            android:name="mil.nga.giat.mage.sdk.fetch.InitialFetchIntentService"
             android:exported="true" />
         
         <service
