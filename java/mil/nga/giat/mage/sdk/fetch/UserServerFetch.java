@@ -90,7 +90,9 @@ public class UserServerFetch extends AbstractServerFetch {
 					Log.e(LOG_NAME, error);
 				}
 			}
-		} finally {
+		} catch(Exception e) {
+            Log.e(LOG_NAME, "Problem fetching users.", e);
+        } finally {
 			try {
 				if (entity != null) {
 					entity.consumeContent();

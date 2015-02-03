@@ -69,7 +69,7 @@ public class RoleHelper extends DaoHelper<Role> {
 		Role createdRole = null;
 		try {
 			createdRole = roleDao.createIfNotExists(pRole);
-
+            Log.d(LOG_NAME, "created role with remote_id " + createdRole.getRemoteId());
 		} catch (SQLException sqle) {
 			Log.e(LOG_NAME, "There was a problem creating the role: " + pRole);
 			throw new RoleException("There was a problem creating the role: " + pRole, sqle);

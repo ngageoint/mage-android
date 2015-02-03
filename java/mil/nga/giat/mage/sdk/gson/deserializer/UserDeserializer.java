@@ -50,6 +50,15 @@ public class UserDeserializer implements JsonDeserializer<User> {
 		return gsonBuilder.create();
 	}
 
+    /**
+     * This is used for both the /api/login response and the /api/users response
+     *
+     * @param json
+     * @param typeOfT
+     * @param context
+     * @return
+     * @throws JsonParseException
+     */
 	@Override
 	public User deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
 
@@ -67,29 +76,42 @@ public class UserDeserializer implements JsonDeserializer<User> {
 		String username = feature.get("username").getAsString();
 
 		Role role = null;
-		if (feature.get("role") != null && feature.get("role").isJsonObject()) {
-			JsonObject roleJSON = feature.get("role").getAsJsonObject();
-			if (roleJSON != null) {
-				String roleId = roleJSON.get("id").getAsString();
+		if (feature.get("role") != null) {
+
+            String roleId = null;
+            JsonObject roleJSON = null;
+            if(feature.get("role").isJsonObject()) {
+                roleJSON = feature.get("role").getAsJsonObject();
+                if (roleJSON != null) {
+                    roleId = roleJSON.get("id").getAsString();
+                }
+            } else if(feature.get("role").isJsonPrimitive()) {
+                roleId = feature.get("role").getAsString();
+            }
+
+            if(roleId != null) {
 				try {
 					// see if roles exists already
 					role = RoleHelper.getInstance(mContext).read(roleId);
-					// if it doesn't, then make it!
-					if (role == null) {
+					// if it doesn't exist, then make it!
+					if (role == null && roleJSON != null) {
 						final Gson roleDeserializer = RoleDeserializer.getGsonBuilder();
 						role = RoleHelper.getInstance(mContext).create(roleDeserializer.fromJson(roleJSON.toString(), Role.class));
-						Log.d(LOG_NAME, "created role with remote_id " + role.getRemoteId());
+						Log.i(LOG_NAME, "Created role with remote_id " + role.getRemoteId());
 					}
-
 				} catch (RoleException e) {
 					Log.e(LOG_NAME, "Could not find matching role for user.");
 				}
 			} else {
-				Log.e(LOG_NAME, "User has no role!");
+				Log.e(LOG_NAME, "User has role with no id!");
 			}
 		} else {
 			Log.e(LOG_NAME, "User has no role!");
 		}
+
+        if(role == null) {
+            throw new JsonParseException("Unable to find or make role for user!");
+        }
 		
 		Collection<Phone> phones = new ArrayList<Phone>();
 		String primaryPhone = null;

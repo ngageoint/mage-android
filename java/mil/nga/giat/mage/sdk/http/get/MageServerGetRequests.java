@@ -393,7 +393,7 @@ public class MageServerGetRequests {
 		return locations;
 	}
 	
-	public static Collection<User> getAllUsers(Context context) {
+	public static Collection<User> getAllUsers(Context context, List<Exception> exceptions) {
 		final Gson userDeserializer = UserDeserializer.getGsonBuilder(context);
 		Collection<User> users = new ArrayList<User>();
 		HttpEntity entity = null;
@@ -407,21 +407,28 @@ public class MageServerGetRequests {
 
 			if (HttpStatus.SC_OK == response.getStatusLine().getStatusCode()) {
 				entity = response.getEntity();
-				JSONArray featureArray = new JSONArray(EntityUtils.toString(entity));
-				for (int i = 0; i < featureArray.length(); i++) {
-					JSONObject feature = featureArray.getJSONObject(i);
-					if (feature != null) {
-						users.add(userDeserializer.fromJson(feature.toString(), User.class));
-					}
-				}
+				JSONArray json = new JSONArray(EntityUtils.toString(entity));
+                if(json != null) {
+                    for (int i = 0; i < json.length(); i++) {
+                        JSONObject feature = json.getJSONObject(i);
+                        if (feature != null) {
+                            User user = userDeserializer.fromJson(feature.toString(), User.class);
+                            if (user != null) {
+                                users.add(user);
+                            }
+                        }
+                    }
+                }
 			} else {
 				entity = response.getEntity();
 				String error = EntityUtils.toString(entity);
 				Log.e(LOG_NAME, "Bad request.");
 				Log.e(LOG_NAME, error);
+                exceptions.add(new Exception("Bad request: " + error));
 			}
 		} catch (Exception e) {
-			Log.e(LOG_NAME, "There was a failure while performing an User Fetch opperation.", e);
+			Log.e(LOG_NAME, "There was a failure while performing an User Fetch operation.", e);
+            exceptions.add(e);
 		} finally {
 			try {
 				if (entity != null) {
@@ -447,19 +454,17 @@ public class MageServerGetRequests {
             DefaultHttpClient httpclient = HttpClientManager.getInstance(context).getHttpClient();
             HttpGet get = new HttpGet(roleURL.toURI());
             HttpResponse response = httpclient.execute(get);
+
             if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
                 entity = response.getEntity();
                 JSONArray json = new JSONArray(EntityUtils.toString(entity));
                 if (json != null) {
                     for (int i = 0; i < json.length(); i++) {
-                        JSONObject roleJson = (JSONObject) json.get(i);
+                        JSONObject roleJson = json.getJSONObject(i);
                         if (roleJson != null) {
                             Role role = roleDeserializer.fromJson(roleJson.toString(), Role.class);
-
                             if (role != null) {
                                 roles.add(role);
-                            } else {
-                                // ignore updates
                             }
                         }
                     }
