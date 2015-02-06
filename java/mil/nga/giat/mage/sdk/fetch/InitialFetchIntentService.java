@@ -5,14 +5,19 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import mil.nga.giat.mage.sdk.ConnectivityAwareIntentService;
 import mil.nga.giat.mage.sdk.R;
+import mil.nga.giat.mage.sdk.datastore.location.LocationHelper;
 import mil.nga.giat.mage.sdk.datastore.user.Role;
 import mil.nga.giat.mage.sdk.datastore.user.RoleHelper;
+import mil.nga.giat.mage.sdk.datastore.user.Team;
+import mil.nga.giat.mage.sdk.datastore.user.TeamHelper;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
+import mil.nga.giat.mage.sdk.datastore.user.UserTeam;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
 import mil.nga.giat.mage.sdk.gson.deserializer.RoleDeserializer;
 import mil.nga.giat.mage.sdk.http.client.HttpClientManager;
@@ -166,9 +171,63 @@ public class InitialFetchIntentService extends ConnectivityAwareIntentService {
                     }
                 }
             }
+
+            // create teams
+            while(!didFetchTeams && !isCanceled) {
+                // FIXME : does this delete work as expected? should not delete records in the parent tables
+                userHelper.deleteUserTeams();
+                Log.d(LOG_NAME, "Attempting to fetch teams...");
+                List<Exception> exceptions = new ArrayList<Exception>();
+                Map<Team, Collection<User>> teams = MageServerGetRequests.getAllTeams(getApplicationContext(), exceptions);
+                Log.d(LOG_NAME, "Fetched " + teams.size() + " teams");
+
+                if(exceptions.isEmpty()) {
+                    TeamHelper teamHelper = TeamHelper.getInstance(getApplicationContext());
+                    for (Team team : teams.keySet()) {
+                        if (isCanceled) {
+                            break;
+                        }
+                        try {
+                            if (team != null) {
+                                team = teamHelper.createOrUpdate(team);
+
+                                for (User user : teams.get(team)) {
+                                    if(userHelper.read(user.getRemoteId()) == null) {
+                                        user = userHelper.createOrUpdate(user);
+                                    }
+                                    // populate the join table
+                                    userHelper.create(new UserTeam(user, team));
+                                }
+                            }
+                        } catch (Exception e) {
+                            Log.e(LOG_NAME, "There was a failure while performing an user fetch operation.", e);
+                            continue;
+                        }
+                    }
+                    didFetchTeams = Boolean.TRUE;
+                } else {
+                    Log.e(LOG_NAME, "Problem fetching teams.  Will try again soon.");
+                    didFetchTeams = Boolean.FALSE;
+                    try {
+                        Thread.sleep(retryTime);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
 		} else {
 			Log.d(LOG_NAME, "The device is currently disconnected, or data fetch is disabled, or this is a local login. Not performing fetch.");
 		}
+
+        /*
+        try {
+            TeamHelper teamHelper = TeamHelper.getInstance(getApplicationContext());
+            List<Team> teams = teamHelper.getTeamsByUser(userHelper.readCurrentUser());
+            Log.i(LOG_NAME, teams.get(0).toString());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }*/
+
 
         Intent localIntent = new Intent(InitialFetchIntentService.InitialFetchIntentServiceAction);
         localIntent.putExtra("status", true);

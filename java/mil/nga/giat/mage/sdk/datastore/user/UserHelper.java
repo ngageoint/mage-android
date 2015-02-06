@@ -1,6 +1,8 @@
 package mil.nga.giat.mage.sdk.datastore.user;
 
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import mil.nga.giat.mage.sdk.datastore.DaoHelper;
@@ -27,6 +29,7 @@ public class UserHelper extends DaoHelper<User> {
 	private static final String LOG_NAME = UserHelper.class.getName();
 
 	private final Dao<User, Long> userDao;
+    private final Dao<UserTeam, Long> userTeamDao;
 	
 	/**
 	 * Singleton.
@@ -58,14 +61,15 @@ public class UserHelper extends DaoHelper<User> {
 
 		try {
 			userDao = daoStore.getUserDao();
+            userTeamDao = daoStore.getUserTeamDao();
 		} catch (SQLException sqle) {
 			Log.e(LOG_NAME, "Unable to communicate with User database.", sqle);
 
 			throw new IllegalStateException("Unable to communicate with User database.", sqle);
 		}
-
 	}
 
+    // FIXME : should add user to team is needed
 	@Override
 	public User create(User pUser) throws UserException {
 		User createdUser = null;
@@ -83,8 +87,8 @@ public class UserHelper extends DaoHelper<User> {
 		try {
 			return userDao.queryForId(id);
 		} catch (SQLException sqle) {
-			Log.e(LOG_NAME, "Unable to query for existance for id = '" + id + "'", sqle);
-			throw new UserException("Unable to query for existance for id = '" + id + "'", sqle);
+			Log.e(LOG_NAME, "Unable to query for existence for id = '" + id + "'", sqle);
+			throw new UserException("Unable to query for existence for id = '" + id + "'", sqle);
 		}
 	}
 	
@@ -97,8 +101,8 @@ public class UserHelper extends DaoHelper<User> {
                 user = results.get(0);
             }
         } catch (SQLException sqle) {
-            Log.e(LOG_NAME, "Unable to query for existance for remote_id = '" + pRemoteId + "'", sqle);
-            throw new UserException("Unable to query for existance for remote_id = '" + pRemoteId + "'", sqle);
+            Log.e(LOG_NAME, "Unable to query for existence for remote_id = '" + pRemoteId + "'", sqle);
+            throw new UserException("Unable to query for existence for remote_id = '" + pRemoteId + "'", sqle);
         }
         return user;
     }
@@ -173,4 +177,45 @@ public class UserHelper extends DaoHelper<User> {
 		}
 		return user;
 	}
+
+    public void deleteUserTeams() {
+        try {
+            DeleteBuilder<UserTeam, Long> db = userTeamDao.deleteBuilder();
+            db.delete();
+        } catch (SQLException sqle) {
+            Log.e(LOG_NAME, "There was a problem deleting userteams.", sqle);
+        }
+    }
+
+    public UserTeam create(UserTeam pUserTeam) {
+        UserTeam createdUserTeam = null;
+        try {
+            createdUserTeam = userTeamDao.createIfNotExists(pUserTeam);
+        } catch (SQLException sqle) {
+            Log.e(LOG_NAME, "There was a problem creating userteam: " + pUserTeam, sqle);
+        }
+        return createdUserTeam;
+    }
+
+    public Collection<User> getUsersByTeam(Team pTeam) {
+        Collection<User> users = new ArrayList<User>();
+        try {
+            QueryBuilder<UserTeam, Long> userTeamQuery = userTeamDao.queryBuilder();
+            userTeamQuery.selectColumns("user_id");
+            Where<UserTeam, Long> where = userTeamQuery.where();
+            where.eq("team_id", pTeam.getId());
+
+            QueryBuilder<User, Long> teamQuery = userDao.queryBuilder();
+            teamQuery.where().in("_id", userTeamQuery);
+
+            users = teamQuery.query();
+            if(users == null) {
+                users = new ArrayList<User>();
+            }
+
+        } catch (SQLException sqle) {
+            Log.e(LOG_NAME, "There was a problem getting users for the team: " + pTeam, sqle);
+        }
+        return users;
+    }
 }

@@ -47,6 +47,10 @@ public class Event {
 		return _id;
 	}
 
+    public void setId(Long _id) {
+        this._id = _id;
+    }
+
 	public String getRemoteId() {
 		return remoteId;
 	}

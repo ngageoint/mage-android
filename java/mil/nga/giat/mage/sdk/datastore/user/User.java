@@ -52,7 +52,6 @@ public class User {
 	@DatabaseField
 	private String iconUrl;
 
-	
 	public User() {
 		// ORMLite needs a no-arg constructor
 	}

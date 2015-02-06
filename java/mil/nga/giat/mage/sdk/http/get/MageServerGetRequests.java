@@ -26,7 +26,9 @@ import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import mil.nga.giat.mage.sdk.R;
 import mil.nga.giat.mage.sdk.datastore.layer.Layer;
@@ -35,9 +37,12 @@ import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
 import mil.nga.giat.mage.sdk.datastore.staticfeature.StaticFeature;
 import mil.nga.giat.mage.sdk.datastore.user.Role;
+import mil.nga.giat.mage.sdk.datastore.user.Team;
 import mil.nga.giat.mage.sdk.datastore.user.User;
+import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.gson.deserializer.LayerDeserializer;
 import mil.nga.giat.mage.sdk.gson.deserializer.RoleDeserializer;
+import mil.nga.giat.mage.sdk.gson.deserializer.TeamDeserializer;
 import mil.nga.giat.mage.sdk.gson.deserializer.UserDeserializer;
 import mil.nga.giat.mage.sdk.http.client.HttpClientManager;
 import mil.nga.giat.mage.sdk.jackson.deserializer.LocationDeserializer;
@@ -392,23 +397,23 @@ public class MageServerGetRequests {
 
 		return locations;
 	}
-	
-	public static Collection<User> getAllUsers(Context context, List<Exception> exceptions) {
-		final Gson userDeserializer = UserDeserializer.getGsonBuilder(context);
-		Collection<User> users = new ArrayList<User>();
-		HttpEntity entity = null;
-		try {
-			URL serverURL = new URL(PreferenceHelper.getInstance(context).getValue(R.string.serverURLKey));
-			URL userURL = new URL(serverURL, "/api/users");
 
-			DefaultHttpClient httpclient = HttpClientManager.getInstance(context).getHttpClient();
-			HttpGet get = new HttpGet(userURL.toURI());
-			HttpResponse response = httpclient.execute(get);
+    public static Collection<User> getAllUsers(Context context, List<Exception> exceptions) {
+        final Gson userDeserializer = UserDeserializer.getGsonBuilder(context);
+        Collection<User> users = new ArrayList<User>();
+        HttpEntity entity = null;
+        try {
+            URL serverURL = new URL(PreferenceHelper.getInstance(context).getValue(R.string.serverURLKey));
+            URL userURL = new URL(serverURL, "/api/users");
 
-			if (HttpStatus.SC_OK == response.getStatusLine().getStatusCode()) {
-				entity = response.getEntity();
-				JSONArray json = new JSONArray(EntityUtils.toString(entity));
-                if(json != null) {
+            DefaultHttpClient httpclient = HttpClientManager.getInstance(context).getHttpClient();
+            HttpGet get = new HttpGet(userURL.toURI());
+            HttpResponse response = httpclient.execute(get);
+
+            if (HttpStatus.SC_OK == response.getStatusLine().getStatusCode()) {
+                entity = response.getEntity();
+                JSONArray json = new JSONArray(EntityUtils.toString(entity));
+                if (json != null) {
                     for (int i = 0; i < json.length(); i++) {
                         JSONObject feature = json.getJSONObject(i);
                         if (feature != null) {
@@ -419,28 +424,28 @@ public class MageServerGetRequests {
                         }
                     }
                 }
-			} else {
-				entity = response.getEntity();
-				String error = EntityUtils.toString(entity);
-				Log.e(LOG_NAME, "Bad request.");
-				Log.e(LOG_NAME, error);
+            } else {
+                entity = response.getEntity();
+                String error = EntityUtils.toString(entity);
+                Log.e(LOG_NAME, "Bad request.");
+                Log.e(LOG_NAME, error);
                 exceptions.add(new Exception("Bad request: " + error));
-			}
-		} catch (Exception e) {
-			Log.e(LOG_NAME, "There was a failure while performing an User Fetch operation.", e);
+            }
+        } catch (Exception e) {
+            Log.e(LOG_NAME, "There was a failure while performing an User Fetch operation.", e);
             exceptions.add(e);
-		} finally {
-			try {
-				if (entity != null) {
-					entity.consumeContent();
-				}
-			} catch (Exception e) {
-				Log.w(LOG_NAME, "Trouble cleaning up after GET request.", e);
-			}
-		}
+        } finally {
+            try {
+                if (entity != null) {
+                    entity.consumeContent();
+                }
+            } catch (Exception e) {
+                Log.w(LOG_NAME, "Trouble cleaning up after GET request.", e);
+            }
+        }
 
-		return users;
-	}
+        return users;
+    }
 
     public static Collection<Role> getAllRoles(Context context, List<Exception> exceptions) {
         final Gson roleDeserializer = RoleDeserializer.getGsonBuilder();
@@ -490,5 +495,75 @@ public class MageServerGetRequests {
         }
 
         return roles;
+    }
+
+    public static Map<Team, Collection<User>> getAllTeams(Context context, List<Exception> exceptions) {
+        final Gson teamDeserializer = TeamDeserializer.getGsonBuilder();
+        final Gson userDeserializer = UserDeserializer.getGsonBuilder(context);
+        Map<Team, Collection<User>> teams = new HashMap<Team, Collection<User>>();
+
+        HttpEntity entity = null;
+        try {
+            URL serverURL = new URL(PreferenceHelper.getInstance(context).getValue(R.string.serverURLKey));
+            URL roleURL = new URL(serverURL, "api/teams");
+
+            DefaultHttpClient httpclient = HttpClientManager.getInstance(context).getHttpClient();
+            HttpGet get = new HttpGet(roleURL.toURI());
+            HttpResponse response = httpclient.execute(get);
+
+            if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
+                entity = response.getEntity();
+                JSONArray json = new JSONArray(EntityUtils.toString(entity));
+                if (json != null) {
+                    for (int i = 0; i < json.length(); i++) {
+                        JSONObject teamJson = json.getJSONObject(i);
+                        if (teamJson != null) {
+                            Team team = teamDeserializer.fromJson(teamJson.toString(), Team.class);
+                            if (team != null) {
+                                ArrayList<User> users = new ArrayList<User>();
+                                JSONArray jsonUsers = teamJson.getJSONArray("users");
+                                if (jsonUsers != null) {
+                                    for (int j = 0; j < jsonUsers.length(); j++) {
+                                        JSONObject userJson = jsonUsers.getJSONObject(j);
+                                        if (userJson != null) {
+                                            String userRemoteId = userJson.getString("id");
+                                            User user = UserHelper.getInstance(context).read(userRemoteId);
+                                            if(user == null) {
+                                                user = userDeserializer.fromJson(userJson.toString(), User.class);
+                                            }
+
+                                            if (user != null) {
+                                                users.add(user);
+                                            }
+                                        }
+                                    }
+                                }
+
+                                teams.put(team, users);
+                            }
+                        }
+                    }
+                }
+            } else {
+                entity = response.getEntity();
+                String error = EntityUtils.toString(entity);
+                Log.e(LOG_NAME, "Bad request.");
+                Log.e(LOG_NAME, error);
+                exceptions.add(new Exception("Bad request: " + error));
+            }
+        } catch (Exception e) {
+            Log.e(LOG_NAME, "There was a failure when fetching teams.", e);
+            exceptions.add(e);
+        } finally {
+            try {
+                if (entity != null) {
+                    entity.consumeContent();
+                }
+            } catch (Exception e) {
+                Log.w(LOG_NAME, "Trouble cleaning up after GET request.", e);
+            }
+        }
+
+        return teams;
     }
 }
