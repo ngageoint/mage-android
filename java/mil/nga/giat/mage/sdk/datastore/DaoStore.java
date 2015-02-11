@@ -14,6 +14,7 @@ import mil.nga.giat.mage.sdk.datastore.staticfeature.StaticFeature;
 import mil.nga.giat.mage.sdk.datastore.staticfeature.StaticFeatureGeometry;
 import mil.nga.giat.mage.sdk.datastore.staticfeature.StaticFeatureProperty;
 import mil.nga.giat.mage.sdk.datastore.user.Role;
+import mil.nga.giat.mage.sdk.datastore.user.TeamEvent;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.Event;
 import mil.nga.giat.mage.sdk.datastore.user.Team;
@@ -57,6 +58,7 @@ public class DaoStore extends OrmLiteSqliteOpenHelper {
     private Dao<Event, Long> eventDao;
     private Dao<Team, Long> teamDao;
     private Dao<UserTeam, Long> userTeamDao;
+    private Dao<TeamEvent, Long> teamEventDao;
 	private Dao<Location, Long> locationDao;
 	private Dao<LocationGeometry, Long> locationGeometryDao;
 	private Dao<LocationProperty, Long> locationPropertyDao;
@@ -101,6 +103,7 @@ public class DaoStore extends OrmLiteSqliteOpenHelper {
             getEventDao();
             getTeamDao();
             getUserTeamDao();
+            getTeamEventDao();
 			getLocationDao();
 			getLocationGeometryDao();
 			getLocationPropertyDao();
@@ -127,6 +130,7 @@ public class DaoStore extends OrmLiteSqliteOpenHelper {
             countOfAllRecords += getEventDao().countOf();
             countOfAllRecords += getTeamDao().countOf();
             countOfAllRecords += getUserTeamDao().countOf();
+            countOfAllRecords += getTeamEventDao().countOf();
 			countOfAllRecords += getLocationDao().countOf();
 			countOfAllRecords += getLocationGeometryDao().countOf();
 			countOfAllRecords += getLocationPropertyDao().countOf();
@@ -152,6 +156,7 @@ public class DaoStore extends OrmLiteSqliteOpenHelper {
         TableUtils.createTable(connectionSource, Event.class);
         TableUtils.createTable(connectionSource, Team.class);
         TableUtils.createTable(connectionSource, UserTeam.class);
+        TableUtils.createTable(connectionSource, TeamEvent.class);
 		TableUtils.createTable(connectionSource, Location.class);
 		TableUtils.createTable(connectionSource, LocationGeometry.class);
 		TableUtils.createTable(connectionSource, LocationProperty.class);
@@ -183,6 +188,7 @@ public class DaoStore extends OrmLiteSqliteOpenHelper {
         TableUtils.dropTable(connectionSource, Event.class, Boolean.TRUE);
         TableUtils.dropTable(connectionSource, Team.class, Boolean.TRUE);
         TableUtils.dropTable(connectionSource, UserTeam.class, Boolean.TRUE);
+        TableUtils.dropTable(connectionSource, TeamEvent.class, Boolean.TRUE);
 		TableUtils.dropTable(connectionSource, Location.class, Boolean.TRUE);
 		TableUtils.dropTable(connectionSource, LocationGeometry.class, Boolean.TRUE);
 		TableUtils.dropTable(connectionSource, LocationProperty.class, Boolean.TRUE);
@@ -333,6 +339,19 @@ public class DaoStore extends OrmLiteSqliteOpenHelper {
             userTeamDao = getDao(UserTeam.class);
         }
         return userTeamDao;
+    }
+
+    /**
+     * Getter for the TeamEventDao
+     *
+     * @return This instance's TeamEventDao
+     * @throws SQLException
+     */
+    public Dao<TeamEvent, Long> getTeamEventDao() throws SQLException {
+        if (teamEventDao == null) {
+            teamEventDao = getDao(TeamEvent.class);
+        }
+        return teamEventDao;
     }
 
 	/**

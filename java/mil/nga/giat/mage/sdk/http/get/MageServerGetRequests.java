@@ -36,10 +36,14 @@ import mil.nga.giat.mage.sdk.datastore.location.Location;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
 import mil.nga.giat.mage.sdk.datastore.staticfeature.StaticFeature;
+import mil.nga.giat.mage.sdk.datastore.user.Event;
+import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
 import mil.nga.giat.mage.sdk.datastore.user.Role;
 import mil.nga.giat.mage.sdk.datastore.user.Team;
+import mil.nga.giat.mage.sdk.datastore.user.TeamHelper;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
+import mil.nga.giat.mage.sdk.gson.deserializer.EventDeserializer;
 import mil.nga.giat.mage.sdk.gson.deserializer.LayerDeserializer;
 import mil.nga.giat.mage.sdk.gson.deserializer.RoleDeserializer;
 import mil.nga.giat.mage.sdk.gson.deserializer.TeamDeserializer;
@@ -72,11 +76,10 @@ public class MageServerGetRequests {
 		try {
 			URL serverURL = new URL(PreferenceHelper.getInstance(context).getValue(R.string.serverURLKey));
 
-			String dynamicFormString = PreferenceHelper.getInstance(context).getValue(R.string.dynamicFormKey);
-			JsonObject dynamicFormJson = new JsonParser().parse(dynamicFormString).getAsJsonObject();
-			String formId = dynamicFormJson.get("id").getAsString();
-			if (formId != null) {
-				URL observationIconsURL = new URL(serverURL, "/api/icons/" + formId + ".zip");
+			Long currentEventId = EventHelper.getInstance(context).getCurrentEvent(context).getId();
+			if (currentEventId != null) {
+                String currentEventIdString = String.valueOf(currentEventId);
+				URL observationIconsURL = new URL(serverURL, "/api/events/" + currentEventIdString + "/form.zip");
 				DefaultHttpClient httpclient = HttpClientManager.getInstance(context).getHttpClient();
 				Log.d(LOG_NAME, observationIconsURL.toString());
 				HttpGet get = new HttpGet(observationIconsURL.toURI());
@@ -85,7 +88,7 @@ public class MageServerGetRequests {
 				if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
 					entity = response.getEntity();
 					File directory = new File(context.getFilesDir() + OBSERVATION_ICON_PATH);
-					File zipFile = new File(directory, formId + ".zip");
+					File zipFile = new File(directory, currentEventIdString + ".zip");
 					if (!zipFile.getParentFile().exists()) {
 						zipFile.getParentFile().mkdirs();
 					}
@@ -95,7 +98,7 @@ public class MageServerGetRequests {
 					if(!zipFile.exists()) {
 						zipFile.createNewFile();
 					}
-					File zipDirectory = new File(directory, formId);
+					File zipDirectory = new File(directory, currentEventIdString);
 					if(!zipDirectory.exists()) {
 						zipDirectory.mkdirs();
 					}
@@ -113,11 +116,11 @@ public class MageServerGetRequests {
 					Log.e(LOG_NAME, error);
 				}
 			} else {
-				Log.e(LOG_NAME, "Could not pull the observation icons, because the form id was: " + String.valueOf(formId));
+				Log.e(LOG_NAME, "Could not pull the observation icons, because the event id was: " + String.valueOf(currentEventId));
 			}
 		} catch (Exception e) {
 			// this block should never flow exceptions up! Log for now.
-			Log.e(LOG_NAME, "There was a failure while retriving the observation icons.", e);
+			Log.e(LOG_NAME, "There was a failure while retrieving the observation icons.", e);
 		} finally {
 			try {
 				if (entity != null) {
@@ -505,10 +508,10 @@ public class MageServerGetRequests {
         HttpEntity entity = null;
         try {
             URL serverURL = new URL(PreferenceHelper.getInstance(context).getValue(R.string.serverURLKey));
-            URL roleURL = new URL(serverURL, "api/teams");
+            URL teamURL = new URL(serverURL, "api/teams");
 
             DefaultHttpClient httpclient = HttpClientManager.getInstance(context).getHttpClient();
-            HttpGet get = new HttpGet(roleURL.toURI());
+            HttpGet get = new HttpGet(teamURL.toURI());
             HttpResponse response = httpclient.execute(get);
 
             if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
@@ -565,5 +568,75 @@ public class MageServerGetRequests {
         }
 
         return teams;
+    }
+
+    public static Map<Event, Collection<Team>> getAllEvents(Context context, List<Exception> exceptions) {
+        final Gson eventDeserializer = EventDeserializer.getGsonBuilder();
+        final Gson teamDeserializer = TeamDeserializer.getGsonBuilder();
+        Map<Event, Collection<Team>> events = new HashMap<Event, Collection<Team>>();
+
+        HttpEntity entity = null;
+        try {
+            URL serverURL = new URL(PreferenceHelper.getInstance(context).getValue(R.string.serverURLKey));
+            URL eventURL = new URL(serverURL, "api/events");
+
+            DefaultHttpClient httpclient = HttpClientManager.getInstance(context).getHttpClient();
+            HttpGet get = new HttpGet(eventURL.toURI());
+            HttpResponse response = httpclient.execute(get);
+
+            if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
+                entity = response.getEntity();
+                JSONArray json = new JSONArray(EntityUtils.toString(entity));
+                if (json != null) {
+                    for (int i = 0; i < json.length(); i++) {
+                        JSONObject eventJson = json.getJSONObject(i);
+                        if (eventJson != null) {
+                            Event event = eventDeserializer.fromJson(eventJson.toString(), Event.class);
+                            if (event != null) {
+                                ArrayList<Team> teams = new ArrayList<Team>();
+                                JSONArray jsonTeams = eventJson.getJSONArray("teams");
+                                if (jsonTeams != null) {
+                                    for (int j = 0; j < jsonTeams.length(); j++) {
+                                        JSONObject teamJson = jsonTeams.getJSONObject(j);
+                                        if (teamJson != null) {
+                                            String teamRemoteId = teamJson.getString("id");
+                                            Team team = TeamHelper.getInstance(context).read(teamRemoteId);
+                                            if(team == null) {
+                                                team = teamDeserializer.fromJson(teamJson.toString(), Team.class);
+                                            }
+
+                                            if (team != null) {
+                                                teams.add(team);
+                                            }
+                                        }
+                                    }
+                                }
+
+                                events.put(event, teams);
+                            }
+                        }
+                    }
+                }
+            } else {
+                entity = response.getEntity();
+                String error = EntityUtils.toString(entity);
+                Log.e(LOG_NAME, "Bad request.");
+                Log.e(LOG_NAME, error);
+                exceptions.add(new Exception("Bad request: " + error));
+            }
+        } catch (Exception e) {
+            Log.e(LOG_NAME, "There was a failure when fetching events.", e);
+            exceptions.add(e);
+        } finally {
+            try {
+                if (entity != null) {
+                    entity.consumeContent();
+                }
+            } catch (Exception e) {
+                Log.w(LOG_NAME, "Trouble cleaning up after GET request.", e);
+            }
+        }
+
+        return events;
     }
 }

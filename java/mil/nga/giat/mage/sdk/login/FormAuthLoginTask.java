@@ -1,10 +1,14 @@
 package mil.nga.giat.mage.sdk.login;
 
+import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.preference.PreferenceManager;
+import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
 import com.google.gson.Gson;
@@ -37,6 +41,7 @@ import mil.nga.giat.mage.sdk.datastore.DaoStore;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.exceptions.LoginException;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
+import mil.nga.giat.mage.sdk.fetch.InitialFetchIntentService;
 import mil.nga.giat.mage.sdk.gson.deserializer.UserDeserializer;
 import mil.nga.giat.mage.sdk.http.client.HttpClientManager;
 import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
@@ -59,7 +64,7 @@ public class FormAuthLoginTask extends AbstractAccountTask {
 		super(delegate, context);
 	}
 
-	/**
+    /**
 	 * Called from execute
 	 * @param params
 	 *            Should contain username, password, and serverURL; in that
@@ -236,7 +241,7 @@ public class FormAuthLoginTask extends AbstractAccountTask {
 					// for now, treat as a warning. Not a great state to be in.
 					Log.w(LOG_NAME, "Unable to initialize a local Active User.");
 				}
-				
+
 				return new AccountStatus(AccountStatus.Status.SUCCESSFUL_LOGIN, new ArrayList<Integer>(), new ArrayList<String>(), json);
 			} else if (response.getStatusLine().getStatusCode() == HttpStatus.SC_UNAUTHORIZED) {
 				
@@ -303,6 +308,40 @@ public class FormAuthLoginTask extends AbstractAccountTask {
 			}
 		}
 		
-		return AccountStatus.Status.FAILED_LOGIN; //new AccountStatus(AccountStatus.Status.FAILED_LOGIN);
+		return AccountStatus.Status.FAILED_LOGIN;
 	}
+
+    @Override
+    protected void onPostExecute(final AccountStatus accountStatus) {
+        // at this point, the user has been created. pull the initial roles, events, etc.
+        if (accountStatus.getStatus().equals(AccountStatus.Status.SUCCESSFUL_LOGIN)) {
+
+            BroadcastReceiver initialFetchReceiver = new BroadcastReceiver() {
+                @Override
+                public void onReceive(Context context, Intent intent) {
+                    LocalBroadcastManager.getInstance(mApplicationContext).unregisterReceiver(this);
+
+                    if (intent.getBooleanExtra("status", false)) {
+                        FormAuthLoginTask.super.onPostExecute(accountStatus);
+                    } else {
+                        List<Integer> errorIndices = new ArrayList<Integer>();
+                        errorIndices.add(2);
+                        List<String> errorMessages = new ArrayList<String>();
+                        errorMessages.add("Error initializing");
+                        FormAuthLoginTask.super.onPostExecute(new AccountStatus(AccountStatus.Status.FAILED_LOGIN, errorIndices, errorMessages));
+                    }
+                }
+
+            };
+
+            // receive response from initial pull
+            IntentFilter statusIntentFilter = new IntentFilter(InitialFetchIntentService.InitialFetchIntentServiceAction);
+            statusIntentFilter.addCategory(Intent.CATEGORY_DEFAULT);
+
+            LocalBroadcastManager.getInstance(mApplicationContext).registerReceiver(initialFetchReceiver, statusIntentFilter);
+
+            Intent initialFetchIntent = new Intent(mApplicationContext, InitialFetchIntentService.class);
+            mApplicationContext.startService(initialFetchIntent);
+        }
+    }
 }

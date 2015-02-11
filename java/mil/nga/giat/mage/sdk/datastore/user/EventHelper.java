@@ -1,14 +1,20 @@
 package mil.nga.giat.mage.sdk.datastore.user;
 
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 
 import mil.nga.giat.mage.sdk.datastore.DaoHelper;
+import mil.nga.giat.mage.sdk.datastore.DaoStore;
 import mil.nga.giat.mage.sdk.exceptions.EventException;
+import mil.nga.giat.mage.sdk.exceptions.UserException;
+
 import android.content.Context;
 import android.util.Log;
 
 import com.j256.ormlite.dao.Dao;
+import com.j256.ormlite.stmt.QueryBuilder;
+import com.j256.ormlite.stmt.Where;
 
 /**
  * A utility class for accessing {@link Event} data from the physical data model.
@@ -23,6 +29,7 @@ public class EventHelper extends DaoHelper<Event> {
     private static final String LOG_NAME = EventHelper.class.getName();
 
     private final Dao<Event, Long> eventDao;
+    private final Dao<TeamEvent, Long> teamEventDao;
 
     /**
      * Singleton.
@@ -54,6 +61,7 @@ public class EventHelper extends DaoHelper<Event> {
 
         try {
             eventDao = daoStore.getEventDao();
+            teamEventDao = daoStore.getTeamEventDao();
         } catch (SQLException sqle) {
             Log.e(LOG_NAME, "Unable to communicate with Event database.", sqle);
 
@@ -123,6 +131,42 @@ public class EventHelper extends DaoHelper<Event> {
         } catch (EventException ee) {
             Log.e(LOG_NAME, "There was a problem reading user: " + event, ee);
         }
+        return event;
+    }
+
+    public List<Event> getEventsByTeam(User pTeam) {
+        List<Event> events = new ArrayList<Event>();
+        try {
+            QueryBuilder<TeamEvent, Long> teamEventQuery = teamEventDao.queryBuilder();
+            teamEventQuery.selectColumns("event_id");
+            Where<TeamEvent, Long> where = teamEventQuery.where();
+            where.eq("team_id", pTeam.getId());
+
+            QueryBuilder<Event, Long> eventQuery = eventDao.queryBuilder();
+            eventQuery.where().in("_id", teamEventQuery);
+
+            events = eventQuery.query();
+            if(events == null) {
+                events = new ArrayList<Event>();
+            }
+
+        } catch (SQLException sqle) {
+            Log.e(LOG_NAME, "There was a problem getting events for the team: " + pTeam, sqle);
+        }
+        return events;
+    }
+
+    public Event getCurrentEvent(Context pContext) {
+        Event event = null;
+        try {
+            User u = UserHelper.getInstance(pContext).readCurrentUser();
+            if(u != null) {
+                event = u.getCurrentEvent();
+            }
+        } catch(UserException ue) {
+            Log.e(LOG_NAME, "There is no current user. ", ue);
+        }
+
         return event;
     }
 }

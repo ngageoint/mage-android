@@ -13,7 +13,6 @@
     <string name="tokenExpirationDateKey">tokenExpirationDate</string>
     <string name="tokenExpirationLengthKey">tokenExpirationLength</string>
     <string name="deviceRegisteredKey">deviceRegistered</string>
-    <string name="dynamicFormKey">gDynamicForm</string>
     <string name="haveLayersBeenFetchedOnceKey">haveLayersBeenReadOnce</string>
     <string name="haveLayersBeenFetchedOnceDefaultValue">false</string>
     <string name="deleteAllDataOnLogoutKey">deleteAllDataOnLogout</string>

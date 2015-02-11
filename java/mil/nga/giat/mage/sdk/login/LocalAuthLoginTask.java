@@ -6,6 +6,9 @@ import android.content.SharedPreferences.Editor;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
+import com.google.common.io.CharStreams;
+
+import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -15,9 +18,15 @@ import java.util.Date;
 
 import mil.nga.giat.mage.sdk.R;
 import mil.nga.giat.mage.sdk.datastore.location.LocationHelper;
+import mil.nga.giat.mage.sdk.datastore.user.Event;
+import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
 import mil.nga.giat.mage.sdk.datastore.user.Role;
 import mil.nga.giat.mage.sdk.datastore.user.RoleHelper;
+import mil.nga.giat.mage.sdk.datastore.user.Team;
+import mil.nga.giat.mage.sdk.datastore.user.TeamEvent;
+import mil.nga.giat.mage.sdk.datastore.user.TeamHelper;
 import mil.nga.giat.mage.sdk.datastore.user.User;
+import mil.nga.giat.mage.sdk.datastore.user.UserTeam;
 import mil.nga.giat.mage.sdk.exceptions.LoginException;
 import mil.nga.giat.mage.sdk.utils.DateFormatFactory;
 
@@ -32,14 +41,9 @@ public class LocalAuthLoginTask extends AbstractAccountTask {
 
 	private static final String LOG_NAME = LocalAuthLoginTask.class.getName();
     private DateFormat iso8601Format = DateFormatFactory.ISO8601();
-
-	protected RoleHelper roleHelper;
-	protected LocationHelper locationHelper;
 	
 	public LocalAuthLoginTask(AccountDelegate delegate, Context applicationContext) {
 		super(delegate, applicationContext);
-		roleHelper = RoleHelper.getInstance(applicationContext);
-		locationHelper = LocationHelper.getInstance(applicationContext);
 	}
 
 	/**
@@ -70,11 +74,15 @@ public class LocalAuthLoginTask extends AbstractAccountTask {
 			uee.printStackTrace();
 		}
 
+        RoleHelper roleHelper = RoleHelper.getInstance(mApplicationContext);
+        TeamHelper teamHelper = TeamHelper.getInstance(mApplicationContext);
+        EventHelper eventHelper = EventHelper.getInstance(mApplicationContext);
+
 		// initialize local active user
 		try {
 			
 			// FIXME : delete all locations for now
-			locationHelper.deleteAll();
+            LocationHelper.getInstance(mApplicationContext).deleteAll();
 			
 			// delte roles
 			roleHelper.deleteAll();
@@ -84,11 +92,24 @@ public class LocalAuthLoginTask extends AbstractAccountTask {
 			
 			Role defaultRole = new Role("NA", "LOCAL", "Local Auth", null);
 			defaultRole = roleHelper.create(defaultRole);
-			
+
+            Team defaultTeam = new Team("NA", "LOCAL", "Local Auth");
+
+            final String DEFAULT_DYNAMIC_FORM = "dynamic-form/default-dynamic-form.json";
+
+            String dynamicForm = CharStreams.toString(new InputStreamReader(mApplicationContext.getAssets().open(DEFAULT_DYNAMIC_FORM), "UTF-8"));
+            Event defaultEvent = new Event("NA", "LOCAL", "Local Auth", dynamicForm);
+            defaultEvent = eventHelper.create(defaultEvent);
+
 			// create new active user.
-			User currentUser = new User("NA", "unknown", username, "", username, defaultRole, null, null, null);
+			User currentUser = new User("NA", "unknown", username, "", username, defaultRole, defaultEvent, null, null, null);
 			currentUser.setCurrentUser(Boolean.TRUE);
 			currentUser = userHelper.create(currentUser);
+
+            // join tables
+            userHelper.create(new UserTeam(currentUser, defaultTeam));
+            teamHelper.create(new TeamEvent(defaultTeam, defaultEvent));
+
 		} catch (Exception e) {
 			// for now, treat as a warning. Not a great state to be in.
 			Log.e(LOG_NAME, "Unable to initialize a local Active User.");

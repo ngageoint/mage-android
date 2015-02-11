@@ -11,6 +11,7 @@ import android.content.Context;
 import android.util.Log;
 
 import com.j256.ormlite.dao.Dao;
+import com.j256.ormlite.stmt.DeleteBuilder;
 import com.j256.ormlite.stmt.PreparedQuery;
 import com.j256.ormlite.stmt.QueryBuilder;
 import com.j256.ormlite.stmt.Where;
@@ -29,6 +30,7 @@ public class TeamHelper extends DaoHelper<Team> {
 
     private final Dao<Team, Long> teamDao;
     private final Dao<UserTeam, Long> userTeamDao;
+    private final Dao<TeamEvent, Long> teamEventDao;
 
     /**
      * Singleton.
@@ -61,6 +63,7 @@ public class TeamHelper extends DaoHelper<Team> {
         try {
             teamDao = daoStore.getTeamDao();
             userTeamDao = daoStore.getUserTeamDao();
+            teamEventDao = daoStore.getTeamEventDao();
         } catch (SQLException sqle) {
             Log.e(LOG_NAME, "Unable to communicate with Team database.", sqle);
 
@@ -125,12 +128,31 @@ public class TeamHelper extends DaoHelper<Team> {
                 // perform update?
                 team.setId(oldTeam.getId());
                 update(team);
-                Log.d(LOG_NAME, "Updated user with remote_id " + team.getRemoteId());
+                Log.d(LOG_NAME, "Updated team with remote_id " + team.getRemoteId());
             }
         } catch (TeamException te) {
-            Log.e(LOG_NAME, "There was a problem reading user: " + team, te);
+            Log.e(LOG_NAME, "There was a problem reading team: " + team, te);
         }
         return team;
+    }
+
+    public void deleteTeamEvents() {
+        try {
+            DeleteBuilder<TeamEvent, Long> db = teamEventDao.deleteBuilder();
+            db.delete();
+        } catch (SQLException sqle) {
+            Log.e(LOG_NAME, "There was a problem deleting teamevents.", sqle);
+        }
+    }
+
+    public TeamEvent create(TeamEvent pTeamEvent) {
+        TeamEvent createdTeamEvent = null;
+        try {
+            createdTeamEvent = teamEventDao.createIfNotExists(pTeamEvent);
+        } catch (SQLException sqle) {
+            Log.e(LOG_NAME, "There was a problem creating teamevent: " + pTeamEvent, sqle);
+        }
+        return createdTeamEvent;
     }
 
     public List<Team> getTeamsByUser(User pUser) {
@@ -151,6 +173,28 @@ public class TeamHelper extends DaoHelper<Team> {
 
         } catch (SQLException sqle) {
             Log.e(LOG_NAME, "There was a problem getting teams for the user: " + pUser, sqle);
+        }
+        return teams;
+    }
+
+    public List<Team> getTeamsByEvent(User pEvent) {
+        List<Team> teams = new ArrayList<Team>();
+        try {
+            QueryBuilder<TeamEvent, Long> teamEventQuery = teamEventDao.queryBuilder();
+            teamEventQuery.selectColumns("team_id");
+            Where<TeamEvent, Long> where = teamEventQuery.where();
+            where.eq("event_id", pEvent.getId());
+
+            QueryBuilder<Team, Long> teamQuery = teamDao.queryBuilder();
+            teamQuery.where().in("_id", teamEventQuery);
+
+            teams = teamQuery.query();
+            if(teams == null) {
+                teams = new ArrayList<Team>();
+            }
+
+        } catch (SQLException sqle) {
+            Log.e(LOG_NAME, "There was a problem getting teams for the event: " + pEvent, sqle);
         }
         return teams;
     }

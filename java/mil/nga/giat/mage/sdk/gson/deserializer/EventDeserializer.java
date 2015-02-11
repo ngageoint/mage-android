@@ -52,9 +52,9 @@ public class EventDeserializer implements JsonDeserializer<Event> {
         if(feature.has("description")) {
             description = feature.get("description").getAsString();
         }
-        String form = feature.get("form").getAsString();
+        String form = feature.get("form").toString();
 
-        Event event = null; //new Event(remoteId, name, description);
+        Event event = new Event(remoteId, name, description, form);
         return event;
     }
 }

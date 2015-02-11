@@ -36,7 +36,10 @@ public class User {
 
 	@DatabaseField(canBeNull = false, foreign = true, foreignAutoRefresh = true)
 	private Role role;
-	
+
+    @DatabaseField(canBeNull = true, foreign = true, foreignAutoRefresh = true)
+    private Event currentEvent;
+
 	@DatabaseField
 	private String primaryPhone;
 	
@@ -56,7 +59,7 @@ public class User {
 		// ORMLite needs a no-arg constructor
 	}
 
-	public User(String remoteId, String email, String firstname, String lastname, String username, Role role, String primaryPhone, String avatarUrl, String iconUrl) {
+	public User(String remoteId, String email, String firstname, String lastname, String username, Role role, Event currentEvent, String primaryPhone, String avatarUrl, String iconUrl) {
 		super();
 		this.remoteId = remoteId;
 		this.email = email;
@@ -64,6 +67,7 @@ public class User {
 		this.lastname = lastname;
 		this.username = username;
 		this.role = role;
+        this.currentEvent = currentEvent;
 		this.primaryPhone = primaryPhone;
 		this.avatarUrl = avatarUrl;
 		this.iconUrl = iconUrl;
@@ -108,6 +112,14 @@ public class User {
 	public void setRole(Role role) {
 		this.role = role;
 	}
+
+    public Event getCurrentEvent() {
+        return currentEvent;
+    }
+
+    public void setCurrentEvent(Event currentEvent) {
+        this.currentEvent = currentEvent;
+    }
 
 	public Boolean isCurrentUser() {
 		return isCurrentUser;

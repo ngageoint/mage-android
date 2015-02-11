@@ -5,10 +5,13 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 
+import mil.nga.giat.mage.sdk.datastore.user.Event;
+import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
 import mil.nga.giat.mage.sdk.datastore.user.Phone;
 import mil.nga.giat.mage.sdk.datastore.user.Role;
 import mil.nga.giat.mage.sdk.datastore.user.RoleHelper;
 import mil.nga.giat.mage.sdk.datastore.user.User;
+import mil.nga.giat.mage.sdk.exceptions.EventException;
 import mil.nga.giat.mage.sdk.exceptions.RoleException;
 import android.content.Context;
 import android.util.Log;
@@ -137,7 +140,38 @@ public class UserDeserializer implements JsonDeserializer<User> {
 			iconUrl = feature.get("iconUrl").getAsString();
 		}
 
-		User user = new User(remoteId, email, firstname, lastname, username, role, primaryPhone, avatarUrl, iconUrl);
+        Event event = null;
+        if (feature.get("currentEvent") != null) {
+
+            String eventId = null;
+            JsonObject roleJSON = null;
+            if (feature.get("currentEvent").isJsonPrimitive()) {
+                eventId = feature.get("currentEvent").getAsString();
+            }
+
+            if (eventId != null) {
+                try {
+                    // see if event exists
+                    event = EventHelper.getInstance(mContext).read(eventId);
+                } catch (EventException e) {
+                    Log.w(LOG_NAME, "Could not find event for user.");
+                }
+            } else {
+                Log.w(LOG_NAME, "User has no recent event!");
+            }
+        } else {
+            Log.w(LOG_NAME, "User has no recent event!");
+        }
+
+
+        // FIXME : this is a hack to get stuff working!
+        try {
+            event = EventHelper.getInstance(mContext).read("1");
+        } catch (EventException e) {
+            Log.e(LOG_NAME, "ERROR this is a hack to get stuff working!");
+        }
+
+		User user = new User(remoteId, email, firstname, lastname, username, role, event, primaryPhone, avatarUrl, iconUrl);
 		return user;
 	}
 }

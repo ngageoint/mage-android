@@ -194,6 +194,9 @@ public class PreferenceHelper {
 		}
 	}
 
+    /**
+     * Not used anymore!  form is now part of the event
+     */
 	private class RemotePreferenceColonizationForm extends AsyncTask<Void, Void, Void> {
 
 		@Override
@@ -207,7 +210,8 @@ public class PreferenceHelper {
 
 			SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(mContext);
 			Editor editor = sharedPreferences.edit();
-			String key = mContext.getString(R.string.dynamicFormKey);
+			//String key = mContext.getString(R.string.dynamicFormKey);
+            String key = "NA";
 
 			// read in default local form
 			try {
