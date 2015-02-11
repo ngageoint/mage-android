@@ -63,7 +63,6 @@ public class MAGE extends MultiDexApplication implements IUserEventListener {
 	private LocationService locationService;
 	private Intent locationFetchIntent;
 	private Intent observationFetchIntent;
-	private Intent initialFetchIntent;
 	private Intent locationPushIntent;
 	private Intent observationPushIntent;
 	private Intent attachmentPushIntent;
@@ -85,12 +84,6 @@ public class MAGE extends MultiDexApplication implements IUserEventListener {
 
 		// setup the screen unlock stuff
 		registerReceiver(ScreenChangeReceiver.getInstance(), new IntentFilter(Intent.ACTION_SCREEN_ON));
-
-        // receive response from initial pull
-        IntentFilter statusIntentFilter = new IntentFilter(InitialFetchIntentService.InitialFetchIntentServiceAction);
-        statusIntentFilter.addCategory(Intent.CATEGORY_DEFAULT);
-        InitialFetchReceiver initialFetchReceiver = new InitialFetchReceiver();
-        LocalBroadcastManager.getInstance(this).registerReceiver(initialFetchReceiver, statusIntentFilter);
 
         //set up Observation notifications
         ObservationHelper oh = ObservationHelper.getInstance(getApplicationContext());
@@ -190,41 +183,16 @@ public class MAGE extends MultiDexApplication implements IUserEventListener {
 	 * Start Tasks responsible for fetching Observations and Locations from the server.
 	 */
 	private void startFetching() {
-		if (initialFetchIntent == null) {
-            initialFetchIntent = new Intent(getApplicationContext(), InitialFetchIntentService.class);
-			startService(initialFetchIntent);
-		}
+        if(locationFetchIntent == null) {
+            locationFetchIntent = new Intent(getApplicationContext(), LocationFetchIntentService.class);
+            startService(locationFetchIntent);
+        }
+
+        if(observationFetchIntent == null) {
+            observationFetchIntent = new Intent(getApplicationContext(), ObservationFetchIntentService.class);
+            startService(observationFetchIntent);
+        }
 	}
-
-    private class InitialFetchReceiver extends BroadcastReceiver {
-
-        private InitialFetchReceiver() {
-            // prevents instantiation by other packages.
-        }
-        /**
-         *
-         * This method is called by the system when a broadcast Intent is matched by this class'
-         * intent filters
-         *
-         * @param context An Android context
-         * @param intent The incoming broadcast Intent
-         */
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            if (intent.getBooleanExtra("status", false)) {
-                if(locationFetchIntent == null) {
-                    locationFetchIntent = new Intent(getApplicationContext(), LocationFetchIntentService.class);
-                    startService(locationFetchIntent);
-                }
-
-                if(observationFetchIntent == null) {
-                    observationFetchIntent = new Intent(getApplicationContext(), ObservationFetchIntentService.class);
-                    startService(observationFetchIntent);
-                }
-            }
-        }
-    }
-
 
     /**
 	 * Stop Tasks responsible for fetching Observations and Locations from the server.
@@ -233,10 +201,6 @@ public class MAGE extends MultiDexApplication implements IUserEventListener {
 		if (staticFeatureServerFetch != null) {
 			staticFeatureServerFetch.destroy();
 			staticFeatureServerFetch = null;
-		}
-		if (initialFetchIntent != null) {
-			stopService(initialFetchIntent);
-            initialFetchIntent = null;
 		}
 		if(locationFetchIntent != null) {
 			stopService(locationFetchIntent);

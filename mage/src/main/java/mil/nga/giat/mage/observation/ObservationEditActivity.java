@@ -80,6 +80,7 @@ import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationGeometry;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationProperty;
+import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.exceptions.ObservationException;
@@ -153,9 +154,8 @@ public class ObservationEditActivity extends Activity {
 						if (observationId == NEW_OBSERVATION) {
 							spinnersLastPositions.put(k, position);
 						}
-						
-						String dynamicFormString = PreferenceHelper.getInstance(getApplicationContext()).getValue(R.string.dynamicFormKey);
-						JsonObject dynamicFormJson = new JsonParser().parse(dynamicFormString).getAsJsonObject();
+
+						JsonObject dynamicFormJson = EventHelper.getInstance(getApplicationContext()).getCurrentEvent(getApplicationContext()).getForm();
 						
 						// get variantField
 						JsonElement variantField = dynamicFormJson.get("variantField");

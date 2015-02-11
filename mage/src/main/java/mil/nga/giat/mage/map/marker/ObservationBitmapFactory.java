@@ -12,6 +12,7 @@ import java.util.Stack;
 import mil.nga.giat.mage.sdk.R;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationProperty;
+import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
 import mil.nga.giat.mage.sdk.http.get.MageServerGetRequests;
 import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
 import android.annotation.TargetApi;
@@ -76,8 +77,7 @@ public class ObservationBitmapFactory {
 			// get type
 			ObservationProperty type = properties.get(TYPE_PROPERTY);
 			// get variantField
-			String dynamicFormString = PreferenceHelper.getInstance(context).getValue(R.string.dynamicFormKey);
-			JsonObject dynamicFormJson = new JsonParser().parse(dynamicFormString).getAsJsonObject();
+			JsonObject dynamicFormJson = EventHelper.getInstance(context).getCurrentEvent(context).getForm();
 			
 			// get variant
 			ObservationProperty variant = null;

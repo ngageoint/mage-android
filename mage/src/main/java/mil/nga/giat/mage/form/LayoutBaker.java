@@ -37,6 +37,7 @@ import java.util.Map;
 
 import mil.nga.giat.mage.sdk.R;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationProperty;
+import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
 import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
 import mil.nga.giat.mage.sdk.utils.DateFormatFactory;
 
@@ -60,8 +61,7 @@ public class LayoutBaker {
 
 		List<View> views = new ArrayList<View>();
 
-		String dynamicFormString = PreferenceHelper.getInstance(context).getValue(R.string.dynamicFormKey);
-		JsonObject dynamicFormJson = new JsonParser().parse(dynamicFormString).getAsJsonObject();
+		JsonObject dynamicFormJson = EventHelper.getInstance(context).getCurrentEvent(context).getForm();
 
 		JsonArray dynamicFormFields = dynamicFormJson.get("fields").getAsJsonArray();
 

@@ -406,13 +406,8 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 					}
 				}).show();
 			} else {
-				try {
-					PreferenceHelper.getInstance(getApplicationContext()).readRemoteForm();
-				} catch (Exception e) {
-					Log.e(LOG_NAME, "Problem reading server form.", e);
-				}
-				
-				startActivity(new Intent(getApplicationContext(), LandingActivity.class));
+                // start up the landing activity!
+                startActivity(new Intent(getApplicationContext(), LandingActivity.class));
 				((MAGE) getApplication()).onLogin();
 				finish();
 			}
