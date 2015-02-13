@@ -393,7 +393,9 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 			} catch (UnsupportedEncodingException uee) {
 				uee.printStackTrace();
 			}
-			sp.putString(getApplicationContext().getString(R.string.serverURLKey), getServerEditText().getText().toString()).commit();
+
+            // remove the slashes at the end, and store the serverURL
+			sp.putString(getApplicationContext().getString(R.string.serverURLKey), getServerEditText().getText().toString().trim().replaceAll("/*$", "")).commit();
 
 			if (accountStatus.getStatus().equals(AccountStatus.Status.DISCONNECTED_LOGIN)) {
 				new AlertDialog.Builder(this).setTitle("Disconnected Login").setMessage("You are logging into MAGE in disconnected mode.  You must re-establish a connection in order to push and pull information to and from your server.").setPositiveButton(android.R.string.ok, new OnClickListener() {
@@ -406,6 +408,9 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 					}
 				}).show();
 			} else {
+
+                // TODO: if the user doesn't have a recent event, have them choose one, eh?
+
                 // start up the landing activity!
                 startActivity(new Intent(getApplicationContext(), LandingActivity.class));
 				((MAGE) getApplication()).onLogin();

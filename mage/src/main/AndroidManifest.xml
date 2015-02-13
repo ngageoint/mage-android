@@ -67,8 +67,7 @@
         <activity
             android:name="mil.nga.giat.mage.LandingActivity"
             android:label="@string/app_name"
-            android:launchMode="singleTop"
-            android:screenOrientation="portrait" >
+            android:launchMode="singleTop">
         </activity>
         <activity
             android:name="mil.nga.giat.mage.preferences.PublicPreferencesFragment"

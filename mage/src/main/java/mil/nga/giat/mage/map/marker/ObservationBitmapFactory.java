@@ -12,6 +12,7 @@ import java.util.Stack;
 import mil.nga.giat.mage.sdk.R;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationProperty;
+import mil.nga.giat.mage.sdk.datastore.user.Event;
 import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
 import mil.nga.giat.mage.sdk.http.get.MageServerGetRequests;
 import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
@@ -76,8 +77,11 @@ public class ObservationBitmapFactory {
 			Map<String, ObservationProperty> properties = observation.getPropertiesMap();
 			// get type
 			ObservationProperty type = properties.get(TYPE_PROPERTY);
+
+            Event currentEvent = EventHelper.getInstance(context).getCurrentEvent(context);
+
 			// get variantField
-			JsonObject dynamicFormJson = EventHelper.getInstance(context).getCurrentEvent(context).getForm();
+			JsonObject dynamicFormJson = currentEvent.getForm();
 			
 			// get variant
 			ObservationProperty variant = null;
@@ -85,28 +89,23 @@ public class ObservationBitmapFactory {
 			if(variantField != null && !variantField.isJsonNull()) {
 				variant = properties.get(variantField.getAsString());
 			}
-	
-			JsonElement jsonFormId = dynamicFormJson.get("id");
-			
-			if(jsonFormId != null && !jsonFormId.isJsonNull()) {
-				String formId = jsonFormId.getAsString();
-				// make path from type and variant
-				File path = new File(new File(new File(context.getFilesDir() + MageServerGetRequests.OBSERVATION_ICON_PATH), formId), "icons");
-		
-				Stack<ObservationProperty> iconProperties = new Stack<ObservationProperty>();
-				iconProperties.add(variant);
-				iconProperties.add(type);
-				
-				path = recurseGetIconPath(iconProperties, path, 0);
 
-				if (path != null && path.exists() && path.isFile()) {
-					try {
-						iconStream = new FileInputStream(path);
-					} catch (FileNotFoundException e) {
-						Log.e(LOG_NAME, "Can find icon.", e);
-					}
-				}
-			}
+            // make path from type and variant
+            File path = new File(new File(new File(context.getFilesDir() + MageServerGetRequests.OBSERVATION_ICON_PATH), String.valueOf(currentEvent.getId())), "icons");
+
+            Stack<ObservationProperty> iconProperties = new Stack<ObservationProperty>();
+            iconProperties.add(variant);
+            iconProperties.add(type);
+
+            path = recurseGetIconPath(iconProperties, path, 0);
+
+            if (path != null && path.exists() && path.isFile()) {
+                try {
+                    iconStream = new FileInputStream(path);
+                } catch (FileNotFoundException e) {
+                    Log.e(LOG_NAME, "Can find icon.", e);
+                }
+            }
 		}
 		if(iconStream == null) {
 			try {
