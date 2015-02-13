@@ -56,7 +56,7 @@ public class InitialFetchIntentService extends ConnectivityAwareIntentService {
     public static final String InitialFetchIntentServiceAction = InitialFetchIntentService.class.getCanonicalName();
 
     private static final long retryTime = 4000;
-    private static final long retryCount = 8;
+    private static final long retryCount = 4;
 
 	public InitialFetchIntentService() {
 		super(LOG_NAME);
@@ -78,7 +78,7 @@ public class InitialFetchIntentService extends ConnectivityAwareIntentService {
             getUsers();
             getTeams();
             getEvents();
-            // now that the client has fetched the events, fetch the users again in order to populate the user's currentEvent.  sort of a chicken in the egg thing
+            // now that the client has fetched the events, fetch the users again in order to populate the user's currentEvent.  a chicken in the egg thing
             getUsers();
 
 		} else {

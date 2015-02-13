@@ -342,6 +342,8 @@ public class FormAuthLoginTask extends AbstractAccountTask {
 
             Intent initialFetchIntent = new Intent(mApplicationContext, InitialFetchIntentService.class);
             mApplicationContext.startService(initialFetchIntent);
+        } else {
+            FormAuthLoginTask.super.onPostExecute(accountStatus);
         }
     }
 }

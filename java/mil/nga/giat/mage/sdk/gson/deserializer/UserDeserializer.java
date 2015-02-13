@@ -141,34 +141,26 @@ public class UserDeserializer implements JsonDeserializer<User> {
 		}
 
         Event event = null;
-        if (feature.get("currentEvent") != null) {
+        if (feature.get("recentEventIds") != null) {
 
-            String eventId = null;
-            JsonObject roleJSON = null;
-            if (feature.get("currentEvent").isJsonPrimitive()) {
-                eventId = feature.get("currentEvent").getAsString();
-            }
-
-            if (eventId != null) {
-                try {
-                    // see if event exists
-                    event = EventHelper.getInstance(mContext).read(eventId);
-                } catch (EventException e) {
-                    Log.w(LOG_NAME, "Could not find event for user.");
+            if (feature.get("recentEventIds").isJsonArray()) {
+                JsonArray recentEventIds = feature.get("recentEventIds").getAsJsonArray();
+                if (recentEventIds.size() > 0) {
+                    String recentEventId = recentEventIds.get(0).getAsString();
+                    if(recentEventId != null) {
+                        try {
+                            // see if event exists
+                            event = EventHelper.getInstance(mContext).read(recentEventId);
+                        } catch (EventException e) {
+                            Log.w(LOG_NAME, "Could not find event for user.");
+                        }
+                    }
+                } else {
+                    Log.w(LOG_NAME, "User has no recent event!");
                 }
-            } else {
-                Log.w(LOG_NAME, "User has no recent event!");
             }
         } else {
             Log.w(LOG_NAME, "User has no recent event!");
-        }
-
-
-        // FIXME : this is a hack to get stuff working!
-        try {
-            event = EventHelper.getInstance(mContext).read("1");
-        } catch (EventException e) {
-            Log.e(LOG_NAME, "ERROR this is a hack to get stuff working!");
         }
 
 		User user = new User(remoteId, email, firstname, lastname, username, role, event, primaryPhone, avatarUrl, iconUrl);

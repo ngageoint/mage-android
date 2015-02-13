@@ -168,7 +168,8 @@ public class PreferenceHelper {
 			HttpEntity entity = null;
 			try {
 				DefaultHttpClient httpclient = HttpClientManager.getInstance(mContext).getHttpClient();
-				HttpGet get = new HttpGet(new URL(serverURL, "api").toURI());
+                URL apiURL = new URL(serverURL, "api");
+				HttpGet get = new HttpGet(apiURL.toURI());
 				HttpResponse response = httpclient.execute(get);
 				if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
 					entity = response.getEntity();
@@ -225,7 +226,8 @@ public class PreferenceHelper {
 			// read dynamic form from server
 			if(!LoginTaskFactory.getInstance(mContext).isLocalLogin()) {
 				try {
-					String fieldObservationFormId = MageServerGetRequests.getFieldObservationFormId(mContext);
+					//String fieldObservationFormId = MageServerGetRequests.getFieldObservationFormId(mContext);
+                    String fieldObservationFormId = "NA";
 					if (fieldObservationFormId != null) {
 						URL url = new URL(new URL(getValue(R.string.serverURLKey)), "api/forms/" + fieldObservationFormId);
 						HttpGet get = new HttpGet(url.toURI());

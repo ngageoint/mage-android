@@ -1,10 +1,13 @@
 package mil.nga.giat.mage.sdk.gson.serializer;
 
+import android.content.Context;
+
 import java.io.Serializable;
 import java.lang.reflect.Type;
 
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationProperty;
+import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -17,9 +20,12 @@ import com.google.gson.JsonSerializer;
 
 
 public class ObservationSerializer implements JsonSerializer<Observation> {
-	
-	public ObservationSerializer() {
+
+    protected Context mApplicationContext;
+
+	public ObservationSerializer(Context context) {
 		super();
+        mApplicationContext = context;
 	}
 
 	/**
@@ -29,9 +35,9 @@ public class ObservationSerializer implements JsonSerializer<Observation> {
 	 * @return A Gson object that can be used to convert {@link Observation} object
 	 * into a JSON string.
 	 */
-	public static Gson getGsonBuilder() {
+	public static Gson getGsonBuilder(Context context) {
 		GsonBuilder gsonBuilder = new GsonBuilder();
-		gsonBuilder.registerTypeAdapter(Observation.class, new ObservationSerializer());
+		gsonBuilder.registerTypeAdapter(Observation.class, new ObservationSerializer(context));
 		return gsonBuilder.create();
 	}
 
@@ -39,6 +45,8 @@ public class ObservationSerializer implements JsonSerializer<Observation> {
 	public JsonElement serialize(Observation pObs, Type pType, JsonSerializationContext pContext) {
 
 		JsonObject feature = new JsonObject();
+        Long currentEventId = EventHelper.getInstance(mApplicationContext).getCurrentEvent(mApplicationContext).getId();
+        feature.add("eventId", new JsonPrimitive(currentEventId));
 		feature.add("type", new JsonPrimitive("Feature"));
 		conditionalAdd("id", pObs.getRemoteId(), feature);
 		feature.add("geometry", new JsonParser().parse(GeometrySerializer.getGsonBuilder().toJson(pObs.getObservationGeometry().getGeometry())));

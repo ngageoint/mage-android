@@ -86,18 +86,6 @@ public class LocationHelper extends DaoHelper<Location> implements IEventDispatc
 
 	}
 
-	public List<Location> readAllNonCurrent() throws LocationException {
-		List<Location> locations = new ArrayList<Location>();
-		try {
-			locations = locationDao.queryBuilder().where().eq("current_user", Boolean.FALSE).query(); 
-		} 
-		catch (SQLException sqle) {
-			Log.e(LOG_NAME, "Unable to read Locations", sqle);
-			throw new LocationException("Unable to read Locations.", sqle);
-		}
-		return locations;
-	}
-
 	@Override
 	public Location create(final Location pLocation) throws LocationException {
 		Log.i(LOG_NAME, "LocationBug create location");

@@ -13,6 +13,7 @@ import mil.nga.giat.mage.sdk.datastore.location.LocationHelper;
 import mil.nga.giat.mage.sdk.datastore.observation.Attachment;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
+import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.gson.deserializer.UserDeserializer;
@@ -72,39 +73,45 @@ public class MageServerPostRequests {
 		ObservationHelper observationHelper = ObservationHelper.getInstance(context);
 		Observation savedObservation = null;
 
+        Long currentEventId = EventHelper.getInstance(context).getCurrentEvent(context).getId();
+
 		HttpEntity entity = null;
 		HttpEntityEnclosingRequestBase request = null;
 		try {
-			String fieldObservationLayerId = MageServerGetRequests.getFieldObservationLayerId(context);
-			DefaultHttpClient httpClient = HttpClientManager.getInstance(context).getHttpClient();
+			if(currentEventId != null) {
+                String currentEventIdString = String.valueOf(currentEventId);
+                DefaultHttpClient httpClient = HttpClientManager.getInstance(context).getHttpClient();
 
-			URL serverURL = new URL(PreferenceHelper.getInstance(context).getValue(R.string.serverURLKey));
-			URI endpointUri = null;
+                URL serverURL = new URL(PreferenceHelper.getInstance(context).getValue(R.string.serverURLKey));
+                URI endpointUri = null;
 
-			if (observation.getRemoteId() == null || observation.getRemoteId().trim().isEmpty()) {
-				endpointUri = new URL(serverURL + "/FeatureServer/" + fieldObservationLayerId + "/features").toURI();
-				request = new HttpPost(endpointUri);
-			} else {
-				endpointUri = new URL(serverURL + "/FeatureServer/" + fieldObservationLayerId + "/features/" + observation.getRemoteId()).toURI();
-				request = new HttpPut(endpointUri);
-			}
-			request.addHeader("Content-Type", "application/json; charset=utf-8");
-			Gson gson = ObservationSerializer.getGsonBuilder();
-			request.setEntity(new StringEntity(gson.toJson(observation)));
+                if (observation.getRemoteId() == null || observation.getRemoteId().trim().isEmpty()) {
+                    endpointUri = new URL(serverURL + "/api/events/" + currentEventIdString + "/observations").toURI();
+                    request = new HttpPost(endpointUri);
+                } else {
+                    endpointUri = new URL(serverURL + "/api/events/" + currentEventIdString + "/observations/" + observation.getRemoteId()).toURI();
+                    request = new HttpPut(endpointUri);
+                }
+                request.addHeader("Content-Type", "application/json; charset=utf-8");
+                Gson gson = ObservationSerializer.getGsonBuilder(context);
+                request.setEntity(new StringEntity(gson.toJson(observation)));
 
-			HttpResponse response = httpClient.execute(request);
-			if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
-				entity = response.getEntity();
-				Observation returnedObservation = observationDeserializer.parseObservation(entity.getContent());
-				returnedObservation.setDirty(Boolean.FALSE);
-				returnedObservation.setId(observation.getId());
-				savedObservation = observationHelper.update(returnedObservation);
-			} else {
-				entity = response.getEntity();
-				String error = EntityUtils.toString(entity);
-				Log.e(LOG_NAME, "Bad request.");
-				Log.e(LOG_NAME, error);
-			}
+                HttpResponse response = httpClient.execute(request);
+                if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
+                    entity = response.getEntity();
+                    Observation returnedObservation = observationDeserializer.parseObservation(entity.getContent());
+                    returnedObservation.setDirty(Boolean.FALSE);
+                    returnedObservation.setId(observation.getId());
+                    savedObservation = observationHelper.update(returnedObservation);
+                } else {
+                    entity = response.getEntity();
+                    String error = EntityUtils.toString(entity);
+                    Log.e(LOG_NAME, "Bad request.");
+                    Log.e(LOG_NAME, error);
+                }
+            } else {
+                Log.e(LOG_NAME, "Could not post/put observation, because the event id was: " + String.valueOf(currentEventId));
+            }
 
 		} catch (Exception e) {
 			Log.e(LOG_NAME, "Failure pushing observation.", e);

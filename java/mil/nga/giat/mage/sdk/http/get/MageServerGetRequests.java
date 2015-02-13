@@ -79,7 +79,7 @@ public class MageServerGetRequests {
 			Long currentEventId = EventHelper.getInstance(context).getCurrentEvent(context).getId();
 			if (currentEventId != null) {
                 String currentEventIdString = String.valueOf(currentEventId);
-				URL observationIconsURL = new URL(serverURL, "/api/events/" + currentEventIdString + "/form.zip");
+				URL observationIconsURL = new URL(serverURL, "/api/events/" + currentEventIdString + "/form/icons.zip");
 				DefaultHttpClient httpclient = HttpClientManager.getInstance(context).getHttpClient();
 				Log.d(LOG_NAME, observationIconsURL.toString());
 				HttpGet get = new HttpGet(observationIconsURL.toURI());
@@ -216,51 +216,6 @@ public class MageServerGetRequests {
 		return layers;
 	}
 
-	private static Layer getFieldObservationLayer(Context context) {
-		Layer fieldObservationLayer = null;
-		List<Layer> layers = MageServerGetRequests.getFeatureLayers(context);
-		for (Layer layer : layers) {
-			if (layer.getName().equals("Field Observations")) {
-				fieldObservationLayer = layer;
-				break;
-			}
-		}
-
-		return fieldObservationLayer;
-	}
-
-	/**
-	 * Makes a GET request to the MAGE server for the Field Observation Form Id.
-	 * 
-	 * @param context
-	 * @return
-	 */
-	public static String getFieldObservationFormId(Context context) {
-		String fieldObservationFormId = null;
-		Layer fieldObservationLayer = getFieldObservationLayer(context);
-		if (fieldObservationLayer != null) {
-			fieldObservationFormId = fieldObservationLayer.getFormId();
-		}
-
-		return fieldObservationFormId;
-	}
-	
-	/**
-	 * Makes a GET request to the MAGE server for the Field Observation Layer Id.
-	 * 
-	 * @param context
-	 * @return
-	 */
-	public static String getFieldObservationLayerId(Context context) {
-		String fieldObservationLayerId = null;
-		Layer fieldObservationLayer = getFieldObservationLayer(context);
-		if (fieldObservationLayer != null) {
-			fieldObservationLayerId = fieldObservationLayer.getRemoteId();
-		}
-
-		return fieldObservationLayerId;
-	}
-
 	public static Collection<StaticFeature> getStaticFeatures(Context context, Layer layer) {
 		long start = 0;
 
@@ -269,7 +224,7 @@ public class MageServerGetRequests {
 		try {
 			URL serverURL = new URL(PreferenceHelper.getInstance(context).getValue(R.string.serverURLKey));
 
-			URL staticFeatureURL = new URL(serverURL, "/FeatureServer/" + layer.getRemoteId() + "/features");
+			URL staticFeatureURL = new URL(serverURL, "/api/layers/" + layer.getRemoteId());
 			DefaultHttpClient httpclient = HttpClientManager.getInstance(context).getHttpClient();
 			Log.d(LOG_NAME, staticFeatureURL.toString());
 			HttpGet get = new HttpGet(staticFeatureURL.toURI());
@@ -286,7 +241,7 @@ public class MageServerGetRequests {
 			}
 		} catch (Exception e) {
 			// this block should never flow exceptions up! Log for now.
-			Log.e(LOG_NAME, "There was a failure while retriving static features.", e);
+			Log.e(LOG_NAME, "There was a failure while retrieving static features.", e);
 		} finally {
 			try {
 				if (entity != null) {
@@ -316,35 +271,40 @@ public class MageServerGetRequests {
         DateFormat iso8601Format = DateFormatFactory.ISO8601();
 
         List<Observation> observations = new ArrayList<Observation>();
-		String fieldObservationLayerId = MageServerGetRequests.getFieldObservationLayerId(context);
+		Long currentEventId = EventHelper.getInstance(context).getCurrentEvent(context).getId();
 		HttpEntity entity = null;
 		try {
 			URL serverURL = new URL(PreferenceHelper.getInstance(context).getValue(R.string.serverURLKey));
 
-			ObservationHelper observationHelper = ObservationHelper.getInstance(context);
+            if(currentEventId != null) {
+                String currentEventIdString = String.valueOf(currentEventId);
+                ObservationHelper observationHelper = ObservationHelper.getInstance(context);
 
-			Date lastModifiedDate = observationHelper.getLatestCleanLastModified(context);
+                Date lastModifiedDate = observationHelper.getLatestCleanLastModified(context);
 
-			URL observationURL = new URL(serverURL, "/FeatureServer/" + fieldObservationLayerId + "/features");
-			Uri.Builder uriBuilder = Uri.parse(observationURL.toURI().toString()).buildUpon();
-			uriBuilder.appendQueryParameter("startDate", iso8601Format.format(lastModifiedDate));
+                URL observationURL = new URL(serverURL, "/api/events/" + currentEventIdString + "/observations");
+                Uri.Builder uriBuilder = Uri.parse(observationURL.toURI().toString()).buildUpon();
+                uriBuilder.appendQueryParameter("startDate", iso8601Format.format(lastModifiedDate));
 
-			DefaultHttpClient httpclient = HttpClientManager.getInstance(context).getHttpClient();
-			Log.d(LOG_NAME, "Fetching all observations after: " + iso8601Format.format(lastModifiedDate));
-			Log.d(LOG_NAME, uriBuilder.build().toString());
-			HttpGet get = new HttpGet(new URI(uriBuilder.build().toString()));
-			HttpResponse response = httpclient.execute(get);
+                DefaultHttpClient httpclient = HttpClientManager.getInstance(context).getHttpClient();
+                Log.d(LOG_NAME, "Fetching all observations after: " + iso8601Format.format(lastModifiedDate));
+                Log.d(LOG_NAME, uriBuilder.build().toString());
+                HttpGet get = new HttpGet(new URI(uriBuilder.build().toString()));
+                HttpResponse response = httpclient.execute(get);
 
-			if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
-				entity = response.getEntity();
-				start = System.currentTimeMillis();
-				observations = observationDeserializer.parseObservations(entity.getContent());
-			} else {
-				entity = response.getEntity();
-				String error = EntityUtils.toString(entity);
-				Log.e(LOG_NAME, "Bad request.");
-				Log.e(LOG_NAME, error);
-			}
+                if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
+                    entity = response.getEntity();
+                    start = System.currentTimeMillis();
+                    observations = observationDeserializer.parseObservations(entity.getContent());
+                } else {
+                    entity = response.getEntity();
+                    String error = EntityUtils.toString(entity);
+                    Log.e(LOG_NAME, "Bad request.");
+                    Log.e(LOG_NAME, error);
+                }
+            } else {
+                Log.e(LOG_NAME, "Could not pull the observations, because the event id was: " + String.valueOf(currentEventId));
+            }
 		} catch (Exception e) {
 			// this block should never flow exceptions up! Log for now.
 			Log.e(LOG_NAME, "There was a failure while performing an Observation Fetch opperation.", e);
@@ -387,7 +347,7 @@ public class MageServerGetRequests {
 				Log.e(LOG_NAME, error);
 			}
 		} catch (Exception e) {
-			Log.e(LOG_NAME, "There was a failure while performing an Location Fetch opperation.", e);
+			Log.e(LOG_NAME, "There was a failure while performing an Location Fetch operation.", e);
 		} finally {
 			try {
 				if (entity != null) {

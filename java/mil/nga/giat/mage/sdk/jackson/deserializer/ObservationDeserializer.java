@@ -38,21 +38,14 @@ public class ObservationDeserializer extends Deserializer {
 
 		JsonParser parser = factory.createParser(is);
 
-		if (parser.nextToken() != JsonToken.START_OBJECT)
-			return observations;
+		if (parser.nextToken() != JsonToken.START_ARRAY) {
+            return observations;
+        }
 
-		while (parser.nextToken() != JsonToken.END_OBJECT) {
-			String name = parser.getCurrentName();
-			if ("features".equals(name)) {
-				parser.nextToken();
-				while (parser.nextToken() != JsonToken.END_ARRAY) {
-					observations.add(parseObservation(parser));
-				}
-			} else {
-				parser.nextToken();
-				parser.skipChildren();
-			}
-		}
+
+        while (parser.nextToken() != JsonToken.END_ARRAY) {
+            observations.add(parseObservation(parser));
+        }
 
 		parser.close();
 		return observations;

@@ -74,7 +74,7 @@ public class LocationPushIntentService extends ConnectivityAwareIntentService {
 						// Delete location where:
 						// the user is current user
 						// the remote id is set. (have been sent to server)
-						// past the lower n ammount!
+						// past the lower n amount!
 						try {
 							if (currentUser != null) {
 								Dao<Location, Long> locationDao = DaoStore.getInstance(getApplicationContext()).getLocationDao();
