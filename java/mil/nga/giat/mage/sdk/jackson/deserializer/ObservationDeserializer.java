@@ -23,6 +23,7 @@ import mil.nga.giat.mage.sdk.datastore.observation.Attachment;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationGeometry;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationProperty;
+import mil.nga.giat.mage.sdk.datastore.user.Event;
 import mil.nga.giat.mage.sdk.utils.DateFormatFactory;
 
 public class ObservationDeserializer extends Deserializer {
@@ -33,6 +34,12 @@ public class ObservationDeserializer extends Deserializer {
 	private AttachmentDeserializer attachmentDeserializer = new AttachmentDeserializer();
 	private DateFormat iso8601Format = DateFormatFactory.ISO8601();
 
+    private Event event = null;
+
+    public ObservationDeserializer(Event event) {
+        this.event = event;
+    }
+
 	public List<Observation> parseObservations(InputStream is) throws JsonParseException, IOException {
 		List<Observation> observations = new ArrayList<Observation>();
 
@@ -41,7 +48,6 @@ public class ObservationDeserializer extends Deserializer {
 		if (parser.nextToken() != JsonToken.START_ARRAY) {
             return observations;
         }
-
 
         while (parser.nextToken() != JsonToken.END_ARRAY) {
             observations.add(parseObservation(parser));
@@ -63,6 +69,7 @@ public class ObservationDeserializer extends Deserializer {
 
 	private Observation parseObservation(JsonParser parser) throws JsonParseException, IOException {
 		Observation observation = new Observation();
+        observation.setEvent(event);
 
 		if (parser.getCurrentToken() != JsonToken.START_OBJECT)
 			return observation;

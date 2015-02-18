@@ -65,7 +65,6 @@ import mil.nga.giat.mage.sdk.utils.ZipUtility;
 public class MageServerGetRequests {
 
 	private static final String LOG_NAME = MageServerGetRequests.class.getName();
-	private static ObservationDeserializer observationDeserializer = new ObservationDeserializer();
 	private static StaticFeatureDeserializer featureDeserializer = new StaticFeatureDeserializer();
 	private static LocationDeserializer locationDeserializer = new LocationDeserializer();
 
@@ -271,7 +270,8 @@ public class MageServerGetRequests {
         DateFormat iso8601Format = DateFormatFactory.ISO8601();
 
         List<Observation> observations = new ArrayList<Observation>();
-		Long currentEventId = EventHelper.getInstance(context).getCurrentEvent(context).getId();
+        Event currentEvent = EventHelper.getInstance(context).getCurrentEvent(context);
+        Long currentEventId = currentEvent.getId();
 		HttpEntity entity = null;
 		try {
 			URL serverURL = new URL(PreferenceHelper.getInstance(context).getValue(R.string.serverURLKey));
@@ -295,7 +295,7 @@ public class MageServerGetRequests {
                 if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
                     entity = response.getEntity();
                     start = System.currentTimeMillis();
-                    observations = observationDeserializer.parseObservations(entity.getContent());
+                    observations = new ObservationDeserializer(currentEvent).parseObservations(entity.getContent());
                 } else {
                     entity = response.getEntity();
                     String error = EntityUtils.toString(entity);

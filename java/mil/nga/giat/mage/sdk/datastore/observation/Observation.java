@@ -8,6 +8,7 @@ import java.util.Map;
 
 import mil.nga.giat.mage.sdk.Temporal;
 import mil.nga.giat.mage.sdk.datastore.common.State;
+import mil.nga.giat.mage.sdk.datastore.user.Event;
 
 import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.apache.commons.lang3.builder.EqualsBuilder;
@@ -61,6 +62,9 @@ public class Observation implements Comparable<Observation>, Temporal {
     @DatabaseField(canBeNull = false, foreign = true, foreignAutoRefresh = true)
     private ObservationGeometry observationGeometry;
 
+    @DatabaseField(canBeNull = false, foreign = true, foreignAutoRefresh = true)
+    private Event event;
+
     @ForeignCollectionField(eager = true)
     private Collection<ObservationProperty> properties = new ArrayList<ObservationProperty>();
 
@@ -71,12 +75,12 @@ public class Observation implements Comparable<Observation>, Temporal {
         // ORMLite needs a no-arg constructor
     }
 
-    public Observation(ObservationGeometry observationGeometry, Collection<ObservationProperty> pProperties, Collection<Attachment> pAttachments, Date timestamp) {
-        this(null, null, observationGeometry, pProperties, pAttachments, timestamp);
+    public Observation(ObservationGeometry observationGeometry, Collection<ObservationProperty> pProperties, Collection<Attachment> pAttachments, Date timestamp, Event event) {
+        this(null, null, observationGeometry, pProperties, pAttachments, timestamp, event);
         this.dirty = true;
     }
 
-    public Observation(String remoteId, Date lastModified, ObservationGeometry observationGeometry, Collection<ObservationProperty> pProperties, Collection<Attachment> pAttachments, Date timestamp) {
+    public Observation(String remoteId, Date lastModified, ObservationGeometry observationGeometry, Collection<ObservationProperty> pProperties, Collection<Attachment> pAttachments, Date timestamp, Event event) {
         super();
         this.remoteId = remoteId;
         this.lastModified = lastModified;
@@ -85,6 +89,7 @@ public class Observation implements Comparable<Observation>, Temporal {
         this.attachments = pAttachments;
         this.dirty = false;
         this.timestamp = timestamp;
+        this.event = event;
     }
 
     public Long getId() {
@@ -141,6 +146,14 @@ public class Observation implements Comparable<Observation>, Temporal {
 
     public void setObservationGeometry(ObservationGeometry observationGeometry) {
         this.observationGeometry = observationGeometry;
+    }
+
+    public Event getEvent() {
+        return event;
+    }
+
+    public void setEvent(Event event) {
+        this.event = event;
     }
 
     public Date getLastModified() {

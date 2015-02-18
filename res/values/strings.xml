@@ -5,6 +5,7 @@
     <string name="databaseVersionKey">databaseVersion</string>
     <string name="buildVersionKey">buildVersion</string>
     <string name="usernameKey">username</string>
+    <string name="currenteventKey">currentevent</string>
     <string name="passwordHashKey">passwordHash</string>
     <string name="serverURLKey">serverURL</string>
     <string name="loginTaskKey">loginTask</string>

@@ -121,12 +121,12 @@ public class EventHelper extends DaoHelper<Event> {
             Event oldEvent = read(event.getRemoteId());
             if (oldEvent == null) {
                 event = create(event);
-                Log.d(LOG_NAME, "Created team with remote_id " + event.getRemoteId());
+                Log.d(LOG_NAME, "Created event with remote_id " + event.getRemoteId());
             } else {
                 // perform update?
                 event.setId(oldEvent.getId());
                 update(event);
-                Log.d(LOG_NAME, "Updated user with remote_id " + event.getRemoteId());
+                Log.d(LOG_NAME, "Updated event with remote_id " + event.getRemoteId());
             }
         } catch (EventException ee) {
             Log.e(LOG_NAME, "There was a problem reading user: " + event, ee);
@@ -134,7 +134,7 @@ public class EventHelper extends DaoHelper<Event> {
         return event;
     }
 
-    public List<Event> getEventsByTeam(User pTeam) {
+    public List<Event> getEventsByTeam(Team pTeam) {
         List<Event> events = new ArrayList<Event>();
         try {
             QueryBuilder<TeamEvent, Long> teamEventQuery = teamEventDao.queryBuilder();

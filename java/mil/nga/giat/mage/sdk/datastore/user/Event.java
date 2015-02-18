@@ -2,6 +2,7 @@ package mil.nga.giat.mage.sdk.datastore.user;
 
 import java.util.Date;
 
+import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
 import com.google.gson.JsonObject;
@@ -71,5 +72,25 @@ public class Event {
 	public String toString() {
 		return ToStringBuilder.reflectionToString(this);
 	}
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((remoteId == null) ? 0 : remoteId.hashCode());
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        Event other = (Event) obj;
+        return new EqualsBuilder().append(remoteId, other.remoteId).isEquals();
+    }
 
 }

@@ -13,6 +13,7 @@ import mil.nga.giat.mage.sdk.datastore.location.LocationHelper;
 import mil.nga.giat.mage.sdk.datastore.observation.Attachment;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
+import mil.nga.giat.mage.sdk.datastore.user.Event;
 import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
@@ -56,8 +57,7 @@ import com.google.gson.reflect.TypeToken;
 public class MageServerPostRequests {
 
 	private static final String LOG_NAME = MageServerPostRequests.class.getName();
-	
-    private static ObservationDeserializer observationDeserializer = new ObservationDeserializer();
+
     private static AttachmentDeserializer attachmentDeserializer = new AttachmentDeserializer();
     private static LocationDeserializer locationDeserializer = new LocationDeserializer();
 
@@ -73,7 +73,8 @@ public class MageServerPostRequests {
 		ObservationHelper observationHelper = ObservationHelper.getInstance(context);
 		Observation savedObservation = null;
 
-        Long currentEventId = EventHelper.getInstance(context).getCurrentEvent(context).getId();
+        Event currentEvent = EventHelper.getInstance(context).getCurrentEvent(context);
+        Long currentEventId = currentEvent.getId();
 
 		HttpEntity entity = null;
 		HttpEntityEnclosingRequestBase request = null;
@@ -99,7 +100,7 @@ public class MageServerPostRequests {
                 HttpResponse response = httpClient.execute(request);
                 if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
                     entity = response.getEntity();
-                    Observation returnedObservation = observationDeserializer.parseObservation(entity.getContent());
+                    Observation returnedObservation = new ObservationDeserializer(currentEvent).parseObservation(entity.getContent());
                     returnedObservation.setDirty(Boolean.FALSE);
                     returnedObservation.setId(observation.getId());
                     savedObservation = observationHelper.update(returnedObservation);
@@ -121,6 +122,7 @@ public class MageServerPostRequests {
 					entity.consumeContent();
 				}
 			} catch (Exception e) {
+                Log.w(LOG_NAME, "Trouble cleaning up after POST request.", e);
 			}
 		}
 		return savedObservation;
@@ -177,6 +179,7 @@ public class MageServerPostRequests {
 					entity.consumeContent();
 				}
 			} catch (Exception e) {
+                Log.w(LOG_NAME, "Trouble cleaning up after POST request.", e);
 			}
 		}
 		return attachment;
@@ -244,6 +247,7 @@ public class MageServerPostRequests {
 					entity.consumeContent();
 				}
 			} catch (Exception e) {
+                Log.w(LOG_NAME, "Trouble cleaning up after POST request.", e);
 			}
 		}
 		return user;
@@ -293,10 +297,49 @@ public class MageServerPostRequests {
 	                entity.consumeContent();
 	            }
 	        } catch (Exception e) {
-	            Log.w(LOG_NAME, "Trouble cleaning up after GET request.", e);
+	            Log.w(LOG_NAME, "Trouble cleaning up after POST request.", e);
 	        }
 		}
 		return status;
 	}
 
+    public static Boolean postCurrentUsersRecentEvent(Event event, Context context) {
+        Boolean status = false;
+        HttpEntity entity = null;
+        try {
+            UserHelper userHelper = UserHelper.getInstance(context);
+            User currentUser = userHelper.readCurrentUser();
+
+            URL serverURL = new URL(PreferenceHelper.getInstance(context).getValue(R.string.serverURLKey));
+            URI endpointUri = new URL(serverURL + "/api/users/" + currentUser.getRemoteId() + "/events/" + event.getRemoteId() + "/recent").toURI();
+
+            DefaultHttpClient httpClient = HttpClientManager.getInstance(context).getHttpClient();
+            HttpPost request = new HttpPost(endpointUri);
+            request.addHeader("Content-Type", "application/json; charset=utf-8");
+
+            HttpResponse response = httpClient.execute(request);
+            if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
+                // update the local user
+                currentUser.setCurrentEvent(event);
+                userHelper.createOrUpdate(currentUser);
+                status = true;
+            } else {
+                entity = response.getEntity();
+                String error = EntityUtils.toString(entity);
+                Log.e(LOG_NAME, "Bad request.");
+                Log.e(LOG_NAME, error);
+            }
+        } catch (Exception e) {
+            Log.e(LOG_NAME, "Failure posting user's recent event.", e);
+        } finally {
+            try {
+                if (entity != null) {
+                    entity.consumeContent();
+                }
+            } catch (Exception e) {
+                Log.w(LOG_NAME, "Trouble cleaning up after POST request.", e);
+            }
+        }
+        return status;
+    }
 }
