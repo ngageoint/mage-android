@@ -287,9 +287,8 @@ public class LandingActivity extends Activity implements ListView.OnItemClickLis
         if (itemToSwitchTo.getFragment() == null) {
             switch (itemToSwitchTo.getId()) {
 			case 5: {
-				UserUtility.getInstance(getApplicationContext()).clearTokenInformation();
+                ((MAGE)getApplication()).onLogout(true);
                 startActivity(new Intent(getApplicationContext(), LoginActivity.class));
-                ((MAGE)getApplication()).onLogout();
                 finish();
                 return;
             }
@@ -344,7 +343,7 @@ public class LandingActivity extends Activity implements ListView.OnItemClickLis
 		}).setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
 			public void onClick(DialogInterface dialog, int which) {
 				// stop doing stuff
-				((MAGE) getApplication()).onLogout();
+				((MAGE) getApplication()).onLogout(false);
 
 				if (seletedItems.contains(0)) {
 					// delete database

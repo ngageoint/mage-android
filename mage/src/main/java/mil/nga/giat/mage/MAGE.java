@@ -37,6 +37,7 @@ import mil.nga.giat.mage.sdk.fetch.StaticFeatureServerFetch;
 import mil.nga.giat.mage.sdk.glide.MageDiskCache;
 import mil.nga.giat.mage.sdk.glide.MageUrlLoader;
 import mil.nga.giat.mage.sdk.http.client.HttpClientManager;
+import mil.nga.giat.mage.sdk.http.post.MageServerPostRequests;
 import mil.nga.giat.mage.sdk.location.LocationService;
 import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
 import mil.nga.giat.mage.sdk.push.AttachmentPushAlarmReceiver;
@@ -122,13 +123,27 @@ public class MAGE extends MultiDexApplication implements IUserEventListener {
 		new Thread(runnable).start();
 	}
 
-	public void onLogout() {
+	public void onLogout(Boolean clearTokenInformationAndSendLogoutRequest) {
 		destroyFetching();
 		destroyPushing();
 		destroyLocationService();
 		NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 		notificationManager.cancel(MAGE_NOTIFICATION_ID);
         notificationManager.cancel(ObservationNotificationListener.OBSERVATION_NOTIFICATION_ID);
+
+        if(clearTokenInformationAndSendLogoutRequest) {
+            Runnable runnable = new Runnable() {
+                @Override
+                public void run() {
+                    if(!MageServerPostRequests.logout(getApplicationContext())) {
+                        Log.e(LOG_NAME, "Unable to logout from server.");
+                    }
+                }
+            };
+            new Thread(runnable).start();
+
+            UserUtility.getInstance(getApplicationContext()).clearTokenInformation();
+        }
 
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
         SharedPreferences.Editor editor = sharedPreferences.edit();

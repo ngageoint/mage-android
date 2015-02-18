@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
@@ -8,57 +8,150 @@
     android:fillViewport="true"
     android:background="@drawable/mage_gradient">
 
-    <TextView
-        android:id="@+id/event_participate_in_label"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:gravity="center"
-        android:paddingTop="20dip"
-        android:paddingBottom="20dip"
-        android:text="Welcome to MAGE"
-        android:textColor="#EEEEEE"
-        android:textSize="26sp" />
 
-    <TextView
-        android:id="@+id/event_info"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/event_participate_in_label"
-        android:paddingTop="20dip"
-        android:paddingBottom="20dip"
-        android:text="You are part of multiple events.  The observations you create and your reported location will be part of the selected event.  You can change your event at anytime within MAGE."
-        android:textColor="#EEEEEE" />
-
-    <TextView
-        android:id="@+id/event_info_select"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/event_info"
-        android:paddingBottom="20dip"
-        android:text="Please select an event:"
-        android:textColor="#EEEEEE" />
-
-
-    <RadioGroup
-        android:id="@+id/event_radiogroup"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/event_info_select"
-        android:paddingBottom="20dip"
-        android:layout_gravity="left">
-    </RadioGroup>
-
-    <Button
-        android:id="@+id/event_continue_button"
+    <LinearLayout
+        android:id="@+id/event_status"
         android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="10dip"
-        android:layout_marginBottom="10dip"
-        android:background="@drawable/login_button_states"
-        android:onClick="chooseEvent"
-        android:layout_below="@id/event_radiogroup"
-        android:text="Go"
-        android:textColor="#def3ff"
-        android:textSize="26sp" />
+        android:layout_height="fill_parent"
+        android:orientation="vertical"
+        android:background="@drawable/mage_gradient" >
 
-</RelativeLayout>
+        <include
+            android:id="@+id/login_header"
+            layout="@layout/mage_header" />
+
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="fill_parent"
+            android:layout_gravity="center_horizontal|center_vertical"
+            android:gravity="center_horizontal|center_vertical"
+            android:orientation="vertical" >
+            <LinearLayout
+                android:layout_width="150dip"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+                <ImageView
+                    android:layout_width="wrap_content"
+                    android:layout_height="76dip"
+                    android:src="@drawable/ic_launcher"/>
+                <ProgressBar
+                    style="?android:attr/progressBarStyleLarge"
+                    android:indeterminateDrawable="@drawable/mage_progress_bar"
+                    android:layout_width="fill_parent"
+                    android:layout_height="76dip" />
+            </LinearLayout>
+            <TextView
+                android:id="@+id/event_message"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="sans-serif-light"
+                android:text="Loading..."
+                android:textColor="#EEEEEE"
+                android:textSize="26sp" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/event_content"
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="fill_parent"
+        android:visibility="gone">
+
+        <TextView
+            android:id="@+id/event_welcome_label"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:paddingTop="20dip"
+            android:paddingBottom="20dip"
+            android:text="Welcome to MAGE"
+            android:textColor="#EEEEEE"
+            android:textSize="26sp" />
+
+        <RelativeLayout
+            android:id="@+id/event_select_content"
+            android:layout_below="@id/event_welcome_label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+
+            <TextView
+                android:id="@+id/event_info"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingTop="20dip"
+                android:paddingBottom="20dip"
+                android:text="You are part of multiple events.  The observations you create and your reported location will be part of the selected event.  You can change your event at anytime within MAGE."
+                android:textColor="#EEEEEE" />
+
+            <TextView
+                android:id="@+id/event_info_select"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/event_info"
+                android:paddingBottom="20dip"
+                android:text="Please select an event:"
+                android:textColor="#EEEEEE" />
+
+
+            <RadioGroup
+                android:id="@+id/event_radiogroup"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/event_info_select"
+                android:paddingBottom="20dip"
+                android:layout_gravity="left">
+            </RadioGroup>
+        </RelativeLayout>
+
+        <TextView
+            android:id="@+id/event_bummer_info"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/event_welcome_label"
+            android:paddingTop="20dip"
+            android:paddingBottom="20dip"
+            android:text="You are not in any events.  You must be part of an event to use MAGE.  Contact your administrator to be added to an event."
+            android:textColor="#EEEEEE"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/event_serverproblem_info"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/event_welcome_label"
+            android:paddingTop="20dip"
+            android:paddingBottom="20dip"
+            android:text="There was a problem getting your information from the server.  Check your connection and try again later."
+            android:textColor="#EEEEEE"
+            android:visibility="gone" />
+
+        <Button
+            android:id="@+id/event_continue_button"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dip"
+            android:layout_marginBottom="10dip"
+            android:background="@drawable/login_button_states"
+            android:onClick="chooseEvent"
+            android:layout_below="@id/event_select_content"
+            android:text="Go"
+            android:textColor="#def3ff"
+            android:textSize="26sp" />
+
+        <Button
+            android:id="@+id/event_back_button"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dip"
+            android:layout_marginBottom="10dip"
+            android:background="@drawable/login_button_states"
+            android:onClick="bummerEvent"
+            android:layout_below="@id/event_bummer_info"
+            android:text="Bummer"
+            android:textColor="#def3ff"
+            android:textSize="26sp"
+            android:visibility="gone" />
+    </LinearLayout>
+</LinearLayout>

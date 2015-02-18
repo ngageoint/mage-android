@@ -32,16 +32,11 @@ import com.google.android.gms.common.GooglePlayServicesUtil;
 
 import org.apache.commons.lang3.StringUtils;
 
-import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
-import mil.nga.giat.mage.LandingActivity;
 import mil.nga.giat.mage.MAGE;
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.disclaimer.DisclaimerActivity;
@@ -53,6 +48,7 @@ import mil.nga.giat.mage.sdk.login.AccountDelegate;
 import mil.nga.giat.mage.sdk.login.AccountStatus;
 import mil.nga.giat.mage.sdk.login.LoginTaskFactory;
 import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
+import mil.nga.giat.mage.sdk.utils.PasswordUtility;
 import mil.nga.giat.mage.sdk.utils.UserUtility;
 
 /**
@@ -87,8 +83,7 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 		super.onCreate(savedInstanceState);
 		
 		if (getIntent().getBooleanExtra("LOGOUT", false)) {
-			UserUtility.getInstance(getApplicationContext()).clearTokenInformation();
-			((MAGE) getApplication()).onLogout();
+			((MAGE) getApplication()).onLogout(true);
 		}
 
 		// IMPORTANT: load the configuration from preferences files and server
@@ -99,10 +94,8 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 		
 		// check if the database needs to be upgraded, and if so log them out
 		if (DaoStore.DATABASE_VERSION != sharedPreferences.getInt(getResources().getString(R.string.databaseVersionKey), 0)) {
-			UserUtility.getInstance(getApplicationContext()).clearTokenInformation();
-			((MAGE) getApplication()).onLogout();
+			((MAGE) getApplication()).onLogout(true);
 		}
-		
 		
 		Editor e = sharedPreferences.edit();
 		e.putInt(getResources().getString(R.string.databaseVersionKey), DaoStore.DATABASE_VERSION);
@@ -140,9 +133,7 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 
 		// if token is not expired, then skip the login module
 		if (!UserUtility.getInstance(getApplicationContext()).isTokenExpired()) {
-			startActivity(new Intent(getApplicationContext(), LandingActivity.class));
-			((MAGE) getApplication()).onLogin();
-			finish();
+            startNextActivityAndFinish();
 		}
 
 		// no title bar
@@ -387,12 +378,10 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 			Editor sp = PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).edit();
 			sp.putString(getApplicationContext().getString(R.string.usernameKey), getUsernameEditText().getText().toString()).commit();
 			try {
-				String md5Password = Arrays.toString(MessageDigest.getInstance("MD5").digest(getPasswordEditText().getText().toString().getBytes("UTF-8")));
-				sp.putString(getApplicationContext().getString(R.string.passwordHashKey), md5Password).commit();
-			} catch (NoSuchAlgorithmException nsae) {
-				nsae.printStackTrace();
-			} catch (UnsupportedEncodingException uee) {
-				uee.printStackTrace();
+				String hashedPassword = PasswordUtility.getSaltedHash(getPasswordEditText().getText().toString());
+				sp.putString(getApplicationContext().getString(R.string.passwordHashKey), hashedPassword).commit();
+			} catch (Exception e) {
+                Log.e(LOG_NAME, "Could not hash password", e);
 			}
 
             // remove the slashes at the end, and store the serverURL
@@ -457,7 +446,6 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 	}
 
     public void startNextActivityAndFinish() {
-
         startActivity(new Intent(getApplicationContext(), EventActivity.class));
         finish();
     }
@@ -467,11 +455,10 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 		super.onResume();
 
 		if (getIntent().getBooleanExtra("LOGOUT", false)) {
-			UserUtility.getInstance(getApplicationContext()).clearTokenInformation();
-			((MAGE) getApplication()).onLogout();
+			((MAGE) getApplication()).onLogout(true);
 		}
 
-		// TODO : populate username and password from preferences?
+		// TODO : populate username from preferences?
 		showKeyboard();
 		// show form, and hide spinner
 		findViewById(R.id.login_status).setVisibility(View.GONE);

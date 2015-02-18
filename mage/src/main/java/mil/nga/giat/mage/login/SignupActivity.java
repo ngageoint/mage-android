@@ -196,8 +196,7 @@ public class SignupActivity extends Activity implements AccountDelegate {
 	 * @param view
 	 */
 	public void login(View view) {
-		Intent intent = new Intent(getApplicationContext(), LoginActivity.class);
-		startActivity(intent);
+		startActivity(new Intent(getApplicationContext(), LoginActivity.class));
 		finish();
 	}
 
