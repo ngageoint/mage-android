@@ -342,4 +342,40 @@ public class MageServerPostRequests {
         }
         return status;
     }
+
+
+    public static Boolean logout(Context context) {
+        Boolean status = false;
+        HttpEntity entity = null;
+        try {
+
+            URL serverURL = new URL(PreferenceHelper.getInstance(context).getValue(R.string.serverURLKey));
+            URI endpointUri = new URL(serverURL + "/api/logout").toURI();
+
+            DefaultHttpClient httpClient = HttpClientManager.getInstance(context).getHttpClient();
+            HttpPost request = new HttpPost(endpointUri);
+            request.addHeader("Content-Type", "application/json; charset=utf-8");
+
+            HttpResponse response = httpClient.execute(request);
+            if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
+                status = true;
+            } else {
+                entity = response.getEntity();
+                String error = EntityUtils.toString(entity);
+                Log.e(LOG_NAME, "Bad request.");
+                Log.e(LOG_NAME, error);
+            }
+        } catch (Exception e) {
+            Log.e(LOG_NAME, "Failure logging out of server.", e);
+        } finally {
+            try {
+                if (entity != null) {
+                    entity.consumeContent();
+                }
+            } catch (Exception e) {
+                Log.w(LOG_NAME, "Trouble cleaning up after POST request.", e);
+            }
+        }
+        return status;
+    }
 }

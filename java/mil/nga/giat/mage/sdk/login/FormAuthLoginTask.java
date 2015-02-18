@@ -47,6 +47,7 @@ import mil.nga.giat.mage.sdk.http.client.HttpClientManager;
 import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
 import mil.nga.giat.mage.sdk.utils.DateFormatFactory;
 import mil.nga.giat.mage.sdk.utils.DeviceUuidFactory;
+import mil.nga.giat.mage.sdk.utils.PasswordUtility;
 
 /**
  * Performs login to specified server with username and password. TODO: Should
@@ -87,27 +88,32 @@ public class FormAuthLoginTask extends AbstractAccountTask {
 
         // Make sure you have connectivity
 		if (!ConnectivityUtility.isOnline(mApplicationContext)) {
-
+            // disconnected login?
 			try {
 				String oldUsername = PreferenceHelper.getInstance(mApplicationContext).getValue(R.string.usernameKey);
 				String serverURLPref = PreferenceHelper.getInstance(mApplicationContext).getValue(R.string.serverURLKey);
 				String oldPasswordHash = PreferenceHelper.getInstance(mApplicationContext).getValue(R.string.passwordHashKey);
-				String md5Password = Arrays.toString(MessageDigest.getInstance("MD5").digest(password.getBytes("UTF-8")));
-				if (oldUsername != null && oldPasswordHash != null && !oldPasswordHash.trim().isEmpty() && oldUsername.equals(username) && md5Password.equals(oldPasswordHash) && serverURL.equals(serverURLPref)) {
-                    // put the token expiration information in the shared preferences
-                    long tokenExpirationLength = sharedPreferences.getLong(mApplicationContext.getString(R.string.tokenExpirationLengthKey), 0);
-                    Date tokenExpiration = new Date(System.currentTimeMillis() + tokenExpirationLength);
-                    sharedPreferences.edit().putString(mApplicationContext.getString(R.string.tokenExpirationDateKey), iso8601Format.format(tokenExpiration)).commit();
+				if (oldUsername != null && oldPasswordHash != null && !oldPasswordHash.trim().isEmpty()) {
+                    if(oldUsername.equals(username) && serverURL.equals(serverURLPref) && PasswordUtility.check(password, oldPasswordHash)) {
+                        // put the token expiration information in the shared preferences
+                        long tokenExpirationLength = sharedPreferences.getLong(mApplicationContext.getString(R.string.tokenExpirationLengthKey), 0);
+                        Date tokenExpiration = new Date(System.currentTimeMillis() + tokenExpirationLength);
+                        sharedPreferences.edit().putString(mApplicationContext.getString(R.string.tokenExpirationDateKey), iso8601Format.format(tokenExpiration)).commit();
 
-					return new AccountStatus(AccountStatus.Status.DISCONNECTED_LOGIN, new ArrayList<Integer>(), new ArrayList<String>(), null);
+                        return new AccountStatus(AccountStatus.Status.DISCONNECTED_LOGIN);
+                    } else {
+                        return new AccountStatus(AccountStatus.Status.FAILED_LOGIN);
+                    }
 				}
-			} catch (NoSuchAlgorithmException nsae) {
-				nsae.printStackTrace();
-			} catch (UnsupportedEncodingException uee) {
-				uee.printStackTrace();
+			} catch (Exception e) {
+                Log.e(LOG_NAME, "Could not hash password", e);
 			}
 
-			return new AccountStatus(AccountStatus.Status.FAILED_LOGIN);
+            List<Integer> errorIndices = new ArrayList<Integer>();
+            errorIndices.add(2);
+            List<String> errorMessages = new ArrayList<String>();
+            errorMessages.add("No connection.");
+			return new AccountStatus(AccountStatus.Status.FAILED_LOGIN, errorIndices, errorMessages);
 		}
 
 		String uuid = new DeviceUuidFactory(mApplicationContext).getDeviceUuid().toString();
@@ -257,7 +263,7 @@ public class FormAuthLoginTask extends AbstractAccountTask {
 				}
 			}
 		} catch (Exception e) {
-			Log.e(LOG_NAME, "Problem logining in.", e);
+			Log.e(LOG_NAME, "Problem logging in.", e);
 		} finally {
 			try {
 				if (entity != null) {
@@ -310,40 +316,4 @@ public class FormAuthLoginTask extends AbstractAccountTask {
 		
 		return AccountStatus.Status.FAILED_LOGIN;
 	}
-
-    @Override
-    protected void onPostExecute(final AccountStatus accountStatus) {
-        // at this point, the user has been created. pull the initial roles, events, etc.
-        if (accountStatus.getStatus().equals(AccountStatus.Status.SUCCESSFUL_LOGIN)) {
-
-            BroadcastReceiver initialFetchReceiver = new BroadcastReceiver() {
-                @Override
-                public void onReceive(Context context, Intent intent) {
-                    LocalBroadcastManager.getInstance(mApplicationContext).unregisterReceiver(this);
-
-                    if (intent.getBooleanExtra("status", false)) {
-                        FormAuthLoginTask.super.onPostExecute(accountStatus);
-                    } else {
-                        List<Integer> errorIndices = new ArrayList<Integer>();
-                        errorIndices.add(2);
-                        List<String> errorMessages = new ArrayList<String>();
-                        errorMessages.add("Error initializing");
-                        FormAuthLoginTask.super.onPostExecute(new AccountStatus(AccountStatus.Status.FAILED_LOGIN, errorIndices, errorMessages));
-                    }
-                }
-
-            };
-
-            // receive response from initial pull
-            IntentFilter statusIntentFilter = new IntentFilter(InitialFetchIntentService.InitialFetchIntentServiceAction);
-            statusIntentFilter.addCategory(Intent.CATEGORY_DEFAULT);
-
-            LocalBroadcastManager.getInstance(mApplicationContext).registerReceiver(initialFetchReceiver, statusIntentFilter);
-
-            Intent initialFetchIntent = new Intent(mApplicationContext, InitialFetchIntentService.class);
-            mApplicationContext.startService(initialFetchIntent);
-        } else {
-            FormAuthLoginTask.super.onPostExecute(accountStatus);
-        }
-    }
 }

@@ -76,6 +76,33 @@ public class RoleHelper extends DaoHelper<Role> {
 		}
 		return createdRole;
 	}
+
+    public void update(Role pRole) throws RoleException {
+        try {
+            roleDao.update(pRole);
+        } catch (SQLException sqle) {
+            Log.e(LOG_NAME, "There was a problem creating role: " + pRole);
+            throw new RoleException("There was a problem creating role: " + pRole, sqle);
+        }
+    }
+
+    public Role createOrUpdate(Role role) {
+        try {
+            Role oldRole = read(role.getRemoteId());
+            if (oldRole == null) {
+                role = create(role);
+                Log.d(LOG_NAME, "Created role with remote_id " + role.getRemoteId());
+            } else {
+                // perform update?
+                role.setId(oldRole.getId());
+                update(role);
+                Log.d(LOG_NAME, "Updated role with remote_id " + role.getRemoteId());
+            }
+        } catch (RoleException re) {
+            Log.e(LOG_NAME, "There was a problem reading role: " + role, re);
+        }
+        return role;
+    }
 	
 	public void deleteAll() throws RoleException {
 		try {

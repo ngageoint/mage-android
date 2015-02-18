@@ -11,7 +11,7 @@ import com.j256.ormlite.table.DatabaseTable;
 public class Role {
 
 	@DatabaseField(generatedId = true)
-	private Long pk_id;
+	private Long _id;
 
 	@DatabaseField(unique = true, columnName = "remote_id")
 	private String remoteId;
@@ -37,9 +37,13 @@ public class Role {
 		this.permissions = permissions;
 	}
 
-	public Long getPk_id() {
-		return pk_id;
-	}
+    public Long getId() {
+        return _id;
+    }
+
+    public void setId(Long _id) {
+        this._id = _id;
+    }
 
 	public String getRemoteId() {
 		return remoteId;

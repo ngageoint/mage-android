@@ -111,15 +111,8 @@ public class InitialFetchIntentService extends ConnectivityAwareIntentService {
                     if (isCanceled) {
                         break;
                     }
-                    try {
-                        if (role != null) {
-                            if (roleHelper.read(role.getRemoteId()) == null) {
-                                role = roleHelper.create(role);
-                            }
-                        }
-                    } catch (Exception e) {
-                        Log.e(LOG_NAME, "There was a failure while performing an role fetch operation.", e);
-                        continue;
+                    if (role != null) {
+                        role = roleHelper.createOrUpdate(role);
                     }
                 }
                 didFetchRoles = Boolean.TRUE;

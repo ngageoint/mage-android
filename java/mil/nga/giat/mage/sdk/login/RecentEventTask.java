@@ -37,12 +37,12 @@ public class RecentEventTask extends AbstractAccountTask {
             // tell the server and update the local store
             if(ConnectivityUtility.isOnline(mApplicationContext) && !LoginTaskFactory.getInstance(mApplicationContext).isLocalLogin()) {
                 if(MageServerPostRequests.postCurrentUsersRecentEvent(userRecentEvent, mApplicationContext)) {
-                    return new AccountStatus(AccountStatus.Status.SUCCESSFUL_LOGIN, new ArrayList<Integer>(), new ArrayList<String>());
+                    return new AccountStatus(AccountStatus.Status.SUCCESSFUL_LOGIN);
                 }
             }
         } catch(EventException ee) {
             Log.e(LOG_NAME, "Unable to get current event.");
         }
-        return new AccountStatus(AccountStatus.Status.FAILED_LOGIN, new ArrayList<Integer>(), new ArrayList<String>());
+        return new AccountStatus(AccountStatus.Status.FAILED_LOGIN);
     }
 }
