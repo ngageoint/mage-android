@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:paddingLeft="24dip"
+    android:paddingRight="24dip"
+    android:fillViewport="true"
+    android:background="@drawable/mage_gradient">
+
+    <TextView
+        android:id="@+id/event_participate_in_label"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:paddingTop="20dip"
+        android:paddingBottom="20dip"
+        android:text="Welcome to MAGE"
+        android:textColor="#EEEEEE"
+        android:textSize="26sp" />
+
+    <TextView
+        android:id="@+id/event_info"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/event_participate_in_label"
+        android:paddingTop="20dip"
+        android:paddingBottom="20dip"
+        android:text="You are part of multiple events.  The observations you create and your reported location will be part of the selected event.  You can change your event at anytime within MAGE."
+        android:textColor="#EEEEEE" />
+
+    <TextView
+        android:id="@+id/event_info_select"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/event_info"
+        android:paddingBottom="20dip"
+        android:text="Please select an event:"
+        android:textColor="#EEEEEE" />
+
+
+    <RadioGroup
+        android:id="@+id/event_radiogroup"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/event_info_select"
+        android:paddingBottom="20dip"
+        android:layout_gravity="left">
+    </RadioGroup>
+
+    <Button
+        android:id="@+id/event_continue_button"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dip"
+        android:layout_marginBottom="10dip"
+        android:background="@drawable/login_button_states"
+        android:onClick="chooseEvent"
+        android:layout_below="@id/event_radiogroup"
+        android:text="Go"
+        android:textColor="#def3ff"
+        android:textSize="26sp" />
+
+</RelativeLayout>

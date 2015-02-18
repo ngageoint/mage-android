@@ -3,15 +3,15 @@ package mil.nga.giat.mage;
 import android.app.AlarmManager;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.os.AsyncTask;
+import android.preference.PreferenceManager;
 import android.support.multidex.MultiDexApplication;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.TaskStackBuilder;
-import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
 import com.bumptech.glide.Glide;
@@ -34,7 +34,6 @@ import mil.nga.giat.mage.sdk.event.IUserEventListener;
 import mil.nga.giat.mage.sdk.fetch.LocationFetchIntentService;
 import mil.nga.giat.mage.sdk.fetch.ObservationFetchIntentService;
 import mil.nga.giat.mage.sdk.fetch.StaticFeatureServerFetch;
-import mil.nga.giat.mage.sdk.fetch.InitialFetchIntentService;
 import mil.nga.giat.mage.sdk.glide.MageDiskCache;
 import mil.nga.giat.mage.sdk.glide.MageUrlLoader;
 import mil.nga.giat.mage.sdk.http.client.HttpClientManager;
@@ -130,6 +129,11 @@ public class MAGE extends MultiDexApplication implements IUserEventListener {
 		NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 		notificationManager.cancel(MAGE_NOTIFICATION_ID);
         notificationManager.cancel(ObservationNotificationListener.OBSERVATION_NOTIFICATION_ID);
+
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.remove(getApplicationContext().getString(mil.nga.giat.mage.sdk.R.string.currenteventKey));
+        editor.commit();
 
 		if(PreferenceHelper.getInstance(getApplicationContext()).getValue(R.string.deleteAllDataOnLogoutKey, Boolean.class, R.string.deleteAllDataOnLogoutDefaultValue)) {
 			LandingActivity.deleteAllData(getApplicationContext());

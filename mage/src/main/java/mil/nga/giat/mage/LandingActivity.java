@@ -138,8 +138,7 @@ public class LandingActivity extends Activity implements ListView.OnItemClickLis
 
 		if (savedInstanceState == null) {
 			Fragment alertBannerFragment = new AlertBannerFragment();
-			android.app.FragmentTransaction ft = getFragmentManager().beginTransaction();
-			ft.add(android.R.id.content, alertBannerFragment).commit();
+			getFragmentManager().beginTransaction().add(android.R.id.content, alertBannerFragment).commit();
 		}
 
         goToMap();

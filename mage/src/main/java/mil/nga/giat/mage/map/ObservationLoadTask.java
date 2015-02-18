@@ -7,6 +7,8 @@ import mil.nga.giat.mage.map.marker.PointCollection;
 import mil.nga.giat.mage.sdk.Temporal;
 import mil.nga.giat.mage.sdk.datastore.DaoStore;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
+import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
+
 import android.content.Context;
 import android.os.AsyncTask;
 
@@ -61,7 +63,9 @@ public class ObservationLoadTask extends AsyncTask<Void, Observation, Void> {
         Where<? extends Temporal, Long> where = query
                 .orderBy("timestamp", false)
                 .where()
-                .ge("last_modified", observationCollection.getLatestDate());   
+                .ge("last_modified", observationCollection.getLatestDate())
+                .and()
+                .eq("event_id", EventHelper.getInstance(context).getCurrentEvent(context).getId());
 
         if (filter != null) {
             filter.where(where.and());            

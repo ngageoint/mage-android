@@ -29,6 +29,10 @@
             android:selectable="false"
             android:title="Username" />
         <EditTextPreference
+            android:key="@string/currenteventKey"
+            android:selectable="false"
+            android:title="Current Event" />
+        <EditTextPreference
             android:key="@string/buildVersionKey"
             android:selectable="false"
             android:title="MAGE App Version" />

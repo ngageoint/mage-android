@@ -20,6 +20,7 @@ import mil.nga.giat.mage.sdk.datastore.location.LocationHelper;
 import mil.nga.giat.mage.sdk.datastore.location.LocationProperty;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
+import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
 import mil.nga.giat.mage.sdk.event.IObservationEventListener;
 import mil.nga.giat.mage.sdk.location.LocationService;
 import android.app.AlertDialog;
@@ -219,7 +220,10 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 		TextView footerTextView = (TextView)footer.findViewById(R.id.footer_text);
 		footerTextView.setText(footerText);
 		getActivity().getActionBar().setTitle(title);
-		qb.where().gt("last_modified", c.getTime());
+		qb.where()
+        .gt("last_modified", c.getTime())
+        .and()
+        .eq("event_id", EventHelper.getInstance(getActivity().getApplicationContext()).getCurrentEvent(getActivity().getApplicationContext()).getId());
 		qb.orderBy("timestamp", false);
 
 		return qb.prepare();

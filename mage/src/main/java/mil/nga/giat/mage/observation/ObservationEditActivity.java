@@ -186,6 +186,7 @@ public class ObservationEditActivity extends Activity {
 			l = getIntent().getParcelableExtra(LOCATION);
 
 			o = new Observation();
+            o.setEvent(EventHelper.getInstance(getApplicationContext()).getCurrentEvent(getApplicationContext()));
 			o.setTimestamp(new Date());
 			List<ObservationProperty> properties = new ArrayList<ObservationProperty>();
 			properties.add(new ObservationProperty("timestamp", iso8601Format.format(o.getTimestamp())));

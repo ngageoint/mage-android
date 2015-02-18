@@ -45,6 +45,7 @@ import mil.nga.giat.mage.LandingActivity;
 import mil.nga.giat.mage.MAGE;
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.disclaimer.DisclaimerActivity;
+import mil.nga.giat.mage.event.EventActivity;
 import mil.nga.giat.mage.sdk.connectivity.ConnectivityUtility;
 import mil.nga.giat.mage.sdk.datastore.DaoStore;
 import mil.nga.giat.mage.sdk.login.AbstractAccountTask;
@@ -402,19 +403,11 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 					@Override
 					public void onClick(DialogInterface dialog, int which) {
 						dialog.dismiss();
-						startActivity(new Intent(getApplicationContext(), LandingActivity.class));
-						((MAGE) getApplication()).onLogin();
-						finish();
+                        startNextActivityAndFinish();
 					}
 				}).show();
 			} else {
-
-                // TODO: if the user doesn't have a recent event, have them choose one, eh?
-
-                // start up the landing activity!
-                startActivity(new Intent(getApplicationContext(), LandingActivity.class));
-				((MAGE) getApplication()).onLogin();
-				finish();
+                startNextActivityAndFinish();
 			}
 		} else if (accountStatus.getStatus().equals(AccountStatus.Status.SUCCESSFUL_REGISTRATION)) {
 			Editor sp = PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).edit();
@@ -463,6 +456,12 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 		}
 	}
 
+    public void startNextActivityAndFinish() {
+
+        startActivity(new Intent(getApplicationContext(), EventActivity.class));
+        finish();
+    }
+
 	@Override
 	protected void onResume() {
 		super.onResume();
@@ -472,7 +471,7 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 			((MAGE) getApplication()).onLogout();
 		}
 
-		// TODO : populate username and password from preferences
+		// TODO : populate username and password from preferences?
 		showKeyboard();
 		// show form, and hide spinner
 		findViewById(R.id.login_status).setVisibility(View.GONE);

@@ -181,7 +181,7 @@
                 android:gravity="center"
                 android:onClick="login"
                 android:text="Have an account? Login here"
-                android:textColor="#5278A2"
+                android:textColor="#EEEEEE"
                 android:textSize="20sp" />
         </LinearLayout>
         <!-- Login Form Ends -->
