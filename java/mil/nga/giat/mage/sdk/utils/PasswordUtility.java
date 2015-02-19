@@ -27,12 +27,12 @@ public class PasswordUtility {
         return Base64.encodeToString(salt, Base64.NO_WRAP) + "$" + hash(password, salt);
     }
 
-    public static boolean check(String password, String hashedPassword) throws Exception {
-        if(hashedPassword == null || password == null) {
+    public static boolean equal(String password, String hash) throws Exception {
+        if(hash == null || password == null) {
             return false;
         }
 
-        String[] saltAndPass = hashedPassword.split("\\$");
+        String[] saltAndPass = hash.split("\\$");
         if (saltAndPass.length != 2) {
             throw new IllegalStateException("The stored password have the form 'salt$hash'");
         }
