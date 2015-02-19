@@ -94,7 +94,7 @@ public class FormAuthLoginTask extends AbstractAccountTask {
 				String serverURLPref = PreferenceHelper.getInstance(mApplicationContext).getValue(R.string.serverURLKey);
 				String oldPasswordHash = PreferenceHelper.getInstance(mApplicationContext).getValue(R.string.passwordHashKey);
 				if (oldUsername != null && oldPasswordHash != null && !oldPasswordHash.trim().isEmpty()) {
-                    if(oldUsername.equals(username) && serverURL.equals(serverURLPref) && PasswordUtility.check(password, oldPasswordHash)) {
+                    if(oldUsername.equals(username) && serverURL.equals(serverURLPref) && PasswordUtility.equal(password, oldPasswordHash)) {
                         // put the token expiration information in the shared preferences
                         long tokenExpirationLength = sharedPreferences.getLong(mApplicationContext.getString(R.string.tokenExpirationLengthKey), 0);
                         Date tokenExpiration = new Date(System.currentTimeMillis() + tokenExpirationLength);
