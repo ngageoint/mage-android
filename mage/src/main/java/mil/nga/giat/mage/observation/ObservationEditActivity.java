@@ -352,6 +352,7 @@ public class ObservationEditActivity extends Activity {
 
 	private void setupMap() {
 		map = ((MapFragment) getFragmentManager().findFragmentById(R.id.background_map)).getMap();
+        map.getUiSettings().setZoomControlsEnabled(false);
 
 		LatLng location = new LatLng(l.getLatitude(), l.getLongitude());
 		((TextView) findViewById(R.id.location)).setText(latLngFormat.format(l.getLatitude()) + ", " + latLngFormat.format(l.getLongitude()));
