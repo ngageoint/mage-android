@@ -12,6 +12,7 @@ import mil.nga.giat.mage.sdk.login.AccountDelegate;
 import mil.nga.giat.mage.sdk.login.AccountStatus;
 import mil.nga.giat.mage.sdk.login.SignupTask;
 import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
+
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
@@ -24,6 +25,7 @@ import android.preference.PreferenceManager;
 import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.util.Patterns;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
@@ -36,13 +38,16 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 
+import com.google.common.base.Predicate;
+
 /**
  * The signup screen
- * 
- * @author wiedemannse
  *
+ * @author wiedemanns
  */
 public class SignupActivity extends Activity implements AccountDelegate {
+
+	private static final String LOG_NAME = SignupActivity.class.getName();
 
 	private EditText mFirstNameEditText;
 	private EditText mLastNameEditText;
@@ -99,7 +104,7 @@ public class SignupActivity extends Activity implements AccountDelegate {
 		mConfirmPasswordEditText = (EditText) findViewById(R.id.signup_confirmpassword);
 		mConfirmPasswordEditText.setTypeface(Typeface.DEFAULT);
 		mServerEditText = (EditText) findViewById(R.id.signup_server);
-		
+
 		mSignupButton = (Button) findViewById(R.id.signup_signup_button);
 
 		// generate the username from first and lastname
@@ -147,7 +152,7 @@ public class SignupActivity extends Activity implements AccountDelegate {
 		SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
 		getServerEditText().setText(sharedPreferences.getString("serverURL", ""));
 		getServerEditText().setSelection(getServerEditText().getText().length());
-		
+
 		mEmailEditText.setOnKeyListener(new View.OnKeyListener() {
 			@Override
 			public boolean onKey(View v, int keyCode, KeyEvent event) {
@@ -163,7 +168,7 @@ public class SignupActivity extends Activity implements AccountDelegate {
 
 	/**
 	 * Hides keyboard when clicking elsewhere
-	 * 
+	 *
 	 * @param view
 	 */
 	private void hideKeyboardOnClick(View view) {
@@ -192,7 +197,7 @@ public class SignupActivity extends Activity implements AccountDelegate {
 
 	/**
 	 * Fired when user clicks login
-	 * 
+	 *
 	 * @param view
 	 */
 	public void login(View view) {
@@ -202,7 +207,7 @@ public class SignupActivity extends Activity implements AccountDelegate {
 
 	/**
 	 * Fired when user clicks signup
-	 * 
+	 *
 	 * @param view
 	 */
 	public void signup(View view) {
@@ -299,16 +304,11 @@ public class SignupActivity extends Activity implements AccountDelegate {
 
 	/**
 	 * Fired when user clicks lock
-	 * 
-	 * @param view
-	 */
-	/**
-	 * Fired when user clicks lock
-	 * 
+	 *
 	 * @param view
 	 */
 	public void toggleLock(View view) {
-		ImageView lockImageView = ((ImageView) findViewById(R.id.signup_lock));
+		final ImageView lockImageView = ((ImageView) findViewById(R.id.signup_lock));
 		if (lockImageView.getTag().toString().equals("lock")) {
 			getServerEditText().setEnabled(!getServerEditText().isEnabled());
 			mSignupButton.setEnabled(!mSignupButton.isEnabled());
@@ -317,63 +317,79 @@ public class SignupActivity extends Activity implements AccountDelegate {
 			showKeyboard();
 			getServerEditText().requestFocus();
 		} else {
+			final View serverProgress = findViewById(R.id.signup_server_progress);
 			try {
-				// TODO : add spinner.
+				lockImageView.setVisibility(View.GONE);
+				serverProgress.setVisibility(View.VISIBLE);
+
 				// make sure the url syntax is good
 				String serverURL = getServerEditText().getText().toString();
-				URL sURL = new URL(serverURL);
+				final URL sURL = new URL(serverURL);
 
 				// make sure you can get to the host!
-				try {
-					if (ConnectivityUtility.isResolvable(sURL.getHost())) {
-						try {
-							PreferenceHelper.getInstance(getApplicationContext()).readRemoteApi(sURL);
-							// check versions
-							Integer compatibleMajorVersion = PreferenceHelper.getInstance(getApplicationContext()).getValue(R.string.compatibleVersionMajorKey, Integer.class, R.string.compatibleVersionMajorDefaultValue);
-							Integer compatibleMinorVersion = PreferenceHelper.getInstance(getApplicationContext()).getValue(R.string.compatibleVersionMinorKey, Integer.class, R.string.compatibleVersionMinorDefaultValue);
+				ConnectivityUtility.isResolvable(sURL.getHost(), new Predicate<Exception>() {
+					@Override
+					public boolean apply(Exception e) {
+						if (e == null) {
+							PreferenceHelper.getInstance(getApplicationContext()).readRemoteApi(sURL, new Predicate<Exception>() {
+								public boolean apply(Exception e) {
+									getServerEditText().setError(null);
+									serverProgress.setVisibility(View.GONE);
+									lockImageView.setVisibility(View.VISIBLE);
+									if (e != null) {
+										showKeyboard();
+										getServerEditText().setError("No server information");
+										getServerEditText().requestFocus();
+										return false;
+									} else {
+										// check versions
+										Integer compatibleMajorVersion = PreferenceHelper.getInstance(getApplicationContext()).getValue(R.string.compatibleVersionMajorKey, Integer.class, R.string.compatibleVersionMajorDefaultValue);
+										Integer compatibleMinorVersion = PreferenceHelper.getInstance(getApplicationContext()).getValue(R.string.compatibleVersionMinorKey, Integer.class, R.string.compatibleVersionMinorDefaultValue);
 
-							Integer serverMajorVersion = PreferenceHelper.getInstance(getApplicationContext()).getValue(R.string.serverVersionMajorKey, Integer.class, null);
-							Integer serverMinorVersion = PreferenceHelper.getInstance(getApplicationContext()).getValue(R.string.serverVersionMinorKey, Integer.class, null);
+										Integer serverMajorVersion = PreferenceHelper.getInstance(getApplicationContext()).getValue(R.string.serverVersionMajorKey, Integer.class, null);
+										Integer serverMinorVersion = PreferenceHelper.getInstance(getApplicationContext()).getValue(R.string.serverVersionMinorKey, Integer.class, null);
 
-							if (serverMajorVersion == null || serverMinorVersion == null) {
-								showKeyboard();
-								getServerEditText().setError("No server version");
-								getServerEditText().requestFocus();
-							} else {
-								if (!compatibleMajorVersion.equals(serverMajorVersion)) {
-									showKeyboard();
-									getServerEditText().setError("This app is not compatible with this server");
-									getServerEditText().requestFocus();
-								} else if (compatibleMinorVersion > serverMinorVersion) {
-									showKeyboard();
-									getServerEditText().setError("This app is not compatible with this server");
-									getServerEditText().requestFocus();
-								} else {
-									getServerEditText().setEnabled(!getServerEditText().isEnabled());
-									mSignupButton.setEnabled(!mSignupButton.isEnabled());
-									lockImageView.setTag("lock");
-									lockImageView.setImageResource(R.drawable.lock_108);
+										if (serverMajorVersion == null || serverMinorVersion == null) {
+											showKeyboard();
+											getServerEditText().setError("No server version");
+											getServerEditText().requestFocus();
+										} else {
+											if (!compatibleMajorVersion.equals(serverMajorVersion)) {
+												showKeyboard();
+												getServerEditText().setError("This app is not compatible with this server");
+												getServerEditText().requestFocus();
+											} else if (compatibleMinorVersion > serverMinorVersion) {
+												showKeyboard();
+												getServerEditText().setError("This app is not compatible with this server");
+												getServerEditText().requestFocus();
+											} else {
+												getServerEditText().setEnabled(!getServerEditText().isEnabled());
+												mSignupButton.setEnabled(!mSignupButton.isEnabled());
+												lockImageView.setTag("lock");
+												lockImageView.setImageResource(R.drawable.lock_108);
+											}
+										}
+									}
+									return true;
 								}
-							}
-						} catch (Exception e) {
+							});
+						} else {
 							showKeyboard();
-							getServerEditText().setError("No server information");
+							getServerEditText().setError("Host does not resolve");
 							getServerEditText().requestFocus();
+							serverProgress.setVisibility(View.GONE);
+							lockImageView.setVisibility(View.VISIBLE);
+							return false;
 						}
-					} else {
-						showKeyboard();
-						getServerEditText().setError("Host does not resolve");
-						getServerEditText().requestFocus();
+						return true;
 					}
-				} catch (Exception e) {
-					showKeyboard();
-					getServerEditText().setError("Host does not resolve");
-					getServerEditText().requestFocus();
-				}
+				});
 			} catch (MalformedURLException mue) {
 				showKeyboard();
 				getServerEditText().setError("Bad URL");
 				getServerEditText().requestFocus();
+				serverProgress.setVisibility(View.GONE);
+				lockImageView.setVisibility(View.VISIBLE);
 			}
 		}
 	}
@@ -382,11 +398,22 @@ public class SignupActivity extends Activity implements AccountDelegate {
 		InputMethodManager inputMethodManager = (InputMethodManager) getSystemService(Activity.INPUT_METHOD_SERVICE);
 		inputMethodManager.toggleSoftInput(InputMethodManager.SHOW_IMPLICIT, 0);
 	}
-	
+
 	@Override
 	public void finishAccount(AccountStatus accountStatus) {
 		if (accountStatus.getStatus() == AccountStatus.Status.SUCCESSFUL_SIGNUP) {
+
+			// we might be able to set the username for the user
+			String oldUsername = PreferenceHelper.getInstance(getApplicationContext()).getValue(mil.nga.giat.mage.sdk.R.string.usernameKey);
 			Editor sp = PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).edit();
+			if (TextUtils.isEmpty(oldUsername)) {
+				try {
+					sp.putString(getApplicationContext().getString(R.string.usernameKey), accountStatus.getAccountInformation().getString("username")).commit();
+				} catch (Exception e) {
+					Log.w(LOG_NAME, "unabel to save username");
+				}
+			}
+
 			sp.putString(getApplicationContext().getString(R.string.serverURLKey), getServerEditText().getText().toString()).commit();
 			// Tell the user that their account was made
 			AlertDialog.Builder alertDialog = new AlertDialog.Builder(this);
@@ -436,7 +463,7 @@ public class SignupActivity extends Activity implements AccountDelegate {
 			findViewById(R.id.signup_form).setVisibility(View.VISIBLE);
 		}
 	}
-	
+
 	@Override
 	protected void onResume() {
 		super.onResume();

@@ -59,73 +59,16 @@ import mil.nga.giat.mage.sdk.utils.MediaUtility;
 public class ObservationViewActivity extends Activity {
 
 	private static final String LOG_NAME = ObservationViewActivity.class.getName();
-
+	private static final int ATTACHMENT_VIEW_ACTIVITY_REQUEST_CODE = 500;
 	public static String OBSERVATION_ID = "OBSERVATION_ID";
 	public static String INITIAL_LOCATION = "INITIAL_LOCATION";
 	public static String INITIAL_ZOOM = "INITIAL_ZOOM";
-
-	private static final int ATTACHMENT_VIEW_ACTIVITY_REQUEST_CODE = 500;
+	private final DateFormat dateFormat = DateFormatFactory.format("yyyy-MM-dd HH:mm zz", Locale.getDefault());
 	private GoogleMap miniMap;
 	private IObservationEventListener observationEventListener;
 	private Observation o;
 	private Marker marker;
 	private DecimalFormat latLngFormat = new DecimalFormat("###.#####");
-	
-    private final DateFormat dateFormat = DateFormatFactory.format("yyyy-MM-dd HH:mm zz", Locale.getDefault());
-
-	public class AttachmentGalleryTask extends AsyncTask<Attachment, ImageView, Boolean> {
-
-		@Override
-		protected Boolean doInBackground(Attachment... params) {
-			for (Attachment a : params) {
-				final String absPath = a.getLocalPath();
-				ImageView iv = new ImageView(getApplicationContext());
-				LayoutParams lp = new LayoutParams(100, 100);
-				iv.setLayoutParams(lp);
-				iv.setPadding(0, 0, 10, 0);
-				iv.setOnClickListener(new View.OnClickListener() {
-					@Override
-					public void onClick(View v) {
-						Intent intent = new Intent(v.getContext(), AttachmentViewerActivity.class);
-						intent.setData(Uri.fromFile(new File(absPath)));
-						intent.putExtra(AttachmentViewerActivity.EDITABLE, false);
-						startActivityForResult(intent, ATTACHMENT_VIEW_ACTIVITY_REQUEST_CODE);
-					}
-				});
-				try {
-					if (absPath != null && absPath.endsWith(".mp4")) {
-						Drawable[] layers = new Drawable[2];
-						Resources r = getResources();
-						layers[0] = new BitmapDrawable(r, ThumbnailUtils.createVideoThumbnail(absPath, MediaStore.Video.Thumbnails.MICRO_KIND));
-						layers[1] = r.getDrawable(R.drawable.ic_video_white_2x);
-						LayerDrawable ld = new LayerDrawable(layers);
-						iv.setImageDrawable(ld);
-					} else if (absPath != null && (absPath.endsWith(".mp3") || absPath.endsWith("m4a"))) {
-						Glide.with(getApplicationContext()).load(R.drawable.ic_microphone).into(iv);
-						// iv.setImageBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.ic_microphone));
-					} else {
-						if (a.getRemoteId() != null) {
-							String url = a.getUrl();
-							Glide.with(getApplicationContext()).load(url).placeholder(android.R.drawable.progress_indeterminate_horizontal).centerCrop().into(iv);
-						} else {
-							Glide.with(getApplicationContext()).load(new File(absPath)).placeholder(android.R.drawable.progress_indeterminate_horizontal).centerCrop().into(iv);
-						}
-					}
-					Log.d(LOG_NAME, "Set the image gallery to have an image with uri " + absPath);
-				} catch (Exception e) {
-					Log.e(LOG_NAME, "Error making image", e);
-				}
-
-				publishProgress(iv);
-			}
-			return true;
-		}
-
-		protected void onProgressUpdate(ImageView... progress) {
-			LinearLayout l = (LinearLayout) findViewById(R.id.image_gallery);
-			l.addView(progress[0]);
-		}
-	}
 
 	private void createImageViews(ViewGroup gallery) {
 		for (final Attachment a : o.getAttachments()) {
@@ -183,18 +126,18 @@ public class ObservationViewActivity extends Activity {
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
 		switch (item.getItemId()) {
-		case android.R.id.home:
-			this.finish();
-			return true;
-		case R.id.observation_edit:
-			Intent intent = new Intent(this, ObservationEditActivity.class);
-			intent.putExtra(ObservationEditActivity.OBSERVATION_ID, o.getId());
-			intent.putExtra(ObservationViewActivity.INITIAL_LOCATION, miniMap.getCameraPosition().target);
-			intent.putExtra(ObservationViewActivity.INITIAL_ZOOM, miniMap.getCameraPosition().zoom);
-			startActivityForResult(intent, 2);
-			return true;
-		default:
-			return super.onOptionsItemSelected(item);
+			case android.R.id.home:
+				this.finish();
+				return true;
+			case R.id.observation_edit:
+				Intent intent = new Intent(this, ObservationEditActivity.class);
+				intent.putExtra(ObservationEditActivity.OBSERVATION_ID, o.getId());
+				intent.putExtra(ObservationViewActivity.INITIAL_LOCATION, miniMap.getCameraPosition().target);
+				intent.putExtra(ObservationViewActivity.INITIAL_ZOOM, miniMap.getCameraPosition().zoom);
+				startActivityForResult(intent, 2);
+				return true;
+			default:
+				return super.onOptionsItemSelected(item);
 		}
 	}
 
@@ -258,7 +201,7 @@ public class ObservationViewActivity extends Activity {
 
 					@Override
 					public void onObservationCreated(Collection<Observation> observations) {
-						for (Iterator<Observation> i = observations.iterator(); i.hasNext();) {
+						for (Iterator<Observation> i = observations.iterator(); i.hasNext(); ) {
 							Observation observation = i.next();
 							if (observation.getId().equals(o.getId()) && !observation.isDirty()) {
 								ObservationViewActivity.this.runOnUiThread(new Runnable() {
@@ -276,11 +219,11 @@ public class ObservationViewActivity extends Activity {
 				ObservationHelper.getInstance(getApplicationContext()).addListener(observationEventListener);
 			}
 			o = ObservationHelper.getInstance(getApplicationContext()).read(getIntent().getLongExtra(OBSERVATION_ID, 0L));
-			
+
 			Map<String, ObservationProperty> propertiesMap = o.getPropertiesMap();
-			
+
 			ObservationProperty observationProperty = propertiesMap.get("type");
-			if(observationProperty != null) {
+			if (observationProperty != null) {
 				this.setTitle(observationProperty.getValue().toString());
 			}
 			Geometry geo = o.getObservationGeometry().getGeometry();
@@ -300,6 +243,7 @@ public class ObservationViewActivity extends Activity {
 				Fragment tempFragment = getFragmentManager().findFragmentById(R.id.mini_map);
 				if (tempFragment != null) {
 					miniMap = ((MapFragment) tempFragment).getMap();
+					miniMap.getUiSettings().setZoomControlsEnabled(false);
 
 					LatLng latLng = getIntent().getParcelableExtra(INITIAL_LOCATION);
 					if (latLng == null) {
@@ -322,7 +266,7 @@ public class ObservationViewActivity extends Activity {
 
 			LayoutBaker.populateLayoutFromMap((LinearLayout) findViewById(R.id.propertyContainer), o.getPropertiesMap());
 			LayoutBaker.populateLayoutFromMap((LinearLayout) findViewById(R.id.topPropertyContainer), o.getPropertiesMap());
-			
+
 			((LinearLayout) findViewById(R.id.image_gallery)).removeAllViews();
 			if (o.getAttachments().size() == 0) {
 				findViewById(R.id.image_gallery).setVisibility(View.GONE);
@@ -337,7 +281,7 @@ public class ObservationViewActivity extends Activity {
 			if (u != null) {
 				userText = u.getFirstname() + " " + u.getLastname();
 			}
-			user.setText(userText); 
+			user.setText(userText);
 
 			FrameLayout fl = (FrameLayout) findViewById(R.id.sync_status);
 			fl.removeAllViews();
@@ -350,6 +294,60 @@ public class ObservationViewActivity extends Activity {
 			}
 		} catch (Exception e) {
 			Log.e(LOG_NAME, e.getMessage(), e);
+		}
+	}
+
+	public class AttachmentGalleryTask extends AsyncTask<Attachment, ImageView, Boolean> {
+
+		@Override
+		protected Boolean doInBackground(Attachment... params) {
+			for (Attachment a : params) {
+				final String absPath = a.getLocalPath();
+				ImageView iv = new ImageView(getApplicationContext());
+				LayoutParams lp = new LayoutParams(100, 100);
+				iv.setLayoutParams(lp);
+				iv.setPadding(0, 0, 10, 0);
+				iv.setOnClickListener(new View.OnClickListener() {
+					@Override
+					public void onClick(View v) {
+						Intent intent = new Intent(v.getContext(), AttachmentViewerActivity.class);
+						intent.setData(Uri.fromFile(new File(absPath)));
+						intent.putExtra(AttachmentViewerActivity.EDITABLE, false);
+						startActivityForResult(intent, ATTACHMENT_VIEW_ACTIVITY_REQUEST_CODE);
+					}
+				});
+				try {
+					if (absPath != null && absPath.endsWith(".mp4")) {
+						Drawable[] layers = new Drawable[2];
+						Resources r = getResources();
+						layers[0] = new BitmapDrawable(r, ThumbnailUtils.createVideoThumbnail(absPath, MediaStore.Video.Thumbnails.MICRO_KIND));
+						layers[1] = r.getDrawable(R.drawable.ic_video_white_2x);
+						LayerDrawable ld = new LayerDrawable(layers);
+						iv.setImageDrawable(ld);
+					} else if (absPath != null && (absPath.endsWith(".mp3") || absPath.endsWith("m4a"))) {
+						Glide.with(getApplicationContext()).load(R.drawable.ic_microphone).into(iv);
+						// iv.setImageBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.ic_microphone));
+					} else {
+						if (a.getRemoteId() != null) {
+							String url = a.getUrl();
+							Glide.with(getApplicationContext()).load(url).placeholder(android.R.drawable.progress_indeterminate_horizontal).centerCrop().into(iv);
+						} else {
+							Glide.with(getApplicationContext()).load(new File(absPath)).placeholder(android.R.drawable.progress_indeterminate_horizontal).centerCrop().into(iv);
+						}
+					}
+					Log.d(LOG_NAME, "Set the image gallery to have an image with uri " + absPath);
+				} catch (Exception e) {
+					Log.e(LOG_NAME, "Error making image", e);
+				}
+
+				publishProgress(iv);
+			}
+			return true;
+		}
+
+		protected void onProgressUpdate(ImageView... progress) {
+			LinearLayout l = (LinearLayout) findViewById(R.id.image_gallery);
+			l.addView(progress[0]);
 		}
 	}
 }

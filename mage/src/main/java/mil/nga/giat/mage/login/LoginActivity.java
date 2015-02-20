@@ -26,9 +26,11 @@ import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.TextView;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
+import com.google.common.base.Predicate;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -53,9 +55,8 @@ import mil.nga.giat.mage.sdk.utils.UserUtility;
 
 /**
  * The login screen
- * 
+ *
  * @author wiedemanns
- * 
  */
 public class LoginActivity extends FragmentActivity implements AccountDelegate {
 
@@ -81,25 +82,25 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		
+
 		if (getIntent().getBooleanExtra("LOGOUT", false)) {
 			((MAGE) getApplication()).onLogout(true);
 		}
 
 		// IMPORTANT: load the configuration from preferences files and server
 		PreferenceHelper preferenceHelper = PreferenceHelper.getInstance(getApplicationContext());
-		preferenceHelper.initialize(false, new Integer[] { R.xml.privatepreferences, R.xml.publicpreferences, R.xml.mappreferences });
-		
+		preferenceHelper.initialize(false, new Integer[]{R.xml.privatepreferences, R.xml.publicpreferences, R.xml.mappreferences});
+
 		SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-		
+
 		// check if the database needs to be upgraded, and if so log them out
 		if (DaoStore.DATABASE_VERSION != sharedPreferences.getInt(getResources().getString(R.string.databaseVersionKey), 0)) {
 			((MAGE) getApplication()).onLogout(true);
 		}
-		
+
 		Editor e = sharedPreferences.edit();
 		e.putInt(getResources().getString(R.string.databaseVersionKey), DaoStore.DATABASE_VERSION);
-		e.commit(); 
+		e.commit();
 
 		// check google play services version
 		int isGooglePlayServicesAvailable = GooglePlayServicesUtil.isGooglePlayServicesAvailable(getApplicationContext());
@@ -133,13 +134,15 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 
 		// if token is not expired, then skip the login module
 		if (!UserUtility.getInstance(getApplicationContext()).isTokenExpired()) {
-            startNextActivityAndFinish();
+			startNextActivityAndFinish();
 		}
 
 		// no title bar
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
 		setContentView(R.layout.activity_login);
 		hideKeyboardOnClick(findViewById(R.id.login));
+
+		((TextView) findViewById(R.id.login_version)).setText("Version: " + preferenceHelper.getValue(R.string.buildVersionKey));
 
 		mUsernameEditText = (EditText) findViewById(R.id.login_username);
 		mPasswordEditText = (EditText) findViewById(R.id.login_password);
@@ -180,7 +183,7 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 
 	/**
 	 * Hides keyboard when clicking elsewhere
-	 * 
+	 *
 	 * @param view
 	 */
 	private void hideKeyboardOnClick(View view) {
@@ -209,7 +212,7 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 
 	/**
 	 * Fired when user clicks login
-	 * 
+	 *
 	 * @param view
 	 */
 	public void login(View view) {
@@ -241,10 +244,12 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 			return;
 		}
 
-		final List<String> credentials = new ArrayList<String>();
+		List<String> credentials = new ArrayList<String>();
 		credentials.add(username);
 		credentials.add(password);
 		credentials.add(server);
+		credentials.add(Boolean.FALSE.toString());
+		final String[] credentialsArray = credentials.toArray(new String[credentials.size()]);
 
 		// show spinner, and hide form
 		findViewById(R.id.login_form).setVisibility(View.GONE);
@@ -256,7 +261,7 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 		String oldUsername = PreferenceHelper.getInstance(getApplicationContext()).getValue(R.string.usernameKey);
 		if (StringUtils.isNotEmpty(oldUsername) && (!username.equals(oldUsername) || !server.equals(serverURLPref))) {
 			PreferenceHelper preferenceHelper = PreferenceHelper.getInstance(getApplicationContext());
-			preferenceHelper.initialize(true, new Integer[] { R.xml.privatepreferences, R.xml.publicpreferences, R.xml.mappreferences });
+			preferenceHelper.initialize(true, new Integer[]{R.xml.privatepreferences, R.xml.publicpreferences, R.xml.mappreferences});
 			UserUtility.getInstance(getApplicationContext()).clearTokenInformation();
 		}
 
@@ -267,7 +272,7 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 			new AlertDialog.Builder(this).setTitle("Server URL").setMessage("The server URL has been changed.  If you continue, any previous local data will be deleted.  Do you want to continue?").setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
 				public void onClick(DialogInterface dialog, int which) {
 					daoStore.resetDatabase();
-					loginTask.execute(credentials.toArray(new String[credentials.size()]));
+					loginTask.execute(credentialsArray);
 				}
 			}).setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
 				public void onClick(DialogInterface dialog, int which) {
@@ -277,13 +282,13 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 				}
 			}).show();
 		} else {
-			loginTask.execute(credentials.toArray(new String[credentials.size()]));
+			loginTask.execute(credentialsArray);
 		}
 	}
 
 	/**
 	 * Fired when user clicks signup
-	 * 
+	 *
 	 * @param view
 	 */
 	public void signup(View view) {
@@ -293,11 +298,11 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 
 	/**
 	 * Fired when user clicks lock
-	 * 
+	 *
 	 * @param view
 	 */
 	public void toggleLock(View view) {
-		ImageView lockImageView = ((ImageView) findViewById(R.id.login_lock));
+		final ImageView lockImageView = ((ImageView) findViewById(R.id.login_lock));
 		if (lockImageView.getTag().toString().equals("lock")) {
 			getServerEditText().setEnabled(!getServerEditText().isEnabled());
 			mLoginButton.setEnabled(!mLoginButton.isEnabled());
@@ -306,63 +311,79 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 			showKeyboard();
 			getServerEditText().requestFocus();
 		} else {
+			final View serverProgress = findViewById(R.id.login_server_progress);
 			try {
-				// TODO : add spinner.
+				lockImageView.setVisibility(View.GONE);
+				serverProgress.setVisibility(View.VISIBLE);
+
 				// make sure the url syntax is good
 				String serverURL = getServerEditText().getText().toString();
-				URL sURL = new URL(serverURL);
+				final URL sURL = new URL(serverURL);
 
 				// make sure you can get to the host!
-				try {
-					if (ConnectivityUtility.isResolvable(sURL.getHost())) {
-						try {
-							PreferenceHelper.getInstance(getApplicationContext()).readRemoteApi(sURL);
-							// check versions
-							Integer compatibleMajorVersion = PreferenceHelper.getInstance(getApplicationContext()).getValue(R.string.compatibleVersionMajorKey, Integer.class, R.string.compatibleVersionMajorDefaultValue);
-							Integer compatibleMinorVersion = PreferenceHelper.getInstance(getApplicationContext()).getValue(R.string.compatibleVersionMinorKey, Integer.class, R.string.compatibleVersionMinorDefaultValue);
+				ConnectivityUtility.isResolvable(sURL.getHost(), new Predicate<Exception>() {
+					@Override
+					public boolean apply(Exception e) {
+						if (e == null) {
+							PreferenceHelper.getInstance(getApplicationContext()).readRemoteApi(sURL, new Predicate<Exception>() {
+								public boolean apply(Exception e) {
+									getServerEditText().setError(null);
+									serverProgress.setVisibility(View.GONE);
+									lockImageView.setVisibility(View.VISIBLE);
+									if (e != null) {
+										showKeyboard();
+										getServerEditText().setError("No server information");
+										getServerEditText().requestFocus();
+										return false;
+									} else {
+										// check versions
+										Integer compatibleMajorVersion = PreferenceHelper.getInstance(getApplicationContext()).getValue(R.string.compatibleVersionMajorKey, Integer.class, R.string.compatibleVersionMajorDefaultValue);
+										Integer compatibleMinorVersion = PreferenceHelper.getInstance(getApplicationContext()).getValue(R.string.compatibleVersionMinorKey, Integer.class, R.string.compatibleVersionMinorDefaultValue);
 
-							Integer serverMajorVersion = PreferenceHelper.getInstance(getApplicationContext()).getValue(R.string.serverVersionMajorKey, Integer.class, null);
-							Integer serverMinorVersion = PreferenceHelper.getInstance(getApplicationContext()).getValue(R.string.serverVersionMinorKey, Integer.class, null);
+										Integer serverMajorVersion = PreferenceHelper.getInstance(getApplicationContext()).getValue(R.string.serverVersionMajorKey, Integer.class, null);
+										Integer serverMinorVersion = PreferenceHelper.getInstance(getApplicationContext()).getValue(R.string.serverVersionMinorKey, Integer.class, null);
 
-							if (serverMajorVersion == null || serverMinorVersion == null) {
-								showKeyboard();
-								getServerEditText().setError("No server version");
-								getServerEditText().requestFocus();
-							} else {
-								if (!compatibleMajorVersion.equals(serverMajorVersion)) {
-									showKeyboard();
-									getServerEditText().setError("This app is not compatible with this server");
-									getServerEditText().requestFocus();
-								} else if (compatibleMinorVersion > serverMinorVersion) {
-									showKeyboard();
-									getServerEditText().setError("This app is not compatible with this server");
-									getServerEditText().requestFocus();
-								} else {
-									getServerEditText().setEnabled(!getServerEditText().isEnabled());
-									mLoginButton.setEnabled(!mLoginButton.isEnabled());
-									lockImageView.setTag("lock");
-									lockImageView.setImageResource(R.drawable.lock_108);
+										if (serverMajorVersion == null || serverMinorVersion == null) {
+											showKeyboard();
+											getServerEditText().setError("No server version");
+											getServerEditText().requestFocus();
+										} else {
+											if (!compatibleMajorVersion.equals(serverMajorVersion)) {
+												showKeyboard();
+												getServerEditText().setError("This app is not compatible with this server");
+												getServerEditText().requestFocus();
+											} else if (compatibleMinorVersion > serverMinorVersion) {
+												showKeyboard();
+												getServerEditText().setError("This app is not compatible with this server");
+												getServerEditText().requestFocus();
+											} else {
+												getServerEditText().setEnabled(!getServerEditText().isEnabled());
+												mLoginButton.setEnabled(!mLoginButton.isEnabled());
+												lockImageView.setTag("lock");
+												lockImageView.setImageResource(R.drawable.lock_108);
+											}
+										}
+									}
+									return true;
 								}
-							}
-						} catch (Exception e) {
+							});
+						} else {
 							showKeyboard();
-							getServerEditText().setError("No server information");
+							getServerEditText().setError("Host does not resolve");
 							getServerEditText().requestFocus();
+							serverProgress.setVisibility(View.GONE);
+							lockImageView.setVisibility(View.VISIBLE);
+							return false;
 						}
-					} else {
-						showKeyboard();
-						getServerEditText().setError("Host does not resolve");
-						getServerEditText().requestFocus();
+						return true;
 					}
-				} catch (Exception e) {
-					showKeyboard();
-					getServerEditText().setError("Host does not resolve");
-					getServerEditText().requestFocus();
-				}
+				});
 			} catch (MalformedURLException mue) {
 				showKeyboard();
 				getServerEditText().setError("Bad URL");
 				getServerEditText().requestFocus();
+				serverProgress.setVisibility(View.GONE);
+				lockImageView.setVisibility(View.VISIBLE);
 			}
 		}
 	}
@@ -381,10 +402,10 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 				String hashedPassword = PasswordUtility.getSaltedHash(getPasswordEditText().getText().toString());
 				sp.putString(getApplicationContext().getString(R.string.passwordHashKey), hashedPassword).commit();
 			} catch (Exception e) {
-                Log.e(LOG_NAME, "Could not hash password", e);
+				Log.e(LOG_NAME, "Could not hash password", e);
 			}
 
-            // remove the slashes at the end, and store the serverURL
+			// remove the slashes at the end, and store the serverURL
 			sp.putString(getApplicationContext().getString(R.string.serverURLKey), getServerEditText().getText().toString().trim().replaceAll("/*$", "")).commit();
 
 			if (accountStatus.getStatus().equals(AccountStatus.Status.DISCONNECTED_LOGIN)) {
@@ -392,11 +413,11 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 					@Override
 					public void onClick(DialogInterface dialog, int which) {
 						dialog.dismiss();
-                        startNextActivityAndFinish();
+						startNextActivityAndFinish();
 					}
 				}).show();
 			} else {
-                startNextActivityAndFinish();
+				startNextActivityAndFinish();
 			}
 		} else if (accountStatus.getStatus().equals(AccountStatus.Status.SUCCESSFUL_REGISTRATION)) {
 			Editor sp = PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).edit();
@@ -445,10 +466,10 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 		}
 	}
 
-    public void startNextActivityAndFinish() {
-        startActivity(new Intent(getApplicationContext(), EventActivity.class));
-        finish();
-    }
+	public void startNextActivityAndFinish() {
+		startActivity(new Intent(getApplicationContext(), EventActivity.class));
+		finish();
+	}
 
 	@Override
 	protected void onResume() {
