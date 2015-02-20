@@ -10,6 +10,7 @@ import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import mil.nga.giat.mage.sdk.datastore.DaoHelper;
+import mil.nga.giat.mage.sdk.datastore.user.Event;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.event.IEventDispatcher;
@@ -249,14 +250,14 @@ public class ObservationHelper extends DaoHelper<Observation> implements IEventD
 	 * 
 	 * @return
 	 */
-	public Date getLatestCleanLastModified(Context context) {
+	public Date getLatestCleanLastModified(Context context, Event currentEvent) {
 		Date lastModifiedDate = new Date(0);
 		QueryBuilder<Observation, Long> queryBuilder = observationDao.queryBuilder();
 
 		try {
 			User currentUser = UserHelper.getInstance(context.getApplicationContext()).readCurrentUser();
 			if (currentUser != null) {
-				queryBuilder.where().eq("dirty", Boolean.FALSE).and().ne("user_id", String.valueOf(currentUser.getRemoteId()));
+				queryBuilder.where().eq("dirty", Boolean.FALSE).and().ne("user_id", String.valueOf(currentUser.getRemoteId())).and().eq("event_id", currentEvent.getId());
 				queryBuilder.orderBy("last_modified", false);
 				queryBuilder.limit(1L);
 				Observation o = observationDao.queryForFirst(queryBuilder.prepare());
@@ -319,7 +320,7 @@ public class ObservationHelper extends DaoHelper<Observation> implements IEventD
 	 * @param primaryKey
 	 *            The primary key of the Attachment to read.
 	 * @return A fully constructed Observation.
-	 * @throws OrmException
+	 * @throws ObservationException
 	 *             If there was an error reading the Observation from the
 	 *             database.
 	 */
@@ -339,7 +340,7 @@ public class ObservationHelper extends DaoHelper<Observation> implements IEventD
 	 * Attachments, child Properties and Geometry data.
 	 * 
 	 * @param pPrimaryKey
-	 * @throws OrmException
+	 * @throws ObservationException
 	 */
 	public void delete(Long pPrimaryKey) throws ObservationException {
 		try {

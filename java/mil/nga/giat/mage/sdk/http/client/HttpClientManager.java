@@ -36,7 +36,7 @@ import android.util.Log;
  * requests to the server. This class adds request and response interceptors to
  * pass things like a token and handle errors like 403 and 401.
  * 
- * @author wiedemannse
+ * @author wiedemanns
  * 
  */
 public class HttpClientManager implements IEventDispatcher<IUserEventListener> {

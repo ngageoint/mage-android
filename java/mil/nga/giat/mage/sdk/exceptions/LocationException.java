@@ -3,7 +3,7 @@ package mil.nga.giat.mage.sdk.exceptions;
 /**
  * A generic Location exception.
  * 
- * @author travis
+ * @author wiedemanns
  * 
  */
 public class LocationException extends Exception {

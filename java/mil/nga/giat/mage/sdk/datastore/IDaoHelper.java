@@ -9,7 +9,6 @@ public interface IDaoHelper<T> {
 	
 	public T read(String remoteId) throws Exception;
 
-
 	// TODO : readAll
 	
 	// TODO : update

@@ -16,7 +16,7 @@ import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
 /**
  * Utility that currently deals mostly with the user's token information.
  * 
- * @author wiedemannse
+ * @author wiedemanns
  * 
  */
 public class UserUtility {

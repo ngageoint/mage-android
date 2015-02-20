@@ -9,11 +9,7 @@ import android.util.Log;
 import com.google.common.io.CharStreams;
 
 import java.io.InputStreamReader;
-import java.io.UnsupportedEncodingException;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.text.DateFormat;
-import java.util.Arrays;
 import java.util.Date;
 
 import mil.nga.giat.mage.sdk.R;
@@ -27,14 +23,14 @@ import mil.nga.giat.mage.sdk.datastore.user.TeamEvent;
 import mil.nga.giat.mage.sdk.datastore.user.TeamHelper;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserTeam;
-import mil.nga.giat.mage.sdk.exceptions.LoginException;
 import mil.nga.giat.mage.sdk.utils.DateFormatFactory;
+import mil.nga.giat.mage.sdk.utils.PasswordUtility;
 
 /**
- * A Task intended to be used for local authentication only. Testing or off-line
- * modes perhaps.  TODO: throw {@link LoginException}
+ * Performs a local login.  Local authentication only. Testing or off-line
+ * modes perhaps.
  * 
- * @author travis
+ * @author wiedemanns
  * 
  */
 public class LocalAuthLoginTask extends AbstractAccountTask {
@@ -59,20 +55,20 @@ public class LocalAuthLoginTask extends AbstractAccountTask {
 		String username = params[0];
 		String password = params[1];
 
-		try {
-			// use a hash of the password as the token
-			String md5Password = Arrays.toString(MessageDigest.getInstance("MD5").digest(password.getBytes("UTF-8")));
-			// put the token information in the shared preferences
-			SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(mApplicationContext);
-			Editor editor = sharedPreferences.edit();
-			editor.putString(mApplicationContext.getString(R.string.tokenKey), md5Password).commit();
-			// FIXME : 8 hours for now?
-			editor.putString(mApplicationContext.getString(R.string.tokenExpirationDateKey), iso8601Format.format(new Date(new Date().getTime() + 8 * 60 * 60 * 1000))).commit();
-		} catch (NoSuchAlgorithmException nsae) {
-			nsae.printStackTrace();
-		} catch (UnsupportedEncodingException uee) {
-			uee.printStackTrace();
-		}
+        // use a hash of the password as the token
+        String hashPassword = "NA";
+        try {
+            PasswordUtility.getSaltedHash(password);
+        } catch(Exception e) {
+            Log.e(LOG_NAME, "Could not hash password", e);
+        }
+
+        // put the token information in the shared preferences
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(mApplicationContext);
+        Editor editor = sharedPreferences.edit();
+        editor.putString(mApplicationContext.getString(R.string.tokenKey), hashPassword).commit();
+        // TODO : 8 hours from now?
+        editor.putString(mApplicationContext.getString(R.string.tokenExpirationDateKey), iso8601Format.format(new Date(new Date().getTime() + 8 * 60 * 60 * 1000))).commit();
 
         RoleHelper roleHelper = RoleHelper.getInstance(mApplicationContext);
         TeamHelper teamHelper = TeamHelper.getInstance(mApplicationContext);
@@ -80,8 +76,7 @@ public class LocalAuthLoginTask extends AbstractAccountTask {
 
 		// initialize local active user
 		try {
-			
-			// FIXME : delete all locations for now
+			// delete all locations for now
             LocationHelper.getInstance(mApplicationContext).deleteAll();
 			
 			// delte roles
@@ -109,7 +104,6 @@ public class LocalAuthLoginTask extends AbstractAccountTask {
             // join tables
             userHelper.create(new UserTeam(currentUser, defaultTeam));
             teamHelper.create(new TeamEvent(defaultTeam, defaultEvent));
-
 		} catch (Exception e) {
 			// for now, treat as a warning. Not a great state to be in.
 			Log.e(LOG_NAME, "Unable to initialize a local Active User.");

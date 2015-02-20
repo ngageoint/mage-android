@@ -8,6 +8,12 @@ import javax.crypto.SecretKey;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
 
+/**
+ *
+ * Used to hash passwords securely
+ *
+ * @author wiedemanns
+ */
 public class PasswordUtility {
 
     private static final int iterations = 1000;

@@ -11,6 +11,13 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
+/**
+ *
+ * Zip and unzips files
+ *
+ * wiedemanns
+ *
+ */
 public class ZipUtility {
 
 	public static final void zipDirectory(File directory, File zip) throws IOException {

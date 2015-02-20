@@ -3,7 +3,7 @@ package mil.nga.giat.mage.sdk.exceptions;
 /**
  * A generic Role exception.
  * 
- * @author wiedemannse
+ * @author wiedemanns
  * 
  */
 public class RoleException extends Exception {

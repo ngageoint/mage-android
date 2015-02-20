@@ -51,7 +51,7 @@ import com.google.gson.reflect.TypeToken;
 /**
  * A class that contains common POST requests to the MAGE server.
  * 
- * @author travis
+ * @author wiedemanns
  * 
  */
 public class MageServerPostRequests {

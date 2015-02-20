@@ -4,7 +4,7 @@ package mil.nga.giat.mage.sdk.event;
  * Part of a small event framework. Used to pass events to different parts of
  * the mdk. When locations are saved, when tokens expire, etc...
  * 
- * @author wiedemannse
+ * @author wiedemanns
  * 
  * @param <T>
  */

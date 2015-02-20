@@ -14,7 +14,7 @@ import android.util.Log;
 /**
  * Updates user's recent event
  *
- * @author wiedemannse
+ * @author wiedemanns
  *
  */
 public class RecentEventTask extends AbstractAccountTask {

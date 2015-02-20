@@ -5,7 +5,7 @@ import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 /**
  * The State of an {@link Observation}
  * 
- * @author wiedemannse
+ * @author wiedemanns
  * 
  */
 public enum State {

@@ -16,6 +16,13 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.util.Log;
 
+
+/**
+ * When network connectivity changes (lost or gained) notify the right listeners.
+ * When we gain connectivity, wait for a little bit to make sure we keep it before notifying listeners.
+ *
+ * @author wiedemanns
+ */
 public class NetworkChangeReceiver extends BroadcastReceiver implements IEventDispatcher<IConnectivityEventListener> {
 
 	/**

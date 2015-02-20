@@ -7,7 +7,7 @@ import android.os.AsyncTask;
 /**
  * New login and signup tasks must extend this!
  * 
- * @author wiedemannse
+ * @author wiedemanns
  * 
  */
 public abstract class AbstractAccountTask extends AsyncTask<String, Void, AccountStatus> {

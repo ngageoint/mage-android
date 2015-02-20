@@ -10,7 +10,7 @@ import android.content.Context;
 /**
  * Deals with login tasks and their configuration.
  * 
- * @author wiedemannse
+ * @author wiedemanns
  *
  */
 public class LoginTaskFactory {

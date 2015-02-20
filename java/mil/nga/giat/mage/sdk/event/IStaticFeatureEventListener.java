@@ -11,6 +11,6 @@ public interface IStaticFeatureEventListener extends IEventListener {
 	 * 
 	 * @param layers
 	 */
-	public void onStaticFeaturesCreated(final Collection<Layer> layer);
+	public void onStaticFeaturesCreated(final Collection<Layer> layers);
 
 }

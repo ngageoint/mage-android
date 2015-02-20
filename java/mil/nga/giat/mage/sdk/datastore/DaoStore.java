@@ -34,7 +34,7 @@ import com.j256.ormlite.table.TableUtils;
  * daos that you may need. Manage your table creation and update strategies here
  * as well.
  * 
- * @author travis, wiedemannse
+ * @author travis, wiedemanns
  * 
  */
 public class DaoStore extends OrmLiteSqliteOpenHelper {

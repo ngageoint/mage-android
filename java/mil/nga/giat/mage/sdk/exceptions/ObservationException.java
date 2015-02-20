@@ -3,7 +3,7 @@ package mil.nga.giat.mage.sdk.exceptions;
 /**
  * A generic Observation exception.
  * 
- * @author travis
+ * @author wiedemanns
  * 
  */
 public class ObservationException extends Exception {

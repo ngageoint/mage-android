@@ -3,7 +3,7 @@ package mil.nga.giat.mage.sdk.exceptions;
 /**
  * A generic Event exception.
  *
- * @author wiedemannse
+ * @author wiedemanns
  *
  */
 public class EventException extends Exception {

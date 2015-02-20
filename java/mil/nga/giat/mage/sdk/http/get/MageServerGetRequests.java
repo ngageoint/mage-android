@@ -59,7 +59,7 @@ import mil.nga.giat.mage.sdk.utils.ZipUtility;
 /**
  * A class that contains common GET requests to the MAGE server.
  * 
- * @author travis
+ * @author wiedemanns
  * 
  */
 public class MageServerGetRequests {
@@ -280,7 +280,7 @@ public class MageServerGetRequests {
                 String currentEventIdString = String.valueOf(currentEventId);
                 ObservationHelper observationHelper = ObservationHelper.getInstance(context);
 
-                Date lastModifiedDate = observationHelper.getLatestCleanLastModified(context);
+                Date lastModifiedDate = observationHelper.getLatestCleanLastModified(context, currentEvent);
 
                 URL observationURL = new URL(serverURL, "/api/events/" + currentEventIdString + "/observations");
                 Uri.Builder uriBuilder = Uri.parse(observationURL.toURI().toString()).buildUpon();

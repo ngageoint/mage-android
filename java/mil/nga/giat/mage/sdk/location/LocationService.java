@@ -46,9 +46,7 @@ import com.vividsolutions.jts.geom.GeometryFactory;
  * Query the device for the device's location. If userReportingFrequency is set
  * to never, the Service will listen for changes to userReportingFrequency.
  * 
- * TODO: implement {@link IEventDispatcher} for location updates?
- * 
- * @author wiedemannse
+ * @author wiedemanns
  * 
  */
 public class LocationService extends Service implements LocationListener, OnSharedPreferenceChangeListener {

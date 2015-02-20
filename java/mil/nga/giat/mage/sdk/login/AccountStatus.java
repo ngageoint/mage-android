@@ -8,7 +8,7 @@ import org.json.JSONObject;
 /**
  * Contains information from resulting login or sign up
  * 
- * @author wiedemannse
+ * @author wiedemanns
  *
  */
 public class AccountStatus {

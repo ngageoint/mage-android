@@ -14,11 +14,12 @@ import android.net.NetworkInfo;
 import android.net.wifi.WifiManager;
 import android.os.AsyncTask;
 
+import com.google.common.base.Predicate;
+
 /**
- * Utility that dealing with connection like information. Connectivity, mac
- * address, etc.
+ * Utility that deals with network connectivity.
  * 
- * @author wiedemannse
+ * @author wiedemanns
  * 
  */
 public class ConnectivityUtility {
@@ -40,20 +41,35 @@ public class ConnectivityUtility {
 		return false;
 	}
 
-	public static boolean isResolvable(String hostname) throws Exception {
-		return new IsResolvable().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, hostname).get(30, TimeUnit.SECONDS);
+	public static void isResolvable(String hostname, Predicate<Exception> callback) {
+		new IsResolvable(callback).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, hostname);
 	}
 	
-	private static class IsResolvable extends AsyncTask<String, Void, Boolean> {
+	private static class IsResolvable extends AsyncTask<String, Void, Exception> {
+
+        private Predicate<Exception> callback = null;
+
+        public IsResolvable (Predicate<Exception> callback) {
+            this.callback = callback;
+        }
+
 		@Override
-		protected Boolean doInBackground(String... arg0) {
+		protected Exception doInBackground(String... arg0) {
 			try {
 				InetAddress.getByName(arg0[0]);
 			} catch (UnknownHostException e) {
-				return false;
+                return e;
 			}
-			return true;
+			return null;
 		}
+
+        @Override
+        protected void onPostExecute(Exception e) {
+            super.onPostExecute(e);
+            if(callback != null) {
+                callback.apply(e);
+            }
+        }
 	}
 
 	public static boolean canConnect(InetAddress address, int port) {
@@ -79,38 +95,4 @@ public class ConnectivityUtility {
 
 		return true;
 	}
-	
-	/**
-	 * Get the Wi-Fi mac address, used to login
-	 */
-	public static String getMacAddress(Context context) {
-		WifiManager wifiManager = ((WifiManager) context.getSystemService(Context.WIFI_SERVICE));
-		String macAddress = wifiManager.getConnectionInfo().getMacAddress();
-		if(macAddress == null && !wifiManager.isWifiEnabled()) {
-			wifiManager.setWifiEnabled(true);
-		}
-//		if (macAddress == null || macAddress.isEmpty()) {
-//			try {
-//				Collection<NetworkInterface> interfaces = Collections.list(NetworkInterface.getNetworkInterfaces());
-//				for (NetworkInterface i : interfaces) {
-//					if (i != null) {
-//						byte[] mac = i.getHardwareAddress();
-//						if (mac != null) {
-//							StringBuilder buf = new StringBuilder();
-//							for (int idx = 0; idx < mac.length; idx++) {
-//								buf.append(String.format("%02X:", mac[idx]));								
-//							}
-//							macAddress = buf.toString().trim();
-//							macAddress.substring(0, macAddress.length() - 1);
-//						}
-//						break;
-//					}
-//				}
-//			} catch (Exception e) {
-//				Log.e(LOG_NAME, "Error retriving mac address.", e);
-//			}
-//		}
-		return macAddress;
-	}
-	
 }

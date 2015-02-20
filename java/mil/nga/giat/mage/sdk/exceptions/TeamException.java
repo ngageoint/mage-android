@@ -3,7 +3,7 @@ package mil.nga.giat.mage.sdk.exceptions;
 /**
  * A generic Team exception.
  *
- * @author wiedemannse
+ * @author wiedemanns
  *
  */
 public class TeamException extends Exception {
