@@ -86,8 +86,7 @@ public class DaoStore extends OrmLiteSqliteOpenHelper {
 	 * Constructor that takes an android Context.
 	 * 
 	 * @param context
-	 * 
-	 * @return
+	 *
 	 */
 	private DaoStore(Context context) {
 		super(context, DATABASE_NAME, null, DATABASE_VERSION);

@@ -1,7 +1,5 @@
 package mil.nga.giat.mage.sdk.login;
 
-import java.util.ArrayList;
-
 import mil.nga.giat.mage.sdk.connectivity.ConnectivityUtility;
 import mil.nga.giat.mage.sdk.datastore.user.Event;
 import mil.nga.giat.mage.sdk.datastore.user.EventHelper;

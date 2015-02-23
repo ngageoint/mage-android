@@ -24,7 +24,7 @@ public class ObservationPushIntentService extends ConnectivityAwareIntentService
 	// in milliseconds
 	private long pushFrequency;
 
-	protected AtomicBoolean pushSemaphore = new AtomicBoolean(false);
+	protected final AtomicBoolean pushSemaphore = new AtomicBoolean(false);
 
 	public ObservationPushIntentService() {
 		super(LOG_NAME);

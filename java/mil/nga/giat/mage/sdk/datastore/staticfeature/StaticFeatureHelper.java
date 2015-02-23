@@ -58,7 +58,7 @@ public class StaticFeatureHelper extends DaoHelper<StaticFeature> implements IEv
 	/**
 	 * Only one-per JVM. Singleton.
 	 * 
-	 * @param pContext
+	 * @param context
 	 */
 	private StaticFeatureHelper(Context context) {
 		super(context);
@@ -103,7 +103,7 @@ public class StaticFeatureHelper extends DaoHelper<StaticFeature> implements IEv
 	/**
 	 * Set of layers that features were added to, or already belonged to.
 	 * 
-	 * @param pStaticFeatures
+	 * @param staticFeatures
 	 * @return
 	 * @throws StaticFeatureException
 	 */
@@ -158,8 +158,8 @@ public class StaticFeatureHelper extends DaoHelper<StaticFeature> implements IEv
 		try {
 			return staticFeatureDao.queryForId(id);
 		} catch (SQLException sqle) {
-			Log.e(LOG_NAME, "Unable to query for existance for id = '" + id + "'", sqle);
-			throw new StaticFeatureException("Unable to query for existance for id = '" + id + "'", sqle);
+			Log.e(LOG_NAME, "Unable to query for existence for id = '" + id + "'", sqle);
+			throw new StaticFeatureException("Unable to query for existence for id = '" + id + "'", sqle);
 		}
 	}
 
@@ -172,8 +172,8 @@ public class StaticFeatureHelper extends DaoHelper<StaticFeature> implements IEv
                 staticFeature = results.get(0);
             }
         } catch (SQLException sqle) {
-            Log.e(LOG_NAME, "Unable to query for existance for remote_id = '" + pRemoteId + "'", sqle);
-            throw new StaticFeatureException("Unable to query for existance for remote_id = '" + pRemoteId + "'", sqle);
+            Log.e(LOG_NAME, "Unable to query for existence for remote_id = '" + pRemoteId + "'", sqle);
+            throw new StaticFeatureException("Unable to query for existence for remote_id = '" + pRemoteId + "'", sqle);
         }
 
         return staticFeature;

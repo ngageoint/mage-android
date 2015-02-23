@@ -1,18 +1,11 @@
 package mil.nga.giat.mage.sdk.gson.deserializer;
 
 import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Locale;
 
-import mil.nga.giat.mage.sdk.datastore.user.Permission;
-import mil.nga.giat.mage.sdk.datastore.user.Permissions;
 import mil.nga.giat.mage.sdk.datastore.user.Event;
-import android.util.Log;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.JsonArray;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;

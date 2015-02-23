@@ -65,12 +65,7 @@ public class RoleFetchIntentService extends ConnectivityAwareIntentService {
 								Role role = roleDeserializer.fromJson(roleJson.toString(), Role.class);
 
 								if (role != null) {
-									if (roleHelper.read(role.getRemoteId()) == null) {
-										role = roleHelper.create(role);
-										Log.d(LOG_NAME, "created role with remote_id " + role.getRemoteId());
-									}
-								} else {
-									// ignore updates
+									roleHelper.createOrUpdate(role);
 								}
 							}
 						}

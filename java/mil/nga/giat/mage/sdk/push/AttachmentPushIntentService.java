@@ -54,7 +54,7 @@ public class AttachmentPushIntentService extends IntentService {
 		} catch (ObservationException oe) {
 			Log.e(LOG_NAME, "Error obtaining attachment: " + attachmentId, oe);
 		} catch (Exception e) {
-			Log.e(LOG_NAME, "Error pushing atachment: " + attachmentId, e);
+			Log.e(LOG_NAME, "Error pushing attachment: " + attachmentId, e);
 		}
 	}
 }

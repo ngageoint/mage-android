@@ -13,7 +13,6 @@ import mil.nga.giat.mage.sdk.datastore.location.LocationHelper;
 import mil.nga.giat.mage.sdk.datastore.location.LocationProperty;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
-import mil.nga.giat.mage.sdk.event.IEventDispatcher;
 import mil.nga.giat.mage.sdk.exceptions.LocationException;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
 import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
@@ -34,7 +33,6 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
-import android.os.SystemClock;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
 import android.util.Log;
@@ -57,9 +55,6 @@ public class LocationService extends Service implements LocationListener, OnShar
 	
 	private final UserHelper userHelper;
 
-	// Minimum milliseconds between updates
-	private static final long MIN_TIME_BW_UPDATES = 0 * 1000;
-
 	protected final LocationManager locationManager;
 
 	private Intent batteryStatus;
@@ -73,7 +68,7 @@ public class LocationService extends Service implements LocationListener, OnShar
 	}
 	
 	// False means don't re-read gps settings.  True means re-read gps settings.  Gets triggered from preference change
-	protected AtomicBoolean preferenceSemaphore = new AtomicBoolean(false);
+	protected final AtomicBoolean preferenceSemaphore = new AtomicBoolean(false);
 
 	protected long priorOnLocationChangedTime = 0;
 	
@@ -95,7 +90,7 @@ public class LocationService extends Service implements LocationListener, OnShar
 	 * 
 	 * @return
 	 */
-	private final synchronized long getMinimumDistanceChangeForUpdates() {
+	private synchronized long getMinimumDistanceChangeForUpdates() {
 		return PreferenceHelper.getInstance(mContext).getValue(R.string.gpsSensitivityKey, Long.class, R.string.gpsSensitivityDefaultValue);
 	}
 	
@@ -155,12 +150,12 @@ public class LocationService extends Service implements LocationListener, OnShar
 			if (providers != null) {
 				
 				if (providers.contains(LocationManager.GPS_PROVIDER)) {
-					locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, MIN_TIME_BW_UPDATES, getMinimumDistanceChangeForUpdates(), this);
+					locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, getMinimumDistanceChangeForUpdates(), this);
 					locationUpdatesEnabled = true;
 				}
 				
 				if (providers.contains(LocationManager.NETWORK_PROVIDER)) {
-					locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, MIN_TIME_BW_UPDATES, getMinimumDistanceChangeForUpdates(), this);
+					locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, getMinimumDistanceChangeForUpdates(), this);
 					locationUpdatesEnabled = true;
 				}
 			}
@@ -424,8 +419,7 @@ public class LocationService extends Service implements LocationListener, OnShar
 				loc = locationHelper.create(loc);
 				Log.d(LOG_NAME, "Save location: " + loc.getLocationGeometry().getGeometry());
 			} catch (LocationException le) {
-				// TODO: is this good enough?
-				Log.w(LOG_NAME, "Unable to record current location locally!", le);
+				Log.e(LOG_NAME, "Unable to save current location locally!", le);
 			}
 		}
 	}

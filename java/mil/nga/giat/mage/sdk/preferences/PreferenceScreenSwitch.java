@@ -40,8 +40,7 @@ public class PreferenceScreenSwitch extends SwitchPreference implements OnPrefer
         for (int i = 0; i < group.getChildCount(); ++i) {
             View child = group.getChildAt(i);
             if (child instanceof Switch) {
-                View s = (Switch) child;
-                s.setPadding(s.getPaddingLeft(), s.getPaddingTop(), 0, s.getPaddingBottom());
+				child.setPadding(child.getPaddingLeft(), child.getPaddingTop(), 0, child.getPaddingBottom());
             }
         }
     }

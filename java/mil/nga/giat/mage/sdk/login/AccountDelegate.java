@@ -1,7 +1,7 @@
 package mil.nga.giat.mage.sdk.login;
 
 /**
- * Use this class when logging in or signing up. {@link #finishLogin} is a
+ * Use this class when logging in or signing up. {@link #finishAccount} is a
  * callback used when logging in or signing up.
  * 
  * Could be a typed interface if needed!

@@ -31,7 +31,7 @@ public class LocationFetchIntentService extends ConnectivityAwareIntentService i
 		super(LOG_NAME);
 	}
 
-	protected AtomicBoolean fetchSemaphore = new AtomicBoolean(false);
+	protected final AtomicBoolean fetchSemaphore = new AtomicBoolean(false);
 
 	protected final synchronized long getLocationFetchFrequency() {
 		return PreferenceHelper.getInstance(getApplicationContext()).getValue(R.string.userFetchFrequencyKey, Long.class, R.string.userFetchFrequencyDefaultValue);
@@ -53,13 +53,10 @@ public class LocationFetchIntentService extends ConnectivityAwareIntentService i
 			if (isConnected && isDataFetchEnabled && !LoginTaskFactory.getInstance(getApplicationContext()).isLocalLogin()) {
 
 				Log.d(LOG_NAME, "The device is currently connected. Attempting to fetch Locations...");
-				Log.i(LOG_NAME, "LocationBug fetching");
 				try {
 					Collection<Location> locations = MageServerGetRequests.getLocations(getApplicationContext());
-					Log.i(LOG_NAME, "LocationBug fetched " + locations.size() + " locations");
 					for (Location location : locations) {
 						if (isCanceled) {
-							Log.i(LOG_NAME, "LocationBug is cancelled");
 							break;
 						}
 
@@ -69,12 +66,12 @@ public class LocationFetchIntentService extends ConnectivityAwareIntentService i
 						if (userIdProperty != null) {
 							userId = userIdProperty.getValue().toString();
 						}
-						Log.i(LOG_NAME, "LocationBug user id: " + userId);
+
 						if (userId != null) {
 							User user = userHelper.read(userId);
 							// TODO : test the timer to make sure users are updated as needed!
-							final long sixHoursInMillseconds = 6 * 60 * 60 * 1000;
-							if (user == null || (new Date()).after(new Date(user.getFetchedDate().getTime() + sixHoursInMillseconds))) {
+							final long sixHoursInMilliseconds = 6 * 60 * 60 * 1000;
+							if (user == null || (new Date()).after(new Date(user.getFetchedDate().getTime() + sixHoursInMilliseconds))) {
 								// get any users that were not recognized or expired
 								userFetch.fetch(new String[] { userId });
 								user = userHelper.read(userId);
@@ -83,8 +80,6 @@ public class LocationFetchIntentService extends ConnectivityAwareIntentService i
 
 							// if there is no existing location, create one
 							Location l = locationHelper.read(location.getRemoteId());
-							Log.i(LOG_NAME, "LocationBug location is " + l);
-							Log.i(LOG_NAME, "LocationBug user is: " + user);
 							if (l == null) {
 								// delete old location and create new one
 								if (user != null) {
@@ -92,18 +87,16 @@ public class LocationFetchIntentService extends ConnectivityAwareIntentService i
 									if (!user.isCurrentUser()) {
 										userId = String.valueOf(user.getId());
 										locationHelper.create(location);
-										Log.d(LOG_NAME, "LocationBug Created location with remote_id " + location.getRemoteId() + " for user with id: " + userId);
 										int numberOfLocationsDeleted = locationHelper.deleteUserLocations(userId, true);
-										Log.d(LOG_NAME, "LocationBug Deleted " + numberOfLocationsDeleted + " locations for user with id: " + userId);
 									}
 								} else {
-									Log.w(LOG_NAME, "A location with no user was found and discarded.  Userid: " + userId);
+									Log.w(LOG_NAME, "A location with no user was found and discarded.  User id: " + userId);
 								}
 							}
 						}
 					}
 				} catch (Exception e) {
-					Log.e(LOG_NAME, "There was a failure while performing an Location Fetch opperation.", e);
+					Log.e(LOG_NAME, "There was a failure while performing an Location Fetch operation.", e);
 				}
 			} else {
 				Log.d(LOG_NAME, "The device is currently disconnected, or data fetch is disabled. Not performing fetch.");
@@ -126,7 +119,7 @@ public class LocationFetchIntentService extends ConnectivityAwareIntentService i
 					fetchSemaphore.set(false);
 				}
 			} catch (InterruptedException ie) {
-				Log.e(LOG_NAME, "Interupted.  Unable to sleep " + frequency, ie);
+				Log.e(LOG_NAME, "Interrupted.  Unable to sleep " + frequency, ie);
 			} finally {
 				isConnected = ConnectivityUtility.isOnline(getApplicationContext());
 			}

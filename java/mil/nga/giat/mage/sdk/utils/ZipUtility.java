@@ -26,7 +26,7 @@ public class ZipUtility {
 		zos.close();
 	}
 
-	private static final void zip(File directory, File base, ZipOutputStream zos) throws IOException {
+	private static void zip(File directory, File base, ZipOutputStream zos) throws IOException {
 		File[] files = directory.listFiles();
 		byte[] buffer = new byte[8192];
 		int read = 0;

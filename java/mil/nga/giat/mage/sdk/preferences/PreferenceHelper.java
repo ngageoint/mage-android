@@ -1,20 +1,14 @@
 package mil.nga.giat.mage.sdk.preferences;
 
-import java.io.InputStreamReader;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.Set;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 import mil.nga.giat.mage.sdk.R;
 import mil.nga.giat.mage.sdk.http.client.HttpClientManager;
-import mil.nga.giat.mage.sdk.http.get.MageServerGetRequests;
-import mil.nga.giat.mage.sdk.login.LoginTaskFactory;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -26,7 +20,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import com.google.common.base.Predicate;
-import com.google.common.io.CharStreams;
 
 import android.content.Context;
 import android.content.SharedPreferences;

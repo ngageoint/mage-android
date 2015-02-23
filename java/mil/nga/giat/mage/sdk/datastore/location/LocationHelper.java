@@ -2,6 +2,7 @@ package mil.nga.giat.mage.sdk.datastore.location;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -88,7 +89,6 @@ public class LocationHelper extends DaoHelper<Location> implements IEventDispatc
 
 	@Override
 	public Location create(final Location pLocation) throws LocationException {
-		Log.i(LOG_NAME, "LocationBug create location");
 		Location createdLocation;
 
 		try {
@@ -106,8 +106,6 @@ public class LocationHelper extends DaoHelper<Location> implements IEventDispatc
 							locationPropertyDao.create(locationProperty);
 						}
 					}
-		
-					Log.i(LOG_NAME, "LocationBug Notifying my " + listeners.size() + " listeners that a location was created");
 					for (ILocationEventListener listener : listeners) {
 						listener.onLocationCreated(Collections.singletonList(createdLocation));
 					}
@@ -127,8 +125,8 @@ public class LocationHelper extends DaoHelper<Location> implements IEventDispatc
 		try {
 			return locationDao.queryForId(id);
 		} catch (SQLException sqle) {
-			Log.e(LOG_NAME, "Unable to query for existance for id = '" + id + "'", sqle);
-			throw new LocationException("Unable to query for existance for id = '" + id + "'", sqle);
+			Log.e(LOG_NAME, "Unable to query for existence for id = '" + id + "'", sqle);
+			throw new LocationException("Unable to query for existence for id = '" + id + "'", sqle);
 		}
 	}
 	
@@ -141,8 +139,8 @@ public class LocationHelper extends DaoHelper<Location> implements IEventDispatc
                 location = results.get(0);
             }
         } catch (SQLException sqle) {
-            Log.e(LOG_NAME, "Unable to query for existance for remote_id = '" + pRemoteId + "'", sqle);
-            throw new LocationException("Unable to query for existance for remote_id = '" + pRemoteId + "'", sqle);
+            Log.e(LOG_NAME, "Unable to query for existence for remote_id = '" + pRemoteId + "'", sqle);
+            throw new LocationException("Unable to query for existence for remote_id = '" + pRemoteId + "'", sqle);
         }
 
         return location;
@@ -223,7 +221,7 @@ public class LocationHelper extends DaoHelper<Location> implements IEventDispatc
 			}
 		} 
 		catch (SQLException sqle) {
-			Log.e(LOG_NAME, "Unable to query for existance for location = '" + location.getId() + "'", sqle);			
+			Log.e(LOG_NAME, "Unable to query for existence for location = '" + location.getId() + "'", sqle);
 		}
 		
 		return exists;
@@ -276,7 +274,7 @@ public class LocationHelper extends DaoHelper<Location> implements IEventDispatc
 		int numberLocationsDeleted = 0;
 
 		try {
-			// newset first
+			// newest first
 			QueryBuilder<Location, Long> qb = locationDao.queryBuilder().orderBy("timestamp", false);
 			qb.where().eq("user_id", userLocalId);
 			
@@ -307,7 +305,7 @@ public class LocationHelper extends DaoHelper<Location> implements IEventDispatc
 	 * Properties and Geometry data.
 	 * 
 	 * @param pPrimaryKey
-	 * @throws OrmException
+	 * @throws LocationException
 	 */
 	public void delete(final Long ... pPrimaryKey) throws LocationException {
 		List<Location> deletedLocations = new ArrayList<Location>();
@@ -339,8 +337,8 @@ public class LocationHelper extends DaoHelper<Location> implements IEventDispatc
 				}
 			});
 		} catch (SQLException sqle) {
-			Log.e(LOG_NAME, "Unable to delete Location: " + pPrimaryKey, sqle);
-			throw new LocationException("Unable to delete Location: " + pPrimaryKey, sqle);
+			Log.e(LOG_NAME, "Unable to delete Location: " + Arrays.toString(pPrimaryKey), sqle);
+			throw new LocationException("Unable to delete Location: " + Arrays.toString(pPrimaryKey), sqle);
 		} finally {
 			for (ILocationEventListener listener : listeners) {
 				listener.onLocationDeleted(deletedLocations);
@@ -354,7 +352,7 @@ public class LocationHelper extends DaoHelper<Location> implements IEventDispatc
 			DeleteBuilder<Location, Long> db = locationDao.deleteBuilder();
 			db.delete();
 		} catch (SQLException sqle) {
-			Log.e(LOG_NAME, "There was a problem deleting locaions.", sqle);
+			Log.e(LOG_NAME, "There was a problem deleting locations.", sqle);
 			throw new UserException("There was a problem deleting locations.", sqle);
 		}
 	}

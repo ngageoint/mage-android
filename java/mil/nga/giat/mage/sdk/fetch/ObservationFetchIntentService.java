@@ -17,11 +17,9 @@ import mil.nga.giat.mage.sdk.http.get.MageServerGetRequests;
 import mil.nga.giat.mage.sdk.login.LoginTaskFactory;
 import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
 import mil.nga.giat.mage.sdk.screen.ScreenChangeReceiver;
-import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
-import android.os.Vibrator;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
@@ -35,7 +33,7 @@ public class ObservationFetchIntentService extends ConnectivityAwareIntentServic
 		super(LOG_NAME);
 	}
 
-	protected AtomicBoolean fetchSemaphore = new AtomicBoolean(false);
+	protected final AtomicBoolean fetchSemaphore = new AtomicBoolean(false);
 
 	protected final synchronized long getobservationFetchFrequency() {
 		return PreferenceHelper.getInstance(getApplicationContext()).getValue(R.string.observationFetchFrequencyKey, Long.class, R.string.observationFetchFrequencyDefaultValue);
@@ -120,7 +118,7 @@ public class ObservationFetchIntentService extends ConnectivityAwareIntentServic
 					fetchSemaphore.set(false);
 				}
 			} catch (InterruptedException ie) {
-				Log.e(LOG_NAME, "Interupted.  Unable to sleep " + frequency, ie);
+				Log.e(LOG_NAME, "Interrupted.  Unable to sleep " + frequency, ie);
 			} finally {
 				isConnected = ConnectivityUtility.isOnline(getApplicationContext());
 			}

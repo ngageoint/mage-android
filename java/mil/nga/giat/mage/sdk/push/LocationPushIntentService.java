@@ -31,11 +31,8 @@ public class LocationPushIntentService extends ConnectivityAwareIntentService {
 	private static final String LOG_NAME = LocationPushIntentService.class.getName();
 
 	public static final int minNumberOfLocationsToKeep = 40;
-	
-	// in milliseconds
-	private long pushFrequency;
 
-	protected AtomicBoolean pushSemaphore = new AtomicBoolean(false);
+	protected final AtomicBoolean pushSemaphore = new AtomicBoolean(false);
 
 	public LocationPushIntentService() {
 		super(LOG_NAME);
@@ -48,7 +45,7 @@ public class LocationPushIntentService extends ConnectivityAwareIntentService {
 	@Override
 	protected void onHandleIntent(Intent intent) {
 		super.onHandleIntent(intent);
-		pushFrequency = getLocationPushFrequency();
+		long pushFrequency = getLocationPushFrequency();
 		while (!isCanceled) {
 			if (isConnected && !LoginTaskFactory.getInstance(getApplicationContext()).isLocalLogin()) {
 				pushFrequency = getLocationPushFrequency();
@@ -67,7 +64,7 @@ public class LocationPushIntentService extends ConnectivityAwareIntentService {
 				List<Location> locations = locationHelper.getCurrentUserLocations(getApplicationContext(), batchSize, false);
 				while (!locations.isEmpty() && failedAttemptCount < 3) {
 					Boolean status = MageServerPostRequests.postLocations(locations, getApplicationContext());
-					// we've sync'ed. Don't need the locations anymore.
+					// we've sync-ed. Don't need the locations anymore.
 					if (status) {
 						Log.d(LOG_NAME, "Pushed " + locations.size() + " locations.");
 
@@ -132,7 +129,7 @@ public class LocationPushIntentService extends ConnectivityAwareIntentService {
 					pushSemaphore.set(false);
 				}
 			} catch (InterruptedException ie) {
-				Log.e(LOG_NAME, "Interupted.  Unable to sleep " + pushFrequency, ie);
+				Log.e(LOG_NAME, "Interrupted.  Unable to sleep " + pushFrequency, ie);
 			} finally {
 				isConnected = ConnectivityUtility.isOnline(getApplicationContext());
 			}

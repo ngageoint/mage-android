@@ -79,7 +79,7 @@ public class LocalAuthLoginTask extends AbstractAccountTask {
 			// delete all locations for now
             LocationHelper.getInstance(mApplicationContext).deleteAll();
 			
-			// delte roles
+			// delete roles
 			roleHelper.deleteAll();
 			
 			// delete active user(s)
