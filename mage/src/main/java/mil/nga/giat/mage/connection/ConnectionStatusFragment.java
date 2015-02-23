@@ -51,7 +51,6 @@ public class ConnectionStatusFragment extends Fragment implements IConnectivityE
 		//enable connectivity event handling
 		NetworkChangeReceiver.getInstance().addListener(this);
 
-		// TODO set up the listener to just listen to the connectivity class
 		// don't show that we are connected if this is the first time and we are already connected
 		if (!connected) {
 			onConnectionChanged();

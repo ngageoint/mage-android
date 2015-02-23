@@ -35,7 +35,6 @@ import mil.nga.giat.mage.sdk.fetch.InitialFetchIntentService;
 import mil.nga.giat.mage.sdk.login.AccountDelegate;
 import mil.nga.giat.mage.sdk.login.AccountStatus;
 import mil.nga.giat.mage.sdk.login.RecentEventTask;
-import mil.nga.giat.mage.sdk.utils.UserUtility;
 
 public class EventActivity extends Activity implements AccountDelegate {
 

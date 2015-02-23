@@ -39,7 +39,7 @@
                 android:fontFamily="sans-serif-light"
                 android:text="Creating account..."
                 android:textColor="#6389b3"
-                android:textSize="26dip" />
+                android:textSize="26sp" />
         </LinearLayout>
 
         <!-- Singup Form -->

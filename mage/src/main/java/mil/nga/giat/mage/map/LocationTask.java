@@ -14,7 +14,7 @@ public class LocationTask extends AsyncTask<Location, Location, Void> {
     }
     
     private Type type;
-    private PointCollection<Location> locationCollection;
+    private final PointCollection<Location> locationCollection;
     private Filter<Temporal> filter;
 
     public LocationTask(Type type, PointCollection<Location> locationCollection) {

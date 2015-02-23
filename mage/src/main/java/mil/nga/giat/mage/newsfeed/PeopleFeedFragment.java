@@ -101,7 +101,6 @@ public class PeopleFeedFragment extends Fragment implements OnSharedPreferenceCh
             }
             queryUpdateHandle = scheduler.schedule(new Runnable() {
                 public void run() {
-                	Log.i(LOG_NAME, "LocationBug Scheduler to update time filter running");
                     updateTimeFilter(getTimeFilterId());
                 }
             }, 30*1000, TimeUnit.MILLISECONDS);
@@ -255,18 +254,15 @@ public class PeopleFeedFragment extends Fragment implements OnSharedPreferenceCh
 	@Override
 	public void onLocationCreated(Collection<Location> location) {
 		updateTimeFilter(getTimeFilterId());
-		Log.i(LOG_NAME, "LocationBug Data set of locations created");
 	}
 
 	@Override
 	public void onLocationUpdated(Location location) {
 		updateTimeFilter(getTimeFilterId());
-		Log.i(LOG_NAME, "LocationBug Data set of locations updated");
 	}
 
 	@Override
 	public void onLocationDeleted(Collection<Location> location) {
 		updateTimeFilter(getTimeFilterId());
-		Log.i(LOG_NAME, "LocationBug Location deleted");
 	}
 }

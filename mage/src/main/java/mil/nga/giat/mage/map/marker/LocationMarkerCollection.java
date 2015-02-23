@@ -62,7 +62,7 @@ public class LocationMarkerCollection implements PointCollection<Location>, OnMa
 
 	protected Long clickedAccuracyCircleLocationId;
 	protected Circle clickedAccuracyCircle;
-	protected InfoWindowAdapter infoWindowAdpater = new LocationInfoWindowAdapter();
+	protected InfoWindowAdapter infoWindowAdapter = new LocationInfoWindowAdapter();
 
 	protected boolean visible = true;
 
@@ -181,7 +181,7 @@ public class LocationMarkerCollection implements PointCollection<Location>, OnMa
 			}
 		}
 
-		map.setInfoWindowAdapter(infoWindowAdpater);
+		map.setInfoWindowAdapter(infoWindowAdapter);
 		marker.setIcon(LocationBitmapFactory.bitmapDescriptor(context, l, l.getUser()));
 		marker.showInfoWindow();
 		return true;

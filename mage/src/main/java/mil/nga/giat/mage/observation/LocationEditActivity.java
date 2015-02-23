@@ -76,8 +76,7 @@ public class LocationEditActivity extends Activity implements OnCameraChangeList
 				map.moveCamera(CameraUpdateFactory.newLatLngZoom(location, map.getCameraPosition().zoom));
 				map.setOnCameraChangeListener(LocationEditActivity.this);
 			} catch (NumberFormatException pe) {
-				// typed wrong probably
-				// warn the user TODO
+				// TODO: warn the user
 			}
 		} else {
 			map.setOnCameraChangeListener(null);

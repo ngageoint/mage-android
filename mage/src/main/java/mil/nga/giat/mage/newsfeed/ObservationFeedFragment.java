@@ -66,12 +66,11 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 	private ScheduledFuture<?> queryUpdateHandle;
 	private long requeryTime;
 	private ViewGroup footer;
-	private View rootView;
 	private ListView lv;
 
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-		rootView = inflater.inflate(R.layout.fragment_news_feed, container, false);
+		View rootView = inflater.inflate(R.layout.fragment_news_feed, container, false);
 		setHasOptionsMenu(true);
 		lv = (ListView) rootView.findViewById(R.id.news_feed_list);
 		footer = (ViewGroup) inflater.inflate(R.layout.feed_footer, lv, false);

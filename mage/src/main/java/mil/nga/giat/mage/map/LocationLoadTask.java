@@ -3,6 +3,7 @@ package mil.nga.giat.mage.map;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 import mil.nga.giat.mage.filter.Filter;
 import mil.nga.giat.mage.map.marker.PointCollection;
@@ -23,7 +24,7 @@ public class LocationLoadTask extends AsyncTask<Void, Location, Void> {
 
 	private Context context;
 	private Filter<Temporal> filter;
-	private PointCollection<Location> locationCollection;
+	private final PointCollection<Location> locationCollection;
 
 	public LocationLoadTask(Context context, PointCollection<Location> locationCollection) {
 		this.context = context.getApplicationContext();
@@ -37,7 +38,8 @@ public class LocationLoadTask extends AsyncTask<Void, Location, Void> {
 	@Override
 	protected Void doInBackground(Void... params) {
 		try {
-			publishProgress(getQuery().query().toArray(new Location[0]));
+			List<Location> locations = getQuery().query();
+			publishProgress(locations.toArray(new Location[locations.size()]));
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}

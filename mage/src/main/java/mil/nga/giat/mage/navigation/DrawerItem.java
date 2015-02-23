@@ -9,7 +9,6 @@ public class DrawerItem {
     private Fragment fragment;
     private boolean isHeader;
     private boolean isSecondary;
-    private Integer count = 0;
 
     public String getText() {
         return text;
@@ -33,10 +32,6 @@ public class DrawerItem {
 
     public int getId() {
         return id;
-    }
-
-    public Integer getCount() {
-        return count;
     }
 
     private DrawerItem(Builder builder) {

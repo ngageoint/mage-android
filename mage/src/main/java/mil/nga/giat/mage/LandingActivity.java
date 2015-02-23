@@ -16,7 +16,6 @@ import mil.nga.giat.mage.preferences.PublicPreferencesFragment;
 import mil.nga.giat.mage.profile.MyProfileFragment;
 import mil.nga.giat.mage.sdk.datastore.DaoStore;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
-import mil.nga.giat.mage.sdk.utils.UserUtility;
 import mil.nga.giat.mage.status.StatusFragment;
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -54,8 +53,7 @@ import android.widget.TextView;
 public class LandingActivity extends Activity implements ListView.OnItemClickListener {
 
 	private static final String LOG_NAME = LandingActivity.class.getName();
-	
-    private DrawerItem[] drawerItems;
+
     private DrawerLayout drawerLayout;
     private ListView drawerList;
     private ActionBarDrawerToggle drawerToggle;
@@ -80,7 +78,7 @@ public class LandingActivity extends Activity implements ListView.OnItemClickLis
         setContentView(R.layout.activity_landing);
         mapItem = new DrawerItem.Builder("Map").id(0).drawableId(R.drawable.ic_globe_white).fragment(new MapFragment()).build();
 
-        drawerItems = new DrawerItem[] { mapItem, 
+		DrawerItem[] drawerItems = new DrawerItem[] { mapItem,
         		new DrawerItem.Builder("Observations").id(1).drawableId(R.drawable.ic_map_marker_white).fragment(new ObservationFeedFragment()).build(),
                 new DrawerItem.Builder("People").id(2).drawableId(R.drawable.ic_users_white).fragment(new PeopleFeedFragment()).build(),
                 new DrawerItem.Builder("My Profile").id(7).drawableId(R.drawable.ic_fa_user).fragment(new MyProfileFragment()).build(),
@@ -112,14 +110,6 @@ public class LandingActivity extends Activity implements ListView.OnItemClickLis
                         if (item.getDrawableId() != null) {
                             ImageView iv = (ImageView) view.findViewById(R.id.drawer_item_icon);
                             iv.setImageResource(item.getDrawableId());
-                        }
-
-                        TextView countView = (TextView) view.findViewById(R.id.drawer_count);
-                        if (item.getCount() != 0) {
-                            countView.setVisibility(View.VISIBLE);
-                            countView.setText("" + item.getCount());
-                        } else {
-                            countView.setVisibility(View.GONE);
                         }
                     }
                 }
@@ -403,8 +393,8 @@ public class LandingActivity extends Activity implements ListView.OnItemClickLis
 	private static boolean deleteDir(File dir) {
 		if (dir != null && dir.isDirectory()) {
 			String[] children = dir.list();
-			for (int i = 0; i < children.length; i++) {
-				boolean success = deleteDir(new File(dir, children[i]));
+			for (String kid : children) {
+				boolean success = deleteDir(new File(dir, kid));
 				if (!success) {
 					return false;
 				}

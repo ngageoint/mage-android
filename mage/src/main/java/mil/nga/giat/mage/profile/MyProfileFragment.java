@@ -62,7 +62,6 @@ public class MyProfileFragment extends Fragment {
 	private User user;
 	
 	private MapView mapView;
-	private View rootView;
 	
 	@Override
 	public void onDestroy() {
@@ -90,7 +89,7 @@ public class MyProfileFragment extends Fragment {
 	
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-		rootView = inflater.inflate(R.layout.fragment_profile, container, false);
+		View rootView = inflater.inflate(R.layout.fragment_profile, container, false);
 		
 		String userToLoad = getActivity().getIntent().getStringExtra(USER_ID);
 		try {
@@ -169,7 +168,7 @@ public class MyProfileFragment extends Fragment {
 			@Override
 			public void onClick(View v) {
 				try {
-					if (userId == UserHelper.getInstance(getActivity().getApplicationContext()).readCurrentUser().getId()) {
+					if (userId.equals(UserHelper.getInstance(getActivity().getApplicationContext()).readCurrentUser().getId())) {
 						AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
 					    builder.setItems(R.array.profileImageChoices, new DialogInterface.OnClickListener() {
 						   public void onClick(DialogInterface dialog, int which) {
@@ -213,7 +212,7 @@ public class MyProfileFragment extends Fragment {
 						startActivityForResult(intent, 1);
 					}
 				} catch (Exception e) {
-					
+					Log.e(LOG_NAME, "Problem setting profile picture.");
 				}
 			}
 		});

@@ -1,6 +1,8 @@
 package mil.nga.giat.mage.map.preference;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import android.content.Context;
@@ -23,8 +25,7 @@ public class OverlayPreference extends Preference {
     }
 
     /**
-     * Sets the value of the key. This should contain entries in
-     * {@link #getEntryValues()}.
+     * Sets the value of the key.
      * 
      * @param values
      *            The values to set for the key.
@@ -91,21 +92,15 @@ public class OverlayPreference extends Preference {
         public SavedState(Parcel source) {
             super(source);
             values = new HashSet<String>();
-            String[] strings = null;
-            int length = source.readInt();
-            if (length >= 0)
-            {
-                strings = new String[length];
+			int length = source.readInt();
+            if (length >= 0) {
+				List<String> strings = new ArrayList<String>(length);
 
-                for (int i = 0 ; i < length ; i++)
-                {
-                    strings[i] = source.readString();
+                for (int i = 0 ; i < length ; i++) {
+                    strings.add(source.readString());
                 }
-            }   
 
-            final int stringCount = strings.length;
-            for (int i = 0; i < stringCount; i++) {
-                values.add(strings[i]);
+				values.addAll(strings);
             }
         }
 
@@ -116,7 +111,7 @@ public class OverlayPreference extends Preference {
         @Override
         public void writeToParcel(Parcel dest, int flags) {
             super.writeToParcel(dest, flags);
-            dest.writeStringArray(values.toArray(new String[0]));
+            dest.writeStringArray(values.toArray(new String[values.size()]));
         }
 
         public static final Parcelable.Creator<SavedState> CREATOR = new Parcelable.Creator<SavedState>() {

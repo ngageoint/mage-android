@@ -22,7 +22,6 @@ import android.widget.TimePicker;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 
 import java.io.Serializable;
 import java.text.DateFormat;
@@ -38,7 +37,6 @@ import java.util.Map;
 import mil.nga.giat.mage.sdk.R;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationProperty;
 import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
-import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
 import mil.nga.giat.mage.sdk.utils.DateFormatFactory;
 
 /**
@@ -336,7 +334,7 @@ public class LayoutBaker {
 				case DROPDOWN:
 				case RADIO:
 					linearLayout.addView(textView);
-					linearLayout.addView((View) mageTextView);
+					linearLayout.addView(mageTextView);
 					views.add(linearLayout);
 					break;
 				case CHECKBOX:
@@ -350,26 +348,26 @@ public class LayoutBaker {
 					}
 					mageCheckBox.setEnabled(false);
 					linearLayout.addView(textView);
-					linearLayout.addView((View) mageCheckBox);
+					linearLayout.addView(mageCheckBox);
 					views.add(linearLayout);
 					break;
 				case PASSWORD:
 					linearLayout.addView(textView);
 					mageTextView.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
-					linearLayout.addView((View) mageTextView);
+					linearLayout.addView(mageTextView);
 					views.add(linearLayout);
 					break;
 				case TEXTAREA:
 					mageTextView.setPropertyType(MagePropertyType.MULTILINE);
 					mageTextView.setPadding((int) (5 * density), (int) (5 * density), (int) (5 * density), (int) (5 * density));
 					linearLayout.addView(textView);
-					linearLayout.addView((View) mageTextView);
+					linearLayout.addView(mageTextView);
 					views.add(linearLayout);
 					break;
 				case DATE:
 					mageTextView.setPropertyType(MagePropertyType.DATE);
 					linearLayout.addView(textView);
-					linearLayout.addView((View) mageTextView);
+					linearLayout.addView(mageTextView);
 					views.add(linearLayout);
 					break;
 				default:
@@ -433,7 +431,7 @@ public class LayoutBaker {
 		return populateMapFromLayout(linearLayout, properties);
 	}
 
-	private static final Map<String, ObservationProperty> populateMapFromLayout(LinearLayout linearLayout, Map<String, ObservationProperty> fields) {
+	private static Map<String, ObservationProperty> populateMapFromLayout(LinearLayout linearLayout, Map<String, ObservationProperty> fields) {
 		for (int i = 0; i < linearLayout.getChildCount(); i++) {
 			View v = linearLayout.getChildAt(i);
 

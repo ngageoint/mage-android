@@ -90,7 +90,6 @@ public class ObservationNotificationListener implements IObservationEventListene
             // pulse the vibrator
             Vibrator vibrator = (Vibrator) mContext.getSystemService(Context.VIBRATOR_SERVICE);
             vibrator.vibrate(50);
-
         }
     }
 

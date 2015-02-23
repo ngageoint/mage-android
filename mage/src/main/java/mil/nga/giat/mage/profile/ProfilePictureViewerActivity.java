@@ -41,8 +41,12 @@ public class ProfilePictureViewerActivity extends Activity {
 	public void goBack(View v) {
 		onBackPressed();
 	}
-    
-    private class DownloadImageTask extends AsyncTask<String, Void, Bitmap> {
+
+	public void removeImage(View view) {
+		throw new UnsupportedOperationException("Shouldn't be able to do this.");
+	}
+
+	private class DownloadImageTask extends AsyncTask<String, Void, Bitmap> {
 	    ImageView bmImage;
 
 	    public DownloadImageTask(ImageView bmImage) {

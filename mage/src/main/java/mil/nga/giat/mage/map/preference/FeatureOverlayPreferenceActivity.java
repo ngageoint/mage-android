@@ -120,7 +120,7 @@ public class FeatureOverlayPreferenceActivity extends ListActivity implements IL
 						l.setLoaded(true);
 						overlayAdapter.notifyDataSetChanged();
 					} else {
-						Log.i(LOG_NAME, "static layer " + layer.getName() + ":" + layer.getId() + " is not availble, adapter size is: " + overlayAdapter.getCount());
+						Log.i(LOG_NAME, "static layer " + layer.getName() + ":" + layer.getId() + " is not available, adapter size is: " + overlayAdapter.getCount());
 					}
 				}
 			}
@@ -268,8 +268,9 @@ public class FeatureOverlayPreferenceActivity extends ListActivity implements IL
             
             try {
                 layer = layers.get(index);
-
-            } catch (ArrayIndexOutOfBoundsException e) {}
+            } catch (ArrayIndexOutOfBoundsException e) {
+				Log.e(LOG_NAME, "Why out of bounds?", e);
+			}
             
             return layer;
         }

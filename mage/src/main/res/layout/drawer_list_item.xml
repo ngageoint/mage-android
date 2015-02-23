@@ -27,14 +27,6 @@
             android:textColor="#EEE"
             android:textSize="17sp" />
 
-        <TextView
-            android:id="@+id/drawer_count"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:background="@drawable/drawer_count"
-            android:textColor="#EEE"
-            android:textSize="18sp"
-            android:visibility="gone" />
     </LinearLayout>
 
 </LinearLayout>

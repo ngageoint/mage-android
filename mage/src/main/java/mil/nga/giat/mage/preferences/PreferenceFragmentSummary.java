@@ -60,8 +60,7 @@ public class PreferenceFragmentSummary extends PreferenceFragment implements OnS
 
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-        // TODO: android HACK as MultiSelectListPreferences don't fire updates
-        // as they should
+        // android HACK as MultiSelectListPreferences don't fire updates as they should
         Preference p = findPreference(key.split(DialogPreference.MultiSelectListPreferenceKey)[0]);
         setSummary(p);
     }

@@ -109,7 +109,6 @@ public class MapFragment extends Fragment implements OnMapClickListener, OnMapLo
 	private GoogleMap map;
 	private View searchLayout;
 	private EditText edittextSearch;
-	private int mapType = 1;
 	private Location location;
 	private boolean followMe = false;
 	private GoogleMapWrapper mapWrapper;
@@ -154,7 +153,7 @@ public class MapFragment extends Fragment implements OnMapClickListener, OnMapLo
 		mapView = (MapView) view.findViewById(R.id.mapView);
 		mapView.onCreate(savedInstanceState);
 
-		searchLayout = (View) view.findViewById(R.id.search_layout);
+		searchLayout = view.findViewById(R.id.search_layout);
 		edittextSearch = (EditText) view.findViewById(R.id.edittext_search);
 
 		MapsInitializer.initialize(getActivity().getApplicationContext());
@@ -317,13 +316,11 @@ public class MapFragment extends Fragment implements OnMapClickListener, OnMapLo
 
 			@Override
 			public void afterTextChanged(Editable s) {
-				// TODO Auto-generated method stub
 
 			}
 
 			@Override
 			public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-				// TODO Auto-generated method stub
 
 			}
 
@@ -588,7 +585,7 @@ public class MapFragment extends Fragment implements OnMapClickListener, OnMapLo
 		Double pixelSizeInMetersAtLatitude = (circumferenceOfEarthInMeters * Math.cos(map.getCameraPosition().target.latitude * (Math.PI / 180.0))) / Math.pow(2.0, map.getCameraPosition().zoom + 8.0);
 		Double tolerance = pixelSizeInMetersAtLatitude * Math.sqrt(2.0) * 10.0;
 
-		// TODO : find the 'closest' line or polygon to the click.
+		// find the 'closest' line or polygon to the click.
 		for (Polyline p : staticGeometryCollection.getPolylines()) {
 			if (PolyUtil.isLocationOnPath(latLng, p.getPoints(), true, tolerance)) {
 				// found it open a info window
@@ -636,7 +633,7 @@ public class MapFragment extends Fragment implements OnMapClickListener, OnMapLo
 
 	@Override
 	public void onClick(View view) {
-		// close keboard
+		// close keyboard
 		hideKeyboard();
 		switch (view.getId()) {
 		case R.id.map_settings: {
@@ -810,8 +807,7 @@ public class MapFragment extends Fragment implements OnMapClickListener, OnMapLo
 
 	private void updateMapView() {
 		// Check the map type
-		this.mapType = Integer.parseInt(preferences.getString(getResources().getString(R.string.baseLayerKey), "1"));
-		map.setMapType(this.mapType);
+		map.setMapType(Integer.parseInt(preferences.getString(getResources().getString(R.string.baseLayerKey), "1")));
 
 		// Check the map location and zoom
 		String xyz = preferences.getString(getResources().getString(R.string.mapXYZKey), null);
@@ -828,9 +824,7 @@ public class MapFragment extends Fragment implements OnMapClickListener, OnMapLo
 
 		String xyz = new StringBuilder().append(Double.valueOf(position.target.longitude).toString()).append(",").append(Double.valueOf(position.target.latitude).toString()).append(",").append(Float.valueOf(position.zoom).toString()).toString();
 
-		SharedPreferences.Editor editor = preferences.edit();
-		editor.putString(getResources().getString(R.string.mapXYZKey), xyz);
-		editor.commit();
+		preferences.edit().putString(getResources().getString(R.string.mapXYZKey), xyz).commit();
 	}
 
 	private void search(View v) {

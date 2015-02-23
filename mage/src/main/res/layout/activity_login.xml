@@ -46,7 +46,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:fontFamily="sans-serif-light"
-                android:text="Logging in"
+                android:text="Logging in..."
                 android:textColor="#EEEEEE"
                 android:textSize="26sp" />
         </LinearLayout>
