@@ -64,14 +64,6 @@ public class LandingActivity extends Activity implements ListView.OnItemClickLis
     private boolean switchFragment;
     private DrawerItem itemToSwitchTo;
     
-    public final DrawerItem getMapItem() {
-    	return mapItem;
-    }
-
-    public void setCurrentItem(DrawerItem item) {
-    	currentActivity = item;
-    }
-    
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -159,7 +151,6 @@ public class LandingActivity extends Activity implements ListView.OnItemClickLis
                     FragmentManager fragmentManager = getFragmentManager();
                     fragmentManager.beginTransaction().setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN).add(R.id.content_frame, itemToSwitchTo.getFragment()).commit();
                     currentActivity = itemToSwitchTo;
-                    getActionBar().setTitle(itemToSwitchTo.getText());
                 }
             }
 
@@ -173,7 +164,7 @@ public class LandingActivity extends Activity implements ListView.OnItemClickLis
 				}
                 currentTitle = (String) getActionBar().getTitle();
                 if (drawerView.getId() == R.id.left_drawer) {
-                    getActionBar().setTitle("Navigation");
+                    // anything to do here?
                 } else if (drawerView.getId() == R.id.filter_drawer) {
                     getActionBar().setTitle("Filter");
                     RadioGroup rg = (RadioGroup) findViewById(R.id.time_filter_radio_gorup);

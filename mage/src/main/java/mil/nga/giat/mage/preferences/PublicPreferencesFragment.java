@@ -17,6 +17,7 @@ public class PublicPreferencesFragment extends PreferenceFragmentSummary {
     @Override
     public void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+		getActivity().getActionBar().setTitle("Settings");
         addPreferencesFromResource(R.xml.publicpreferences);
         addPreferencesFromResource(R.xml.mdkpublicpreferences);
 
