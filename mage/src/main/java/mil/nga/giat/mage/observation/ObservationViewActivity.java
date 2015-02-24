@@ -3,6 +3,7 @@ package mil.nga.giat.mage.observation;
 import android.app.ActionBar;
 import android.app.Activity;
 import android.app.Fragment;
+import android.app.FragmentManager;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.graphics.drawable.BitmapDrawable;
@@ -43,6 +44,7 @@ import java.util.Locale;
 import java.util.Map;
 
 import mil.nga.giat.mage.R;
+import mil.nga.giat.mage.event.EventBannerFragment;
 import mil.nga.giat.mage.form.LayoutBaker;
 import mil.nga.giat.mage.form.LayoutBaker.ControlGenerationType;
 import mil.nga.giat.mage.map.marker.ObservationBitmapFactory;
@@ -153,6 +155,10 @@ public class ObservationViewActivity extends Activity {
 		super.onCreate(savedInstanceState);
 
 		setContentView(R.layout.observation_viewer);
+
+		FragmentManager fragmentManager = getFragmentManager();
+		fragmentManager.beginTransaction().add(R.id.observation_view_event_holder, new EventBannerFragment()).commit();
+
 		ActionBar actionBar = getActionBar();
 		actionBar.setDisplayHomeAsUpEnabled(true);
 

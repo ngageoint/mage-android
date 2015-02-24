@@ -18,6 +18,7 @@ import java.util.concurrent.TimeUnit;
 import mil.nga.giat.mage.MAGE;
 import mil.nga.giat.mage.MAGE.OnCacheOverlayListener;
 import mil.nga.giat.mage.R;
+import mil.nga.giat.mage.event.EventBannerFragment;
 import mil.nga.giat.mage.filter.DateTimeFilter;
 import mil.nga.giat.mage.filter.Filter;
 import mil.nga.giat.mage.map.GoogleMapWrapper.OnMapPanListener;
@@ -50,6 +51,7 @@ import org.apache.commons.lang3.StringUtils;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Fragment;
+import android.app.FragmentManager;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -140,6 +142,9 @@ public class MapFragment extends Fragment implements OnMapClickListener, OnMapLo
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 		View view = inflater.inflate(R.layout.fragment_map, container, false);
+
+		FragmentManager fragmentManager = getFragmentManager();
+		fragmentManager.beginTransaction().add(R.id.map_event_holder, new EventBannerFragment()).commit();
 
 		setHasOptionsMenu(true);
 

@@ -8,10 +8,10 @@ public class RefreshMarkersTask extends AsyncTask<Integer, Void, Void> {
 
 	private static final String LOG_NAME = RefreshMarkersTask.class.getName();
 
-	PointCollection<?> colleciton;
+	PointCollection<?> collection;
 
-	public RefreshMarkersTask(PointCollection<?> colleciton) {
-		this.colleciton = colleciton;
+	public RefreshMarkersTask(PointCollection<?> collection) {
+		this.collection = collection;
 	}
 
 	@Override
@@ -27,7 +27,7 @@ public class RefreshMarkersTask extends AsyncTask<Integer, Void, Void> {
 			try {
 				Thread.sleep(sleepTimeInMilli);
 			} catch (InterruptedException ie) {
-				Log.e(LOG_NAME, "Interrupted.  Unable to sleep ", ie);
+				//Log.e(LOG_NAME, "Interrupted.  Unable to sleep ", ie);
 			}
 		}
 		return null;
@@ -36,8 +36,8 @@ public class RefreshMarkersTask extends AsyncTask<Integer, Void, Void> {
 	@Override
 	protected void onProgressUpdate(Void... values) {
 		super.onProgressUpdate(values);
-		if(colleciton.isVisible()) {
-			colleciton.refreshMarkerIcons();
+		if(collection.isVisible()) {
+			collection.refreshMarkerIcons();
 		}
 	}
 
