@@ -62,53 +62,50 @@ public class HttpClientManager implements IEventDispatcher<IUserEventListener> {
 		return httpClientManager;
 	}
 
-	private DefaultHttpClient httpClient = null;
 
 	public DefaultHttpClient getHttpClient() {
-		if (httpClient == null) {
-			BasicHttpParams params = new BasicHttpParams();
-			SchemeRegistry schemeRegistry = new SchemeRegistry();
-			// register http?
-			schemeRegistry.register(new Scheme("http", PlainSocketFactory.getSocketFactory(), 80));
-			final SSLSocketFactory sslSocketFactory = SSLSocketFactory.getSocketFactory();
-			schemeRegistry.register(new Scheme("https", sslSocketFactory, 443));
-			// needs to be thread safe!
-			ClientConnectionManager cm = new ThreadSafeClientConnManager(params, schemeRegistry);
-			httpClient = new DefaultHttpClient(cm, params);
-			httpClient.getParams().setParameter(CoreConnectionPNames.CONNECTION_TIMEOUT, 25000);
-			httpClient.getParams().setParameter(CoreConnectionPNames.SO_TIMEOUT, 30000);
-			String userAgent = System.getProperty("http.agent");
-			userAgent = (userAgent == null) ? "" : userAgent;
-			httpClient.getParams().setParameter(CoreProtocolPNames.USER_AGENT, userAgent);
-			// add the token to every request!
-			httpClient.addRequestInterceptor(new HttpRequestInterceptor() {
-				@Override
-				public void process(HttpRequest request, HttpContext context) throws HttpException, IOException {
+		BasicHttpParams params = new BasicHttpParams();
+		SchemeRegistry schemeRegistry = new SchemeRegistry();
+		// register http?
+		schemeRegistry.register(new Scheme("http", PlainSocketFactory.getSocketFactory(), 80));
+		final SSLSocketFactory sslSocketFactory = SSLSocketFactory.getSocketFactory();
+		schemeRegistry.register(new Scheme("https", sslSocketFactory, 443));
+		// needs to be thread safe!
+		ClientConnectionManager cm = new ThreadSafeClientConnManager(params, schemeRegistry);
+		DefaultHttpClient httpClient = new DefaultHttpClient(cm, params);
+		httpClient.getParams().setParameter(CoreConnectionPNames.CONNECTION_TIMEOUT, 25000);
+		httpClient.getParams().setParameter(CoreConnectionPNames.SO_TIMEOUT, 30000);
+		String userAgent = System.getProperty("http.agent");
+		userAgent = (userAgent == null) ? "" : userAgent;
+		httpClient.getParams().setParameter(CoreProtocolPNames.USER_AGENT, userAgent);
+		// add the token to every request!
+		httpClient.addRequestInterceptor(new HttpRequestInterceptor() {
+			@Override
+			public void process(HttpRequest request, HttpContext context) throws HttpException, IOException {
 
-					String token = PreferenceHelper.getInstance(mContext).getValue(R.string.tokenKey);
-					if (token != null && !token.trim().isEmpty()) {
-						request.addHeader("Authorization", "Bearer " + token);
-					}
+				String token = PreferenceHelper.getInstance(mContext).getValue(R.string.tokenKey);
+				if (token != null && !token.trim().isEmpty()) {
+					request.addHeader("Authorization", "Bearer " + token);
 				}
-			});
-			httpClient.addResponseInterceptor(new HttpResponseInterceptor() {
+			}
+		});
+		httpClient.addResponseInterceptor(new HttpResponseInterceptor() {
 
-				@Override
-				public void process(HttpResponse response, HttpContext context) throws HttpException, IOException {
-					int statusCode = response.getStatusLine().getStatusCode();
-					if (statusCode == HttpStatus.SC_FORBIDDEN || statusCode == HttpStatus.SC_UNAUTHORIZED) {
-						UserUtility.getInstance(mContext).clearTokenInformation();
-						for (IUserEventListener listener : listeners) {
-							listener.onTokenExpired();
-						}
-						Log.w(LOG_NAME, "TOKEN EXPIRED");
-						return;
-					} else if(statusCode == HttpStatus.SC_NOT_FOUND) {
-						Log.w(LOG_NAME, "404 Not Found.");
+			@Override
+			public void process(HttpResponse response, HttpContext context) throws HttpException, IOException {
+				int statusCode = response.getStatusLine().getStatusCode();
+				if (statusCode == HttpStatus.SC_FORBIDDEN || statusCode == HttpStatus.SC_UNAUTHORIZED) {
+					UserUtility.getInstance(mContext).clearTokenInformation();
+					for (IUserEventListener listener : listeners) {
+						listener.onTokenExpired();
 					}
+					Log.w(LOG_NAME, "TOKEN EXPIRED");
+					return;
+				} else if (statusCode == HttpStatus.SC_NOT_FOUND) {
+					Log.w(LOG_NAME, "404 Not Found.");
 				}
-			});
-		}
+			}
+		});
 		return httpClient;
 	}
 
