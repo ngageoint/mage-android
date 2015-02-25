@@ -21,11 +21,8 @@ import com.google.gson.JsonSerializer;
 
 public class ObservationSerializer implements JsonSerializer<Observation> {
 
-    protected Context mApplicationContext;
-
-	public ObservationSerializer(Context context) {
+	public ObservationSerializer() {
 		super();
-        mApplicationContext = context;
 	}
 
 	/**
@@ -35,9 +32,9 @@ public class ObservationSerializer implements JsonSerializer<Observation> {
 	 * @return A Gson object that can be used to convert {@link Observation} object
 	 * into a JSON string.
 	 */
-	public static Gson getGsonBuilder(Context context) {
+	public static Gson getGsonBuilder() {
 		GsonBuilder gsonBuilder = new GsonBuilder();
-		gsonBuilder.registerTypeAdapter(Observation.class, new ObservationSerializer(context));
+		gsonBuilder.registerTypeAdapter(Observation.class, new ObservationSerializer());
 		return gsonBuilder.create();
 	}
 
@@ -45,8 +42,7 @@ public class ObservationSerializer implements JsonSerializer<Observation> {
 	public JsonElement serialize(Observation pObs, Type pType, JsonSerializationContext pContext) {
 
 		JsonObject feature = new JsonObject();
-        Long currentEventId = EventHelper.getInstance(mApplicationContext).getCurrentEvent(mApplicationContext).getId();
-        feature.add("eventId", new JsonPrimitive(currentEventId));
+        feature.add("eventId", new JsonPrimitive(pObs.getEvent().getId()));
 		feature.add("type", new JsonPrimitive("Feature"));
 		conditionalAdd("id", pObs.getRemoteId(), feature);
 		feature.add("geometry", new JsonParser().parse(GeometrySerializer.getGsonBuilder().toJson(pObs.getObservationGeometry().getGeometry())));

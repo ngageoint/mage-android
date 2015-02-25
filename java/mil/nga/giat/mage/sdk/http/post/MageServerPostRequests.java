@@ -72,47 +72,39 @@ public class MageServerPostRequests {
 		ObservationHelper observationHelper = ObservationHelper.getInstance(context);
 		Observation savedObservation = null;
 
-        Event currentEvent = EventHelper.getInstance(context).getCurrentEvent(context);
-        Long currentEventId = currentEvent.getId();
-
 		HttpEntity entity = null;
 		HttpEntityEnclosingRequestBase request = null;
 		try {
-			if(currentEventId != null) {
-                String currentEventIdString = String.valueOf(currentEventId);
-                DefaultHttpClient httpClient = HttpClientManager.getInstance(context).getHttpClient();
+			String observationEventIdString = String.valueOf(observation.getEvent().getId());
+			DefaultHttpClient httpClient = HttpClientManager.getInstance(context).getHttpClient();
 
-                URL serverURL = new URL(PreferenceHelper.getInstance(context).getValue(R.string.serverURLKey));
-                URI endpointUri = null;
+			URL serverURL = new URL(PreferenceHelper.getInstance(context).getValue(R.string.serverURLKey));
+			URI endpointUri = null;
 
-                if (observation.getRemoteId() == null || observation.getRemoteId().trim().isEmpty()) {
-                    endpointUri = new URL(serverURL + "/api/events/" + currentEventIdString + "/observations").toURI();
-                    request = new HttpPost(endpointUri);
-                } else {
-                    endpointUri = new URL(serverURL + "/api/events/" + currentEventIdString + "/observations/" + observation.getRemoteId()).toURI();
-                    request = new HttpPut(endpointUri);
-                }
-                request.addHeader("Content-Type", "application/json; charset=utf-8");
-                Gson gson = ObservationSerializer.getGsonBuilder(context);
-                request.setEntity(new StringEntity(gson.toJson(observation)));
+			if (observation.getRemoteId() == null || observation.getRemoteId().trim().isEmpty()) {
+				endpointUri = new URL(serverURL + "/api/events/" + observationEventIdString + "/observations").toURI();
+				request = new HttpPost(endpointUri);
+			} else {
+				endpointUri = new URL(serverURL + "/api/events/" + observationEventIdString + "/observations/" + observation.getRemoteId()).toURI();
+				request = new HttpPut(endpointUri);
+			}
+			request.addHeader("Content-Type", "application/json; charset=utf-8");
+			Gson gson = ObservationSerializer.getGsonBuilder();
+			request.setEntity(new StringEntity(gson.toJson(observation)));
 
-                HttpResponse response = httpClient.execute(request);
-                if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
-                    entity = response.getEntity();
-                    Observation returnedObservation = new ObservationDeserializer(currentEvent).parseObservation(entity.getContent());
-                    returnedObservation.setDirty(Boolean.FALSE);
-                    returnedObservation.setId(observation.getId());
-                    savedObservation = observationHelper.update(returnedObservation);
-                } else {
-                    entity = response.getEntity();
-                    String error = EntityUtils.toString(entity);
-                    Log.e(LOG_NAME, "Bad request.");
-                    Log.e(LOG_NAME, error);
-                }
-            } else {
-                Log.e(LOG_NAME, "Could not post/put observation, because the event id was: " + String.valueOf(currentEventId));
-            }
-
+			HttpResponse response = httpClient.execute(request);
+			if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
+				entity = response.getEntity();
+				Observation returnedObservation = new ObservationDeserializer(observation.getEvent()).parseObservation(entity.getContent());
+				returnedObservation.setDirty(Boolean.FALSE);
+				returnedObservation.setId(observation.getId());
+				savedObservation = observationHelper.update(returnedObservation);
+			} else {
+				entity = response.getEntity();
+				String error = EntityUtils.toString(entity);
+				Log.e(LOG_NAME, "Bad request.");
+				Log.e(LOG_NAME, error);
+			}
 		} catch (Exception e) {
 			Log.e(LOG_NAME, "Failure pushing observation.", e);
 		} finally {
