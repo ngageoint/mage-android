@@ -53,13 +53,11 @@ public class LayoutBaker {
 		VIEW, EDIT;
 	}
 
-	public static List<View> createControlsFromJson(Context pContext, ControlGenerationType controlGenerationType) {
+	public static List<View> createControlsFromJson(Context pContext, ControlGenerationType controlGenerationType, JsonObject dynamicFormJson) {
 		// add the theme to the context
 		final Context context = new ContextThemeWrapper(pContext, R.style.AppTheme);
 
 		List<View> views = new ArrayList<View>();
-
-		JsonObject dynamicFormJson = EventHelper.getInstance(context).getCurrentEvent(context).getForm();
 
 		JsonArray dynamicFormFields = dynamicFormJson.get("fields").getAsJsonArray();
 

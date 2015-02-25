@@ -135,7 +135,14 @@ public class ObservationEditActivity extends Activity {
 		
 		final long observationId = getIntent().getLongExtra(OBSERVATION_ID, NEW_OBSERVATION);
 
-		List<View> controls = LayoutBaker.createControlsFromJson(this, ControlGenerationType.EDIT);
+		JsonObject dynamicFormJson = null;
+		if (observationId == NEW_OBSERVATION) {
+			dynamicFormJson = EventHelper.getInstance(getApplicationContext()).getCurrentEvent(getApplicationContext()).getForm();
+		} else {
+			dynamicFormJson = o.getEvent().getForm();
+		}
+
+		List<View> controls = LayoutBaker.createControlsFromJson(this, ControlGenerationType.EDIT, dynamicFormJson);
 
 		for (View view : controls) {
 			if (view instanceof MageSpinner) {
@@ -158,7 +165,7 @@ public class ObservationEditActivity extends Activity {
 							spinnersLastPositions.put(k, position);
 						}
 
-						JsonObject dynamicFormJson = EventHelper.getInstance(getApplicationContext()).getCurrentEvent(getApplicationContext()).getForm();
+						JsonObject dynamicFormJson = o.getEvent().getForm();
 						
 						// get variantField
 						JsonElement variantField = dynamicFormJson.get("variantField");
