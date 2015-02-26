@@ -73,7 +73,7 @@ public class MageServerGetRequests {
 		try {
 			URL serverURL = new URL(PreferenceHelper.getInstance(context).getValue(R.string.serverURLKey));
 
-			Long currentEventId = EventHelper.getInstance(context).getCurrentEvent(context).getId();
+			Long currentEventId = EventHelper.getInstance(context).getCurrentEvent().getId();
 			if (currentEventId != null) {
                 String currentEventIdString = String.valueOf(currentEventId);
 				URL observationIconsURL = new URL(serverURL, "/api/events/" + currentEventIdString + "/form/icons.zip");
@@ -268,7 +268,7 @@ public class MageServerGetRequests {
         DateFormat iso8601Format = DateFormatFactory.ISO8601();
 
         List<Observation> observations = new ArrayList<Observation>();
-        Event currentEvent = EventHelper.getInstance(context).getCurrentEvent(context);
+        Event currentEvent = EventHelper.getInstance(context).getCurrentEvent();
         Long currentEventId = currentEvent.getId();
 		HttpEntity entity = null;
 		try {

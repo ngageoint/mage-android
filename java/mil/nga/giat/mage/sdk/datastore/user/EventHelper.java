@@ -2,6 +2,8 @@ package mil.nga.giat.mage.sdk.datastore.user;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import mil.nga.giat.mage.sdk.datastore.DaoHelper;
@@ -155,10 +157,29 @@ public class EventHelper extends DaoHelper<Event> {
         return events;
     }
 
-    public Event getCurrentEvent(Context pContext) {
+	public List<Event> getEventsByUser(User pUser) {
+		List<Event> events = new ArrayList<Event>();
+		List<Team> teams = TeamHelper.getInstance(mApplicationContext).getTeamsByUser(pUser);
+		for(Team team : teams) {
+			for(Event e : EventHelper.getInstance(mApplicationContext).getEventsByTeam(team)) {
+				if(!events.contains(e)) {
+					events.add(e);
+				}
+			}
+		}
+		Collections.sort(events, new Comparator<Event>() {
+			@Override
+			public int compare(Event lhs, Event rhs) {
+				return lhs.getName().compareTo(rhs.getName());
+			}
+		});
+		return events;
+	}
+
+    public Event getCurrentEvent() {
         Event event = null;
         try {
-            User u = UserHelper.getInstance(pContext).readCurrentUser();
+            User u = UserHelper.getInstance(mApplicationContext).readCurrentUser();
             if(u != null) {
                 event = u.getCurrentEvent();
             }

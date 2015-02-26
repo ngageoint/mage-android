@@ -10,8 +10,10 @@ import android.content.Context;
  */
 public abstract class DaoHelper<T> implements IDaoHelper<T> {
 	protected final DaoStore daoStore;
+	protected final Context mApplicationContext;
 	
 	protected DaoHelper(Context pContext) {
 		daoStore = DaoStore.getInstance(pContext);
+		mApplicationContext = pContext;
 	}
 }
