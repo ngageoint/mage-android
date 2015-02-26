@@ -75,10 +75,10 @@ public class ObservationBitmapFactory {
 			// get type
 			ObservationProperty type = properties.get(TYPE_PROPERTY);
 
-            Event currentEvent = EventHelper.getInstance(context).getCurrentEvent(context);
+            Event event = observation.getEvent();
 
 			// get variantField
-			JsonObject dynamicFormJson = currentEvent.getForm();
+			JsonObject dynamicFormJson = event.getForm();
 			
 			// get variant
 			ObservationProperty variant = null;
@@ -88,7 +88,7 @@ public class ObservationBitmapFactory {
 			}
 
             // make path from type and variant
-            File path = new File(new File(new File(context.getFilesDir() + MageServerGetRequests.OBSERVATION_ICON_PATH), String.valueOf(currentEvent.getId())), "icons");
+            File path = new File(new File(new File(context.getFilesDir() + MageServerGetRequests.OBSERVATION_ICON_PATH), String.valueOf(event.getId())), "icons");
 
             Stack<ObservationProperty> iconProperties = new Stack<ObservationProperty>();
             iconProperties.add(variant);

@@ -25,7 +25,7 @@ public class EventBannerFragment extends Fragment {
 		View rootView = inflater.inflate(R.layout.event_header, container, false);
 
 		TextView eventTextView = (TextView)rootView.findViewById(R.id.event_header_text);
-		eventTextView.setText(EventHelper.getInstance(getActivity().getApplicationContext()).getCurrentEvent(getActivity().getApplicationContext()).getName());
+		eventTextView.setText(EventHelper.getInstance(getActivity().getApplicationContext()).getCurrentEvent().getName());
 
 		return rootView;
 	}

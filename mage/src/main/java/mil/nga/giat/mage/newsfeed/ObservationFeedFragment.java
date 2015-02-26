@@ -228,7 +228,7 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 		qb.where()
         .gt("last_modified", c.getTime())
         .and()
-        .eq("event_id", EventHelper.getInstance(getActivity().getApplicationContext()).getCurrentEvent(getActivity().getApplicationContext()).getId());
+        .eq("event_id", EventHelper.getInstance(getActivity().getApplicationContext()).getCurrentEvent().getId());
 		qb.orderBy("timestamp", false);
 
 		return qb.prepare();

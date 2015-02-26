@@ -65,7 +65,7 @@ public class ObservationLoadTask extends AsyncTask<Void, Observation, Void> {
                 .where()
                 .ge("last_modified", observationCollection.getLatestDate())
                 .and()
-                .eq("event_id", EventHelper.getInstance(context).getCurrentEvent(context).getId());
+                .eq("event_id", EventHelper.getInstance(context).getCurrentEvent().getId());
 
         if (filter != null) {
             filter.where(where.and());            

@@ -68,15 +68,7 @@ public class EventActivity extends Activity implements AccountDelegate {
                     User currentUser = null;
                     try {
                         currentUser = UserHelper.getInstance(getApplicationContext()).readCurrentUser();
-
-                        List<Team> teams = TeamHelper.getInstance(getApplicationContext()).getTeamsByUser(currentUser);
-                        for(Team team : teams) {
-                            for(Event e : EventHelper.getInstance(getApplicationContext()).getEventsByTeam(team)) {
-                                if(!currentEvents.contains(e)) {
-                                    currentEvents.add(e);
-                                }
-                            }
-                        }
+						currentEvents = EventHelper.getInstance(getApplicationContext()).getEventsByUser(currentUser);
                     } catch(Exception e) {
                         Log.e(LOG_NAME, "Could not get current events!");
                     }

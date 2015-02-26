@@ -61,6 +61,7 @@ public class LandingActivity extends Activity implements ListView.OnItemClickLis
     private int activeTimeFilter = 0;
     private String currentTitle = "";
     private DrawerItem mapItem;
+	private int logoutId;
     private boolean switchFragment;
     private DrawerItem itemToSwitchTo;
     
@@ -68,16 +69,19 @@ public class LandingActivity extends Activity implements ListView.OnItemClickLis
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_landing);
-        mapItem = new DrawerItem.Builder("Map").id(0).drawableId(R.drawable.ic_globe_white).fragment(new MapFragment()).build();
+		int id = 0;
+        mapItem = new DrawerItem.Builder("Map").id(id++).drawableId(R.drawable.ic_globe_white).fragment(new MapFragment()).build();
+		DrawerItem logoutItem = new DrawerItem.Builder("Logout").id(id++).secondary(true).build();
+		logoutId = logoutItem.getId();
 
 		DrawerItem[] drawerItems = new DrawerItem[] { mapItem,
-        		new DrawerItem.Builder("Observations").id(1).drawableId(R.drawable.ic_map_marker_white).fragment(new ObservationFeedFragment()).build(),
-                new DrawerItem.Builder("People").id(2).drawableId(R.drawable.ic_users_white).fragment(new PeopleFeedFragment()).build(),
-                new DrawerItem.Builder("My Profile").id(7).drawableId(R.drawable.ic_fa_user).fragment(new MyProfileFragment()).build(),
-                new DrawerItem.Builder("Settings").id(3).secondary(true).fragment(new PublicPreferencesFragment()).build(), 
-                new DrawerItem.Builder("Status").id(6).secondary(true).fragment(new StatusFragment()).build(), 
-                new DrawerItem.Builder("Help").id(4).secondary(true).fragment(new HelpFragment()).build(), 
-                new DrawerItem.Builder("Logout").id(5).secondary(true).build() };
+				new DrawerItem.Builder("Observations").id(id++).drawableId(R.drawable.ic_map_marker_white).fragment(new ObservationFeedFragment()).build(),
+				new DrawerItem.Builder("People").id(id++).drawableId(R.drawable.ic_users_white).fragment(new PeopleFeedFragment()).build(),
+				new DrawerItem.Builder("My Profile").id(id++).drawableId(R.drawable.ic_fa_user).fragment(new MyProfileFragment()).build(),
+				new DrawerItem.Builder("Settings").id(id++).secondary(true).fragment(new PublicPreferencesFragment()).build(),
+				new DrawerItem.Builder("Status").id(id++).secondary(true).fragment(new StatusFragment()).build(),
+				new DrawerItem.Builder("Help").id(id++).secondary(true).fragment(new HelpFragment()).build(),
+				logoutItem };
 
         drawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawerList = (ListView) findViewById(R.id.left_drawer);
@@ -266,17 +270,13 @@ public class LandingActivity extends Activity implements ListView.OnItemClickLis
         ArrayAdapter<DrawerItem> adapter = (ArrayAdapter<DrawerItem>) adapterView.getAdapter();
         itemToSwitchTo = adapter.getItem(position);
         if (itemToSwitchTo.getFragment() == null) {
-            switch (itemToSwitchTo.getId()) {
-			case 5: {
+            if(itemToSwitchTo.getId() == logoutId) {
                 ((MAGE)getApplication()).onLogout(true);
                 startActivity(new Intent(getApplicationContext(), LoginActivity.class));
                 finish();
                 return;
-            }
-            default: {
-                // TODO not sure what to do here, if anything (fix your code)
-                // could just be unclickable
-            }
+            } else {
+				Log.e(LOG_NAME, "Your fragment was null. Fix the code.");
             }
         }
         if (currentActivity != itemToSwitchTo && itemToSwitchTo.getFragment() != null) {

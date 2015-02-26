@@ -137,7 +137,7 @@ public class ObservationEditActivity extends Activity {
 
 		JsonObject dynamicFormJson = null;
 		if (observationId == NEW_OBSERVATION) {
-			dynamicFormJson = EventHelper.getInstance(getApplicationContext()).getCurrentEvent(getApplicationContext()).getForm();
+			dynamicFormJson = EventHelper.getInstance(getApplicationContext()).getCurrentEvent().getForm();
 		} else {
 			dynamicFormJson = o.getEvent().getForm();
 		}
@@ -196,7 +196,7 @@ public class ObservationEditActivity extends Activity {
 			l = getIntent().getParcelableExtra(LOCATION);
 
 			o = new Observation();
-            o.setEvent(EventHelper.getInstance(getApplicationContext()).getCurrentEvent(getApplicationContext()));
+            o.setEvent(EventHelper.getInstance(getApplicationContext()).getCurrentEvent());
 			o.setTimestamp(new Date());
 			List<ObservationProperty> properties = new ArrayList<ObservationProperty>();
 			properties.add(new ObservationProperty("timestamp", iso8601Format.format(o.getTimestamp())));
