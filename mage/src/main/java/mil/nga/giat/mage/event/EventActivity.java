@@ -1,6 +1,7 @@
 package mil.nga.giat.mage.event;
 
 import android.app.Activity;
+import android.app.FragmentManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -44,7 +45,7 @@ public class EventActivity extends Activity implements AccountDelegate {
 
     private int uniqueChildIdIndex = uniqueChildStartingIdIndex;
 
-    private List<Event> currentEvents = new ArrayList<Event>();
+    private List<Event> events = new ArrayList<Event>();
 
     private Event chosenEvent = null;
 
@@ -53,7 +54,7 @@ public class EventActivity extends Activity implements AccountDelegate {
         super.onCreate(savedInstanceState);
 
         uniqueChildIdIndex = uniqueChildStartingIdIndex;
-        currentEvents = new ArrayList<Event>();
+		events = new ArrayList<Event>();
 
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(R.layout.activity_event);
@@ -68,19 +69,12 @@ public class EventActivity extends Activity implements AccountDelegate {
                     User currentUser = null;
                     try {
                         currentUser = UserHelper.getInstance(getApplicationContext()).readCurrentUser();
-						currentEvents = EventHelper.getInstance(getApplicationContext()).getEventsByUser(currentUser);
+						events = EventHelper.getInstance(getApplicationContext()).getEventsForCurrentUser();
                     } catch(Exception e) {
                         Log.e(LOG_NAME, "Could not get current events!");
                     }
 
-                    Collections.sort(currentEvents, new Comparator<Event>() {
-                        @Override
-                        public int compare(Event lhs, Event rhs) {
-                            return lhs.getName().compareTo(rhs.getName());
-                        }
-                    });
-
-                    if(currentEvents.isEmpty() || currentUser == null) {
+                    if(events.isEmpty() || currentUser == null) {
                         Log.e(LOG_NAME, "User is part of no event!");
                         ((MAGE) getApplication()).onLogout(true);
                         findViewById(R.id.event_status).setVisibility(View.GONE);
@@ -94,18 +88,18 @@ public class EventActivity extends Activity implements AccountDelegate {
                         Event userRecentEvent = currentUser.getCurrentEvent();
 
                         if(userRecentEvent == null) {
-                            userRecentEvent = currentEvents.get(0);
+                            userRecentEvent = events.get(0);
                             currentUser.setCurrentEvent(userRecentEvent);
                             UserHelper.getInstance(getApplicationContext()).createOrUpdate(currentUser);
                         }
 
-                        if(currentEvents.size() == 1 && currentEvents.get(0).equals(userRecentEvent)) {
+                        if(events.size() == 1 && events.get(0).equals(userRecentEvent)) {
                             currentUser.setCurrentEvent(userRecentEvent);
                             UserHelper.getInstance(getApplicationContext()).createOrUpdate(currentUser);
                             chosenEvent = userRecentEvent;
                             finishAccount(new AccountStatus(AccountStatus.Status.SUCCESSFUL_LOGIN));
                         } else {
-                            for (Event e : currentEvents) {
+                            for (Event e : events) {
                                 RadioButton radioButton = new RadioButton(getApplicationContext());
                                 radioButton.setId(uniqueChildIdIndex++);
                                 radioButton.setText(e.getName());
@@ -143,13 +137,26 @@ public class EventActivity extends Activity implements AccountDelegate {
     }
 
     public void chooseEvent(View view) {
+
+		findViewById(R.id.event_content).setVisibility(View.GONE);
+		findViewById(R.id.event_status).setVisibility(View.VISIBLE);
+
         int eventIndex = (((RadioGroup)findViewById(R.id.event_radiogroup)).getCheckedRadioButtonId() - uniqueChildStartingIdIndex);
-        chosenEvent = currentEvents.get(eventIndex);
+        chosenEvent = events.get(eventIndex);
 
         List<String> userRecentEventInfo = new ArrayList<String>();
         userRecentEventInfo.add(chosenEvent.getRemoteId());
 
         new RecentEventTask(this, this.getApplicationContext()).execute(userRecentEventInfo.toArray(new String[userRecentEventInfo.size()]));
+
+		// regardless of the return status, set the user's currentevent
+		try {
+			User currentUser = UserHelper.getInstance(getApplicationContext()).readCurrentUser();
+			currentUser.setCurrentEvent(chosenEvent);
+			UserHelper.getInstance(getApplicationContext()).createOrUpdate(currentUser);
+		} catch(Exception e) {
+			Log.e(LOG_NAME, "Could not set current event.");
+		}
     }
 
     public void bummerEvent(View view) {

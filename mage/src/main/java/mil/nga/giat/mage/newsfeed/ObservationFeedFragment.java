@@ -69,6 +69,13 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 	private long requeryTime;
 	private ViewGroup footer;
 	private ListView lv;
+	private Long currentEventId;
+
+	@Override
+	public void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		this.currentEventId = EventHelper.getInstance(getActivity().getApplicationContext()).getCurrentEvent().getId();
+	}
 
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -228,7 +235,7 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 		qb.where()
         .gt("last_modified", c.getTime())
         .and()
-        .eq("event_id", EventHelper.getInstance(getActivity().getApplicationContext()).getCurrentEvent().getId());
+        .eq("event_id", currentEventId);
 		qb.orderBy("timestamp", false);
 
 		return qb.prepare();

@@ -88,7 +88,7 @@ public class ObservationBitmapFactory {
 			}
 
             // make path from type and variant
-            File path = new File(new File(new File(context.getFilesDir() + MageServerGetRequests.OBSERVATION_ICON_PATH), String.valueOf(event.getId())), "icons");
+            File path = new File(new File(new File(context.getFilesDir() + MageServerGetRequests.OBSERVATION_ICON_PATH), event.getRemoteId()), "icons");
 
             Stack<ObservationProperty> iconProperties = new Stack<ObservationProperty>();
             iconProperties.add(variant);
@@ -125,11 +125,11 @@ public class ObservationBitmapFactory {
 				}
 			}
 		}
-		while (path != null && path.listFiles(fileFilter).length == 0 && i >= 0) {
+		while (path != null && path.listFiles(fileFilter) != null && path.listFiles(fileFilter).length == 0 && i >= 0) {
 			path = path.getParentFile();
 			i--;
 		}
-		if (path == null) return null;
+		if (path == null || !path.exists()) return null;
 		
 		File[] files = path.listFiles(fileFilter);
 		return files.length == 0 ? null : files[0];

@@ -22,10 +22,12 @@ public class ObservationLoadTask extends AsyncTask<Void, Observation, Void> {
     private Context context;
     private Filter<Temporal> filter;
     private PointCollection<Observation> observationCollection;
+	private Long currentEventId;
 
     public ObservationLoadTask(Context context, PointCollection<Observation> observationCollection) {
         this.context = context.getApplicationContext();
         this.observationCollection = observationCollection;
+		this.currentEventId = EventHelper.getInstance(context).getCurrentEvent().getId();
     }
        
     public void setFilter(Filter<Temporal> filter) {
@@ -65,7 +67,7 @@ public class ObservationLoadTask extends AsyncTask<Void, Observation, Void> {
                 .where()
                 .ge("last_modified", observationCollection.getLatestDate())
                 .and()
-                .eq("event_id", EventHelper.getInstance(context).getCurrentEvent().getId());
+                .eq("event_id", currentEventId);
 
         if (filter != null) {
             filter.where(where.and());            

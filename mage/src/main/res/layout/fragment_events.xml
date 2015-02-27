@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="vertical">
+    <FrameLayout
+        android:id="@+id/event_fragment_event_holder"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:paddingLeft="24dip"
+        android:paddingRight="24dip">
+
+        <TextView
+            android:id="@+id/event_info"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingBottom="20dip"
+            android:paddingTop="20dip"
+            android:text="You are part of multiple events.  The observations you create and your reported location will be part of the selected event."
+            android:textColor="#000000"/>
+
+        <TextView
+            android:id="@+id/event_fragment_info_select"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/event_info"
+            android:paddingBottom="20dip"
+            android:text="Current event:"
+            android:textColor="#000000"/>
+
+        <RadioGroup
+            android:id="@+id/event_fragment_radiogroup"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/event_fragment_info_select"
+            android:layout_gravity="left"
+            android:paddingBottom="20dip">
+        </RadioGroup>
+    </RelativeLayout>
+</RelativeLayout>

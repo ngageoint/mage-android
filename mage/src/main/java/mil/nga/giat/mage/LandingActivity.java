@@ -1,10 +1,13 @@
 package mil.nga.giat.mage;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
+import mil.nga.giat.mage.event.EventFragment;
 import mil.nga.giat.mage.help.HelpFragment;
 import mil.nga.giat.mage.login.AlertBannerFragment;
 import mil.nga.giat.mage.login.LoginActivity;
@@ -15,6 +18,7 @@ import mil.nga.giat.mage.newsfeed.PeopleFeedFragment;
 import mil.nga.giat.mage.preferences.PublicPreferencesFragment;
 import mil.nga.giat.mage.profile.MyProfileFragment;
 import mil.nga.giat.mage.sdk.datastore.DaoStore;
+import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
 import mil.nga.giat.mage.status.StatusFragment;
 import android.app.Activity;
@@ -74,14 +78,18 @@ public class LandingActivity extends Activity implements ListView.OnItemClickLis
 		DrawerItem logoutItem = new DrawerItem.Builder("Logout").id(id++).secondary(true).build();
 		logoutId = logoutItem.getId();
 
-		DrawerItem[] drawerItems = new DrawerItem[] { mapItem,
-				new DrawerItem.Builder("Observations").id(id++).drawableId(R.drawable.ic_map_marker_white).fragment(new ObservationFeedFragment()).build(),
-				new DrawerItem.Builder("People").id(id++).drawableId(R.drawable.ic_users_white).fragment(new PeopleFeedFragment()).build(),
-				new DrawerItem.Builder("My Profile").id(id++).drawableId(R.drawable.ic_fa_user).fragment(new MyProfileFragment()).build(),
-				new DrawerItem.Builder("Settings").id(id++).secondary(true).fragment(new PublicPreferencesFragment()).build(),
-				new DrawerItem.Builder("Status").id(id++).secondary(true).fragment(new StatusFragment()).build(),
-				new DrawerItem.Builder("Help").id(id++).secondary(true).fragment(new HelpFragment()).build(),
-				logoutItem };
+		List<DrawerItem> drawerItems = new ArrayList<DrawerItem>();
+		drawerItems.add(mapItem);
+		drawerItems.add(new DrawerItem.Builder("Observations").id(id++).drawableId(R.drawable.ic_map_marker_white).fragment(new ObservationFeedFragment()).build());
+		drawerItems.add(new DrawerItem.Builder("People").id(id++).drawableId(R.drawable.ic_users_white).fragment(new PeopleFeedFragment()).build());
+		if(EventHelper.getInstance(getApplicationContext()).getEventsForCurrentUser().size() > 1) {
+			drawerItems.add(new DrawerItem.Builder("Events").id(id++).drawableId(R.drawable.ic_events_white).fragment(new EventFragment()).build());
+		}
+		drawerItems.add(new DrawerItem.Builder("My Profile").id(id++).drawableId(R.drawable.ic_fa_user).fragment(new MyProfileFragment()).build());
+		drawerItems.add(new DrawerItem.Builder("Settings").id(id++).secondary(true).fragment(new PublicPreferencesFragment()).build());
+		drawerItems.add(new DrawerItem.Builder("Status").id(id++).secondary(true).fragment(new StatusFragment()).build());
+		drawerItems.add(new DrawerItem.Builder("Help").id(id++).secondary(true).fragment(new HelpFragment()).build());
+		drawerItems.add(logoutItem);
 
         drawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawerList = (ListView) findViewById(R.id.left_drawer);
@@ -129,7 +137,7 @@ public class LandingActivity extends Activity implements ListView.OnItemClickLis
 
         goToMap();
     }
-    
+
     private void goToMap() {
         FragmentManager fragmentManager = getFragmentManager();
         fragmentManager.beginTransaction().replace(R.id.content_frame, mapItem.getFragment()).commit();
@@ -176,7 +184,7 @@ public class LandingActivity extends Activity implements ListView.OnItemClickLis
                     rg.check(checkedFilter);
                 }
             }
-            
+
             @Override
             public void onDrawerStateChanged(int newState) {
                 invalidateOptionsMenu();

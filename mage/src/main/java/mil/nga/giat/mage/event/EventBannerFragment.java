@@ -29,4 +29,9 @@ public class EventBannerFragment extends Fragment {
 
 		return rootView;
 	}
+
+	void refresh() {
+		TextView eventTextView = (TextView)getView().findViewById(R.id.event_header_text);
+		eventTextView.setText(EventHelper.getInstance(getActivity().getApplicationContext()).getCurrentEvent().getName());
+	}
 }
