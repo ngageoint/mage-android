@@ -157,6 +157,19 @@ public class EventHelper extends DaoHelper<Event> {
         return events;
     }
 
+	public List<Event> getEventsForCurrentUser() {
+		List<Event> events = new ArrayList<Event>();
+		try {
+			User currentUser = UserHelper.getInstance(mApplicationContext).readCurrentUser();
+			if (currentUser != null) {
+				events = getEventsByUser(currentUser);
+			}
+		} catch(UserException ue) {
+			Log.e(LOG_NAME, "There is no current user. ", ue);
+		}
+		return events;
+	}
+
 	public List<Event> getEventsByUser(User pUser) {
 		List<Event> events = new ArrayList<Event>();
 		List<Team> teams = TeamHelper.getInstance(mApplicationContext).getTeamsByUser(pUser);

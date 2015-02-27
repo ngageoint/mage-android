@@ -4,8 +4,11 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import mil.nga.giat.mage.sdk.datastore.DaoHelper;
+import mil.nga.giat.mage.sdk.event.IEventDispatcher;
+import mil.nga.giat.mage.sdk.event.IEventEventListener;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
 import android.content.Context;
 import android.util.Log;
@@ -24,12 +27,14 @@ import com.j256.ormlite.stmt.Where;
  * @author travis, wiedemanns
  * 
  */
-public class UserHelper extends DaoHelper<User> {
+public class UserHelper extends DaoHelper<User> implements IEventDispatcher<IEventEventListener> {
 
 	private static final String LOG_NAME = UserHelper.class.getName();
 
 	private final Dao<User, Long> userDao;
     private final Dao<UserTeam, Long> userTeamDao;
+
+	private static Collection<IEventEventListener> listeners = new CopyOnWriteArrayList<IEventEventListener>();
 	
 	/**
 	 * Singleton.
@@ -75,6 +80,12 @@ public class UserHelper extends DaoHelper<User> {
 		User createdUser = null;
 		try {
 			createdUser = userDao.createIfNotExists(pUser);
+
+			if(createdUser.isCurrentUser()) {
+				for (IEventEventListener listener : listeners) {
+					listener.onEventChanged();
+				}
+			}
 		} catch (SQLException sqle) {
 			Log.e(LOG_NAME, "There was a problem creating user: " + pUser, sqle);
 			throw new UserException("There was a problem creating user: " + pUser, sqle);
@@ -108,8 +119,37 @@ public class UserHelper extends DaoHelper<User> {
     }
 
 	public void update(User pUser) throws UserException {
+
 		try {
-			userDao.update(pUser);
+			// check if we need to send event onChange
+			if(pUser.isCurrentUser()) {
+				User oldUser = read(pUser.getRemoteId());
+				String oldEventRemoteId = null;
+				if(oldUser != null && oldUser.getCurrentEvent() != null) {
+					oldEventRemoteId = oldUser.getCurrentEvent().getRemoteId();
+				}
+				userDao.update(pUser);
+
+				String newEventRemoteId = null;
+				if(pUser != null && pUser.getCurrentEvent() != null) {
+					newEventRemoteId = pUser.getCurrentEvent().getRemoteId();
+				}
+
+				if(oldEventRemoteId == null ^ newEventRemoteId == null) {
+					for (IEventEventListener listener : listeners) {
+						listener.onEventChanged();
+					}
+				} else if(oldEventRemoteId != null && newEventRemoteId != null) {
+					if(!oldEventRemoteId.equals(newEventRemoteId)) {
+						for (IEventEventListener listener : listeners) {
+							listener.onEventChanged();
+						}
+					}
+				}
+
+			} else {
+				userDao.update(pUser);
+			}
 		} catch (SQLException sqle) {
 			Log.e(LOG_NAME, "There was a problem creating user: " + pUser);
 			throw new UserException("There was a problem creating user: " + pUser, sqle);
@@ -218,4 +258,14 @@ public class UserHelper extends DaoHelper<User> {
         }
         return users;
     }
+
+	@Override
+	public boolean addListener(IEventEventListener listener) {
+		return listeners.add(listener);
+	}
+
+	@Override
+	public boolean removeListener(IEventEventListener listener) {
+		return listeners.remove(listener);
+	}
 }

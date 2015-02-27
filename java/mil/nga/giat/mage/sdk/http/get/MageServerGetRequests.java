@@ -73,10 +73,9 @@ public class MageServerGetRequests {
 		try {
 			URL serverURL = new URL(PreferenceHelper.getInstance(context).getValue(R.string.serverURLKey));
 
-			Long currentEventId = EventHelper.getInstance(context).getCurrentEvent().getId();
+			String currentEventId = EventHelper.getInstance(context).getCurrentEvent().getRemoteId();
 			if (currentEventId != null) {
-                String currentEventIdString = String.valueOf(currentEventId);
-				URL observationIconsURL = new URL(serverURL, "/api/events/" + currentEventIdString + "/form/icons.zip");
+				URL observationIconsURL = new URL(serverURL, "/api/events/" + currentEventId + "/form/icons.zip");
 				DefaultHttpClient httpclient = HttpClientManager.getInstance(context).getHttpClient();
 				Log.d(LOG_NAME, observationIconsURL.toString());
 				HttpGet get = new HttpGet(observationIconsURL.toURI());
@@ -85,7 +84,7 @@ public class MageServerGetRequests {
 				if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
 					entity = response.getEntity();
 					File directory = new File(context.getFilesDir() + OBSERVATION_ICON_PATH);
-					File zipFile = new File(directory, currentEventIdString + ".zip");
+					File zipFile = new File(directory, currentEventId + ".zip");
 					if (!zipFile.getParentFile().exists()) {
 						zipFile.getParentFile().mkdirs();
 					}
@@ -95,7 +94,7 @@ public class MageServerGetRequests {
 					if(!zipFile.exists()) {
 						zipFile.createNewFile();
 					}
-					File zipDirectory = new File(directory, currentEventIdString);
+					File zipDirectory = new File(directory, currentEventId);
 					if(!zipDirectory.exists()) {
 						zipDirectory.mkdirs();
 					}
@@ -269,18 +268,17 @@ public class MageServerGetRequests {
 
         List<Observation> observations = new ArrayList<Observation>();
         Event currentEvent = EventHelper.getInstance(context).getCurrentEvent();
-        Long currentEventId = currentEvent.getId();
+        String currentEventId = currentEvent.getRemoteId();
 		HttpEntity entity = null;
 		try {
 			URL serverURL = new URL(PreferenceHelper.getInstance(context).getValue(R.string.serverURLKey));
 
             if(currentEventId != null) {
-                String currentEventIdString = String.valueOf(currentEventId);
                 ObservationHelper observationHelper = ObservationHelper.getInstance(context);
 
                 Date lastModifiedDate = observationHelper.getLatestCleanLastModified(context, currentEvent);
 
-                URL observationURL = new URL(serverURL, "/api/events/" + currentEventIdString + "/observations");
+                URL observationURL = new URL(serverURL, "/api/events/" + currentEventId + "/observations");
                 Uri.Builder uriBuilder = Uri.parse(observationURL.toURI().toString()).buildUpon();
                 uriBuilder.appendQueryParameter("startDate", iso8601Format.format(lastModifiedDate));
 

@@ -12,6 +12,7 @@ import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
+import mil.nga.giat.mage.sdk.event.IEventEventListener;
 import mil.nga.giat.mage.sdk.event.IScreenEventListener;
 import mil.nga.giat.mage.sdk.http.get.MageServerGetRequests;
 import mil.nga.giat.mage.sdk.login.LoginTaskFactory;
@@ -23,7 +24,7 @@ import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
-public class ObservationFetchIntentService extends ConnectivityAwareIntentService implements OnSharedPreferenceChangeListener, IScreenEventListener {
+public class ObservationFetchIntentService extends ConnectivityAwareIntentService implements OnSharedPreferenceChangeListener, IScreenEventListener, IEventEventListener {
 
 	private static final String LOG_NAME = ObservationFetchIntentService.class.getName();
 
@@ -35,7 +36,9 @@ public class ObservationFetchIntentService extends ConnectivityAwareIntentServic
 
 	protected final AtomicBoolean fetchSemaphore = new AtomicBoolean(false);
 
-	protected final synchronized long getobservationFetchFrequency() {
+	protected final AtomicBoolean needToFetchIcons = new AtomicBoolean(true);
+
+	protected final synchronized long getObservationFetchFrequency() {
 		return PreferenceHelper.getInstance(getApplicationContext()).getValue(R.string.observationFetchFrequencyKey, Long.class, R.string.observationFetchFrequencyDefaultValue);
 	}
 
@@ -46,19 +49,22 @@ public class ObservationFetchIntentService extends ConnectivityAwareIntentServic
 		PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).registerOnSharedPreferenceChangeListener(this);
 		ObservationHelper observationHelper = ObservationHelper.getInstance(getApplicationContext());
 		UserHelper userHelper = UserHelper.getInstance(getApplicationContext());
+		userHelper.addListener(this);
 		SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
 		
 		Boolean isDataFetchEnabled = sharedPreferences.getBoolean(getApplicationContext().getString(R.string.dataFetchEnabledKey), true);
-
-		// Pull the icons here
-		if (!isCanceled && isConnected && isDataFetchEnabled && !LoginTaskFactory.getInstance(getApplicationContext()).isLocalLogin()) {
-			new ObservationBitmapFetch(getApplicationContext()).fetch();
-		}
+		needToFetchIcons.set(true);
 
 		while (!isCanceled) {
 			isDataFetchEnabled = sharedPreferences.getBoolean(getApplicationContext().getString(R.string.dataFetchEnabledKey), true);
 
 			if (isConnected && isDataFetchEnabled && !LoginTaskFactory.getInstance(getApplicationContext()).isLocalLogin()) {
+
+				// Pull the icons here
+				if(needToFetchIcons.get()) {
+					new ObservationBitmapFetch(getApplicationContext()).fetch();
+					needToFetchIcons.set(false);
+				}
 
 				Log.d(LOG_NAME, "The device is currently connected. Attempting to fetch Observations...");
 				List<Observation> observations = MageServerGetRequests.getObservations(getApplicationContext());
@@ -101,11 +107,11 @@ public class ObservationFetchIntentService extends ConnectivityAwareIntentServic
 				Log.d(LOG_NAME, "The device is currently disconnected, or data fetch is disabled. Not performing fetch.");
 			}
 
-			long frequency = getobservationFetchFrequency();
+			long frequency = getObservationFetchFrequency();
 			long lastFetchTime = new Date().getTime();
 			long currentTime = new Date().getTime();
 			try {
-				while (lastFetchTime + (frequency = getobservationFetchFrequency()) > (currentTime = new Date().getTime())) {
+				while (lastFetchTime + (frequency = getObservationFetchFrequency()) > (currentTime = new Date().getTime())) {
 					synchronized (fetchSemaphore) {
 						Log.d(LOG_NAME, "Observation fetch sleeping for " + (lastFetchTime + frequency - currentTime) + "ms.");
 						fetchSemaphore.wait(lastFetchTime + frequency - currentTime);
@@ -150,6 +156,15 @@ public class ObservationFetchIntentService extends ConnectivityAwareIntentServic
 	@Override
 	public void onScreenOn() {
 		synchronized (fetchSemaphore) {
+			fetchSemaphore.set(true);
+			fetchSemaphore.notifyAll();
+		}
+	}
+
+	@Override
+	public void onEventChanged() {
+		synchronized (fetchSemaphore) {
+			needToFetchIcons.set(true);
 			fetchSemaphore.set(true);
 			fetchSemaphore.notifyAll();
 		}

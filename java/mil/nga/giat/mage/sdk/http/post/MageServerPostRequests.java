@@ -310,9 +310,6 @@ public class MageServerPostRequests {
 
             HttpResponse response = httpClient.execute(request);
             if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
-                // update the local user
-                currentUser.setCurrentEvent(event);
-                userHelper.createOrUpdate(currentUser);
                 status = true;
             } else {
                 entity = response.getEntity();
