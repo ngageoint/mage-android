@@ -1,12 +1,18 @@
 package mil.nga.giat.mage.map.marker;
 
+import java.text.DateFormat;
 import java.util.Collection;
 import java.util.Date;
+import java.util.Locale;
 import java.util.Map;
+import java.util.TimeZone;
 import java.util.concurrent.ConcurrentHashMap;
 
 import mil.nga.giat.mage.observation.ObservationViewActivity;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
+import mil.nga.giat.mage.sdk.datastore.observation.ObservationProperty;
+import mil.nga.giat.mage.sdk.utils.DateFormatFactory;
+
 import android.content.Context;
 import android.content.Intent;
 
@@ -18,6 +24,8 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.maps.android.MarkerManager;
 import com.vividsolutions.jts.geom.Point;
+
+import org.ocpsoft.prettytime.PrettyTime;
 
 public class ObservationMarkerCollection implements PointCollection<Observation>, OnMarkerClickListener {
 
@@ -50,9 +58,15 @@ public class ObservationMarkerCollection implements PointCollection<Observation>
             marker.remove();
         }
 
+		ObservationProperty observationPropertyType = o.getPropertiesMap().get("type");
+
+		String type = observationPropertyType!=null?observationPropertyType.getValue().toString():"";
+
         Point point = (Point) o.getObservationGeometry().getGeometry();
         MarkerOptions options = new MarkerOptions()
             .position(new LatLng(point.getY(), point.getX()))
+			.title(type)
+			.snippet(new PrettyTime().format(o.getTimestamp()))
             .icon(ObservationBitmapFactory.bitmapDescriptor(context, o))
             .visible(visible);
 
@@ -104,11 +118,7 @@ public class ObservationMarkerCollection implements PointCollection<Observation>
         
         if (o == null) return false;  // Not an observation let someone else handle it
 
-        Intent intent = new Intent(context, ObservationViewActivity.class);
-        intent.putExtra(ObservationViewActivity.OBSERVATION_ID, o.getId());
-        intent.putExtra(ObservationViewActivity.INITIAL_LOCATION, map.getCameraPosition().target);
-        intent.putExtra(ObservationViewActivity.INITIAL_ZOOM, map.getCameraPosition().zoom);
-        context.startActivity(intent);
+		marker.showInfoWindow();
 
         return true;
     }
@@ -146,8 +156,17 @@ public class ObservationMarkerCollection implements PointCollection<Observation>
     }
 
 	@Override
-	public void onInfoWindowClick(Marker arg0) {
-		// TODO Auto-generated method stub
-		
+	public void onInfoWindowClick(Marker marker) {
+		Observation o = markerIdToObservation.get(marker.getId());
+
+		if (o == null) {
+			return;
+		}
+
+		Intent intent = new Intent(context, ObservationViewActivity.class);
+        intent.putExtra(ObservationViewActivity.OBSERVATION_ID, o.getId());
+        intent.putExtra(ObservationViewActivity.INITIAL_LOCATION, map.getCameraPosition().target);
+        intent.putExtra(ObservationViewActivity.INITIAL_ZOOM, map.getCameraPosition().zoom);
+        context.startActivity(intent);
 	}
 }

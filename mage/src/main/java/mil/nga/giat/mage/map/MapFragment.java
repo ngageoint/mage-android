@@ -534,7 +534,7 @@ public class MapFragment extends Fragment implements OnMapClickListener, OnMapLo
 	
 	@Override
 	public void onInfoWindowClick(Marker marker) {
-		// for now the only one that cares about info window clicks is the location marker window
+		observations.onInfoWindowClick(marker);
 		locations.onInfoWindowClick(marker);
 	}
 
