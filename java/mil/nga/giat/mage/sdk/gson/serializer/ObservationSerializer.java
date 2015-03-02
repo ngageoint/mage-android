@@ -42,7 +42,7 @@ public class ObservationSerializer implements JsonSerializer<Observation> {
 	public JsonElement serialize(Observation pObs, Type pType, JsonSerializationContext pContext) {
 
 		JsonObject feature = new JsonObject();
-        feature.add("eventId", new JsonPrimitive(pObs.getEvent().getId()));
+        feature.add("eventId", new JsonPrimitive(pObs.getEvent().getRemoteId()));
 		feature.add("type", new JsonPrimitive("Feature"));
 		conditionalAdd("id", pObs.getRemoteId(), feature);
 		feature.add("geometry", new JsonParser().parse(GeometrySerializer.getGsonBuilder().toJson(pObs.getObservationGeometry().getGeometry())));

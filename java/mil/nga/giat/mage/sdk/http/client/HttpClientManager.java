@@ -7,9 +7,13 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import mil.nga.giat.mage.sdk.R;
 import mil.nga.giat.mage.sdk.event.IEventDispatcher;
 import mil.nga.giat.mage.sdk.event.IUserEventListener;
+import mil.nga.giat.mage.sdk.http.entity.GzipDecompressingEntity;
 import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
 import mil.nga.giat.mage.sdk.utils.UserUtility;
 
+import org.apache.http.Header;
+import org.apache.http.HeaderElement;
+import org.apache.http.HttpEntity;
 import org.apache.http.HttpException;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpRequestInterceptor;
@@ -62,7 +66,6 @@ public class HttpClientManager implements IEventDispatcher<IUserEventListener> {
 		return httpClientManager;
 	}
 
-
 	public DefaultHttpClient getHttpClient() {
 		BasicHttpParams params = new BasicHttpParams();
 		SchemeRegistry schemeRegistry = new SchemeRegistry();
@@ -83,16 +86,21 @@ public class HttpClientManager implements IEventDispatcher<IUserEventListener> {
 			@Override
 			public void process(HttpRequest request, HttpContext context) throws HttpException, IOException {
 
+				// add token
 				String token = PreferenceHelper.getInstance(mContext).getValue(R.string.tokenKey);
 				if (token != null && !token.trim().isEmpty()) {
 					request.addHeader("Authorization", "Bearer " + token);
 				}
+
+				// add Accept-Encoding:gzip
+				request.addHeader("Accept-Encoding", "gzip");
 			}
 		});
 		httpClient.addResponseInterceptor(new HttpResponseInterceptor() {
 
 			@Override
 			public void process(HttpResponse response, HttpContext context) throws HttpException, IOException {
+				// token is expired?
 				int statusCode = response.getStatusLine().getStatusCode();
 				if (statusCode == HttpStatus.SC_FORBIDDEN || statusCode == HttpStatus.SC_UNAUTHORIZED) {
 					UserUtility.getInstance(mContext).clearTokenInformation();
@@ -103,6 +111,18 @@ public class HttpClientManager implements IEventDispatcher<IUserEventListener> {
 					return;
 				} else if (statusCode == HttpStatus.SC_NOT_FOUND) {
 					Log.w(LOG_NAME, "404 Not Found.");
+				}
+
+				// unzip if needed
+				HttpEntity entity = response.getEntity();
+				Header ceheader = entity.getContentEncoding();
+				if (ceheader != null) {
+					for (HeaderElement codec : ceheader.getElements()) {
+						if (codec.getName().equalsIgnoreCase("gzip")) {
+							response.setEntity(new GzipDecompressingEntity(response.getEntity()));
+							return;
+						}
+					}
 				}
 			}
 		});

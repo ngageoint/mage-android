@@ -75,7 +75,7 @@ public class MageServerPostRequests {
 		HttpEntity entity = null;
 		HttpEntityEnclosingRequestBase request = null;
 		try {
-			String observationEventIdString = String.valueOf(observation.getEvent().getId());
+			String observationEventIdString = String.valueOf(observation.getEvent().getRemoteId());
 			DefaultHttpClient httpClient = HttpClientManager.getInstance(context).getHttpClient();
 
 			URL serverURL = new URL(PreferenceHelper.getInstance(context).getValue(R.string.serverURLKey));
