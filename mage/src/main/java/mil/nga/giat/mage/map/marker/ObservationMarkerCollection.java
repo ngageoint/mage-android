@@ -1,20 +1,20 @@
 package mil.nga.giat.mage.map.marker;
 
-import java.text.DateFormat;
 import java.util.Collection;
 import java.util.Date;
-import java.util.Locale;
 import java.util.Map;
-import java.util.TimeZone;
 import java.util.concurrent.ConcurrentHashMap;
 
+import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.observation.ObservationViewActivity;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationProperty;
-import mil.nga.giat.mage.sdk.utils.DateFormatFactory;
 
 import android.content.Context;
 import android.content.Intent;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.widget.TextView;
 
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.GoogleMap.OnMarkerClickListener;
@@ -38,6 +38,8 @@ public class ObservationMarkerCollection implements PointCollection<Observation>
     private Map<Long, Marker> observationIdToMarker = new ConcurrentHashMap<Long, Marker>();
     private Map<String, Observation> markerIdToObservation = new ConcurrentHashMap<String, Observation>();
 
+	protected GoogleMap.InfoWindowAdapter infoWindowAdapter = new ObservationInfoWindowAdapter();
+
     private MarkerManager.Collection markerCollection;
 
     public ObservationMarkerCollection(Context context, GoogleMap map) {
@@ -58,15 +60,9 @@ public class ObservationMarkerCollection implements PointCollection<Observation>
             marker.remove();
         }
 
-		ObservationProperty observationPropertyType = o.getPropertiesMap().get("type");
-
-		String type = observationPropertyType!=null?observationPropertyType.getValue().toString():"";
-
         Point point = (Point) o.getObservationGeometry().getGeometry();
         MarkerOptions options = new MarkerOptions()
             .position(new LatLng(point.getY(), point.getX()))
-			.title(type)
-			.snippet(new PrettyTime().format(o.getTimestamp()))
             .icon(ObservationBitmapFactory.bitmapDescriptor(context, o))
             .visible(visible);
 
@@ -118,6 +114,7 @@ public class ObservationMarkerCollection implements PointCollection<Observation>
         
         if (o == null) return false;  // Not an observation let someone else handle it
 
+		map.setInfoWindowAdapter(infoWindowAdapter);
 		marker.showInfoWindow();
 
         return true;
@@ -168,5 +165,36 @@ public class ObservationMarkerCollection implements PointCollection<Observation>
         intent.putExtra(ObservationViewActivity.INITIAL_LOCATION, map.getCameraPosition().target);
         intent.putExtra(ObservationViewActivity.INITIAL_ZOOM, map.getCameraPosition().zoom);
         context.startActivity(intent);
+	}
+
+	private class ObservationInfoWindowAdapter implements GoogleMap.InfoWindowAdapter {
+
+		@Override
+		public View getInfoContents(Marker marker) {
+			final Observation observation = markerIdToObservation.get(marker.getId());
+			if (observation == null) {
+				return null;
+			}
+
+			LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+			View v = inflater.inflate(R.layout.observation_infowindow, null);
+
+			ObservationProperty observationPropertyType = observation.getPropertiesMap().get("type");
+
+			String type = observationPropertyType!=null?observationPropertyType.getValue().toString():"";
+
+			TextView observation_infowindow_type = (TextView)v.findViewById(R.id.observation_infowindow_type);
+			observation_infowindow_type.setText(type);
+
+			TextView observation_infowindow_date = (TextView)v.findViewById(R.id.observation_infowindow_date);
+			observation_infowindow_date.setText(new PrettyTime().format(observation.getTimestamp()));
+
+			return v;
+		}
+
+		@Override
+		public View getInfoWindow(Marker marker) {
+			return null; // Use default info window
+		}
 	}
 }

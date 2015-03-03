@@ -568,8 +568,8 @@ public class MapFragment extends Fragment implements OnMapClickListener, OnMapLo
 		}
 
 		// static layer
-		View markerInfoWindow = LayoutInflater.from(getActivity()).inflate(R.layout.marker_infowindow, null, false);
-		WebView webView = ((WebView) markerInfoWindow.findViewById(R.id.infowindowcontent));
+		View markerInfoWindow = LayoutInflater.from(getActivity()).inflate(R.layout.static_feature_infowindow, null, false);
+		WebView webView = ((WebView) markerInfoWindow.findViewById(R.id.static_feature_infowindow_content));
 		webView.loadData(marker.getSnippet(), "text/html; charset=UTF-8", null);
 		new AlertDialog.Builder(getActivity()).setView(markerInfoWindow).setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
 			public void onClick(DialogInterface dialog, int which) {
@@ -584,43 +584,7 @@ public class MapFragment extends Fragment implements OnMapClickListener, OnMapLo
 		// remove old accuracy circle
 		((LocationMarkerCollection) locations).offMarkerClick();
 
-		// how many meters away form the click can the geomerty be?
-		Double circumferenceOfEarthInMeters = 2 * Math.PI * 6371000;
-		// Double tileWidthAtZoomLevelAtEquatorInDegrees = 360.0/Math.pow(2.0, map.getCameraPosition().zoom);
-		Double pixelSizeInMetersAtLatitude = (circumferenceOfEarthInMeters * Math.cos(map.getCameraPosition().target.latitude * (Math.PI / 180.0))) / Math.pow(2.0, map.getCameraPosition().zoom + 8.0);
-		Double tolerance = pixelSizeInMetersAtLatitude * Math.sqrt(2.0) * 10.0;
-
-		// find the 'closest' line or polygon to the click.
-		for (Polyline p : staticGeometryCollection.getPolylines()) {
-			if (PolyUtil.isLocationOnPath(latLng, p.getPoints(), true, tolerance)) {
-				// found it open a info window
-				Log.i(LOG_NAME, "static feature polyline clicked at: " + latLng.toString());
-				View markerInfoWindow = LayoutInflater.from(getActivity()).inflate(R.layout.marker_infowindow, null, false);
-				WebView webView = ((WebView) markerInfoWindow.findViewById(R.id.infowindowcontent));
-				webView.loadData(staticGeometryCollection.getPopupHTML(p), "text/html; charset=UTF-8", null);
-				new AlertDialog.Builder(getActivity()).setView(markerInfoWindow).setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
-					public void onClick(DialogInterface dialog, int which) {
-					}
-				}).show();
-				return;
-			}
-		}
-
-		for (Polygon p : staticGeometryCollection.getPolygons()) {
-			if (PolyUtil.containsLocation(latLng, p.getPoints(), true)) {
-				// found it open a info window
-				Log.i(LOG_NAME, "static feature polgon clicked at: " + latLng.toString());
-
-				View markerInfoWindow = LayoutInflater.from(getActivity()).inflate(R.layout.marker_infowindow, null, false);
-				WebView webView = ((WebView) markerInfoWindow.findViewById(R.id.infowindowcontent));
-				webView.loadData(staticGeometryCollection.getPopupHTML(p), "text/html; charset=UTF-8", null);
-				new AlertDialog.Builder(getActivity()).setView(markerInfoWindow).setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
-					public void onClick(DialogInterface dialog, int which) {
-					}
-				}).show();
-				return;
-			}
-		}
+		staticGeometryCollection.onMapClick(map, latLng, getActivity());
 	}
 
 	@Override

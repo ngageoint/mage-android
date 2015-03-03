@@ -317,7 +317,6 @@ public class LocationMarkerCollection implements PointCollection<Location>, OnMa
 			String timeText = dateFormat.format(location.getTimestamp());
 			Boolean prettyPrint = PreferenceHelper.getInstance(context).getValue(R.string.prettyPrintLocationDatesKey, Boolean.class, R.string.prettyPrintLocationDatesDefaultValue);
 			if (prettyPrint) {
-				// timeText = DateUtils.getRelativeTimeSpanString(location.getTimestamp().getTime(), System.currentTimeMillis(), 0, DateUtils.FORMAT_ABBREV_RELATIVE).toString();
 				timeText = new PrettyTime().format(location.getTimestamp());
 			}
 			location_date.setText(timeText);
@@ -327,7 +326,7 @@ public class LocationMarkerCollection implements PointCollection<Location>, OnMa
 
 		@Override
 		public View getInfoWindow(Marker marker) {
-			return null; // Use default info window for now
+			return null; // Use default info window
 		}
 	}
 	
