@@ -80,37 +80,45 @@ public class UserDeserializer implements JsonDeserializer<User> {
 
         Role role = null;
         if (feature.get("role") != null) {
-
-            String roleId = null;
-            JsonObject roleJSON = null;
             if (feature.get("role").isJsonObject()) {
-                roleJSON = feature.get("role").getAsJsonObject();
-                if (roleJSON != null) {
-                    roleId = roleJSON.get("id").getAsString();
-                }
-            } else if (feature.get("role").isJsonPrimitive()) {
-                roleId = feature.get("role").getAsString();
-            }
-
-            if (roleId != null) {
-                try {
-                    // see if roles exists already
-                    role = RoleHelper.getInstance(mContext).read(roleId);
-                    // if it doesn't exist, then make it!
-                    if (role == null && roleJSON != null) {
-                        final Gson roleDeserializer = RoleDeserializer.getGsonBuilder();
-                        role = RoleHelper.getInstance(mContext).create(roleDeserializer.fromJson(roleJSON.toString(), Role.class));
-                        Log.i(LOG_NAME, "Created role with remote_id " + role.getRemoteId());
-                    }
-                } catch (RoleException e) {
-                    Log.e(LOG_NAME, "Could not find matching role for user.");
-                }
-            } else {
-                Log.e(LOG_NAME, "User has role with no id!");
-            }
+				JsonObject roleJSON = feature.get("role").getAsJsonObject();
+				if (roleJSON != null) {
+					String roleId = roleJSON.get("id").getAsString();
+					if (roleId != null) {
+						try {
+							// see if roles exists already
+							role = RoleHelper.getInstance(mContext).read(roleId);
+							// if it doesn't exist, then make it!
+							if (role == null) {
+								final Gson roleDeserializer = RoleDeserializer.getGsonBuilder();
+								role = RoleHelper.getInstance(mContext).create(roleDeserializer.fromJson(roleJSON.toString(), Role.class));
+								Log.i(LOG_NAME, "Created role with remote_id " + role.getRemoteId());
+							}
+						} catch (RoleException e) {
+							Log.e(LOG_NAME, "Could not find matching role for user.");
+						}
+					} else {
+						Log.e(LOG_NAME, "User has role with no id!");
+					}
+				}
+			}
+        } else if(feature.get("roleId") != null) {
+			if (feature.get("roleId").isJsonPrimitive()) {
+				String roleId = feature.get("roleId").getAsString();
+				if (roleId != null) {
+					try {
+						// go get role
+						role = RoleHelper.getInstance(mContext).read(roleId);
+					} catch (RoleException e) {
+						Log.e(LOG_NAME, "Could not find matching role for user.");
+					}
+				} else {
+					Log.e(LOG_NAME, "User has role with no id!");
+				}
+			}
         } else {
-            Log.e(LOG_NAME, "User has no role!");
-        }
+			Log.e(LOG_NAME, "User has no role!");
+		}
 
         if(role == null) {
             throw new JsonParseException("Unable to find or make role for user!");

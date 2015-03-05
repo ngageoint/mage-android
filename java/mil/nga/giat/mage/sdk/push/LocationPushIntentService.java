@@ -1,6 +1,7 @@
 package mil.nga.giat.mage.sdk.push;
 
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Stack;
@@ -16,6 +17,7 @@ import mil.nga.giat.mage.sdk.connectivity.ConnectivityUtility;
 import mil.nga.giat.mage.sdk.datastore.DaoStore;
 import mil.nga.giat.mage.sdk.datastore.location.Location;
 import mil.nga.giat.mage.sdk.datastore.location.LocationHelper;
+import mil.nga.giat.mage.sdk.datastore.user.Event;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.exceptions.LocationException;
@@ -63,10 +65,21 @@ public class LocationPushIntentService extends ConnectivityAwareIntentService {
 
 				List<Location> locations = locationHelper.getCurrentUserLocations(getApplicationContext(), batchSize, false);
 				while (!locations.isEmpty() && failedAttemptCount < 3) {
-					Boolean status = MageServerPostRequests.postLocations(locations, getApplicationContext());
+
+					// post locations by event
+					Event event = locations.get(0).getEvent();
+
+					List<Location> eventLocations = new ArrayList<Location>();
+					for(Location l : locations) {
+						if(event.equals(l.getEvent())) {
+							eventLocations.add(l);
+						}
+					}
+
+					Boolean status = MageServerPostRequests.postLocations(eventLocations, event, getApplicationContext());
 					// we've sync-ed. Don't need the locations anymore.
 					if (status) {
-						Log.d(LOG_NAME, "Pushed " + locations.size() + " locations.");
+						Log.d(LOG_NAME, "Pushed " + eventLocations.size() + " locations.");
 
 						// Delete location where:
 						// the user is current user
@@ -77,7 +90,7 @@ public class LocationPushIntentService extends ConnectivityAwareIntentService {
 								Dao<Location, Long> locationDao = DaoStore.getInstance(getApplicationContext()).getLocationDao();
 								QueryBuilder<Location, Long> queryBuilder = locationDao.queryBuilder();
 								Where<Location, Long> where = queryBuilder.where().eq("user_id", currentUser.getId());
-								where.and().isNotNull("remote_id");
+								where.and().isNotNull("remote_id").and().eq("event_id", event.getId());
 								queryBuilder.orderBy("timestamp", false);
 								List<Location> locationsToDelete = queryBuilder.query();
 								Stack<Long> locationIDsToDelete = new Stack<Long>(); 
@@ -100,7 +113,7 @@ public class LocationPushIntentService extends ConnectivityAwareIntentService {
 								}
 							}
 						} catch (SQLException e) {
-							e.printStackTrace();
+							Log.e(LOG_NAME, "Problem deleting locations.", e);
 						}
 					} else {
 						Log.e(LOG_NAME, "Failed to push locations.");

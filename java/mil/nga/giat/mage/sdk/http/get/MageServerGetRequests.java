@@ -64,7 +64,6 @@ public class MageServerGetRequests {
 
 	private static final String LOG_NAME = MageServerGetRequests.class.getName();
 	private static StaticFeatureDeserializer featureDeserializer = new StaticFeatureDeserializer();
-	private static LocationDeserializer locationDeserializer = new LocationDeserializer();
 
 	public static final String OBSERVATION_ICON_PATH = "/icons/observations";
 
@@ -303,7 +302,7 @@ public class MageServerGetRequests {
             }
 		} catch (Exception e) {
 			// this block should never flow exceptions up! Log for now.
-			Log.e(LOG_NAME, "There was a failure while performing an Observation Fetch opperation.", e);
+			Log.e(LOG_NAME, "There was a failure while performing an Observation Fetch operation.", e);
 		} finally {
 			try {
 				if (entity != null) {
@@ -325,22 +324,28 @@ public class MageServerGetRequests {
 	public static Collection<Location> getLocations(Context context) {
 		Collection<Location> locations = new ArrayList<Location>();
 		HttpEntity entity = null;
+		Event currentEvent = EventHelper.getInstance(context).getCurrentEvent();
+		String currentEventId = currentEvent.getRemoteId();
 		try {
 			URL serverURL = new URL(PreferenceHelper.getInstance(context).getValue(R.string.serverURLKey));
-			URL locationURL = new URL(serverURL, "/api/locations/users");
+			if (currentEventId != null) {
+				URL locationURL = new URL(serverURL, "/api/events/" + currentEventId + "/locations/users");
 
-			DefaultHttpClient httpclient = HttpClientManager.getInstance(context).getHttpClient();
-			HttpGet get = new HttpGet(locationURL.toURI());
-			HttpResponse response = httpclient.execute(get);
+				DefaultHttpClient httpclient = HttpClientManager.getInstance(context).getHttpClient();
+				HttpGet get = new HttpGet(locationURL.toURI());
+				HttpResponse response = httpclient.execute(get);
 
-			if (HttpStatus.SC_OK == response.getStatusLine().getStatusCode()) {
-				entity = response.getEntity();
-				locations = locationDeserializer.parseUserLocations(entity.getContent());
+				if (HttpStatus.SC_OK == response.getStatusLine().getStatusCode()) {
+					entity = response.getEntity();
+					locations = new LocationDeserializer(currentEvent).parseUserLocations(entity.getContent());
+				} else {
+					entity = response.getEntity();
+					String error = EntityUtils.toString(entity);
+					Log.e(LOG_NAME, "Bad request.");
+					Log.e(LOG_NAME, error);
+				}
 			} else {
-				entity = response.getEntity();
-				String error = EntityUtils.toString(entity);
-				Log.e(LOG_NAME, "Bad request.");
-				Log.e(LOG_NAME, error);
+				Log.e(LOG_NAME, "Could not pull the observations, because the event id was: " + String.valueOf(currentEventId));
 			}
 		} catch (Exception e) {
 			Log.e(LOG_NAME, "There was a failure while performing an Location Fetch operation.", e);
@@ -535,9 +540,11 @@ public class MageServerGetRequests {
         try {
             URL serverURL = new URL(PreferenceHelper.getInstance(context).getValue(R.string.serverURLKey));
             URL eventURL = new URL(serverURL, "api/events");
+			Uri.Builder uriBuilder = Uri.parse(eventURL.toURI().toString()).buildUpon();
+			uriBuilder.appendQueryParameter("populate", "{\"teams\":true}");
 
             DefaultHttpClient httpclient = HttpClientManager.getInstance(context).getHttpClient();
-            HttpGet get = new HttpGet(eventURL.toURI());
+            HttpGet get = new HttpGet(new URI(uriBuilder.build().toString()));
             HttpResponse response = httpclient.execute(get);
 
             if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {

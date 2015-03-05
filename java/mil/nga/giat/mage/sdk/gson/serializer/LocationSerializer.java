@@ -45,14 +45,12 @@ public class LocationSerializer implements JsonSerializer<Collection<Location>> 
 		for (Location location : locations) {
 
 			JsonObject jsonLocation = new JsonObject();
+			jsonLocation.add("eventId", new JsonPrimitive(location.getEvent().getRemoteId()));
 			JsonObject jsonProperties = new JsonObject();
 
 			jsonLocation.add("geometry", new JsonParser().parse(GeometrySerializer.getGsonBuilder().toJson(location.getLocationGeometry().getGeometry())));
 			jsonLocation.add("properties", jsonProperties);
 			jsonProperties.add("timestamp", new JsonPrimitive(iso8601Format.format(location.getTimestamp())));
-			jsonProperties.add("timestampUnformattedDuringSerialization", new JsonPrimitive(location.getTimestamp().toString()));
-			jsonProperties.add("timeNowDuringSerialization", new JsonPrimitive(System.currentTimeMillis()));
-			jsonProperties.add("user", new JsonPrimitive(location.getUser().getId()));
 
 			// properties
 			for (LocationProperty property : location.getProperties()) {

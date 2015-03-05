@@ -91,7 +91,6 @@ public class HttpClientManager implements IEventDispatcher<IUserEventListener> {
 				if (token != null && !token.trim().isEmpty()) {
 					request.addHeader("Authorization", "Bearer " + token);
 				}
-
 				// add Accept-Encoding:gzip
 				request.addHeader("Accept-Encoding", "gzip");
 			}

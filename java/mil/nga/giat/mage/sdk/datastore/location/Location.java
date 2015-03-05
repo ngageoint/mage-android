@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import mil.nga.giat.mage.sdk.Temporal;
+import mil.nga.giat.mage.sdk.datastore.user.Event;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 
 import org.apache.commons.lang3.builder.CompareToBuilder;
@@ -52,15 +53,18 @@ public class Location implements Comparable<Location>, Temporal {
 	@DatabaseField(canBeNull = false, foreign = true, foreignAutoRefresh = true)
 	private LocationGeometry locationGeometry;
 
+	@DatabaseField(canBeNull = false, foreign = true, foreignAutoRefresh = true)
+	private Event event;
+
 	public Location() {
 		// ORMLite needs a no-arg constructor
 	}
 
-	public Location(String type, User user, Collection<LocationProperty> properties, LocationGeometry locationGeometry, Date timestamp) {
-		this(null, user, null, type, properties, locationGeometry, timestamp);
+	public Location(String type, User user, Collection<LocationProperty> properties, LocationGeometry locationGeometry, Date timestamp, Event event) {
+		this(null, user, null, type, properties, locationGeometry, timestamp, event);
 	}
 
-	public Location(String remoteId, User user, Date lastModified, String type, Collection<LocationProperty> properties, LocationGeometry locationGeometry, Date timestamp) {
+	public Location(String remoteId, User user, Date lastModified, String type, Collection<LocationProperty> properties, LocationGeometry locationGeometry, Date timestamp, Event event) {
 		super();
 		this.remoteId = remoteId;
 		this.user = user;
@@ -69,6 +73,7 @@ public class Location implements Comparable<Location>, Temporal {
 		this.properties = properties;
 		this.locationGeometry = locationGeometry;
 		this.timestamp = timestamp;
+		this.event = event;
 	}
 
 	public Long getId() {
@@ -110,6 +115,14 @@ public class Location implements Comparable<Location>, Temporal {
 
 	public void setType(String type) {
 		this.type = type;
+	}
+
+	public Event getEvent() {
+		return event;
+	}
+
+	public void setEvent(Event event) {
+		this.event = event;
 	}
 
 	public Collection<LocationProperty> getProperties() {

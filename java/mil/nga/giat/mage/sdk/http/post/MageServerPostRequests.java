@@ -58,7 +58,6 @@ public class MageServerPostRequests {
 	private static final String LOG_NAME = MageServerPostRequests.class.getName();
 
     private static AttachmentDeserializer attachmentDeserializer = new AttachmentDeserializer();
-    private static LocationDeserializer locationDeserializer = new LocationDeserializer();
 
 	/**
 	 * POST an {@link Observation} to the server.
@@ -176,7 +175,7 @@ public class MageServerPostRequests {
 		return attachment;
 	}
 
-	public static User postProfilePicture(User user, String abslutePath, Context context) {
+	public static User postProfilePicture(User user, String absolutePath, Context context) {
 		DefaultHttpClient httpClient = HttpClientManager.getInstance(context).getHttpClient();
 		HttpEntity entity = null;
 		try {
@@ -185,11 +184,11 @@ public class MageServerPostRequests {
 			URL endpoint = new URL(serverURL + "/api/users/" + user.getRemoteId());
 			
 			HttpPut request = new HttpPut(endpoint.toURI());
-			String mimeType = MediaUtility.getMimeType(abslutePath);
+			String mimeType = MediaUtility.getMimeType(absolutePath);
 			
 			Log.d(LOG_NAME, "Mime type is: " + mimeType);
 
-			FileBody fileBody = new FileBody(new File(abslutePath), mimeType);
+			FileBody fileBody = new FileBody(new File(absolutePath), mimeType);
 			FormBodyPart fbp = new FormBodyPart("avatar", fileBody);
 
 			MultipartEntity reqEntity = new MultipartEntity();
@@ -231,7 +230,7 @@ public class MageServerPostRequests {
 			}
 
 		} catch (Exception e) {
-			Log.e(LOG_NAME, "Failure pushing profile picture: " + abslutePath, e);
+			Log.e(LOG_NAME, "Failure pushing profile picture: " + absolutePath, e);
 		} finally {
 			try {
 				if (entity != null) {
@@ -243,15 +242,23 @@ public class MageServerPostRequests {
 		}
 		return user;
 	}
-	
-	public static Boolean postLocations(List<Location> locations, Context context) {
+
+	/**
+	 * All these locations provided should be from the provided event.
+	 *
+	 * @param locations
+	 * @param event
+	 * @param context
+	 * @return
+	 */
+	public static Boolean postLocations(List<Location> locations, Event event, Context context) {
 		LocationHelper locationHelper = LocationHelper.getInstance(context);
 		
 		Boolean status = false;
 		HttpEntity entity = null;
 		try {
 			URL serverURL = new URL(PreferenceHelper.getInstance(context).getValue(R.string.serverURLKey));
-			URI endpointUri = new URL(serverURL + "/api/locations").toURI();
+			URI endpointUri = new URL(serverURL + "/api/events/" + event.getRemoteId() + "/locations").toURI();
 
 			DefaultHttpClient httpClient = HttpClientManager.getInstance(context).getHttpClient();
 			HttpPost request = new HttpPost(endpointUri);
@@ -264,9 +271,8 @@ public class MageServerPostRequests {
 				entity = response.getEntity();
 				// it is imperative that the order of the returnedLocations match the order that was posted!!!
 				// if the order changes from the server, all of this will break!
-				List<Location> returnedLocations = locationDeserializer.parseLocations(entity.getContent());
+				List<Location> returnedLocations = new LocationDeserializer(event).parseLocations(entity.getContent());
 				for(int i=0; i < returnedLocations.size(); i++) {
-					//Log.i(LOG_NAME, "old, new : " + locations.get(i).getTimestamp() + ", " + returnedLocations.get(i).getTimestamp());
 					Location returnedLocation = returnedLocations.get(i);
 					returnedLocation.setId(locations.get(i).getId());
 					// locations that are posted are only from the current user

@@ -20,6 +20,8 @@ import java.util.Map;
 import mil.nga.giat.mage.sdk.datastore.location.Location;
 import mil.nga.giat.mage.sdk.datastore.location.LocationGeometry;
 import mil.nga.giat.mage.sdk.datastore.location.LocationProperty;
+import mil.nga.giat.mage.sdk.datastore.user.Event;
+import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.utils.DateFormatFactory;
 
 public class LocationDeserializer extends Deserializer {
@@ -28,6 +30,12 @@ public class LocationDeserializer extends Deserializer {
 	
 	private GeometryDeserializer geometryDeserializer = new GeometryDeserializer();
     private DateFormat iso8601Format = DateFormatFactory.ISO8601();
+
+	private Event event = null;
+
+	public LocationDeserializer(Event event) {
+		this.event = event;
+	}
 
 	public List<Location> parseUserLocations(InputStream is) throws JsonParseException, IOException {
 		JsonParser parser = factory.createParser(is);
@@ -64,7 +72,7 @@ public class LocationDeserializer extends Deserializer {
 
 		return locations;
 	}
-	
+
 	public List<Location> parseLocations(InputStream is) throws JsonParseException, IOException {
 		JsonParser parser = factory.createParser(is);
 
@@ -75,7 +83,7 @@ public class LocationDeserializer extends Deserializer {
 		return locations;
 	}
 
-	
+
 	private Collection<Location> parseLocations(JsonParser parser) throws JsonParseException, IOException {
 		Collection<Location> locations = new ArrayList<Location>();
 		parser.nextToken();
@@ -87,37 +95,40 @@ public class LocationDeserializer extends Deserializer {
 
 	private Location parseLocation(JsonParser parser) throws JsonParseException, IOException {
 		Location location = new Location();
+		location.setEvent(event);
 
 		if (parser.getCurrentToken() != JsonToken.START_OBJECT) {
 			return location;
 		}
 
+		String userId = null;
+		Collection<LocationProperty> properties = null;
 		while (parser.nextToken() != JsonToken.END_OBJECT) {
 			String name = parser.getCurrentName();
+			parser.nextToken();
 			if ("_id".equals(name)) {
-				parser.nextToken();
 				location.setRemoteId(parser.getText());
 			} else if ("type".equals(name)) {
-				parser.nextToken();
 				location.setType(parser.getText());
 			} else if ("geometry".equals(name)) {
-				parser.nextToken();
 				location.setLocationGeometry(new LocationGeometry(geometryDeserializer.parseGeometry(parser)));
 			} else if ("properties".equals(name)) {
-				parser.nextToken();
-				location.setProperties(parseProperties(parser, location));
+				properties = parseProperties(parser, location);
+			} else if ("userId".equals(name)) {
+				userId = parser.getText();
 			} else {
-				parser.nextToken();
 				parser.skipChildren();
 			}
 		}
 
-		Map<String, LocationProperty> properties = location.getPropertiesMap();
+		// don't set the user at this time, only the id.  Set it later.
+		properties.add(new LocationProperty("userId", userId));
+		location.setProperties(properties);
 
-		// don't set the user at this time.  Set it later.
+		Map<String, LocationProperty> propertiesMap = location.getPropertiesMap();
 
 		// timestamp is special pull it out of properties and set it at the top level
-		LocationProperty timestamp = properties.get("timestamp");
+		LocationProperty timestamp = propertiesMap.get("timestamp");
 		if (timestamp != null) {
 			try {
 				Date d = iso8601Format.parse(timestamp.getValue().toString());

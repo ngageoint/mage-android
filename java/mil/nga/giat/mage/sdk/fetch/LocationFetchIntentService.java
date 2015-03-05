@@ -62,7 +62,7 @@ public class LocationFetchIntentService extends ConnectivityAwareIntentService i
 
 						// make sure that the user exists and is persisted in the local data-store
 						String userId = null;
-						LocationProperty userIdProperty = location.getPropertiesMap().get("user");
+						LocationProperty userIdProperty = location.getPropertiesMap().get("userId");
 						if (userIdProperty != null) {
 							userId = userIdProperty.getValue().toString();
 						}
