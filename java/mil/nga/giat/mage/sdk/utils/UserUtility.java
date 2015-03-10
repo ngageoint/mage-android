@@ -11,7 +11,6 @@ import java.text.ParseException;
 import java.util.Date;
 
 import mil.nga.giat.mage.sdk.R;
-import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
 
 /**
  * Utility that currently deals mostly with the user's token information.
@@ -45,7 +44,7 @@ public class UserUtility {
     // this should probably be in the auth module as something more generic,
     // in case we ever go to a different login module
 	public synchronized final Boolean isTokenExpired() {
-		String tokenExpirationDateString = PreferenceHelper.getInstance(mContext).getValue(R.string.tokenExpirationDateKey);
+		String tokenExpirationDateString = PreferenceManager.getDefaultSharedPreferences(mContext).getString(mContext.getString(R.string.tokenExpirationDateKey), null);
 		if (tokenExpirationDateString != null && !tokenExpirationDateString.isEmpty()) {
 			try {
 				return new Date().after(iso8601Format.parse(tokenExpirationDateString));
@@ -62,8 +61,7 @@ public class UserUtility {
 	public synchronized final void clearTokenInformation() {
 		SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(mContext);
 		Editor editor = sharedPreferences.edit();
-		editor.remove(mContext.getString(R.string.tokenKey));
-        editor.remove(mContext.getString(R.string.tokenExpirationDateKey));
-        editor.commit();
+		editor.remove(mContext.getString(R.string.tokenKey)).commit();
+        editor.remove(mContext.getString(R.string.tokenExpirationDateKey)).commit();
 	}
 }

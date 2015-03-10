@@ -80,13 +80,13 @@ public class FormAuthLoginTask extends AbstractAccountTask {
 		if (!ConnectivityUtility.isOnline(mApplicationContext)) {
 			// try disconnected login
 			try {
-				String oldUsername = PreferenceHelper.getInstance(mApplicationContext).getValue(R.string.usernameKey);
-				String serverURLPref = PreferenceHelper.getInstance(mApplicationContext).getValue(R.string.serverURLKey);
-				String oldPasswordHash = PreferenceHelper.getInstance(mApplicationContext).getValue(R.string.passwordHashKey);
+				String oldUsername = sharedPreferences.getString(mApplicationContext.getString(R.string.usernameKey), mApplicationContext.getString(R.string.usernameDefaultValue));
+				String serverURLPref = sharedPreferences.getString(mApplicationContext.getString(R.string.serverURLKey), mApplicationContext.getString(R.string.serverURLDefaultValue));
+				String oldPasswordHash = sharedPreferences.getString(mApplicationContext.getString(R.string.passwordHashKey), null);
 				if (oldUsername != null && oldPasswordHash != null && !oldPasswordHash.trim().isEmpty()) {
 					if (oldUsername.equals(username) && serverURL.equals(serverURLPref) && PasswordUtility.equal(password, oldPasswordHash)) {
 						// put the token expiration information in the shared preferences
-						long tokenExpirationLength = sharedPreferences.getLong(mApplicationContext.getString(R.string.tokenExpirationLengthKey), 0);
+						long tokenExpirationLength = Math.max(sharedPreferences.getLong(mApplicationContext.getString(R.string.tokenExpirationLengthKey), 0), 0);
 						Date tokenExpiration = new Date(System.currentTimeMillis() + tokenExpirationLength);
 						sharedPreferences.edit().putString(mApplicationContext.getString(R.string.tokenExpirationDateKey), iso8601Format.format(tokenExpiration)).commit();
 
@@ -177,7 +177,7 @@ public class FormAuthLoginTask extends AbstractAccountTask {
 				nameValuePairs.add(new BasicNameValuePair("password", password));
 				nameValuePairs.add(new BasicNameValuePair("uid", uuid));
 				nameValuePairs.add(new BasicNameValuePair("username", username));
-				String buildVersion = PreferenceHelper.getInstance(mApplicationContext).getValue(R.string.buildVersionKey);
+				String buildVersion = sharedPreferences.getString(mApplicationContext.getString(R.string.buildVersionKey), null);
 				if (buildVersion != null) {
 					nameValuePairs.add(new BasicNameValuePair("mageVersion", buildVersion));
 				}
@@ -206,7 +206,7 @@ public class FormAuthLoginTask extends AbstractAccountTask {
 					// put the token information in the shared preferences
 					Editor editor = sharedPreferences.edit();
 					editor.putString(mApplicationContext.getString(R.string.tokenKey), json.getString("token").trim()).commit();
-					Log.d(LOG_NAME, "Storing token: " + PreferenceHelper.getInstance(mApplicationContext).getValue(R.string.tokenKey));
+					Log.d(LOG_NAME, "Storing token: " + String.valueOf(sharedPreferences.getString(mApplicationContext.getString(R.string.tokenKey), null)));
 					try {
 						Date tokenExpiration = iso8601Format.parse(json.getString("expirationDate").trim());
 						long tokenExpirationLength = tokenExpiration.getTime() - (new Date()).getTime();
@@ -220,7 +220,7 @@ public class FormAuthLoginTask extends AbstractAccountTask {
 					JSONObject userJson = json.getJSONObject("user");
 
 					// if username is different, then clear the db
-					String oldUsername = PreferenceHelper.getInstance(mApplicationContext).getValue(R.string.usernameKey);
+					String oldUsername = sharedPreferences.getString(mApplicationContext.getString(R.string.usernameKey), mApplicationContext.getString(R.string.usernameDefaultValue));
 					String newUsername = userJson.getString("username");
 					if (oldUsername == null || !oldUsername.equals(newUsername)) {
 						DaoStore.getInstance(mApplicationContext).resetDatabase();

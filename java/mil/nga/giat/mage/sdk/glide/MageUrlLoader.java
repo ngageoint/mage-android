@@ -3,8 +3,8 @@ package mil.nga.giat.mage.sdk.glide;
 import java.io.InputStream;
 
 import mil.nga.giat.mage.sdk.R;
-import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
 import android.content.Context;
+import android.preference.PreferenceManager;
 import android.util.Log;
 
 import com.android.volley.Request;
@@ -71,7 +71,7 @@ public class MageUrlLoader extends VolleyUrlLoader {
 	@Override
 	public DataFetcher<InputStream> getResourceFetcher(GlideUrl url, int width, int height) {
 		String s = url.toString();
-		String token = PreferenceHelper.getInstance(context).getValue(R.string.tokenKey);
+		String token = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.tokenKey), null);
 		s += "?access_token=" + token + "&size=" + (width < height ? height : width);
 		if (s.contains("avatar")) {
 			// this is a user avatar, let's defeat the cache on them

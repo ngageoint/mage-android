@@ -8,7 +8,6 @@ import mil.nga.giat.mage.sdk.R;
 import mil.nga.giat.mage.sdk.event.IEventDispatcher;
 import mil.nga.giat.mage.sdk.event.IUserEventListener;
 import mil.nga.giat.mage.sdk.http.entity.GzipDecompressingEntity;
-import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
 import mil.nga.giat.mage.sdk.utils.UserUtility;
 
 import org.apache.http.Header;
@@ -33,6 +32,7 @@ import org.apache.http.params.CoreProtocolPNames;
 import org.apache.http.protocol.HttpContext;
 
 import android.content.Context;
+import android.preference.PreferenceManager;
 import android.util.Log;
 
 /**
@@ -87,7 +87,7 @@ public class HttpClientManager implements IEventDispatcher<IUserEventListener> {
 			public void process(HttpRequest request, HttpContext context) throws HttpException, IOException {
 
 				// add token
-				String token = PreferenceHelper.getInstance(mContext).getValue(R.string.tokenKey);
+				String token = PreferenceManager.getDefaultSharedPreferences(mContext).getString(mContext.getString(R.string.tokenKey), null);
 				if (token != null && !token.trim().isEmpty()) {
 					request.addHeader("Authorization", "Bearer " + token);
 				}

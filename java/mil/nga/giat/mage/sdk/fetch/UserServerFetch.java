@@ -9,7 +9,6 @@ import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
 import mil.nga.giat.mage.sdk.gson.deserializer.UserDeserializer;
 import mil.nga.giat.mage.sdk.http.client.HttpClientManager;
-import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -22,6 +21,7 @@ import org.json.JSONObject;
 import com.google.gson.Gson;
 
 import android.content.Context;
+import android.preference.PreferenceManager;
 import android.util.Log;
 
 public class UserServerFetch extends AbstractServerFetch {
@@ -34,7 +34,7 @@ public class UserServerFetch extends AbstractServerFetch {
 
 	public void fetch(String... userids) throws Exception {
 
-		URL serverURL = new URL(PreferenceHelper.getInstance(mContext).getValue(R.string.serverURLKey));
+		URL serverURL = new URL(PreferenceManager.getDefaultSharedPreferences(mContext).getString(mContext.getString(R.string.serverURLKey), mContext.getString(R.string.serverURLDefaultValue)));
 
 		HttpEntity entity = null;
 		try {

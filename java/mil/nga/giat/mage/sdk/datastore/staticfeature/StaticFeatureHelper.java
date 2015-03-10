@@ -9,14 +9,12 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-import mil.nga.giat.mage.sdk.R;
 import mil.nga.giat.mage.sdk.datastore.DaoHelper;
 import mil.nga.giat.mage.sdk.datastore.DaoStore;
 import mil.nga.giat.mage.sdk.datastore.layer.Layer;
 import mil.nga.giat.mage.sdk.event.IEventDispatcher;
 import mil.nga.giat.mage.sdk.event.IStaticFeatureEventListener;
 import mil.nga.giat.mage.sdk.exceptions.StaticFeatureException;
-import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
 import android.content.Context;
 import android.util.Log;
 
@@ -147,10 +145,6 @@ public class StaticFeatureHelper extends DaoHelper<StaticFeature> implements IEv
 			listener.onStaticFeaturesCreated(layers);
 		}
 		return layers;
-	}
-
-	public Boolean haveLayersBeenFetchedOnce() {
-		return PreferenceHelper.getInstance(context).getValue(R.string.haveLayersBeenFetchedOnceKey, Boolean.class, R.string.haveLayersBeenFetchedOnceDefaultValue);
 	}
 
 	@Override

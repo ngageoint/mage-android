@@ -14,7 +14,6 @@ import mil.nga.giat.mage.sdk.datastore.observation.Attachment;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
 import mil.nga.giat.mage.sdk.datastore.user.Event;
-import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.gson.deserializer.UserDeserializer;
@@ -24,7 +23,6 @@ import mil.nga.giat.mage.sdk.http.client.HttpClientManager;
 import mil.nga.giat.mage.sdk.jackson.deserializer.AttachmentDeserializer;
 import mil.nga.giat.mage.sdk.jackson.deserializer.LocationDeserializer;
 import mil.nga.giat.mage.sdk.jackson.deserializer.ObservationDeserializer;
-import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
 
 import org.apache.http.HttpEntity;
@@ -42,6 +40,7 @@ import org.apache.http.util.EntityUtils;
 import org.json.JSONObject;
 
 import android.content.Context;
+import android.preference.PreferenceManager;
 import android.util.Log;
 
 import com.google.gson.Gson;
@@ -77,7 +76,7 @@ public class MageServerPostRequests {
 			String observationEventIdString = String.valueOf(observation.getEvent().getRemoteId());
 			DefaultHttpClient httpClient = HttpClientManager.getInstance(context).getHttpClient();
 
-			URL serverURL = new URL(PreferenceHelper.getInstance(context).getValue(R.string.serverURLKey));
+			URL serverURL = new URL(PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.serverURLKey), context.getString(R.string.serverURLDefaultValue)));
 			URI endpointUri = null;
 
 			if (observation.getRemoteId() == null || observation.getRemoteId().trim().isEmpty()) {
@@ -180,7 +179,7 @@ public class MageServerPostRequests {
 		HttpEntity entity = null;
 		try {
 			Log.d(LOG_NAME, "Pushing profile picture for  " + user.getRemoteId());
-			URL serverURL = new URL(PreferenceHelper.getInstance(context).getValue(R.string.serverURLKey));
+			URL serverURL = new URL(PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.serverURLKey), context.getString(R.string.serverURLDefaultValue)));
 			URL endpoint = new URL(serverURL + "/api/users/" + user.getRemoteId());
 			
 			HttpPut request = new HttpPut(endpoint.toURI());
@@ -257,7 +256,7 @@ public class MageServerPostRequests {
 		Boolean status = false;
 		HttpEntity entity = null;
 		try {
-			URL serverURL = new URL(PreferenceHelper.getInstance(context).getValue(R.string.serverURLKey));
+			URL serverURL = new URL(PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.serverURLKey), context.getString(R.string.serverURLDefaultValue)));
 			URI endpointUri = new URL(serverURL + "/api/events/" + event.getRemoteId() + "/locations").toURI();
 
 			DefaultHttpClient httpClient = HttpClientManager.getInstance(context).getHttpClient();
@@ -307,7 +306,7 @@ public class MageServerPostRequests {
             UserHelper userHelper = UserHelper.getInstance(context);
             User currentUser = userHelper.readCurrentUser();
 
-            URL serverURL = new URL(PreferenceHelper.getInstance(context).getValue(R.string.serverURLKey));
+            URL serverURL = new URL(PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.serverURLKey), context.getString(R.string.serverURLDefaultValue)));
             URI endpointUri = new URL(serverURL + "/api/users/" + currentUser.getRemoteId() + "/events/" + event.getRemoteId() + "/recent").toURI();
 
             DefaultHttpClient httpClient = HttpClientManager.getInstance(context).getHttpClient();
@@ -343,7 +342,7 @@ public class MageServerPostRequests {
         HttpEntity entity = null;
         try {
 
-            URL serverURL = new URL(PreferenceHelper.getInstance(context).getValue(R.string.serverURLKey));
+            URL serverURL = new URL(PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.serverURLKey), context.getString(R.string.serverURLDefaultValue)));
             URI endpointUri = new URL(serverURL + "/api/logout").toURI();
 
             DefaultHttpClient httpClient = HttpClientManager.getInstance(context).getHttpClient();

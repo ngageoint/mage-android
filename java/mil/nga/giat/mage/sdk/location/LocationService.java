@@ -15,7 +15,6 @@ import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.exceptions.LocationException;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
-import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.app.Service;
@@ -91,7 +90,7 @@ public class LocationService extends Service implements LocationListener, OnShar
 	 * @return
 	 */
 	private synchronized long getMinimumDistanceChangeForUpdates() {
-		return PreferenceHelper.getInstance(mContext).getValue(R.string.gpsSensitivityKey, Long.class, R.string.gpsSensitivityDefaultValue);
+		return PreferenceManager.getDefaultSharedPreferences(mContext).getInt(mContext.getString(R.string.gpsSensitivityKey), mContext.getResources().getInteger(R.integer.gpsSensitivityDefaultValue));
 	}
 	
 	/**
@@ -100,17 +99,15 @@ public class LocationService extends Service implements LocationListener, OnShar
 	 * @return
 	 */
 	protected final synchronized long getUserReportingFrequency() {
-		return PreferenceHelper.getInstance(mContext).getValue(R.string.userReportingFrequencyKey, Long.class, R.string.userReportingFrequencyDefaultValue);
+		return PreferenceManager.getDefaultSharedPreferences(mContext).getInt(mContext.getString(R.string.userReportingFrequencyKey), mContext.getResources().getInteger(R.integer.userReportingFrequencyDefaultValue));
 	}
 	
 	protected final synchronized boolean getLocationServiceEnabled() {
-	    SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(mContext);
-        return preferences.getBoolean(mContext.getString(R.string.locationServiceEnabledKey), false);
+        return PreferenceManager.getDefaultSharedPreferences(mContext).getBoolean(mContext.getString(R.string.locationServiceEnabledKey), mContext.getResources().getBoolean(R.bool.locationServiceEnabledDefaultValue));
 	}
 	
     protected final synchronized boolean shouldReportUserLocation() {
-        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(mContext);
-        return preferences.getBoolean("reportLocation", false);
+		return PreferenceManager.getDefaultSharedPreferences(mContext).getBoolean(mContext.getString(R.string.reportLocationKey), mContext.getResources().getBoolean(R.bool.reportLocationDefaultValue));
     }
 	
 	protected boolean locationUpdatesEnabled = false;

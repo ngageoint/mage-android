@@ -15,7 +15,6 @@ import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.event.IScreenEventListener;
 import mil.nga.giat.mage.sdk.http.get.MageServerGetRequests;
 import mil.nga.giat.mage.sdk.login.LoginTaskFactory;
-import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
 import mil.nga.giat.mage.sdk.screen.ScreenChangeReceiver;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -34,7 +33,7 @@ public class LocationFetchIntentService extends ConnectivityAwareIntentService i
 	protected final AtomicBoolean fetchSemaphore = new AtomicBoolean(false);
 
 	protected final synchronized long getLocationFetchFrequency() {
-		return PreferenceHelper.getInstance(getApplicationContext()).getValue(R.string.userFetchFrequencyKey, Long.class, R.string.userFetchFrequencyDefaultValue);
+		return PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).getInt(getString(R.string.userFetchFrequencyKey), getResources().getInteger(R.integer.userFetchFrequencyDefaultValue));
 	}
 
 	@Override
@@ -48,7 +47,7 @@ public class LocationFetchIntentService extends ConnectivityAwareIntentService i
 		SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
 
 		while (!isCanceled) {
-			Boolean isDataFetchEnabled = sharedPreferences.getBoolean(getApplicationContext().getString(R.string.dataFetchEnabledKey), true);
+			Boolean isDataFetchEnabled = sharedPreferences.getBoolean(getString(R.string.dataFetchEnabledKey), getResources().getBoolean(R.bool.dataFetchEnabledDefaultValue));
 
 			if (isConnected && isDataFetchEnabled && !LoginTaskFactory.getInstance(getApplicationContext()).isLocalLogin()) {
 

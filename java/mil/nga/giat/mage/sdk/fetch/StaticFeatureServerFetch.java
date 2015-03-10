@@ -6,7 +6,6 @@ import java.net.URL;
 import java.sql.SQLException;
 import java.util.Collection;
 
-import mil.nga.giat.mage.sdk.R;
 import mil.nga.giat.mage.sdk.connectivity.ConnectivityUtility;
 import mil.nga.giat.mage.sdk.datastore.DaoStore;
 import mil.nga.giat.mage.sdk.datastore.layer.Layer;
@@ -54,7 +53,6 @@ public class StaticFeatureServerFetch extends AbstractServerFetch {
 		StaticFeatureHelper staticFeatureHelper = StaticFeatureHelper.getInstance(mContext);
 		LayerHelper layerHelper = LayerHelper.getInstance(mContext);
 
-		sp.putString(mContext.getString(R.string.haveLayersBeenFetchedOnceKey), "false").commit();
 		// if you are disconnect, skip this
 		if(!ConnectivityUtility.isOnline(mContext) || LoginTaskFactory.getInstance(mContext).isLocalLogin()) {
 			Log.d(LOG_NAME, "Disconnected, not pulling static layers.");
@@ -70,8 +68,8 @@ public class StaticFeatureServerFetch extends AbstractServerFetch {
 
 			layerHelper.createAll(layers);
 
-			// set this flag for the layer manager
-			sp.putString(mContext.getString(R.string.haveLayersBeenFetchedOnceKey), "true").commit();
+			// FIXME : set a flag to not pull layers again
+
 
 			// get ALL the layers
 			layers = layerHelper.readAll();

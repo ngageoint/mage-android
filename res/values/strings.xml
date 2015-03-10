@@ -1,39 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
-
     <string name="app_name">MAGE SDK</string>
-    <!-- mdkprivatepreferences.xml -->
-    <string name="databaseVersionKey">databaseVersion</string>
-    <string name="buildVersionKey">buildVersion</string>
-    <string name="usernameKey">username</string>
-    <string name="currenteventKey">currentevent</string>
-    <string name="passwordHashKey">passwordHash</string>
-    <string name="serverURLKey">serverURL</string>
-    <string name="loginTaskKey">loginTask</string>
-    <string name="loginTaskDefaultValue">mil.nga.giat.mage.sdk.login.FormAuthLoginTask</string>
-    <string name="tokenKey">token</string>
-    <string name="tokenExpirationDateKey">tokenExpirationDate</string>
-    <string name="tokenExpirationLengthKey">tokenExpirationLength</string>
-    <string name="haveLayersBeenFetchedOnceKey">haveLayersBeenReadOnce</string>
-    <string name="haveLayersBeenFetchedOnceDefaultValue">false</string>
-    <string name="deleteAllDataOnLogoutKey">deleteAllDataOnLogout</string>
-    <string name="deleteAllDataOnLogoutDefaultValue">false</string>
-    
-    <!-- mdkpublicpreferences.xml -->
-    <string name="locationServiceEnabledKey">locationServiceEnabled</string>
-    <string name="dataFetchEnabledKey">dataFetchEnabled</string>
-    <string name="gpsSensitivityKey">gpsSensitivity</string>
-    <string name="gpsSensitivityDefaultValue">10</string>
-    <string name="reportLocationKey">reportLocation</string>
-    <string name="userReportingFrequencyKey">userReportingFrequency</string>
-    <string name="userReportingFrequencyDefaultValue">300000</string>
-    <string name="observationFetchFrequencyKey">observationFetchFrequency</string>
-    <string name="observationFetchFrequencyDefaultValue">300000</string>
-    <string name="userFetchFrequencyKey">userFetchFrequency</string>
-    <string name="userFetchFrequencyDefaultValue">120000</string>
-    <string name="observationPushFrequencyKey">observationPushFrequency</string>
-    <string name="observationPushFrequencyDefaultValue">60000</string>
-    <string name="locationPushFrequencyKey">locationPushFrequency</string>
-    <string name="locationPushFrequencyDefaultValue">60000</string>
-    <string name="imageUploadSizeKey">imageUploadSize</string>
-
 </resources>
