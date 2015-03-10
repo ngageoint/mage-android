@@ -4,18 +4,18 @@
     android:id="@+id/about_button"
     android:orderInCategory="100"
     android:showAsAction="never"
-    android:title="@string/about"/>
+    android:title="About"/>
 
 <item
     android:id="@+id/disclaimer_button"
     android:orderInCategory="100"
     android:showAsAction="never"
-    android:title="@string/disclaimer"/>
+    android:title="Disclaimer"/>
 
 <item
     android:id="@+id/acknowledgements_button"
     android:orderInCategory="100"
     android:showAsAction="never"
-    android:title="@string/acknowledgements"/>
+    android:title="Acknowledgements"/>
 
 </menu>

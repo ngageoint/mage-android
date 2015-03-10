@@ -9,12 +9,12 @@
         <item>Large</item>
     </string-array>
     
-    <string-array name="imageUploadSizeValues">
+    <integer-array name="imageUploadSizeValues">
         <item>0</item>
         <item>256</item>
         <item>512</item>
         <item>1024</item>
-    </string-array>
+    </integer-array>
     
     <string-array name="profileImageChoices">
         <item>View Profile Photo</item>

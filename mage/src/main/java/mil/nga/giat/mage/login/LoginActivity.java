@@ -89,7 +89,7 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 
 		// IMPORTANT: load the configuration from preferences files and server
 		PreferenceHelper preferenceHelper = PreferenceHelper.getInstance(getApplicationContext());
-		preferenceHelper.initialize(false, new Integer[]{R.xml.privatepreferences, R.xml.publicpreferences, R.xml.mappreferences});
+		preferenceHelper.initialize(false, new Class<?>[]{mil.nga.giat.mage.sdk.R.xml.class, R.xml.class});
 
 		SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
 
@@ -98,9 +98,7 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 			((MAGE) getApplication()).onLogout(true);
 		}
 
-		Editor e = sharedPreferences.edit();
-		e.putInt(getResources().getString(R.string.databaseVersionKey), DaoStore.DATABASE_VERSION);
-		e.commit();
+		sharedPreferences.edit().putInt(getString(R.string.databaseVersionKey), DaoStore.DATABASE_VERSION).commit();
 
 		// check google play services version
 		int isGooglePlayServicesAvailable = GooglePlayServicesUtil.isGooglePlayServicesAvailable(getApplicationContext());
@@ -142,7 +140,7 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 		setContentView(R.layout.activity_login);
 		hideKeyboardOnClick(findViewById(R.id.login));
 
-		((TextView) findViewById(R.id.login_version)).setText("Version: " + preferenceHelper.getValue(R.string.buildVersionKey));
+		((TextView) findViewById(R.id.login_version)).setText("Version: " + sharedPreferences.getString(getString(R.string.buildVersionKey), "NA"));
 
 		mUsernameEditText = (EditText) findViewById(R.id.login_username);
 		mPasswordEditText = (EditText) findViewById(R.id.login_password);
@@ -152,9 +150,9 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 		mLoginButton = (Button) findViewById(R.id.login_login_button);
 
 		// set the default values
-		getUsernameEditText().setText(preferenceHelper.getValue(R.string.usernameKey));
+		getUsernameEditText().setText(sharedPreferences.getString(getString(R.string.usernameKey), getString(R.string.usernameDefaultValue)));
 		getUsernameEditText().setSelection(getUsernameEditText().getText().length());
-		getServerEditText().setText(preferenceHelper.getValue(R.string.serverURLKey));
+		getServerEditText().setText(sharedPreferences.getString(getString(R.string.serverURLKey), getString(R.string.serverURLDefaultValue)));
 		getServerEditText().setSelection(getServerEditText().getText().length());
 
 		mPasswordEditText.setOnKeyListener(new View.OnKeyListener() {
@@ -255,13 +253,14 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 		findViewById(R.id.login_form).setVisibility(View.GONE);
 		findViewById(R.id.login_status).setVisibility(View.VISIBLE);
 
-		String serverURLPref = PreferenceHelper.getInstance(getApplicationContext()).getValue(R.string.serverURLKey);
+		SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+		String serverURLPref =  sharedPreferences.getString(getString(R.string.serverURLKey), getString(R.string.serverURLDefaultValue));
 
 		// if the username is different, then clear the token information
-		String oldUsername = PreferenceHelper.getInstance(getApplicationContext()).getValue(R.string.usernameKey);
+		String oldUsername = sharedPreferences.getString(getString(R.string.usernameKey), null);
 		if (StringUtils.isNotEmpty(oldUsername) && (!username.equals(oldUsername) || !server.equals(serverURLPref))) {
 			PreferenceHelper preferenceHelper = PreferenceHelper.getInstance(getApplicationContext());
-			preferenceHelper.initialize(true, new Integer[]{R.xml.privatepreferences, R.xml.publicpreferences, R.xml.mappreferences});
+			preferenceHelper.initialize(true, new Class<?>[]{mil.nga.giat.mage.sdk.R.xml.class, R.xml.class});
 			UserUtility.getInstance(getApplicationContext()).clearTokenInformation();
 		}
 
@@ -337,11 +336,12 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 										return false;
 									} else {
 										// check versions
-										Integer compatibleMajorVersion = PreferenceHelper.getInstance(getApplicationContext()).getValue(R.string.compatibleVersionMajorKey, Integer.class, R.string.compatibleVersionMajorDefaultValue);
-										Integer compatibleMinorVersion = PreferenceHelper.getInstance(getApplicationContext()).getValue(R.string.compatibleVersionMinorKey, Integer.class, R.string.compatibleVersionMinorDefaultValue);
+										SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+										Integer compatibleMajorVersion = sharedPreferences.getInt(getString(R.string.compatibleVersionMajorKey), getResources().getInteger(R.integer.compatibleVersionMajorDefaultValue));
+										Integer compatibleMinorVersion = sharedPreferences.getInt(getString(R.string.compatibleVersionMinorKey), getResources().getInteger(R.integer.compatibleVersionMinorDefaultValue));
 
-										Integer serverMajorVersion = PreferenceHelper.getInstance(getApplicationContext()).getValue(R.string.serverVersionMajorKey, Integer.class, null);
-										Integer serverMinorVersion = PreferenceHelper.getInstance(getApplicationContext()).getValue(R.string.serverVersionMinorKey, Integer.class, null);
+										Integer serverMajorVersion = sharedPreferences.getInt(getString(R.string.serverVersionMajorKey), getResources().getInteger(R.integer.serverVersionMajorDefaultValue));
+										Integer serverMinorVersion = sharedPreferences.getInt(getString(R.string.serverVersionMinorKey), getResources().getInteger(R.integer.serverVersionMinorDefaultValue));
 
 										if (serverMajorVersion == null || serverMinorVersion == null) {
 											showKeyboard();
@@ -407,6 +407,8 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 
 			// remove the slashes at the end, and store the serverURL
 			sp.putString(getApplicationContext().getString(R.string.serverURLKey), getServerEditText().getText().toString().trim().replaceAll("/*$", "")).commit();
+
+			PreferenceHelper.getInstance(getApplicationContext()).logKeyValuePairs();
 
 			if (accountStatus.getStatus().equals(AccountStatus.Status.DISCONNECTED_LOGIN)) {
 				new AlertDialog.Builder(this).setTitle("Disconnected Login").setMessage("You are logging into MAGE in disconnected mode.  You must re-establish a connection in order to push and pull information to and from your server.").setPositiveButton(android.R.string.ok, new OnClickListener() {

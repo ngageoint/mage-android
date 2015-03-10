@@ -142,7 +142,8 @@ public class FeatureOverlayPreferenceActivity extends ListActivity implements IL
         // the problem is that onResume gets called before this so my menu is
         // not yet setup and I will not have a handle on this button
 
-        boolean loaded = StaticFeatureHelper.getInstance(this).haveLayersBeenFetchedOnce();
+		// FIXME : store this in a static field maybe?
+        boolean loaded = false;
         if (loaded) {
             try {
                 Collection<Layer> layers = LayerHelper.getInstance(this).readAllStaticLayers();

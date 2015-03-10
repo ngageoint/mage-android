@@ -12,7 +12,6 @@ import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.observation.RemoveAttachmentDialogFragment.RemoveAttachmentDialogListener;
 import mil.nga.giat.mage.sdk.datastore.DaoStore;
 import mil.nga.giat.mage.sdk.datastore.observation.Attachment;
-import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
 
 import android.app.ProgressDialog;
@@ -21,6 +20,7 @@ import android.media.ThumbnailUtils;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.provider.MediaStore;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.FragmentActivity;
@@ -159,7 +159,7 @@ public class AttachmentViewerActivity extends FragmentActivity implements Remove
 	}
 
 	private void startDownload(Attachment attachment, String mimeType) {
-		String url = attachment.getUrl() + "?access_token=" + PreferenceHelper.getInstance(getApplicationContext()).getValue(R.string.tokenKey);
+		String url = attachment.getUrl() + "?access_token=" + PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).getString(getString(mil.nga.giat.mage.sdk.R.string.tokenKey), null);
 		new DownloadFileAsync(mimeType).execute(url);
 	}
 

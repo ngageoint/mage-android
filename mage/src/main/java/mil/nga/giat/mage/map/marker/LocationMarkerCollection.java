@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
+import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -48,7 +49,6 @@ import mil.nga.giat.mage.sdk.datastore.location.LocationProperty;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
-import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
 import mil.nga.giat.mage.sdk.utils.DateFormatFactory;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
 
@@ -296,7 +296,7 @@ public class LocationMarkerCollection implements PointCollection<Location>, OnMa
 			if (location.getUser().getLocalAvatarPath() != null) {
 				iconView.setImageBitmap(MediaUtility.resizeAndRoundCorners(BitmapFactory.decodeFile(location.getUser().getLocalAvatarPath()), 128));
 			} else if (location.getUser().getAvatarUrl() != null) {
-				new DownloadImageTask(marker, context, user).execute(location.getUser().getAvatarUrl() + "?access_token=" + PreferenceHelper.getInstance(context).getValue(R.string.tokenKey));
+				new DownloadImageTask(marker, context, user).execute(location.getUser().getAvatarUrl() + "?access_token=" + PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(mil.nga.giat.mage.sdk.R.string.tokenKey), null));
 			}
 			
 			TextView location_name = (TextView) v.findViewById(R.id.location_name);
@@ -314,12 +314,7 @@ public class LocationMarkerCollection implements PointCollection<Location>, OnMa
 			// set date
 			TextView location_date = (TextView) v.findViewById(R.id.location_date);
 
-			String timeText = dateFormat.format(location.getTimestamp());
-			Boolean prettyPrint = PreferenceHelper.getInstance(context).getValue(R.string.prettyPrintLocationDatesKey, Boolean.class, R.string.prettyPrintLocationDatesDefaultValue);
-			if (prettyPrint) {
-				timeText = new PrettyTime().format(location.getTimestamp());
-			}
-			location_date.setText(timeText);
+			location_date.setText(new PrettyTime().format(location.getTimestamp()));
 
 			return v;
 		}

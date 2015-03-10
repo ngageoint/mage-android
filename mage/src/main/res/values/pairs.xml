@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- ************** set in setdefaultpreferences.xml ************* -->
+
+    <string name="passwordMinLengthKey">gAuthenticationPasswordMinLength</string>
+    <integer name="passwordMinLengthDefaultValue">5</integer>
+
+    <string name="compatibleVersionMajorKey">compatibleVersionMajor</string>
+    <integer name="compatibleVersionMajorDefaultValue">3</integer>
+
+    <string name="compatibleVersionMinorKey">compatibleVersionMinor</string>
+    <integer name="compatibleVersionMinorDefaultValue">0</integer>
+
+    <!-- from the server /api call -->
+    <string name="serverVersionMajorKey">gVersionMajor</string>
+    <integer name="serverVersionMajorDefaultValue">@integer/compatibleVersionMajorDefaultValue</integer>
+
+    <string name="serverVersionMinorKey">gVersionMinor</string>
+    <integer name="serverVersionMinorDefaultValue">@integer/compatibleVersionMinorDefaultValue</integer>
+
+    <!-- ************************************************************* -->
+
+    <!-- ***************** set in mappreferences.xml ***************** -->
+
+    <string name="baseLayerKey">baseLayer</string>
+    <integer name="baseLayerDefaultValue">1</integer>
+
+    <string name="showObservationsKey">showObservations</string>
+    <bool name="showObservationsDefaultValue">true</bool>
+
+    <string name="showLocationsKey">showLocations</string>
+    <bool name="showLocationsDefaultValue">true</bool>
+
+    <string name="showMyLocationHistoryKey">showMyLocationHistory</string>
+    <bool name="showMyLocationHistoryDefaultValue">false</bool>
+
+    <!-- ************************************************************* -->
+
+    <!-- FIXME: what is this stuff? why is it in shared prefs? -->
+    <string name="mapXYZKey">mapXYZ</string>
+    <string name="mapTileOverlaysKey">mapTileOverlays</string>
+    <string name="mapFeatureOverlaysKey">mapFeatureOverlays</string>
+    <string name="activeTimeFilterKey">activeTimeFilter</string>
+    <string name="mapZoomLatKey">mapZoomLatKey</string>
+    <string name="mapZoomLonKey">mapZoomLonKey</string>
+
+</resources>

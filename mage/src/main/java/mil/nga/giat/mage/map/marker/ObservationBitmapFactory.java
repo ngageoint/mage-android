@@ -12,7 +12,6 @@ import java.util.Stack;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationProperty;
 import mil.nga.giat.mage.sdk.datastore.user.Event;
-import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
 import mil.nga.giat.mage.sdk.http.get.MageServerGetRequests;
 import android.annotation.TargetApi;
 import android.content.Context;

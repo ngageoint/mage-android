@@ -56,8 +56,7 @@ public class LocationPreferencesActivity extends PreferenceActivity {
         @Override
         public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
             Editor editor = PreferenceManager.getDefaultSharedPreferences(getActivity()).edit();
-            editor.putBoolean(getResources().getString(R.string.locationServiceEnabledKey), isChecked);
-            editor.commit();
+            editor.putBoolean(getResources().getString(R.string.locationServiceEnabledKey), isChecked).commit();
 
             updateSettings();
         }

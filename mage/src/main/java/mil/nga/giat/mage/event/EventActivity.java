@@ -1,7 +1,6 @@
 package mil.nga.giat.mage.event;
 
 import android.app.Activity;
-import android.app.FragmentManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -18,8 +17,6 @@ import android.widget.RadioGroup;
 
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 
 import mil.nga.giat.mage.LandingActivity;
@@ -28,8 +25,6 @@ import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.login.LoginActivity;
 import mil.nga.giat.mage.sdk.datastore.user.Event;
 import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
-import mil.nga.giat.mage.sdk.datastore.user.Team;
-import mil.nga.giat.mage.sdk.datastore.user.TeamHelper;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.fetch.InitialFetchIntentService;
@@ -75,7 +70,7 @@ public class EventActivity extends Activity implements AccountDelegate {
                     }
 
                     if(events.isEmpty() || currentUser == null) {
-                        Log.e(LOG_NAME, "User is part of no event!");
+                        Log.e(LOG_NAME, "User is part of no events!");
                         ((MAGE) getApplication()).onLogout(true);
                         findViewById(R.id.event_status).setVisibility(View.GONE);
                         findViewById(R.id.event_content).setVisibility(View.VISIBLE);
@@ -169,7 +164,7 @@ public class EventActivity extends Activity implements AccountDelegate {
             Log.e(LOG_NAME, "Unable to post your recent event!");
         }
         SharedPreferences.Editor sp = PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).edit();
-        sp.putString(getApplicationContext().getString(R.string.currenteventKey), String.valueOf(chosenEvent.getName())).commit();
+        sp.putString(getString(R.string.currentEventKey), String.valueOf(chosenEvent.getName())).commit();
 
         // start up the landing activity!
         startActivity(new Intent(getApplicationContext(), LandingActivity.class));

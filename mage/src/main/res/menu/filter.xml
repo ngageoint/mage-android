@@ -4,5 +4,5 @@
         android:id="@+id/filter_button"
         android:orderInCategory="100"
         android:showAsAction="always"
-        android:title="@string/filter"/>
+        android:title="Filter"/>
 </menu>

@@ -39,7 +39,6 @@ import mil.nga.giat.mage.sdk.glide.MageUrlLoader;
 import mil.nga.giat.mage.sdk.http.client.HttpClientManager;
 import mil.nga.giat.mage.sdk.http.post.MageServerPostRequests;
 import mil.nga.giat.mage.sdk.location.LocationService;
-import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
 import mil.nga.giat.mage.sdk.push.AttachmentPushAlarmReceiver;
 import mil.nga.giat.mage.sdk.push.LocationPushIntentService;
 import mil.nga.giat.mage.sdk.push.ObservationPushIntentService;
@@ -85,6 +84,7 @@ public class MAGE extends MultiDexApplication implements IUserEventListener {
 		// setup the screen unlock stuff
 		registerReceiver(ScreenChangeReceiver.getInstance(), new IntentFilter(Intent.ACTION_SCREEN_ON));
 
+		// FIXME : remove listener
         //set up Observation notifications
         ObservationHelper oh = ObservationHelper.getInstance(getApplicationContext());
         oh.addListener(new ObservationNotificationListener(getApplicationContext()));
@@ -147,10 +147,11 @@ public class MAGE extends MultiDexApplication implements IUserEventListener {
 
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
         SharedPreferences.Editor editor = sharedPreferences.edit();
-        editor.remove(getApplicationContext().getString(mil.nga.giat.mage.sdk.R.string.currenteventKey));
-        editor.commit();
+        editor.remove(getApplicationContext().getString(mil.nga.giat.mage.sdk.R.string.currentEventKey)).commit();
 
-		if(PreferenceHelper.getInstance(getApplicationContext()).getValue(R.string.deleteAllDataOnLogoutKey, Boolean.class, R.string.deleteAllDataOnLogoutDefaultValue)) {
+		Boolean deleteAllDataOnLogout = sharedPreferences.getBoolean(getApplicationContext().getString(R.string.deleteAllDataOnLogoutKey), getResources().getBoolean(R.bool.deleteAllDataOnLogoutDefaultValue));
+
+		if(deleteAllDataOnLogout) {
 			LandingActivity.deleteAllData(getApplicationContext());
 		}		
 	}

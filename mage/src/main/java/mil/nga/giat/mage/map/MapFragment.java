@@ -92,12 +92,9 @@ import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
-import com.google.android.gms.maps.model.Polygon;
-import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.TileOverlay;
 import com.google.android.gms.maps.model.TileOverlayOptions;
 import com.google.android.gms.maps.model.TileProvider;
-import com.google.maps.android.PolyUtil;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.Point;
 
@@ -380,7 +377,7 @@ public class MapFragment extends Fragment implements OnMapClickListener, OnMapLo
 		mage.unregisterCacheOverlayListener(this);
 		StaticFeatureHelper.getInstance(getActivity().getApplicationContext()).removeListener(this);
 
-		boolean locationServiceEnabled = Integer.parseInt(preferences.getString(getResources().getString(R.string.userReportingFrequencyKey), "0")) > 0;
+		boolean locationServiceEnabled = preferences.getInt(getString(R.string.userReportingFrequencyKey), getResources().getInteger(R.integer.userReportingFrequencyDefaultValue)) > 0;
 		if (locationServiceEnabled) {
 			map.setLocationSource(null);
 			locationService.unregisterOnLocationListener(this);
@@ -776,7 +773,7 @@ public class MapFragment extends Fragment implements OnMapClickListener, OnMapLo
 
 	private void updateMapView() {
 		// Check the map type
-		map.setMapType(Integer.parseInt(preferences.getString(getResources().getString(R.string.baseLayerKey), "1")));
+		map.setMapType(preferences.getInt(getString(R.string.baseLayerKey), getResources().getInteger(R.integer.baseLayerDefaultValue)));
 
 		// Check the map location and zoom
 		String xyz = preferences.getString(getResources().getString(R.string.mapXYZKey), null);

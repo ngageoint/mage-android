@@ -266,7 +266,8 @@ public class SignupActivity extends Activity implements AccountDelegate {
 			return;
 		}
 
-		Long passwordLength = PreferenceHelper.getInstance(getApplicationContext()).getValue(R.string.passwordMinLengthKey, Long.class, R.string.passwordMinLengthDefaultValue);
+		SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+		Integer passwordLength = sharedPreferences.getInt(getString(R.string.passwordMinLengthKey), getResources().getInteger(R.integer.passwordMinLengthDefaultValue));
 		if (password.length() < passwordLength) {
 			getPasswordEditText().setError("Password must be " + passwordLength + " characters");
 			getPasswordEditText().requestFocus();
@@ -343,11 +344,12 @@ public class SignupActivity extends Activity implements AccountDelegate {
 										return false;
 									} else {
 										// check versions
-										Integer compatibleMajorVersion = PreferenceHelper.getInstance(getApplicationContext()).getValue(R.string.compatibleVersionMajorKey, Integer.class, R.string.compatibleVersionMajorDefaultValue);
-										Integer compatibleMinorVersion = PreferenceHelper.getInstance(getApplicationContext()).getValue(R.string.compatibleVersionMinorKey, Integer.class, R.string.compatibleVersionMinorDefaultValue);
+										SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+										Integer compatibleMajorVersion = sharedPreferences.getInt(getString(R.string.compatibleVersionMajorKey), getResources().getInteger(R.integer.compatibleVersionMajorDefaultValue));
+										Integer compatibleMinorVersion = sharedPreferences.getInt(getString(R.string.compatibleVersionMinorKey), getResources().getInteger(R.integer.compatibleVersionMinorDefaultValue));
 
-										Integer serverMajorVersion = PreferenceHelper.getInstance(getApplicationContext()).getValue(R.string.serverVersionMajorKey, Integer.class, null);
-										Integer serverMinorVersion = PreferenceHelper.getInstance(getApplicationContext()).getValue(R.string.serverVersionMinorKey, Integer.class, null);
+										Integer serverMajorVersion = sharedPreferences.getInt(getString(R.string.serverVersionMajorKey), getResources().getInteger(R.integer.serverVersionMajorDefaultValue));
+										Integer serverMinorVersion = sharedPreferences.getInt(getString(R.string.serverVersionMinorKey), getResources().getInteger(R.integer.serverVersionMinorDefaultValue));
 
 										if (serverMajorVersion == null || serverMinorVersion == null) {
 											showKeyboard();
@@ -404,13 +406,14 @@ public class SignupActivity extends Activity implements AccountDelegate {
 		if (accountStatus.getStatus() == AccountStatus.Status.SUCCESSFUL_SIGNUP) {
 
 			// we might be able to set the username for the user
-			String oldUsername = PreferenceHelper.getInstance(getApplicationContext()).getValue(mil.nga.giat.mage.sdk.R.string.usernameKey);
-			Editor sp = PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).edit();
+			SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+			String oldUsername = sharedPreferences.getString(getString(mil.nga.giat.mage.sdk.R.string.usernameKey), getString(mil.nga.giat.mage.sdk.R.string.usernameDefaultValue));
+			Editor sp = sharedPreferences.edit();
 			if (TextUtils.isEmpty(oldUsername)) {
 				try {
 					sp.putString(getApplicationContext().getString(R.string.usernameKey), accountStatus.getAccountInformation().getString("username")).commit();
 				} catch (Exception e) {
-					Log.w(LOG_NAME, "unabel to save username");
+					Log.w(LOG_NAME, "Unable to save username");
 				}
 			}
 

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+                  android:title="Data Fetching">
+
+    <PreferenceCategory android:title="DATA FETCH FREQUENCY">
+        <mil.nga.giat.mage.sdk.preferences.IntegerListPreference
+            android:defaultValue="@integer/userFetchFrequencyDefaultValue"
+            android:entries="@array/userFetchFrequencies"
+            android:entryValues="@array/userFetchFrequencyValues"
+            android:key="@string/userFetchFrequencyKey"
+            android:title="Users"/>
+        <mil.nga.giat.mage.sdk.preferences.IntegerListPreference
+            android:defaultValue="@integer/observationFetchFrequencyDefaultValue"
+            android:entries="@array/observationFetchFrequencies"
+            android:entryValues="@array/observationFetchFrequencyValues"
+            android:key="@string/observationFetchFrequencyKey"
+            android:title="Observations"/>
+    </PreferenceCategory>
+
+</PreferenceScreen>

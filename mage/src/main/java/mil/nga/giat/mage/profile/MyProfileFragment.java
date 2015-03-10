@@ -13,7 +13,6 @@ import mil.nga.giat.mage.sdk.datastore.location.LocationHelper;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
-import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
 import mil.nga.giat.mage.sdk.profile.UpdateProfileTask;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
 import android.annotation.TargetApi;
@@ -29,6 +28,7 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.provider.MediaStore;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -154,7 +154,7 @@ public class MyProfileFragment extends Fragment {
 		ImageView iv = (ImageView)rootView.findViewById(R.id.profile_picture);
 		String avatarUrl = null;
 		if (user.getAvatarUrl() != null) {
-			avatarUrl = user.getAvatarUrl() + "?access_token=" + PreferenceHelper.getInstance(getActivity().getApplicationContext()).getValue(R.string.tokenKey);
+			avatarUrl = user.getAvatarUrl() + "?access_token=" + PreferenceManager.getDefaultSharedPreferences(getActivity().getApplicationContext()).getString(getActivity().getApplicationContext().getString(mil.nga.giat.mage.sdk.R.string.tokenKey), null);
 			new DownloadImageTask(iv).execute(avatarUrl);
 		}
 		

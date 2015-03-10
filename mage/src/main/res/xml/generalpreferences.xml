@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <mil.nga.giat.mage.sdk.preferences.PreferenceScreenSwitch
+        android:defaultValue="@bool/locationServiceEnabledDefaultValue"
+        android:key="@string/locationServiceEnabledKey"
+        android:summary="GPS sensitivy and tracking options"
+        android:title="Location Services">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetClass="mil.nga.giat.mage.preferences.LocationPreferencesActivity"
+            android:targetPackage="mil.nga.giat.mage"/>
+    </mil.nga.giat.mage.sdk.preferences.PreferenceScreenSwitch>
+    <mil.nga.giat.mage.sdk.preferences.PreferenceScreenSwitch
+        android:defaultValue="@bool/dataFetchEnabledDefaultValue"
+        android:key="@string/dataFetchEnabledKey"
+        android:summary="User and Observation fetching options"
+        android:title="Data Fetching">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetClass="mil.nga.giat.mage.preferences.FetchPreferencesActivity"
+            android:targetPackage="mil.nga.giat.mage"/>
+    </mil.nga.giat.mage.sdk.preferences.PreferenceScreenSwitch>
+    <mil.nga.giat.mage.sdk.preferences.PreferenceScreenSwitch
+        android:defaultValue="@bool/notificationsEnabledDefaultValue"
+        android:key="@string/notificationsEnabledKey"
+        android:summary="Receive notifications when new observations are loaded"
+        android:title="Notifications">
+    </mil.nga.giat.mage.sdk.preferences.PreferenceScreenSwitch>
+    <PreferenceCategory
+        android:title="MEDIA">
+        <mil.nga.giat.mage.sdk.preferences.IntegerListValuePreference
+            android:defaultValue="@integer/imageUploadSizeDefaultValue"
+            android:entries="@array/imageUploadSize"
+            android:entryValues="@array/imageUploadSizeValues"
+            android:summary="Automatically scale down the images you upload"
+            android:key="@string/imageUploadSizeKey"
+            android:title="Image Upload Size"/>
+    </PreferenceCategory>
+    <PreferenceCategory
+        android:title="ABOUT">
+        <EditTextPreference
+            android:defaultValue="@string/serverURLDefaultValue"
+            android:key="@string/serverURLKey"
+            android:selectable="false"
+            android:title="Server URL"/>
+        <EditTextPreference
+            android:defaultValue="@string/usernameDefaultValue"
+            android:key="@string/usernameKey"
+            android:selectable="false"
+            android:title="Username"/>
+        <EditTextPreference
+            android:key="@string/currentEventKey"
+            android:selectable="false"
+            android:title="Current Event"/>
+        <EditTextPreference
+            android:key="@string/buildVersionKey"
+            android:selectable="false"
+            android:title="MAGE App Version"/>
+    </PreferenceCategory>
+
+</PreferenceScreen>
