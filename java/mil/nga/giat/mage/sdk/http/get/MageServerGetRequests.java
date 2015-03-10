@@ -2,6 +2,7 @@ package mil.nga.giat.mage.sdk.http.get;
 
 import android.content.Context;
 import android.net.Uri;
+import android.preference.PreferenceManager;
 import android.util.Log;
 
 import com.google.common.io.ByteStreams;
@@ -50,7 +51,6 @@ import mil.nga.giat.mage.sdk.http.client.HttpClientManager;
 import mil.nga.giat.mage.sdk.jackson.deserializer.LocationDeserializer;
 import mil.nga.giat.mage.sdk.jackson.deserializer.ObservationDeserializer;
 import mil.nga.giat.mage.sdk.jackson.deserializer.StaticFeatureDeserializer;
-import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
 import mil.nga.giat.mage.sdk.utils.DateFormatFactory;
 import mil.nga.giat.mage.sdk.utils.ZipUtility;
 
@@ -70,7 +70,7 @@ public class MageServerGetRequests {
 	public static void getAndSaveObservationIcons(Context context) {
 		HttpEntity entity = null;
 		try {
-			URL serverURL = new URL(PreferenceHelper.getInstance(context).getValue(R.string.serverURLKey));
+			URL serverURL = new URL(PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.serverURLKey), context.getString(R.string.serverURLDefaultValue)));
 
 			String currentEventId = EventHelper.getInstance(context).getCurrentEvent().getRemoteId();
 			if (currentEventId != null) {
@@ -136,7 +136,7 @@ public class MageServerGetRequests {
 		DefaultHttpClient httpclient = HttpClientManager.getInstance(context).getHttpClient();
 		HttpEntity entity = null;
 		try {
-			Uri uri = Uri.parse(PreferenceHelper.getInstance(context).getValue(R.string.serverURLKey)).buildUpon().appendPath("api").appendPath("layers").appendQueryParameter("type", "Feature").build();
+			Uri uri = Uri.parse(PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.serverURLKey), context.getString(R.string.serverURLDefaultValue))).buildUpon().appendPath("api").appendPath("layers").appendQueryParameter("type", "Feature").build();
 
 			HttpGet get = new HttpGet(uri.toString());
 			HttpResponse response = httpclient.execute(get);
@@ -176,8 +176,8 @@ public class MageServerGetRequests {
 		DefaultHttpClient httpclient = HttpClientManager.getInstance(context).getHttpClient();
 		HttpEntity entity = null;
 		try {
-
-			Uri uri = Uri.parse(PreferenceHelper.getInstance(context).getValue(R.string.serverURLKey)).buildUpon().appendPath("api").appendPath("layers").appendQueryParameter("type", "External").build();
+			String currentEventId = EventHelper.getInstance(context).getCurrentEvent().getRemoteId();
+			Uri uri = Uri.parse(PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.serverURLKey), context.getString(R.string.serverURLDefaultValue))).buildUpon().appendPath("api").appendPath("events").appendPath(currentEventId).appendPath("layers").appendQueryParameter("type", "External").build();
 
 			HttpGet get = new HttpGet(uri.toString());
 			HttpResponse response = httpclient.execute(get);
@@ -217,7 +217,7 @@ public class MageServerGetRequests {
 		Collection<StaticFeature> staticFeatures = new ArrayList<StaticFeature>();
 		HttpEntity entity = null;
 		try {
-			URL serverURL = new URL(PreferenceHelper.getInstance(context).getValue(R.string.serverURLKey));
+			URL serverURL = new URL(PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.serverURLKey), context.getString(R.string.serverURLDefaultValue)));
 
 			URL staticFeatureURL = new URL(serverURL, "/api/layers/" + layer.getRemoteId());
 			DefaultHttpClient httpclient = HttpClientManager.getInstance(context).getHttpClient();
@@ -270,7 +270,7 @@ public class MageServerGetRequests {
         String currentEventId = currentEvent.getRemoteId();
 		HttpEntity entity = null;
 		try {
-			URL serverURL = new URL(PreferenceHelper.getInstance(context).getValue(R.string.serverURLKey));
+			URL serverURL = new URL(PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.serverURLKey), context.getString(R.string.serverURLDefaultValue)));
 
             if(currentEventId != null) {
                 ObservationHelper observationHelper = ObservationHelper.getInstance(context);
@@ -327,7 +327,7 @@ public class MageServerGetRequests {
 		Event currentEvent = EventHelper.getInstance(context).getCurrentEvent();
 		String currentEventId = currentEvent.getRemoteId();
 		try {
-			URL serverURL = new URL(PreferenceHelper.getInstance(context).getValue(R.string.serverURLKey));
+			URL serverURL = new URL(PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.serverURLKey), context.getString(R.string.serverURLDefaultValue)));
 			if (currentEventId != null) {
 				URL locationURL = new URL(serverURL, "/api/events/" + currentEventId + "/locations/users");
 
@@ -367,7 +367,7 @@ public class MageServerGetRequests {
         Collection<User> users = new ArrayList<User>();
         HttpEntity entity = null;
         try {
-            URL serverURL = new URL(PreferenceHelper.getInstance(context).getValue(R.string.serverURLKey));
+            URL serverURL = new URL(PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.serverURLKey), context.getString(R.string.serverURLDefaultValue)));
             URL userURL = new URL(serverURL, "/api/users");
 
             DefaultHttpClient httpclient = HttpClientManager.getInstance(context).getHttpClient();
@@ -417,7 +417,7 @@ public class MageServerGetRequests {
 
         HttpEntity entity = null;
         try {
-            URL serverURL = new URL(PreferenceHelper.getInstance(context).getValue(R.string.serverURLKey));
+            URL serverURL = new URL(PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.serverURLKey), context.getString(R.string.serverURLDefaultValue)));
             URL roleURL = new URL(serverURL, "api/roles");
 
             DefaultHttpClient httpclient = HttpClientManager.getInstance(context).getHttpClient();
@@ -468,7 +468,7 @@ public class MageServerGetRequests {
 
         HttpEntity entity = null;
         try {
-            URL serverURL = new URL(PreferenceHelper.getInstance(context).getValue(R.string.serverURLKey));
+            URL serverURL = new URL(PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.serverURLKey), context.getString(R.string.serverURLDefaultValue)));
             URL teamURL = new URL(serverURL, "api/teams");
 
             DefaultHttpClient httpclient = HttpClientManager.getInstance(context).getHttpClient();
@@ -538,13 +538,11 @@ public class MageServerGetRequests {
 
         HttpEntity entity = null;
         try {
-            URL serverURL = new URL(PreferenceHelper.getInstance(context).getValue(R.string.serverURLKey));
+            URL serverURL = new URL(PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.serverURLKey), context.getString(R.string.serverURLDefaultValue)));
             URL eventURL = new URL(serverURL, "api/events");
-			Uri.Builder uriBuilder = Uri.parse(eventURL.toURI().toString()).buildUpon();
-			uriBuilder.appendQueryParameter("populate", "{\"teams\":true}");
 
             DefaultHttpClient httpclient = HttpClientManager.getInstance(context).getHttpClient();
-            HttpGet get = new HttpGet(new URI(uriBuilder.build().toString()));
+            HttpGet get = new HttpGet(eventURL.toURI());
             HttpResponse response = httpclient.execute(get);
 
             if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {

@@ -1,10 +1,10 @@
 package mil.nga.giat.mage.sdk.preferences;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
+import java.lang.reflect.Field;
 import java.net.URL;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
+import java.util.Map;
 import java.util.Set;
 
 import mil.nga.giat.mage.sdk.R;
@@ -32,8 +32,6 @@ import android.util.Log;
 /**
  * Loads the default configuration from the local property files, and also loads
  * the server configuration.
- * 
- * TODO: add setValue methods that provide similar functionality as getValue
  * 
  * @author wiedemannse
  * 
@@ -66,44 +64,48 @@ public class PreferenceHelper {
 	 * properties.
 	 * 
 	 */
-	public synchronized void initialize(Boolean forceReinitialize, Integer... xmlFiles) {
+	public synchronized void initialize(Boolean forceReinitialize, final Class<?>... xmlClasses) {
 		SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(mContext);
 		if (forceReinitialize) {
-			// clear the old ones
 			sharedPreferences.edit().clear().commit();
 		}
 		Set<Integer> resourcesToLoad = new LinkedHashSet<Integer>();
-		resourcesToLoad.add(R.xml.overrides);
-		resourcesToLoad.add(R.xml.mdkprivatepreferences);
-		resourcesToLoad.add(R.xml.mdkpublicpreferences);
-		resourcesToLoad.add(R.xml.locationpreferences);
-		resourcesToLoad.add(R.xml.fetchpreferences);
-		
-		/*final Class<R.xml> c = R.xml.class;
-		final Field[] fields = c.getDeclaredFields();
-		// add any other files you might have added
-		for (int i = 0, max = fields.length; i < max; i++) {
-		    try {
-		        final int resourceId = fields[i].getInt(new R.xml());
-		        resourcesToLoad.add(resourceId);
-		    } catch (Exception e) {
-		        continue;
-		    }
-		}*/
+
+		for(Class c : xmlClasses) {
+			final Field[] fields = c.getDeclaredFields();
+			// add any other files you might have added
+			for (int i = 0, max = fields.length; i < max; i++) {
+				try {
+					final int resourceId = fields[i].getInt(new R.xml());
+					resourcesToLoad.add(resourceId);
+				} catch (Exception e) {
+					continue;
+				}
+			}
+		}
 		
 		// load preferences from mdk xml files first
-		initializeLocal(resourcesToLoad.toArray((new Integer[0])));
+		initializeLocal(resourcesToLoad.toArray((new Integer[resourcesToLoad.size()])));
 
 		// add programmatic preferences
 		Editor editor = sharedPreferences.edit();
 		try {
 			editor.putString(mContext.getString(R.string.buildVersionKey), mContext.getPackageManager().getPackageInfo(mContext.getPackageName(), 0).versionName).commit();
 		} catch (NameNotFoundException nnfe) {
-			nnfe.printStackTrace();
+			Log.e(LOG_NAME , "Problem storing build version.", nnfe);
 		}
+		logKeyValuePairs();
+	}
 
-		// load other xml files
-		initializeLocal(xmlFiles);
+	public void logKeyValuePairs() {
+		SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(mContext);
+		// log all preference values
+		for(Map.Entry<String, ?> e : sharedPreferences.getAll().entrySet()) {
+			String key = e.getKey();
+			Object value = e.getValue();
+			String valueType = (value == null) ? null : value.getClass().getName();
+			Log.d(LOG_NAME, "SharedPreferences contains (key, value, type): (" + String.valueOf(key) + ", " + String.valueOf(value) + ", " + String.valueOf(valueType) + ")");
+		}
 	}
 
 	private synchronized void initializeLocal(Integer... xmlFiles) {
@@ -158,8 +160,23 @@ public class PreferenceHelper {
 						SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(mContext);
 						Editor editor = sharedPreferences.edit();
 						String keyString = sharedPreferenceName + Character.toUpperCase(key.charAt(0)) + ((key.length() > 1) ? key.substring(1) : "");
-						Log.i(LOG_NAME, keyString + " is " + sharedPreferences.getString(keyString, "empty") + ".  Setting it to " + value.toString() + ".");
-						editor.putString(keyString, value.toString()).commit();
+						Log.i(LOG_NAME, keyString + " is " + String.valueOf(sharedPreferences.getAll().get(keyString)) + ".  Setting it to " + String.valueOf(value) + ".");
+
+						try {
+							Integer intValue = Integer.valueOf(value.toString());
+							editor.putInt(keyString, intValue).commit();
+						} catch(Exception e) {
+							if (value.toString().trim().equalsIgnoreCase("true") || value.toString().trim().equalsIgnoreCase("false")) {
+								Boolean boolValue = Boolean.valueOf(value.toString());
+								editor.putBoolean(keyString, boolValue).commit();
+							} else {
+								try {
+									editor.putString(keyString, value.toString()).commit();
+								} catch(Exception e1) {
+									Log.e(LOG_NAME, "Can not determine what type of value " + value.toString() + " is.  Skipping this key, value pair.");
+								}
+							}
+						}
 					}
 				} catch (JSONException je) {
 					je.printStackTrace();
@@ -200,69 +217,5 @@ public class PreferenceHelper {
 			}
             return exception;
 		}
-	}
-
-	public final String getValue(int key) {
-		return getValue(key, String.class, null);
-	}
-
-	/**
-	 * Use this method to get values of correct type form shared preferences.
-	 * Does not work with collections yet!
-	 * 
-	 * @param <T>
-	 * @param key
-	 * @param valueType
-	 * @param defaultValue
-	 * @return
-	 */
-	public final <T extends Object> T getValue(int key, Class<T> valueType, int defaultValue) {
-		final SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(mContext);
-		String defaultValueString = sharedPreferences.getString(mContext.getString(defaultValue), mContext.getString(defaultValue));
-		Object defaultReturnValue = null;
-		if (valueType.equals(String.class)) {
-			defaultReturnValue = defaultValueString;
-		} else {
-			try {
-				Method valueOfMethod = valueType.getMethod("valueOf", String.class);
-				defaultReturnValue = valueOfMethod.invoke(valueType, defaultValueString);
-			} catch (NoSuchMethodException nsme) {
-				nsme.printStackTrace();
-			} catch (IllegalAccessException iae) {
-				iae.printStackTrace();
-			} catch (IllegalArgumentException iae) {
-				iae.printStackTrace();
-			} catch (InvocationTargetException ite) {
-				ite.printStackTrace();
-			}
-		}
-
-		return getValue(key, valueType, (T) defaultReturnValue);
-	}
-
-	public final <T extends Object> T getValue(int key, Class<T> valueType, T defaultValue) {
-		final SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(mContext);
-		String stringValue = sharedPreferences.getString(mContext.getString(key), null);
-		if (stringValue != null) {
-			if (valueType.equals(String.class)) {
-				return (T) stringValue;
-			} else {
-				try {
-					Method valueOfMethod = valueType.getMethod("valueOf", String.class);
-					Object returnValue = valueOfMethod.invoke(valueType, stringValue);
-					return (T) returnValue;
-				} catch (NoSuchMethodException nsme) {
-					nsme.printStackTrace();
-				} catch (IllegalAccessException iae) {
-					iae.printStackTrace();
-				} catch (IllegalArgumentException iae) {
-					iae.printStackTrace();
-				} catch (InvocationTargetException ite) {
-					ite.printStackTrace();
-				}
-			}
-		}
-
-		return defaultValue;
 	}
 }

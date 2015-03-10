@@ -21,7 +21,6 @@ import mil.nga.giat.mage.sdk.datastore.location.Location;
 import mil.nga.giat.mage.sdk.datastore.location.LocationGeometry;
 import mil.nga.giat.mage.sdk.datastore.location.LocationProperty;
 import mil.nga.giat.mage.sdk.datastore.user.Event;
-import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.utils.DateFormatFactory;
 
 public class LocationDeserializer extends Deserializer {

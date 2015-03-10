@@ -4,8 +4,8 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 
 import mil.nga.giat.mage.sdk.R;
-import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
 import android.content.Context;
+import android.preference.PreferenceManager;
 
 /**
  * Deals with login tasks and their configuration.
@@ -33,7 +33,7 @@ public class LoginTaskFactory {
 	}
 	
 	public boolean isLocalLogin() {
-		String className = PreferenceHelper.getInstance(mContext).getValue(R.string.loginTaskKey, String.class, R.string.loginTaskDefaultValue);
+		String className = PreferenceManager.getDefaultSharedPreferences(mContext).getString(mContext.getString(R.string.loginTaskKey), mContext.getString(R.string.loginTaskDefaultValue));
 		return className.equals(LocalAuthLoginTask.class.getCanonicalName());
 	}
 
@@ -45,7 +45,7 @@ public class LoginTaskFactory {
 	 * @return
 	 */
 	public AbstractAccountTask getLoginTask(AccountDelegate delegate, Context context) {
-		String className = PreferenceHelper.getInstance(mContext).getValue(R.string.loginTaskKey, String.class, R.string.loginTaskDefaultValue);
+		String className = PreferenceManager.getDefaultSharedPreferences(mContext).getString(mContext.getString(R.string.loginTaskKey), mContext.getString(R.string.loginTaskDefaultValue));
 		
 		try {
 			Class<?> c = Class.forName(className);

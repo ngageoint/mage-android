@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- This data is not fronted by a screen.  It is here to populate shared preferences by default -->
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" >
+
+    <!-- What type of auth to use FormAuthLoginTask or LocalAuthLoginTask? -->
+    <EditTextPreference
+        android:defaultValue="@string/loginTaskDefaultValue"
+        android:key="@string/loginTaskKey" />
+
+    <!-- How often to push observations? -->
+    <mil.nga.giat.mage.sdk.preferences.IntegerEditTextPreference
+        android:defaultValue="@integer/observationPushFrequencyDefaultValue"
+        android:key="@string/observationPushFrequencyKey" />
+
+    <!-- How often to push locations? -->
+    <mil.nga.giat.mage.sdk.preferences.IntegerEditTextPreference
+        android:defaultValue="@integer/locationPushFrequencyDefaultValue"
+        android:key="@string/locationPushFrequencyKey" />
+    
+    <!-- Option for some deployments.  Delete all data when logging out. -->
+    <CheckBoxPreference
+        android:defaultValue="@bool/deleteAllDataOnLogoutDefaultValue"
+        android:key="@string/deleteAllDataOnLogoutKey" />
+    
+</PreferenceScreen>

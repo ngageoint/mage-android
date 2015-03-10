@@ -16,7 +16,6 @@ import mil.nga.giat.mage.sdk.event.IEventEventListener;
 import mil.nga.giat.mage.sdk.event.IScreenEventListener;
 import mil.nga.giat.mage.sdk.http.get.MageServerGetRequests;
 import mil.nga.giat.mage.sdk.login.LoginTaskFactory;
-import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
 import mil.nga.giat.mage.sdk.screen.ScreenChangeReceiver;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -39,7 +38,7 @@ public class ObservationFetchIntentService extends ConnectivityAwareIntentServic
 	protected final AtomicBoolean needToFetchIcons = new AtomicBoolean(true);
 
 	protected final synchronized long getObservationFetchFrequency() {
-		return PreferenceHelper.getInstance(getApplicationContext()).getValue(R.string.observationFetchFrequencyKey, Long.class, R.string.observationFetchFrequencyDefaultValue);
+		return PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).getInt(getString(R.string.observationFetchFrequencyKey), getResources().getInteger(R.integer.observationFetchFrequencyDefaultValue));
 	}
 
 	@Override
@@ -51,12 +50,12 @@ public class ObservationFetchIntentService extends ConnectivityAwareIntentServic
 		UserHelper userHelper = UserHelper.getInstance(getApplicationContext());
 		userHelper.addListener(this);
 		SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-		
-		Boolean isDataFetchEnabled = sharedPreferences.getBoolean(getApplicationContext().getString(R.string.dataFetchEnabledKey), true);
+
+		Boolean isDataFetchEnabled = sharedPreferences.getBoolean(getString(R.string.dataFetchEnabledKey), getResources().getBoolean(R.bool.dataFetchEnabledDefaultValue));
 		needToFetchIcons.set(true);
 
 		while (!isCanceled) {
-			isDataFetchEnabled = sharedPreferences.getBoolean(getApplicationContext().getString(R.string.dataFetchEnabledKey), true);
+			isDataFetchEnabled = sharedPreferences.getBoolean(getString(R.string.dataFetchEnabledKey), getResources().getBoolean(R.bool.dataFetchEnabledDefaultValue));
 
 			if (isConnected && isDataFetchEnabled && !LoginTaskFactory.getInstance(getApplicationContext()).isLocalLogin()) {
 

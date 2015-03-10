@@ -10,7 +10,6 @@ import java.security.SecureRandom;
 
 import mil.nga.giat.mage.sdk.R;
 import mil.nga.giat.mage.sdk.datastore.DaoStore;
-import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
 
 import org.apache.sanselan.Sanselan;
@@ -22,9 +21,11 @@ import org.apache.sanselan.formats.tiff.constants.TiffConstants;
 import org.apache.sanselan.formats.tiff.write.TiffOutputSet;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.CompressFormat;
 import android.graphics.BitmapFactory;
+import android.preference.PreferenceManager;
 import android.util.Log;
 
 import com.google.common.io.Files;
@@ -53,8 +54,8 @@ public class AttachmentHelper {
 			Log.d(LOG_NAME, "Attachment is already staged.  Nothing to do.");
 			return;
 		}
-
-		Integer outImageSize = Integer.valueOf(PreferenceHelper.getInstance(context).getValue(R.string.imageUploadSizeKey));
+		SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
+		Integer outImageSize = sharedPreferences.getInt(context.getString(R.string.imageUploadSizeKey), context.getResources().getInteger(R.integer.imageUploadSizeDefaultValue));
 
 		if (MediaUtility.isImage(stagedFile.getAbsolutePath())) {
 

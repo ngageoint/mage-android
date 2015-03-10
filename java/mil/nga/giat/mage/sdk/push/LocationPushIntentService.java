@@ -24,8 +24,8 @@ import mil.nga.giat.mage.sdk.exceptions.LocationException;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
 import mil.nga.giat.mage.sdk.http.post.MageServerPostRequests;
 import mil.nga.giat.mage.sdk.login.LoginTaskFactory;
-import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
 import android.content.Intent;
+import android.preference.PreferenceManager;
 import android.util.Log;
 
 public class LocationPushIntentService extends ConnectivityAwareIntentService {
@@ -40,8 +40,8 @@ public class LocationPushIntentService extends ConnectivityAwareIntentService {
 		super(LOG_NAME);
 	}
 
-	protected final long getLocationPushFrequency() {
-		return PreferenceHelper.getInstance(getApplicationContext()).getValue(R.string.locationPushFrequencyKey, Long.class, R.string.locationPushFrequencyDefaultValue);
+	protected final int getLocationPushFrequency() {
+		return PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).getInt(getString(R.string.locationPushFrequencyKey), getResources().getInteger(R.integer.locationPushFrequencyDefaultValue));
 	}
 
 	@Override

@@ -1,13 +1,10 @@
 package mil.nga.giat.mage.sdk.gson.serializer;
 
-import android.content.Context;
-
 import java.io.Serializable;
 import java.lang.reflect.Type;
 
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationProperty;
-import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;

@@ -61,7 +61,7 @@ public class RoleDeserializer implements JsonDeserializer<Role> {
 					Permission permission = Permission.valueOf(jsonPermission);
 					permissions.add(permission);
 				} catch (IllegalArgumentException iae) {
-					Log.e(LOG_NAME, "Could not find matching permission for user.");
+					Log.e(LOG_NAME, "Could not find matching permission, " + jsonPermission + ", for user.");
 				}
 			}
 		}

@@ -7,12 +7,12 @@ import java.io.InputStream;
 import mil.nga.giat.mage.sdk.R;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
-import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
+import android.preference.PreferenceManager;
 import android.util.Log;
 
 public class UserIconFetchTask extends AsyncTask<User, Void, Void> {
@@ -25,7 +25,7 @@ public class UserIconFetchTask extends AsyncTask<User, Void, Void> {
     }
 
     protected Void doInBackground(User... users) {
-    	String token = PreferenceHelper.getInstance(context).getValue(R.string.tokenKey);
+    	String token = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.tokenKey), null);
     	for (User user : users) {
     		Log.d(LOG_NAME, "Fetching icon at url: " + user.getIconUrl());
 	        String urldisplay = user.getIconUrl() + "?access_token=" + token;

@@ -1,42 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string-array name="userFetchFrequencies">
-        <item>15 seconds</item>
-        <item>30 seconds</item>
-        <item>1 minute</item>
-        <item>2 minutes</item>
-        <item>5 minutes</item>
-        <item>10 minutes</item>
-        <item>30 minutes</item>
-    </string-array>
-    <string-array name="userFetchFrequencyValues">
-        <item>15000</item>
-        <item>30000</item>
-        <item>60000</item>
-        <item>120000</item>
-        <item>300000</item>
-        <item>600000</item>
-        <item>1800000</item>
-    </string-array>
-    <string-array name="observationFetchFrequencies">
-        <item>15 seconds</item>
-        <item>30 seconds</item>
-        <item>1 minute</item>
-        <item>2 minutes</item>
-        <item>5 minutes</item>
-        <item>10 minutes</item>
-        <item>30 minutes</item>
-    </string-array>
-    <string-array name="observationFetchFrequencyValues">
-        <item>15000</item>
-        <item>30000</item>
-        <item>60000</item>
-        <item>120000</item>
-        <item>300000</item>
-        <item>600000</item>
-        <item>1800000</item>
-    </string-array>
+    <!-- *************** set in locationpreferences.xml ************** -->
+
     <string-array name="userReportingFrequencies">
         <item>15 seconds</item>
         <item>30 seconds</item>
@@ -47,7 +13,7 @@
         <item>30 minutes</item>
         <item>Never</item>
     </string-array>
-    <string-array name="userReportingFrequencyValues">
+    <integer-array name="userReportingFrequencyValues">
         <item>15000</item>
         <item>30000</item>
         <item>60000</item>
@@ -56,20 +22,63 @@
         <item>600000</item>
         <item>1800000</item>
         <item>0</item>
-    </string-array>
+    </integer-array>
     <string-array name="gpsSensitivities">
         <item>3 Kilometers</item>
         <item>1 Kilometer</item>
         <item>100 Meters</item>
         <item>10 Meters</item>
-        <item>1 Meters</item>
+        <item>1 Meter</item>
     </string-array>
-    <string-array name="gpsSensitivityValues">
+    <integer-array name="gpsSensitivityValues">
         <item>3000</item>
         <item>1000</item>
         <item>100</item>
         <item>10</item>
         <item>1</item>
+    </integer-array>
+
+    <!-- ************************************************************* -->
+
+    <!-- **************** set in fetchpreferences.xml **************** -->
+
+    <string-array name="userFetchFrequencies">
+        <item>15 seconds</item>
+        <item>30 seconds</item>
+        <item>1 minute</item>
+        <item>2 minutes</item>
+        <item>5 minutes</item>
+        <item>10 minutes</item>
+        <item>30 minutes</item>
     </string-array>
+    <integer-array name="userFetchFrequencyValues">
+        <item>15000</item>
+        <item>30000</item>
+        <item>60000</item>
+        <item>120000</item>
+        <item>300000</item>
+        <item>600000</item>
+        <item>1800000</item>
+    </integer-array>
+    <string-array name="observationFetchFrequencies">
+        <item>15 seconds</item>
+        <item>30 seconds</item>
+        <item>1 minute</item>
+        <item>2 minutes</item>
+        <item>5 minutes</item>
+        <item>10 minutes</item>
+        <item>30 minutes</item>
+    </string-array>
+    <integer-array name="observationFetchFrequencyValues">
+        <item>15000</item>
+        <item>30000</item>
+        <item>60000</item>
+        <item>120000</item>
+        <item>300000</item>
+        <item>600000</item>
+        <item>1800000</item>
+    </integer-array>
+
+    <!-- ************************************************************* -->
 
 </resources>

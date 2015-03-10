@@ -13,8 +13,8 @@ import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
 import mil.nga.giat.mage.sdk.event.IObservationEventListener;
 import mil.nga.giat.mage.sdk.http.post.MageServerPostRequests;
 import mil.nga.giat.mage.sdk.login.LoginTaskFactory;
-import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
 import android.content.Intent;
+import android.preference.PreferenceManager;
 import android.util.Log;
 
 public class ObservationPushIntentService extends ConnectivityAwareIntentService implements IObservationEventListener {
@@ -31,7 +31,7 @@ public class ObservationPushIntentService extends ConnectivityAwareIntentService
 	}
 
 	protected final long getObservationPushFrequency() {
-		return PreferenceHelper.getInstance(getApplicationContext()).getValue(R.string.observationPushFrequencyKey, Long.class, R.string.observationPushFrequencyDefaultValue);
+		return PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).getInt(getString(R.string.observationPushFrequencyKey), getResources().getInteger(R.integer.observationPushFrequencyDefaultValue));
 	}
 
 	@Override

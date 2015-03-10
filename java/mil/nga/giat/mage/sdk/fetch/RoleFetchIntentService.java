@@ -8,7 +8,6 @@ import mil.nga.giat.mage.sdk.datastore.user.Role;
 import mil.nga.giat.mage.sdk.datastore.user.RoleHelper;
 import mil.nga.giat.mage.sdk.gson.deserializer.RoleDeserializer;
 import mil.nga.giat.mage.sdk.http.client.HttpClientManager;
-import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -20,6 +19,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import android.content.Intent;
+import android.preference.PreferenceManager;
 import android.util.Log;
 
 import com.google.gson.Gson;
@@ -48,7 +48,7 @@ public class RoleFetchIntentService extends ConnectivityAwareIntentService {
 			DefaultHttpClient httpclient = HttpClientManager.getInstance(getApplicationContext()).getHttpClient();
 			HttpEntity entity = null;
 			try {
-				URL serverURL = new URL(PreferenceHelper.getInstance(getApplicationContext()).getValue(R.string.serverURLKey));
+				URL serverURL = new URL(PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).getString(getString(R.string.serverURLKey), getString(R.string.serverURLDefaultValue)));
 
 				URL roleURL = new URL(serverURL, "api/roles");
 
