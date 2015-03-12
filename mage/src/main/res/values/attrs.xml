@@ -11,4 +11,9 @@
 	        <enum name="location" value="5"/>
 		</attr>
 	</declare-styleable>
+    <declare-styleable name="OpensourceItemFragment">
+        <attr name="name" format="string"/>
+        <attr name="copyright" format="string"/>
+        <attr name="license" format="string"/>
+    </declare-styleable>
 </resources>

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources xmlns:android="http://schemas.android.com/apk/res/android">
+<resources>
     <color name="accuracy_circle_fill">#33007AFF</color>
     <color name="accuracy_circle_stroke">#FF007AFF</color>
 </resources>

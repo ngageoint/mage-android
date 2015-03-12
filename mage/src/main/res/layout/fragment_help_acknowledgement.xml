@@ -1,157 +1,110 @@
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical"
-    tools:context=".MainActivity$DummySectionFragment" >
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+            xmlns:mage="http://schemas.android.com/apk/res-auto"
+            xmlns:tools="http://schemas.android.com/tools"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingLeft="10dp"
+            android:paddingRight="10dp"
+            tools:context=".MainActivity$DummySectionFragment">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:paddingLeft="10dp"
-        android:text="Software"
-        android:textColor="@android:color/black"
-        android:textSize="28sp" />
-
-    <View
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:background="@android:color/black" />
+        android:layout_height="match_parent"
+        android:orientation="vertical">
 
-    <TableLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:paddingBottom="20dp"
-        android:paddingLeft="10dp"
-        android:paddingRight="10dp"
-        android:stretchColumns="*" >
+        <mil.nga.giat.mage.help.OpensourceItemFragment
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            mage:license="This product includes software licensed under the Creative Commons BY 2.5 License http://creativecommons.org/licenses/by/2.5/"
+            mage:name="Android Action Bar Icons"/>
 
-        <TableRow
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:padding="5dp" >
+        <mil.nga.giat.mage.help.OpensourceItemFragment
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            mage:license="This product includes software licensed under the MIT License http://opensource.org/licenses/mit-license.php"
+            mage:name="Android Sanselan"/>
 
-            <TextView
-                android:text="Android Sanselan"
-                android:textColor="@android:color/black"
-                android:textSize="18sp" />
+        <mil.nga.giat.mage.help.OpensourceItemFragment
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            mage:copyright="Copyright © 2005-2015 The Apache Software Foundation"
+            mage:license="This product includes software licensed under the Apache License version 2.0 http://www.apache.org/licenses/LICENSE-2.0"
+            mage:name="Apache HttpComponents"/>
 
-            <TextView
-                android:text="Google Play Services"
-                android:textColor="@android:color/black"
-                android:textSize="18sp" />
-        </TableRow>
+        <mil.nga.giat.mage.help.OpensourceItemFragment
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            mage:copyright="Copyright © 2005-2015 The Apache Software Foundation"
+            mage:license="This product includes software licensed under the Apache License version 2.0 http://www.apache.org/licenses/LICENSE-2.0"
+            mage:name="Apache Commons"/>
 
-        <TableRow
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:padding="5dp" >
+        <mil.nga.giat.mage.help.OpensourceItemFragment
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            mage:copyright="Dave Gandy - http://fontawesome.io"
+            mage:license="This product includes software licensed under the SIL OFL 1.1 http://scripts.sil.org/OFL the MIT License http://opensource.org/licenses/mit-license.php and the Creative Commons BY 3.0 License http://creativecommons.org/licenses/by/3.0/"
+            mage:name="Font Awesome"/>
 
-            <TextView
-                android:text="Android SDK"
-                android:textColor="@android:color/black"
-                android:textSize="18sp" />
+        <mil.nga.giat.mage.help.OpensourceItemFragment
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            mage:copyright="Copyright 2011 Bricolsoft Consulting"
+            mage:license="This product includes software licensed under the Apache License version 2.0 http://www.apache.org/licenses/LICENSE-2.0"
+            mage:name="Geocoder Plus"/>
 
-            <TextView
-                android:text="Http Mime"
-                android:textColor="@android:color/black"
-                android:textSize="18sp" />
-        </TableRow>
+        <mil.nga.giat.mage.help.OpensourceItemFragment
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            mage:copyright="Bump Technologies"
+            mage:license="This product includes software licenesed under the BSD 2-Clause License http://opensource.org/licenses/BSD-2-Clause"
+            mage:name="Glide"/>
 
-        <TableRow
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:padding="5dp" >
+        <mil.nga.giat.mage.help.OpensourceItemFragment
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            mage:copyright="Google"
+            mage:license="This product includes software licensed under the Apache License version 2.0 http://www.apache.org/licenses/LICENSE-2.0"
+            mage:name="Google Gson"/>
 
-            <TextView
-                android:text="Apache Commons"
-                android:textColor="@android:color/black"
-                android:textSize="18sp" />
+        <mil.nga.giat.mage.help.OpensourceItemFragment
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            mage:copyright="Google"
+            mage:license="This product includes software licensed under the Apache License version 2.0 http://www.apache.org/licenses/LICENSE-2.0"
+            mage:name="Google Guava"/>
 
-            <TextView
-                android:text="Jts"
-                android:textColor="@android:color/black"
-                android:textSize="18sp" />
-        </TableRow>
+        <mil.nga.giat.mage.help.OpensourceItemFragment
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            mage:copyright="Google Inc."
+            mage:license="This product includes software licensed under the Apache License version 2.0 http://www.apache.org/licenses/LICENSE-2.0"
+            mage:name="Google Play Services"/>
 
-        <TableRow
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:padding="5dp" >
+        <mil.nga.giat.mage.help.OpensourceItemFragment
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            mage:license="This product includes software licensed under the Apache License version 2.0 http://www.apache.org/licenses/LICENSE-2.0"
+            mage:name="Jackson JSON Processor"/>
 
-            <TextView
-                android:text="Glide"
-                android:textColor="@android:color/black"
-                android:textSize="18sp" />
+        <mil.nga.giat.mage.help.OpensourceItemFragment
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            mage:copyright="Copyright © 2014 Vivid Solutions Inc."
+            mage:license="This product includes software licenesed under the GNU Lesser General Public License v3 https://www.gnu.org/licenses/lgpl.html"
+            mage:name="JTS Topolgy Suite"/>
 
-            <TextView
-                android:text="MAGE SDK"
-                android:textColor="@android:color/black"
-                android:textSize="18sp" />
-        </TableRow>
+        <mil.nga.giat.mage.help.OpensourceItemFragment
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            mage:copyright="http://ormlite.com/"
+            mage:license="This product includes software licensed under the ISC License http://opensource.org/licenses/ISC"
+            mage:name="ORMLite"/>
 
-        <TableRow
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:padding="5dp" >
-
-            <TextView
-                android:text="Google Gson"
-                android:textColor="@android:color/black"
-                android:textSize="18sp" />
-
-            <TextView
-                android:text="Orm-lite"
-                android:textColor="@android:color/black"
-                android:textSize="18sp" />
-        </TableRow>
-
-        <TableRow
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:padding="5dp" >
-
-            <TextView
-                android:text="Google Guava"
-                android:textColor="@android:color/black"
-                android:textSize="18sp" />
-
-            <TextView
-                android:text="Bricolsoft GeocoderPlus"
-                android:textColor="@android:color/black"
-                android:textSize="18sp" />
-        </TableRow>
-    </TableLayout>
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:paddingLeft="10dp"
-        android:text="Iconography"
-        android:textColor="@android:color/black"
-        android:textSize="28sp" />
-
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:background="@android:color/black" />
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:paddingLeft="15dp"
-        android:paddingTop="5dp"
-        android:text="Androton Action Bar Icons v0.1 by Sven Kapuđija"
-        android:textColor="@android:color/black"
-        android:textSize="18sp" />
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:paddingLeft="15dp"
-        android:paddingTop="5dp"
-        android:text="Font Awesome by Dave Gandy"
-        android:textColor="@android:color/black"
-        android:textSize="18sp" />
-
-</LinearLayout>
+        <mil.nga.giat.mage.help.OpensourceItemFragment
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            mage:copyright="© 2015 OCPsoft All Rights Reserved"
+            mage:license="This product includes software licensed under the Apache License version 2.0 http://www.apache.org/licenses/LICENSE-2.0"
+            mage:name="Pretty Time"/>
+    </LinearLayout>
+</ScrollView>
