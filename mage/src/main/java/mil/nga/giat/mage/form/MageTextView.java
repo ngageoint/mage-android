@@ -20,8 +20,8 @@ public class MageTextView extends TextView implements MageControl {
 
 	private static final String LOG_NAME = MageTextView.class.getName();
 
-    public final DateFormat iso8601Format = DateFormatFactory.ISO8601();
-    public final DateFormat dateFormat = DateFormatFactory.format("yyyy-MM-dd HH:mm zz", Locale.getDefault(), TimeZone.getTimeZone("Zulu"));
+    private final DateFormat iso8601Format = DateFormatFactory.ISO8601();
+	private final DateFormat dateFormat = DateFormatFactory.format("yyyy-MM-dd HH:mm zz", Locale.getDefault());
 
 	private String propertyKey;
 	private MagePropertyType propertyType;
@@ -66,7 +66,6 @@ public class MageTextView extends TextView implements MageControl {
 			value = getText().toString();
 			break;
 		case USER:
-
 			break;
 		case DATE:
 			value = iso8601Format.format(propertyDate);
@@ -74,7 +73,6 @@ public class MageTextView extends TextView implements MageControl {
 		case LOCATION:
 			break;
 		case MULTICHOICE:
-
 			break;
 		default:
 			break;
