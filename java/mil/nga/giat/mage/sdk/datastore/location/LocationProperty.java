@@ -8,18 +8,11 @@ import com.j256.ormlite.field.DataType;
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
 
+import mil.nga.giat.mage.sdk.datastore.Property;
+
 @DatabaseTable(tableName = "location_properties")
-public class LocationProperty {
+public class LocationProperty extends Property {
 
-	@DatabaseField(generatedId = true)
-	private Long _id;
-
-	@DatabaseField(canBeNull = false, uniqueCombo = true)
-	private String key;
-
-	@DatabaseField(canBeNull = false, dataType=DataType.SERIALIZABLE)
-	private Serializable value;
-	
 	@DatabaseField(foreign = true, uniqueCombo = true)
 	private Location location;
 
@@ -28,32 +21,7 @@ public class LocationProperty {
 	}
 
 	public LocationProperty(String pKey, Serializable pValue) {
-		this.key = pKey;
-		this.value = pValue;
-	}
-
-	public Long getId() {
-		return _id;
-	}
-
-	public void setId(Long _id) {
-		this._id = _id;
-	}
-
-	public String getKey() {
-		return key;
-	}
-
-	public void setKey(String key) {
-		this.key = key;
-	}
-
-	public Serializable getValue() {
-		return value;
-	}
-
-	public void setValue(Serializable value) {
-		this.value = value;
+		super(pKey, pValue);
 	}
 
 	public Location getLocation() {
@@ -62,11 +30,6 @@ public class LocationProperty {
 
 	public void setLocation(Location location) {
 		this.location = location;
-	}
-
-	@Override
-	public String toString() {
-		return ToStringBuilder.reflectionToString(this);
 	}
 
 }

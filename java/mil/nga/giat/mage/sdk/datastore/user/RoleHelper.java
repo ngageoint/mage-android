@@ -17,7 +17,7 @@ import com.j256.ormlite.stmt.DeleteBuilder;
  * The details of ORM DAOs and Lazy Loading should not be exposed past this
  * class.
  * 
- * @author wiedemannse
+ * @author wiedemanns
  * 
  */
 public class RoleHelper extends DaoHelper<Role> {
@@ -77,13 +77,14 @@ public class RoleHelper extends DaoHelper<Role> {
 		return createdRole;
 	}
 
-    public void update(Role pRole) throws RoleException {
+    public Role update(Role pRole) throws RoleException {
         try {
             roleDao.update(pRole);
         } catch (SQLException sqle) {
             Log.e(LOG_NAME, "There was a problem creating role: " + pRole);
             throw new RoleException("There was a problem creating role: " + pRole, sqle);
         }
+		return pRole;
     }
 
     public Role createOrUpdate(Role role) {

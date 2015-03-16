@@ -36,7 +36,6 @@ public class ObservationHelper extends DaoHelper<Observation> implements IEventD
 	private static final String LOG_NAME = ObservationHelper.class.getName();
 
 	private final Dao<Observation, Long> observationDao;
-	private final Dao<ObservationGeometry, Long> observationGeometryDao;
 	private final Dao<ObservationProperty, Long> observationPropertyDao;
 	private final Dao<Attachment, Long> attachmentDao;
 
@@ -72,7 +71,6 @@ public class ObservationHelper extends DaoHelper<Observation> implements IEventD
 		try {
 			// Set up DAOs
 			observationDao = daoStore.getObservationDao();
-			observationGeometryDao = daoStore.getObservationGeometryDao();
 			observationPropertyDao = daoStore.getObservationPropertyDao();
 			attachmentDao = daoStore.getAttachmentDao();
 		} catch (SQLException sqle) {
@@ -90,10 +88,6 @@ public class ObservationHelper extends DaoHelper<Observation> implements IEventD
 
 		// Now we try and create the Observation structure.
 		try {
-
-			// create Observation geometry.
-			observationGeometryDao.create(observation.getObservationGeometry());
-
 			// set last Modified
 			if (observation.getLastModified() == null) {
 				observation.setLastModified(new Date());
@@ -164,21 +158,18 @@ public class ObservationHelper extends DaoHelper<Observation> implements IEventD
 	 * @param observation
 	 * @throws ObservationException
 	 */
+	@Override
 	public Observation update(Observation observation) throws ObservationException {
 		// set all the ids as needed
 	    Observation pOldObservation = read(observation.getId());
 	    
 		observation.setId(pOldObservation.getId());
 
-		if (observation.getObservationGeometry() != null && pOldObservation.getObservationGeometry() != null) {
-			observation.getObservationGeometry().setPk_id(pOldObservation.getObservationGeometry().getPk_id());
-		}
-
 		// FIXME : make this run faster?
 		for (ObservationProperty op : observation.getProperties()) {
 			for (ObservationProperty oop : pOldObservation.getProperties()) {
 				if (op.getKey().equalsIgnoreCase(oop.getKey())) {
-					op.setPk_id(oop.getPk_id());
+					op.setId(oop.getId());
 					break;
 				}
 			}
@@ -196,8 +187,6 @@ public class ObservationHelper extends DaoHelper<Observation> implements IEventD
 
 		// do the update
 		try {
-			observationGeometryDao.update(observation.getObservationGeometry());
-			
 			// if the observation is dirty, set the last_modified date!
 			if(observation.isDirty()) {
 				observation.setLastModified(new Date());
@@ -344,14 +333,13 @@ public class ObservationHelper extends DaoHelper<Observation> implements IEventD
 	 */
 	public void delete(Long pPrimaryKey) throws ObservationException {
 		try {
-			// read the full Observation in
 			Observation observation = observationDao.queryForId(pPrimaryKey);
 
 			// delete Observation properties.
 			Collection<ObservationProperty> properties = observation.getProperties();
 			if (properties != null) {
 				for (ObservationProperty property : properties) {
-					observationPropertyDao.deleteById(property.getPk_id());
+					observationPropertyDao.deleteById(property.getId());
 				}
 			}
 
@@ -362,9 +350,6 @@ public class ObservationHelper extends DaoHelper<Observation> implements IEventD
 					attachmentDao.deleteById(attachment.getId());
 				}
 			}
-
-			// delete Geometry (but not corresponding GeometryType).
-			observationGeometryDao.deleteById(observation.getObservationGeometry().getPk_id());
 
 			// finally, delete the Observation.
 			observationDao.deleteById(pPrimaryKey);

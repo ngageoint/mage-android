@@ -33,7 +33,7 @@ import android.util.Log;
  * Loads the default configuration from the local property files, and also loads
  * the server configuration.
  * 
- * @author wiedemannse
+ * @author wiedemanns
  * 
  */
 public class PreferenceHelper {

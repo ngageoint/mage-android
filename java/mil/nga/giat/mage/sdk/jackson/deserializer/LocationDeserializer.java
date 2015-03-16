@@ -18,7 +18,6 @@ import java.util.List;
 import java.util.Map;
 
 import mil.nga.giat.mage.sdk.datastore.location.Location;
-import mil.nga.giat.mage.sdk.datastore.location.LocationGeometry;
 import mil.nga.giat.mage.sdk.datastore.location.LocationProperty;
 import mil.nga.giat.mage.sdk.datastore.user.Event;
 import mil.nga.giat.mage.sdk.utils.DateFormatFactory;
@@ -110,7 +109,7 @@ public class LocationDeserializer extends Deserializer {
 			} else if ("type".equals(name)) {
 				location.setType(parser.getText());
 			} else if ("geometry".equals(name)) {
-				location.setLocationGeometry(new LocationGeometry(geometryDeserializer.parseGeometry(parser)));
+				location.setGeometry(geometryDeserializer.parseGeometry(parser));
 			} else if ("properties".equals(name)) {
 				properties = parseProperties(parser, location);
 			} else if ("userId".equals(name)) {

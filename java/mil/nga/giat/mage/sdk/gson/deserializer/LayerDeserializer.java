@@ -3,6 +3,7 @@ package mil.nga.giat.mage.sdk.gson.deserializer;
 import java.lang.reflect.Type;
 
 import mil.nga.giat.mage.sdk.datastore.layer.Layer;
+import mil.nga.giat.mage.sdk.datastore.user.Event;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -15,20 +16,26 @@ import com.google.gson.JsonParseException;
 /**
  * JSON to {@link Layer}
  * 
- * @author wiedemannse
+ * @author wiedemanns
  * 
  */
 public class LayerDeserializer implements JsonDeserializer<Layer> {
-	
+
+	private Event event = null;
+
+	public LayerDeserializer(Event event) {
+		this.event = event;
+	}
+
 	/**
 	 * Convenience method for returning a Gson object with a registered GSon
 	 * TypeAdaptor i.e. custom deserializer.
 	 * 
 	 * @return A Gson object that can be used to convert Json into a {@link Layer}.
 	 */
-	public static Gson getGsonBuilder() {
+	public static Gson getGsonBuilder(Event event) {
 		GsonBuilder gsonBuilder = new GsonBuilder();
-		gsonBuilder.registerTypeAdapter(Layer.class, new LayerDeserializer());
+		gsonBuilder.registerTypeAdapter(Layer.class, new LayerDeserializer(event));
 		return gsonBuilder.create();
 	}
 
@@ -39,13 +46,8 @@ public class LayerDeserializer implements JsonDeserializer<Layer> {
 		String remoteId = feature.get("id").getAsString();
 		String type = feature.get("type").getAsString();
 		String name = feature.get("name").getAsString();
-		String formId = null;
-		JsonElement formIdJson = feature.get("formId");
-		if(formIdJson != null) {
-			formId = formIdJson.getAsString();
-		}
 
-		Layer layer = new Layer(remoteId, type, name, formId);
+		Layer layer = new Layer(remoteId, type, name, event);
 		return layer;
 	}
 }

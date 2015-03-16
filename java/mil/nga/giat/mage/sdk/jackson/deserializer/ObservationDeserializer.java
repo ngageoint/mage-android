@@ -18,10 +18,9 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
-import mil.nga.giat.mage.sdk.datastore.common.State;
+import mil.nga.giat.mage.sdk.datastore.observation.State;
 import mil.nga.giat.mage.sdk.datastore.observation.Attachment;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
-import mil.nga.giat.mage.sdk.datastore.observation.ObservationGeometry;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationProperty;
 import mil.nga.giat.mage.sdk.datastore.user.Event;
 import mil.nga.giat.mage.sdk.utils.DateFormatFactory;
@@ -102,8 +101,7 @@ public class ObservationDeserializer extends Deserializer {
 				observation.setState(parseState(parser));
 			} else if ("geometry".equals(name)) {
 				parser.nextToken();
-				Geometry g = geometryDeserializer.parseGeometry(parser);
-				observation.setObservationGeometry(new ObservationGeometry(g));
+				observation.setGeometry(geometryDeserializer.parseGeometry(parser));
 			} else if ("properties".equals(name)) {
 				parser.nextToken();
 				observation.setProperties(parseProperties(parser));

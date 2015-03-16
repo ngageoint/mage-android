@@ -31,7 +31,7 @@ import com.j256.ormlite.stmt.Where;
  * model. The details of ORM DAOs and Lazy Loading should not be exposed past
  * this class.
  * 
- * @author wiedemannse
+ * @author wiedemanns
  * 
  */
 public class LocationHelper extends DaoHelper<Location> implements IEventDispatcher<ILocationEventListener> {
@@ -39,7 +39,6 @@ public class LocationHelper extends DaoHelper<Location> implements IEventDispatc
 	private static final String LOG_NAME = LocationHelper.class.getName();
 
 	private final Dao<Location, Long> locationDao;
-	private final Dao<LocationGeometry, Long> locationGeometryDao;
 	private final Dao<LocationProperty, Long> locationPropertyDao;
 	
 	private Collection<ILocationEventListener> listeners = new CopyOnWriteArrayList<ILocationEventListener>();
@@ -77,7 +76,6 @@ public class LocationHelper extends DaoHelper<Location> implements IEventDispatc
 				
 		try {
 			locationDao = daoStore.getLocationDao();
-			locationGeometryDao = daoStore.getLocationGeometryDao();
 			locationPropertyDao = daoStore.getLocationPropertyDao();
 		} catch (SQLException sqle) {
 			Log.e(LOG_NAME, "Unable to communicate with Location database.", sqle);
@@ -96,7 +94,6 @@ public class LocationHelper extends DaoHelper<Location> implements IEventDispatc
                 @Override
                 public Location call() throws Exception {
 					// create Location geometry.
-					locationGeometryDao.create(pLocation.getLocationGeometry());
 					Location createdLocation = locationDao.createIfNotExists(pLocation);
 					// create Location properties.
 					Collection<LocationProperty> locationProperties = pLocation.getProperties();
@@ -164,10 +161,6 @@ public class LocationHelper extends DaoHelper<Location> implements IEventDispatc
 					
 					location.setId(pOldLocation.getId());
 
-					if (location.getLocationGeometry() != null && pOldLocation.getLocationGeometry() != null) {
-						location.getLocationGeometry().setPk_id(pOldLocation.getLocationGeometry().getPk_id());
-					}
-
 					// FIXME : make this run faster?
 					for (LocationProperty lp : location.getProperties()) {
 						for (LocationProperty olp : pOldLocation.getProperties()) {
@@ -177,8 +170,6 @@ public class LocationHelper extends DaoHelper<Location> implements IEventDispatc
 							}
 						}
 					}
-					
-					locationGeometryDao.update(location.getLocationGeometry());
 					
 					locationDao.update(location);
 		
@@ -325,9 +316,6 @@ public class LocationHelper extends DaoHelper<Location> implements IEventDispatc
 								locationPropertyDao.deleteById(property.getId());
 							}
 						}
-
-						// delete Geometry (but not corresponding GeometryType).
-						locationGeometryDao.deleteById(location.getLocationGeometry().getPk_id());
 
 						// finally, delete the Location.
 						locationDao.deleteById(pk);

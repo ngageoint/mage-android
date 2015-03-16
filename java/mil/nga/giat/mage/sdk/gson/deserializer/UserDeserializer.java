@@ -28,7 +28,7 @@ import com.google.gson.JsonParseException;
 /**
  * JSON to {@link User}
  * 
- * @author wiedemannse
+ * @author wiedemanns
  * 
  */
 public class UserDeserializer implements JsonDeserializer<User> {

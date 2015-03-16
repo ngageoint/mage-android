@@ -108,13 +108,14 @@ public class EventHelper extends DaoHelper<Event> {
         return event;
     }
 
-    public void update(Event pEvent) throws EventException {
+    public Event update(Event pEvent) throws EventException {
         try {
             eventDao.update(pEvent);
         } catch (SQLException sqle) {
             Log.e(LOG_NAME, "There was a problem creating event: " + pEvent);
             throw new EventException("There was a problem creating event: " + pEvent, sqle);
         }
+		return pEvent;
     }
 
     public Event createOrUpdate(Event event) {

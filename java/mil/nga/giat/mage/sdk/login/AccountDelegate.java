@@ -6,7 +6,7 @@ package mil.nga.giat.mage.sdk.login;
  * 
  * Could be a typed interface if needed!
  * 
- * @author wiedemannse
+ * @author wiedemanns
  * 
  */
 public interface AccountDelegate {

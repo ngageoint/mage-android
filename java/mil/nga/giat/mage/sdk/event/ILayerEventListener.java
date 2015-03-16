@@ -6,6 +6,6 @@ import mil.nga.giat.mage.sdk.datastore.layer.Layer;
 
 public interface ILayerEventListener extends IEventListener {
 
-	public void onLayersCreated(final Collection<Layer> layers);
+	public void onLayerCreated(Layer layer);
 
 }

@@ -107,13 +107,15 @@ public class TeamHelper extends DaoHelper<Team> {
         return team;
     }
 
-    public void update(Team pTeam) throws TeamException {
+	@Override
+    public Team update(Team pTeam) throws TeamException {
         try {
             teamDao.update(pTeam);
         } catch (SQLException sqle) {
             Log.e(LOG_NAME, "There was a problem creating team: " + pTeam);
             throw new TeamException("There was a problem creating team: " + pTeam, sqle);
         }
+		return pTeam;
     }
 
     public Team createOrUpdate(Team team) {

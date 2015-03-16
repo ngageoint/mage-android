@@ -18,6 +18,7 @@ import com.j256.ormlite.field.DataType;
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.field.ForeignCollectionField;
 import com.j256.ormlite.table.DatabaseTable;
+import com.vividsolutions.jts.geom.Geometry;
 
 @DatabaseTable(tableName = "locations")
 public class Location implements Comparable<Location>, Temporal {
@@ -50,8 +51,8 @@ public class Location implements Comparable<Location>, Temporal {
 	@ForeignCollectionField(eager = true)
 	private Collection<LocationProperty> properties  = new ArrayList<LocationProperty>();
 
-	@DatabaseField(canBeNull = false, foreign = true, foreignAutoRefresh = true)
-	private LocationGeometry locationGeometry;
+	@DatabaseField(canBeNull = false, dataType = DataType.SERIALIZABLE)
+	private Geometry geometry;
 
 	@DatabaseField(canBeNull = false, foreign = true, foreignAutoRefresh = true)
 	private Event event;
@@ -60,18 +61,18 @@ public class Location implements Comparable<Location>, Temporal {
 		// ORMLite needs a no-arg constructor
 	}
 
-	public Location(String type, User user, Collection<LocationProperty> properties, LocationGeometry locationGeometry, Date timestamp, Event event) {
-		this(null, user, null, type, properties, locationGeometry, timestamp, event);
+	public Location(String type, User user, Collection<LocationProperty> properties, Geometry geometry, Date timestamp, Event event) {
+		this(null, user, null, type, properties, geometry, timestamp, event);
 	}
 
-	public Location(String remoteId, User user, Date lastModified, String type, Collection<LocationProperty> properties, LocationGeometry locationGeometry, Date timestamp, Event event) {
+	public Location(String remoteId, User user, Date lastModified, String type, Collection<LocationProperty> properties, Geometry geometry, Date timestamp, Event event) {
 		super();
 		this.remoteId = remoteId;
 		this.user = user;
 		this.lastModified = lastModified;
 		this.type = type;
 		this.properties = properties;
-		this.locationGeometry = locationGeometry;
+		this.geometry = geometry;
 		this.timestamp = timestamp;
 		this.event = event;
 	}
@@ -133,12 +134,12 @@ public class Location implements Comparable<Location>, Temporal {
 		this.properties = properties;
 	}
 
-	public LocationGeometry getLocationGeometry() {
-		return locationGeometry;
+	public Geometry getGeometry() {
+		return geometry;
 	}
 
-	public void setLocationGeometry(LocationGeometry geometry) {
-		this.locationGeometry = geometry;
+	public void setGeometry(Geometry geometry) {
+		this.geometry = geometry;
 	}
 	
 	/**
