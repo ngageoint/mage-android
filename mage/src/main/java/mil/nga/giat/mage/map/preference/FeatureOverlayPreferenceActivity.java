@@ -11,6 +11,7 @@ import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.sdk.datastore.layer.Layer;
 import mil.nga.giat.mage.sdk.datastore.layer.LayerHelper;
 import mil.nga.giat.mage.sdk.datastore.staticfeature.StaticFeatureHelper;
+import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
 import mil.nga.giat.mage.sdk.event.ILayerEventListener;
 import mil.nga.giat.mage.sdk.event.IStaticFeatureEventListener;
 import mil.nga.giat.mage.sdk.exceptions.LayerException;
@@ -70,10 +71,17 @@ public class FeatureOverlayPreferenceActivity extends ListActivity implements IL
     }
 
     @Override
-    public void onLayersCreated(final Collection<Layer> layers) {
+    public void onLayerCreated(Layer layer) {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
+				Collection<Layer> layers = new ArrayList<Layer>();
+
+				try {
+					layers = LayerHelper.getInstance(getApplicationContext()).readByEvent(EventHelper.getInstance(getApplicationContext()).getCurrentEvent());
+				} catch(Exception e) {
+					Log.e(LOG_NAME, "Problem getting layers.", e);
+				}
                 ListView listView = getListView();
                 listView.clearChoices();
 
@@ -108,20 +116,18 @@ public class FeatureOverlayPreferenceActivity extends ListActivity implements IL
     }
 
 	@Override
-	public void onStaticFeaturesCreated(final Collection<Layer> layers) {
+	public void onStaticFeaturesCreated(final Layer layer) {
 		runOnUiThread(new Runnable() {
 			@Override
 			public void run() {
-				for (Layer layer : layers) {
-					int i = overlayAdapter.getPosition(layer);
-					Layer l = overlayAdapter.getItem(i);
+				int i = overlayAdapter.getPosition(layer);
+				Layer l = overlayAdapter.getItem(i);
 
-					if (l != null) {
-						l.setLoaded(true);
-						overlayAdapter.notifyDataSetChanged();
-					} else {
-						Log.i(LOG_NAME, "static layer " + layer.getName() + ":" + layer.getId() + " is not available, adapter size is: " + overlayAdapter.getCount());
-					}
+				if (l != null) {
+					l.setLoaded(true);
+					overlayAdapter.notifyDataSetChanged();
+				} else {
+					Log.i(LOG_NAME, "static layer " + layer.getName() + ":" + layer.getId() + " is not available, adapter size is: " + overlayAdapter.getCount());
 				}
 			}
 		});
@@ -142,16 +148,7 @@ public class FeatureOverlayPreferenceActivity extends ListActivity implements IL
         // the problem is that onResume gets called before this so my menu is
         // not yet setup and I will not have a handle on this button
 
-		// FIXME : store this in a static field maybe?
-        boolean loaded = false;
-        if (loaded) {
-            try {
-                Collection<Layer> layers = LayerHelper.getInstance(this).readAllStaticLayers();
-                onLayersCreated(layers);
-            } catch (LayerException e) {
-                e.printStackTrace();
-            }
-        }
+		onLayerCreated(null);
 
         LayerHelper.getInstance(this).addListener(this);
         StaticFeatureHelper.getInstance(this).addListener(this);

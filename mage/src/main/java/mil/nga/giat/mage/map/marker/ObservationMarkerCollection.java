@@ -60,7 +60,7 @@ public class ObservationMarkerCollection implements PointCollection<Observation>
             marker.remove();
         }
 
-        Point point = (Point) o.getObservationGeometry().getGeometry();
+        Point point = (Point) o.getGeometry();
         MarkerOptions options = new MarkerOptions()
             .position(new LatLng(point.getY(), point.getX()))
             .icon(ObservationBitmapFactory.bitmapDescriptor(context, o))

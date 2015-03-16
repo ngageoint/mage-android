@@ -49,7 +49,7 @@ public class StaticFeatureLoadTask extends AsyncTask<Layer, Object, Void> {
 		Log.d(LOG_NAME, "static feature layer: " + layer.getName() + " is enabled, it has " + layer.getStaticFeatures().size() + " features");
 
 		for (StaticFeature feature : layer.getStaticFeatures()) {
-			Geometry geometry = feature.getStaticFeatureGeometry().getGeometry();
+			Geometry geometry = feature.getGeometry();
 			Map<String, StaticFeatureProperty> properties = feature.getPropertiesMap();
 
 			StringBuilder content = new StringBuilder();

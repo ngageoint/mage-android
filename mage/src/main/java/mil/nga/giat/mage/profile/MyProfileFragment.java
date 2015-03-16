@@ -119,7 +119,7 @@ public class MyProfileFragment extends Fragment {
 		LatLng location = new LatLng(0,0);
 		
 		if (!lastLocation.isEmpty()) {
-			Geometry geo = lastLocation.get(0).getLocationGeometry().getGeometry();
+			Geometry geo = lastLocation.get(0).getGeometry();
 			if (geo instanceof Point) {
 				Point point = (Point) geo;
 				location = new LatLng(point.getY(), point.getX());

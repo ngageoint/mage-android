@@ -5,7 +5,6 @@ import java.util.Date;
 import java.util.Set;
 
 import mil.nga.giat.mage.sdk.datastore.location.Location;
-import mil.nga.giat.mage.sdk.datastore.location.LocationGeometry;
 import mil.nga.giat.mage.sdk.datastore.location.LocationHelper;
 import mil.nga.giat.mage.sdk.push.LocationPushIntentService;
 import android.content.Context;
@@ -15,6 +14,7 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.common.collect.MinMaxPriorityQueue;
+import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.Point;
 
 /**
@@ -46,8 +46,8 @@ public class MyHistoricalLocationMarkerCollection extends LocationMarkerCollecti
 
 	@Override
 	public void add(Location l) {
-		final LocationGeometry lg = l.getLocationGeometry();
-		if (lg != null) {
+		final Geometry g = l.getGeometry();
+		if (g != null) {
 			// If I got an observation that I already have in my list
 			// remove it from the map and clean-up my collections
 			Marker marker = locationIdToMarker.remove(l.getId());
@@ -56,7 +56,7 @@ public class MyHistoricalLocationMarkerCollection extends LocationMarkerCollecti
 				marker.remove();
 			}
 
-			Point point = lg.getGeometry().getCentroid();
+			Point point = g.getCentroid();
 			MarkerOptions options = new MarkerOptions().position(new LatLng(point.getY(), point.getX())).icon(LocationBitmapFactory.dotBitmapDescriptor(context, l, l.getUser())).visible(visible);
 
 			marker = markerCollection.addMarker(options);

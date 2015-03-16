@@ -236,7 +236,7 @@ public class ObservationViewActivity extends Activity {
 			if (observationProperty != null) {
 				this.setTitle(observationProperty.getValue().toString());
 			}
-			Geometry geo = o.getObservationGeometry().getGeometry();
+			Geometry geo = o.getGeometry();
 			if (geo instanceof Point) {
 				Point pointGeo = (Point) geo;
 				((TextView) findViewById(R.id.location)).setText(latLngFormat.format(pointGeo.getY()) + ", " + latLngFormat.format(pointGeo.getX()));

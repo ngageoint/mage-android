@@ -12,6 +12,7 @@ import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.preferences.PreferenceFragmentSummary;
 import mil.nga.giat.mage.sdk.datastore.layer.Layer;
 import mil.nga.giat.mage.sdk.datastore.layer.LayerHelper;
+import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
 import mil.nga.giat.mage.sdk.exceptions.LayerException;
 import android.app.Activity;
 import android.content.Intent;
@@ -87,7 +88,7 @@ public class MapPreferencesActivity extends PreferenceActivity {
             try {
                 Set<String> layerIds = p.getValues();
                 Collection<String> values = new ArrayList<String>(layerIds.size());
-                for (Layer l : LayerHelper.getInstance(getActivity()).readAll()) {
+                for (Layer l : LayerHelper.getInstance(getActivity()).readByEvent(EventHelper.getInstance(getActivity().getApplicationContext()).getCurrentEvent())) {
                     if (layerIds.contains(l.getId().toString())) {
                         values.add(l.getName());
                     }

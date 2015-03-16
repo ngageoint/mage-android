@@ -75,10 +75,9 @@ import mil.nga.giat.mage.form.LayoutBaker.ControlGenerationType;
 import mil.nga.giat.mage.form.MageSpinner;
 import mil.nga.giat.mage.form.MageTextView;
 import mil.nga.giat.mage.map.marker.ObservationBitmapFactory;
-import mil.nga.giat.mage.sdk.datastore.common.State;
+import mil.nga.giat.mage.sdk.datastore.observation.State;
 import mil.nga.giat.mage.sdk.datastore.observation.Attachment;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
-import mil.nga.giat.mage.sdk.datastore.observation.ObservationGeometry;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationProperty;
 import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
@@ -230,7 +229,7 @@ public class ObservationEditActivity extends Activity {
 				}
 
 				Map<String, ObservationProperty> propertiesMap = o.getPropertiesMap();
-				Geometry geo = o.getObservationGeometry().getGeometry();
+				Geometry geo = o.getGeometry();
 				if (geo instanceof Point) {
 					Point point = (Point) geo;
 					String provider = "manual";
@@ -459,7 +458,7 @@ public class ObservationEditActivity extends Activity {
 		case R.id.observation_save:
 			o.setState(State.ACTIVE);
 			o.setDirty(true);
-			o.setObservationGeometry(new ObservationGeometry(new GeometryFactory().createPoint(new Coordinate(l.getLongitude(), l.getLatitude()))));
+			o.setGeometry(new GeometryFactory().createPoint(new Coordinate(l.getLongitude(), l.getLatitude())));
 
 			if (!LayoutBaker.checkAndFlagRequiredFields((LinearLayout) findViewById(R.id.form))) {
 				return super.onOptionsItemSelected(item);

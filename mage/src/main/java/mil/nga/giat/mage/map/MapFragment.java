@@ -37,6 +37,7 @@ import mil.nga.giat.mage.sdk.datastore.location.LocationProperty;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
 import mil.nga.giat.mage.sdk.datastore.staticfeature.StaticFeatureHelper;
+import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.event.ILocationEventListener;
@@ -128,7 +129,6 @@ public class MapFragment extends Fragment implements OnMapClickListener, OnMapLo
 	private List<Marker> searchMarkes = new ArrayList<Marker>();
 
 	private Map<String, TileOverlay> tileOverlays = new HashMap<String, TileOverlay>();
-	private Collection<String> featureIds = new ArrayList<String>();
 
 	private LocationService locationService;
 
@@ -188,8 +188,6 @@ public class MapFragment extends Fragment implements OnMapClickListener, OnMapLo
 
 		locations.clear();
 		locations = null;
-		
-		featureIds.clear();
 
 		myHistoricLocations.clear();
 		myHistoricLocations = null;
@@ -405,7 +403,7 @@ public class MapFragment extends Fragment implements OnMapClickListener, OnMapLo
 				List<mil.nga.giat.mage.sdk.datastore.location.Location> tLocations = LocationHelper.getInstance(getActivity().getApplicationContext()).getCurrentUserLocations(getActivity().getApplicationContext(), 1, true);
 				if (!tLocations.isEmpty()) {
 					mil.nga.giat.mage.sdk.datastore.location.Location tLocation = tLocations.get(0);
-					Geometry geo = tLocation.getLocationGeometry().getGeometry();
+					Geometry geo = tLocation.getGeometry();
 					Map<String, LocationProperty> propertiesMap = tLocation.getPropertiesMap();
 					if (geo instanceof Point) {
 						Point point = (Point) geo;
@@ -726,7 +724,7 @@ public class MapFragment extends Fragment implements OnMapClickListener, OnMapLo
 		removeStaticFeatureLayers();
 
 		try {
-			for (Layer l : LayerHelper.getInstance(getActivity().getApplicationContext()).readAllStaticLayers()) {
+			for (Layer l : LayerHelper.getInstance(getActivity().getApplicationContext()).readByEvent(EventHelper.getInstance(getActivity().getApplicationContext()).getCurrentEvent())) {
 				onStaticFeatureLayer(l);
 			}
 		} catch (LayerException e) {
@@ -739,21 +737,18 @@ public class MapFragment extends Fragment implements OnMapClickListener, OnMapLo
 
 		for (String currentLayerId : staticGeometryCollection.getLayers()) {
 			if (!selectedLayerIds.contains(currentLayerId)) {
-				featureIds.remove(currentLayerId);
 				staticGeometryCollection.removeLayer(currentLayerId);
 			}
 		}
 	}
 
 	@Override
-	public void onStaticFeaturesCreated(final Collection<Layer> layers) {
+	public void onStaticFeaturesCreated(final Layer layer) {
 		getActivity().runOnUiThread(new Runnable() {
 
 			@Override
 			public void run() {
-				for (Layer layer : layers) {
-					onStaticFeatureLayer(layer);
-				}
+				onStaticFeatureLayer(layer);
 			}
 		});
 	}
@@ -764,10 +759,7 @@ public class MapFragment extends Fragment implements OnMapClickListener, OnMapLo
 		// The user has asked for this feature layer
 		String layerId = layer.getId().toString();
 		if (layers.contains(layerId) && layer.isLoaded()) {
-			if (!featureIds.contains(layerId)) {
-				featureIds.add(layerId);
-				new StaticFeatureLoadTask(getActivity().getApplicationContext(), staticGeometryCollection, map).executeOnExecutor(executor, new Layer[] { layer });
-			}
+			new StaticFeatureLoadTask(getActivity().getApplicationContext(), staticGeometryCollection, map).executeOnExecutor(executor, new Layer[] { layer });
 		}
 	}
 

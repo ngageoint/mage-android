@@ -23,6 +23,7 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.maps.android.MarkerManager;
+import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.Point;
 
 import org.ocpsoft.prettytime.PrettyTime;
@@ -43,7 +44,6 @@ import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.profile.MyProfileFragment;
 import mil.nga.giat.mage.profile.ProfileActivity;
 import mil.nga.giat.mage.sdk.datastore.location.Location;
-import mil.nga.giat.mage.sdk.datastore.location.LocationGeometry;
 import mil.nga.giat.mage.sdk.datastore.location.LocationHelper;
 import mil.nga.giat.mage.sdk.datastore.location.LocationProperty;
 import mil.nga.giat.mage.sdk.datastore.user.User;
@@ -82,8 +82,8 @@ public class LocationMarkerCollection implements PointCollection<Location>, OnMa
 
 	@Override
 	public void add(Location l) {
-		final LocationGeometry lg = l.getLocationGeometry();
-		if (lg != null) {
+		final Geometry g = l.getGeometry();
+		if (g != null) {
 			
 			// one user has one location
 			Long locId = userIdToLocationId.get(l.getUser().getId());
@@ -103,7 +103,7 @@ public class LocationMarkerCollection implements PointCollection<Location>, OnMa
 			// remove it from the map and clean-up my collections
 			remove(l);
 
-			Point point = lg.getGeometry().getCentroid();
+			Point point = g.getCentroid();
 
 			LatLng latLng = new LatLng(point.getY(), point.getX());
 			MarkerOptions options = new MarkerOptions().position(latLng).visible(visible);
@@ -162,9 +162,9 @@ public class LocationMarkerCollection implements PointCollection<Location>, OnMa
 			return false;
 		}
 
-		final LocationGeometry lg = l.getLocationGeometry();
-		if (lg != null) {
-			Point point = lg.getGeometry().getCentroid();
+		final Geometry g = l.getGeometry();
+		if (g != null) {
+			Point point = g.getCentroid();
 			LatLng latLng = new LatLng(point.getY(), point.getX());
 			LocationProperty accuracyProperty = l.getPropertiesMap().get("accuracy");
 			if (accuracyProperty != null && !accuracyProperty.getValue().toString().trim().isEmpty()) {

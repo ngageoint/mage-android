@@ -68,6 +68,8 @@ public class MAGE extends MultiDexApplication implements IUserEventListener {
 	private List<CacheOverlay> cacheOverlays = null;
 	private Collection<OnCacheOverlayListener> cacheOverlayListeners = new ArrayList<OnCacheOverlayListener>();
 
+	private ObservationNotificationListener observationNotificationListener = null;
+
 	private StaticFeatureServerFetch staticFeatureServerFetch = null;
 
 	@Override
@@ -84,10 +86,9 @@ public class MAGE extends MultiDexApplication implements IUserEventListener {
 		// setup the screen unlock stuff
 		registerReceiver(ScreenChangeReceiver.getInstance(), new IntentFilter(Intent.ACTION_SCREEN_ON));
 
-		// FIXME : remove listener
         //set up Observation notifications
-        ObservationHelper oh = ObservationHelper.getInstance(getApplicationContext());
-        oh.addListener(new ObservationNotificationListener(getApplicationContext()));
+		observationNotificationListener = new ObservationNotificationListener(getApplicationContext());
+		ObservationHelper.getInstance(getApplicationContext()).addListener(observationNotificationListener);
 
         HttpClientManager.getInstance(getApplicationContext()).addListener(this);
 
@@ -124,6 +125,11 @@ public class MAGE extends MultiDexApplication implements IUserEventListener {
 	}
 
 	public void onLogout(Boolean clearTokenInformationAndSendLogoutRequest) {
+
+		if(observationNotificationListener != null){
+			ObservationHelper.getInstance(getApplicationContext()).removeListener(observationNotificationListener);
+		}
+
 		destroyFetching();
 		destroyPushing();
 		destroyLocationService();

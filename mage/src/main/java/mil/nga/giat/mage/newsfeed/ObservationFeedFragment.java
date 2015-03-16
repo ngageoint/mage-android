@@ -153,7 +153,7 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 				List<mil.nga.giat.mage.sdk.datastore.location.Location> tLocations = LocationHelper.getInstance(getActivity().getApplicationContext()).getCurrentUserLocations(getActivity().getApplicationContext(), 1, true);
 				if (!tLocations.isEmpty()) {
 					mil.nga.giat.mage.sdk.datastore.location.Location tLocation = tLocations.get(0);
-					Geometry geo = tLocation.getLocationGeometry().getGeometry();
+					Geometry geo = tLocation.getGeometry();
 					Map<String, LocationProperty> propertiesMap = tLocation.getPropertiesMap();
 					if (geo instanceof Point) {
 						Point point = (Point) geo;

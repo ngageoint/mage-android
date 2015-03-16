@@ -111,7 +111,7 @@ public class ObservationClusterCollection implements PointCollection<Observation
 
         @Override
         public LatLng getPosition() {
-            Point point = (Point) observation.getObservationGeometry().getGeometry();
+            Point point = (Point) observation.getGeometry();
             return new LatLng(point.getY(), point.getX());
         }
         
