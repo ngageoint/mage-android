@@ -43,12 +43,7 @@ public class StaticFeatureServerFetch extends AbstractServerFetch {
 
 	private Boolean isCanceled = Boolean.FALSE;
 
-	public void fetch() {
-		fetch(false);
-	}
-
-	public void fetch(boolean force) {
-		Editor sp = PreferenceManager.getDefaultSharedPreferences(mContext).edit();
+	public void fetch(boolean deleteLocal) {
 
 		StaticFeatureHelper staticFeatureHelper = StaticFeatureHelper.getInstance(mContext);
 		LayerHelper layerHelper = LayerHelper.getInstance(mContext);
@@ -62,25 +57,26 @@ public class StaticFeatureServerFetch extends AbstractServerFetch {
 		Log.d(LOG_NAME, "Pulling static layers.");
 		Collection<Layer> layers = MageServerGetRequests.getStaticLayers(mContext);
 		try {
-			if (force) {
-				layerHelper.deleteAllStaticLayers();
+			if (deleteLocal) {
+				layerHelper.deleteAll();
 			}
 
-			layerHelper.createAll(layers);
+			// get local layers
+			Collection<Layer> localLayers = layerHelper.readAll();
 
-			// FIXME : set a flag to not pull layers again
+			layers.removeAll(localLayers);
 
+			for(Layer layer : layers) {
+				layerHelper.create(layer);
+			}
 
-			// get ALL the layers
-			layers = layerHelper.readAll();
-
-			for (Layer layer : layers) {
+			for (Layer layer : layerHelper.readAll()) {
 				if (isCanceled) {
 					break;
 				}
-				if (layer.getType().equalsIgnoreCase("external") && (force || !layer.isLoaded())) {
+				if (!layer.isLoaded()) {
 					try {
-						Log.i(LOG_NAME, "Loading static features for layer " + layer.getName());
+						Log.i(LOG_NAME, "Loading static features for layer " + layer.getName() + ".");
 
 						Collection<StaticFeature> staticFeatures = MageServerGetRequests.getStaticFeatures(mContext, layer);
 
@@ -139,9 +135,7 @@ public class StaticFeatureServerFetch extends AbstractServerFetch {
 							}
 						}
 
-						staticFeatureHelper.createAll(staticFeatures);
-
-						layer.setLoaded(true);
+						layer = staticFeatureHelper.createAll(staticFeatures, layer);
 						try {
 							DaoStore.getInstance(mContext).getLayerDao().update(layer);
 						} catch (SQLException e) {

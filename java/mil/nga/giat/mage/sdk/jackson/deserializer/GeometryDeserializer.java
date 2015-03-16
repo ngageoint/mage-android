@@ -17,7 +17,7 @@ public class GeometryDeserializer extends Deserializer {
     
     private final GeometryFactory geometryFactory = new GeometryFactory();
 
-    public Geometry parseGeometry(JsonParser parser) throws JsonParseException, IOException {
+    public Geometry parseGeometry(JsonParser parser) throws IOException {
         if (parser.getCurrentToken() != JsonToken.START_OBJECT) return null;
         
         String typeName = null;
@@ -56,11 +56,11 @@ public class GeometryDeserializer extends Deserializer {
         return geometry;
     }
     
-    private Coordinate parseCoordinate(JsonNode coordinate) throws JsonParseException, IOException {
+    private Coordinate parseCoordinate(JsonNode coordinate) throws IOException {
         return new Coordinate(coordinate.get(0).asDouble(), coordinate.get(1).asDouble());
     }
     
-    private Coordinate[] parseLineString(JsonNode array) throws JsonParseException, IOException {
+    private Coordinate[] parseLineString(JsonNode array) throws IOException {
         Coordinate[] points = new Coordinate[array.size()];
         for (int i = 0; i < array.size(); ++i) {
             points[i] = parseCoordinate(array.get(i));
@@ -68,7 +68,7 @@ public class GeometryDeserializer extends Deserializer {
         return points;
     }
     
-    private LineString[] parseLineStrings(JsonNode array) throws JsonParseException, IOException {
+    private LineString[] parseLineStrings(JsonNode array) throws IOException {
         LineString[] strings = new LineString[array.size()];
         for (int i = 0; i != array.size(); ++i) {
             strings[i] = geometryFactory.createLineString(parseLineString(array.get(i)));
@@ -76,11 +76,11 @@ public class GeometryDeserializer extends Deserializer {
         return strings;
     }
     
-    private Polygon parsePolygonCoordinates(JsonNode arrayOfRings) throws JsonParseException, IOException {
+    private Polygon parsePolygonCoordinates(JsonNode arrayOfRings) throws IOException {
         return geometryFactory.createPolygon(parseExteriorRing(arrayOfRings), parseInteriorRings(arrayOfRings));
     }
 
-    private Geometry[] parseGeometries(JsonNode arrayOfGeoms) throws JsonParseException, IOException {
+    private Geometry[] parseGeometries(JsonNode arrayOfGeoms) throws IOException {
         Geometry[] items = new Geometry[arrayOfGeoms.size()];
         for (int i = 0; i != arrayOfGeoms.size(); ++i) {
             items[i] = parseGeometry(arrayOfGeoms.get(i).traverse());
@@ -88,7 +88,7 @@ public class GeometryDeserializer extends Deserializer {
         return items;
     }
 
-    private Polygon[] parsePolygons(JsonNode arrayOfPolygons) throws JsonParseException, IOException {
+    private Polygon[] parsePolygons(JsonNode arrayOfPolygons) throws IOException {
         Polygon[] polygons = new Polygon[arrayOfPolygons.size()];
         for (int i = 0; i != arrayOfPolygons.size(); i++) {
             polygons[i] = parsePolygonCoordinates(arrayOfPolygons.get(i));
@@ -96,11 +96,11 @@ public class GeometryDeserializer extends Deserializer {
         return polygons;
     }
 
-    private LinearRing parseExteriorRing(JsonNode arrayOfRings) throws JsonParseException, IOException {
+    private LinearRing parseExteriorRing(JsonNode arrayOfRings) throws IOException {
         return geometryFactory.createLinearRing(parseLineString(arrayOfRings.get(0)));
     }
 
-    private LinearRing[] parseInteriorRings(JsonNode arrayOfRings) throws JsonParseException, IOException {
+    private LinearRing[] parseInteriorRings(JsonNode arrayOfRings) throws IOException {
         LinearRing rings[] = new LinearRing[arrayOfRings.size() - 1];
         for (int i = 1; i < arrayOfRings.size(); i++) {
             rings[i - 1] = geometryFactory.createLinearRing(parseLineString(arrayOfRings.get(i)));

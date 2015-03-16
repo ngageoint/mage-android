@@ -27,7 +27,7 @@ import com.google.gson.Gson;
 /**
  * Gets roles from server. Not currently used!
  * 
- * @author wiedemannse
+ * @author wiedemanns
  * 
  */
 public class RoleFetchIntentService extends ConnectivityAwareIntentService {

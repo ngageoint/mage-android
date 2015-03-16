@@ -7,7 +7,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import mil.nga.giat.mage.sdk.ConnectivityAwareIntentService;
 import mil.nga.giat.mage.sdk.R;
 import mil.nga.giat.mage.sdk.connectivity.ConnectivityUtility;
-import mil.nga.giat.mage.sdk.datastore.common.State;
+import mil.nga.giat.mage.sdk.datastore.observation.State;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
 import mil.nga.giat.mage.sdk.datastore.user.User;
@@ -92,7 +92,7 @@ public class ObservationFetchIntentService extends ConnectivityAwareIntentServic
 						} else if (!observation.getState().equals(State.ARCHIVE) && oldObservation == null) {
 							observation = observationHelper.create(observation);
 							Log.d(LOG_NAME, "Created observation with remote_id " + observation.getRemoteId());
-						} else if (!observation.getState().equals(State.ARCHIVE) && oldObservation != null && !oldObservation.isDirty()) {
+						} else if (!observation.getState().equals(State.ARCHIVE) && oldObservation != null && !oldObservation.isDirty()) { // TODO : conflict resolution
 							observation.setId(oldObservation.getId());
 							observation = observationHelper.update(observation);
 							Log.d(LOG_NAME, "Updated observation with remote_id " + observation.getRemoteId());

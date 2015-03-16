@@ -24,7 +24,7 @@ import com.j256.ormlite.stmt.Where;
  * The details of ORM DAOs and Lazy Loading should not be exposed past this
  * class.
  * 
- * @author travis, wiedemanns
+ * @author wiedemanns
  * 
  */
 public class UserHelper extends DaoHelper<User> implements IEventDispatcher<IEventEventListener> {
@@ -74,7 +74,7 @@ public class UserHelper extends DaoHelper<User> implements IEventDispatcher<IEve
 		}
 	}
 
-    // FIXME : should add user to team is needed
+    // FIXME : should add user to team if needed
 	@Override
 	public User create(User pUser) throws UserException {
 		User createdUser = null;
@@ -118,7 +118,8 @@ public class UserHelper extends DaoHelper<User> implements IEventDispatcher<IEve
         return user;
     }
 
-	public void update(User pUser) throws UserException {
+	@Override
+	public User update(User pUser) throws UserException {
 
 		try {
 			// check if we need to send event onChange
@@ -154,6 +155,7 @@ public class UserHelper extends DaoHelper<User> implements IEventDispatcher<IEve
 			Log.e(LOG_NAME, "There was a problem creating user: " + pUser);
 			throw new UserException("There was a problem creating user: " + pUser, sqle);
 		}
+		return pUser;
 	}
 
 	/**

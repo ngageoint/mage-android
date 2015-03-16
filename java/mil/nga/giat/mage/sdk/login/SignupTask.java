@@ -26,7 +26,7 @@ import android.util.Log;
 /**
  * Creates a user
  * 
- * @author wiedemannse
+ * @author wiedemanns
  * 
  */
 public class SignupTask extends AbstractAccountTask {

@@ -11,9 +11,11 @@ import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
+import com.j256.ormlite.field.DataType;
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.field.ForeignCollectionField;
 import com.j256.ormlite.table.DatabaseTable;
+import com.vividsolutions.jts.geom.Geometry;
 
 @DatabaseTable(tableName = "staticfeatures")
 public class StaticFeature implements Comparable<StaticFeature> {
@@ -27,8 +29,8 @@ public class StaticFeature implements Comparable<StaticFeature> {
 	@DatabaseField(canBeNull = false, foreign = true, foreignAutoRefresh = true)
 	private Layer layer;
 
-	@DatabaseField(canBeNull = false, foreign = true, foreignAutoRefresh = true)
-	private StaticFeatureGeometry staticFeatureGeometry;
+	@DatabaseField(canBeNull = false, dataType = DataType.SERIALIZABLE)
+	private Geometry geometry;
 
 	@ForeignCollectionField(eager = true)
 	private Collection<StaticFeatureProperty> properties = new ArrayList<StaticFeatureProperty>();
@@ -40,14 +42,14 @@ public class StaticFeature implements Comparable<StaticFeature> {
 		// ORMLite needs a no-arg constructor
 	}
 
-	public StaticFeature(StaticFeatureGeometry observationGeometry, Layer layer) {
-		this(null, observationGeometry, layer);
+	public StaticFeature(Geometry geometry, Layer layer) {
+		this(null, geometry, layer);
 	}
 
-	public StaticFeature(String remoteId, StaticFeatureGeometry observationGeometry, Layer layer) {
+	public StaticFeature(String remoteId, Geometry geometry, Layer layer) {
 		super();
 		this.remoteId = remoteId;
-		this.staticFeatureGeometry = observationGeometry;
+		this.geometry = geometry;
 		this.layer = layer;
 	}
 
@@ -71,12 +73,12 @@ public class StaticFeature implements Comparable<StaticFeature> {
 		this.layer = layer;
 	}
 
-	public StaticFeatureGeometry getStaticFeatureGeometry() {
-		return staticFeatureGeometry;
+	public Geometry getGeometry() {
+		return geometry;
 	}
 
-	public void setStaticFeatureGeometry(StaticFeatureGeometry staticFeatureGeometry) {
-		this.staticFeatureGeometry = staticFeatureGeometry;
+	public void setGeometry(Geometry geometry) {
+		this.geometry = geometry;
 	}
 
 	public Collection<StaticFeatureProperty> getProperties() {

@@ -8,7 +8,6 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import mil.nga.giat.mage.sdk.R;
-import mil.nga.giat.mage.sdk.datastore.location.LocationGeometry;
 import mil.nga.giat.mage.sdk.datastore.location.LocationHelper;
 import mil.nga.giat.mage.sdk.datastore.location.LocationProperty;
 import mil.nga.giat.mage.sdk.datastore.user.User;
@@ -364,14 +363,6 @@ public class LocationService extends Service implements LocationListener, OnShar
 	private void saveLocation(Location location, Long echoTime) {
 		if (location != null && location.getTime() > 0) {
 			Collection<LocationProperty> locationProperties = new ArrayList<LocationProperty>();
-			long currentTimeMillis = System.currentTimeMillis();
-			locationProperties.add(new LocationProperty("currentTimeMillis", currentTimeMillis));
-			
-			if (location.getTime() > currentTimeMillis) {
-				locationProperties.add(new LocationProperty("timeInFuture", true));
-				Log.w(LOG_NAME, "Location was in future.  Setting location time to system current time.");
-				location.setTime(currentTimeMillis);
-			}
 
 			// INTEGRATION WITH LOCATION DATASTORE
 			LocationHelper locationHelper = LocationHelper.getInstance(mContext);
@@ -394,9 +385,6 @@ public class LocationService extends Service implements LocationListener, OnShar
 				locationProperties.add(new LocationProperty("battery_level", level));
 			}
 
-			// build geometry
-			LocationGeometry locationGeometry = new LocationGeometry(geometryFactory.createPoint(new Coordinate(location.getLongitude(), location.getLatitude())));
-
 			User currentUser = null;
 			try {
 				currentUser = userHelper.readCurrentUser();
@@ -405,16 +393,12 @@ public class LocationService extends Service implements LocationListener, OnShar
 			}
 			
 			// build location
-			mil.nga.giat.mage.sdk.datastore.location.Location loc = new mil.nga.giat.mage.sdk.datastore.location.Location("Feature", currentUser, locationProperties, locationGeometry, new Date(location.getTime()), currentUser.getCurrentEvent());
-			locationProperties.add(new LocationProperty("locationObjectTime", loc.getTimestamp()));
-
-			loc.setLocationGeometry(locationGeometry);
-			loc.setProperties(locationProperties);
+			mil.nga.giat.mage.sdk.datastore.location.Location loc = new mil.nga.giat.mage.sdk.datastore.location.Location("Feature", currentUser, locationProperties, geometryFactory.createPoint(new Coordinate(location.getLongitude(), location.getLatitude())), new Date(location.getTime()), currentUser.getCurrentEvent());
 
 			// save the location
 			try {
 				loc = locationHelper.create(loc);
-				Log.d(LOG_NAME, "Save location: " + loc.getLocationGeometry().getGeometry());
+				Log.d(LOG_NAME, "Save location: " + loc.getGeometry());
 			} catch (LocationException le) {
 				Log.e(LOG_NAME, "Unable to save current location locally!", le);
 			}

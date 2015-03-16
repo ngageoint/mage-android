@@ -22,7 +22,7 @@ import com.google.gson.JsonParseException;
 /**
  * JSON to {@link Role}
  * 
- * @author wiedemannse
+ * @author wiedemanns
  * 
  */
 public class RoleDeserializer implements JsonDeserializer<Role> {

@@ -7,7 +7,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import mil.nga.giat.mage.sdk.Temporal;
-import mil.nga.giat.mage.sdk.datastore.common.State;
 import mil.nga.giat.mage.sdk.datastore.user.Event;
 
 import org.apache.commons.lang3.builder.CompareToBuilder;
@@ -18,6 +17,7 @@ import com.j256.ormlite.field.DataType;
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.field.ForeignCollectionField;
 import com.j256.ormlite.table.DatabaseTable;
+import com.vividsolutions.jts.geom.Geometry;
 
 @DatabaseTable(tableName = "observations")
 public class Observation implements Comparable<Observation>, Temporal {
@@ -59,8 +59,8 @@ public class Observation implements Comparable<Observation>, Temporal {
     @DatabaseField(canBeNull = false)
     private State state = State.ACTIVE;
 
-    @DatabaseField(canBeNull = false, foreign = true, foreignAutoRefresh = true)
-    private ObservationGeometry observationGeometry;
+	@DatabaseField(canBeNull = false, dataType = DataType.SERIALIZABLE)
+	private Geometry geometry;
 
     @DatabaseField(canBeNull = false, foreign = true, foreignAutoRefresh = true)
     private Event event;
@@ -75,16 +75,16 @@ public class Observation implements Comparable<Observation>, Temporal {
         // ORMLite needs a no-arg constructor
     }
 
-    public Observation(ObservationGeometry observationGeometry, Collection<ObservationProperty> pProperties, Collection<Attachment> pAttachments, Date timestamp, Event event) {
-        this(null, null, observationGeometry, pProperties, pAttachments, timestamp, event);
+    public Observation(Geometry geometry, Collection<ObservationProperty> pProperties, Collection<Attachment> pAttachments, Date timestamp, Event event) {
+        this(null, null, geometry, pProperties, pAttachments, timestamp, event);
         this.dirty = true;
     }
 
-    public Observation(String remoteId, Date lastModified, ObservationGeometry observationGeometry, Collection<ObservationProperty> pProperties, Collection<Attachment> pAttachments, Date timestamp, Event event) {
+    public Observation(String remoteId, Date lastModified, Geometry geometry, Collection<ObservationProperty> pProperties, Collection<Attachment> pAttachments, Date timestamp, Event event) {
         super();
         this.remoteId = remoteId;
         this.lastModified = lastModified;
-        this.observationGeometry = observationGeometry;
+        this.geometry = geometry;
         this.properties = pProperties;
         this.attachments = pAttachments;
         this.dirty = false;
@@ -140,13 +140,13 @@ public class Observation implements Comparable<Observation>, Temporal {
         this.state = state;
     }
 
-    public ObservationGeometry getObservationGeometry() {
-        return observationGeometry;
-    }
+	public Geometry getGeometry() {
+		return geometry;
+	}
 
-    public void setObservationGeometry(ObservationGeometry observationGeometry) {
-        this.observationGeometry = observationGeometry;
-    }
+	public void setGeometry(Geometry geometry) {
+		this.geometry = geometry;
+	}
 
     public Event getEvent() {
         return event;
