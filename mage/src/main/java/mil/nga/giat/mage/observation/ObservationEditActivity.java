@@ -185,7 +185,7 @@ public class ObservationEditActivity extends Activity {
 			}
 		}
 
-		// add dynamic content to view
+		// add dynamic controls to view
 		LayoutBaker.populateLayoutWithControls((LinearLayout) findViewById(R.id.location_dynamic_form), controls);
 
 		hideKeyboardOnClick(findViewById(R.id.observation_edit));

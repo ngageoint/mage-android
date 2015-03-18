@@ -9,6 +9,7 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import mil.nga.giat.mage.R;
+import mil.nga.giat.mage.sdk.datastore.user.Event;
 import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
 
 /**
@@ -25,7 +26,10 @@ public class EventBannerFragment extends Fragment {
 		View rootView = inflater.inflate(R.layout.event_header, container, false);
 
 		TextView eventTextView = (TextView)rootView.findViewById(R.id.event_header_text);
-		eventTextView.setText(EventHelper.getInstance(getActivity().getApplicationContext()).getCurrentEvent().getName());
+		Event currentEvent = EventHelper.getInstance(getActivity().getApplicationContext()).getCurrentEvent();
+		if(currentEvent != null) {
+			eventTextView.setText(currentEvent.getName());
+		}
 
 		return rootView;
 	}
