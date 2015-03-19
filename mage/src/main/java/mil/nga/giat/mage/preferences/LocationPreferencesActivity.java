@@ -4,7 +4,6 @@ import mil.nga.giat.mage.R;
 import android.app.ActionBar;
 import android.app.Activity;
 import android.content.SharedPreferences;
-import android.content.SharedPreferences.Editor;
 import android.os.Bundle;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
@@ -15,16 +14,20 @@ import android.widget.Switch;
 
 public class LocationPreferencesActivity extends PreferenceActivity {
 
-    LocationPreferenceFragment preference = new LocationPreferenceFragment();
+	private final LocationPreferenceFragment preference = new LocationPreferenceFragment();
 
     public static class LocationPreferenceFragment extends PreferenceFragmentSummary implements CompoundButton.OnCheckedChangeListener {
 
-        private Switch locationSwitch;
+		private Switch locationSwitch;
+
+		public LocationPreferenceFragment() {
+			Bundle bundle = new Bundle();
+			bundle.putInt(PreferenceFragmentSummary.xmlResourceClassKey, R.xml.locationpreferences);
+			setArguments(bundle);
+		}
 
         public void onCreate(final Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
-
-            addPreferencesFromResource(R.xml.locationpreferences);
 
             PreferenceManager.getDefaultSharedPreferences(getActivity()).registerOnSharedPreferenceChangeListener(this);
 
@@ -37,13 +40,12 @@ public class LocationPreferencesActivity extends PreferenceActivity {
                     new ActionBar.LayoutParams(ActionBar.LayoutParams.WRAP_CONTENT, 
                             ActionBar.LayoutParams.WRAP_CONTENT, 
                             Gravity.CENTER_VERTICAL | Gravity.RIGHT));
-            
-            updateSettings();
         }
         
         @Override
         public void onResume() {
             super.onResume();
+			updateEnabled();
             locationSwitch.setOnCheckedChangeListener(this);
         }
 
@@ -55,22 +57,19 @@ public class LocationPreferencesActivity extends PreferenceActivity {
 
         @Override
         public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-            Editor editor = PreferenceManager.getDefaultSharedPreferences(getActivity()).edit();
-            editor.putBoolean(getResources().getString(R.string.locationServiceEnabledKey), isChecked).commit();
-
-            updateSettings();
+			PreferenceManager.getDefaultSharedPreferences(getActivity()).edit().putBoolean(getResources().getString(R.string.locationServiceEnabledKey), isChecked).commit();
+			updateEnabled();
         }
         
-        protected void updateSettings() {
+        protected void updateEnabled() {
             SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
-            boolean locationServiceEnabled = preferences.getBoolean(getResources().getString(R.string.locationServiceEnabledKey), false);
+            boolean locationServiceEnabled = preferences.getBoolean(getString(R.string.locationServiceEnabledKey), getResources().getBoolean(R.bool.locationServiceEnabledDefaultValue));
             locationSwitch.setChecked(locationServiceEnabled);
 
             int count = getPreferenceScreen().getPreferenceCount();
             for (int i = 0; i < count; ++i) {
                 Preference pref = getPreferenceScreen().getPreference(i);
                 pref.setEnabled(locationServiceEnabled);
-                setSummary(getPreferenceScreen().getPreference(i));
             }
         }
     }

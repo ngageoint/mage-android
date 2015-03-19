@@ -2,6 +2,9 @@ package mil.nga.giat.mage.preferences;
 
 import java.util.Iterator;
 
+import mil.nga.giat.mage.map.preference.OverlayPreference;
+import mil.nga.giat.mage.sdk.preferences.IntegerListPreference;
+import mil.nga.giat.mage.sdk.preferences.IntegerListValuePreference;
 import mil.nga.giat.mage.sdk.preferences.ListValuePreference;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
@@ -11,8 +14,14 @@ import android.preference.MultiSelectListPreference;
 import android.preference.Preference;
 import android.preference.PreferenceCategory;
 import android.preference.PreferenceFragment;
+import android.preference.PreferenceScreen;
+import android.util.Log;
 
-public class PreferenceFragmentSummary extends PreferenceFragment implements OnSharedPreferenceChangeListener {
+public abstract class PreferenceFragmentSummary extends PreferenceFragment implements OnSharedPreferenceChangeListener {
+
+	private static final String LOG_NAME = PreferenceFragmentSummary.class.getName();
+
+	public final static String xmlResourceClassKey = "xmlResourceClass";
 
     public void setSummary(Preference preference) {
         if (preference instanceof PreferenceCategory) {
@@ -26,7 +35,13 @@ public class PreferenceFragmentSummary extends PreferenceFragment implements OnS
         } else if (preference instanceof ListPreference) {
             ListPreference p = (ListPreference) preference;
             p.setSummary(p.getEntry());
-        } else if (preference instanceof EditTextPreference) {
+		} else if (preference instanceof IntegerListValuePreference) {
+			IntegerListValuePreference p = (IntegerListValuePreference) preference;
+			p.setListValue(p.getEntry());
+		} else if (preference instanceof IntegerListPreference) {
+			IntegerListPreference p = (IntegerListPreference) preference;
+			p.setSummary(p.getEntry());
+		} else if (preference instanceof EditTextPreference) {
             EditTextPreference p = (EditTextPreference) preference;
             p.setSummary(p.getText());
         } else if (preference instanceof MultiSelectListPreference) {
@@ -43,13 +58,36 @@ public class PreferenceFragmentSummary extends PreferenceFragment implements OnS
                     summary.append("\n");
             }
             p.setSummary(summary);
-        }
+		} else if (preference instanceof OverlayPreference) {
+			OverlayPreference p = (OverlayPreference) preference;
+			StringBuffer summary = new StringBuffer();
+			Iterator<String> iterator = p.getValues().iterator();
+			while (iterator.hasNext()) {
+				String value = iterator.next();
+				summary.append(value);
+
+				if (iterator.hasNext())
+					summary.append("\n");
+			}
+			p.setSummary(summary);
+		} else if(preference != null) {
+			Log.d(LOG_NAME, "Not setting preference summary for " + preference + " preference.");
+		}
     }
 
     @Override
     public void onResume() {
         super.onResume();
-        getPreferenceScreen().getSharedPreferences().registerOnSharedPreferenceChangeListener(this);
+		PreferenceScreen preferenceScreen = getPreferenceScreen();
+		if(preferenceScreen != null) {
+			preferenceScreen.removeAll();
+		}
+		addPreferencesFromResource(getArguments().getInt(xmlResourceClassKey));
+		getPreferenceScreen().getSharedPreferences().registerOnSharedPreferenceChangeListener(this);
+
+		for (int i = 0; i < getPreferenceScreen().getPreferenceCount(); i++) {
+			setSummary(getPreferenceScreen().getPreference(i));
+		}
     }
 
     @Override

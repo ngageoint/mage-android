@@ -15,7 +15,7 @@ import mil.nga.giat.mage.map.MapFragment;
 import mil.nga.giat.mage.navigation.DrawerItem;
 import mil.nga.giat.mage.newsfeed.ObservationFeedFragment;
 import mil.nga.giat.mage.newsfeed.PeopleFeedFragment;
-import mil.nga.giat.mage.preferences.PublicPreferencesFragment;
+import mil.nga.giat.mage.preferences.GeneralPreferencesFragment;
 import mil.nga.giat.mage.profile.MyProfileFragment;
 import mil.nga.giat.mage.sdk.datastore.DaoStore;
 import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
@@ -86,7 +86,7 @@ public class LandingActivity extends Activity implements ListView.OnItemClickLis
 			drawerItems.add(new DrawerItem.Builder("Events").id(id++).drawableId(R.drawable.ic_events_white).fragment(new EventFragment()).build());
 		}
 		drawerItems.add(new DrawerItem.Builder("My Profile").id(id++).drawableId(R.drawable.ic_fa_user).fragment(new MyProfileFragment()).build());
-		drawerItems.add(new DrawerItem.Builder("Settings").id(id++).secondary(true).fragment(new PublicPreferencesFragment()).build());
+		drawerItems.add(new DrawerItem.Builder("Settings").id(id++).secondary(true).fragment(new GeneralPreferencesFragment()).build());
 		drawerItems.add(new DrawerItem.Builder("Status").id(id++).secondary(true).fragment(new StatusFragment()).build());
 		drawerItems.add(new DrawerItem.Builder("Help").id(id++).secondary(true).fragment(new HelpFragment()).build());
 		drawerItems.add(logoutItem);
