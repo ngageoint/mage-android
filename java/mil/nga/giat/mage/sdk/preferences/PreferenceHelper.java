@@ -36,7 +36,7 @@ import android.util.Log;
  * @author wiedemanns
  * 
  */
-public class PreferenceHelper {
+public class PreferenceHelper implements SharedPreferences.OnSharedPreferenceChangeListener {
 
 	private static final String LOG_NAME = PreferenceHelper.class.getName();
 	
@@ -95,6 +95,7 @@ public class PreferenceHelper {
 			Log.e(LOG_NAME , "Problem storing build version.", nnfe);
 		}
 		logKeyValuePairs();
+		sharedPreferences.registerOnSharedPreferenceChangeListener(this);
 	}
 
 	public void logKeyValuePairs() {
@@ -117,6 +118,14 @@ public class PreferenceHelper {
 
 	public synchronized void readRemoteApi(URL serverURL, Predicate<Exception> callback) {
         new RemotePreferenceColonizationApi(callback).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, serverURL);
+	}
+
+	@Override
+	public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+		Map<String, ?> sharedPreferenceMap = sharedPreferences.getAll();
+		Object value = sharedPreferenceMap.get(key);
+		String valueType = (value == null) ? null : value.getClass().getName();
+		Log.d(LOG_NAME, "SharedPreferences changed. Now contains (key, value, type): (" + String.valueOf(key) + ", " + String.valueOf(value) + ", " + String.valueOf(valueType) + ")");
 	}
 
 	private class RemotePreferenceColonizationApi extends AsyncTask<URL, Void, Exception> {
@@ -162,19 +171,32 @@ public class PreferenceHelper {
 						String keyString = sharedPreferenceName + Character.toUpperCase(key.charAt(0)) + ((key.length() > 1) ? key.substring(1) : "");
 						Log.i(LOG_NAME, keyString + " is " + String.valueOf(sharedPreferences.getAll().get(keyString)) + ".  Setting it to " + String.valueOf(value) + ".");
 
-						try {
-							Integer intValue = Integer.valueOf(value.toString());
-							editor.putInt(keyString, intValue).commit();
-						} catch(Exception e) {
-							if (value.toString().trim().equalsIgnoreCase("true") || value.toString().trim().equalsIgnoreCase("false")) {
-								Boolean boolValue = Boolean.valueOf(value.toString());
-								editor.putBoolean(keyString, boolValue).commit();
+						if(value instanceof Number) {
+							if(value instanceof Long) {
+								editor.putLong(keyString, (Long)value).commit();
+							} else if(value instanceof Float) {
+								editor.putFloat(keyString, (Float)value).commit();
+							} else if(value instanceof Double) {
+								editor.putFloat(keyString, ((Double)value).floatValue()).commit();
+							} else if(value instanceof Integer) {
+								editor.putInt(keyString, (Integer)value).commit();
+							} else if(value instanceof Short) {
+								editor.putInt(keyString, ((Short)value).intValue()).commit();
 							} else {
-								try {
-									editor.putString(keyString, value.toString()).commit();
-								} catch(Exception e1) {
-									Log.e(LOG_NAME, "Can not determine what type of value " + value.toString() + " is.  Skipping this key, value pair.");
-								}
+								Log.e(LOG_NAME, keyString + " with value " + String.valueOf(value) + " is not of valid number type. Skipping this key-value pair.");
+							}
+						} else if(value instanceof Boolean) {
+							editor.putBoolean(keyString, (Boolean)value).commit();
+						} else if(value instanceof String) {
+							editor.putString(keyString, (String)value).commit();
+						} else if(value instanceof Character) {
+							editor.putString(keyString, Character.toString((Character)value)).commit();
+						} else {
+							// don't know what type this is, just use toString
+							try {
+								editor.putString(keyString, value.toString()).commit();
+							} catch(Exception e) {
+								Log.e(LOG_NAME, keyString + " with value " + String.valueOf(value) + " is not of valid type. Skipping this key-value pair.");
 							}
 						}
 					}
