@@ -136,8 +136,15 @@ public class ObservationEditActivity extends Activity {
 
 		JsonObject dynamicFormJson = null;
 		if (observationId == NEW_OBSERVATION) {
+			o = new Observation();
 			dynamicFormJson = EventHelper.getInstance(getApplicationContext()).getCurrentEvent().getForm();
 		} else {
+			try {
+				o = ObservationHelper.getInstance(getApplicationContext()).read(getIntent().getLongExtra(OBSERVATION_ID, 0L));
+			} catch (ObservationException oe) {
+				Log.e(LOG_NAME, "Problem reading observation.", oe);
+				return;
+			}
 			dynamicFormJson = o.getEvent().getForm();
 		}
 
@@ -194,7 +201,6 @@ public class ObservationEditActivity extends Activity {
 			this.setTitle("Create New Observation");
 			l = getIntent().getParcelableExtra(LOCATION);
 
-			o = new Observation();
             o.setEvent(EventHelper.getInstance(getApplicationContext()).getCurrentEvent());
 			o.setTimestamp(new Date());
 			List<ObservationProperty> properties = new ArrayList<ObservationProperty>();
@@ -221,32 +227,27 @@ public class ObservationEditActivity extends Activity {
 		} else {
 			this.setTitle("Edit Observation");
 			// this is an edit of an existing observation
-			try {
-				o = ObservationHelper.getInstance(getApplicationContext()).read(getIntent().getLongExtra(OBSERVATION_ID, 0L));
-				attachments.addAll(o.getAttachments());
-				for (Attachment a : attachments) {
-					addAttachmentToGallery(a);
-				}
-
-				Map<String, ObservationProperty> propertiesMap = o.getPropertiesMap();
-				Geometry geo = o.getGeometry();
-				if (geo instanceof Point) {
-					Point point = (Point) geo;
-					String provider = "manual";
-					if (propertiesMap.get("provider") != null) {
-						provider = propertiesMap.get("provider").getValue().toString();
-					}
-					l = new Location(provider);
-					if (propertiesMap.containsKey("accuracy")) {
-						l.setAccuracy(Float.parseFloat(propertiesMap.get("accuracy").getValue().toString()));
-					}
-					l.setLatitude(point.getY());
-					l.setLongitude(point.getX());
-				}
-				LayoutBaker.populateLayoutFromMap((LinearLayout) findViewById(R.id.form), propertiesMap);
-			} catch (ObservationException oe) {
-				Log.e(LOG_NAME, "Problem reading observation.");
+			attachments.addAll(o.getAttachments());
+			for (Attachment a : attachments) {
+				addAttachmentToGallery(a);
 			}
+
+			Map<String, ObservationProperty> propertiesMap = o.getPropertiesMap();
+			Geometry geo = o.getGeometry();
+			if (geo instanceof Point) {
+				Point point = (Point) geo;
+				String provider = "manual";
+				if (propertiesMap.get("provider") != null) {
+					provider = propertiesMap.get("provider").getValue().toString();
+				}
+				l = new Location(provider);
+				if (propertiesMap.containsKey("accuracy")) {
+					l.setAccuracy(Float.parseFloat(propertiesMap.get("accuracy").getValue().toString()));
+				}
+				l.setLatitude(point.getY());
+				l.setLongitude(point.getX());
+			}
+			LayoutBaker.populateLayoutFromMap((LinearLayout) findViewById(R.id.form), propertiesMap);
 		}
 		
 		findViewById(R.id.date_edit).setOnClickListener(new View.OnClickListener() {

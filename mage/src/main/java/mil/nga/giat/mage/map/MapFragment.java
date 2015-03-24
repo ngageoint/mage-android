@@ -233,6 +233,7 @@ public class MapFragment extends Fragment implements OnMapClickListener, OnMapLo
 		map.setOnMyLocationButtonClickListener(this);
 		map.setOnInfoWindowClickListener(this);
 
+		// zoom to map location
 		updateMapView();
 
 		if (staticGeometryCollection == null) {
@@ -337,19 +338,6 @@ public class MapFragment extends Fragment implements OnMapClickListener, OnMapLo
 			}
 
 		});
-
-		// zoom to location if told to
-		Float zoomLat = preferences.getFloat(getResources().getString(R.string.mapZoomLatKey), Float.MAX_VALUE);
-		Float zoomLon = preferences.getFloat(getResources().getString(R.string.mapZoomLonKey), Float.MAX_VALUE);
-		if (zoomLat != null && zoomLon != null && !zoomLat.equals(Float.MAX_VALUE) && !zoomLon.equals(Float.MAX_VALUE)) {
-			Editor e = preferences.edit();
-			e.putFloat(getResources().getString(R.string.mapZoomLatKey), Float.MAX_VALUE).commit();
-			e.putFloat(getResources().getString(R.string.mapZoomLonKey), Float.MAX_VALUE).commit();
-			android.location.Location tl = new android.location.Location("");
-			tl.setLatitude(zoomLat.doubleValue());
-			tl.setLongitude(zoomLon.doubleValue());
-			zoomToLocation(tl);
-		}
 	}
 
 	@Override
@@ -631,15 +619,6 @@ public class MapFragment extends Fragment implements OnMapClickListener, OnMapLo
 		return true;
 	}
 
-	private boolean zoomToLocation(Location pLocation) {
-		if (pLocation != null) {
-			LatLng latLng = new LatLng(pLocation.getLatitude(), pLocation.getLongitude());
-			float zoom = map.getCameraPosition().zoom < 15 ? 15 : map.getCameraPosition().zoom;
-			map.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, zoom));
-		}
-		return true;
-	}
-
 	@Override
 	public void activate(OnLocationChangedListener listener) {
 		Log.i(LOG_NAME, "map location, activate");
@@ -694,7 +673,7 @@ public class MapFragment extends Fragment implements OnMapClickListener, OnMapLo
 
 	@Override
 	public void onCacheOverlay(List<CacheOverlay> cacheOverlays) {
-		Set<String> overlays = preferences.getStringSet(getResources().getString(R.string.mapTileOverlaysKey), Collections.<String> emptySet());
+		Set<String> overlays = preferences.getStringSet(getResources().getString(R.string.tileOverlaysKey), Collections.<String> emptySet());
 
 		// Add all overlays that are in the preferences
 		// For now there is no ordering in how tile overlays are stacked
@@ -733,7 +712,7 @@ public class MapFragment extends Fragment implements OnMapClickListener, OnMapLo
 	}
 
 	private void removeStaticFeatureLayers() {
-		Set<String> selectedLayerIds = preferences.getStringSet(getResources().getString(R.string.mapFeatureOverlaysKey), Collections.<String> emptySet());
+		Set<String> selectedLayerIds = preferences.getStringSet(getResources().getString(R.string.staticFeatureLayersKey), Collections.<String> emptySet());
 
 		for (String currentLayerId : staticGeometryCollection.getLayers()) {
 			if (!selectedLayerIds.contains(currentLayerId)) {
@@ -754,7 +733,7 @@ public class MapFragment extends Fragment implements OnMapClickListener, OnMapLo
 	}
 
 	private void onStaticFeatureLayer(Layer layer) {
-		Set<String> layers = PreferenceManager.getDefaultSharedPreferences(getActivity().getApplicationContext()).getStringSet(getResources().getString(R.string.mapFeatureOverlaysKey), Collections.<String> emptySet());
+		Set<String> layers = PreferenceManager.getDefaultSharedPreferences(getActivity().getApplicationContext()).getStringSet(getString(R.string.staticFeatureLayersKey), Collections.<String> emptySet());
 
 		// The user has asked for this feature layer
 		String layerId = layer.getId().toString();
@@ -768,11 +747,25 @@ public class MapFragment extends Fragment implements OnMapClickListener, OnMapLo
 		map.setMapType(preferences.getInt(getString(R.string.baseLayerKey), getResources().getInteger(R.integer.baseLayerDefaultValue)));
 
 		// Check the map location and zoom
-		String xyz = preferences.getString(getResources().getString(R.string.mapXYZKey), null);
+		String xyz = preferences.getString(getString(R.string.recentMapXYZKey), getString(R.string.recentMapXYZDefaultValue));
 		if (xyz != null) {
 			String[] values = StringUtils.split(xyz, ",");
-			LatLng latLng = new LatLng(Double.valueOf(values[1]), Double.valueOf(values[0]));
-			Float zoom = Float.valueOf(values[2]);
+			LatLng latLng = new LatLng(0.0, 0.0);
+			if(values.length > 1) {
+				try {
+					latLng = new LatLng(Double.valueOf(values[1]), Double.valueOf(values[0]));
+				} catch (NumberFormatException nfe) {
+					Log.e(LOG_NAME, "Could not parse lon,lat: " + String.valueOf(values[1]) + ", " + String.valueOf(values[0]));
+				}
+			}
+			float zoom = 1.0f;
+			if(values.length > 2) {
+				try {
+					zoom = Float.valueOf(values[2]);
+				} catch (NumberFormatException nfe) {
+					Log.e(LOG_NAME, "Could not parse zoom level: " + String.valueOf(values[2]));
+				}
+			}
 			map.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, zoom));
 		}
 	}
@@ -781,8 +774,7 @@ public class MapFragment extends Fragment implements OnMapClickListener, OnMapLo
 		CameraPosition position = map.getCameraPosition();
 
 		String xyz = new StringBuilder().append(Double.valueOf(position.target.longitude).toString()).append(",").append(Double.valueOf(position.target.latitude).toString()).append(",").append(Float.valueOf(position.zoom).toString()).toString();
-
-		preferences.edit().putString(getResources().getString(R.string.mapXYZKey), xyz).commit();
+		preferences.edit().putString(getResources().getString(R.string.recentMapXYZKey), xyz).commit();
 	}
 
 	private void search(View v) {

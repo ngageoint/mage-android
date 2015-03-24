@@ -90,7 +90,7 @@ public class FeatureOverlayPreferenceActivity extends ListActivity implements IL
 
                 // Set what should be checked based on preferences.
                 SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(FeatureOverlayPreferenceActivity.this);
-                Set<String> overlays = preferences.getStringSet(getResources().getString(R.string.mapFeatureOverlaysKey), Collections.<String> emptySet());
+                Set<String> overlays = preferences.getStringSet(getResources().getString(R.string.staticFeatureLayersKey), Collections.<String> emptySet());
                 for (int i = 0; i < listView.getCount(); i++) {
                     Layer layer = (Layer) listView.getItemAtPosition(i);
                     if (overlays.contains(layer.getId().toString())) {
@@ -124,10 +124,9 @@ public class FeatureOverlayPreferenceActivity extends ListActivity implements IL
 				Layer l = overlayAdapter.getItem(i);
 
 				if (l != null) {
-					l.setLoaded(true);
 					overlayAdapter.notifyDataSetChanged();
 				} else {
-					Log.i(LOG_NAME, "static layer " + layer.getName() + ":" + layer.getId() + " is not available, adapter size is: " + overlayAdapter.getCount());
+					Log.d(LOG_NAME, "Static layer " + layer.getName() + ":" + layer.getId() + " is not available, adapter size is: " + overlayAdapter.getCount());
 				}
 			}
 		});

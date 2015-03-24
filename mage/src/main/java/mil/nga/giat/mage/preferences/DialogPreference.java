@@ -17,6 +17,11 @@ public class DialogPreference extends MultiSelectListPreference {
 	}
 
 	@Override
+	protected void onClick() {
+		// Don't let users click the actual preference to changed the switch state
+	}
+
+	@Override
 	protected void onDialogClosed(boolean positiveResult) {
 		super.onDialogClosed(positiveResult);
 		

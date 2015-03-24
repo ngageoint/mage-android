@@ -32,8 +32,8 @@
             android:defaultValue="@integer/imageUploadSizeDefaultValue"
             android:entries="@array/imageUploadSize"
             android:entryValues="@array/imageUploadSizeValues"
-            android:summary="Automatically scale down the images you upload"
             android:key="@string/imageUploadSizeKey"
+            android:summary="Automatically scale down the images you upload"
             android:title="Image Upload Size"/>
     </PreferenceCategory>
     <PreferenceCategory
@@ -56,6 +56,20 @@
             android:key="@string/buildVersionKey"
             android:selectable="false"
             android:title="MAGE App Version"/>
+    </PreferenceCategory>
+    <PreferenceCategory
+        android:title="ADMIN">
+        <mil.nga.giat.mage.preferences.DialogPreference
+            android:key="@string/clearDataKey"
+            android:defaultValue="@array/empty_array"
+            android:entries="@array/clearDataEntries"
+            android:entryValues="@array/clearDataValues"
+            android:title="Clear Data">
+            <intent
+                android:action="android.intent.action.VIEW"
+                android:targetClass="mil.nga.giat.mage.preferences.ClearDataPreferenceActivity"
+                android:targetPackage="mil.nga.giat.mage"/>
+            </mil.nga.giat.mage.preferences.DialogPreference>
     </PreferenceCategory>
 
 </PreferenceScreen>

@@ -1,32 +1,9 @@
 package mil.nga.giat.mage;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
-import mil.nga.giat.mage.event.EventFragment;
-import mil.nga.giat.mage.help.HelpFragment;
-import mil.nga.giat.mage.login.AlertBannerFragment;
-import mil.nga.giat.mage.login.LoginActivity;
-import mil.nga.giat.mage.map.MapFragment;
-import mil.nga.giat.mage.navigation.DrawerItem;
-import mil.nga.giat.mage.newsfeed.ObservationFeedFragment;
-import mil.nga.giat.mage.newsfeed.PeopleFeedFragment;
-import mil.nga.giat.mage.preferences.GeneralPreferencesFragment;
-import mil.nga.giat.mage.profile.MyProfileFragment;
-import mil.nga.giat.mage.sdk.datastore.DaoStore;
-import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
-import mil.nga.giat.mage.sdk.utils.MediaUtility;
-import mil.nga.giat.mage.status.StatusFragment;
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.app.Fragment;
 import android.app.FragmentManager;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.os.Bundle;
@@ -48,6 +25,24 @@ import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.RadioGroup;
 import android.widget.TextView;
+
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
+
+import mil.nga.giat.mage.event.EventFragment;
+import mil.nga.giat.mage.help.HelpFragment;
+import mil.nga.giat.mage.login.AlertBannerFragment;
+import mil.nga.giat.mage.login.LoginActivity;
+import mil.nga.giat.mage.map.MapFragment;
+import mil.nga.giat.mage.navigation.DrawerItem;
+import mil.nga.giat.mage.newsfeed.ObservationFeedFragment;
+import mil.nga.giat.mage.newsfeed.PeopleFeedFragment;
+import mil.nga.giat.mage.preferences.GeneralPreferencesFragment;
+import mil.nga.giat.mage.profile.MyProfileFragment;
+import mil.nga.giat.mage.sdk.datastore.DaoStore;
+import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
+import mil.nga.giat.mage.sdk.utils.MediaUtility;
 
 /**
  * This is the Activity that holds other fragments. Map, feeds, etc. It 
@@ -87,7 +82,6 @@ public class LandingActivity extends Activity implements ListView.OnItemClickLis
 		}
 		drawerItems.add(new DrawerItem.Builder("My Profile").id(id++).drawableId(R.drawable.ic_fa_user).fragment(new MyProfileFragment()).build());
 		drawerItems.add(new DrawerItem.Builder("Settings").id(id++).secondary(true).fragment(new GeneralPreferencesFragment()).build());
-		drawerItems.add(new DrawerItem.Builder("Status").id(id++).secondary(true).fragment(new StatusFragment()).build());
 		drawerItems.add(new DrawerItem.Builder("Help").id(id++).secondary(true).fragment(new HelpFragment()).build());
 		drawerItems.add(logoutItem);
 
@@ -298,74 +292,6 @@ public class LandingActivity extends Activity implements ListView.OnItemClickLis
         drawerList.setItemChecked(position, true);
         drawerLayout.closeDrawer(drawerList);
     }
-
-	public void deleteDataDialog(final View view) {
-
-		final String[] items = { "Database", "Preferences", "Attachments", "App Filesystem" };
-		final boolean[] defaultItems = new boolean[items.length];
-		Arrays.fill(defaultItems, true);
-		// arraylist to keep the selected items
-		final Set<Integer> seletedItems = new HashSet<Integer>();
-		for (int i = 0; i < items.length; i++) {
-			seletedItems.add(i);
-		}
-
-		new AlertDialog.Builder(view.getContext()).setTitle("Delete All Data").setMultiChoiceItems(items, defaultItems, new DialogInterface.OnMultiChoiceClickListener() {
-			@Override
-			public void onClick(DialogInterface dialog, int indexSelected, boolean isChecked) {
-				if (isChecked) {
-					seletedItems.add(indexSelected);
-					if (indexSelected == 0 || indexSelected == 3) {
-						((AlertDialog) dialog).getListView().setItemChecked(1, true);
-						seletedItems.add(1);
-					}
-				} else if (seletedItems.contains(indexSelected)) {
-					if (indexSelected == 1) {
-						if (seletedItems.contains(0) || seletedItems.contains(3)) {
-							((AlertDialog) dialog).getListView().setItemChecked(1, true);
-							return;
-						}
-					}
-					seletedItems.remove(Integer.valueOf(indexSelected));
-				}
-			}
-		}).setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
-			public void onClick(DialogInterface dialog, int which) {
-				// stop doing stuff
-				((MAGE) getApplication()).onLogout(false);
-
-				if (seletedItems.contains(0)) {
-					// delete database
-					DaoStore.getInstance(view.getContext()).resetDatabase();
-				}
-
-				if (seletedItems.contains(1)) {
-					// clear preferences
-					PreferenceManager.getDefaultSharedPreferences(view.getContext()).edit().clear().commit();
-				}
-
-				if (seletedItems.contains(2)) {
-					// delete attachments
-					deleteDir(MediaUtility.getMediaStageDirectory());
-				}
-
-				if (seletedItems.contains(3)) {
-					// delete the application contents on the filesystem
-					clearApplicationData(getApplicationContext());
-				}
-
-				// go to login activity
-                startActivity(new Intent(getApplicationContext(), LoginActivity.class));
-                
-				// finish the activity
-				finish();
-			}
-		}).setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
-			public void onClick(DialogInterface dialog, int which) {
-				dialog.dismiss();
-			}
-		}).show();
-	}
 	
 	public static void deleteAllData(Context context) {
 		DaoStore.getInstance(context).resetDatabase();
@@ -374,7 +300,7 @@ public class LandingActivity extends Activity implements ListView.OnItemClickLis
 		clearApplicationData(context);
 	}
 
-	private static void clearApplicationData(Context context) {
+	public static void clearApplicationData(Context context) {
 		File cache = context.getCacheDir();
 		File appDir = new File(cache.getParent());
 		if (appDir.exists()) {
@@ -389,7 +315,7 @@ public class LandingActivity extends Activity implements ListView.OnItemClickLis
 		}
 	}
 
-	private static boolean deleteDir(File dir) {
+	public static boolean deleteDir(File dir) {
 		if (dir != null && dir.isDirectory()) {
 			String[] children = dir.list();
 			for (String kid : children) {

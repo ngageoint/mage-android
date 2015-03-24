@@ -5,7 +5,7 @@
     android:versionName="4.0.0">
 
     <uses-sdk
-        android:minSdkVersion="14"
+        android:minSdkVersion="16"
         android:targetSdkVersion="19" />
 
     <permission
@@ -105,6 +105,18 @@
                 android:value="mil.nga.giat.mage.preferences.GeneralPreferencesFragment" />
         </activity>
         <activity
+            android:name="mil.nga.giat.mage.preferences.ClearDataPreferenceActivity"
+            android:icon="@drawable/ic_settings_white"
+            android:label="Clear Data"
+            android:uiOptions="splitActionBarWhenNarrow"
+            android:parentActivityName="mil.nga.giat.mage.preferences.GeneralPreferencesFragment" >
+
+            <!-- Parent activity meta-data to support 4.0 and lower -->
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="mil.nga.giat.mage.preferences.GeneralPreferencesFragment" />
+        </activity>
+        <activity
             android:name="mil.nga.giat.mage.map.preference.MapPreferencesActivity"
             android:icon="@drawable/ic_map_white"
             android:label="@string/map_settings"
@@ -118,7 +130,7 @@
         <activity
             android:name="mil.nga.giat.mage.map.preference.TileOverlayPreferenceActivity"
             android:icon="@drawable/ic_map_white"
-            android:label="@string/overlay_settings"
+            android:label="Overlay Maps"
             android:launchMode="singleTop"
             android:parentActivityName="mil.nga.giat.mage.map.preference.MapPreferencesActivity"
             android:theme="@style/AppBaseTheme.ActionBar.OverlayMap"
@@ -132,7 +144,7 @@
         <activity
             android:name="mil.nga.giat.mage.map.preference.FeatureOverlayPreferenceActivity"
             android:icon="@drawable/ic_map_white"
-            android:label="@string/feature_overlay_settings"
+            android:label="Feature Overlays"
             android:launchMode="singleTop"
             android:parentActivityName="mil.nga.giat.mage.map.preference.MapPreferencesActivity"
             android:theme="@style/AppBaseTheme.ActionBar.OverlayMap"

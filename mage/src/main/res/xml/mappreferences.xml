@@ -11,7 +11,7 @@
             android:title="Base Layer"/>
 
         <mil.nga.giat.mage.map.preference.OverlayPreference
-            android:key="@string/mapTileOverlaysKey"
+            android:key="@string/tileOverlaysKey"
             android:title="Overlay Maps"/>
     </PreferenceCategory>
     <PreferenceCategory android:title="OBSERVATIONS">
@@ -35,7 +35,7 @@
     </PreferenceCategory>
     <PreferenceCategory android:title="STATIC FEATURES">
         <mil.nga.giat.mage.map.preference.OverlayPreference
-            android:key="@string/mapFeatureOverlaysKey"
+            android:key="@string/staticFeatureLayersKey"
             android:title="Feature Overlays"/>
     </PreferenceCategory>
 

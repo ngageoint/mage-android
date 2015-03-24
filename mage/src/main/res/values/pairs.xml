@@ -37,12 +37,15 @@
 
     <!-- ************************************************************* -->
 
+    <string name="recentMapXYZKey">recentMapXYZ</string>
+    <string name="recentMapXYZDefaultValue">263.0,40.0,3</string>
+
+
+    <string name="clearDataKey">clearData</string>
+    <string name="tileOverlaysKey">tileOverlays</string>
+    <string name="staticFeatureLayersKey">staticFeatureLayers</string>
+
     <!-- FIXME: what is this stuff? why is it in shared prefs? -->
-    <string name="mapXYZKey">mapXYZ</string>
-    <string name="mapTileOverlaysKey">mapTileOverlays</string>
-    <string name="mapFeatureOverlaysKey">mapFeatureOverlays</string>
     <string name="activeTimeFilterKey">activeTimeFilter</string>
-    <string name="mapZoomLatKey">mapZoomLatKey</string>
-    <string name="mapZoomLonKey">mapZoomLonKey</string>
 
 </resources>

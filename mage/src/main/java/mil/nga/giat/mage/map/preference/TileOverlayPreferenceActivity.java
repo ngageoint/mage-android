@@ -69,7 +69,7 @@ public class TileOverlayPreferenceActivity extends ListActivity implements OnCac
         
         // Set what should be checked based on preferences.
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
-        Set<String> overlays = preferences.getStringSet(getResources().getString(R.string.mapTileOverlaysKey), Collections.<String> emptySet());
+        Set<String> overlays = preferences.getStringSet(getString(R.string.tileOverlaysKey), Collections.<String> emptySet());
 
         for (int i = 0; i < listView.getCount(); i++) {
             CacheOverlay tileOverlay = (CacheOverlay) listView.getItemAtPosition(i);

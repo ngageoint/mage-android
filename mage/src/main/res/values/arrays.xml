@@ -15,16 +15,39 @@
         <item>512</item>
         <item>1024</item>
     </integer-array>
-    
+
+    <string-array name="clearDataEntries">
+        <item>Database</item>
+        <item>Preferences</item>
+        <item>Attachments</item>
+        <item>App Filesystem</item>
+    </string-array>
+
+    <string-array name="clearDataValues">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+    </string-array>
+
     <string-array name="profileImageChoices">
         <item>View Profile Photo</item>
         <item>Choose New Photo From Gallery</item>
         <item>Take New Photo</item>
     </string-array>
-    
-    <string-array name="staticFeatureEntries">
+
+    <string-array name="baseLayerEntries">
+        <item>Normal</item>
+        <item>Hyrbid</item>
+        <item>Satellite</item>
+        <item>Terrain</item>
     </string-array>
-    <string-array name="staticFeatureValues">
-    </string-array>
+
+    <integer-array name="baseLayerValues">
+        <item>1</item>
+        <item>4</item>
+        <item>2</item>
+        <item>3</item>
+    </integer-array>
 
 </resources>
