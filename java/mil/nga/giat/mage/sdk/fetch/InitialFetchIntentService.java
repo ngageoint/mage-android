@@ -61,6 +61,7 @@ public class InitialFetchIntentService extends ConnectivityAwareIntentService {
             getUsers();
             getTeams();
             getEvents();
+			// FIXME : we should be able to not make this second request for uesrs
             // now that the client has fetched the events, fetch the users again in order to populate the user's currentEvent.  a chicken in the egg thing
             getUsers();
 
