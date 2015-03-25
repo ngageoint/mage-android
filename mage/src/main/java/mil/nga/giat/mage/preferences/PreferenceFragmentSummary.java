@@ -1,11 +1,5 @@
 package mil.nga.giat.mage.preferences;
 
-import java.util.Iterator;
-
-import mil.nga.giat.mage.map.preference.OverlayPreference;
-import mil.nga.giat.mage.sdk.preferences.IntegerListPreference;
-import mil.nga.giat.mage.sdk.preferences.IntegerListValuePreference;
-import mil.nga.giat.mage.sdk.preferences.ListValuePreference;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.preference.EditTextPreference;
@@ -16,6 +10,13 @@ import android.preference.PreferenceCategory;
 import android.preference.PreferenceFragment;
 import android.preference.PreferenceScreen;
 import android.util.Log;
+
+import java.util.Iterator;
+
+import mil.nga.giat.mage.map.preference.OverlayPreference;
+import mil.nga.giat.mage.sdk.preferences.IntegerListPreference;
+import mil.nga.giat.mage.sdk.preferences.IntegerListValuePreference;
+import mil.nga.giat.mage.sdk.preferences.ListValuePreference;
 
 public abstract class PreferenceFragmentSummary extends PreferenceFragment implements OnSharedPreferenceChangeListener {
 

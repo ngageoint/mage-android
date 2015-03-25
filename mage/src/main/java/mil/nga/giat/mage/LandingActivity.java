@@ -169,9 +169,7 @@ public class LandingActivity extends Activity implements ListView.OnItemClickLis
 					inputMethodManager.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(), 0);
 				}
                 currentTitle = (String) getActionBar().getTitle();
-                if (drawerView.getId() == R.id.left_drawer) {
-                    // anything to do here?
-                } else if (drawerView.getId() == R.id.filter_drawer) {
+                if (drawerView.getId() == R.id.filter_drawer) {
                     getActionBar().setTitle("Filter");
                     RadioGroup rg = (RadioGroup) findViewById(R.id.time_filter_radio_gorup);
                     int checkedFilter = PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).getInt(getResources().getString(R.string.activeTimeFilterKey), R.id.none_rb);
@@ -324,6 +322,9 @@ public class LandingActivity extends Activity implements ListView.OnItemClickLis
 					return false;
 				}
 			}
+		}
+		if(dir == null) {
+			return true;
 		}
 		return dir.delete();
 	}

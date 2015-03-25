@@ -1,10 +1,11 @@
 package mil.nga.giat.mage.profile;
 
-import mil.nga.giat.mage.R;
 import android.app.ActionBar;
 import android.app.Activity;
 import android.os.Bundle;
 import android.view.MenuItem;
+
+import mil.nga.giat.mage.R;
 
 public class ProfileActivity extends Activity {
 

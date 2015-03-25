@@ -1,25 +1,5 @@
 package mil.nga.giat.mage.newsfeed;
 
-import java.sql.SQLException;
-import java.util.Calendar;
-import java.util.Collection;
-import java.util.Date;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
-
-import mil.nga.giat.mage.R;
-import mil.nga.giat.mage.event.EventBannerFragment;
-import mil.nga.giat.mage.profile.MyProfileFragment;
-import mil.nga.giat.mage.profile.ProfileActivity;
-import mil.nga.giat.mage.sdk.datastore.DaoStore;
-import mil.nga.giat.mage.sdk.datastore.location.Location;
-import mil.nga.giat.mage.sdk.datastore.location.LocationHelper;
-import mil.nga.giat.mage.sdk.datastore.user.User;
-import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
-import mil.nga.giat.mage.sdk.event.ILocationEventListener;
-import mil.nga.giat.mage.sdk.exceptions.UserException;
 import android.app.Fragment;
 import android.app.FragmentManager;
 import android.content.Intent;
@@ -46,6 +26,27 @@ import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.stmt.PreparedQuery;
 import com.j256.ormlite.stmt.QueryBuilder;
 import com.j256.ormlite.stmt.Where;
+
+import java.sql.SQLException;
+import java.util.Calendar;
+import java.util.Collection;
+import java.util.Date;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
+
+import mil.nga.giat.mage.R;
+import mil.nga.giat.mage.event.EventBannerFragment;
+import mil.nga.giat.mage.profile.MyProfileFragment;
+import mil.nga.giat.mage.profile.ProfileActivity;
+import mil.nga.giat.mage.sdk.datastore.DaoStore;
+import mil.nga.giat.mage.sdk.datastore.location.Location;
+import mil.nga.giat.mage.sdk.datastore.location.LocationHelper;
+import mil.nga.giat.mage.sdk.datastore.user.User;
+import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
+import mil.nga.giat.mage.sdk.event.ILocationEventListener;
+import mil.nga.giat.mage.sdk.exceptions.UserException;
 
 public class PeopleFeedFragment extends Fragment implements OnSharedPreferenceChangeListener, OnItemClickListener, ILocationEventListener {
 	

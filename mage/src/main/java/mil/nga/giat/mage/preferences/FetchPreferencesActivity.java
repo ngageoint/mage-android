@@ -1,6 +1,5 @@
 package mil.nga.giat.mage.preferences;
 
-import mil.nga.giat.mage.R;
 import android.app.ActionBar;
 import android.app.Activity;
 import android.content.SharedPreferences;
@@ -9,8 +8,11 @@ import android.preference.Preference;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceManager;
 import android.view.Gravity;
+import android.view.MenuItem;
 import android.widget.CompoundButton;
 import android.widget.Switch;
+
+import mil.nga.giat.mage.R;
 
 public class FetchPreferencesActivity extends PreferenceActivity {
 
@@ -36,7 +38,7 @@ public class FetchPreferencesActivity extends PreferenceActivity {
             fetchSwitch = new Switch(activity);
 
             actionbar.setDisplayOptions(ActionBar.DISPLAY_SHOW_CUSTOM, ActionBar.DISPLAY_SHOW_CUSTOM);
-            actionbar.setCustomView(fetchSwitch, 
+            actionbar.setCustomView(fetchSwitch,
                     new ActionBar.LayoutParams(ActionBar.LayoutParams.WRAP_CONTENT, 
                             ActionBar.LayoutParams.WRAP_CONTENT, 
                             Gravity.CENTER_VERTICAL | Gravity.RIGHT));
@@ -80,4 +82,16 @@ public class FetchPreferencesActivity extends PreferenceActivity {
         super.onCreate(savedInstanceState);
         getFragmentManager().beginTransaction().replace(android.R.id.content, preference).commit();
     }
+
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		// Handle presses on the action bar items
+		switch (item.getItemId()) {
+			case android.R.id.home:
+				onBackPressed();
+				return true;
+			default:
+				return super.onOptionsItemSelected(item);
+		}
+	}
 }

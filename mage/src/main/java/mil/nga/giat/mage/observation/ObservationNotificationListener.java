@@ -1,10 +1,5 @@
 package mil.nga.giat.mage.observation;
 
-import mil.nga.giat.mage.LandingActivity;
-import mil.nga.giat.mage.R;
-import mil.nga.giat.mage.sdk.datastore.observation.Observation;
-import mil.nga.giat.mage.sdk.event.IObservationEventListener;
-
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
@@ -14,6 +9,11 @@ import android.preference.PreferenceManager;
 import android.support.v4.app.NotificationManagerCompat;
 
 import java.util.Collection;
+
+import mil.nga.giat.mage.LandingActivity;
+import mil.nga.giat.mage.R;
+import mil.nga.giat.mage.sdk.datastore.observation.Observation;
+import mil.nga.giat.mage.sdk.event.IObservationEventListener;
 
 import static android.support.v4.app.NotificationCompat.Builder;
 

@@ -1,12 +1,5 @@
 package mil.nga.giat.mage.map.marker;
 
-import java.util.Comparator;
-import java.util.Date;
-import java.util.Set;
-
-import mil.nga.giat.mage.sdk.datastore.location.Location;
-import mil.nga.giat.mage.sdk.datastore.location.LocationHelper;
-import mil.nga.giat.mage.sdk.push.LocationPushIntentService;
 import android.content.Context;
 
 import com.google.android.gms.maps.GoogleMap;
@@ -16,6 +9,14 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.common.collect.MinMaxPriorityQueue;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.Point;
+
+import java.util.Comparator;
+import java.util.Date;
+import java.util.Set;
+
+import mil.nga.giat.mage.sdk.datastore.location.Location;
+import mil.nga.giat.mage.sdk.datastore.location.LocationHelper;
+import mil.nga.giat.mage.sdk.push.LocationPushIntentService;
 
 /**
  * Class uses a queue like structure to limit the Collection size. Size determined 

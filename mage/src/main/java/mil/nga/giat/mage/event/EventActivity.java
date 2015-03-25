@@ -15,7 +15,6 @@ import android.view.Window;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -25,6 +24,7 @@ import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.login.LoginActivity;
 import mil.nga.giat.mage.sdk.datastore.user.Event;
 import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
+import mil.nga.giat.mage.sdk.datastore.user.RoleHelper;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.fetch.InitialFetchIntentService;
@@ -64,7 +64,12 @@ public class EventActivity extends Activity implements AccountDelegate {
                     User currentUser = null;
                     try {
                         currentUser = UserHelper.getInstance(getApplicationContext()).readCurrentUser();
-						events = EventHelper.getInstance(getApplicationContext()).getEventsForCurrentUser();
+						if(currentUser.getRole().equals(RoleHelper.getInstance(getApplicationContext()).readAdmin())) {
+							// TODO : now that ADMINS can be part of any event, make sure they don't push data to events they are not part of!!
+							events = EventHelper.getInstance(getApplicationContext()).readAll();
+						} else {
+							events = EventHelper.getInstance(getApplicationContext()).getEventsForCurrentUser();
+						}
                     } catch(Exception e) {
                         Log.e(LOG_NAME, "Could not get current events!");
                     }
@@ -94,10 +99,16 @@ public class EventActivity extends Activity implements AccountDelegate {
                             chosenEvent = userRecentEvent;
                             finishAccount(new AccountStatus(AccountStatus.Status.SUCCESSFUL_LOGIN));
                         } else {
+							List<Event> tempEventsForCurrentUser = EventHelper.getInstance(getApplicationContext()).getEventsForCurrentUser();
                             for (Event e : events) {
                                 RadioButton radioButton = new RadioButton(getApplicationContext());
                                 radioButton.setId(uniqueChildIdIndex++);
-                                radioButton.setText(e.getName());
+								String text = e.getName();
+								if(!tempEventsForCurrentUser.contains(e)) {
+									text += " (admin access)";
+								}
+                                radioButton.setText(text);
+
                                 if(userRecentEvent.getRemoteId().equals(e.getRemoteId())) {
                                     radioButton.setChecked(true);
                                 }
@@ -165,6 +176,11 @@ public class EventActivity extends Activity implements AccountDelegate {
         }
         SharedPreferences.Editor sp = PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).edit();
         sp.putString(getString(R.string.currentEventKey), String.valueOf(chosenEvent.getName())).commit();
+
+		// disable pushing locations
+		if(!UserHelper.getInstance(getApplicationContext()).isCurrentUserPartOfCurrentEvent()) {
+			sp.putBoolean(getString(R.string.reportLocationKey), false).commit();
+		}
 
         // start up the landing activity!
         startActivity(new Intent(getApplicationContext(), LandingActivity.class));

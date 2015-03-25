@@ -49,7 +49,7 @@ public class LayoutBaker {
 	private static final String LOG_NAME = LayoutBaker.class.getName();
 
 	public enum ControlGenerationType {
-		VIEW, EDIT;
+		VIEW, EDIT
 	}
 
 	public static List<View> createControlsFromJson(Context pContext, ControlGenerationType controlGenerationType, JsonObject dynamicFormJson) {

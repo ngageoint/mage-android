@@ -1,6 +1,5 @@
 package mil.nga.giat.mage.help;
 
-import mil.nga.giat.mage.R;
 import android.app.Fragment;
 import android.content.Context;
 import android.os.Bundle;
@@ -10,6 +9,8 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+
+import mil.nga.giat.mage.R;
 
 public class HelpFragment extends Fragment {
 

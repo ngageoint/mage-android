@@ -1,10 +1,11 @@
 package mil.nga.giat.mage.map;
 
+import android.os.AsyncTask;
+
 import mil.nga.giat.mage.filter.Filter;
 import mil.nga.giat.mage.map.marker.PointCollection;
 import mil.nga.giat.mage.sdk.Temporal;
 import mil.nga.giat.mage.sdk.datastore.location.Location;
-import android.os.AsyncTask;
 
 public class LocationTask extends AsyncTask<Location, Location, Void> {
     public enum Type {

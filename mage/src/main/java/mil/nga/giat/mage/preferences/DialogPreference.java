@@ -1,11 +1,12 @@
 package mil.nga.giat.mage.preferences;
 
-import mil.nga.giat.mage.R;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.preference.MultiSelectListPreference;
 import android.util.AttributeSet;
+
+import mil.nga.giat.mage.R;
 
 public class DialogPreference extends MultiSelectListPreference {
 

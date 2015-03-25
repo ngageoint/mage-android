@@ -1,6 +1,5 @@
 package mil.nga.giat.mage.preferences;
 
-import mil.nga.giat.mage.R;
 import android.app.ActionBar;
 import android.app.Activity;
 import android.content.SharedPreferences;
@@ -9,8 +8,12 @@ import android.preference.Preference;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceManager;
 import android.view.Gravity;
+import android.view.MenuItem;
 import android.widget.CompoundButton;
 import android.widget.Switch;
+
+import mil.nga.giat.mage.R;
+import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 
 public class LocationPreferencesActivity extends PreferenceActivity {
 
@@ -29,9 +32,8 @@ public class LocationPreferencesActivity extends PreferenceActivity {
         public void onCreate(final Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
 
-            PreferenceManager.getDefaultSharedPreferences(getActivity()).registerOnSharedPreferenceChangeListener(this);
-
-            Activity activity = getActivity();
+			Activity activity = getActivity();
+            PreferenceManager.getDefaultSharedPreferences(activity).registerOnSharedPreferenceChangeListener(this);
             ActionBar actionbar = activity.getActionBar();
             locationSwitch = new Switch(activity);
 
@@ -45,6 +47,7 @@ public class LocationPreferencesActivity extends PreferenceActivity {
         @Override
         public void onResume() {
             super.onResume();
+
 			updateEnabled();
             locationSwitch.setOnCheckedChangeListener(this);
         }
@@ -71,6 +74,13 @@ public class LocationPreferencesActivity extends PreferenceActivity {
                 Preference pref = getPreferenceScreen().getPreference(i);
                 pref.setEnabled(locationServiceEnabled);
             }
+
+			// ADMIN user?
+			if(!UserHelper.getInstance(getActivity().getApplicationContext()).isCurrentUserPartOfCurrentEvent()) {
+				Preference reportLocationPreference = findPreference(getString(R.string.reportLocationKey));
+				reportLocationPreference.setEnabled(false);
+				reportLocationPreference.setSummary("You are an administrator and not a member of the current event.  You can not report your location in this event.");
+			}
         }
     }
 
@@ -79,4 +89,16 @@ public class LocationPreferencesActivity extends PreferenceActivity {
         super.onCreate(savedInstanceState);
         getFragmentManager().beginTransaction().replace(android.R.id.content, preference).commit();
     }
+
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		// Handle presses on the action bar items
+		switch (item.getItemId()) {
+			case android.R.id.home:
+				onBackPressed();
+				return true;
+			default:
+				return super.onOptionsItemSelected(item);
+		}
+	}
 }

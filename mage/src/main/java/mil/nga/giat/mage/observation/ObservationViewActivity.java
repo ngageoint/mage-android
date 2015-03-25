@@ -2,8 +2,10 @@ package mil.nga.giat.mage.observation;
 
 import android.app.ActionBar;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.Fragment;
 import android.app.FragmentManager;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.graphics.drawable.BitmapDrawable;
@@ -132,11 +134,19 @@ public class ObservationViewActivity extends Activity {
 				this.finish();
 				return true;
 			case R.id.observation_edit:
-				Intent intent = new Intent(this, ObservationEditActivity.class);
-				intent.putExtra(ObservationEditActivity.OBSERVATION_ID, o.getId());
-				intent.putExtra(ObservationViewActivity.INITIAL_LOCATION, miniMap.getCameraPosition().target);
-				intent.putExtra(ObservationViewActivity.INITIAL_ZOOM, miniMap.getCameraPosition().zoom);
-				startActivityForResult(intent, 2);
+				if(!UserHelper.getInstance(getApplicationContext()).isCurrentUserPartOfCurrentEvent()) {
+					new AlertDialog.Builder(this).setTitle("Not a member of this event").setMessage("You are an administrator and not a member of the current event.  You can not edit this observation.").setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+						public void onClick(DialogInterface dialog, int which) {
+						}
+					}).show();
+				} else {
+					Intent intent = new Intent(this, ObservationEditActivity.class);
+					intent.putExtra(ObservationEditActivity.OBSERVATION_ID, o.getId());
+					intent.putExtra(ObservationViewActivity.INITIAL_LOCATION, miniMap.getCameraPosition().target);
+					intent.putExtra(ObservationViewActivity.INITIAL_ZOOM, miniMap.getCameraPosition().zoom);
+					startActivityForResult(intent, 2);
+				}
+
 				return true;
 			default:
 				return super.onOptionsItemSelected(item);
@@ -211,8 +221,7 @@ public class ObservationViewActivity extends Activity {
 
 					@Override
 					public void onObservationCreated(Collection<Observation> observations) {
-						for (Iterator<Observation> i = observations.iterator(); i.hasNext(); ) {
-							Observation observation = i.next();
+						for (Observation observation : observations) {
 							if (observation.getId().equals(o.getId()) && !observation.isDirty()) {
 								ObservationViewActivity.this.runOnUiThread(new Runnable() {
 									@Override

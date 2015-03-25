@@ -1,13 +1,5 @@
 package mil.nga.giat.mage.login;
 
-import mil.nga.giat.mage.R;
-import mil.nga.giat.mage.sdk.connectivity.ConnectivityUtility;
-import mil.nga.giat.mage.sdk.connectivity.NetworkChangeReceiver;
-import mil.nga.giat.mage.sdk.event.IConnectivityEventListener;
-import mil.nga.giat.mage.sdk.event.IUserEventListener;
-import mil.nga.giat.mage.sdk.http.client.HttpClientManager;
-import mil.nga.giat.mage.sdk.utils.UserUtility;
-
 import android.app.Activity;
 import android.app.Fragment;
 import android.content.Intent;
@@ -16,6 +8,14 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+
+import mil.nga.giat.mage.R;
+import mil.nga.giat.mage.sdk.connectivity.ConnectivityUtility;
+import mil.nga.giat.mage.sdk.connectivity.NetworkChangeReceiver;
+import mil.nga.giat.mage.sdk.event.IConnectivityEventListener;
+import mil.nga.giat.mage.sdk.event.IUserEventListener;
+import mil.nga.giat.mage.sdk.http.client.HttpClientManager;
+import mil.nga.giat.mage.sdk.utils.UserUtility;
 
 /**
  * Alert banner at the top of the screen

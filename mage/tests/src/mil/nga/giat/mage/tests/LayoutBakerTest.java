@@ -82,7 +82,7 @@ public class LayoutBakerTest extends ActivityInstrumentationTestCase2<Observatio
 				"    ]\n" +
 				"  }";
 
-		JsonObject dynamicFormJson = new JsonParser().parse(form).getAsJsonObject();;
+		JsonObject dynamicFormJson = new JsonParser().parse(form).getAsJsonObject();
 
 		List<View> controls = LayoutBaker.createControlsFromJson(activity, LayoutBaker.ControlGenerationType.VIEW, dynamicFormJson);
 

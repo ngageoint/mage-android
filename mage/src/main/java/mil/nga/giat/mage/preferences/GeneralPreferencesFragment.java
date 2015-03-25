@@ -1,12 +1,12 @@
 package mil.nga.giat.mage.preferences;
 
-import mil.nga.giat.mage.R;
-
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ListView;
+
+import mil.nga.giat.mage.R;
 
 public class GeneralPreferencesFragment extends PreferenceFragmentSummary {
 
@@ -32,7 +32,7 @@ public class GeneralPreferencesFragment extends PreferenceFragmentSummary {
 
 		return view;
 	}
-//
+
 //	@Override
 //	public void onResume() {
 //		super.onResume();

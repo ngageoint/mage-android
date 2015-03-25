@@ -1,18 +1,5 @@
 package mil.nga.giat.mage.login;
 
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
-
-import mil.nga.giat.mage.R;
-import mil.nga.giat.mage.sdk.connectivity.ConnectivityUtility;
-import mil.nga.giat.mage.sdk.login.AccountDelegate;
-import mil.nga.giat.mage.sdk.login.AccountStatus;
-import mil.nga.giat.mage.sdk.login.SignupTask;
-import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
-
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
@@ -39,6 +26,19 @@ import android.widget.EditText;
 import android.widget.ImageView;
 
 import com.google.common.base.Predicate;
+
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+
+import mil.nga.giat.mage.R;
+import mil.nga.giat.mage.sdk.connectivity.ConnectivityUtility;
+import mil.nga.giat.mage.sdk.login.AccountDelegate;
+import mil.nga.giat.mage.sdk.login.AccountStatus;
+import mil.nga.giat.mage.sdk.login.SignupTask;
+import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
 
 /**
  * The signup screen

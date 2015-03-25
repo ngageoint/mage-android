@@ -1,8 +1,8 @@
 package mil.nga.giat.mage.map;
 
-import mil.nga.giat.mage.map.marker.PointCollection;
 import android.os.AsyncTask;
-import android.util.Log;
+
+import mil.nga.giat.mage.map.marker.PointCollection;
 
 public class RefreshMarkersTask extends AsyncTask<Integer, Void, Void> {
 

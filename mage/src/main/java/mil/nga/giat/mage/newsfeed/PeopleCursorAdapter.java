@@ -73,7 +73,7 @@ public class PeopleCursorAdapter extends CursorAdapter {
 
 			location_date.setText(timeText);
 		} catch (SQLException sqle) {
-			Log.e(LOG_NAME, "Could not set location view informaiton.", sqle);
+			Log.e(LOG_NAME, "Could not set location view information.", sqle);
 		}
 	}
 

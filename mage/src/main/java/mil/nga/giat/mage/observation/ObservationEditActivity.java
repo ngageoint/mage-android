@@ -75,11 +75,11 @@ import mil.nga.giat.mage.form.LayoutBaker.ControlGenerationType;
 import mil.nga.giat.mage.form.MageSpinner;
 import mil.nga.giat.mage.form.MageTextView;
 import mil.nga.giat.mage.map.marker.ObservationBitmapFactory;
-import mil.nga.giat.mage.sdk.datastore.observation.State;
 import mil.nga.giat.mage.sdk.datastore.observation.Attachment;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationProperty;
+import mil.nga.giat.mage.sdk.datastore.observation.State;
 import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
@@ -473,7 +473,7 @@ public class ObservationEditActivity extends Activity {
 				Log.e(LOG_NAME, "Could not parse timestamp", pe);
 			}
 			// Add properties that weren't part of the layout
-			propertyMap.put("accuracy", new ObservationProperty("accuracy", Float.valueOf(l.getAccuracy())));
+			propertyMap.put("accuracy", new ObservationProperty("accuracy", l.getAccuracy()));
 			String provider = l.getProvider();
 			if (provider == null || provider.trim().isEmpty()) {
 				provider = "manual";

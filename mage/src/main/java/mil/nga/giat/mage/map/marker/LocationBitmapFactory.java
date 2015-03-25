@@ -1,9 +1,5 @@
 package mil.nga.giat.mage.map.marker;
 
-import java.io.IOException;
-
-import mil.nga.giat.mage.sdk.datastore.location.Location;
-import mil.nga.giat.mage.sdk.datastore.user.User;
 import android.animation.ArgbEvaluator;
 import android.annotation.TargetApi;
 import android.content.Context;
@@ -21,6 +17,11 @@ import android.util.Log;
 
 import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
+
+import java.io.IOException;
+
+import mil.nga.giat.mage.sdk.datastore.location.Location;
+import mil.nga.giat.mage.sdk.datastore.user.User;
 
 public class LocationBitmapFactory {
 
@@ -104,7 +105,7 @@ public class LocationBitmapFactory {
 			Integer COLOR1 = colorGradient[gradientIndex];
 			Integer COLOR2 = colorGradient[Math.min(gradientIndex + 1, colorGradient.length - 1)];
 			
-			// TODO : SCOTT UFM
+			// TODO : this use to use a gradient, but no longer do. Could remove some of this code
 			int color = (Integer) new ArgbEvaluator().evaluate(gradientIndexDecimalNormalized.floatValue(), COLOR1, COLOR1);
 
 			// use a invert filter to swap black and white colors in the bitmap. This will preserve the original black
@@ -143,6 +144,7 @@ public class LocationBitmapFactory {
 				int outHeight = Double.valueOf(scale*Integer.valueOf(dotBitmap.getHeight()).doubleValue()).intValue();
 				dotBitmap = Bitmap.createScaledBitmap(dotBitmap, outWidth, outHeight, true);
 			} catch (IOException e2) {
+				Log.e(LOG_NAME, "Problem setting generating bitmap", e2);
 			}
 		}
 		return dotBitmap;
