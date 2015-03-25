@@ -1,12 +1,12 @@
 package mil.nga.giat.mage.sdk.datastore.user;
 
-import java.util.Date;
+import com.j256.ormlite.field.DatabaseField;
+import com.j256.ormlite.table.DatabaseTable;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
-import com.j256.ormlite.field.DatabaseField;
-import com.j256.ormlite.table.DatabaseTable;
+import java.util.Date;
 
 @DatabaseTable(tableName = "users")
 public class User {

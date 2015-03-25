@@ -1,14 +1,16 @@
 package mil.nga.giat.mage.sdk.datastore.user;
 
-import org.apache.commons.lang3.builder.EqualsBuilder;
-import org.apache.commons.lang3.builder.ToStringBuilder;
-
 import com.j256.ormlite.field.DataType;
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
 
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.ToStringBuilder;
+
 @DatabaseTable(tableName = "roles")
 public class Role {
+
+	public static final String ADMIN_ROLE_NAME = "ADMIN_ROLE";
 
 	@DatabaseField(generatedId = true)
 	private Long _id;

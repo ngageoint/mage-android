@@ -1,15 +1,19 @@
 package mil.nga.giat.mage.sdk.push;
 
+import android.content.Intent;
+import android.preference.PreferenceManager;
+import android.util.Log;
+
+import com.j256.ormlite.dao.Dao;
+import com.j256.ormlite.stmt.QueryBuilder;
+import com.j256.ormlite.stmt.Where;
+
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Stack;
 import java.util.concurrent.atomic.AtomicBoolean;
-
-import com.j256.ormlite.dao.Dao;
-import com.j256.ormlite.stmt.QueryBuilder;
-import com.j256.ormlite.stmt.Where;
 
 import mil.nga.giat.mage.sdk.ConnectivityAwareIntentService;
 import mil.nga.giat.mage.sdk.R;
@@ -24,9 +28,6 @@ import mil.nga.giat.mage.sdk.exceptions.LocationException;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
 import mil.nga.giat.mage.sdk.http.post.MageServerPostRequests;
 import mil.nga.giat.mage.sdk.login.LoginTaskFactory;
-import android.content.Intent;
-import android.preference.PreferenceManager;
-import android.util.Log;
 
 public class LocationPushIntentService extends ConnectivityAwareIntentService {
 
@@ -133,7 +134,7 @@ public class LocationPushIntentService extends ConnectivityAwareIntentService {
 					synchronized (pushSemaphore) {
 						Log.d(LOG_NAME, "Location push sleeping for " + (lastFetchTime + pushFrequency - currentTime) + "ms.");
 						pushSemaphore.wait(lastFetchTime + pushFrequency - currentTime);
-						if (pushSemaphore.get() == true) {
+						if (pushSemaphore.get()) {
 							break;
 						}
 					}

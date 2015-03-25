@@ -1,11 +1,15 @@
 package mil.nga.giat.mage.sdk.datastore.staticfeature;
 
+import android.content.Context;
+import android.util.Log;
+
+import com.j256.ormlite.dao.Dao;
+import com.j256.ormlite.misc.TransactionManager;
+
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -15,11 +19,6 @@ import mil.nga.giat.mage.sdk.datastore.layer.Layer;
 import mil.nga.giat.mage.sdk.event.IEventDispatcher;
 import mil.nga.giat.mage.sdk.event.IStaticFeatureEventListener;
 import mil.nga.giat.mage.sdk.exceptions.StaticFeatureException;
-import android.content.Context;
-import android.util.Log;
-
-import com.j256.ormlite.dao.Dao;
-import com.j256.ormlite.misc.TransactionManager;
 
 public class StaticFeatureHelper extends DaoHelper<StaticFeature> implements IEventDispatcher<IStaticFeatureEventListener> {
 

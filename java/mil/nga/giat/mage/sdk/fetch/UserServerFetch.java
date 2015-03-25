@@ -1,14 +1,10 @@
 package mil.nga.giat.mage.sdk.fetch;
 
-import java.net.URL;
-import java.util.Date;
+import android.content.Context;
+import android.preference.PreferenceManager;
+import android.util.Log;
 
-import mil.nga.giat.mage.sdk.R;
-import mil.nga.giat.mage.sdk.datastore.user.User;
-import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
-import mil.nga.giat.mage.sdk.exceptions.UserException;
-import mil.nga.giat.mage.sdk.gson.deserializer.UserDeserializer;
-import mil.nga.giat.mage.sdk.http.client.HttpClientManager;
+import com.google.gson.Gson;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -18,11 +14,15 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.util.EntityUtils;
 import org.json.JSONObject;
 
-import com.google.gson.Gson;
+import java.net.URL;
+import java.util.Date;
 
-import android.content.Context;
-import android.preference.PreferenceManager;
-import android.util.Log;
+import mil.nga.giat.mage.sdk.R;
+import mil.nga.giat.mage.sdk.datastore.user.User;
+import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
+import mil.nga.giat.mage.sdk.exceptions.UserException;
+import mil.nga.giat.mage.sdk.gson.deserializer.UserDeserializer;
+import mil.nga.giat.mage.sdk.http.client.HttpClientManager;
 
 public class UserServerFetch extends AbstractServerFetch {
 

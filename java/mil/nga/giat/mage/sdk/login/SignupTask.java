@@ -1,13 +1,7 @@
 package mil.nga.giat.mage.sdk.login;
 
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
-
-import mil.nga.giat.mage.sdk.connectivity.ConnectivityUtility;
-import mil.nga.giat.mage.sdk.http.client.HttpClientManager;
-import mil.nga.giat.mage.sdk.utils.DeviceUuidFactory;
+import android.content.Context;
+import android.util.Log;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -20,8 +14,14 @@ import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
 import org.json.JSONObject;
 
-import android.content.Context;
-import android.util.Log;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
+
+import mil.nga.giat.mage.sdk.connectivity.ConnectivityUtility;
+import mil.nga.giat.mage.sdk.http.client.HttpClientManager;
+import mil.nga.giat.mage.sdk.utils.DeviceUuidFactory;
 
 /**
  * Creates a user

@@ -1,5 +1,9 @@
 package mil.nga.giat.mage.sdk.push;
 
+import android.content.Intent;
+import android.preference.PreferenceManager;
+import android.util.Log;
+
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
@@ -13,9 +17,6 @@ import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
 import mil.nga.giat.mage.sdk.event.IObservationEventListener;
 import mil.nga.giat.mage.sdk.http.post.MageServerPostRequests;
 import mil.nga.giat.mage.sdk.login.LoginTaskFactory;
-import android.content.Intent;
-import android.preference.PreferenceManager;
-import android.util.Log;
 
 public class ObservationPushIntentService extends ConnectivityAwareIntentService implements IObservationEventListener {
 
@@ -68,7 +69,7 @@ public class ObservationPushIntentService extends ConnectivityAwareIntentService
 					synchronized (pushSemaphore) {
 						Log.d(LOG_NAME, "Observation push sleeping for " + (lastFetchTime + pushFrequency - currentTime) + "ms.");
 						pushSemaphore.wait(lastFetchTime + pushFrequency - currentTime);
-						if (pushSemaphore.get() == true) {
+						if (pushSemaphore.get()) {
 							break;
 						}
 					}
@@ -77,7 +78,7 @@ public class ObservationPushIntentService extends ConnectivityAwareIntentService
 					pushSemaphore.set(false);
 				}
 			} catch (InterruptedException ie) {
-				Log.e(LOG_NAME, "Interupted.  Unable to sleep " + pushFrequency, ie);
+				Log.e(LOG_NAME, "Unable to sleep " + pushFrequency, ie);
 			} finally {
 				isConnected = ConnectivityUtility.isOnline(getApplicationContext());
 			}

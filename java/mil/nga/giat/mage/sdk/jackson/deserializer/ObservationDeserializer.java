@@ -5,7 +5,6 @@ import android.util.Log;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
-import com.vividsolutions.jts.geom.Geometry;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -18,10 +17,10 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
-import mil.nga.giat.mage.sdk.datastore.observation.State;
 import mil.nga.giat.mage.sdk.datastore.observation.Attachment;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationProperty;
+import mil.nga.giat.mage.sdk.datastore.observation.State;
 import mil.nga.giat.mage.sdk.datastore.user.Event;
 import mil.nga.giat.mage.sdk.utils.DateFormatFactory;
 

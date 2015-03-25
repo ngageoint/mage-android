@@ -1,13 +1,13 @@
 package mil.nga.giat.mage.sdk.jackson.deserializer;
 
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonToken;
+
 import java.io.IOException;
 import java.io.InputStream;
 
 import mil.nga.giat.mage.sdk.datastore.observation.Attachment;
-
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonToken;
 
 public class AttachmentDeserializer extends Deserializer {
 

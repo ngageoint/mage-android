@@ -1,5 +1,14 @@
 package mil.nga.giat.mage.sdk.datastore.location;
 
+import android.content.Context;
+import android.util.Log;
+
+import com.j256.ormlite.dao.Dao;
+import com.j256.ormlite.misc.TransactionManager;
+import com.j256.ormlite.stmt.DeleteBuilder;
+import com.j256.ormlite.stmt.QueryBuilder;
+import com.j256.ormlite.stmt.Where;
+
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -17,14 +26,6 @@ import mil.nga.giat.mage.sdk.event.IEventDispatcher;
 import mil.nga.giat.mage.sdk.event.ILocationEventListener;
 import mil.nga.giat.mage.sdk.exceptions.LocationException;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
-import android.content.Context;
-import android.util.Log;
-
-import com.j256.ormlite.dao.Dao;
-import com.j256.ormlite.misc.TransactionManager;
-import com.j256.ormlite.stmt.DeleteBuilder;
-import com.j256.ormlite.stmt.QueryBuilder;
-import com.j256.ormlite.stmt.Where;
 
 /**
  * A utility class for accessing {@link Location} data from the physical data

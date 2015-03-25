@@ -1,5 +1,14 @@
 package mil.nga.giat.mage.sdk.datastore.user;
 
+import android.content.Context;
+import android.util.Log;
+
+import com.j256.ormlite.dao.Dao;
+import com.j256.ormlite.stmt.DeleteBuilder;
+import com.j256.ormlite.stmt.PreparedQuery;
+import com.j256.ormlite.stmt.QueryBuilder;
+import com.j256.ormlite.stmt.Where;
+
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -10,14 +19,6 @@ import mil.nga.giat.mage.sdk.datastore.DaoHelper;
 import mil.nga.giat.mage.sdk.event.IEventDispatcher;
 import mil.nga.giat.mage.sdk.event.IEventEventListener;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
-import android.content.Context;
-import android.util.Log;
-
-import com.j256.ormlite.dao.Dao;
-import com.j256.ormlite.stmt.DeleteBuilder;
-import com.j256.ormlite.stmt.PreparedQuery;
-import com.j256.ormlite.stmt.QueryBuilder;
-import com.j256.ormlite.stmt.Where;
 
 /**
  * A utility class for accessing {@link User} data from the physical data model.
@@ -260,6 +261,17 @@ public class UserHelper extends DaoHelper<User> implements IEventDispatcher<IEve
         }
         return users;
     }
+
+	public boolean isCurrentUserPartOfCurrentEvent() {
+		boolean status = false;
+
+		try {
+			status = EventHelper.getInstance(mApplicationContext).getEventsForCurrentUser().contains(readCurrentUser().getCurrentEvent());
+		} catch(Exception e) {
+			Log.e(LOG_NAME, "Problem getting user or event.");
+		}
+		return status;
+	}
 
 	@Override
 	public boolean addListener(IEventEventListener listener) {

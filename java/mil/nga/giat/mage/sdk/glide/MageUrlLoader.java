@@ -1,8 +1,5 @@
 package mil.nga.giat.mage.sdk.glide;
 
-import java.io.InputStream;
-
-import mil.nga.giat.mage.sdk.R;
 import android.content.Context;
 import android.preference.PreferenceManager;
 import android.util.Log;
@@ -16,6 +13,10 @@ import com.bumptech.glide.load.model.GenericLoaderFactory;
 import com.bumptech.glide.load.model.GlideUrl;
 import com.bumptech.glide.load.model.ModelLoader;
 import com.bumptech.glide.load.model.ModelLoaderFactory;
+
+import java.io.InputStream;
+
+import mil.nga.giat.mage.sdk.R;
 
 public class MageUrlLoader extends VolleyUrlLoader {
 

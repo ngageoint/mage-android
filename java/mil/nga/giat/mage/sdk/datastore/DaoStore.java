@@ -1,5 +1,14 @@
 package mil.nga.giat.mage.sdk.datastore;
 
+import android.content.Context;
+import android.database.sqlite.SQLiteDatabase;
+import android.util.Log;
+
+import com.j256.ormlite.android.apptools.OrmLiteSqliteOpenHelper;
+import com.j256.ormlite.dao.Dao;
+import com.j256.ormlite.support.ConnectionSource;
+import com.j256.ormlite.table.TableUtils;
+
 import java.sql.SQLException;
 
 import mil.nga.giat.mage.sdk.datastore.layer.Layer;
@@ -10,21 +19,12 @@ import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationProperty;
 import mil.nga.giat.mage.sdk.datastore.staticfeature.StaticFeature;
 import mil.nga.giat.mage.sdk.datastore.staticfeature.StaticFeatureProperty;
+import mil.nga.giat.mage.sdk.datastore.user.Event;
 import mil.nga.giat.mage.sdk.datastore.user.Role;
+import mil.nga.giat.mage.sdk.datastore.user.Team;
 import mil.nga.giat.mage.sdk.datastore.user.TeamEvent;
 import mil.nga.giat.mage.sdk.datastore.user.User;
-import mil.nga.giat.mage.sdk.datastore.user.Event;
-import mil.nga.giat.mage.sdk.datastore.user.Team;
 import mil.nga.giat.mage.sdk.datastore.user.UserTeam;
-
-import android.content.Context;
-import android.database.sqlite.SQLiteDatabase;
-import android.util.Log;
-
-import com.j256.ormlite.android.apptools.OrmLiteSqliteOpenHelper;
-import com.j256.ormlite.dao.Dao;
-import com.j256.ormlite.support.ConnectionSource;
-import com.j256.ormlite.table.TableUtils;
 
 /**
  * This is an implementation of OrmLite android database Helper. Go here to get

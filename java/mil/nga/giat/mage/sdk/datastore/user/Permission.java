@@ -40,5 +40,5 @@ public enum Permission implements Serializable {
 	UPDATE_OBSERVATION_EVENT,
 	UPDATE_ROLE,
 	UPDATE_TEAM,
-	UPDATE_USER;
+	UPDATE_USER
 }

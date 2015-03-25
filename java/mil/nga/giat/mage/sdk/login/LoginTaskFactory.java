@@ -1,11 +1,13 @@
 package mil.nga.giat.mage.sdk.login;
 
+import android.content.Context;
+import android.preference.PreferenceManager;
+import android.util.Log;
+
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 
 import mil.nga.giat.mage.sdk.R;
-import android.content.Context;
-import android.preference.PreferenceManager;
 
 /**
  * Deals with login tasks and their configuration.
@@ -14,6 +16,8 @@ import android.preference.PreferenceManager;
  *
  */
 public class LoginTaskFactory {
+
+	private static final String LOG_NAME = LocalAuthLoginTask.class.getName();
 
 	private LoginTaskFactory() {
 	}
@@ -56,16 +60,8 @@ public class LoginTaskFactory {
 					return (AbstractAccountTask) constructor.newInstance(delegate, context);
 				}
 			}
-		} catch (ClassNotFoundException cnfe) {
-			cnfe.printStackTrace();
-		} catch (InstantiationException ie) {
-			ie.printStackTrace();
-		} catch (IllegalAccessException iae) {
-			iae.printStackTrace();
-		} catch (IllegalArgumentException iae) {
-			iae.printStackTrace();
-		} catch (InvocationTargetException ite) {
-			ite.printStackTrace();
+		} catch (Exception e) {
+			Log.e(LOG_NAME, "Problem making new instance of " + String.valueOf(className) + ".", e);
 		}
 		return new FormAuthLoginTask(delegate, context);
 	}

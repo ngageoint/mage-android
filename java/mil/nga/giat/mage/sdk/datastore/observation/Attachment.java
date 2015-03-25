@@ -1,13 +1,13 @@
 package mil.nga.giat.mage.sdk.datastore.observation;
 
-import org.apache.commons.lang3.builder.EqualsBuilder;
-import org.apache.commons.lang3.builder.ToStringBuilder;
-
 import android.os.Parcel;
 import android.os.Parcelable;
 
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
+
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.ToStringBuilder;
 
 @DatabaseTable(tableName = "attachments")
 public class Attachment implements Parcelable {

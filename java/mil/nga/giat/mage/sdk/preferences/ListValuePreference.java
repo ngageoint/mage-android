@@ -1,6 +1,5 @@
 package mil.nga.giat.mage.sdk.preferences;
 
-import mil.nga.giat.mage.sdk.R;
 import android.content.Context;
 import android.preference.ListPreference;
 import android.util.AttributeSet;
@@ -8,6 +7,8 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+
+import mil.nga.giat.mage.sdk.R;
 
 public class ListValuePreference extends ListPreference {
 

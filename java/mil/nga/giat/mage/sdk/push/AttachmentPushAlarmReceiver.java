@@ -1,14 +1,15 @@
 package mil.nga.giat.mage.sdk.push;
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.util.Log;
+
 import java.util.List;
 
 import mil.nga.giat.mage.sdk.connectivity.ConnectivityUtility;
 import mil.nga.giat.mage.sdk.datastore.observation.Attachment;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.Intent;
-import android.util.Log;
 
 public class AttachmentPushAlarmReceiver extends BroadcastReceiver {
 

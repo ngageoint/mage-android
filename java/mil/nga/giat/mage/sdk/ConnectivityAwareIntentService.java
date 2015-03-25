@@ -1,10 +1,11 @@
 package mil.nga.giat.mage.sdk;
 
+import android.app.IntentService;
+import android.content.Intent;
+
 import mil.nga.giat.mage.sdk.connectivity.ConnectivityUtility;
 import mil.nga.giat.mage.sdk.connectivity.NetworkChangeReceiver;
 import mil.nga.giat.mage.sdk.event.IConnectivityEventListener;
-import android.app.IntentService;
-import android.content.Intent;
 
 public abstract class ConnectivityAwareIntentService extends IntentService implements IConnectivityEventListener {
 

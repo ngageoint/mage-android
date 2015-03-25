@@ -1,5 +1,11 @@
 package mil.nga.giat.mage.sdk.fetch;
 
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
+import android.preference.PreferenceManager;
+import android.util.Log;
+
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -7,9 +13,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import mil.nga.giat.mage.sdk.ConnectivityAwareIntentService;
 import mil.nga.giat.mage.sdk.R;
 import mil.nga.giat.mage.sdk.connectivity.ConnectivityUtility;
-import mil.nga.giat.mage.sdk.datastore.observation.State;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
+import mil.nga.giat.mage.sdk.datastore.observation.State;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.event.IEventEventListener;
@@ -17,11 +23,6 @@ import mil.nga.giat.mage.sdk.event.IScreenEventListener;
 import mil.nga.giat.mage.sdk.http.get.MageServerGetRequests;
 import mil.nga.giat.mage.sdk.login.LoginTaskFactory;
 import mil.nga.giat.mage.sdk.screen.ScreenChangeReceiver;
-import android.content.Intent;
-import android.content.SharedPreferences;
-import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
-import android.preference.PreferenceManager;
-import android.util.Log;
 
 public class ObservationFetchIntentService extends ConnectivityAwareIntentService implements OnSharedPreferenceChangeListener, IScreenEventListener, IEventEventListener {
 
@@ -78,8 +79,8 @@ public class ObservationFetchIntentService extends ConnectivityAwareIntentServic
 						if (userId != null) {
 							User user = userHelper.read(userId);
 							// TODO : test the timer to make sure users are updated as needed!
-							final long sixHoursInMillseconds = 6 * 60 * 60 * 1000;
-							if (user == null || (new Date()).after(new Date(user.getFetchedDate().getTime() + sixHoursInMillseconds))) {
+							final long sixHoursInMilliseconds = 6 * 60 * 60 * 1000;
+							if (user == null || (new Date()).after(new Date(user.getFetchedDate().getTime() + sixHoursInMilliseconds))) {
 								// get any users that were not recognized or expired
 								new UserServerFetch(getApplicationContext()).fetch(new String[] { userId });
 							}
@@ -114,7 +115,7 @@ public class ObservationFetchIntentService extends ConnectivityAwareIntentServic
 					synchronized (fetchSemaphore) {
 						Log.d(LOG_NAME, "Observation fetch sleeping for " + (lastFetchTime + frequency - currentTime) + "ms.");
 						fetchSemaphore.wait(lastFetchTime + frequency - currentTime);
-						if (fetchSemaphore.get() == true) {
+						if (fetchSemaphore.get()) {
 							break;
 						}
 					}

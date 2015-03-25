@@ -1,5 +1,17 @@
 package mil.nga.giat.mage.sdk.datastore.observation;
 
+import android.support.annotation.NonNull;
+
+import com.j256.ormlite.field.DataType;
+import com.j256.ormlite.field.DatabaseField;
+import com.j256.ormlite.field.ForeignCollectionField;
+import com.j256.ormlite.table.DatabaseTable;
+import com.vividsolutions.jts.geom.Geometry;
+
+import org.apache.commons.lang3.builder.CompareToBuilder;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.ToStringBuilder;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -8,16 +20,6 @@ import java.util.Map;
 
 import mil.nga.giat.mage.sdk.Temporal;
 import mil.nga.giat.mage.sdk.datastore.user.Event;
-
-import org.apache.commons.lang3.builder.CompareToBuilder;
-import org.apache.commons.lang3.builder.EqualsBuilder;
-import org.apache.commons.lang3.builder.ToStringBuilder;
-
-import com.j256.ormlite.field.DataType;
-import com.j256.ormlite.field.DatabaseField;
-import com.j256.ormlite.field.ForeignCollectionField;
-import com.j256.ormlite.table.DatabaseTable;
-import com.vividsolutions.jts.geom.Geometry;
 
 @DatabaseTable(tableName = "observations")
 public class Observation implements Comparable<Observation>, Temporal {
@@ -223,7 +225,7 @@ public class Observation implements Comparable<Observation>, Temporal {
     }
 
     @Override
-    public int compareTo(Observation another) {
+    public int compareTo(@NonNull Observation another) {
         return new CompareToBuilder().append(this._id, another._id).append(this.remoteId, another.remoteId).toComparison();
     }
 

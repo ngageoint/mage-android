@@ -6,5 +6,5 @@ package mil.nga.giat.mage.sdk.datastore.observation;
  * @author wiedemanns
  */
 public enum State {
-	ACTIVE, COMPLETE, ARCHIVE;
+	ACTIVE, COMPLETE, ARCHIVE
 }

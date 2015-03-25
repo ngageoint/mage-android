@@ -1,19 +1,5 @@
 package mil.nga.giat.mage.sdk.location;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.atomic.AtomicBoolean;
-
-import mil.nga.giat.mage.sdk.R;
-import mil.nga.giat.mage.sdk.datastore.location.LocationHelper;
-import mil.nga.giat.mage.sdk.datastore.location.LocationProperty;
-import mil.nga.giat.mage.sdk.datastore.user.User;
-import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
-import mil.nga.giat.mage.sdk.exceptions.LocationException;
-import mil.nga.giat.mage.sdk.exceptions.UserException;
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.app.Service;
@@ -37,6 +23,21 @@ import android.util.Log;
 
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.GeometryFactory;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import mil.nga.giat.mage.sdk.R;
+import mil.nga.giat.mage.sdk.datastore.location.LocationHelper;
+import mil.nga.giat.mage.sdk.datastore.location.LocationProperty;
+import mil.nga.giat.mage.sdk.datastore.user.User;
+import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
+import mil.nga.giat.mage.sdk.exceptions.LocationException;
+import mil.nga.giat.mage.sdk.exceptions.UserException;
 
 /**
  * Query the device for the device's location. If userReportingFrequency is set
@@ -325,7 +326,7 @@ public class LocationService extends Service implements LocationListener, OnShar
 								synchronized (preferenceSemaphore) {
 									preferenceSemaphore.wait(lLPullTime + userReportingFrequency - currentTime);
 									// this means we need to re-read the gps sensitivity
-									if(preferenceSemaphore.get() == true) {
+									if(preferenceSemaphore.get()) {
 										break;
 									}
 								}
@@ -371,9 +372,9 @@ public class LocationService extends Service implements LocationListener, OnShar
 			// locationProperties.add(new LocationProperty("timestamp", DateFormatFactory.getISO8601().format(new Date(location.getTime()))));
 			if (echoTime != null) {
 				locationProperties.add(new LocationProperty("echoTime", echoTime));
-				locationProperties.add(new LocationProperty("accuracy", Float.valueOf(Math.max(Long.valueOf(getMinimumDistanceChangeForUpdates()).floatValue(), location.getAccuracy()))));
+				locationProperties.add(new LocationProperty("accuracy", Math.max(Long.valueOf(getMinimumDistanceChangeForUpdates()).floatValue(), location.getAccuracy())));
 			} else {
-				locationProperties.add(new LocationProperty("accuracy", Float.valueOf(location.getAccuracy())));
+				locationProperties.add(new LocationProperty("accuracy", location.getAccuracy()));
 			}
 			locationProperties.add(new LocationProperty("bearing", location.getBearing()));
 			locationProperties.add(new LocationProperty("speed", location.getSpeed()));

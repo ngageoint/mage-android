@@ -1,13 +1,13 @@
 package mil.nga.giat.mage.sdk.login;
 
+import android.content.Context;
+import android.util.Log;
+
 import mil.nga.giat.mage.sdk.connectivity.ConnectivityUtility;
 import mil.nga.giat.mage.sdk.datastore.user.Event;
 import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
 import mil.nga.giat.mage.sdk.exceptions.EventException;
 import mil.nga.giat.mage.sdk.http.post.MageServerPostRequests;
-
-import android.content.Context;
-import android.util.Log;
 
 /**
  * Updates user's recent event

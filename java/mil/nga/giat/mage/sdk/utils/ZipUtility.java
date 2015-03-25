@@ -15,7 +15,7 @@ import java.util.zip.ZipOutputStream;
  *
  * Zip and unzips files
  *
- * wiedemanns
+ * @author wiedemanns
  *
  */
 public class ZipUtility {
