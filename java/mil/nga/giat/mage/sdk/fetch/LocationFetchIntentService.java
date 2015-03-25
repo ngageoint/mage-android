@@ -1,5 +1,11 @@
 package mil.nga.giat.mage.sdk.fetch;
 
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
+import android.preference.PreferenceManager;
+import android.util.Log;
+
 import java.util.Collection;
 import java.util.Date;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -16,11 +22,6 @@ import mil.nga.giat.mage.sdk.event.IScreenEventListener;
 import mil.nga.giat.mage.sdk.http.get.MageServerGetRequests;
 import mil.nga.giat.mage.sdk.login.LoginTaskFactory;
 import mil.nga.giat.mage.sdk.screen.ScreenChangeReceiver;
-import android.content.Intent;
-import android.content.SharedPreferences;
-import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
-import android.preference.PreferenceManager;
-import android.util.Log;
 
 public class LocationFetchIntentService extends ConnectivityAwareIntentService implements OnSharedPreferenceChangeListener, IScreenEventListener {
 
@@ -72,7 +73,7 @@ public class LocationFetchIntentService extends ConnectivityAwareIntentService i
 							final long sixHoursInMilliseconds = 6 * 60 * 60 * 1000;
 							if (user == null || (new Date()).after(new Date(user.getFetchedDate().getTime() + sixHoursInMilliseconds))) {
 								// get any users that were not recognized or expired
-								userFetch.fetch(new String[] { userId });
+								userFetch.fetch(userId);
 								user = userHelper.read(userId);
 							}
 							location.setUser(user);
@@ -109,7 +110,7 @@ public class LocationFetchIntentService extends ConnectivityAwareIntentService i
 					synchronized (fetchSemaphore) {
 						Log.d(LOG_NAME, "Location fetch sleeping for " + (lastFetchTime + frequency - currentTime) + "ms.");
 						fetchSemaphore.wait(lastFetchTime + frequency - currentTime);
-						if (fetchSemaphore.get() == true) {
+						if (fetchSemaphore.get()) {
 							break;
 						}
 					}

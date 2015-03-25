@@ -1,5 +1,17 @@
 package mil.nga.giat.mage.sdk.fetch;
 
+import android.content.Context;
+import android.util.Log;
+
+import com.google.common.io.ByteStreams;
+
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.HttpStatus;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.util.EntityUtils;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.net.URL;
@@ -18,20 +30,6 @@ import mil.nga.giat.mage.sdk.exceptions.StaticFeatureException;
 import mil.nga.giat.mage.sdk.http.client.HttpClientManager;
 import mil.nga.giat.mage.sdk.http.get.MageServerGetRequests;
 import mil.nga.giat.mage.sdk.login.LoginTaskFactory;
-
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.HttpStatus;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.util.EntityUtils;
-
-import android.content.Context;
-import android.content.SharedPreferences.Editor;
-import android.preference.PreferenceManager;
-import android.util.Log;
-
-import com.google.common.io.ByteStreams;
 
 public class StaticFeatureServerFetch extends AbstractServerFetch {
 

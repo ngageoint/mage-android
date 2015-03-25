@@ -1,5 +1,11 @@
 package mil.nga.giat.mage.sdk.profile;
 
+import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.Bitmap.CompressFormat;
+import android.os.AsyncTask;
+import android.util.Log;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
@@ -10,11 +16,6 @@ import mil.nga.giat.mage.sdk.connectivity.ConnectivityUtility;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.http.post.MageServerPostRequests;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
-import android.content.Context;
-import android.graphics.Bitmap;
-import android.graphics.Bitmap.CompressFormat;
-import android.os.AsyncTask;
-import android.util.Log;
 
 public class UpdateProfileTask extends AsyncTask<String, Void, User> {
 	

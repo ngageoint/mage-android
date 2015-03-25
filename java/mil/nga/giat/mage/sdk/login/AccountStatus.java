@@ -1,9 +1,9 @@
 package mil.nga.giat.mage.sdk.login;
 
+import org.json.JSONObject;
+
 import java.util.ArrayList;
 import java.util.List;
-
-import org.json.JSONObject;
 
 /**
  * Contains information from resulting login or sign up
@@ -21,7 +21,7 @@ public class AccountStatus {
 		ALREADY_REGISTERED,
 		FAILED_SIGNUP,
 		SUCCESSFUL_SIGNUP
-	};
+	}
 
 	/**
 	 * Request was successful or not

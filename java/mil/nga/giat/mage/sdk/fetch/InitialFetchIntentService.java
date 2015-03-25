@@ -1,5 +1,11 @@
 package mil.nga.giat.mage.sdk.fetch;
 
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.preference.PreferenceManager;
+import android.support.v4.content.LocalBroadcastManager;
+import android.util.Log;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -21,12 +27,6 @@ import mil.nga.giat.mage.sdk.datastore.user.UserTeam;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
 import mil.nga.giat.mage.sdk.http.get.MageServerGetRequests;
 import mil.nga.giat.mage.sdk.login.LoginTaskFactory;
-
-import android.content.Intent;
-import android.content.SharedPreferences;
-import android.preference.PreferenceManager;
-import android.support.v4.content.LocalBroadcastManager;
-import android.util.Log;
 
 /**
  * This class will fetch events, roles, users and teams just once.

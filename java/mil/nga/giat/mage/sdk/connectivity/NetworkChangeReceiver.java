@@ -1,5 +1,12 @@
 package mil.nga.giat.mage.sdk.connectivity;
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
+import android.util.Log;
+
 import java.util.Collection;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executors;
@@ -9,12 +16,6 @@ import java.util.concurrent.TimeUnit;
 
 import mil.nga.giat.mage.sdk.event.IConnectivityEventListener;
 import mil.nga.giat.mage.sdk.event.IEventDispatcher;
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.Intent;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
-import android.util.Log;
 
 
 /**

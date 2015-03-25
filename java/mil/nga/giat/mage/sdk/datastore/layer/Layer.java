@@ -1,18 +1,18 @@
 package mil.nga.giat.mage.sdk.datastore.layer;
 
-import java.util.ArrayList;
-import java.util.Collection;
-
-import mil.nga.giat.mage.sdk.datastore.staticfeature.StaticFeature;
-import mil.nga.giat.mage.sdk.datastore.user.Event;
+import com.j256.ormlite.field.DatabaseField;
+import com.j256.ormlite.field.ForeignCollectionField;
+import com.j256.ormlite.table.DatabaseTable;
 
 import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
-import com.j256.ormlite.field.DatabaseField;
-import com.j256.ormlite.field.ForeignCollectionField;
-import com.j256.ormlite.table.DatabaseTable;
+import java.util.ArrayList;
+import java.util.Collection;
+
+import mil.nga.giat.mage.sdk.datastore.staticfeature.StaticFeature;
+import mil.nga.giat.mage.sdk.datastore.user.Event;
 
 @DatabaseTable(tableName = "layers")
 public class Layer implements Comparable<Layer> {

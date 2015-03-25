@@ -1,12 +1,12 @@
 package mil.nga.giat.mage.sdk.datastore.user;
 
-import org.apache.commons.lang3.builder.EqualsBuilder;
-import org.apache.commons.lang3.builder.ToStringBuilder;
-
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
+
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.ToStringBuilder;
 
 @DatabaseTable(tableName = "events")
 public class Event {

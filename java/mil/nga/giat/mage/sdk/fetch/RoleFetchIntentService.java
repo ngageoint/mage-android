@@ -1,13 +1,10 @@
 package mil.nga.giat.mage.sdk.fetch;
 
-import java.net.URL;
+import android.content.Intent;
+import android.preference.PreferenceManager;
+import android.util.Log;
 
-import mil.nga.giat.mage.sdk.ConnectivityAwareIntentService;
-import mil.nga.giat.mage.sdk.R;
-import mil.nga.giat.mage.sdk.datastore.user.Role;
-import mil.nga.giat.mage.sdk.datastore.user.RoleHelper;
-import mil.nga.giat.mage.sdk.gson.deserializer.RoleDeserializer;
-import mil.nga.giat.mage.sdk.http.client.HttpClientManager;
+import com.google.gson.Gson;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -18,11 +15,14 @@ import org.apache.http.util.EntityUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import android.content.Intent;
-import android.preference.PreferenceManager;
-import android.util.Log;
+import java.net.URL;
 
-import com.google.gson.Gson;
+import mil.nga.giat.mage.sdk.ConnectivityAwareIntentService;
+import mil.nga.giat.mage.sdk.R;
+import mil.nga.giat.mage.sdk.datastore.user.Role;
+import mil.nga.giat.mage.sdk.datastore.user.RoleHelper;
+import mil.nga.giat.mage.sdk.gson.deserializer.RoleDeserializer;
+import mil.nga.giat.mage.sdk.http.client.HttpClientManager;
 
 /**
  * Gets roles from server. Not currently used!

@@ -1,7 +1,5 @@
 package mil.nga.giat.mage.sdk.jackson.deserializer;
-import java.io.IOException;
 
-import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -12,6 +10,8 @@ import com.vividsolutions.jts.geom.GeometryFactory;
 import com.vividsolutions.jts.geom.LineString;
 import com.vividsolutions.jts.geom.LinearRing;
 import com.vividsolutions.jts.geom.Polygon;
+
+import java.io.IOException;
 
 public class GeometryDeserializer extends Deserializer {
     
@@ -35,6 +35,10 @@ public class GeometryDeserializer extends Deserializer {
                 parser.skipChildren();
             }
         }
+
+		if(typeName == null) {
+			throw new IOException("'type' not present");
+		}
 
         Geometry geometry = null;
         if (typeName.equals("Point")) {

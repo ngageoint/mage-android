@@ -1,14 +1,8 @@
 package mil.nga.giat.mage.sdk.http.client;
 
-import java.io.IOException;
-import java.util.Collection;
-import java.util.concurrent.CopyOnWriteArrayList;
-
-import mil.nga.giat.mage.sdk.R;
-import mil.nga.giat.mage.sdk.event.IEventDispatcher;
-import mil.nga.giat.mage.sdk.event.IUserEventListener;
-import mil.nga.giat.mage.sdk.http.entity.GzipDecompressingEntity;
-import mil.nga.giat.mage.sdk.utils.UserUtility;
+import android.content.Context;
+import android.preference.PreferenceManager;
+import android.util.Log;
 
 import org.apache.http.Header;
 import org.apache.http.HeaderElement;
@@ -31,9 +25,15 @@ import org.apache.http.params.CoreConnectionPNames;
 import org.apache.http.params.CoreProtocolPNames;
 import org.apache.http.protocol.HttpContext;
 
-import android.content.Context;
-import android.preference.PreferenceManager;
-import android.util.Log;
+import java.io.IOException;
+import java.util.Collection;
+import java.util.concurrent.CopyOnWriteArrayList;
+
+import mil.nga.giat.mage.sdk.R;
+import mil.nga.giat.mage.sdk.event.IEventDispatcher;
+import mil.nga.giat.mage.sdk.event.IUserEventListener;
+import mil.nga.giat.mage.sdk.http.entity.GzipDecompressingEntity;
+import mil.nga.giat.mage.sdk.utils.UserUtility;
 
 /**
  * Always use the {@link HttpClientManager#getHttpClient()} for making ALL

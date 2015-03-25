@@ -1,5 +1,8 @@
 package mil.nga.giat.mage.sdk.jackson.deserializer;
 
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonToken;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -9,9 +12,6 @@ import java.util.List;
 import mil.nga.giat.mage.sdk.datastore.layer.Layer;
 import mil.nga.giat.mage.sdk.datastore.staticfeature.StaticFeature;
 import mil.nga.giat.mage.sdk.datastore.staticfeature.StaticFeatureProperty;
-
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonToken;
 
 public class StaticFeatureDeserializer extends Deserializer {
 

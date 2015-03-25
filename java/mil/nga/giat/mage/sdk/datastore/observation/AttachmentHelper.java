@@ -1,5 +1,23 @@
 package mil.nga.giat.mage.sdk.datastore.observation;
 
+import android.content.Context;
+import android.content.SharedPreferences;
+import android.graphics.Bitmap;
+import android.graphics.Bitmap.CompressFormat;
+import android.graphics.BitmapFactory;
+import android.preference.PreferenceManager;
+import android.util.Log;
+
+import com.google.common.io.Files;
+
+import org.apache.sanselan.Sanselan;
+import org.apache.sanselan.common.IImageMetadata;
+import org.apache.sanselan.formats.jpeg.JpegImageMetadata;
+import org.apache.sanselan.formats.jpeg.exifRewrite.ExifRewriter;
+import org.apache.sanselan.formats.tiff.TiffImageMetadata;
+import org.apache.sanselan.formats.tiff.constants.TiffConstants;
+import org.apache.sanselan.formats.tiff.write.TiffOutputSet;
+
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -11,24 +29,6 @@ import java.security.SecureRandom;
 import mil.nga.giat.mage.sdk.R;
 import mil.nga.giat.mage.sdk.datastore.DaoStore;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
-
-import org.apache.sanselan.Sanselan;
-import org.apache.sanselan.common.IImageMetadata;
-import org.apache.sanselan.formats.jpeg.JpegImageMetadata;
-import org.apache.sanselan.formats.jpeg.exifRewrite.ExifRewriter;
-import org.apache.sanselan.formats.tiff.TiffImageMetadata;
-import org.apache.sanselan.formats.tiff.constants.TiffConstants;
-import org.apache.sanselan.formats.tiff.write.TiffOutputSet;
-
-import android.content.Context;
-import android.content.SharedPreferences;
-import android.graphics.Bitmap;
-import android.graphics.Bitmap.CompressFormat;
-import android.graphics.BitmapFactory;
-import android.preference.PreferenceManager;
-import android.util.Log;
-
-import com.google.common.io.Files;
 
 public class AttachmentHelper {
 

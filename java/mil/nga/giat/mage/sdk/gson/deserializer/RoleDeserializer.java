@@ -1,13 +1,5 @@
 package mil.nga.giat.mage.sdk.gson.deserializer;
 
-import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Locale;
-
-import mil.nga.giat.mage.sdk.datastore.user.Permission;
-import mil.nga.giat.mage.sdk.datastore.user.Permissions;
-import mil.nga.giat.mage.sdk.datastore.user.Role;
 import android.util.Log;
 
 import com.google.gson.Gson;
@@ -18,6 +10,15 @@ import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
+
+import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Locale;
+
+import mil.nga.giat.mage.sdk.datastore.user.Permission;
+import mil.nga.giat.mage.sdk.datastore.user.Permissions;
+import mil.nga.giat.mage.sdk.datastore.user.Role;
 
 /**
  * JSON to {@link Role}

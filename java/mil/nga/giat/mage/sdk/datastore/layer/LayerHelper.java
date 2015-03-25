@@ -1,5 +1,10 @@
 package mil.nga.giat.mage.sdk.datastore.layer;
 
+import android.content.Context;
+import android.util.Log;
+
+import com.j256.ormlite.dao.Dao;
+
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -7,22 +12,11 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import mil.nga.giat.mage.sdk.datastore.DaoHelper;
-import mil.nga.giat.mage.sdk.datastore.DaoStore;
-import mil.nga.giat.mage.sdk.datastore.staticfeature.StaticFeature;
 import mil.nga.giat.mage.sdk.datastore.staticfeature.StaticFeatureHelper;
-import mil.nga.giat.mage.sdk.datastore.staticfeature.StaticFeatureProperty;
 import mil.nga.giat.mage.sdk.datastore.user.Event;
 import mil.nga.giat.mage.sdk.event.IEventDispatcher;
 import mil.nga.giat.mage.sdk.event.ILayerEventListener;
-import mil.nga.giat.mage.sdk.exceptions.EventException;
 import mil.nga.giat.mage.sdk.exceptions.LayerException;
-import mil.nga.giat.mage.sdk.exceptions.StaticFeatureException;
-
-import android.content.Context;
-import android.util.Log;
-
-import com.j256.ormlite.dao.Dao;
-import com.j256.ormlite.stmt.DeleteBuilder;
 
 /**
  * A utility class for accessing {@link Layer} data from the physical data

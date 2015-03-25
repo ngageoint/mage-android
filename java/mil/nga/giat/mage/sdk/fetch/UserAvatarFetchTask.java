@@ -1,5 +1,12 @@
 package mil.nga.giat.mage.sdk.fetch;
 
+import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.os.AsyncTask;
+import android.preference.PreferenceManager;
+import android.util.Log;
+
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -8,12 +15,6 @@ import mil.nga.giat.mage.sdk.R;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
-import android.content.Context;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.os.AsyncTask;
-import android.preference.PreferenceManager;
-import android.util.Log;
 
 public class UserAvatarFetchTask extends AsyncTask<User, Void, Void> {
 	private static final String LOG_NAME = UserAvatarFetchTask.class.getName();

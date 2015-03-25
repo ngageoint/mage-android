@@ -1,8 +1,9 @@
 package mil.nga.giat.mage.sdk.login;
 
-import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import android.content.Context;
 import android.os.AsyncTask;
+
+import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 
 /**
  * New login and signup tasks must extend this!

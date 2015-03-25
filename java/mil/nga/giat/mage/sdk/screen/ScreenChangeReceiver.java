@@ -1,14 +1,15 @@
 package mil.nga.giat.mage.sdk.screen;
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.util.Log;
+
 import java.util.Collection;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import mil.nga.giat.mage.sdk.event.IEventDispatcher;
 import mil.nga.giat.mage.sdk.event.IScreenEventListener;
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.Intent;
-import android.util.Log;
 
 public class ScreenChangeReceiver extends BroadcastReceiver implements IEventDispatcher<IScreenEventListener> {
 

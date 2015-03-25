@@ -1,5 +1,26 @@
 package mil.nga.giat.mage.sdk.http.post;
 
+import android.content.Context;
+import android.preference.PreferenceManager;
+import android.util.Log;
+
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.HttpStatus;
+import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpPut;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.entity.mime.FormBodyPart;
+import org.apache.http.entity.mime.MultipartEntity;
+import org.apache.http.entity.mime.content.FileBody;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.util.EntityUtils;
+import org.json.JSONObject;
+
 import java.io.File;
 import java.net.URI;
 import java.net.URL;
@@ -24,27 +45,6 @@ import mil.nga.giat.mage.sdk.jackson.deserializer.AttachmentDeserializer;
 import mil.nga.giat.mage.sdk.jackson.deserializer.LocationDeserializer;
 import mil.nga.giat.mage.sdk.jackson.deserializer.ObservationDeserializer;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
-
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.HttpStatus;
-import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.HttpPut;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.entity.mime.FormBodyPart;
-import org.apache.http.entity.mime.MultipartEntity;
-import org.apache.http.entity.mime.content.FileBody;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.util.EntityUtils;
-import org.json.JSONObject;
-
-import android.content.Context;
-import android.preference.PreferenceManager;
-import android.util.Log;
-
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 
 /**
  * A class that contains common POST requests to the MAGE server.

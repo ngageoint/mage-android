@@ -1,13 +1,5 @@
 package mil.nga.giat.mage.sdk.utils;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-
 import android.content.ContentUris;
 import android.content.Context;
 import android.content.Intent;
@@ -30,6 +22,14 @@ import android.provider.DocumentsContract;
 import android.provider.MediaStore;
 import android.util.Log;
 import android.webkit.MimeTypeMap;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 /**
  * Some code below from openintents

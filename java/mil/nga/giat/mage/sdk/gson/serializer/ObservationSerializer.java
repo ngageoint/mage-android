@@ -1,11 +1,5 @@
 package mil.nga.giat.mage.sdk.gson.serializer;
 
-import java.io.Serializable;
-import java.lang.reflect.Type;
-
-import mil.nga.giat.mage.sdk.datastore.observation.Observation;
-import mil.nga.giat.mage.sdk.datastore.observation.ObservationProperty;
-
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
@@ -14,6 +8,12 @@ import com.google.gson.JsonParser;
 import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
+
+import java.io.Serializable;
+import java.lang.reflect.Type;
+
+import mil.nga.giat.mage.sdk.datastore.observation.Observation;
+import mil.nga.giat.mage.sdk.datastore.observation.ObservationProperty;
 
 
 public class ObservationSerializer implements JsonSerializer<Observation> {

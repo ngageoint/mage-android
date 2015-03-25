@@ -1,5 +1,17 @@
 package mil.nga.giat.mage.sdk.gson.deserializer;
 
+import android.content.Context;
+import android.util.Log;
+
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonDeserializationContext;
+import com.google.gson.JsonDeserializer;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParseException;
+
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -13,17 +25,6 @@ import mil.nga.giat.mage.sdk.datastore.user.RoleHelper;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.exceptions.EventException;
 import mil.nga.giat.mage.sdk.exceptions.RoleException;
-import android.content.Context;
-import android.util.Log;
-
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonDeserializationContext;
-import com.google.gson.JsonDeserializer;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParseException;
 
 /**
  * JSON to {@link User}
@@ -128,8 +129,7 @@ public class UserDeserializer implements JsonDeserializer<User> {
 		String primaryPhone = null;
 		if (feature.has("phones")) {
 			JsonArray phoneArray = feature.get("phones").getAsJsonArray();
-			for (Iterator<JsonElement> i = phoneArray.iterator(); i.hasNext();) {
-				JsonElement e = i.next();
+			for (JsonElement e : phoneArray) {
 				Phone phone = new Phone();
 				phone.setNumber(e.getAsJsonObject().get("number").getAsString());
 				phones.add(phone);

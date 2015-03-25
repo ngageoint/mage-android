@@ -1,8 +1,5 @@
 package mil.nga.giat.mage.sdk.glide;
 
-import java.io.File;
-import java.io.IOException;
-
 import android.content.Context;
 import android.util.Log;
 
@@ -10,6 +7,9 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.Key;
 import com.bumptech.glide.load.engine.cache.DiskCache;
 import com.bumptech.glide.load.engine.cache.DiskLruCacheWrapper;
+
+import java.io.File;
+import java.io.IOException;
 
 public class MageDiskCache implements DiskCache {
 	private static final String LOG_NAME = MageDiskCache.class.getName();

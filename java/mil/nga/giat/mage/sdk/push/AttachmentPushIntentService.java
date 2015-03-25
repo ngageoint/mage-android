@@ -1,5 +1,9 @@
 package mil.nga.giat.mage.sdk.push;
 
+import android.app.IntentService;
+import android.content.Intent;
+import android.util.Log;
+
 import mil.nga.giat.mage.sdk.connectivity.ConnectivityUtility;
 import mil.nga.giat.mage.sdk.datastore.observation.Attachment;
 import mil.nga.giat.mage.sdk.datastore.observation.AttachmentHelper;
@@ -7,9 +11,6 @@ import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
 import mil.nga.giat.mage.sdk.exceptions.ObservationException;
 import mil.nga.giat.mage.sdk.http.post.MageServerPostRequests;
 import mil.nga.giat.mage.sdk.login.LoginTaskFactory;
-import android.app.IntentService;
-import android.content.Intent;
-import android.util.Log;
 
 public class AttachmentPushIntentService extends IntentService {
 	

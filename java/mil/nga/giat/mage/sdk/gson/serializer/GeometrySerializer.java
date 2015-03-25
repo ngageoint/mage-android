@@ -1,7 +1,5 @@
 package mil.nga.giat.mage.sdk.gson.serializer;
 
-import java.lang.reflect.Type;
-
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
@@ -19,6 +17,8 @@ import com.vividsolutions.jts.geom.MultiPoint;
 import com.vividsolutions.jts.geom.MultiPolygon;
 import com.vividsolutions.jts.geom.Point;
 import com.vividsolutions.jts.geom.Polygon;
+
+import java.lang.reflect.Type;
 
 public class GeometrySerializer implements JsonSerializer<Geometry> {
 
