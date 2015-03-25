@@ -481,7 +481,6 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 			((MAGE) getApplication()).onLogout(true);
 		}
 
-		// TODO : populate username from preferences?
 		showKeyboard();
 		// show form, and hide spinner
 		findViewById(R.id.login_status).setVisibility(View.GONE);

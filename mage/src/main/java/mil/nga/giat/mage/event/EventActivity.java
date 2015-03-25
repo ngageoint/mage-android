@@ -65,7 +65,7 @@ public class EventActivity extends Activity implements AccountDelegate {
                     try {
                         currentUser = UserHelper.getInstance(getApplicationContext()).readCurrentUser();
 						if(currentUser.getRole().equals(RoleHelper.getInstance(getApplicationContext()).readAdmin())) {
-							// TODO : now that ADMINS can be part of any event, make sure they don't push data to events they are not part of!!
+							// now that ADMINS can be part of any event, make sure they don't push data to events they are not part of!!
 							events = EventHelper.getInstance(getApplicationContext()).readAll();
 						} else {
 							events = EventHelper.getInstance(getApplicationContext()).getEventsForCurrentUser();
