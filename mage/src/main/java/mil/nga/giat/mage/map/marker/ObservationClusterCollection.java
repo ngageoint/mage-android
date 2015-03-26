@@ -76,7 +76,7 @@ public class ObservationClusterCollection implements PointCollection<Observation
 
     }
     
-    @Override    
+    @Override
     public void refreshMarkerIcons() {
     	// TODO : figure this out?
     	Log.d(LOG_NAME, "TODO: refreshme");
