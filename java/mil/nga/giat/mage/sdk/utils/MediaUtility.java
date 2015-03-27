@@ -23,11 +23,15 @@ import android.provider.MediaStore;
 import android.util.Log;
 import android.webkit.MimeTypeMap;
 
+import org.apache.commons.lang3.StringUtils;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -58,11 +62,26 @@ public class MediaUtility {
         else return k;
     }
 	
-	public static String getMimeType(String url)
-	{
+	public static String getMimeType(String url) {
 	    String type = null;
-	    String extension = MimeTypeMap.getFileExtensionFromUrl(url.replaceAll("\\s*", ""));
-	    if (extension != null) {
+		if(StringUtils.isBlank(url)) {
+			return type;
+		}
+		String extension = null;
+		try {
+			extension = MimeTypeMap.getFileExtensionFromUrl(URLEncoder.encode(url.replaceAll("\\s*", ""), "UTF-8"));
+		} catch(UnsupportedEncodingException uee) {
+			Log.e(LOG_NAME, "Unable to determine file extension");
+		}
+
+		if(StringUtils.isBlank(extension)) {
+			int i = url.lastIndexOf('.');
+			if (i > 0 && url.length() >= i+1) {
+				extension = url.substring(i+1);
+			}
+		}
+
+	    if (!StringUtils.isBlank(extension)) {
 	        MimeTypeMap mime = MimeTypeMap.getSingleton();
 	        type = mime.getMimeTypeFromExtension(extension);
 	    }
