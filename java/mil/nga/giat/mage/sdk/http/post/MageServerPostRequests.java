@@ -137,6 +137,10 @@ public class MageServerPostRequests {
 			
 			Log.d(LOG_NAME, "Mime type is: " + mimeType);
 
+			if(mimeType == null) {
+				throw new Exception("Attachment mimeType is " + String.valueOf(mimeType));
+			}
+
 			FileBody fileBody = new FileBody(new File(attachment.getLocalPath()), mimeType);
 			FormBodyPart fbp = new FormBodyPart("attachment", fileBody);
 
