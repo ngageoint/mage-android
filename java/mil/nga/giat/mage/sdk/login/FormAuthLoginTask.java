@@ -179,7 +179,7 @@ public class FormAuthLoginTask extends AbstractAccountTask {
 				nameValuePairs.add(new BasicNameValuePair("username", username));
 				String buildVersion = sharedPreferences.getString(mApplicationContext.getString(R.string.buildVersionKey), null);
 				if (buildVersion != null) {
-					nameValuePairs.add(new BasicNameValuePair("mageVersion", buildVersion));
+					nameValuePairs.add(new BasicNameValuePair("appVersion", buildVersion));
 				}
 
 				UrlEncodedFormEntity authParams = new UrlEncodedFormEntity(nameValuePairs);
