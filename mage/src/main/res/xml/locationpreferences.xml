@@ -8,7 +8,7 @@
         android:summary="Track and report device location"
         android:title="Report Location"/>
 
-    <PreferenceCategory android:title="LOCATION TIME/DISTANCE SENSITIVITY">
+    <PreferenceCategory android:title="GPS TIME/DISTANCE SENSITIVITY">
         <mil.nga.giat.mage.sdk.preferences.IntegerListValuePreference
             android:defaultValue="@integer/userReportingFrequencyDefaultValue"
             android:entries="@array/userReportingFrequencies"
@@ -23,6 +23,17 @@
             android:key="@string/gpsSensitivityKey"
             android:summary="Minimum distance between location updates. Smaller distances will give a more precise location at the cost of battery drain."
             android:title="GPS Distance Sensitivity"/>
+    </PreferenceCategory>
+
+    <PreferenceCategory android:title="SERVER PUSH TIME">
+        <!-- How often to push locations? -->
+        <mil.nga.giat.mage.sdk.preferences.IntegerListValuePreference
+            android:defaultValue="@integer/locationPushFrequencyDefaultValue"
+            android:entries="@array/locationPushFrequencies"
+            android:entryValues="@array/locationPushFrequencyValues"
+            android:key="@string/locationPushFrequencyKey"
+            android:summary="How often your location gets reported to the server."
+            android:title="Time Interval"/>
     </PreferenceCategory>
 
 </PreferenceScreen>
