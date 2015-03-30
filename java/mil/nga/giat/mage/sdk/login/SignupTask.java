@@ -3,6 +3,7 @@ package mil.nga.giat.mage.sdk.login;
 import android.content.Context;
 import android.util.Log;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
@@ -110,6 +111,14 @@ public class SignupTask extends AbstractAccountTask {
 				String error = EntityUtils.toString(entity);
 				Log.e(LOG_NAME, "Bad request.");
 				Log.e(LOG_NAME, error);
+				if(!StringUtils.isBlank(error)) {
+					List<Integer> errorIndices = new ArrayList<Integer>();
+					errorIndices.add(5);
+					List<String> errorMessages = new ArrayList<String>();
+					errorMessages.add(error);
+					return new AccountStatus(AccountStatus.Status.FAILED_SIGNUP, errorIndices, errorMessages);
+				}
+				return new AccountStatus(AccountStatus.Status.FAILED_SIGNUP);
 			}
 		} catch (Exception e) {
 			Log.e(LOG_NAME, "Problem signing up.", e);

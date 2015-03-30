@@ -1,6 +1,7 @@
 package mil.nga.giat.mage.sdk.push;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
@@ -29,7 +30,7 @@ import mil.nga.giat.mage.sdk.exceptions.UserException;
 import mil.nga.giat.mage.sdk.http.post.MageServerPostRequests;
 import mil.nga.giat.mage.sdk.login.LoginTaskFactory;
 
-public class LocationPushIntentService extends ConnectivityAwareIntentService {
+public class LocationPushIntentService extends ConnectivityAwareIntentService implements SharedPreferences.OnSharedPreferenceChangeListener {
 
 	private static final String LOG_NAME = LocationPushIntentService.class.getName();
 
@@ -48,6 +49,7 @@ public class LocationPushIntentService extends ConnectivityAwareIntentService {
 	@Override
 	protected void onHandleIntent(Intent intent) {
 		super.onHandleIntent(intent);
+		PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).registerOnSharedPreferenceChangeListener(this);
 		long pushFrequency = getLocationPushFrequency();
 		while (!isCanceled) {
 			if (isConnected && !LoginTaskFactory.getInstance(getApplicationContext()).isLocalLogin()) {
@@ -130,7 +132,7 @@ public class LocationPushIntentService extends ConnectivityAwareIntentService {
 			long currentTime = new Date().getTime();
 
 			try {
-				while (lastFetchTime + pushFrequency > (currentTime = new Date().getTime())) {
+				while (lastFetchTime + (pushFrequency = getLocationPushFrequency()) > (currentTime = new Date().getTime())) {
 					synchronized (pushSemaphore) {
 						Log.d(LOG_NAME, "Location push sleeping for " + (lastFetchTime + pushFrequency - currentTime) + "ms.");
 						pushSemaphore.wait(lastFetchTime + pushFrequency - currentTime);
@@ -146,6 +148,18 @@ public class LocationPushIntentService extends ConnectivityAwareIntentService {
 				Log.e(LOG_NAME, "Interrupted.  Unable to sleep " + pushFrequency, ie);
 			} finally {
 				isConnected = ConnectivityUtility.isOnline(getApplicationContext());
+			}
+		}
+	}
+
+	/**
+	 * Will alert the fetching thread that changes have been made
+	 */
+	@Override
+	public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+		if (key.equalsIgnoreCase(getApplicationContext().getString(R.string.locationPushFrequencyKey))) {
+			synchronized (pushSemaphore) {
+				pushSemaphore.notifyAll();
 			}
 		}
 	}

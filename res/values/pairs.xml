@@ -22,7 +22,7 @@
     <integer name="observationPushFrequencyDefaultValue">60000</integer>
 
     <string name="locationPushFrequencyKey">locationPushFrequency</string>
-    <integer name="locationPushFrequencyDefaultValue">45000</integer>
+    <integer name="locationPushFrequencyDefaultValue">40000</integer>
 
     <string name="deleteAllDataOnLogoutKey">deleteAllDataOnLogout</string>
     <bool name="deleteAllDataOnLogoutDefaultValue">false</bool>

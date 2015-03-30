@@ -11,11 +11,6 @@
     <mil.nga.giat.mage.sdk.preferences.IntegerEditTextPreference
         android:defaultValue="@integer/observationPushFrequencyDefaultValue"
         android:key="@string/observationPushFrequencyKey" />
-
-    <!-- How often to push locations? -->
-    <mil.nga.giat.mage.sdk.preferences.IntegerEditTextPreference
-        android:defaultValue="@integer/locationPushFrequencyDefaultValue"
-        android:key="@string/locationPushFrequencyKey" />
     
     <!-- Option for some deployments.  Delete all data when logging out. -->
     <CheckBoxPreference
