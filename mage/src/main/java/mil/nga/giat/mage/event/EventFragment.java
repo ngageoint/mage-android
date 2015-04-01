@@ -4,6 +4,7 @@ import android.app.Fragment;
 import android.app.FragmentManager;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -17,6 +18,7 @@ import java.util.List;
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.sdk.datastore.user.Event;
 import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
+import mil.nga.giat.mage.sdk.datastore.user.RoleHelper;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.login.AccountDelegate;
@@ -51,19 +53,28 @@ public class EventFragment extends Fragment {
 		final EventBannerFragment eventBannerFragment = new EventBannerFragment();
 		fragmentManager.beginTransaction().add(R.id.event_fragment_event_holder, eventBannerFragment).commit();
 
-
 		try {
 			final User currentUser = UserHelper.getInstance(getActivity().getApplicationContext()).readCurrentUser();
-			events = EventHelper.getInstance(getActivity().getApplicationContext()).getEventsForCurrentUser();
+			if(currentUser.getRole().equals(RoleHelper.getInstance(getActivity().getApplicationContext()).readAdmin())) {
+				// now that ADMINS can be part of any event, make sure they don't push data to events they are not part of!!
+				events = EventHelper.getInstance(getActivity().getApplicationContext()).readAll();
+			} else {
+				events = EventHelper.getInstance(getActivity().getApplicationContext()).getEventsForCurrentUser();
+			}
 
 			Event currentEvent = currentUser.getCurrentEvent();
 
 			RadioGroup radioGroup = ((RadioGroup) rootView.findViewById(R.id.event_fragment_radiogroup));
 
+			List<Event> tempEventsForCurrentUser = EventHelper.getInstance(getActivity().getApplicationContext()).getEventsForCurrentUser();
 			for (Event e : events) {
 				RadioButton radioButton = new RadioButton(getActivity().getApplicationContext());
 				radioButton.setId(uniqueChildIdIndex++);
-				radioButton.setText(e.getName());
+				String text = e.getName();
+				if(!tempEventsForCurrentUser.contains(e)) {
+					text += " (admin access)";
+				}
+				radioButton.setText(text);
 				radioButton.setTextColor(Color.BLACK);
 				if (currentEvent.getRemoteId().equals(e.getRemoteId())) {
 					radioButton.setChecked(true);
@@ -89,6 +100,9 @@ public class EventFragment extends Fragment {
 
 					// regardless of the return status, set the user's currentevent which will fire off local onEventChanged
 					try {
+						if(!UserHelper.getInstance(getActivity().getApplicationContext()).isCurrentUserPartOfEvent(chosenEvent)) {
+							PreferenceManager.getDefaultSharedPreferences(getActivity().getApplicationContext()).edit().putBoolean(getString(R.string.reportLocationKey), false).commit();
+						}
 						currentUser.setCurrentEvent(chosenEvent);
 						UserHelper.getInstance(getActivity().getApplicationContext()).createOrUpdate(currentUser);
 						eventBannerFragment.refresh();

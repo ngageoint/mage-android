@@ -42,6 +42,8 @@ import mil.nga.giat.mage.preferences.GeneralPreferencesFragment;
 import mil.nga.giat.mage.profile.MyProfileFragment;
 import mil.nga.giat.mage.sdk.datastore.DaoStore;
 import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
+import mil.nga.giat.mage.sdk.datastore.user.RoleHelper;
+import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
 
 /**
@@ -77,7 +79,18 @@ public class LandingActivity extends Activity implements ListView.OnItemClickLis
 		drawerItems.add(mapItem);
 		drawerItems.add(new DrawerItem.Builder("Observations").id(id++).drawableId(R.drawable.ic_map_marker_white).fragment(new ObservationFeedFragment()).build());
 		drawerItems.add(new DrawerItem.Builder("People").id(id++).drawableId(R.drawable.ic_users_white).fragment(new PeopleFeedFragment()).build());
-		if(EventHelper.getInstance(getApplicationContext()).getEventsForCurrentUser().size() > 1) {
+
+		int numberOfEvents = EventHelper.getInstance(getApplicationContext()).getEventsForCurrentUser().size();
+		try {
+			if (UserHelper.getInstance(getApplicationContext()).readCurrentUser().getRole().equals(RoleHelper.getInstance(getApplicationContext()).readAdmin())) {
+				// now that ADMINS can be part of any event
+				numberOfEvents = EventHelper.getInstance(getApplicationContext()).readAll().size();
+			}
+		} catch(Exception e) {
+			Log.e(LOG_NAME, "Problem pulling events for this admin.");
+		}
+
+		if(numberOfEvents > 1) {
 			drawerItems.add(new DrawerItem.Builder("Events").id(id++).drawableId(R.drawable.ic_events_white).fragment(new EventFragment()).build());
 		}
 		drawerItems.add(new DrawerItem.Builder("My Profile").id(id++).drawableId(R.drawable.ic_fa_user).fragment(new MyProfileFragment()).build());
