@@ -262,12 +262,22 @@ public class UserHelper extends DaoHelper<User> implements IEventDispatcher<IEve
         return users;
     }
 
-	public boolean isCurrentUserPartOfCurrentEvent() {
+	public boolean isCurrentUserPartOfEvent(Event event) {
 		boolean status = false;
 
 		try {
-			status = EventHelper.getInstance(mApplicationContext).getEventsForCurrentUser().contains(readCurrentUser().getCurrentEvent());
+			status = EventHelper.getInstance(mApplicationContext).getEventsForCurrentUser().contains(event);
 		} catch(Exception e) {
+			Log.e(LOG_NAME, "Problem getting user or event.");
+		}
+		return status;
+	}
+
+	public boolean isCurrentUserPartOfCurrentEvent() {
+		boolean status = false;
+		try {
+			status = isCurrentUserPartOfEvent(readCurrentUser().getCurrentEvent());
+		} catch (Exception e) {
 			Log.e(LOG_NAME, "Problem getting user or event.");
 		}
 		return status;
