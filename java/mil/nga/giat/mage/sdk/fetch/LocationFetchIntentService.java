@@ -18,12 +18,13 @@ import mil.nga.giat.mage.sdk.datastore.location.LocationHelper;
 import mil.nga.giat.mage.sdk.datastore.location.LocationProperty;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
+import mil.nga.giat.mage.sdk.event.IEventEventListener;
 import mil.nga.giat.mage.sdk.event.IScreenEventListener;
 import mil.nga.giat.mage.sdk.http.get.MageServerGetRequests;
 import mil.nga.giat.mage.sdk.login.LoginTaskFactory;
 import mil.nga.giat.mage.sdk.screen.ScreenChangeReceiver;
 
-public class LocationFetchIntentService extends ConnectivityAwareIntentService implements OnSharedPreferenceChangeListener, IScreenEventListener {
+public class LocationFetchIntentService extends ConnectivityAwareIntentService implements OnSharedPreferenceChangeListener, IScreenEventListener, IEventEventListener {
 
 	private static final String LOG_NAME = LocationFetchIntentService.class.getName();
 
@@ -44,6 +45,7 @@ public class LocationFetchIntentService extends ConnectivityAwareIntentService i
 		PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).registerOnSharedPreferenceChangeListener(this);
 		LocationHelper locationHelper = LocationHelper.getInstance(getApplicationContext());
 		UserHelper userHelper = UserHelper.getInstance(getApplicationContext());
+		userHelper.addListener(this);
 		UserServerFetch userFetch = new UserServerFetch(getApplicationContext());
 		SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
 
@@ -86,8 +88,8 @@ public class LocationFetchIntentService extends ConnectivityAwareIntentService i
 									// don't pull your own locations for now!
 									if (!user.isCurrentUser()) {
 										userId = String.valueOf(user.getId());
-										locationHelper.create(location);
-										int numberOfLocationsDeleted = locationHelper.deleteUserLocations(userId, true);
+										location = locationHelper.create(location);
+										int numberOfLocationsDeleted = locationHelper.deleteUserLocations(userId, true, location.getEvent());
 									}
 								} else {
 									Log.w(LOG_NAME, "A location with no user was found and discarded.  User id: " + userId);
@@ -149,6 +151,14 @@ public class LocationFetchIntentService extends ConnectivityAwareIntentService i
 
 	@Override
 	public void onScreenOn() {
+		synchronized (fetchSemaphore) {
+			fetchSemaphore.set(true);
+			fetchSemaphore.notifyAll();
+		}
+	}
+
+	@Override
+	public void onEventChanged() {
 		synchronized (fetchSemaphore) {
 			fetchSemaphore.set(true);
 			fetchSemaphore.notifyAll();

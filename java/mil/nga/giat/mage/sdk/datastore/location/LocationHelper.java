@@ -20,6 +20,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 import mil.nga.giat.mage.sdk.datastore.DaoHelper;
 import mil.nga.giat.mage.sdk.datastore.DaoStore;
+import mil.nga.giat.mage.sdk.datastore.user.Event;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.event.IEventDispatcher;
@@ -261,14 +262,14 @@ public class LocationHelper extends DaoHelper<Location> implements IEventDispatc
 	 *            The user's local id
 	 * @throws LocationException
 	 */
-	public int deleteUserLocations(String userLocalId, Boolean keepMostRecent) throws LocationException {
+	public int deleteUserLocations(String userLocalId, Boolean keepMostRecent, Event event) throws LocationException {
 
 		int numberLocationsDeleted = 0;
 
 		try {
 			// newest first
 			QueryBuilder<Location, Long> qb = locationDao.queryBuilder().orderBy("timestamp", false);
-			qb.where().eq("user_id", userLocalId);
+			qb.where().eq("user_id", userLocalId).and().eq("event_id", event.getId());
 			
 			List<Location> locations = qb.query();
 			
