@@ -205,15 +205,6 @@ public class ObservationEditActivity extends Activity {
 			o.setTimestamp(new Date());
 			List<ObservationProperty> properties = new ArrayList<ObservationProperty>();
 			properties.add(new ObservationProperty("timestamp", iso8601Format.format(o.getTimestamp())));
-			for (View view : controls) {
-				if (view instanceof MageSpinner) {
-					MageSpinner mageSpinner = (MageSpinner) view;
-					String key = mageSpinner.getPropertyKey();
-					if(mageSpinner.getSelectedItem() != null) {
-						properties.add(new ObservationProperty(key, mageSpinner.getSelectedItem().toString()));
-					}
-				}
-			}
 			o.addProperties(properties);
 			try {
 				User u = UserHelper.getInstance(getApplicationContext()).readCurrentUser();
