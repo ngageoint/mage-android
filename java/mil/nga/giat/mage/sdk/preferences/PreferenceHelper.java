@@ -10,6 +10,7 @@ import android.util.Log;
 
 import com.google.common.base.Predicate;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
@@ -66,6 +67,23 @@ public class PreferenceHelper implements SharedPreferences.OnSharedPreferenceCha
 	 */
 	public synchronized void initialize(Boolean forceReinitialize, final Class<?>... xmlClasses) {
 		SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(mContext);
+
+		String oldBuildVersion = sharedPreferences.getString(mContext.getString(R.string.buildVersionKey), null);
+		String newBuildVersion = null;
+		try {
+			newBuildVersion = mContext.getPackageManager().getPackageInfo(mContext.getPackageName(), 0).versionName;
+		} catch (NameNotFoundException nnfe) {
+			Log.e(LOG_NAME , "Problem retrieving build version.", nnfe);
+		}
+		if(!StringUtils.isBlank(oldBuildVersion) && !StringUtils.isBlank(newBuildVersion)) {
+			String oldMajorVersion = oldBuildVersion.split("\\.")[0];
+			String newMajorVersion = newBuildVersion.split("\\.")[0];
+
+			if(!oldMajorVersion.equals(newMajorVersion)) {
+				forceReinitialize = true;
+			}
+		}
+
 		if (forceReinitialize) {
 			sharedPreferences.edit().clear().commit();
 		}
@@ -89,11 +107,10 @@ public class PreferenceHelper implements SharedPreferences.OnSharedPreferenceCha
 
 		// add programmatic preferences
 		Editor editor = sharedPreferences.edit();
-		try {
-			editor.putString(mContext.getString(R.string.buildVersionKey), mContext.getPackageManager().getPackageInfo(mContext.getPackageName(), 0).versionName).commit();
-		} catch (NameNotFoundException nnfe) {
-			Log.e(LOG_NAME , "Problem storing build version.", nnfe);
+		if(!StringUtils.isBlank(newBuildVersion)) {
+			editor.putString(mContext.getString(R.string.buildVersionKey), newBuildVersion).commit();
 		}
+
 		logKeyValuePairs();
 		sharedPreferences.registerOnSharedPreferenceChangeListener(this);
 	}

@@ -63,7 +63,7 @@
     <!-- *************** set in locationpreferences.xml ************** -->
 
     <string name="reportLocationKey">reportLocation</string>
-    <bool name="reportLocationDefaultValue">false</bool>
+    <bool name="reportLocationDefaultValue">true</bool>
 
     <string name="userReportingFrequencyKey">userReportingFrequency</string>
     <integer name="userReportingFrequencyDefaultValue">300000</integer>
