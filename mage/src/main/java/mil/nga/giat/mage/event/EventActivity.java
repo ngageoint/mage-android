@@ -105,7 +105,7 @@ public class EventActivity extends Activity implements AccountDelegate {
                                 radioButton.setId(uniqueChildIdIndex++);
 								String text = e.getName();
 								if(!tempEventsForCurrentUser.contains(e)) {
-									text += " (admin access)";
+									text += " (read-only access)";
 								}
                                 radioButton.setText(text);
 
