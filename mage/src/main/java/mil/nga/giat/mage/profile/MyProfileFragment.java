@@ -241,7 +241,18 @@ public class MyProfileFragment extends Fragment {
 			break;
 		}
 		if (filePath != null) {
-			Bitmap b = MediaUtility.resizeAndRoundCorners((MediaUtility.orientImage(new File(filePath))), 150);
+
+			BitmapFactory.Options options = new BitmapFactory.Options();
+			options.inPreferredConfig = Bitmap.Config.RGB_565;
+			options.inSampleSize = 2;
+			Bitmap bitmap = BitmapFactory.decodeFile(new File(filePath).getAbsolutePath(), options);
+			Bitmap b = MediaUtility.resizeAndRoundCorners(bitmap, 150);
+			try {
+				b = MediaUtility.orientBitmap(b, new File(filePath).getAbsolutePath(), false);
+			} catch (Exception e) {
+				Log.e(LOG_NAME, "failed to rotate image", e);
+			}
+
 			ImageView iv = (ImageView)getActivity().findViewById(R.id.profile_picture);
 			iv.setImageBitmap(b);
 			user.setLocalAvatarPath(filePath);

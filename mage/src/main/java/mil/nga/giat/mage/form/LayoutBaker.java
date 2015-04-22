@@ -31,6 +31,7 @@ import java.util.Calendar;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -98,7 +99,7 @@ public class LayoutBaker {
 			
 			String name = field.get("name").getAsString();
 			JsonArray choicesJson = field.get("choices").getAsJsonArray();
-			Collection<String> choices = new HashSet<String>();
+			Collection<String> choices = new LinkedHashSet<String>();
 			if (choicesJson != null && !choicesJson.isJsonNull()) {
 				for (int j = 0; j < choicesJson.size(); j++) {
 					JsonObject choiceJson = choicesJson.get(j).getAsJsonObject();

@@ -44,105 +44,109 @@ public class EventActivity extends Activity implements AccountDelegate {
 
     private Event chosenEvent = null;
 
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+	@Override
+	public void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		requestWindowFeature(Window.FEATURE_NO_TITLE);
+		setContentView(R.layout.activity_event);
+	}
 
-        uniqueChildIdIndex = uniqueChildStartingIdIndex;
+	@Override
+	protected void onResume() {
+		super.onResume();
+		uniqueChildIdIndex = uniqueChildStartingIdIndex;
 		events = new ArrayList<Event>();
 
-        requestWindowFeature(Window.FEATURE_NO_TITLE);
-        setContentView(R.layout.activity_event);
+		BroadcastReceiver initialFetchReceiver = new BroadcastReceiver() {
+			@Override
+			public void onReceive(Context context, Intent intent) {
+				LocalBroadcastManager.getInstance(getApplicationContext()).unregisterReceiver(this);
 
-        BroadcastReceiver initialFetchReceiver = new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                LocalBroadcastManager.getInstance(getApplicationContext()).unregisterReceiver(this);
-
-                // status?
-                if (intent.getBooleanExtra("status", false)) {
-                    User currentUser = null;
-                    try {
-                        currentUser = UserHelper.getInstance(getApplicationContext()).readCurrentUser();
+				// status?
+				if (intent.getBooleanExtra("status", false)) {
+					User currentUser = null;
+					try {
+						currentUser = UserHelper.getInstance(getApplicationContext()).readCurrentUser();
 						if(currentUser.getRole().equals(RoleHelper.getInstance(getApplicationContext()).readAdmin())) {
 							// now that ADMINS can be part of any event, make sure they don't push data to events they are not part of!!
 							events = EventHelper.getInstance(getApplicationContext()).readAll();
 						} else {
 							events = EventHelper.getInstance(getApplicationContext()).getEventsForCurrentUser();
 						}
-                    } catch(Exception e) {
-                        Log.e(LOG_NAME, "Could not get current events!");
-                    }
+					} catch(Exception e) {
+						Log.e(LOG_NAME, "Could not get current events!");
+					}
 
-                    if(events.isEmpty() || currentUser == null) {
-                        Log.e(LOG_NAME, "User is part of no events!");
-                        ((MAGE) getApplication()).onLogout(true);
-                        findViewById(R.id.event_status).setVisibility(View.GONE);
-                        findViewById(R.id.event_content).setVisibility(View.VISIBLE);
-                        findViewById(R.id.event_continue_button).setVisibility(View.GONE);
-                        findViewById(R.id.event_select_content).setVisibility(View.GONE);
-                        findViewById(R.id.event_back_button).setVisibility(View.VISIBLE);
-                        findViewById(R.id.event_bummer_info).setVisibility(View.VISIBLE);
-                        findViewById(R.id.event_serverproblem_info).setVisibility(View.GONE);
-                    } else {
-                        Event userRecentEvent = currentUser.getCurrentEvent();
+					if(events.isEmpty() || currentUser == null) {
+						Log.e(LOG_NAME, "User is part of no events!");
+						((MAGE) getApplication()).onLogout(true);
+						findViewById(R.id.event_status).setVisibility(View.GONE);
+						findViewById(R.id.event_content).setVisibility(View.VISIBLE);
+						findViewById(R.id.event_continue_button).setVisibility(View.GONE);
+						findViewById(R.id.event_select_content).setVisibility(View.GONE);
+						findViewById(R.id.event_back_button).setVisibility(View.VISIBLE);
+						findViewById(R.id.event_bummer_info).setVisibility(View.VISIBLE);
+						findViewById(R.id.event_serverproblem_info).setVisibility(View.GONE);
+					} else {
+						Event userRecentEvent = currentUser.getCurrentEvent();
 
-                        if(userRecentEvent == null) {
-                            userRecentEvent = events.get(0);
-                            currentUser.setCurrentEvent(userRecentEvent);
-                            UserHelper.getInstance(getApplicationContext()).createOrUpdate(currentUser);
-                        }
+						if(userRecentEvent == null) {
+							userRecentEvent = events.get(0);
+							currentUser.setCurrentEvent(userRecentEvent);
+							UserHelper.getInstance(getApplicationContext()).createOrUpdate(currentUser);
+						}
 
-                        if(events.size() == 1 && events.get(0).equals(userRecentEvent)) {
-                            currentUser.setCurrentEvent(userRecentEvent);
-                            UserHelper.getInstance(getApplicationContext()).createOrUpdate(currentUser);
-                            chosenEvent = userRecentEvent;
-                            finishAccount(new AccountStatus(AccountStatus.Status.SUCCESSFUL_LOGIN));
-                        } else {
+						if(events.size() == 1 && events.get(0).equals(userRecentEvent)) {
+							currentUser.setCurrentEvent(userRecentEvent);
+							UserHelper.getInstance(getApplicationContext()).createOrUpdate(currentUser);
+							chosenEvent = userRecentEvent;
+							finishAccount(new AccountStatus(AccountStatus.Status.SUCCESSFUL_LOGIN));
+						} else {
 							List<Event> tempEventsForCurrentUser = EventHelper.getInstance(getApplicationContext()).getEventsForCurrentUser();
-                            for (Event e : events) {
-                                RadioButton radioButton = new RadioButton(getApplicationContext());
-                                radioButton.setId(uniqueChildIdIndex++);
+							((RadioGroup)findViewById(R.id.event_radiogroup)).removeAllViews();
+							for (Event e : events) {
+								RadioButton radioButton = new RadioButton(getApplicationContext());
+								radioButton.setId(uniqueChildIdIndex++);
 								String text = e.getName();
 								if(!tempEventsForCurrentUser.contains(e)) {
 									text += " (read-only access)";
 								}
-                                radioButton.setText(text);
+								radioButton.setText(text);
 
-                                if(userRecentEvent.getRemoteId().equals(e.getRemoteId())) {
-                                    radioButton.setChecked(true);
-                                }
+								if(userRecentEvent.getRemoteId().equals(e.getRemoteId())) {
+									radioButton.setChecked(true);
+								}
 
-                                ((RadioGroup)findViewById(R.id.event_radiogroup)).addView(radioButton);
-                            }
-                            findViewById(R.id.event_status).setVisibility(View.GONE);
-                            findViewById(R.id.event_content).setVisibility(View.VISIBLE);
-                        }
-                    }
-                } else {
-                    findViewById(R.id.event_status).setVisibility(View.GONE);
-                    findViewById(R.id.event_content).setVisibility(View.VISIBLE);
-                    Log.e(LOG_NAME, "User is part of no event!");
-                    ((MAGE) getApplication()).onLogout(true);
-                    findViewById(R.id.event_continue_button).setVisibility(View.GONE);
-                    findViewById(R.id.event_select_content).setVisibility(View.GONE);
-                    findViewById(R.id.event_back_button).setVisibility(View.VISIBLE);
-                    findViewById(R.id.event_bummer_info).setVisibility(View.GONE);
-                    findViewById(R.id.event_serverproblem_info).setVisibility(View.VISIBLE);
-                }
-            }
-        };
+								((RadioGroup)findViewById(R.id.event_radiogroup)).addView(radioButton);
+							}
+							findViewById(R.id.event_status).setVisibility(View.GONE);
+							findViewById(R.id.event_content).setVisibility(View.VISIBLE);
+						}
+					}
+				} else {
+					findViewById(R.id.event_status).setVisibility(View.GONE);
+					findViewById(R.id.event_content).setVisibility(View.VISIBLE);
+					Log.e(LOG_NAME, "User is part of no event!");
+					((MAGE) getApplication()).onLogout(true);
+					findViewById(R.id.event_continue_button).setVisibility(View.GONE);
+					findViewById(R.id.event_select_content).setVisibility(View.GONE);
+					findViewById(R.id.event_back_button).setVisibility(View.VISIBLE);
+					findViewById(R.id.event_bummer_info).setVisibility(View.GONE);
+					findViewById(R.id.event_serverproblem_info).setVisibility(View.VISIBLE);
+				}
+			}
+		};
 
-        // receive response from initial pull
-        IntentFilter statusIntentFilter = new IntentFilter(InitialFetchIntentService.InitialFetchIntentServiceAction);
-        statusIntentFilter.addCategory(Intent.CATEGORY_DEFAULT);
+		// receive response from initial pull
+		IntentFilter statusIntentFilter = new IntentFilter(InitialFetchIntentService.InitialFetchIntentServiceAction);
+		statusIntentFilter.addCategory(Intent.CATEGORY_DEFAULT);
 
-        LocalBroadcastManager.getInstance(getApplicationContext()).registerReceiver(initialFetchReceiver, statusIntentFilter);
+		LocalBroadcastManager.getInstance(getApplicationContext()).registerReceiver(initialFetchReceiver, statusIntentFilter);
 
-        getApplicationContext().startService(new Intent(getApplicationContext(), InitialFetchIntentService.class));
-    }
+		getApplicationContext().startService(new Intent(getApplicationContext(), InitialFetchIntentService.class));
+	}
 
-    public void chooseEvent(View view) {
+	public void chooseEvent(View view) {
 
 		findViewById(R.id.event_content).setVisibility(View.GONE);
 		findViewById(R.id.event_status).setVisibility(View.VISIBLE);
@@ -154,15 +158,6 @@ public class EventActivity extends Activity implements AccountDelegate {
         userRecentEventInfo.add(chosenEvent.getRemoteId());
 
         new RecentEventTask(this, this.getApplicationContext()).execute(userRecentEventInfo.toArray(new String[userRecentEventInfo.size()]));
-
-		// regardless of the return status, set the user's currentevent
-		try {
-			User currentUser = UserHelper.getInstance(getApplicationContext()).readCurrentUser();
-			currentUser.setCurrentEvent(chosenEvent);
-			UserHelper.getInstance(getApplicationContext()).createOrUpdate(currentUser);
-		} catch(Exception e) {
-			Log.e(LOG_NAME, "Could not set current event.");
-		}
     }
 
     public void bummerEvent(View view) {
@@ -174,6 +169,15 @@ public class EventActivity extends Activity implements AccountDelegate {
         if (!accountStatus.getStatus().equals(AccountStatus.Status.SUCCESSFUL_LOGIN)) {
             Log.e(LOG_NAME, "Unable to post your recent event!");
         }
+		// regardless of the return status, set the user's currentevent
+		try {
+			User currentUser = UserHelper.getInstance(getApplicationContext()).readCurrentUser();
+			currentUser.setCurrentEvent(chosenEvent);
+			UserHelper.getInstance(getApplicationContext()).createOrUpdate(currentUser);
+		} catch(Exception e) {
+			Log.e(LOG_NAME, "Could not set current event.");
+		}
+
         SharedPreferences.Editor sp = PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).edit();
         sp.putString(getString(R.string.currentEventKey), String.valueOf(chosenEvent.getName())).commit();
 
