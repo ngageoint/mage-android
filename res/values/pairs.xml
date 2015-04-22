@@ -43,7 +43,7 @@
 
     <!-- MEDIA -->
     <string name="imageUploadSizeKey">imageUploadSize</string>
-    <integer name="imageUploadSizeDefaultValue">0</integer>
+    <integer name="imageUploadSizeDefaultValue">1024</integer>
 
     <!-- ABOUT -->
     <string name="serverURLKey">serverURL</string>

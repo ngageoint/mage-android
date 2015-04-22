@@ -321,39 +321,52 @@ public class MageServerGetRequests {
 		return locations;
 	}
 
-    public static Collection<User> getAllUsers(Context context, List<Exception> exceptions) {
+    public static Collection<User> getAllUsers(Context context, List<JSONArray> userJSONCacheOut, JSONArray userJSONCacheIn, List<Exception> exceptions) {
         final Gson userDeserializer = UserDeserializer.getGsonBuilder(context);
         Collection<User> users = new ArrayList<User>();
         HttpEntity entity = null;
         try {
-            URL serverURL = new URL(PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.serverURLKey), context.getString(R.string.serverURLDefaultValue)));
-            URL userURL = new URL(serverURL, "/api/users");
+			if(userJSONCacheIn == null) {
+				URL serverURL = new URL(PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.serverURLKey), context.getString(R.string.serverURLDefaultValue)));
+				URL userURL = new URL(serverURL, "/api/users");
 
-            DefaultHttpClient httpclient = HttpClientManager.getInstance(context).getHttpClient();
-            HttpGet get = new HttpGet(userURL.toURI());
-            HttpResponse response = httpclient.execute(get);
+				DefaultHttpClient httpclient = HttpClientManager.getInstance(context).getHttpClient();
+				HttpGet get = new HttpGet(userURL.toURI());
+				HttpResponse response = httpclient.execute(get);
 
-            if (HttpStatus.SC_OK == response.getStatusLine().getStatusCode()) {
-                entity = response.getEntity();
-                JSONArray json = new JSONArray(EntityUtils.toString(entity));
-                if (json != null) {
-                    for (int i = 0; i < json.length(); i++) {
-                        JSONObject feature = json.getJSONObject(i);
-                        if (feature != null) {
-                            User user = userDeserializer.fromJson(feature.toString(), User.class);
-                            if (user != null) {
-                                users.add(user);
-                            }
-                        }
-                    }
-                }
-            } else {
-                entity = response.getEntity();
-                String error = EntityUtils.toString(entity);
-                Log.e(LOG_NAME, "Bad request.");
-                Log.e(LOG_NAME, error);
-                exceptions.add(new Exception("Bad request: " + error));
-            }
+				if (HttpStatus.SC_OK == response.getStatusLine().getStatusCode()) {
+					entity = response.getEntity();
+					JSONArray json = new JSONArray(EntityUtils.toString(entity));
+					if (json != null) {
+						userJSONCacheOut.add(json);
+						for (int i = 0; i < json.length(); i++) {
+							JSONObject feature = json.getJSONObject(i);
+							if (feature != null) {
+								User user = userDeserializer.fromJson(feature.toString(), User.class);
+								if (user != null) {
+									users.add(user);
+								}
+							}
+						}
+					}
+				} else {
+					entity = response.getEntity();
+					String error = EntityUtils.toString(entity);
+					Log.e(LOG_NAME, "Bad request.");
+					Log.e(LOG_NAME, error);
+					exceptions.add(new Exception("Bad request: " + error));
+				}
+			} else {
+				for (int i = 0; i < userJSONCacheIn.length(); i++) {
+					JSONObject feature = userJSONCacheIn.getJSONObject(i);
+					if (feature != null) {
+						User user = userDeserializer.fromJson(feature.toString(), User.class);
+						if (user != null) {
+							users.add(user);
+						}
+					}
+				}
+			}
         } catch (Exception e) {
             Log.e(LOG_NAME, "There was a failure while performing an User Fetch operation.", e);
             exceptions.add(e);
