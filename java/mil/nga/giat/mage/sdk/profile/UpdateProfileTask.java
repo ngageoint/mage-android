@@ -3,6 +3,7 @@ package mil.nga.giat.mage.sdk.profile;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.CompressFormat;
+import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
 import android.util.Log;
 
@@ -54,35 +55,41 @@ public class UpdateProfileTask extends AsyncTask<String, Void, User> {
 			Log.d(LOG_NAME, "Attachment is already staged.  Nothing to do.");
 			return user;
 		}
-		
-		Bitmap bitmap = MediaUtility.orientImage(inFile);
+
+		BitmapFactory.Options options = new BitmapFactory.Options();
+		options.inPreferredConfig = Bitmap.Config.RGB_565;
+		options.inSampleSize = 2;
+		Bitmap bitmap = BitmapFactory.decodeFile(inFile.getAbsolutePath(), options);
 
 		// Scale file
 		Integer inWidth = bitmap.getWidth();
 		Integer inHeight = bitmap.getHeight();
 
-		Integer outWidth = 2048;
-		Integer outHeight = 2048;
+		Integer outImageSize = 512;
+		Integer outWidth = outImageSize;
+		Integer outHeight = outImageSize;
 
 		if (inWidth > inHeight) {
-			outHeight = ((Double) ((inHeight.doubleValue() / inWidth.doubleValue()) * 2048.0)).intValue();
+			outHeight = ((Double) ((inHeight.doubleValue() / inWidth.doubleValue()) * outImageSize.doubleValue())).intValue();
 		} else if (inWidth < inHeight) {
-			outWidth = ((Double) ((inWidth.doubleValue() / inHeight.doubleValue()) * 2048.0)).intValue();
+			outWidth = ((Double) ((inWidth.doubleValue() / inHeight.doubleValue()) * outImageSize.doubleValue())).intValue();
 		}
 		bitmap = Bitmap.createScaledBitmap(bitmap, outWidth, outHeight, true);
 
 		try {
+			bitmap = MediaUtility.orientBitmap(bitmap, inFile.getAbsolutePath(), true);
 			OutputStream out = new FileOutputStream(stagedFile);
 			bitmap.compress(CompressFormat.JPEG, 100, out);
 
 			out.flush();
 			out.close();
 			bitmap.recycle();
+			MediaUtility.copyExifData(inFile, stagedFile);
 		} catch (Exception e) {
-			Log.e(LOG_NAME, "failed to upload file", e);
+			Log.e(LOG_NAME, "Failed to upload file", e);
 		}
 		
-		Log.e(LOG_NAME, "Pushing new picture " + stagedFile);
+		Log.i(LOG_NAME, "Pushing profile picture " + stagedFile);
 		return MageServerPostRequests.postProfilePicture(user, stagedFile.getAbsolutePath(), context);
 	}
 

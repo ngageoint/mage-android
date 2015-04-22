@@ -24,12 +24,22 @@ import android.util.Log;
 import android.webkit.MimeTypeMap;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.sanselan.Sanselan;
+import org.apache.sanselan.common.IImageMetadata;
+import org.apache.sanselan.formats.jpeg.JpegImageMetadata;
+import org.apache.sanselan.formats.jpeg.exifRewrite.ExifRewriter;
+import org.apache.sanselan.formats.tiff.TiffImageMetadata;
+import org.apache.sanselan.formats.tiff.constants.TiffConstants;
+import org.apache.sanselan.formats.tiff.write.TiffOutputSet;
 
+import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.text.SimpleDateFormat;
@@ -324,7 +334,7 @@ public class MediaUtility {
 	
 	public static Bitmap getFullSizeOrientedBitmap(Uri uri, Context c) throws FileNotFoundException, IOException {
 		InputStream is = c.getContentResolver().openInputStream(uri);
-		return MediaUtility.orientBitmap(BitmapFactory.decodeStream(is, null, null), getFileAbsolutePath(uri, c));
+		return MediaUtility.orientBitmap(BitmapFactory.decodeStream(is, null, null), getFileAbsolutePath(uri, c), false);
 	}
 	
 	public static Bitmap getThumbnailFromContent(Uri uri, int thumbsize, Context c) throws FileNotFoundException, IOException {
@@ -360,7 +370,7 @@ public class MediaUtility {
         bitmapOptions.inPreferredConfig=Bitmap.Config.ARGB_8888;//optional
         input = new FileInputStream(absoluteFilePath);
         
-        Bitmap bitmap = MediaUtility.orientBitmap(BitmapFactory.decodeStream(input, null, bitmapOptions), absoluteFilePath);
+        Bitmap bitmap = MediaUtility.orientBitmap(BitmapFactory.decodeStream(input, null, bitmapOptions), absoluteFilePath, false);
         input.close();
         return bitmap;
 	}
@@ -385,33 +395,84 @@ public class MediaUtility {
         bitmapOptions.inPreferredConfig=Bitmap.Config.ARGB_8888;//optional
         return BitmapFactory.decodeStream(input, null, bitmapOptions);
 	}
-	
-	public static Bitmap orientBitmap(Bitmap bitmap, String absoluteFilePath) throws IOException {
+
+	// FIXME : phone will run out of memory on big images...
+	public static Bitmap orientBitmap(Bitmap bitmap, String absoluteFilePath, boolean setOrientationOnFile) throws IOException {
 		// Rotate the picture based on the exif data
         ExifInterface exif = new ExifInterface(absoluteFilePath);
         int orientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, 1);
         Matrix matrix = new Matrix();
         if (orientation == 6) {
             matrix.postRotate(90);
-        }
-        else if (orientation == 3) {
+        } else if (orientation == 3) {
             matrix.postRotate(180);
-        }
-        else if (orientation == 8) {
+        } else if (orientation == 8) {
             matrix.postRotate(270);
         }
-        return Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true); // rotating bitmap
-	}
-	
-	public static Bitmap orientImage(File original) {
-		try {
-			Bitmap bitmap = BitmapFactory.decodeStream(new FileInputStream(original), null, null);
-			return orientBitmap(bitmap, original.getAbsolutePath());
-		} catch (Exception e) {
-			Log.e(LOG_NAME, "Error loading bitmap from " + original.getAbsolutePath(), e);
+
+        Bitmap newBitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true); // rotating bitmap
+		if(setOrientationOnFile) {
+			exif.setAttribute(ExifInterface.TAG_ORIENTATION, "1");
+			exif.saveAttributes();
 		}
-		return null;
-	
+		return newBitmap;
+	}
+
+	public static void copyExifData(File sourceFile, File destFile) {
+		String tempFileName = destFile.getAbsolutePath() + ".tmp";
+		File tempFile = null;
+		OutputStream tempStream = null;
+
+		try {
+			tempFile = new File(tempFileName);
+			TiffOutputSet sourceSet = getSanselanOutputSet(sourceFile);
+
+			// Save data to destination
+			tempStream = new BufferedOutputStream(new FileOutputStream(tempFile));
+			new ExifRewriter().updateExifMetadataLossless(destFile, tempStream, sourceSet);
+			tempStream.close();
+
+			if (destFile.delete()) {
+				tempFile.renameTo(destFile);
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			if (tempStream != null) {
+				try {
+					tempStream.close();
+				} catch (IOException e) {
+				}
+			}
+
+			if (tempFile != null) {
+				if (tempFile.exists()) {
+					tempFile.delete();
+				}
+			}
+		}
+	}
+
+	private static TiffOutputSet getSanselanOutputSet(File jpegImageFile) throws Exception {
+		TiffImageMetadata exif = null;
+		TiffOutputSet outputSet = null;
+
+		IImageMetadata metadata = Sanselan.getMetadata(jpegImageFile);
+		JpegImageMetadata jpegMetadata = (JpegImageMetadata) metadata;
+		if (jpegMetadata != null) {
+			exif = jpegMetadata.getExif();
+
+			if (exif != null) {
+				outputSet = exif.getOutputSet();
+			}
+		}
+
+		// If JPEG file contains no EXIF metadata, create an empty set of EXIF metadata. Otherwise, use existing EXIF metadata to keep all other existing tags
+		if (outputSet == null) {
+			outputSet = new TiffOutputSet(exif == null ? TiffConstants.DEFAULT_TIFF_BYTE_ORDER : exif.contents.header.byteOrder);
+		}
+
+		return outputSet;
 	}
 	
 	public static Bitmap resizeAndRoundCorners(Bitmap bitmap, int maxSize) {

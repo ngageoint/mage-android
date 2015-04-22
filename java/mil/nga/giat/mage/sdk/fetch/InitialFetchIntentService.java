@@ -6,8 +6,11 @@ import android.preference.PreferenceManager;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
+import org.json.JSONArray;
+
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -58,13 +61,11 @@ public class InitialFetchIntentService extends ConnectivityAwareIntentService {
         if (isConnected && isDataFetchEnabled && !LoginTaskFactory.getInstance(getApplicationContext()).isLocalLogin()) {
             Log.d(LOG_NAME, "The device is currently connected.");
             getRoles();
-            getUsers();
+			JSONArray userJSONCache = getUsers(null);
             getTeams();
             getEvents();
-			// FIXME : we should be able to not make this second request for uesrs
-            // now that the client has fetched the events, fetch the users again in order to populate the user's currentEvent.  a chicken in the egg thing
-            getUsers();
-
+            // now that the client has fetched the events, fetch the users again in order to populate the user's currentEvent using the json cache form the prior request. a chicken in the egg thing
+			getUsers(userJSONCache);
 		} else {
 			Log.d(LOG_NAME, "The device is currently disconnected, or data fetch is disabled, or this is a local login. Not performing fetch.");
 		}
@@ -116,9 +117,11 @@ public class InitialFetchIntentService extends ConnectivityAwareIntentService {
     /**
      * Create users
      */
-    private void getUsers() {
+    private JSONArray getUsers(JSONArray userJSONCacheIn) {
         Boolean didFetchUsers = Boolean.FALSE;
         UserHelper userHelper = UserHelper.getInstance(getApplicationContext());
+
+		JSONArray userJSONCacheOut = null;
 
         User currentUser = null;
         try {
@@ -130,7 +133,11 @@ public class InitialFetchIntentService extends ConnectivityAwareIntentService {
         while(!didFetchUsers && !isCanceled && attemptCount < retryCount) {
             Log.d(LOG_NAME, "Attempting to fetch users...");
             List<Exception> exceptions = new ArrayList<Exception>();
-            Collection<User> users = MageServerGetRequests.getAllUsers(getApplicationContext(), exceptions);
+			List<JSONArray> userJSONCacheOutArray = new ArrayList<JSONArray>();
+			Collection<User> users = MageServerGetRequests.getAllUsers(getApplicationContext(), userJSONCacheOutArray, userJSONCacheIn, exceptions);
+			if(userJSONCacheOutArray.size() > 0 && userJSONCacheOutArray.get(0) != null) {
+				userJSONCacheOut = userJSONCacheOutArray.get(0);
+			}
             Log.d(LOG_NAME, "Fetched " + users.size() + " users");
 
             UserAvatarFetchTask avatarFetch = new UserAvatarFetchTask(getApplicationContext());
@@ -177,8 +184,8 @@ public class InitialFetchIntentService extends ConnectivityAwareIntentService {
             }
             attemptCount++;
         }
+		return userJSONCacheOut;
     }
-
 
     /**
      * Create teams

@@ -10,18 +10,8 @@ import android.util.Log;
 
 import com.google.common.io.Files;
 
-import org.apache.sanselan.Sanselan;
-import org.apache.sanselan.common.IImageMetadata;
-import org.apache.sanselan.formats.jpeg.JpegImageMetadata;
-import org.apache.sanselan.formats.jpeg.exifRewrite.ExifRewriter;
-import org.apache.sanselan.formats.tiff.TiffImageMetadata;
-import org.apache.sanselan.formats.tiff.constants.TiffConstants;
-import org.apache.sanselan.formats.tiff.write.TiffOutputSet;
-
-import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.OutputStream;
 import java.math.BigInteger;
 import java.security.SecureRandom;
@@ -58,10 +48,12 @@ public class AttachmentHelper {
 		Integer outImageSize = sharedPreferences.getInt(context.getString(R.string.imageUploadSizeKey), context.getResources().getInteger(R.integer.imageUploadSizeDefaultValue));
 
 		if (MediaUtility.isImage(stagedFile.getAbsolutePath())) {
-
 			if (outImageSize > 0) {
 
-				Bitmap bitmap = BitmapFactory.decodeFile(inFile.getAbsolutePath());
+				BitmapFactory.Options options = new BitmapFactory.Options();
+				options.inPreferredConfig = Bitmap.Config.RGB_565;
+				options.inSampleSize = 2;
+				Bitmap bitmap = BitmapFactory.decodeFile(inFile.getAbsolutePath(), options);
 
 				// Scale file
 				Integer inWidth = bitmap.getWidth();
@@ -79,31 +71,18 @@ public class AttachmentHelper {
 				}
 				bitmap = Bitmap.createScaledBitmap(bitmap, outWidth, outHeight, true);
 
-				// rotate the image and then remove exif rotation info
-//			      ExifInterface exif = new ExifInterface(inFile.getAbsolutePath());
-//			            int orientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, 1);
-//			            Matrix matrix = new Matrix();
-//			      if (orientation == 6) {
-//			        matrix.postRotate(30);
-//			      } else if (orientation == 3) {
-//			        matrix.postRotate(30);
-//			      } else if (orientation == 8) {
-//			        matrix.postRotate(30);
-//			      }
-//			            bitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true); // rotating bitmap
-//			      bitmap.compress(CompressFormat.JPEG, 100, out);
-//			      
-//			      // modify rotation exif
-//			            exif.setAttribute(ExifInterface.TAG_ORIENTATION, "1");
-//			            exif.saveAttributes();			
-				
+				// TODO: TESTING, might still run out of memory...
+				if(outImageSize <= 1024) {
+					bitmap = MediaUtility.orientBitmap(bitmap, inFile.getAbsolutePath(), true);
+				}
+
 				OutputStream out = new FileOutputStream(stagedFile);
 				bitmap.compress(CompressFormat.JPEG, 100, out);
 
 				out.flush();
 				out.close();
 				bitmap.recycle();
-				copyExifData(inFile, stagedFile);
+				MediaUtility.copyExifData(inFile, stagedFile);
 			} else {
 				Files.copy(inFile, stagedFile);
 			}
@@ -112,62 +91,5 @@ public class AttachmentHelper {
 		}
 		attachment.setLocalPath(stagedFile.getAbsolutePath());
 		DaoStore.getInstance(context).getAttachmentDao().update(attachment);
-	}
-
-	public static void copyExifData(File sourceFile, File destFile) {
-		String tempFileName = destFile.getAbsolutePath() + ".tmp";
-		File tempFile = null;
-		OutputStream tempStream = null;
-
-		try {
-			tempFile = new File(tempFileName);
-			TiffOutputSet sourceSet = getSanselanOutputSet(sourceFile);
-
-			// Save data to destination
-			tempStream = new BufferedOutputStream(new FileOutputStream(tempFile));
-			new ExifRewriter().updateExifMetadataLossless(destFile, tempStream, sourceSet);
-			tempStream.close();
-
-			if (destFile.delete()) {
-				tempFile.renameTo(destFile);
-			}
-		} catch (Exception e) {
-			e.printStackTrace();
-		} finally {
-			if (tempStream != null) {
-				try {
-					tempStream.close();
-				} catch (IOException e) {
-				}
-			}
-
-			if (tempFile != null) {
-				if (tempFile.exists()) {
-					tempFile.delete();
-				}
-			}
-		}
-	}
-
-	private static TiffOutputSet getSanselanOutputSet(File jpegImageFile) throws Exception {
-		TiffImageMetadata exif = null;
-		TiffOutputSet outputSet = null;
-
-		IImageMetadata metadata = Sanselan.getMetadata(jpegImageFile);
-		JpegImageMetadata jpegMetadata = (JpegImageMetadata) metadata;
-		if (jpegMetadata != null) {
-			exif = jpegMetadata.getExif();
-
-			if (exif != null) {
-				outputSet = exif.getOutputSet();
-			}
-		}
-
-		// If JPEG file contains no EXIF metadata, create an empty set of EXIF metadata. Otherwise, use existing EXIF metadata to keep all other existing tags
-		if (outputSet == null) {
-			outputSet = new TiffOutputSet(exif == null ? TiffConstants.DEFAULT_TIFF_BYTE_ORDER : exif.contents.header.byteOrder);
-		}
-
-		return outputSet;
 	}
 }
