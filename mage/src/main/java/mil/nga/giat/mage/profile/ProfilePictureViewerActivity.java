@@ -46,29 +46,4 @@ public class ProfilePictureViewerActivity extends Activity {
 	public void removeImage(View view) {
 		throw new UnsupportedOperationException("Shouldn't be able to do this.");
 	}
-
-	private class DownloadImageTask extends AsyncTask<String, Void, Bitmap> {
-	    ImageView bmImage;
-
-	    public DownloadImageTask(ImageView bmImage) {
-	        this.bmImage = bmImage;
-	    }
-
-	    protected Bitmap doInBackground(String... urls) {
-	        String urldisplay = urls[0];
-	        Bitmap mIcon11 = null;
-	        try {
-	            InputStream in = new java.net.URL(urldisplay).openStream();
-	            mIcon11 = BitmapFactory.decodeStream(in);
-	        } catch (Exception e) {
-	            Log.e(LOG_NAME, e.getMessage());
-	            e.printStackTrace();
-	        }
-	        return mIcon11;
-	    }
-
-	    protected void onPostExecute(Bitmap bitmap) {
-	        bmImage.setImageBitmap(bitmap);
-	    }
-	}
 }
