@@ -30,32 +30,56 @@ public class UserAvatarFetchTask extends AsyncTask<User, Void, Void> {
     	for (User user : users) {
     		Log.d(LOG_NAME, "Fetching avatar at url: " + user.getAvatarUrl());
 	        String urldisplay = user.getAvatarUrl() + "?access_token=" + token;
-	        
-	        try {
-	            InputStream in = new java.net.URL(urldisplay).openStream();
-	            Bitmap avatar = BitmapFactory.decodeStream(in);
-	            
-	    		FileOutputStream out = null;
-	    		try {
-	    			String localPath = MediaUtility.getAvatarDirectory() + "/" + user.getId();
-	    		    out = new FileOutputStream(localPath);
-	    		    avatar.compress(Bitmap.CompressFormat.PNG, 90, out);
-	    		    user.setLocalAvatarPath(localPath);
-	    		    UserHelper.getInstance(context).update(user);
-	    		} catch (Exception e) {
-		            Log.e(LOG_NAME, e.getMessage());
-	    		} finally {
-	    		    try {
-	    		        if (out != null) {
-	    		            out.close();
-	    		        }
-	    		    } catch (IOException e) {
-	    		        e.printStackTrace();
-	    		    }
-	    		}
-	        } catch (Exception e) {
-	            Log.e(LOG_NAME, e.getMessage());
-	        }
+
+			int imageWidth = -1;
+			int imageHeight = -1;
+
+			InputStream in = null;
+			try {
+				in = new java.net.URL(urldisplay).openStream();
+				BitmapFactory.Options bitmapOptions = new BitmapFactory.Options();
+				bitmapOptions.inJustDecodeBounds = true;
+				BitmapFactory.decodeStream(in, null, bitmapOptions);
+				imageWidth = bitmapOptions.outWidth;
+				imageHeight = bitmapOptions.outHeight;
+			} catch (Exception e) {
+				Log.e(LOG_NAME, e.getMessage());
+			} finally {
+				try {
+					if (in != null) {
+						in.close();
+					}
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+
+			if(Math.max(imageWidth, imageHeight) <= 1024) {
+				FileOutputStream out = null;
+				try {
+					in = new java.net.URL(urldisplay).openStream();
+					Bitmap avatar = BitmapFactory.decodeStream(in);
+
+					String localPath = MediaUtility.getAvatarDirectory() + "/" + user.getId();
+					out = new FileOutputStream(localPath);
+					avatar.compress(Bitmap.CompressFormat.PNG, 90, out);
+					user.setLocalAvatarPath(localPath);
+					UserHelper.getInstance(context).update(user);
+				} catch (Exception e) {
+					Log.e(LOG_NAME, e.getMessage());
+				} finally {
+					try {
+						if (in != null) {
+							in.close();
+						}
+						if (out != null) {
+							out.close();
+						}
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+				}
+			}
     	}
     	return null;
     }
