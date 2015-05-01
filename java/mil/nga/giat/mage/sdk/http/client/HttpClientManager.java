@@ -26,6 +26,7 @@ import org.apache.http.params.CoreProtocolPNames;
 import org.apache.http.protocol.HttpContext;
 
 import java.io.IOException;
+import java.security.KeyStore;
 import java.util.Collection;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -70,8 +71,20 @@ public class HttpClientManager implements IEventDispatcher<IUserEventListener> {
 		BasicHttpParams params = new BasicHttpParams();
 		SchemeRegistry schemeRegistry = new SchemeRegistry();
 		// register http?
-		schemeRegistry.register(new Scheme("http", PlainSocketFactory.getSocketFactory(), 80));
-		final SSLSocketFactory sslSocketFactory = SSLSocketFactory.getSocketFactory();
+		//schemeRegistry.register(new Scheme("http", PlainSocketFactory.getSocketFactory(), 80));
+
+		SSLSocketFactory sslSocketFactory = SSLSocketFactory.getSocketFactory();
+		// Some servers don't have a CA...
+		Boolean noServerCA = PreferenceManager.getDefaultSharedPreferences(mContext).getBoolean(mContext.getString(R.string.noServerCAKey), mContext.getResources().getBoolean(R.bool.noServerCADefaultValue));
+		if(noServerCA) {
+			try {
+				KeyStore trustStore = KeyStore.getInstance(KeyStore.getDefaultType());
+				trustStore.load(null, null);
+				sslSocketFactory = new NoCASSLSocketFactory(trustStore);
+			} catch(Exception e) {
+				Log.e(LOG_NAME, "Problem overwriting trust manager.");
+			}
+		}
 		schemeRegistry.register(new Scheme("https", sslSocketFactory, 443));
 		// needs to be thread safe!
 		ClientConnectionManager cm = new ThreadSafeClientConnManager(params, schemeRegistry);
