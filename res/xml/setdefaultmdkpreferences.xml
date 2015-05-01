@@ -16,5 +16,10 @@
     <CheckBoxPreference
         android:defaultValue="@bool/deleteAllDataOnLogoutDefaultValue"
         android:key="@string/deleteAllDataOnLogoutKey" />
-    
+
+    <!-- Option for some deployments.  no Sever CA? -->
+    <CheckBoxPreference
+        android:defaultValue="@bool/noServerCADefaultValue"
+        android:key="@string/noServerCAKey" />
+
 </PreferenceScreen>

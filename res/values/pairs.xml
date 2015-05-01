@@ -27,6 +27,9 @@
     <string name="deleteAllDataOnLogoutKey">deleteAllDataOnLogout</string>
     <bool name="deleteAllDataOnLogoutDefaultValue">false</bool>
 
+    <string name="noServerCAKey">noServerCA</string>
+    <bool name="noServerCADefaultValue">false</bool>
+
     <!-- ************************************************************* -->
 
     <!-- *************** set in generalpreferences.xml *************** -->
