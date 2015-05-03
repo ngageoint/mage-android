@@ -250,7 +250,20 @@ public class ObservationEditActivity extends Activity {
 				View dialogView = inflater.inflate(R.layout.date_time_dialog, null);
 				final DatePicker datePicker = (DatePicker) dialogView.findViewById(R.id.date_picker);
 				final TimePicker timePicker = (TimePicker) dialogView.findViewById(R.id.time_picker);
-				// Inflate and set the layout for the dialog
+
+                String value = ((MageTextView) findViewById(R.id.date)).getPropertyValue();
+                try {
+                    Date date = iso8601Format.parse(value);
+                    Calendar c = Calendar.getInstance();
+                    c.setTime(date);
+                    datePicker.updateDate(c.get(Calendar.YEAR), c.get(Calendar.MONTH), c.get(Calendar.DAY_OF_MONTH));
+                    timePicker.setCurrentHour(c.get(Calendar.HOUR_OF_DAY));
+                    timePicker.setCurrentMinute(c.get(Calendar.MINUTE));
+
+                } catch (ParseException e) {
+                    e.printStackTrace();
+                }
+                // Inflate and set the layout for the dialog
 				// Pass null as the parent view because its going in the dialog layout
 				builder.setView(dialogView).setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
 					@Override
