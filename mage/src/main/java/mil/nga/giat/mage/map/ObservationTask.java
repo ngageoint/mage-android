@@ -1,10 +1,11 @@
 package mil.nga.giat.mage.map;
 
+import android.os.AsyncTask;
+
 import mil.nga.giat.mage.filter.Filter;
 import mil.nga.giat.mage.map.marker.PointCollection;
 import mil.nga.giat.mage.sdk.Temporal;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
-import android.os.AsyncTask;
 
 public class ObservationTask extends AsyncTask<Observation, Observation, Void> {
     public enum Type {

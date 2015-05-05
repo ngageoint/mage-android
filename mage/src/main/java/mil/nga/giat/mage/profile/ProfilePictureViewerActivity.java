@@ -1,8 +1,5 @@
 package mil.nga.giat.mage.profile;
 
-import java.io.InputStream;
-
-import mil.nga.giat.mage.R;
 import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -12,6 +9,10 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
+
+import java.io.InputStream;
+
+import mil.nga.giat.mage.R;
 
 public class ProfilePictureViewerActivity extends Activity {
 	private static final String LOG_NAME = ProfilePictureViewerActivity.class.getName();
@@ -41,29 +42,8 @@ public class ProfilePictureViewerActivity extends Activity {
 	public void goBack(View v) {
 		onBackPressed();
 	}
-    
-    private class DownloadImageTask extends AsyncTask<String, Void, Bitmap> {
-	    ImageView bmImage;
 
-	    public DownloadImageTask(ImageView bmImage) {
-	        this.bmImage = bmImage;
-	    }
-
-	    protected Bitmap doInBackground(String... urls) {
-	        String urldisplay = urls[0];
-	        Bitmap mIcon11 = null;
-	        try {
-	            InputStream in = new java.net.URL(urldisplay).openStream();
-	            mIcon11 = BitmapFactory.decodeStream(in);
-	        } catch (Exception e) {
-	            Log.e(LOG_NAME, e.getMessage());
-	            e.printStackTrace();
-	        }
-	        return mIcon11;
-	    }
-
-	    protected void onPostExecute(Bitmap bitmap) {
-	        bmImage.setImageBitmap(bitmap);
-	    }
+	public void removeImage(View view) {
+		throw new UnsupportedOperationException("Shouldn't be able to do this.");
 	}
 }

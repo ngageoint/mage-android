@@ -1,12 +1,5 @@
 package mil.nga.giat.mage.login;
 
-import mil.nga.giat.mage.R;
-import mil.nga.giat.mage.sdk.connectivity.ConnectivityUtility;
-import mil.nga.giat.mage.sdk.connectivity.NetworkChangeReceiver;
-import mil.nga.giat.mage.sdk.event.IConnectivityEventListener;
-import mil.nga.giat.mage.sdk.event.IUserEventListener;
-import mil.nga.giat.mage.sdk.http.client.HttpClientManager;
-import mil.nga.giat.mage.sdk.utils.UserUtility;
 import android.app.Activity;
 import android.app.Fragment;
 import android.content.Intent;
@@ -16,15 +9,27 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 
+import mil.nga.giat.mage.R;
+import mil.nga.giat.mage.sdk.connectivity.ConnectivityUtility;
+import mil.nga.giat.mage.sdk.connectivity.NetworkChangeReceiver;
+import mil.nga.giat.mage.sdk.event.IConnectivityEventListener;
+import mil.nga.giat.mage.sdk.event.IUserEventListener;
+import mil.nga.giat.mage.sdk.http.client.HttpClientManager;
+import mil.nga.giat.mage.sdk.utils.UserUtility;
+
+/**
+ * Alert banner at the top of the screen
+ *
+ * @author wiedemanns
+ */
 public class AlertBannerFragment extends Fragment implements IUserEventListener, IConnectivityEventListener {
 
+	private static final String SESSION_EXPIRED = "Session expired. Click to re-login.";
+	private static final String DISCONNECTED_MODE = "Disconnected mode.";
 	private Activity mActivity;
 	private View alertBanner;
 	private Button alertBannerButton;
 	private View.OnClickListener buttonOnClickListener;
-	
-	private static final String SESSION_EXPIRED = "Session expired. Click to re-login.";
-	private static final String DISCONNECTED_MODE = "Disconnected mode.";
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -40,7 +45,6 @@ public class AlertBannerFragment extends Fragment implements IUserEventListener,
 
 	@Override
 	public void onAttach(Activity activity) {
-		// TODO Auto-generated method stub
 		super.onAttach(activity);
 		mActivity = activity;
 	}
@@ -59,7 +63,7 @@ public class AlertBannerFragment extends Fragment implements IUserEventListener,
 			}
 		};
 
-		if(!ConnectivityUtility.isOnline(getActivity().getApplicationContext())) {
+		if (!ConnectivityUtility.isOnline(getActivity().getApplicationContext())) {
 			alertBannerButton.setText(DISCONNECTED_MODE);
 			alertBannerButton.setOnClickListener(null);
 			alertBanner.setVisibility(View.VISIBLE);

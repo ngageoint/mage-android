@@ -1,59 +1,12 @@
 package mil.nga.giat.mage.map;
 
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-
-import mil.nga.giat.mage.MAGE;
-import mil.nga.giat.mage.MAGE.OnCacheOverlayListener;
-import mil.nga.giat.mage.R;
-import mil.nga.giat.mage.filter.DateTimeFilter;
-import mil.nga.giat.mage.filter.Filter;
-import mil.nga.giat.mage.map.GoogleMapWrapper.OnMapPanListener;
-import mil.nga.giat.mage.map.marker.LocationMarkerCollection;
-import mil.nga.giat.mage.map.marker.MyHistoricalLocationMarkerCollection;
-import mil.nga.giat.mage.map.marker.ObservationMarkerCollection;
-import mil.nga.giat.mage.map.marker.PointCollection;
-import mil.nga.giat.mage.map.marker.StaticGeometryCollection;
-import mil.nga.giat.mage.map.preference.MapPreferencesActivity;
-import mil.nga.giat.mage.observation.ObservationEditActivity;
-import mil.nga.giat.mage.sdk.Temporal;
-import mil.nga.giat.mage.sdk.datastore.layer.Layer;
-import mil.nga.giat.mage.sdk.datastore.layer.LayerHelper;
-import mil.nga.giat.mage.sdk.datastore.location.LocationHelper;
-import mil.nga.giat.mage.sdk.datastore.location.LocationProperty;
-import mil.nga.giat.mage.sdk.datastore.observation.Observation;
-import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
-import mil.nga.giat.mage.sdk.datastore.staticfeature.StaticFeatureHelper;
-import mil.nga.giat.mage.sdk.datastore.user.User;
-import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
-import mil.nga.giat.mage.sdk.event.ILocationEventListener;
-import mil.nga.giat.mage.sdk.event.IObservationEventListener;
-import mil.nga.giat.mage.sdk.event.IStaticFeatureEventListener;
-import mil.nga.giat.mage.sdk.exceptions.LayerException;
-import mil.nga.giat.mage.sdk.exceptions.UserException;
-import mil.nga.giat.mage.sdk.location.LocationService;
-
-import org.apache.commons.lang3.StringUtils;
-
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Fragment;
+import android.app.FragmentManager;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.SharedPreferences.Editor;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.location.Location;
 import android.location.LocationListener;
@@ -69,8 +22,8 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
-import android.view.inputmethod.InputMethodManager;
 import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
 import android.webkit.WebView;
 import android.widget.EditText;
 import android.widget.ImageButton;
@@ -90,14 +43,60 @@ import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
-import com.google.android.gms.maps.model.Polygon;
-import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.TileOverlay;
 import com.google.android.gms.maps.model.TileOverlayOptions;
 import com.google.android.gms.maps.model.TileProvider;
-import com.google.maps.android.PolyUtil;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.Point;
+
+import org.apache.commons.lang3.StringUtils;
+
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+
+import mil.nga.giat.mage.MAGE;
+import mil.nga.giat.mage.MAGE.OnCacheOverlayListener;
+import mil.nga.giat.mage.R;
+import mil.nga.giat.mage.event.EventBannerFragment;
+import mil.nga.giat.mage.filter.DateTimeFilter;
+import mil.nga.giat.mage.filter.Filter;
+import mil.nga.giat.mage.map.GoogleMapWrapper.OnMapPanListener;
+import mil.nga.giat.mage.map.marker.LocationMarkerCollection;
+import mil.nga.giat.mage.map.marker.MyHistoricalLocationMarkerCollection;
+import mil.nga.giat.mage.map.marker.ObservationMarkerCollection;
+import mil.nga.giat.mage.map.marker.PointCollection;
+import mil.nga.giat.mage.map.marker.StaticGeometryCollection;
+import mil.nga.giat.mage.map.preference.MapPreferencesActivity;
+import mil.nga.giat.mage.observation.ObservationEditActivity;
+import mil.nga.giat.mage.sdk.Temporal;
+import mil.nga.giat.mage.sdk.datastore.layer.Layer;
+import mil.nga.giat.mage.sdk.datastore.layer.LayerHelper;
+import mil.nga.giat.mage.sdk.datastore.location.LocationHelper;
+import mil.nga.giat.mage.sdk.datastore.location.LocationProperty;
+import mil.nga.giat.mage.sdk.datastore.observation.Observation;
+import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
+import mil.nga.giat.mage.sdk.datastore.staticfeature.StaticFeatureHelper;
+import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
+import mil.nga.giat.mage.sdk.datastore.user.User;
+import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
+import mil.nga.giat.mage.sdk.event.ILocationEventListener;
+import mil.nga.giat.mage.sdk.event.IObservationEventListener;
+import mil.nga.giat.mage.sdk.event.IStaticFeatureEventListener;
+import mil.nga.giat.mage.sdk.exceptions.LayerException;
+import mil.nga.giat.mage.sdk.exceptions.UserException;
+import mil.nga.giat.mage.sdk.location.LocationService;
 
 public class MapFragment extends Fragment implements OnMapClickListener, OnMapLongClickListener, OnMarkerClickListener, OnInfoWindowClickListener, OnMapPanListener, OnMyLocationButtonClickListener, OnClickListener, LocationSource, LocationListener, OnCacheOverlayListener, OnSharedPreferenceChangeListener,
 		IObservationEventListener, ILocationEventListener, IStaticFeatureEventListener {
@@ -109,7 +108,6 @@ public class MapFragment extends Fragment implements OnMapClickListener, OnMapLo
 	private GoogleMap map;
 	private View searchLayout;
 	private EditText edittextSearch;
-	private int mapType = 1;
 	private Location location;
 	private boolean followMe = false;
 	private GoogleMapWrapper mapWrapper;
@@ -130,7 +128,6 @@ public class MapFragment extends Fragment implements OnMapClickListener, OnMapLo
 	private List<Marker> searchMarkes = new ArrayList<Marker>();
 
 	private Map<String, TileOverlay> tileOverlays = new HashMap<String, TileOverlay>();
-	private Collection<String> featureIds = new ArrayList<String>();
 
 	private LocationService locationService;
 
@@ -141,6 +138,9 @@ public class MapFragment extends Fragment implements OnMapClickListener, OnMapLo
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 		View view = inflater.inflate(R.layout.fragment_map, container, false);
+
+		FragmentManager fragmentManager = getFragmentManager();
+		fragmentManager.beginTransaction().add(R.id.map_event_holder, new EventBannerFragment()).commit();
 
 		setHasOptionsMenu(true);
 
@@ -154,7 +154,7 @@ public class MapFragment extends Fragment implements OnMapClickListener, OnMapLo
 		mapView = (MapView) view.findViewById(R.id.mapView);
 		mapView.onCreate(savedInstanceState);
 
-		searchLayout = (View) view.findViewById(R.id.search_layout);
+		searchLayout = view.findViewById(R.id.search_layout);
 		edittextSearch = (EditText) view.findViewById(R.id.edittext_search);
 
 		MapsInitializer.initialize(getActivity().getApplicationContext());
@@ -187,8 +187,6 @@ public class MapFragment extends Fragment implements OnMapClickListener, OnMapLo
 
 		locations.clear();
 		locations = null;
-		
-		featureIds.clear();
 
 		myHistoricLocations.clear();
 		myHistoricLocations = null;
@@ -234,6 +232,7 @@ public class MapFragment extends Fragment implements OnMapClickListener, OnMapLo
 		map.setOnMyLocationButtonClickListener(this);
 		map.setOnInfoWindowClickListener(this);
 
+		// zoom to map location
 		updateMapView();
 
 		if (staticGeometryCollection == null) {
@@ -317,13 +316,11 @@ public class MapFragment extends Fragment implements OnMapClickListener, OnMapLo
 
 			@Override
 			public void afterTextChanged(Editable s) {
-				// TODO Auto-generated method stub
 
 			}
 
 			@Override
 			public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-				// TODO Auto-generated method stub
 
 			}
 
@@ -340,19 +337,6 @@ public class MapFragment extends Fragment implements OnMapClickListener, OnMapLo
 			}
 
 		});
-
-		// zoom to location if told to
-		Float zoomLat = preferences.getFloat(getResources().getString(R.string.mapZoomLatKey), Float.MAX_VALUE);
-		Float zoomLon = preferences.getFloat(getResources().getString(R.string.mapZoomLonKey), Float.MAX_VALUE);
-		if (zoomLat != null && zoomLon != null && !zoomLat.equals(Float.MAX_VALUE) && !zoomLon.equals(Float.MAX_VALUE)) {
-			Editor e = preferences.edit();
-			e.putFloat(getResources().getString(R.string.mapZoomLatKey), Float.MAX_VALUE).commit();
-			e.putFloat(getResources().getString(R.string.mapZoomLonKey), Float.MAX_VALUE).commit();
-			android.location.Location tl = new android.location.Location("");
-			tl.setLatitude(zoomLat.doubleValue());
-			tl.setLongitude(zoomLon.doubleValue());
-			zoomToLocation(tl);
-		}
 	}
 
 	@Override
@@ -378,7 +362,7 @@ public class MapFragment extends Fragment implements OnMapClickListener, OnMapLo
 		mage.unregisterCacheOverlayListener(this);
 		StaticFeatureHelper.getInstance(getActivity().getApplicationContext()).removeListener(this);
 
-		boolean locationServiceEnabled = Integer.parseInt(preferences.getString(getResources().getString(R.string.userReportingFrequencyKey), "0")) > 0;
+		boolean locationServiceEnabled = preferences.getInt(getString(R.string.userReportingFrequencyKey), getResources().getInteger(R.integer.userReportingFrequencyDefaultValue)) > 0;
 		if (locationServiceEnabled) {
 			map.setLocationSource(null);
 			locationService.unregisterOnLocationListener(this);
@@ -406,7 +390,7 @@ public class MapFragment extends Fragment implements OnMapClickListener, OnMapLo
 				List<mil.nga.giat.mage.sdk.datastore.location.Location> tLocations = LocationHelper.getInstance(getActivity().getApplicationContext()).getCurrentUserLocations(getActivity().getApplicationContext(), 1, true);
 				if (!tLocations.isEmpty()) {
 					mil.nga.giat.mage.sdk.datastore.location.Location tLocation = tLocations.get(0);
-					Geometry geo = tLocation.getLocationGeometry().getGeometry();
+					Geometry geo = tLocation.getGeometry();
 					Map<String, LocationProperty> propertiesMap = tLocation.getPropertiesMap();
 					if (geo instanceof Point) {
 						Point point = (Point) geo;
@@ -426,7 +410,13 @@ public class MapFragment extends Fragment implements OnMapClickListener, OnMapLo
 			} else {
 				l = new Location(l);
 			}
-			if (l != null) {
+
+			if(!UserHelper.getInstance(getActivity().getApplicationContext()).isCurrentUserPartOfCurrentEvent()) {
+				new AlertDialog.Builder(getActivity()).setTitle("Not a member of this event").setMessage("You are an administrator and not a member of the current event.  You can not create an observation in this event.").setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+					public void onClick(DialogInterface dialog, int which) {
+					}
+				}).show();
+			} else if (l != null) {
 				intent.putExtra(ObservationEditActivity.LOCATION, l);
 				intent.putExtra(ObservationEditActivity.INITIAL_LOCATION, map.getCameraPosition().target);
 				intent.putExtra(ObservationEditActivity.INITIAL_ZOOM, map.getCameraPosition().zoom);
@@ -532,7 +522,7 @@ public class MapFragment extends Fragment implements OnMapClickListener, OnMapLo
 	
 	@Override
 	public void onInfoWindowClick(Marker marker) {
-		// for now the only one that cares about info window clicks is the location marker window
+		observations.onInfoWindowClick(marker);
 		locations.onInfoWindowClick(marker);
 	}
 
@@ -566,8 +556,8 @@ public class MapFragment extends Fragment implements OnMapClickListener, OnMapLo
 		}
 
 		// static layer
-		View markerInfoWindow = LayoutInflater.from(getActivity()).inflate(R.layout.marker_infowindow, null, false);
-		WebView webView = ((WebView) markerInfoWindow.findViewById(R.id.infowindowcontent));
+		View markerInfoWindow = LayoutInflater.from(getActivity()).inflate(R.layout.static_feature_infowindow, null, false);
+		WebView webView = ((WebView) markerInfoWindow.findViewById(R.id.static_feature_infowindow_content));
 		webView.loadData(marker.getSnippet(), "text/html; charset=UTF-8", null);
 		new AlertDialog.Builder(getActivity()).setView(markerInfoWindow).setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
 			public void onClick(DialogInterface dialog, int which) {
@@ -582,61 +572,32 @@ public class MapFragment extends Fragment implements OnMapClickListener, OnMapLo
 		// remove old accuracy circle
 		((LocationMarkerCollection) locations).offMarkerClick();
 
-		// how many meters away form the click can the geomerty be?
-		Double circumferenceOfEarthInMeters = 2 * Math.PI * 6371000;
-		// Double tileWidthAtZoomLevelAtEquatorInDegrees = 360.0/Math.pow(2.0, map.getCameraPosition().zoom);
-		Double pixelSizeInMetersAtLatitude = (circumferenceOfEarthInMeters * Math.cos(map.getCameraPosition().target.latitude * (Math.PI / 180.0))) / Math.pow(2.0, map.getCameraPosition().zoom + 8.0);
-		Double tolerance = pixelSizeInMetersAtLatitude * Math.sqrt(2.0) * 10.0;
-
-		// TODO : find the 'closest' line or polygon to the click.
-		for (Polyline p : staticGeometryCollection.getPolylines()) {
-			if (PolyUtil.isLocationOnPath(latLng, p.getPoints(), true, tolerance)) {
-				// found it open a info window
-				Log.i(LOG_NAME, "static feature polyline clicked at: " + latLng.toString());
-				View markerInfoWindow = LayoutInflater.from(getActivity()).inflate(R.layout.marker_infowindow, null, false);
-				WebView webView = ((WebView) markerInfoWindow.findViewById(R.id.infowindowcontent));
-				webView.loadData(staticGeometryCollection.getPopupHTML(p), "text/html; charset=UTF-8", null);
-				new AlertDialog.Builder(getActivity()).setView(markerInfoWindow).setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
-					public void onClick(DialogInterface dialog, int which) {
-					}
-				}).show();
-				return;
-			}
-		}
-
-		for (Polygon p : staticGeometryCollection.getPolygons()) {
-			if (PolyUtil.containsLocation(latLng, p.getPoints(), true)) {
-				// found it open a info window
-				Log.i(LOG_NAME, "static feature polgon clicked at: " + latLng.toString());
-
-				View markerInfoWindow = LayoutInflater.from(getActivity()).inflate(R.layout.marker_infowindow, null, false);
-				WebView webView = ((WebView) markerInfoWindow.findViewById(R.id.infowindowcontent));
-				webView.loadData(staticGeometryCollection.getPopupHTML(p), "text/html; charset=UTF-8", null);
-				new AlertDialog.Builder(getActivity()).setView(markerInfoWindow).setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
-					public void onClick(DialogInterface dialog, int which) {
-					}
-				}).show();
-				return;
-			}
-		}
+		staticGeometryCollection.onMapClick(map, latLng, getActivity());
 	}
 
 	@Override
 	public void onMapLongClick(LatLng point) {
 		hideKeyboard();
-		Intent intent = new Intent(getActivity().getApplicationContext(), ObservationEditActivity.class);
-		Location l = new Location("manual");
-		l.setAccuracy(0.0f);
-		l.setLatitude(point.latitude);
-		l.setLongitude(point.longitude);
-		l.setTime(new Date().getTime());
-		intent.putExtra(ObservationEditActivity.LOCATION, l);
-		startActivity(intent);
+		if(!UserHelper.getInstance(getActivity().getApplicationContext()).isCurrentUserPartOfCurrentEvent()) {
+			new AlertDialog.Builder(getActivity()).setTitle("Not a member of this event").setMessage("You are an administrator and not a member of the current event.  You can not create an observation in this event.").setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+				public void onClick(DialogInterface dialog, int which) {
+				}
+			}).show();
+		} else {
+			Intent intent = new Intent(getActivity().getApplicationContext(), ObservationEditActivity.class);
+			Location l = new Location("manual");
+			l.setAccuracy(0.0f);
+			l.setLatitude(point.latitude);
+			l.setLongitude(point.longitude);
+			l.setTime(new Date().getTime());
+			intent.putExtra(ObservationEditActivity.LOCATION, l);
+			startActivity(intent);
+		}
 	}
 
 	@Override
 	public void onClick(View view) {
-		// close keboard
+		// close keyboard
 		hideKeyboard();
 		switch (view.getId()) {
 		case R.id.map_settings: {
@@ -666,15 +627,6 @@ public class MapFragment extends Fragment implements OnMapClickListener, OnMapLo
 					followMe = true;
 				}
 			});
-		}
-		return true;
-	}
-
-	private boolean zoomToLocation(Location pLocation) {
-		if (pLocation != null) {
-			LatLng latLng = new LatLng(pLocation.getLatitude(), pLocation.getLongitude());
-			float zoom = map.getCameraPosition().zoom < 15 ? 15 : map.getCameraPosition().zoom;
-			map.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, zoom));
 		}
 		return true;
 	}
@@ -733,7 +685,7 @@ public class MapFragment extends Fragment implements OnMapClickListener, OnMapLo
 
 	@Override
 	public void onCacheOverlay(List<CacheOverlay> cacheOverlays) {
-		Set<String> overlays = preferences.getStringSet(getResources().getString(R.string.mapTileOverlaysKey), Collections.<String> emptySet());
+		Set<String> overlays = preferences.getStringSet(getResources().getString(R.string.tileOverlaysKey), Collections.<String> emptySet());
 
 		// Add all overlays that are in the preferences
 		// For now there is no ordering in how tile overlays are stacked
@@ -763,7 +715,7 @@ public class MapFragment extends Fragment implements OnMapClickListener, OnMapLo
 		removeStaticFeatureLayers();
 
 		try {
-			for (Layer l : LayerHelper.getInstance(getActivity().getApplicationContext()).readAllStaticLayers()) {
+			for (Layer l : LayerHelper.getInstance(getActivity().getApplicationContext()).readByEvent(EventHelper.getInstance(getActivity().getApplicationContext()).getCurrentEvent())) {
 				onStaticFeatureLayer(l);
 			}
 		} catch (LayerException e) {
@@ -772,53 +724,60 @@ public class MapFragment extends Fragment implements OnMapClickListener, OnMapLo
 	}
 
 	private void removeStaticFeatureLayers() {
-		Set<String> selectedLayerIds = preferences.getStringSet(getResources().getString(R.string.mapFeatureOverlaysKey), Collections.<String> emptySet());
+		Set<String> selectedLayerIds = preferences.getStringSet(getResources().getString(R.string.staticFeatureLayersKey), Collections.<String> emptySet());
 
 		for (String currentLayerId : staticGeometryCollection.getLayers()) {
 			if (!selectedLayerIds.contains(currentLayerId)) {
-				featureIds.remove(currentLayerId);
 				staticGeometryCollection.removeLayer(currentLayerId);
 			}
 		}
 	}
 
 	@Override
-	public void onStaticFeaturesCreated(final Collection<Layer> layers) {
+	public void onStaticFeaturesCreated(final Layer layer) {
 		getActivity().runOnUiThread(new Runnable() {
 
 			@Override
 			public void run() {
-				for (Layer layer : layers) {
-					onStaticFeatureLayer(layer);
-				}
+				onStaticFeatureLayer(layer);
 			}
 		});
 	}
 
 	private void onStaticFeatureLayer(Layer layer) {
-		Set<String> layers = PreferenceManager.getDefaultSharedPreferences(getActivity().getApplicationContext()).getStringSet(getResources().getString(R.string.mapFeatureOverlaysKey), Collections.<String> emptySet());
+		Set<String> layers = PreferenceManager.getDefaultSharedPreferences(getActivity().getApplicationContext()).getStringSet(getString(R.string.staticFeatureLayersKey), Collections.<String> emptySet());
 
 		// The user has asked for this feature layer
 		String layerId = layer.getId().toString();
 		if (layers.contains(layerId) && layer.isLoaded()) {
-			if (!featureIds.contains(layerId)) {
-				featureIds.add(layerId);
-				new StaticFeatureLoadTask(getActivity().getApplicationContext(), staticGeometryCollection, map).executeOnExecutor(executor, new Layer[] { layer });
-			}
+			new StaticFeatureLoadTask(getActivity().getApplicationContext(), staticGeometryCollection, map).executeOnExecutor(executor, layer);
 		}
 	}
 
 	private void updateMapView() {
 		// Check the map type
-		this.mapType = Integer.parseInt(preferences.getString(getResources().getString(R.string.baseLayerKey), "1"));
-		map.setMapType(this.mapType);
+		map.setMapType(preferences.getInt(getString(R.string.baseLayerKey), getResources().getInteger(R.integer.baseLayerDefaultValue)));
 
 		// Check the map location and zoom
-		String xyz = preferences.getString(getResources().getString(R.string.mapXYZKey), null);
+		String xyz = preferences.getString(getString(R.string.recentMapXYZKey), getString(R.string.recentMapXYZDefaultValue));
 		if (xyz != null) {
 			String[] values = StringUtils.split(xyz, ",");
-			LatLng latLng = new LatLng(Double.valueOf(values[1]), Double.valueOf(values[0]));
-			Float zoom = Float.valueOf(values[2]);
+			LatLng latLng = new LatLng(0.0, 0.0);
+			if(values.length > 1) {
+				try {
+					latLng = new LatLng(Double.valueOf(values[1]), Double.valueOf(values[0]));
+				} catch (NumberFormatException nfe) {
+					Log.e(LOG_NAME, "Could not parse lon,lat: " + String.valueOf(values[1]) + ", " + String.valueOf(values[0]));
+				}
+			}
+			float zoom = 1.0f;
+			if(values.length > 2) {
+				try {
+					zoom = Float.valueOf(values[2]);
+				} catch (NumberFormatException nfe) {
+					Log.e(LOG_NAME, "Could not parse zoom level: " + String.valueOf(values[2]));
+				}
+			}
 			map.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, zoom));
 		}
 	}
@@ -827,10 +786,7 @@ public class MapFragment extends Fragment implements OnMapClickListener, OnMapLo
 		CameraPosition position = map.getCameraPosition();
 
 		String xyz = new StringBuilder().append(Double.valueOf(position.target.longitude).toString()).append(",").append(Double.valueOf(position.target.latitude).toString()).append(",").append(Float.valueOf(position.zoom).toString()).toString();
-
-		SharedPreferences.Editor editor = preferences.edit();
-		editor.putString(getResources().getString(R.string.mapXYZKey), xyz);
-		editor.commit();
+		preferences.edit().putString(getResources().getString(R.string.recentMapXYZKey), xyz).commit();
 	}
 
 	private void search(View v) {

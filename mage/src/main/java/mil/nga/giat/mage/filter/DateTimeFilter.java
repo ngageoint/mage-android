@@ -1,11 +1,11 @@
 package mil.nga.giat.mage.filter;
 
+import com.j256.ormlite.stmt.Where;
+
 import java.sql.SQLException;
 import java.util.Date;
 
 import mil.nga.giat.mage.sdk.Temporal;
-
-import com.j256.ormlite.stmt.Where;
 
 public class DateTimeFilter implements Filter<Temporal> {
 	private Date start;

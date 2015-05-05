@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="mil.nga.giat.mage"
-    android:versionCode="5"
-    android:versionName="3.0.13">
+    android:versionCode="6"
+    android:versionName="4.0.0">
 
     <uses-sdk
-        android:minSdkVersion="14"
+        android:minSdkVersion="16"
         android:targetSdkVersion="19" />
 
     <permission
@@ -25,10 +25,6 @@
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-    <!--
-    <uses-permission android:name="android.permission.READ_CONTACTS" />
-    <uses-permission android:name="android.permission.WRITE_CONTACTS" />
-    -->
     <uses-permission android:name="com.google.android.providers.gsf.permission.READ_GSERVICES" />
 
     <uses-feature
@@ -56,7 +52,6 @@
             android:windowSoftInputMode="stateVisible" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
@@ -65,83 +60,57 @@
             android:windowSoftInputMode="adjustResize" >
         </activity>
         <activity
-            android:name="mil.nga.giat.mage.LandingActivity"
-            android:label="@string/app_name"
-            android:launchMode="singleTop"
-            android:screenOrientation="portrait" >
+            android:name="mil.nga.giat.mage.event.EventActivity"
+            android:label="@string/app_name">
         </activity>
         <activity
-            android:name="mil.nga.giat.mage.preferences.PublicPreferencesFragment"
-            android:icon="@drawable/ic_settings_white"
-            android:label="@string/menu_settings"
-            android:launchMode="singleTop"
-            android:parentActivityName="mil.nga.giat.mage.LandingActivity" >
-
-            <!-- Parent activity meta-data to support 4.0 and lower -->
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value="mil.nga.giat.mage.LandingActivity" />
+            android:name="mil.nga.giat.mage.LandingActivity"
+            android:configChanges="keyboardHidden|orientation|screenSize"
+            android:label="@string/app_name"
+            android:launchMode="singleTop">
         </activity>
         <activity
             android:name="mil.nga.giat.mage.preferences.LocationPreferencesActivity"
             android:icon="@drawable/ic_compass_white"
             android:label="@string/location_settings"
-            android:parentActivityName="mil.nga.giat.mage.preferences.PublicPreferencesFragment" >
-
-            <!-- Parent activity meta-data to support 4.0 and lower -->
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value="mil.nga.giat.mage.preferences.PublicPreferencesActivity" />
+            android:parentActivityName="mil.nga.giat.mage.preferences.GeneralPreferencesFragment" >
         </activity>
         <activity
             android:name="mil.nga.giat.mage.preferences.FetchPreferencesActivity"
             android:icon="@drawable/ic_download"
             android:label="@string/fetch_settings"
-            android:parentActivityName="mil.nga.giat.mage.preferences.PublicPreferencesFragment" >
-
-            <!-- Parent activity meta-data to support 4.0 and lower -->
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value="mil.nga.giat.mage.preferences.PublicPreferencesActivity" />
+            android:parentActivityName="mil.nga.giat.mage.preferences.GeneralPreferencesFragment" >
+        </activity>
+        <activity
+            android:name="mil.nga.giat.mage.preferences.ClearDataPreferenceActivity"
+            android:icon="@drawable/ic_settings_white"
+            android:label="Clear Data"
+            android:uiOptions="splitActionBarWhenNarrow"
+            android:parentActivityName="mil.nga.giat.mage.preferences.GeneralPreferencesFragment" >
         </activity>
         <activity
             android:name="mil.nga.giat.mage.map.preference.MapPreferencesActivity"
             android:icon="@drawable/ic_map_white"
             android:label="@string/map_settings"
             android:parentActivityName="mil.nga.giat.mage.LandingActivity" >
-
-            <!-- Parent activity meta-data to support 4.0 and lower -->
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value="mil.nga.giat.mage.LandingActivity" />
         </activity>
         <activity
             android:name="mil.nga.giat.mage.map.preference.TileOverlayPreferenceActivity"
             android:icon="@drawable/ic_map_white"
-            android:label="@string/overlay_settings"
+            android:label="Overlay Maps"
             android:launchMode="singleTop"
             android:parentActivityName="mil.nga.giat.mage.map.preference.MapPreferencesActivity"
             android:theme="@style/AppBaseTheme.ActionBar.OverlayMap"
             android:uiOptions="splitActionBarWhenNarrow" >
-
-            <!-- Parent activity meta-data to support 4.0 and lower -->
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value="mil.nga.giat.mage.map.MapPreferencesActivity" />
         </activity>
         <activity
             android:name="mil.nga.giat.mage.map.preference.FeatureOverlayPreferenceActivity"
             android:icon="@drawable/ic_map_white"
-            android:label="@string/feature_overlay_settings"
+            android:label="Feature Overlays"
             android:launchMode="singleTop"
             android:parentActivityName="mil.nga.giat.mage.map.preference.MapPreferencesActivity"
             android:theme="@style/AppBaseTheme.ActionBar.OverlayMap"
             android:uiOptions="splitActionBarWhenNarrow" >
-
-            <!-- Parent activity meta-data to support 4.0 and lower -->
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value="mil.nga.giat.mage.map.MapPreferencesActivity" />
         </activity>
         <activity
             android:name="mil.nga.giat.mage.observation.ObservationViewActivity"
@@ -174,9 +143,9 @@
             android:exported="true" />
 
         <service
-            android:name="mil.nga.giat.mage.sdk.fetch.UserFetchIntentService"
+            android:name="mil.nga.giat.mage.sdk.fetch.InitialFetchIntentService"
             android:exported="true" />
-        
+
         <service
             android:name="mil.nga.giat.mage.sdk.push.LocationPushIntentService"
             android:exported="true" />

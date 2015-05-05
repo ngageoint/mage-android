@@ -1,13 +1,14 @@
 package mil.nga.giat.mage.form;
 
-import java.io.Serializable;
-
-import mil.nga.giat.mage.R;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.util.AttributeSet;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
+
+import java.io.Serializable;
+
+import mil.nga.giat.mage.R;
 
 public class MageRadioGroup extends RadioGroup implements MageControl {
 

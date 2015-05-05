@@ -1,12 +1,13 @@
 package mil.nga.giat.mage.observation;
 
-import mil.nga.giat.mage.R;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.DialogInterface;
 import android.os.Bundle;
 import android.support.v4.app.DialogFragment;
+
+import mil.nga.giat.mage.R;
 
 public class RemoveAttachmentDialogFragment extends DialogFragment {
 	

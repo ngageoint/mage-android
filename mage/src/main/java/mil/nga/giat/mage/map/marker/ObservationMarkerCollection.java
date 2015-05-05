@@ -1,14 +1,10 @@
 package mil.nga.giat.mage.map.marker;
 
-import java.util.Collection;
-import java.util.Date;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-
-import mil.nga.giat.mage.observation.ObservationViewActivity;
-import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import android.content.Context;
 import android.content.Intent;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.widget.TextView;
 
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.GoogleMap.OnMarkerClickListener;
@@ -18,6 +14,18 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.maps.android.MarkerManager;
 import com.vividsolutions.jts.geom.Point;
+
+import org.ocpsoft.prettytime.PrettyTime;
+
+import java.util.Collection;
+import java.util.Date;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
+import mil.nga.giat.mage.R;
+import mil.nga.giat.mage.observation.ObservationViewActivity;
+import mil.nga.giat.mage.sdk.datastore.observation.Observation;
+import mil.nga.giat.mage.sdk.datastore.observation.ObservationProperty;
 
 public class ObservationMarkerCollection implements PointCollection<Observation>, OnMarkerClickListener {
 
@@ -29,6 +37,8 @@ public class ObservationMarkerCollection implements PointCollection<Observation>
 
     private Map<Long, Marker> observationIdToMarker = new ConcurrentHashMap<Long, Marker>();
     private Map<String, Observation> markerIdToObservation = new ConcurrentHashMap<String, Observation>();
+
+	protected GoogleMap.InfoWindowAdapter infoWindowAdapter = new ObservationInfoWindowAdapter();
 
     private MarkerManager.Collection markerCollection;
 
@@ -50,7 +60,7 @@ public class ObservationMarkerCollection implements PointCollection<Observation>
             marker.remove();
         }
 
-        Point point = (Point) o.getObservationGeometry().getGeometry();
+        Point point = (Point) o.getGeometry();
         MarkerOptions options = new MarkerOptions()
             .position(new LatLng(point.getY(), point.getX()))
             .icon(ObservationBitmapFactory.bitmapDescriptor(context, o))
@@ -104,11 +114,8 @@ public class ObservationMarkerCollection implements PointCollection<Observation>
         
         if (o == null) return false;  // Not an observation let someone else handle it
 
-        Intent intent = new Intent(context, ObservationViewActivity.class);
-        intent.putExtra(ObservationViewActivity.OBSERVATION_ID, o.getId());
-        intent.putExtra(ObservationViewActivity.INITIAL_LOCATION, map.getCameraPosition().target);
-        intent.putExtra(ObservationViewActivity.INITIAL_ZOOM, map.getCameraPosition().zoom);
-        context.startActivity(intent);
+		map.setInfoWindowAdapter(infoWindowAdapter);
+		marker.showInfoWindow();
 
         return true;
     }
@@ -146,8 +153,48 @@ public class ObservationMarkerCollection implements PointCollection<Observation>
     }
 
 	@Override
-	public void onInfoWindowClick(Marker arg0) {
-		// TODO Auto-generated method stub
-		
+	public void onInfoWindowClick(Marker marker) {
+		Observation o = markerIdToObservation.get(marker.getId());
+
+		if (o == null) {
+			return;
+		}
+
+		Intent intent = new Intent(context, ObservationViewActivity.class);
+        intent.putExtra(ObservationViewActivity.OBSERVATION_ID, o.getId());
+        intent.putExtra(ObservationViewActivity.INITIAL_LOCATION, map.getCameraPosition().target);
+        intent.putExtra(ObservationViewActivity.INITIAL_ZOOM, map.getCameraPosition().zoom);
+        context.startActivity(intent);
+	}
+
+	private class ObservationInfoWindowAdapter implements GoogleMap.InfoWindowAdapter {
+
+		@Override
+		public View getInfoContents(Marker marker) {
+			final Observation observation = markerIdToObservation.get(marker.getId());
+			if (observation == null) {
+				return null;
+			}
+
+			LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+			View v = inflater.inflate(R.layout.observation_infowindow, null);
+
+			ObservationProperty observationPropertyType = observation.getPropertiesMap().get("type");
+
+			String type = observationPropertyType!=null?observationPropertyType.getValue().toString():"";
+
+			TextView observation_infowindow_type = (TextView)v.findViewById(R.id.observation_infowindow_type);
+			observation_infowindow_type.setText(type);
+
+			TextView observation_infowindow_date = (TextView)v.findViewById(R.id.observation_infowindow_date);
+			observation_infowindow_date.setText(new PrettyTime().format(observation.getTimestamp()));
+
+			return v;
+		}
+
+		@Override
+		public View getInfoWindow(Marker marker) {
+			return null; // Use default info window
+		}
 	}
 }

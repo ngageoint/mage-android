@@ -1,11 +1,12 @@
 package mil.nga.giat.mage.preferences;
 
-import mil.nga.giat.mage.R;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.preference.MultiSelectListPreference;
 import android.util.AttributeSet;
+
+import mil.nga.giat.mage.R;
 
 public class DialogPreference extends MultiSelectListPreference {
 
@@ -14,6 +15,11 @@ public class DialogPreference extends MultiSelectListPreference {
 	public DialogPreference(Context context, AttributeSet attrs) {
 		super(context, attrs);
 		setDialogLayoutResource(R.layout.map_preference);
+	}
+
+	@Override
+	protected void onClick() {
+		// Don't let users click the actual preference to changed the switch state
 	}
 
 	@Override

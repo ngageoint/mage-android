@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
+import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -22,6 +23,7 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.maps.android.MarkerManager;
+import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.Point;
 
 import org.ocpsoft.prettytime.PrettyTime;
@@ -42,13 +44,11 @@ import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.profile.MyProfileFragment;
 import mil.nga.giat.mage.profile.ProfileActivity;
 import mil.nga.giat.mage.sdk.datastore.location.Location;
-import mil.nga.giat.mage.sdk.datastore.location.LocationGeometry;
 import mil.nga.giat.mage.sdk.datastore.location.LocationHelper;
 import mil.nga.giat.mage.sdk.datastore.location.LocationProperty;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
-import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
 import mil.nga.giat.mage.sdk.utils.DateFormatFactory;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
 
@@ -62,7 +62,7 @@ public class LocationMarkerCollection implements PointCollection<Location>, OnMa
 
 	protected Long clickedAccuracyCircleLocationId;
 	protected Circle clickedAccuracyCircle;
-	protected InfoWindowAdapter infoWindowAdpater = new LocationInfoWindowAdapter();
+	protected InfoWindowAdapter infoWindowAdapter = new LocationInfoWindowAdapter();
 
 	protected boolean visible = true;
 
@@ -82,8 +82,8 @@ public class LocationMarkerCollection implements PointCollection<Location>, OnMa
 
 	@Override
 	public void add(Location l) {
-		final LocationGeometry lg = l.getLocationGeometry();
-		if (lg != null) {
+		final Geometry g = l.getGeometry();
+		if (g != null) {
 			
 			// one user has one location
 			Long locId = userIdToLocationId.get(l.getUser().getId());
@@ -103,7 +103,7 @@ public class LocationMarkerCollection implements PointCollection<Location>, OnMa
 			// remove it from the map and clean-up my collections
 			remove(l);
 
-			Point point = lg.getGeometry().getCentroid();
+			Point point = g.getCentroid();
 
 			LatLng latLng = new LatLng(point.getY(), point.getX());
 			MarkerOptions options = new MarkerOptions().position(latLng).visible(visible);
@@ -162,9 +162,9 @@ public class LocationMarkerCollection implements PointCollection<Location>, OnMa
 			return false;
 		}
 
-		final LocationGeometry lg = l.getLocationGeometry();
-		if (lg != null) {
-			Point point = lg.getGeometry().getCentroid();
+		final Geometry g = l.getGeometry();
+		if (g != null) {
+			Point point = g.getCentroid();
 			LatLng latLng = new LatLng(point.getY(), point.getX());
 			LocationProperty accuracyProperty = l.getPropertiesMap().get("accuracy");
 			if (accuracyProperty != null && !accuracyProperty.getValue().toString().trim().isEmpty()) {
@@ -181,7 +181,7 @@ public class LocationMarkerCollection implements PointCollection<Location>, OnMa
 			}
 		}
 
-		map.setInfoWindowAdapter(infoWindowAdpater);
+		map.setInfoWindowAdapter(infoWindowAdapter);
 		marker.setIcon(LocationBitmapFactory.bitmapDescriptor(context, l, l.getUser()));
 		marker.showInfoWindow();
 		return true;
@@ -296,7 +296,7 @@ public class LocationMarkerCollection implements PointCollection<Location>, OnMa
 			if (location.getUser().getLocalAvatarPath() != null) {
 				iconView.setImageBitmap(MediaUtility.resizeAndRoundCorners(BitmapFactory.decodeFile(location.getUser().getLocalAvatarPath()), 128));
 			} else if (location.getUser().getAvatarUrl() != null) {
-				new DownloadImageTask(marker, context, user).execute(location.getUser().getAvatarUrl() + "?access_token=" + PreferenceHelper.getInstance(context).getValue(R.string.tokenKey));
+				new DownloadImageTask(marker, context, user).execute(location.getUser().getAvatarUrl() + "?access_token=" + PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(mil.nga.giat.mage.sdk.R.string.tokenKey), null));
 			}
 			
 			TextView location_name = (TextView) v.findViewById(R.id.location_name);
@@ -314,20 +314,14 @@ public class LocationMarkerCollection implements PointCollection<Location>, OnMa
 			// set date
 			TextView location_date = (TextView) v.findViewById(R.id.location_date);
 
-			String timeText = dateFormat.format(location.getTimestamp());
-			Boolean prettyPrint = PreferenceHelper.getInstance(context).getValue(R.string.prettyPrintLocationDatesKey, Boolean.class, R.string.prettyPrintLocationDatesDefaultValue);
-			if (prettyPrint) {
-				// timeText = DateUtils.getRelativeTimeSpanString(location.getTimestamp().getTime(), System.currentTimeMillis(), 0, DateUtils.FORMAT_ABBREV_RELATIVE).toString();
-				timeText = new PrettyTime().format(location.getTimestamp());
-			}
-			location_date.setText(timeText);
+			location_date.setText(new PrettyTime().format(location.getTimestamp()));
 
 			return v;
 		}
 
 		@Override
 		public View getInfoWindow(Marker marker) {
-			return null; // Use default info window for now
+			return null; // Use default info window
 		}
 	}
 	

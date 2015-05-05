@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- This data is not fronted by a screen.  It is here to populate shared preferences by default -->
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Signup password length -->
+    <mil.nga.giat.mage.sdk.preferences.IntegerEditTextPreference
+        android:defaultValue="@integer/passwordMinLengthDefaultValue"
+        android:key="@string/passwordMinLengthKey"/>
+
+    <!-- Is the client compatible with the server? -->
+    <mil.nga.giat.mage.sdk.preferences.IntegerEditTextPreference
+        android:defaultValue="@integer/compatibleVersionMajorDefaultValue"
+        android:key="@string/compatibleVersionMajorKey"/>
+
+    <mil.nga.giat.mage.sdk.preferences.IntegerEditTextPreference
+        android:defaultValue="@integer/compatibleVersionMinorDefaultValue"
+        android:key="@string/compatibleVersionMinorKey"/>
+
+    <EditTextPreference
+        android:defaultValue="@string/recentMapXYZDefaultValue"
+        android:key="@string/recentMapXYZKey"/>
+
+</PreferenceScreen>

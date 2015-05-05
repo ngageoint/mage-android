@@ -1,49 +1,42 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
-    android:title="@string/map_settings" >
+                  android:title="@string/map_settings">
 
-    <PreferenceCategory android:title="MAPS" >
-        <ListPreference
-            android:defaultValue="1"
-            android:entries="@array/layerEntries"
-            android:entryValues="@array/layerValues"
+    <PreferenceCategory android:title="MAPS">
+        <mil.nga.giat.mage.sdk.preferences.IntegerListPreference
+            android:defaultValue="@integer/baseLayerDefaultValue"
+            android:entries="@array/baseLayerEntries"
+            android:entryValues="@array/baseLayerValues"
             android:key="@string/baseLayerKey"
-            android:title="Base Layer" />
+            android:title="Base Layer"/>
 
         <mil.nga.giat.mage.map.preference.OverlayPreference
-            android:key="@string/mapTileOverlaysKey"
-            android:title="Overlay Maps" />
+            android:key="@string/tileOverlaysKey"
+            android:title="Overlay Maps"/>
     </PreferenceCategory>
-    <PreferenceCategory android:title="OBSERVATIONS" >
+    <PreferenceCategory android:title="OBSERVATIONS">
         <CheckBoxPreference
-            android:defaultValue="true"
+            android:defaultValue="@bool/showObservationsDefaultValue"
             android:key="@string/showObservationsKey"
             android:summary="Show observations on map"
-            android:title="Show Observations" />
-        <!--
-             <CheckBoxPreference
-            android:defaultValue="true"
-            android:key="clusterObservations"
-            android:summary="Cluster observation at higher zoom levels to reduce clutter"
-            android:title="Cluster Observations" />
-        -->
+            android:title="Show Observations"/>
     </PreferenceCategory>
-    <PreferenceCategory android:title="PEOPLE" >
+    <PreferenceCategory android:title="PEOPLE">
         <CheckBoxPreference
-            android:defaultValue="true"
+            android:defaultValue="@bool/showLocationsDefaultValue"
             android:key="@string/showLocationsKey"
             android:summary="Show users locations on map"
-            android:title="Show People" />
+            android:title="Show People"/>
         <CheckBoxPreference
-            android:defaultValue="false"
+            android:defaultValue="@bool/showMyLocationHistoryDefaultValue"
             android:key="@string/showMyLocationHistoryKey"
             android:summary="Show your history on the map"
-            android:title="Show My Location History" />
+            android:title="Show My Location History"/>
     </PreferenceCategory>
-    <PreferenceCategory android:title="STATIC FEATURES" >
+    <PreferenceCategory android:title="STATIC FEATURES">
         <mil.nga.giat.mage.map.preference.OverlayPreference
-            android:key="@string/mapFeatureOverlaysKey"
-            android:title="Feature Overlays" />
+            android:key="@string/staticFeatureLayersKey"
+            android:title="Feature Overlays"/>
     </PreferenceCategory>
 
 </PreferenceScreen>

@@ -1,14 +1,5 @@
 package mil.nga.giat.mage.map;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.util.Map;
-
-import mil.nga.giat.mage.map.marker.StaticGeometryCollection;
-import mil.nga.giat.mage.sdk.datastore.layer.Layer;
-import mil.nga.giat.mage.sdk.datastore.staticfeature.StaticFeature;
-import mil.nga.giat.mage.sdk.datastore.staticfeature.StaticFeatureProperty;
 import android.content.Context;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
@@ -26,6 +17,16 @@ import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Geometry;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.util.Map;
+
+import mil.nga.giat.mage.map.marker.StaticGeometryCollection;
+import mil.nga.giat.mage.sdk.datastore.layer.Layer;
+import mil.nga.giat.mage.sdk.datastore.staticfeature.StaticFeature;
+import mil.nga.giat.mage.sdk.datastore.staticfeature.StaticFeatureProperty;
 
 public class StaticFeatureLoadTask extends AsyncTask<Layer, Object, Void> {
 
@@ -49,7 +50,7 @@ public class StaticFeatureLoadTask extends AsyncTask<Layer, Object, Void> {
 		Log.d(LOG_NAME, "static feature layer: " + layer.getName() + " is enabled, it has " + layer.getStaticFeatures().size() + " features");
 
 		for (StaticFeature feature : layer.getStaticFeatures()) {
-			Geometry geometry = feature.getStaticFeatureGeometry().getGeometry();
+			Geometry geometry = feature.getGeometry();
 			Map<String, StaticFeatureProperty> properties = feature.getPropertiesMap();
 
 			StringBuilder content = new StringBuilder();

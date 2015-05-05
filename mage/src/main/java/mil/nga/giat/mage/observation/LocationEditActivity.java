@@ -1,14 +1,5 @@
 package mil.nga.giat.mage.observation;
 
-import com.google.android.gms.maps.CameraUpdateFactory;
-import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.GoogleMap.OnCameraChangeListener;
-import com.google.android.gms.maps.GoogleMap.OnMapClickListener;
-import com.google.android.gms.maps.MapFragment;
-import com.google.android.gms.maps.model.CameraPosition;
-import com.google.android.gms.maps.model.LatLng;
-
-import mil.nga.giat.mage.R;
 import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -19,6 +10,16 @@ import android.view.View.OnFocusChangeListener;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.ImageView;
+
+import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.GoogleMap.OnCameraChangeListener;
+import com.google.android.gms.maps.GoogleMap.OnMapClickListener;
+import com.google.android.gms.maps.MapFragment;
+import com.google.android.gms.maps.model.CameraPosition;
+import com.google.android.gms.maps.model.LatLng;
+
+import mil.nga.giat.mage.R;
 
 public class LocationEditActivity extends Activity implements OnCameraChangeListener, OnFocusChangeListener, OnMapClickListener {
 
@@ -76,8 +77,7 @@ public class LocationEditActivity extends Activity implements OnCameraChangeList
 				map.moveCamera(CameraUpdateFactory.newLatLngZoom(location, map.getCameraPosition().zoom));
 				map.setOnCameraChangeListener(LocationEditActivity.this);
 			} catch (NumberFormatException pe) {
-				// typed wrong probably
-				// warn the user TODO
+				// TODO: warn the user
 			}
 		} else {
 			map.setOnCameraChangeListener(null);

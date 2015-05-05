@@ -1,19 +1,5 @@
 package mil.nga.giat.mage.map.marker;
 
-import java.io.File;
-import java.io.FileFilter;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Map;
-import java.util.Stack;
-
-import mil.nga.giat.mage.sdk.R;
-import mil.nga.giat.mage.sdk.datastore.observation.Observation;
-import mil.nga.giat.mage.sdk.datastore.observation.ObservationProperty;
-import mil.nga.giat.mage.sdk.http.get.MageServerGetRequests;
-import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
 import android.annotation.TargetApi;
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -25,7 +11,20 @@ import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
+
+import java.io.File;
+import java.io.FileFilter;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Map;
+import java.util.Stack;
+
+import mil.nga.giat.mage.sdk.datastore.observation.Observation;
+import mil.nga.giat.mage.sdk.datastore.observation.ObservationProperty;
+import mil.nga.giat.mage.sdk.datastore.user.Event;
+import mil.nga.giat.mage.sdk.http.get.MageServerGetRequests;
 
 public class ObservationBitmapFactory {
 	
@@ -75,9 +74,11 @@ public class ObservationBitmapFactory {
 			Map<String, ObservationProperty> properties = observation.getPropertiesMap();
 			// get type
 			ObservationProperty type = properties.get(TYPE_PROPERTY);
+
+            Event event = observation.getEvent();
+
 			// get variantField
-			String dynamicFormString = PreferenceHelper.getInstance(context).getValue(R.string.dynamicFormKey);
-			JsonObject dynamicFormJson = new JsonParser().parse(dynamicFormString).getAsJsonObject();
+			JsonObject dynamicFormJson = event.getForm();
 			
 			// get variant
 			ObservationProperty variant = null;
@@ -85,28 +86,23 @@ public class ObservationBitmapFactory {
 			if(variantField != null && !variantField.isJsonNull()) {
 				variant = properties.get(variantField.getAsString());
 			}
-	
-			JsonElement jsonFormId = dynamicFormJson.get("id");
-			
-			if(jsonFormId != null && !jsonFormId.isJsonNull()) {
-				String formId = jsonFormId.getAsString();
-				// make path from type and variant
-				File path = new File(new File(new File(context.getFilesDir() + MageServerGetRequests.OBSERVATION_ICON_PATH), formId), "icons");
-		
-				Stack<ObservationProperty> iconProperties = new Stack<ObservationProperty>();
-				iconProperties.add(variant);
-				iconProperties.add(type);
-				
-				path = recurseGetIconPath(iconProperties, path, 0);
 
-				if (path != null && path.exists() && path.isFile()) {
-					try {
-						iconStream = new FileInputStream(path);
-					} catch (FileNotFoundException e) {
-						Log.e(LOG_NAME, "Can find icon.", e);
-					}
-				}
-			}
+            // make path from type and variant
+            File path = new File(new File(new File(context.getFilesDir() + MageServerGetRequests.OBSERVATION_ICON_PATH), event.getRemoteId()), "icons");
+
+            Stack<ObservationProperty> iconProperties = new Stack<ObservationProperty>();
+            iconProperties.add(variant);
+            iconProperties.add(type);
+
+            path = recurseGetIconPath(iconProperties, path, 0);
+
+            if (path != null && path.exists() && path.isFile()) {
+                try {
+                    iconStream = new FileInputStream(path);
+                } catch (FileNotFoundException e) {
+                    Log.e(LOG_NAME, "Can find icon.", e);
+                }
+            }
 		}
 		if(iconStream == null) {
 			try {
@@ -129,11 +125,11 @@ public class ObservationBitmapFactory {
 				}
 			}
 		}
-		while (path != null && path.listFiles(fileFilter).length == 0 && i >= 0) {
+		while (path != null && path.listFiles(fileFilter) != null && path.listFiles(fileFilter).length == 0 && i >= 0) {
 			path = path.getParentFile();
 			i--;
 		}
-		if (path == null) return null;
+		if (path == null || !path.exists()) return null;
 		
 		File[] files = path.listFiles(fileFilter);
 		return files.length == 0 ? null : files[0];

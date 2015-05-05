@@ -5,6 +5,6 @@
         android:orderInCategory="100"
         android:showAsAction="always"
         android:enabled="true"
-        android:title="@string/search"/>
+        android:title="Search"/>
     
 </menu>

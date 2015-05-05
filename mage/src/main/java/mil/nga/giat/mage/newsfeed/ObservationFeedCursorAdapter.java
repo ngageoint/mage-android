@@ -1,18 +1,5 @@
 package mil.nga.giat.mage.newsfeed;
 
-import java.io.File;
-import java.util.Collection;
-
-import mil.nga.giat.mage.R;
-import mil.nga.giat.mage.form.LayoutBaker;
-import mil.nga.giat.mage.form.LayoutBaker.ControlGenerationType;
-import mil.nga.giat.mage.map.marker.ObservationBitmapFactory;
-import mil.nga.giat.mage.sdk.datastore.observation.Attachment;
-import mil.nga.giat.mage.sdk.datastore.observation.Observation;
-import mil.nga.giat.mage.sdk.datastore.user.User;
-import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
-import mil.nga.giat.mage.sdk.exceptions.UserException;
-import mil.nga.giat.mage.sdk.utils.MediaUtility;
 import android.app.Activity;
 import android.content.Context;
 import android.database.Cursor;
@@ -30,6 +17,20 @@ import android.widget.TextView;
 import com.bumptech.glide.Glide;
 import com.j256.ormlite.android.AndroidDatabaseResults;
 import com.j256.ormlite.stmt.PreparedQuery;
+
+import java.io.File;
+import java.util.Collection;
+
+import mil.nga.giat.mage.R;
+import mil.nga.giat.mage.form.LayoutBaker;
+import mil.nga.giat.mage.form.LayoutBaker.ControlGenerationType;
+import mil.nga.giat.mage.map.marker.ObservationBitmapFactory;
+import mil.nga.giat.mage.sdk.datastore.observation.Attachment;
+import mil.nga.giat.mage.sdk.datastore.observation.Observation;
+import mil.nga.giat.mage.sdk.datastore.user.User;
+import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
+import mil.nga.giat.mage.sdk.exceptions.UserException;
+import mil.nga.giat.mage.sdk.utils.MediaUtility;
 
 public class ObservationFeedCursorAdapter extends CursorAdapter {
 
@@ -125,14 +126,18 @@ public class ObservationFeedCursorAdapter extends CursorAdapter {
 				iv.setVisibility(View.GONE);
 			}
 		} catch (java.sql.SQLException e) {
-			e.printStackTrace();
+			Log.e(LOG_NAME, "Problem getting observation.", e);
 		}
 	}
 
 	@Override
 	public View newView(Context context, Cursor cursor, ViewGroup parentView) {
 		View v = inflater.inflate(R.layout.observation_list_item, parentView, false);
-		LayoutBaker.populateLayoutWithControls((LinearLayout) v.findViewById(R.id.observation_list_dynamic_content), LayoutBaker.createControlsFromJson(v.getContext(), ControlGenerationType.VIEW));
+		try {
+			LayoutBaker.populateLayoutWithControls((LinearLayout) v.findViewById(R.id.observation_list_dynamic_content), LayoutBaker.createControlsFromJson(v.getContext(), ControlGenerationType.VIEW, query.mapRow(new AndroidDatabaseResults(cursor, null)).getEvent().getForm()));
+		} catch (java.sql.SQLException e) {
+			Log.e(LOG_NAME, "Problem getting observation.", e);
+		}
 		return v;
 	}
 

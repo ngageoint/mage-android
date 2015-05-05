@@ -1,14 +1,17 @@
 package mil.nga.giat.mage.map;
 
-import mil.nga.giat.mage.map.marker.PointCollection;
 import android.os.AsyncTask;
+
+import mil.nga.giat.mage.map.marker.PointCollection;
 
 public class RefreshMarkersTask extends AsyncTask<Integer, Void, Void> {
 
-	PointCollection<?> colleciton;
+	private static final String LOG_NAME = RefreshMarkersTask.class.getName();
 
-	public RefreshMarkersTask(PointCollection<?> colleciton) {
-		this.colleciton = colleciton;
+	PointCollection<?> collection;
+
+	public RefreshMarkersTask(PointCollection<?> collection) {
+		this.collection = collection;
 	}
 
 	@Override
@@ -23,7 +26,8 @@ public class RefreshMarkersTask extends AsyncTask<Integer, Void, Void> {
 			publishProgress();
 			try {
 				Thread.sleep(sleepTimeInMilli);
-			} catch (InterruptedException e) {
+			} catch (InterruptedException ie) {
+				//Log.e(LOG_NAME, "Interrupted.  Unable to sleep ", ie);
 			}
 		}
 		return null;
@@ -32,8 +36,8 @@ public class RefreshMarkersTask extends AsyncTask<Integer, Void, Void> {
 	@Override
 	protected void onProgressUpdate(Void... values) {
 		super.onProgressUpdate(values);
-		if(colleciton.isVisible()) {
-			colleciton.refreshMarkerIcons();
+		if(collection.isVisible()) {
+			collection.refreshMarkerIcons();
 		}
 	}
 

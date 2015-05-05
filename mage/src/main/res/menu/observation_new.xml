@@ -4,6 +4,6 @@
         android:id="@+id/observation_new"
         android:orderInCategory="100"
         android:showAsAction="always"
-        android:title="@string/observation_new"/>
+        android:title="New"/>
     
 </menu>

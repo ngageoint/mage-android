@@ -22,7 +22,6 @@ import android.widget.TimePicker;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 
 import java.io.Serializable;
 import java.text.DateFormat;
@@ -31,13 +30,12 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 
 import mil.nga.giat.mage.sdk.R;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationProperty;
-import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
 import mil.nga.giat.mage.sdk.utils.DateFormatFactory;
 
 /**
@@ -51,17 +49,14 @@ public class LayoutBaker {
 	private static final String LOG_NAME = LayoutBaker.class.getName();
 
 	public enum ControlGenerationType {
-		VIEW, EDIT;
+		VIEW, EDIT
 	}
 
-	public static List<View> createControlsFromJson(Context pContext, ControlGenerationType controlGenerationType) {
+	public static List<View> createControlsFromJson(Context pContext, ControlGenerationType controlGenerationType, JsonObject dynamicFormJson) {
 		// add the theme to the context
 		final Context context = new ContextThemeWrapper(pContext, R.style.AppTheme);
 
 		List<View> views = new ArrayList<View>();
-
-		String dynamicFormString = PreferenceHelper.getInstance(context).getValue(R.string.dynamicFormKey);
-		JsonObject dynamicFormJson = new JsonParser().parse(dynamicFormString).getAsJsonObject();
 
 		JsonArray dynamicFormFields = dynamicFormJson.get("fields").getAsJsonArray();
 
@@ -103,7 +98,7 @@ public class LayoutBaker {
 			
 			String name = field.get("name").getAsString();
 			JsonArray choicesJson = field.get("choices").getAsJsonArray();
-			Collection<String> choices = new HashSet<String>();
+			Collection<String> choices = new LinkedHashSet<String>();
 			if (choicesJson != null && !choicesJson.isJsonNull()) {
 				for (int j = 0; j < choicesJson.size(); j++) {
 					JsonObject choiceJson = choicesJson.get(j).getAsJsonObject();
@@ -336,7 +331,7 @@ public class LayoutBaker {
 				case DROPDOWN:
 				case RADIO:
 					linearLayout.addView(textView);
-					linearLayout.addView((View) mageTextView);
+					linearLayout.addView(mageTextView);
 					views.add(linearLayout);
 					break;
 				case CHECKBOX:
@@ -350,26 +345,26 @@ public class LayoutBaker {
 					}
 					mageCheckBox.setEnabled(false);
 					linearLayout.addView(textView);
-					linearLayout.addView((View) mageCheckBox);
+					linearLayout.addView(mageCheckBox);
 					views.add(linearLayout);
 					break;
 				case PASSWORD:
 					linearLayout.addView(textView);
 					mageTextView.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
-					linearLayout.addView((View) mageTextView);
+					linearLayout.addView(mageTextView);
 					views.add(linearLayout);
 					break;
 				case TEXTAREA:
 					mageTextView.setPropertyType(MagePropertyType.MULTILINE);
 					mageTextView.setPadding((int) (5 * density), (int) (5 * density), (int) (5 * density), (int) (5 * density));
 					linearLayout.addView(textView);
-					linearLayout.addView((View) mageTextView);
+					linearLayout.addView(mageTextView);
 					views.add(linearLayout);
 					break;
 				case DATE:
 					mageTextView.setPropertyType(MagePropertyType.DATE);
 					linearLayout.addView(textView);
-					linearLayout.addView((View) mageTextView);
+					linearLayout.addView(mageTextView);
 					views.add(linearLayout);
 					break;
 				default:
@@ -433,7 +428,7 @@ public class LayoutBaker {
 		return populateMapFromLayout(linearLayout, properties);
 	}
 
-	private static final Map<String, ObservationProperty> populateMapFromLayout(LinearLayout linearLayout, Map<String, ObservationProperty> fields) {
+	private static Map<String, ObservationProperty> populateMapFromLayout(LinearLayout linearLayout, Map<String, ObservationProperty> fields) {
 		for (int i = 0; i < linearLayout.getChildCount(); i++) {
 			View v = linearLayout.getChildAt(i);
 

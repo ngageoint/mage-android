@@ -1,12 +1,5 @@
 package mil.nga.giat.mage.map;
 
-import java.sql.SQLException;
-
-import mil.nga.giat.mage.filter.Filter;
-import mil.nga.giat.mage.map.marker.PointCollection;
-import mil.nga.giat.mage.sdk.Temporal;
-import mil.nga.giat.mage.sdk.datastore.DaoStore;
-import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import android.content.Context;
 import android.os.AsyncTask;
 
@@ -15,15 +8,26 @@ import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.stmt.QueryBuilder;
 import com.j256.ormlite.stmt.Where;
 
+import java.sql.SQLException;
+
+import mil.nga.giat.mage.filter.Filter;
+import mil.nga.giat.mage.map.marker.PointCollection;
+import mil.nga.giat.mage.sdk.Temporal;
+import mil.nga.giat.mage.sdk.datastore.DaoStore;
+import mil.nga.giat.mage.sdk.datastore.observation.Observation;
+import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
+
 public class ObservationLoadTask extends AsyncTask<Void, Observation, Void> {
     
     private Context context;
     private Filter<Temporal> filter;
     private PointCollection<Observation> observationCollection;
+	private Long currentEventId;
 
     public ObservationLoadTask(Context context, PointCollection<Observation> observationCollection) {
         this.context = context.getApplicationContext();
         this.observationCollection = observationCollection;
+		this.currentEventId = EventHelper.getInstance(context).getCurrentEvent().getId();
     }
        
     public void setFilter(Filter<Temporal> filter) {
@@ -61,7 +65,9 @@ public class ObservationLoadTask extends AsyncTask<Void, Observation, Void> {
         Where<? extends Temporal, Long> where = query
                 .orderBy("timestamp", false)
                 .where()
-                .ge("last_modified", observationCollection.getLatestDate());   
+                .ge("last_modified", observationCollection.getLatestDate())
+                .and()
+                .eq("event_id", currentEventId);
 
         if (filter != null) {
             filter.where(where.and());            

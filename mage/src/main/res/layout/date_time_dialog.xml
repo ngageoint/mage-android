@@ -1,5 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
-    <LinearLayout android:orientation="vertical" android:layout_width="fill_parent" android:layout_height="fill_parent" xmlns:android="http://schemas.android.com/apk/res/android">
-        <DatePicker android:id="@+id/date_picker" android:layout_width="wrap_content" android:layout_height="wrap_content"></DatePicker>
-        <TimePicker android:id="@+id/time_picker" android:layout_width="wrap_content" android:layout_height="wrap_content"></TimePicker>
-    </LinearLayout>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent">
+
+    <DatePicker
+        android:id="@+id/date_picker"
+        android:layout_width="match_parent"
+        android:spinnersShown="true"
+        android:calendarViewShown="false"
+        android:layout_weight="4"
+        android:layout_height="0dp" />
+
+    <TimePicker
+        android:id="@+id/time_picker"
+        android:layout_weight="4"
+        android:layout_width="match_parent"
+        android:layout_height="0dp" />
+
+</LinearLayout>

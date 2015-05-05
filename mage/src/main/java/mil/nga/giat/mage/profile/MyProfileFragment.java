@@ -1,21 +1,5 @@
 package mil.nga.giat.mage.profile;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.List;
-
-import mil.nga.giat.mage.R;
-import mil.nga.giat.mage.map.marker.LocationBitmapFactory;
-import mil.nga.giat.mage.sdk.datastore.location.Location;
-import mil.nga.giat.mage.sdk.datastore.location.LocationHelper;
-import mil.nga.giat.mage.sdk.datastore.user.User;
-import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
-import mil.nga.giat.mage.sdk.exceptions.UserException;
-import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
-import mil.nga.giat.mage.sdk.profile.UpdateProfileTask;
-import mil.nga.giat.mage.sdk.utils.MediaUtility;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -29,6 +13,7 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.provider.MediaStore;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -47,6 +32,22 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.Point;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
+
+import mil.nga.giat.mage.R;
+import mil.nga.giat.mage.map.marker.LocationBitmapFactory;
+import mil.nga.giat.mage.sdk.datastore.location.Location;
+import mil.nga.giat.mage.sdk.datastore.location.LocationHelper;
+import mil.nga.giat.mage.sdk.datastore.user.User;
+import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
+import mil.nga.giat.mage.sdk.exceptions.UserException;
+import mil.nga.giat.mage.sdk.profile.UpdateProfileTask;
+import mil.nga.giat.mage.sdk.utils.MediaUtility;
+
 public class MyProfileFragment extends Fragment {
 
 	private static final String LOG_NAME = MyProfileFragment.class.getName();
@@ -62,7 +63,6 @@ public class MyProfileFragment extends Fragment {
 	private User user;
 	
 	private MapView mapView;
-	private View rootView;
 	
 	@Override
 	public void onDestroy() {
@@ -90,8 +90,8 @@ public class MyProfileFragment extends Fragment {
 	
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-		rootView = inflater.inflate(R.layout.fragment_profile, container, false);
-		
+		View rootView = inflater.inflate(R.layout.fragment_profile, container, false);
+		getActivity().getActionBar().setTitle("My Profile");
 		String userToLoad = getActivity().getIntent().getStringExtra(USER_ID);
 		try {
 			if (userToLoad != null) {
@@ -120,7 +120,7 @@ public class MyProfileFragment extends Fragment {
 		LatLng location = new LatLng(0,0);
 		
 		if (!lastLocation.isEmpty()) {
-			Geometry geo = lastLocation.get(0).getLocationGeometry().getGeometry();
+			Geometry geo = lastLocation.get(0).getGeometry();
 			if (geo instanceof Point) {
 				Point point = (Point) geo;
 				location = new LatLng(point.getY(), point.getX());
@@ -155,7 +155,7 @@ public class MyProfileFragment extends Fragment {
 		ImageView iv = (ImageView)rootView.findViewById(R.id.profile_picture);
 		String avatarUrl = null;
 		if (user.getAvatarUrl() != null) {
-			avatarUrl = user.getAvatarUrl() + "?access_token=" + PreferenceHelper.getInstance(getActivity().getApplicationContext()).getValue(R.string.tokenKey);
+			avatarUrl = user.getAvatarUrl() + "?access_token=" + PreferenceManager.getDefaultSharedPreferences(getActivity().getApplicationContext()).getString(getActivity().getApplicationContext().getString(mil.nga.giat.mage.sdk.R.string.tokenKey), null);
 			new DownloadImageTask(iv).execute(avatarUrl);
 		}
 		
@@ -169,7 +169,7 @@ public class MyProfileFragment extends Fragment {
 			@Override
 			public void onClick(View v) {
 				try {
-					if (userId == UserHelper.getInstance(getActivity().getApplicationContext()).readCurrentUser().getId()) {
+					if (userId.equals(UserHelper.getInstance(getActivity().getApplicationContext()).readCurrentUser().getId())) {
 						AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
 					    builder.setItems(R.array.profileImageChoices, new DialogInterface.OnClickListener() {
 						   public void onClick(DialogInterface dialog, int which) {
@@ -213,7 +213,7 @@ public class MyProfileFragment extends Fragment {
 						startActivityForResult(intent, 1);
 					}
 				} catch (Exception e) {
-					
+					Log.e(LOG_NAME, "Problem setting profile picture.");
 				}
 			}
 		});
@@ -241,7 +241,18 @@ public class MyProfileFragment extends Fragment {
 			break;
 		}
 		if (filePath != null) {
-			Bitmap b = MediaUtility.resizeAndRoundCorners((MediaUtility.orientImage(new File(filePath))), 150);
+
+			BitmapFactory.Options options = new BitmapFactory.Options();
+			options.inPreferredConfig = Bitmap.Config.RGB_565;
+			options.inSampleSize = 2;
+			Bitmap bitmap = BitmapFactory.decodeFile(new File(filePath).getAbsolutePath(), options);
+			Bitmap b = MediaUtility.resizeAndRoundCorners(bitmap, 150);
+			try {
+				b = MediaUtility.orientBitmap(b, new File(filePath).getAbsolutePath(), false);
+			} catch (Exception e) {
+				Log.e(LOG_NAME, "failed to rotate image", e);
+			}
+
 			ImageView iv = (ImageView)getActivity().findViewById(R.id.profile_picture);
 			iv.setImageBitmap(b);
 			user.setLocalAvatarPath(filePath);
@@ -271,32 +282,5 @@ public class MyProfileFragment extends Fragment {
 			}
 		}
 		return uris;
-	}
-	
-	private class DownloadImageTask extends AsyncTask<String, Void, Bitmap> {
-	    ImageView bmImage;
-
-	    public DownloadImageTask(ImageView bmImage) {
-	        this.bmImage = bmImage;
-	    }
-
-	    protected Bitmap doInBackground(String... urls) {
-	        String urldisplay = urls[0];
-	        Bitmap mIcon11 = null;
-	        try {
-	            InputStream in = new java.net.URL(urldisplay).openStream();
-	            mIcon11 = BitmapFactory.decodeStream(in);
-	        } catch (Exception e) {
-	            Log.e(LOG_NAME, e.getMessage());
-	            e.printStackTrace();
-	        }
-	        return mIcon11;
-	    }
-
-	    protected void onPostExecute(Bitmap bitmap) {
-	    	if (bitmap != null) {
-	    		bmImage.setImageBitmap(MediaUtility.resizeAndRoundCorners(bitmap, 150));
-	    	}
-	    }
 	}
 }

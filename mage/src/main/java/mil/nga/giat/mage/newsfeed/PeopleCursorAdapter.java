@@ -24,7 +24,6 @@ import java.util.TimeZone;
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.sdk.datastore.location.Location;
 import mil.nga.giat.mage.sdk.datastore.user.User;
-import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
 import mil.nga.giat.mage.sdk.utils.DateFormatFactory;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
 
@@ -43,7 +42,6 @@ public class PeopleCursorAdapter extends CursorAdapter {
 
 	@Override
 	public void bindView(View v, final Context context, Cursor cursor) {
-		Log.i(LOG_NAME, "LocationBug bind view");
 		try {
 			Location location = query.mapRow(new AndroidDatabaseResults(cursor, null));
 			User user = location.getUser();
@@ -71,15 +69,11 @@ public class PeopleCursorAdapter extends CursorAdapter {
 			// set date
 			TextView location_date = (TextView) v.findViewById(R.id.location_date);
 
-			String timeText = dateFormat.format(location.getTimestamp());
-			Boolean prettyPrint = PreferenceHelper.getInstance(context).getValue(R.string.prettyPrintLocationDatesKey, Boolean.class, R.string.prettyPrintLocationDatesDefaultValue);
-			if(prettyPrint) {
-				timeText = new PrettyTime().format(location.getTimestamp());
-			}
+			String timeText = new PrettyTime().format(location.getTimestamp());
 
 			location_date.setText(timeText);
 		} catch (SQLException sqle) {
-			Log.e(LOG_NAME, "Could not set location view informaiton.", sqle);
+			Log.e(LOG_NAME, "Could not set location view information.", sqle);
 		}
 	}
 

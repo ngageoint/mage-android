@@ -25,7 +25,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:paddingBottom="4dp"
-                android:text="@string/features"
+                android:text="AVAILABLE FEATURES"
                 android:textSize="14sp" />
         </LinearLayout>
 
@@ -66,7 +66,6 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:gravity="center"
-            android:text="@string/feature_overlay_no_content_text"
             android:textColor="#999"
             android:visibility="gone" />
 

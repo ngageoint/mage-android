@@ -1,29 +1,8 @@
 package mil.nga.giat.mage.newsfeed;
 
-import java.sql.SQLException;
-import java.util.Calendar;
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
-
-import mil.nga.giat.mage.MAGE;
-import mil.nga.giat.mage.R;
-import mil.nga.giat.mage.observation.ObservationEditActivity;
-import mil.nga.giat.mage.observation.ObservationViewActivity;
-import mil.nga.giat.mage.sdk.datastore.DaoStore;
-import mil.nga.giat.mage.sdk.datastore.location.LocationHelper;
-import mil.nga.giat.mage.sdk.datastore.location.LocationProperty;
-import mil.nga.giat.mage.sdk.datastore.observation.Observation;
-import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
-import mil.nga.giat.mage.sdk.event.IObservationEventListener;
-import mil.nga.giat.mage.sdk.location.LocationService;
 import android.app.AlertDialog;
 import android.app.Fragment;
+import android.app.FragmentManager;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -53,6 +32,32 @@ import com.j256.ormlite.stmt.QueryBuilder;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.Point;
 
+import java.sql.SQLException;
+import java.util.Calendar;
+import java.util.Collection;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
+
+import mil.nga.giat.mage.MAGE;
+import mil.nga.giat.mage.R;
+import mil.nga.giat.mage.event.EventBannerFragment;
+import mil.nga.giat.mage.observation.ObservationEditActivity;
+import mil.nga.giat.mage.observation.ObservationViewActivity;
+import mil.nga.giat.mage.sdk.datastore.DaoStore;
+import mil.nga.giat.mage.sdk.datastore.location.LocationHelper;
+import mil.nga.giat.mage.sdk.datastore.location.LocationProperty;
+import mil.nga.giat.mage.sdk.datastore.observation.Observation;
+import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
+import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
+import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
+import mil.nga.giat.mage.sdk.event.IObservationEventListener;
+import mil.nga.giat.mage.sdk.location.LocationService;
+
 public class ObservationFeedFragment extends Fragment implements IObservationEventListener, OnItemClickListener, OnSharedPreferenceChangeListener {
 
 	private static final String LOG_NAME = ObservationFeedFragment.class.getName();
@@ -65,13 +70,23 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 	private ScheduledFuture<?> queryUpdateHandle;
 	private long requeryTime;
 	private ViewGroup footer;
-	private View rootView;
 	private ListView lv;
+	private Long currentEventId;
+
+	@Override
+	public void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		this.currentEventId = EventHelper.getInstance(getActivity().getApplicationContext()).getCurrentEvent().getId();
+	}
 
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-		rootView = inflater.inflate(R.layout.fragment_news_feed, container, false);
+		View rootView = inflater.inflate(R.layout.fragment_news_feed, container, false);
 		setHasOptionsMenu(true);
+
+		FragmentManager fragmentManager = getFragmentManager();
+		fragmentManager.beginTransaction().add(R.id.news_feed_event_holder, new EventBannerFragment()).commit();
+
 		lv = (ListView) rootView.findViewById(R.id.news_feed_list);
 		footer = (ViewGroup) inflater.inflate(R.layout.feed_footer, lv, false);
         lv.addFooterView(footer, null, false);
@@ -140,7 +155,7 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 				List<mil.nga.giat.mage.sdk.datastore.location.Location> tLocations = LocationHelper.getInstance(getActivity().getApplicationContext()).getCurrentUserLocations(getActivity().getApplicationContext(), 1, true);
 				if (!tLocations.isEmpty()) {
 					mil.nga.giat.mage.sdk.datastore.location.Location tLocation = tLocations.get(0);
-					Geometry geo = tLocation.getLocationGeometry().getGeometry();
+					Geometry geo = tLocation.getGeometry();
 					Map<String, LocationProperty> propertiesMap = tLocation.getPropertiesMap();
 					if (geo instanceof Point) {
 						Point point = (Point) geo;
@@ -160,7 +175,12 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 			} else {
 				l = new Location(l);
 			}
-			if(l != null) {
+			if(!UserHelper.getInstance(getActivity().getApplicationContext()).isCurrentUserPartOfCurrentEvent()) {
+				new AlertDialog.Builder(getActivity()).setTitle("Not a member of this event").setMessage("You are an administrator and not a member of the current event.  You can not create an observation in this event.").setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+					public void onClick(DialogInterface dialog, int which) {
+					}
+				}).show();
+			} else if(l != null) {
 				intent.putExtra(ObservationEditActivity.LOCATION, l);
 				startActivity(intent);
 			} else {
@@ -219,7 +239,10 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 		TextView footerTextView = (TextView)footer.findViewById(R.id.footer_text);
 		footerTextView.setText(footerText);
 		getActivity().getActionBar().setTitle(title);
-		qb.where().gt("last_modified", c.getTime());
+		qb.where()
+        .gt("last_modified", c.getTime())
+        .and()
+        .eq("event_id", currentEventId);
 		qb.orderBy("timestamp", false);
 
 		return qb.prepare();

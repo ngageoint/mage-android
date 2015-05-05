@@ -6,7 +6,9 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.os.AsyncTask;
+import android.preference.PreferenceManager;
 import android.support.multidex.MultiDexApplication;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.TaskStackBuilder;
@@ -32,12 +34,11 @@ import mil.nga.giat.mage.sdk.event.IUserEventListener;
 import mil.nga.giat.mage.sdk.fetch.LocationFetchIntentService;
 import mil.nga.giat.mage.sdk.fetch.ObservationFetchIntentService;
 import mil.nga.giat.mage.sdk.fetch.StaticFeatureServerFetch;
-import mil.nga.giat.mage.sdk.fetch.UserFetchIntentService;
 import mil.nga.giat.mage.sdk.glide.MageDiskCache;
 import mil.nga.giat.mage.sdk.glide.MageUrlLoader;
 import mil.nga.giat.mage.sdk.http.client.HttpClientManager;
+import mil.nga.giat.mage.sdk.http.post.MageServerPostRequests;
 import mil.nga.giat.mage.sdk.location.LocationService;
-import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
 import mil.nga.giat.mage.sdk.push.AttachmentPushAlarmReceiver;
 import mil.nga.giat.mage.sdk.push.LocationPushIntentService;
 import mil.nga.giat.mage.sdk.push.ObservationPushIntentService;
@@ -61,12 +62,13 @@ public class MAGE extends MultiDexApplication implements IUserEventListener {
 	private LocationService locationService;
 	private Intent locationFetchIntent;
 	private Intent observationFetchIntent;
-	private Intent userFetchIntent;
 	private Intent locationPushIntent;
 	private Intent observationPushIntent;
 	private Intent attachmentPushIntent;
 	private List<CacheOverlay> cacheOverlays = null;
 	private Collection<OnCacheOverlayListener> cacheOverlayListeners = new ArrayList<OnCacheOverlayListener>();
+
+	private ObservationNotificationListener observationNotificationListener = null;
 
 	private StaticFeatureServerFetch staticFeatureServerFetch = null;
 
@@ -85,8 +87,8 @@ public class MAGE extends MultiDexApplication implements IUserEventListener {
 		registerReceiver(ScreenChangeReceiver.getInstance(), new IntentFilter(Intent.ACTION_SCREEN_ON));
 
         //set up Observation notifications
-        ObservationHelper oh = ObservationHelper.getInstance(getApplicationContext());
-        oh.addListener(new ObservationNotificationListener(getApplicationContext()));
+		observationNotificationListener = new ObservationNotificationListener(getApplicationContext());
+		ObservationHelper.getInstance(getApplicationContext()).addListener(observationNotificationListener);
 
         HttpClientManager.getInstance(getApplicationContext()).addListener(this);
 
@@ -122,7 +124,12 @@ public class MAGE extends MultiDexApplication implements IUserEventListener {
 		new Thread(runnable).start();
 	}
 
-	public void onLogout() {
+	public void onLogout(Boolean clearTokenInformationAndSendLogoutRequest) {
+
+		if(observationNotificationListener != null){
+			ObservationHelper.getInstance(getApplicationContext()).removeListener(observationNotificationListener);
+		}
+
 		destroyFetching();
 		destroyPushing();
 		destroyLocationService();
@@ -130,7 +137,27 @@ public class MAGE extends MultiDexApplication implements IUserEventListener {
 		notificationManager.cancel(MAGE_NOTIFICATION_ID);
         notificationManager.cancel(ObservationNotificationListener.OBSERVATION_NOTIFICATION_ID);
 
-		if(PreferenceHelper.getInstance(getApplicationContext()).getValue(R.string.deleteAllDataOnLogoutKey, Boolean.class, R.string.deleteAllDataOnLogoutDefaultValue)) {
+        if(clearTokenInformationAndSendLogoutRequest) {
+            Runnable runnable = new Runnable() {
+                @Override
+                public void run() {
+                    if(!MageServerPostRequests.logout(getApplicationContext())) {
+                        Log.e(LOG_NAME, "Unable to logout from server.");
+                    }
+                }
+            };
+            new Thread(runnable).start();
+
+            UserUtility.getInstance(getApplicationContext()).clearTokenInformation();
+        }
+
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.remove(getApplicationContext().getString(mil.nga.giat.mage.sdk.R.string.currentEventKey)).commit();
+
+		Boolean deleteAllDataOnLogout = sharedPreferences.getBoolean(getApplicationContext().getString(R.string.deleteAllDataOnLogoutKey), getResources().getBoolean(R.bool.deleteAllDataOnLogoutDefaultValue));
+
+		if(deleteAllDataOnLogout) {
 			LandingActivity.deleteAllData(getApplicationContext());
 		}		
 	}
@@ -155,7 +182,7 @@ public class MAGE extends MultiDexApplication implements IUserEventListener {
 		builder.setStyle(bigTextStyle);
 
 		// Creates an explicit intent for an Activity in your app
-		Intent resultIntent = new Intent(this, LoginActivity.class);
+		Intent resultIntent = new Intent(this, LandingActivity.class);
 
 		// The stack builder object will contain an artificial back stack for the
 		// started Activity.
@@ -182,33 +209,24 @@ public class MAGE extends MultiDexApplication implements IUserEventListener {
 	 * Start Tasks responsible for fetching Observations and Locations from the server.
 	 */
 	private void startFetching() {
-		if (userFetchIntent == null) {
-			userFetchIntent = new Intent(getApplicationContext(), UserFetchIntentService.class);
-			startService(userFetchIntent);
-		}
-		
-		if(locationFetchIntent == null) {
-			locationFetchIntent = new Intent(getApplicationContext(), LocationFetchIntentService.class);
-			startService(locationFetchIntent);
-		}
-		
-		if(observationFetchIntent == null) {
-			observationFetchIntent = new Intent(getApplicationContext(), ObservationFetchIntentService.class);
-			startService(observationFetchIntent);
-		}
+        if(locationFetchIntent == null) {
+            locationFetchIntent = new Intent(getApplicationContext(), LocationFetchIntentService.class);
+            startService(locationFetchIntent);
+        }
+
+        if(observationFetchIntent == null) {
+            observationFetchIntent = new Intent(getApplicationContext(), ObservationFetchIntentService.class);
+            startService(observationFetchIntent);
+        }
 	}
 
-	/**
+    /**
 	 * Stop Tasks responsible for fetching Observations and Locations from the server.
 	 */
 	private void destroyFetching() {
 		if (staticFeatureServerFetch != null) {
 			staticFeatureServerFetch.destroy();
 			staticFeatureServerFetch = null;
-		}
-		if (userFetchIntent != null) {
-			stopService(userFetchIntent);
-			userFetchIntent = null;
 		}
 		if(locationFetchIntent != null) {
 			stopService(locationFetchIntent);

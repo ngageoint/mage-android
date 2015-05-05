@@ -1,19 +1,5 @@
 package mil.nga.giat.mage.map.preference;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
-
-import mil.nga.giat.mage.MAGE;
-import mil.nga.giat.mage.R;
-import mil.nga.giat.mage.sdk.datastore.layer.Layer;
-import mil.nga.giat.mage.sdk.datastore.layer.LayerHelper;
-import mil.nga.giat.mage.sdk.datastore.staticfeature.StaticFeatureHelper;
-import mil.nga.giat.mage.sdk.event.ILayerEventListener;
-import mil.nga.giat.mage.sdk.event.IStaticFeatureEventListener;
-import mil.nga.giat.mage.sdk.exceptions.LayerException;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ListActivity;
@@ -34,6 +20,21 @@ import android.widget.ArrayAdapter;
 import android.widget.CheckedTextView;
 import android.widget.ListView;
 import android.widget.TextView;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
+
+import mil.nga.giat.mage.MAGE;
+import mil.nga.giat.mage.R;
+import mil.nga.giat.mage.sdk.datastore.layer.Layer;
+import mil.nga.giat.mage.sdk.datastore.layer.LayerHelper;
+import mil.nga.giat.mage.sdk.datastore.staticfeature.StaticFeatureHelper;
+import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
+import mil.nga.giat.mage.sdk.event.ILayerEventListener;
+import mil.nga.giat.mage.sdk.event.IStaticFeatureEventListener;
 
 public class FeatureOverlayPreferenceActivity extends ListActivity implements ILayerEventListener, IStaticFeatureEventListener {
 
@@ -70,10 +71,17 @@ public class FeatureOverlayPreferenceActivity extends ListActivity implements IL
     }
 
     @Override
-    public void onLayersCreated(final Collection<Layer> layers) {
+    public void onLayerCreated(Layer layer) {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
+				Collection<Layer> layers = new ArrayList<Layer>();
+
+				try {
+					layers = LayerHelper.getInstance(getApplicationContext()).readByEvent(EventHelper.getInstance(getApplicationContext()).getCurrentEvent());
+				} catch(Exception e) {
+					Log.e(LOG_NAME, "Problem getting layers.", e);
+				}
                 ListView listView = getListView();
                 listView.clearChoices();
 
@@ -82,7 +90,7 @@ public class FeatureOverlayPreferenceActivity extends ListActivity implements IL
 
                 // Set what should be checked based on preferences.
                 SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(FeatureOverlayPreferenceActivity.this);
-                Set<String> overlays = preferences.getStringSet(getResources().getString(R.string.mapFeatureOverlaysKey), Collections.<String> emptySet());
+                Set<String> overlays = preferences.getStringSet(getResources().getString(R.string.staticFeatureLayersKey), Collections.<String> emptySet());
                 for (int i = 0; i < listView.getCount(); i++) {
                     Layer layer = (Layer) listView.getItemAtPosition(i);
                     if (overlays.contains(layer.getId().toString())) {
@@ -108,20 +116,17 @@ public class FeatureOverlayPreferenceActivity extends ListActivity implements IL
     }
 
 	@Override
-	public void onStaticFeaturesCreated(final Collection<Layer> layers) {
+	public void onStaticFeaturesCreated(final Layer layer) {
 		runOnUiThread(new Runnable() {
 			@Override
 			public void run() {
-				for (Layer layer : layers) {
-					int i = overlayAdapter.getPosition(layer);
-					Layer l = overlayAdapter.getItem(i);
+				int i = overlayAdapter.getPosition(layer);
+				Layer l = overlayAdapter.getItem(i);
 
-					if (l != null) {
-						l.setLoaded(true);
-						overlayAdapter.notifyDataSetChanged();
-					} else {
-						Log.i(LOG_NAME, "static layer " + layer.getName() + ":" + layer.getId() + " is not availble, adapter size is: " + overlayAdapter.getCount());
-					}
+				if (l != null) {
+					overlayAdapter.notifyDataSetChanged();
+				} else {
+					Log.d(LOG_NAME, "Static layer " + layer.getName() + ":" + layer.getId() + " is not available, adapter size is: " + overlayAdapter.getCount());
 				}
 			}
 		});
@@ -142,15 +147,7 @@ public class FeatureOverlayPreferenceActivity extends ListActivity implements IL
         // the problem is that onResume gets called before this so my menu is
         // not yet setup and I will not have a handle on this button
 
-        boolean loaded = StaticFeatureHelper.getInstance(this).haveLayersBeenFetchedOnce();
-        if (loaded) {
-            try {
-                Collection<Layer> layers = LayerHelper.getInstance(this).readAllStaticLayers();
-                onLayersCreated(layers);
-            } catch (LayerException e) {
-                e.printStackTrace();
-            }
-        }
+		onLayerCreated(null);
 
         LayerHelper.getInstance(this).addListener(this);
         StaticFeatureHelper.getInstance(this).addListener(this);
@@ -268,8 +265,9 @@ public class FeatureOverlayPreferenceActivity extends ListActivity implements IL
             
             try {
                 layer = layers.get(index);
-
-            } catch (ArrayIndexOutOfBoundsException e) {}
+            } catch (ArrayIndexOutOfBoundsException e) {
+				Log.e(LOG_NAME, "Why out of bounds?", e);
+			}
             
             return layer;
         }

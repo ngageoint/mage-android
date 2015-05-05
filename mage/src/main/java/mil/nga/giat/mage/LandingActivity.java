@@ -1,29 +1,9 @@
 package mil.nga.giat.mage;
 
-import java.io.File;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
-
-import mil.nga.giat.mage.help.HelpFragment;
-import mil.nga.giat.mage.login.AlertBannerFragment;
-import mil.nga.giat.mage.login.LoginActivity;
-import mil.nga.giat.mage.map.MapFragment;
-import mil.nga.giat.mage.navigation.DrawerItem;
-import mil.nga.giat.mage.newsfeed.ObservationFeedFragment;
-import mil.nga.giat.mage.newsfeed.PeopleFeedFragment;
-import mil.nga.giat.mage.preferences.PublicPreferencesFragment;
-import mil.nga.giat.mage.profile.MyProfileFragment;
-import mil.nga.giat.mage.sdk.datastore.DaoStore;
-import mil.nga.giat.mage.sdk.utils.MediaUtility;
-import mil.nga.giat.mage.sdk.utils.UserUtility;
-import mil.nga.giat.mage.status.StatusFragment;
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.app.Fragment;
 import android.app.FragmentManager;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.os.Bundle;
@@ -46,6 +26,26 @@ import android.widget.ListView;
 import android.widget.RadioGroup;
 import android.widget.TextView;
 
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
+
+import mil.nga.giat.mage.event.EventFragment;
+import mil.nga.giat.mage.help.HelpFragment;
+import mil.nga.giat.mage.login.AlertBannerFragment;
+import mil.nga.giat.mage.login.LoginActivity;
+import mil.nga.giat.mage.map.MapFragment;
+import mil.nga.giat.mage.navigation.DrawerItem;
+import mil.nga.giat.mage.newsfeed.ObservationFeedFragment;
+import mil.nga.giat.mage.newsfeed.PeopleFeedFragment;
+import mil.nga.giat.mage.preferences.GeneralPreferencesFragment;
+import mil.nga.giat.mage.profile.MyProfileFragment;
+import mil.nga.giat.mage.sdk.datastore.DaoStore;
+import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
+import mil.nga.giat.mage.sdk.datastore.user.RoleHelper;
+import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
+import mil.nga.giat.mage.sdk.utils.MediaUtility;
+
 /**
  * This is the Activity that holds other fragments. Map, feeds, etc. It 
  * starts and stops much of the application. It also contains menus.
@@ -54,8 +54,7 @@ import android.widget.TextView;
 public class LandingActivity extends Activity implements ListView.OnItemClickListener {
 
 	private static final String LOG_NAME = LandingActivity.class.getName();
-	
-    private DrawerItem[] drawerItems;
+
     private DrawerLayout drawerLayout;
     private ListView drawerList;
     private ActionBarDrawerToggle drawerToggle;
@@ -63,31 +62,41 @@ public class LandingActivity extends Activity implements ListView.OnItemClickLis
     private int activeTimeFilter = 0;
     private String currentTitle = "";
     private DrawerItem mapItem;
+	private int logoutId;
     private boolean switchFragment;
     private DrawerItem itemToSwitchTo;
-    
-    public final DrawerItem getMapItem() {
-    	return mapItem;
-    }
-
-    public void setCurrentItem(DrawerItem item) {
-    	currentActivity = item;
-    }
     
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_landing);
-        mapItem = new DrawerItem.Builder("Map").id(0).drawableId(R.drawable.ic_globe_white).fragment(new MapFragment()).build();
+		int id = 0;
+        mapItem = new DrawerItem.Builder("Map").id(id++).drawableId(R.drawable.ic_globe_white).fragment(new MapFragment()).build();
+		DrawerItem logoutItem = new DrawerItem.Builder("Logout").id(id++).secondary(true).build();
+		logoutId = logoutItem.getId();
 
-        drawerItems = new DrawerItem[] { mapItem, 
-        		new DrawerItem.Builder("Observations").id(1).drawableId(R.drawable.ic_map_marker_white).fragment(new ObservationFeedFragment()).build(),
-                new DrawerItem.Builder("People").id(2).drawableId(R.drawable.ic_users_white).fragment(new PeopleFeedFragment()).build(),
-                new DrawerItem.Builder("My Profile").id(7).drawableId(R.drawable.ic_fa_user).fragment(new MyProfileFragment()).build(),
-                new DrawerItem.Builder("Settings").id(3).secondary(true).fragment(new PublicPreferencesFragment()).build(), 
-                new DrawerItem.Builder("Status").id(6).secondary(true).fragment(new StatusFragment()).build(), 
-                new DrawerItem.Builder("Help").id(4).secondary(true).fragment(new HelpFragment()).build(), 
-                new DrawerItem.Builder("Logout").id(5).secondary(true).build() };
+		List<DrawerItem> drawerItems = new ArrayList<DrawerItem>();
+		drawerItems.add(mapItem);
+		drawerItems.add(new DrawerItem.Builder("Observations").id(id++).drawableId(R.drawable.ic_map_marker_white).fragment(new ObservationFeedFragment()).build());
+		drawerItems.add(new DrawerItem.Builder("People").id(id++).drawableId(R.drawable.ic_users_white).fragment(new PeopleFeedFragment()).build());
+
+		int numberOfEvents = EventHelper.getInstance(getApplicationContext()).getEventsForCurrentUser().size();
+		try {
+			if (UserHelper.getInstance(getApplicationContext()).readCurrentUser().getRole().equals(RoleHelper.getInstance(getApplicationContext()).readAdmin())) {
+				// now that ADMINS can be part of any event
+				numberOfEvents = EventHelper.getInstance(getApplicationContext()).readAll().size();
+			}
+		} catch(Exception e) {
+			Log.e(LOG_NAME, "Problem pulling events for this admin.");
+		}
+
+		if(numberOfEvents > 1) {
+			drawerItems.add(new DrawerItem.Builder("Events").id(id++).drawableId(R.drawable.ic_events_white).fragment(new EventFragment()).build());
+		}
+		drawerItems.add(new DrawerItem.Builder("My Profile").id(id++).drawableId(R.drawable.ic_fa_user).fragment(new MyProfileFragment()).build());
+		drawerItems.add(new DrawerItem.Builder("Settings").id(id++).secondary(true).fragment(new GeneralPreferencesFragment()).build());
+		drawerItems.add(new DrawerItem.Builder("Help").id(id++).secondary(true).fragment(new HelpFragment()).build());
+		drawerItems.add(logoutItem);
 
         drawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawerList = (ListView) findViewById(R.id.left_drawer);
@@ -113,14 +122,6 @@ public class LandingActivity extends Activity implements ListView.OnItemClickLis
                             ImageView iv = (ImageView) view.findViewById(R.id.drawer_item_icon);
                             iv.setImageResource(item.getDrawableId());
                         }
-
-                        TextView countView = (TextView) view.findViewById(R.id.drawer_count);
-                        if (item.getCount() != 0) {
-                            countView.setVisibility(View.VISIBLE);
-                            countView.setText("" + item.getCount());
-                        } else {
-                            countView.setVisibility(View.GONE);
-                        }
                     }
                 }
 
@@ -138,13 +139,12 @@ public class LandingActivity extends Activity implements ListView.OnItemClickLis
 
 		if (savedInstanceState == null) {
 			Fragment alertBannerFragment = new AlertBannerFragment();
-			android.app.FragmentTransaction ft = getFragmentManager().beginTransaction();
-			ft.add(android.R.id.content, alertBannerFragment).commit();
+			getFragmentManager().beginTransaction().add(android.R.id.content, alertBannerFragment).commit();
 		}
 
         goToMap();
     }
-    
+
     private void goToMap() {
         FragmentManager fragmentManager = getFragmentManager();
         fragmentManager.beginTransaction().replace(R.id.content_frame, mapItem.getFragment()).commit();
@@ -170,7 +170,6 @@ public class LandingActivity extends Activity implements ListView.OnItemClickLis
                     FragmentManager fragmentManager = getFragmentManager();
                     fragmentManager.beginTransaction().setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN).add(R.id.content_frame, itemToSwitchTo.getFragment()).commit();
                     currentActivity = itemToSwitchTo;
-                    getActionBar().setTitle(itemToSwitchTo.getText());
                 }
             }
 
@@ -183,16 +182,14 @@ public class LandingActivity extends Activity implements ListView.OnItemClickLis
 					inputMethodManager.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(), 0);
 				}
                 currentTitle = (String) getActionBar().getTitle();
-                if (drawerView.getId() == R.id.left_drawer) {
-                    getActionBar().setTitle("Navigation");
-                } else if (drawerView.getId() == R.id.filter_drawer) {
+                if (drawerView.getId() == R.id.filter_drawer) {
                     getActionBar().setTitle("Filter");
                     RadioGroup rg = (RadioGroup) findViewById(R.id.time_filter_radio_gorup);
                     int checkedFilter = PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).getInt(getResources().getString(R.string.activeTimeFilterKey), R.id.none_rb);
                     rg.check(checkedFilter);
                 }
             }
-            
+
             @Override
             public void onDrawerStateChanged(int newState) {
                 invalidateOptionsMenu();
@@ -286,18 +283,13 @@ public class LandingActivity extends Activity implements ListView.OnItemClickLis
         ArrayAdapter<DrawerItem> adapter = (ArrayAdapter<DrawerItem>) adapterView.getAdapter();
         itemToSwitchTo = adapter.getItem(position);
         if (itemToSwitchTo.getFragment() == null) {
-            switch (itemToSwitchTo.getId()) {
-			case 5: {
-				UserUtility.getInstance(getApplicationContext()).clearTokenInformation();
+            if(itemToSwitchTo.getId() == logoutId) {
+                ((MAGE)getApplication()).onLogout(true);
                 startActivity(new Intent(getApplicationContext(), LoginActivity.class));
-                ((MAGE)getApplication()).onLogout();
                 finish();
                 return;
-            }
-            default: {
-                // TODO not sure what to do here, if anything (fix your code)
-                // could just be unclickable
-            }
+            } else {
+				Log.e(LOG_NAME, "Your fragment was null. Fix the code.");
             }
         }
         if (currentActivity != itemToSwitchTo && itemToSwitchTo.getFragment() != null) {
@@ -311,74 +303,6 @@ public class LandingActivity extends Activity implements ListView.OnItemClickLis
         drawerList.setItemChecked(position, true);
         drawerLayout.closeDrawer(drawerList);
     }
-
-	public void deleteDataDialog(final View view) {
-
-		final String[] items = { "Database", "Preferences", "Attachments", "App Filesystem" };
-		final boolean[] defaultItems = new boolean[items.length];
-		Arrays.fill(defaultItems, true);
-		// arraylist to keep the selected items
-		final Set<Integer> seletedItems = new HashSet<Integer>();
-		for (int i = 0; i < items.length; i++) {
-			seletedItems.add(i);
-		}
-
-		new AlertDialog.Builder(view.getContext()).setTitle("Delete All Data").setMultiChoiceItems(items, defaultItems, new DialogInterface.OnMultiChoiceClickListener() {
-			@Override
-			public void onClick(DialogInterface dialog, int indexSelected, boolean isChecked) {
-				if (isChecked) {
-					seletedItems.add(indexSelected);
-					if (indexSelected == 0 || indexSelected == 3) {
-						((AlertDialog) dialog).getListView().setItemChecked(1, true);
-						seletedItems.add(1);
-					}
-				} else if (seletedItems.contains(indexSelected)) {
-					if (indexSelected == 1) {
-						if (seletedItems.contains(0) || seletedItems.contains(3)) {
-							((AlertDialog) dialog).getListView().setItemChecked(1, true);
-							return;
-						}
-					}
-					seletedItems.remove(Integer.valueOf(indexSelected));
-				}
-			}
-		}).setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
-			public void onClick(DialogInterface dialog, int which) {
-				// stop doing stuff
-				((MAGE) getApplication()).onLogout();
-
-				if (seletedItems.contains(0)) {
-					// delete database
-					DaoStore.getInstance(view.getContext()).resetDatabase();
-				}
-
-				if (seletedItems.contains(1)) {
-					// clear preferences
-					PreferenceManager.getDefaultSharedPreferences(view.getContext()).edit().clear().commit();
-				}
-
-				if (seletedItems.contains(2)) {
-					// delete attachments
-					deleteDir(MediaUtility.getMediaStageDirectory());
-				}
-
-				if (seletedItems.contains(3)) {
-					// delete the application contents on the filesystem
-					clearApplicationData(getApplicationContext());
-				}
-
-				// go to login activity
-                startActivity(new Intent(getApplicationContext(), LoginActivity.class));
-                
-				// finish the activity
-				finish();
-			}
-		}).setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
-			public void onClick(DialogInterface dialog, int which) {
-				dialog.dismiss();
-			}
-		}).show();
-	}
 	
 	public static void deleteAllData(Context context) {
 		DaoStore.getInstance(context).resetDatabase();
@@ -387,7 +311,7 @@ public class LandingActivity extends Activity implements ListView.OnItemClickLis
 		clearApplicationData(context);
 	}
 
-	private static void clearApplicationData(Context context) {
+	public static void clearApplicationData(Context context) {
 		File cache = context.getCacheDir();
 		File appDir = new File(cache.getParent());
 		if (appDir.exists()) {
@@ -402,15 +326,18 @@ public class LandingActivity extends Activity implements ListView.OnItemClickLis
 		}
 	}
 
-	private static boolean deleteDir(File dir) {
+	public static boolean deleteDir(File dir) {
 		if (dir != null && dir.isDirectory()) {
 			String[] children = dir.list();
-			for (int i = 0; i < children.length; i++) {
-				boolean success = deleteDir(new File(dir, children[i]));
+			for (String kid : children) {
+				boolean success = deleteDir(new File(dir, kid));
 				if (!success) {
 					return false;
 				}
 			}
+		}
+		if(dir == null) {
+			return true;
 		}
 		return dir.delete();
 	}

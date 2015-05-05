@@ -1,5 +1,23 @@
 package mil.nga.giat.mage.observation;
 
+import android.app.ProgressDialog;
+import android.content.Intent;
+import android.media.ThumbnailUtils;
+import android.net.Uri;
+import android.os.AsyncTask;
+import android.os.Bundle;
+import android.preference.PreferenceManager;
+import android.provider.MediaStore;
+import android.support.v4.app.DialogFragment;
+import android.support.v4.app.FragmentActivity;
+import android.util.Log;
+import android.view.View;
+import android.widget.ImageView;
+
+import com.bumptech.glide.Glide;
+
+import org.apache.commons.lang3.StringUtils;
+
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -12,57 +30,39 @@ import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.observation.RemoveAttachmentDialogFragment.RemoveAttachmentDialogListener;
 import mil.nga.giat.mage.sdk.datastore.DaoStore;
 import mil.nga.giat.mage.sdk.datastore.observation.Attachment;
-import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
-import android.app.ProgressDialog;
-import android.content.Intent;
-import android.media.ThumbnailUtils;
-import android.net.Uri;
-import android.os.AsyncTask;
-import android.os.Bundle;
-import android.provider.MediaStore;
-import android.support.v4.app.DialogFragment;
-import android.support.v4.app.FragmentActivity;
-import android.util.Log;
-import android.view.View;
-import android.widget.ImageView;
-
-import com.bumptech.glide.Glide;
 
 public class AttachmentViewerActivity extends FragmentActivity implements RemoveAttachmentDialogListener {
-	
-	private static final String LOG_NAME = AttachmentViewerActivity.class.getName();
-	
+
 	public final static String EDITABLE = "EDITABLE";
 	public final static String ATTACHMENT = "ATTACHMENT";
 	public final static String SHOULD_REMOVE = "SHOULD_REMOVE";
-	
 	public static final int DIALOG_DOWNLOAD_PROGRESS = 0;
-    private ProgressDialog progressDialog;
-    private Attachment a;
+	private static final String LOG_NAME = AttachmentViewerActivity.class.getName();
+	private ProgressDialog progressDialog;
+	private Attachment a;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.attachment_viewer);
 		this.setTitle("Observation Attachment");
-		
-		
+
 		Intent intent = getIntent();
-		ImageView iv = (ImageView)findViewById(R.id.image);
+		ImageView iv = (ImageView) findViewById(R.id.image);
 		if (!intent.getBooleanExtra(EDITABLE, false)) {
 			findViewById(R.id.remove_btn).setVisibility(View.GONE);
 		}
-		
+
 		a = intent.getParcelableExtra(ATTACHMENT);
-		
+
 		String absPath = a.getLocalPath();
 		String url = a.getUrl();
-		
+
 		// get content type from everywhere I can think of
 		String contentType = a.getContentType();
 		String name = null;
-		if (contentType == null || "".equalsIgnoreCase(contentType) || "application/octet-stream".equalsIgnoreCase(contentType)) {
+		if (StringUtils.isBlank(contentType) || "application/octet-stream".equalsIgnoreCase(contentType)) {
 			name = a.getName();
 			if (name == null) {
 				name = a.getLocalPath();
@@ -72,10 +72,10 @@ public class AttachmentViewerActivity extends FragmentActivity implements Remove
 			}
 			contentType = MediaUtility.getMimeType(name);
 		}
-		
+
 		final String finalType;
 		final Uri uri;
-		
+
 		if (absPath != null) {
 			File f = new File(absPath);
 			uri = Uri.fromFile(f);
@@ -134,12 +134,12 @@ public class AttachmentViewerActivity extends FragmentActivity implements Remove
 			});
 		}
 	}
-	
+
 	public void removeImage(View v) {
 		DialogFragment dialog = new RemoveAttachmentDialogFragment();
 		dialog.show(getSupportFragmentManager(), "RemoveAttachmentDialogFragment");
 	}
-	
+
 	public void goBack(View v) {
 		onBackPressed();
 	}
@@ -151,86 +151,89 @@ public class AttachmentViewerActivity extends FragmentActivity implements Remove
 		data.putExtra(ATTACHMENT, getIntent().getParcelableExtra(ATTACHMENT));
 		setResult(RESULT_OK, data);
 		finish();
-		
+
 	}
 
 	@Override
 	public void onDialogNegativeClick(DialogFragment dialog) {
 	}
-	
+
 	private void startDownload(Attachment attachment, String mimeType) {
-		String url = attachment.getUrl() + "?access_token=" + PreferenceHelper.getInstance(getApplicationContext()).getValue(R.string.tokenKey);
-        new DownloadFileAsync(mimeType).execute(url);
-    }
-    
-    class DownloadFileAsync extends AsyncTask<String, String, String> {
-    	String mimeType;
-    	public DownloadFileAsync(String mimeType) {
-    		this.mimeType = mimeType;
-    	}
-    	   
-    	@Override
-    	protected void onPreExecute() {
-    		super.onPreExecute();
-    		progressDialog.show();
-    	}
+		String url = attachment.getUrl() + "?access_token=" + PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).getString(getString(mil.nga.giat.mage.sdk.R.string.tokenKey), null);
+		new DownloadFileAsync(mimeType).execute(url);
+	}
 
-    	@Override
-    	protected String doInBackground(String... aurl) {
-    		int count;
+	class DownloadFileAsync extends AsyncTask<String, String, String> {
+		String mimeType;
 
-    	try {
+		public DownloadFileAsync(String mimeType) {
+			this.mimeType = mimeType;
+		}
 
-    	URL url = new URL(aurl[0]);
-    	URLConnection conexion = url.openConnection();
-    	conexion.connect();
+		@Override
+		protected void onPreExecute() {
+			super.onPreExecute();
+			progressDialog.show();
+		}
 
-    	int lengthOfFile = conexion.getContentLength();
+		@Override
+		protected String doInBackground(String... aurl) {
+			int count;
 
-    	InputStream input = new BufferedInputStream(url.openStream());
-    	File stageDir = MediaUtility.getMediaStageDirectory();
-    	File stagedFile = new File(stageDir, a.getName());
-    	a.setLocalPath(stagedFile.getAbsolutePath());
-    	OutputStream output = new FileOutputStream(a.getLocalPath());
+			try {
+				URL url = new URL(aurl[0]);
+				URLConnection connection = url.openConnection();
+				connection.connect();
 
-    	byte data[] = new byte[1024];
+				int lengthOfFile = connection.getContentLength();
 
-    	long total = 0;
+				InputStream input = new BufferedInputStream(url.openStream());
+				File stageDir = MediaUtility.getMediaStageDirectory();
+				File stagedFile = new File(stageDir, a.getName());
+				a.setLocalPath(stagedFile.getAbsolutePath());
+				OutputStream output = new FileOutputStream(a.getLocalPath());
 
-    		while ((count = input.read(data)) != -1) {
-    			total += count;
-    			publishProgress(""+(int)((total*100)/lengthOfFile));
-    			output.write(data, 0, count);
-    		}
+				byte data[] = new byte[1024];
 
-    		output.flush();
-    		output.close();
-    		input.close();
-    	} catch (Exception e) {}
-    	return null;
+				long total = 0;
 
-    	}
-    	protected void onProgressUpdate(String... progress) {
-    		 progressDialog.setProgress(Integer.parseInt(progress[0]));
-    	}
+				while ((count = input.read(data)) != -1) {
+					total += count;
+					publishProgress("" + (int) ((total * 100) / lengthOfFile));
+					output.write(data, 0, count);
+				}
 
-    	@Override
-    	protected void onPostExecute(String unused) {
-    		progressDialog.dismiss();
-    		try {
-    			Attachment attachment = DaoStore.getInstance(getApplicationContext()).getAttachmentDao().queryForId(a.getId());
-    			attachment.setLocalPath(a.getLocalPath());
-    			DaoStore.getInstance(getApplicationContext()).getAttachmentDao().update(attachment);
-    		} catch (Exception e) {
-    			Log.e(LOG_NAME, "Error saving attachment to DB", e);
-    		}
-    		File f = new File(a.getLocalPath());
+				output.flush();
+				output.close();
+				input.close();
+			} catch (Exception e) {
+				Log.e(LOG_NAME, "Problem downloading file.");
+			}
+			return null;
+
+		}
+
+		protected void onProgressUpdate(String... progress) {
+			progressDialog.setProgress(Integer.parseInt(progress[0]));
+		}
+
+		@Override
+		protected void onPostExecute(String unused) {
+			progressDialog.dismiss();
+			try {
+				Attachment attachment = DaoStore.getInstance(getApplicationContext()).getAttachmentDao().queryForId(a.getId());
+				attachment.setLocalPath(a.getLocalPath());
+				DaoStore.getInstance(getApplicationContext()).getAttachmentDao().update(attachment);
+			} catch (Exception e) {
+				Log.e(LOG_NAME, "Error saving attachment to DB", e);
+			}
+			File f = new File(a.getLocalPath());
 			Uri uri = Uri.fromFile(f);
-    		Log.i(LOG_NAME, "launching viewer for " + uri + " type " + mimeType);
+			Log.i(LOG_NAME, "launching viewer for " + uri + " type " + mimeType);
 			Intent intent = new Intent(Intent.ACTION_VIEW);
 			intent.setDataAndType(uri, mimeType);
 			startActivity(intent);
-    	}
-    }
+		}
+	}
 
 }

@@ -1,14 +1,5 @@
 package mil.nga.giat.mage.map.preference;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
-
-import mil.nga.giat.mage.MAGE;
-import mil.nga.giat.mage.MAGE.OnCacheOverlayListener;
-import mil.nga.giat.mage.R;
-import mil.nga.giat.mage.map.CacheOverlay;
 import android.app.Activity;
 import android.app.ListActivity;
 import android.content.Context;
@@ -26,6 +17,16 @@ import android.widget.ArrayAdapter;
 import android.widget.CheckedTextView;
 import android.widget.ListView;
 import android.widget.ProgressBar;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
+
+import mil.nga.giat.mage.MAGE;
+import mil.nga.giat.mage.MAGE.OnCacheOverlayListener;
+import mil.nga.giat.mage.R;
+import mil.nga.giat.mage.map.CacheOverlay;
 
 public class TileOverlayPreferenceActivity extends ListActivity implements OnCacheOverlayListener {
 
@@ -69,7 +70,7 @@ public class TileOverlayPreferenceActivity extends ListActivity implements OnCac
         
         // Set what should be checked based on preferences.
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
-        Set<String> overlays = preferences.getStringSet(getResources().getString(R.string.mapTileOverlaysKey), Collections.<String> emptySet());
+        Set<String> overlays = preferences.getStringSet(getString(R.string.tileOverlaysKey), Collections.<String> emptySet());
 
         for (int i = 0; i < listView.getCount(); i++) {
             CacheOverlay tileOverlay = (CacheOverlay) listView.getItemAtPosition(i);

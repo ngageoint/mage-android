@@ -1,9 +1,5 @@
 package mil.nga.giat.mage.map;
 
-import java.io.IOException;
-import java.util.List;
-
-import mil.nga.giat.mage.sdk.connectivity.ConnectivityUtility;
 import android.content.Context;
 import android.os.AsyncTask;
 import android.util.Log;
@@ -17,6 +13,11 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+
+import java.io.IOException;
+import java.util.List;
+
+import mil.nga.giat.mage.sdk.connectivity.ConnectivityUtility;
 
 public class GeocoderTask extends AsyncTask<String, Void, Address> {
 

@@ -1,5 +1,20 @@
 package mil.nga.giat.mage.map.marker;
 
+import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
+import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.webkit.WebView;
+
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
+import com.google.android.gms.maps.model.Polygon;
+import com.google.android.gms.maps.model.Polyline;
+import com.google.maps.android.PolyUtil;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -7,11 +22,11 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import com.google.android.gms.maps.model.Marker;
-import com.google.android.gms.maps.model.Polygon;
-import com.google.android.gms.maps.model.Polyline;
+import mil.nga.giat.mage.R;
 
 public class StaticGeometryCollection {
+
+	private static final String LOG_NAME = StaticGeometryCollection.class.getName();
 
 	private Map<String, Collection<Marker>> featureMarkers = new HashMap<String, Collection<Marker>>();
 	private Map<String, Collection<Polyline>> featurePolylines = new HashMap<String, Collection<Polyline>>();
@@ -118,4 +133,44 @@ public class StaticGeometryCollection {
 		}
 	}
 
+	public void onMapClick(GoogleMap map, LatLng latLng, Activity activity) {
+		// how many meters away form the click can the geometry be?
+		Double circumferenceOfEarthInMeters = 2 * Math.PI * 6371000;
+		// Double tileWidthAtZoomLevelAtEquatorInDegrees = 360.0/Math.pow(2.0, map.getCameraPosition().zoom);
+		Double pixelSizeInMetersAtLatitude = (circumferenceOfEarthInMeters * Math.cos(map.getCameraPosition().target.latitude * (Math.PI / 180.0))) / Math.pow(2.0, map.getCameraPosition().zoom + 8.0);
+		Double tolerance = pixelSizeInMetersAtLatitude * Math.sqrt(2.0) * 10.0;
+
+		// find the 'closest' line or polygon to the click.
+		for (Polyline p : getPolylines()) {
+			if (PolyUtil.isLocationOnPath(latLng, p.getPoints(), true, tolerance)) {
+				// found it open a info window
+				Log.i(LOG_NAME, "static feature polyline clicked at: " + latLng.toString());
+
+				View markerInfoWindow = LayoutInflater.from(activity).inflate(R.layout.static_feature_infowindow, null, false);
+				WebView webView = ((WebView) markerInfoWindow.findViewById(R.id.static_feature_infowindow_content));
+				webView.loadData(getPopupHTML(p), "text/html; charset=UTF-8", null);
+				new AlertDialog.Builder(activity).setView(markerInfoWindow).setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+					public void onClick(DialogInterface dialog, int which) {
+					}
+				}).show();
+				return;
+			}
+		}
+
+		for (Polygon p : getPolygons()) {
+			if (PolyUtil.containsLocation(latLng, p.getPoints(), true)) {
+				// found it open a info window
+				Log.i(LOG_NAME, "static feature polygon clicked at: " + latLng.toString());
+
+				View markerInfoWindow = LayoutInflater.from(activity).inflate(R.layout.static_feature_infowindow, null, false);
+				WebView webView = ((WebView) markerInfoWindow.findViewById(R.id.static_feature_infowindow_content));
+				webView.loadData(getPopupHTML(p), "text/html; charset=UTF-8", null);
+				new AlertDialog.Builder(activity).setView(markerInfoWindow).setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+					public void onClick(DialogInterface dialog, int which) {
+					}
+				}).show();
+				return;
+			}
+		}
+	}
 }
