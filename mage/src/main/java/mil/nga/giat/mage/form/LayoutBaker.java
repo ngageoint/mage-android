@@ -105,7 +105,7 @@ public class LayoutBaker {
 					JsonElement choiceElement = choiceJson.get("title");
 					if (choiceElement != null) {
 	                   String choiceTitle = choiceElement.getAsString();
-	                    if (choiceTitle != null && !choiceTitle.trim().isEmpty()) {
+	                    if (choiceTitle != null) {
 	                        choices.add(choiceTitle);
 	                    }
 					} else {

@@ -17,6 +17,9 @@ import android.widget.ImageView;
 import com.bumptech.glide.Glide;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.DefaultHttpClient;
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -30,6 +33,7 @@ import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.observation.RemoveAttachmentDialogFragment.RemoveAttachmentDialogListener;
 import mil.nga.giat.mage.sdk.datastore.DaoStore;
 import mil.nga.giat.mage.sdk.datastore.observation.Attachment;
+import mil.nga.giat.mage.sdk.http.client.HttpClientManager;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
 
 public class AttachmentViewerActivity extends FragmentActivity implements RemoveAttachmentDialogListener {
@@ -178,16 +182,16 @@ public class AttachmentViewerActivity extends FragmentActivity implements Remove
 
 		@Override
 		protected String doInBackground(String... aurl) {
-			int count;
-
 			try {
 				URL url = new URL(aurl[0]);
-				URLConnection connection = url.openConnection();
-				connection.connect();
+				DefaultHttpClient httpclient = HttpClientManager.getInstance(getApplicationContext()).getHttpClient();
+				HttpGet get = new HttpGet(url.toURI());
+				HttpResponse response = httpclient.execute(get);
 
-				int lengthOfFile = connection.getContentLength();
+				// FIXME : I'm not sure this works
+				long lengthOfFile = Math.max(response.getEntity().getContentLength(), 1l);
 
-				InputStream input = new BufferedInputStream(url.openStream());
+				InputStream input = response.getEntity().getContent();
 				File stageDir = MediaUtility.getMediaStageDirectory();
 				File stagedFile = new File(stageDir, a.getName());
 				a.setLocalPath(stagedFile.getAbsolutePath());
@@ -196,10 +200,10 @@ public class AttachmentViewerActivity extends FragmentActivity implements Remove
 				byte data[] = new byte[1024];
 
 				long total = 0;
-
+				int count;
 				while ((count = input.read(data)) != -1) {
 					total += count;
-					publishProgress("" + (int) ((total * 100) / lengthOfFile));
+					publishProgress(String.valueOf((total * 100) / lengthOfFile));
 					output.write(data, 0, count);
 				}
 

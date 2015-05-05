@@ -28,11 +28,13 @@ import com.vividsolutions.jts.geom.Point;
 
 import org.ocpsoft.prettytime.PrettyTime;
 
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.text.DateFormat;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.Locale;
 import java.util.Map;
@@ -49,6 +51,7 @@ import mil.nga.giat.mage.sdk.datastore.location.LocationProperty;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
+import mil.nga.giat.mage.sdk.fetch.DownloadImageTask;
 import mil.nga.giat.mage.sdk.utils.DateFormatFactory;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
 
@@ -282,7 +285,7 @@ public class LocationMarkerCollection implements PointCollection<Location>, OnMa
         private final DateFormat dateFormat = DateFormatFactory.format("yyyy-MM-dd HH:mm zz", Locale.getDefault(), TimeZone.getTimeZone("Zulu"));
 
 		@Override
-		public View getInfoContents(Marker marker) {
+		public View getInfoContents(final Marker marker) {
 			final Location location = markerIdToLocation.get(marker.getId());
 			if (location == null) {
 				return null;
@@ -296,7 +299,21 @@ public class LocationMarkerCollection implements PointCollection<Location>, OnMa
 			if (location.getUser().getLocalAvatarPath() != null) {
 				iconView.setImageBitmap(MediaUtility.resizeAndRoundCorners(BitmapFactory.decodeFile(location.getUser().getLocalAvatarPath()), 128));
 			} else if (location.getUser().getAvatarUrl() != null) {
-				new DownloadImageTask(marker, context, user).execute(location.getUser().getAvatarUrl() + "?access_token=" + PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(mil.nga.giat.mage.sdk.R.string.tokenKey), null));
+				String localFilePath = MediaUtility.getAvatarDirectory() + "/" + user.getId() + ".png";
+				DownloadImageTask avatarImageTask = new DownloadImageTask(context, Collections.singletonList(location.getUser().getAvatarUrl()), Collections.singletonList(localFilePath), false) {
+					@Override
+					protected void onPostExecute(Void aVoid) {
+						String lap = localFilePaths.get(0);
+						location.getUser().setLocalAvatarPath(lap);
+						try {
+							UserHelper.getInstance(context).update(location.getUser());
+						} catch (Exception e) {
+							Log.e(LOG_NAME, e.getMessage(), e);
+						}
+						marker.showInfoWindow();
+					}
+				};
+				avatarImageTask.execute();
 			}
 			
 			TextView location_name = (TextView) v.findViewById(R.id.location_name);
@@ -323,54 +340,5 @@ public class LocationMarkerCollection implements PointCollection<Location>, OnMa
 		public View getInfoWindow(Marker marker) {
 			return null; // Use default info window
 		}
-	}
-	
-	private class DownloadImageTask extends AsyncTask<String, Void, Bitmap> {
-	    Marker marker;
-	    Context context;
-	    User user;
-
-	    public DownloadImageTask(Marker marker, Context c, User u) {
-	        this.marker = marker;
-	        this.context = c;
-	        this.user = u;
-	    }
-
-	    protected Bitmap doInBackground(String... urls) {
-	        String urldisplay = urls[0];
-	        Bitmap mIcon11 = null;
-	        try {
-	            InputStream in = new java.net.URL(urldisplay).openStream();
-	            mIcon11 = BitmapFactory.decodeStream(in);
-	        } catch (Exception e) {
-	            Log.e(LOG_NAME, e.getMessage());
-	            e.printStackTrace();
-	        }
-	        return mIcon11;
-	    }
-
-	    protected void onPostExecute(Bitmap bitmap) {
-	    	if (bitmap != null) {
-	    		FileOutputStream out = null;
-	    		try {
-	    			String localPath = MediaUtility.getAvatarDirectory() + "/" + user.getId();
-	    		    out = new FileOutputStream(localPath);
-	    		    bitmap.compress(Bitmap.CompressFormat.PNG, 90, out);
-	    		    user.setLocalAvatarPath(localPath);
-	    		    UserHelper.getInstance(context).update(user);
-		    		marker.showInfoWindow();
-	    		} catch (Exception e) {
-	    		    e.printStackTrace();
-	    		} finally {
-	    		    try {
-	    		        if (out != null) {
-	    		            out.close();
-	    		        }
-	    		    } catch (IOException e) {
-	    		        e.printStackTrace();
-	    		    }
-	    		}
-	    	}
-	    }
 	}
 }
