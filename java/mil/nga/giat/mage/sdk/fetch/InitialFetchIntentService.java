@@ -10,10 +10,13 @@ import org.json.JSONArray;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 import mil.nga.giat.mage.sdk.ConnectivityAwareIntentService;
 import mil.nga.giat.mage.sdk.R;
@@ -30,6 +33,7 @@ import mil.nga.giat.mage.sdk.datastore.user.UserTeam;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
 import mil.nga.giat.mage.sdk.http.get.MageServerGetRequests;
 import mil.nga.giat.mage.sdk.login.LoginTaskFactory;
+import mil.nga.giat.mage.sdk.utils.MediaUtility;
 
 /**
  * This class will fetch events, roles, users and teams just once.
@@ -41,8 +45,15 @@ public class InitialFetchIntentService extends ConnectivityAwareIntentService {
 
     public static final String InitialFetchIntentServiceAction = InitialFetchIntentService.class.getCanonicalName();
 
+	private final BlockingQueue<Runnable> queue = new ArrayBlockingQueue<Runnable>(64);
+	private final ThreadPoolExecutor executor = new ThreadPoolExecutor(8, 8, 10, TimeUnit.SECONDS, queue);
+
     private static final long retryTime = 4000;
     private static final long retryCount = 4;
+
+	private DownloadImageTask avatarFetch;
+	private DownloadImageTask iconFetch;
+
 
 	public InitialFetchIntentService() {
 		super(LOG_NAME);
@@ -54,9 +65,7 @@ public class InitialFetchIntentService extends ConnectivityAwareIntentService {
 
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
 
-        Boolean isDataFetchEnabled = sharedPreferences.getBoolean(getApplicationContext().getString(R.string.dataFetchEnabledKey), true);
-
-        isDataFetchEnabled = sharedPreferences.getBoolean(getApplicationContext().getString(R.string.dataFetchEnabledKey), true);
+        Boolean isDataFetchEnabled = sharedPreferences.getBoolean(getApplicationContext().getString(R.string.dataFetchEnabledKey), getApplicationContext().getResources().getBoolean(R.bool.dataFetchEnabledDefaultValue));
 
         if (isConnected && isDataFetchEnabled && !LoginTaskFactory.getInstance(getApplicationContext()).isLocalLogin()) {
             Log.d(LOG_NAME, "The device is currently connected.");
@@ -66,6 +75,10 @@ public class InitialFetchIntentService extends ConnectivityAwareIntentService {
             getEvents();
             // now that the client has fetched the events, fetch the users again in order to populate the user's currentEvent using the json cache form the prior request. a chicken in the egg thing
 			getUsers(userJSONCache);
+
+			// users are updated, finish getting image content
+			avatarFetch.executeOnExecutor(executor);
+			iconFetch.executeOnExecutor(executor);
 		} else {
 			Log.d(LOG_NAME, "The device is currently disconnected, or data fetch is disabled, or this is a local login. Not performing fetch.");
 		}
@@ -119,7 +132,7 @@ public class InitialFetchIntentService extends ConnectivityAwareIntentService {
      */
     private JSONArray getUsers(JSONArray userJSONCacheIn) {
         Boolean didFetchUsers = Boolean.FALSE;
-        UserHelper userHelper = UserHelper.getInstance(getApplicationContext());
+        final UserHelper userHelper = UserHelper.getInstance(getApplicationContext());
 
 		JSONArray userJSONCacheOut = null;
 
@@ -130,6 +143,7 @@ public class InitialFetchIntentService extends ConnectivityAwareIntentService {
             Log.e(LOG_NAME, "Could not get current user.");
         }
         int attemptCount = 0;
+
         while(!didFetchUsers && !isCanceled && attemptCount < retryCount) {
             Log.d(LOG_NAME, "Attempting to fetch users...");
             List<Exception> exceptions = new ArrayList<Exception>();
@@ -140,11 +154,8 @@ public class InitialFetchIntentService extends ConnectivityAwareIntentService {
 			}
             Log.d(LOG_NAME, "Fetched " + users.size() + " users");
 
-            UserAvatarFetchTask avatarFetch = new UserAvatarFetchTask(getApplicationContext());
-            UserIconFetchTask iconFetch = new UserIconFetchTask(getApplicationContext());
-
-            ArrayList<User> userAvatarsToFetch = new ArrayList<User>();
-            ArrayList<User> userIconsToFetch = new ArrayList<User>();
+            final ArrayList<User> userAvatarsToFetch = new ArrayList<User>();
+            final ArrayList<User> userIconsToFetch = new ArrayList<User>();
 
             if(exceptions.isEmpty()) {
                 for (User user : users) {
@@ -170,8 +181,53 @@ public class InitialFetchIntentService extends ConnectivityAwareIntentService {
                         continue;
                     }
                 }
-                avatarFetch.execute(userAvatarsToFetch.toArray(new User[userAvatarsToFetch.size()]));
-                iconFetch.execute(userIconsToFetch.toArray(new User[userIconsToFetch.size()]));
+
+				// pull down images (map icons and profile pictures)
+				List<String> avatarUrls = new ArrayList<String>();
+				List<String> avatarLocalFilePaths = new ArrayList<String>();
+				for(User u : userAvatarsToFetch) {
+					avatarUrls.add(u.getAvatarUrl());
+					avatarLocalFilePaths.add(MediaUtility.getAvatarDirectory() + "/" + u.getId() + ".png");
+				}
+				avatarFetch = new DownloadImageTask(getApplicationContext(), avatarUrls, avatarLocalFilePaths, true) {
+					@Override
+					protected void onPostExecute(Void aVoid) {
+						for(int i =0 ; i<localFilePaths.size(); i++) {
+							try {
+								User u = userHelper.read(userAvatarsToFetch.get(i).getId());
+								u.setLocalAvatarPath(localFilePaths.get(i));
+								userHelper.update(u);
+							} catch(Exception e) {
+								Log.e(LOG_NAME, "Could not read or update user.", e);
+							}
+						}
+						super.onPostExecute(aVoid);
+					}
+				};
+
+				List<String> iconUrls = new ArrayList<String>();
+				List<String> iconLocalFilePaths = new ArrayList<String>();
+				for(User u : userIconsToFetch) {
+					iconUrls.add(u.getIconUrl());
+					iconLocalFilePaths.add(MediaUtility.getUserIconDirectory() + "/" + u.getId() + ".png");
+				}
+
+				iconFetch = new DownloadImageTask(getApplicationContext(), iconUrls, iconLocalFilePaths, true) {
+					@Override
+					protected void onPostExecute(Void aVoid) {
+						for(int i =0 ; i<localFilePaths.size(); i++) {
+							try {
+								User u = userHelper.read(userIconsToFetch.get(i).getId());
+								u.setLocalIconPath(localFilePaths.get(i));
+								userHelper.update(u);
+							} catch(Exception e) {
+								Log.e(LOG_NAME, "Could not read or update user.", e);
+							}
+						}
+						super.onPostExecute(aVoid);
+					}
+				};
+
                 didFetchUsers = Boolean.TRUE;
             } else {
                 Log.e(LOG_NAME, "Problem fetching users.  Will try again soon.");

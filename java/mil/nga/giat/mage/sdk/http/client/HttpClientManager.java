@@ -19,7 +19,7 @@ import org.apache.http.conn.scheme.Scheme;
 import org.apache.http.conn.scheme.SchemeRegistry;
 import org.apache.http.conn.ssl.SSLSocketFactory;
 import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.impl.conn.tsccm.ThreadSafeClientConnManager;
+import org.apache.http.impl.conn.SingleClientConnManager;
 import org.apache.http.params.BasicHttpParams;
 import org.apache.http.params.CoreConnectionPNames;
 import org.apache.http.params.CoreProtocolPNames;
@@ -40,9 +40,9 @@ import mil.nga.giat.mage.sdk.utils.UserUtility;
  * Always use the {@link HttpClientManager#getHttpClient()} for making ALL
  * requests to the server. This class adds request and response interceptors to
  * pass things like a token and handle errors like 403 and 401.
- * 
+ *
  * @author wiedemanns
- * 
+ *
  */
 public class HttpClientManager implements IEventDispatcher<IUserEventListener> {
 
@@ -71,7 +71,7 @@ public class HttpClientManager implements IEventDispatcher<IUserEventListener> {
 		BasicHttpParams params = new BasicHttpParams();
 		SchemeRegistry schemeRegistry = new SchemeRegistry();
 		// register http?
-		//schemeRegistry.register(new Scheme("http", PlainSocketFactory.getSocketFactory(), 80));
+		schemeRegistry.register(new Scheme("http", PlainSocketFactory.getSocketFactory(), 80));
 
 		SSLSocketFactory sslSocketFactory = SSLSocketFactory.getSocketFactory();
 		// Some servers don't have a CA...
@@ -86,8 +86,7 @@ public class HttpClientManager implements IEventDispatcher<IUserEventListener> {
 			}
 		}
 		schemeRegistry.register(new Scheme("https", sslSocketFactory, 443));
-		// needs to be thread safe!
-		ClientConnectionManager cm = new ThreadSafeClientConnManager(params, schemeRegistry);
+		ClientConnectionManager cm = new SingleClientConnManager(params, schemeRegistry);
 		DefaultHttpClient httpClient = new DefaultHttpClient(cm, params);
 		httpClient.getParams().setParameter(CoreConnectionPNames.CONNECTION_TIMEOUT, 25000);
 		httpClient.getParams().setParameter(CoreConnectionPNames.SO_TIMEOUT, 30000);
