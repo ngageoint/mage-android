@@ -137,9 +137,9 @@ public class MediaUtility {
 	}
 	
 	public static File getAvatarDirectory() {
-		File sd = Environment.getExternalStorageDirectory();
-		File mediaFolder = new File(sd, "/MAGE/Media/user/avatars");
-		if (sd.canWrite()) {
+		File ms = getMediaStageDirectory();
+		File mediaFolder = new File(ms, "/user/avatars");
+		if (ms.canWrite()) {
 			if (!mediaFolder.exists()) {
 				mediaFolder.mkdirs();
 			}
@@ -148,9 +148,9 @@ public class MediaUtility {
 	}
 	
 	public static File getUserIconDirectory() {
-		File sd = Environment.getExternalStorageDirectory();
-		File mediaFolder = new File(sd, "/MAGE/Media/user/icons");
-		if (sd.canWrite()) {
+		File ms = getMediaStageDirectory();
+		File mediaFolder = new File(ms, "/user/icons");
+		if (ms.canWrite()) {
 			if (!mediaFolder.exists()) {
 				mediaFolder.mkdirs();
 			}

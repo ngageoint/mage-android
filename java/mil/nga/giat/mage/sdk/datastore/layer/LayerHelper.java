@@ -88,6 +88,9 @@ public class LayerHelper extends DaoHelper<Layer> implements IEventDispatcher<IL
 
 	public Collection<Layer> readByEvent(Event pEvent) throws LayerException {
 		List<Layer> layers = new ArrayList<Layer>();
+		if(pEvent == null) {
+			return layers;
+		}
 		try {
 			layers = layerDao.queryBuilder().where().eq("event_id", pEvent.getId()).query();
 		} catch (SQLException sqle) {

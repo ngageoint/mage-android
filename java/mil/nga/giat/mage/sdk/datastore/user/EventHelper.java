@@ -207,7 +207,9 @@ public class EventHelper extends DaoHelper<Event> {
             User u = UserHelper.getInstance(mApplicationContext).readCurrentUser();
             if(u != null) {
                 event = u.getCurrentEvent();
-            }
+            } else {
+				Log.d(LOG_NAME, "Current user is null.  Why?");
+			}
         } catch(UserException ue) {
             Log.e(LOG_NAME, "There is no current user. ", ue);
         }
