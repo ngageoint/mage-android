@@ -32,10 +32,14 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.Point;
 
+import org.apache.commons.lang3.StringUtils;
+
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import mil.nga.giat.mage.R;
@@ -45,6 +49,7 @@ import mil.nga.giat.mage.sdk.datastore.location.LocationHelper;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
+import mil.nga.giat.mage.sdk.fetch.DownloadImageTask;
 import mil.nga.giat.mage.sdk.profile.UpdateProfileTask;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
 
@@ -152,17 +157,37 @@ public class MyProfileFragment extends Fragment {
 		} else {
 			email.setVisibility(View.GONE);
 		}
-		ImageView iv = (ImageView)rootView.findViewById(R.id.profile_picture);
-		String avatarUrl = null;
-		if (user.getAvatarUrl() != null) {
-			avatarUrl = user.getAvatarUrl() + "?access_token=" + PreferenceManager.getDefaultSharedPreferences(getActivity().getApplicationContext()).getString(getActivity().getApplicationContext().getString(mil.nga.giat.mage.sdk.R.string.tokenKey), null);
-			new DownloadImageTask(iv).execute(avatarUrl);
+		final ImageView imageView = (ImageView)rootView.findViewById(R.id.profile_picture);
+		String avatarUrl = user.getAvatarUrl();
+		String localAvatarPath = user.getLocalAvatarPath();
+
+		if(StringUtils.isNotBlank(localAvatarPath)) {
+			File f = new File(localAvatarPath);
+			setProfilePicture(f, imageView);
+		} else {
+			if (avatarUrl != null) {
+				String localFilePath = MediaUtility.getAvatarDirectory() + "/" + user.getId() + ".png";
+
+				DownloadImageTask avatarImageTask = new DownloadImageTask(getActivity().getApplicationContext(), Collections.singletonList(avatarUrl), Collections.singletonList(localFilePath), false) {
+					@Override
+					protected void onPostExecute(Void aVoid) {
+						String lap = localFilePaths.get(0);
+						user.setLocalAvatarPath(lap);
+						try {
+							UserHelper.getInstance(getActivity().getApplicationContext()).update(user);
+						} catch (Exception e) {
+							Log.e(LOG_NAME, e.getMessage(), e);
+						}
+						File f = new File(user.getLocalAvatarPath());
+						setProfilePicture(f, imageView);
+					}
+				};
+				avatarImageTask.execute();
+			}
 		}
 		
 		final Intent intent = new Intent(getActivity().getApplicationContext(), ProfilePictureViewerActivity.class);
-		intent.putExtra(ProfilePictureViewerActivity.IMAGE_URL, avatarUrl);
-		intent.putExtra(ProfilePictureViewerActivity.USER_FIRSTNAME, user.getFirstname());
-		intent.putExtra(ProfilePictureViewerActivity.USER_LASTNAME, user.getLastname());
+		intent.putExtra(ProfilePictureViewerActivity.USER_ID, user.getId());
 		
 		rootView.findViewById(R.id.profile_picture).setOnClickListener(new OnClickListener() {
 			
@@ -219,6 +244,16 @@ public class MyProfileFragment extends Fragment {
 		});
 		
 		return rootView;
+	}
+
+	private void setProfilePicture(File file, ImageView imageView) {
+		if(file.exists() && file.canRead()) {
+			try {
+				imageView.setImageBitmap(MediaUtility.resizeAndRoundCorners(BitmapFactory.decodeStream(new FileInputStream(file)), 150));
+			} catch(Exception e) {
+				Log.e(LOG_NAME, "Problem setting profile picture.");
+			}
+		}
 	}
 	
 	@Override

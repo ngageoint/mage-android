@@ -452,7 +452,7 @@ public class MapFragment extends Fragment implements OnMapClickListener, OnMapLo
 		if (observations != null) {
 			ObservationTask task = new ObservationTask(ObservationTask.Type.ADD, observations);
 			task.setFilter(getTemporalFilter("last_modified"));
-			task.execute(o.toArray(new Observation[o.size()]));
+			task.executeOnExecutor(executor, o.toArray(new Observation[o.size()]));
 		}
 	}
 
@@ -461,14 +461,14 @@ public class MapFragment extends Fragment implements OnMapClickListener, OnMapLo
 		if (observations != null) {
 			ObservationTask task = new ObservationTask(ObservationTask.Type.UPDATE, observations);
 			task.setFilter(getTemporalFilter("last_modified"));
-			task.execute(o);
+			task.executeOnExecutor(executor, o);
 		}
 	}
 
 	@Override
 	public void onObservationDeleted(Observation o) {
 		if (observations != null) {
-			new ObservationTask(ObservationTask.Type.DELETE, observations).execute(o);
+			new ObservationTask(ObservationTask.Type.DELETE, observations).executeOnExecutor(executor, o);
 		}
 	}
 
@@ -479,11 +479,11 @@ public class MapFragment extends Fragment implements OnMapClickListener, OnMapLo
 				if (locations != null) {
 					LocationTask task = new LocationTask(LocationTask.Type.ADD, locations);
 					task.setFilter(getTemporalFilter("timestamp"));
-					task.execute(l);
+					task.executeOnExecutor(executor, l);
 				}
 			} else {
 				if (myHistoricLocations != null) {
-					new LocationTask(LocationTask.Type.ADD, myHistoricLocations).execute(l);
+					new LocationTask(LocationTask.Type.ADD, myHistoricLocations).executeOnExecutor(executor, l);
 				}
 			}
 		}
@@ -495,11 +495,11 @@ public class MapFragment extends Fragment implements OnMapClickListener, OnMapLo
 			if (locations != null) {
 				LocationTask task = new LocationTask(LocationTask.Type.UPDATE, locations);
 				task.setFilter(getTemporalFilter("timestamp"));
-				task.execute(l);
+				task.executeOnExecutor(executor, l);
 			}
 		} else {
 			if (myHistoricLocations != null) {
-				new LocationTask(LocationTask.Type.UPDATE, myHistoricLocations).execute(l);
+				new LocationTask(LocationTask.Type.UPDATE, myHistoricLocations).executeOnExecutor(executor, l);
 			}
 		}
 	}
