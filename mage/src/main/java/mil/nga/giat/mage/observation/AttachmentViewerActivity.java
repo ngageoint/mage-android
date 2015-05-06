@@ -17,6 +17,7 @@ import android.widget.ImageView;
 import com.bumptech.glide.Glide;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
@@ -182,6 +183,7 @@ public class AttachmentViewerActivity extends FragmentActivity implements Remove
 
 		@Override
 		protected String doInBackground(String... aurl) {
+			HttpEntity entity = null;
 			try {
 				URL url = new URL(aurl[0]);
 				DefaultHttpClient httpclient = HttpClientManager.getInstance(getApplicationContext()).getHttpClient();
@@ -191,7 +193,8 @@ public class AttachmentViewerActivity extends FragmentActivity implements Remove
 				// FIXME : I'm not sure this works
 				long lengthOfFile = Math.max(response.getEntity().getContentLength(), 1l);
 
-				InputStream input = response.getEntity().getContent();
+				entity = response.getEntity();
+				InputStream input = entity.getContent();
 				File stageDir = MediaUtility.getMediaStageDirectory();
 				File stagedFile = new File(stageDir, a.getName());
 				a.setLocalPath(stagedFile.getAbsolutePath());
@@ -212,6 +215,14 @@ public class AttachmentViewerActivity extends FragmentActivity implements Remove
 				input.close();
 			} catch (Exception e) {
 				Log.e(LOG_NAME, "Problem downloading file.");
+			} finally {
+				try {
+					if (entity != null) {
+						entity.consumeContent();
+					}
+				} catch (Exception e) {
+					Log.w(LOG_NAME, "Trouble cleaning up after request.", e);
+				}
 			}
 			return null;
 

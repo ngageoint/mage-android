@@ -54,10 +54,12 @@ public class ProfilePictureViewerActivity extends Activity {
 						DownloadImageTask avatarImageTask = new DownloadImageTask(getApplicationContext(), Collections.singletonList(avatarUrl), Collections.singletonList(localFilePath), false) {
 							@Override
 							protected void onPostExecute(Void aVoid) {
-								String lap = localFilePaths.get(0);
-								user.setLocalAvatarPath(lap);
-								File f = new File(user.getLocalAvatarPath());
-								setProfilePicture(f, imageView);
+								if(!errors.get(0)) {
+									String lap = localFilePaths.get(0);
+									user.setLocalAvatarPath(lap);
+									File f = new File(user.getLocalAvatarPath());
+									setProfilePicture(f, imageView);
+								}
 							}
 						};
 						avatarImageTask.execute();

@@ -303,14 +303,16 @@ public class LocationMarkerCollection implements PointCollection<Location>, OnMa
 				DownloadImageTask avatarImageTask = new DownloadImageTask(context, Collections.singletonList(location.getUser().getAvatarUrl()), Collections.singletonList(localFilePath), false) {
 					@Override
 					protected void onPostExecute(Void aVoid) {
-						String lap = localFilePaths.get(0);
-						location.getUser().setLocalAvatarPath(lap);
-						try {
-							UserHelper.getInstance(context).update(location.getUser());
-						} catch (Exception e) {
-							Log.e(LOG_NAME, e.getMessage(), e);
+						if(!errors.get(0)) {
+							String lap = localFilePaths.get(0);
+							location.getUser().setLocalAvatarPath(lap);
+							try {
+								UserHelper.getInstance(context).update(location.getUser());
+							} catch (Exception e) {
+								Log.e(LOG_NAME, e.getMessage(), e);
+							}
+							marker.showInfoWindow();
 						}
-						marker.showInfoWindow();
 					}
 				};
 				avatarImageTask.execute();
