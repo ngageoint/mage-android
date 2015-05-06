@@ -194,9 +194,11 @@ public class InitialFetchIntentService extends ConnectivityAwareIntentService {
 					protected void onPostExecute(Void aVoid) {
 						for(int i =0 ; i<localFilePaths.size(); i++) {
 							try {
-								User u = userHelper.read(userAvatarsToFetch.get(i).getId());
-								u.setLocalAvatarPath(localFilePaths.get(i));
-								userHelper.update(u);
+								if(!errors.get(i)) {
+									User u = userHelper.read(userAvatarsToFetch.get(i).getId());
+									u.setLocalAvatarPath(localFilePaths.get(i));
+									userHelper.update(u);
+								}
 							} catch(Exception e) {
 								Log.e(LOG_NAME, "Could not read or update user.", e);
 							}
@@ -217,9 +219,11 @@ public class InitialFetchIntentService extends ConnectivityAwareIntentService {
 					protected void onPostExecute(Void aVoid) {
 						for(int i =0 ; i<localFilePaths.size(); i++) {
 							try {
-								User u = userHelper.read(userIconsToFetch.get(i).getId());
-								u.setLocalIconPath(localFilePaths.get(i));
-								userHelper.update(u);
+								if(!errors.get(i)) {
+									User u = userHelper.read(userIconsToFetch.get(i).getId());
+									u.setLocalIconPath(localFilePaths.get(i));
+									userHelper.update(u);
+								}
 							} catch(Exception e) {
 								Log.e(LOG_NAME, "Could not read or update user.", e);
 							}
