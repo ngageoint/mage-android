@@ -171,15 +171,17 @@ public class MyProfileFragment extends Fragment {
 				DownloadImageTask avatarImageTask = new DownloadImageTask(getActivity().getApplicationContext(), Collections.singletonList(avatarUrl), Collections.singletonList(localFilePath), false) {
 					@Override
 					protected void onPostExecute(Void aVoid) {
-						String lap = localFilePaths.get(0);
-						user.setLocalAvatarPath(lap);
-						try {
-							UserHelper.getInstance(getActivity().getApplicationContext()).update(user);
-						} catch (Exception e) {
-							Log.e(LOG_NAME, e.getMessage(), e);
+						if(!errors.get(0)) {
+							String lap = localFilePaths.get(0);
+							user.setLocalAvatarPath(lap);
+							try {
+								UserHelper.getInstance(getActivity().getApplicationContext()).update(user);
+							} catch (Exception e) {
+								Log.e(LOG_NAME, e.getMessage(), e);
+							}
+							File f = new File(user.getLocalAvatarPath());
+							setProfilePicture(f, imageView);
 						}
-						File f = new File(user.getLocalAvatarPath());
-						setProfilePicture(f, imageView);
 					}
 				};
 				avatarImageTask.execute();
