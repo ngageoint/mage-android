@@ -301,8 +301,10 @@ public class LocationMarkerCollection implements PointCollection<Location>, OnMa
 			} else if (location.getUser().getAvatarUrl() != null) {
 				String localFilePath = MediaUtility.getAvatarDirectory() + "/" + user.getId() + ".png";
 				DownloadImageTask avatarImageTask = new DownloadImageTask(context, Collections.singletonList(location.getUser().getAvatarUrl()), Collections.singletonList(localFilePath), false) {
+
 					@Override
-					protected void onPostExecute(Void aVoid) {
+					protected Void doInBackground(Void... v) {
+						Void result = super.doInBackground(v);
 						if(!errors.get(0)) {
 							String lap = localFilePaths.get(0);
 							location.getUser().setLocalAvatarPath(lap);
@@ -313,6 +315,8 @@ public class LocationMarkerCollection implements PointCollection<Location>, OnMa
 							}
 							marker.showInfoWindow();
 						}
+
+						return result;
 					}
 				};
 				avatarImageTask.execute();

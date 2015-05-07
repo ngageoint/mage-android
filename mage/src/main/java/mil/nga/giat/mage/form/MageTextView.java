@@ -110,7 +110,7 @@ public class MageTextView extends TextView implements MageControl {
 				try {
 					propertyDate = iso8601Format.parse((String) value);
 				} catch (ParseException e) {
-					Log.e(LOG_NAME, "Could not parse date.");
+					Log.e(LOG_NAME, "Could not parse date: " + value);
 				}
 			}
 			setText(dateFormat.format(propertyDate));

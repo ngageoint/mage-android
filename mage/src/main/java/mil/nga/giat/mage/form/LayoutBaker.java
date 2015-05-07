@@ -33,6 +33,7 @@ import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 
 import mil.nga.giat.mage.sdk.R;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationProperty;
@@ -60,13 +61,22 @@ public class LayoutBaker {
 
 		JsonArray dynamicFormFields = dynamicFormJson.get("fields").getAsJsonArray();
 
-		int uniqueChildIdIndex = 10000;
+		Map<Integer, JsonObject> dynamicFormFieldsCollection = new TreeMap<Integer, JsonObject>();
 
 		for (int i = 0; i < dynamicFormFields.size(); i++) {
 			JsonObject field = dynamicFormFields.get(i).getAsJsonObject();
+			Integer id = field.get("id").getAsInt();
+			dynamicFormFieldsCollection.put(id, field);
+		}
+
+		int uniqueChildIdIndex = 10000;
+
+		int i = -1;
+		for (Integer id : dynamicFormFieldsCollection.keySet()) {
+			i++;
+			JsonObject field = dynamicFormFieldsCollection.get(id);
 
 			// get members
-			Integer id = field.get("id").getAsInt();
 			String title = field.get("title").getAsString();
 			DynamicFormType type = DynamicFormType.TEXTFIELD;
 			String typeString = field.get("type").getAsString();

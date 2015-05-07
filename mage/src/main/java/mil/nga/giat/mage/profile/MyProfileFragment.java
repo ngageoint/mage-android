@@ -169,8 +169,10 @@ public class MyProfileFragment extends Fragment {
 				String localFilePath = MediaUtility.getAvatarDirectory() + "/" + user.getId() + ".png";
 
 				DownloadImageTask avatarImageTask = new DownloadImageTask(getActivity().getApplicationContext(), Collections.singletonList(avatarUrl), Collections.singletonList(localFilePath), false) {
+
 					@Override
-					protected void onPostExecute(Void aVoid) {
+					protected Void doInBackground(Void... v) {
+						Void result = super.doInBackground(v);
 						if(!errors.get(0)) {
 							String lap = localFilePaths.get(0);
 							user.setLocalAvatarPath(lap);
@@ -182,6 +184,7 @@ public class MyProfileFragment extends Fragment {
 							File f = new File(user.getLocalAvatarPath());
 							setProfilePicture(f, imageView);
 						}
+						return result;
 					}
 				};
 				avatarImageTask.execute();

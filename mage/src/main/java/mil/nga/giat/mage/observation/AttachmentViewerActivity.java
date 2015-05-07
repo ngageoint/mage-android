@@ -42,7 +42,6 @@ public class AttachmentViewerActivity extends FragmentActivity implements Remove
 	public final static String EDITABLE = "EDITABLE";
 	public final static String ATTACHMENT = "ATTACHMENT";
 	public final static String SHOULD_REMOVE = "SHOULD_REMOVE";
-	public static final int DIALOG_DOWNLOAD_PROGRESS = 0;
 	private static final String LOG_NAME = AttachmentViewerActivity.class.getName();
 	private ProgressDialog progressDialog;
 	private Attachment a;
@@ -214,7 +213,7 @@ public class AttachmentViewerActivity extends FragmentActivity implements Remove
 				output.close();
 				input.close();
 			} catch (Exception e) {
-				Log.e(LOG_NAME, "Problem downloading file.");
+				Log.e(LOG_NAME, "Problem downloading file.", e);
 			} finally {
 				try {
 					if (entity != null) {
