@@ -22,6 +22,10 @@ import java.util.List;
 
 import mil.nga.giat.mage.sdk.http.client.HttpClientManager;
 
+/**
+ * Basic task to download and save images on the filesystem.
+ *
+ */
 public abstract class DownloadImageTask extends AsyncTask<Void, Void, Void> {
 
 	protected static final String LOG_NAME = DownloadImageTask.class.getName();
@@ -98,7 +102,7 @@ public abstract class DownloadImageTask extends AsyncTask<Void, Void, Void> {
 				imageHeight = bitmapOptions.outHeight;
 			} catch (Exception e) {
 				errors.set(i, true);
-				Log.e(LOG_NAME, e.getMessage());
+				Log.e(LOG_NAME, e.getMessage(), e);
 			} finally {
 				try {
 					if (entity != null) {
@@ -154,6 +158,9 @@ public abstract class DownloadImageTask extends AsyncTask<Void, Void, Void> {
 						e.printStackTrace();
 					}
 				}
+			} else {
+				Log.w(LOG_NAME, urlString + " was too big to download.  Skipping.");
+				errors.set(i, true);
 			}
 		}
 		return null;

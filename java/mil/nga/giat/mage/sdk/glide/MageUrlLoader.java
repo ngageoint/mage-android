@@ -1,6 +1,7 @@
 package mil.nga.giat.mage.sdk.glide;
 
 import android.content.Context;
+import android.net.Uri;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
@@ -14,7 +15,12 @@ import com.bumptech.glide.load.model.GlideUrl;
 import com.bumptech.glide.load.model.ModelLoader;
 import com.bumptech.glide.load.model.ModelLoaderFactory;
 
+import org.apache.http.NameValuePair;
+import org.apache.http.client.utils.URLEncodedUtils;
+
 import java.io.InputStream;
+import java.net.URL;
+import java.util.List;
 
 import mil.nga.giat.mage.sdk.R;
 
@@ -71,15 +77,25 @@ public class MageUrlLoader extends VolleyUrlLoader {
 	
 	@Override
 	public DataFetcher<InputStream> getResourceFetcher(GlideUrl url, int width, int height) {
-		String s = url.toString();
-		String token = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.tokenKey), null);
-		s += "?access_token=" + token + "&size=" + (width < height ? height : width);
-		if (s.contains("avatar")) {
-			// this is a user avatar, let's defeat the cache on them
-			s += "&_dc=" + System.currentTimeMillis();
+		try {
+			List<NameValuePair> params = URLEncodedUtils.parse(url.toURL().toURI(), "UTF-8");
+			Uri.Builder uriBuilder = Uri.parse(url.toURL().toURI().toString()).buildUpon();
+			String token = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.tokenKey), null);
+			uriBuilder.appendQueryParameter("access_token", token);
+			uriBuilder.appendQueryParameter("size", String.valueOf(Math.max(width, height)));
+
+			for (NameValuePair param : params) {
+				if(param.getName() != null && param.getName().equalsIgnoreCase("avatar")) {
+					uriBuilder.appendQueryParameter("_dc", String.valueOf(System.currentTimeMillis()));
+					break;
+				}
+			}
+
+			url = new GlideUrl(uriBuilder.build().toString());
+			Log.d(LOG_NAME, "Loading image: " + url);
+		} catch(Exception e) {
+			Log.e(LOG_NAME, e.getMessage(), e);
 		}
-		Log.d(LOG_NAME, "Loading image: " + s);
-		url = new GlideUrl(s);
 		return super.getResourceFetcher(url, width, height);
 	}
 

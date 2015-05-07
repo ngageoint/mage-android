@@ -48,6 +48,8 @@ public class AttachmentHelper {
 		Integer outImageSize = sharedPreferences.getInt(context.getString(R.string.imageUploadSizeKey), context.getResources().getInteger(R.integer.imageUploadSizeDefaultValue));
 
 		if (MediaUtility.isImage(stagedFile.getAbsolutePath())) {
+
+			// if not original image size
 			if (outImageSize > 0) {
 
 				BitmapFactory.Options options = new BitmapFactory.Options();
