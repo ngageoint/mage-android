@@ -190,8 +190,10 @@ public class InitialFetchIntentService extends ConnectivityAwareIntentService {
 					avatarLocalFilePaths.add(MediaUtility.getAvatarDirectory() + "/" + u.getId() + ".png");
 				}
 				avatarFetch = new DownloadImageTask(getApplicationContext(), avatarUrls, avatarLocalFilePaths, true) {
+
 					@Override
-					protected void onPostExecute(Void aVoid) {
+					protected Void doInBackground(Void... v) {
+						Void result = super.doInBackground(v);
 						for(int i =0 ; i<localFilePaths.size(); i++) {
 							try {
 								if(!errors.get(i)) {
@@ -203,7 +205,7 @@ public class InitialFetchIntentService extends ConnectivityAwareIntentService {
 								Log.e(LOG_NAME, "Could not read or update user.", e);
 							}
 						}
-						super.onPostExecute(aVoid);
+						return result;
 					}
 				};
 
@@ -215,8 +217,11 @@ public class InitialFetchIntentService extends ConnectivityAwareIntentService {
 				}
 
 				iconFetch = new DownloadImageTask(getApplicationContext(), iconUrls, iconLocalFilePaths, true) {
+
 					@Override
-					protected void onPostExecute(Void aVoid) {
+					protected Void doInBackground(Void... v) {
+						Void result = super.doInBackground(v);
+
 						for(int i =0 ; i<localFilePaths.size(); i++) {
 							try {
 								if(!errors.get(i)) {
@@ -228,7 +233,8 @@ public class InitialFetchIntentService extends ConnectivityAwareIntentService {
 								Log.e(LOG_NAME, "Could not read or update user.", e);
 							}
 						}
-						super.onPostExecute(aVoid);
+
+						return result;
 					}
 				};
 

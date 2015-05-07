@@ -35,7 +35,7 @@ public class LocationDeserializer extends Deserializer {
 		this.event = event;
 	}
 
-	public List<Location> parseUserLocations(InputStream is) throws JsonParseException, IOException {
+	public List<Location> parseUserLocations(InputStream is) throws IOException {
 		JsonParser parser = factory.createParser(is);
 
 		List<Location> locations = new ArrayList<Location>();
@@ -52,7 +52,7 @@ public class LocationDeserializer extends Deserializer {
 		return locations;
 	}
 
-	private Collection<Location> parseUserLocations(JsonParser parser) throws JsonParseException, IOException {
+	private Collection<Location> parseUserLocations(JsonParser parser) throws IOException {
 		Collection<Location> locations = new ArrayList<Location>();
 
 		if (parser.getCurrentToken() != JsonToken.START_OBJECT)
@@ -71,7 +71,7 @@ public class LocationDeserializer extends Deserializer {
 		return locations;
 	}
 
-	public List<Location> parseLocations(InputStream is) throws JsonParseException, IOException {
+	public List<Location> parseLocations(InputStream is) throws IOException {
 		JsonParser parser = factory.createParser(is);
 
 		List<Location> locations = new ArrayList<Location>();
@@ -82,7 +82,7 @@ public class LocationDeserializer extends Deserializer {
 	}
 
 
-	private Collection<Location> parseLocations(JsonParser parser) throws JsonParseException, IOException {
+	private Collection<Location> parseLocations(JsonParser parser) throws IOException {
 		Collection<Location> locations = new ArrayList<Location>();
 		parser.nextToken();
 		while (parser.nextToken() != JsonToken.END_ARRAY) {
@@ -91,7 +91,7 @@ public class LocationDeserializer extends Deserializer {
 		return locations;
 	}
 
-	private Location parseLocation(JsonParser parser) throws JsonParseException, IOException {
+	private Location parseLocation(JsonParser parser) throws IOException {
 		Location location = new Location();
 		location.setEvent(event);
 
@@ -138,7 +138,7 @@ public class LocationDeserializer extends Deserializer {
 		return location;
 	}
 
-	private Collection<LocationProperty> parseProperties(JsonParser parser, Location location) throws JsonParseException, IOException {
+	private Collection<LocationProperty> parseProperties(JsonParser parser, Location location) throws IOException {
 		Collection<LocationProperty> properties = new ArrayList<LocationProperty>();
 		while (parser.nextToken() != JsonToken.END_OBJECT) {
 			String key = parser.getCurrentName();
