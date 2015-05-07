@@ -53,13 +53,15 @@ public class ProfilePictureViewerActivity extends Activity {
 
 						DownloadImageTask avatarImageTask = new DownloadImageTask(getApplicationContext(), Collections.singletonList(avatarUrl), Collections.singletonList(localFilePath), false) {
 							@Override
-							protected void onPostExecute(Void aVoid) {
+							protected Void doInBackground(Void... v) {
+								Void result = super.doInBackground(v);
 								if(!errors.get(0)) {
 									String lap = localFilePaths.get(0);
 									user.setLocalAvatarPath(lap);
 									File f = new File(user.getLocalAvatarPath());
 									setProfilePicture(f, imageView);
 								}
+								return result;
 							}
 						};
 						avatarImageTask.execute();
@@ -78,7 +80,7 @@ public class ProfilePictureViewerActivity extends Activity {
 			try {
 				imageView.setImageBitmap(MediaUtility.resizeAndRoundCorners(BitmapFactory.decodeStream(new FileInputStream(file)), 500));
 			} catch(Exception e) {
-				Log.e(LOG_NAME, "Problem setting profile picture.");
+				Log.e(LOG_NAME, "Problem setting profile picture.", e);
 			}
 		}
 	}
