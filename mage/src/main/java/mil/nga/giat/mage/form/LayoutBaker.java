@@ -23,6 +23,8 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
+import org.apache.commons.lang3.StringUtils;
+
 import java.io.Serializable;
 import java.text.DateFormat;
 import java.text.ParseException;
@@ -367,9 +369,8 @@ public class LayoutBaker {
 				case TEXTAREA:
 					mageTextView.setPropertyType(MagePropertyType.MULTILINE);
 					mageTextView.setPadding((int) (5 * density), (int) (5 * density), (int) (5 * density), (int) (5 * density));
-					linearLayout.addView(textView);
-					linearLayout.addView(mageTextView);
-					views.add(linearLayout);
+					views.add(textView);
+					views.add(mageTextView);
 					break;
 				case DATE:
 					mageTextView.setPropertyType(MagePropertyType.DATE);
@@ -399,7 +400,7 @@ public class LayoutBaker {
 	 * @param linearLayout
 	 * @param propertiesMap
 	 */
-	public static void populateLayoutFromMap(final LinearLayout linearLayout, final Map<String, ObservationProperty> propertiesMap) {
+	public static void populateLayoutFromMap(final LinearLayout linearLayout, ControlGenerationType controlGenerationType, final Map<String, ObservationProperty> propertiesMap) {
 		for (int i = 0; i < linearLayout.getChildCount(); i++) {
 			View v = linearLayout.getChildAt(i);
 			if (v instanceof MageControl) {
@@ -411,20 +412,35 @@ public class LayoutBaker {
 				if (property != null && property.getValue() != null) {
 					propertyValue = property.getValue();
 				}
-				
-				((MageControl) v).setPropertyValue(propertyValue);
+
+				mageControl.setPropertyValue(propertyValue);
+
+				View textView = linearLayout.getChildAt(Math.max(0, i - 1));
+				if(textView != null && textView instanceof TextView) {
+					textView.setVisibility(View.VISIBLE);
+				}
+				v.setVisibility(View.VISIBLE);
+
+				if(controlGenerationType.equals(ControlGenerationType.VIEW) && v instanceof MageTextView && (propertyValue == null || (propertyValue instanceof String && StringUtils.isBlank((String)propertyValue)))) {
+					textView = linearLayout.getChildAt(Math.max(0, i - 1));
+					if(textView != null && textView instanceof TextView) {
+						textView.setVisibility(View.GONE);
+					}
+					v.setVisibility(View.GONE);
+				}
+
 			} else if (v instanceof LinearLayout) {
-				populateLayoutFromMap((LinearLayout) v, propertiesMap);
+				populateLayoutFromMap((LinearLayout) v, controlGenerationType, propertiesMap);
 			}
 		}
 	}
 
-	public static void populateLayoutFromBundle(final LinearLayout linearLayout, Bundle savedInstanceState) {
+	public static void populateLayoutFromBundle(final LinearLayout linearLayout, ControlGenerationType controlGenerationType, Bundle savedInstanceState) {
 		Map<String, ObservationProperty> propertiesMap = new HashMap<String, ObservationProperty>();
 		for (String key : savedInstanceState.keySet()) {
 			propertiesMap.put(key, new ObservationProperty(key, savedInstanceState.getSerializable(key)));
 		}
-		populateLayoutFromMap(linearLayout, propertiesMap);
+		populateLayoutFromMap(linearLayout, controlGenerationType, propertiesMap);
 	}
 
 	/**
