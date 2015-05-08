@@ -57,7 +57,7 @@ public class ObservationFeedCursorAdapter extends CursorAdapter {
 		try {
 			Observation o = query.mapRow(new AndroidDatabaseResults(cursor, null));
 
-			LayoutBaker.populateLayoutFromMap((LinearLayout) v.findViewById(R.id.observation_list_container), o.getPropertiesMap());
+			LayoutBaker.populateLayoutFromMap((LinearLayout) v.findViewById(R.id.observation_list_container), ControlGenerationType.VIEW, o.getPropertiesMap());
 
 			ImageView markerView = (ImageView) v.findViewById(R.id.observation_marker);
 			Bitmap marker = ObservationBitmapFactory.bitmap(activity, o);

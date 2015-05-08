@@ -283,8 +283,8 @@ public class ObservationViewActivity extends Activity {
 				}
 			}
 
-			LayoutBaker.populateLayoutFromMap((LinearLayout) findViewById(R.id.propertyContainer), o.getPropertiesMap());
-			LayoutBaker.populateLayoutFromMap((LinearLayout) findViewById(R.id.topPropertyContainer), o.getPropertiesMap());
+			LayoutBaker.populateLayoutFromMap((LinearLayout) findViewById(R.id.propertyContainer), ControlGenerationType.VIEW, o.getPropertiesMap());
+			LayoutBaker.populateLayoutFromMap((LinearLayout) findViewById(R.id.topPropertyContainer), ControlGenerationType.VIEW, o.getPropertiesMap());
 
 			((LinearLayout) findViewById(R.id.image_gallery)).removeAllViews();
 			if (o.getAttachments().size() == 0) {

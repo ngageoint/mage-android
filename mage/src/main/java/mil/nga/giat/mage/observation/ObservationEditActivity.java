@@ -214,7 +214,7 @@ public class ObservationEditActivity extends Activity {
 			} catch (UserException ue) {
 				ue.printStackTrace();
 			}
-			LayoutBaker.populateLayoutFromMap((LinearLayout) findViewById(R.id.form), o.getPropertiesMap());
+			LayoutBaker.populateLayoutFromMap((LinearLayout) findViewById(R.id.form), ControlGenerationType.EDIT, o.getPropertiesMap());
 		} else {
 			this.setTitle("Edit Observation");
 			// this is an edit of an existing observation
@@ -238,7 +238,7 @@ public class ObservationEditActivity extends Activity {
 				l.setLatitude(point.getY());
 				l.setLongitude(point.getX());
 			}
-			LayoutBaker.populateLayoutFromMap((LinearLayout) findViewById(R.id.form), propertiesMap);
+			LayoutBaker.populateLayoutFromMap((LinearLayout) findViewById(R.id.form), ControlGenerationType.EDIT, propertiesMap);
 		}
 		
 		findViewById(R.id.date_edit).setOnClickListener(new View.OnClickListener() {
@@ -435,7 +435,7 @@ public class ObservationEditActivity extends Activity {
 		}
 
 		LinearLayout form = (LinearLayout) findViewById(R.id.form);
-		LayoutBaker.populateLayoutFromBundle(form, savedInstanceState);
+		LayoutBaker.populateLayoutFromBundle(form, ControlGenerationType.EDIT, savedInstanceState);
 		currentMediaUri = savedInstanceState.getParcelable(CURRENT_MEDIA_URI);
 	}
 
