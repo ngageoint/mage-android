@@ -205,7 +205,7 @@ public class AttachmentViewerActivity extends FragmentActivity implements Remove
 				int count;
 				while ((count = input.read(data)) != -1) {
 					total += count;
-					publishProgress(((Double)(total.doubleValue()/lengthOfFile.doubleValue())).intValue());
+					publishProgress(((Double)(100.0*(total.doubleValue()/lengthOfFile.doubleValue()))).intValue());
 					output.write(data, 0, count);
 				}
 
