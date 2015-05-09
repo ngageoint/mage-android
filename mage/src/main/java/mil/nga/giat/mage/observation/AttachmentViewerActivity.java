@@ -122,7 +122,7 @@ public class AttachmentViewerActivity extends FragmentActivity implements Remove
 				public void onClick(View v) {
 					if (a.getLocalPath() == null) {
 						progressDialog = new ProgressDialog(AttachmentViewerActivity.this);
-						progressDialog.setMessage("Downloading file..");
+						progressDialog.setMessage("Downloading file...");
 						progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
 						progressDialog.setCancelable(false);
 						startDownload(a, finalType);
@@ -163,11 +163,11 @@ public class AttachmentViewerActivity extends FragmentActivity implements Remove
 	}
 
 	private void startDownload(Attachment attachment, String mimeType) {
-		String url = attachment.getUrl() + "?access_token=" + PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).getString(getString(mil.nga.giat.mage.sdk.R.string.tokenKey), null);
+		String url = attachment.getUrl();
 		new DownloadFileAsync(mimeType).execute(url);
 	}
 
-	class DownloadFileAsync extends AsyncTask<String, String, String> {
+	class DownloadFileAsync extends AsyncTask<String, Integer, String> {
 		String mimeType;
 
 		public DownloadFileAsync(String mimeType) {
@@ -190,10 +190,10 @@ public class AttachmentViewerActivity extends FragmentActivity implements Remove
 				HttpResponse response = httpclient.execute(get);
 
 				// FIXME : I'm not sure this works
-				long lengthOfFile = Math.max(response.getEntity().getContentLength(), 1l);
-
 				entity = response.getEntity();
-				InputStream input = entity.getContent();
+				Long lengthOfFile = Math.max(entity.getContentLength(), 1l);
+
+				InputStream input = new BufferedInputStream(entity.getContent());
 				File stageDir = MediaUtility.getMediaStageDirectory();
 				File stagedFile = new File(stageDir, a.getName());
 				a.setLocalPath(stagedFile.getAbsolutePath());
@@ -201,11 +201,11 @@ public class AttachmentViewerActivity extends FragmentActivity implements Remove
 
 				byte data[] = new byte[1024];
 
-				long total = 0;
+				Long total = 0l;
 				int count;
 				while ((count = input.read(data)) != -1) {
 					total += count;
-					publishProgress(String.valueOf((total * 100) / lengthOfFile));
+					publishProgress(((Double)(total.doubleValue()/lengthOfFile.doubleValue())).intValue());
 					output.write(data, 0, count);
 				}
 
@@ -227,8 +227,8 @@ public class AttachmentViewerActivity extends FragmentActivity implements Remove
 
 		}
 
-		protected void onProgressUpdate(String... progress) {
-			progressDialog.setProgress(Integer.parseInt(progress[0]));
+		protected void onProgressUpdate(Integer... progress) {
+			progressDialog.setProgress(progress[0]);
 		}
 
 		@Override
