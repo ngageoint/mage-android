@@ -2,6 +2,7 @@ package mil.nga.giat.mage.newsfeed;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.support.v4.widget.CursorAdapter;
@@ -9,7 +10,6 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.ViewGroup.LayoutParams;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -19,12 +19,12 @@ import com.j256.ormlite.android.AndroidDatabaseResults;
 import com.j256.ormlite.stmt.PreparedQuery;
 
 import java.io.File;
-import java.util.Collection;
 
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.form.LayoutBaker;
 import mil.nga.giat.mage.form.LayoutBaker.ControlGenerationType;
 import mil.nga.giat.mage.map.marker.ObservationBitmapFactory;
+import mil.nga.giat.mage.observation.AttachmentViewerActivity;
 import mil.nga.giat.mage.sdk.datastore.observation.Attachment;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.datastore.user.User;
@@ -64,8 +64,6 @@ public class ObservationFeedCursorAdapter extends CursorAdapter {
 			if (marker != null) {
 				markerView.setImageBitmap(marker);
 			}
-			ImageView iv = ((ImageView) v.findViewById(R.id.observation_thumb));
-			Collection<Attachment> attachments = o.getAttachments();
 
 			String user = "Unknown User";
 			try {
@@ -79,52 +77,14 @@ public class ObservationFeedCursorAdapter extends CursorAdapter {
 
 			((TextView) v.findViewById(R.id.username)).setText(user);
 
-			((TextView) v.findViewById(R.id.attachment_text)).setText(attachments.size() != 0 ? "1 of " + attachments.size() : "");
-			if (attachments.size() != 0) {
-				iv.setVisibility(View.VISIBLE);
-				Attachment a = attachments.iterator().next();
-
-				final String absPath = a.getLocalPath();
-				final String remoteId = a.getRemoteId();
-
-				// get content type from everywhere I can think of
-				String contentType = a.getContentType();
-				String name = null;
-				if (contentType == null || "".equalsIgnoreCase(contentType) || "application/octet-stream".equalsIgnoreCase(contentType)) {
-					name = a.getName();
-					if (name == null) {
-						name = a.getLocalPath();
-						if (name == null) {
-							name = a.getRemotePath();
-						}
-					}
-					contentType = MediaUtility.getMimeType(name);
-				}
-
-				if (absPath != null) {
-					if (contentType.startsWith("image")) {
-						Glide.with(activity).load(new File(absPath)).placeholder(android.R.drawable.progress_indeterminate_horizontal).centerCrop().into(iv);
-					} else if (contentType.startsWith("video")) {
-						Glide.with(activity).load(R.drawable.ic_video_2x).into(iv);
-					} else if (contentType.startsWith("audio")) {
-						Glide.with(activity).load(R.drawable.ic_microphone).into(iv);
-					}
-				} else if (remoteId != null) {
-					if (contentType.startsWith("image")) {
-						String url = a.getUrl();
-						Log.i(LOG_NAME, "Loading Image URL: " + url);
-						Glide.with(activity).load(url).placeholder(android.R.drawable.progress_indeterminate_horizontal).centerCrop().into(iv);
-					} else if (contentType.startsWith("video")) {
-						Glide.with(activity).load(R.drawable.ic_video_2x).into(iv);
-					} else if (contentType.startsWith("audio")) {
-						Glide.with(activity).load(R.drawable.ic_microphone).into(iv);
-					}
-				}
-				v.findViewById(R.id.observation_list_text_content).setLayoutParams(new LinearLayout.LayoutParams((int) LayoutParams.WRAP_CONTENT, (int) LayoutParams.WRAP_CONTENT, 7.0f));
-			} else {
-				v.findViewById(R.id.observation_list_text_content).setLayoutParams(new LinearLayout.LayoutParams((int) LayoutParams.MATCH_PARENT, (int) LayoutParams.WRAP_CONTENT, 7.0f));
-				iv.setVisibility(View.GONE);
-			}
+            LinearLayout attachmentLayout = (LinearLayout) v.findViewById(R.id.image_gallery);
+            attachmentLayout.removeAllViews();
+            if (o.getAttachments().size() == 0) {
+                attachmentLayout.setVisibility(View.GONE);
+            } else {
+                attachmentLayout.setVisibility(View.VISIBLE);
+                createImageViews(attachmentLayout, o);
+            }
 		} catch (java.sql.SQLException e) {
 			Log.e(LOG_NAME, "Problem getting observation.", e);
 		}
@@ -140,5 +100,58 @@ public class ObservationFeedCursorAdapter extends CursorAdapter {
 		}
 		return v;
 	}
+
+    private void createImageViews(ViewGroup gallery, Observation o) {
+        for (final Attachment a : o.getAttachments()) {
+            final String absPath = a.getLocalPath();
+            final String remoteId = a.getRemoteId();
+            ImageView iv = new ImageView(activity.getApplicationContext());
+            ViewGroup.LayoutParams lp = new ViewGroup.LayoutParams(300, 300);
+            iv.setLayoutParams(lp);
+            iv.setPadding(0, 0, 10, 0);
+            iv.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Intent intent = new Intent(v.getContext(), AttachmentViewerActivity.class);
+                    intent.putExtra(AttachmentViewerActivity.ATTACHMENT, a);
+                    intent.putExtra(AttachmentViewerActivity.EDITABLE, false);
+                    activity.startActivity(intent);
+                }
+            });
+            gallery.addView(iv);
+
+            // get content type from everywhere I can think of
+            String contentType = a.getContentType();
+            if (contentType == null || "".equalsIgnoreCase(contentType) || "application/octet-stream".equalsIgnoreCase(contentType)) {
+                String name = a.getName();
+                if (name == null) {
+                    name = a.getLocalPath();
+                    if (name == null) {
+                        name = a.getRemotePath();
+                    }
+                }
+                contentType = MediaUtility.getMimeType(name);
+            }
+
+            if (absPath != null) {
+                if (contentType.startsWith("image")) {
+                    Glide.with(activity.getApplicationContext()).load(new File(absPath)).placeholder(android.R.drawable.progress_indeterminate_horizontal).centerCrop().into(iv);
+                } else if (contentType.startsWith("video")) {
+                    Glide.with(activity.getApplicationContext()).load(R.drawable.ic_video_2x).into(iv);
+                } else if (contentType.startsWith("audio")) {
+                    Glide.with(activity.getApplicationContext()).load(R.drawable.ic_microphone).into(iv);
+                }
+            } else if (remoteId != null) {
+                String url = a.getUrl();
+                if (contentType.startsWith("image")) {
+                    Glide.with(activity.getApplicationContext()).load(url).placeholder(android.R.drawable.progress_indeterminate_horizontal).centerCrop().into(iv);
+                } else if (contentType.startsWith("video")) {
+                    Glide.with(activity.getApplicationContext()).load(R.drawable.ic_video_2x).into(iv);
+                } else if (contentType.startsWith("audio")) {
+                    Glide.with(activity.getApplicationContext()).load(R.drawable.ic_microphone).into(iv);
+                }
+            }
+        }
+    }
 
 }
