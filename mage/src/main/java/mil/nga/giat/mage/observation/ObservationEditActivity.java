@@ -25,20 +25,17 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnTouchListener;
 import android.view.ViewGroup;
-import android.view.ViewGroup.LayoutParams;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemSelectedListener;
 import android.widget.Button;
 import android.widget.DatePicker;
 import android.widget.EditText;
-import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.TimePicker;
 import android.widget.Toast;
 
-import com.bumptech.glide.Glide;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapFragment;
@@ -118,6 +115,9 @@ public class ObservationEditActivity extends Activity {
 	private Circle accuracyCircle;
 	private long locationElapsedTimeMilliseconds = 0;
 
+    private LinearLayout attachmentLayout;
+    private AttachmentGallery attachmentGallery;
+
 	private Uri currentMediaUri;
 
 	// control key to default position
@@ -131,6 +131,18 @@ public class ObservationEditActivity extends Activity {
 
 		FragmentManager fragmentManager = getFragmentManager();
 		fragmentManager.beginTransaction().add(R.id.observation_edit_event_holder, new EventBannerFragment()).commit();
+
+        attachmentLayout = (LinearLayout) findViewById(R.id.image_gallery);
+        attachmentGallery = new AttachmentGallery(getApplicationContext(), 100, 100);
+        attachmentGallery.addOnAttachmentClickListener(new AttachmentGallery.OnAttachmentClickListener() {
+            @Override
+            public void onAttachmentClick(Attachment attachment) {
+                Intent intent = new Intent(getApplicationContext(), AttachmentViewerActivity.class);
+                intent.putExtra(AttachmentViewerActivity.ATTACHMENT, attachment);
+                intent.putExtra(AttachmentViewerActivity.EDITABLE, false);
+                startActivity(intent);
+            }
+        });
 		
 		final long observationId = getIntent().getLongExtra(OBSERVATION_ID, NEW_OBSERVATION);
 
@@ -219,9 +231,7 @@ public class ObservationEditActivity extends Activity {
 			this.setTitle("Edit Observation");
 			// this is an edit of an existing observation
 			attachments.addAll(o.getAttachments());
-			for (Attachment a : attachments) {
-				addAttachmentToGallery(a);
-			}
+            attachmentGallery.addAttachments(attachmentLayout, o.getAttachments());
 
 			Map<String, ObservationProperty> propertiesMap = o.getPropertiesMap();
 			Geometry geo = o.getGeometry();
@@ -430,9 +440,9 @@ public class ObservationEditActivity extends Activity {
 		l = savedInstanceState.getParcelable("location");
 		attachments = savedInstanceState.getParcelableArrayList("attachments");
 
-		for (Attachment a : attachments) {
-			addAttachmentToGallery(a);
-		}
+        for (Attachment a : attachments) {
+            attachmentGallery.addAttachment(attachmentLayout, a);
+        }
 
 		LinearLayout form = (LinearLayout) findViewById(R.id.form);
 		LayoutBaker.populateLayoutFromBundle(form, ControlGenerationType.EDIT, savedInstanceState);
@@ -598,63 +608,6 @@ public class ObservationEditActivity extends Activity {
 		startActivityForResult(intent, GALLERY_ACTIVITY_REQUEST_CODE);
 	}
 
-	private void addAttachmentToGallery(final Attachment a) {
-		LinearLayout l = (LinearLayout) findViewById(R.id.image_gallery);
-		
-		final String absPath = a.getLocalPath();
-		final String remoteId = a.getRemoteId();
-		ImageView iv = new ImageView(getApplicationContext());
-		LayoutParams lp = new LayoutParams(100, 100);
-		iv.setLayoutParams(lp);
-		iv.setPadding(0, 0, 10, 0);
-		iv.setOnClickListener(new View.OnClickListener() {
-			@Override
-			public void onClick(View v) {
-				Intent intent = new Intent(v.getContext(), AttachmentViewerActivity.class);
-				intent.putExtra(AttachmentViewerActivity.ATTACHMENT, a);
-				intent.putExtra(AttachmentViewerActivity.EDITABLE, (o.getRemoteId() == null));
-				startActivityForResult(intent, ATTACHMENT_VIEW_ACTIVITY_REQUEST_CODE);
-			}
-		});
-		l.addView(iv);
-		
-		// get content type from everywhere I can think of
-		String contentType = a.getContentType();
-		if (contentType == null || "".equalsIgnoreCase(contentType) || "application/octet-stream".equalsIgnoreCase(contentType)) {
-			String name = a.getName();
-			if (name == null) {
-				name = a.getLocalPath();
-				if (name == null) {
-					name = a.getRemotePath();
-				}
-			}
-			contentType = MediaUtility.getMimeType(name);
-		}
-		
-		if (absPath != null) {
-			if (contentType == null) {
-				Glide.with(getApplicationContext()).load(R.drawable.ic_email_attachment).into(iv);
-			} else if (contentType.startsWith("image")) {
-				Glide.with(getApplicationContext()).load(new File(absPath)).placeholder(android.R.drawable.progress_indeterminate_horizontal).centerCrop().into(iv);
-			} else if (contentType.startsWith("video")) {
-				Glide.with(getApplicationContext()).load(R.drawable.ic_video_2x).into(iv);
-			} else if (contentType.startsWith("audio")) {
-				Glide.with(getApplicationContext()).load(R.drawable.ic_microphone).into(iv);
-			}
-		} else if (remoteId != null) {
-			String url = a.getUrl();
-			if (contentType == null) {
-				Glide.with(getApplicationContext()).load(R.drawable.ic_email_attachment).into(iv);
-			} else if (contentType.startsWith("image")) {
-				Glide.with(getApplicationContext()).load(url).placeholder(android.R.drawable.progress_indeterminate_horizontal).centerCrop().into(iv);
-			} else if (contentType.startsWith("video")) {
-				Glide.with(getApplicationContext()).load(R.drawable.ic_video_2x).into(iv);
-			} else if (contentType.startsWith("audio")) {
-				Glide.with(getApplicationContext()).load(R.drawable.ic_microphone).into(iv);
-			} 
-		}
-	}
-
 	@Override
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 		if (resultCode != RESULT_OK) {
@@ -667,7 +620,7 @@ public class ObservationEditActivity extends Activity {
 			Attachment capture = new Attachment();
 			capture.setLocalPath(MediaUtility.getFileAbsolutePath(currentMediaUri, this));
 			attachments.add(capture);
-			addAttachmentToGallery(capture);
+            attachmentGallery.addAttachment(attachmentLayout, capture);
 			break;
 		case GALLERY_ACTIVITY_REQUEST_CODE:
 		case CAPTURE_VOICE_ACTIVITY_REQUEST_CODE:
@@ -677,7 +630,7 @@ public class ObservationEditActivity extends Activity {
 				Attachment a = new Attachment();
 				a.setLocalPath(path);
 				attachments.add(a);
-				addAttachmentToGallery(a);
+                attachmentGallery.addAttachment(attachmentLayout, a);
 			}
 			break;
 		case ATTACHMENT_VIEW_ACTIVITY_REQUEST_CODE:

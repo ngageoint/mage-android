@@ -46,11 +46,14 @@ import java.util.concurrent.TimeUnit;
 import mil.nga.giat.mage.MAGE;
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.event.EventBannerFragment;
+import mil.nga.giat.mage.observation.AttachmentGallery;
+import mil.nga.giat.mage.observation.AttachmentViewerActivity;
 import mil.nga.giat.mage.observation.ObservationEditActivity;
 import mil.nga.giat.mage.observation.ObservationViewActivity;
 import mil.nga.giat.mage.sdk.datastore.DaoStore;
 import mil.nga.giat.mage.sdk.datastore.location.LocationHelper;
 import mil.nga.giat.mage.sdk.datastore.location.LocationProperty;
+import mil.nga.giat.mage.sdk.datastore.observation.Attachment;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
 import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
@@ -72,6 +75,7 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 	private ViewGroup footer;
 	private ListView lv;
 	private Long currentEventId;
+    private AttachmentGallery attachmentGallery;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -83,6 +87,17 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 		View rootView = inflater.inflate(R.layout.fragment_news_feed, container, false);
 		setHasOptionsMenu(true);
+
+        attachmentGallery = new AttachmentGallery(getActivity().getApplicationContext(), 300, 300);
+        attachmentGallery.addOnAttachmentClickListener(new AttachmentGallery.OnAttachmentClickListener() {
+            @Override
+            public void onAttachmentClick(Attachment attachment) {
+                Intent intent = new Intent(getActivity().getApplicationContext(), AttachmentViewerActivity.class);
+                intent.putExtra(AttachmentViewerActivity.ATTACHMENT, attachment);
+                intent.putExtra(AttachmentViewerActivity.EDITABLE, false);
+                startActivity(intent);
+            }
+        });
 
 		FragmentManager fragmentManager = getFragmentManager();
 		fragmentManager.beginTransaction().add(R.id.news_feed_event_holder, new EventBannerFragment()).commit();
@@ -98,7 +113,7 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 			oDao = DaoStore.getInstance(getActivity().getApplicationContext()).getObservationDao();
 			query = buildQuery(oDao, getTimeFilterId());
 			Cursor c = obtainCursor(query, oDao);
-			adapter = new ObservationFeedCursorAdapter(getActivity().getApplicationContext(), c, query, getActivity());
+			adapter = new ObservationFeedCursorAdapter(getActivity().getApplicationContext(), c, query, attachmentGallery);
 			lv.setAdapter(adapter);
 			lv.setOnItemClickListener(this);
 

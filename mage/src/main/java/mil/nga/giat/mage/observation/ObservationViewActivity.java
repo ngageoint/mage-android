@@ -7,27 +7,15 @@ import android.app.Fragment;
 import android.app.FragmentManager;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.res.Resources;
-import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.Drawable;
-import android.graphics.drawable.LayerDrawable;
-import android.media.ThumbnailUtils;
-import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Bundle;
-import android.provider.MediaStore;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewGroup;
-import android.view.ViewGroup.LayoutParams;
 import android.widget.FrameLayout;
-import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-import com.bumptech.glide.Glide;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapFragment;
@@ -37,7 +25,6 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.Point;
 
-import java.io.File;
 import java.text.DateFormat;
 import java.text.DecimalFormat;
 import java.util.Collection;
@@ -57,7 +44,6 @@ import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.event.IObservationEventListener;
 import mil.nga.giat.mage.sdk.utils.DateFormatFactory;
-import mil.nga.giat.mage.sdk.utils.MediaUtility;
 
 public class ObservationViewActivity extends Activity {
 
@@ -68,63 +54,11 @@ public class ObservationViewActivity extends Activity {
 	public static String INITIAL_ZOOM = "INITIAL_ZOOM";
 	private final DateFormat dateFormat = DateFormatFactory.format("yyyy-MM-dd HH:mm zz", Locale.getDefault());
 	private GoogleMap miniMap;
+    private AttachmentGallery attachmentGallery;
 	private IObservationEventListener observationEventListener;
 	private Observation o;
 	private Marker marker;
 	private DecimalFormat latLngFormat = new DecimalFormat("###.#####");
-
-	private void createImageViews(ViewGroup gallery) {
-		for (final Attachment a : o.getAttachments()) {
-			final String absPath = a.getLocalPath();
-			final String remoteId = a.getRemoteId();
-			ImageView iv = new ImageView(getApplicationContext());
-			LayoutParams lp = new LayoutParams(300, 300);
-			iv.setLayoutParams(lp);
-			iv.setPadding(0, 0, 10, 0);
-			iv.setOnClickListener(new View.OnClickListener() {
-				@Override
-				public void onClick(View v) {
-					Intent intent = new Intent(v.getContext(), AttachmentViewerActivity.class);
-					intent.putExtra(AttachmentViewerActivity.ATTACHMENT, a);
-					intent.putExtra(AttachmentViewerActivity.EDITABLE, false);
-					startActivityForResult(intent, ATTACHMENT_VIEW_ACTIVITY_REQUEST_CODE);
-				}
-			});
-			gallery.addView(iv);
-
-			// get content type from everywhere I can think of
-			String contentType = a.getContentType();
-			if (contentType == null || "".equalsIgnoreCase(contentType) || "application/octet-stream".equalsIgnoreCase(contentType)) {
-				String name = a.getName();
-				if (name == null) {
-					name = a.getLocalPath();
-					if (name == null) {
-						name = a.getRemotePath();
-					}
-				}
-				contentType = MediaUtility.getMimeType(name);
-			}
-
-			if (absPath != null) {
-				if (contentType.startsWith("image")) {
-					Glide.with(getApplicationContext()).load(new File(absPath)).placeholder(android.R.drawable.progress_indeterminate_horizontal).centerCrop().into(iv);
-				} else if (contentType.startsWith("video")) {
-					Glide.with(getApplicationContext()).load(R.drawable.ic_video_2x).into(iv);
-				} else if (contentType.startsWith("audio")) {
-					Glide.with(getApplicationContext()).load(R.drawable.ic_microphone).into(iv);
-				}
-			} else if (remoteId != null) {
-				String url = a.getUrl();
-				if (contentType.startsWith("image")) {
-					Glide.with(getApplicationContext()).load(url).placeholder(android.R.drawable.progress_indeterminate_horizontal).centerCrop().into(iv);
-				} else if (contentType.startsWith("video")) {
-					Glide.with(getApplicationContext()).load(R.drawable.ic_video_2x).into(iv);
-				} else if (contentType.startsWith("audio")) {
-					Glide.with(getApplicationContext()).load(R.drawable.ic_microphone).into(iv);
-				}
-			}
-		}
-	}
 
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
@@ -176,7 +110,7 @@ public class ObservationViewActivity extends Activity {
 		} catch(Exception e) {
 			Log.e(LOG_NAME, "Problem getting observation.", e);
 		}
-	}
+  	}
 
 	@Override
 	protected void onDestroy() {
@@ -285,12 +219,22 @@ public class ObservationViewActivity extends Activity {
 			LayoutBaker.populateLayoutFromMap((LinearLayout) findViewById(R.id.propertyContainer), ControlGenerationType.VIEW, o.getPropertiesMap());
 			LayoutBaker.populateLayoutFromMap((LinearLayout) findViewById(R.id.topPropertyContainer), ControlGenerationType.VIEW, o.getPropertiesMap());
 
-			((LinearLayout) findViewById(R.id.image_gallery)).removeAllViews();
+            LinearLayout galleryLayout = (LinearLayout) findViewById(R.id.image_gallery);
+            galleryLayout.removeAllViews();
 			if (o.getAttachments().size() == 0) {
 				findViewById(R.id.image_gallery).setVisibility(View.GONE);
 			} else {
-				LinearLayout l = (LinearLayout) findViewById(R.id.image_gallery);
-				createImageViews(l);
+                attachmentGallery = new AttachmentGallery(getApplicationContext(), 300, 300);
+                attachmentGallery.addOnAttachmentClickListener(new AttachmentGallery.OnAttachmentClickListener() {
+                    @Override
+                    public void onAttachmentClick(Attachment attachment) {
+                        Intent intent = new Intent(getApplicationContext(), AttachmentViewerActivity.class);
+                        intent.putExtra(AttachmentViewerActivity.ATTACHMENT, attachment);
+                        intent.putExtra(AttachmentViewerActivity.EDITABLE, false);
+                        startActivity(intent);
+                    }
+                });
+                attachmentGallery.addAttachments(galleryLayout, o.getAttachments());
 			}
 
 			TextView user = (TextView) findViewById(R.id.username);
@@ -312,60 +256,6 @@ public class ObservationViewActivity extends Activity {
 			}
 		} catch (Exception e) {
 			Log.e(LOG_NAME, e.getMessage(), e);
-		}
-	}
-
-	public class AttachmentGalleryTask extends AsyncTask<Attachment, ImageView, Boolean> {
-
-		@Override
-		protected Boolean doInBackground(Attachment... params) {
-			for (Attachment a : params) {
-				final String absPath = a.getLocalPath();
-				ImageView iv = new ImageView(getApplicationContext());
-				LayoutParams lp = new LayoutParams(300, 300);
-				iv.setLayoutParams(lp);
-				iv.setPadding(0, 0, 10, 0);
-				iv.setOnClickListener(new View.OnClickListener() {
-					@Override
-					public void onClick(View v) {
-						Intent intent = new Intent(v.getContext(), AttachmentViewerActivity.class);
-						intent.setData(Uri.fromFile(new File(absPath)));
-						intent.putExtra(AttachmentViewerActivity.EDITABLE, false);
-						startActivityForResult(intent, ATTACHMENT_VIEW_ACTIVITY_REQUEST_CODE);
-					}
-				});
-				try {
-					if (absPath != null && absPath.endsWith(".mp4")) {
-						Drawable[] layers = new Drawable[2];
-						Resources r = getResources();
-						layers[0] = new BitmapDrawable(r, ThumbnailUtils.createVideoThumbnail(absPath, MediaStore.Video.Thumbnails.MICRO_KIND));
-						layers[1] = r.getDrawable(R.drawable.ic_video_white_2x);
-						LayerDrawable ld = new LayerDrawable(layers);
-						iv.setImageDrawable(ld);
-					} else if (absPath != null && (absPath.endsWith(".mp3") || absPath.endsWith("m4a"))) {
-						Glide.with(getApplicationContext()).load(R.drawable.ic_microphone).into(iv);
-						// iv.setImageBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.ic_microphone));
-					} else {
-						if (a.getRemoteId() != null) {
-							String url = a.getUrl();
-							Glide.with(getApplicationContext()).load(url).placeholder(android.R.drawable.progress_indeterminate_horizontal).centerCrop().into(iv);
-						} else {
-							Glide.with(getApplicationContext()).load(new File(absPath)).placeholder(android.R.drawable.progress_indeterminate_horizontal).centerCrop().into(iv);
-						}
-					}
-					Log.d(LOG_NAME, "Set the image gallery to have an image with uri " + absPath);
-				} catch (Exception e) {
-					Log.e(LOG_NAME, "Error making image", e);
-				}
-
-				publishProgress(iv);
-			}
-			return true;
-		}
-
-		protected void onProgressUpdate(ImageView... progress) {
-			LinearLayout l = (LinearLayout) findViewById(R.id.image_gallery);
-			l.addView(progress[0]);
 		}
 	}
 }
