@@ -38,7 +38,7 @@ import java.util.concurrent.TimeUnit;
 
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.event.EventBannerFragment;
-import mil.nga.giat.mage.profile.MyProfileFragment;
+import mil.nga.giat.mage.profile.ProfileFragment;
 import mil.nga.giat.mage.profile.ProfileActivity;
 import mil.nga.giat.mage.sdk.datastore.DaoStore;
 import mil.nga.giat.mage.sdk.datastore.location.Location;
@@ -235,7 +235,7 @@ public class PeopleFeedFragment extends Fragment implements OnSharedPreferenceCh
 		try {
 			Location l = query.mapRow(new AndroidDatabaseResults(c, null));
 			Intent profileView = new Intent(getActivity().getApplicationContext(), ProfileActivity.class);
-			profileView.putExtra(MyProfileFragment.USER_ID, l.getUser().getRemoteId());
+			profileView.putExtra(ProfileFragment.USER_ID, l.getUser().getRemoteId());
 			getActivity().startActivityForResult(profileView, 2);
 		} catch (Exception e) {
 			Log.e(LOG_NAME, "Problem.", e);

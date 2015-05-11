@@ -6,7 +6,7 @@
     
 	<fragment
         android:id="@+id/profile_fragment"
-        android:name="mil.nga.giat.mage.profile.MyProfileFragment"
+        android:name="mil.nga.giat.mage.profile.ProfileFragment"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 </LinearLayout>

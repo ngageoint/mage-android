@@ -4,17 +4,18 @@ import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Fragment;
+import android.content.ActivityNotFoundException;
 import android.content.ClipData;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
 import android.provider.MediaStore;
+import android.text.SpannableString;
+import android.text.style.UnderlineSpan;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -22,6 +23,7 @@ import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.MapView;
@@ -37,7 +39,6 @@ import org.apache.commons.lang3.StringUtils;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -53,9 +54,9 @@ import mil.nga.giat.mage.sdk.fetch.DownloadImageTask;
 import mil.nga.giat.mage.sdk.profile.UpdateProfileTask;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
 
-public class MyProfileFragment extends Fragment {
+public class ProfileFragment extends Fragment {
 
-	private static final String LOG_NAME = MyProfileFragment.class.getName();
+	private static final String LOG_NAME = ProfileFragment.class.getName();
 	
 	private static final int CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE = 100;
 	private static final int GALLERY_ACTIVITY_REQUEST_CODE = 400;
@@ -96,7 +97,7 @@ public class MyProfileFragment extends Fragment {
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 		View rootView = inflater.inflate(R.layout.fragment_profile, container, false);
-		getActivity().getActionBar().setTitle("My Profile");
+
 		String userToLoad = getActivity().getIntent().getStringExtra(USER_ID);
 		try {
 			if (userToLoad != null) {
@@ -104,12 +105,19 @@ public class MyProfileFragment extends Fragment {
 			} else {
 				user = UserHelper.getInstance(getActivity().getApplicationContext()).readCurrentUser();
 			}
-			
-		} catch (UserException e) {
-			e.printStackTrace();
+		} catch (UserException ue) {
+			Log.e(LOG_NAME, "Problem finding user.", ue);
 		}
+
 		final Long userId = user.getId();
-		
+
+		String firstName = user.getFirstname();
+		String lastName = user.getLastname();
+
+		String tFullName = (StringUtils.isBlank(firstName)?"":firstName) + " " + (StringUtils.isBlank(lastName)?"":lastName);
+		final String fullName = StringUtils.isBlank(tFullName)?user.getUsername():tFullName;
+		getActivity().getActionBar().setTitle(user.isCurrentUser() ? "My Profile" : fullName);
+
 		mapView = (MapView) rootView.findViewById(R.id.mapView);
 		mapView.onCreate(savedInstanceState);
 		MapsInitializer.initialize(getActivity().getApplicationContext());
@@ -122,13 +130,11 @@ public class MyProfileFragment extends Fragment {
 		mapView.getMap().moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, zoom));
 		List<Location> lastLocation = LocationHelper.getInstance(getActivity()).getUserLocations(userId, getActivity(), 1, true);
 		
-		LatLng location = new LatLng(0,0);
-		
 		if (!lastLocation.isEmpty()) {
 			Geometry geo = lastLocation.get(0).getGeometry();
 			if (geo instanceof Point) {
 				Point point = (Point) geo;
-				location = new LatLng(point.getY(), point.getX());
+				LatLng location = new LatLng(point.getY(), point.getX());
 				MarkerOptions options = new MarkerOptions().position(location).visible(true);
 				
 				Marker marker = mapView.getMap().addMarker(options);
@@ -137,25 +143,93 @@ public class MyProfileFragment extends Fragment {
 			}
 		}
 		
-		TextView realName = (TextView)rootView.findViewById(R.id.realName);
-		TextView username = (TextView)rootView.findViewById(R.id.username);
-		TextView phone = (TextView)rootView.findViewById(R.id.phone);
-		TextView email = (TextView)rootView.findViewById(R.id.email);
-		
-		realName.setText(user.getFirstname() + " " + user.getLastname());
-		username.setText("(" + user.getUsername() + ")");
-		if (user.getPrimaryPhone() == null) {
-			phone.setVisibility(View.GONE);
+		final TextView realNameTextView = (TextView)rootView.findViewById(R.id.realName);
+		realNameTextView.setText(fullName);
+		final TextView usernameTextView = (TextView)rootView.findViewById(R.id.username);
+		usernameTextView.setText("(" + user.getUsername() + ")");
+		final TextView phoneTextView = (TextView)rootView.findViewById(R.id.phone);
+
+		if (StringUtils.isNotBlank(user.getPrimaryPhone())) {
+			SpannableString primaryPhone = new SpannableString(user.getPrimaryPhone());
+			primaryPhone.setSpan(new UnderlineSpan(), 0, primaryPhone.length(), 0);
+			phoneTextView.setText(primaryPhone);
+			phoneTextView.setOnClickListener(new OnClickListener() {
+										 @Override
+										 public void onClick(View v) {
+											 AlertDialog.Builder mBuilder = new AlertDialog.Builder(getActivity());
+											 mBuilder.setMessage("Do you want to call or text " + fullName + "?");
+											 mBuilder.setNegativeButton("No", new DialogInterface.OnClickListener() {
+												 public void onClick(DialogInterface dialog, int id) {
+													 dialog.cancel();
+												 }
+											 });
+											 mBuilder.setNeutralButton("Call", new DialogInterface.OnClickListener() {
+												 public void onClick(DialogInterface dialog, int id) {
+													 try {
+														 Intent callIntent = new Intent(Intent.ACTION_CALL);
+														 callIntent.setData(Uri.parse("tel:" + phoneTextView.getText().toString()));
+														 startActivity(callIntent);
+													 } catch (ActivityNotFoundException ae) {
+														 Toast.makeText(getActivity(), "Could not call user.", Toast.LENGTH_SHORT).show();
+														 Log.e(LOG_NAME, "Could not call user.", ae);
+													 }
+												 }
+											 });
+											 mBuilder.setPositiveButton("Text", new DialogInterface.OnClickListener() {
+												 public void onClick(DialogInterface dialog, int id) {
+													 Intent textIntent = new Intent(Intent.ACTION_VIEW, Uri.fromParts("sms", phoneTextView.getText().toString(), null));
+													 startActivity(textIntent);
+
+												 }
+											 });
+											 mBuilder.create().show();
+										 }
+									 }
+
+			);
+			phoneTextView.setVisibility(View.VISIBLE);
 		} else {
-			phone.setVisibility(View.VISIBLE);
-			phone.setText(user.getPrimaryPhone());
+			phoneTextView.setVisibility(View.GONE);
 		}
-		
-		if (user.getEmail() != null && !user.getEmail().trim().isEmpty()) {
-			email.setVisibility(View.VISIBLE);
-			email.setText(user.getEmail());
+
+		final TextView emailTextView = (TextView)rootView.findViewById(R.id.email);
+		if (StringUtils.isNotBlank(user.getEmail())) {
+			SpannableString emailAddress = new SpannableString(user.getEmail());
+			emailAddress.setSpan(new UnderlineSpan(), 0, emailAddress.length(), 0);
+			emailTextView.setText(emailAddress);
+			emailTextView.setOnClickListener(new OnClickListener() {
+												 @Override
+												 public void onClick(View v) {
+													 AlertDialog.Builder mBuilder = new AlertDialog.Builder(getActivity());
+													 mBuilder.setMessage("Do you want to email " + fullName + "?");
+													 mBuilder.setNegativeButton("No", new DialogInterface.OnClickListener() {
+														 public void onClick(DialogInterface dialog, int id) {
+															 dialog.cancel();
+														 }
+													 });
+													 mBuilder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+														 public void onClick(DialogInterface dialog, int id) {
+
+															 Intent emailIntent = new Intent(Intent.ACTION_SEND);
+															 emailIntent.setType("message/rfc822");
+															 emailIntent.putExtra(Intent.EXTRA_EMAIL, new String[]{emailTextView.getText().toString()});
+															 emailIntent.putExtra(Intent.EXTRA_SUBJECT, "MAGE");
+															 try {
+																 startActivity(Intent.createChooser(emailIntent, "Send mail..."));
+															 } catch (ActivityNotFoundException ae) {
+																 Toast.makeText(getActivity(), "There are no email clients installed.", Toast.LENGTH_SHORT).show();
+																 Log.e(LOG_NAME, "Could not email user.", ae);
+															 }
+														 }
+													 });
+													 mBuilder.create().show();
+												 }
+											 }
+
+			);
+			emailTextView.setVisibility(View.VISIBLE);
 		} else {
-			email.setVisibility(View.GONE);
+			emailTextView.setVisibility(View.GONE);
 		}
 		final ImageView imageView = (ImageView)rootView.findViewById(R.id.profile_picture);
 		String avatarUrl = user.getAvatarUrl();
