@@ -2,10 +2,7 @@ package mil.nga.giat.mage.map.marker;
 
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.os.AsyncTask;
-import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -28,10 +25,6 @@ import com.vividsolutions.jts.geom.Point;
 
 import org.ocpsoft.prettytime.PrettyTime;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.text.DateFormat;
 import java.util.Collection;
 import java.util.Collections;
@@ -43,7 +36,7 @@ import java.util.TimeZone;
 import java.util.concurrent.ConcurrentHashMap;
 
 import mil.nga.giat.mage.R;
-import mil.nga.giat.mage.profile.MyProfileFragment;
+import mil.nga.giat.mage.profile.ProfileFragment;
 import mil.nga.giat.mage.profile.ProfileActivity;
 import mil.nga.giat.mage.sdk.datastore.location.Location;
 import mil.nga.giat.mage.sdk.datastore.location.LocationHelper;
@@ -153,7 +146,7 @@ public class LocationMarkerCollection implements PointCollection<Location>, OnMa
 		}
 		
 		Intent profileView = new Intent(context, ProfileActivity.class);
-		profileView.putExtra(MyProfileFragment.USER_ID, l.getUser().getRemoteId());
+		profileView.putExtra(ProfileFragment.USER_ID, l.getUser().getRemoteId());
 		context.startActivity(profileView);
 	}
 

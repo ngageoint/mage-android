@@ -8,7 +8,8 @@
     <com.google.android.gms.maps.MapView
         android:id="@+id/mapView"
         android:layout_width="match_parent"
-        android:layout_height="200dp"
+        android:layout_height="0dp"
+        android:layout_weight="1"
         map:uiCompass="false"
         map:uiRotateGestures="false"
         map:uiTiltGestures="false" />
@@ -16,7 +17,8 @@
     <LinearLayout
         android:orientation="horizontal"
         android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="0dp"
+        android:layout_weight="1"
         android:paddingTop="7dp"
         android:paddingBottom="7dp">
         

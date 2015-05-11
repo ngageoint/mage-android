@@ -16,8 +16,6 @@ public class ProfileActivity extends Activity {
 		setContentView(R.layout.activity_profile);
 		ActionBar actionBar = getActionBar();
 		actionBar.setDisplayHomeAsUpEnabled(true);
-		
-		
 	}
 	
 	@Override
