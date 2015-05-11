@@ -41,13 +41,13 @@
 
         <LinearLayout
             android:id="@+id/observation_list_text_content"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="7"
             android:orientation="vertical" >
 
             <TextView
                 android:id="@+id/username"
+                style="@style/ViewTextView"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:gravity="center_vertical"
@@ -65,32 +65,24 @@
 
             </LinearLayout>
         </LinearLayout>
-
-        <RelativeLayout
-            android:layout_width="0dip"
-            android:layout_height="fill_parent"
-            android:layout_gravity="center_vertical|right"
-            android:layout_weight="5"
-            android:paddingRight="5dip" >
-
-            <ImageView
-                android:id="@+id/observation_thumb"
-                android:layout_width="fill_parent"
-                android:layout_height="fill_parent" />
-
-            <TextView
-                android:id="@+id/attachment_text"
-                android:layout_width="fill_parent"
-                android:layout_height="wrap_content"
-                android:layout_alignParentBottom="true"
-                android:gravity="center_horizontal"
-                android:shadowColor="#000000"
-                android:shadowDx="1"
-                android:shadowDy="1"
-                android:shadowRadius="1"
-                android:textColor="#FFFFFF"
-                android:textStyle="bold" />
-        </RelativeLayout>
     </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal" >
+
+        <HorizontalScrollView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" >
+
+            <LinearLayout
+                android:id="@+id/image_gallery"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal" />
+        </HorizontalScrollView>
+    </LinearLayout>
+
 
 </LinearLayout>

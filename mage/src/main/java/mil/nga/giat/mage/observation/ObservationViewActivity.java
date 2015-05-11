@@ -41,7 +41,6 @@ import java.io.File;
 import java.text.DateFormat;
 import java.text.DecimalFormat;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.Locale;
 import java.util.Map;
 
@@ -79,7 +78,7 @@ public class ObservationViewActivity extends Activity {
 			final String absPath = a.getLocalPath();
 			final String remoteId = a.getRemoteId();
 			ImageView iv = new ImageView(getApplicationContext());
-			LayoutParams lp = new LayoutParams(100, 100);
+			LayoutParams lp = new LayoutParams(300, 300);
 			iv.setLayoutParams(lp);
 			iv.setPadding(0, 0, 10, 0);
 			iv.setOnClickListener(new View.OnClickListener() {
@@ -323,7 +322,7 @@ public class ObservationViewActivity extends Activity {
 			for (Attachment a : params) {
 				final String absPath = a.getLocalPath();
 				ImageView iv = new ImageView(getApplicationContext());
-				LayoutParams lp = new LayoutParams(100, 100);
+				LayoutParams lp = new LayoutParams(300, 300);
 				iv.setLayoutParams(lp);
 				iv.setPadding(0, 0, 10, 0);
 				iv.setOnClickListener(new View.OnClickListener() {

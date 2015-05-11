@@ -39,6 +39,7 @@
 
             <TextView
                 android:id="@+id/location_email"
+                style="@style/SecondaryTextView"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:gravity="right|center_vertical"
@@ -47,6 +48,7 @@
 
             <TextView
                 android:id="@+id/location_date"
+                style="@style/SecondaryTextView"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:gravity="right|center_vertical"
