@@ -101,14 +101,14 @@ public class ObservationEditActivity extends Activity {
 	private static final int CAPTURE_VIDEO_ACTIVITY_REQUEST_CODE = 200;
 	private static final int CAPTURE_VOICE_ACTIVITY_REQUEST_CODE = 300;
 	private static final int GALLERY_ACTIVITY_REQUEST_CODE = 400;
-	private static final int ATTACHMENT_VIEW_ACTIVITY_REQUEST_CODE = 500;
 	private static final int LOCATION_EDIT_ACTIVITY_REQUEST_CODE = 600;
 
 	private static final long NEW_OBSERVATION = -1L;
 
 	private final DecimalFormat latLngFormat = new DecimalFormat("###.#####");
-	private ArrayList<Attachment> attachments = new ArrayList<Attachment>();
-	private Location l;
+	private ArrayList<Attachment> attachmentsToCreate = new ArrayList<Attachment>();
+
+    private Location l;
 	private Observation o;
 	private GoogleMap map;
 	private Marker observationMarker;
@@ -230,7 +230,6 @@ public class ObservationEditActivity extends Activity {
 		} else {
 			this.setTitle("Edit Observation");
 			// this is an edit of an existing observation
-			attachments.addAll(o.getAttachments());
             attachmentGallery.addAttachments(attachmentLayout, o.getAttachments());
 
 			Map<String, ObservationProperty> propertiesMap = o.getPropertiesMap();
@@ -438,9 +437,9 @@ public class ObservationEditActivity extends Activity {
 		super.onRestoreInstanceState(savedInstanceState);
 
 		l = savedInstanceState.getParcelable("location");
-		attachments = savedInstanceState.getParcelableArrayList("attachments");
 
-        for (Attachment a : attachments) {
+        attachmentsToCreate = savedInstanceState.getParcelableArrayList("attachmentsToCreate");
+        for (Attachment a : attachmentsToCreate) {
             attachmentGallery.addAttachment(attachmentLayout, a);
         }
 
@@ -453,7 +452,7 @@ public class ObservationEditActivity extends Activity {
 	protected void onSaveInstanceState(Bundle outState) {
 		LayoutBaker.populateBundleFromLayout((LinearLayout) findViewById(R.id.form), outState);
 		outState.putParcelable("location", l);
-		outState.putParcelableArrayList("attachments", new ArrayList<Attachment>(attachments));
+		outState.putParcelableArrayList("attachmentsToCreate", attachmentsToCreate);
 		outState.putParcelable(CURRENT_MEDIA_URI, currentMediaUri);
 		super.onSaveInstanceState(outState);
 	}
@@ -499,8 +498,7 @@ public class ObservationEditActivity extends Activity {
 			}
 
 			o.addProperties(propertyMap.values());
-
-			o.setAttachments(attachments);
+            o.getAttachments().addAll(attachmentsToCreate);
 
 			ObservationHelper oh = ObservationHelper.getInstance(getApplicationContext());
 			try {
@@ -619,7 +617,7 @@ public class ObservationEditActivity extends Activity {
 			MediaUtility.addImageToGallery(getApplicationContext(), currentMediaUri);
 			Attachment capture = new Attachment();
 			capture.setLocalPath(MediaUtility.getFileAbsolutePath(currentMediaUri, this));
-			attachments.add(capture);
+			attachmentsToCreate.add(capture);
             attachmentGallery.addAttachment(attachmentLayout, capture);
 			break;
 		case GALLERY_ACTIVITY_REQUEST_CODE:
@@ -629,18 +627,8 @@ public class ObservationEditActivity extends Activity {
 				String path = MediaUtility.getPath(getApplicationContext(), uri);
 				Attachment a = new Attachment();
 				a.setLocalPath(path);
-				attachments.add(a);
+                attachmentsToCreate.add(a);
                 attachmentGallery.addAttachment(attachmentLayout, a);
-			}
-			break;
-		case ATTACHMENT_VIEW_ACTIVITY_REQUEST_CODE:
-			Attachment remove = data.getParcelableExtra(AttachmentViewerActivity.ATTACHMENT);
-			Boolean shouldRemove = data.getBooleanExtra(AttachmentViewerActivity.SHOULD_REMOVE, false);
-			if (remove != null && shouldRemove) {
-				int idx = attachments.indexOf(remove);
-				attachments.remove(remove);
-				LinearLayout l = (LinearLayout) findViewById(R.id.image_gallery);
-				l.removeViewAt(idx);
 			}
 			break;
 		case LOCATION_EDIT_ACTIVITY_REQUEST_CODE:
