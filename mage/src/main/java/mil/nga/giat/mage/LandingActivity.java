@@ -39,7 +39,7 @@ import mil.nga.giat.mage.navigation.DrawerItem;
 import mil.nga.giat.mage.newsfeed.ObservationFeedFragment;
 import mil.nga.giat.mage.newsfeed.PeopleFeedFragment;
 import mil.nga.giat.mage.preferences.GeneralPreferencesFragment;
-import mil.nga.giat.mage.profile.MyProfileFragment;
+import mil.nga.giat.mage.profile.ProfileFragment;
 import mil.nga.giat.mage.sdk.datastore.DaoStore;
 import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
 import mil.nga.giat.mage.sdk.datastore.user.RoleHelper;
@@ -93,7 +93,7 @@ public class LandingActivity extends Activity implements ListView.OnItemClickLis
 		if(numberOfEvents > 1) {
 			drawerItems.add(new DrawerItem.Builder("Events").id(id++).drawableId(R.drawable.ic_events_white).fragment(new EventFragment()).build());
 		}
-		drawerItems.add(new DrawerItem.Builder("My Profile").id(id++).drawableId(R.drawable.ic_fa_user).fragment(new MyProfileFragment()).build());
+		drawerItems.add(new DrawerItem.Builder("My Profile").id(id++).drawableId(R.drawable.ic_fa_user).fragment(new ProfileFragment()).build());
 		drawerItems.add(new DrawerItem.Builder("Settings").id(id++).secondary(true).fragment(new GeneralPreferencesFragment()).build());
 		drawerItems.add(new DrawerItem.Builder("Help").id(id++).secondary(true).fragment(new HelpFragment()).build());
 		drawerItems.add(logoutItem);
