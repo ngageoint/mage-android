@@ -60,6 +60,8 @@ import mil.nga.giat.mage.sdk.utils.UserUtility;
  */
 public class LoginActivity extends FragmentActivity implements AccountDelegate {
 
+	public static final String EXTRA_PICK_DEFAULT_EVENT = "PICK_DEFAULT_EVENT";
+
 	private static final String LOG_NAME = LoginActivity.class.getName();
 
 	private EditText mUsernameEditText;
@@ -132,7 +134,7 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 
 		// if token is not expired, then skip the login module
 		if (!UserUtility.getInstance(getApplicationContext()).isTokenExpired()) {
-			startNextActivityAndFinish();
+			skipLogin();
 		}
 
 		// no title bar
@@ -469,7 +471,15 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 	}
 
 	public void startNextActivityAndFinish() {
-		startActivity(new Intent(getApplicationContext(), EventActivity.class));
+		Intent intent = new Intent(getApplicationContext(), EventActivity.class);
+		startActivity(intent);
+		finish();
+	}
+
+	public void skipLogin() {
+		Intent intent = new Intent(getApplicationContext(), EventActivity.class);
+		intent.putExtra(EventActivity.EXTRA_CHOOSE_CURRENT_EVENT, true);
+		startActivity(intent);
 		finish();
 	}
 

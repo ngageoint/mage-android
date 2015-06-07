@@ -182,7 +182,8 @@ public class MAGE extends MultiDexApplication implements IUserEventListener {
 		builder.setStyle(bigTextStyle);
 
 		// Creates an explicit intent for an Activity in your app
-		Intent resultIntent = new Intent(this, LandingActivity.class);
+		Intent resultIntent = new Intent(this, LoginActivity.class);
+		resultIntent.putExtra(LoginActivity.EXTRA_PICK_DEFAULT_EVENT, true);
 
 		// The stack builder object will contain an artificial back stack for the
 		// started Activity.
