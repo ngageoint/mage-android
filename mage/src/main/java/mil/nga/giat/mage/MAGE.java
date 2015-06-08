@@ -86,10 +86,6 @@ public class MAGE extends MultiDexApplication implements IUserEventListener {
 		// setup the screen unlock stuff
 		registerReceiver(ScreenChangeReceiver.getInstance(), new IntentFilter(Intent.ACTION_SCREEN_ON));
 
-        //set up Observation notifications
-		observationNotificationListener = new ObservationNotificationListener(getApplicationContext());
-		ObservationHelper.getInstance(getApplicationContext()).addListener(observationNotificationListener);
-
         HttpClientManager.getInstance(getApplicationContext()).addListener(this);
 
 		super.onCreate();
@@ -99,6 +95,10 @@ public class MAGE extends MultiDexApplication implements IUserEventListener {
 		createNotification();
 		// Start location services
 		initLocationService();
+
+		//set up Observation notifications
+		observationNotificationListener = new ObservationNotificationListener(getApplicationContext());
+		ObservationHelper.getInstance(getApplicationContext()).addListener(observationNotificationListener);
 
 		// Start fetching and pushing observations and locations
 		startFetching();

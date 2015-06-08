@@ -84,8 +84,10 @@ public class ObservationNotificationListener implements IObservationEventListene
 			notificationManager.notify(OBSERVATION_NOTIFICATION_ID, notificationBuilder.build());
 
 			// pulse the vibrator
-			Vibrator vibrator = (Vibrator) mContext.getSystemService(Context.VIBRATOR_SERVICE);
-			vibrator.vibrate(1000);
+			// Vibrator vibrator = (Vibrator) mContext.getSystemService(Context.VIBRATOR_SERVICE);
+			// vibrator.vibrate(1000);
+			// ***Since notification builder has property DEFAULT_VIBRATE
+			// we should need more vibrations.
 		}
 	}
 
