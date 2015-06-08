@@ -25,6 +25,10 @@
         android:key="@string/notificationsEnabledKey"
         android:summary="Receive notifications when new observations are loaded"
         android:title="Notifications">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetClass="mil.nga.giat.mage.preferences.NotificationPreferencesActivity"
+            android:targetPackage="mil.nga.giat.mage"/>
     </mil.nga.giat.mage.sdk.preferences.PreferenceScreenSwitch>
     <PreferenceCategory
         android:title="MEDIA">
