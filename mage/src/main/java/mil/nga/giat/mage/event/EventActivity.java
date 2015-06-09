@@ -34,7 +34,9 @@ import mil.nga.giat.mage.sdk.login.RecentEventTask;
 
 public class EventActivity extends Activity implements AccountDelegate {
 
-    private static final String LOG_NAME = EventActivity.class.getName();
+	public static final String EXTRA_CHOOSE_CURRENT_EVENT = "CHOOSE_CURRENT_EVENT";
+
+	private static final String LOG_NAME = EventActivity.class.getName();
 
     private static final int uniqueChildStartingIdIndex = 10000;
 
@@ -56,6 +58,8 @@ public class EventActivity extends Activity implements AccountDelegate {
 		super.onResume();
 		uniqueChildIdIndex = uniqueChildStartingIdIndex;
 		events = new ArrayList<Event>();
+
+		final boolean pickDefaultEvent = getIntent().getBooleanExtra(EXTRA_CHOOSE_CURRENT_EVENT, false);
 
 		BroadcastReceiver initialFetchReceiver = new BroadcastReceiver() {
 			@Override
@@ -99,6 +103,10 @@ public class EventActivity extends Activity implements AccountDelegate {
 						if(events.size() == 1 && events.get(0).equals(userRecentEvent)) {
 							currentUser.setCurrentEvent(userRecentEvent);
 							UserHelper.getInstance(getApplicationContext()).createOrUpdate(currentUser);
+							chosenEvent = userRecentEvent;
+							finishAccount(new AccountStatus(AccountStatus.Status.SUCCESSFUL_LOGIN));
+						} else if (pickDefaultEvent && events.contains(userRecentEvent)) {
+							Log.i("BILLY", "PICKING USERS CURRENT EVENT!!!!!!!!!!!!!!!!!!!!!!!!!!!");
 							chosenEvent = userRecentEvent;
 							finishAccount(new AccountStatus(AccountStatus.Status.SUCCESSFUL_LOGIN));
 						} else {
