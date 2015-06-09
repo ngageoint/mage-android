@@ -18,7 +18,7 @@ public class DisclaimerActivity extends FragmentActivity {
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
 		setContentView(R.layout.activity_disclaimer);
 		getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
-		((MAGE) getApplication()).onLogout(false);
+		((MAGE) getApplication()).onLogout(true);
 	}
 
 	public void agree(View view) {
@@ -26,6 +26,7 @@ public class DisclaimerActivity extends FragmentActivity {
 	}
 
 	public void exit(View view) {
+		((MAGE) getApplication()).onLogout(true);
 		Intent intent = new Intent(Intent.ACTION_MAIN);
 		intent.addCategory(Intent.CATEGORY_HOME);
 		intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
