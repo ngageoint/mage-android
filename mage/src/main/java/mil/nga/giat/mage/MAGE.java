@@ -200,7 +200,7 @@ public class MAGE extends MultiDexApplication implements IUserEventListener {
 		PendingIntent resultPendingIntent = stackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
 		builder.setContentIntent(resultPendingIntent);
 		NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-		notificationManager.notify(MAGE.MAGE_NOTIFICATION_ID, builder.build());
+		notificationManager.notify(MAGE_NOTIFICATION_ID, builder.build());
 	}
 
 	private PendingIntent getLogoutPendingIntent() {

@@ -75,6 +75,7 @@ public class ObservationNotificationListener implements IObservationEventListene
 							.setContentText("Log into application for more details.")
 							.setPriority(NotificationCompat.PRIORITY_MAX)
 							.setDefaults(NotificationCompat.DEFAULT_VIBRATE)
+							.setAutoCancel(true)
 							.setContentIntent(viewPendingIntent);
 
 			// Get an instance of the NotificationManager service
