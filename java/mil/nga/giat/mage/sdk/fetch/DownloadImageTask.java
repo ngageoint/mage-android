@@ -134,7 +134,7 @@ public abstract class DownloadImageTask extends AsyncTask<Void, Void, Void> {
 					image.compress(Bitmap.CompressFormat.PNG, 90, out);
 				} catch (Exception e) {
 					errors.set(i, true);
-					Log.e(LOG_NAME, e.getMessage());
+					Log.e(LOG_NAME, "Problem downloading image.");
 				} finally {
 					try {
 						if (entity != null) {

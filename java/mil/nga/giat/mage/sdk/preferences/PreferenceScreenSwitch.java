@@ -16,7 +16,7 @@ public class PreferenceScreenSwitch extends SwitchPreference implements OnPrefer
         
         setOnPreferenceChangeListener(this);
     }
-    
+
     @Override
     protected void onClick() {
         // Don't let users click the actual preference to changed the switch state
@@ -40,6 +40,7 @@ public class PreferenceScreenSwitch extends SwitchPreference implements OnPrefer
         for (int i = 0; i < group.getChildCount(); ++i) {
             View child = group.getChildAt(i);
             if (child instanceof Switch) {
+                child.setClickable(true);
 				child.setPadding(child.getPaddingLeft(), child.getPaddingTop(), 0, child.getPaddingBottom());
             }
         }
