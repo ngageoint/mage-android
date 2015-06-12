@@ -83,12 +83,6 @@
             android:parentActivityName="mil.nga.giat.mage.preferences.GeneralPreferencesFragment" >
         </activity>
         <activity
-            android:name="mil.nga.giat.mage.preferences.NotificationPreferencesActivity"
-            android:icon="@drawable/ic_info"
-            android:label="@string/notifications_settings"
-            android:parentActivityName="mil.nga.giat.mage.preferences.GeneralPreferencesFragment" >
-        </activity>
-        <activity
             android:name="mil.nga.giat.mage.preferences.ClearDataPreferenceActivity"
             android:icon="@drawable/ic_settings_white"
             android:label="Clear Data"
