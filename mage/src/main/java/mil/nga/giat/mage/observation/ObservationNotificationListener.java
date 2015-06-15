@@ -45,7 +45,7 @@ public class ObservationNotificationListener implements IObservationEventListene
 
 		// TODO: what is this?
 		// are we configured to fire notifications?
-		Boolean fireNotification = mPreferences.getBoolean(mContext.getString(R.string.notificationsEnabledKey), Boolean.FALSE);
+		Boolean fireNotification = mPreferences.getBoolean(mContext.getString(R.string.notificationsEnabledKey), mContext.getResources().getBoolean(R.bool.notificationsEnabledDefaultValue));
 
 		// are any of the observations remote?  We don't want to fire on locally created
 		// observations.

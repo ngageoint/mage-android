@@ -186,7 +186,6 @@ public class MAGE extends MultiDexApplication implements IUserEventListener {
 
 		// Creates an explicit intent for an Activity in your app
 		Intent resultIntent = new Intent(this, LoginActivity.class);
-		resultIntent.putExtra(LoginActivity.EXTRA_PICK_DEFAULT_EVENT, true);
 
 		// The stack builder object will contain an artificial back stack for the
 		// started Activity.
@@ -206,6 +205,7 @@ public class MAGE extends MultiDexApplication implements IUserEventListener {
 	private PendingIntent getLogoutPendingIntent() {
 		Intent intent = new Intent(getApplicationContext(), LoginActivity.class);
 		intent.putExtra("LOGOUT", true);
+		intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
 		return PendingIntent.getActivity(getApplicationContext(), 1, intent, PendingIntent.FLAG_UPDATE_CURRENT);
 	}
 
