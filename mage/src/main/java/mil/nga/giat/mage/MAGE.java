@@ -126,36 +126,39 @@ public class MAGE extends MultiDexApplication implements IUserEventListener {
 
 	public void onLogout(Boolean clearTokenInformationAndSendLogoutRequest) {
 
-        if(clearTokenInformationAndSendLogoutRequest) {
-			if(observationNotificationListener != null){
-				ObservationHelper.getInstance(getApplicationContext()).removeListener(observationNotificationListener);
-			}
+		if(observationNotificationListener != null){
+			ObservationHelper.getInstance(getApplicationContext()).removeListener(observationNotificationListener);
+		}
 
-			destroyFetching();
-			destroyPushing();
-			destroyLocationService();
-			destroyNotification();
+		destroyFetching();
+		destroyPushing();
+		destroyLocationService();
+		NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+		notificationManager.cancel(MAGE_NOTIFICATION_ID);
+		notificationManager.cancel(ObservationNotificationListener.OBSERVATION_NOTIFICATION_ID);
 
-            Runnable runnable = new Runnable() {
-                @Override
-                public void run() {
-                    if(!MageServerPostRequests.logout(getApplicationContext())) {
-                        Log.e(LOG_NAME, "Unable to logout from server.");
-                    }
-                }
-            };
-            new Thread(runnable).start();
+		if(clearTokenInformationAndSendLogoutRequest) {
+			Runnable runnable = new Runnable() {
+				@Override
+				public void run() {
+					if(!MageServerPostRequests.logout(getApplicationContext())) {
+						Log.e(LOG_NAME, "Unable to logout from server.");
+					}
+				}
+			};
+			new Thread(runnable).start();
 
-            UserUtility.getInstance(getApplicationContext()).clearTokenInformation();
-			SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-			SharedPreferences.Editor editor = sharedPreferences.edit();
-			editor.remove(getApplicationContext().getString(mil.nga.giat.mage.sdk.R.string.currentEventKey)).commit();
+			UserUtility.getInstance(getApplicationContext()).clearTokenInformation();
+		}
 
-			Boolean deleteAllDataOnLogout = sharedPreferences.getBoolean(getApplicationContext().getString(R.string.deleteAllDataOnLogoutKey), getResources().getBoolean(R.bool.deleteAllDataOnLogoutDefaultValue));
+		SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+		SharedPreferences.Editor editor = sharedPreferences.edit();
+		editor.remove(getApplicationContext().getString(mil.nga.giat.mage.sdk.R.string.currentEventKey)).commit();
 
-			if(deleteAllDataOnLogout) {
-				LandingActivity.deleteAllData(getApplicationContext());
-			}
+		Boolean deleteAllDataOnLogout = sharedPreferences.getBoolean(getApplicationContext().getString(R.string.deleteAllDataOnLogoutKey), getResources().getBoolean(R.bool.deleteAllDataOnLogoutDefaultValue));
+
+		if(deleteAllDataOnLogout) {
+			LandingActivity.deleteAllData(getApplicationContext());
 		}
 	}
 

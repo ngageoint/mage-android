@@ -487,10 +487,6 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 	protected void onResume() {
 		super.onResume();
 
-		if (getIntent().getBooleanExtra("LOGOUT", false)) {
-			((MAGE) getApplication()).onLogout(true);
-		}
-
 		showKeyboard();
 		// show form, and hide spinner
 		findViewById(R.id.login_status).setVisibility(View.GONE);

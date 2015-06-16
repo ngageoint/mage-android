@@ -18,7 +18,6 @@ public class DisclaimerActivity extends FragmentActivity {
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
 		setContentView(R.layout.activity_disclaimer);
 		getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
-		((MAGE) getApplication()).onLogout(true);
 	}
 
 	public void agree(View view) {
