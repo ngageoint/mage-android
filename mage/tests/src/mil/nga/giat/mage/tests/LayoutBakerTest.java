@@ -100,7 +100,7 @@ public class LayoutBakerTest extends ActivityInstrumentationTestCase2<Observatio
 		LayoutBaker.populateLayoutWithControls(ll, controls);
 
 		// check two way mapping
-		LayoutBaker.populateLayoutFromMap(ll, propertiesMapBefore);
+		LayoutBaker.populateLayoutFromMap(ll, LayoutBaker.ControlGenerationType.VIEW, propertiesMapBefore);
 
 		final Map<String, ObservationProperty> propertiesMapAfter = LayoutBaker.populateMapFromLayout(ll);
 

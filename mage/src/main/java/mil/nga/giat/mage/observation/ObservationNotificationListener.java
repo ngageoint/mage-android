@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Vibrator;
 import android.preference.PreferenceManager;
+import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.NotificationManagerCompat;
 
 import java.util.Collection;
@@ -67,11 +68,14 @@ public class ObservationNotificationListener implements IObservationEventListene
 			PendingIntent viewPendingIntent =
 					PendingIntent.getActivity(mContext, 0, viewIntent, 0);
 
-			Builder notificationBuilder =
-					new Builder(mContext)
+			NotificationCompat.Builder notificationBuilder =
+					new NotificationCompat.Builder(mContext)
 							.setSmallIcon(R.drawable.ic_new_obs)
 							.setContentTitle("New MAGE Observation(s)")
 							.setContentText("Log into application for more details.")
+							.setPriority(NotificationCompat.PRIORITY_MAX)
+							.setDefaults(NotificationCompat.DEFAULT_VIBRATE)
+							.setAutoCancel(true)
 							.setContentIntent(viewPendingIntent);
 
 			// Get an instance of the NotificationManager service
@@ -81,8 +85,10 @@ public class ObservationNotificationListener implements IObservationEventListene
 			notificationManager.notify(OBSERVATION_NOTIFICATION_ID, notificationBuilder.build());
 
 			// pulse the vibrator
-			Vibrator vibrator = (Vibrator) mContext.getSystemService(Context.VIBRATOR_SERVICE);
-			vibrator.vibrate(50);
+			// Vibrator vibrator = (Vibrator) mContext.getSystemService(Context.VIBRATOR_SERVICE);
+			// vibrator.vibrate(1000);
+			// ***Since notification builder has property DEFAULT_VIBRATE
+			// we should need more vibrations.
 		}
 	}
 
