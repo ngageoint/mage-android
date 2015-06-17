@@ -86,10 +86,6 @@ public class MAGE extends MultiDexApplication implements IUserEventListener {
 		// setup the screen unlock stuff
 		registerReceiver(ScreenChangeReceiver.getInstance(), new IntentFilter(Intent.ACTION_SCREEN_ON));
 
-        //set up Observation notifications
-		observationNotificationListener = new ObservationNotificationListener(getApplicationContext());
-		ObservationHelper.getInstance(getApplicationContext()).addListener(observationNotificationListener);
-
         HttpClientManager.getInstance(getApplicationContext()).addListener(this);
 
 		super.onCreate();
@@ -99,6 +95,10 @@ public class MAGE extends MultiDexApplication implements IUserEventListener {
 		createNotification();
 		// Start location services
 		initLocationService();
+
+		//set up Observation notifications
+		observationNotificationListener = new ObservationNotificationListener(getApplicationContext());
+		ObservationHelper.getInstance(getApplicationContext()).addListener(observationNotificationListener);
 
 		// Start fetching and pushing observations and locations
 		startFetching();
@@ -133,33 +133,37 @@ public class MAGE extends MultiDexApplication implements IUserEventListener {
 		destroyFetching();
 		destroyPushing();
 		destroyLocationService();
-		NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-		notificationManager.cancel(MAGE_NOTIFICATION_ID);
-        notificationManager.cancel(ObservationNotificationListener.OBSERVATION_NOTIFICATION_ID);
+		destroyNotification();
 
-        if(clearTokenInformationAndSendLogoutRequest) {
-            Runnable runnable = new Runnable() {
-                @Override
-                public void run() {
-                    if(!MageServerPostRequests.logout(getApplicationContext())) {
-                        Log.e(LOG_NAME, "Unable to logout from server.");
-                    }
-                }
-            };
-            new Thread(runnable).start();
+		if(clearTokenInformationAndSendLogoutRequest) {
+			Runnable runnable = new Runnable() {
+				@Override
+				public void run() {
+					if(!MageServerPostRequests.logout(getApplicationContext())) {
+						Log.e(LOG_NAME, "Unable to logout from server.");
+					}
+				}
+			};
+			new Thread(runnable).start();
 
-            UserUtility.getInstance(getApplicationContext()).clearTokenInformation();
-        }
+			UserUtility.getInstance(getApplicationContext()).clearTokenInformation();
+		}
 
-        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-        SharedPreferences.Editor editor = sharedPreferences.edit();
-        editor.remove(getApplicationContext().getString(mil.nga.giat.mage.sdk.R.string.currentEventKey)).commit();
+		SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+		SharedPreferences.Editor editor = sharedPreferences.edit();
+		editor.remove(getApplicationContext().getString(mil.nga.giat.mage.sdk.R.string.currentEventKey)).commit();
 
 		Boolean deleteAllDataOnLogout = sharedPreferences.getBoolean(getApplicationContext().getString(R.string.deleteAllDataOnLogoutKey), getResources().getBoolean(R.bool.deleteAllDataOnLogoutDefaultValue));
 
 		if(deleteAllDataOnLogout) {
 			LandingActivity.deleteAllData(getApplicationContext());
-		}		
+		}
+	}
+
+	private void destroyNotification(){
+		NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+		notificationManager.cancel(MAGE_NOTIFICATION_ID);
+		notificationManager.cancel(ObservationNotificationListener.OBSERVATION_NOTIFICATION_ID);
 	}
 
 	private void createNotification() {
@@ -167,17 +171,17 @@ public class MAGE extends MultiDexApplication implements IUserEventListener {
 		getLogoutPendingIntent().cancel();
 		boolean tokenExpired = UserUtility.getInstance(getApplicationContext()).isTokenExpired();
 
-        String notificationMsg = tokenExpired ? "Your token has expired, please tap to login." : "You are logged in. Slide down to logout.";
+		String notificationMsg = tokenExpired ? "Your token has expired, please tap to login." : "You are logged in. Slide down to logout.";
 		NotificationCompat.Builder builder = new NotificationCompat.Builder(this)
-                .setSmallIcon(R.drawable.ic_launcher)
-                .setContentTitle("MAGE")
-                .setOngoing(true)
+				.setSmallIcon(R.drawable.ic_launcher)
+				.setContentTitle("MAGE")
+				.setOngoing(true)
 				.setPriority(NotificationCompat.PRIORITY_MAX)
-                .setContentText(notificationMsg)
-                .addAction(R.drawable.ic_power_off_white, "Logout", getLogoutPendingIntent());
+				.setContentText(notificationMsg)
+				.addAction(R.drawable.ic_power_off_white, "Logout", getLogoutPendingIntent());
 
-        NotificationCompat.BigTextStyle bigTextStyle = new NotificationCompat.BigTextStyle();
-        bigTextStyle.setBigContentTitle("MAGE").bigText(notificationMsg);
+		NotificationCompat.BigTextStyle bigTextStyle = new NotificationCompat.BigTextStyle();
+		bigTextStyle.setBigContentTitle("MAGE").bigText(notificationMsg);
 
 		builder.setStyle(bigTextStyle);
 
@@ -196,7 +200,7 @@ public class MAGE extends MultiDexApplication implements IUserEventListener {
 		PendingIntent resultPendingIntent = stackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
 		builder.setContentIntent(resultPendingIntent);
 		NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-		notificationManager.notify(MAGE.MAGE_NOTIFICATION_ID, builder.build());
+		notificationManager.notify(MAGE_NOTIFICATION_ID, builder.build());
 	}
 
 	private PendingIntent getLogoutPendingIntent() {
