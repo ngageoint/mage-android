@@ -133,9 +133,7 @@ public class MAGE extends MultiDexApplication implements IUserEventListener {
 		destroyFetching();
 		destroyPushing();
 		destroyLocationService();
-		NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-		notificationManager.cancel(MAGE_NOTIFICATION_ID);
-		notificationManager.cancel(ObservationNotificationListener.OBSERVATION_NOTIFICATION_ID);
+		destroyNotification();
 
 		if(clearTokenInformationAndSendLogoutRequest) {
 			Runnable runnable = new Runnable() {
