@@ -71,11 +71,6 @@ public abstract class DownloadImageTask extends AsyncTask<Void, Void, Void> {
 					Log.e(LOG_NAME, "File already exists, not downloading.");
 					continue;
 				}
-
-				if (!localFile.canWrite()) {
-					Log.e(LOG_NAME, "Can not write to: " + localFile + ".  Skipping.");
-					continue;
-				}
 			} else {
 				if (localFile.exists() && localFile.isFile()) {
 					localFile.delete();
