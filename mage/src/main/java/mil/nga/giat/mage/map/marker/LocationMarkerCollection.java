@@ -36,8 +36,8 @@ import java.util.TimeZone;
 import java.util.concurrent.ConcurrentHashMap;
 
 import mil.nga.giat.mage.R;
-import mil.nga.giat.mage.profile.ProfileFragment;
 import mil.nga.giat.mage.profile.ProfileActivity;
+import mil.nga.giat.mage.profile.ProfileFragment;
 import mil.nga.giat.mage.sdk.datastore.location.Location;
 import mil.nga.giat.mage.sdk.datastore.location.LocationHelper;
 import mil.nga.giat.mage.sdk.datastore.location.LocationProperty;
@@ -202,6 +202,7 @@ public class LocationMarkerCollection implements PointCollection<Location>, OnMa
 				} catch (UserException ue) {
 					Log.e(LOG_NAME, "Error refreshing the icon for user: " + tl.getUser().getId(), ue);
 				}
+
 				if (showWindow) {
 					m.showInfoWindow();
 				}
@@ -301,12 +302,12 @@ public class LocationMarkerCollection implements PointCollection<Location>, OnMa
 						if(!errors.get(0)) {
 							String lap = localFilePaths.get(0);
 							location.getUser().setLocalAvatarPath(lap);
+
 							try {
 								UserHelper.getInstance(context).update(location.getUser());
 							} catch (Exception e) {
 								Log.e(LOG_NAME, e.getMessage(), e);
 							}
-							marker.showInfoWindow();
 						}
 
 						return result;

@@ -38,7 +38,7 @@
 
     <string-array name="baseLayerEntries">
         <item>Normal</item>
-        <item>Hyrbid</item>
+        <item>Hybrid</item>
         <item>Satellite</item>
         <item>Terrain</item>
     </string-array>

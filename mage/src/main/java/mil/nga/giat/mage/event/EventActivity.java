@@ -106,7 +106,6 @@ public class EventActivity extends Activity implements AccountDelegate {
 							chosenEvent = userRecentEvent;
 							finishAccount(new AccountStatus(AccountStatus.Status.SUCCESSFUL_LOGIN));
 						} else if (pickDefaultEvent && events.contains(userRecentEvent)) {
-							Log.i("BILLY", "PICKING USERS CURRENT EVENT!!!!!!!!!!!!!!!!!!!!!!!!!!!");
 							chosenEvent = userRecentEvent;
 							finishAccount(new AccountStatus(AccountStatus.Status.SUCCESSFUL_LOGIN));
 						} else {
