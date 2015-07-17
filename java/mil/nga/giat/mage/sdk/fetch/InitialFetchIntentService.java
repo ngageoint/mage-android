@@ -77,8 +77,8 @@ public class InitialFetchIntentService extends ConnectivityAwareIntentService {
 			getUsers(userJSONCache);
 
 			// users are updated, finish getting image content
-			avatarFetch.executeOnExecutor(executor);
-			iconFetch.executeOnExecutor(executor);
+			if (avatarFetch != null) avatarFetch.executeOnExecutor(executor);
+			if (iconFetch != null) iconFetch.executeOnExecutor(executor);
 		} else {
 			Log.d(LOG_NAME, "The device is currently disconnected, or data fetch is disabled, or this is a local login. Not performing fetch.");
 		}
