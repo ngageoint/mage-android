@@ -37,12 +37,10 @@
 
     <!-- ************************************************************* -->
 
-    <string name="recentMapXYZKey">recentMapXYZ</string>
-    <string name="recentMapXYZDefaultValue">263.0,40.0,3</string>
-
     <!-- TODO : all of the following should not go in pairs -->
     <string name="clearDataKey">clearData</string>
     <string name="tileOverlaysKey">tileOverlays</string>
+    <string name="recentMapXYZKey">recentMapXYZ</string>
     <string name="staticFeatureLayersKey">staticFeatureLayers</string>
 
     <!-- FIXME: what is this stuff? why is it in shared prefs? -->
