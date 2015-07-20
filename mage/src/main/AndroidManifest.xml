@@ -4,10 +4,6 @@
     android:versionCode="9"
     android:versionName="4.0.2">
 
-    <uses-sdk
-        android:minSdkVersion="16"
-        android:targetSdkVersion="22" />
-
     <permission
         android:name="mil.nga.giat.mage.permission.MAPS_RECEIVE"
         android:protectionLevel="signature" />
@@ -135,33 +131,34 @@
                 <action android:name="android.net.conn.CONNECTIVITY_CHANGE" />
             </intent-filter>
         </receiver>
+
         <service
             android:name="mil.nga.giat.mage.sdk.fetch.LocationFetchIntentService"
-            android:exported="true" />
+            android:exported="false" />
 
         <service
             android:name="mil.nga.giat.mage.sdk.fetch.ObservationFetchIntentService"
-            android:exported="true" />
+            android:exported="false" />
 
         <service
             android:name="mil.nga.giat.mage.sdk.fetch.InitialFetchIntentService"
-            android:exported="true" />
+            android:exported="false" />
 
         <service
             android:name="mil.nga.giat.mage.sdk.push.LocationPushIntentService"
-            android:exported="true" />
+            android:exported="false" />
 
         <service
             android:name="mil.nga.giat.mage.sdk.push.ObservationPushIntentService"
-            android:exported="true" />
+            android:exported="false" />
 
         <receiver
             android:name="mil.nga.giat.mage.sdk.push.AttachmentPushAlarmReceiver"
-            android:exported="true" />
+            android:exported="false" />
 
         <service
             android:name="mil.nga.giat.mage.sdk.push.AttachmentPushIntentService"
-            android:exported="true" />
+            android:exported="false" />
 
         <meta-data
             android:name="com.google.android.maps.v2.API_KEY"
