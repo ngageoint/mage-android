@@ -173,7 +173,7 @@ public class MAGE extends MultiDexApplication implements IUserEventListener {
 
 		String notificationMsg = tokenExpired ? "Your token has expired, please tap to login." : "You are logged in. Slide down to logout.";
 		NotificationCompat.Builder builder = new NotificationCompat.Builder(this)
-				.setSmallIcon(R.drawable.ic_launcher)
+				.setSmallIcon(R.drawable.ic_wand)
 				.setContentTitle("MAGE")
 				.setOngoing(true)
 				.setPriority(NotificationCompat.PRIORITY_MAX)
