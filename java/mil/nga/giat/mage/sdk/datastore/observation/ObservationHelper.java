@@ -84,6 +84,10 @@ public class ObservationHelper extends DaoHelper<Observation> implements IEventD
 
 	@Override
 	public Observation create(Observation observation) throws ObservationException {
+		return create(observation, true);
+	}
+
+	public Observation create(Observation observation, Boolean sendUserNotifcations) throws ObservationException {
 
 		Observation createdObservation;
 
@@ -118,12 +122,12 @@ public class ObservationHelper extends DaoHelper<Observation> implements IEventD
 			Log.e(LOG_NAME, "There was a problem creating the observation: " + observation + ".", sqle);
 			throw new ObservationException("There was a problem creating the observation: " + observation + ".", sqle);
 		}
-		
+
 		// fire the event
 		for (IObservationEventListener listener : listeners) {
-			listener.onObservationCreated(Collections.singletonList(createdObservation));
+			listener.onObservationCreated(Collections.singletonList(createdObservation), sendUserNotifcations);
 		}
-		
+
 		return createdObservation;
 	}
 
