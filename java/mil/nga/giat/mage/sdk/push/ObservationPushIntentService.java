@@ -86,7 +86,7 @@ public class ObservationPushIntentService extends ConnectivityAwareIntentService
 	}
 
 	@Override
-	public void onObservationCreated(Collection<Observation> observations) {
+	public void onObservationCreated(Collection<Observation> observations, Boolean sendUserNotifcations) {
 		for (Observation observation : observations) {
 			if (observation.isDirty()) {
 				synchronized (pushSemaphore) {

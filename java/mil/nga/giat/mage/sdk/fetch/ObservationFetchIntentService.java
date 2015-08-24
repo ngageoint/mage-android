@@ -52,11 +52,10 @@ public class ObservationFetchIntentService extends ConnectivityAwareIntentServic
 		userHelper.addListener(this);
 		SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
 
-		Boolean isDataFetchEnabled = sharedPreferences.getBoolean(getString(R.string.dataFetchEnabledKey), getResources().getBoolean(R.bool.dataFetchEnabledDefaultValue));
 		needToFetchIcons.set(true);
 
 		while (!isCanceled) {
-			isDataFetchEnabled = sharedPreferences.getBoolean(getString(R.string.dataFetchEnabledKey), getResources().getBoolean(R.bool.dataFetchEnabledDefaultValue));
+			Boolean isDataFetchEnabled = sharedPreferences.getBoolean(getString(R.string.dataFetchEnabledKey), getResources().getBoolean(R.bool.dataFetchEnabledDefaultValue));
 
 			if (isConnected && isDataFetchEnabled && !LoginTaskFactory.getInstance(getApplicationContext()).isLocalLogin()) {
 
@@ -91,7 +90,7 @@ public class ObservationFetchIntentService extends ConnectivityAwareIntentServic
 							observationHelper.delete(oldObservation.getId());
 							Log.d(LOG_NAME, "Deleted observation with remote_id " + observation.getRemoteId());
 						} else if (!observation.getState().equals(State.ARCHIVE) && oldObservation == null) {
-							observation = observationHelper.create(observation);
+							observation = observationHelper.create(observation, !firstTimeToRun);
 							Log.d(LOG_NAME, "Created observation with remote_id " + observation.getRemoteId());
 						} else if (!observation.getState().equals(State.ARCHIVE) && oldObservation != null && !oldObservation.isDirty()) { // TODO : conflict resolution
 							observation.setId(oldObservation.getId());
