@@ -33,7 +33,6 @@ import mil.nga.giat.mage.sdk.datastore.DaoStore;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.gson.deserializer.UserDeserializer;
 import mil.nga.giat.mage.sdk.http.client.HttpClientManager;
-import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
 import mil.nga.giat.mage.sdk.utils.DateFormatFactory;
 import mil.nga.giat.mage.sdk.utils.DeviceUuidFactory;
 import mil.nga.giat.mage.sdk.utils.PasswordUtility;
@@ -123,22 +122,7 @@ public class FormAuthLoginTask extends AbstractAccountTask {
 				@Override
 				public boolean apply(Exception e) {
 					if (e == null) {
-						PreferenceHelper.getInstance(mApplicationContext).readRemoteApi(sURL, new Predicate<Exception>() {
-							@Override
-							public boolean apply(Exception e) {
-								if (e == null) {
-									callbackStatus = new AccountStatus(AccountStatus.Status.SUCCESSFUL_LOGIN);
-									return true;
-								} else {
-									List<Integer> errorIndices = new ArrayList<Integer>();
-									errorIndices.add(2);
-									List<String> errorMessages = new ArrayList<String>();
-									errorMessages.add("Problem connecting to server");
-									callbackStatus = new AccountStatus(AccountStatus.Status.FAILED_LOGIN, errorIndices, errorMessages);
-									return false;
-								}
-							}
-						});
+						callbackStatus = new AccountStatus(AccountStatus.Status.SUCCESSFUL_LOGIN);
 						return true;
 					} else {
 						List<Integer> errorIndices = new ArrayList<Integer>();

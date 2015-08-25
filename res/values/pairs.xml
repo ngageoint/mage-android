@@ -86,4 +86,23 @@
 
     <!-- ************************************************************* -->
 
+
+    <!-- ************** set in setdefaultpreferences.xml ************* -->
+
+    <string name="passwordMinLengthKey">gAuthenticationPasswordMinLength</string>
+    <integer name="passwordMinLengthDefaultValue">5</integer>
+
+    <string name="compatibleVersionMajorKey">compatibleVersionMajor</string>
+    <integer name="compatibleVersionMajorDefaultValue">3</integer>
+
+    <string name="compatibleVersionMinorKey">compatibleVersionMinor</string>
+    <integer name="compatibleVersionMinorDefaultValue">0</integer>
+
+    <!-- from the server /api call -->
+    <string name="serverVersionMajorKey">gVersionMajor</string>
+    <string name="serverVersionMinorKey">gVersionMinor</string>
+    <string name="serverDisclaimerShow">gDisclaimerShow</string>
+    <string name="serverDisclaimerTitle">gDisclaimerTitle</string>
+    <string name="serverDisclaimerText">gDisclaimerText</string>
+
 </resources>
