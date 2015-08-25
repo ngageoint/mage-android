@@ -36,7 +36,7 @@
                 <ImageView
                     android:layout_width="wrap_content"
                     android:layout_height="76dip"
-                    android:src="@drawable/ic_launcher"/>
+                    android:src="@drawable/ic_wand"/>
 
                 <ProgressBar
                     style="?android:attr/progressBarStyleLarge"

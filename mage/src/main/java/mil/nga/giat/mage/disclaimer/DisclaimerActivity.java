@@ -50,7 +50,10 @@ public class DisclaimerActivity extends FragmentActivity {
 		editor.apply();
 
 		Intent intent = new Intent(getApplicationContext(), EventActivity.class);
-		intent.putExtras(getIntent().getExtras());
+		Bundle extras = getIntent().getExtras();
+		if (extras != null) {
+			intent.putExtras(extras);
+		}
 		startActivity(intent);
 		finish();
 	}

@@ -41,6 +41,7 @@ import mil.nga.giat.mage.MAGE;
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.disclaimer.DisclaimerActivity;
 import mil.nga.giat.mage.event.EventActivity;
+import mil.nga.giat.mage.sdk.connectivity.ConnectivityUtility;
 import mil.nga.giat.mage.sdk.datastore.DaoStore;
 import mil.nga.giat.mage.sdk.login.AbstractAccountTask;
 import mil.nga.giat.mage.sdk.login.AccountDelegate;
@@ -172,7 +173,9 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 		if (StringUtils.isBlank(serverURL)) {
 			onServerUnlock(lockImageView);
 		} else {
-			onServerLock(lockImageView);
+			if (ConnectivityUtility.isOnline(getApplicationContext())) {
+				onServerLock(lockImageView);
+			}
 		}
 	}
 
@@ -318,15 +321,41 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 	}
 
 	private void onServerUnlock(final ImageView lockImageView) {
-		getServerEditText().setEnabled(true);
-		mLoginButton.setEnabled(false);
-		lockImageView.setTag("unlock");
-		lockImageView.setImageResource(R.drawable.unlock_108);
-		showKeyboard();
-		getServerEditText().requestFocus();
+		if (ConnectivityUtility.isOnline(getApplicationContext())) {
+			getServerEditText().setEnabled(true);
+			mLoginButton.setEnabled(false);
+			lockImageView.setTag("unlock");
+			lockImageView.setImageResource(R.drawable.unlock_108);
+			showKeyboard();
+			getServerEditText().requestFocus();
+		} else {
+			new AlertDialog.Builder(this)
+				.setTitle("No Connectivity")
+				.setMessage("Sorry, you cannot change the server URL with no network connectivity.")
+				.setPositiveButton(android.R.string.ok, new OnClickListener() {
+					@Override
+					public void onClick(DialogInterface dialog, int which) {
+						dialog.dismiss();
+					}
+				}).show();
+		}
 	}
 
 	private void onServerLock(final ImageView lockImageView) {
+		SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+		String serverURLPref =  sharedPreferences.getString(getString(R.string.serverURLKey), getString(R.string.serverURLDefaultValue));
+		if (StringUtils.isNoneBlank(serverURLPref) && serverURLPref.equals(getServerEditText().getText().toString())) {
+			// Server URL was previously set in preferences and did not change.
+			// no need to hit the server again
+			getServerEditText().setEnabled(false);
+			mLoginButton.setEnabled(true);
+			lockImageView.setTag("lock");
+			lockImageView.setImageResource(R.drawable.lock_108);
+			getServerEditText().setError(null);
+			
+			return;
+		}
+
 		final String url = getServerEditText().getText().toString();
 		final View serverProgress = findViewById(R.id.login_server_progress);
 

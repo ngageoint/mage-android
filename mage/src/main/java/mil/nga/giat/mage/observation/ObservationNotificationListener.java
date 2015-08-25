@@ -28,7 +28,6 @@ public class ObservationNotificationListener implements IObservationEventListene
 	private Context mContext;
 	private SharedPreferences mPreferences;
 
-
 	/**
 	 * Constructor.
 	 *
@@ -41,54 +40,49 @@ public class ObservationNotificationListener implements IObservationEventListene
 	}
 
 	@Override
-	public void onObservationCreated(Collection<Observation> observations) {
+	public void onObservationCreated(Collection<Observation> observations, Boolean sendUserNotifcations) {
 
-		// TODO: what is this?
-		// are we configured to fire notifications?
-		Boolean fireNotification = mPreferences.getBoolean(mContext.getString(R.string.notificationsEnabledKey), mContext.getResources().getBoolean(R.bool.notificationsEnabledDefaultValue));
+		if(sendUserNotifcations != null && sendUserNotifcations) {
+			// are we configured to fire notifications?
+			Boolean notificationsEnabled = mPreferences.getBoolean(mContext.getString(R.string.notificationsEnabledKey), mContext.getResources().getBoolean(R.bool.notificationsEnabledDefaultValue));
 
-		// are any of the observations remote?  We don't want to fire on locally created
-		// observations.
-		Boolean remoteObservations = Boolean.FALSE;
-		if (fireNotification) {
-			for (Observation obs : observations) {
-				if (obs.getRemoteId() != null) {
-					remoteObservations = Boolean.TRUE;
-					break;
+			// are any of the observations remote?  We don't want to fire on locally created
+			// observations.
+			Boolean remoteObservations = Boolean.FALSE;
+			if (notificationsEnabled) {
+				for (Observation obs : observations) {
+					if (obs.getRemoteId() != null) {
+						remoteObservations = Boolean.TRUE;
+						break;
+					}
 				}
 			}
-		}
 
-		// to fire, or not to fire...THAT is the question.
-		if (fireNotification && remoteObservations && observations.size() > 0) {
+			// Should a notification be presented to the user?
+			if (notificationsEnabled && remoteObservations && (observations.size()) > 0) {
 
-			// Build intent for notification content
-			Intent viewIntent = new Intent(mContext, LandingActivity.class);
-			//viewIntent.putExtra(EXTRA_EVENT_ID, eventId);
-			PendingIntent viewPendingIntent =
-					PendingIntent.getActivity(mContext, 0, viewIntent, 0);
+				// Build intent for notification content
+				Intent viewIntent = new Intent(mContext, LandingActivity.class);
+				//viewIntent.putExtra(EXTRA_EVENT_ID, eventId);
+				PendingIntent viewPendingIntent =
+						PendingIntent.getActivity(mContext, 0, viewIntent, 0);
 
-			NotificationCompat.Builder notificationBuilder =
-					new NotificationCompat.Builder(mContext)
-							.setSmallIcon(R.drawable.ic_new_obs)
-							.setContentTitle("New MAGE Observation(s)")
-							.setContentText("Log into application for more details.")
-							.setPriority(NotificationCompat.PRIORITY_MAX)
-							.setDefaults(NotificationCompat.DEFAULT_VIBRATE)
-							.setAutoCancel(true)
-							.setContentIntent(viewPendingIntent);
+				NotificationCompat.Builder notificationBuilder =
+						new NotificationCompat.Builder(mContext)
+								.setSmallIcon(R.drawable.ic_new_obs)
+								.setContentTitle("New MAGE Observation(s)")
+								.setContentText("Touch for details")
+								.setVibrate(new long[]{0, 400, 75, 250, 75, 250})
+								.setPriority(NotificationCompat.PRIORITY_MAX)
+								.setAutoCancel(true)
+								.setContentIntent(viewPendingIntent);
 
-			// Get an instance of the NotificationManager service
-			NotificationManagerCompat notificationManager =	NotificationManagerCompat.from(mContext);
+				// Get an instance of the NotificationManager service
+				NotificationManagerCompat notificationManager = NotificationManagerCompat.from(mContext);
 
-			// Build the notification and issues it with notification manager.
-			notificationManager.notify(OBSERVATION_NOTIFICATION_ID, notificationBuilder.build());
-
-			// pulse the vibrator
-			// Vibrator vibrator = (Vibrator) mContext.getSystemService(Context.VIBRATOR_SERVICE);
-			// vibrator.vibrate(1000);
-			// ***Since notification builder has property DEFAULT_VIBRATE
-			// we should need more vibrations.
+				// Build the notification and issues it with notification manager.
+				notificationManager.notify(OBSERVATION_NOTIFICATION_ID, notificationBuilder.build());
+			}
 		}
 	}
 
