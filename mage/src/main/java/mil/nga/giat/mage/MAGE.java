@@ -153,6 +153,9 @@ public class MAGE extends MultiDexApplication implements IUserEventListener {
 		SharedPreferences.Editor editor = sharedPreferences.edit();
 		editor.remove(getApplicationContext().getString(mil.nga.giat.mage.sdk.R.string.currentEventKey)).commit();
 
+		editor.putBoolean(getString(R.string.disclaimerAccepted), false);
+		editor.apply();
+
 		Boolean deleteAllDataOnLogout = sharedPreferences.getBoolean(getApplicationContext().getString(R.string.deleteAllDataOnLogoutKey), getResources().getBoolean(R.bool.deleteAllDataOnLogoutDefaultValue));
 
 		if(deleteAllDataOnLogout) {
@@ -372,5 +375,10 @@ public class MAGE extends MultiDexApplication implements IUserEventListener {
 		destroyFetching();
 		destroyPushing();
 		createNotification();
+
+		SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+		SharedPreferences.Editor editor = sharedPreferences.edit();
+		editor.putBoolean(getString(R.string.disclaimerAccepted), false);
+		editor.apply();
 	}
 }

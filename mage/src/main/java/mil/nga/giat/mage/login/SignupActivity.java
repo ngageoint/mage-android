@@ -348,8 +348,8 @@ public class SignupActivity extends Activity implements AccountDelegate {
 										Integer compatibleMajorVersion = sharedPreferences.getInt(getString(R.string.compatibleVersionMajorKey), getResources().getInteger(R.integer.compatibleVersionMajorDefaultValue));
 										Integer compatibleMinorVersion = sharedPreferences.getInt(getString(R.string.compatibleVersionMinorKey), getResources().getInteger(R.integer.compatibleVersionMinorDefaultValue));
 
-										Integer serverMajorVersion = sharedPreferences.getInt(getString(R.string.serverVersionMajorKey), getResources().getInteger(R.integer.serverVersionMajorDefaultValue));
-										Integer serverMinorVersion = sharedPreferences.getInt(getString(R.string.serverVersionMinorKey), getResources().getInteger(R.integer.serverVersionMinorDefaultValue));
+										Integer serverMajorVersion = sharedPreferences.getInt(getString(R.string.serverVersionMajorKey), 0);
+										Integer serverMinorVersion = sharedPreferences.getInt(getString(R.string.serverVersionMinorKey), 0);
 
 										if (serverMajorVersion == null || serverMinorVersion == null) {
 											showKeyboard();

@@ -31,9 +31,9 @@
 			    android:layout_width="150dip"
 			    android:layout_height="wrap_content"
 			    android:orientation="horizontal">
-		        <ImageView 
-		            android:layout_width="wrap_content" 
-		            android:layout_height="76dip" 
+		        <ImageView
+		            android:layout_width="wrap_content"
+		            android:layout_height="76dip"
 		            android:src="@drawable/ic_launcher"/>
 	            <ProgressBar
 	                style="?android:attr/progressBarStyleLarge"
@@ -123,7 +123,6 @@
                     android:layout_height="26dip"
                     android:layout_weight=".12"
                     android:contentDescription="lock"
-                    android:onClick="toggleLock"
                     android:src="@drawable/lock_108"
                     android:tag="lock" />
 

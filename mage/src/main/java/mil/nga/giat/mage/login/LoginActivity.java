@@ -34,8 +34,6 @@ import com.google.common.base.Predicate;
 
 import org.apache.commons.lang3.StringUtils;
 
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -43,7 +41,6 @@ import mil.nga.giat.mage.MAGE;
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.disclaimer.DisclaimerActivity;
 import mil.nga.giat.mage.event.EventActivity;
-import mil.nga.giat.mage.sdk.connectivity.ConnectivityUtility;
 import mil.nga.giat.mage.sdk.datastore.DaoStore;
 import mil.nga.giat.mage.sdk.login.AbstractAccountTask;
 import mil.nga.giat.mage.sdk.login.AccountDelegate;
@@ -126,12 +123,6 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 			}
 		}
 
-		// show the disclaimer?
-		if (UserUtility.getInstance(getApplicationContext()).isTokenExpired()) {
-			Intent intent = new Intent(this, DisclaimerActivity.class);
-			startActivity(intent);
-		}
-
 		// if token is not expired, then skip the login module
 		if (!UserUtility.getInstance(getApplicationContext()).isTokenExpired()) {
 			skipLogin();
@@ -143,6 +134,12 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 		hideKeyboardOnClick(findViewById(R.id.login));
 
 		((TextView) findViewById(R.id.login_version)).setText("Version: " + sharedPreferences.getString(getString(R.string.buildVersionKey), "NA"));
+		findViewById(R.id.login_lock).setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				onLockToggle(v, false);
+			}
+		});
 
 		mUsernameEditText = (EditText) findViewById(R.id.login_username);
 		mPasswordEditText = (EditText) findViewById(R.id.login_password);
@@ -151,10 +148,12 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 
 		mLoginButton = (Button) findViewById(R.id.login_login_button);
 
+		String serverURL = sharedPreferences.getString(getString(R.string.serverURLKey), getString(R.string.serverURLDefaultValue));
+
 		// set the default values
 		getUsernameEditText().setText(sharedPreferences.getString(getString(R.string.usernameKey), getString(R.string.usernameDefaultValue)));
 		getUsernameEditText().setSelection(getUsernameEditText().getText().length());
-		getServerEditText().setText(sharedPreferences.getString(getString(R.string.serverURLKey), getString(R.string.serverURLDefaultValue)));
+		getServerEditText().setText(serverURL);
 		getServerEditText().setSelection(getServerEditText().getText().length());
 
 		mPasswordEditText.setOnKeyListener(new View.OnKeyListener() {
@@ -168,6 +167,13 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 				}
 			}
 		});
+
+		ImageView lockImageView = (ImageView) findViewById(R.id.login_lock);
+		if (StringUtils.isBlank(serverURL)) {
+			onServerUnlock(lockImageView);
+		} else {
+			onServerLock(lockImageView);
+		}
 	}
 
 	public void togglePassword(View v) {
@@ -302,98 +308,61 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 	 *
 	 * @param view
 	 */
-	public void toggleLock(View view) {
+	public void onLockToggle(View view, boolean initialLoad) {
 		final ImageView lockImageView = ((ImageView) findViewById(R.id.login_lock));
 		if (lockImageView.getTag().toString().equals("lock")) {
-			getServerEditText().setEnabled(!getServerEditText().isEnabled());
-			mLoginButton.setEnabled(!mLoginButton.isEnabled());
-			lockImageView.setTag("unlock");
-			lockImageView.setImageResource(R.drawable.unlock_108);
-			showKeyboard();
-			getServerEditText().requestFocus();
+			onServerUnlock(lockImageView);
 		} else {
-			final View serverProgress = findViewById(R.id.login_server_progress);
-			try {
-				lockImageView.setVisibility(View.GONE);
-				serverProgress.setVisibility(View.VISIBLE);
+			onServerLock(lockImageView);
+		}
+	}
 
-				// make sure the url syntax is good
-				String serverURL = getServerEditText().getText().toString();
-				final URL sURL = new URL(serverURL);
+	private void onServerUnlock(final ImageView lockImageView) {
+		getServerEditText().setEnabled(true);
+		mLoginButton.setEnabled(false);
+		lockImageView.setTag("unlock");
+		lockImageView.setImageResource(R.drawable.unlock_108);
+		showKeyboard();
+		getServerEditText().requestFocus();
+	}
 
-				// make sure you can get to the host!
-				ConnectivityUtility.isResolvable(sURL.getHost(), new Predicate<Exception>() {
-					@Override
-					public boolean apply(Exception e) {
-						if (e == null) {
-							PreferenceHelper.getInstance(getApplicationContext()).readRemoteApi(sURL, new Predicate<Exception>() {
-								public boolean apply(Exception e) {
-									getServerEditText().setError(null);
-									serverProgress.setVisibility(View.GONE);
-									lockImageView.setVisibility(View.VISIBLE);
-									if (e != null) {
-										showKeyboard();
-										getServerEditText().setError("No server information");
-										getServerEditText().requestFocus();
-										return false;
-									} else {
-										// check versions
-										SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-										Integer compatibleMajorVersion = sharedPreferences.getInt(getString(R.string.compatibleVersionMajorKey), getResources().getInteger(R.integer.compatibleVersionMajorDefaultValue));
-										Integer compatibleMinorVersion = sharedPreferences.getInt(getString(R.string.compatibleVersionMinorKey), getResources().getInteger(R.integer.compatibleVersionMinorDefaultValue));
+	private void onServerLock(final ImageView lockImageView) {
+		final String url = getServerEditText().getText().toString();
+		final View serverProgress = findViewById(R.id.login_server_progress);
 
-										Integer serverMajorVersion = sharedPreferences.getInt(getString(R.string.serverVersionMajorKey), getResources().getInteger(R.integer.serverVersionMajorDefaultValue));
-										Integer serverMinorVersion = sharedPreferences.getInt(getString(R.string.serverVersionMinorKey), getResources().getInteger(R.integer.serverVersionMinorDefaultValue));
+		lockImageView.setVisibility(View.GONE);
+		serverProgress.setVisibility(View.VISIBLE);
 
-										if (serverMajorVersion == null || serverMinorVersion == null) {
-											showKeyboard();
-											getServerEditText().setError("No server version");
-											getServerEditText().requestFocus();
-										} else {
-											if (!compatibleMajorVersion.equals(serverMajorVersion)) {
-												showKeyboard();
-												getServerEditText().setError("This app is not compatible with this server");
-												getServerEditText().requestFocus();
-											} else if (compatibleMinorVersion > serverMinorVersion) {
-												showKeyboard();
-												getServerEditText().setError("This app is not compatible with this server");
-												getServerEditText().requestFocus();
-											} else {
-												getServerEditText().setEnabled(!getServerEditText().isEnabled());
-												mLoginButton.setEnabled(!mLoginButton.isEnabled());
-												lockImageView.setTag("lock");
-												lockImageView.setImageResource(R.drawable.lock_108);
-											}
-										}
-									}
-									return true;
-								}
-							});
-						} else {
-							showKeyboard();
-							getServerEditText().setError("Host does not resolve");
-							getServerEditText().requestFocus();
-							serverProgress.setVisibility(View.GONE);
-							lockImageView.setVisibility(View.VISIBLE);
-							return false;
-						}
-						return true;
-					}
-				});
-			} catch (MalformedURLException mue) {
-				showKeyboard();
-				getServerEditText().setError("Bad URL");
-				getServerEditText().requestFocus();
+		PreferenceHelper.getInstance(getApplicationContext()).validateServerApi(url, new Predicate<Exception>() {
+			@Override
+			public boolean apply(Exception e) {
 				serverProgress.setVisibility(View.GONE);
 				lockImageView.setVisibility(View.VISIBLE);
+
+				if (e == null) {
+					getServerEditText().setEnabled(false);
+					mLoginButton.setEnabled(true);
+					lockImageView.setTag("lock");
+					lockImageView.setImageResource(R.drawable.lock_108);
+					getServerEditText().setError(null);
+					return true;
+				} else {
+					mLoginButton.setEnabled(false);
+					getServerEditText().setEnabled(true);
+					showKeyboard();
+					getServerEditText().setError(e.getMessage());
+					getServerEditText().requestFocus();
+					return false;
+				}
 			}
-		}
+		});
 	}
 
 	private void showKeyboard() {
 		InputMethodManager inputMethodManager = (InputMethodManager) getSystemService(Activity.INPUT_METHOD_SERVICE);
 		inputMethodManager.toggleSoftInput(InputMethodManager.SHOW_IMPLICIT, 0);
 	}
+
 
 	@Override
 	public void finishAccount(AccountStatus accountStatus) {
@@ -471,13 +440,25 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 	}
 
 	public void startNextActivityAndFinish() {
-		Intent intent = new Intent(getApplicationContext(), EventActivity.class);
+		SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+		boolean showDisclaimer = sharedPreferences.getBoolean(getString(R.string.serverDisclaimerShow), false);
+
+		Intent intent = showDisclaimer ?
+				new Intent(getApplicationContext(), DisclaimerActivity.class) :
+				new Intent(getApplicationContext(), EventActivity.class);
+
 		startActivity(intent);
 		finish();
 	}
 
 	public void skipLogin() {
-		Intent intent = new Intent(getApplicationContext(), EventActivity.class);
+		SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+		boolean disclaimerAccepted = sharedPreferences.getBoolean(getString(R.string.disclaimerAccepted), false);
+
+		Intent intent = disclaimerAccepted ?
+				new Intent(getApplicationContext(), EventActivity.class) :
+				new Intent(getApplicationContext(), DisclaimerActivity.class);
+
 		intent.putExtra(EventActivity.EXTRA_CHOOSE_CURRENT_EVENT, true);
 		startActivity(intent);
 		finish();
