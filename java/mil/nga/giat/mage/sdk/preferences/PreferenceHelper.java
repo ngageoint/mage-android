@@ -21,6 +21,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.lang.reflect.Field;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
@@ -28,6 +29,7 @@ import java.util.Map;
 import java.util.Set;
 
 import mil.nga.giat.mage.sdk.R;
+import mil.nga.giat.mage.sdk.connectivity.ConnectivityUtility;
 import mil.nga.giat.mage.sdk.http.client.HttpClientManager;
 
 /**
@@ -135,6 +137,56 @@ public class PreferenceHelper implements SharedPreferences.OnSharedPreferenceCha
 
 	public synchronized void readRemoteApi(URL serverURL, Predicate<Exception> callback) {
         new RemotePreferenceColonizationApi(callback).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, serverURL);
+	}
+
+	public void validateServerApi(String url, final Predicate<Exception> callback) {
+		try {
+			final URL serverURL = new URL(url);
+			// make sure you can get to the host!
+			ConnectivityUtility.isResolvable(serverURL.getHost(), new Predicate<Exception>() {
+				@Override
+				public boolean apply(Exception e) {
+					if (e == null) {
+						PreferenceHelper.getInstance(mContext).readRemoteApi(serverURL, new Predicate<Exception>() {
+							public boolean apply(Exception e) {
+								if (e != null) {
+									return callback.apply(new Exception("No server information"));
+								} else {
+									// check versions
+									SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(mContext);
+									Integer compatibleMajorVersion = sharedPreferences.getInt(mContext.getString(R.string.compatibleVersionMajorKey), mContext.getResources().getInteger(R.integer.compatibleVersionMajorDefaultValue));
+									Integer compatibleMinorVersion = sharedPreferences.getInt(mContext.getString(R.string.compatibleVersionMinorKey), mContext.getResources().getInteger(R.integer.compatibleVersionMinorDefaultValue));
+
+									boolean hasServerMajorVersion = sharedPreferences.contains(mContext.getString(R.string.serverVersionMajorKey));
+									boolean hasServerMinorVersion = sharedPreferences.contains(mContext.getString(R.string.serverVersionMinorKey));
+
+									if (!hasServerMajorVersion || !hasServerMinorVersion) {
+										return callback.apply(new Exception("No server version"));
+									} else {
+										int serverMajorVersion = sharedPreferences.getInt(mContext.getString(R.string.serverVersionMajorKey), 0);
+										int serverMinorVersion = sharedPreferences.getInt(mContext.getString(R.string.serverVersionMinorKey), 0);
+
+										if (!compatibleMajorVersion.equals(serverMajorVersion)) {
+											return callback.apply(new Exception("This app is not compatible with this server"));
+										} else if (compatibleMinorVersion > serverMinorVersion) {
+											return callback.apply(new Exception("This app is not compatible with this server"));
+										} else {
+											return callback.apply(null);
+										}
+									}
+								}
+							}
+						});
+					} else {
+						return callback.apply(new Exception("Host does not resolve"));
+					}
+
+					return true;
+				}
+			});
+		} catch (MalformedURLException mue) {
+			callback.apply(new Exception("Bad URL"));
+		}
 	}
 
 	@Override
