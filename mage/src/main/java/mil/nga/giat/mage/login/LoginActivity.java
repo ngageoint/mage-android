@@ -135,12 +135,6 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 		hideKeyboardOnClick(findViewById(R.id.login));
 
 		((TextView) findViewById(R.id.login_version)).setText("Version: " + sharedPreferences.getString(getString(R.string.buildVersionKey), "NA"));
-		findViewById(R.id.login_lock).setOnClickListener(new View.OnClickListener() {
-			@Override
-			public void onClick(View v) {
-				onLockToggle(v);
-			}
-		});
 
 		mUsernameEditText = (EditText) findViewById(R.id.login_username);
 		mPasswordEditText = (EditText) findViewById(R.id.login_password);
@@ -170,6 +164,13 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 		});
 
 		ImageView lockImageView = (ImageView) findViewById(R.id.login_lock);
+		lockImageView.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				onLockToggle(v);
+			}
+		});
+
 		if (StringUtils.isBlank(serverURL)) {
 			onServerUnlock(lockImageView);
 		} else {

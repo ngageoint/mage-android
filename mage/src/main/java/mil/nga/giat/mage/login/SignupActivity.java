@@ -168,7 +168,15 @@ public class SignupActivity extends Activity implements AccountDelegate {
 			}
 		});
 
-		ImageView lockImageView = (ImageView) findViewById(R.id.login_lock);
+		ImageView lockImageView = (ImageView) findViewById(R.id.signup_lock);
+
+		lockImageView.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				onLockToggle(v);
+			}
+		});
+
 		if (StringUtils.isBlank(serverURL)) {
 			onServerUnlock(lockImageView);
 		} else {
@@ -316,7 +324,7 @@ public class SignupActivity extends Activity implements AccountDelegate {
 	}
 
 	public void onLockToggle(View view) {
-		final ImageView lockImageView = ((ImageView) findViewById(R.id.login_lock));
+		final ImageView lockImageView = ((ImageView) findViewById(R.id.signup_lock));
 		if (lockImageView.getTag().toString().equals("lock")) {
 			onServerUnlock(lockImageView);
 		} else {
@@ -361,7 +369,7 @@ public class SignupActivity extends Activity implements AccountDelegate {
 		}
 
 		final String url = getServerEditText().getText().toString();
-		final View serverProgress = findViewById(R.id.login_server_progress);
+		final View serverProgress = findViewById(R.id.signup_server_progress);
 
 		lockImageView.setVisibility(View.GONE);
 		serverProgress.setVisibility(View.VISIBLE);
