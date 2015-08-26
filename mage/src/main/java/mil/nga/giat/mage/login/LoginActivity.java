@@ -138,7 +138,7 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 		findViewById(R.id.login_lock).setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				onLockToggle(v, false);
+				onLockToggle(v);
 			}
 		});
 
@@ -311,7 +311,7 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 	 *
 	 * @param view
 	 */
-	public void onLockToggle(View view, boolean initialLoad) {
+	public void onLockToggle(View view) {
 		final ImageView lockImageView = ((ImageView) findViewById(R.id.login_lock));
 		if (lockImageView.getTag().toString().equals("lock")) {
 			onServerUnlock(lockImageView);
@@ -352,7 +352,7 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 			lockImageView.setTag("lock");
 			lockImageView.setImageResource(R.drawable.lock_108);
 			getServerEditText().setError(null);
-			
+
 			return;
 		}
 
