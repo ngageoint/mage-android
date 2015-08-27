@@ -4,6 +4,7 @@ import android.content.Context;
 import android.util.Log;
 
 import com.j256.ormlite.dao.Dao;
+import com.j256.ormlite.stmt.DeleteBuilder;
 import com.j256.ormlite.stmt.QueryBuilder;
 import com.j256.ormlite.stmt.Where;
 
@@ -12,8 +13,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
 
 import mil.nga.giat.mage.sdk.datastore.DaoHelper;
+import mil.nga.giat.mage.sdk.datastore.location.LocationHelper;
+import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
 import mil.nga.giat.mage.sdk.exceptions.EventException;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
 
@@ -215,5 +219,35 @@ public class EventHelper extends DaoHelper<Event> {
         }
 
         return event;
+    }
+
+
+    /**
+     * Remove any events from the database that are not in this event list.
+     *
+     * @param remoteEvents list of events that should remain in the database, all others will be removed
+     */
+    public void syncEvents(Set<Event> remoteEvents) {
+        try {
+            List<Event> eventsToRemove = readAll();
+            eventsToRemove.removeAll(remoteEvents);
+
+            for (Event eventToRemove : eventsToRemove) {
+                Log.e(LOG_NAME, "Removing event " + eventToRemove.getName());
+
+                LocationHelper.getInstance(mApplicationContext).deleteLocations(eventToRemove);
+                ObservationHelper.getInstance(mApplicationContext).deleteObservations(eventToRemove);
+
+                DeleteBuilder<TeamEvent, Long> teamDeleteBuilder = teamEventDao.deleteBuilder();
+                teamDeleteBuilder.where().eq("event_id", eventToRemove.getId());
+                teamDeleteBuilder.delete();
+
+                DeleteBuilder<Event, Long> eventDeleteBuilder = eventDao.deleteBuilder();
+                eventDeleteBuilder.where().idEq(eventToRemove.getId());
+                eventDeleteBuilder.delete();
+            }
+        } catch (Exception e) {
+            Log.e(LOG_NAME, "Error deleting event ", e);
+        }
     }
 }

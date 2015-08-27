@@ -21,6 +21,7 @@ import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.event.IEventDispatcher;
 import mil.nga.giat.mage.sdk.event.IObservationEventListener;
+import mil.nga.giat.mage.sdk.exceptions.LocationException;
 import mil.nga.giat.mage.sdk.exceptions.ObservationException;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
 
@@ -333,13 +334,11 @@ public class ObservationHelper extends DaoHelper<Observation> implements IEventD
 	 * Deletes an Observation. This will also delete an Observation's child
 	 * Attachments, child Properties and Geometry data.
 	 * 
-	 * @param pPrimaryKey
+	 * @param observation
 	 * @throws ObservationException
 	 */
-	public void delete(Long pPrimaryKey) throws ObservationException {
+	public void delete(Observation observation) throws ObservationException {
 		try {
-			Observation observation = observationDao.queryForId(pPrimaryKey);
-
 			// delete Observation properties.
 			Collection<ObservationProperty> properties = observation.getProperties();
 			if (properties != null) {
@@ -357,16 +356,40 @@ public class ObservationHelper extends DaoHelper<Observation> implements IEventD
 			}
 
 			// finally, delete the Observation.
-			observationDao.deleteById(pPrimaryKey);
+			observationDao.deleteById(observation.getId());
 			
 			for (IObservationEventListener listener : listeners) {
 				listener.onObservationDeleted(observation);
 			}
 		} catch (SQLException sqle) {
-			Log.e(LOG_NAME, "Unable to delete Observation: " + pPrimaryKey, sqle);
-			throw new ObservationException("Unable to delete Observation: " + pPrimaryKey, sqle);
+			Log.e(LOG_NAME, "Unable to delete Observation: " + observation.getId(), sqle);
+			throw new ObservationException("Unable to delete Observation: " + observation.getId(), sqle);
 		}
 	}
+
+	/**
+	 * This will delete all observations for an event.
+	 *
+	 * @param event
+	 *            The event to remove locations for
+	 * @throws LocationException
+	 */
+	public void deleteObservations(Event event) throws ObservationException {
+		Log.e(LOG_NAME, "Deleting observations for event "  + event.getName());
+
+
+		try {
+			QueryBuilder<Observation, Long> qb = observationDao.queryBuilder();
+			qb.where().eq("event_id", event.getId());
+			for (Observation observation : qb.query()) {
+				delete(observation);
+			}
+		} catch (SQLException sqle) {
+			Log.e(LOG_NAME, "Unable to delete locations for an event", sqle);
+			throw new ObservationException("Unable to delete observations for an event", sqle);
+		}
+	}
+
 
 	@Override
 	public boolean addListener(final IObservationEventListener listener) {

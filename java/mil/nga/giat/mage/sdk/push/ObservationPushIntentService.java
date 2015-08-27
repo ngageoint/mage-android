@@ -59,7 +59,6 @@ public class ObservationPushIntentService extends ConnectivityAwareIntentService
 				}
 			} else {
 				Log.d(LOG_NAME, "The device is currently disconnected. Can't push observations.");
-				pushFrequency = Math.min(pushFrequency * 2, 30 * 60 * 1000);
 			}
 			long lastFetchTime = new Date().getTime();
 			long currentTime = new Date().getTime();

@@ -87,7 +87,7 @@ public class ObservationFetchIntentService extends ConnectivityAwareIntentServic
 
 						Observation oldObservation = observationHelper.read(observation.getRemoteId());
 						if (observation.getState().equals(State.ARCHIVE) && oldObservation != null) {
-							observationHelper.delete(oldObservation.getId());
+							observationHelper.delete(oldObservation);
 							Log.d(LOG_NAME, "Deleted observation with remote_id " + observation.getRemoteId());
 						} else if (!observation.getState().equals(State.ARCHIVE) && oldObservation == null) {
 							observation = observationHelper.create(observation, !firstTimeToRun);

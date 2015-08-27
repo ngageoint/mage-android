@@ -11,9 +11,9 @@ import com.j256.ormlite.stmt.Where;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
 import java.util.List;
-import java.util.Stack;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import mil.nga.giat.mage.sdk.ConnectivityAwareIntentService;
@@ -95,23 +95,15 @@ public class LocationPushIntentService extends ConnectivityAwareIntentService im
 								Where<Location, Long> where = queryBuilder.where().eq("user_id", currentUser.getId());
 								where.and().isNotNull("remote_id").and().eq("event_id", event.getId());
 								queryBuilder.orderBy("timestamp", false);
-								List<Location> locationsToDelete = queryBuilder.query();
-								Stack<Long> locationIDsToDelete = new Stack<Long>(); 
+								List<Location> pushedLocations = queryBuilder.query();
 
-								for (int i = minNumberOfLocationsToKeep; i < locationsToDelete.size(); i++) {
-									locationIDsToDelete.push(locationsToDelete.get(i).getId());
-								}
-								try {
-									LocationHelper.getInstance(getApplicationContext()).delete(locationIDsToDelete.toArray(new Long[locationIDsToDelete.size()]));
-								} catch (LocationException e) {
-									Log.e(LOG_NAME, "Could not delete locations.", e);
-									for (int i = 0; i < locationIDsToDelete.size(); i++) {
-										try {
-											LocationHelper.getInstance(getApplicationContext()).delete(locationIDsToDelete.pop());
-										} catch (LocationException e1) {
-											Log.e(LOG_NAME, "Could not delete the location.", e);
-											continue;
-										}
+								if (pushedLocations.size() > minNumberOfLocationsToKeep) {
+									Collection<Location> locationsToDelete = pushedLocations.subList(minNumberOfLocationsToKeep, pushedLocations.size());
+
+									try {
+										LocationHelper.getInstance(getApplicationContext()).delete(locationsToDelete);
+									} catch (LocationException e) {
+										Log.e(LOG_NAME, "Could not delete locations.", e);
 									}
 								}
 							}
@@ -126,7 +118,6 @@ public class LocationPushIntentService extends ConnectivityAwareIntentService im
 				}
 			} else {
 				Log.d(LOG_NAME, "The device is currently disconnected. Can't push locations.");
-				pushFrequency = Math.min(pushFrequency * 2, 30 * 60 * 1000);
 			}
 			long lastFetchTime = new Date().getTime();
 			long currentTime = new Date().getTime();

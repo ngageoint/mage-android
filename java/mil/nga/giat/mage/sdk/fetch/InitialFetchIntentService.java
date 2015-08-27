@@ -292,6 +292,9 @@ public class InitialFetchIntentService extends ConnectivityAwareIntentService {
                         continue;
                     }
                 }
+
+                TeamHelper.getInstance(getApplicationContext()).syncTeams(teams.keySet());
+
                 didFetchTeams = Boolean.TRUE;
             } else {
                 Log.e(LOG_NAME, "Problem fetching teams.  Will try again soon.");
@@ -309,6 +312,7 @@ public class InitialFetchIntentService extends ConnectivityAwareIntentService {
 
     /**
      * Create events
+     * TODO make sure events get deleted
      */
     private void getEvents() {
         Boolean didFetchEvents = Boolean.FALSE;
@@ -344,6 +348,9 @@ public class InitialFetchIntentService extends ConnectivityAwareIntentService {
                         continue;
                     }
                 }
+
+                EventHelper.getInstance(getApplicationContext()).syncEvents(events.keySet());
+
                 didFetchEvents = Boolean.TRUE;
             } else {
                 Log.e(LOG_NAME, "Problem fetching events.  Will try again soon.");
