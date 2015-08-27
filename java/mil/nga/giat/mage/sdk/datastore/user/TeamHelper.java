@@ -11,8 +11,10 @@ import com.j256.ormlite.stmt.Where;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import mil.nga.giat.mage.sdk.datastore.DaoHelper;
+import mil.nga.giat.mage.sdk.exceptions.EventException;
 import mil.nga.giat.mage.sdk.exceptions.TeamException;
 
 /**
@@ -91,6 +93,17 @@ public class TeamHelper extends DaoHelper<Team> {
             Log.e(LOG_NAME, "Unable to query for existence for id = '" + id + "'", sqle);
             throw new TeamException("Unable to query for existence for id = '" + id + "'", sqle);
         }
+    }
+
+    public List<Team> readAll() throws EventException {
+        List<Team> teams = new ArrayList<Team>();
+        try {
+            teams.addAll(teamDao.queryForAll());
+        } catch (SQLException sqle) {
+            Log.e(LOG_NAME, "Unable to read Teams", sqle);
+            throw new EventException("Unable to read Teams.", sqle);
+        }
+        return teams;
     }
 
     @Override
@@ -198,5 +211,31 @@ public class TeamHelper extends DaoHelper<Team> {
             Log.e(LOG_NAME, "There was a problem getting teams for the event: " + pEvent, sqle);
         }
         return teams;
+    }
+
+    /**
+     * Remove any teams from the database that are not in this team list.
+     *
+     * @param remoteTeams list of team that should remain in the database, all others will be removed
+     */
+    public void syncTeams(Set<Team> remoteTeams) {
+        try {
+            List<Team> teamsToRemove = readAll();
+            teamsToRemove.removeAll(remoteTeams);
+
+            for (Team teamToRemove : teamsToRemove) {
+                Log.e(LOG_NAME, "Removing team " + teamToRemove.getName());
+
+                DeleteBuilder<TeamEvent, Long> teamDeleteBuilder = teamEventDao.deleteBuilder();
+                teamDeleteBuilder.where().eq("team_id", teamToRemove.getId());
+                teamDeleteBuilder.delete();
+
+                DeleteBuilder<Team, Long> eventDeleteBuilder = teamDao.deleteBuilder();
+                eventDeleteBuilder.where().idEq(teamToRemove.getId());
+                eventDeleteBuilder.delete();
+            }
+        } catch (Exception e) {
+            Log.e(LOG_NAME, "Error deleting event ", e);
+        }
     }
 }
