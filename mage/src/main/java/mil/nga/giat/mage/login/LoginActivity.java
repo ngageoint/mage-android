@@ -175,7 +175,7 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 			onServerUnlock(lockImageView);
 		} else {
 			if (ConnectivityUtility.isOnline(getApplicationContext())) {
-				onServerLock(lockImageView);
+				onServerLock(lockImageView, true);
 			}
 		}
 	}
@@ -317,7 +317,7 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 		if (lockImageView.getTag().toString().equals("lock")) {
 			onServerUnlock(lockImageView);
 		} else {
-			onServerLock(lockImageView);
+			onServerLock(lockImageView, false);
 		}
 	}
 
@@ -342,10 +342,10 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 		}
 	}
 
-	private void onServerLock(final ImageView lockImageView) {
+	private void onServerLock(final ImageView lockImageView, boolean initialLoad) {
 		SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
 		String serverURLPref =  sharedPreferences.getString(getString(R.string.serverURLKey), getString(R.string.serverURLDefaultValue));
-		if (StringUtils.isNoneBlank(serverURLPref) && serverURLPref.equals(getServerEditText().getText().toString())) {
+		if (!initialLoad && StringUtils.isNoneBlank(serverURLPref) && serverURLPref.equals(getServerEditText().getText().toString())) {
 			// Server URL was previously set in preferences and did not change.
 			// no need to hit the server again
 			getServerEditText().setEnabled(false);
