@@ -7,7 +7,6 @@ import android.util.Log;
 import mil.nga.giat.mage.sdk.connectivity.ConnectivityUtility;
 import mil.nga.giat.mage.sdk.datastore.observation.Attachment;
 import mil.nga.giat.mage.sdk.datastore.observation.AttachmentHelper;
-import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
 import mil.nga.giat.mage.sdk.exceptions.ObservationException;
 import mil.nga.giat.mage.sdk.http.post.MageServerPostRequests;
 import mil.nga.giat.mage.sdk.login.LoginTaskFactory;
@@ -33,14 +32,19 @@ public class AttachmentPushIntentService extends IntentService {
 		Long attachmentId = intent.getLongExtra(ATTACHMENT_ID, -1);
 		Log.i(LOG_NAME, "Handling attachment: " + attachmentId);
 		try {
-			Attachment attachment = ObservationHelper.getInstance(getApplicationContext()).readAttachmentByPrimaryKey(attachmentId);
+			AttachmentHelper attachmentHelper = AttachmentHelper.getInstance(getApplicationContext());
+
+			Attachment attachment = attachmentHelper.read(attachmentId);
+
 			if (attachment.getUrl() != null) {
 				Log.i(LOG_NAME, "Already pushed attachment " + attachmentId + ", skipping.");
 				return;
 			}
+
 			Log.d(LOG_NAME, "Staging attachment with id: " + attachment.getId());
-			AttachmentHelper.stageForUpload(attachment, getApplicationContext());
+			attachmentHelper.stageForUpload(attachment);
 			Log.d(LOG_NAME, "Pushing attachment with id: " + attachment.getId());
+
 			attachment = MageServerPostRequests.postAttachment(attachment, getApplicationContext());
 			if(attachment != null) {
 				Log.d(LOG_NAME, "Pushed attachment with remote_id: " + attachment.getRemoteId());
