@@ -9,7 +9,7 @@ import java.util.List;
 
 import mil.nga.giat.mage.sdk.connectivity.ConnectivityUtility;
 import mil.nga.giat.mage.sdk.datastore.observation.Attachment;
-import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
+import mil.nga.giat.mage.sdk.datastore.observation.AttachmentHelper;
 
 public class AttachmentPushAlarmReceiver extends BroadcastReceiver {
 
@@ -23,7 +23,7 @@ public class AttachmentPushAlarmReceiver extends BroadcastReceiver {
 			Log.d(LOG_NAME, "Not connected.  Will try later.");
 			return;
 		}
-		List<Attachment> attachments = ObservationHelper.getInstance(context).getDirtyAttachments();
+		List<Attachment> attachments = AttachmentHelper.getInstance(context).getDirtyAttachments();
 		for (Attachment attachment : attachments) {
 
 			if (attachment.getObservation().getRemoteId() != null) {

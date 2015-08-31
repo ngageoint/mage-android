@@ -39,7 +39,6 @@ public class ObservationHelper extends DaoHelper<Observation> implements IEventD
 
 	private final Dao<Observation, Long> observationDao;
 	private final Dao<ObservationProperty, Long> observationPropertyDao;
-	private final Dao<Attachment, Long> attachmentDao;
 
 	private Collection<IObservationEventListener> listeners = new CopyOnWriteArrayList<IObservationEventListener>();
 	
@@ -74,7 +73,6 @@ public class ObservationHelper extends DaoHelper<Observation> implements IEventD
 			// Set up DAOs
 			observationDao = daoStore.getObservationDao();
 			observationPropertyDao = daoStore.getObservationPropertyDao();
-			attachmentDao = daoStore.getAttachmentDao();
 		} catch (SQLException sqle) {
 			Log.e(LOG_NAME, "Unable to communicate with Observation database.", sqle);
 
@@ -112,10 +110,12 @@ public class ObservationHelper extends DaoHelper<Observation> implements IEventD
 
 			// create Observation attachments.
 			Collection<Attachment> attachments = observation.getAttachments();
-			if (attachments != null) {
-				for (Attachment attachment : attachments) {
+			for (Attachment attachment : attachments) {
+				try {
 					attachment.setObservation(createdObservation);
-					attachmentDao.create(attachment);
+					AttachmentHelper.getInstance(mApplicationContext).create(attachment);
+				} catch (Exception e) {
+					throw new ObservationException("There was a problem creating the observations attachment: " + attachment + ".", e);
 				}
 			}
 
@@ -166,38 +166,54 @@ public class ObservationHelper extends DaoHelper<Observation> implements IEventD
 	 */
 	@Override
 	public Observation update(Observation observation) throws ObservationException {
+		Log.i(LOG_NAME, "Updating observation w/ id: " + observation.getId());
+
 		// set all the ids as needed
-	    Observation pOldObservation = read(observation.getId());
-	    
-		observation.setId(pOldObservation.getId());
+	    Observation oldObservation = read(observation.getId());
 
-		// FIXME : make this run faster?
-		for (ObservationProperty op : observation.getProperties()) {
-			for (ObservationProperty oop : pOldObservation.getProperties()) {
-				if (op.getKey().equalsIgnoreCase(oop.getKey())) {
-					op.setId(oop.getId());
-					break;
-				}
-			}
+		Log.i(LOG_NAME, "Old Observation attachments " + oldObservation.getAttachments().size());
+
+		// if the observation is dirty, set the last_modified date!
+		if (observation.isDirty()) {
+			observation.setLastModified(new Date());
 		}
 
-		// FIXME : make this run faster?
-		for (Attachment a : observation.getAttachments()) {
-			for (Attachment oa : pOldObservation.getAttachments()) {
-				if (a.getRemoteId() != null && a.getRemoteId().equalsIgnoreCase(oa.getRemoteId())) {
-					a.setId(oa.getId());
-					break;
-				}
-			}
-		}
+//		for (Attachment oa : oldObservation.getAttachments()) {
+//			if (oa.getRemoteId() == null) {
+//				observation.getAttachments().add(oa);
+//			} else {
+//				boolean contains = false;
+//				for (Attachment a : observation.getAttachments()) {
+//					if (oa.getRemoteId().equals(a.getRemoteId())) {
+//						contains = true;
+//						break;
+//					}
+//				}
+//
+//				if (!contains) {
+//					observation.getAttachments().remove(oa);
+//					try {
+//						AttachmentHelper.getInstance(mApplicationContext).delete(oa);
+//					} catch (SQLException e) {
+//						throw new ObservationException("There was a problem deleting the observations attachment: " + oa + ".", e);
+//					}
+//				}
+//			}
+//		}
 
 		// do the update
 		try {
-			// if the observation is dirty, set the last_modified date!
-			if(observation.isDirty()) {
-				observation.setLastModified(new Date());
-			}
 			observationDao.update(observation);
+
+			// FIXME : make this run faster?
+			for (ObservationProperty op : observation.getProperties()) {
+				for (ObservationProperty oop : oldObservation.getProperties()) {
+					if (op.getKey().equalsIgnoreCase(oop.getKey())) {
+						op.setId(oop.getId());
+						break;
+					}
+				}
+			}
 
 			Collection<ObservationProperty> properties = observation.getProperties();
 			if (properties != null) {
@@ -207,11 +223,35 @@ public class ObservationHelper extends DaoHelper<Observation> implements IEventD
 				}
 			}
 
-			Collection<Attachment> attachments = observation.getAttachments();
-			if (attachments != null) {
-				for (Attachment attachment : attachments) {
+			Log.i(LOG_NAME, "Observation attachments " + observation.getAttachments().size());
+
+
+			// FIXME : make this run faster?
+			for (Attachment a : observation.getAttachments()) {
+				for (Attachment oa : oldObservation.getAttachments()) {
+					if (a.getRemoteId() != null && a.getRemoteId().equalsIgnoreCase(oa.getRemoteId())) {
+						a.setId(oa.getId());
+						break;
+					}
+				}
+			}
+
+			for (Attachment attachment : observation.getAttachments()) {
+				try {
 					attachment.setObservation(observation);
-					attachmentDao.createOrUpdate(attachment);
+					AttachmentHelper.getInstance(mApplicationContext).create(attachment);
+				} catch (Exception e) {
+					throw new ObservationException("There was a problem creating/updating the observations attachment: " + attachment + ".", e);
+				}
+			}
+
+			observationDao.refresh(observation);
+
+			if (observation.getRemoteId() != null) {
+				for (Attachment attachment : observation.getAttachments()) {
+					if (attachment.isDirty()) {
+						AttachmentHelper.getInstance(mApplicationContext).uploadableAttachment(attachment);
+					}
 				}
 			}
 
@@ -290,47 +330,6 @@ public class ObservationHelper extends DaoHelper<Observation> implements IEventD
 	}
 	
 	/**
-	 * A List of {@link Attachment} from the datastore that are dirty (i.e.
-	 * should be synced with the server).
-	 * 
-	 * @return
-	 */
-	public List<Attachment> getDirtyAttachments() {
-		QueryBuilder<Attachment, Long> queryBuilder = attachmentDao.queryBuilder();
-		List<Attachment> attachments = new ArrayList<Attachment>();
-
-		try {
-			queryBuilder.where().eq("dirty", true);
-			attachments = attachmentDao.query(queryBuilder.prepare());
-		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			Log.e(LOG_NAME, "Could not get dirty Observations.");
-		}
-		return attachments;
-	}
-	
-	/**
-	 * Read an Attachment from the data-store
-	 * 
-	 * @param primaryKey
-	 *            The primary key of the Attachment to read.
-	 * @return A fully constructed Observation.
-	 * @throws ObservationException
-	 *             If there was an error reading the Observation from the
-	 *             database.
-	 */
-	public Attachment readAttachmentByPrimaryKey(Long primaryKey) throws ObservationException {
-		Attachment a;
-		try {
-			a = attachmentDao.queryForId(primaryKey);
-		} catch (SQLException sqle) {
-			Log.e(LOG_NAME, "Unable to read Attachment: " + primaryKey, sqle);
-			throw new ObservationException("Unable to read Attachment: " + primaryKey, sqle);
-		}
-		return a;
-	}
-	
-	/**
 	 * Deletes an Observation. This will also delete an Observation's child
 	 * Attachments, child Properties and Geometry data.
 	 * 
@@ -350,8 +349,9 @@ public class ObservationHelper extends DaoHelper<Observation> implements IEventD
 			// delete Observation attachments.
 			Collection<Attachment> attachments = observation.getAttachments();
 			if (attachments != null) {
+				AttachmentHelper attachmentHelper = AttachmentHelper.getInstance(mApplicationContext);
 				for (Attachment attachment : attachments) {
-					attachmentDao.deleteById(attachment.getId());
+					attachmentHelper.delete(attachment);
 				}
 			}
 
