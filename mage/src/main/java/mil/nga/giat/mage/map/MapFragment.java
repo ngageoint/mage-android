@@ -448,7 +448,7 @@ public class MapFragment extends Fragment implements OnMapClickListener, OnMapLo
 	}
 
 	@Override
-	public void onObservationCreated(Collection<Observation> o) {
+	public void onObservationCreated(Collection<Observation> o, Boolean sendUserNotifcations) {
 		if (observations != null) {
 			ObservationTask task = new ObservationTask(ObservationTask.Type.ADD, observations);
 			task.setFilter(getTemporalFilter("last_modified"));

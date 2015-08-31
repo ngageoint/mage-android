@@ -153,7 +153,7 @@ public class ObservationViewActivity extends Activity {
 					}
 
 					@Override
-					public void onObservationCreated(Collection<Observation> observations) {
+					public void onObservationCreated(Collection<Observation> observations, Boolean sendUserNotifcations) {
 						for (Observation observation : observations) {
 							if (observation.getId().equals(o.getId()) && !observation.isDirty()) {
 								ObservationViewActivity.this.runOnUiThread(new Runnable() {

@@ -1,6 +1,5 @@
 package mil.nga.giat.mage;
 
-import android.app.AlarmManager;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
@@ -39,7 +38,7 @@ import mil.nga.giat.mage.sdk.glide.MageUrlLoader;
 import mil.nga.giat.mage.sdk.http.client.HttpClientManager;
 import mil.nga.giat.mage.sdk.http.post.MageServerPostRequests;
 import mil.nga.giat.mage.sdk.location.LocationService;
-import mil.nga.giat.mage.sdk.push.AttachmentPushAlarmReceiver;
+import mil.nga.giat.mage.sdk.push.AttachmentPushService;
 import mil.nga.giat.mage.sdk.push.LocationPushIntentService;
 import mil.nga.giat.mage.sdk.push.ObservationPushIntentService;
 import mil.nga.giat.mage.sdk.screen.ScreenChangeReceiver;
@@ -50,8 +49,6 @@ import mil.nga.giat.mage.sdk.utils.UserUtility;
 public class MAGE extends MultiDexApplication implements IUserEventListener {
 
 	private static final String LOG_NAME = MAGE.class.getName();
-
-	private AlarmManager alarm;
 
 	public static final int MAGE_NOTIFICATION_ID = 1414;
 
@@ -64,17 +61,16 @@ public class MAGE extends MultiDexApplication implements IUserEventListener {
 	private Intent observationFetchIntent;
 	private Intent locationPushIntent;
 	private Intent observationPushIntent;
-	private Intent attachmentPushIntent;
 	private List<CacheOverlay> cacheOverlays = null;
 	private Collection<OnCacheOverlayListener> cacheOverlayListeners = new ArrayList<OnCacheOverlayListener>();
 
 	private ObservationNotificationListener observationNotificationListener = null;
+	private AttachmentPushService attachmentPushService = null;
 
 	private StaticFeatureServerFetch staticFeatureServerFetch = null;
 
 	@Override
 	public void onCreate() {
-		alarm = (AlarmManager) this.getSystemService(Context.ALARM_SERVICE);
 		try {
 			Glide.setup(new GlideBuilder(getApplicationContext()).setDiskCache(new MageDiskCache(getApplicationContext())));
 			Glide.get(getApplicationContext()).register(GlideUrl.class, InputStream.class, new MageUrlLoader.Factory());
@@ -126,7 +122,7 @@ public class MAGE extends MultiDexApplication implements IUserEventListener {
 
 	public void onLogout(Boolean clearTokenInformationAndSendLogoutRequest) {
 
-		if(observationNotificationListener != null){
+		if (observationNotificationListener != null) {
 			ObservationHelper.getInstance(getApplicationContext()).removeListener(observationNotificationListener);
 		}
 
@@ -153,6 +149,9 @@ public class MAGE extends MultiDexApplication implements IUserEventListener {
 		SharedPreferences.Editor editor = sharedPreferences.edit();
 		editor.remove(getApplicationContext().getString(mil.nga.giat.mage.sdk.R.string.currentEventKey)).commit();
 
+		editor.putBoolean(getString(R.string.disclaimerAccepted), false);
+		editor.apply();
+
 		Boolean deleteAllDataOnLogout = sharedPreferences.getBoolean(getApplicationContext().getString(R.string.deleteAllDataOnLogoutKey), getResources().getBoolean(R.bool.deleteAllDataOnLogoutDefaultValue));
 
 		if(deleteAllDataOnLogout) {
@@ -173,7 +172,7 @@ public class MAGE extends MultiDexApplication implements IUserEventListener {
 
 		String notificationMsg = tokenExpired ? "Your token has expired, please tap to login." : "You are logged in. Slide down to logout.";
 		NotificationCompat.Builder builder = new NotificationCompat.Builder(this)
-				.setSmallIcon(R.drawable.ic_launcher)
+				.setSmallIcon(R.drawable.ic_wand)
 				.setContentTitle("MAGE")
 				.setOngoing(true)
 				.setPriority(NotificationCompat.PRIORITY_MAX)
@@ -255,17 +254,9 @@ public class MAGE extends MultiDexApplication implements IUserEventListener {
 			observationPushIntent = new Intent(getApplicationContext(), ObservationPushIntentService.class);
 			startService(observationPushIntent);
 		}
-		startAttachmentPushing();
-	}
 
-	private void startAttachmentPushing() {
-		if(attachmentPushIntent == null) {
-			attachmentPushIntent = new Intent(getApplicationContext(), AttachmentPushAlarmReceiver.class);
-			final PendingIntent pendingIntent = PendingIntent.getBroadcast(this, AttachmentPushAlarmReceiver.REQUEST_CODE, attachmentPushIntent, PendingIntent.FLAG_UPDATE_CURRENT);
-			long firstMillis = System.currentTimeMillis();
-			int intervalMillis = 60000;
-			alarm.setInexactRepeating(AlarmManager.RTC_WAKEUP, firstMillis, intervalMillis, pendingIntent);
-		}
+		attachmentPushService = new AttachmentPushService(getApplicationContext());
+		attachmentPushService.start();
 	}
 
 	/**
@@ -280,17 +271,10 @@ public class MAGE extends MultiDexApplication implements IUserEventListener {
 			stopService(observationPushIntent);
 			observationPushIntent = null;
 		}
-		cancelAttachmentPush();
-	}
-	
-	private void cancelAttachmentPush() {
-		Intent intent = new Intent(getApplicationContext(), AttachmentPushAlarmReceiver.class);
-		final PendingIntent pIntent = PendingIntent.getBroadcast(this, AttachmentPushAlarmReceiver.REQUEST_CODE, intent, PendingIntent.FLAG_UPDATE_CURRENT);
-		alarm.cancel(pIntent);
 
-		if(attachmentPushIntent != null) {
-			this.stopService(attachmentPushIntent);
-			attachmentPushIntent = null;
+		if (attachmentPushService != null) {
+			attachmentPushService.stop();
+			attachmentPushService = null;
 		}
 	}
 
@@ -372,5 +356,11 @@ public class MAGE extends MultiDexApplication implements IUserEventListener {
 		destroyFetching();
 		destroyPushing();
 		createNotification();
+
+		SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+		SharedPreferences.Editor editor = sharedPreferences.edit();
+		editor.putBoolean(getString(R.string.disclaimerAccepted), false);
+		editor.apply();
 	}
+
 }

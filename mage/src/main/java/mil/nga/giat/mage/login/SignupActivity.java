@@ -27,8 +27,8 @@ import android.widget.ImageView;
 
 import com.google.common.base.Predicate;
 
-import java.net.MalformedURLException;
-import java.net.URL;
+import org.apache.commons.lang3.StringUtils;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -150,7 +150,10 @@ public class SignupActivity extends Activity implements AccountDelegate {
 		mLastNameEditText.addTextChangedListener(lastnameWatcher);
 
 		SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-		getServerEditText().setText(sharedPreferences.getString("serverURL", ""));
+
+		String serverURL = sharedPreferences.getString(getString(R.string.serverURLKey), getString(R.string.serverURLDefaultValue));
+
+		getServerEditText().setText(serverURL);
 		getServerEditText().setSelection(getServerEditText().getText().length());
 
 		mEmailEditText.setOnKeyListener(new View.OnKeyListener() {
@@ -164,6 +167,23 @@ public class SignupActivity extends Activity implements AccountDelegate {
 				}
 			}
 		});
+
+		ImageView lockImageView = (ImageView) findViewById(R.id.signup_lock);
+
+		lockImageView.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				onLockToggle(v);
+			}
+		});
+
+		if (StringUtils.isBlank(serverURL)) {
+			onServerUnlock(lockImageView);
+		} else {
+			if (ConnectivityUtility.isOnline(getApplicationContext())) {
+				onServerLock(lockImageView);
+			}
+		}
 	}
 
 	/**
@@ -303,97 +323,80 @@ public class SignupActivity extends Activity implements AccountDelegate {
 		new SignupTask(this, this.getApplicationContext()).execute(accountInfo.toArray(new String[accountInfo.size()]));
 	}
 
-	/**
-	 * Fired when user clicks lock
-	 *
-	 * @param view
-	 */
-	public void toggleLock(View view) {
+	public void onLockToggle(View view) {
 		final ImageView lockImageView = ((ImageView) findViewById(R.id.signup_lock));
 		if (lockImageView.getTag().toString().equals("lock")) {
-			getServerEditText().setEnabled(!getServerEditText().isEnabled());
-			mSignupButton.setEnabled(!mSignupButton.isEnabled());
+			onServerUnlock(lockImageView);
+		} else {
+			onServerLock(lockImageView);
+		}
+	}
+
+	private void onServerUnlock(final ImageView lockImageView) {
+		if (ConnectivityUtility.isOnline(getApplicationContext())) {
+			getServerEditText().setEnabled(true);
+			mSignupButton.setEnabled(false);
 			lockImageView.setTag("unlock");
 			lockImageView.setImageResource(R.drawable.unlock_108);
 			showKeyboard();
 			getServerEditText().requestFocus();
 		} else {
-			final View serverProgress = findViewById(R.id.signup_server_progress);
-			try {
-				lockImageView.setVisibility(View.GONE);
-				serverProgress.setVisibility(View.VISIBLE);
-
-				// make sure the url syntax is good
-				String serverURL = getServerEditText().getText().toString();
-				final URL sURL = new URL(serverURL);
-
-				// make sure you can get to the host!
-				ConnectivityUtility.isResolvable(sURL.getHost(), new Predicate<Exception>() {
-					@Override
-					public boolean apply(Exception e) {
-						if (e == null) {
-							PreferenceHelper.getInstance(getApplicationContext()).readRemoteApi(sURL, new Predicate<Exception>() {
-								public boolean apply(Exception e) {
-									getServerEditText().setError(null);
-									serverProgress.setVisibility(View.GONE);
-									lockImageView.setVisibility(View.VISIBLE);
-									if (e != null) {
-										showKeyboard();
-										getServerEditText().setError("No server information");
-										getServerEditText().requestFocus();
-										return false;
-									} else {
-										// check versions
-										SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-										Integer compatibleMajorVersion = sharedPreferences.getInt(getString(R.string.compatibleVersionMajorKey), getResources().getInteger(R.integer.compatibleVersionMajorDefaultValue));
-										Integer compatibleMinorVersion = sharedPreferences.getInt(getString(R.string.compatibleVersionMinorKey), getResources().getInteger(R.integer.compatibleVersionMinorDefaultValue));
-
-										Integer serverMajorVersion = sharedPreferences.getInt(getString(R.string.serverVersionMajorKey), getResources().getInteger(R.integer.serverVersionMajorDefaultValue));
-										Integer serverMinorVersion = sharedPreferences.getInt(getString(R.string.serverVersionMinorKey), getResources().getInteger(R.integer.serverVersionMinorDefaultValue));
-
-										if (serverMajorVersion == null || serverMinorVersion == null) {
-											showKeyboard();
-											getServerEditText().setError("No server version");
-											getServerEditText().requestFocus();
-										} else {
-											if (!compatibleMajorVersion.equals(serverMajorVersion)) {
-												showKeyboard();
-												getServerEditText().setError("This app is not compatible with this server");
-												getServerEditText().requestFocus();
-											} else if (compatibleMinorVersion > serverMinorVersion) {
-												showKeyboard();
-												getServerEditText().setError("This app is not compatible with this server");
-												getServerEditText().requestFocus();
-											} else {
-												getServerEditText().setEnabled(!getServerEditText().isEnabled());
-												mSignupButton.setEnabled(!mSignupButton.isEnabled());
-												lockImageView.setTag("lock");
-												lockImageView.setImageResource(R.drawable.lock_108);
-											}
-										}
-									}
-									return true;
-								}
-							});
-						} else {
-							showKeyboard();
-							getServerEditText().setError("Host does not resolve");
-							getServerEditText().requestFocus();
-							serverProgress.setVisibility(View.GONE);
-							lockImageView.setVisibility(View.VISIBLE);
-							return false;
+			new AlertDialog.Builder(this)
+					.setTitle("No Connectivity")
+					.setMessage("Sorry, you cannot change the server URL with no network connectivity.")
+					.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+						@Override
+						public void onClick(DialogInterface dialog, int which) {
+							dialog.dismiss();
 						}
-						return true;
-					}
-				});
-			} catch (MalformedURLException mue) {
-				showKeyboard();
-				getServerEditText().setError("Bad URL");
-				getServerEditText().requestFocus();
+					}).show();
+		}
+	}
+
+	private void onServerLock(final ImageView lockImageView) {
+		SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+		String serverURLPref =  sharedPreferences.getString(getString(R.string.serverURLKey), getString(R.string.serverURLDefaultValue));
+		if (StringUtils.isNoneBlank(serverURLPref) && serverURLPref.equals(getServerEditText().getText().toString())) {
+			// Server URL was previously set in preferences and did not change.
+			// no need to hit the server again
+			getServerEditText().setEnabled(false);
+			mSignupButton.setEnabled(true);
+			lockImageView.setTag("lock");
+			lockImageView.setImageResource(R.drawable.lock_108);
+			getServerEditText().setError(null);
+
+			return;
+		}
+
+		final String url = getServerEditText().getText().toString();
+		final View serverProgress = findViewById(R.id.signup_server_progress);
+
+		lockImageView.setVisibility(View.GONE);
+		serverProgress.setVisibility(View.VISIBLE);
+
+		PreferenceHelper.getInstance(getApplicationContext()).validateServerApi(url, new Predicate<Exception>() {
+			@Override
+			public boolean apply(Exception e) {
 				serverProgress.setVisibility(View.GONE);
 				lockImageView.setVisibility(View.VISIBLE);
+
+				if (e == null) {
+					getServerEditText().setEnabled(false);
+					mSignupButton.setEnabled(true);
+					lockImageView.setTag("lock");
+					lockImageView.setImageResource(R.drawable.lock_108);
+					getServerEditText().setError(null);
+					return true;
+				} else {
+					mSignupButton.setEnabled(false);
+					getServerEditText().setEnabled(true);
+					showKeyboard();
+					getServerEditText().setError(e.getMessage());
+					getServerEditText().requestFocus();
+					return false;
+				}
 			}
-		}
+		});
 	}
 
 	private void showKeyboard() {

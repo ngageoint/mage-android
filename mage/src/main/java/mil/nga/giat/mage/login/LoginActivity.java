@@ -34,8 +34,6 @@ import com.google.common.base.Predicate;
 
 import org.apache.commons.lang3.StringUtils;
 
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -126,12 +124,6 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 			}
 		}
 
-		// show the disclaimer?
-		if (UserUtility.getInstance(getApplicationContext()).isTokenExpired()) {
-			Intent intent = new Intent(this, DisclaimerActivity.class);
-			startActivity(intent);
-		}
-
 		// if token is not expired, then skip the login module
 		if (!UserUtility.getInstance(getApplicationContext()).isTokenExpired()) {
 			skipLogin();
@@ -151,10 +143,12 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 
 		mLoginButton = (Button) findViewById(R.id.login_login_button);
 
+		String serverURL = sharedPreferences.getString(getString(R.string.serverURLKey), getString(R.string.serverURLDefaultValue));
+
 		// set the default values
 		getUsernameEditText().setText(sharedPreferences.getString(getString(R.string.usernameKey), getString(R.string.usernameDefaultValue)));
 		getUsernameEditText().setSelection(getUsernameEditText().getText().length());
-		getServerEditText().setText(sharedPreferences.getString(getString(R.string.serverURLKey), getString(R.string.serverURLDefaultValue)));
+		getServerEditText().setText(serverURL);
 		getServerEditText().setSelection(getServerEditText().getText().length());
 
 		mPasswordEditText.setOnKeyListener(new View.OnKeyListener() {
@@ -168,6 +162,22 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 				}
 			}
 		});
+
+		ImageView lockImageView = (ImageView) findViewById(R.id.login_lock);
+		lockImageView.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				onLockToggle(v);
+			}
+		});
+
+		if (StringUtils.isBlank(serverURL)) {
+			onServerUnlock(lockImageView);
+		} else {
+			if (ConnectivityUtility.isOnline(getApplicationContext())) {
+				onServerLock(lockImageView);
+			}
+		}
 	}
 
 	public void togglePassword(View v) {
@@ -302,98 +312,87 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 	 *
 	 * @param view
 	 */
-	public void toggleLock(View view) {
+	public void onLockToggle(View view) {
 		final ImageView lockImageView = ((ImageView) findViewById(R.id.login_lock));
 		if (lockImageView.getTag().toString().equals("lock")) {
-			getServerEditText().setEnabled(!getServerEditText().isEnabled());
-			mLoginButton.setEnabled(!mLoginButton.isEnabled());
+			onServerUnlock(lockImageView);
+		} else {
+			onServerLock(lockImageView);
+		}
+	}
+
+	private void onServerUnlock(final ImageView lockImageView) {
+		if (ConnectivityUtility.isOnline(getApplicationContext())) {
+			getServerEditText().setEnabled(true);
+			mLoginButton.setEnabled(false);
 			lockImageView.setTag("unlock");
 			lockImageView.setImageResource(R.drawable.unlock_108);
 			showKeyboard();
 			getServerEditText().requestFocus();
 		} else {
-			final View serverProgress = findViewById(R.id.login_server_progress);
-			try {
-				lockImageView.setVisibility(View.GONE);
-				serverProgress.setVisibility(View.VISIBLE);
-
-				// make sure the url syntax is good
-				String serverURL = getServerEditText().getText().toString();
-				final URL sURL = new URL(serverURL);
-
-				// make sure you can get to the host!
-				ConnectivityUtility.isResolvable(sURL.getHost(), new Predicate<Exception>() {
+			new AlertDialog.Builder(this)
+				.setTitle("No Connectivity")
+				.setMessage("Sorry, you cannot change the server URL with no network connectivity.")
+				.setPositiveButton(android.R.string.ok, new OnClickListener() {
 					@Override
-					public boolean apply(Exception e) {
-						if (e == null) {
-							PreferenceHelper.getInstance(getApplicationContext()).readRemoteApi(sURL, new Predicate<Exception>() {
-								public boolean apply(Exception e) {
-									getServerEditText().setError(null);
-									serverProgress.setVisibility(View.GONE);
-									lockImageView.setVisibility(View.VISIBLE);
-									if (e != null) {
-										showKeyboard();
-										getServerEditText().setError("No server information");
-										getServerEditText().requestFocus();
-										return false;
-									} else {
-										// check versions
-										SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-										Integer compatibleMajorVersion = sharedPreferences.getInt(getString(R.string.compatibleVersionMajorKey), getResources().getInteger(R.integer.compatibleVersionMajorDefaultValue));
-										Integer compatibleMinorVersion = sharedPreferences.getInt(getString(R.string.compatibleVersionMinorKey), getResources().getInteger(R.integer.compatibleVersionMinorDefaultValue));
-
-										Integer serverMajorVersion = sharedPreferences.getInt(getString(R.string.serverVersionMajorKey), getResources().getInteger(R.integer.serverVersionMajorDefaultValue));
-										Integer serverMinorVersion = sharedPreferences.getInt(getString(R.string.serverVersionMinorKey), getResources().getInteger(R.integer.serverVersionMinorDefaultValue));
-
-										if (serverMajorVersion == null || serverMinorVersion == null) {
-											showKeyboard();
-											getServerEditText().setError("No server version");
-											getServerEditText().requestFocus();
-										} else {
-											if (!compatibleMajorVersion.equals(serverMajorVersion)) {
-												showKeyboard();
-												getServerEditText().setError("This app is not compatible with this server");
-												getServerEditText().requestFocus();
-											} else if (compatibleMinorVersion > serverMinorVersion) {
-												showKeyboard();
-												getServerEditText().setError("This app is not compatible with this server");
-												getServerEditText().requestFocus();
-											} else {
-												getServerEditText().setEnabled(!getServerEditText().isEnabled());
-												mLoginButton.setEnabled(!mLoginButton.isEnabled());
-												lockImageView.setTag("lock");
-												lockImageView.setImageResource(R.drawable.lock_108);
-											}
-										}
-									}
-									return true;
-								}
-							});
-						} else {
-							showKeyboard();
-							getServerEditText().setError("Host does not resolve");
-							getServerEditText().requestFocus();
-							serverProgress.setVisibility(View.GONE);
-							lockImageView.setVisibility(View.VISIBLE);
-							return false;
-						}
-						return true;
+					public void onClick(DialogInterface dialog, int which) {
+						dialog.dismiss();
 					}
-				});
-			} catch (MalformedURLException mue) {
-				showKeyboard();
-				getServerEditText().setError("Bad URL");
-				getServerEditText().requestFocus();
+				}).show();
+		}
+	}
+
+	private void onServerLock(final ImageView lockImageView) {
+		SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+		String serverURLPref =  sharedPreferences.getString(getString(R.string.serverURLKey), getString(R.string.serverURLDefaultValue));
+		if (StringUtils.isNoneBlank(serverURLPref) && serverURLPref.equals(getServerEditText().getText().toString())) {
+			// Server URL was previously set in preferences and did not change.
+			// no need to hit the server again
+			getServerEditText().setEnabled(false);
+			mLoginButton.setEnabled(true);
+			lockImageView.setTag("lock");
+			lockImageView.setImageResource(R.drawable.lock_108);
+			getServerEditText().setError(null);
+
+			return;
+		}
+
+		final String url = getServerEditText().getText().toString();
+		final View serverProgress = findViewById(R.id.login_server_progress);
+
+		lockImageView.setVisibility(View.GONE);
+		serverProgress.setVisibility(View.VISIBLE);
+
+		PreferenceHelper.getInstance(getApplicationContext()).validateServerApi(url, new Predicate<Exception>() {
+			@Override
+			public boolean apply(Exception e) {
 				serverProgress.setVisibility(View.GONE);
 				lockImageView.setVisibility(View.VISIBLE);
+
+				if (e == null) {
+					getServerEditText().setEnabled(false);
+					mLoginButton.setEnabled(true);
+					lockImageView.setTag("lock");
+					lockImageView.setImageResource(R.drawable.lock_108);
+					getServerEditText().setError(null);
+					return true;
+				} else {
+					mLoginButton.setEnabled(false);
+					getServerEditText().setEnabled(true);
+					showKeyboard();
+					getServerEditText().setError(e.getMessage());
+					getServerEditText().requestFocus();
+					return false;
+				}
 			}
-		}
+		});
 	}
 
 	private void showKeyboard() {
 		InputMethodManager inputMethodManager = (InputMethodManager) getSystemService(Activity.INPUT_METHOD_SERVICE);
 		inputMethodManager.toggleSoftInput(InputMethodManager.SHOW_IMPLICIT, 0);
 	}
+
 
 	@Override
 	public void finishAccount(AccountStatus accountStatus) {
@@ -471,13 +470,25 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 	}
 
 	public void startNextActivityAndFinish() {
-		Intent intent = new Intent(getApplicationContext(), EventActivity.class);
+		SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+		boolean showDisclaimer = sharedPreferences.getBoolean(getString(R.string.serverDisclaimerShow), false);
+
+		Intent intent = showDisclaimer ?
+				new Intent(getApplicationContext(), DisclaimerActivity.class) :
+				new Intent(getApplicationContext(), EventActivity.class);
+
 		startActivity(intent);
 		finish();
 	}
 
 	public void skipLogin() {
-		Intent intent = new Intent(getApplicationContext(), EventActivity.class);
+		SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+		boolean disclaimerAccepted = sharedPreferences.getBoolean(getString(R.string.disclaimerAccepted), false);
+
+		Intent intent = disclaimerAccepted ?
+				new Intent(getApplicationContext(), EventActivity.class) :
+				new Intent(getApplicationContext(), DisclaimerActivity.class);
+
 		intent.putExtra(EventActivity.EXTRA_CHOOSE_CURRENT_EVENT, true);
 		startActivity(intent);
 		finish();
