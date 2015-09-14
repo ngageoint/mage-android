@@ -368,7 +368,12 @@ public class SignupActivity extends Activity implements AccountDelegate {
 			return;
 		}
 
-		final String url = getServerEditText().getText().toString();
+		String url = getServerEditText().getText().toString().trim().replaceAll("(\\w)/*$", "$1");
+		if(!url.matches("^(H|h)(T|t)(T|t)(P|p)(S|s)?://.*")) {
+			url = "https://" + url;
+			getServerEditText().setText(url);
+		}
+
 		final View serverProgress = findViewById(R.id.signup_server_progress);
 
 		lockImageView.setVisibility(View.GONE);
