@@ -35,6 +35,7 @@ import mil.nga.giat.mage.sdk.login.RecentEventTask;
 public class EventActivity extends Activity implements AccountDelegate {
 
 	public static final String EXTRA_CHOOSE_CURRENT_EVENT = "CHOOSE_CURRENT_EVENT";
+	private static final String STATE_EVENT = "stateEvent";
 
 	private static final String LOG_NAME = EventActivity.class.getName();
 
@@ -51,13 +52,23 @@ public class EventActivity extends Activity implements AccountDelegate {
 		super.onCreate(savedInstanceState);
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
 		setContentView(R.layout.activity_event);
-	}
 
-	@Override
-	protected void onResume() {
-		super.onResume();
+		findViewById(R.id.event_content).setVisibility(View.GONE);
+		findViewById(R.id.event_status).setVisibility(View.VISIBLE);
+
 		uniqueChildIdIndex = uniqueChildStartingIdIndex;
-		events = new ArrayList<Event>();
+		if(savedInstanceState == null) {
+			events = new ArrayList<Event>();
+		} else {
+			long[] te = savedInstanceState.getLongArray(STATE_EVENT);
+			try {
+				for(int i = 0; i < te.length; i++) {
+					events.add(EventHelper.getInstance(getApplicationContext()).read(te[i]));
+				}
+			} catch(Exception e) {
+				Log.e(LOG_NAME, "Could not hydrate events!");
+			}
+		}
 
 		final boolean pickDefaultEvent = getIntent().getBooleanExtra(EXTRA_CHOOSE_CURRENT_EVENT, false);
 
@@ -151,6 +162,19 @@ public class EventActivity extends Activity implements AccountDelegate {
 		LocalBroadcastManager.getInstance(getApplicationContext()).registerReceiver(initialFetchReceiver, statusIntentFilter);
 
 		getApplicationContext().startService(new Intent(getApplicationContext(), InitialFetchIntentService.class));
+	}
+
+	public void onSaveInstanceState(Bundle savedInstanceState) {
+
+		long[] te = new long[events.size()];
+
+		for(int i = 0; i < events.size(); i++) {
+			Event e = events.get(i);
+			te[i] = e.getId();
+		}
+
+		savedInstanceState.putLongArray(STATE_EVENT, te);
+		super.onSaveInstanceState(savedInstanceState);
 	}
 
 	public void chooseEvent(View view) {
