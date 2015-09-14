@@ -2,6 +2,8 @@ package mil.nga.giat.mage.sdk.fetch;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.os.Handler;
+import android.os.Looper;
 import android.preference.PreferenceManager;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
@@ -76,10 +78,26 @@ public class InitialFetchIntentService extends ConnectivityAwareIntentService {
             // now that the client has fetched the events, fetch the users again in order to populate the user's currentEvent using the json cache form the prior request. a chicken in the egg thing
 			getUsers(userJSONCache);
 
+            Handler handler = new Handler(Looper.getMainLooper());
 			// users are updated, finish getting image content
-			if (avatarFetch != null) avatarFetch.executeOnExecutor(executor);
-			if (iconFetch != null) iconFetch.executeOnExecutor(executor);
-		} else {
+            if (avatarFetch != null) {
+                handler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        avatarFetch.executeOnExecutor(executor);
+                    }
+                });
+
+            }
+            if (iconFetch != null) {
+                handler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        iconFetch.executeOnExecutor(executor);
+                    }
+                });
+            }
+        } else {
 			Log.d(LOG_NAME, "The device is currently disconnected, or data fetch is disabled, or this is a local login. Not performing fetch.");
 		}
 
@@ -89,6 +107,8 @@ public class InitialFetchIntentService extends ConnectivityAwareIntentService {
 
         // Broadcasts the Intent
         LocalBroadcastManager.getInstance(this).sendBroadcast(localIntent);
+
+        stopSelf();
 	}
 
     /**
