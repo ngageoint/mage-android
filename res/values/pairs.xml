@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- ******************** set programmatically ******************* -->
+
+    <string name="databaseVersionKey">databaseVersion</string>
+
+    <string name="passwordHashKey">passwordHash</string>
+
+    <string name="tokenKey">token</string>
+    <string name="tokenExpirationDateKey">tokenExpirationDate</string>
+    <string name="tokenExpirationLengthKey">tokenExpirationLength</string>
+
+    <!-- ************************************************************* -->
+
+    <!-- ************ set in setdefaultmdkpreferences.xml ************ -->
+
+    <string name="loginTaskKey">loginTask</string>
+    <string name="loginTaskDefaultValue">mil.nga.giat.mage.sdk.login.FormAuthLoginTask</string>
+
+    <string name="observationPushFrequencyKey">observationPushFrequency</string>
+    <integer name="observationPushFrequencyDefaultValue">60000</integer>
+
+    <string name="locationPushFrequencyKey">locationPushFrequency</string>
+    <integer name="locationPushFrequencyDefaultValue">40000</integer>
+
+    <string name="deleteAllDataOnLogoutKey">deleteAllDataOnLogout</string>
+    <bool name="deleteAllDataOnLogoutDefaultValue">false</bool>
+
+    <string name="noServerCAKey">noServerCA</string>
+    <bool name="noServerCADefaultValue">false</bool>
+
+    <!-- ************************************************************* -->
+
+    <!-- *************** set in generalpreferences.xml *************** -->
+
+    <string name="locationServiceEnabledKey">locationServiceEnabled</string>
+    <bool name="locationServiceEnabledDefaultValue">true</bool>
+
+    <string name="dataFetchEnabledKey">dataFetchEnabled</string>
+    <bool name="dataFetchEnabledDefaultValue">true</bool>
+
+    <!-- Notifications -->
+    <string name="notificationsEnabledKey">notificationsEnabled</string>
+    <bool name="notificationsEnabledDefaultValue">true</bool>
+
+    <!-- MEDIA -->
+    <string name="imageUploadSizeKey">imageUploadSize</string>
+    <integer name="imageUploadSizeDefaultValue">1024</integer>
+
+    <!-- ABOUT -->
+    <string name="serverURLKey">serverURL</string>
+    <string name="serverURLDefaultValue"></string>
+
+    <string name="usernameKey">username</string>
+    <string name="usernameDefaultValue"></string>
+
+    <!-- set programmatically-->
+    <string name="currentEventKey">currentEvent</string>
+
+    <!-- set programmatically-->
+    <string name="buildVersionKey">buildVersion</string>
+
+    <!-- ************************************************************* -->
+
+    <!-- *************** set in locationpreferences.xml ************** -->
+
+    <string name="reportLocationKey">reportLocation</string>
+    <bool name="reportLocationDefaultValue">true</bool>
+
+    <string name="userReportingFrequencyKey">userReportingFrequency</string>
+    <integer name="userReportingFrequencyDefaultValue">300000</integer>
+
+    <string name="gpsSensitivityKey">gpsSensitivity</string>
+    <integer name="gpsSensitivityDefaultValue">10</integer>
+
+    <!-- ************************************************************* -->
+
+    <!-- **************** set in fetchpreferences.xml **************** -->
+
+    <string name="userFetchFrequencyKey">userFetchFrequency</string>
+    <integer name="userFetchFrequencyDefaultValue">120000</integer>
+
+    <string name="observationFetchFrequencyKey">observationFetchFrequency</string>
+    <integer name="observationFetchFrequencyDefaultValue">300000</integer>
+
+    <!-- ************************************************************* -->
+
+
+    <!-- ************** set in setdefaultpreferences.xml ************* -->
+
+    <string name="passwordMinLengthKey">gAuthenticationPasswordMinLength</string>
+    <integer name="passwordMinLengthDefaultValue">5</integer>
+
+    <string name="compatibleVersionMajorKey">compatibleVersionMajor</string>
+    <integer name="compatibleVersionMajorDefaultValue">3</integer>
+
+    <string name="compatibleVersionMinorKey">compatibleVersionMinor</string>
+    <integer name="compatibleVersionMinorDefaultValue">0</integer>
+
+    <!-- from the server /api call -->
+    <string name="serverVersionMajorKey">gVersionMajor</string>
+    <string name="serverVersionMinorKey">gVersionMinor</string>
+    <string name="serverDisclaimerShow">gDisclaimerShow</string>
+    <string name="serverDisclaimerTitle">gDisclaimerTitle</string>
+    <string name="serverDisclaimerText">gDisclaimerText</string>
+
+</resources>
