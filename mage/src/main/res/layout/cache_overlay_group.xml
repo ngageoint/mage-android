@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:gravity="left|center"
+    android:minHeight="56dp"
+    android:paddingLeft="16dp"
+    android:paddingRight="16dp">
+
+    <ImageView
+        android:id="@+id/cache_overlay_group_image"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_gravity="center_vertical"
+        android:gravity="left|center" />
+
+    <LinearLayout
+        android:id="@+id/cache_overlay_group_linear"
+        android:layout_height="wrap_content"
+        android:layout_width="wrap_content"
+        android:orientation="horizontal"
+        android:paddingLeft="72dp" >
+
+        <TextView
+            android:id="@+id/cache_overlay_group_name"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="22sp"
+            android:layout_gravity="center_vertical"
+            android:gravity="left|center"/>
+
+        <TextView
+            android:id="@+id/cache_overlay_group_count"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="22sp"
+            android:layout_gravity="center_vertical"
+            android:gravity="left|center"
+            android:paddingLeft="10dp" />
+
+    </LinearLayout>
+
+    <CheckBox
+        android:id="@+id/cache_overlay_group_checkbox"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:focusable="false"
+        android:layout_gravity="center_vertical"
+        android:layout_alignBottom="@id/cache_overlay_child_linear"
+        android:layout_alignTop="@id/cache_overlay_child_linear"
+        android:layout_alignParentRight="true" />
+
+</RelativeLayout>
