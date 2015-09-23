@@ -23,4 +23,12 @@ public abstract class GeoPackageTableCacheOverlay extends CacheOverlay {
         this.geoPackage = geoPackage;
     }
 
+    /**
+     * Get the GeoPackage name
+     *
+     * @return
+     */
+    public String getGeoPackage() {
+        return geoPackage;
+    }
 }
