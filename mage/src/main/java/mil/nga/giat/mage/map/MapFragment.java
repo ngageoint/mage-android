@@ -70,6 +70,13 @@ import mil.nga.geopackage.GeoPackage;
 import mil.nga.geopackage.GeoPackageCache;
 import mil.nga.geopackage.GeoPackageManager;
 import mil.nga.geopackage.factory.GeoPackageFactory;
+import mil.nga.geopackage.features.user.FeatureCursor;
+import mil.nga.geopackage.features.user.FeatureDao;
+import mil.nga.geopackage.features.user.FeatureRow;
+import mil.nga.geopackage.geom.GeoPackageGeometryData;
+import mil.nga.geopackage.geom.map.GoogleMapShape;
+import mil.nga.geopackage.geom.map.GoogleMapShapeConverter;
+import mil.nga.geopackage.projection.Projection;
 import mil.nga.geopackage.tiles.overlay.GeoPackageOverlayFactory;
 import mil.nga.geopackage.tiles.user.TileDao;
 import mil.nga.giat.mage.MAGE;
@@ -81,6 +88,8 @@ import mil.nga.giat.mage.filter.Filter;
 import mil.nga.giat.mage.map.GoogleMapWrapper.OnMapPanListener;
 import mil.nga.giat.mage.map.cache.CacheOverlay;
 import mil.nga.giat.mage.map.cache.GeoPackageCacheOverlay;
+import mil.nga.giat.mage.map.cache.GeoPackageFeatureTableCacheOverlay;
+import mil.nga.giat.mage.map.cache.GeoPackageTileTableCacheOverlay;
 import mil.nga.giat.mage.map.cache.XYZDirectoryCacheOverlay;
 import mil.nga.giat.mage.map.marker.LocationMarkerCollection;
 import mil.nga.giat.mage.map.marker.MyHistoricalLocationMarkerCollection;
@@ -136,7 +145,7 @@ public class MapFragment extends Fragment implements OnMapClickListener, OnMapLo
 	private StaticGeometryCollection staticGeometryCollection;
 	private List<Marker> searchMarkes = new ArrayList<Marker>();
 
-	private Map<String, TileOverlay> tileOverlays;
+	private Map<String, CacheOverlay> cacheOverlays;
 
 	// GeoPackage cache of open GeoPackage connections
 	private GeoPackageCache geoPackageCache;
@@ -176,7 +185,7 @@ public class MapFragment extends Fragment implements OnMapClickListener, OnMapLo
 
 		locationService = mage.getLocationService();
 
-		tileOverlays = new HashMap<String, TileOverlay>();
+		cacheOverlays = new HashMap<String, CacheOverlay>();
 
 		// Initialize the GeoPackage cache with a GeoPackage manager
 		GeoPackageManager geoPackageManager = GeoPackageFactory.getManager(mage);
@@ -577,13 +586,15 @@ public class MapFragment extends Fragment implements OnMapClickListener, OnMapLo
 		}
 
 		// static layer
-		View markerInfoWindow = LayoutInflater.from(getActivity()).inflate(R.layout.static_feature_infowindow, null, false);
-		WebView webView = ((WebView) markerInfoWindow.findViewById(R.id.static_feature_infowindow_content));
-		webView.loadData(marker.getSnippet(), "text/html; charset=UTF-8", null);
-		new AlertDialog.Builder(getActivity()).setView(markerInfoWindow).setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
-			public void onClick(DialogInterface dialog, int which) {
-			}
-		}).show();
+		if(marker.getSnippet() != null) {
+			View markerInfoWindow = LayoutInflater.from(getActivity()).inflate(R.layout.static_feature_infowindow, null, false);
+			WebView webView = ((WebView) markerInfoWindow.findViewById(R.id.static_feature_infowindow_content));
+			webView.loadData(marker.getSnippet(), "text/html; charset=UTF-8", null);
+			new AlertDialog.Builder(getActivity()).setView(markerInfoWindow).setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+				public void onClick(DialogInterface dialog, int which) {
+				}
+			}).show();
+		}
 		return true;
 	}
 
@@ -709,8 +720,8 @@ public class MapFragment extends Fragment implements OnMapClickListener, OnMapLo
 
 		// Add all overlays that are in the preferences
 
-		// Track enabled tile overlays
-		Map<String, TileOverlay> enabledTileOverlays = new HashMap<String, TileOverlay>();
+		// Track enabled cache overlays
+		Map<String, CacheOverlay> enabledCacheOverlays = new HashMap<String, CacheOverlay>();
 
 		// Track enabled GeoPackages
 		Set<String> enabledGeoPackages = new HashSet<String>();
@@ -723,11 +734,11 @@ public class MapFragment extends Fragment implements OnMapClickListener, OnMapLo
 				switch(cacheOverlay.getType()) {
 
 					case XYZ_DIRECTORY:
-						addXYZDirectoryCacheOverlay(enabledTileOverlays, (XYZDirectoryCacheOverlay) cacheOverlay);
+						addXYZDirectoryCacheOverlay(enabledCacheOverlays, (XYZDirectoryCacheOverlay) cacheOverlay);
 						break;
 
 					case GEOPACKAGE:
-						addGeoPackageCacheOverlay(enabledTileOverlays, enabledGeoPackages, (GeoPackageCacheOverlay)cacheOverlay);
+						addGeoPackageCacheOverlay(enabledCacheOverlays, enabledGeoPackages, (GeoPackageCacheOverlay)cacheOverlay);
 						break;
 				}
 			}
@@ -735,10 +746,10 @@ public class MapFragment extends Fragment implements OnMapClickListener, OnMapLo
 
 		// Remove any overlays that are on the map but no longer selected in
 		// preferences, update the tile overlays to the enabled tile overlays
-		for (TileOverlay tileOverlay : tileOverlays.values()) {
-			tileOverlay.remove();
+		for (CacheOverlay cacheOverlay : this.cacheOverlays.values()) {
+			cacheOverlay.removeFromMap();
 		}
-		tileOverlays = enabledTileOverlays;
+		this.cacheOverlays = enabledCacheOverlays;
 
 		// Close GeoPackages no longer enabled
 		geoPackageCache.closeRetain(enabledGeoPackages);
@@ -747,29 +758,32 @@ public class MapFragment extends Fragment implements OnMapClickListener, OnMapLo
 
 	/**
 	 * Add XYZ Directory tile cache overlay
-	 * @param enabledTileOverlays
+	 * @param enabledCacheOverlays
 	 * @param xyzDirectoryCacheOverlay
 	 */
-	private void addXYZDirectoryCacheOverlay(Map<String, TileOverlay> enabledTileOverlays, XYZDirectoryCacheOverlay xyzDirectoryCacheOverlay){
-		// Retrieve the tile overlay if it already exists (and remove from tile overlays)
-		TileOverlay tileOverlay = tileOverlays.remove(xyzDirectoryCacheOverlay.getCacheName());
-		if(tileOverlay == null){
+	private void addXYZDirectoryCacheOverlay(Map<String, CacheOverlay> enabledCacheOverlays, XYZDirectoryCacheOverlay xyzDirectoryCacheOverlay){
+		// Retrieve the cache overlay if it already exists (and remove from cache overlays)
+		CacheOverlay cacheOverlay = cacheOverlays.remove(xyzDirectoryCacheOverlay.getCacheName());
+		if(cacheOverlay == null){
 			// Create a new tile provider and add to the map
 			TileProvider tileProvider = new FileSystemTileProvider(256, 256, xyzDirectoryCacheOverlay.getDirectory().getAbsolutePath());
 			TileOverlayOptions overlayOptions = createTileOverlayOptions(tileProvider);
-			tileOverlay = map.addTileOverlay(overlayOptions);
+			// Set the tile overlay in the cache overlay
+			TileOverlay tileOverlay = map.addTileOverlay(overlayOptions);
+			xyzDirectoryCacheOverlay.setTileOverlay(tileOverlay);
+			cacheOverlay = xyzDirectoryCacheOverlay;
 		}
-		// Add the tile overlay to the enabled tile overlays
-		enabledTileOverlays.put(xyzDirectoryCacheOverlay.getCacheName(), tileOverlay);
+		// Add the cache overlay to the enabled cache overlays
+		enabledCacheOverlays.put(cacheOverlay.getCacheName(), cacheOverlay);
 	}
 
 	/**
 	 * Add a GeoPackage cache overlay, which contains tile and feature tables
-	 * @param enabledTileOverlays
+	 * @param enabledCacheOverlays
 	 * @param enabledGeoPackages
 	 * @param geoPackageCacheOverlay
 	 */
-	private void addGeoPackageCacheOverlay(Map<String, TileOverlay> enabledTileOverlays, Set<String> enabledGeoPackages, GeoPackageCacheOverlay geoPackageCacheOverlay){
+	private void addGeoPackageCacheOverlay(Map<String, CacheOverlay> enabledCacheOverlays, Set<String> enabledGeoPackages, GeoPackageCacheOverlay geoPackageCacheOverlay){
 
 		// Check each GeoPackage table
 		for(CacheOverlay tableCacheOverlay: geoPackageCacheOverlay.getChildren()){
@@ -783,26 +797,76 @@ public class MapFragment extends Fragment implements OnMapClickListener, OnMapLo
 				// Handle tile and feature tables
 				switch(tableCacheOverlay.getType()){
 					case GEOPACKAGE_TILE_TABLE:
-						// Retrieve the tile overlay if it already exists (and remove from tile overlays)
-						TileOverlay tileOverlay = tileOverlays.remove(tableCacheOverlay.getCacheName());
-						if(tileOverlay == null){
-							// Create a new GeoPackage tile provider and add to the map
-							TileDao tileDao = geoPackage.getTileDao(tableCacheOverlay.getName());
-							TileProvider geoPackageTileProvider = GeoPackageOverlayFactory.getTileProvider(tileDao);
-							TileOverlayOptions overlayOptions = createTileOverlayOptions(geoPackageTileProvider);
-							tileOverlay = map.addTileOverlay(overlayOptions);
-						}
-						// Add the tile overlay to the enabled tile overlays
-						enabledTileOverlays.put(tableCacheOverlay.getCacheName(), tileOverlay);
+						addGeoPackageTileCacheOverlay(enabledCacheOverlays, (GeoPackageTileTableCacheOverlay)tableCacheOverlay, geoPackage);
 						break;
 					case GEOPACKAGE_FEATURE_TABLE:
-						// TODO
+						addGeoPackageFeatureCacheOverlay(enabledCacheOverlays, (GeoPackageFeatureTableCacheOverlay)tableCacheOverlay, geoPackage);
 						break;
 					default:
 						throw new UnsupportedOperationException("Unsupported GeoPackage type: " + tableCacheOverlay.getType());
 				}
 			}
 		}
+	}
+
+	/**
+	 * Add the GeoPackage Tile Table Cache Overlay
+	 * @param enabledCacheOverlays
+	 * @param tileTableCacheOverlay
+	 * @param geoPackage
+	 */
+	private void addGeoPackageTileCacheOverlay(Map<String, CacheOverlay> enabledCacheOverlays, GeoPackageTileTableCacheOverlay tileTableCacheOverlay, GeoPackage geoPackage){
+		// Retrieve the cache overlay if it already exists (and remove from cache overlays)
+		CacheOverlay cacheOverlay = cacheOverlays.remove(tileTableCacheOverlay.getCacheName());
+		if(cacheOverlay == null){
+			// Create a new GeoPackage tile provider and add to the map
+			TileDao tileDao = geoPackage.getTileDao(tileTableCacheOverlay.getName());
+			TileProvider geoPackageTileProvider = GeoPackageOverlayFactory.getTileProvider(tileDao);
+			TileOverlayOptions overlayOptions = createTileOverlayOptions(geoPackageTileProvider);
+			// Set the tile overlay in the cache overlay
+			TileOverlay tileOverlay = map.addTileOverlay(overlayOptions);
+			tileTableCacheOverlay.setTileOverlay(tileOverlay);
+			cacheOverlay = tileTableCacheOverlay;
+		}
+		// Add the cache overlay to the enabled cache overlays
+		enabledCacheOverlays.put(cacheOverlay.getCacheName(), cacheOverlay);
+	}
+
+	/**
+	 * Add the GeoPackage Feature Table Cache Overlay
+	 * @param enabledCacheOverlays
+	 * @param featureTableCacheOverlay
+	 * @param geoPackage
+	 */
+	private void addGeoPackageFeatureCacheOverlay(Map<String, CacheOverlay> enabledCacheOverlays, GeoPackageFeatureTableCacheOverlay featureTableCacheOverlay, GeoPackage geoPackage){
+		// Retrieve the cache overlay if it already exists (and remove from cache overlays)
+		CacheOverlay cacheOverlay = cacheOverlays.remove(featureTableCacheOverlay.getCacheName());
+		if(cacheOverlay == null) {
+			// Add the features to the map
+			FeatureDao featureDao = geoPackage.getFeatureDao(featureTableCacheOverlay.getName());
+			Projection projection = featureDao.getProjection();
+			GoogleMapShapeConverter shapeConverter = new GoogleMapShapeConverter(projection);
+			FeatureCursor featureCursor = featureDao.queryForAll();
+			try {
+				while (featureCursor.moveToNext()) {
+					FeatureRow featureRow = featureCursor.getRow();
+					GeoPackageGeometryData geometryData = featureRow.getGeometry();
+					if (geometryData != null && !geometryData.isEmpty()) {
+						mil.nga.wkb.geom.Geometry geometry = geometryData.getGeometry();
+						if (geometry != null) {
+							GoogleMapShape shape = shapeConverter.toShape(geometry);
+							// Set the Shape Marker, PolylineOptions, and PolygonOptions here if needed to change color and style
+							featureTableCacheOverlay.addShapeToMap(featureRow.getId(), shape, map);
+						}
+					}
+				}
+			} finally {
+				featureCursor.close();
+			}
+			cacheOverlay = featureTableCacheOverlay;
+		}
+		// Add the cache overlay to the enabled cache overlays
+		enabledCacheOverlays.put(cacheOverlay.getCacheName(), cacheOverlay);
 	}
 
 	/**

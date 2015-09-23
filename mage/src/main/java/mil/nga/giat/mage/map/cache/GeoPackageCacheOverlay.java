@@ -31,10 +31,19 @@ public class GeoPackageCacheOverlay extends CacheOverlay {
         }
     }
 
+    @Override
+    public void removeFromMap() {
+        for (CacheOverlay tableCacheOverlay : getChildren()) {
+            tableCacheOverlay.removeFromMap();
+        }
+    }
+
+    @Override
     public Integer getIconImageResourceId() {
         return R.drawable.ic_geopackage;
     }
 
+    @Override
     public List<CacheOverlay> getChildren() {
         List<CacheOverlay> children = new ArrayList<>();
         children.addAll(tables.values());

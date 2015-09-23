@@ -59,6 +59,11 @@ public abstract class CacheOverlay {
         this.supportsChildren = supportsChildren;
     }
 
+    /**
+     * Remove the cache overlay from the map
+     */
+    public abstract void removeFromMap();
+
     public String getName() {
         return name;
     }
