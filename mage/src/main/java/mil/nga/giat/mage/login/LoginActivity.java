@@ -488,7 +488,7 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 
 	public void skipLogin() {
 		SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-		boolean disclaimerAccepted = sharedPreferences.getBoolean(getString(R.string.disclaimerAccepted), false);
+		boolean disclaimerAccepted = sharedPreferences.getBoolean(getString(R.string.disclaimerAcceptedKey), getResources().getBoolean(R.bool.disclaimerAcceptedDefaultValue));
 
 		Intent intent = disclaimerAccepted ?
 				new Intent(getApplicationContext(), EventActivity.class) :
