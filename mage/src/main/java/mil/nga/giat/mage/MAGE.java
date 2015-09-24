@@ -57,6 +57,7 @@ import mil.nga.giat.mage.sdk.screen.ScreenChangeReceiver;
 import mil.nga.giat.mage.sdk.utils.StorageUtility;
 import mil.nga.giat.mage.sdk.utils.StorageUtility.StorageType;
 import mil.nga.giat.mage.sdk.utils.UserUtility;
+import mil.nga.giat.mage.wearable.InitializeMAGEWearBridge;
 
 public class MAGE extends MultiDexApplication implements IUserEventListener {
 
@@ -114,6 +115,8 @@ public class MAGE extends MultiDexApplication implements IUserEventListener {
 
 		// Pull static layers and features just once
 		loadStaticFeatures(false);
+
+		InitializeMAGEWearBridge.startBridgeIfWearBuild(getApplicationContext());
 	}
 	
 	public void loadStaticFeatures(final boolean force) {
@@ -161,8 +164,7 @@ public class MAGE extends MultiDexApplication implements IUserEventListener {
 		SharedPreferences.Editor editor = sharedPreferences.edit();
 		editor.remove(getApplicationContext().getString(mil.nga.giat.mage.sdk.R.string.currentEventKey)).commit();
 
-		editor.putBoolean(getString(R.string.disclaimerAccepted), false);
-		editor.apply();
+		editor.putBoolean(getString(R.string.disclaimerAcceptedKey), false).commit();
 
 		Boolean deleteAllDataOnLogout = sharedPreferences.getBoolean(getApplicationContext().getString(R.string.deleteAllDataOnLogoutKey), getResources().getBoolean(R.bool.deleteAllDataOnLogoutDefaultValue));
 
@@ -437,10 +439,7 @@ public class MAGE extends MultiDexApplication implements IUserEventListener {
 		destroyPushing();
 		createNotification();
 
-		SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-		SharedPreferences.Editor editor = sharedPreferences.edit();
-		editor.putBoolean(getString(R.string.disclaimerAccepted), false);
-		editor.apply();
+		PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).edit().putBoolean(getString(R.string.disclaimerAcceptedKey), false).commit();
 	}
 
 }

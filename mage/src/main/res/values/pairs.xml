@@ -25,7 +25,9 @@
     <string name="tileOverlaysKey">tileOverlays</string>
     <string name="recentMapXYZKey">recentMapXYZ</string>
     <string name="staticFeatureLayersKey">staticFeatureLayers</string>
-    <string name="disclaimerAccepted">disclaimerAccepted</string>
+
+    <string name="disclaimerAcceptedKey">disclaimerAccepted</string>
+    <bool name="disclaimerAcceptedDefaultValue">false</bool>
 
     <!-- FIXME: what is this stuff? why is it in shared prefs? -->
     <string name="activeTimeFilterKey">activeTimeFilter</string>
