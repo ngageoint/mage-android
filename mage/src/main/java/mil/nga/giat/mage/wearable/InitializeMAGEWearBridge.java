@@ -1,18 +1,22 @@
 package mil.nga.giat.mage.wearable;
 
 import android.content.Context;
+import android.content.SharedPreferences;
+import android.preference.PreferenceManager;
 import android.util.Log;
 
 import java.lang.reflect.Method;
 
-import mil.nga.giat.mage.BuildConfig;
+import mil.nga.giat.mage.R;
 
 public class InitializeMAGEWearBridge {
 
 	private static final String LOG_NAME = InitializeMAGEWearBridge.class.getName();
 
 	public static Boolean startBridgeIfWearBuild(Context context) {
-		if (BuildConfig.isWearBuild) {
+		SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
+		Boolean isWearBuild = sharedPreferences.getBoolean(context.getString(R.string.isWearBuildKey), context.getResources().getBoolean(R.bool.isWearBuildDefaultValue));
+		if (isWearBuild) {
 			final String MAGEWearBridgeClassName = "mil.nga.giat.mage.wearable.bridge.MAGEWearBridge";
 
 			try {
