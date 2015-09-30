@@ -37,6 +37,19 @@
             android:title="Image Upload Size"/>
     </PreferenceCategory>
     <PreferenceCategory
+        android:title="WEARABLE">
+        <Preference
+            android:summary="Manage gestures for your wearable"
+            android:enabled="@bool/isWearBuildDefaultValue"
+            android:title="Wearable">
+            <!-- targetPackage is mil.nga.giat.mage, not mil.nga.giat.mage.wearable.bridge because of the resource merger that occurs -->
+            <intent
+                android:action="android.intent.action.VIEW"
+                android:targetClass="mil.nga.giat.mage.wearable.bridge.preferences.ListGesturePreferencesActivity"
+                android:targetPackage="mil.nga.giat.mage"/>
+        </Preference>
+    </PreferenceCategory>
+    <PreferenceCategory
         android:title="ABOUT">
         <EditTextPreference
             android:defaultValue="@string/serverURLDefaultValue"

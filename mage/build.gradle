@@ -1,0 +1,100 @@
+apply plugin: 'com.android.application'
+
+def serverURL = hasProperty('SERVER_URL') ? SERVER_URL : ''
+def googleMapsApiReleaseKey = hasProperty('RELEASE_MAPS_API_KEY') ? RELEASE_MAPS_API_KEY: ''
+def googleMapsApiDebugKey = hasProperty('DEBUG_MAPS_API_KEY') ? DEBUG_MAPS_API_KEY: ''
+
+android {
+    compileSdkVersion 22
+    buildToolsVersion "22.0.1"
+
+    dexOptions {
+        javaMaxHeapSize "4g"
+    }
+
+    sourceSets {
+        androidTest.setRoot('tests')
+        androidTest.java.srcDirs = ['tests/src']
+    }
+
+    defaultConfig {
+        applicationId "mil.nga.giat.mage"
+        minSdkVersion 16
+        targetSdkVersion 22
+        multiDexEnabled true
+        resValue "string", "serverURLDefaultValue", serverURL
+        resValue "string", "recentMapXYZDefaultValue", "263.0,40.0,3"
+        resValue "bool", "isWearBuildDefaultValue", "false"
+        //buildConfigField "String", "EXTRALOGGING", "\"true\""
+    }
+
+    signingConfigs {
+        release {
+            storeFile file(RELEASE_STORE_FILE)
+            storePassword RELEASE_STORE_PASSWORD
+            keyAlias RELEASE_KEY_ALIAS
+            keyPassword RELEASE_KEY_PASSWORD
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
+            signingConfig signingConfigs.release
+            resValue "string", "GOOGLE_MAPS_ANDROID_API_KEY", googleMapsApiReleaseKey
+        }
+        debug {
+            minifyEnabled false
+            resValue "string", "GOOGLE_MAPS_ANDROID_API_KEY", googleMapsApiDebugKey
+        }
+    }
+
+    productFlavors {
+        defaults {
+            // if you build without a flavor gradle will build all flavors.
+            // Lets define this flavor to provide a flavor we can build with no overrides
+        }
+
+        local {
+            resValue "string", "serverURLDefaultValue", "http://192.168.1.1:4242"
+            //resValue "string", "usernameDefaultValue", "admin"
+            resValue "integer", "gpsSensitivityDefaultValue", "1"
+        }
+
+        wear {
+            resValue "bool", "isWearBuildDefaultValue", "true"
+        }
+    }
+
+    packagingOptions {
+        exclude 'META-INF/LICENSE'
+        exclude 'META-INF/LICENSE.txt'
+        exclude 'META-INF/NOTICE'
+        exclude 'META-INF/NOTICE.txt'
+    }
+}
+
+dependencies {
+
+    // this block allows the mage-android-wear-bridge to be pulled in dynamically when that flavor is built
+    gradle.startParameter.taskRequests.each { taskRequest ->
+        taskRequest.args.each { taskName ->
+            String flavorName = "wear";
+            if (taskName.toLowerCase().contains(flavorName.toLowerCase())) {
+                //wearCompile project(':bridge') // uncomment me to build wearable locally
+                wearCompile "mil.nga.giat.mage.wearable:bridge:1.0.0" // uncomment me to build wearable.  comment me if building wearable locally.
+            }
+        }
+    }
+
+    //compile project(':sdk') // uncomment me to build locally
+    compile "mil.nga.giat.mage:sdk:4.0.4" // comment me to build locally
+    compile "mil.nga.geopackage:geopackage-android:1.0.1"
+    compile 'com.android.support:multidex:1.0.1'
+    compile 'com.android.support:support-v4:23.0.1'
+    compile 'com.google.android.gms:play-services:7.8.0'
+    compile 'com.google.maps.android:android-maps-utils:0.3.3'
+    compile 'org.ocpsoft.prettytime:prettytime:3.2.5.Final'
+    compile files('libs/GeocoderPlus.jar')
+}
