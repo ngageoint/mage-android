@@ -1,0 +1,3 @@
+include ':mage'
+//include ':sdk' // uncomment me to build locally
+//include ':bridge' // uncomment me to build wearable locally

@@ -20,10 +20,18 @@
 
     <!-- ************************************************************* -->
 
-    <!-- TODO : all of the following should not go in pairs -->
+    <string name="isWearBuildKey">isWearBuild</string>
+    <!-- following value is defined in build.gradle -->
+    <!--<bool name="isWearBuildDefaultValue">false</bool>-->
+
+    <string name="recentMapXYZKey">recentMapXYZ</string>
+    <!-- following value is defined in build.gradle -->
+    <!--<bool name="recentMapXYZDefaultValue">263.0,40.0,3</bool>-->
+
+    <!-- TODO : should the following go in pairs? -->
     <string name="clearDataKey">clearData</string>
     <string name="tileOverlaysKey">tileOverlays</string>
-    <string name="recentMapXYZKey">recentMapXYZ</string>
+
     <string name="staticFeatureLayersKey">staticFeatureLayers</string>
 
     <string name="disclaimerAcceptedKey">disclaimerAccepted</string>
