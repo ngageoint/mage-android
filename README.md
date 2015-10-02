@@ -1,10 +1,12 @@
 # MAGE Android
 
-09/24/2015
+10/02/2015
 
-This is the MAGE client for Android devices.  Depends on the [MAGE Android SDK](https://github.com/ngageoint/mage-android-sdk).
+This is the MAGE client for Android devices.
 
 ![MAGE](screenshots/composite.png)
+
+Depends on the [MAGE Android SDK](https://github.com/ngageoint/mage-android-sdk).
 
 ## About
 
