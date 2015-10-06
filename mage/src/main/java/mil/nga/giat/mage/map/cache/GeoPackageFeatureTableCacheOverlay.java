@@ -1,14 +1,13 @@
 package mil.nga.giat.mage.map.cache;
 
 import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.model.Marker;
+import com.google.android.gms.maps.model.TileOverlay;
 
 import java.util.HashMap;
 import java.util.Map;
 
 import mil.nga.geopackage.geom.map.GoogleMapShape;
 import mil.nga.geopackage.geom.map.GoogleMapShapeConverter;
-import mil.nga.geopackage.geom.map.GoogleMapShapeType;
 import mil.nga.giat.mage.R;
 
 /**
@@ -20,6 +19,11 @@ public class GeoPackageFeatureTableCacheOverlay extends GeoPackageTableCacheOver
      * Mapping between feature ids and shapes
      */
     private Map<Long, GoogleMapShape> shapes = new HashMap<>();
+
+    /**
+     * Tile Overlay
+     */
+    private TileOverlay tileOverlay;
 
     /**
      * Constructor
@@ -38,6 +42,10 @@ public class GeoPackageFeatureTableCacheOverlay extends GeoPackageTableCacheOver
             shape.remove();
         }
         shapes.clear();
+        if (tileOverlay != null) {
+            tileOverlay.remove();
+            tileOverlay = null;
+        }
     }
 
     @Override
@@ -90,6 +98,24 @@ public class GeoPackageFeatureTableCacheOverlay extends GeoPackageTableCacheOver
             shape.remove();
         }
         return shape;
+    }
+
+    /**
+     * Get the tile overlay
+     *
+     * @return
+     */
+    public TileOverlay getTileOverlay() {
+        return tileOverlay;
+    }
+
+    /**
+     * Set the tile overlay
+     *
+     * @param tileOverlay
+     */
+    public void setTileOverlay(TileOverlay tileOverlay) {
+        this.tileOverlay = tileOverlay;
     }
 
 }

@@ -364,36 +364,7 @@ public class MAGE extends MultiDexApplication implements IUserEventListener {
 							}
 							// GeoPackage File
 							else if(GeoPackageValidate.hasGeoPackageExtension(cache)){
-								// Import the GeoPackage as a linked file
-								String cacheName = GeoPackageIOUtils.getFileNameWithoutExtension(cache);
-								if(geoPackageManager.importGeoPackageAsExternalLink(cache, cacheName)){
-									// Add the GeoPackage overlay
-									GeoPackage geoPackage = geoPackageManager.open(cacheName);
-									try {
-										List<CacheOverlay> tables = new ArrayList<>();
-
-										// GeoPackage tile tables
-										List<String> tileTables = geoPackage.getTileTables();
-										for (String tileTable : tileTables) {
-											String tableCacheName = CacheOverlay.buildChildCacheName(cacheName, tileTable);
-											GeoPackageTableCacheOverlay tableCache = new GeoPackageTileTableCacheOverlay(tileTable, cacheName, tableCacheName);
-											tables.add(tableCache);
-										}
-
-										// GeoPackage feature tables
-										List<String> featureTables = geoPackage.getFeatureTables();
-										for (String featureTable : featureTables) {
-											String tableCacheName = CacheOverlay.buildChildCacheName(cacheName, featureTable);
-											GeoPackageTableCacheOverlay tableCache = new GeoPackageFeatureTableCacheOverlay(featureTable, cacheName, tableCacheName);
-											tables.add(tableCache);
-										}
-
-										// Add the GeoPackage overlay with child tables
-										overlays.add(new GeoPackageCacheOverlay(cacheName, tables));
-									}finally {
-										geoPackage.close();
-									}
-								}
+								addGeoPackageCacheOverlays(overlays, cache, geoPackageManager);
 							}
 						}
 					}
@@ -425,6 +396,45 @@ public class MAGE extends MultiDexApplication implements IUserEventListener {
 		@Override
 		protected void onPostExecute(List<CacheOverlay> result) {
 			setCacheOverlays(result);
+		}
+	}
+
+	/**
+	 * Add GeoPackage Cache Overlays
+	 * @param overlays
+	 * @param cache
+	 * @param geoPackageManager
+	 */
+	private void addGeoPackageCacheOverlays(List<CacheOverlay> overlays, File cache, GeoPackageManager geoPackageManager){
+		// Import the GeoPackage as a linked file
+		String cacheName = GeoPackageIOUtils.getFileNameWithoutExtension(cache);
+		if(geoPackageManager.importGeoPackageAsExternalLink(cache, cacheName)){
+			// Add the GeoPackage overlay
+			GeoPackage geoPackage = geoPackageManager.open(cacheName);
+			try {
+				List<CacheOverlay> tables = new ArrayList<>();
+
+				// GeoPackage tile tables
+				List<String> tileTables = geoPackage.getTileTables();
+				for (String tileTable : tileTables) {
+					String tableCacheName = CacheOverlay.buildChildCacheName(cacheName, tileTable);
+					GeoPackageTableCacheOverlay tableCache = new GeoPackageTileTableCacheOverlay(tileTable, cacheName, tableCacheName);
+					tables.add(tableCache);
+				}
+
+				// GeoPackage feature tables
+				List<String> featureTables = geoPackage.getFeatureTables();
+				for (String featureTable : featureTables) {
+					String tableCacheName = CacheOverlay.buildChildCacheName(cacheName, featureTable);
+					GeoPackageTableCacheOverlay tableCache = new GeoPackageFeatureTableCacheOverlay(featureTable, cacheName, tableCacheName);
+					tables.add(tableCache);
+				}
+
+				// Add the GeoPackage overlay with child tables
+				overlays.add(new GeoPackageCacheOverlay(cacheName, tables));
+			}finally {
+				geoPackage.close();
+			}
 		}
 	}
 
