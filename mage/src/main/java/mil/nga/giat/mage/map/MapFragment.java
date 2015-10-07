@@ -119,6 +119,7 @@ import mil.nga.giat.mage.sdk.event.IStaticFeatureEventListener;
 import mil.nga.giat.mage.sdk.exceptions.LayerException;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
 import mil.nga.giat.mage.sdk.location.LocationService;
+import mil.nga.wkb.geom.GeometryType;
 
 public class MapFragment extends Fragment implements OnMapClickListener, OnMapLongClickListener, OnMarkerClickListener, OnInfoWindowClickListener, OnMapPanListener, OnMyLocationButtonClickListener, OnClickListener, LocationSource, LocationListener, OnCacheOverlayListener, OnSharedPreferenceChangeListener,
 		IObservationEventListener, ILocationEventListener, IStaticFeatureEventListener {
@@ -609,6 +610,30 @@ public class MapFragment extends Fragment implements OnMapClickListener, OnMapLo
 		((LocationMarkerCollection) locations).offMarkerClick();
 
 		staticGeometryCollection.onMapClick(map, latLng, getActivity());
+
+		if(!cacheOverlays.isEmpty()) {
+			StringBuilder clickMessage = new StringBuilder();
+			for (CacheOverlay cacheOverlay : cacheOverlays.values()) {
+				String message = cacheOverlay.onMapClick(latLng, mapView, map);
+				if(message != null){
+					if(clickMessage.length() > 0){
+						clickMessage.append("\n\n");
+					}
+					clickMessage.append(message);
+				}
+			}
+			if(clickMessage.length() > 0){
+				new AlertDialog.Builder(getActivity())
+						.setMessage(clickMessage.toString())
+						.setPositiveButton(android.R.string.yes,
+								new DialogInterface.OnClickListener() {
+									public void onClick(DialogInterface dialog, int which) {
+									}
+								}
+						)
+				.show();
+			}
+		}
 	}
 
 	@Override
@@ -851,8 +876,13 @@ public class MapFragment extends Fragment implements OnMapClickListener, OnMapLo
 			// If indexed, add as a tile overlay
 			if(featureTableCacheOverlay.isIndexed()){
 				FeatureTiles featureTiles = new FeatureTiles(getActivity(), featureDao);
-				featureTiles.setMaxFeaturesPerTile(
-						getResources().getInteger(R.integer.geopackage_feature_tiles_max_features_per_tile));
+				Integer maxFeaturesPerTile = null;
+				if(featureDao.getGeometryType() == GeometryType.POINT){
+					maxFeaturesPerTile = getResources().getInteger(R.integer.geopackage_feature_tiles_max_points_per_tile);
+				}else{
+					maxFeaturesPerTile = getResources().getInteger(R.integer.geopackage_feature_tiles_max_features_per_tile);
+				}
+				featureTiles.setMaxFeaturesPerTile(maxFeaturesPerTile);
 				NumberFeaturesTile numberFeaturesTile = new NumberFeaturesTile(getActivity());
 				// Adjust the max features number tile draw paint attributes here as needed to
 				// change how tiles are drawn when more than the max features exist in a tile
@@ -864,7 +894,7 @@ public class MapFragment extends Fragment implements OnMapClickListener, OnMapLo
 				featureTileProvider.setMinZoom(featureTableCacheOverlay.getMinZoom());
 				TileOverlayOptions overlayOptions = createTileOverlayOptions(featureTileProvider);
 				TileOverlay tileOverlay = map.addTileOverlay(overlayOptions);
-				featureTableCacheOverlay.setTileOverlay(tileOverlay);
+				featureTableCacheOverlay.setTileOverlay(tileOverlay, featureTiles);
 			}
 			// Not indexed, add the features to the map
 			else {

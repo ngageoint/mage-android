@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <bool name="geopackage_feature_tiles_map_click_max_features">true</bool>
+    <bool name="geopackage_feature_tiles_map_click_features">true</bool>
+    <bool name="geopackage_feature_tiles_map_click_print_points">true</bool>
+    <bool name="geopackage_feature_tiles_map_click_print_features">false</bool>
+    
+</resources>

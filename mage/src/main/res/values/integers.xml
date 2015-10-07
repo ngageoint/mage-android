@@ -1,7 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <integer name="geopackage_feature_tiles_max_features_per_tile">1000</integer>
+    <integer name="geopackage_feature_tiles_max_points_per_tile">1000</integer>
+    <integer name="geopackage_feature_tiles_max_features_per_tile">500</integer>
     <integer name="geopackage_feature_tiles_min_zoom_offset">0</integer>
+    <integer name="geopackage_feature_tiles_map_click_max_point_info">10</integer>
+    <integer name="geopackage_feature_tiles_map_click_max_feature_info">10</integer>
     
 </resources>
