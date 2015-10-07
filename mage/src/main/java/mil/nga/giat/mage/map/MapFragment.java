@@ -847,11 +847,9 @@ public class MapFragment extends Fragment implements OnMapClickListener, OnMapLo
 		if(cacheOverlay == null) {
 			// Add the features to the map
 			FeatureDao featureDao = geoPackage.getFeatureDao(featureTableCacheOverlay.getName());
-			FeatureIndexManager indexer = new FeatureIndexManager(getActivity(), geoPackage, featureDao);
-			boolean indexed = indexer.isIndexed();
 
 			// If indexed, add as a tile overlay
-			if(indexed){
+			if(featureTableCacheOverlay.isIndexed()){
 				FeatureTiles featureTiles = new FeatureTiles(getActivity(), featureDao);
 				featureTiles.setMaxFeaturesPerTile(
 						getResources().getInteger(R.integer.geopackage_feature_tiles_max_features_per_tile));
@@ -859,14 +857,11 @@ public class MapFragment extends Fragment implements OnMapClickListener, OnMapLo
 				// Adjust the max features number tile draw paint attributes here as needed to
 				// change how tiles are drawn when more than the max features exist in a tile
 				featureTiles.setMaxFeaturesTileDraw(numberFeaturesTile);
-				featureTiles.setIndexManager(indexer);
+				featureTiles.setIndexManager(new FeatureIndexManager(getActivity(), geoPackage, featureDao));
 				// Adjust the feature tiles draw paint attributes here as needed to change how
 				// features are drawn on tiles
 				FeatureOverlay featureTileProvider = new FeatureOverlay(featureTiles);
-				int zoomLevel = featureDao.getZoomLevel();
-				zoomLevel = Math.max(
-						zoomLevel + getResources().getInteger(R.integer.geopackage_feature_tiles_min_zoom_offset), 0);
-				featureTileProvider.setMinZoom(zoomLevel);
+				featureTileProvider.setMinZoom(featureTableCacheOverlay.getMinZoom());
 				TileOverlayOptions overlayOptions = createTileOverlayOptions(featureTileProvider);
 				TileOverlay tileOverlay = map.addTileOverlay(overlayOptions);
 				featureTableCacheOverlay.setTileOverlay(tileOverlay);

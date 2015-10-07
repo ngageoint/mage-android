@@ -2,6 +2,6 @@
 <resources>
 
     <integer name="geopackage_feature_tiles_max_features_per_tile">1000</integer>
-    <integer name="geopackage_feature_tiles_min_zoom_offset">-1</integer>
+    <integer name="geopackage_feature_tiles_min_zoom_offset">0</integer>
     
 </resources>

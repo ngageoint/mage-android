@@ -5,6 +5,8 @@ import java.util.List;
 
 /**
  * Abstract cache overlay
+ *
+ * @author osbornb
  */
 public abstract class CacheOverlay {
 
@@ -109,6 +111,14 @@ public abstract class CacheOverlay {
      */
     public List<CacheOverlay> getChildren() {
         return new ArrayList<>();
+    }
+
+    /**
+     * Get information about the cache to display
+     * @return
+     */
+    public String getInfo(){
+        return null;
     }
 
     /**

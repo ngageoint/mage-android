@@ -9,11 +9,29 @@ import java.util.Map;
 import mil.nga.geopackage.geom.map.GoogleMapShape;
 import mil.nga.geopackage.geom.map.GoogleMapShapeConverter;
 import mil.nga.giat.mage.R;
+import mil.nga.wkb.geom.GeometryType;
 
 /**
  * GeoPackage Feature Table cache overlay
+ *
+ * @author osbornb
  */
 public class GeoPackageFeatureTableCacheOverlay extends GeoPackageTableCacheOverlay {
+
+    /**
+     * Max zoom for features
+     */
+    public static final int MAX_ZOOM = 21;
+
+    /**
+     * Indexed flag, true when the feature table is indexed
+     */
+    private final boolean indexed;
+
+    /**
+     * Geometry type
+     */
+    private final GeometryType geometryType;
 
     /**
      * Mapping between feature ids and shapes
@@ -28,12 +46,18 @@ public class GeoPackageFeatureTableCacheOverlay extends GeoPackageTableCacheOver
     /**
      * Constructor
      *
-     * @param name       GeoPackage table name
-     * @param geoPackage GeoPackage name
-     * @param cacheName  Cache name
+     * @param name         GeoPackage table name
+     * @param geoPackage   GeoPackage name
+     * @param cacheName    Cache name
+     * @param count        count
+     * @param minZoom      min zoom level
+     * @param indexed      indexed flag
+     * @param geometryType geometry type
      */
-    public GeoPackageFeatureTableCacheOverlay(String name, String geoPackage, String cacheName) {
-        super(name, geoPackage, cacheName, CacheOverlayType.GEOPACKAGE_FEATURE_TABLE);
+    public GeoPackageFeatureTableCacheOverlay(String name, String geoPackage, String cacheName, int count, int minZoom, boolean indexed, GeometryType geometryType) {
+        super(name, geoPackage, cacheName, CacheOverlayType.GEOPACKAGE_FEATURE_TABLE, count, minZoom, MAX_ZOOM);
+        this.indexed = indexed;
+        this.geometryType = geometryType;
     }
 
     @Override
@@ -51,6 +75,29 @@ public class GeoPackageFeatureTableCacheOverlay extends GeoPackageTableCacheOver
     @Override
     public Integer getIconImageResourceId() {
         return R.drawable.ic_place;
+    }
+
+    @Override
+    public String getInfo() {
+        return "features: " + getCount() + ", zoom: " + getMinZoom() + " - " + getMaxZoom();
+    }
+
+    /**
+     * Determine if the feature table is indexed
+     *
+     * @return true if indexed
+     */
+    public boolean isIndexed() {
+        return indexed;
+    }
+
+    /**
+     * Get the geometry type
+     *
+     * @return geometry type
+     */
+    public GeometryType getGeometryType() {
+        return geometryType;
     }
 
     /**
