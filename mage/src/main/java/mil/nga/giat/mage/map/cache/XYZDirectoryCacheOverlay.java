@@ -8,6 +8,8 @@ import mil.nga.giat.mage.R;
 
 /**
  * XYZ Directory of tiles cache overlay
+ *
+ * @author osbornb
  */
 public class XYZDirectoryCacheOverlay extends CacheOverlay {
 

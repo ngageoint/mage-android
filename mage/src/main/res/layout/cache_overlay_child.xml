@@ -3,7 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:gravity="left|center"
-    android:minHeight="56dp"
+    android:minHeight="72dp"
     android:paddingLeft="16dp"
     android:paddingRight="16dp"
     android:background="?android:attr/dividerHorizontal" >
@@ -19,7 +19,7 @@
         android:id="@+id/cache_overlay_child_linear"
         android:layout_height="wrap_content"
         android:layout_width="wrap_content"
-        android:orientation="horizontal"
+        android:orientation="vertical"
         android:paddingLeft="72dp" >
 
         <TextView
@@ -28,7 +28,15 @@
             android:layout_height="wrap_content"
             android:layout_gravity="center_vertical"
             android:gravity="left|center"
-            android:textSize="22sp" />
+            android:textSize="16sp" />
+
+        <TextView
+            android:id="@+id/cache_overlay_child_info"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:gravity="left|center"
+            android:textSize="14sp" />
 
     </LinearLayout>
 

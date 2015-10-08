@@ -6,6 +6,8 @@ import mil.nga.giat.mage.R;
 
 /**
  * GeoPackage Tile Table cache overlay
+ *
+ * @author osbornb
  */
 public class GeoPackageTileTableCacheOverlay extends GeoPackageTableCacheOverlay {
 
@@ -20,9 +22,12 @@ public class GeoPackageTileTableCacheOverlay extends GeoPackageTableCacheOverlay
      * @param name       GeoPackage table name
      * @param geoPackage GeoPackage name
      * @param cacheName  Cache name
+     * @param count      count
+     * @param minZoom    min zoom level
+     * @param maxZoom    max zoom level
      */
-    public GeoPackageTileTableCacheOverlay(String name, String geoPackage, String cacheName) {
-        super(name, geoPackage, cacheName, CacheOverlayType.GEOPACKAGE_TILE_TABLE);
+    public GeoPackageTileTableCacheOverlay(String name, String geoPackage, String cacheName, int count, int minZoom, int maxZoom) {
+        super(name, geoPackage, cacheName, CacheOverlayType.GEOPACKAGE_TILE_TABLE, count, minZoom, maxZoom);
     }
 
     @Override
@@ -36,6 +41,11 @@ public class GeoPackageTileTableCacheOverlay extends GeoPackageTableCacheOverlay
     @Override
     public Integer getIconImageResourceId() {
         return R.drawable.ic_layers;
+    }
+
+    @Override
+    public String getInfo() {
+        return "tiles: " + getCount() + ", zoom: " + getMinZoom() + " - " + getMaxZoom();
     }
 
     /**

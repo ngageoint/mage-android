@@ -30,7 +30,10 @@ import java.util.Set;
 import mil.nga.geopackage.GeoPackage;
 import mil.nga.geopackage.GeoPackageManager;
 import mil.nga.geopackage.factory.GeoPackageFactory;
+import mil.nga.geopackage.features.index.FeatureIndexManager;
+import mil.nga.geopackage.features.user.FeatureDao;
 import mil.nga.geopackage.io.GeoPackageIOUtils;
+import mil.nga.geopackage.tiles.user.TileDao;
 import mil.nga.geopackage.validate.GeoPackageValidate;
 import mil.nga.giat.mage.login.LoginActivity;
 import mil.nga.giat.mage.map.cache.CacheOverlay;
@@ -58,6 +61,7 @@ import mil.nga.giat.mage.sdk.utils.StorageUtility;
 import mil.nga.giat.mage.sdk.utils.StorageUtility.StorageType;
 import mil.nga.giat.mage.sdk.utils.UserUtility;
 import mil.nga.giat.mage.wearable.InitializeMAGEWearBridge;
+import mil.nga.wkb.geom.GeometryType;
 
 public class MAGE extends MultiDexApplication implements IUserEventListener {
 
@@ -118,7 +122,7 @@ public class MAGE extends MultiDexApplication implements IUserEventListener {
 
 		InitializeMAGEWearBridge.startBridgeIfWearBuild(getApplicationContext());
 	}
-	
+
 	public void loadStaticFeatures(final boolean force) {
 		Runnable runnable = new Runnable() {
 			@Override
@@ -364,36 +368,7 @@ public class MAGE extends MultiDexApplication implements IUserEventListener {
 							}
 							// GeoPackage File
 							else if(GeoPackageValidate.hasGeoPackageExtension(cache)){
-								// Import the GeoPackage as a linked file
-								String cacheName = GeoPackageIOUtils.getFileNameWithoutExtension(cache);
-								if(geoPackageManager.importGeoPackageAsExternalLink(cache, cacheName)){
-									// Add the GeoPackage overlay
-									GeoPackage geoPackage = geoPackageManager.open(cacheName);
-									try {
-										List<CacheOverlay> tables = new ArrayList<>();
-
-										// GeoPackage tile tables
-										List<String> tileTables = geoPackage.getTileTables();
-										for (String tileTable : tileTables) {
-											String tableCacheName = CacheOverlay.buildChildCacheName(cacheName, tileTable);
-											GeoPackageTableCacheOverlay tableCache = new GeoPackageTileTableCacheOverlay(tileTable, cacheName, tableCacheName);
-											tables.add(tableCache);
-										}
-
-										// GeoPackage feature tables
-										List<String> featureTables = geoPackage.getFeatureTables();
-										for (String featureTable : featureTables) {
-											String tableCacheName = CacheOverlay.buildChildCacheName(cacheName, featureTable);
-											GeoPackageTableCacheOverlay tableCache = new GeoPackageFeatureTableCacheOverlay(featureTable, cacheName, tableCacheName);
-											tables.add(tableCache);
-										}
-
-										// Add the GeoPackage overlay with child tables
-										overlays.add(new GeoPackageCacheOverlay(cacheName, tables));
-									}finally {
-										geoPackage.close();
-									}
-								}
+								addGeoPackageCacheOverlays(context, overlays, cache, geoPackageManager);
 							}
 						}
 					}
@@ -425,6 +400,62 @@ public class MAGE extends MultiDexApplication implements IUserEventListener {
 		@Override
 		protected void onPostExecute(List<CacheOverlay> result) {
 			setCacheOverlays(result);
+		}
+	}
+
+	/**
+	 * Add GeoPackage Cache Overlays
+     *
+	 * @param context
+	 * @param overlays
+	 * @param cache
+	 * @param geoPackageManager
+	 */
+	private void addGeoPackageCacheOverlays(Context context, List<CacheOverlay> overlays, File cache, GeoPackageManager geoPackageManager){
+		// Import the GeoPackage as a linked file
+		String cacheName = GeoPackageIOUtils.getFileNameWithoutExtension(cache);
+		if(geoPackageManager.importGeoPackageAsExternalLink(cache, cacheName)){
+			// Add the GeoPackage overlay
+			GeoPackage geoPackage = geoPackageManager.open(cacheName);
+			try {
+				List<CacheOverlay> tables = new ArrayList<>();
+
+				// GeoPackage tile tables
+				List<String> tileTables = geoPackage.getTileTables();
+				for (String tileTable : tileTables) {
+					String tableCacheName = CacheOverlay.buildChildCacheName(cacheName, tileTable);
+					TileDao tileDao = geoPackage.getTileDao(tileTable);
+					int count = tileDao.count();
+					int minZoom = (int) tileDao.getMinZoom();
+					int maxZoom = (int) tileDao.getMaxZoom();
+					GeoPackageTableCacheOverlay tableCache = new GeoPackageTileTableCacheOverlay(tileTable, cacheName, tableCacheName, count, minZoom, maxZoom);
+					tables.add(tableCache);
+				}
+
+				// GeoPackage feature tables
+				List<String> featureTables = geoPackage.getFeatureTables();
+				for (String featureTable : featureTables) {
+					String tableCacheName = CacheOverlay.buildChildCacheName(cacheName, featureTable);
+					FeatureDao featureDao = geoPackage.getFeatureDao(featureTable);
+					int count = featureDao.count();
+					GeometryType geometryType = featureDao.getGeometryType();
+					FeatureIndexManager indexer = new FeatureIndexManager(context, geoPackage, featureDao);
+					boolean indexed = indexer.isIndexed();
+					int minZoom = 0;
+					if(indexed) {
+						minZoom = featureDao.getZoomLevel() + getResources().getInteger(R.integer.geopackage_feature_tiles_min_zoom_offset);
+						minZoom = Math.max(minZoom, 0);
+						minZoom = Math.min(minZoom, GeoPackageFeatureTableCacheOverlay.MAX_ZOOM);
+					}
+					GeoPackageTableCacheOverlay tableCache = new GeoPackageFeatureTableCacheOverlay(featureTable, cacheName, tableCacheName, count, minZoom, indexed, geometryType);
+					tables.add(tableCache);
+				}
+
+				// Add the GeoPackage overlay with child tables
+				overlays.add(new GeoPackageCacheOverlay(cacheName, tables));
+			}finally {
+				geoPackage.close();
+			}
 		}
 	}
 

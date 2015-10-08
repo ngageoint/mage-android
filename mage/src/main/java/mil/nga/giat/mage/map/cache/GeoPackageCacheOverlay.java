@@ -9,6 +9,8 @@ import mil.nga.giat.mage.R;
 
 /**
  * GeoPackage file cache overlay
+ *
+ * @author osbornb
  */
 public class GeoPackageCacheOverlay extends CacheOverlay {
 
