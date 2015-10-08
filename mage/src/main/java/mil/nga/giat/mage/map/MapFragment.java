@@ -70,6 +70,7 @@ import mil.nga.geopackage.GeoPackage;
 import mil.nga.geopackage.GeoPackageCache;
 import mil.nga.geopackage.GeoPackageManager;
 import mil.nga.geopackage.factory.GeoPackageFactory;
+import mil.nga.geopackage.features.index.FeatureIndexManager;
 import mil.nga.geopackage.features.user.FeatureCursor;
 import mil.nga.geopackage.features.user.FeatureDao;
 import mil.nga.geopackage.features.user.FeatureRow;
@@ -77,6 +78,10 @@ import mil.nga.geopackage.geom.GeoPackageGeometryData;
 import mil.nga.geopackage.geom.map.GoogleMapShape;
 import mil.nga.geopackage.geom.map.GoogleMapShapeConverter;
 import mil.nga.geopackage.projection.Projection;
+import mil.nga.geopackage.tiles.features.FeatureTiles;
+import mil.nga.geopackage.tiles.features.custom.NumberFeaturesTile;
+import mil.nga.geopackage.tiles.overlay.FeatureOverlay;
+import mil.nga.geopackage.tiles.overlay.FeatureOverlayQuery;
 import mil.nga.geopackage.tiles.overlay.GeoPackageOverlayFactory;
 import mil.nga.geopackage.tiles.user.TileDao;
 import mil.nga.giat.mage.MAGE;
@@ -115,6 +120,7 @@ import mil.nga.giat.mage.sdk.event.IStaticFeatureEventListener;
 import mil.nga.giat.mage.sdk.exceptions.LayerException;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
 import mil.nga.giat.mage.sdk.location.LocationService;
+import mil.nga.wkb.geom.GeometryType;
 
 public class MapFragment extends Fragment implements OnMapClickListener, OnMapLongClickListener, OnMarkerClickListener, OnInfoWindowClickListener, OnMapPanListener, OnMyLocationButtonClickListener, OnClickListener, LocationSource, LocationListener, OnCacheOverlayListener, OnSharedPreferenceChangeListener,
 		IObservationEventListener, ILocationEventListener, IStaticFeatureEventListener {
@@ -605,6 +611,30 @@ public class MapFragment extends Fragment implements OnMapClickListener, OnMapLo
 		((LocationMarkerCollection) locations).offMarkerClick();
 
 		staticGeometryCollection.onMapClick(map, latLng, getActivity());
+
+		if(!cacheOverlays.isEmpty()) {
+			StringBuilder clickMessage = new StringBuilder();
+			for (CacheOverlay cacheOverlay : cacheOverlays.values()) {
+				String message = cacheOverlay.onMapClick(latLng, mapView, map);
+				if(message != null){
+					if(clickMessage.length() > 0){
+						clickMessage.append("\n\n");
+					}
+					clickMessage.append(message);
+				}
+			}
+			if(clickMessage.length() > 0){
+				new AlertDialog.Builder(getActivity())
+						.setMessage(clickMessage.toString())
+						.setPositiveButton(android.R.string.yes,
+								new DialogInterface.OnClickListener() {
+									public void onClick(DialogInterface dialog, int which) {
+									}
+								}
+						)
+				.show();
+			}
+		}
 	}
 
 	@Override
@@ -823,7 +853,6 @@ public class MapFragment extends Fragment implements OnMapClickListener, OnMapLo
 			TileDao tileDao = geoPackage.getTileDao(tileTableCacheOverlay.getName());
 			TileProvider geoPackageTileProvider = GeoPackageOverlayFactory.getTileProvider(tileDao);
 			TileOverlayOptions overlayOptions = createTileOverlayOptions(geoPackageTileProvider);
-			// Set the tile overlay in the cache overlay
 			TileOverlay tileOverlay = map.addTileOverlay(overlayOptions);
 			tileTableCacheOverlay.setTileOverlay(tileOverlay);
 			cacheOverlay = tileTableCacheOverlay;
@@ -844,24 +873,53 @@ public class MapFragment extends Fragment implements OnMapClickListener, OnMapLo
 		if(cacheOverlay == null) {
 			// Add the features to the map
 			FeatureDao featureDao = geoPackage.getFeatureDao(featureTableCacheOverlay.getName());
-			Projection projection = featureDao.getProjection();
-			GoogleMapShapeConverter shapeConverter = new GoogleMapShapeConverter(projection);
-			FeatureCursor featureCursor = featureDao.queryForAll();
-			try {
-				while (featureCursor.moveToNext()) {
-					FeatureRow featureRow = featureCursor.getRow();
-					GeoPackageGeometryData geometryData = featureRow.getGeometry();
-					if (geometryData != null && !geometryData.isEmpty()) {
-						mil.nga.wkb.geom.Geometry geometry = geometryData.getGeometry();
-						if (geometry != null) {
-							GoogleMapShape shape = shapeConverter.toShape(geometry);
-							// Set the Shape Marker, PolylineOptions, and PolygonOptions here if needed to change color and style
-							featureTableCacheOverlay.addShapeToMap(featureRow.getId(), shape, map);
+
+			// If indexed, add as a tile overlay
+			if(featureTableCacheOverlay.isIndexed()){
+				FeatureTiles featureTiles = new FeatureTiles(getActivity(), featureDao);
+				Integer maxFeaturesPerTile = null;
+				if(featureDao.getGeometryType() == GeometryType.POINT){
+					maxFeaturesPerTile = getResources().getInteger(R.integer.geopackage_feature_tiles_max_points_per_tile);
+				}else{
+					maxFeaturesPerTile = getResources().getInteger(R.integer.geopackage_feature_tiles_max_features_per_tile);
+				}
+				featureTiles.setMaxFeaturesPerTile(maxFeaturesPerTile);
+				NumberFeaturesTile numberFeaturesTile = new NumberFeaturesTile(getActivity());
+				// Adjust the max features number tile draw paint attributes here as needed to
+				// change how tiles are drawn when more than the max features exist in a tile
+				featureTiles.setMaxFeaturesTileDraw(numberFeaturesTile);
+				featureTiles.setIndexManager(new FeatureIndexManager(getActivity(), geoPackage, featureDao));
+				// Adjust the feature tiles draw paint attributes here as needed to change how
+				// features are drawn on tiles
+				FeatureOverlay featureOverlay = new FeatureOverlay(featureTiles);
+				featureOverlay.setMinZoom(featureTableCacheOverlay.getMinZoom());
+				FeatureOverlayQuery featureOverlayQuery = new FeatureOverlayQuery(getActivity(), featureOverlay);
+				featureTableCacheOverlay.setFeatureOverlayQuery(featureOverlayQuery);
+				TileOverlayOptions overlayOptions = createTileOverlayOptions(featureOverlay);
+				TileOverlay tileOverlay = map.addTileOverlay(overlayOptions);
+				featureTableCacheOverlay.setTileOverlay(tileOverlay);
+			}
+			// Not indexed, add the features to the map
+			else {
+				Projection projection = featureDao.getProjection();
+				GoogleMapShapeConverter shapeConverter = new GoogleMapShapeConverter(projection);
+				FeatureCursor featureCursor = featureDao.queryForAll();
+				try {
+					while (featureCursor.moveToNext()) {
+						FeatureRow featureRow = featureCursor.getRow();
+						GeoPackageGeometryData geometryData = featureRow.getGeometry();
+						if (geometryData != null && !geometryData.isEmpty()) {
+							mil.nga.wkb.geom.Geometry geometry = geometryData.getGeometry();
+							if (geometry != null) {
+								GoogleMapShape shape = shapeConverter.toShape(geometry);
+								// Set the Shape Marker, PolylineOptions, and PolygonOptions here if needed to change color and style
+								featureTableCacheOverlay.addShapeToMap(featureRow.getId(), shape, map);
+							}
 						}
 					}
+				} finally {
+					featureCursor.close();
 				}
-			} finally {
-				featureCursor.close();
 			}
 			cacheOverlay = featureTableCacheOverlay;
 		}

@@ -2,6 +2,8 @@ package mil.nga.giat.mage.map.cache;
 
 /**
  * Enumeration of cache overlay types
+ *
+ * @author osbornb
  */
 public enum CacheOverlayType {
 

@@ -279,6 +279,8 @@ public class TileOverlayPreferenceActivity extends ExpandableListActivity implem
                     .findViewById(R.id.cache_overlay_child_image);
             TextView tableName = (TextView) view
                     .findViewById(R.id.cache_overlay_child_name);
+            TextView info = (TextView) view
+                    .findViewById(R.id.cache_overlay_child_info);
             CheckBox checkBox = (CheckBox) view
                     .findViewById(R.id.cache_overlay_child_checkbox);
 
@@ -315,6 +317,7 @@ public class TileOverlayPreferenceActivity extends ExpandableListActivity implem
             });
 
             tableName.setText(childCache.getName());
+            info.setText(childCache.getInfo());
             checkBox.setChecked(childCache.isEnabled());
 
             Integer imageResource = childCache.getIconImageResourceId();

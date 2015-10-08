@@ -1,10 +1,16 @@
 package mil.nga.giat.mage.map.cache;
 
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.MapView;
+import com.google.android.gms.maps.model.LatLng;
+
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * Abstract cache overlay
+ *
+ * @author osbornb
  */
 public abstract class CacheOverlay {
 
@@ -109,6 +115,27 @@ public abstract class CacheOverlay {
      */
     public List<CacheOverlay> getChildren() {
         return new ArrayList<>();
+    }
+
+    /**
+     * Get information about the cache to display
+     *
+     * @return
+     */
+    public String getInfo() {
+        return null;
+    }
+
+    /**
+     * On map click
+     *
+     * @param latLng  map click location
+     * @param mapView map view
+     * @param map     Google map
+     * @return map click message
+     */
+    public String onMapClick(LatLng latLng, MapView mapView, GoogleMap map) {
+        return null;
     }
 
     /**
