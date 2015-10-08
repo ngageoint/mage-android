@@ -1,6 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-
-    <item name="geopackage_feature_tiles_map_click_screen_percentage" type="dimen" format="float">.03</item>
-    
-</resources>

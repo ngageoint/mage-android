@@ -81,6 +81,7 @@ import mil.nga.geopackage.projection.Projection;
 import mil.nga.geopackage.tiles.features.FeatureTiles;
 import mil.nga.geopackage.tiles.features.custom.NumberFeaturesTile;
 import mil.nga.geopackage.tiles.overlay.FeatureOverlay;
+import mil.nga.geopackage.tiles.overlay.FeatureOverlayQuery;
 import mil.nga.geopackage.tiles.overlay.GeoPackageOverlayFactory;
 import mil.nga.geopackage.tiles.user.TileDao;
 import mil.nga.giat.mage.MAGE;
@@ -890,11 +891,13 @@ public class MapFragment extends Fragment implements OnMapClickListener, OnMapLo
 				featureTiles.setIndexManager(new FeatureIndexManager(getActivity(), geoPackage, featureDao));
 				// Adjust the feature tiles draw paint attributes here as needed to change how
 				// features are drawn on tiles
-				FeatureOverlay featureTileProvider = new FeatureOverlay(featureTiles);
-				featureTileProvider.setMinZoom(featureTableCacheOverlay.getMinZoom());
-				TileOverlayOptions overlayOptions = createTileOverlayOptions(featureTileProvider);
+				FeatureOverlay featureOverlay = new FeatureOverlay(featureTiles);
+				featureOverlay.setMinZoom(featureTableCacheOverlay.getMinZoom());
+				FeatureOverlayQuery featureOverlayQuery = new FeatureOverlayQuery(getActivity(), featureOverlay);
+				featureTableCacheOverlay.setFeatureOverlayQuery(featureOverlayQuery);
+				TileOverlayOptions overlayOptions = createTileOverlayOptions(featureOverlay);
 				TileOverlay tileOverlay = map.addTileOverlay(overlayOptions);
-				featureTableCacheOverlay.setTileOverlay(tileOverlay, featureTiles);
+				featureTableCacheOverlay.setTileOverlay(tileOverlay);
 			}
 			// Not indexed, add the features to the map
 			else {

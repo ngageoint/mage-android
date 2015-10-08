@@ -1,32 +1,18 @@
 package mil.nga.giat.mage.map.cache;
 
-import android.util.TypedValue;
-
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapView;
-import com.google.android.gms.maps.Projection;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.TileOverlay;
 
 import java.util.HashMap;
 import java.util.Map;
 
-import mil.nga.geopackage.BoundingBox;
-import mil.nga.geopackage.features.index.FeatureIndexManager;
-import mil.nga.geopackage.features.index.FeatureIndexResults;
-import mil.nga.geopackage.features.user.FeatureRow;
-import mil.nga.geopackage.geom.GeoPackageGeometryData;
 import mil.nga.geopackage.geom.map.GoogleMapShape;
 import mil.nga.geopackage.geom.map.GoogleMapShapeConverter;
-import mil.nga.geopackage.projection.ProjectionConstants;
-import mil.nga.geopackage.projection.ProjectionFactory;
-import mil.nga.geopackage.tiles.TileBoundingBoxUtils;
-import mil.nga.geopackage.tiles.TileGrid;
-import mil.nga.geopackage.tiles.features.FeatureTiles;
+import mil.nga.geopackage.tiles.overlay.FeatureOverlayQuery;
 import mil.nga.giat.mage.R;
 import mil.nga.wkb.geom.GeometryType;
-import mil.nga.wkb.geom.Point;
-import mil.nga.wkb.util.GeometryPrinter;
 
 /**
  * GeoPackage Feature Table cache overlay
@@ -61,9 +47,9 @@ public class GeoPackageFeatureTableCacheOverlay extends GeoPackageTableCacheOver
     private TileOverlay tileOverlay;
 
     /**
-     * Feature Tiles
+     * Feature Overlay Query
      */
-    private FeatureTiles featureTiles;
+    private FeatureOverlayQuery featureOverlayQuery;
 
     /**
      * Constructor
@@ -108,173 +94,8 @@ public class GeoPackageFeatureTableCacheOverlay extends GeoPackageTableCacheOver
     public String onMapClick(LatLng latLng, MapView mapView, GoogleMap map) {
         String message = null;
 
-        boolean maxFeaturesEnabled = mapView.getResources().getBoolean(R.bool.geopackage_feature_tiles_map_click_max_features);
-        boolean featuresEnabled = mapView.getResources().getBoolean(R.bool.geopackage_feature_tiles_map_click_features);
-
-        if ((maxFeaturesEnabled || featuresEnabled) && tileOverlay != null && featureTiles != null) {
-            float zoom = map.getCameraPosition().zoom;
-            if (zoom >= getMinZoom() && featureTiles.getMaxFeaturesPerTile() != null) {
-                int zoomValue = (int) zoom;
-                Point point = new Point(latLng.longitude, latLng.latitude);
-                TileGrid tileGrid = TileBoundingBoxUtils.getTileGridFromWGS84(point, zoomValue);
-                long tileFeaturesCount = featureTiles.queryIndexedFeaturesCount((int) tileGrid.getMinX(), (int) tileGrid.getMinY(), zoomValue);
-                if (tileFeaturesCount > featureTiles.getMaxFeaturesPerTile().intValue()) {
-                    if (maxFeaturesEnabled) {
-                        message = getName() + " - " + tileFeaturesCount + " features";
-                    }
-                } else if (featuresEnabled) {
-                    message = handleFeatureClick(latLng, mapView, map);
-                }
-            }
-        }
-
-        return message;
-    }
-
-    /**
-     * Handle feature clicks on nearby features
-     *
-     * @param latLng  click location
-     * @param mapView map view
-     * @param map     Google map
-     * @return string message or null
-     */
-    private String handleFeatureClick(LatLng latLng, MapView mapView, GoogleMap map) {
-        String message = null;
-
-        // Get the screen percentage to determine when a feature is clicked
-        TypedValue screenPercentage = new TypedValue();
-        mapView.getResources().getValue(R.dimen.geopackage_feature_tiles_map_click_screen_percentage, screenPercentage, true);
-        float screenClickPercentage = screenPercentage.getFloat();
-
-        // Get the screen width and height a click occurs from a feature
-        int width = (int) Math.round(mapView.getWidth() * screenClickPercentage);
-        int height = (int) Math.round(mapView.getHeight() * screenClickPercentage);
-
-        // Get the screen click location
-        Projection projection = map.getProjection();
-        android.graphics.Point clickLocation = projection.toScreenLocation(latLng);
-
-        // Get the screen click locations in each width or height direction
-        android.graphics.Point left = new android.graphics.Point(clickLocation);
-        android.graphics.Point up = new android.graphics.Point(clickLocation);
-        android.graphics.Point right = new android.graphics.Point(clickLocation);
-        android.graphics.Point down = new android.graphics.Point(clickLocation);
-        left.offset(-width, 0);
-        up.offset(0, -height);
-        right.offset(width, 0);
-        down.offset(0, height);
-
-        // Get the coordinates of the bounding box points
-        LatLng leftCoordinate = projection.fromScreenLocation(left);
-        LatLng upCoordinate = projection.fromScreenLocation(up);
-        LatLng rightCoordinate = projection.fromScreenLocation(right);
-        LatLng downCoordinate = projection.fromScreenLocation(down);
-
-        // Create the bounding box to query for features
-        BoundingBox boundingBox = new BoundingBox(
-                leftCoordinate.longitude,
-                rightCoordinate.longitude,
-                downCoordinate.latitude,
-                upCoordinate.latitude);
-
-        // Query features
-        message = queryFeatures(boundingBox, mapView);
-
-        return message;
-    }
-
-    /**
-     * Query for features in the bounding box
-     *
-     * @param boundingBox
-     * @param mapView
-     * @return string message or null
-     */
-    private String queryFeatures(BoundingBox boundingBox, MapView mapView) {
-
-        String message = null;
-
-        // Query for features
-        FeatureIndexManager indexManager = featureTiles.getIndexManager();
-        FeatureIndexResults results = indexManager.query(boundingBox, ProjectionFactory.getProjection(ProjectionConstants.EPSG_WORLD_GEODETIC_SYSTEM));
-        try {
-            long featureCount = results.count();
-            if (featureCount > 0) {
-
-                int maxFeatureInfo = 0;
-                if (geometryType == GeometryType.POINT) {
-                    maxFeatureInfo = mapView.getResources().getInteger(R.integer.geopackage_feature_tiles_map_click_max_point_info);
-                } else {
-                    maxFeatureInfo = mapView.getResources().getInteger(R.integer.geopackage_feature_tiles_map_click_max_feature_info);
-                }
-
-                if (featureCount <= maxFeatureInfo) {
-                    StringBuilder messageBuilder = new StringBuilder();
-                    messageBuilder.append(getName())
-                            .append("\n");
-
-                    int featureNumber = 0;
-
-                    boolean printFeatures = false;
-                    if (geometryType == GeometryType.POINT) {
-                        printFeatures = mapView.getResources().getBoolean(R.bool.geopackage_feature_tiles_map_click_print_points);
-                    } else {
-                        printFeatures = mapView.getResources().getBoolean(R.bool.geopackage_feature_tiles_map_click_print_features);
-                    }
-
-                    for (FeatureRow featureRow : results) {
-
-                        featureNumber++;
-                        if (featureNumber > maxFeatureInfo) {
-                            break;
-                        }
-
-                        if (featureCount > 1) {
-                            if (featureNumber > 1) {
-                                messageBuilder.append("\n");
-                            } else {
-                                messageBuilder.append("\n")
-                                        .append(featureCount)
-                                        .append(" Features")
-                                        .append("\n");
-                            }
-                            messageBuilder.append("\n")
-                                    .append("Feature ")
-                                    .append(featureNumber)
-                                    .append(":")
-                                    .append("\n");
-                        }
-
-                        GeoPackageGeometryData geomData = featureRow.getGeometry();
-                        int geometryColumn = featureRow.getGeometryColumnIndex();
-                        for (int i = 0; i < featureRow.columnCount(); i++) {
-                            if (i != geometryColumn) {
-                                Object value = featureRow.getValue(i);
-                                if (value != null) {
-                                    messageBuilder.append("\n")
-                                            .append(featureRow.getColumnName(i))
-                                            .append(": ")
-                                            .append(value);
-                                }
-                            }
-                        }
-
-                        if (printFeatures) {
-                            messageBuilder.append("\n\n");
-                            messageBuilder.append(GeometryPrinter.getGeometryString(geomData
-                                    .getGeometry()));
-                        }
-
-                    }
-
-                    message = messageBuilder.toString();
-                } else {
-                    message = getName() + " - " + featureCount + " features";
-                }
-            }
-        } finally {
-            results.close();
+        if (featureOverlayQuery != null) {
+            message = featureOverlayQuery.buildMapClickMessage(latLng, mapView, map);
         }
 
         return message;
@@ -355,23 +176,30 @@ public class GeoPackageFeatureTableCacheOverlay extends GeoPackageTableCacheOver
     }
 
     /**
-     * Get the feature tiles
-     *
-     * @return feature tiles or null
-     */
-    public FeatureTiles getFeatureTiles() {
-        return featureTiles;
-    }
-
-    /**
      * Set the tile overlay
      *
      * @param tileOverlay
-     * @param featureTiles
      */
-    public void setTileOverlay(TileOverlay tileOverlay, FeatureTiles featureTiles) {
+    public void setTileOverlay(TileOverlay tileOverlay) {
         this.tileOverlay = tileOverlay;
-        this.featureTiles = featureTiles;
+    }
+
+    /**
+     * Get the feature overlay query
+     *
+     * @return feature overlay query
+     */
+    public FeatureOverlayQuery getFeatureOverlayQuery() {
+        return featureOverlayQuery;
+    }
+
+    /**
+     * Set the feature overlay query
+     *
+     * @param featureOverlayQuery
+     */
+    public void setFeatureOverlayQuery(FeatureOverlayQuery featureOverlayQuery) {
+        this.featureOverlayQuery = featureOverlayQuery;
     }
 
 }
