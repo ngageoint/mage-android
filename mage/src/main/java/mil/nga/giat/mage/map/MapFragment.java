@@ -895,7 +895,7 @@ public class MapFragment extends Fragment implements OnMapClickListener, OnMapLo
 				featureOverlay.setMinZoom(featureTableCacheOverlay.getMinZoom());
 				FeatureOverlayQuery featureOverlayQuery = new FeatureOverlayQuery(getActivity(), featureOverlay);
 				featureTableCacheOverlay.setFeatureOverlayQuery(featureOverlayQuery);
-				TileOverlayOptions overlayOptions = createTileOverlayOptions(featureOverlay);
+				TileOverlayOptions overlayOptions = createFeatureTileOverlayOptions(featureOverlay);
 				TileOverlay tileOverlay = map.addTileOverlay(overlayOptions);
 				featureTableCacheOverlay.setTileOverlay(tileOverlay);
 			}
@@ -925,6 +925,15 @@ public class MapFragment extends Fragment implements OnMapClickListener, OnMapLo
 		}
 		// Add the cache overlay to the enabled cache overlays
 		enabledCacheOverlays.put(cacheOverlay.getCacheName(), cacheOverlay);
+	}
+
+	/**
+	 * Create Feature Tile Overlay Options with the default z index for tile layers drawn from features
+	 * @param tileProvider
+	 * @return
+	 */
+	private TileOverlayOptions createFeatureTileOverlayOptions(TileProvider tileProvider){
+		return createTileOverlayOptions(tileProvider, -1);
 	}
 
 	/**
