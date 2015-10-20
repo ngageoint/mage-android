@@ -217,6 +217,7 @@ public class FormAuthLoginTask extends AbstractAccountTask {
 						user.setCurrentUser(true);
 						user.setFetchedDate(new Date());
 						user = userHelper.createOrUpdate(user);
+						editor.putString(mApplicationContext.getString(R.string.displayNameKey), user.getDisplayName()).commit();
 					} else {
 						Log.e(LOG_NAME, "Unable to Deserializer user.");
 						List<Integer> errorIndices = new ArrayList<Integer>();

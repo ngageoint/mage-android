@@ -97,7 +97,7 @@ public class LocalAuthLoginTask extends AbstractAccountTask {
             defaultEvent = eventHelper.create(defaultEvent);
 
 			// create new active user.
-			User currentUser = new User("NA", "unknown", username, "", username, defaultRole, defaultEvent, null, null, null);
+			User currentUser = new User("NA", "unknown", username, username, defaultRole, defaultEvent, null, null, null);
 			currentUser.setCurrentUser(Boolean.TRUE);
 			currentUser = userHelper.create(currentUser);
 

@@ -128,6 +128,28 @@ public class PreferenceHelper implements SharedPreferences.OnSharedPreferenceCha
 		}
 	}
 
+	public boolean containsLocalAuthentication() {
+		SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(mContext);
+		for (String key : sharedPreferences.getAll().keySet()) {
+			if (key.startsWith("gAuthenticationStrategiesLocal")) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	public boolean containsGoogleAuthentication() {
+		SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(mContext);
+		for (String key : sharedPreferences.getAll().keySet()) {
+			if (key.startsWith("gAuthenticationStrategiesGoogle")) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
 	private synchronized void initializeLocal(Integer... xmlFiles) {
 		for (int id : xmlFiles) {
 			Log.d(LOG_NAME, "Loading resources from: " + mContext.getResources().getResourceEntryName(id));
@@ -165,6 +187,14 @@ public class PreferenceHelper implements SharedPreferences.OnSharedPreferenceCha
 									} else {
 										int serverMajorVersion = sharedPreferences.getInt(mContext.getString(R.string.serverVersionMajorKey), 0);
 										int serverMinorVersion = sharedPreferences.getInt(mContext.getString(R.string.serverVersionMinorKey), 0);
+
+										Log.d("BILLY", "server major version: " + serverMajorVersion);
+										Log.d("BILLY", "server minor version: " + serverMinorVersion);
+
+										Log.d("BILLY", "compatibleMajorVersion: " + compatibleMajorVersion);
+										Log.d("BILLY", "compatibleMinorVersion: " + compatibleMinorVersion);
+
+
 
 										if (!compatibleMajorVersion.equals(serverMajorVersion)) {
 											return callback.apply(new Exception("This app is not compatible with this server"));
@@ -268,6 +298,8 @@ public class PreferenceHelper implements SharedPreferences.OnSharedPreferenceCha
 								Log.e(LOG_NAME, keyString + " with value " + String.valueOf(value) + " is not of valid type. Skipping this key-value pair.");
 							}
 						}
+
+						editor.commit();
 					}
 				} catch (JSONException je) {
 					je.printStackTrace();
