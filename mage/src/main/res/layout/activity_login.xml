@@ -34,7 +34,7 @@
 		        <ImageView 
 		            android:layout_width="wrap_content" 
 		            android:layout_height="76dip" 
-		            android:src="@drawable/ic_wand"/>
+		            android:src="@drawable/ic_launcher"/>
 	            <ProgressBar
 	                style="?android:attr/progressBarStyleLarge"
 	                android:indeterminateDrawable="@drawable/mage_progress_bar"
@@ -46,13 +46,44 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:fontFamily="sans-serif-light"
-                android:text="Logging in..."
+                android:text="Logging in"
                 android:textColor="#EEEEEE"
                 android:textSize="26sp" />
         </LinearLayout>
 
-        <!-- Login Form -->
+        <LinearLayout
+            android:visibility="gone"
+            android:id="@+id/server_configuration"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingBottom="24dip"
+            android:paddingLeft="24dip"
+            android:paddingRight="24dip">
 
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_marginTop="80dip"
+                android:layout_marginBottom="7dip"
+                android:orientation="vertical"
+                android:clickable="true"
+                android:onClick="changeServerURL">
+
+                <TextView
+                    android:id="@+id/server_configuration_url"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:text="MAGE server URL not set, click here to change."
+                    android:textColor="#AAAAAA"
+                    android:textSize="20sp" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <!-- Login Form -->
         <LinearLayout
             android:visibility="visible"
             android:id="@+id/login_form"
@@ -63,119 +94,167 @@
             android:paddingLeft="24dip"
             android:paddingRight="24dip">
 
-            <EditText
-                android:id="@+id/login_username"
-                android:layout_width="fill_parent"
+            <LinearLayout
+                android:visibility="visible"
+                android:id="@+id/third_party_auth"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="7dip"
-                android:layout_marginTop="7dip"
-                android:background="@drawable/form_field"
-                android:hint="Username"
-                android:textColorHint="#CCCCCC"
-                android:imeOptions="actionNext"
-                android:inputType="textVisiblePassword|textNoSuggestions"
-                android:singleLine="true"
-                android:textSize="22sp" />
+                android:orientation="vertical">
 
-            <EditText
-                android:id="@+id/login_password"
-                android:layout_width="fill_parent"
+                <Button
+                    android:id="@+id/google_login_button"
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dip"
+                    android:background="@drawable/google_login_button_states"
+                    android:text="Sign in with Google"
+                    android:textColor="#EEEEEE"
+                    android:textSize="21sp"
+                    android:textStyle="bold" />
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:visibility="visible"
+                android:id="@+id/or"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="7dip"
-                android:layout_marginTop="7dip"
-                android:background="@drawable/form_field"
-                android:hint="Password"
-                android:textColorHint="#CCCCCC"
-                android:inputType="textPassword"
-                android:imeActionLabel="Log In"
-                android:singleLine="true"
-                android:textSize="22sp" />
+                android:orientation="horizontal"
+                android:paddingTop="20dip"
+                android:paddingBottom="20dip">
 
-			<CheckBox
-			    android:layout_width="wrap_content"
-			    android:layout_height="wrap_content"
-			    android:onClick="togglePassword"
-			    android:text="Show Password"
-			    android:textColor="#EEEEEE" />
+                <View
+                    android:layout_width="0dip"
+                    android:layout_height="1dp"
+                    android:background="@android:color/darker_gray"
+                    android:layout_weight=".5"
+                    android:layout_marginTop="10dip"/>
+
+                <TextView
+                    android:layout_width="0dip"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:text="or"
+                    android:textColor="@android:color/darker_gray"
+                    android:layout_weight=".15" />
+
+                <View
+                    android:layout_width="0dip"
+                    android:layout_height="1dp"
+                    android:background="@android:color/darker_gray"
+                    android:layout_weight=".5"
+                    android:layout_marginTop="10dip"/>
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:visibility="visible"
+                android:id="@+id/local_auth"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <EditText
+                    android:id="@+id/login_username"
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="7dip"
+                    android:layout_marginTop="7dip"
+                    android:background="@drawable/form_field"
+                    android:hint="Username"
+                    android:textColorHint="#CCCCCC"
+                    android:imeOptions="actionNext"
+                    android:inputType="textVisiblePassword|textNoSuggestions"
+                    android:singleLine="true"
+                    android:textSize="22sp" />
+
+                <EditText
+                    android:id="@+id/login_password"
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="7dip"
+                    android:layout_marginTop="7dip"
+                    android:background="@drawable/form_field"
+                    android:hint="Password"
+                    android:textColorHint="#CCCCCC"
+                    android:inputType="textPassword"
+                    android:imeActionLabel="Log In"
+                    android:singleLine="true"
+                    android:textSize="22sp" />
+
+                <CheckBox
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:onClick="togglePassword"
+                    android:text="Show Password"
+                    android:textColor="#EEEEEE" />
+
+                <!-- Login button -->
+                <Button
+                    android:id="@+id/local_login_button"
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dip"
+                    android:background="@drawable/login_button_states"
+                    android:text="Log In"
+                    android:textColor="#EEEEEE"
+                    android:textSize="21sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:layout_marginBottom="7dip"
-                android:layout_marginTop="7dip"
+                android:layout_marginTop="40dip"
                 android:orientation="horizontal" >
 
-                <EditText
-                    android:id="@+id/login_server"
-                    android:layout_width="0dp"
+                <!-- Link to Signup Screen? -->
+                <TextView
+                    android:id="@+id/link_to_signup"
+                    android:layout_width="fill_parent"
                     android:layout_height="wrap_content"
-                    android:layout_weight=".88"
-                    android:background="@drawable/form_field"
-                    android:enabled="false"
-                    android:hint="Server URL"
-                    android:inputType="textUri"
-                    android:singleLine="true"
-                    android:textSize="16sp" />
+                    android:clickable="true"
+                    android:gravity="center"
+                    android:onClick="signup"
+                    android:text="New to MAGE? Signup here"
+                    android:textColor="#EEEEEE"
+                    android:textSize="20sp" />
+            </LinearLayout>
 
-                <ImageView
-                    android:id="@+id/login_lock"
-                    android:layout_width="0dp"
-                    android:layout_height="26dip"
-                    android:layout_weight=".12"
-                    android:contentDescription="lock"
-                    android:src="@drawable/lock_108"
-                    android:tag="lock" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_marginTop="40dip"
+                android:layout_marginBottom="7dip"
+                android:layout_alignParentBottom="true"
+                android:orientation="vertical"
+                android:clickable="true"
+                android:onClick="changeServerURL">
 
-                <ProgressBar
-                    android:id="@+id/login_server_progress"
-                    style="?android:attr/progressBarStyleLarge"
-                    android:layout_width="0dp"
-                    android:visibility="gone"
-                    android:layout_weight=".12"
-                    android:layout_height="26dip" />
+
+                <TextView
+                    android:id="@+id/server_url"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:textColor="#AAAAAA"
+                    android:textSize="13sp" />
+
+                <TextView
+                    android:id="@+id/login_version"
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:clickable="false"
+                    android:gravity="center"
+                    android:text=""
+                    android:textColor="#AAAAAA"
+                    android:textSize="11dp" />
+
 
             </LinearLayout>
 
-            <!-- Login button -->
-            <Button
-                android:id="@+id/login_login_button"
-                android:layout_width="fill_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="10dip"
-                android:background="@drawable/login_button_states"
-                android:onClick="login"
-                android:text="Log In"
-                android:textColor="#EEEEEE"
-                android:textSize="21sp"
-                android:textStyle="bold" />
-
-            <!-- Link to Signup Screen? -->
-
-            <TextView
-                android:id="@+id/link_to_signup"
-                android:layout_width="fill_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="40dip"
-                android:clickable="true"
-                android:gravity="center"
-                android:onClick="signup"
-                android:text="New to MAGE? Signup here"
-                android:textColor="#EEEEEE"
-                android:textSize="20sp" />
-
-            <TextView
-                android:id="@+id/login_version"
-                android:layout_width="fill_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="40dip"
-                android:layout_alignParentBottom="true"
-                android:clickable="false"
-                android:gravity="center"
-                android:text=""
-                android:textColor="#1B4069"
-                android:textSize="12sp" />
         </LinearLayout>
-        <!-- Login Form Ends -->
+
     </LinearLayout>
 
 </ScrollView>

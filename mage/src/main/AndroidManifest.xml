@@ -47,11 +47,15 @@
         <activity
             android:name="mil.nga.giat.mage.login.LoginActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
-            android:windowSoftInputMode="stateVisible" >
+            android:windowSoftInputMode="stateAlwaysHidden">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+        </activity>
+        <activity
+            android:name="mil.nga.giat.mage.login.OAuthActivity"
+            android:windowSoftInputMode="adjustResize" >
         </activity>
         <activity
             android:name="mil.nga.giat.mage.login.SignupActivity"

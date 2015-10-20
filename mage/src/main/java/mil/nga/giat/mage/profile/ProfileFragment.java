@@ -111,12 +111,8 @@ public class ProfileFragment extends Fragment {
 
 		final Long userId = user.getId();
 
-		String firstName = user.getFirstname();
-		String lastName = user.getLastname();
-
-		String tFullName = (StringUtils.isBlank(firstName)?"":firstName) + " " + (StringUtils.isBlank(lastName)?"":lastName);
-		final String fullName = StringUtils.isBlank(tFullName)?user.getUsername():tFullName;
-		getActivity().getActionBar().setTitle(user.isCurrentUser() ? "My Profile" : fullName);
+		final String displayName = user.getDisplayName();
+		getActivity().getActionBar().setTitle(user.isCurrentUser() ? "My Profile" : displayName);
 
 		mapView = (MapView) rootView.findViewById(R.id.mapView);
 		mapView.onCreate(savedInstanceState);
@@ -144,9 +140,7 @@ public class ProfileFragment extends Fragment {
 		}
 		
 		final TextView realNameTextView = (TextView)rootView.findViewById(R.id.realName);
-		realNameTextView.setText(fullName);
-		final TextView usernameTextView = (TextView)rootView.findViewById(R.id.username);
-		usernameTextView.setText("(" + user.getUsername() + ")");
+		realNameTextView.setText(displayName);
 		final TextView phoneTextView = (TextView)rootView.findViewById(R.id.phone);
 
 		if (StringUtils.isNotBlank(user.getPrimaryPhone())) {
@@ -157,7 +151,7 @@ public class ProfileFragment extends Fragment {
 										 @Override
 										 public void onClick(View v) {
 											 AlertDialog.Builder mBuilder = new AlertDialog.Builder(getActivity());
-											 mBuilder.setMessage("Do you want to call or text " + fullName + "?");
+											 mBuilder.setMessage("Do you want to call or text " + displayName + "?");
 											 mBuilder.setNegativeButton("No", new DialogInterface.OnClickListener() {
 												 public void onClick(DialogInterface dialog, int id) {
 													 dialog.cancel();
@@ -201,7 +195,7 @@ public class ProfileFragment extends Fragment {
 												 @Override
 												 public void onClick(View v) {
 													 AlertDialog.Builder mBuilder = new AlertDialog.Builder(getActivity());
-													 mBuilder.setMessage("Do you want to email " + fullName + "?");
+													 mBuilder.setMessage("Do you want to email " + displayName + "?");
 													 mBuilder.setNegativeButton("No", new DialogInterface.OnClickListener() {
 														 public void onClick(DialogInterface dialog, int id) {
 															 dialog.cancel();

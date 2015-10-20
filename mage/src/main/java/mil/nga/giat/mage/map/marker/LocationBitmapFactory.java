@@ -35,7 +35,7 @@ public class LocationBitmapFactory {
 	@TargetApi(Build.VERSION_CODES.JELLY_BEAN)
 	public static Bitmap bitmap(Context context, Location location, User user) {
 		Bitmap bitmap = createDot(context, location, user);
-		Log.d(LOG_NAME, "Drawing the bitmap for user " + user.getUsername());
+		Log.d(LOG_NAME, "Drawing the bitmap for user " + user.getDisplayName());
 		final String iconPath = user.getLocalIconPath();
 		if (iconPath != null) {
 			bitmap = combineIconAndDot(bitmap.copy(Bitmap.Config.ARGB_8888, true), bitmapUser(context, iconPath));

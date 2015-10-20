@@ -55,7 +55,7 @@ public class PeopleCursorAdapter extends CursorAdapter {
 			}
 
 			TextView location_name = (TextView) v.findViewById(R.id.location_name);
-			location_name.setText(user.getFirstname() + " " + user.getLastname());
+			location_name.setText(user.getDisplayName());
 
 			TextView location_email = (TextView) v.findViewById(R.id.location_email);
 			String email = user.getEmail();

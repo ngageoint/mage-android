@@ -241,7 +241,7 @@ public class ObservationViewActivity extends Activity {
 			String userText = "Unknown User";
 			User u = UserHelper.getInstance(this).read(o.getUserId());
 			if (u != null) {
-				userText = u.getFirstname() + " " + u.getLastname();
+				userText = u.getDisplayName();
 			}
 			user.setText(userText);
 

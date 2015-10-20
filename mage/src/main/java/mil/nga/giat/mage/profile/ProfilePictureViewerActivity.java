@@ -2,9 +2,7 @@ package mil.nga.giat.mage.profile;
 
 import android.app.Activity;
 import android.content.Intent;
-import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -14,7 +12,6 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.InputStream;
 import java.util.Collections;
 
 import mil.nga.giat.mage.R;
@@ -39,7 +36,7 @@ public class ProfilePictureViewerActivity extends Activity {
 		if(userID >= 0) {
 			try {
 				final User user = UserHelper.getInstance(getApplicationContext()).read(userID);
-				this.setTitle(user.getFirstname() + " " + user.getLastname());
+				this.setTitle(user.getDisplayName());
 
 				String avatarUrl = user.getAvatarUrl();
 				String localAvatarPath = user.getLocalAvatarPath();

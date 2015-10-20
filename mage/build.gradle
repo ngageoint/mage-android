@@ -89,7 +89,7 @@ dependencies {
     }
 
     //compile project(':sdk') // uncomment me to build locally
-    compile "mil.nga.giat.mage:sdk:4.0.4" // comment me to build locally
+    compile "mil.nga.giat.mage:sdk:5.0.0" // comment me to build locally
     compile "mil.nga.geopackage:geopackage-android:1.1.0"
     compile 'com.android.support:multidex:1.0.1'
     compile 'com.android.support:support-v4:23.0.1'
