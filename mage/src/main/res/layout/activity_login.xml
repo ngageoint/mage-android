@@ -98,19 +98,17 @@
                 android:visibility="visible"
                 android:id="@+id/third_party_auth"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical">
+                android:layout_height="wrap_content">
 
                 <Button
                     android:id="@+id/google_login_button"
                     android:layout_width="fill_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="10dip"
-                    android:background="@drawable/google_login_button_states"
+                    android:background="@drawable/common_signin_btn_text_normal_light"
                     android:text="Sign in with Google"
-                    android:textColor="#EEEEEE"
-                    android:textSize="21sp"
-                    android:textStyle="bold" />
+                    android:textColor="#dd4b39"
+                    android:fontFamily="sans-serif-medium"/>
 
             </LinearLayout>
 
@@ -162,11 +160,11 @@
                     android:layout_marginTop="7dip"
                     android:background="@drawable/form_field"
                     android:hint="Username"
+                    android:fontFamily="sans-serif"
                     android:textColorHint="#CCCCCC"
                     android:imeOptions="actionNext"
                     android:inputType="textVisiblePassword|textNoSuggestions"
-                    android:singleLine="true"
-                    android:textSize="22sp" />
+                    android:singleLine="true" />
 
                 <EditText
                     android:id="@+id/login_password"
@@ -176,11 +174,11 @@
                     android:layout_marginTop="7dip"
                     android:background="@drawable/form_field"
                     android:hint="Password"
+                    android:fontFamily="sans-serif"
                     android:textColorHint="#CCCCCC"
                     android:inputType="textPassword"
                     android:imeActionLabel="Log In"
-                    android:singleLine="true"
-                    android:textSize="22sp" />
+                    android:singleLine="true" />
 
                 <CheckBox
                     android:layout_width="wrap_content"
