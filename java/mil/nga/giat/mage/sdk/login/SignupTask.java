@@ -42,7 +42,7 @@ public class SignupTask extends AbstractAccountTask {
 	 * Called from execute
 	 * 
 	 * @param params
-	 *            Should contain firstname, lastname, username, email, password,
+	 *            Should contain displayname, username, email, password,
 	 *            and serverURL; in that order.
 	 * @return On success, {@link AccountStatus#getAccountInformation()}
 	 *         contains the username
@@ -51,12 +51,11 @@ public class SignupTask extends AbstractAccountTask {
 	protected AccountStatus doInBackground(String... params) {
 
 		// get inputs
-		String firstname = params[0];
-		String lastname = params[1];
-		String username = params[2];
-		String email = params[3];
-		String password = params[4];
-		String serverURL = params[5];
+		String displayName = params[0];
+		String username = params[1];
+		String email = params[2];
+		String password = params[3];
+		String serverURL = params[4];
 
 		// Make sure you have connectivity
 		if (!ConnectivityUtility.isOnline(mApplicationContext)) {
@@ -97,8 +96,7 @@ public class SignupTask extends AbstractAccountTask {
 			nameValuePairs.add(new BasicNameValuePair("uid", uuid));
 			nameValuePairs.add(new BasicNameValuePair("username", username));
 			nameValuePairs.add(new BasicNameValuePair("email", email));
-			nameValuePairs.add(new BasicNameValuePair("firstname", firstname));
-			nameValuePairs.add(new BasicNameValuePair("lastname", lastname));
+			nameValuePairs.add(new BasicNameValuePair("displayname", displayName));
 			post.setEntity(new UrlEncodedFormEntity(nameValuePairs));
 			HttpResponse response = httpclient.execute(post);
 

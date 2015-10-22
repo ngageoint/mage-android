@@ -40,14 +40,13 @@ public class OAuthLoginTask extends AbstractAccountTask {
 	/**
 	 * Called from execute
 	 *
-	 * @param params Should contain oauth serverURL oauth login JSON info as first param
+	 * @param params Should contain oauth login JSON info as first param
 	 * @return On success, {@link AccountStatus#getAccountInformation()}
 	 * contains the user's token
 	 */
 	@Override
 	protected AccountStatus doInBackground(String... params) {
-		String url = params[0];
-		String json = params[1];
+		String json = params[0];
 
 		SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(mApplicationContext);
 		SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(mApplicationContext).edit();
@@ -94,7 +93,6 @@ public class OAuthLoginTask extends AbstractAccountTask {
 
 				editor.putString(mApplicationContext.getString(R.string.userIdKey), newUserId);
 				editor.putString(mApplicationContext.getString(R.string.displayNameKey), user.getDisplayName());
-				editor.putString(mApplicationContext.getString(R.string.serverURLKey), url);
 				editor.commit();
 
 				PreferenceHelper.getInstance(mApplicationContext).logKeyValuePairs();
@@ -109,7 +107,6 @@ public class OAuthLoginTask extends AbstractAccountTask {
 						String userId = userJson.getString("id");
 
 						editor.putString(mApplicationContext.getString(R.string.userIdKey), userId);
-						editor.putString(mApplicationContext.getString(R.string.serverURLKey), url);
 
 						return new AccountStatus(AccountStatus.Status.SUCCESSFUL_REGISTRATION);
 					}
