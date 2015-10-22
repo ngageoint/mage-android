@@ -12,7 +12,6 @@ import android.graphics.Typeface;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v4.app.FragmentActivity;
-import android.text.Editable;
 import android.text.InputType;
 import android.text.TextUtils;
 import android.util.Log;
@@ -188,8 +187,8 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 
 		PreferenceHelper preferenceHelper = PreferenceHelper.getInstance(getApplicationContext());
 		if (preferenceHelper.containsLocalAuthentication()) {
-			Button googleButton = (Button) findViewById(R.id.local_login_button);
-			googleButton.setOnClickListener(new View.OnClickListener() {
+			Button localButton = (Button) findViewById(R.id.local_login_button);
+			localButton.setOnClickListener(new View.OnClickListener() {
 				@Override
 				public void onClick(View v) {
 					login(v);
@@ -243,20 +242,27 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 			final EditText serverEditText = (EditText) dialogView.findViewById(R.id.server_url);
 			final View progress = dialogView.findViewById(R.id.progress);
 
-			if (!mServerURL.getText().equals("Server not configured, click here to change")) {
-				serverEditText.setText(mServerURL.getText());
-			}
+			final SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+			final String serverURLPreference = sharedPreferences.getString(getString(R.string.serverURLKey), getString(R.string.serverURLDefaultValue));
+			serverEditText.setText(serverURLPreference);
 
-			final AlertDialog alertDialog = new AlertDialog.Builder(this)
+			AlertDialog.Builder builder = new AlertDialog.Builder(this)
 					.setView(dialogView)
 					.setTitle("MAGE Server URL")
 					.setPositiveButton(android.R.string.ok, null)
-					.setNegativeButton(android.R.string.cancel, null)
-					.create();
+					.setNegativeButton(android.R.string.cancel, null);
+
+			if (StringUtils.isNotEmpty(serverURLPreference)) {
+				builder.setMessage("Changing the server URL will delete all previous data.  Do you want to continue?");
+			}
+
+			final AlertDialog alertDialog = builder.create();
 
 			alertDialog.setOnShowListener(new DialogInterface.OnShowListener() {
 				@Override
 				public void onShow(DialogInterface dialog) {
+
+
 
 					final Button button = alertDialog.getButton(AlertDialog.BUTTON_POSITIVE);
 					button.setOnClickListener(new View.OnClickListener() {
@@ -265,31 +271,40 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 						public void onClick(View view) {
 							progress.setVisibility(View.VISIBLE);
 							button.setEnabled(false);
-							serverEditText.setEnabled(false);
 
-							//TODO put in sharedpreferences
-							Editable serverURL = serverEditText.getText();
-							mServerURL.setText(serverURL);
-
-							String url = mServerURL.getText().toString().trim().replaceAll("(\\w)/*$", "$1");
-							if (StringUtils.isNotEmpty(serverURL) && !url.matches("^(H|h)(T|t)(T|t)(P|p)(S|s)?://.*")) {
+							String url = serverEditText.getText().toString().trim().replaceAll("(\\w)/*$", "$1");
+							if (StringUtils.isNotEmpty(url) && !url.matches("^(H|h)(T|t)(T|t)(P|p)(S|s)?://.*")) {
 								url = "https://" + url;
-								mServerURL.setText(url);
 							}
 
-							PreferenceHelper.getInstance(getApplicationContext()).validateServerApi(url, new Predicate<Exception>() {
+							if (url.equals(serverURLPreference)) {
+								alertDialog.dismiss();
+								return;
+							}
+
+							final String serverURL = url;
+							PreferenceHelper.getInstance(getApplicationContext()).validateServerApi(serverURL, new Predicate<Exception>() {
 								@Override
 								public boolean apply(Exception e) {
 									if (e == null) {
+										mServerURL.setText(serverURL);
 										mLoginButton.setEnabled(true);
 										serverEditText.setError(null);
 										alertDialog.dismiss();
+
+										final DaoStore daoStore = DaoStore.getInstance(getApplicationContext());
+										if (!daoStore.isDatabaseEmpty()) {
+											daoStore.resetDatabase();
+										}
+
+										Editor editor = sharedPreferences.edit();
+										editor.putString(getString(R.string.serverURLKey), serverURL).commit();
 										configureLogin();
+
 										return true;
 									} else {
 										progress.setVisibility(View.INVISIBLE);
 										button.setEnabled(true);
-										serverEditText.setEnabled(true);
 										serverEditText.setError(e.getMessage());
 										return false;
 									}
@@ -307,12 +322,7 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 			new AlertDialog.Builder(this)
 					.setTitle("No Connectivity")
 					.setMessage("Sorry, you cannot change the server URL with no network connectivity.")
-					.setPositiveButton(android.R.string.ok, new OnClickListener() {
-						@Override
-						public void onClick(DialogInterface dialog, int which) {
-							dialog.dismiss();
-						}
-					}).show();
+					.setPositiveButton(android.R.string.ok, null).show();
 		}
 	}
 
@@ -373,29 +383,15 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 		}
 
 		// if the serverURL is different that before, clear out the database
-		final DaoStore daoStore = DaoStore.getInstance(getApplicationContext());
-		final AbstractAccountTask loginTask = LoginTaskFactory.getInstance(getApplicationContext()).getLoginTask(this, this.getApplicationContext());
-		if (!server.equals(serverURLPref) && !daoStore.isDatabaseEmpty()) {
-			new AlertDialog.Builder(this).setTitle("Server URL").setMessage("The server URL has been changed.  If you continue, any previous local data will be deleted.  Do you want to continue?").setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
-				public void onClick(DialogInterface dialog, int which) {
-					daoStore.resetDatabase();
-					loginTask.execute(credentialsArray);
-				}
-			}).setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
-				public void onClick(DialogInterface dialog, int which) {
-					// show form, and hide spinner
-					findViewById(R.id.login_status).setVisibility(View.GONE);
-					findViewById(R.id.login_form).setVisibility(View.VISIBLE);
-				}
-			}).show();
-		} else {
-			loginTask.execute(credentialsArray);
-		}
+		AbstractAccountTask loginTask = LoginTaskFactory.getInstance(getApplicationContext()).getLoginTask(this, this.getApplicationContext());
+		loginTask.execute(credentialsArray);
 	}
 
 	private void googleLogin() {
 		Intent intent = new Intent(getApplicationContext(), OAuthActivity.class);
 		intent.putExtra(OAuthActivity.EXTRA_SERVER_URL, mServerURL.getText());
+		intent.putExtra(OAuthActivity.EXTRA_OAUTH_URL, mServerURL.getText() + "/auth/google/signin");
+		intent.putExtra(OAuthActivity.EXTRA_OAUTH_TYPE, OAuthActivity.OAuthType.SIGNIN);
 		startActivityForResult(intent, EXTRA_OAUTH_RESULT);
 	}
 
@@ -420,47 +416,6 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 		startActivity(intent);
 	}
 
-	private void onServerURLChange(boolean initialLoad) {
-		SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-		String serverURLPref =  sharedPreferences.getString(getString(R.string.serverURLKey), getString(R.string.serverURLDefaultValue));
-		if (!initialLoad && StringUtils.isNoneBlank(serverURLPref) && serverURLPref.equals(mServerURL.getText().toString())) {
-			// Server URL was previously set in preferences and did not change.
-			// no need to hit the server again
-			mLoginButton.setEnabled(true);
-			mServerURL.setError(null);
-
-			return;
-		}
-
-		String url = mServerURL.getText().toString().trim().replaceAll("(\\w)/*$", "$1");
-		if(!url.matches("^(H|h)(T|t)(T|t)(P|p)(S|s)?://.*")) {
-			url = "https://" + url;
-			mServerURL.setText(url);
-		}
-
-
-		PreferenceHelper.getInstance(getApplicationContext()).validateServerApi(url, new Predicate<Exception>() {
-			@Override
-			public boolean apply(Exception e) {
-				if (e == null) {
-					mLoginButton.setEnabled(true);
-					mServerURL.setError(null);
-					return true;
-				} else {
-					mLoginButton.setEnabled(false);
-					showKeyboard();
-					mServerURL.setError(e.getMessage());
-					return false;
-				}
-			}
-		});
-	}
-
-	private void showKeyboard() {
-		InputMethodManager inputMethodManager = (InputMethodManager) getSystemService(Activity.INPUT_METHOD_SERVICE);
-		inputMethodManager.toggleSoftInput(InputMethodManager.SHOW_IMPLICIT, 0);
-	}
-
 	@Override
 	public void finishAccount(AccountStatus accountStatus) {
 		if (accountStatus.getStatus().equals(AccountStatus.Status.SUCCESSFUL_LOGIN) || accountStatus.getStatus().equals(AccountStatus.Status.DISCONNECTED_LOGIN)) {
@@ -472,9 +427,6 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 			} catch (Exception e) {
 				Log.e(LOG_NAME, "Could not hash password", e);
 			}
-
-			// remove the slashes at the end, and store the serverURL
-			sp.putString(getApplicationContext().getString(R.string.serverURLKey), mServerURL.getText().toString()).commit();
 
 			PreferenceHelper.getInstance(getApplicationContext()).logKeyValuePairs();
 
@@ -492,8 +444,6 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 		} else if (accountStatus.getStatus().equals(AccountStatus.Status.SUCCESSFUL_REGISTRATION)) {
 			Editor sp = PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).edit();
 			sp.putString(getApplicationContext().getString(R.string.usernameKey), getUsernameEditText().getText().toString()).commit();
-			// don't store password hash this time
-			sp.putString(getApplicationContext().getString(R.string.serverURLKey), mServerURL.getText().toString()).commit();
 			showUnregisteredDeviceDialog();
 		} else {
 			if (accountStatus.getErrorIndices().isEmpty()) {

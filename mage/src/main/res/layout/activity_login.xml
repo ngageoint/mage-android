@@ -7,9 +7,9 @@
     android:fillViewport="true"
     android:windowSoftInputMode="stateVisible" >
 
-    <LinearLayout
+    <RelativeLayout
         android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="fill_parent"
         android:orientation="vertical"
         android:background="@drawable/mage_gradient" >
 
@@ -18,7 +18,6 @@
             layout="@layout/mage_header" />
 
         <!-- Loading spinner -->
-
         <LinearLayout
             android:id="@+id/login_status"
             android:layout_width="match_parent"
@@ -27,26 +26,26 @@
             android:gravity="center_horizontal|center_vertical"
             android:orientation="vertical"
             android:visibility="gone" >
-			<LinearLayout
-			    android:layout_width="150dip"
-			    android:layout_height="wrap_content"
-			    android:orientation="horizontal">
-		        <ImageView 
-		            android:layout_width="wrap_content" 
-		            android:layout_height="76dip" 
-		            android:src="@drawable/ic_launcher"/>
-	            <ProgressBar
-	                style="?android:attr/progressBarStyleLarge"
-	                android:indeterminateDrawable="@drawable/mage_progress_bar"
-	                android:layout_width="fill_parent"
-	                android:layout_height="76dip" />
-			</LinearLayout>
+            <LinearLayout
+                android:layout_width="150dip"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+                <ImageView
+                    android:layout_width="wrap_content"
+                    android:layout_height="50dip"
+                    android:src="@drawable/ic_wand"/>
+                <ProgressBar
+                    style="?android:attr/progressBarStyleLarge"
+                    android:indeterminateDrawable="@drawable/mage_progress_bar"
+                    android:layout_width="match_parent"
+                    android:layout_height="50dip" />
+            </LinearLayout>
             <TextView
                 android:id="@+id/login_message"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:fontFamily="sans-serif-light"
-                android:text="Logging in"
+                android:text="Logging in..."
                 android:textColor="#EEEEEE"
                 android:textSize="26sp" />
         </LinearLayout>
@@ -57,6 +56,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
+            android:layout_marginTop="80dp"
             android:paddingBottom="24dip"
             android:paddingLeft="24dip"
             android:paddingRight="24dip">
@@ -90,6 +90,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
+            android:layout_marginTop="80dp"
             android:paddingBottom="24dip"
             android:paddingLeft="24dip"
             android:paddingRight="24dip">
@@ -104,7 +105,6 @@
                     android:id="@+id/google_login_button"
                     android:layout_width="fill_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="10dip"
                     android:background="@drawable/common_signin_btn_text_normal_light"
                     android:text="Sign in with Google"
                     android:textColor="#dd4b39"
@@ -196,8 +196,8 @@
                     android:background="@drawable/login_button_states"
                     android:text="Log In"
                     android:textColor="#EEEEEE"
-                    android:textSize="21sp"
-                    android:textStyle="bold" />
+                    android:fontFamily="sans-serif-medium"/>
+
             </LinearLayout>
 
             <LinearLayout
@@ -253,6 +253,6 @@
 
         </LinearLayout>
 
-    </LinearLayout>
+    </RelativeLayout>
 
 </ScrollView>

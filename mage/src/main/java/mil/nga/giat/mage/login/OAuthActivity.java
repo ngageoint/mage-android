@@ -11,15 +11,17 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
-import java.text.DateFormat;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.disclaimer.DisclaimerActivity;
 import mil.nga.giat.mage.event.EventActivity;
+import mil.nga.giat.mage.sdk.login.AbstractAccountTask;
 import mil.nga.giat.mage.sdk.login.AccountDelegate;
 import mil.nga.giat.mage.sdk.login.AccountStatus;
 import mil.nga.giat.mage.sdk.login.OAuthLoginTask;
-import mil.nga.giat.mage.sdk.utils.DateFormatFactory;
+import mil.nga.giat.mage.sdk.login.OAuthSignupTask;
 import mil.nga.giat.mage.sdk.utils.DeviceUuidFactory;
 
 /**
@@ -27,13 +29,21 @@ import mil.nga.giat.mage.sdk.utils.DeviceUuidFactory;
  */
 public class OAuthActivity extends FragmentActivity implements AccountDelegate {
 
+    public enum OAuthType {
+        SIGNIN,
+        SIGINUP
+    }
+
     private static final String LOG_NAME = OAuthActivity.class.getName();
 
     public static final String EXTRA_SERVER_URL = "EXTRA_SERVER_URL";
-
-    private DateFormat iso8601Format = DateFormatFactory.ISO8601();
+    public static final String EXTRA_OAUTH_URL = "EXTRA_OAUTH_URL";
+    public static final String EXTRA_OAUTH_TYPE = "EXTRA_OAUTH_TYPE";
 
     private String serverURL;
+    private String oauthURL;
+    private OAuthType oauthType;
+
     private WebView webView;
     private View progress;
     private String uuid;
@@ -44,6 +54,9 @@ public class OAuthActivity extends FragmentActivity implements AccountDelegate {
         setContentView(R.layout.activity_oauth);
 
         serverURL = getIntent().getStringExtra(EXTRA_SERVER_URL);
+        oauthURL = getIntent().getStringExtra(EXTRA_OAUTH_URL);
+        oauthType = (OAuthType) getIntent().getSerializableExtra(EXTRA_OAUTH_TYPE);
+
         uuid = new DeviceUuidFactory(this).getDeviceUuid().toString();
 
         progress = findViewById(R.id.progress);
@@ -64,13 +77,16 @@ public class OAuthActivity extends FragmentActivity implements AccountDelegate {
             }
         });
 
-        webView.loadUrl(serverURL + "/auth/google/signin?uid=" + uuid);
+        webView.loadUrl(oauthURL + "?uid=" + uuid);
     }
 
     @JavascriptInterface
     public void getLogin(String login) {
-        OAuthLoginTask loginTask = new OAuthLoginTask(this, getApplicationContext());
-        loginTask.execute(new String[]{ serverURL, login });
+        AbstractAccountTask loginTask = oauthType == OAuthType.SIGNIN ?
+                new OAuthLoginTask(this, getApplicationContext()) :
+                new OAuthSignupTask(this, getApplicationContext());
+
+        loginTask.execute(new String[]{ login });
     }
 
     @Override
@@ -88,6 +104,26 @@ public class OAuthActivity extends FragmentActivity implements AccountDelegate {
         } else if (accountStatus.getStatus().equals(AccountStatus.Status.SUCCESSFUL_REGISTRATION)) {
             Intent intent = new Intent();
             intent.putExtra(LoginActivity.EXTRA_OAUTH_UNREGISTERED_DEVICE, true);
+            setResult(RESULT_OK, intent);
+            finish();
+        } else if (accountStatus.getStatus().equals(AccountStatus.Status.SUCCESSFUL_SIGNUP)) {
+            Intent intent = new Intent();
+            setResult(RESULT_OK, intent);
+            finish();
+        } else if (accountStatus.getStatus().equals(AccountStatus.Status.FAILED_SIGNUP)) {
+            JSONObject json = accountStatus.getAccountInformation();
+            String errorMessage = "Your account could not be created, please contact your MAGE administrator";
+
+            if (json.has("errorMessage")) {
+                try {
+                    errorMessage = json.getString("errorMessage");
+                } catch (JSONException e) {
+                }
+            }
+
+            Intent intent = new Intent();
+            intent.putExtra(SignupActivity.EXTRA_OAUTH_ERROR, true);
+            intent.putExtra(SignupActivity.EXTRA_OAUTH_ERROR_MESSAGE, errorMessage);
             setResult(RESULT_OK, intent);
             finish();
         } else {
