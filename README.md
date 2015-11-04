@@ -24,18 +24,20 @@ MAGE Android was developed at the National Geospatial-Intelligence Agency (NGA) 
 Make sure to download the and build the [sdk](https://github.com/ngageoint/mage-android-sdk) first.
 
 ### Build
-
+```bash
 ./gradlew clean
-
 ./gradlew assembleLocalDebug
+```
 
 ### Install
-
+```bash
 ./gradlew installLocalDebug
+```
 
 ### Test
-
+```bash
 ./gradlew connectedAndroidTestLocalDebug
+```
 
 ## Pull Requests
 
