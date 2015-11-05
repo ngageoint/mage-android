@@ -1,6 +1,6 @@
 # MAGE Android
 
-11/04/2015
+11/05/2015
 
 This is the MAGE client for Android devices.
 
@@ -21,12 +21,43 @@ MAGE Android was developed at the National Geospatial-Intelligence Agency (NGA) 
 
 ## How to Build
 
-Make sure to download the and build the [sdk](https://github.com/ngageoint/mage-android-sdk) first.
+These instructions are for *nix operating systems.  Do not use Windows systems to build MAGE.
+
+### Setup & Configuration
+
+Android requires that you sign your applications.  You will need to create an idenity to sign your MAGE Android build.  To do this, create a new keystore file using the keytool utility:
+```bash
+keytool -genkey -v -keystore ~/debug.keystore -alias magedebugkey -keyalg RSA -validity 14000
+```
+
+keytool will prompt for a password of your choice and other information that identifies you.  When finished, *~/debug.keystore* should now exist on your system.  Verify the information you entered looks correct:
+```bash
+keytool -list -keystore ~/debug.keystore
+```
+
+MAGE Android uses Google Maps.  Whether you build a dubug, or release version of the application, you will need to obtain a Google Maps API key to use Android Google's Maps.
+
+First, go to [Google's API Library](https://console.developers.google.com/) with a valid Google account, and enable the *Google Maps Android API* in the *APIs & Auth* section.  Next, in the *credentials* section, *Add Credentials* -> *API key* -> *Android key*.  Enter a key name, or accept the default.  Enter *mil.nga.giat.mage* for the package name, and the SHA-1 certificate fingerprint from the keystore you made.  You can get the SHA-1 hash from the debug.keystore you made using the command line:
+```bash
+keytool -list -keystore ~/debug.keystore
+```
+
+Finally, click *create* in Google's developer console.  Once created, you should be prompted with a hash that represents the Android Google Maps API key.
+
+To link the mage applicaiton with this api key, you will need to edit the *DEBUG_MAPS_API_KEY* value in [gradle.properties file](gradle.properties).  Congratulations!  You are all done configuring your very own debug build of MAGE Android.
 
 ### Build
+
+The MAGE Android application (apk) is built using [gradle](http://gradle.org/).  These instructions build a debug version of the application that is **not for release**.
+
+Before you build the MAGE Android applicaiton, make sure to download the and build the MAGE [sdk](https://github.com/ngageoint/mage-android-sdk) first.
+
+This command will create the Android package that you will install on the phone:
+
 ```bash
 ./gradlew clean
 ./gradlew assembleLocalDebug
+file ./mage/build/outputs/apk/mage-local-debug.apk
 ```
 
 ### Install
