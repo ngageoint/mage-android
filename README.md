@@ -1,6 +1,6 @@
 # MAGE Android
 
-10/02/2015
+11/05/2015
 
 This is the MAGE client for Android devices.
 
@@ -10,7 +10,7 @@ Depends on the [MAGE Android SDK](https://github.com/ngageoint/mage-android-sdk)
 
 ## About
 
-The Mobile Awareness GEOINT Environment, or MAGE, provides mobile situational awareness capabilities. The MAGE app on your mobile device allows you to create geotagged field reports that contain media such as photos, videos, and voice recordings and share them instantly with who you want. Using the GPS in your mobile device, MAGE can also track users locations in real time. Your locations can be automatically shared with the other members of your team.
+The **M**obile **A**wareness **G**EOINT **E**nvironment, or MAGE, provides mobile situational awareness capabilities. The MAGE app on your mobile device allows you to create geotagged field reports that contain media such as photos, videos, and voice recordings and share them instantly with who you want. Using the GPS in your mobile device, MAGE can also track users locations in real time. Your locations can be automatically shared with the other members of your team.
 
 The app remains functional if your mobile device loses its network connection, and will upload its local content when a connection is re-established. When disconnected from the network, MAGE will use local data layers to continue to provide relevant GEOINT. Data layers, including map tiles and vector data, can stored on your mobile device and are available at all times.
 
@@ -21,21 +21,54 @@ MAGE Android was developed at the National Geospatial-Intelligence Agency (NGA) 
 
 ## How to Build
 
-Make sure to download the and build the sdk first.
+These instructions are for *nix operating systems.  Do not use Windows systems to build MAGE.
+
+### Setup & Configuration
+
+Android requires that you sign your applications.  You will need to create an idenity to sign your MAGE Android build.  To do this, create a new keystore file using the keytool utility:
+```bash
+keytool -genkey -v -keystore ~/debug.keystore -alias magedebugkey -keyalg RSA -validity 14000
+```
+
+keytool will prompt for a password of your choice and other information that identifies you.  When finished, *~/debug.keystore* should now exist on your system.  Verify the information you entered looks correct:
+```bash
+keytool -list -keystore ~/debug.keystore
+```
+
+MAGE Android uses Google Maps.  Whether you build a dubug, or release version of the application, you will need to obtain a Google Maps API key to use Android Google's Maps.
+
+First, go to [Google's API Library](https://console.developers.google.com/) with a valid Google account, and enable the *Google Maps Android API* in the *APIs & Auth* section.  Next, in the *credentials* section, *Add Credentials* -> *API key* -> *Android key*.  Enter a key name, or accept the default.  Enter *mil.nga.giat.mage* for the package name, and the SHA-1 certificate fingerprint from the keystore you made.  You can get the SHA-1 hash from the debug.keystore you made using the command line:
+```bash
+keytool -list -keystore ~/debug.keystore
+```
+
+Finally, click *create* in Google's developer console.  Once created, you should be prompted with a hash that represents the Android Google Maps API key.
+
+To link the mage applicaiton with this api key, you will need to edit the *DEBUG_MAPS_API_KEY* value in [gradle.properties file](gradle.properties).  Congratulations!  You are all done configuring your very own debug build of MAGE Android.
 
 ### Build
 
-./gradlew clean
+The MAGE Android application (apk) is built using [gradle](http://gradle.org/).  These instructions build a debug version of the application that is **not for release**.
 
+Before you build the MAGE Android applicaiton, make sure to download the and build the MAGE [sdk](https://github.com/ngageoint/mage-android-sdk) first.
+
+This command will create the Android package that you will install on the phone:
+
+```bash
+./gradlew clean
 ./gradlew assembleLocalDebug
+file ./mage/build/outputs/apk/mage-local-debug.apk
+```
 
 ### Install
-
+```bash
 ./gradlew installLocalDebug
+```
 
 ### Test
-
+```bash
 ./gradlew connectedAndroidTestLocalDebug
+```
 
 ## Pull Requests
 
