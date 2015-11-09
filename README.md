@@ -64,6 +64,13 @@ mv android-sdk-linux ~
 echo "export ANDROID_HOME=`echo $HOME`/android-sdk-linux" >> ~/.bashrc && source ~/.bashrc
 ```
 
+Use the Android SDK Manager GUI to install the correct version of the android sdk to your system:
+```bash
+~/android-sdk-linux/tools/android
+```
+
+Check the [build configuration](mage/build.gradle#L8-L9) for the version of android you will need.
+
 ### Signing
 
 Android requires that you sign your applications.  You will need to create an idenity to sign your MAGE Android build.  If you don't plan on releasing your build of MAGE, use *Debug Build* instructions, otherwise use the *Release Build* instructions.  If you aren't sure, follow the *Debug Build* instructions.
