@@ -26,7 +26,7 @@ These instructions are for *nix operating systems.  Do not use Windows systems t
 
 You will need to install the Java and Android sdks to build MAGE Android.
 
-#### Java
+#### Java SDK
 
 Check to see if you have Java installed:
 ```bash
@@ -52,7 +52,7 @@ Verify:
 javac -version
 ```
 
-#### Android
+#### Android SDK
 
 Download the Stand-alone SDK Tools, or Android Studio:
 http://developer.android.com/sdk/index.html#Other
@@ -61,6 +61,7 @@ Unpack and install the contents:
 ```bash
 tar zxvf android-sdk-linux.tgz
 mv android-sdk-linux ~
+echo "export ANDROID_HOME=`echo $HOME`/android-sdk-linux" >> ~/.bashrc && source ~/.bashrc
 ```
 
 ### Signing
