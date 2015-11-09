@@ -1,6 +1,6 @@
 # MAGE Android
 
-11/05/2015
+11/09/2015
 
 This is the MAGE client for Android devices.
 
@@ -20,9 +20,50 @@ MAGE Android was developed at the National Geospatial-Intelligence Agency (NGA) 
 
 ## How to Build
 
-These instructions are for *nix operating systems.  Do not use Windows systems to build MAGE.
+These instructions are for *nix operating systems.  Do not use Windows systems to build MAGE.  The following example commands are for debian based linux systems like Ubuntu.
 
 ### Setup & Configuration
+
+You will need to install and Java and Android sdks to build MAGE Android.
+
+#### Java
+
+Check to see if you have Java installed:
+```bash
+javac -version
+```
+
+If you already have Java 1.8.* installed you can skip to the next section, Android.
+
+Install a version of java:
+```bash
+sudo apt-add-repository ppa:webupd8team/java
+sudo apt-get update
+sudo apt-get install oracle-java8-installer
+```
+
+If you prefer openJDK:
+```bash
+sudo apt-get install openjdk-8-jre
+```
+
+Verify:
+```bash
+javac -version
+```
+
+#### Android
+
+Download the Stand-alone SDK Tools, or Android Studio:
+http://developer.android.com/sdk/index.html#Other
+
+Unpack and install the contents:
+```bash
+tar zxvf android-sdk-linux.tgz
+mv android-sdk-linux ~
+```
+
+### Signing
 
 Android requires that you sign your applications.  You will need to create an idenity to sign your MAGE Android build.  If you don't plan on releasing your build of MAGE, use *Debug Build* instructions, otherwise use the *Release Build* instructions.  If you aren't sure, follow the *Debug Build* instructions.
 
