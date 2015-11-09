@@ -97,14 +97,14 @@ keytool -list -keystore  ~/.android/release.keystore
 
 MAGE Android uses Google Maps.  Whether you build a dubug or release version of the application, you will need to obtain a Google Maps API key to use Android Google's Maps.
 
-First, go to [Google's API Library](https://console.developers.google.com/) with a valid Google account, and enable the *Google Maps Android API* in the *APIs & Auth* section.  Next, in the *credentials* section, *Add Credentials* -> *API key* -> *Android key*.  Enter a key name, or accept the default.  Enter *mil.nga.giat.mage* for the package name, and the SHA-1 certificate fingerprint from the keystore you made.  You can get the SHA-1 hash from the debug.keystore (If this is a release build, use your release keystore instead) you made using the command line:
+First, go to [Google's API Library](https://console.developers.google.com/) with a valid Google account, and enable the *Google Maps Android API* in the *APIs & Auth* -> *APIs* section.  Next, in the *Credentials* section, *Add Credentials* -> *API key* -> *Android key*.  Enter a key name, or accept the default.  Add package anme and fingerprint, enter *mil.nga.giat.mage* for the package name, and the SHA-1 certificate fingerprint from the keystore you made.  You can get the SHA-1 hash from the debug.keystore (If this is a release build, use your release keystore instead) you made using the command line:
 ```bash
 keytool -list -keystore ~/.android/debug.keystore
 ```
 
-If prompted for a password, enter *android*.  Finally, click *create* in Google's developer console.  Once created, you should be prompted with a hash that represents the Android Google Maps API key.
+If prompted for a password, enter *android*.  Finally, click *Create* in Google's developer console.  Once created, you should be prompted with a hash that represents the Android Google Maps API key.
 
-To link the mage applicaiton with this api key, you must edit the *DEBUG_MAPS_API_KEY* value in [gradle.properties file](gradle.properties).  Congratulations!  You are all done configuring your very own debug build of MAGE Android.
+To link the mage applicaiton with this api key you have just made, you must edit the *DEBUG_MAPS_API_KEY* value in [gradle.properties file](gradle.properties) and enter your Android Google Maps API key hash.  Congratulations!  You are all done configuring your very own debug build of MAGE Android.
 
 ### Build
 
