@@ -110,7 +110,7 @@ To link the mage applicaiton with this api key you have just made, you must edit
 
 The MAGE Android application (apk) is built using [gradle](http://gradle.org/).  These instructions build a debug version of the application that is **not for release**.
 
-Before you build the MAGE Android applicaiton, make sure to download the and build the MAGE [sdk](https://github.com/ngageoint/mage-android-sdk) first.
+Before you build the MAGE Android applicaiton, make sure to download the and build the MAGE [sdk](https://github.com/ngageoint/mage-android-sdk) dependency first.
 
 This command will create the Android package that you will install on the phone:
 
