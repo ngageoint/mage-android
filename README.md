@@ -24,7 +24,7 @@ These instructions are for *nix operating systems.  Do not use Windows systems t
 
 ### Setup & Configuration
 
-You will need to install and Java and Android sdks to build MAGE Android.
+You will need to install the Java and Android sdks to build MAGE Android.
 
 #### Java
 
