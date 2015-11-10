@@ -69,7 +69,7 @@ Use the Android SDK Manager GUI to install the correct version of the android sd
 ~/android-sdk-linux/tools/android
 ```
 
-Check the [build configuration](mage/build.gradle#L8-L9) for the version of android you will need.  You will also need to install Google Play services.
+Check the [build configuration](mage/build.gradle#L8-L9) for the version of android you will need.  You will also need to install Android Support Repository, Android Support Library, Google Play services, and Google Repository using the Android SDK Manager.
 
 ### Signing
 
