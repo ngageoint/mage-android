@@ -69,7 +69,7 @@ Use the Android SDK Manager GUI to install the correct version of the android sd
 ~/android-sdk-linux/tools/android
 ```
 
-Check the [build configuration](mage/build.gradle#L8-L9) for the version of android you will need.
+Check the [build configuration](mage/build.gradle#L8-L9) for the version of android you will need.  You will also need to install Google Play services.
 
 ### Signing
 
@@ -129,11 +129,15 @@ file ./mage/build/outputs/apk/mage-local-debug.apk
 ```
 
 ### Install
+
+With a device connected to your machine, you can install the MAGE app with the following command:
 ```bash
 ./gradlew installLocalDebug
 ```
 
 ### Test
+
+Run the tests on your device:
 ```bash
 ./gradlew connectedAndroidTestLocalDebug
 ```
