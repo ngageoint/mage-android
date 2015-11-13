@@ -64,7 +64,7 @@
                     android:id="@+id/google_signup_button"
                     android:layout_width="fill_parent"
                     android:layout_height="wrap_content"
-                    android:background="@drawable/common_signin_btn_text_normal_light"
+                    android:background="@drawable/common_plus_signin_btn_text_light_normal"
                     android:text="Sign up with Google"
                     android:textColor="#dd4b39"
                     android:fontFamily="sans-serif-medium"/>

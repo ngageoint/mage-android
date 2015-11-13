@@ -100,13 +100,12 @@
                 android:id="@+id/third_party_auth"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
-
                 <Button
                     android:id="@+id/google_login_button"
                     android:layout_width="fill_parent"
                     android:layout_height="wrap_content"
-                    android:background="@drawable/common_signin_btn_text_normal_light"
                     android:text="Sign in with Google"
+                    android:background="@drawable/common_plus_signin_btn_text_light_normal"
                     android:textColor="#dd4b39"
                     android:fontFamily="sans-serif-medium"/>
 
