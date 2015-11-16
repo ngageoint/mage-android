@@ -39,6 +39,7 @@ import com.google.android.gms.maps.GoogleMap.OnMyLocationButtonClickListener;
 import com.google.android.gms.maps.LocationSource;
 import com.google.android.gms.maps.MapView;
 import com.google.android.gms.maps.MapsInitializer;
+import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
@@ -122,7 +123,7 @@ import mil.nga.giat.mage.sdk.exceptions.UserException;
 import mil.nga.giat.mage.sdk.location.LocationService;
 import mil.nga.wkb.geom.GeometryType;
 
-public class MapFragment extends Fragment implements OnMapClickListener, OnMapLongClickListener, OnMarkerClickListener, OnInfoWindowClickListener, OnMapPanListener, OnMyLocationButtonClickListener, OnClickListener, LocationSource, LocationListener, OnCacheOverlayListener, OnSharedPreferenceChangeListener,
+public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapClickListener, OnMapLongClickListener, OnMarkerClickListener, OnInfoWindowClickListener, OnMapPanListener, OnMyLocationButtonClickListener, OnClickListener, LocationSource, LocationListener, OnCacheOverlayListener, OnSharedPreferenceChangeListener,
 		IObservationEventListener, ILocationEventListener, IStaticFeatureEventListener {
 
 	private static final String LOG_NAME = MapFragment.class.getName();
@@ -130,6 +131,7 @@ public class MapFragment extends Fragment implements OnMapClickListener, OnMapLo
 	private MAGE mage;
 	private MapView mapView;
 	private GoogleMap map;
+	private boolean mapInitialized = false;
 	private View searchLayout;
 	private EditText edittextSearch;
 	private Location location;
@@ -147,11 +149,11 @@ public class MapFragment extends Fragment implements OnMapClickListener, OnMapLo
 
 	private PointCollection<Observation> observations;
 	private PointCollection<mil.nga.giat.mage.sdk.datastore.location.Location> locations;
-	private PointCollection<mil.nga.giat.mage.sdk.datastore.location.Location> myHistoricLocations;
+	private PointCollection<mil.nga.giat.mage.sdk.datastore.location.Location> historicLocations;
 	private StaticGeometryCollection staticGeometryCollection;
-	private List<Marker> searchMarkes = new ArrayList<Marker>();
+	private List<Marker> searchMarkers = new ArrayList<Marker>();
 
-	private Map<String, CacheOverlay> cacheOverlays;
+	private Map<String, CacheOverlay> cacheOverlays = new HashMap<String, CacheOverlay>();;
 
 	// GeoPackage cache of open GeoPackage connections
 	private GeoPackageCache geoPackageCache;
@@ -172,14 +174,9 @@ public class MapFragment extends Fragment implements OnMapClickListener, OnMapLo
 		setHasOptionsMenu(true);
 
 		mage = (MAGE) getActivity().getApplication();
-
-		mapWrapper = new GoogleMapWrapper(getActivity().getApplicationContext());
-		mapWrapper.addView(view);
+		locationService = mage.getLocationService();
 
 		preferences = PreferenceManager.getDefaultSharedPreferences(getActivity().getApplicationContext());
-
-		mapView = (MapView) view.findViewById(R.id.mapView);
-		mapView.onCreate(savedInstanceState);
 
 		searchLayout = view.findViewById(R.id.search_layout);
 		edittextSearch = (EditText) view.findViewById(R.id.edittext_search);
@@ -189,46 +186,50 @@ public class MapFragment extends Fragment implements OnMapClickListener, OnMapLo
 		ImageButton mapSettings = (ImageButton) view.findViewById(R.id.map_settings);
 		mapSettings.setOnClickListener(this);
 
-		locationService = mage.getLocationService();
+		mapWrapper = new GoogleMapWrapper(getActivity().getApplicationContext());
+		mapWrapper.addView(view);
 
-		cacheOverlays = new HashMap<String, CacheOverlay>();
+		mapView = (MapView) view.findViewById(R.id.mapView);
+		mapView.onCreate(savedInstanceState);
+		mapView.getMapAsync(this);
 
 		// Initialize the GeoPackage cache with a GeoPackage manager
-		GeoPackageManager geoPackageManager = GeoPackageFactory.getManager(mage);
+		GeoPackageManager geoPackageManager = GeoPackageFactory.getManager(getActivity().getApplicationContext());
 		geoPackageCache = new GeoPackageCache(geoPackageManager);
 
 		return mapWrapper;
 	}
 
 	@Override
-	public void onCreate(Bundle savedInstanceState) {
-		super.onCreate(savedInstanceState);
-		ObservationHelper.getInstance(getActivity().getApplicationContext()).addListener(this);
-		LocationHelper.getInstance(getActivity().getApplicationContext()).addListener(this);
-	}
-
-	@Override
 	public void onDestroy() {
+		super.onDestroy();
+
+		mapView.onDestroy();
+
 		ObservationHelper.getInstance(getActivity().getApplicationContext()).removeListener(this);
 		LocationHelper.getInstance(getActivity().getApplicationContext()).removeListener(this);
 
-		mapView.onDestroy();
-		map = null;
 
-		observations.clear();
-		observations = null;
+		if (observations != null) {
+			observations.clear();
+			observations = null;
+		}
 
-		locations.clear();
-		locations = null;
+		if (locations != null) {
+			locations.clear();
+			locations = null;
+		}
 
-		myHistoricLocations.clear();
-		myHistoricLocations = null;
+		if (historicLocations != null) {
+			historicLocations.clear();
+			historicLocations = null;
+		}
 
-		if (searchMarkes != null) {
-			for (Marker m : searchMarkes) {
+		if (searchMarkers != null) {
+			for (Marker m : searchMarkers) {
 				m.remove();
 			}
-			searchMarkes.clear();
+			searchMarkers.clear();
 		}
 
 		// Close all open GeoPackages
@@ -236,7 +237,82 @@ public class MapFragment extends Fragment implements OnMapClickListener, OnMapLo
 
 		staticGeometryCollection = null;
 		currentUser = null;
-		super.onDestroy();
+		map = null;
+		mapInitialized = false;
+	}
+
+	@Override
+	public void onMapReady(GoogleMap googleMap) {
+		map = googleMap;
+		initializeMap();
+	}
+
+	private void initializeMap() {
+		if (map == null) return;
+
+		if (!mapInitialized) {
+			mapInitialized = true;
+
+			map.setOnMapClickListener(this);
+			map.setOnMarkerClickListener(this);
+			map.setOnMapLongClickListener(this);
+			map.setOnMyLocationButtonClickListener(this);
+			map.setOnInfoWindowClickListener(this);
+
+			// zoom to map location
+			updateMapView();
+
+			staticGeometryCollection = new StaticGeometryCollection();
+
+			observations = new ObservationMarkerCollection(getActivity(), map);
+			ObservationLoadTask observationLoad = new ObservationLoadTask(getActivity(), observations);
+			observationLoad.setFilter(getTemporalFilter("last_modified"));
+			observationLoad.executeOnExecutor(executor);
+
+
+			locations = new LocationMarkerCollection(getActivity(), map);
+			LocationLoadTask locationLoad = new LocationLoadTask(getActivity(), locations);
+			locationLoad.setFilter(getTemporalFilter("timestamp"));
+			locationLoad.executeOnExecutor(executor);
+
+			historicLocations = new MyHistoricalLocationMarkerCollection(getActivity(), map);
+			HistoricLocationLoadTask myHistoricLocationLoad = new HistoricLocationLoadTask(getActivity(), historicLocations);
+			myHistoricLocationLoad.executeOnExecutor(executor);
+
+			ObservationHelper.getInstance(getActivity().getApplicationContext()).addListener(this);
+			LocationHelper.getInstance(getActivity().getApplicationContext()).addListener(this);
+		}
+
+		// Set visibility on map markers as preferences may have changed
+		observations.setVisibility(preferences.getBoolean(getResources().getString(R.string.showObservationsKey), true));
+		locations.setVisibility(preferences.getBoolean(getResources().getString(R.string.showLocationsKey), true));
+		historicLocations.setVisibility(preferences.getBoolean(getResources().getString(R.string.showMyLocationHistoryKey), false));
+
+		// task to refresh location markers every x seconds
+		refreshLocationsMarkersTask = new RefreshMarkersTask(locations);
+		if (!refreshLocationsMarkersTask.isCancelled()) {
+			refreshLocationsMarkersTask.executeOnExecutor(executor, REFRESHMARKERINTERVALINSECONDS);
+		}
+
+		// task to refresh my historic location markers every x seconds
+		refreshMyHistoricLocationsMarkersTask = new RefreshMarkersTask(historicLocations);
+		if (!refreshMyHistoricLocationsMarkersTask.isCancelled()) {
+			refreshMyHistoricLocationsMarkersTask.executeOnExecutor(executor, REFRESHMARKERINTERVALINSECONDS);
+		}
+
+		updateStaticFeatureLayers();
+
+		mage.registerCacheOverlayListener(this);
+		StaticFeatureHelper.getInstance(getActivity().getApplicationContext()).addListener(this);
+
+		// Check if any map preferences changed that I care about
+		boolean locationServiceEnabled = preferences.getBoolean(getResources().getString(R.string.locationServiceEnabledKey), false);
+		map.setMyLocationEnabled(locationServiceEnabled);
+
+		if (locationServiceEnabled) {
+			map.setLocationSource(this);
+			locationService.registerOnLocationListener(this);
+		}
 	}
 
 	@Override
@@ -256,85 +332,11 @@ public class MapFragment extends Fragment implements OnMapClickListener, OnMapLo
 		}
 
 		mapView.onResume();
+		initializeMap();
 
 		PreferenceManager.getDefaultSharedPreferences(getActivity().getApplicationContext()).registerOnSharedPreferenceChangeListener(this);
 
-		if (map == null) {
-			map = mapView.getMap();
-		}
-		map.setOnMapClickListener(this);
-		map.setOnMarkerClickListener(this);
-		map.setOnMapLongClickListener(this);
-		map.setOnMyLocationButtonClickListener(this);
-		map.setOnInfoWindowClickListener(this);
-
-		// zoom to map location
-		updateMapView();
-
-		if (staticGeometryCollection == null) {
-			staticGeometryCollection = new StaticGeometryCollection();
-		}
-		updateStaticFeatureLayers();
-
-		if (observations == null) {
-			observations = new ObservationMarkerCollection(getActivity(), map);
-		}
-
 		getActivity().getActionBar().setTitle(getTemporalFilterTitle());
-		ObservationLoadTask observationLoad = new ObservationLoadTask(getActivity(), observations);
-		observationLoad.setFilter(getTemporalFilter("last_modified"));
-		observationLoad.executeOnExecutor(executor);
-
-		boolean showObservations = preferences.getBoolean(getResources().getString(R.string.showObservationsKey), true);
-		observations.setVisibility(showObservations);
-
-		if (locations == null) {
-			locations = new LocationMarkerCollection(getActivity(), map);
-		}
-		LocationLoadTask locationLoad = new LocationLoadTask(getActivity(), locations);
-		locationLoad.setFilter(getTemporalFilter("timestamp"));
-		locationLoad.executeOnExecutor(executor);
-
-		boolean showLocations = preferences.getBoolean(getResources().getString(R.string.showLocationsKey), true);
-		locations.setVisibility(showLocations);
-
-		if (myHistoricLocations == null) {
-			myHistoricLocations = new MyHistoricalLocationMarkerCollection(getActivity(), map);
-		}
-
-		HistoricLocationLoadTask myHistoricLocationLoad = new HistoricLocationLoadTask(getActivity(), myHistoricLocations);
-		myHistoricLocationLoad.executeOnExecutor(executor);
-
-		boolean showMyLocationHistory = preferences.getBoolean(getResources().getString(R.string.showMyLocationHistoryKey), false);
-		myHistoricLocations.setVisibility(showMyLocationHistory);
-		
-		mage.registerCacheOverlayListener(this);
-		StaticFeatureHelper.getInstance(getActivity().getApplicationContext()).addListener(this);
-
-		// Check if any map preferences changed that I care about
-		boolean locationServiceEnabled = preferences.getBoolean(getResources().getString(R.string.locationServiceEnabledKey), false);
-		map.setMyLocationEnabled(locationServiceEnabled);
-
-		if (locationServiceEnabled) {
-			map.setLocationSource(this);
-			locationService.registerOnLocationListener(this);
-		}
-
-		// task to refresh location markers every x seconds
-		if (refreshLocationsMarkersTask == null) {
-			refreshLocationsMarkersTask = new RefreshMarkersTask(locations);
-		}
-		if (!refreshLocationsMarkersTask.isCancelled()) {
-			refreshLocationsMarkersTask.executeOnExecutor(executor, REFRESHMARKERINTERVALINSECONDS);
-		}
-
-		// task to refresh my historic location markers every x seconds
-		if (refreshMyHistoricLocationsMarkersTask == null) {
-			refreshMyHistoricLocationsMarkersTask = new RefreshMarkersTask(myHistoricLocations);
-		}
-		if (!refreshMyHistoricLocationsMarkersTask.isCancelled()) {
-			refreshMyHistoricLocationsMarkersTask.executeOnExecutor(executor, REFRESHMARKERINTERVALINSECONDS);
-		}
 
 		edittextSearch.setOnKeyListener(new View.OnKeyListener() {
 			@Override
@@ -363,11 +365,11 @@ public class MapFragment extends Fragment implements OnMapClickListener, OnMapLo
 			@Override
 			public void onTextChanged(CharSequence s, int start, int before, int count) {
 				if(s == null || s.toString().trim().isEmpty()) {
-					if (searchMarkes != null) {
-						for (Marker m : searchMarkes) {
+					if (searchMarkers != null) {
+						for (Marker m : searchMarkers) {
 							m.remove();
 						}
-						searchMarkes.clear();
+						searchMarkers.clear();
 					}
 				}
 			}
@@ -398,9 +400,8 @@ public class MapFragment extends Fragment implements OnMapClickListener, OnMapLo
 		mage.unregisterCacheOverlayListener(this);
 		StaticFeatureHelper.getInstance(getActivity().getApplicationContext()).removeListener(this);
 
-		boolean locationServiceEnabled = preferences.getInt(getString(R.string.userReportingFrequencyKey), getResources().getInteger(R.integer.userReportingFrequencyDefaultValue)) > 0;
-		if (locationServiceEnabled) {
-			map.setLocationSource(null);
+		map.setLocationSource(null);
+		if (locationService != null) {
 			locationService.unregisterOnLocationListener(this);
 		}
 	}
@@ -419,8 +420,8 @@ public class MapFragment extends Fragment implements OnMapClickListener, OnMapLo
 		switch (item.getItemId()) {
 		case R.id.observation_new:
 			Intent intent = new Intent(getActivity().getApplicationContext(), ObservationEditActivity.class);
-			LocationService ls = ((MAGE) getActivity().getApplication()).getLocationService();
-			Location l = ls.getLocation();
+			Location l = locationService.getLocation();
+
 			// if there is not a location from the location service, then try to pull one from the database.
 			if (l == null) {
 				List<mil.nga.giat.mage.sdk.datastore.location.Location> tLocations = LocationHelper.getInstance(getActivity().getApplicationContext()).getCurrentUserLocations(getActivity().getApplicationContext(), 1, true);
@@ -518,8 +519,8 @@ public class MapFragment extends Fragment implements OnMapClickListener, OnMapLo
 					task.executeOnExecutor(executor, l);
 				}
 			} else {
-				if (myHistoricLocations != null) {
-					new LocationTask(LocationTask.Type.ADD, myHistoricLocations).executeOnExecutor(executor, l);
+				if (historicLocations != null) {
+					new LocationTask(LocationTask.Type.ADD, historicLocations).executeOnExecutor(executor, l);
 				}
 			}
 		}
@@ -534,8 +535,8 @@ public class MapFragment extends Fragment implements OnMapClickListener, OnMapLo
 				task.executeOnExecutor(executor, l);
 			}
 		} else {
-			if (myHistoricLocations != null) {
-				new LocationTask(LocationTask.Type.UPDATE, myHistoricLocations).executeOnExecutor(executor, l);
+			if (historicLocations != null) {
+				new LocationTask(LocationTask.Type.UPDATE, historicLocations).executeOnExecutor(executor, l);
 			}
 		}
 	}
@@ -566,8 +567,8 @@ public class MapFragment extends Fragment implements OnMapClickListener, OnMapLo
 	public boolean onMarkerClick(Marker marker) {
 		hideKeyboard();
 		// search marker
-		if(searchMarkes != null) {
-			for(Marker m :searchMarkes) {
+		if(searchMarkers != null) {
+			for(Marker m :searchMarkers) {
 				 if(marker.getId().equals(m.getId())) {
 						m.showInfoWindow();
 						return true;		 
@@ -587,7 +588,7 @@ public class MapFragment extends Fragment implements OnMapClickListener, OnMapLo
 			return true;
 		}
 
-		if (myHistoricLocations.onMarkerClick(marker)) {
+		if (historicLocations.onMarkerClick(marker)) {
 			return true;
 		}
 
@@ -1045,7 +1046,7 @@ public class MapFragment extends Fragment implements OnMapClickListener, OnMapLo
 				inputMethodManager.hideSoftInputFromWindow(getActivity().getCurrentFocus().getWindowToken(), 0);
 			}
 
-			new GeocoderTask(getActivity(), map, searchMarkes).execute(searchString);
+			new GeocoderTask(getActivity(), map, searchMarkers).execute(searchString);
 		}
 	}
 
@@ -1142,6 +1143,4 @@ public class MapFragment extends Fragment implements OnMapClickListener, OnMapLo
 			inputMethodManager.hideSoftInputFromWindow(getActivity().getCurrentFocus().getWindowToken(), 0);
 		}
 	}
-
-
 }

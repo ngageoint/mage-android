@@ -219,7 +219,6 @@ public class EventActivity extends Activity implements AccountDelegate {
 
         // start up the landing activity!
         startActivity(new Intent(getApplicationContext(), LandingActivity.class));
-        ((MAGE) getApplication()).onLogin();
         finish();
     }
 }

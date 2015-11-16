@@ -16,12 +16,13 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.GoogleMap.OnCameraChangeListener;
 import com.google.android.gms.maps.GoogleMap.OnMapClickListener;
 import com.google.android.gms.maps.MapFragment;
+import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 
 import mil.nga.giat.mage.R;
 
-public class LocationEditActivity extends Activity implements OnCameraChangeListener, OnFocusChangeListener, OnMapClickListener {
+public class LocationEditActivity extends Activity implements OnCameraChangeListener, OnFocusChangeListener, OnMapReadyCallback, OnMapClickListener {
 
 	public static String LOCATION = "LOCATION";
 	public static String MARKER_BITMAP = "MARKER_BITMAP";
@@ -37,6 +38,8 @@ public class LocationEditActivity extends Activity implements OnCameraChangeList
 		l = intent.getParcelableExtra(LOCATION);
 		markerBitmap = intent.getParcelableExtra(MARKER_BITMAP);
 		setContentView(R.layout.location_edit);
+
+		((MapFragment) getFragmentManager().findFragmentById(R.id.location_edit_map)).getMapAsync(this);
 	}
 
 	public void cancel(View v) {
@@ -56,7 +59,38 @@ public class LocationEditActivity extends Activity implements OnCameraChangeList
 		setResult(RESULT_OK, data);
 		finish();
 	}
-	
+
+	@Override
+	public void onMapReady(GoogleMap map) {
+		this.map = map;
+
+		LatLng location = new LatLng(l.getLatitude(), l.getLongitude());
+
+		map.moveCamera(CameraUpdateFactory.newLatLngZoom(location, 18));
+
+		ImageView iv = (ImageView) findViewById(R.id.location_edit_marker);
+		iv.setImageBitmap(markerBitmap);
+		map.setOnCameraChangeListener(this);
+		map.setOnMapClickListener(this);
+
+		EditText longitudeEdit = (EditText) findViewById(R.id.location_edit_longitude);
+		longitudeEdit.setText(Double.toString(l.getLongitude()));
+		longitudeEdit.setOnFocusChangeListener(this);
+
+		EditText latitudeEdit = (EditText) findViewById(R.id.location_edit_latitude);
+		latitudeEdit.setText(Double.toString(l.getLatitude()));
+		latitudeEdit.setOnFocusChangeListener(this);
+	}
+
+	@Override
+	public void onMapClick(LatLng location) {
+		InputMethodManager inputMethodManager = (InputMethodManager) getSystemService(Activity.INPUT_METHOD_SERVICE);
+		if (getCurrentFocus() != null) {
+			inputMethodManager.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(), 0);
+		}
+		map.setOnCameraChangeListener(LocationEditActivity.this);
+	}
+
 	@Override
 	public void onCameraChange(CameraPosition position) {
 		EditText longitudeEdit = (EditText) findViewById(R.id.location_edit_longitude);
@@ -64,7 +98,7 @@ public class LocationEditActivity extends Activity implements OnCameraChangeList
 		longitudeEdit.setText(Double.toString(position.target.longitude));
 		latitudeEdit.setText(Double.toString(position.target.latitude));
 	}
-	
+
 	@Override
 	public void onFocusChange(View v, boolean hasFocus) {
 		if (!hasFocus) {
@@ -83,40 +117,4 @@ public class LocationEditActivity extends Activity implements OnCameraChangeList
 			map.setOnCameraChangeListener(null);
 		}
 	}
-	
-	@Override
-	public void onMapClick(LatLng location) {
-		InputMethodManager inputMethodManager = (InputMethodManager) getSystemService(Activity.INPUT_METHOD_SERVICE);
-		if (getCurrentFocus() != null) {
-			inputMethodManager.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(), 0);
-		}
-		map.setOnCameraChangeListener(LocationEditActivity.this);
-	}
-
-	@Override
-	protected void onResume() {
-		final EditText longitudeEdit = (EditText) findViewById(R.id.location_edit_longitude);
-		final EditText latitudeEdit = (EditText) findViewById(R.id.location_edit_latitude);
-
-		longitudeEdit.setText(Double.toString(l.getLongitude()));
-		latitudeEdit.setText(Double.toString(l.getLatitude()));
-
-		map = ((MapFragment) getFragmentManager().findFragmentById(R.id.location_edit_map)).getMap();
-		LatLng location = new LatLng(l.getLatitude(), l.getLongitude());
-
-		map.moveCamera(CameraUpdateFactory.newLatLngZoom(location, 18));
-
-		ImageView iv = (ImageView) findViewById(R.id.location_edit_marker);
-		iv.setImageBitmap(markerBitmap);
-		map.setOnCameraChangeListener(this);
-		map.setOnMapClickListener(this);
-		
-		longitudeEdit.setOnFocusChangeListener(this);
-		latitudeEdit.setOnFocusChangeListener(this);
-
-		super.onResume();
-	}
-
-
-
 }
