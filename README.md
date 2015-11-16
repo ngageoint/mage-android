@@ -1,6 +1,6 @@
 # MAGE Android
 
-11/09/2015
+11/16/2015
 
 This is the MAGE client for Android devices.
 
@@ -22,11 +22,9 @@ MAGE Android was developed at the National Geospatial-Intelligence Agency (NGA) 
 
 These instructions are for *nix operating systems.  Do not use Windows systems to build MAGE.  The following example commands are for debian based linux systems like Ubuntu.
 
-### Setup & Configuration
-
 You will need to install the Java and Android sdks to build MAGE Android.
 
-#### Java SDK
+### Java SDK
 
 Check to see if you have Java installed:
 ```bash
@@ -52,7 +50,7 @@ Verify:
 javac -version
 ```
 
-#### Android SDK
+### Android SDK
 
 Download the Stand-alone SDK Tools, or Android Studio:
 http://developer.android.com/sdk/index.html#Other
@@ -75,7 +73,7 @@ Check the [build configuration](mage/build.gradle#L8-L9) for the version of andr
 
 Android requires that you sign your applications.  You will need to create an idenity to sign your MAGE Android build.  If you don't plan on releasing your build of MAGE, use *Debug Build* instructions, otherwise use the *Release Build* instructions.  If you aren't sure, follow the *Debug Build* instructions.
 
-#### Debug Build
+##### Debug Build
 
 First, check to see if you have a *~/.android/debug.keystore*.  If the file does not exist, generate one using keytool:
 ```bash
@@ -89,7 +87,7 @@ keytool -list -keystore  ~/.android/debug.keystore
 
 If prompted for a password, enter *android*.  
 
-#### Release Build
+##### Release Build
 
 Only follow these instructions if you would like to release or distribute your build of MAGE.  If you already have a *~/.android/release.keystore* skip to the next section, *Google Maps Android API*.  If you don't have a *~/.android/release.keystore* (or production keystore you use to sign other Android applications), create a new keystore file using the keytool utility:
 ```bash
@@ -101,7 +99,7 @@ When finished, *~/.android/release.keystore* should now exist on your system.  V
 keytool -list -keystore  ~/.android/release.keystore
 ```
 
-#### Google Maps Android API
+### Google Maps Android API
 
 MAGE Android uses Google Maps.  Whether you build a dubug or release version of the application, you will need to obtain a Google Maps API key to use Android Google's Maps.
 
