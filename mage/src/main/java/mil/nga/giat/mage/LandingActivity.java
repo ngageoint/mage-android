@@ -53,6 +53,11 @@ import mil.nga.giat.mage.sdk.utils.MediaUtility;
  */
 public class LandingActivity extends Activity implements ListView.OnItemClickListener {
 
+    /**
+     * Extra key for storing the path of a file used to launch MAGE
+     */
+    public static final String EXTRA_OPEN_FILE_PATH = "extra_open_file_path";
+
 	private static final String LOG_NAME = LandingActivity.class.getName();
 
     private DrawerLayout drawerLayout;
@@ -144,6 +149,11 @@ public class LandingActivity extends Activity implements ListView.OnItemClickLis
 			Fragment alertBannerFragment = new AlertBannerFragment();
 			getFragmentManager().beginTransaction().add(android.R.id.content, alertBannerFragment).commit();
 		}
+
+        String openFilePath = getIntent().getStringExtra(EXTRA_OPEN_FILE_PATH);
+        if(openFilePath != null){
+            // TODO handle the open with file
+        }
 
         goToMap();
     }
