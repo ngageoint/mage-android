@@ -27,6 +27,7 @@ import android.view.inputmethod.InputMethodManager;
 import android.webkit.WebView;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -153,7 +154,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 	private StaticGeometryCollection staticGeometryCollection;
 	private List<Marker> searchMarkers = new ArrayList<Marker>();
 
-	private Map<String, CacheOverlay> cacheOverlays = new HashMap<String, CacheOverlay>();;
+	private Map<String, CacheOverlay> cacheOverlays = new HashMap<String, CacheOverlay>();
 
 	// GeoPackage cache of open GeoPackage connections
 	private GeoPackageCache geoPackageCache;
@@ -364,7 +365,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 
 			@Override
 			public void onTextChanged(CharSequence s, int start, int before, int count) {
-				if(s == null || s.toString().trim().isEmpty()) {
+				if (s == null || s.toString().trim().isEmpty()) {
 					if (searchMarkers != null) {
 						for (Marker m : searchMarkers) {
 							m.remove();
@@ -902,10 +903,18 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 			}
 			// Not indexed, add the features to the map
 			else {
+				int maxFeaturesPerTable = 0;
+				if(featureDao.getGeometryType() == GeometryType.POINT){
+					maxFeaturesPerTable = getResources().getInteger(R.integer.geopackage_features_max_points_per_table);
+				}else{
+					maxFeaturesPerTable = getResources().getInteger(R.integer.geopackage_features_max_features_per_table);
+				}
 				Projection projection = featureDao.getProjection();
 				GoogleMapShapeConverter shapeConverter = new GoogleMapShapeConverter(projection);
 				FeatureCursor featureCursor = featureDao.queryForAll();
 				try {
+					final int totalCount = featureCursor.getCount();
+					int count = 0;
 					while (featureCursor.moveToNext()) {
 						FeatureRow featureRow = featureCursor.getRow();
 						GeoPackageGeometryData geometryData = featureRow.getGeometry();
@@ -915,6 +924,14 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 								GoogleMapShape shape = shapeConverter.toShape(geometry);
 								// Set the Shape Marker, PolylineOptions, and PolygonOptions here if needed to change color and style
 								featureTableCacheOverlay.addShapeToMap(featureRow.getId(), shape, map);
+
+								if(++count >= maxFeaturesPerTable){
+									if(count < totalCount){
+										Toast.makeText(getActivity().getApplicationContext(), featureTableCacheOverlay.getCacheName()
+												+ "- added " + count + " of " + totalCount, Toast.LENGTH_LONG).show();
+									}
+									break;
+								}
 							}
 						}
 					}

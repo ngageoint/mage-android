@@ -35,5 +35,7 @@
     <string name="feature_overlay_no_content_text">Click the refresh button below to pull all feature overlays from the server.</string>
     <string name="feature_overlay_refresh">You are about to refresh all feature overlays, this could take a while.\n\n Refresh all feature overlays?</string>
     <string name="clear_data_message">You are about to delete the selected data and logout.\n\n Are you sure you want to do this?</string>
-    
+
+    <string name="overlay_cache_directory">MapCache</string>
+
 </resources>

@@ -30,8 +30,10 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+import mil.nga.geopackage.validate.GeoPackageValidate;
 import mil.nga.giat.mage.event.EventFragment;
 import mil.nga.giat.mage.help.HelpFragment;
+import mil.nga.giat.mage.cache.GeoPackageCacheUtils;
 import mil.nga.giat.mage.login.AlertBannerFragment;
 import mil.nga.giat.mage.login.LoginActivity;
 import mil.nga.giat.mage.map.MapFragment;
@@ -54,7 +56,7 @@ import mil.nga.giat.mage.sdk.utils.MediaUtility;
 public class LandingActivity extends Activity implements ListView.OnItemClickListener {
 
     /**
-     * Extra key for storing the path of a file used to launch MAGE
+     * Extra key for storing the local file path used to launch MAGE
      */
     public static final String EXTRA_OPEN_FILE_PATH = "extra_open_file_path";
 
@@ -150,9 +152,10 @@ public class LandingActivity extends Activity implements ListView.OnItemClickLis
 			getFragmentManager().beginTransaction().add(android.R.id.content, alertBannerFragment).commit();
 		}
 
+        // Check if MAGE was launched with a local file
         String openFilePath = getIntent().getStringExtra(EXTRA_OPEN_FILE_PATH);
         if(openFilePath != null){
-            // TODO handle the open with file
+            handleOpenFilePath(openFilePath);
         }
 
         goToMap();
@@ -316,7 +319,24 @@ public class LandingActivity extends Activity implements ListView.OnItemClickLis
         drawerList.setItemChecked(position, true);
         drawerLayout.closeDrawer(drawerList);
     }
-	
+
+    /**
+     * Handle opening the file path that MAGE was launched with
+     * @param path
+     */
+    private void handleOpenFilePath(String path){
+
+        File cacheFile = new File(path);
+
+        // Handle GeoPackage files by linking them to their current location
+        if(GeoPackageValidate.hasGeoPackageExtension(cacheFile)){
+
+            // Import the GeoPackage if needed
+            GeoPackageCacheUtils.importGeoPackage(this, cacheFile);
+        }
+
+    }
+
 	public static void deleteAllData(Context context) {
 		DaoStore.getInstance(context).resetDatabase();
 		PreferenceManager.getDefaultSharedPreferences(context).edit().clear().commit();
@@ -354,4 +374,5 @@ public class LandingActivity extends Activity implements ListView.OnItemClickLis
 		}
 		return dir.delete();
 	}
+
 }

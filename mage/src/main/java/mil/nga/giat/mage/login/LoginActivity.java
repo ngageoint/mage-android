@@ -43,6 +43,7 @@ import mil.nga.giat.mage.MAGE;
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.disclaimer.DisclaimerActivity;
 import mil.nga.giat.mage.event.EventActivity;
+import mil.nga.giat.mage.cache.CacheUtils;
 import mil.nga.giat.mage.sdk.connectivity.ConnectivityUtility;
 import mil.nga.giat.mage.sdk.datastore.DaoStore;
 import mil.nga.giat.mage.sdk.login.AbstractAccountTask;
@@ -129,9 +130,10 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 			}
 		}
 
+		// Handle when MAGE was launched with a Uri (such as a local or remote cache file)
 		Uri uri = intent.getData();
-		if(uri != null){
-			mOpenFilePath = MediaUtility.getPath(getApplicationContext(), uri);
+		if(uri != null) {
+			handleUri(uri);
 		}
 
 		// if token is not expired, then skip the login module
@@ -227,6 +229,24 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 				View innerView = ((ViewGroup) view).getChildAt(i);
 				hideKeyboardOnClick(innerView);
 			}
+		}
+	}
+
+	/**
+	 * Handle the Uri used to launch MAGE
+	 * @param uri
+	 */
+	private void handleUri(Uri uri){
+
+		// Attempt to get a local file path
+		String openPath = MediaUtility.getPath(this, uri);
+
+		// If not a local or temporary file path, copy the file to cache
+		if(openPath == null || MediaUtility.isTemporaryPath(openPath)){
+			CacheUtils.copyToCache(this, uri, openPath);
+		}else{
+			// Else, store the path to pass to further intents
+			mOpenFilePath = openPath;
 		}
 	}
 
@@ -492,6 +512,7 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 				new Intent(getApplicationContext(), DisclaimerActivity.class) :
 				new Intent(getApplicationContext(), EventActivity.class);
 
+		// If launched with a local file path, save as an extra
 		if(mOpenFilePath != null){
 			intent.putExtra(LandingActivity.EXTRA_OPEN_FILE_PATH, mOpenFilePath);
 		}
@@ -509,6 +530,7 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 				new Intent(getApplicationContext(), DisclaimerActivity.class);
 
 		intent.putExtra(EventActivity.EXTRA_CHOOSE_CURRENT_EVENT, true);
+		// If launched with a local file path, save as an extra
 		if(mOpenFilePath != null){
 			intent.putExtra(LandingActivity.EXTRA_OPEN_FILE_PATH, mOpenFilePath);
 		}
