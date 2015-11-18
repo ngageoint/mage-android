@@ -9,7 +9,7 @@
               android:paddingRight="24dip">
 
 
-    <LinearLayout
+    <RelativeLayout
         android:id="@+id/event_status"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
@@ -35,13 +35,13 @@
 
                 <ImageView
                     android:layout_width="wrap_content"
-                    android:layout_height="76dip"
+                    android:layout_height="50dip"
                     android:src="@drawable/ic_wand"/>
 
                 <ProgressBar
                     style="?android:attr/progressBarStyleLarge"
                     android:layout_width="fill_parent"
-                    android:layout_height="76dip"
+                    android:layout_height="50dip"
                     android:indeterminateDrawable="@drawable/mage_progress_bar"/>
             </LinearLayout>
 
@@ -54,7 +54,7 @@
                 android:textColor="#EEEEEE"
                 android:textSize="26sp"/>
         </LinearLayout>
-    </LinearLayout>
+    </RelativeLayout>
 
     <LinearLayout
         android:id="@+id/event_content"
