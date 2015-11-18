@@ -26,8 +26,10 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapView;
 import com.google.android.gms.maps.MapsInitializer;
+import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
@@ -54,7 +56,7 @@ import mil.nga.giat.mage.sdk.fetch.DownloadImageTask;
 import mil.nga.giat.mage.sdk.profile.UpdateProfileTask;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
 
-public class ProfileFragment extends Fragment {
+public class ProfileFragment extends Fragment implements OnMapReadyCallback {
 
 	private static final String LOG_NAME = ProfileFragment.class.getName();
 	
@@ -109,6 +111,12 @@ public class ProfileFragment extends Fragment {
 			Log.e(LOG_NAME, "Problem finding user.", ue);
 		}
 
+		MapsInitializer.initialize(getActivity().getApplicationContext());
+
+		mapView = (MapView) rootView.findViewById(R.id.mapView);
+		mapView.onCreate(savedInstanceState);
+		mapView.getMapAsync(this);
+
 		final Long userId = user.getId();
 
 		final String displayName = user.getDisplayName();
@@ -117,27 +125,6 @@ public class ProfileFragment extends Fragment {
 		mapView = (MapView) rootView.findViewById(R.id.mapView);
 		mapView.onCreate(savedInstanceState);
 		MapsInitializer.initialize(getActivity().getApplicationContext());
-		
-		LatLng latLng = getActivity().getIntent().getParcelableExtra(INITIAL_LOCATION);
-		if (latLng == null) {
-			latLng = new LatLng(0, 0);
-		}
-		float zoom = getActivity().getIntent().getFloatExtra(INITIAL_ZOOM, 0);
-		mapView.getMap().moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, zoom));
-		List<Location> lastLocation = LocationHelper.getInstance(getActivity()).getUserLocations(userId, getActivity(), 1, true);
-		
-		if (!lastLocation.isEmpty()) {
-			Geometry geo = lastLocation.get(0).getGeometry();
-			if (geo instanceof Point) {
-				Point point = (Point) geo;
-				LatLng location = new LatLng(point.getY(), point.getX());
-				MarkerOptions options = new MarkerOptions().position(location).visible(true);
-				
-				Marker marker = mapView.getMap().addMarker(options);
-				marker.setIcon(LocationBitmapFactory.bitmapDescriptor(getActivity(), lastLocation.get(0), lastLocation.get(0).getUser()));
-				mapView.getMap().animateCamera(CameraUpdateFactory.newLatLngZoom(location, 15));
-			}
-		}
 		
 		final TextView realNameTextView = (TextView)rootView.findViewById(R.id.realName);
 		realNameTextView.setText(displayName);
@@ -263,48 +250,48 @@ public class ProfileFragment extends Fragment {
 		intent.putExtra(ProfilePictureViewerActivity.USER_ID, user.getId());
 		
 		rootView.findViewById(R.id.profile_picture).setOnClickListener(new OnClickListener() {
-			
+
 			@Override
 			public void onClick(View v) {
 				try {
 					if (userId.equals(UserHelper.getInstance(getActivity().getApplicationContext()).readCurrentUser().getId())) {
 						AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-					    builder.setItems(R.array.profileImageChoices, new DialogInterface.OnClickListener() {
-						   public void onClick(DialogInterface dialog, int which) {
-							   switch (which) {
-							   case 0:
-									startActivityForResult(intent, 1);
-									break;
-							   case 1:
-								   // change the picture from the gallery
-								   Intent intent = new Intent();
-									intent.setType("image/*");
-									intent.setAction(Intent.ACTION_GET_CONTENT);
-									if (Build.VERSION.SDK_INT >= 18) {
-										intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, false);
-									}
-									startActivityForResult(intent, GALLERY_ACTIVITY_REQUEST_CODE);
-								   break;
-							   case 2:
-								   // change the picture from the camera
-								   Intent caputreIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-									File f = null;
-							        try {
-							        	f = MediaUtility.createImageFile();
-							        } catch (IOException ex) {
-							            // Error occurred while creating the File
-							        	ex.printStackTrace();
-							        }
-							        // Continue only if the File was successfully created
-							        if (f != null) {
-							        	currentMediaUri = Uri.fromFile(f);
-							        	caputreIntent.putExtra(MediaStore.EXTRA_OUTPUT, currentMediaUri);
-							            startActivityForResult(caputreIntent, CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE);
-							        }
-								   break;
-							   }
-						   }
-					    });
+						builder.setItems(R.array.profileImageChoices, new DialogInterface.OnClickListener() {
+							public void onClick(DialogInterface dialog, int which) {
+								switch (which) {
+									case 0:
+										startActivityForResult(intent, 1);
+										break;
+									case 1:
+										// change the picture from the gallery
+										Intent intent = new Intent();
+										intent.setType("image/*");
+										intent.setAction(Intent.ACTION_GET_CONTENT);
+										if (Build.VERSION.SDK_INT >= 18) {
+											intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, false);
+										}
+										startActivityForResult(intent, GALLERY_ACTIVITY_REQUEST_CODE);
+										break;
+									case 2:
+										// change the picture from the camera
+										Intent caputreIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+										File f = null;
+										try {
+											f = MediaUtility.createImageFile();
+										} catch (IOException ex) {
+											// Error occurred while creating the File
+											ex.printStackTrace();
+										}
+										// Continue only if the File was successfully created
+										if (f != null) {
+											currentMediaUri = Uri.fromFile(f);
+											caputreIntent.putExtra(MediaStore.EXTRA_OUTPUT, currentMediaUri);
+											startActivityForResult(caputreIntent, CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE);
+										}
+										break;
+								}
+							}
+						});
 						AlertDialog d = builder.create();
 						d.show();
 					} else {
@@ -317,6 +304,30 @@ public class ProfileFragment extends Fragment {
 		});
 		
 		return rootView;
+	}
+
+	@Override
+	public void onMapReady(GoogleMap map) {
+		LatLng latLng = getActivity().getIntent().getParcelableExtra(INITIAL_LOCATION);
+		if (latLng == null) {
+			latLng = new LatLng(0, 0);
+		}
+		float zoom = getActivity().getIntent().getFloatExtra(INITIAL_ZOOM, 0);
+		map.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, zoom));
+		List<Location> lastLocation = LocationHelper.getInstance(getActivity()).getUserLocations(user.getId(), getActivity(), 1, true);
+
+		if (!lastLocation.isEmpty()) {
+			Geometry geo = lastLocation.get(0).getGeometry();
+			if (geo instanceof Point) {
+				Point point = (Point) geo;
+				LatLng location = new LatLng(point.getY(), point.getX());
+				MarkerOptions options = new MarkerOptions().position(location).visible(true);
+
+				Marker marker = map.addMarker(options);
+				marker.setIcon(LocationBitmapFactory.bitmapDescriptor(getActivity(), lastLocation.get(0), lastLocation.get(0).getUser()));
+				map.animateCamera(CameraUpdateFactory.newLatLngZoom(location, 15));
+			}
+		}
 	}
 
 	private void setProfilePicture(File file, ImageView imageView) {

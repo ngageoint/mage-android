@@ -51,6 +51,8 @@ public class LayoutBaker {
 
 	private static final String LOG_NAME = LayoutBaker.class.getName();
 
+	private static final String EXTRA_PROPERTY_MAP = "EXTRA_PROPERTY_MAP";
+
 	public enum ControlGenerationType {
 		VIEW, EDIT
 	}
@@ -437,9 +439,10 @@ public class LayoutBaker {
 
 	public static void populateLayoutFromBundle(final LinearLayout linearLayout, ControlGenerationType controlGenerationType, Bundle savedInstanceState) {
 		Map<String, ObservationProperty> propertiesMap = new HashMap<String, ObservationProperty>();
-		for (String key : savedInstanceState.keySet()) {
-			propertiesMap.put(key, new ObservationProperty(key, savedInstanceState.getSerializable(key)));
+		for (Map.Entry<String, Serializable> entry : ((Map<String, Serializable>) savedInstanceState.getSerializable(EXTRA_PROPERTY_MAP)).entrySet()) {
+			propertiesMap.put(entry.getKey(), new ObservationProperty(entry.getKey(), entry.getValue()));
 		}
+
 		populateLayoutFromMap(linearLayout, controlGenerationType, propertiesMap);
 	}
 
@@ -473,10 +476,12 @@ public class LayoutBaker {
 	}
 
 	public static void populateBundleFromLayout(LinearLayout linearLayout, Bundle outState) {
-		Map<String, ObservationProperty> properties = populateMapFromLayout(linearLayout);
-		for (String key : properties.keySet()) {
-			outState.putSerializable(key, properties.get(key).getValue());
+		HashMap<String, Serializable> properties = new HashMap<String, Serializable>();
+		for (Map.Entry<String, ObservationProperty> entry : populateMapFromLayout(linearLayout).entrySet()) {
+			properties.put(entry.getKey(), entry.getValue().getValue());
 		}
+
+		outState.putSerializable(EXTRA_PROPERTY_MAP, properties);
 	}
 
 	/**

@@ -27,7 +27,6 @@ import android.view.View.OnTouchListener;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
-import android.widget.AdapterView.OnItemSelectedListener;
 import android.widget.Button;
 import android.widget.DatePicker;
 import android.widget.EditText;
@@ -39,6 +38,7 @@ import android.widget.Toast;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapFragment;
+import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.model.Circle;
 import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
@@ -85,7 +85,7 @@ import mil.nga.giat.mage.sdk.exceptions.UserException;
 import mil.nga.giat.mage.sdk.utils.DateFormatFactory;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
 
-public class ObservationEditActivity extends Activity {
+public class ObservationEditActivity extends Activity implements OnMapReadyCallback {
 
 	private static final String LOG_NAME = ObservationEditActivity.class.getName();
 
@@ -109,7 +109,7 @@ public class ObservationEditActivity extends Activity {
 	private ArrayList<Attachment> attachmentsToCreate = new ArrayList<Attachment>();
 
     private Location l;
-	private Observation o;
+	private Observation observation;
 	private GoogleMap map;
 	private Marker observationMarker;
 	private Circle accuracyCircle;
@@ -145,23 +145,21 @@ public class ObservationEditActivity extends Activity {
         });
 		
 		final long observationId = getIntent().getLongExtra(OBSERVATION_ID, NEW_OBSERVATION);
-
-		JsonObject dynamicFormJson = null;
+		JsonObject dynamicFormJson;
 		if (observationId == NEW_OBSERVATION) {
-			o = new Observation();
+			observation = new Observation();
 			dynamicFormJson = EventHelper.getInstance(getApplicationContext()).getCurrentEvent().getForm();
 		} else {
 			try {
-				o = ObservationHelper.getInstance(getApplicationContext()).read(getIntent().getLongExtra(OBSERVATION_ID, 0L));
+				observation = ObservationHelper.getInstance(getApplicationContext()).read(getIntent().getLongExtra(OBSERVATION_ID, 0L));
+				dynamicFormJson = observation.getEvent().getForm();
 			} catch (ObservationException oe) {
 				Log.e(LOG_NAME, "Problem reading observation.", oe);
 				return;
 			}
-			dynamicFormJson = o.getEvent().getForm();
 		}
 
 		List<View> controls = LayoutBaker.createControlsFromJson(this, ControlGenerationType.EDIT, dynamicFormJson);
-
 		for (View view : controls) {
 			if (view instanceof MageSpinner) {
 				MageSpinner mageSpinner = (MageSpinner) view;
@@ -174,7 +172,7 @@ public class ObservationEditActivity extends Activity {
 				spinnersLastPositions.put(key, spinnerPosition);
 
 				mageSpinner.setSelection(spinnerPosition);
-				mageSpinner.setOnItemSelectedListener(new OnItemSelectedListener() {
+				mageSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
 					@Override
 					public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
 						MageSpinner ms = ((MageSpinner) parent);
@@ -183,17 +181,18 @@ public class ObservationEditActivity extends Activity {
 							spinnersLastPositions.put(k, position);
 						}
 
-						JsonObject dynamicFormJson = o.getEvent().getForm();
-						
+						JsonObject dynamicFormJson = observation.getEvent().getForm();
+
 						// get variantField
 						JsonElement variantField = dynamicFormJson.get("variantField");
 						String variantFieldString = null;
 						if(variantField != null && !variantField.isJsonNull()) {
 							variantFieldString = variantField.getAsString();
 						}
-						
+
 						if (k.equals("type") || (variantFieldString != null && k.equals(variantFieldString))) {
-							onTypeOrVariantChanged(k, parent.getItemAtPosition(position).toString());
+							observation.addProperties(Collections.singleton(new ObservationProperty(k, parent.getItemAtPosition(position).toString())));
+							updateMapIcon();
 						}
 					}
 
@@ -207,33 +206,35 @@ public class ObservationEditActivity extends Activity {
 		// add dynamic controls to view
 		LayoutBaker.populateLayoutWithControls((LinearLayout) findViewById(R.id.location_dynamic_form), controls);
 
+		((MapFragment) getFragmentManager().findFragmentById(R.id.background_map)).getMapAsync(this);
+
 		hideKeyboardOnClick(findViewById(R.id.observation_edit));
 
 		if (observationId == NEW_OBSERVATION) {
 			this.setTitle("Create New Observation");
 			l = getIntent().getParcelableExtra(LOCATION);
 
-            o.setEvent(EventHelper.getInstance(getApplicationContext()).getCurrentEvent());
-			o.setTimestamp(new Date());
+            observation.setEvent(EventHelper.getInstance(getApplicationContext()).getCurrentEvent());
+			observation.setTimestamp(new Date());
 			List<ObservationProperty> properties = new ArrayList<ObservationProperty>();
-			properties.add(new ObservationProperty("timestamp", iso8601Format.format(o.getTimestamp())));
-			o.addProperties(properties);
+			properties.add(new ObservationProperty("timestamp", iso8601Format.format(observation.getTimestamp())));
+			observation.addProperties(properties);
 			try {
 				User u = UserHelper.getInstance(getApplicationContext()).readCurrentUser();
 				if (u != null) {
-					o.setUserId(u.getRemoteId());
+					observation.setUserId(u.getRemoteId());
 				}
 			} catch (UserException ue) {
 				ue.printStackTrace();
 			}
-			LayoutBaker.populateLayoutFromMap((LinearLayout) findViewById(R.id.form), ControlGenerationType.EDIT, o.getPropertiesMap());
+			LayoutBaker.populateLayoutFromMap((LinearLayout) findViewById(R.id.form), ControlGenerationType.EDIT, observation.getPropertiesMap());
 		} else {
 			this.setTitle("Edit Observation");
 			// this is an edit of an existing observation
-            attachmentGallery.addAttachments(attachmentLayout, o.getAttachments());
+            attachmentGallery.addAttachments(attachmentLayout, observation.getAttachments());
 
-			Map<String, ObservationProperty> propertiesMap = o.getPropertiesMap();
-			Geometry geo = o.getGeometry();
+			Map<String, ObservationProperty> propertiesMap = observation.getPropertiesMap();
+			Geometry geo = observation.getGeometry();
 			if (geo instanceof Point) {
 				Point point = (Point) geo;
 				String provider = "manual";
@@ -298,12 +299,10 @@ public class ObservationEditActivity extends Activity {
 			public void onClick(View v) {
 				Intent intent = new Intent(ObservationEditActivity.this, LocationEditActivity.class);
 				intent.putExtra(LocationEditActivity.LOCATION, l);
-				intent.putExtra(LocationEditActivity.MARKER_BITMAP, ObservationBitmapFactory.bitmap(ObservationEditActivity.this, o));
+				intent.putExtra(LocationEditActivity.MARKER_BITMAP, ObservationBitmapFactory.bitmap(ObservationEditActivity.this, observation));
 				startActivityForResult(intent, LOCATION_EDIT_ACTIVITY_REQUEST_CODE);
 			}
 		});
-
-		setupMap();
 	}
 	
 	/**
@@ -334,12 +333,77 @@ public class ObservationEditActivity extends Activity {
 			}
 		}
 	}
+
+	@Override
+	public void onMapReady(GoogleMap map) {
+		this.map = map;
+		map.getUiSettings().setZoomControlsEnabled(false);
+
+		setupMap();
+	}
+
+	private void setupMap() {
+		if (map == null) return;
+
+		LatLng location = new LatLng(l.getLatitude(), l.getLongitude());
+
+		((TextView) findViewById(R.id.location)).setText(latLngFormat.format(l.getLatitude()) + ", " + latLngFormat.format(l.getLongitude()));
+		if (l.getProvider() != null) {
+			((TextView)findViewById(R.id.location_provider)).setText("("+l.getProvider()+")");
+		} else {
+			findViewById(R.id.location_provider).setVisibility(View.GONE);
+		}
+		if (l.getAccuracy() != 0) {
+			((TextView)findViewById(R.id.location_accuracy)).setText("\u00B1" + l.getAccuracy() + "m");
+		} else {
+			findViewById(R.id.location_accuracy).setVisibility(View.GONE);
+		}
+
+		locationElapsedTimeMilliseconds = getElapsedTimeInMilliseconds();
+		if (locationElapsedTimeMilliseconds != 0 && !("manual".equalsIgnoreCase(l.getProvider()))) {
+			//String dateText = DateUtils.getRelativeTimeSpanString(System.currentTimeMillis() - locationElapsedTimeMilliseconds, System.currentTimeMillis(), 0).toString();
+			String dateText = elapsedTime(locationElapsedTimeMilliseconds);
+			((TextView)findViewById(R.id.location_elapsed_time)).setText(dateText);
+		} else {
+			findViewById(R.id.location_elapsed_time).setVisibility(View.GONE);
+		}
+
+		LatLng latLng = getIntent().getParcelableExtra(INITIAL_LOCATION);
+		if (latLng == null) {
+			latLng = new LatLng(0,0);
+		}
+
+		float zoom = getIntent().getFloatExtra(INITIAL_ZOOM, 0);
+
+		map.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, zoom));
+
+		map.animateCamera(CameraUpdateFactory.newLatLngZoom(location, 18));
+
+		if (accuracyCircle != null) {
+			accuracyCircle.remove();
+		}
+
+		CircleOptions circleOptions = new CircleOptions()
+				.fillColor(getResources().getColor(R.color.accuracy_circle_fill))
+				.strokeColor(getResources().getColor(R.color.accuracy_circle_stroke))
+				.strokeWidth(5)
+				.center(location)
+				.radius(l.getAccuracy());
+		accuracyCircle = map.addCircle(circleOptions);
+
+		if (observationMarker != null) {
+			observationMarker.setPosition(location);
+			observationMarker.setIcon(ObservationBitmapFactory.bitmapDescriptor(this, observation));
+		} else {
+			observationMarker = map.addMarker(new MarkerOptions().position(location).icon(ObservationBitmapFactory.bitmapDescriptor(this, observation)));
+		}
+	}
 	
 	@SuppressLint("NewApi")
 	private long getElapsedTimeInMilliseconds() {
 		long elapsedTimeInMilliseconds = 0;
-		if (o.getPropertiesMap().containsKey("delta")) {
-			elapsedTimeInMilliseconds = Long.parseLong(o.getPropertiesMap().get("delta").getValue().toString());
+		if (observation.getPropertiesMap().containsKey("delta")) {
+			elapsedTimeInMilliseconds = Long.parseLong(observation.getPropertiesMap().get("delta").getValue().toString());
 		}
 		if (Build.VERSION.SDK_INT >= 17 && l.getElapsedRealtimeNanos() != 0) {
 			elapsedTimeInMilliseconds = ((SystemClock.elapsedRealtimeNanos() - l.getElapsedRealtimeNanos()) / (1000000l));
@@ -355,7 +419,7 @@ public class ObservationEditActivity extends Activity {
 		long sec = ms / 1000;
 		long min = sec / 60;
 		
-		if (o.getRemoteId() == null) {
+		if (observation.getRemoteId() == null) {
 			if (ms < 1000) {
 				return "now";
 			}
@@ -371,64 +435,6 @@ public class ObservationEditActivity extends Activity {
 			return "";
 		}
 		return s;
-	}
-
-	private void setupMap() {
-		map = ((MapFragment) getFragmentManager().findFragmentById(R.id.background_map)).getMap();
-        map.getUiSettings().setZoomControlsEnabled(false);
-
-		LatLng location = new LatLng(l.getLatitude(), l.getLongitude());
-		((TextView) findViewById(R.id.location)).setText(latLngFormat.format(l.getLatitude()) + ", " + latLngFormat.format(l.getLongitude()));
-		if (l.getProvider() != null) {
-			((TextView)findViewById(R.id.location_provider)).setText("("+l.getProvider()+")");
-		} else {
-			findViewById(R.id.location_provider).setVisibility(View.GONE);
-		}
-		if (l.getAccuracy() != 0) {
-			((TextView)findViewById(R.id.location_accuracy)).setText("\u00B1" + l.getAccuracy() + "m");
-		} else {
-			findViewById(R.id.location_accuracy).setVisibility(View.GONE);
-		}
-		
-		locationElapsedTimeMilliseconds = getElapsedTimeInMilliseconds();
-		if (locationElapsedTimeMilliseconds != 0 && !("manual".equalsIgnoreCase(l.getProvider()))) {
-			//String dateText = DateUtils.getRelativeTimeSpanString(System.currentTimeMillis() - locationElapsedTimeMilliseconds, System.currentTimeMillis(), 0).toString();
-			String dateText = elapsedTime(locationElapsedTimeMilliseconds);
-			((TextView)findViewById(R.id.location_elapsed_time)).setText(dateText);
-		} else {
-			findViewById(R.id.location_elapsed_time).setVisibility(View.GONE);
-		}
-		
-        LatLng latLng = getIntent().getParcelableExtra(INITIAL_LOCATION);
-        if (latLng == null) {
-            latLng = new LatLng(0,0);
-        }
-        
-        float zoom = getIntent().getFloatExtra(INITIAL_ZOOM, 0);
-        
-        map.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, zoom));
-		
-		map.animateCamera(CameraUpdateFactory.newLatLngZoom(location, 18));
-		
-		if (accuracyCircle != null) {
-			accuracyCircle.remove();
-		}
-		
-		CircleOptions circleOptions = new CircleOptions()
-		.fillColor(getResources().getColor(R.color.accuracy_circle_fill))
-		.strokeColor(getResources().getColor(R.color.accuracy_circle_stroke))
-		.strokeWidth(5)
-	    .center(location)
-	    .radius(l.getAccuracy());
-		accuracyCircle = map.addCircle(circleOptions);
-
-		
-		if (observationMarker != null) {
-			observationMarker.setPosition(location);
-			observationMarker.setIcon(ObservationBitmapFactory.bitmapDescriptor(this, o));
-		} else {
-			observationMarker = map.addMarker(new MarkerOptions().position(location).icon(ObservationBitmapFactory.bitmapDescriptor(this, o)));
-		}
 	}
 
 	@Override
@@ -470,9 +476,9 @@ public class ObservationEditActivity extends Activity {
 		switch (item.getItemId()) {
 
 		case R.id.observation_save:
-			o.setState(State.ACTIVE);
-			o.setDirty(true);
-			o.setGeometry(new GeometryFactory().createPoint(new Coordinate(l.getLongitude(), l.getLatitude())));
+			observation.setState(State.ACTIVE);
+			observation.setDirty(true);
+			observation.setGeometry(new GeometryFactory().createPoint(new Coordinate(l.getLongitude(), l.getLatitude())));
 
 			if (!LayoutBaker.checkAndFlagRequiredFields((LinearLayout) findViewById(R.id.form))) {
 				return super.onOptionsItemSelected(item);
@@ -481,7 +487,7 @@ public class ObservationEditActivity extends Activity {
 			Map<String, ObservationProperty> propertyMap = LayoutBaker.populateMapFromLayout((LinearLayout) findViewById(R.id.form));
 
 			try {
-				o.setTimestamp(iso8601Format.parse(propertyMap.get("timestamp").getValue().toString()));
+				observation.setTimestamp(iso8601Format.parse(propertyMap.get("timestamp").getValue().toString()));
 			} catch (ParseException pe) {
 				Log.e(LOG_NAME, "Could not parse timestamp", pe);
 			}
@@ -497,17 +503,17 @@ public class ObservationEditActivity extends Activity {
 				propertyMap.put("delta", new ObservationProperty("delta", Long.toString(locationElapsedTimeMilliseconds)));
 			}
 
-			o.addProperties(propertyMap.values());
-            o.getAttachments().addAll(attachmentsToCreate);
+			observation.addProperties(propertyMap.values());
+            observation.getAttachments().addAll(attachmentsToCreate);
 
 			ObservationHelper oh = ObservationHelper.getInstance(getApplicationContext());
 			try {
-				if (o.getId() == null) {
-					Observation newObs = oh.create(o);
+				if (observation.getId() == null) {
+					Observation newObs = oh.create(observation);
 					Log.i(LOG_NAME, "Created new observation with id: " + newObs.getId());
 				} else {
-					oh.update(o);
-					Log.i(LOG_NAME, "Updated observation with remote id: " + o.getRemoteId());
+					oh.update(observation);
+					Log.i(LOG_NAME, "Updated observation with remote id: " + observation.getRemoteId());
 				}
 				finish();
 			} catch (Exception e) {
@@ -661,11 +667,12 @@ public class ObservationEditActivity extends Activity {
 		return uris;
 	}
 
-	public void onTypeOrVariantChanged(String field, String value) {
-		o.addProperties(Collections.singleton(new ObservationProperty(field, value)));
+	private void updateMapIcon() {
+		if (map == null) return;
+
 		if (observationMarker != null) {
 			observationMarker.remove();
 		}
-		observationMarker = map.addMarker(new MarkerOptions().position(new LatLng(l.getLatitude(), l.getLongitude())).icon(ObservationBitmapFactory.bitmapDescriptor(this, o)));
+		observationMarker = map.addMarker(new MarkerOptions().position(new LatLng(l.getLatitude(), l.getLongitude())).icon(ObservationBitmapFactory.bitmapDescriptor(this, observation)));
 	}
 }
