@@ -1,5 +1,7 @@
 package mil.nga.giat.mage.sdk.utils;
 
+import android.annotation.TargetApi;
+import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.Context;
 import android.content.Intent;
@@ -33,6 +35,7 @@ import org.apache.sanselan.formats.tiff.constants.TiffConstants;
 import org.apache.sanselan.formats.tiff.write.TiffOutputSet;
 
 import java.io.BufferedOutputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -117,12 +120,12 @@ public class MediaUtility {
 	    String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
 	    String imageFileName = "MAGE_" + timeStamp;
 	    File storageDir = Environment.getExternalStoragePublicDirectory(
-	            Environment.DIRECTORY_PICTURES);
+				Environment.DIRECTORY_PICTURES);
 	    return File.createTempFile(
-	        imageFileName,  /* prefix */
-	        ".jpg",         /* suffix */
-	        storageDir      /* directory */
-	    );
+				imageFileName,  /* prefix */
+				".jpg",         /* suffix */
+				storageDir      /* directory */
+		);
 	}
 	
 	public static File getMediaStageDirectory() {
@@ -225,6 +228,16 @@ public class MediaUtility {
     }
 
     /**
+	 * From:
+	 * https://github.com/iPaulPro/aFileChooser/blob/master/aFileChooser/src/com/ipaulpro/afilechooser/utils/FileUtils.java
+	 *
+	 * MODIFIED FOR MAGE:
+	 *
+	 * - Removed LocalStorageProvider references
+	 * - Added and modified to use isDocumentUri and getDocumentId methods with KITKAT target api annotation
+	 * - Added ExternalStorageProvider SD card handler section in the getPath method
+	 * - Added getFileIfExists method
+	 *
      * Get a file path from a Uri. This will get the the path for Storage Access
      * Framework Documents, as well as the _data field for the MediaStore and
      * other file-based ContentProviders.<br>
@@ -234,6 +247,7 @@ public class MediaUtility {
      * 
      * @param context The context.
      * @param uri The Uri to query.
+	 * @author paulburke
      */
     public static String getPath(final Context context, final Uri uri) {
 
@@ -241,15 +255,11 @@ public class MediaUtility {
         final boolean isKitKat = Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT;
 
         // DocumentProvider
-        if (isKitKat && DocumentsContract.isDocumentUri(context, uri)) {
-            // LocalStorageProvider
-//            if (isLocalStorageDocument(uri)) {
-//                // The path is the id
-//                return DocumentsContract.getDocumentId(uri);
-//            }
+        if (isKitKat && isDocumentUri(context, uri)) {
+
             // ExternalStorageProvider
             if (isExternalStorageDocument(uri)) {
-                final String docId = DocumentsContract.getDocumentId(uri);
+                final String docId = getDocumentId(uri);
                 final String[] split = docId.split(":");
                 final String type = split[0];
 
@@ -257,12 +267,30 @@ public class MediaUtility {
                     return Environment.getExternalStorageDirectory() + "/" + split[1];
                 }
 
+				// Handle SD cards
+				File file = getFileIfExists("/storage/extSdCard", split[1]);
+				if(file != null){
+					return file.getAbsolutePath();
+				}
+				file = getFileIfExists("/storage/sdcard1", split[1]);
+				if(file != null){
+					return file.getAbsolutePath();
+				}
+				file = getFileIfExists("/storage/usbcard1", split[1]);
+				if(file != null){
+					return file.getAbsolutePath();
+				}
+				file = getFileIfExists("/storage/sdcard0", split[1]);
+				if(file != null){
+					return file.getAbsolutePath();
+				}
+
                 // TODO handle non-primary volumes
             }
             // DownloadsProvider
             else if (isDownloadsDocument(uri)) {
 
-                final String id = DocumentsContract.getDocumentId(uri);
+                final String id = getDocumentId(uri);
                 final Uri contentUri = ContentUris.withAppendedId(
                         Uri.parse("content://downloads/public_downloads"), Long.valueOf(id));
 
@@ -270,7 +298,7 @@ public class MediaUtility {
             }
             // MediaProvider
             else if (isMediaDocument(uri)) {
-                final String docId = DocumentsContract.getDocumentId(uri);
+                final String docId = getDocumentId(uri);
                 final String[] split = docId.split(":");
                 final String type = split[0];
 
@@ -307,7 +335,140 @@ public class MediaUtility {
 
         return null;
     }
-	
+
+	@TargetApi(Build.VERSION_CODES.KITKAT) private static boolean isDocumentUri(Context context, Uri uri){
+		return DocumentsContract.isDocumentUri(context, uri);
+	}
+
+	@TargetApi(Build.VERSION_CODES.KITKAT) private static String getDocumentId(Uri documentUri){
+		return DocumentsContract.getDocumentId(documentUri);
+	}
+
+	/**
+	 * Attempt to get the file location from the base path and path if the file exists
+	 * @param basePath
+	 * @param path
+	 * @return
+	 */
+	private static File getFileIfExists(String basePath, String path){
+		File result = null;
+		File file = new File(basePath);
+		if(file.exists())
+		{
+			file = new File(file, path);
+			if(file.exists()){
+				result = file;
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * Attempt to detect temporary file paths so that the files can be copied as needed
+	 * @param path
+	 * @return true if a temporary file path
+	 */
+	public static boolean isTemporaryPath(String path){
+		boolean temporary = isGoogleDocsInternalPath(path);
+		return temporary;
+	}
+
+	/**
+	 * Determine if the file path is an internal Google docs / drive path
+	 * @param path file path
+	 * @return true if an internal path
+	 */
+	public static boolean isGoogleDocsInternalPath(String path){
+		return path.contains("com.google.android.apps.docs/files/fileinternal");
+	}
+
+	/**
+	 * Get display name from the uri
+	 *
+	 * @param context
+	 * @param uri
+	 * @return
+	 */
+	@TargetApi(Build.VERSION_CODES.KITKAT)
+	public static String getDisplayName(Context context, Uri uri) {
+
+		String name = null;
+
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+			ContentResolver resolver = context.getContentResolver();
+			Cursor nameCursor = resolver.query(uri, null, null, null, null);
+			try {
+				if (nameCursor.getCount() > 0) {
+					int displayNameIndex = nameCursor
+							.getColumnIndex(DocumentsContract.Document.COLUMN_DISPLAY_NAME);
+					if (displayNameIndex >= 0 && nameCursor.moveToFirst()) {
+						name = nameCursor.getString(displayNameIndex);
+					}
+				}
+			} finally {
+				nameCursor.close();
+			}
+		}
+
+		return name;
+	}
+
+	/**
+	 * Get the display name from the URI and path
+	 *
+	 * @param context
+	 * @param uri
+	 * @param path
+	 * @return
+	 */
+	public static String getDisplayName(Context context, Uri uri, String path) {
+
+		// Try to get the GeoPackage name
+		String name = null;
+		if (path != null) {
+			name = new File(path).getName();
+		} else {
+			name = getDisplayName(context, uri);
+		}
+
+		return name;
+	}
+
+	/**
+	 * Get the display name from the URI and path
+	 *
+	 * @param context
+	 * @param uri
+	 * @return
+	 */
+	public static String getDisplayNameWithoutExtension(Context context, Uri uri) {
+		return getDisplayNameWithoutExtension(context, uri, null);
+	}
+
+	/**
+	 * Get the display name from the URI and path
+	 *
+	 * @param context
+	 * @param uri
+	 * @param path
+	 * @return
+	 */
+	public static String getDisplayNameWithoutExtension(Context context, Uri uri, String path) {
+
+		// Try to get the GeoPackage name
+		String name = getDisplayName(context, uri, path);
+
+		// Remove the extension
+		if (name != null) {
+			int extensionIndex = name.lastIndexOf(".");
+			if (extensionIndex > -1) {
+				name = name.substring(0, extensionIndex);
+			}
+		}
+
+		return name;
+	}
+
 	public static String getFileAbsolutePath(Uri uri, Context c) 
 	{
 	    String fileName = null;
@@ -512,6 +673,147 @@ public class MediaUtility {
         paint.setXfermode(new PorterDuffXfermode(Mode.SRC_IN));
         roundedCanvas.drawBitmap(resizedBitmap, rect, rect, paint);
         return roundedProfile;
+	}
+
+	/**
+	 * Get the file extension
+	 *
+	 * @param file
+	 * @return
+	 */
+	public static String getFileExtension(File file) {
+
+		String fileName = file.getName();
+		String extension = getFileExtension(fileName);
+
+		return extension;
+	}
+
+	/**
+	 * Get the file extension
+	 *
+	 * @param name
+	 * @return
+	 */
+	public static String getFileExtension(String name) {
+
+		String extension = null;
+
+		int extensionIndex = name.lastIndexOf(".");
+		if (extensionIndex > -1) {
+			extension = name.substring(extensionIndex + 1);
+		}
+
+		return extension;
+	}
+
+	/**
+	 * Get the file name with the extension removed
+	 *
+	 * @param file
+	 * @return
+	 */
+	public static String getFileNameWithoutExtension(File file) {
+
+		String name = file.getName();
+		name = getNameWithoutExtension(name);
+
+		return name;
+	}
+
+	/**
+	 * Get the name with the extension removed
+	 *
+	 * @param name
+	 * @return
+	 */
+	public static String getNameWithoutExtension(String name) {
+
+		int extensionIndex = name.lastIndexOf(".");
+		if (extensionIndex > -1) {
+			name = name.substring(0, extensionIndex);
+		}
+
+		return name;
+	}
+
+	/**
+	 * Copy a file to a file location
+	 *
+	 * @param copyFrom
+	 * @param copyTo
+	 * @throws IOException
+	 */
+	public static void copyFile(File copyFrom, File copyTo) throws IOException {
+
+		InputStream from = new FileInputStream(copyFrom);
+		OutputStream to = new FileOutputStream(copyTo);
+
+		copyStream(from, to);
+	}
+
+	/**
+	 * Copy an input stream to a file location
+	 *
+	 * @param copyFrom
+	 * @param copyTo
+	 * @throws IOException
+	 */
+	public static void copyStream(InputStream copyFrom, File copyTo)
+			throws IOException {
+
+		OutputStream to = new FileOutputStream(copyTo);
+
+		copyStream(copyFrom, to);
+	}
+
+	/**
+	 * Get the file bytes
+	 *
+	 * @param file
+	 * @throws IOException
+	 */
+	public static byte[] fileBytes(File file) throws IOException {
+
+		FileInputStream fis = new FileInputStream(file);
+
+		return streamBytes(fis);
+	}
+
+	/**
+	 * Get the stream bytes
+	 *
+	 * @param stream
+	 * @throws IOException
+	 */
+	public static byte[] streamBytes(InputStream stream) throws IOException {
+
+		ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+
+		copyStream(stream, bytes);
+
+		return bytes.toByteArray();
+	}
+
+	/**
+	 * Copy an input stream to an output stream
+	 *
+	 * @param copyFrom
+	 * @param copyTo
+	 * @throws IOException
+	 */
+	public static void copyStream(InputStream copyFrom, OutputStream copyTo)
+			throws IOException {
+
+		byte[] buffer = new byte[1024];
+		int length;
+		while ((length = copyFrom.read(buffer)) > 0) {
+			copyTo.write(buffer, 0, length);
+		}
+
+		copyTo.flush();
+		copyTo.close();
+		copyFrom.close();
 	}
 
 }
