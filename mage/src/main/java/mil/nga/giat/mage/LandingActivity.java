@@ -70,7 +70,10 @@ public class LandingActivity extends Activity implements ListView.OnItemClickLis
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_landing);
-		int id = 0;
+
+        ((MAGE) getApplication()).onLogin();
+
+        int id = 0;
         mapItem = new DrawerItem.Builder("Map").id(id++).drawableId(R.drawable.ic_globe_white).fragment(new MapFragment()).build();
 		DrawerItem logoutItem = new DrawerItem.Builder("Logout").id(id++).secondary(true).build();
 		logoutId = logoutItem.getId();

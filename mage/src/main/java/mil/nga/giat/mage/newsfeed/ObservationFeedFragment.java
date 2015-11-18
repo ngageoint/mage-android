@@ -75,12 +75,15 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 	private ViewGroup footer;
 	private ListView lv;
 	private Long currentEventId;
+	private LocationService locationService;
     private AttachmentGallery attachmentGallery;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		this.currentEventId = EventHelper.getInstance(getActivity().getApplicationContext()).getCurrentEvent().getId();
+
+		locationService = ((MAGE) getActivity().getApplication()).getLocationService();
 	}
 
 	@Override
@@ -132,6 +135,7 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 			queryUpdateHandle.cancel(true);
 		}
 		ObservationHelper.getInstance(getActivity().getApplicationContext()).removeListener(this);
+
 		super.onDestroy();
 	}
 
@@ -163,8 +167,12 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 		switch (item.getItemId()) {
 		case R.id.observation_new:
 			Intent intent = new Intent(getActivity(), ObservationEditActivity.class);
-			LocationService ls = ((MAGE) getActivity().getApplication()).getLocationService();
-			Location l = ls.getLocation();
+
+			Location l = null;
+			if (locationService != null) {
+				l = locationService.getLocation();
+			}
+
 			// if there is not a location from the location service, then try to pull one from the database.
 			if (l == null) {
 				List<mil.nga.giat.mage.sdk.datastore.location.Location> tLocations = LocationHelper.getInstance(getActivity().getApplicationContext()).getCurrentUserLocations(getActivity().getApplicationContext(), 1, true);
