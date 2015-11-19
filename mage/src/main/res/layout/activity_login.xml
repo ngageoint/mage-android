@@ -224,9 +224,7 @@
                 android:layout_marginTop="40dip"
                 android:layout_marginBottom="7dip"
                 android:layout_alignParentBottom="true"
-                android:orientation="vertical"
-                android:clickable="true"
-                android:onClick="changeServerURL">
+                android:orientation="vertical">
 
 
                 <TextView
@@ -235,7 +233,11 @@
                     android:layout_height="wrap_content"
                     android:gravity="center"
                     android:textColor="#AAAAAA"
-                    android:textSize="13sp" />
+                    android:textSize="13sp"
+                    android:focusable="true"
+                    android:focusableInTouchMode="true"
+                    android:clickable="true"
+                    android:onClick="changeServerURL"/>
 
                 <TextView
                     android:id="@+id/login_version"
@@ -243,7 +245,6 @@
                     android:layout_height="wrap_content"
                     android:clickable="false"
                     android:gravity="center"
-                    android:text=""
                     android:textColor="#AAAAAA"
                     android:textSize="11dp" />
 
