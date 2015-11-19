@@ -95,7 +95,7 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 		PreferenceHelper preferenceHelper = PreferenceHelper.getInstance(getApplicationContext());
 		preferenceHelper.initialize(false, new Class<?>[]{mil.nga.giat.mage.sdk.R.xml.class, R.xml.class});
 
-		SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+		final SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
 
 		// check if the database needs to be upgraded, and if so log them out
 		if (DaoStore.DATABASE_VERSION != sharedPreferences.getInt(getResources().getString(R.string.databaseVersionKey), 0)) {
@@ -163,9 +163,28 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 			}
 		});
 
-		String serverURL = sharedPreferences.getString(getString(R.string.serverURLKey), getString(R.string.serverURLDefaultValue));
+		final String serverURL = sharedPreferences.getString(getString(R.string.serverURLKey), getString(R.string.serverURLDefaultValue));
 		if (StringUtils.isNotEmpty(serverURL)) {
 			mServerURL.setText(serverURL);
+
+			PreferenceHelper.getInstance(getApplicationContext()).validateServerApi(serverURL, new Predicate<Exception>() {
+				@Override
+				public boolean apply(Exception e) {
+					if (e == null) {
+						mLoginButton.setEnabled(true);
+						getServerUrlText().setError(null);
+						configureLogin();
+
+						return true;
+					} else {
+						configureLogin();
+						getServerUrlText().setError(e.getMessage());
+						getServerUrlText().requestFocus();
+
+						return false;
+					}
+				}
+			});
 		}
 	}
 
@@ -262,8 +281,6 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 				@Override
 				public void onShow(DialogInterface dialog) {
 
-
-
 					final Button button = alertDialog.getButton(AlertDialog.BUTTON_POSITIVE);
 					button.setOnClickListener(new View.OnClickListener() {
 
@@ -277,7 +294,7 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 								url = "https://" + url;
 							}
 
-							if (url.equals(serverURLPreference)) {
+							if (url.equals(serverURLPreference) && getServerUrlText().getError() == null) {
 								alertDialog.dismiss();
 								return;
 							}
@@ -306,6 +323,7 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 										progress.setVisibility(View.INVISIBLE);
 										button.setEnabled(true);
 										serverEditText.setError(e.getMessage());
+										getServerUrlText().setError(null);
 										return false;
 									}
 								}
