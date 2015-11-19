@@ -32,11 +32,11 @@ public class LoginActivityTest extends ActivityInstrumentationTestCase2<LoginAct
 	/**
 	 * Server url should be set
 	 *
-	 * @see mil.nga.giat.mage.login.LoginActivity#getServerEditText()
+	 * @see LoginActivity#getServerUrlText()
 	 */
 	@SmallTest
 	public void testServerEditText() {
 		SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(activity.getApplicationContext());
-		assertEquals(activity.getServerEditText().getText().toString(), sharedPreferences.getString(activity.getString(R.string.serverURLKey), activity.getString(R.string.serverURLDefaultValue)));
+		assertEquals(activity.getServerUrlText().getText().toString(), sharedPreferences.getString(activity.getString(R.string.serverURLKey), activity.getString(R.string.serverURLDefaultValue)));
 	}
 }

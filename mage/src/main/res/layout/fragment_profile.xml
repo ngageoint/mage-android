@@ -56,12 +56,6 @@
 	            android:textAppearance="?android:attr/textAppearanceSmall"
 	            android:textColor="#111111"
 	            android:textStyle="bold" />
-        	<TextView
-	            android:id="@+id/username"
-	            android:layout_width="wrap_content"
-	            android:layout_height="wrap_content"
-	            android:textAppearance="?android:attr/textAppearanceSmall"
-	            android:textColor="#999999"/>
          	<TextView
 	            android:id="@+id/phone"
 	            android:layout_width="wrap_content"

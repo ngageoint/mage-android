@@ -22,11 +22,11 @@ import android.view.View;
 import android.view.View.OnTouchListener;
 import android.view.ViewGroup;
 import android.view.Window;
+import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
-import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -62,13 +62,17 @@ import mil.nga.giat.mage.sdk.utils.UserUtility;
  */
 public class LoginActivity extends FragmentActivity implements AccountDelegate {
 
+	public static final int EXTRA_OAUTH_RESULT = 1;
+
 	public static final String EXTRA_PICK_DEFAULT_EVENT = "PICK_DEFAULT_EVENT";
+	public static final String EXTRA_OAUTH_ERROR = "OAUTH_ERROR";
+	public static final String EXTRA_OAUTH_UNREGISTERED_DEVICE = "OAUTH_UNREGISTERED_DEVICE";
 
 	private static final String LOG_NAME = LoginActivity.class.getName();
 
 	private EditText mUsernameEditText;
 	private EditText mPasswordEditText;
-	private EditText mServerEditText;
+	private TextView mServerURL;
 	private Button mLoginButton;
 	private String mOpenFilePath;
 
@@ -80,8 +84,8 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 		return mPasswordEditText;
 	}
 
-	public final EditText getServerEditText() {
-		return mServerEditText;
+	public final TextView getServerUrlText() {
+		return mServerURL;
 	}
 
 	@Override
@@ -146,22 +150,18 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 		setContentView(R.layout.activity_login);
 		hideKeyboardOnClick(findViewById(R.id.login));
 
-		((TextView) findViewById(R.id.login_version)).setText("Version: " + sharedPreferences.getString(getString(R.string.buildVersionKey), "NA"));
+		((TextView) findViewById(R.id.login_version)).setText("App Version: " + sharedPreferences.getString(getString(R.string.buildVersionKey), "NA"));
 
 		mUsernameEditText = (EditText) findViewById(R.id.login_username);
 		mPasswordEditText = (EditText) findViewById(R.id.login_password);
 		mPasswordEditText.setTypeface(Typeface.DEFAULT);
-		mServerEditText = (EditText) findViewById(R.id.login_server);
+		mServerURL = (TextView) findViewById(R.id.server_url);
 
-		mLoginButton = (Button) findViewById(R.id.login_login_button);
-
-		String serverURL = sharedPreferences.getString(getString(R.string.serverURLKey), getString(R.string.serverURLDefaultValue));
+		mLoginButton = (Button) findViewById(R.id.local_login_button);
 
 		// set the default values
 		getUsernameEditText().setText(sharedPreferences.getString(getString(R.string.usernameKey), getString(R.string.usernameDefaultValue)));
 		getUsernameEditText().setSelection(getUsernameEditText().getText().length());
-		getServerEditText().setText(serverURL);
-		getServerEditText().setSelection(getServerEditText().getText().length());
 
 		mPasswordEditText.setOnKeyListener(new View.OnKeyListener() {
 			@Override
@@ -175,20 +175,9 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 			}
 		});
 
-		ImageView lockImageView = (ImageView) findViewById(R.id.login_lock);
-		lockImageView.setOnClickListener(new View.OnClickListener() {
-			@Override
-			public void onClick(View v) {
-				onLockToggle(v);
-			}
-		});
-
-		if (StringUtils.isBlank(serverURL)) {
-			onServerUnlock(lockImageView);
-		} else {
-			if (ConnectivityUtility.isOnline(getApplicationContext())) {
-				onServerLock(lockImageView, true);
-			}
+		String serverURL = sharedPreferences.getString(getString(R.string.serverURLKey), getString(R.string.serverURLDefaultValue));
+		if (StringUtils.isNotEmpty(serverURL)) {
+			mServerURL.setText(serverURL);
 		}
 	}
 
@@ -201,6 +190,33 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 		}
 		mPasswordEditText.setSelection(mPasswordEditText.getText().length());
 		mPasswordEditText.setTypeface(Typeface.DEFAULT);
+	}
+
+	private void configureLogin() {
+		boolean noServer = StringUtils.isEmpty(mServerURL.getText());
+		findViewById(R.id.login_form).setVisibility(noServer ? View.GONE : View.VISIBLE);
+		findViewById(R.id.server_configuration).setVisibility(noServer ? View.VISIBLE : View.GONE);
+
+		PreferenceHelper preferenceHelper = PreferenceHelper.getInstance(getApplicationContext());
+		if (preferenceHelper.containsLocalAuthentication()) {
+			Button localButton = (Button) findViewById(R.id.local_login_button);
+			localButton.setOnClickListener(new View.OnClickListener() {
+				@Override
+				public void onClick(View v) {
+					login(v);
+				}
+			});
+		}
+
+		if (preferenceHelper.containsGoogleAuthentication()) {
+			Button googleButton = (Button) findViewById(R.id.google_login_button);
+			googleButton.setOnClickListener(new View.OnClickListener() {
+				@Override
+				public void onClick(View v) {
+					googleLogin();
+				}
+			});
+		}
 	}
 
 	/**
@@ -229,6 +245,96 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 				View innerView = ((ViewGroup) view).getChildAt(i);
 				hideKeyboardOnClick(innerView);
 			}
+		}
+	}
+
+	public void changeServerURL(View view) {
+		if (ConnectivityUtility.isOnline(getApplicationContext())) {
+			View dialogView = getLayoutInflater().inflate(R.layout.dialog_server, null);
+			final EditText serverEditText = (EditText) dialogView.findViewById(R.id.server_url);
+			final View progress = dialogView.findViewById(R.id.progress);
+
+			final SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+			final String serverURLPreference = sharedPreferences.getString(getString(R.string.serverURLKey), getString(R.string.serverURLDefaultValue));
+			serverEditText.setText(serverURLPreference);
+
+			AlertDialog.Builder builder = new AlertDialog.Builder(this)
+					.setView(dialogView)
+					.setTitle("MAGE Server URL")
+					.setPositiveButton(android.R.string.ok, null)
+					.setNegativeButton(android.R.string.cancel, null);
+
+			if (StringUtils.isNotEmpty(serverURLPreference)) {
+				builder.setMessage("Changing the server URL will delete all previous data.  Do you want to continue?");
+			}
+
+			final AlertDialog alertDialog = builder.create();
+
+			alertDialog.setOnShowListener(new DialogInterface.OnShowListener() {
+				@Override
+				public void onShow(DialogInterface dialog) {
+
+
+
+					final Button button = alertDialog.getButton(AlertDialog.BUTTON_POSITIVE);
+					button.setOnClickListener(new View.OnClickListener() {
+
+						@Override
+						public void onClick(View view) {
+							progress.setVisibility(View.VISIBLE);
+							button.setEnabled(false);
+
+							String url = serverEditText.getText().toString().trim().replaceAll("(\\w)/*$", "$1");
+							if (StringUtils.isNotEmpty(url) && !url.matches("^(H|h)(T|t)(T|t)(P|p)(S|s)?://.*")) {
+								url = "https://" + url;
+							}
+
+							if (url.equals(serverURLPreference)) {
+								alertDialog.dismiss();
+								return;
+							}
+
+							final String serverURL = url;
+							PreferenceHelper.getInstance(getApplicationContext()).validateServerApi(serverURL, new Predicate<Exception>() {
+								@Override
+								public boolean apply(Exception e) {
+									if (e == null) {
+										mServerURL.setText(serverURL);
+										mLoginButton.setEnabled(true);
+										serverEditText.setError(null);
+										alertDialog.dismiss();
+
+										final DaoStore daoStore = DaoStore.getInstance(getApplicationContext());
+										if (!daoStore.isDatabaseEmpty()) {
+											daoStore.resetDatabase();
+										}
+
+										Editor editor = sharedPreferences.edit();
+										editor.putString(getString(R.string.serverURLKey), serverURL).commit();
+										configureLogin();
+
+										return true;
+									} else {
+										progress.setVisibility(View.INVISIBLE);
+										button.setEnabled(true);
+										serverEditText.setError(e.getMessage());
+										return false;
+									}
+								}
+							});
+
+						}
+					});
+				}
+			});
+
+			alertDialog.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE);
+			alertDialog.show();
+		} else {
+			new AlertDialog.Builder(this)
+					.setTitle("No Connectivity")
+					.setMessage("Sorry, you cannot change the server URL with no network connectivity.")
+					.setPositiveButton(android.R.string.ok, null).show();
 		}
 	}
 
@@ -265,11 +371,11 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 		// reset errors
 		getUsernameEditText().setError(null);
 		getPasswordEditText().setError(null);
-		getServerEditText().setError(null);
+		mServerURL.setError(null);
 
 		String username = getUsernameEditText().getText().toString();
 		String password = getPasswordEditText().getText().toString();
-		String server = getServerEditText().getText().toString();
+		String server = mServerURL.getText().toString();
 
 		// are the inputs valid?
 		if (TextUtils.isEmpty(username)) {
@@ -307,23 +413,26 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 		}
 
 		// if the serverURL is different that before, clear out the database
-		final DaoStore daoStore = DaoStore.getInstance(getApplicationContext());
-		final AbstractAccountTask loginTask = LoginTaskFactory.getInstance(getApplicationContext()).getLoginTask(this, this.getApplicationContext());
-		if (!server.equals(serverURLPref) && !daoStore.isDatabaseEmpty()) {
-			new AlertDialog.Builder(this).setTitle("Server URL").setMessage("The server URL has been changed.  If you continue, any previous local data will be deleted.  Do you want to continue?").setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
-				public void onClick(DialogInterface dialog, int which) {
-					daoStore.resetDatabase();
-					loginTask.execute(credentialsArray);
-				}
-			}).setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
-				public void onClick(DialogInterface dialog, int which) {
-					// show form, and hide spinner
-					findViewById(R.id.login_status).setVisibility(View.GONE);
-					findViewById(R.id.login_form).setVisibility(View.VISIBLE);
-				}
-			}).show();
-		} else {
-			loginTask.execute(credentialsArray);
+		AbstractAccountTask loginTask = LoginTaskFactory.getInstance(getApplicationContext()).getLoginTask(this, this.getApplicationContext());
+		loginTask.execute(credentialsArray);
+	}
+
+	private void googleLogin() {
+		Intent intent = new Intent(getApplicationContext(), OAuthActivity.class);
+		intent.putExtra(OAuthActivity.EXTRA_SERVER_URL, mServerURL.getText());
+		intent.putExtra(OAuthActivity.EXTRA_OAUTH_URL, mServerURL.getText() + "/auth/google/signin");
+		intent.putExtra(OAuthActivity.EXTRA_OAUTH_TYPE, OAuthActivity.OAuthType.SIGNIN);
+		startActivityForResult(intent, EXTRA_OAUTH_RESULT);
+	}
+
+	@Override
+	protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
+		if (requestCode == EXTRA_OAUTH_RESULT && resultCode == RESULT_OK) {
+			if (intent.getBooleanExtra(EXTRA_OAUTH_UNREGISTERED_DEVICE, false)) {
+				showUnregisteredDeviceDialog();
+			} else {
+				showOAuthErrorDialog();
+			}
 		}
 	}
 
@@ -337,98 +446,6 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 		startActivity(intent);
 	}
 
-	/**
-	 * Fired when user clicks lock
-	 *
-	 * @param view
-	 */
-	public void onLockToggle(View view) {
-		final ImageView lockImageView = ((ImageView) findViewById(R.id.login_lock));
-		if (lockImageView.getTag().toString().equals("lock")) {
-			onServerUnlock(lockImageView);
-		} else {
-			onServerLock(lockImageView, false);
-		}
-	}
-
-	private void onServerUnlock(final ImageView lockImageView) {
-		if (ConnectivityUtility.isOnline(getApplicationContext())) {
-			getServerEditText().setEnabled(true);
-			mLoginButton.setEnabled(false);
-			lockImageView.setTag("unlock");
-			lockImageView.setImageResource(R.drawable.unlock_108);
-			showKeyboard();
-			getServerEditText().requestFocus();
-		} else {
-			new AlertDialog.Builder(this)
-				.setTitle("No Connectivity")
-				.setMessage("Sorry, you cannot change the server URL with no network connectivity.")
-				.setPositiveButton(android.R.string.ok, new OnClickListener() {
-					@Override
-					public void onClick(DialogInterface dialog, int which) {
-						dialog.dismiss();
-					}
-				}).show();
-		}
-	}
-
-	private void onServerLock(final ImageView lockImageView, boolean initialLoad) {
-		SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-		String serverURLPref =  sharedPreferences.getString(getString(R.string.serverURLKey), getString(R.string.serverURLDefaultValue));
-		if (!initialLoad && StringUtils.isNoneBlank(serverURLPref) && serverURLPref.equals(getServerEditText().getText().toString())) {
-			// Server URL was previously set in preferences and did not change.
-			// no need to hit the server again
-			getServerEditText().setEnabled(false);
-			mLoginButton.setEnabled(true);
-			lockImageView.setTag("lock");
-			lockImageView.setImageResource(R.drawable.lock_108);
-			getServerEditText().setError(null);
-
-			return;
-		}
-
-		String url = getServerEditText().getText().toString().trim().replaceAll("(\\w)/*$", "$1");
-		if(!url.matches("^(H|h)(T|t)(T|t)(P|p)(S|s)?://.*")) {
-			url = "https://" + url;
-			getServerEditText().setText(url);
-		}
-
-		final View serverProgress = findViewById(R.id.login_server_progress);
-
-		lockImageView.setVisibility(View.GONE);
-		serverProgress.setVisibility(View.VISIBLE);
-
-		PreferenceHelper.getInstance(getApplicationContext()).validateServerApi(url, new Predicate<Exception>() {
-			@Override
-			public boolean apply(Exception e) {
-				serverProgress.setVisibility(View.GONE);
-				lockImageView.setVisibility(View.VISIBLE);
-
-				if (e == null) {
-					getServerEditText().setEnabled(false);
-					mLoginButton.setEnabled(true);
-					lockImageView.setTag("lock");
-					lockImageView.setImageResource(R.drawable.lock_108);
-					getServerEditText().setError(null);
-					return true;
-				} else {
-					mLoginButton.setEnabled(false);
-					getServerEditText().setEnabled(true);
-					showKeyboard();
-					getServerEditText().setError(e.getMessage());
-					getServerEditText().requestFocus();
-					return false;
-				}
-			}
-		});
-	}
-
-	private void showKeyboard() {
-		InputMethodManager inputMethodManager = (InputMethodManager) getSystemService(Activity.INPUT_METHOD_SERVICE);
-		inputMethodManager.toggleSoftInput(InputMethodManager.SHOW_IMPLICIT, 0);
-	}
-
-
 	@Override
 	public void finishAccount(AccountStatus accountStatus) {
 		if (accountStatus.getStatus().equals(AccountStatus.Status.SUCCESSFUL_LOGIN) || accountStatus.getStatus().equals(AccountStatus.Status.DISCONNECTED_LOGIN)) {
@@ -440,9 +457,6 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 			} catch (Exception e) {
 				Log.e(LOG_NAME, "Could not hash password", e);
 			}
-
-			// remove the slashes at the end, and store the serverURL
-			sp.putString(getApplicationContext().getString(R.string.serverURLKey), getServerEditText().getText().toString()).commit();
 
 			PreferenceHelper.getInstance(getApplicationContext()).logKeyValuePairs();
 
@@ -460,14 +474,7 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 		} else if (accountStatus.getStatus().equals(AccountStatus.Status.SUCCESSFUL_REGISTRATION)) {
 			Editor sp = PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).edit();
 			sp.putString(getApplicationContext().getString(R.string.usernameKey), getUsernameEditText().getText().toString()).commit();
-			// don't store password hash this time
-			sp.putString(getApplicationContext().getString(R.string.serverURLKey), getServerEditText().getText().toString()).commit();
-			new AlertDialog.Builder(this).setTitle("Registration Sent").setMessage(R.string.device_registered_text).setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
-				public void onClick(DialogInterface dialog, int which) {
-					findViewById(R.id.login_status).setVisibility(View.GONE);
-					findViewById(R.id.login_form).setVisibility(View.VISIBLE);
-				}
-			}).show();
+			showUnregisteredDeviceDialog();
 		} else {
 			if (accountStatus.getErrorIndices().isEmpty()) {
 				getUsernameEditText().setError(null);
@@ -493,8 +500,8 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 						getPasswordEditText().setError(message);
 						getPasswordEditText().requestFocus();
 					} else if (errorIndex == 2) {
-						getServerEditText().setError(message);
-						getServerEditText().requestFocus();
+						mServerURL.setError(message);
+						mServerURL.requestFocus();
 					}
 				}
 			}
@@ -547,9 +554,33 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 			((MAGE) getApplication()).onLogout(true);
 		}
 
-		showKeyboard();
+		configureLogin();
+
 		// show form, and hide spinner
 		findViewById(R.id.login_status).setVisibility(View.GONE);
-		findViewById(R.id.login_form).setVisibility(View.VISIBLE);
+	}
+
+	private void showUnregisteredDeviceDialog() {
+		new AlertDialog.Builder(this)
+				.setTitle("Registration Sent")
+				.setMessage(R.string.device_registered_text)
+				.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+					public void onClick(DialogInterface dialog, int which) {
+						findViewById(R.id.login_status).setVisibility(View.GONE);
+						findViewById(R.id.login_form).setVisibility(View.VISIBLE);
+					}
+				}).show();
+	}
+
+	private void showOAuthErrorDialog() {
+		new AlertDialog.Builder(this)
+				.setTitle("Login failed")
+				.setMessage("Could not login w/ account. Either your account does not exist or it has not been approved.")
+				.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+					public void onClick(DialogInterface dialog, int which) {
+						findViewById(R.id.login_status).setVisibility(View.GONE);
+						findViewById(R.id.login_form).setVisibility(View.VISIBLE);
+					}
+				}).show();
 	}
 }

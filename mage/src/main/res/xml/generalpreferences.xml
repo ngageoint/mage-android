@@ -58,9 +58,9 @@
             android:title="Server URL"/>
         <EditTextPreference
             android:defaultValue="@string/usernameDefaultValue"
-            android:key="@string/usernameKey"
+            android:key="@string/displayNameKey"
             android:selectable="false"
-            android:title="Username"/>
+            android:title="Name"/>
         <EditTextPreference
             android:key="@string/currentEventKey"
             android:selectable="false"
