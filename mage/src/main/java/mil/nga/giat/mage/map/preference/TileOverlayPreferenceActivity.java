@@ -1,8 +1,9 @@
 package mil.nga.giat.mage.map.preference;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.ExpandableListActivity;
-import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -11,19 +12,28 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.BaseExpandableListAdapter;
 import android.widget.CheckBox;
+import android.widget.ExpandableListView;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
+import mil.nga.geopackage.GeoPackageManager;
+import mil.nga.geopackage.factory.GeoPackageFactory;
 import mil.nga.giat.mage.MAGE;
 import mil.nga.giat.mage.MAGE.OnCacheOverlayListener;
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.map.cache.CacheOverlay;
+import mil.nga.giat.mage.map.cache.GeoPackageCacheOverlay;
+import mil.nga.giat.mage.map.cache.XYZDirectoryCacheOverlay;
+import mil.nga.giat.mage.sdk.utils.StorageUtility;
 
 public class TileOverlayPreferenceActivity extends ExpandableListActivity implements OnCacheOverlayListener {
 
@@ -56,6 +66,25 @@ public class TileOverlayPreferenceActivity extends ExpandableListActivity implem
         overlayAdapter = new OverlayAdapter(this, cacheOverlays);
 
         setListAdapter(overlayAdapter);
+        getExpandableListView().setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+            @Override
+            public boolean onItemLongClick(AdapterView<?> parent, View view,
+                                           int position, long id) {
+                int itemType = ExpandableListView.getPackedPositionType(id);
+                if (itemType == ExpandableListView.PACKED_POSITION_TYPE_CHILD) {
+                    int childPosition = ExpandableListView.getPackedPositionChild(id);
+                    int groupPosition = ExpandableListView.getPackedPositionGroup(id);
+                    // Handle child row long clicks here
+                    return true;
+                } else if (itemType == ExpandableListView.PACKED_POSITION_TYPE_GROUP) {
+                    int groupPosition = ExpandableListView.getPackedPositionGroup(id);
+                    CacheOverlay cacheOverlay = (CacheOverlay) overlayAdapter.getGroup(groupPosition);
+                    deleteCacheOverlayConfirm(cacheOverlay);
+                    return true;
+                }
+                return false;
+            }
+        });
         refreshButton.setEnabled(true);
         getExpandableListView().setEnabled(true);
         progressBar.setVisibility(View.GONE);
@@ -145,7 +174,7 @@ public class TileOverlayPreferenceActivity extends ExpandableListActivity implem
         /**
          * Context
          */
-        private Context context;
+        private TileOverlayPreferenceActivity activity;
 
         /**
          * List of cache overlays
@@ -155,11 +184,11 @@ public class TileOverlayPreferenceActivity extends ExpandableListActivity implem
         /**
          * Constructor
          *
-         * @param context
+         * @param activity
          * @param overlays
          */
-        public OverlayAdapter(Context context, List<CacheOverlay> overlays) {
-            this.context = context;
+        public OverlayAdapter(TileOverlayPreferenceActivity activity, List<CacheOverlay> overlays) {
+            this.activity = activity;
             this.overlays = overlays;
         }
 
@@ -211,13 +240,13 @@ public class TileOverlayPreferenceActivity extends ExpandableListActivity implem
         public View getGroupView(int i, boolean isExpanded, View view,
                                  ViewGroup viewGroup) {
             if (view == null) {
-                LayoutInflater inflater = LayoutInflater.from(context);
+                LayoutInflater inflater = LayoutInflater.from(activity);
                 view = inflater.inflate(R.layout.cache_overlay_group, viewGroup, false);
             }
 
             ImageView imageView = (ImageView) view
                     .findViewById(R.id.cache_overlay_group_image);
-            TextView geoPackageName = (TextView) view
+            TextView cacheName = (TextView) view
                     .findViewById(R.id.cache_overlay_group_name);
             TextView childCount = (TextView) view
                     .findViewById(R.id.cache_overlay_group_count);
@@ -253,7 +282,7 @@ public class TileOverlayPreferenceActivity extends ExpandableListActivity implem
             }else{
                 imageView.setImageResource(-1);
             }
-            geoPackageName.setText(overlay.getName());
+            cacheName.setText(overlay.getName());
             if (overlay.isSupportsChildren()) {
                 childCount.setText("(" + getChildrenCount(i) + ")");
             }else{
@@ -268,7 +297,7 @@ public class TileOverlayPreferenceActivity extends ExpandableListActivity implem
         public View getChildView(int i, int j, boolean b, View view,
                                  ViewGroup viewGroup) {
             if (view == null) {
-                LayoutInflater inflater = LayoutInflater.from(context);
+                LayoutInflater inflater = LayoutInflater.from(activity);
                 view = inflater.inflate(R.layout.cache_overlay_child, viewGroup, false);
             }
 
@@ -335,6 +364,115 @@ public class TileOverlayPreferenceActivity extends ExpandableListActivity implem
             return true;
         }
 
+    }
+
+    /**
+     * Delete the cache overlay
+     * @param cacheOverlay
+     */
+    private void deleteCacheOverlayConfirm(final CacheOverlay cacheOverlay) {
+        AlertDialog deleteDialog = new AlertDialog.Builder(this)
+                .setTitle("Delete Cache")
+                .setMessage("Delete " + cacheOverlay.getName() + " Cache?")
+                .setPositiveButton("Delete",
+
+                        new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog,
+                                                int which) {
+                                deleteCacheOverlay(cacheOverlay);
+                            }
+                        })
+
+                .setNegativeButton(getString(R.string.cancel),
+                        new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog,
+                                                int which) {
+                                dialog.dismiss();
+                            }
+                        }).create();
+        deleteDialog.show();
+    }
+
+    /**
+     * Delete the cache overlay
+     * @param cacheOverlay
+     */
+    private void deleteCacheOverlay(CacheOverlay cacheOverlay){
+
+        progressBar.setVisibility(View.VISIBLE);
+        getExpandableListView().setEnabled(false);
+
+        switch(cacheOverlay.getType()) {
+
+            case XYZ_DIRECTORY:
+                deleteXYZCacheOverlay((XYZDirectoryCacheOverlay)cacheOverlay);
+                break;
+
+            case GEOPACKAGE:
+                deleteGeoPackageCacheOverlay((GeoPackageCacheOverlay)cacheOverlay);
+                break;
+
+        }
+
+        ((MAGE) getApplication()).refreshTileOverlays();
+    }
+
+    /**
+     * Delete the XYZ cache overlay
+     * @param xyzCacheOverlay
+     */
+    private void deleteXYZCacheOverlay(XYZDirectoryCacheOverlay xyzCacheOverlay){
+
+        File directory = xyzCacheOverlay.getDirectory();
+
+        if(directory.canWrite()){
+            deleteFile(directory);
+        }
+
+    }
+
+    /**
+     * Delete the base directory file
+     * @param base directory
+     */
+    private void deleteFile(File base) {
+        if (base.isDirectory()) {
+            for (File file : base.listFiles()) {
+                deleteFile(file);
+            }
+        }
+        base.delete();
+    }
+
+    /**
+     * Delete the GeoPackage cache overlay
+     * @param geoPackageCacheOverlay
+     */
+    private void deleteGeoPackageCacheOverlay(GeoPackageCacheOverlay geoPackageCacheOverlay){
+
+        String database = geoPackageCacheOverlay.getName();
+
+        // Get the GeoPackage file
+        GeoPackageManager manager = GeoPackageFactory.getManager(this);
+        File path = manager.getFile(database);
+
+        // Delete the cache from the GeoPackage manager
+        manager.delete(database);
+
+        // Attempt to delete the cache file if it is in the cache directory
+        File pathDirectory = path.getParentFile();
+        if(path.canWrite() && pathDirectory != null){
+            Map<StorageUtility.StorageType, File> storageLocations = StorageUtility.getAllStorageLocations();
+            for (File storageLocation : storageLocations.values()) {
+                File root = new File(storageLocation, getString(R.string.overlay_cache_directory));
+                if (root.equals(pathDirectory)) {
+                    path.delete();
+                    break;
+                }
+            }
+        }
     }
 
 }

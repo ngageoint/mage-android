@@ -329,6 +329,22 @@ public class MAGE extends MultiDexApplication implements IUserEventListener {
 		task.execute();
 	}
 
+	public void enableOverlay(String overlayName){
+		List<String> overlayNames = new ArrayList<>();
+		overlayNames.add(overlayName);
+		enableOverlays(overlayNames);
+	}
+
+	public void enableOverlays(Collection<String> overlayNames){
+		String overlayKey = getString(R.string.tileOverlaysKey);
+		SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+		Set<String> enabledOverlays = preferences.getStringSet(overlayKey, Collections.<String>emptySet());
+		enabledOverlays.addAll(overlayNames);
+		SharedPreferences.Editor editor = preferences.edit();
+		editor.putStringSet(overlayKey, enabledOverlays);
+		editor.apply();
+	}
+
 	private void setCacheOverlays(List<CacheOverlay> cacheOverlays) {
 		this.cacheOverlays = cacheOverlays;
 
@@ -382,15 +398,35 @@ public class MAGE extends MultiDexApplication implements IUserEventListener {
 
 			// Determine which caches are enabled
 			for (CacheOverlay cacheOverlay : overlays) {
-				if (enabledOverlays.contains(cacheOverlay.getCacheName())) {
+
+				// Check and enable the cache
+				boolean cacheEnabled = enabledOverlays.contains(cacheOverlay.getCacheName());
+				if (cacheEnabled) {
 					cacheOverlay.setEnabled(true);
 				}
 
-				// If a child is enabled, enable the parent
-				for (CacheOverlay childCache : cacheOverlay.getChildren()) {
-					if (enabledOverlays.contains(childCache.getCacheName())) {
-						childCache.setEnabled(true);
+				// If the cache supports children
+				if(cacheOverlay.isSupportsChildren()) {
+
+					// Check the child caches
+					boolean childCacheEnabled = false;
+					for (CacheOverlay childCache : cacheOverlay.getChildren()) {
+						if (enabledOverlays.contains(childCache.getCacheName())) {
+							childCache.setEnabled(true);
+							childCacheEnabled = true;
+						}
+					}
+
+					// If a child cache is set, enable the parent by default
+					if(childCacheEnabled) {
 						cacheOverlay.setEnabled(true);
+					}
+
+					// If no child cache is set, but the parent is, enable all children
+					if(!childCacheEnabled && cacheEnabled) {
+						for (CacheOverlay childCache : cacheOverlay.getChildren()) {
+							childCache.setEnabled(true);
+						}
 					}
 				}
 			}

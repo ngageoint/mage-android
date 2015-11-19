@@ -332,7 +332,12 @@ public class LandingActivity extends Activity implements ListView.OnItemClickLis
         if(GeoPackageValidate.hasGeoPackageExtension(cacheFile)){
 
             // Import the GeoPackage if needed
-            GeoPackageCacheUtils.importGeoPackage(this, cacheFile);
+            String cacheName = GeoPackageCacheUtils.importGeoPackage(this, cacheFile);
+            if(cacheName != null){
+                MAGE mage = ((MAGE) getApplication());
+                mage.enableOverlay(cacheName);
+                mage.refreshTileOverlays();
+            }
         }
 
     }
