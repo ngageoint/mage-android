@@ -335,8 +335,7 @@ public class LandingActivity extends Activity implements ListView.OnItemClickLis
             String cacheName = GeoPackageCacheUtils.importGeoPackage(this, cacheFile);
             if(cacheName != null){
                 MAGE mage = ((MAGE) getApplication());
-                mage.enableOverlay(cacheName);
-                mage.refreshTileOverlays();
+                mage.enableAndRefreshTileOverlays(cacheName);
             }
         }
 

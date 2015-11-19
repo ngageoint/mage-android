@@ -23,6 +23,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -325,24 +326,19 @@ public class MAGE extends MultiDexApplication implements IUserEventListener {
 	}
 
 	public void refreshTileOverlays() {
-		TileOverlaysTask task = new TileOverlaysTask(this);
+		TileOverlaysTask task = new TileOverlaysTask(this, null);
 		task.execute();
 	}
 
-	public void enableOverlay(String overlayName){
+	public void enableAndRefreshTileOverlays(String enableOverlayName) {
 		List<String> overlayNames = new ArrayList<>();
-		overlayNames.add(overlayName);
-		enableOverlays(overlayNames);
+		overlayNames.add(enableOverlayName);
+		enableAndRefreshTileOverlays(overlayNames);
 	}
 
-	public void enableOverlays(Collection<String> overlayNames){
-		String overlayKey = getString(R.string.tileOverlaysKey);
-		SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-		Set<String> enabledOverlays = preferences.getStringSet(overlayKey, Collections.<String>emptySet());
-		enabledOverlays.addAll(overlayNames);
-		SharedPreferences.Editor editor = preferences.edit();
-		editor.putStringSet(overlayKey, enabledOverlays);
-		editor.apply();
+	public void enableAndRefreshTileOverlays(Collection<String> enableOverlayNames) {
+		TileOverlaysTask task = new TileOverlaysTask(this, enableOverlayNames);
+		task.execute();
 	}
 
 	private void setCacheOverlays(List<CacheOverlay> cacheOverlays) {
@@ -356,9 +352,13 @@ public class MAGE extends MultiDexApplication implements IUserEventListener {
 	private class TileOverlaysTask extends AsyncTask<Void, Void, List<CacheOverlay>> {
 
 		private Context context;
+		private Set<String> enable = new HashSet<>();
 
-		public TileOverlaysTask(Context context){
+		public TileOverlaysTask(Context context, Collection<String> enable){
 			this.context = context;
+			if(enable != null) {
+				this.enable.addAll(enable);
+			}
 		}
 
 		@Override
@@ -385,7 +385,10 @@ public class MAGE extends MultiDexApplication implements IUserEventListener {
 							}
 							// GeoPackage File
 							else if(GeoPackageValidate.hasGeoPackageExtension(cache)){
-								addGeoPackageCacheOverlay(context, overlays, cache, geoPackageManager);
+								GeoPackageCacheOverlay cacheOverlay = getGeoPackageCacheOverlay(context, cache, geoPackageManager);
+								if(cacheOverlay != null){
+									overlays.add(cacheOverlay);
+								}
 							}
 						}
 					}
@@ -393,42 +396,57 @@ public class MAGE extends MultiDexApplication implements IUserEventListener {
 			}
 
 			// Set what should be enabled based on preferences.
+			boolean update = false;
 			SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-			Set<String> enabledOverlays = preferences.getStringSet(getString(R.string.tileOverlaysKey), Collections.<String>emptySet());
+			Set<String> updatedEnabledOverlays = preferences.getStringSet(getString(R.string.tileOverlaysKey), Collections.<String>emptySet());
+			Set<String> enabledOverlays = new HashSet<>();
+			enabledOverlays.addAll(updatedEnabledOverlays);
 
 			// Determine which caches are enabled
 			for (CacheOverlay cacheOverlay : overlays) {
 
 				// Check and enable the cache
-				boolean cacheEnabled = enabledOverlays.contains(cacheOverlay.getCacheName());
-				if (cacheEnabled) {
+				String cacheName = cacheOverlay.getCacheName();
+				if (enabledOverlays.remove(cacheName)) {
 					cacheOverlay.setEnabled(true);
 				}
 
-				// If the cache supports children
-				if(cacheOverlay.isSupportsChildren()) {
-
-					// Check the child caches
-					boolean childCacheEnabled = false;
-					for (CacheOverlay childCache : cacheOverlay.getChildren()) {
-						if (enabledOverlays.contains(childCache.getCacheName())) {
-							childCache.setEnabled(true);
-							childCacheEnabled = true;
-						}
-					}
-
-					// If a child cache is set, enable the parent by default
-					if(childCacheEnabled) {
+				// Check the child caches
+				for (CacheOverlay childCache : cacheOverlay.getChildren()) {
+					if (enabledOverlays.remove(childCache.getCacheName())) {
+						childCache.setEnabled(true);
 						cacheOverlay.setEnabled(true);
 					}
+				}
 
-					// If no child cache is set, but the parent is, enable all children
-					if(!childCacheEnabled && cacheEnabled) {
+				// Check for new caches to enable in the overlays and preferences
+				if(enable.contains(cacheName) && !cacheOverlay.isEnabled()){
+
+					update = true;
+					cacheOverlay.setEnabled(true);
+					if(cacheOverlay.isSupportsChildren()){
 						for (CacheOverlay childCache : cacheOverlay.getChildren()) {
 							childCache.setEnabled(true);
+							updatedEnabledOverlays.add(childCache.getCacheName());
 						}
+					}else{
+						updatedEnabledOverlays.add(cacheName);
 					}
 				}
+
+			}
+
+			// Remove overlays in the preferences that no longer exist
+			if(!enabledOverlays.isEmpty()){
+				updatedEnabledOverlays.removeAll(enabledOverlays);
+				update = true;
+			}
+
+			// If new enabled cache overlays, update them in the preferences
+			if(update){
+				SharedPreferences.Editor editor = preferences.edit();
+				editor.putStringSet(getString(R.string.tileOverlaysKey), updatedEnabledOverlays);
+				editor.apply();
 			}
 
 			return overlays;
@@ -455,38 +473,46 @@ public class MAGE extends MultiDexApplication implements IUserEventListener {
         // Add each existing database as a cache
         List<String> externalDatabases = geoPackageManager.externalDatabases();
         for (String database : externalDatabases) {
-            addGeoPackageCacheOverlay(context, overlays, geoPackageManager, database);
+			GeoPackageCacheOverlay cacheOverlay = getGeoPackageCacheOverlay(context, geoPackageManager, database);
+			if(cacheOverlay != null){
+				overlays.add(cacheOverlay);
+			}
         }
     }
 
     /**
-     * Add GeoPackage Cache Overlay for the database file
+     * Get GeoPackage Cache Overlay for the database file
      *
      * @param context
-     * @param overlays
      * @param cache
      * @param geoPackageManager
+	 * @return cache overlay
      */
-    private void addGeoPackageCacheOverlay(Context context, List<CacheOverlay> overlays, File cache, GeoPackageManager geoPackageManager) {
+    private GeoPackageCacheOverlay getGeoPackageCacheOverlay(Context context, File cache, GeoPackageManager geoPackageManager) {
+
+		GeoPackageCacheOverlay cacheOverlay = null;
 
 		// Import the GeoPackage if needed
 		String cacheName = GeoPackageCacheUtils.importGeoPackage(geoPackageManager, cache);
 		if(cacheName != null){
-			// Add the GeoPackage overlay
-			addGeoPackageCacheOverlay(context, overlays, geoPackageManager, cacheName);
+			// Get the GeoPackage overlay
+			cacheOverlay = getGeoPackageCacheOverlay(context, geoPackageManager, cacheName);
 		}
 
+		return cacheOverlay;
     }
 
     /**
-     * Add the GeoPackage database as a cache overlay
+     * Get the GeoPackage database as a cache overlay
      *
      * @param context
-     * @param overlays
      * @param geoPackageManager
      * @param database
+	 * @return cache overlay
      */
-    private void addGeoPackageCacheOverlay(Context context, List<CacheOverlay> overlays, GeoPackageManager geoPackageManager, String database) {
+    private GeoPackageCacheOverlay getGeoPackageCacheOverlay(Context context, GeoPackageManager geoPackageManager, String database) {
+
+		GeoPackageCacheOverlay cacheOverlay = null;
 
         // Add the GeoPackage overlay
         GeoPackage geoPackage = geoPackageManager.open(database);
@@ -524,11 +550,13 @@ public class MAGE extends MultiDexApplication implements IUserEventListener {
                 tables.add(tableCache);
             }
 
-            // Add the GeoPackage overlay with child tables
-            overlays.add(new GeoPackageCacheOverlay(database, tables));
+            // Create the GeoPackage overlay with child tables
+			cacheOverlay = new GeoPackageCacheOverlay(database, tables);
         } finally {
             geoPackage.close();
         }
+
+		return cacheOverlay;
     }
 
 	@Override

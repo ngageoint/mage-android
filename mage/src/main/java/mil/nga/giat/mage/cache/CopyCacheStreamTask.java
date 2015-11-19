@@ -77,8 +77,7 @@ public class CopyCacheStreamTask extends AsyncTask<Void, Void, String> {
         if (result == null) {
             MAGE mage = ((MAGE) activity.getApplication());
             String cacheName = MediaUtility.getFileNameWithoutExtension(cacheFile);
-            mage.enableOverlay(cacheName);
-            mage.refreshTileOverlays();
+            mage.enableAndRefreshTileOverlays(cacheName);
         }
     }
 
