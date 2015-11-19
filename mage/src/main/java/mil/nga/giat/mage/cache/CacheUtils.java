@@ -1,12 +1,10 @@
 package mil.nga.giat.mage.cache;
 
-import android.content.ContentResolver;
+import android.app.Activity;
 import android.content.Context;
 import android.net.Uri;
 
 import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.Map;
 
 import mil.nga.geopackage.validate.GeoPackageValidate;
@@ -20,28 +18,28 @@ import mil.nga.giat.mage.sdk.utils.StorageUtility;
 public class CacheUtils {
 
     /**
-     * Copy the Uri to the cache directory
+     * Copy the Uri to the cache directory in a background task
      *
-     * @param context
+     * @param activity
      * @param uri
      * @param path
      */
-    public static void copyToCache(Context context, Uri uri, String path) {
+    public static void copyToCache(Activity activity, Uri uri, String path) {
 
-        String name = MediaUtility.getDisplayName(context, uri, path);
-        File cacheDirectory = CacheUtils.getWritableCacheDirectory(context);
+        // Get the Uri display name, which should be the file name with extension
+        String name = MediaUtility.getDisplayName(activity, uri, path);
+
+        // Get a cache directory to write to
+        File cacheDirectory = CacheUtils.getWritableCacheDirectory(activity);
         if (cacheDirectory != null) {
+
+            // Verify that the file is a cache file by its extension
             File cacheFile = new File(cacheDirectory, name);
             if (isCacheFile(cacheFile)) {
-                // TODO Do this as a background task
-                final ContentResolver resolver = context.getContentResolver();
-                try {
-                    InputStream stream = resolver.openInputStream(uri);
-                    MediaUtility.copyStream(stream, cacheFile);
-                } catch (IOException e) {
-                    // TODO
-                    String TODO = "TODO";
-                }
+
+                // Copy the file in a background task
+                CopyCacheStreamTask task = new CopyCacheStreamTask(activity, uri, cacheFile);
+                task.execute();
             }
         }
     }
