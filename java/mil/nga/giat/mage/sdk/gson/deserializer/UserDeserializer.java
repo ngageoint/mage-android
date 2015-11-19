@@ -75,8 +75,7 @@ public class UserDeserializer implements JsonDeserializer<User> {
 		if (emailElement != null) {
 		    email = emailElement.getAsString();
 		}
-		String firstname = feature.get("firstname").getAsString();
-		String lastname = feature.get("lastname").getAsString();
+		String displayName = feature.get("displayName").getAsString();
 		String username = feature.get("username").getAsString();
 
         Role role = null;
@@ -171,7 +170,7 @@ public class UserDeserializer implements JsonDeserializer<User> {
             Log.w(LOG_NAME, "User has no recent event!");
         }
 
-		User user = new User(remoteId, email, firstname, lastname, username, role, event, primaryPhone, avatarUrl, iconUrl);
+		User user = new User(remoteId, email, displayName, username, role, event, primaryPhone, avatarUrl, iconUrl);
 		return user;
 	}
 }

@@ -21,10 +21,7 @@ public class User {
 	private String email;
 
 	@DatabaseField
-	private String firstname;
-
-	@DatabaseField
-	private String lastname;
+	private String displayName;
 
 	@DatabaseField(canBeNull = false, unique = true)
 	private String username;
@@ -60,12 +57,11 @@ public class User {
 		// ORMLite needs a no-arg constructor
 	}
 
-	public User(String remoteId, String email, String firstname, String lastname, String username, Role role, Event currentEvent, String primaryPhone, String avatarUrl, String iconUrl) {
+	public User(String remoteId, String email, String displayName, String username, Role role, Event currentEvent, String primaryPhone, String avatarUrl, String iconUrl) {
 		super();
 		this.remoteId = remoteId;
 		this.email = email;
-		this.firstname = firstname;
-		this.lastname = lastname;
+		this.displayName = displayName;
 		this.username = username;
 		this.role = role;
         this.currentEvent = currentEvent;
@@ -94,12 +90,8 @@ public class User {
 		return email;
 	}
 
-	public String getFirstname() {
-		return firstname;
-	}
-
-	public String getLastname() {
-		return lastname;
+	public String getDisplayName() {
+		return displayName;
 	}
 
 	public String getUsername() {
