@@ -161,3 +161,59 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
+
+## Acknowledgements
+
+MAGE Android makes use of the following open source projects:
+- **Android Action Bar Icons**  
+This product includes software licensed under the Creative Commons BY 2.5 License http://creativecommons.org/licenses/by/2.5/
+
+- **Android Sanselan**  
+This product includes software licensed under the MIT License http://opensource.org/licenses/mit-license.php
+
+- **Apache HttpComponents**  
+*Copyright © 2005-2015 The Apache Software Foundation*  
+This product includes software licensed under the Apache License version 2.0 http://www.apache.org/licenses/LICENSE-2.0
+
+- **Apache Commons**  
+*Copyright © 2005-2015 The Apache Software Foundation*  
+This product includes software licensed under the Apache License version 2.0 http://www.apache.org/licenses/LICENSE-2.0
+
+- **Font Awesome**  
+*Dave Gandy - http://fontawesome.io*  
+This product includes software licensed under the SIL OFL 1.1 http://scripts.sil.org/OFL the MIT License http://opensource.org/licenses/mit-license.php and the Creative Commons BY 3.0 License http://creativecommons.org/licenses/by/3.0/
+
+- **Geocoder Plus**  
+*Copyright 2011 Bricolsoft Consulting*  
+This product includes software licensed under the Apache License version 2.0 http://www.apache.org/licenses/LICENSE-2.0
+
+- **Glide**  
+*Bump Technologies*  
+This product includes software licensed under the BSD 2-Clause License http://opensource.org/licenses/BSD-2-Clause
+
+- **Google Gson**  
+*Google*  
+This product includes software licensed under the Apache License version 2.0 http://www.apache.org/licenses/LICENSE-2.0
+
+- **Google Guava**  
+*Google*  
+This product includes software licensed under the Apache License version 2.0 http://www.apache.org/licenses/LICENSE-2.0
+
+- **Google Play Services**  
+*Google Inc.*  
+This product includes software licensed under the Apache License version 2.0 http://www.apache.org/licenses/LICENSE-2.0
+
+- **Jackson JSON Processor**  
+This product includes software licensed under the Apache License version 2.0 http://www.apache.org/licenses/LICENSE-2.0
+
+- **JTS Topolgy Suite**  
+*Copyright © 2014 Vivid Solutions Inc.*  
+This product includes software licensed under the GNU Lesser General Public License v3 https://www.gnu.org/licenses/lgpl.html
+
+- **ORMLite**  
+*http://ormlite.com/*  
+This product includes software licensed under the ISC License http://opensource.org/licenses/ISC
+
+- **Pretty Time**  
+*© 2015 OCPsoft All Rights Reserved*  
+This product includes software licensed under the Apache License version 2.0 http://www.apache.org/licenses/LICENSE-2.0
