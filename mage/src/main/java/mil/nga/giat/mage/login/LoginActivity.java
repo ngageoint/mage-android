@@ -9,6 +9,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.graphics.Typeface;
+import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v4.app.FragmentActivity;
@@ -37,10 +38,12 @@ import org.apache.commons.lang3.StringUtils;
 import java.util.ArrayList;
 import java.util.List;
 
+import mil.nga.giat.mage.LandingActivity;
 import mil.nga.giat.mage.MAGE;
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.disclaimer.DisclaimerActivity;
 import mil.nga.giat.mage.event.EventActivity;
+import mil.nga.giat.mage.cache.CacheUtils;
 import mil.nga.giat.mage.sdk.connectivity.ConnectivityUtility;
 import mil.nga.giat.mage.sdk.datastore.DaoStore;
 import mil.nga.giat.mage.sdk.login.AbstractAccountTask;
@@ -48,6 +51,7 @@ import mil.nga.giat.mage.sdk.login.AccountDelegate;
 import mil.nga.giat.mage.sdk.login.AccountStatus;
 import mil.nga.giat.mage.sdk.login.LoginTaskFactory;
 import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
+import mil.nga.giat.mage.sdk.utils.MediaUtility;
 import mil.nga.giat.mage.sdk.utils.PasswordUtility;
 import mil.nga.giat.mage.sdk.utils.UserUtility;
 
@@ -70,6 +74,7 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 	private EditText mPasswordEditText;
 	private TextView mServerURL;
 	private Button mLoginButton;
+	private String mOpenFilePath;
 
 	public final EditText getUsernameEditText() {
 		return mUsernameEditText;
@@ -87,7 +92,8 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 
-		if (getIntent().getBooleanExtra("LOGOUT", false)) {
+		Intent intent = getIntent();
+		if (intent.getBooleanExtra("LOGOUT", false)) {
 			((MAGE) getApplication()).onLogout(true);
 		}
 
@@ -126,6 +132,12 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 					}
 				}).show();
 			}
+		}
+
+		// Handle when MAGE was launched with a Uri (such as a local or remote cache file)
+		Uri uri = intent.getData();
+		if(uri != null) {
+			handleUri(uri);
 		}
 
 		// if token is not expired, then skip the login module
@@ -327,6 +339,24 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 	}
 
 	/**
+	 * Handle the Uri used to launch MAGE
+	 * @param uri
+	 */
+	private void handleUri(Uri uri){
+
+		// Attempt to get a local file path
+		String openPath = MediaUtility.getPath(this, uri);
+
+		// If not a local or temporary file path, copy the file to cache
+		if(openPath == null || MediaUtility.isTemporaryPath(openPath)){
+			CacheUtils.copyToCache(this, uri, openPath);
+		}else{
+			// Else, store the path to pass to further intents
+			mOpenFilePath = openPath;
+		}
+	}
+
+	/**
 	 * Fired when user clicks login
 	 *
 	 * @param view
@@ -489,6 +519,11 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 				new Intent(getApplicationContext(), DisclaimerActivity.class) :
 				new Intent(getApplicationContext(), EventActivity.class);
 
+		// If launched with a local file path, save as an extra
+		if(mOpenFilePath != null){
+			intent.putExtra(LandingActivity.EXTRA_OPEN_FILE_PATH, mOpenFilePath);
+		}
+
 		startActivity(intent);
 		finish();
 	}
@@ -502,6 +537,11 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 				new Intent(getApplicationContext(), DisclaimerActivity.class);
 
 		intent.putExtra(EventActivity.EXTRA_CHOOSE_CURRENT_EVENT, true);
+		// If launched with a local file path, save as an extra
+		if(mOpenFilePath != null){
+			intent.putExtra(LandingActivity.EXTRA_OPEN_FILE_PATH, mOpenFilePath);
+		}
+
 		startActivity(intent);
 		finish();
 	}
