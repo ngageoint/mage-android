@@ -259,9 +259,6 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 			map.setOnMyLocationButtonClickListener(this);
 			map.setOnInfoWindowClickListener(this);
 
-			// zoom to map location
-			updateMapView();
-
 			staticGeometryCollection = new StaticGeometryCollection();
 
 			observations = new ObservationMarkerCollection(getActivity(), map);
@@ -282,6 +279,8 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 			ObservationHelper.getInstance(getActivity().getApplicationContext()).addListener(this);
 			LocationHelper.getInstance(getActivity().getApplicationContext()).addListener(this);
 		}
+
+		updateMapView();
 
 		// Set visibility on map markers as preferences may have changed
 		observations.setVisibility(preferences.getBoolean(getResources().getString(R.string.showObservationsKey), true));
