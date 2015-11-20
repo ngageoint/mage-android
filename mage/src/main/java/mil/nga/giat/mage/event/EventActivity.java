@@ -218,7 +218,12 @@ public class EventActivity extends Activity implements AccountDelegate {
 		}
 
         // start up the landing activity!
-        startActivity(new Intent(getApplicationContext(), LandingActivity.class));
+		Intent intent = new Intent(getApplicationContext(), LandingActivity.class);
+		Bundle extras = getIntent().getExtras();
+		if (extras != null) {
+			intent.putExtras(extras);
+		}
+		startActivity(intent);
         finish();
     }
 }
