@@ -36,14 +36,12 @@ import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
 import mil.nga.giat.mage.sdk.datastore.staticfeature.StaticFeature;
 import mil.nga.giat.mage.sdk.datastore.user.Event;
 import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
-import mil.nga.giat.mage.sdk.datastore.user.Role;
 import mil.nga.giat.mage.sdk.datastore.user.Team;
 import mil.nga.giat.mage.sdk.datastore.user.TeamHelper;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.gson.deserializer.EventDeserializer;
 import mil.nga.giat.mage.sdk.gson.deserializer.LayerDeserializer;
-import mil.nga.giat.mage.sdk.gson.deserializer.RoleDeserializer;
 import mil.nga.giat.mage.sdk.gson.deserializer.TeamDeserializer;
 import mil.nga.giat.mage.sdk.gson.deserializer.UserDeserializer;
 import mil.nga.giat.mage.sdk.http.client.HttpClientManager;
@@ -338,56 +336,6 @@ public class MageServerGetRequests {
         }
 
         return users;
-    }
-
-    public static Collection<Role> getAllRoles(Context context, List<Exception> exceptions) {
-        final Gson roleDeserializer = RoleDeserializer.getGsonBuilder();
-        Collection<Role> roles = new ArrayList<Role>();
-
-        HttpEntity entity = null;
-        try {
-            URL serverURL = new URL(PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.serverURLKey), context.getString(R.string.serverURLDefaultValue)));
-            URL roleURL = new URL(serverURL, "api/roles");
-
-            DefaultHttpClient httpclient = HttpClientManager.getInstance(context).getHttpClient();
-            HttpGet get = new HttpGet(roleURL.toURI());
-            HttpResponse response = httpclient.execute(get);
-
-            if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
-                entity = response.getEntity();
-                JSONArray json = new JSONArray(EntityUtils.toString(entity));
-                if (json != null) {
-                    for (int i = 0; i < json.length(); i++) {
-                        JSONObject roleJson = json.getJSONObject(i);
-                        if (roleJson != null) {
-                            Role role = roleDeserializer.fromJson(roleJson.toString(), Role.class);
-                            if (role != null) {
-                                roles.add(role);
-                            }
-                        }
-                    }
-                }
-            } else {
-                entity = response.getEntity();
-                String error = EntityUtils.toString(entity);
-                Log.e(LOG_NAME, "Bad request.");
-                Log.e(LOG_NAME, error);
-                exceptions.add(new Exception("Bad request: " + error));
-            }
-        } catch (Exception e) {
-            Log.e(LOG_NAME, "There was a failure when fetching roles.", e);
-            exceptions.add(e);
-        } finally {
-            try {
-                if (entity != null) {
-                    entity.consumeContent();
-                }
-            } catch (Exception e) {
-                Log.w(LOG_NAME, "Trouble cleaning up after GET request.", e);
-            }
-        }
-
-        return roles;
     }
 
     public static Map<Team, Collection<User>> getAllTeams(Context context, List<Exception> exceptions) {

@@ -10,6 +10,7 @@ import android.util.Log;
 
 import org.json.JSONArray;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -35,6 +36,7 @@ import mil.nga.giat.mage.sdk.datastore.user.UserTeam;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
 import mil.nga.giat.mage.sdk.http.get.MageServerGetRequests;
 import mil.nga.giat.mage.sdk.login.LoginTaskFactory;
+import mil.nga.giat.mage.sdk.retrofit.resource.RoleResource;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
 
 /**
@@ -119,11 +121,12 @@ public class InitialFetchIntentService extends ConnectivityAwareIntentService {
         int attemptCount = 0;
         while (!didFetchRoles && !isCanceled && attemptCount < retryCount) {
             Log.d(LOG_NAME, "Attempting to fetch roles...");
-            List<Exception> exceptions = new ArrayList<Exception>();
-            Collection<Role> roles = MageServerGetRequests.getAllRoles(getApplicationContext(), exceptions);
-            Log.d(LOG_NAME, "Fetched " + roles.size() + " roles");
 
-            if (exceptions.isEmpty()) {
+            RoleResource roleResource = new RoleResource(getApplicationContext());
+            try {
+                Collection<Role> roles = roleResource.getRoles();
+                Log.d(LOG_NAME, "Fetched " + roles.size() + " roles");
+
                 RoleHelper roleHelper = RoleHelper.getInstance(getApplicationContext());
                 for (Role role : roles) {
                     if (isCanceled) {
@@ -133,16 +136,18 @@ public class InitialFetchIntentService extends ConnectivityAwareIntentService {
                         role = roleHelper.createOrUpdate(role);
                     }
                 }
+
                 didFetchRoles = Boolean.TRUE;
-            } else {
+            } catch (IOException e) {
                 Log.e(LOG_NAME, "Problem fetching roles.  Will try again soon.");
                 didFetchRoles = Boolean.FALSE;
                 try {
                     Thread.sleep(retryTime);
-                } catch (InterruptedException e) {
+                } catch (InterruptedException ie) {
                     e.printStackTrace();
                 }
             }
+
             attemptCount++;
         }
     }
