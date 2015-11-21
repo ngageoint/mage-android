@@ -1,7 +1,5 @@
 package mil.nga.giat.mage.sdk.gson.serializer;
 
-import android.content.Context;
-
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
@@ -33,10 +31,6 @@ import mil.nga.giat.mage.sdk.utils.DateFormatFactory;
 public class LocationSerializer implements JsonSerializer<Collection<Location>> {
 
     private DateFormat iso8601Format = DateFormatFactory.ISO8601();
-
-	public LocationSerializer(Context context) {
-		super();
-	}
 
 	@Override
 	public JsonElement serialize(Collection<Location> locations, Type locationType, JsonSerializationContext context) {
@@ -71,9 +65,9 @@ public class LocationSerializer implements JsonSerializer<Collection<Location>> 
 	 * 
 	 * @return A Gson object that can be used to convert {@link Observation} object into a JSON string.
 	 */
-	public static Gson getGsonBuilder(Context context) {
+	public static Gson getGsonBuilder() {
 		GsonBuilder gsonBuilder = new GsonBuilder();
-		gsonBuilder.registerTypeAdapter(new TypeToken<List<Location>>(){}.getType(), new LocationSerializer(context));
+		gsonBuilder.registerTypeAdapter(new TypeToken<List<Location>>(){}.getType(), new LocationSerializer());
 		return gsonBuilder.create();
 	}
 

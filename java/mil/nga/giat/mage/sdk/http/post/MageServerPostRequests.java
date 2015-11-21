@@ -5,7 +5,6 @@ import android.preference.PreferenceManager;
 import android.util.Log;
 
 import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -25,12 +24,9 @@ import java.io.File;
 import java.net.URI;
 import java.net.URL;
 import java.util.Date;
-import java.util.List;
 
 import mil.nga.giat.mage.sdk.R;
 import mil.nga.giat.mage.sdk.datastore.DaoStore;
-import mil.nga.giat.mage.sdk.datastore.location.Location;
-import mil.nga.giat.mage.sdk.datastore.location.LocationHelper;
 import mil.nga.giat.mage.sdk.datastore.observation.Attachment;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
@@ -38,11 +34,9 @@ import mil.nga.giat.mage.sdk.datastore.user.Event;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.gson.deserializer.UserDeserializer;
-import mil.nga.giat.mage.sdk.gson.serializer.LocationSerializer;
 import mil.nga.giat.mage.sdk.gson.serializer.ObservationSerializer;
 import mil.nga.giat.mage.sdk.http.client.HttpClientManager;
 import mil.nga.giat.mage.sdk.jackson.deserializer.AttachmentDeserializer;
-import mil.nga.giat.mage.sdk.jackson.deserializer.LocationDeserializer;
 import mil.nga.giat.mage.sdk.jackson.deserializer.ObservationDeserializer;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
 
@@ -244,63 +238,6 @@ public class MageServerPostRequests {
 			}
 		}
 		return user;
-	}
-
-	/**
-	 * All these locations provided should be from the provided event.
-	 *
-	 * @param locations
-	 * @param event
-	 * @param context
-	 * @return
-	 */
-	public static Boolean postLocations(List<Location> locations, Event event, Context context) {
-		LocationHelper locationHelper = LocationHelper.getInstance(context);
-		
-		Boolean status = false;
-		HttpEntity entity = null;
-		try {
-			URL serverURL = new URL(PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.serverURLKey), context.getString(R.string.serverURLDefaultValue)));
-			URI endpointUri = new URL(serverURL + "/api/events/" + event.getRemoteId() + "/locations").toURI();
-
-			DefaultHttpClient httpClient = HttpClientManager.getInstance(context).getHttpClient();
-			HttpPost request = new HttpPost(endpointUri);
-			request.addHeader("Content-Type", "application/json; charset=utf-8");
-			Gson gson = LocationSerializer.getGsonBuilder(context);
-			request.setEntity(new StringEntity(gson.toJson(locations, new TypeToken<List<Location>>(){}.getType())));
-
-			HttpResponse response = httpClient.execute(request);
-			if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
-				entity = response.getEntity();
-				// it is imperative that the order of the returnedLocations match the order that was posted!!!
-				// if the order changes from the server, all of this will break!
-				List<Location> returnedLocations = new LocationDeserializer(event).parseLocations(entity.getContent());
-				for(int i=0; i < returnedLocations.size(); i++) {
-					Location returnedLocation = returnedLocations.get(i);
-					returnedLocation.setId(locations.get(i).getId());
-					// locations that are posted are only from the current user
-					returnedLocation.setUser(UserHelper.getInstance(context).readCurrentUser());
-					locationHelper.update(returnedLocation);
-				}
-				status = true;
-			} else {
-				entity = response.getEntity();
-				String error = EntityUtils.toString(entity);
-				Log.e(LOG_NAME, "Bad request.");
-				Log.e(LOG_NAME, error);
-			}
-		} catch (Exception e) {
-			Log.e(LOG_NAME, "Failure posting location.", e);
-		} finally {
-			try {
-	            if (entity != null) {
-	                entity.consumeContent();
-	            }
-	        } catch (Exception e) {
-	            Log.w(LOG_NAME, "Trouble cleaning up after POST request.", e);
-	        }
-		}
-		return status;
 	}
 
     public static Boolean postCurrentUsersRecentEvent(Event event, Context context) {

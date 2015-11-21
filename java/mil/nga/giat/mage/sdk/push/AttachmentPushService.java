@@ -11,7 +11,10 @@ import mil.nga.giat.mage.sdk.datastore.observation.AttachmentHelper;
 import mil.nga.giat.mage.sdk.event.IAttachmentEventListener;
 
 /**
- * Created by wnewman on 8/31/15.
+ * Service to handle pushing observation attachments
+ *
+ * @author newmanw
+ *
  */
 public class AttachmentPushService implements IAttachmentEventListener {
 

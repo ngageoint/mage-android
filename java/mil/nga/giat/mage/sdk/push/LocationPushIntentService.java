@@ -27,8 +27,8 @@ import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.exceptions.LocationException;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
-import mil.nga.giat.mage.sdk.http.post.MageServerPostRequests;
 import mil.nga.giat.mage.sdk.login.LoginTaskFactory;
+import mil.nga.giat.mage.sdk.retrofit.resource.LocationResource;
 
 public class LocationPushIntentService extends ConnectivityAwareIntentService implements SharedPreferences.OnSharedPreferenceChangeListener {
 
@@ -51,6 +51,7 @@ public class LocationPushIntentService extends ConnectivityAwareIntentService im
 		super.onHandleIntent(intent);
 		PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).registerOnSharedPreferenceChangeListener(this);
 		long pushFrequency = getLocationPushFrequency();
+		LocationResource locationResource = new LocationResource(getApplicationContext());
 		while (!isCanceled) {
 			if (isConnected && !LoginTaskFactory.getInstance(getApplicationContext()).isLocalLogin()) {
 				pushFrequency = getLocationPushFrequency();
@@ -79,7 +80,8 @@ public class LocationPushIntentService extends ConnectivityAwareIntentService im
 						}
 					}
 
-					Boolean status = MageServerPostRequests.postLocations(eventLocations, event, getApplicationContext());
+					boolean status = locationResource.createLocations(event, eventLocations);
+
 					// we've sync-ed. Don't need the locations anymore.
 					if (status) {
 						Log.d(LOG_NAME, "Pushed " + eventLocations.size() + " locations.");

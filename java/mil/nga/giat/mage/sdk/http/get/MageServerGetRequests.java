@@ -31,7 +31,6 @@ import java.util.Map;
 
 import mil.nga.giat.mage.sdk.R;
 import mil.nga.giat.mage.sdk.datastore.layer.Layer;
-import mil.nga.giat.mage.sdk.datastore.location.Location;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
 import mil.nga.giat.mage.sdk.datastore.staticfeature.StaticFeature;
@@ -48,7 +47,6 @@ import mil.nga.giat.mage.sdk.gson.deserializer.RoleDeserializer;
 import mil.nga.giat.mage.sdk.gson.deserializer.TeamDeserializer;
 import mil.nga.giat.mage.sdk.gson.deserializer.UserDeserializer;
 import mil.nga.giat.mage.sdk.http.client.HttpClientManager;
-import mil.nga.giat.mage.sdk.jackson.deserializer.LocationDeserializer;
 import mil.nga.giat.mage.sdk.jackson.deserializer.ObservationDeserializer;
 import mil.nga.giat.mage.sdk.jackson.deserializer.StaticFeatureDeserializer;
 import mil.nga.giat.mage.sdk.utils.DateFormatFactory;
@@ -278,47 +276,6 @@ public class MageServerGetRequests {
 		}
 
 		return observations;
-	}
-
-	public static Collection<Location> getLocations(Context context) {
-		Collection<Location> locations = new ArrayList<Location>();
-		HttpEntity entity = null;
-		Event currentEvent = EventHelper.getInstance(context).getCurrentEvent();
-		String currentEventId = currentEvent.getRemoteId();
-		try {
-			URL serverURL = new URL(PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.serverURLKey), context.getString(R.string.serverURLDefaultValue)));
-			if (currentEventId != null) {
-				URL locationURL = new URL(serverURL, "/api/events/" + currentEventId + "/locations/users");
-
-				DefaultHttpClient httpclient = HttpClientManager.getInstance(context).getHttpClient();
-				HttpGet get = new HttpGet(locationURL.toURI());
-				HttpResponse response = httpclient.execute(get);
-
-				if (HttpStatus.SC_OK == response.getStatusLine().getStatusCode()) {
-					entity = response.getEntity();
-					locations = new LocationDeserializer(currentEvent).parseUserLocations(entity.getContent());
-				} else {
-					entity = response.getEntity();
-					String error = EntityUtils.toString(entity);
-					Log.e(LOG_NAME, "Bad request.");
-					Log.e(LOG_NAME, error);
-				}
-			} else {
-				Log.e(LOG_NAME, "Could not pull the observations, because the event id was: " + String.valueOf(currentEventId));
-			}
-		} catch (Exception e) {
-			Log.e(LOG_NAME, "There was a failure while performing an Location Fetch operation.", e);
-		} finally {
-			try {
-				if (entity != null) {
-					entity.consumeContent();
-				}
-			} catch (Exception e) {
-				Log.w(LOG_NAME, "Trouble cleaning up after GET request.", e);
-			}
-		}
-
-		return locations;
 	}
 
     public static Collection<User> getAllUsers(Context context, List<JSONArray> userJSONCacheOut, JSONArray userJSONCacheIn, List<Exception> exceptions) {

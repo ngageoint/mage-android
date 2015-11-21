@@ -24,7 +24,8 @@ import mil.nga.giat.mage.sdk.utils.DateFormatFactory;
 /**
  * Performs login to specified oauth server.
  *
- * @author wnewmanw
+ * @author newmanw
+ *
  */
 public class OAuthLoginTask extends AbstractAccountTask {
 

@@ -8,10 +8,10 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 
 /**
- * Creates a user
- * 
+ * Performs signup to specified oauth server.
+ *
  * @author newmanw
- * 
+ *
  */
 public class OAuthSignupTask extends AbstractAccountTask {
 
