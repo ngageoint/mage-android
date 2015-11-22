@@ -36,6 +36,7 @@ import mil.nga.giat.mage.sdk.datastore.user.UserTeam;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
 import mil.nga.giat.mage.sdk.http.get.MageServerGetRequests;
 import mil.nga.giat.mage.sdk.login.LoginTaskFactory;
+import mil.nga.giat.mage.sdk.retrofit.resource.EventResource;
 import mil.nga.giat.mage.sdk.retrofit.resource.RoleResource;
 import mil.nga.giat.mage.sdk.retrofit.resource.TeamResource;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
@@ -345,15 +346,16 @@ public class InitialFetchIntentService extends ConnectivityAwareIntentService {
     private void getEvents() {
         Boolean didFetchEvents = Boolean.FALSE;
         int attemptCount = 0;
+        EventResource eventResource = new EventResource(getApplicationContext());
         while(!didFetchEvents && !isCanceled && attemptCount < retryCount) {
             TeamHelper teamHelper = TeamHelper.getInstance(getApplicationContext());
             teamHelper.deleteTeamEvents();
             Log.d(LOG_NAME, "Attempting to fetch events...");
-            List<Exception> exceptions = new ArrayList<Exception>();
-            Map<Event, Collection<Team>> events = MageServerGetRequests.getAllEvents(getApplicationContext(), exceptions);
-            Log.d(LOG_NAME, "Fetched " + events.size() + " events");
 
-            if(exceptions.isEmpty()) {
+            try {
+                Map<Event, Collection<Team>> events = eventResource.getEvents();
+                Log.d(LOG_NAME, "Fetched " + events.size() + " events");
+
                 EventHelper eventHelper = EventHelper.getInstance(getApplicationContext());
                 for (Event event : events.keySet()) {
                     if (isCanceled) {
@@ -380,15 +382,16 @@ public class InitialFetchIntentService extends ConnectivityAwareIntentService {
                 EventHelper.getInstance(getApplicationContext()).syncEvents(events.keySet());
 
                 didFetchEvents = Boolean.TRUE;
-            } else {
+            } catch (Exception e) {
                 Log.e(LOG_NAME, "Problem fetching events.  Will try again soon.");
                 didFetchEvents = Boolean.FALSE;
                 try {
                     Thread.sleep(retryTime);
-                } catch (InterruptedException e) {
+                } catch (InterruptedException ie) {
                     e.printStackTrace();
                 }
             }
+
             attemptCount++;
         }
     }

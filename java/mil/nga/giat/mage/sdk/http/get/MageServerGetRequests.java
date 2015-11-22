@@ -25,9 +25,7 @@ import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import mil.nga.giat.mage.sdk.R;
 import mil.nga.giat.mage.sdk.datastore.layer.Layer;
@@ -36,12 +34,8 @@ import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
 import mil.nga.giat.mage.sdk.datastore.staticfeature.StaticFeature;
 import mil.nga.giat.mage.sdk.datastore.user.Event;
 import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
-import mil.nga.giat.mage.sdk.datastore.user.Team;
-import mil.nga.giat.mage.sdk.datastore.user.TeamHelper;
 import mil.nga.giat.mage.sdk.datastore.user.User;
-import mil.nga.giat.mage.sdk.gson.deserializer.EventDeserializer;
 import mil.nga.giat.mage.sdk.gson.deserializer.LayerDeserializer;
-import mil.nga.giat.mage.sdk.gson.deserializer.TeamDeserializer;
 import mil.nga.giat.mage.sdk.gson.deserializer.UserDeserializer;
 import mil.nga.giat.mage.sdk.http.client.HttpClientManager;
 import mil.nga.giat.mage.sdk.jackson.deserializer.ObservationDeserializer;
@@ -335,75 +329,5 @@ public class MageServerGetRequests {
         }
 
         return users;
-    }
-
-    public static Map<Event, Collection<Team>> getAllEvents(Context context, List<Exception> exceptions) {
-        final Gson eventDeserializer = EventDeserializer.getGsonBuilder();
-        final Gson teamDeserializer = TeamDeserializer.getGsonBuilder();
-        Map<Event, Collection<Team>> events = new HashMap<Event, Collection<Team>>();
-
-        HttpEntity entity = null;
-        try {
-            URL serverURL = new URL(PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.serverURLKey), context.getString(R.string.serverURLDefaultValue)));
-            URL eventURL = new URL(serverURL, "api/events");
-
-            DefaultHttpClient httpclient = HttpClientManager.getInstance(context).getHttpClient();
-            HttpGet get = new HttpGet(eventURL.toURI());
-            HttpResponse response = httpclient.execute(get);
-
-            if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
-                entity = response.getEntity();
-                JSONArray json = new JSONArray(EntityUtils.toString(entity));
-                if (json != null) {
-                    for (int i = 0; i < json.length(); i++) {
-                        JSONObject eventJson = json.getJSONObject(i);
-                        if (eventJson != null) {
-                            Event event = eventDeserializer.fromJson(eventJson.toString(), Event.class);
-                            if (event != null) {
-                                ArrayList<Team> teams = new ArrayList<Team>();
-                                JSONArray jsonTeams = eventJson.getJSONArray("teams");
-                                if (jsonTeams != null) {
-                                    for (int j = 0; j < jsonTeams.length(); j++) {
-                                        JSONObject teamJson = jsonTeams.getJSONObject(j);
-                                        if (teamJson != null) {
-                                            String teamRemoteId = teamJson.getString("id");
-                                            Team team = TeamHelper.getInstance(context).read(teamRemoteId);
-                                            if(team == null) {
-                                                team = teamDeserializer.fromJson(teamJson.toString(), Team.class);
-                                            }
-
-                                            if (team != null) {
-                                                teams.add(team);
-                                            }
-                                        }
-                                    }
-                                }
-
-                                events.put(event, teams);
-                            }
-                        }
-                    }
-                }
-            } else {
-                entity = response.getEntity();
-                String error = EntityUtils.toString(entity);
-                Log.e(LOG_NAME, "Bad request.");
-                Log.e(LOG_NAME, error);
-                exceptions.add(new Exception("Bad request: " + error));
-            }
-        } catch (Exception e) {
-            Log.e(LOG_NAME, "There was a failure when fetching events.", e);
-            exceptions.add(e);
-        } finally {
-            try {
-                if (entity != null) {
-                    entity.consumeContent();
-                }
-            } catch (Exception e) {
-                Log.w(LOG_NAME, "Trouble cleaning up after GET request.", e);
-            }
-        }
-
-        return events;
     }
 }

@@ -5,12 +5,14 @@ import android.preference.PreferenceManager;
 import android.util.Log;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 import mil.nga.giat.mage.sdk.R;
-import mil.nga.giat.mage.sdk.datastore.user.Role;
-import mil.nga.giat.mage.sdk.gson.deserializer.RolesDeserializer;
+import mil.nga.giat.mage.sdk.datastore.user.Event;
+import mil.nga.giat.mage.sdk.datastore.user.Team;
+import mil.nga.giat.mage.sdk.gson.deserializer.EventsDeserializer;
 import mil.nga.giat.mage.sdk.retrofit.HttpClient;
 import retrofit.Call;
 import retrofit.GsonConverterFactory;
@@ -19,42 +21,41 @@ import retrofit.Retrofit;
 import retrofit.http.GET;
 
 /***
- * RESTful communication for roles
+ * RESTful communication for events
  *
  * @author newmanw
  */
 
-public class RoleResource {
+public class EventResource {
 
-    public interface RoleService {
-        @GET("/api/roles")
-        Call<Collection<Role>> getRoles();
+    public interface EventService {
+        @GET("/api/events")
+        Call<Map<Event, Collection<Team>>> getEvents();
     }
 
-    private static final String LOG_NAME = RoleResource.class.getName();
+    private static final String LOG_NAME = EventResource.class.getName();
 
     private Context context;
 
-    public RoleResource(Context context) {
+    public EventResource(Context context) {
         this.context = context;
     }
 
-    public Collection<Role> getRoles() throws IOException {
-        Collection<Role> roles = new ArrayList<Role>();
+    public Map<Event, Collection<Team>> getEvents() throws IOException {
+        Map<Event, Collection<Team>> events = new HashMap<>();
 
         String baseUrl = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.serverURLKey), context.getString(R.string.serverURLDefaultValue));
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl(baseUrl)
-                .addConverterFactory(GsonConverterFactory.create(RolesDeserializer.getGsonBuilder()))
+                .addConverterFactory(GsonConverterFactory.create(EventsDeserializer.getGsonBuilder(context)))
                 .client(HttpClient.httpClient(context))
                 .build();
 
-        RoleService service = retrofit.create(RoleService.class);
-        Call<Collection<Role>> call = service.getRoles();
-        Response<Collection<Role>> response = call.execute();
+        EventService service = retrofit.create(EventService.class);
+        Response<Map<Event, Collection<Team>>> response = service.getEvents().execute();
 
         if (response.isSuccess()) {
-            roles = response.body();
+            events = response.body();
         } else {
             Log.e(LOG_NAME, "Bad request.");
             if (response.errorBody() != null) {
@@ -62,6 +63,6 @@ public class RoleResource {
             }
         }
 
-        return roles;
+        return events;
     }
 }
