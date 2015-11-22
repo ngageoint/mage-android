@@ -4,6 +4,7 @@ import android.content.Context;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
+import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 
 import org.apache.http.HttpEntity;
@@ -23,7 +24,9 @@ import org.json.JSONObject;
 import java.io.File;
 import java.net.URI;
 import java.net.URL;
+import java.util.Collection;
 import java.util.Date;
+import java.util.Map;
 
 import mil.nga.giat.mage.sdk.R;
 import mil.nga.giat.mage.sdk.datastore.DaoStore;
@@ -200,8 +203,9 @@ public class MageServerPostRequests {
 				
 				JSONObject userJson = new JSONObject(entityString);
 				if (userJson != null) {
-					User newUser = userDeserializer.fromJson(userJson.toString(), User.class);
+					Map.Entry<User, Collection<String>> entry = userDeserializer.fromJson(userJson.toString(), new TypeToken<Map.Entry<User, Collection<String>>>() {}.getType());
 					UserHelper userHelper = UserHelper.getInstance(context);
+					User newUser = entry.getKey();
 					if (newUser != null) {
 						User oldUser = userHelper.read(newUser.getRemoteId());
 						if (oldUser == null) {

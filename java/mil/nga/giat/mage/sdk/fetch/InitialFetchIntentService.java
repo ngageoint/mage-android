@@ -8,11 +8,10 @@ import android.preference.PreferenceManager;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
-import org.json.JSONArray;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -33,12 +32,13 @@ import mil.nga.giat.mage.sdk.datastore.user.TeamHelper;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.datastore.user.UserTeam;
+import mil.nga.giat.mage.sdk.exceptions.EventException;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
-import mil.nga.giat.mage.sdk.http.get.MageServerGetRequests;
 import mil.nga.giat.mage.sdk.login.LoginTaskFactory;
 import mil.nga.giat.mage.sdk.retrofit.resource.EventResource;
 import mil.nga.giat.mage.sdk.retrofit.resource.RoleResource;
 import mil.nga.giat.mage.sdk.retrofit.resource.TeamResource;
+import mil.nga.giat.mage.sdk.retrofit.resource.UserResource;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
 
 /**
@@ -76,11 +76,24 @@ public class InitialFetchIntentService extends ConnectivityAwareIntentService {
         if (isConnected && isDataFetchEnabled && !LoginTaskFactory.getInstance(getApplicationContext()).isLocalLogin()) {
             Log.d(LOG_NAME, "The device is currently connected.");
             getRoles();
-			JSONArray userJSONCache = getUsers(null);
+			Map<User, Collection<String>> users = getUsers();
             getTeams();
             getEvents();
-            // now that the client has fetched the events, fetch the users again in order to populate the user's currentEvent using the json cache form the prior request. a chicken in the egg thing
-			getUsers(userJSONCache);
+
+            // Now that the client has fetched the events populate the user's currentEvent.
+            EventHelper eventHelper = EventHelper.getInstance(getApplicationContext());
+            for (Map.Entry<User, Collection<String>> entry : users.entrySet()) {
+                if (entry.getValue().size() > 0) {
+                    try {
+                        Event currentEvent = eventHelper.read(entry.getValue().iterator().next());
+                        entry.getKey().setCurrentEvent(currentEvent);
+                    } catch (EventException e) {
+                        Log.d(LOG_NAME, "Error reading event", e);
+                    }
+                } else {
+                    Log.d(LOG_NAME, "User has no recent events!");
+                }
+            }
 
             Handler handler = new Handler(Looper.getMainLooper());
 			// users are updated, finish getting image content
@@ -157,11 +170,12 @@ public class InitialFetchIntentService extends ConnectivityAwareIntentService {
     /**
      * Create users
      */
-    private JSONArray getUsers(JSONArray userJSONCacheIn) {
+    private Map<User, Collection<String>> getUsers() {
+        int attemptCount = 0;
         Boolean didFetchUsers = Boolean.FALSE;
-        final UserHelper userHelper = UserHelper.getInstance(getApplicationContext());
 
-		JSONArray userJSONCacheOut = null;
+        final UserResource userResource = new UserResource(getApplicationContext());
+        final UserHelper userHelper = UserHelper.getInstance(getApplicationContext());
 
         User currentUser = null;
         try {
@@ -169,23 +183,18 @@ public class InitialFetchIntentService extends ConnectivityAwareIntentService {
         } catch (UserException e) {
             Log.e(LOG_NAME, "Could not get current user.");
         }
-        int attemptCount = 0;
 
+        Map<User, Collection<String>> users = Collections.emptyMap();
         while(!didFetchUsers && !isCanceled && attemptCount < retryCount) {
             Log.d(LOG_NAME, "Attempting to fetch users...");
-            List<Exception> exceptions = new ArrayList<Exception>();
-			List<JSONArray> userJSONCacheOutArray = new ArrayList<JSONArray>();
-			Collection<User> users = MageServerGetRequests.getAllUsers(getApplicationContext(), userJSONCacheOutArray, userJSONCacheIn, exceptions);
-			if(userJSONCacheOutArray.size() > 0 && userJSONCacheOutArray.get(0) != null) {
-				userJSONCacheOut = userJSONCacheOutArray.get(0);
-			}
-            Log.d(LOG_NAME, "Fetched " + users.size() + " users");
 
-            final ArrayList<User> userAvatarsToFetch = new ArrayList<User>();
-            final ArrayList<User> userIconsToFetch = new ArrayList<User>();
+            try {
+                users = userResource.getUsers();
+                Log.d(LOG_NAME, "Fetched " + users.size() + " users");
 
-            if(exceptions.isEmpty()) {
-                for (User user : users) {
+                final ArrayList<User> userAvatarsToFetch = new ArrayList<User>();
+                final ArrayList<User> userIconsToFetch = new ArrayList<User>();
+                for (User user : users.keySet()) {
                     if (isCanceled) {
                         break;
                     }
@@ -209,75 +218,77 @@ public class InitialFetchIntentService extends ConnectivityAwareIntentService {
                     }
                 }
 
-				// pull down images (map icons and profile pictures)
-				List<String> avatarUrls = new ArrayList<String>();
-				List<String> avatarLocalFilePaths = new ArrayList<String>();
-				for(User u : userAvatarsToFetch) {
-					avatarUrls.add(u.getAvatarUrl());
-					avatarLocalFilePaths.add(MediaUtility.getAvatarDirectory() + "/" + u.getId() + ".png");
-				}
-				avatarFetch = new DownloadImageTask(getApplicationContext(), avatarUrls, avatarLocalFilePaths, true) {
+                // pull down images (map icons and profile pictures)
+                List<String> avatarUrls = new ArrayList<String>();
+                List<String> avatarLocalFilePaths = new ArrayList<String>();
+                for(User u : userAvatarsToFetch) {
+                    avatarUrls.add(u.getAvatarUrl());
+                    avatarLocalFilePaths.add(MediaUtility.getAvatarDirectory() + "/" + u.getId() + ".png");
+                }
+                avatarFetch = new DownloadImageTask(getApplicationContext(), avatarUrls, avatarLocalFilePaths, true) {
 
-					@Override
-					protected Void doInBackground(Void... v) {
-						Void result = super.doInBackground(v);
-						for(int i =0 ; i<localFilePaths.size(); i++) {
-							try {
-								if(!errors.get(i)) {
-									User u = userHelper.read(userAvatarsToFetch.get(i).getId());
-									u.setLocalAvatarPath(localFilePaths.get(i));
-									userHelper.update(u);
-								}
-							} catch(Exception e) {
-								Log.e(LOG_NAME, "Could not read or update user.", e);
-							}
-						}
-						return result;
-					}
-				};
+                    @Override
+                    protected Void doInBackground(Void... v) {
+                        Void result = super.doInBackground(v);
+                        for(int i =0 ; i<localFilePaths.size(); i++) {
+                            try {
+                                if(!errors.get(i)) {
+                                    User u = userHelper.read(userAvatarsToFetch.get(i).getId());
+                                    u.setLocalAvatarPath(localFilePaths.get(i));
+                                    userHelper.update(u);
+                                }
+                            } catch(Exception e) {
+                                Log.e(LOG_NAME, "Could not read or update user.", e);
+                            }
+                        }
+                        return result;
+                    }
+                };
 
-				List<String> iconUrls = new ArrayList<String>();
-				List<String> iconLocalFilePaths = new ArrayList<String>();
-				for(User u : userIconsToFetch) {
-					iconUrls.add(u.getIconUrl());
-					iconLocalFilePaths.add(MediaUtility.getUserIconDirectory() + "/" + u.getId() + ".png");
-				}
+                List<String> iconUrls = new ArrayList<String>();
+                List<String> iconLocalFilePaths = new ArrayList<String>();
+                for(User u : userIconsToFetch) {
+                    iconUrls.add(u.getIconUrl());
+                    iconLocalFilePaths.add(MediaUtility.getUserIconDirectory() + "/" + u.getId() + ".png");
+                }
 
-				iconFetch = new DownloadImageTask(getApplicationContext(), iconUrls, iconLocalFilePaths, true) {
+                iconFetch = new DownloadImageTask(getApplicationContext(), iconUrls, iconLocalFilePaths, true) {
 
-					@Override
-					protected Void doInBackground(Void... v) {
-						Void result = super.doInBackground(v);
+                    @Override
+                    protected Void doInBackground(Void... v) {
+                        Void result = super.doInBackground(v);
 
-						for(int i =0 ; i<localFilePaths.size(); i++) {
-							try {
-								if(!errors.get(i)) {
-									User u = userHelper.read(userIconsToFetch.get(i).getId());
-									u.setLocalIconPath(localFilePaths.get(i));
-									userHelper.update(u);
-								}
-							} catch(Exception e) {
-								Log.e(LOG_NAME, "Could not read or update user.", e);
-							}
-						}
+                        for(int i =0 ; i<localFilePaths.size(); i++) {
+                            try {
+                                if(!errors.get(i)) {
+                                    User u = userHelper.read(userIconsToFetch.get(i).getId());
+                                    u.setLocalIconPath(localFilePaths.get(i));
+                                    userHelper.update(u);
+                                }
+                            } catch(Exception e) {
+                                Log.e(LOG_NAME, "Could not read or update user.", e);
+                            }
+                        }
 
-						return result;
-					}
-				};
+                        return result;
+                    }
+                };
 
                 didFetchUsers = Boolean.TRUE;
-            } else {
+            } catch (Exception e) {
                 Log.e(LOG_NAME, "Problem fetching users.  Will try again soon.");
                 didFetchUsers = Boolean.FALSE;
                 try {
                     Thread.sleep(retryTime);
-                } catch (InterruptedException e) {
+                } catch (InterruptedException ie) {
                     e.printStackTrace();
                 }
             }
+
             attemptCount++;
         }
-		return userJSONCacheOut;
+
+		return users;
     }
 
     /**

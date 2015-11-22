@@ -83,7 +83,8 @@ public class TeamsDeserializer implements JsonDeserializer<Map<Team, Collection<
             }
 
             if (user == null) {
-                user = userDeserializer.fromJson(jsonUser.toString(), User.class);
+                Map.Entry<User, Collection<String>> entry = userDeserializer.fromJson(jsonUser, new com.google.common.reflect.TypeToken<Map.Entry<User, Collection<String>>>() {}.getType());
+                user = entry.getKey();
             }
 
             if (user != null) {

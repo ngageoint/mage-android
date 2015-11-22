@@ -11,33 +11,32 @@ import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
+import com.google.gson.reflect.TypeToken;
 
 import java.lang.reflect.Type;
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
+import java.util.Map;
 
-import mil.nga.giat.mage.sdk.datastore.user.Event;
-import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
 import mil.nga.giat.mage.sdk.datastore.user.Phone;
 import mil.nga.giat.mage.sdk.datastore.user.Role;
 import mil.nga.giat.mage.sdk.datastore.user.RoleHelper;
 import mil.nga.giat.mage.sdk.datastore.user.User;
-import mil.nga.giat.mage.sdk.exceptions.EventException;
 import mil.nga.giat.mage.sdk.exceptions.RoleException;
 
 /**
  * JSON to {@link User}
  * 
- * @author wiedemanns
+ * @author newmanw
  * 
  */
-public class UserDeserializer implements JsonDeserializer<User> {
+public class UserDeserializer implements JsonDeserializer<Map.Entry<User, Collection<String>>> {
 
 	private static final String LOG_NAME = UserDeserializer.class.getName();
 
 	private Context mContext;
-	
+
 	public UserDeserializer(Context context) {
 		this.mContext = context;
 	}
@@ -50,38 +49,37 @@ public class UserDeserializer implements JsonDeserializer<User> {
 	 */
 	public static Gson getGsonBuilder(Context context) {
 		GsonBuilder gsonBuilder = new GsonBuilder();
-		gsonBuilder.registerTypeAdapter(User.class, new UserDeserializer(context));
+		gsonBuilder.registerTypeAdapter(new TypeToken<Map.Entry<User, Collection<String>>>(){}.getType(), new UserDeserializer(context));
 		return gsonBuilder.create();
 	}
 
-    /**
-     * This is used for both the /api/login response and the /api/users response
-     *
-     * @param json
-     * @param typeOfT
-     * @param context
-     * @return
-     * @throws JsonParseException
-     */
+	/**
+	 * This is used for both the /api/login response and the /api/users response
+	 *
+	 * @param json
+	 * @param typeOfT
+	 * @param context
+	 * @return
+	 * @throws JsonParseException
+	 */
 	@Override
-	public User deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
+	public Map.Entry<User, Collection<String>> deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
+		JsonObject jsonUser = json.getAsJsonObject();
 
-		JsonObject feature = json.getAsJsonObject();
-
-		String remoteId = feature.get("id").getAsString();
+		String remoteId = jsonUser.get("id").getAsString();
 		
 		String email = "";
-		JsonElement emailElement = feature.get("email");
+		JsonElement emailElement = jsonUser.get("email");
 		if (emailElement != null) {
 		    email = emailElement.getAsString();
 		}
-		String displayName = feature.get("displayName").getAsString();
-		String username = feature.get("username").getAsString();
+		String displayName = jsonUser.get("displayName").getAsString();
+		String username = jsonUser.get("username").getAsString();
 
         Role role = null;
-        if (feature.get("role") != null) {
-            if (feature.get("role").isJsonObject()) {
-				JsonObject roleJSON = feature.get("role").getAsJsonObject();
+        if (jsonUser.get("role") != null) {
+            if (jsonUser.get("role").isJsonObject()) {
+				JsonObject roleJSON = jsonUser.get("role").getAsJsonObject();
 				if (roleJSON != null) {
 					String roleId = roleJSON.get("id").getAsString();
 					if (roleId != null) {
@@ -102,9 +100,9 @@ public class UserDeserializer implements JsonDeserializer<User> {
 					}
 				}
 			}
-        } else if(feature.get("roleId") != null) {
-			if (feature.get("roleId").isJsonPrimitive()) {
-				String roleId = feature.get("roleId").getAsString();
+        } else if(jsonUser.get("roleId") != null) {
+			if (jsonUser.get("roleId").isJsonPrimitive()) {
+				String roleId = jsonUser.get("roleId").getAsString();
 				if (roleId != null) {
 					try {
 						// go get role
@@ -120,14 +118,14 @@ public class UserDeserializer implements JsonDeserializer<User> {
 			Log.e(LOG_NAME, "User has no role!");
 		}
 
-        if(role == null) {
+        if (role == null) {
             throw new JsonParseException("Unable to find or make role for user!");
         }
 		
 		Collection<Phone> phones = new ArrayList<Phone>();
 		String primaryPhone = null;
-		if (feature.has("phones")) {
-			JsonArray phoneArray = feature.get("phones").getAsJsonArray();
+		if (jsonUser.has("phones")) {
+			JsonArray phoneArray = jsonUser.get("phones").getAsJsonArray();
 			for (JsonElement e : phoneArray) {
 				Phone phone = new Phone();
 				phone.setNumber(e.getAsJsonObject().get("number").getAsString());
@@ -137,40 +135,27 @@ public class UserDeserializer implements JsonDeserializer<User> {
 				}
 			}
 		}
+
 		String avatarUrl = null;
-		if (feature.has("avatarUrl")) {
-			avatarUrl = feature.get("avatarUrl").getAsString();
+		if (jsonUser.has("avatarUrl")) {
+			avatarUrl = jsonUser.get("avatarUrl").getAsString();
 		}
 		
 		String iconUrl = null;
-		if (feature.has("iconUrl")) {
-			iconUrl = feature.get("iconUrl").getAsString();
+		if (jsonUser.has("iconUrl")) {
+			iconUrl = jsonUser.get("iconUrl").getAsString();
 		}
 
-        Event event = null;
-        if (feature.get("recentEventIds") != null) {
-
-            if (feature.get("recentEventIds").isJsonArray()) {
-                JsonArray recentEventIds = feature.get("recentEventIds").getAsJsonArray();
-                if (recentEventIds.size() > 0) {
-                    String recentEventId = recentEventIds.get(0).getAsString();
-                    if(recentEventId != null) {
-                        try {
-                            // see if event exists
-                            event = EventHelper.getInstance(mContext).read(recentEventId);
-                        } catch (EventException e) {
-                            Log.w(LOG_NAME, "Could not find event for user.");
-                        }
-                    }
-                } else {
-                    Log.w(LOG_NAME, "User has no recent event!");
-                }
-            }
+		Collection<String> recentEventIds = new ArrayList<>();
+        if (jsonUser.get("recentEventIds") != null && jsonUser.get("recentEventIds").isJsonArray()) {
+			for (JsonElement element : jsonUser.get("recentEventIds").getAsJsonArray()) {
+				recentEventIds.add(element.getAsString());
+			}
         } else {
-            Log.w(LOG_NAME, "User has no recent event!");
+            Log.w(LOG_NAME, "User has no recent events!");
         }
 
-		User user = new User(remoteId, email, displayName, username, role, event, primaryPhone, avatarUrl, iconUrl);
-		return user;
+		User user = new User(remoteId, email, displayName, username, role, null, primaryPhone, avatarUrl, iconUrl);
+		return new AbstractMap.SimpleEntry<User, Collection<String>>(user, recentEventIds);
 	}
 }

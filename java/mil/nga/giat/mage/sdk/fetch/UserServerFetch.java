@@ -4,6 +4,7 @@ import android.content.Context;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
+import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 
 import org.apache.http.HttpEntity;
@@ -15,7 +16,9 @@ import org.apache.http.util.EntityUtils;
 import org.json.JSONObject;
 
 import java.net.URL;
+import java.util.Collection;
 import java.util.Date;
+import java.util.Map;
 
 import mil.nga.giat.mage.sdk.R;
 import mil.nga.giat.mage.sdk.datastore.user.User;
@@ -76,8 +79,9 @@ public class UserServerFetch extends AbstractServerFetch {
 					entity = response.getEntity();
 					JSONObject userJson = new JSONObject(EntityUtils.toString(entity));
 					if (userJson != null) {
-						User user = userDeserializer.fromJson(userJson.toString(), User.class);
-						if (user != null) {
+						Map.Entry<User, Collection<String>> entry = userDeserializer.fromJson(userJson.toString(), new TypeToken<Map.Entry<User, Collection<String>>>() {}.getType());
+						if (entry != null && entry.getKey() != null) {
+							User user = entry.getKey();
 							user.setCurrentUser(isCurrentUser);
 							user.setFetchedDate(new Date());
 							userHelper.createOrUpdate(user);

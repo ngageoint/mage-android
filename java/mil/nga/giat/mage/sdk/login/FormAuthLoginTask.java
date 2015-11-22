@@ -24,8 +24,10 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.text.DateFormat;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 import mil.nga.giat.mage.sdk.R;
 import mil.nga.giat.mage.sdk.connectivity.ConnectivityUtility;
@@ -212,7 +214,9 @@ public class FormAuthLoginTask extends AbstractAccountTask {
 
 					final Gson userDeserializer = UserDeserializer.getGsonBuilder(mApplicationContext);
 
-					User user = userDeserializer.fromJson(userJson.toString(), User.class);
+					Map.Entry<User, Collection<String>> entry = userDeserializer.fromJson(userJson.toString(), new com.google.common.reflect.TypeToken<Map.Entry<User, Collection<String>>>() {
+					}.getType());
+					User user = entry.getKey();
 					if (user != null) {
 						user.setCurrentUser(true);
 						user.setFetchedDate(new Date());
