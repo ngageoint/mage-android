@@ -39,7 +39,6 @@ import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
 import mil.nga.giat.mage.sdk.datastore.user.Team;
 import mil.nga.giat.mage.sdk.datastore.user.TeamHelper;
 import mil.nga.giat.mage.sdk.datastore.user.User;
-import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.gson.deserializer.EventDeserializer;
 import mil.nga.giat.mage.sdk.gson.deserializer.LayerDeserializer;
 import mil.nga.giat.mage.sdk.gson.deserializer.TeamDeserializer;
@@ -336,76 +335,6 @@ public class MageServerGetRequests {
         }
 
         return users;
-    }
-
-    public static Map<Team, Collection<User>> getAllTeams(Context context, List<Exception> exceptions) {
-        final Gson teamDeserializer = TeamDeserializer.getGsonBuilder();
-        final Gson userDeserializer = UserDeserializer.getGsonBuilder(context);
-        Map<Team, Collection<User>> teams = new HashMap<Team, Collection<User>>();
-
-        HttpEntity entity = null;
-        try {
-            URL serverURL = new URL(PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.serverURLKey), context.getString(R.string.serverURLDefaultValue)));
-            URL teamURL = new URL(serverURL, "api/teams");
-
-            DefaultHttpClient httpclient = HttpClientManager.getInstance(context).getHttpClient();
-            HttpGet get = new HttpGet(teamURL.toURI());
-            HttpResponse response = httpclient.execute(get);
-
-            if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
-                entity = response.getEntity();
-                JSONArray json = new JSONArray(EntityUtils.toString(entity));
-                if (json != null) {
-                    for (int i = 0; i < json.length(); i++) {
-                        JSONObject teamJson = json.getJSONObject(i);
-                        if (teamJson != null) {
-                            Team team = teamDeserializer.fromJson(teamJson.toString(), Team.class);
-                            if (team != null) {
-                                ArrayList<User> users = new ArrayList<User>();
-                                JSONArray jsonUsers = teamJson.getJSONArray("users");
-                                if (jsonUsers != null) {
-                                    for (int j = 0; j < jsonUsers.length(); j++) {
-                                        JSONObject userJson = jsonUsers.getJSONObject(j);
-                                        if (userJson != null) {
-                                            String userRemoteId = userJson.getString("id");
-                                            User user = UserHelper.getInstance(context).read(userRemoteId);
-                                            if(user == null) {
-                                                user = userDeserializer.fromJson(userJson.toString(), User.class);
-                                            }
-
-                                            if (user != null) {
-                                                users.add(user);
-                                            }
-                                        }
-                                    }
-                                }
-
-                                teams.put(team, users);
-                            }
-                        }
-                    }
-                }
-            } else {
-                entity = response.getEntity();
-                String error = EntityUtils.toString(entity);
-                Log.e(LOG_NAME, "Bad request.");
-                Log.e(LOG_NAME, error);
-                exceptions.add(new Exception("Bad request: " + error));
-            }
-        } catch (Exception e) {
-            Log.e(LOG_NAME, "There was a failure when fetching teams.", e);
-            exceptions.add(e);
-        } finally {
-            try {
-                if (entity != null) {
-                    entity.consumeContent();
-                }
-            } catch (Exception e) {
-                Log.w(LOG_NAME, "Trouble cleaning up after GET request.", e);
-            }
-        }
-
-        return teams;
     }
 
     public static Map<Event, Collection<Team>> getAllEvents(Context context, List<Exception> exceptions) {

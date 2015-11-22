@@ -6,6 +6,9 @@ import com.j256.ormlite.table.DatabaseTable;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
+import java.util.ArrayList;
+import java.util.Collection;
+
 @DatabaseTable(tableName = "teams")
 public class Team {
 
@@ -20,6 +23,8 @@ public class Team {
 
     @DatabaseField
     private String description;
+
+    private Collection<User> users = new ArrayList<>();
 	
 	public Team() {
 		// ORMLite needs a no-arg constructor

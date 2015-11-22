@@ -36,17 +36,16 @@ public class TeamDeserializer implements JsonDeserializer<Team> {
 
     @Override
     public Team deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
+        JsonObject jsonTeam = json.getAsJsonObject();
 
-        JsonObject feature = json.getAsJsonObject();
-
-        String remoteId = feature.get("id").getAsString();
-        String name = feature.get("name").getAsString();
+        String remoteId = jsonTeam.get("id").getAsString();
+        String name = jsonTeam.get("name").getAsString();
         String description = "";
-        if(feature.has("description")) {
-            description = feature.get("description").getAsString();
+        if(jsonTeam.has("description")) {
+            description = jsonTeam.get("description").getAsString();
         }
 
-        Team team = new Team(remoteId, name, description);
-        return team;
+        return new Team(remoteId, name, description);
     }
+
 }

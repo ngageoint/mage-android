@@ -37,6 +37,7 @@ import mil.nga.giat.mage.sdk.exceptions.UserException;
 import mil.nga.giat.mage.sdk.http.get.MageServerGetRequests;
 import mil.nga.giat.mage.sdk.login.LoginTaskFactory;
 import mil.nga.giat.mage.sdk.retrofit.resource.RoleResource;
+import mil.nga.giat.mage.sdk.retrofit.resource.TeamResource;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
 
 /**
@@ -287,14 +288,15 @@ public class InitialFetchIntentService extends ConnectivityAwareIntentService {
         Boolean didFetchTeams = Boolean.FALSE;
         int attemptCount = 0;
 
+        TeamResource teamResource = new TeamResource(getApplicationContext());
         while(!didFetchTeams && !isCanceled && attemptCount < retryCount) {
             userHelper.deleteUserTeams();
             Log.d(LOG_NAME, "Attempting to fetch teams...");
-            List<Exception> exceptions = new ArrayList<Exception>();
-            Map<Team, Collection<User>> teams = MageServerGetRequests.getAllTeams(getApplicationContext(), exceptions);
-            Log.d(LOG_NAME, "Fetched " + teams.size() + " teams");
 
-            if(exceptions.isEmpty()) {
+            try {
+                Map<Team, Collection<User>> teams = teamResource.getTeams();
+                Log.d(LOG_NAME, "Fetched " + teams.size() + " teams");
+
                 TeamHelper teamHelper = TeamHelper.getInstance(getApplicationContext());
                 for (Team team : teams.keySet()) {
                     if (isCanceled) {
@@ -321,15 +323,16 @@ public class InitialFetchIntentService extends ConnectivityAwareIntentService {
                 TeamHelper.getInstance(getApplicationContext()).syncTeams(teams.keySet());
 
                 didFetchTeams = Boolean.TRUE;
-            } else {
+            } catch (Exception e) {
                 Log.e(LOG_NAME, "Problem fetching teams.  Will try again soon.");
                 didFetchTeams = Boolean.FALSE;
                 try {
                     Thread.sleep(retryTime);
-                } catch (InterruptedException e) {
+                } catch (InterruptedException ie) {
                     e.printStackTrace();
                 }
             }
+
             attemptCount++;
         }
     }
