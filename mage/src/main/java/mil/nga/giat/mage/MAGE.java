@@ -23,6 +23,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -32,9 +33,9 @@ import mil.nga.geopackage.GeoPackageManager;
 import mil.nga.geopackage.factory.GeoPackageFactory;
 import mil.nga.geopackage.features.index.FeatureIndexManager;
 import mil.nga.geopackage.features.user.FeatureDao;
-import mil.nga.geopackage.io.GeoPackageIOUtils;
 import mil.nga.geopackage.tiles.user.TileDao;
 import mil.nga.geopackage.validate.GeoPackageValidate;
+import mil.nga.giat.mage.cache.GeoPackageCacheUtils;
 import mil.nga.giat.mage.login.LoginActivity;
 import mil.nga.giat.mage.map.cache.CacheOverlay;
 import mil.nga.giat.mage.map.cache.GeoPackageCacheOverlay;
@@ -325,7 +326,18 @@ public class MAGE extends MultiDexApplication implements IUserEventListener {
 	}
 
 	public void refreshTileOverlays() {
-		TileOverlaysTask task = new TileOverlaysTask(this);
+		TileOverlaysTask task = new TileOverlaysTask(this, null);
+		task.execute();
+	}
+
+	public void enableAndRefreshTileOverlays(String enableOverlayName) {
+		List<String> overlayNames = new ArrayList<>();
+		overlayNames.add(enableOverlayName);
+		enableAndRefreshTileOverlays(overlayNames);
+	}
+
+	public void enableAndRefreshTileOverlays(Collection<String> enableOverlayNames) {
+		TileOverlaysTask task = new TileOverlaysTask(this, enableOverlayNames);
 		task.execute();
 	}
 
@@ -340,22 +352,27 @@ public class MAGE extends MultiDexApplication implements IUserEventListener {
 	private class TileOverlaysTask extends AsyncTask<Void, Void, List<CacheOverlay>> {
 
 		private Context context;
+		private Set<String> enable = new HashSet<>();
 
-		public TileOverlaysTask(Context context){
+		public TileOverlaysTask(Context context, Collection<String> enable){
 			this.context = context;
+			if(enable != null) {
+				this.enable.addAll(enable);
+			}
 		}
 
 		@Override
 		protected List<CacheOverlay> doInBackground(Void... params) {
 			List<CacheOverlay> overlays = new ArrayList<CacheOverlay>();
 
-			// Delete all external GeoPackage links
+			// Add the existing external GeoPackage databases as cache overlays
 			GeoPackageManager geoPackageManager = GeoPackageFactory.getManager(context);
-			geoPackageManager.deleteAllExternal();
+			addGeoPackageCacheOverlays(context, overlays, geoPackageManager);
 
+			// Add each cache file or directory structure
 			Map<StorageType, File> storageLocations = StorageUtility.getAllStorageLocations();
 			for (File storageLocation : storageLocations.values()) {
-				File root = new File(storageLocation, "MapCache");
+				File root = new File(storageLocation, getString(R.string.overlay_cache_directory));
 				if (root.exists() && root.isDirectory() && root.canRead()) {
 
 					for (File cache : root.listFiles()) {
@@ -368,7 +385,10 @@ public class MAGE extends MultiDexApplication implements IUserEventListener {
 							}
 							// GeoPackage File
 							else if(GeoPackageValidate.hasGeoPackageExtension(cache)){
-								addGeoPackageCacheOverlays(context, overlays, cache, geoPackageManager);
+								GeoPackageCacheOverlay cacheOverlay = getGeoPackageCacheOverlay(context, cache, geoPackageManager);
+								if(cacheOverlay != null){
+									overlays.add(cacheOverlay);
+								}
 							}
 						}
 					}
@@ -376,22 +396,57 @@ public class MAGE extends MultiDexApplication implements IUserEventListener {
 			}
 
 			// Set what should be enabled based on preferences.
+			boolean update = false;
 			SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-			Set<String> enabledOverlays = preferences.getStringSet(getString(R.string.tileOverlaysKey), Collections.<String>emptySet());
+			Set<String> updatedEnabledOverlays = preferences.getStringSet(getString(R.string.tileOverlaysKey), Collections.<String>emptySet());
+			Set<String> enabledOverlays = new HashSet<>();
+			enabledOverlays.addAll(updatedEnabledOverlays);
 
 			// Determine which caches are enabled
 			for (CacheOverlay cacheOverlay : overlays) {
-				if (enabledOverlays.contains(cacheOverlay.getCacheName())) {
+
+				// Check and enable the cache
+				String cacheName = cacheOverlay.getCacheName();
+				if (enabledOverlays.remove(cacheName)) {
 					cacheOverlay.setEnabled(true);
 				}
 
-				// If a child is enabled, enable the parent
+				// Check the child caches
 				for (CacheOverlay childCache : cacheOverlay.getChildren()) {
-					if (enabledOverlays.contains(childCache.getCacheName())) {
+					if (enabledOverlays.remove(childCache.getCacheName())) {
 						childCache.setEnabled(true);
 						cacheOverlay.setEnabled(true);
 					}
 				}
+
+				// Check for new caches to enable in the overlays and preferences
+				if(enable.contains(cacheName) && !cacheOverlay.isEnabled()){
+
+					update = true;
+					cacheOverlay.setEnabled(true);
+					if(cacheOverlay.isSupportsChildren()){
+						for (CacheOverlay childCache : cacheOverlay.getChildren()) {
+							childCache.setEnabled(true);
+							updatedEnabledOverlays.add(childCache.getCacheName());
+						}
+					}else{
+						updatedEnabledOverlays.add(cacheName);
+					}
+				}
+
+			}
+
+			// Remove overlays in the preferences that no longer exist
+			if(!enabledOverlays.isEmpty()){
+				updatedEnabledOverlays.removeAll(enabledOverlays);
+				update = true;
+			}
+
+			// If new enabled cache overlays, update them in the preferences
+			if(update){
+				SharedPreferences.Editor editor = preferences.edit();
+				editor.putStringSet(getString(R.string.tileOverlaysKey), updatedEnabledOverlays);
+				editor.apply();
 			}
 
 			return overlays;
@@ -403,61 +458,106 @@ public class MAGE extends MultiDexApplication implements IUserEventListener {
 		}
 	}
 
-	/**
-	 * Add GeoPackage Cache Overlays
+    /**
+     * Add GeoPackage Cache Overlay for the existing databases
      *
-	 * @param context
-	 * @param overlays
-	 * @param cache
-	 * @param geoPackageManager
-	 */
-	private void addGeoPackageCacheOverlays(Context context, List<CacheOverlay> overlays, File cache, GeoPackageManager geoPackageManager){
-		// Import the GeoPackage as a linked file
-		String cacheName = GeoPackageIOUtils.getFileNameWithoutExtension(cache);
-		if(geoPackageManager.importGeoPackageAsExternalLink(cache, cacheName)){
-			// Add the GeoPackage overlay
-			GeoPackage geoPackage = geoPackageManager.open(cacheName);
-			try {
-				List<CacheOverlay> tables = new ArrayList<>();
+     * @param context
+     * @param overlays
+     * @param geoPackageManager
+     */
+    private void addGeoPackageCacheOverlays(Context context, List<CacheOverlay> overlays, GeoPackageManager geoPackageManager) {
 
-				// GeoPackage tile tables
-				List<String> tileTables = geoPackage.getTileTables();
-				for (String tileTable : tileTables) {
-					String tableCacheName = CacheOverlay.buildChildCacheName(cacheName, tileTable);
-					TileDao tileDao = geoPackage.getTileDao(tileTable);
-					int count = tileDao.count();
-					int minZoom = (int) tileDao.getMinZoom();
-					int maxZoom = (int) tileDao.getMaxZoom();
-					GeoPackageTableCacheOverlay tableCache = new GeoPackageTileTableCacheOverlay(tileTable, cacheName, tableCacheName, count, minZoom, maxZoom);
-					tables.add(tableCache);
-				}
+        // Delete any GeoPackages where the file is no longer accessible
+        geoPackageManager.deleteAllMissingExternal();
 
-				// GeoPackage feature tables
-				List<String> featureTables = geoPackage.getFeatureTables();
-				for (String featureTable : featureTables) {
-					String tableCacheName = CacheOverlay.buildChildCacheName(cacheName, featureTable);
-					FeatureDao featureDao = geoPackage.getFeatureDao(featureTable);
-					int count = featureDao.count();
-					GeometryType geometryType = featureDao.getGeometryType();
-					FeatureIndexManager indexer = new FeatureIndexManager(context, geoPackage, featureDao);
-					boolean indexed = indexer.isIndexed();
-					int minZoom = 0;
-					if(indexed) {
-						minZoom = featureDao.getZoomLevel() + getResources().getInteger(R.integer.geopackage_feature_tiles_min_zoom_offset);
-						minZoom = Math.max(minZoom, 0);
-						minZoom = Math.min(minZoom, GeoPackageFeatureTableCacheOverlay.MAX_ZOOM);
-					}
-					GeoPackageTableCacheOverlay tableCache = new GeoPackageFeatureTableCacheOverlay(featureTable, cacheName, tableCacheName, count, minZoom, indexed, geometryType);
-					tables.add(tableCache);
-				}
-
-				// Add the GeoPackage overlay with child tables
-				overlays.add(new GeoPackageCacheOverlay(cacheName, tables));
-			}finally {
-				geoPackage.close();
+        // Add each existing database as a cache
+        List<String> externalDatabases = geoPackageManager.externalDatabases();
+        for (String database : externalDatabases) {
+			GeoPackageCacheOverlay cacheOverlay = getGeoPackageCacheOverlay(context, geoPackageManager, database);
+			if(cacheOverlay != null){
+				overlays.add(cacheOverlay);
 			}
+        }
+    }
+
+    /**
+     * Get GeoPackage Cache Overlay for the database file
+     *
+     * @param context
+     * @param cache
+     * @param geoPackageManager
+	 * @return cache overlay
+     */
+    private GeoPackageCacheOverlay getGeoPackageCacheOverlay(Context context, File cache, GeoPackageManager geoPackageManager) {
+
+		GeoPackageCacheOverlay cacheOverlay = null;
+
+		// Import the GeoPackage if needed
+		String cacheName = GeoPackageCacheUtils.importGeoPackage(geoPackageManager, cache);
+		if(cacheName != null){
+			// Get the GeoPackage overlay
+			cacheOverlay = getGeoPackageCacheOverlay(context, geoPackageManager, cacheName);
 		}
-	}
+
+		return cacheOverlay;
+    }
+
+    /**
+     * Get the GeoPackage database as a cache overlay
+     *
+     * @param context
+     * @param geoPackageManager
+     * @param database
+	 * @return cache overlay
+     */
+    private GeoPackageCacheOverlay getGeoPackageCacheOverlay(Context context, GeoPackageManager geoPackageManager, String database) {
+
+		GeoPackageCacheOverlay cacheOverlay = null;
+
+        // Add the GeoPackage overlay
+        GeoPackage geoPackage = geoPackageManager.open(database);
+        try {
+            List<CacheOverlay> tables = new ArrayList<>();
+
+            // GeoPackage tile tables
+            List<String> tileTables = geoPackage.getTileTables();
+            for (String tileTable : tileTables) {
+                String tableCacheName = CacheOverlay.buildChildCacheName(database, tileTable);
+                TileDao tileDao = geoPackage.getTileDao(tileTable);
+                int count = tileDao.count();
+                int minZoom = (int) tileDao.getMinZoom();
+                int maxZoom = (int) tileDao.getMaxZoom();
+                GeoPackageTableCacheOverlay tableCache = new GeoPackageTileTableCacheOverlay(tileTable, database, tableCacheName, count, minZoom, maxZoom);
+                tables.add(tableCache);
+            }
+
+            // GeoPackage feature tables
+            List<String> featureTables = geoPackage.getFeatureTables();
+            for (String featureTable : featureTables) {
+                String tableCacheName = CacheOverlay.buildChildCacheName(database, featureTable);
+                FeatureDao featureDao = geoPackage.getFeatureDao(featureTable);
+                int count = featureDao.count();
+                GeometryType geometryType = featureDao.getGeometryType();
+                FeatureIndexManager indexer = new FeatureIndexManager(context, geoPackage, featureDao);
+                boolean indexed = indexer.isIndexed();
+                int minZoom = 0;
+                if (indexed) {
+                    minZoom = featureDao.getZoomLevel() + getResources().getInteger(R.integer.geopackage_feature_tiles_min_zoom_offset);
+                    minZoom = Math.max(minZoom, 0);
+                    minZoom = Math.min(minZoom, GeoPackageFeatureTableCacheOverlay.MAX_ZOOM);
+                }
+                GeoPackageTableCacheOverlay tableCache = new GeoPackageFeatureTableCacheOverlay(featureTable, database, tableCacheName, count, minZoom, indexed, geometryType);
+                tables.add(tableCache);
+            }
+
+            // Create the GeoPackage overlay with child tables
+			cacheOverlay = new GeoPackageCacheOverlay(database, tables);
+        } finally {
+            geoPackage.close();
+        }
+
+		return cacheOverlay;
+    }
 
 	@Override
 	public void onError(Throwable error) {
