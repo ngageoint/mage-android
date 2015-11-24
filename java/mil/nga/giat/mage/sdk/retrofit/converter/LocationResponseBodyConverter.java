@@ -18,11 +18,11 @@ import retrofit.Converter;
  * @author newmanw
  *
  */
-public class LocationResponseConverter implements Converter<ResponseBody, List<Location>> {
+public class LocationResponseBodyConverter implements Converter<ResponseBody, List<Location>> {
 
     private Event event;
 
-    public LocationResponseConverter(Event event) {
+    public LocationResponseBodyConverter(Event event) {
         this.event = event;
     }
 

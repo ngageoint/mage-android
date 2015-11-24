@@ -2,7 +2,6 @@ package mil.nga.giat.mage.sdk.jackson.deserializer;
 
 import android.util.Log;
 
-import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 
@@ -38,7 +37,7 @@ public class LocationDeserializer extends Deserializer {
 	public List<Location> parseUserLocations(InputStream is) throws IOException {
 		JsonParser parser = factory.createParser(is);
 
-		List<Location> locations = new ArrayList<Location>();
+		List<Location> locations = new ArrayList<>();
 
 		if (parser.nextToken() != JsonToken.START_ARRAY)
 			return locations;
@@ -53,7 +52,7 @@ public class LocationDeserializer extends Deserializer {
 	}
 
 	private Collection<Location> parseUserLocations(JsonParser parser) throws IOException {
-		Collection<Location> locations = new ArrayList<Location>();
+		Collection<Location> locations = new ArrayList<>();
 
 		if (parser.getCurrentToken() != JsonToken.START_OBJECT)
 			return locations;
@@ -71,19 +70,8 @@ public class LocationDeserializer extends Deserializer {
 		return locations;
 	}
 
-	public List<Location> parseLocations(InputStream is) throws IOException {
-		JsonParser parser = factory.createParser(is);
-
-		List<Location> locations = new ArrayList<Location>();
-		locations.addAll(parseLocations(parser));
-		parser.close();
-
-		return locations;
-	}
-
-
 	private Collection<Location> parseLocations(JsonParser parser) throws IOException {
-		Collection<Location> locations = new ArrayList<Location>();
+		Collection<Location> locations = new ArrayList<>();
 		parser.nextToken();
 		while (parser.nextToken() != JsonToken.END_ARRAY) {
 			locations.add(parseLocation(parser));

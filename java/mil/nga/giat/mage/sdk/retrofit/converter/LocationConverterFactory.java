@@ -35,7 +35,7 @@ public final class LocationConverterFactory extends Converter.Factory {
 
     @Override
     public Converter<ResponseBody, List<Location>> fromResponseBody(Type type, Annotation[] annotations) {
-        return new LocationResponseConverter(event);
+        return new LocationResponseBodyConverter(event);
     }
 
     @Override

@@ -19,26 +19,19 @@ import org.json.JSONObject;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.net.URI;
 import java.net.URL;
-import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Date;
 import java.util.List;
 
 import mil.nga.giat.mage.sdk.R;
 import mil.nga.giat.mage.sdk.datastore.layer.Layer;
-import mil.nga.giat.mage.sdk.datastore.observation.Observation;
-import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
 import mil.nga.giat.mage.sdk.datastore.staticfeature.StaticFeature;
 import mil.nga.giat.mage.sdk.datastore.user.Event;
 import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
 import mil.nga.giat.mage.sdk.gson.deserializer.LayerDeserializer;
 import mil.nga.giat.mage.sdk.http.client.HttpClientManager;
-import mil.nga.giat.mage.sdk.jackson.deserializer.ObservationDeserializer;
 import mil.nga.giat.mage.sdk.jackson.deserializer.StaticFeatureDeserializer;
-import mil.nga.giat.mage.sdk.utils.DateFormatFactory;
 import mil.nga.giat.mage.sdk.utils.ZipUtility;
 
 /**
@@ -199,71 +192,5 @@ public class MageServerGetRequests {
 			Log.d(LOG_NAME, "Took " + (stop - start) + " millis to deserialize " + staticFeatures.size() + " static features.");
 		}
 		return staticFeatures;
-	}
-
-	/**
-	 * Returns the observations from the server. Uses a date as in filter in the request.
-	 * 
-	 * @param context
-	 * @return
-	 */
-	public static List<Observation> getObservations(Context context) {
-		long start = 0;
-        DateFormat iso8601Format = DateFormatFactory.ISO8601();
-
-        List<Observation> observations = new ArrayList<Observation>();
-        Event currentEvent = EventHelper.getInstance(context).getCurrentEvent();
-        String currentEventId = currentEvent.getRemoteId();
-		HttpEntity entity = null;
-		try {
-			URL serverURL = new URL(PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.serverURLKey), context.getString(R.string.serverURLDefaultValue)));
-
-            if(currentEventId != null) {
-                ObservationHelper observationHelper = ObservationHelper.getInstance(context);
-
-                Date lastModifiedDate = observationHelper.getLatestCleanLastModified(context, currentEvent);
-
-                URL observationURL = new URL(serverURL, "/api/events/" + currentEventId + "/observations");
-                Uri.Builder uriBuilder = Uri.parse(observationURL.toURI().toString()).buildUpon();
-                uriBuilder.appendQueryParameter("startDate", iso8601Format.format(lastModifiedDate));
-
-                DefaultHttpClient httpclient = HttpClientManager.getInstance(context).getHttpClient();
-                Log.d(LOG_NAME, "Fetching all observations after: " + iso8601Format.format(lastModifiedDate));
-                Log.d(LOG_NAME, uriBuilder.build().toString());
-                HttpGet get = new HttpGet(new URI(uriBuilder.build().toString()));
-                HttpResponse response = httpclient.execute(get);
-
-                if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
-                    entity = response.getEntity();
-                    start = System.currentTimeMillis();
-                    observations = new ObservationDeserializer(currentEvent).parseObservations(entity.getContent());
-                } else {
-                    entity = response.getEntity();
-                    String error = EntityUtils.toString(entity);
-                    Log.e(LOG_NAME, "Bad request.");
-                    Log.e(LOG_NAME, error);
-                }
-            } else {
-                Log.e(LOG_NAME, "Could not pull the observations, because the event id was: " + String.valueOf(currentEventId));
-            }
-		} catch (Exception e) {
-			// this block should never flow exceptions up! Log for now.
-			Log.e(LOG_NAME, "There was a failure while performing an Observation Fetch operation.", e);
-		} finally {
-			try {
-				if (entity != null) {
-					entity.consumeContent();
-				}
-			} catch (Exception e) {
-				Log.w(LOG_NAME, "Trouble cleaning up after GET request.", e);
-			}
-		}
-		long stop = System.currentTimeMillis();
-
-		if (observations.size() > 0) {
-			Log.d(LOG_NAME, "Took " + (stop - start) + " millis to deserialize " + observations.size() + " observations.");
-		}
-
-		return observations;
 	}
 }
