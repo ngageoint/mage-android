@@ -58,7 +58,7 @@ public class UsersDeserializer implements JsonDeserializer<Collection<User>> {
 		Collection<User> users = new ArrayList<>();
 
 		for (JsonElement element : json.getAsJsonArray()) {
-			User user = userDeserializer.fromJson(element, new TypeToken<User>() {}.getType());
+			User user = userDeserializer.fromJson(element, User.class);
 			users.add(user);
 		}
 

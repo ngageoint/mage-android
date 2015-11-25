@@ -11,12 +11,10 @@ import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
-import com.google.gson.reflect.TypeToken;
 
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Map;
 
 import mil.nga.giat.mage.sdk.datastore.user.Event;
 import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
@@ -54,7 +52,7 @@ public class UserDeserializer implements JsonDeserializer<User> {
 	 */
 	public static Gson getGsonBuilder(Context context) {
 		GsonBuilder gsonBuilder = new GsonBuilder();
-		gsonBuilder.registerTypeAdapter(new TypeToken<Map.Entry<User, Collection<String>>>(){}.getType(), new UserDeserializer(context));
+		gsonBuilder.registerTypeAdapter(User.class, new UserDeserializer(context));
 		return gsonBuilder.create();
 	}
 

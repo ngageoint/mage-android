@@ -12,10 +12,8 @@ import org.json.JSONObject;
 
 import java.text.DateFormat;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
 
 import mil.nga.giat.mage.sdk.R;
 import mil.nga.giat.mage.sdk.datastore.DaoStore;
@@ -83,8 +81,7 @@ public class OAuthLoginTask extends AbstractAccountTask {
 				}
 
 				Gson userDeserializer = UserDeserializer.getGsonBuilder(mApplicationContext);
-				Map.Entry<User, Collection<String>> entry = userDeserializer.fromJson(userJson.toString(), new com.google.common.reflect.TypeToken<Map.Entry<User, Collection<String>>>() {}.getType());
-				User user = entry.getKey();
+				User user = userDeserializer.fromJson(userJson.toString(), User.class);
 				if (user != null) {
 					user.setCurrentUser(true);
 					user.setFetchedDate(new Date());
