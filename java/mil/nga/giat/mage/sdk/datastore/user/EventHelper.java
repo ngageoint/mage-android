@@ -59,7 +59,7 @@ public class EventHelper extends DaoHelper<Event> {
     /**
      * Only one-per JVM. Singleton.
      *
-     * @param pContext
+     * @param pContext context
      */
     private EventHelper(Context pContext) {
         super(pContext);
@@ -77,7 +77,7 @@ public class EventHelper extends DaoHelper<Event> {
 
     @Override
     public Event create(Event pEvent) throws EventException {
-        Event createdEvent = null;
+        Event createdEvent;
         try {
             createdEvent = eventDao.createIfNotExists(pEvent);
         } catch (SQLException sqle) {
@@ -98,7 +98,7 @@ public class EventHelper extends DaoHelper<Event> {
     }
 
 	public List<Event> readAll() throws EventException {
-		List<Event> events = new ArrayList<Event>();
+		List<Event> events = new ArrayList<>();
 		try {
 			events.addAll(eventDao.queryForAll());
 		} catch (SQLException sqle) {
@@ -152,7 +152,7 @@ public class EventHelper extends DaoHelper<Event> {
     }
 
     public List<Event> getEventsByTeam(Team pTeam) {
-        List<Event> events = new ArrayList<Event>();
+        List<Event> events = new ArrayList<>();
         try {
             QueryBuilder<TeamEvent, Long> teamEventQuery = teamEventDao.queryBuilder();
             teamEventQuery.selectColumns("event_id");
@@ -164,7 +164,7 @@ public class EventHelper extends DaoHelper<Event> {
 
             events = eventQuery.query();
             if(events == null) {
-                events = new ArrayList<Event>();
+                events = new ArrayList<>();
             }
 
         } catch (SQLException sqle) {
@@ -174,7 +174,7 @@ public class EventHelper extends DaoHelper<Event> {
     }
 
 	public List<Event> getEventsForCurrentUser() {
-		List<Event> events = new ArrayList<Event>();
+		List<Event> events = new ArrayList<>();
 		try {
 			User currentUser = UserHelper.getInstance(mApplicationContext).readCurrentUser();
 			if (currentUser != null) {
@@ -187,7 +187,7 @@ public class EventHelper extends DaoHelper<Event> {
 	}
 
 	public List<Event> getEventsByUser(User pUser) {
-		List<Event> events = new ArrayList<Event>();
+		List<Event> events = new ArrayList<>();
 		List<Team> teams = TeamHelper.getInstance(mApplicationContext).getTeamsByUser(pUser);
 		for(Team team : teams) {
 			for(Event e : EventHelper.getInstance(mApplicationContext).getEventsByTeam(team)) {

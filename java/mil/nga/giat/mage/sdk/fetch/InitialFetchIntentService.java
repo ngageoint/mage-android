@@ -11,7 +11,6 @@ import android.util.Log;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -32,7 +31,6 @@ import mil.nga.giat.mage.sdk.datastore.user.TeamHelper;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.datastore.user.UserTeam;
-import mil.nga.giat.mage.sdk.exceptions.EventException;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
 import mil.nga.giat.mage.sdk.login.LoginTaskFactory;
 import mil.nga.giat.mage.sdk.retrofit.resource.EventResource;
@@ -51,7 +49,7 @@ public class InitialFetchIntentService extends ConnectivityAwareIntentService {
 
     public static final String InitialFetchIntentServiceAction = InitialFetchIntentService.class.getCanonicalName();
 
-	private final BlockingQueue<Runnable> queue = new ArrayBlockingQueue<Runnable>(64);
+	private final BlockingQueue<Runnable> queue = new ArrayBlockingQueue<>(64);
 	private final ThreadPoolExecutor executor = new ThreadPoolExecutor(8, 8, 10, TimeUnit.SECONDS, queue);
 
     private static final long retryTime = 4000;
@@ -59,7 +57,6 @@ public class InitialFetchIntentService extends ConnectivityAwareIntentService {
 
 	private DownloadImageTask avatarFetch;
 	private DownloadImageTask iconFetch;
-
 
 	public InitialFetchIntentService() {
 		super(LOG_NAME);
@@ -75,25 +72,10 @@ public class InitialFetchIntentService extends ConnectivityAwareIntentService {
 
         if (isConnected && isDataFetchEnabled && !LoginTaskFactory.getInstance(getApplicationContext()).isLocalLogin()) {
             Log.d(LOG_NAME, "The device is currently connected.");
-            getRoles();
-			Map<User, Collection<String>> users = getUsers();
-            getTeams();
-            getEvents();
-
-            // Now that the client has fetched the events populate the user's currentEvent.
-            EventHelper eventHelper = EventHelper.getInstance(getApplicationContext());
-            for (Map.Entry<User, Collection<String>> entry : users.entrySet()) {
-                if (entry.getValue().size() > 0) {
-                    try {
-                        Event currentEvent = eventHelper.read(entry.getValue().iterator().next());
-                        entry.getKey().setCurrentEvent(currentEvent);
-                    } catch (EventException e) {
-                        Log.d(LOG_NAME, "Error reading event", e);
-                    }
-                } else {
-                    Log.d(LOG_NAME, "User has no recent events!");
-                }
-            }
+            fetchAndSaveRoles();
+			fetchAndSaveUsers();
+            fetchAndSaveTeams();
+            fetchAndSaveEvents();
 
             Handler handler = new Handler(Looper.getMainLooper());
 			// users are updated, finish getting image content
@@ -131,7 +113,7 @@ public class InitialFetchIntentService extends ConnectivityAwareIntentService {
     /**
      * Create roles
      */
-    private void getRoles() {
+    private void fetchAndSaveRoles() {
         Boolean didFetchRoles = Boolean.FALSE;
         int attemptCount = 0;
         while (!didFetchRoles && !isCanceled && attemptCount < retryCount) {
@@ -148,7 +130,7 @@ public class InitialFetchIntentService extends ConnectivityAwareIntentService {
                         break;
                     }
                     if (role != null) {
-                        role = roleHelper.createOrUpdate(role);
+                        roleHelper.createOrUpdate(role);
                     }
                 }
 
@@ -170,7 +152,7 @@ public class InitialFetchIntentService extends ConnectivityAwareIntentService {
     /**
      * Create users
      */
-    private Map<User, Collection<String>> getUsers() {
+    private void fetchAndSaveUsers() {
         int attemptCount = 0;
         Boolean didFetchUsers = Boolean.FALSE;
 
@@ -184,27 +166,28 @@ public class InitialFetchIntentService extends ConnectivityAwareIntentService {
             Log.e(LOG_NAME, "Could not get current user.");
         }
 
-        Map<User, Collection<String>> users = Collections.emptyMap();
         while(!didFetchUsers && !isCanceled && attemptCount < retryCount) {
             Log.d(LOG_NAME, "Attempting to fetch users...");
 
             try {
-                users = userResource.getUsers();
+                Collection<User> users = userResource.getUsers();
                 Log.d(LOG_NAME, "Fetched " + users.size() + " users");
 
-                final ArrayList<User> userAvatarsToFetch = new ArrayList<User>();
-                final ArrayList<User> userIconsToFetch = new ArrayList<User>();
-                for (User user : users.keySet()) {
+                final ArrayList<User> userAvatarsToFetch = new ArrayList<>();
+                final ArrayList<User> userIconsToFetch = new ArrayList<>();
+                for (User user : users) {
                     if (isCanceled) {
                         break;
                     }
                     try {
                         if (user != null) {
                             if (currentUser != null) {
-                                user.setCurrentUser(currentUser.getRemoteId().equalsIgnoreCase(user.getRemoteId()));
+                                boolean isCurrentUser = currentUser.getRemoteId().equalsIgnoreCase(user.getRemoteId());
+                                user.setCurrentUser(isCurrentUser);
                             }
                             user.setFetchedDate(new Date());
                             user = userHelper.createOrUpdate(user);
+
                             if (user.getAvatarUrl() != null) {
                                 userAvatarsToFetch.add(user);
                             }
@@ -214,13 +197,12 @@ public class InitialFetchIntentService extends ConnectivityAwareIntentService {
                         }
                     } catch (Exception e) {
                         Log.e(LOG_NAME, "There was a failure while performing an user fetch operation.", e);
-                        continue;
                     }
                 }
 
                 // pull down images (map icons and profile pictures)
-                List<String> avatarUrls = new ArrayList<String>();
-                List<String> avatarLocalFilePaths = new ArrayList<String>();
+                List<String> avatarUrls = new ArrayList<>();
+                List<String> avatarLocalFilePaths = new ArrayList<>();
                 for(User u : userAvatarsToFetch) {
                     avatarUrls.add(u.getAvatarUrl());
                     avatarLocalFilePaths.add(MediaUtility.getAvatarDirectory() + "/" + u.getId() + ".png");
@@ -230,7 +212,7 @@ public class InitialFetchIntentService extends ConnectivityAwareIntentService {
                     @Override
                     protected Void doInBackground(Void... v) {
                         Void result = super.doInBackground(v);
-                        for(int i =0 ; i<localFilePaths.size(); i++) {
+                        for(int i = 0; i < localFilePaths.size(); i++) {
                             try {
                                 if(!errors.get(i)) {
                                     User u = userHelper.read(userAvatarsToFetch.get(i).getId());
@@ -245,8 +227,8 @@ public class InitialFetchIntentService extends ConnectivityAwareIntentService {
                     }
                 };
 
-                List<String> iconUrls = new ArrayList<String>();
-                List<String> iconLocalFilePaths = new ArrayList<String>();
+                List<String> iconUrls = new ArrayList<>();
+                List<String> iconLocalFilePaths = new ArrayList<>();
                 for(User u : userIconsToFetch) {
                     iconUrls.add(u.getIconUrl());
                     iconLocalFilePaths.add(MediaUtility.getUserIconDirectory() + "/" + u.getId() + ".png");
@@ -258,7 +240,7 @@ public class InitialFetchIntentService extends ConnectivityAwareIntentService {
                     protected Void doInBackground(Void... v) {
                         Void result = super.doInBackground(v);
 
-                        for(int i =0 ; i<localFilePaths.size(); i++) {
+                        for(int i = 0; i < localFilePaths.size(); i++) {
                             try {
                                 if(!errors.get(i)) {
                                     User u = userHelper.read(userIconsToFetch.get(i).getId());
@@ -287,14 +269,12 @@ public class InitialFetchIntentService extends ConnectivityAwareIntentService {
 
             attemptCount++;
         }
-
-		return users;
     }
 
     /**
      * Create teams
      */
-    private void getTeams() {
+    private void fetchAndSaveTeams() {
         UserHelper userHelper = UserHelper.getInstance(getApplicationContext());
 
         Boolean didFetchTeams = Boolean.FALSE;
@@ -328,7 +308,6 @@ public class InitialFetchIntentService extends ConnectivityAwareIntentService {
                         }
                     } catch (Exception e) {
                         Log.e(LOG_NAME, "There was a failure while performing a team fetch operation.", e);
-                        continue;
                     }
                 }
 
@@ -354,13 +333,14 @@ public class InitialFetchIntentService extends ConnectivityAwareIntentService {
      * Create events
      * TODO make sure events get deleted
      */
-    private void getEvents() {
+    private void fetchAndSaveEvents() {
         Boolean didFetchEvents = Boolean.FALSE;
         int attemptCount = 0;
         EventResource eventResource = new EventResource(getApplicationContext());
         while(!didFetchEvents && !isCanceled && attemptCount < retryCount) {
             TeamHelper teamHelper = TeamHelper.getInstance(getApplicationContext());
             teamHelper.deleteTeamEvents();
+
             Log.d(LOG_NAME, "Attempting to fetch events...");
 
             try {
@@ -386,7 +366,6 @@ public class InitialFetchIntentService extends ConnectivityAwareIntentService {
                         }
                     } catch (Exception e) {
                         Log.e(LOG_NAME, "There was a failure while performing an event fetch operation.", e);
-                        continue;
                     }
                 }
 

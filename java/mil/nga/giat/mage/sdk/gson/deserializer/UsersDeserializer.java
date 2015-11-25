@@ -11,9 +11,8 @@ import com.google.gson.JsonParseException;
 import com.google.gson.reflect.TypeToken;
 
 import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
 
 import mil.nga.giat.mage.sdk.datastore.user.User;
 
@@ -23,7 +22,7 @@ import mil.nga.giat.mage.sdk.datastore.user.User;
  * @author newmanw
  * 
  */
-public class UsersDeserializer implements JsonDeserializer<Map<User, Collection<String>>> {
+public class UsersDeserializer implements JsonDeserializer<Collection<User>> {
 
 	private static final String LOG_NAME = UsersDeserializer.class.getName();
 
@@ -41,7 +40,7 @@ public class UsersDeserializer implements JsonDeserializer<Map<User, Collection<
 	 */
 	public static Gson getGsonBuilder(Context context) {
 		GsonBuilder gsonBuilder = new GsonBuilder();
-		gsonBuilder.registerTypeAdapter(new TypeToken<Map<User, Collection<String>>>(){}.getType(), new UsersDeserializer(context));
+		gsonBuilder.registerTypeAdapter(new TypeToken<Collection<User>>(){}.getType(), new UsersDeserializer(context));
 		return gsonBuilder.create();
 	}
 
@@ -55,12 +54,12 @@ public class UsersDeserializer implements JsonDeserializer<Map<User, Collection<
 	 * @throws JsonParseException
 	 */
 	@Override
-	public Map<User, Collection<String>> deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
-		Map<User, Collection<String>> users = new HashMap<>();
+	public Collection<User> deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
+		Collection<User> users = new ArrayList<>();
 
 		for (JsonElement element : json.getAsJsonArray()) {
-			Map.Entry<User, Collection<String>> user = userDeserializer.fromJson(element, new TypeToken<Map.Entry<User, Collection<String>>>() {}.getType());
-			users.put(user.getKey(), user.getValue());
+			User user = userDeserializer.fromJson(element, new TypeToken<User>() {}.getType());
+			users.add(user);
 		}
 
 		return users;

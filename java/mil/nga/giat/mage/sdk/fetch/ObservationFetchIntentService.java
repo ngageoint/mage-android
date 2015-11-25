@@ -48,7 +48,6 @@ public class ObservationFetchIntentService extends ConnectivityAwareIntentServic
 	protected void onHandleIntent(Intent intent) {
 		super.onHandleIntent(intent);
 
-
 		ScreenChangeReceiver.getInstance().addListener(this);
 		PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).registerOnSharedPreferenceChangeListener(this);
 		ObservationHelper observationHelper = ObservationHelper.getInstance(getApplicationContext());
@@ -87,7 +86,7 @@ public class ObservationFetchIntentService extends ConnectivityAwareIntentServic
 							final long sixHoursInMilliseconds = 6 * 60 * 60 * 1000;
 							if (user == null || (new Date()).after(new Date(user.getFetchedDate().getTime() + sixHoursInMilliseconds))) {
 								// get any users that were not recognized or expired
-								new UserServerFetch(getApplicationContext()).fetch(new String[] { userId });
+								new UserServerFetch(getApplicationContext()).fetch(userId);
 							}
 						}
 
@@ -105,7 +104,6 @@ public class ObservationFetchIntentService extends ConnectivityAwareIntentServic
 						}
 					} catch (Exception e) {
 						Log.e(LOG_NAME, "There was a failure while performing an Observation Fetch opperation.", e);
-						continue;
 					}
 				}
 			} else {

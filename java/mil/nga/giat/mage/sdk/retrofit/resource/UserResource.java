@@ -5,9 +5,8 @@ import android.preference.PreferenceManager;
 import android.util.Log;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
 
 import mil.nga.giat.mage.sdk.R;
 import mil.nga.giat.mage.sdk.datastore.user.User;
@@ -29,7 +28,7 @@ public class UserResource {
 
     public interface UserService {
         @GET("/api/users")
-        Call<Map<User, Collection<String>>> getUsers();
+        Call<Collection<User>> getUsers();
     }
 
     private static final String LOG_NAME = UserResource.class.getName();
@@ -40,8 +39,8 @@ public class UserResource {
         this.context = context;
     }
 
-    public Map<User, Collection<String>> getUsers() throws IOException {
-        Map<User, Collection<String>> users = new HashMap<>();
+    public Collection<User> getUsers() throws IOException {
+        Collection<User> users = new ArrayList<>();
 
         String baseUrl = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.serverURLKey), context.getString(R.string.serverURLDefaultValue));
         Retrofit retrofit = new Retrofit.Builder()
@@ -51,7 +50,7 @@ public class UserResource {
                 .build();
 
         UserService service = retrofit.create(UserService.class);
-        Response<Map<User, Collection<String>>> response = service.getUsers().execute();
+        Response<Collection<User>> response = service.getUsers().execute();
 
         if (response.isSuccess()) {
             users = response.body();

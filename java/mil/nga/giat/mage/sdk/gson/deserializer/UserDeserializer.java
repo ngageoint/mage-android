@@ -14,15 +14,17 @@ import com.google.gson.JsonParseException;
 import com.google.gson.reflect.TypeToken;
 
 import java.lang.reflect.Type;
-import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
 
+import mil.nga.giat.mage.sdk.datastore.user.Event;
+import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
 import mil.nga.giat.mage.sdk.datastore.user.Phone;
 import mil.nga.giat.mage.sdk.datastore.user.Role;
 import mil.nga.giat.mage.sdk.datastore.user.RoleHelper;
 import mil.nga.giat.mage.sdk.datastore.user.User;
+import mil.nga.giat.mage.sdk.exceptions.EventException;
 import mil.nga.giat.mage.sdk.exceptions.RoleException;
 
 /**
@@ -31,14 +33,17 @@ import mil.nga.giat.mage.sdk.exceptions.RoleException;
  * @author newmanw
  * 
  */
-public class UserDeserializer implements JsonDeserializer<Map.Entry<User, Collection<String>>> {
+public class UserDeserializer implements JsonDeserializer<User> {
 
 	private static final String LOG_NAME = UserDeserializer.class.getName();
 
 	private Context mContext;
+	private EventHelper eventHelper;
+
 
 	public UserDeserializer(Context context) {
 		this.mContext = context;
+		eventHelper = EventHelper.getInstance(context);
 	}
 	
 	/**
@@ -63,7 +68,7 @@ public class UserDeserializer implements JsonDeserializer<Map.Entry<User, Collec
 	 * @throws JsonParseException
 	 */
 	@Override
-	public Map.Entry<User, Collection<String>> deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
+	public User deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
 		JsonObject jsonUser = json.getAsJsonObject();
 
 		String remoteId = jsonUser.get("id").getAsString();
@@ -100,7 +105,7 @@ public class UserDeserializer implements JsonDeserializer<Map.Entry<User, Collec
 					}
 				}
 			}
-        } else if(jsonUser.get("roleId") != null) {
+        } else if (jsonUser.get("roleId") != null) {
 			if (jsonUser.get("roleId").isJsonPrimitive()) {
 				String roleId = jsonUser.get("roleId").getAsString();
 				if (roleId != null) {
@@ -146,16 +151,19 @@ public class UserDeserializer implements JsonDeserializer<Map.Entry<User, Collec
 			iconUrl = jsonUser.get("iconUrl").getAsString();
 		}
 
-		Collection<String> recentEventIds = new ArrayList<>();
-        if (jsonUser.get("recentEventIds") != null && jsonUser.get("recentEventIds").isJsonArray()) {
-			for (JsonElement element : jsonUser.get("recentEventIds").getAsJsonArray()) {
-				recentEventIds.add(element.getAsString());
+		Event event = null;
+		if (jsonUser.get("recentEventIds") != null && jsonUser.get("recentEventIds").isJsonArray()) {
+			for (JsonElement jsonEventId : jsonUser.get("recentEventIds").getAsJsonArray()) {
+				try {
+					event = eventHelper.read(jsonEventId.getAsString());
+				} catch (EventException e) {
+					Log.d(LOG_NAME, "Error reading event", e);
+				}
 			}
         } else {
             Log.w(LOG_NAME, "User has no recent events!");
         }
 
-		User user = new User(remoteId, email, displayName, username, role, null, primaryPhone, avatarUrl, iconUrl);
-		return new AbstractMap.SimpleEntry<User, Collection<String>>(user, recentEventIds);
+		return new User(remoteId, email, displayName, username, role, event, primaryPhone, avatarUrl, iconUrl);
 	}
 }
