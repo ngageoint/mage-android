@@ -62,15 +62,15 @@ public class ObservationFetchIntentService extends ConnectivityAwareIntentServic
 			Boolean isDataFetchEnabled = sharedPreferences.getBoolean(getString(R.string.dataFetchEnabledKey), getResources().getBoolean(R.bool.dataFetchEnabledDefaultValue));
 
 			if (isConnected && isDataFetchEnabled && !LoginTaskFactory.getInstance(getApplicationContext()).isLocalLogin()) {
+				Event event = EventHelper.getInstance(getApplicationContext()).getCurrentEvent();
+				Log.d(LOG_NAME, "The device is currently connected. Attempting to fetch Observations for event " + event.getName());
 
 				// Pull the icons here
 				if(needToFetchIcons.get()) {
-					new ObservationBitmapFetch(getApplicationContext()).fetch();
+					new ObservationBitmapFetch(getApplicationContext()).fetch(event);
 					needToFetchIcons.set(false);
 				}
 
-				Event event = EventHelper.getInstance(getApplicationContext()).getCurrentEvent();
-				Log.d(LOG_NAME, "The device is currently connected. Attempting to fetch Observations for event " + event.getName());
 				Collection<Observation> observations = observationResource.getObservations(event);
 				Log.d(LOG_NAME, "Fetched " + observations.size() + " new observations");
 				for (Observation observation : observations) {

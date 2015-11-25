@@ -4,7 +4,10 @@ import android.content.Context;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
+import com.squareup.okhttp.ResponseBody;
+
 import java.io.IOException;
+import java.io.InputStream;
 import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -34,6 +37,9 @@ public class ObservationResource {
     public interface ObservationService {
         @GET("/api/events/{eventId}/observations")
         Call<Collection<Observation>> getObservations(@Path("eventId") String eventId, @Query("startDate") String startDate);
+
+        @GET("/api/events/{eventId}/form/icons.zip")
+        Call<ResponseBody> getObservationIcons(@Path("eventId") String eventId);
     }
 
     private static final String LOG_NAME = ObservationResource.class.getName();
@@ -80,5 +86,28 @@ public class ObservationResource {
         }
 
         return observations;
+    }
+
+    public InputStream getObservationIcons(Event event) throws IOException {
+        String baseUrl = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.serverURLKey), context.getString(R.string.serverURLDefaultValue));
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl(baseUrl)
+                .client(HttpClient.httpClient(context))
+                .build();
+
+        ObservationService service = retrofit.create(ObservationService.class);
+        Response<ResponseBody> response = service.getObservationIcons(event.getRemoteId()).execute();
+
+        InputStream inputStream = null;
+        if (response.isSuccess()) {
+            inputStream = response.body().byteStream();
+        } else {
+            Log.e(LOG_NAME, "Bad request.");
+            if (response.errorBody() != null) {
+                Log.e(LOG_NAME, response.errorBody().toString());
+            }
+        }
+
+        return inputStream;
     }
 }
