@@ -25,16 +25,20 @@ import mil.nga.giat.mage.sdk.datastore.layer.LayerHelper;
 import mil.nga.giat.mage.sdk.datastore.staticfeature.StaticFeature;
 import mil.nga.giat.mage.sdk.datastore.staticfeature.StaticFeatureHelper;
 import mil.nga.giat.mage.sdk.datastore.staticfeature.StaticFeatureProperty;
-import mil.nga.giat.mage.sdk.exceptions.LayerException;
+import mil.nga.giat.mage.sdk.datastore.user.Event;
+import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
 import mil.nga.giat.mage.sdk.exceptions.StaticFeatureException;
 import mil.nga.giat.mage.sdk.http.client.HttpClientManager;
-import mil.nga.giat.mage.sdk.http.get.MageServerGetRequests;
 import mil.nga.giat.mage.sdk.login.LoginTaskFactory;
+import mil.nga.giat.mage.sdk.retrofit.resource.LayerResource;
 
 public class StaticFeatureServerFetch extends AbstractServerFetch {
 
+	private LayerResource layerResource;
+
 	public StaticFeatureServerFetch(Context context) {
 		super(context);
+		layerResource = new LayerResource(context);
 	}
 
 	private static final String LOG_NAME = StaticFeatureServerFetch.class.getName();
@@ -52,9 +56,11 @@ public class StaticFeatureServerFetch extends AbstractServerFetch {
 			return;
 		}
 
-		Log.d(LOG_NAME, "Pulling static layers.");
-		Collection<Layer> layers = MageServerGetRequests.getStaticLayers(mContext);
+		Event event = EventHelper.getInstance(mContext).getCurrentEvent();
+		Log.d(LOG_NAME, "Pulling static layers for event " + event.getName());
 		try {
+			Collection<Layer> layers = layerResource.getLayers(event);
+
 			if (deleteLocal) {
 				layerHelper.deleteAll();
 			}
@@ -76,7 +82,7 @@ public class StaticFeatureServerFetch extends AbstractServerFetch {
 					try {
 						Log.i(LOG_NAME, "Loading static features for layer " + layer.getName() + ".");
 
-						Collection<StaticFeature> staticFeatures = MageServerGetRequests.getStaticFeatures(mContext, layer);
+						Collection<StaticFeature> staticFeatures = layerResource.getFeatures(layer);
 
 						DefaultHttpClient httpclient = HttpClientManager.getInstance(mContext).getHttpClient();
 
@@ -148,7 +154,7 @@ public class StaticFeatureServerFetch extends AbstractServerFetch {
 					}
 				}
 			}
-		} catch (LayerException e) {
+		} catch (Exception e) {
 			Log.e(LOG_NAME, "Problem creating layers.", e);
 		}
 	}
