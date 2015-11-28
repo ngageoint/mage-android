@@ -70,6 +70,16 @@ public class LocationDeserializer extends Deserializer {
 		return locations;
 	}
 
+	public List<Location> parseLocations(InputStream is) throws IOException {
+		JsonParser parser = factory.createParser(is);
+
+		List<Location> locations = new ArrayList<>();
+		locations.addAll(parseLocations(parser));
+		parser.close();
+
+		return locations;
+	}
+
 	private Collection<Location> parseLocations(JsonParser parser) throws IOException {
 		Collection<Location> locations = new ArrayList<>();
 		parser.nextToken();

@@ -9,7 +9,6 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.lang.reflect.Type;
 import java.nio.charset.Charset;
-import java.util.Collection;
 
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import okio.Buffer;
@@ -18,12 +17,12 @@ import retrofit.Converter;
 /**
  * Retrofit observation request body converter
  *
- * Handles GSON serialization for locations
+ * Handles GSON serialization for an observation
  *
  * @author newmanw
  *
  */
-public class ObservationRequestBodyConverter implements Converter<Collection<Observation>, RequestBody> {
+public class ObservationRequestBodyConverter implements Converter<Observation, RequestBody> {
 
     private static final MediaType MEDIA_TYPE = MediaType.parse("application/json; charset=UTF-8");
     private static final Charset UTF_8 = Charset.forName("UTF-8");
@@ -37,11 +36,11 @@ public class ObservationRequestBodyConverter implements Converter<Collection<Obs
     }
 
     @Override
-    public RequestBody convert(Collection<Observation> observations) throws IOException {
+    public RequestBody convert(Observation observation) throws IOException {
         Buffer buffer = new Buffer();
         Writer writer = new OutputStreamWriter(buffer.outputStream(), UTF_8);
         try {
-            gson.toJson(observations, type, writer);
+            gson.toJson(observation, type, writer);
             writer.flush();
         } catch (IOException e) {
             throw new AssertionError(e); // Writing to Buffer does no I/O.

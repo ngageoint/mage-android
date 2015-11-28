@@ -3,7 +3,6 @@ package mil.nga.giat.mage.sdk.retrofit.converter;
 import com.squareup.okhttp.ResponseBody;
 
 import java.io.IOException;
-import java.util.Collection;
 
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.datastore.user.Event;
@@ -11,14 +10,14 @@ import mil.nga.giat.mage.sdk.jackson.deserializer.ObservationDeserializer;
 import retrofit.Converter;
 
 /**
- * Retrofit location response body converter
+ * Retrofit observation response body converter
  *
- * Handles Jackson deserialization for observations
+ * Handles Jackson deserialization for an observation
  *
  * @author newmanw
  *
  */
-public class ObservationResponseBodyConverter implements Converter<ResponseBody, Collection<Observation>> {
+public class ObservationResponseBodyConverter implements Converter<ResponseBody, Observation> {
 
     private Event event;
 
@@ -27,8 +26,8 @@ public class ObservationResponseBodyConverter implements Converter<ResponseBody,
     }
 
     @Override
-    public Collection<Observation> convert(ResponseBody body) throws IOException {
-        return new ObservationDeserializer(event).parseObservations(body.byteStream());
+    public Observation convert(ResponseBody body) throws IOException {
+        return new ObservationDeserializer(event).parseObservation(body.byteStream());
     }
 
 }

@@ -54,7 +54,7 @@ public class LocationResource {
         String baseUrl = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.serverURLKey), context.getString(R.string.serverURLDefaultValue));
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl(baseUrl)
-                .addConverterFactory(LocationConverterFactory.create(event))
+                .addConverterFactory(LocationConverterFactory.create(event, true))
                 .client(HttpClient.httpClient(context))
                 .build();
 
@@ -92,7 +92,7 @@ public class LocationResource {
             String baseUrl = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.serverURLKey), context.getString(R.string.serverURLDefaultValue));
             Retrofit retrofit = new Retrofit.Builder()
                     .baseUrl(baseUrl)
-                    .addConverterFactory(LocationConverterFactory.create(event))
+                    .addConverterFactory(LocationConverterFactory.create(event, false))
                     .client(HttpClient.httpClient(context))
                     .build();
 

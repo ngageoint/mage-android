@@ -21,14 +21,18 @@ import retrofit.Converter;
 public class LocationResponseBodyConverter implements Converter<ResponseBody, List<Location>> {
 
     private Event event;
+    private boolean groupByUser;
 
-    public LocationResponseBodyConverter(Event event) {
+    public LocationResponseBodyConverter(Event event, boolean groupByUser) {
         this.event = event;
+        this.groupByUser = groupByUser;
     }
 
     @Override
     public List<Location> convert(ResponseBody body) throws IOException {
-        return new LocationDeserializer(event).parseUserLocations(body.byteStream());
+        LocationDeserializer deserializer = new LocationDeserializer(event);
+        return groupByUser ?
+                deserializer.parseUserLocations(body.byteStream()) :
+                deserializer.parseLocations(body.byteStream());
     }
-
 }

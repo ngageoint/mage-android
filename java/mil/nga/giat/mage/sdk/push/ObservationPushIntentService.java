@@ -15,8 +15,8 @@ import mil.nga.giat.mage.sdk.connectivity.ConnectivityUtility;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
 import mil.nga.giat.mage.sdk.event.IObservationEventListener;
-import mil.nga.giat.mage.sdk.http.post.MageServerPostRequests;
 import mil.nga.giat.mage.sdk.login.LoginTaskFactory;
+import mil.nga.giat.mage.sdk.retrofit.resource.ObservationResource;
 
 public class ObservationPushIntentService extends ConnectivityAwareIntentService implements IObservationEventListener {
 
@@ -40,6 +40,8 @@ public class ObservationPushIntentService extends ConnectivityAwareIntentService
 		super.onHandleIntent(intent);
 		ObservationHelper.getInstance(getApplicationContext()).addListener(this);
 		pushFrequency = getObservationPushFrequency();
+
+		ObservationResource observationResource = new ObservationResource(getApplicationContext());
 		while (!isCanceled) {
 			if (isConnected && !LoginTaskFactory.getInstance(getApplicationContext()).isLocalLogin()) {
 				pushFrequency = getObservationPushFrequency();
@@ -52,7 +54,7 @@ public class ObservationPushIntentService extends ConnectivityAwareIntentService
 						break;
 					}
 					Log.d(LOG_NAME, "Pushing observation with id: " + observation.getId());
-					observation = MageServerPostRequests.postObservation(observation, getApplicationContext());
+					observation = observationResource.saveObservation(observation);
 					if(observation != null) {
 						Log.d(LOG_NAME, "Pushed observation with remote_id: " + observation.getRemoteId());
 					}

@@ -21,21 +21,23 @@ import retrofit.Converter;
  */
 public final class LocationConverterFactory extends Converter.Factory {
 
-    private final Gson gson;
+    private Gson gson;
     private Event event;
+    private boolean groupByUser;
 
-    public static LocationConverterFactory create(Event event) {
-        return new LocationConverterFactory(LocationSerializer.getGsonBuilder(), event);
+    public static LocationConverterFactory create(Event event, boolean groupByUser) {
+        return new LocationConverterFactory(LocationSerializer.getGsonBuilder(), event, groupByUser);
     }
 
-    private LocationConverterFactory(Gson gson, Event event) {
+    private LocationConverterFactory(Gson gson, Event event, boolean groupByUser) {
         this.gson = gson;
         this.event = event;
+        this.groupByUser = groupByUser;
     }
 
     @Override
     public Converter<ResponseBody, List<Location>> fromResponseBody(Type type, Annotation[] annotations) {
-        return new LocationResponseBodyConverter(event);
+        return new LocationResponseBodyConverter(event, groupByUser);
     }
 
     @Override

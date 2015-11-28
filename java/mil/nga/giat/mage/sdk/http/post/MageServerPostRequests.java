@@ -9,10 +9,8 @@ import com.google.gson.Gson;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
-import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
-import org.apache.http.entity.StringEntity;
 import org.apache.http.entity.mime.FormBodyPart;
 import org.apache.http.entity.mime.MultipartEntity;
 import org.apache.http.entity.mime.content.FileBody;
@@ -28,16 +26,12 @@ import java.util.Date;
 import mil.nga.giat.mage.sdk.R;
 import mil.nga.giat.mage.sdk.datastore.DaoStore;
 import mil.nga.giat.mage.sdk.datastore.observation.Attachment;
-import mil.nga.giat.mage.sdk.datastore.observation.Observation;
-import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
 import mil.nga.giat.mage.sdk.datastore.user.Event;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.gson.deserializer.UserDeserializer;
-import mil.nga.giat.mage.sdk.gson.serializer.ObservationSerializer;
 import mil.nga.giat.mage.sdk.http.client.HttpClientManager;
 import mil.nga.giat.mage.sdk.jackson.deserializer.AttachmentDeserializer;
-import mil.nga.giat.mage.sdk.jackson.deserializer.ObservationDeserializer;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
 
 /**
@@ -51,65 +45,6 @@ public class MageServerPostRequests {
 	private static final String LOG_NAME = MageServerPostRequests.class.getName();
 
     private static AttachmentDeserializer attachmentDeserializer = new AttachmentDeserializer();
-
-	/**
-	 * POST an {@link Observation} to the server.
-	 * 
-	 * @param observation
-	 *            The Observation to post.
-	 * @param context
-	 */
-	public static Observation postObservation(Observation observation, Context context) {
-
-		ObservationHelper observationHelper = ObservationHelper.getInstance(context);
-		Observation savedObservation = null;
-
-		HttpEntity entity = null;
-		HttpEntityEnclosingRequestBase request = null;
-		try {
-			String observationEventIdString = String.valueOf(observation.getEvent().getRemoteId());
-			DefaultHttpClient httpClient = HttpClientManager.getInstance(context).getHttpClient();
-
-			URL serverURL = new URL(PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.serverURLKey), context.getString(R.string.serverURLDefaultValue)));
-			URI endpointUri = null;
-
-			if (observation.getRemoteId() == null || observation.getRemoteId().trim().isEmpty()) {
-				endpointUri = new URL(serverURL + "/api/events/" + observationEventIdString + "/observations").toURI();
-				request = new HttpPost(endpointUri);
-			} else {
-				endpointUri = new URL(serverURL + "/api/events/" + observationEventIdString + "/observations/" + observation.getRemoteId()).toURI();
-				request = new HttpPut(endpointUri);
-			}
-			request.addHeader("Content-Type", "application/json; charset=utf-8");
-			Gson gson = ObservationSerializer.getGsonBuilder();
-			request.setEntity(new StringEntity(gson.toJson(observation)));
-
-			HttpResponse response = httpClient.execute(request);
-			if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
-				entity = response.getEntity();
-				Observation returnedObservation = new ObservationDeserializer(observation.getEvent()).parseObservation(entity.getContent());
-				returnedObservation.setDirty(Boolean.FALSE);
-				returnedObservation.setId(observation.getId());
-				savedObservation = observationHelper.update(returnedObservation);
-			} else {
-				entity = response.getEntity();
-				String error = EntityUtils.toString(entity);
-				Log.e(LOG_NAME, "Bad request.");
-				Log.e(LOG_NAME, error);
-			}
-		} catch (Exception e) {
-			Log.e(LOG_NAME, "Failure pushing observation.", e);
-		} finally {
-			try {
-				if (entity != null) {
-					entity.consumeContent();
-				}
-			} catch (Exception e) {
-                Log.w(LOG_NAME, "Trouble cleaning up after POST request.", e);
-			}
-		}
-		return savedObservation;
-	}
 
 	/**
 	 * POST an {@link Attachment} to the server.
