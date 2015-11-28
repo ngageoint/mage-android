@@ -6,8 +6,8 @@ import android.util.Log;
 import mil.nga.giat.mage.sdk.connectivity.ConnectivityUtility;
 import mil.nga.giat.mage.sdk.datastore.user.Event;
 import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
-import mil.nga.giat.mage.sdk.exceptions.EventException;
-import mil.nga.giat.mage.sdk.http.post.MageServerPostRequests;
+import mil.nga.giat.mage.sdk.datastore.user.User;
+import mil.nga.giat.mage.sdk.retrofit.resource.UserResource;
 
 /**
  * Updates user's recent event
@@ -19,13 +19,15 @@ public class RecentEventTask extends AbstractAccountTask {
 
     private static final String LOG_NAME = RecentEventTask.class.getName();
 
-    public RecentEventTask(AccountDelegate delegate, Context applicationContext) {
-        super(delegate, applicationContext);
+    private UserResource userResource;
+
+    public RecentEventTask(AccountDelegate delegate, Context context) {
+        super(delegate, context);
+        userResource = new UserResource(context);
     }
 
     @Override
     protected AccountStatus doInBackground(String... params) {
-
         // get the user's recent event
         String userRecentEventRemoteId = params[0];
 
@@ -34,13 +36,17 @@ public class RecentEventTask extends AbstractAccountTask {
 
             // tell the server and update the local store
             if(ConnectivityUtility.isOnline(mApplicationContext) && !LoginTaskFactory.getInstance(mApplicationContext).isLocalLogin()) {
-                if(MageServerPostRequests.postCurrentUsersRecentEvent(userRecentEvent, mApplicationContext)) {
+                User currentUser = userHelper.readCurrentUser();
+
+                User user = userResource.addRecentEvent(currentUser, userRecentEvent);
+                if (user != null) {
                     return new AccountStatus(AccountStatus.Status.SUCCESSFUL_LOGIN);
                 }
             }
-        } catch(EventException ee) {
+        } catch(Exception e) {
             Log.e(LOG_NAME, "Unable to get current event.");
         }
+
         return new AccountStatus(AccountStatus.Status.FAILED_LOGIN);
     }
 }

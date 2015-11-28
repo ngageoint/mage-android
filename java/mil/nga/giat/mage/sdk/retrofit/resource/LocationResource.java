@@ -68,7 +68,7 @@ public class LocationResource {
             } else {
                 Log.e(LOG_NAME, "Bad request.");
                 if (response.errorBody() != null) {
-                    Log.e(LOG_NAME, response.errorBody().toString());
+                    Log.e(LOG_NAME, response.errorBody().string());
                 }
             }
         } catch (Exception e) {
@@ -118,7 +118,7 @@ public class LocationResource {
             } else {
                 Log.e(LOG_NAME, "Bad request.");
                 if (response.errorBody() != null) {
-                    Log.e(LOG_NAME, response.errorBody().toString());
+                    Log.e(LOG_NAME, response.errorBody().string());
                 }
             }
 
