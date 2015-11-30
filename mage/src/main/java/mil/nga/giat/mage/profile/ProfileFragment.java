@@ -30,8 +30,8 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapView;
 import com.google.android.gms.maps.MapsInitializer;
 import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.Point;
@@ -63,14 +63,15 @@ public class ProfileFragment extends Fragment implements OnMapReadyCallback {
 	private static final int CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE = 100;
 	private static final int GALLERY_ACTIVITY_REQUEST_CODE = 400;
 	
-	public static String INITIAL_LOCATION = "INITIAL_LOCATION";
-	public static String INITIAL_ZOOM = "INITIAL_ZOOM";
 	public static String USER_ID = "USER_ID";
 	
 	private Uri currentMediaUri;
 	private User user;
 	
 	private MapView mapView;
+	private LatLng latLng = new LatLng(0, 0);
+	private float zoom = 0f;
+	private BitmapDescriptor icon;
 	
 	@Override
 	public void onDestroy() {
@@ -107,6 +108,16 @@ public class ProfileFragment extends Fragment implements OnMapReadyCallback {
 			} else {
 				user = UserHelper.getInstance(getActivity().getApplicationContext()).readCurrentUser();
 			}
+
+			List<Location> lastLocation = LocationHelper.getInstance(getActivity()).getUserLocations(user.getId(), getActivity(), 1, true);
+			if (!lastLocation.isEmpty()) {
+				Geometry geo = lastLocation.get(0).getGeometry();
+				if (geo instanceof Point) {
+					Point point = (Point) geo;
+					latLng = new LatLng(point.getY(), point.getX());
+					icon = LocationBitmapFactory.bitmapDescriptor(getActivity(), lastLocation.get(0), user);
+				}
+			}
 		} catch (UserException ue) {
 			Log.e(LOG_NAME, "Problem finding user.", ue);
 		}
@@ -122,10 +133,6 @@ public class ProfileFragment extends Fragment implements OnMapReadyCallback {
 		final String displayName = user.getDisplayName();
 		getActivity().getActionBar().setTitle(user.isCurrentUser() ? "My Profile" : displayName);
 
-		mapView = (MapView) rootView.findViewById(R.id.mapView);
-		mapView.onCreate(savedInstanceState);
-		MapsInitializer.initialize(getActivity().getApplicationContext());
-		
 		final TextView realNameTextView = (TextView)rootView.findViewById(R.id.realName);
 		realNameTextView.setText(displayName);
 		final TextView phoneTextView = (TextView)rootView.findViewById(R.id.phone);
@@ -308,25 +315,12 @@ public class ProfileFragment extends Fragment implements OnMapReadyCallback {
 
 	@Override
 	public void onMapReady(GoogleMap map) {
-		LatLng latLng = getActivity().getIntent().getParcelableExtra(INITIAL_LOCATION);
-		if (latLng == null) {
-			latLng = new LatLng(0, 0);
-		}
-		float zoom = getActivity().getIntent().getFloatExtra(INITIAL_ZOOM, 0);
-		map.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, zoom));
-		List<Location> lastLocation = LocationHelper.getInstance(getActivity()).getUserLocations(user.getId(), getActivity(), 1, true);
+		if (latLng != null && icon != null) {
+			map.addMarker(new MarkerOptions()
+					.position(latLng)
+					.icon(icon));
 
-		if (!lastLocation.isEmpty()) {
-			Geometry geo = lastLocation.get(0).getGeometry();
-			if (geo instanceof Point) {
-				Point point = (Point) geo;
-				LatLng location = new LatLng(point.getY(), point.getX());
-				MarkerOptions options = new MarkerOptions().position(location).visible(true);
-
-				Marker marker = map.addMarker(options);
-				marker.setIcon(LocationBitmapFactory.bitmapDescriptor(getActivity(), lastLocation.get(0), lastLocation.get(0).getUser()));
-				map.animateCamera(CameraUpdateFactory.newLatLngZoom(location, 15));
-			}
+			map.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15));
 		}
 	}
 
