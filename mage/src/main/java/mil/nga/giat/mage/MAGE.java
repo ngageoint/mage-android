@@ -52,11 +52,11 @@ import mil.nga.giat.mage.sdk.fetch.StaticFeatureServerFetch;
 import mil.nga.giat.mage.sdk.glide.MageDiskCache;
 import mil.nga.giat.mage.sdk.glide.MageUrlLoader;
 import mil.nga.giat.mage.sdk.http.client.HttpClientManager;
-import mil.nga.giat.mage.sdk.http.post.MageServerPostRequests;
 import mil.nga.giat.mage.sdk.location.LocationService;
 import mil.nga.giat.mage.sdk.push.AttachmentPushService;
 import mil.nga.giat.mage.sdk.push.LocationPushIntentService;
 import mil.nga.giat.mage.sdk.push.ObservationPushIntentService;
+import mil.nga.giat.mage.sdk.retrofit.resource.UserResource;
 import mil.nga.giat.mage.sdk.screen.ScreenChangeReceiver;
 import mil.nga.giat.mage.sdk.utils.StorageUtility;
 import mil.nga.giat.mage.sdk.utils.StorageUtility.StorageType;
@@ -71,7 +71,11 @@ public class MAGE extends MultiDexApplication implements IUserEventListener {
 	public static final int MAGE_NOTIFICATION_ID = 1414;
 
 	public interface OnCacheOverlayListener {
-		public void onCacheOverlay(List<CacheOverlay> cacheOverlays);
+		void onCacheOverlay(List<CacheOverlay> cacheOverlays);
+	}
+
+	public interface OnLogoutListener {
+		void onLogout();
 	}
 
 	private LocationService locationService;
@@ -140,7 +144,7 @@ public class MAGE extends MultiDexApplication implements IUserEventListener {
 		new Thread(runnable).start();
 	}
 
-	public void onLogout(Boolean clearTokenInformationAndSendLogoutRequest) {
+	public void onLogout(Boolean clearTokenInformationAndSendLogoutRequest, final OnLogoutListener logoutListener) {
 
 		if (observationNotificationListener != null) {
 			ObservationHelper.getInstance(getApplicationContext()).removeListener(observationNotificationListener);
@@ -151,18 +155,28 @@ public class MAGE extends MultiDexApplication implements IUserEventListener {
 		destroyLocationService();
 		destroyNotification();
 
-		if(clearTokenInformationAndSendLogoutRequest) {
+		if (clearTokenInformationAndSendLogoutRequest) {
 			Runnable runnable = new Runnable() {
 				@Override
 				public void run() {
-					if(!MageServerPostRequests.logout(getApplicationContext())) {
+					UserResource userResource = new UserResource(getApplicationContext());
+					if (!userResource.logout()) {
 						Log.e(LOG_NAME, "Unable to logout from server.");
+					}
+
+					UserUtility.getInstance(getApplicationContext()).clearTokenInformation();
+
+					if (logoutListener != null) {
+						logoutListener.onLogout();
 					}
 				}
 			};
-			new Thread(runnable).start();
 
-			UserUtility.getInstance(getApplicationContext()).clearTokenInformation();
+			new Thread(runnable).start();
+		} else {
+			if (logoutListener != null) {
+				logoutListener.onLogout();
+			}
 		}
 
 		SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
@@ -173,7 +187,7 @@ public class MAGE extends MultiDexApplication implements IUserEventListener {
 
 		Boolean deleteAllDataOnLogout = sharedPreferences.getBoolean(getApplicationContext().getString(R.string.deleteAllDataOnLogoutKey), getResources().getBoolean(R.bool.deleteAllDataOnLogoutDefaultValue));
 
-		if(deleteAllDataOnLogout) {
+		if (deleteAllDataOnLogout) {
 			LandingActivity.deleteAllData(getApplicationContext());
 		}
 	}

@@ -49,6 +49,7 @@ public class MapPreferencesActivity extends PreferenceActivity {
 		@Override
 		public void onCreate(final Bundle savedInstanceState) {
 			super.onCreate(savedInstanceState);
+			addPreferencesFromResource(R.xml.mappreferences);
 		}
 
 		@Override
@@ -77,7 +78,7 @@ public class MapPreferencesActivity extends PreferenceActivity {
 			OverlayPreference p = (OverlayPreference) findPreference(getResources().getString(R.string.staticFeatureLayersKey));
 			try {
 				Set<String> layerIds = p.getValues();
-				Collection<String> values = new ArrayList<String>(layerIds.size());
+				Collection<String> values = new ArrayList<>(layerIds.size());
 				for (Layer l : LayerHelper.getInstance(getActivity()).readByEvent(EventHelper.getInstance(getActivity().getApplicationContext()).getCurrentEvent())) {
 					if (layerIds.contains(l.getId().toString())) {
 						values.add(l.getName());
@@ -112,14 +113,14 @@ public class MapPreferencesActivity extends PreferenceActivity {
 			case TILE_OVERLAY_ACTIVITY: {
 				if (resultCode == Activity.RESULT_OK) {
 					OverlayPreference p = (OverlayPreference) preference.findPreference(getString(R.string.tileOverlaysKey));
-					p.setValues(new HashSet<String>(data.getStringArrayListExtra(OVERLAY_EXTENDED_DATA_KEY)));
+					p.setValues(new HashSet<>(data.getStringArrayListExtra(OVERLAY_EXTENDED_DATA_KEY)));
 				}
 				break;
 			}
 			case FEATURE_OVERLAY_ACTIVITY: {
 				if (resultCode == Activity.RESULT_OK) {
 					OverlayPreference p = (OverlayPreference) preference.findPreference(getString(R.string.staticFeatureLayersKey));
-					p.setValues(new HashSet<String>(data.getStringArrayListExtra(OVERLAY_EXTENDED_DATA_KEY)));
+					p.setValues(new HashSet<>(data.getStringArrayListExtra(OVERLAY_EXTENDED_DATA_KEY)));
 				}
 				break;
 			}

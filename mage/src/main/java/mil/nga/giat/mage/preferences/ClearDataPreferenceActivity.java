@@ -140,7 +140,7 @@ public class ClearDataPreferenceActivity extends ListActivity {
 		new AlertDialog.Builder(view.getContext()).setTitle("Delete All Data").setMessage(R.string.clear_data_message).setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
 			public void onClick(DialogInterface dialog, int which) {
 				// stop doing stuff
-				((MAGE) getApplication()).onLogout(false);
+				((MAGE) getApplication()).onLogout(false, null);
 
 				SparseBooleanArray checkedItems = getListView().getCheckedItemPositions();
 
