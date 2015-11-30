@@ -94,7 +94,7 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 
 		Intent intent = getIntent();
 		if (intent.getBooleanExtra("LOGOUT", false)) {
-			((MAGE) getApplication()).onLogout(true);
+			((MAGE) getApplication()).onLogout(true, null);
 		}
 
 		// IMPORTANT: load the configuration from preferences files and server
@@ -105,7 +105,7 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 
 		// check if the database needs to be upgraded, and if so log them out
 		if (DaoStore.DATABASE_VERSION != sharedPreferences.getInt(getResources().getString(R.string.databaseVersionKey), 0)) {
-			((MAGE) getApplication()).onLogout(true);
+			((MAGE) getApplication()).onLogout(true, null);
 		}
 
 		sharedPreferences.edit().putInt(getString(R.string.databaseVersionKey), DaoStore.DATABASE_VERSION).commit();
@@ -550,11 +550,8 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 		SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
 		boolean disclaimerAccepted = sharedPreferences.getBoolean(getString(R.string.disclaimerAcceptedKey), getResources().getBoolean(R.bool.disclaimerAcceptedDefaultValue));
 
-		Intent intent = disclaimerAccepted ?
-				new Intent(getApplicationContext(), EventActivity.class) :
-				new Intent(getApplicationContext(), DisclaimerActivity.class);
+		Intent intent = new Intent(getApplicationContext(), LandingActivity.class);
 
-		intent.putExtra(EventActivity.EXTRA_CHOOSE_CURRENT_EVENT, true);
 		// If launched with a local file path, save as an extra
 		if(mOpenFilePath != null){
 			intent.putExtra(LandingActivity.EXTRA_OPEN_FILE_PATH, mOpenFilePath);
@@ -569,7 +566,7 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 		super.onResume();
 
 		if (getIntent().getBooleanExtra("LOGOUT", false)) {
-			((MAGE) getApplication()).onLogout(true);
+			((MAGE) getApplication()).onLogout(true, null);
 		}
 
 		configureLogin();

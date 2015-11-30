@@ -67,10 +67,13 @@ public class DisclaimerActivity extends FragmentActivity {
 	}
 
 	public void exit(View view) {
-		((MAGE)getApplication()).onLogout(true);
-		startActivity(new Intent(getApplicationContext(), LoginActivity.class));
-		finish();
-		return;
+		((MAGE) getApplication()).onLogout(true, new MAGE.OnLogoutListener() {
+			@Override
+			public void onLogout() {
+				startActivity(new Intent(getApplicationContext(), LoginActivity.class));
+				finish();
+			}
+		});
 	}
 
 	@Override

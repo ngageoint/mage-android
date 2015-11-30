@@ -393,16 +393,18 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 		
 		mapView.onPause();
 
-		saveMapView();
-
 		PreferenceManager.getDefaultSharedPreferences(getActivity().getApplicationContext()).unregisterOnSharedPreferenceChangeListener(this);
 
 		mage.unregisterCacheOverlayListener(this);
 		StaticFeatureHelper.getInstance(getActivity().getApplicationContext()).removeListener(this);
 
-		map.setLocationSource(null);
-		if (locationService != null) {
-			locationService.unregisterOnLocationListener(this);
+		if (map != null) {
+			saveMapView();
+
+			map.setLocationSource(null);
+			if (locationService != null) {
+				locationService.unregisterOnLocationListener(this);
+			}
 		}
 	}
 
