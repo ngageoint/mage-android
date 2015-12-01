@@ -4,7 +4,10 @@ import android.content.Context;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
+import com.squareup.okhttp.ResponseBody;
+
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 
@@ -22,6 +25,7 @@ import retrofit.Retrofit;
 import retrofit.http.GET;
 import retrofit.http.Path;
 import retrofit.http.Query;
+import retrofit.http.Url;
 
 /***
  * RESTful communication for events
@@ -38,6 +42,9 @@ public class LayerResource {
 
         @GET("/api/events/{eventId}/layers/{layerId}/features")
         Call<Collection<StaticFeature>> getFeatures(@Path("eventId") String eventId, @Path("layerId") String layerId);
+
+        @GET
+        Call<ResponseBody> getFeatureIcon(@Url String url);
     }
 
     private static final String LOG_NAME = LayerResource.class.getName();
@@ -96,5 +103,29 @@ public class LayerResource {
         }
 
         return features;
+    }
+
+    public InputStream getFeatureIcon(String url) throws IOException {
+        InputStream inputStream = null;
+
+        String baseUrl = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.serverURLKey), context.getString(R.string.serverURLDefaultValue));
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl(baseUrl)
+                .client(HttpClient.httpClient(context))
+                .build();
+
+        LayerService service = retrofit.create(LayerService.class);
+        Response<ResponseBody> response = service.getFeatureIcon(url).execute();
+
+        if (response.isSuccess()) {
+            inputStream = response.body().byteStream();
+        } else {
+            Log.e(LOG_NAME, "Bad request.");
+            if (response.errorBody() != null) {
+                Log.e(LOG_NAME, response.errorBody().string());
+            }
+        }
+
+        return inputStream;
     }
 }

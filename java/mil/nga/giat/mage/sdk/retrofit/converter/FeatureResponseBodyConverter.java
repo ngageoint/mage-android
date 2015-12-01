@@ -11,9 +11,9 @@ import mil.nga.giat.mage.sdk.jackson.deserializer.StaticFeatureDeserializer;
 import retrofit.Converter;
 
 /**
- * Retrofit location response body converter
+ * Retrofit feature response body converter
  *
- * Handles Jackson deserialization for locations
+ * Handles Jackson deserialization for features
  *
  * @author newmanw
  *

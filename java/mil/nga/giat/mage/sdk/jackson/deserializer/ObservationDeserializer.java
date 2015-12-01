@@ -197,7 +197,7 @@ public class ObservationDeserializer extends Deserializer {
 		return properties;
 	}
 
-	private Collection<Attachment> parseAttachments(JsonParser parser) throws JsonParseException, IOException {
+	private Collection<Attachment> parseAttachments(JsonParser parser) throws IOException {
 		Collection<Attachment> attachments = new ArrayList<Attachment>();
 
 		if (parser.getCurrentToken() != JsonToken.START_ARRAY)

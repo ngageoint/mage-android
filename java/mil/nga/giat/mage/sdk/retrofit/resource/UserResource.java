@@ -4,21 +4,34 @@ import android.content.Context;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
+import com.squareup.okhttp.MediaType;
+import com.squareup.okhttp.RequestBody;
+import com.squareup.okhttp.ResponseBody;
+
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 import mil.nga.giat.mage.sdk.R;
 import mil.nga.giat.mage.sdk.datastore.user.Event;
 import mil.nga.giat.mage.sdk.datastore.user.User;
+import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
+import mil.nga.giat.mage.sdk.gson.deserializer.UserDeserializer;
 import mil.nga.giat.mage.sdk.gson.deserializer.UsersDeserializer;
 import mil.nga.giat.mage.sdk.retrofit.HttpClient;
+import mil.nga.giat.mage.sdk.utils.MediaUtility;
 import retrofit.Call;
 import retrofit.GsonConverterFactory;
 import retrofit.Response;
 import retrofit.Retrofit;
 import retrofit.http.GET;
+import retrofit.http.Multipart;
 import retrofit.http.POST;
+import retrofit.http.PUT;
+import retrofit.http.PartMap;
 import retrofit.http.Path;
 
 /***
@@ -30,11 +43,18 @@ import retrofit.http.Path;
 public class UserResource {
 
     public interface UserService {
+        @POST("/api/logout")
+        Call<ResponseBody> logout();
+
         @GET("/api/users")
         Call<Collection<User>> getUsers();
 
-        @POST("/api/users/{userId}/events{eventId}/recent")
+        @POST("/api/users/{userId}/events/{eventId}/recent")
         Call<User> addRecentEvent(@Path("userId") String userId, @Path("eventId") String eventId);
+
+        @Multipart
+        @PUT("/api/users/myself")
+        Call<User> createAvatar(@PartMap Map<String, RequestBody> parts);
     }
 
     private static final String LOG_NAME = UserResource.class.getName();
@@ -43,6 +63,35 @@ public class UserResource {
 
     public UserResource(Context context) {
         this.context = context;
+    }
+
+    public boolean logout() {
+        boolean status = false;
+
+        String baseUrl = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.serverURLKey), context.getString(R.string.serverURLDefaultValue));
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl(baseUrl)
+                .addConverterFactory(GsonConverterFactory.create(UsersDeserializer.getGsonBuilder(context)))
+                .client(HttpClient.httpClient(context))
+                .build();
+
+        UserService service = retrofit.create(UserService.class);
+
+        try {
+            Response<ResponseBody> response = service.logout().execute();
+            if (response.isSuccess()) {
+                status = true;
+            } else {
+                Log.e(LOG_NAME, "Bad request.");
+                if (response.errorBody() != null) {
+                    Log.e(LOG_NAME, response.errorBody().string());
+                }
+            }
+        } catch (IOException e) {
+            Log.e(LOG_NAME, "Bad request.", e);
+        }
+
+        return status;
     }
 
     public Collection<User> getUsers() throws IOException {
@@ -74,7 +123,7 @@ public class UserResource {
         String baseUrl = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.serverURLKey), context.getString(R.string.serverURLDefaultValue));
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl(baseUrl)
-                .addConverterFactory(GsonConverterFactory.create(UsersDeserializer.getGsonBuilder(context)))
+                .addConverterFactory(GsonConverterFactory.create(UserDeserializer.getGsonBuilder(context)))
                 .client(HttpClient.httpClient(context))
                 .build();
 
@@ -91,6 +140,50 @@ public class UserResource {
 
             return null;
         }
+    }
 
+    public User createAvatar(String avatarPath) {
+        try {
+            String baseUrl = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.serverURLKey), context.getString(R.string.serverURLDefaultValue));
+
+            Retrofit retrofit = new Retrofit.Builder()
+                    .baseUrl(baseUrl)
+                    .addConverterFactory(GsonConverterFactory.create(UserDeserializer.getGsonBuilder(context)))
+                    .client(HttpClient.httpClient(context))
+                    .build();
+
+            UserService service = retrofit.create(UserService.class);
+
+            Map<String, RequestBody> parts = new HashMap<>();
+            File avatar = new File(avatarPath);
+            String mimeType = MediaUtility.getMimeType(avatarPath);
+            RequestBody fileBody = RequestBody.create(MediaType.parse(mimeType), avatar);
+            parts.put("avatar\"; filename=\"" + avatar.getName() + "\"", fileBody);
+
+            Response<User> response = service.createAvatar(parts).execute();
+
+            if (response.isSuccess()) {
+                User currentUser = UserHelper.getInstance(context).readCurrentUser();
+                User returnedUser = response.body();
+
+                currentUser.setAvatarUrl(returnedUser.getAvatarUrl());
+                currentUser.setLocalAvatarPath(avatarPath);
+                UserHelper userHelper = UserHelper.getInstance(context);
+
+                userHelper.update(currentUser);
+                Log.d(LOG_NAME, "Updated user with remote_id " + returnedUser.getRemoteId());
+
+                return returnedUser;
+            } else {
+                Log.e(LOG_NAME, "Bad request.");
+                if (response.errorBody() != null) {
+                    Log.e(LOG_NAME, response.errorBody().string());
+                }
+            }
+        } catch (Exception e) {
+            Log.e(LOG_NAME, "Failure saving observation.", e);
+        }
+
+        return null;
     }
 }

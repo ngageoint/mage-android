@@ -15,13 +15,14 @@ import java.security.SecureRandom;
 
 import mil.nga.giat.mage.sdk.connectivity.ConnectivityUtility;
 import mil.nga.giat.mage.sdk.datastore.user.User;
-import mil.nga.giat.mage.sdk.http.post.MageServerPostRequests;
+import mil.nga.giat.mage.sdk.retrofit.resource.UserResource;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
 
 public class UpdateProfileTask extends AsyncTask<String, Void, User> {
 	
 	private User user;
 	private Context context;
+	private UserResource userResource;
 	
 	private static final SecureRandom random = new SecureRandom();
 	
@@ -30,6 +31,7 @@ public class UpdateProfileTask extends AsyncTask<String, Void, User> {
 	public UpdateProfileTask(User user, Context context) {
 		this.user = user;
 		this.context = context;
+		userResource = new UserResource(context);
 	}
 
 
@@ -90,7 +92,8 @@ public class UpdateProfileTask extends AsyncTask<String, Void, User> {
 		}
 		
 		Log.i(LOG_NAME, "Pushing profile picture " + stagedFile);
-		return MageServerPostRequests.postProfilePicture(user, stagedFile.getAbsolutePath(), context);
+
+		return userResource.createAvatar(stagedFile.getAbsolutePath());
 	}
 
 }

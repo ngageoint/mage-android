@@ -11,7 +11,7 @@ import mil.nga.giat.mage.sdk.datastore.staticfeature.StaticFeature;
 import retrofit.Converter;
 
 /**
- * Retrofit converter factory for locations
+ * Retrofit converter factory for features
  *
  * @author newmanw
  *

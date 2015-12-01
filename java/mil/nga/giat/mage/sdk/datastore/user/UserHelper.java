@@ -124,25 +124,25 @@ public class UserHelper extends DaoHelper<User> implements IEventDispatcher<IEve
 
 		try {
 			// check if we need to send event onChange
-			if(pUser.isCurrentUser()) {
+			if (pUser.isCurrentUser()) {
 				User oldUser = read(pUser.getRemoteId());
 				String oldEventRemoteId = null;
-				if(oldUser != null && oldUser.getCurrentEvent() != null) {
+				if (oldUser != null && oldUser.getCurrentEvent() != null) {
 					oldEventRemoteId = oldUser.getCurrentEvent().getRemoteId();
 				}
 				userDao.update(pUser);
 
 				String newEventRemoteId = null;
-				if(pUser != null && pUser.getCurrentEvent() != null) {
+				if (pUser != null && pUser.getCurrentEvent() != null) {
 					newEventRemoteId = pUser.getCurrentEvent().getRemoteId();
 				}
 
-				if(oldEventRemoteId == null ^ newEventRemoteId == null) {
+				if (oldEventRemoteId == null ^ newEventRemoteId == null) {
 					for (IEventEventListener listener : listeners) {
 						listener.onEventChanged();
 					}
-				} else if(oldEventRemoteId != null && newEventRemoteId != null) {
-					if(!oldEventRemoteId.equals(newEventRemoteId)) {
+				} else if (oldEventRemoteId != null && newEventRemoteId != null) {
+					if (!oldEventRemoteId.equals(newEventRemoteId)) {
 						for (IEventEventListener listener : listeners) {
 							listener.onEventChanged();
 						}

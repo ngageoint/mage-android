@@ -8,8 +8,8 @@ import mil.nga.giat.mage.sdk.connectivity.ConnectivityUtility;
 import mil.nga.giat.mage.sdk.datastore.observation.Attachment;
 import mil.nga.giat.mage.sdk.datastore.observation.AttachmentHelper;
 import mil.nga.giat.mage.sdk.exceptions.ObservationException;
-import mil.nga.giat.mage.sdk.http.post.MageServerPostRequests;
 import mil.nga.giat.mage.sdk.login.LoginTaskFactory;
+import mil.nga.giat.mage.sdk.retrofit.resource.ObservationResource;
 
 public class AttachmentPushIntentService extends IntentService {
 	
@@ -45,7 +45,8 @@ public class AttachmentPushIntentService extends IntentService {
 			attachmentHelper.stageForUpload(attachment);
 			Log.d(LOG_NAME, "Pushing attachment with id: " + attachment.getId());
 
-			attachment = MageServerPostRequests.postAttachment(attachment, getApplicationContext());
+			ObservationResource observationResource = new ObservationResource(getApplicationContext());
+			attachment = observationResource.createAttachment(attachment);
 			if(attachment != null) {
 				Log.d(LOG_NAME, "Pushed attachment with remote_id: " + attachment.getRemoteId());
 			}

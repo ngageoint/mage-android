@@ -44,7 +44,7 @@ public class RecentEventTask extends AbstractAccountTask {
                 }
             }
         } catch(Exception e) {
-            Log.e(LOG_NAME, "Unable to get current event.");
+            Log.e(LOG_NAME, "Unable to get current event.", e);
         }
 
         return new AccountStatus(AccountStatus.Status.FAILED_LOGIN);

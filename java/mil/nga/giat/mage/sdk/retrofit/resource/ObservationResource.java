@@ -4,32 +4,43 @@ import android.content.Context;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
+import com.squareup.okhttp.MediaType;
+import com.squareup.okhttp.RequestBody;
 import com.squareup.okhttp.ResponseBody;
 
 import org.apache.commons.lang3.StringUtils;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 import mil.nga.giat.mage.sdk.R;
+import mil.nga.giat.mage.sdk.datastore.DaoStore;
+import mil.nga.giat.mage.sdk.datastore.observation.Attachment;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
 import mil.nga.giat.mage.sdk.datastore.user.Event;
 import mil.nga.giat.mage.sdk.retrofit.HttpClient;
+import mil.nga.giat.mage.sdk.retrofit.converter.AttachmentConverterFactory;
 import mil.nga.giat.mage.sdk.retrofit.converter.ObservationConverterFactory;
 import mil.nga.giat.mage.sdk.retrofit.converter.ObservationsConverterFactory;
 import mil.nga.giat.mage.sdk.utils.DateFormatFactory;
+import mil.nga.giat.mage.sdk.utils.MediaUtility;
 import retrofit.Call;
 import retrofit.Response;
 import retrofit.Retrofit;
 import retrofit.http.Body;
 import retrofit.http.GET;
+import retrofit.http.Multipart;
 import retrofit.http.POST;
 import retrofit.http.PUT;
+import retrofit.http.PartMap;
 import retrofit.http.Path;
 import retrofit.http.Query;
 
@@ -52,6 +63,10 @@ public class ObservationResource {
 
         @GET("/api/events/{eventId}/form/icons.zip")
         Call<ResponseBody> getObservationIcons(@Path("eventId") String eventId);
+
+        @Multipart
+        @POST("/api/events/{eventId}/observations/{observationId}/attachments")
+        Call<Attachment> createAttachment(@Path("eventId") String eventId, @Path("observationId") String observationId, @PartMap Map<String, RequestBody> parts);
     }
 
     private static final String LOG_NAME = ObservationResource.class.getName();
@@ -161,5 +176,52 @@ public class ObservationResource {
         }
 
         return inputStream;
+    }
+
+    // TODO test
+    public Attachment createAttachment(Attachment attachment) {
+        try {
+            String baseUrl = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.serverURLKey), context.getString(R.string.serverURLDefaultValue));
+            Retrofit retrofit = new Retrofit.Builder()
+                    .baseUrl(baseUrl)
+                    .addConverterFactory(AttachmentConverterFactory.create())
+                    .client(HttpClient.httpClient(context))
+                    .build();
+
+            ObservationService service = retrofit.create(ObservationService.class);
+
+            String eventId = attachment.getObservation().getEvent().getRemoteId();
+            String observationId = attachment.getObservation().getRemoteId();
+
+            Map<String, RequestBody> parts = new HashMap<>();
+            File attachmentFile = new File(attachment.getLocalPath());
+            String mimeType = MediaUtility.getMimeType(attachment.getLocalPath());
+            RequestBody fileBody = RequestBody.create(MediaType.parse(mimeType), attachmentFile);
+            parts.put("attachment\"; filename=\"" + attachmentFile.getName() + "\"", fileBody);
+
+            Response<Attachment> response = service.createAttachment(eventId, observationId, parts).execute();
+
+            if (response.isSuccess()) {
+                Attachment returnedAttachment = response.body();
+                attachment.setContentType(returnedAttachment.getContentType());
+                attachment.setName(returnedAttachment.getName());
+                attachment.setRemoteId(returnedAttachment.getRemoteId());
+                attachment.setRemotePath(returnedAttachment.getRemotePath());
+                attachment.setSize(returnedAttachment.getSize());
+                attachment.setUrl(returnedAttachment.getUrl());
+                attachment.setDirty(returnedAttachment.isDirty());
+
+                DaoStore.getInstance(context).getAttachmentDao().update(attachment);
+            } else {
+                Log.e(LOG_NAME, "Bad request.");
+                if (response.errorBody() != null) {
+                    Log.e(LOG_NAME, response.errorBody().string());
+                }
+            }
+        } catch (Exception e) {
+            Log.e(LOG_NAME, "Failure saving observation.", e);
+        }
+
+        return attachment;
     }
 }

@@ -11,7 +11,7 @@ import mil.nga.giat.mage.sdk.jackson.deserializer.ObservationDeserializer;
 import retrofit.Converter;
 
 /**
- * Retrofit location response body converter
+ * Retrofit observation response body converter
  *
  * Handles Jackson deserialization for observations
  *
