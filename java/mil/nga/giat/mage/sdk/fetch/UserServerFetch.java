@@ -1,28 +1,14 @@
 package mil.nga.giat.mage.sdk.fetch;
 
 import android.content.Context;
-import android.preference.PreferenceManager;
 import android.util.Log;
 
-import com.google.gson.Gson;
-
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.HttpStatus;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.util.EntityUtils;
-import org.json.JSONObject;
-
-import java.net.URL;
 import java.util.Date;
 
-import mil.nga.giat.mage.sdk.R;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
-import mil.nga.giat.mage.sdk.gson.deserializer.UserDeserializer;
-import mil.nga.giat.mage.sdk.http.client.HttpClientManager;
+import mil.nga.giat.mage.sdk.retrofit.resource.UserResource;
 
 public class UserServerFetch extends AbstractServerFetch {
 
@@ -32,23 +18,18 @@ public class UserServerFetch extends AbstractServerFetch {
 
 	private static final String LOG_NAME = UserServerFetch.class.getName();
 
-	public void fetch(String... userids) throws Exception {
+	public void fetch(String... userIds) throws Exception {
 
-		URL serverURL = new URL(PreferenceManager.getDefaultSharedPreferences(mContext).getString(mContext.getString(R.string.serverURLKey), mContext.getString(R.string.serverURLDefaultValue)));
-
-		HttpEntity entity = null;
 		try {
-			final Gson userDeserializer = UserDeserializer.getGsonBuilder(mContext);
-			DefaultHttpClient httpclient = HttpClientManager.getInstance(mContext).getHttpClient();
+			UserResource userResource = new UserResource(mContext);
 			UserHelper userHelper = UserHelper.getInstance(mContext);
 
 			// loop over all the ids
-			for (String userId : userids) {
+			for (String userId : userIds) {
 				if (userId.equals("-1")) {
 					continue;
 				}
-				String userPath = "api/users";
-				userPath += "/" + userId;
+
 				boolean isCurrentUser = false;
 				// is this a request for the current user?
 				if (userId.equalsIgnoreCase("myself")) {
@@ -67,39 +48,16 @@ public class UserServerFetch extends AbstractServerFetch {
 					}
 				}
 
-				URL userURL = new URL(serverURL, userPath);
+				User user = userResource.getUser(userId);
 
-				Log.d(LOG_NAME, userURL.toString());
-				HttpGet get = new HttpGet(userURL.toURI());
-				HttpResponse response = httpclient.execute(get);
-				if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
-					entity = response.getEntity();
-					JSONObject userJson = new JSONObject(EntityUtils.toString(entity));
-					if (userJson != null) {
-						User user = userDeserializer.fromJson(userJson.toString(), User.class);
-						if (user != null) {
-							user.setCurrentUser(isCurrentUser);
-							user.setFetchedDate(new Date());
-							userHelper.createOrUpdate(user);
-						}
-					}
-				} else {
-					entity = response.getEntity();
-					String error = EntityUtils.toString(entity);
-					Log.e(LOG_NAME, "Bad request.");
-					Log.e(LOG_NAME, error);
+				if (user != null) {
+					user.setCurrentUser(isCurrentUser);
+					user.setFetchedDate(new Date());
+					userHelper.createOrUpdate(user);
 				}
 			}
 		} catch(Exception e) {
             Log.e(LOG_NAME, "Problem fetching users.", e);
-        } finally {
-			try {
-				if (entity != null) {
-					entity.consumeContent();
-				}
-			} catch (Exception e) {
-			}
-		}
+        }
 	}
-
 }

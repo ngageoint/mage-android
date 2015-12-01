@@ -178,7 +178,6 @@ public class ObservationResource {
         return inputStream;
     }
 
-    // TODO test
     public Attachment createAttachment(Attachment attachment) {
         try {
             String baseUrl = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.serverURLKey), context.getString(R.string.serverURLDefaultValue));

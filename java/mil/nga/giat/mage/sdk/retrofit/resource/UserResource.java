@@ -49,6 +49,9 @@ public class UserResource {
         @GET("/api/users")
         Call<Collection<User>> getUsers();
 
+        @GET("/api/users/{userId}")
+        Call<User> getUser(@Path("userId") String userId);
+
         @POST("/api/users/{userId}/events/{eventId}/recent")
         Call<User> addRecentEvent(@Path("userId") String userId, @Path("eventId") String eventId);
 
@@ -117,6 +120,31 @@ public class UserResource {
         }
 
         return users;
+    }
+
+    public User getUser(String userId) throws IOException {
+        User user = null;
+
+        String baseUrl = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.serverURLKey), context.getString(R.string.serverURLDefaultValue));
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl(baseUrl)
+                .addConverterFactory(GsonConverterFactory.create(UserDeserializer.getGsonBuilder(context)))
+                .client(HttpClient.httpClient(context))
+                .build();
+
+        UserService service = retrofit.create(UserService.class);
+        Response<User> response = service.getUser(userId).execute();
+
+        if (response.isSuccess()) {
+            user = response.body();
+        } else {
+            Log.e(LOG_NAME, "Bad request.");
+            if (response.errorBody() != null) {
+                Log.e(LOG_NAME, response.errorBody().string());
+            }
+        }
+
+        return user;
     }
 
     public User addRecentEvent(User user, Event event) throws IOException {
