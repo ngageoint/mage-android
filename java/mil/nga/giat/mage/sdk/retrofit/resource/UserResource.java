@@ -10,6 +10,7 @@ import com.squareup.okhttp.ResponseBody;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -52,6 +53,12 @@ public class UserResource {
         @GET("/api/users/{userId}")
         Call<User> getUser(@Path("userId") String userId);
 
+        @GET("/api/users/{userId}/icon")
+        Call<ResponseBody> getIcon(@Path("userId") String userId);
+
+        @GET("/api/users/{userId}/avatar")
+        Call<ResponseBody> getAvatar(@Path("userId") String userId);
+
         @POST("/api/users/{userId}/events/{eventId}/recent")
         Call<User> addRecentEvent(@Path("userId") String userId, @Path("eventId") String eventId);
 
@@ -91,7 +98,7 @@ public class UserResource {
                     Log.e(LOG_NAME, response.errorBody().string());
                 }
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
             Log.e(LOG_NAME, "Bad request.", e);
         }
 
@@ -146,6 +153,54 @@ public class UserResource {
         }
 
         return user;
+    }
+
+    public InputStream getIcon(User user) throws IOException {
+        InputStream inputStream = null;
+
+        String baseUrl = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.serverURLKey), context.getString(R.string.serverURLDefaultValue));
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl(baseUrl)
+                .client(HttpClient.httpClient(context))
+                .build();
+
+        UserService service = retrofit.create(UserService.class);
+        Response<ResponseBody> response = service.getIcon(user.getRemoteId()).execute();
+
+        if (response.isSuccess()) {
+            inputStream = response.body().byteStream();
+        } else {
+            Log.e(LOG_NAME, "Bad request.");
+            if (response.errorBody() != null) {
+                Log.e(LOG_NAME, response.errorBody().string());
+            }
+        }
+
+        return inputStream;
+    }
+
+    public InputStream getAvatar(User user) throws IOException {
+        InputStream inputStream = null;
+
+        String baseUrl = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.serverURLKey), context.getString(R.string.serverURLDefaultValue));
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl(baseUrl)
+                .client(HttpClient.httpClient(context))
+                .build();
+
+        UserService service = retrofit.create(UserService.class);
+        Response<ResponseBody> response = service.getAvatar(user.getRemoteId()).execute();
+
+        if (response.isSuccess()) {
+            inputStream = response.body().byteStream();
+        } else {
+            Log.e(LOG_NAME, "Bad request.");
+            if (response.errorBody() != null) {
+                Log.e(LOG_NAME, response.errorBody().string());
+            }
+        }
+
+        return inputStream;
     }
 
     public User addRecentEvent(User user, Event event) throws IOException {

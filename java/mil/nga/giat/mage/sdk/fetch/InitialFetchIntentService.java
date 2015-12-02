@@ -12,7 +12,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
@@ -37,7 +36,6 @@ import mil.nga.giat.mage.sdk.retrofit.resource.EventResource;
 import mil.nga.giat.mage.sdk.retrofit.resource.RoleResource;
 import mil.nga.giat.mage.sdk.retrofit.resource.TeamResource;
 import mil.nga.giat.mage.sdk.retrofit.resource.UserResource;
-import mil.nga.giat.mage.sdk.utils.MediaUtility;
 
 /**
  * This class will fetch events, roles, users and teams just once.
@@ -173,8 +171,8 @@ public class InitialFetchIntentService extends ConnectivityAwareIntentService {
                 Collection<User> users = userResource.getUsers();
                 Log.d(LOG_NAME, "Fetched " + users.size() + " users");
 
-                final ArrayList<User> userAvatarsToFetch = new ArrayList<>();
-                final ArrayList<User> userIconsToFetch = new ArrayList<>();
+                final ArrayList<User> avatarUsers = new ArrayList<>();
+                final ArrayList<User> iconUsers = new ArrayList<>();
                 for (User user : users) {
                     if (isCanceled) {
                         break;
@@ -189,10 +187,10 @@ public class InitialFetchIntentService extends ConnectivityAwareIntentService {
                             user = userHelper.createOrUpdate(user);
 
                             if (user.getAvatarUrl() != null) {
-                                userAvatarsToFetch.add(user);
+                                avatarUsers.add(user);
                             }
                             if (user.getIconUrl() != null) {
-                                userIconsToFetch.add(user);
+                                iconUsers.add(user);
                             }
                         }
                     } catch (Exception e) {
@@ -200,61 +198,8 @@ public class InitialFetchIntentService extends ConnectivityAwareIntentService {
                     }
                 }
 
-                // pull down images (map icons and profile pictures)
-                List<String> avatarUrls = new ArrayList<>();
-                List<String> avatarLocalFilePaths = new ArrayList<>();
-                for(User u : userAvatarsToFetch) {
-                    avatarUrls.add(u.getAvatarUrl());
-                    avatarLocalFilePaths.add(MediaUtility.getAvatarDirectory() + "/" + u.getId() + ".png");
-                }
-                avatarFetch = new DownloadImageTask(getApplicationContext(), avatarUrls, avatarLocalFilePaths, true) {
-
-                    @Override
-                    protected Void doInBackground(Void... v) {
-                        Void result = super.doInBackground(v);
-                        for(int i = 0; i < localFilePaths.size(); i++) {
-                            try {
-                                if(!errors.get(i)) {
-                                    User u = userHelper.read(userAvatarsToFetch.get(i).getId());
-                                    u.setLocalAvatarPath(localFilePaths.get(i));
-                                    userHelper.update(u);
-                                }
-                            } catch(Exception e) {
-                                Log.e(LOG_NAME, "Could not read or update user.", e);
-                            }
-                        }
-                        return result;
-                    }
-                };
-
-                List<String> iconUrls = new ArrayList<>();
-                List<String> iconLocalFilePaths = new ArrayList<>();
-                for(User u : userIconsToFetch) {
-                    iconUrls.add(u.getIconUrl());
-                    iconLocalFilePaths.add(MediaUtility.getUserIconDirectory() + "/" + u.getId() + ".png");
-                }
-
-                iconFetch = new DownloadImageTask(getApplicationContext(), iconUrls, iconLocalFilePaths, true) {
-
-                    @Override
-                    protected Void doInBackground(Void... v) {
-                        Void result = super.doInBackground(v);
-
-                        for(int i = 0; i < localFilePaths.size(); i++) {
-                            try {
-                                if(!errors.get(i)) {
-                                    User u = userHelper.read(userIconsToFetch.get(i).getId());
-                                    u.setLocalIconPath(localFilePaths.get(i));
-                                    userHelper.update(u);
-                                }
-                            } catch(Exception e) {
-                                Log.e(LOG_NAME, "Could not read or update user.", e);
-                            }
-                        }
-
-                        return result;
-                    }
-                };
+//                avatarFetch = new DownloadImageTask(getApplicationContext(), avatarUsers, DownloadImageTask.ImageType.AVATAR, true);
+                iconFetch = new DownloadImageTask(getApplicationContext(), iconUsers, DownloadImageTask.ImageType.ICON, true);
 
                 didFetchUsers = Boolean.TRUE;
             } catch (Exception e) {

@@ -6,63 +6,70 @@ import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
 import android.util.Log;
 
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.DefaultHttpClient;
-
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Collection;
 
-import mil.nga.giat.mage.sdk.http.client.HttpClientManager;
+import mil.nga.giat.mage.sdk.datastore.user.User;
+import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
+import mil.nga.giat.mage.sdk.retrofit.resource.UserResource;
+import mil.nga.giat.mage.sdk.utils.MediaUtility;
 
 /**
  * Basic task to download and save images on the filesystem.
  *
  */
-public abstract class DownloadImageTask extends AsyncTask<Void, Void, Void> {
+public class DownloadImageTask extends AsyncTask<Void, Void, Void> {
+
+	public enum ImageType {
+		AVATAR,
+		ICON
+	}
+
+	public interface OnImageDownloadListener {
+		void complete();
+	}
 
 	protected static final String LOG_NAME = DownloadImageTask.class.getName();
 
-	protected final Context context;
-	protected final List<String> urls;
-	protected final List<String> localFilePaths;
-	protected final List<Boolean> errors = new ArrayList<Boolean>();
-	protected final Boolean overwriteLocalFiles;
-	private DefaultHttpClient httpclient;
+	protected ImageType imageType;
+	protected Collection<User> users;
+	protected UserResource userResource;
+	protected UserHelper userHelper;
+	protected boolean overwriteLocalFiles;
+	protected OnImageDownloadListener listener = null;
 
-	public DownloadImageTask(Context context, List<String> urls, List<String> localFilePaths, Boolean overwriteLocalFiles) {
-		this.context = context;
-		if (urls.size() != localFilePaths.size()) {
-			throw new IllegalArgumentException("Lists must be same size");
-		}
-
-		this.urls = urls;
-		this.localFilePaths = localFilePaths;
+	public DownloadImageTask(Context context, Collection<User> users, ImageType imageType, boolean overwriteLocalFiles) {
+		this.users = users;
+		this.imageType = imageType;
 		this.overwriteLocalFiles = overwriteLocalFiles;
-		this.httpclient = HttpClientManager.getInstance(context).getHttpClient();
+		this.userResource = new UserResource(context);
+		this.userHelper = UserHelper.getInstance(context);
 	}
 
-	protected Void doInBackground(Void... v) {
+	public DownloadImageTask(Context context, Collection<User> users, ImageType imageType, boolean overwriteLocalFiles, OnImageDownloadListener listener) {
+		this.users = users;
+		this.imageType = imageType;
+		this.overwriteLocalFiles = overwriteLocalFiles;
+		this.userResource = new UserResource(context);
+		this.userHelper = UserHelper.getInstance(context);
+		this.listener = listener;
+	}
 
-		for (int i = 0; i < urls.size(); i++) {
-			errors.add(false);
-			String urlString = urls.get(i);
-			String localFilePath = localFilePaths.get(i);
+	@Override
+	protected Void doInBackground(Void... params) {
 
-			URL url = null;
-			try {
-				url = new URL(urlString);
-			} catch (MalformedURLException mue) {
-				Log.e(LOG_NAME, "Bad URL: " + urlString + ".  Not downloading.", mue);
-				errors.set(i, true);
-				continue;
+		for (User user : users) {
+			String localFilePath = null;
+			switch (imageType) {
+				case AVATAR:
+					localFilePath = MediaUtility.getAvatarDirectory() + "/" + user.getId() + ".png";
+					break;
+				case ICON:
+					localFilePath = MediaUtility.getUserIconDirectory() + "/" + user.getId() + ".png";
+					break;
 			}
 
 			File localFile = new File(localFilePath);
@@ -77,18 +84,14 @@ public abstract class DownloadImageTask extends AsyncTask<Void, Void, Void> {
 				}
 			}
 
-			Log.d(LOG_NAME, "Downloading " + url + " and saving to " + localFile + ".");
+			Log.d(LOG_NAME, "Downloading icon for user " + user.getDisplayName() + " and saving to " + localFile + ".");
 
-			int imageWidth = -1;
-			int imageHeight = -1;
+			int imageWidth = Integer.MAX_VALUE;
+			int imageHeight = Integer.MAX_VALUE;
 			InputStream in = null;
 
-			HttpEntity entity = null;
 			try {
-				HttpGet get = new HttpGet(url.toURI());
-				HttpResponse response = httpclient.execute(get);
-				entity = response.getEntity();
-				in = entity.getContent();
+				in = imageType == ImageType.AVATAR ? userResource.getAvatar(user) : userResource.getIcon(user);
 
 				BitmapFactory.Options bitmapOptions = new BitmapFactory.Options();
 				bitmapOptions.inJustDecodeBounds = true;
@@ -96,16 +99,9 @@ public abstract class DownloadImageTask extends AsyncTask<Void, Void, Void> {
 				imageWidth = bitmapOptions.outWidth;
 				imageHeight = bitmapOptions.outHeight;
 			} catch (Exception e) {
-				errors.set(i, true);
 				Log.e(LOG_NAME, e.getMessage(), e);
+				continue;
 			} finally {
-				try {
-					if (entity != null) {
-						entity.consumeContent();
-					}
-				} catch (Exception e) {
-					Log.w(LOG_NAME, "Trouble cleaning up after request.", e);
-				}
 				try {
 					if (in != null) {
 						in.close();
@@ -117,27 +113,26 @@ public abstract class DownloadImageTask extends AsyncTask<Void, Void, Void> {
 
 			if (Math.max(imageWidth, imageHeight) <= 1024) {
 				FileOutputStream out = null;
-				entity = null;
 				try {
-					HttpGet get = new HttpGet(url.toURI());
-					HttpResponse response = httpclient.execute(get);
-					entity = response.getEntity();
-					in = entity.getContent();
+					in = imageType == ImageType.AVATAR ? userResource.getAvatar(user) : userResource.getIcon(user);
 					Bitmap image = BitmapFactory.decodeStream(in);
 
 					out = new FileOutputStream(localFile);
 					image.compress(Bitmap.CompressFormat.PNG, 90, out);
+
+					switch (imageType) {
+						case AVATAR:
+							user.setLocalAvatarPath(localFilePath);
+							break;
+						case ICON:
+							user.setLocalIconPath(localFilePath);
+							break;
+					}
+
+					userHelper.update(user);
 				} catch (Exception e) {
-					errors.set(i, true);
 					Log.e(LOG_NAME, "Problem downloading image.");
 				} finally {
-					try {
-						if (entity != null) {
-							entity.consumeContent();
-						}
-					} catch (Exception e) {
-						Log.w(LOG_NAME, "Trouble cleaning up after request.", e);
-					}
 					try {
 						if (in != null) {
 							in.close();
@@ -154,10 +149,18 @@ public abstract class DownloadImageTask extends AsyncTask<Void, Void, Void> {
 					}
 				}
 			} else {
-				Log.w(LOG_NAME, urlString + " was too big to download.  Skipping.");
-				errors.set(i, true);
+				Log.w(LOG_NAME, "User '" + user.getDisplayName() + "' avatar was too big to download.  Skipping.");
 			}
 		}
+
 		return null;
 	}
+
+	@Override
+	protected void onPostExecute(Void param) {
+		if (listener != null) {
+			listener.complete();
+		}
+	}
+
 }
