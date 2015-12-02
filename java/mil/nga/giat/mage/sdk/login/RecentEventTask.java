@@ -7,7 +7,7 @@ import mil.nga.giat.mage.sdk.connectivity.ConnectivityUtility;
 import mil.nga.giat.mage.sdk.datastore.user.Event;
 import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
 import mil.nga.giat.mage.sdk.datastore.user.User;
-import mil.nga.giat.mage.sdk.retrofit.resource.UserResource;
+import mil.nga.giat.mage.sdk.http.resource.UserResource;
 
 /**
  * Updates user's recent event

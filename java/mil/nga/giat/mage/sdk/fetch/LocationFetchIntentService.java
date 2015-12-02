@@ -23,7 +23,7 @@ import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.event.IEventEventListener;
 import mil.nga.giat.mage.sdk.event.IScreenEventListener;
 import mil.nga.giat.mage.sdk.login.LoginTaskFactory;
-import mil.nga.giat.mage.sdk.retrofit.resource.LocationResource;
+import mil.nga.giat.mage.sdk.http.resource.LocationResource;
 import mil.nga.giat.mage.sdk.screen.ScreenChangeReceiver;
 
 public class LocationFetchIntentService extends ConnectivityAwareIntentService implements OnSharedPreferenceChangeListener, IScreenEventListener, IEventEventListener {

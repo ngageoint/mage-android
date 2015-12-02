@@ -24,7 +24,7 @@ import java.util.Set;
 
 import mil.nga.giat.mage.sdk.R;
 import mil.nga.giat.mage.sdk.connectivity.ConnectivityUtility;
-import mil.nga.giat.mage.sdk.retrofit.resource.ApiResource;
+import mil.nga.giat.mage.sdk.http.resource.ApiResource;
 
 /**
  * Loads the default configuration from the local property files, and also loads

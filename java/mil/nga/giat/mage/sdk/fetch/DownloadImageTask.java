@@ -14,7 +14,7 @@ import java.util.Collection;
 
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
-import mil.nga.giat.mage.sdk.retrofit.resource.UserResource;
+import mil.nga.giat.mage.sdk.http.resource.UserResource;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
 
 /**

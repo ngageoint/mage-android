@@ -23,7 +23,7 @@ import mil.nga.giat.mage.sdk.datastore.user.Event;
 import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
 import mil.nga.giat.mage.sdk.exceptions.StaticFeatureException;
 import mil.nga.giat.mage.sdk.login.LoginTaskFactory;
-import mil.nga.giat.mage.sdk.retrofit.resource.LayerResource;
+import mil.nga.giat.mage.sdk.http.resource.LayerResource;
 
 public class StaticFeatureServerFetch extends AbstractServerFetch {
 

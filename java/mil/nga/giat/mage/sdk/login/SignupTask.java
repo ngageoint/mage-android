@@ -13,7 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import mil.nga.giat.mage.sdk.connectivity.ConnectivityUtility;
-import mil.nga.giat.mage.sdk.retrofit.resource.UserResource;
+import mil.nga.giat.mage.sdk.http.resource.UserResource;
 import mil.nga.giat.mage.sdk.utils.DeviceUuidFactory;
 
 /**

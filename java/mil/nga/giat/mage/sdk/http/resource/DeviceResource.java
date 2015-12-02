@@ -1,4 +1,4 @@
-package mil.nga.giat.mage.sdk.retrofit.resource;
+package mil.nga.giat.mage.sdk.http.resource;
 
 import android.content.Context;
 import android.preference.PreferenceManager;
@@ -9,7 +9,7 @@ import com.google.gson.JsonObject;
 import java.io.IOException;
 
 import mil.nga.giat.mage.sdk.R;
-import mil.nga.giat.mage.sdk.retrofit.HttpClientManager;
+import mil.nga.giat.mage.sdk.http.HttpClientManager;
 import retrofit.Call;
 import retrofit.GsonConverterFactory;
 import retrofit.Response;

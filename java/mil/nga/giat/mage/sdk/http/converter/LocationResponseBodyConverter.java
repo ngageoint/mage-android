@@ -1,4 +1,4 @@
-package mil.nga.giat.mage.sdk.retrofit.converter;
+package mil.nga.giat.mage.sdk.http.converter;
 
 import com.squareup.okhttp.ResponseBody;
 

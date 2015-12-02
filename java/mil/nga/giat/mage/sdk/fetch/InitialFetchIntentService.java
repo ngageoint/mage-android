@@ -32,10 +32,10 @@ import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.datastore.user.UserTeam;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
 import mil.nga.giat.mage.sdk.login.LoginTaskFactory;
-import mil.nga.giat.mage.sdk.retrofit.resource.EventResource;
-import mil.nga.giat.mage.sdk.retrofit.resource.RoleResource;
-import mil.nga.giat.mage.sdk.retrofit.resource.TeamResource;
-import mil.nga.giat.mage.sdk.retrofit.resource.UserResource;
+import mil.nga.giat.mage.sdk.http.resource.EventResource;
+import mil.nga.giat.mage.sdk.http.resource.RoleResource;
+import mil.nga.giat.mage.sdk.http.resource.TeamResource;
+import mil.nga.giat.mage.sdk.http.resource.UserResource;
 
 /**
  * This class will fetch events, roles, users and teams just once.

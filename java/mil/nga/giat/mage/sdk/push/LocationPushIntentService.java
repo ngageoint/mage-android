@@ -28,7 +28,7 @@ import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.exceptions.LocationException;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
 import mil.nga.giat.mage.sdk.login.LoginTaskFactory;
-import mil.nga.giat.mage.sdk.retrofit.resource.LocationResource;
+import mil.nga.giat.mage.sdk.http.resource.LocationResource;
 
 public class LocationPushIntentService extends ConnectivityAwareIntentService implements SharedPreferences.OnSharedPreferenceChangeListener {
 

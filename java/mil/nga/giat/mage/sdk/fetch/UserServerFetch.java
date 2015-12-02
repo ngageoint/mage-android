@@ -8,7 +8,7 @@ import java.util.Date;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
-import mil.nga.giat.mage.sdk.retrofit.resource.UserResource;
+import mil.nga.giat.mage.sdk.http.resource.UserResource;
 
 public class UserServerFetch extends AbstractServerFetch {
 

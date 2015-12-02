@@ -1,4 +1,4 @@
-package mil.nga.giat.mage.sdk.retrofit.converter;
+package mil.nga.giat.mage.sdk.http.converter;
 
 import com.google.gson.Gson;
 import com.squareup.okhttp.MediaType;
@@ -9,20 +9,21 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.lang.reflect.Type;
 import java.nio.charset.Charset;
+import java.util.List;
 
-import mil.nga.giat.mage.sdk.datastore.observation.Observation;
+import mil.nga.giat.mage.sdk.datastore.location.Location;
 import okio.Buffer;
 import retrofit.Converter;
 
 /**
- * Retrofit observation request body converter
+ * Retrofit location request body converter
  *
- * Handles GSON serialization for an observation
+ * Handles GSON serialization for locations
  *
  * @author newmanw
  *
  */
-public class ObservationRequestBodyConverter implements Converter<Observation, RequestBody> {
+public class LocationRequestBodyConverter implements Converter<List<Location>, RequestBody> {
 
     private static final MediaType MEDIA_TYPE = MediaType.parse("application/json; charset=UTF-8");
     private static final Charset UTF_8 = Charset.forName("UTF-8");
@@ -30,17 +31,17 @@ public class ObservationRequestBodyConverter implements Converter<Observation, R
     private final Gson gson;
     private final Type type;
 
-    ObservationRequestBodyConverter(Gson gson, Type type) {
+    LocationRequestBodyConverter(Gson gson, Type type) {
         this.gson = gson;
         this.type = type;
     }
 
     @Override
-    public RequestBody convert(Observation observation) throws IOException {
+    public RequestBody convert(List<Location> value) throws IOException {
         Buffer buffer = new Buffer();
         Writer writer = new OutputStreamWriter(buffer.outputStream(), UTF_8);
         try {
-            gson.toJson(observation, type, writer);
+            gson.toJson(value, type, writer);
             writer.flush();
         } catch (IOException e) {
             throw new AssertionError(e); // Writing to Buffer does no I/O.

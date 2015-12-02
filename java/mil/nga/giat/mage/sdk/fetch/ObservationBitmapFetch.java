@@ -10,7 +10,7 @@ import java.io.FileOutputStream;
 import java.io.InputStream;
 
 import mil.nga.giat.mage.sdk.datastore.user.Event;
-import mil.nga.giat.mage.sdk.retrofit.resource.ObservationResource;
+import mil.nga.giat.mage.sdk.http.resource.ObservationResource;
 import mil.nga.giat.mage.sdk.utils.ZipUtility;
 
 public class ObservationBitmapFetch extends AbstractServerFetch {

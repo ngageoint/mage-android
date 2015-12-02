@@ -16,7 +16,7 @@ import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
 import mil.nga.giat.mage.sdk.event.IObservationEventListener;
 import mil.nga.giat.mage.sdk.login.LoginTaskFactory;
-import mil.nga.giat.mage.sdk.retrofit.resource.ObservationResource;
+import mil.nga.giat.mage.sdk.http.resource.ObservationResource;
 
 public class ObservationPushIntentService extends ConnectivityAwareIntentService implements IObservationEventListener {
 

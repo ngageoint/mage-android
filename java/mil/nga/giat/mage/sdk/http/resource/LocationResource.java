@@ -1,4 +1,4 @@
-package mil.nga.giat.mage.sdk.retrofit.resource;
+package mil.nga.giat.mage.sdk.http.resource;
 
 import android.content.Context;
 import android.preference.PreferenceManager;
@@ -14,8 +14,8 @@ import mil.nga.giat.mage.sdk.datastore.location.LocationHelper;
 import mil.nga.giat.mage.sdk.datastore.user.Event;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
-import mil.nga.giat.mage.sdk.retrofit.HttpClientManager;
-import mil.nga.giat.mage.sdk.retrofit.converter.LocationConverterFactory;
+import mil.nga.giat.mage.sdk.http.HttpClientManager;
+import mil.nga.giat.mage.sdk.http.converter.LocationConverterFactory;
 import retrofit.Call;
 import retrofit.Response;
 import retrofit.Retrofit;

@@ -1,4 +1,4 @@
-package mil.nga.giat.mage.sdk.retrofit;
+package mil.nga.giat.mage.sdk.http;
 
 import android.content.Context;
 import android.preference.PreferenceManager;

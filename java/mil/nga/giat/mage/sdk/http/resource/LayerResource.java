@@ -1,4 +1,4 @@
-package mil.nga.giat.mage.sdk.retrofit.resource;
+package mil.nga.giat.mage.sdk.http.resource;
 
 import android.content.Context;
 import android.preference.PreferenceManager;
@@ -16,8 +16,8 @@ import mil.nga.giat.mage.sdk.datastore.layer.Layer;
 import mil.nga.giat.mage.sdk.datastore.staticfeature.StaticFeature;
 import mil.nga.giat.mage.sdk.datastore.user.Event;
 import mil.nga.giat.mage.sdk.gson.deserializer.LayerDeserializer;
-import mil.nga.giat.mage.sdk.retrofit.HttpClientManager;
-import mil.nga.giat.mage.sdk.retrofit.converter.FeatureConverterFactory;
+import mil.nga.giat.mage.sdk.http.HttpClientManager;
+import mil.nga.giat.mage.sdk.http.converter.FeatureConverterFactory;
 import retrofit.Call;
 import retrofit.GsonConverterFactory;
 import retrofit.Response;

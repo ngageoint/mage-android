@@ -9,7 +9,7 @@ import mil.nga.giat.mage.sdk.datastore.observation.Attachment;
 import mil.nga.giat.mage.sdk.datastore.observation.AttachmentHelper;
 import mil.nga.giat.mage.sdk.exceptions.ObservationException;
 import mil.nga.giat.mage.sdk.login.LoginTaskFactory;
-import mil.nga.giat.mage.sdk.retrofit.resource.ObservationResource;
+import mil.nga.giat.mage.sdk.http.resource.ObservationResource;
 
 public class AttachmentPushIntentService extends IntentService {
 	

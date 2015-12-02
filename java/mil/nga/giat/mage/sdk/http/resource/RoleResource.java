@@ -1,4 +1,4 @@
-package mil.nga.giat.mage.sdk.retrofit.resource;
+package mil.nga.giat.mage.sdk.http.resource;
 
 import android.content.Context;
 import android.preference.PreferenceManager;
@@ -11,7 +11,7 @@ import java.util.Collection;
 import mil.nga.giat.mage.sdk.R;
 import mil.nga.giat.mage.sdk.datastore.user.Role;
 import mil.nga.giat.mage.sdk.gson.deserializer.RolesDeserializer;
-import mil.nga.giat.mage.sdk.retrofit.HttpClientManager;
+import mil.nga.giat.mage.sdk.http.HttpClientManager;
 import retrofit.Call;
 import retrofit.GsonConverterFactory;
 import retrofit.Response;

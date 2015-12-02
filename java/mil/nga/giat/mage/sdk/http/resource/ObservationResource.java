@@ -1,4 +1,4 @@
-package mil.nga.giat.mage.sdk.retrofit.resource;
+package mil.nga.giat.mage.sdk.http.resource;
 
 import android.content.Context;
 import android.preference.PreferenceManager;
@@ -26,10 +26,10 @@ import mil.nga.giat.mage.sdk.datastore.observation.Attachment;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
 import mil.nga.giat.mage.sdk.datastore.user.Event;
-import mil.nga.giat.mage.sdk.retrofit.HttpClientManager;
-import mil.nga.giat.mage.sdk.retrofit.converter.AttachmentConverterFactory;
-import mil.nga.giat.mage.sdk.retrofit.converter.ObservationConverterFactory;
-import mil.nga.giat.mage.sdk.retrofit.converter.ObservationsConverterFactory;
+import mil.nga.giat.mage.sdk.http.HttpClientManager;
+import mil.nga.giat.mage.sdk.http.converter.AttachmentConverterFactory;
+import mil.nga.giat.mage.sdk.http.converter.ObservationConverterFactory;
+import mil.nga.giat.mage.sdk.http.converter.ObservationsConverterFactory;
 import mil.nga.giat.mage.sdk.utils.DateFormatFactory;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
 import retrofit.Call;

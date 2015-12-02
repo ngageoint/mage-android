@@ -15,7 +15,7 @@ import java.security.SecureRandom;
 
 import mil.nga.giat.mage.sdk.connectivity.ConnectivityUtility;
 import mil.nga.giat.mage.sdk.datastore.user.User;
-import mil.nga.giat.mage.sdk.retrofit.resource.UserResource;
+import mil.nga.giat.mage.sdk.http.resource.UserResource;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
 
 public class UpdateProfileTask extends AsyncTask<String, Void, User> {
