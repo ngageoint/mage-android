@@ -1,5 +1,7 @@
 package mil.nga.giat.mage.sdk.login;
 
+import com.google.gson.JsonObject;
+
 import org.json.JSONObject;
 
 import java.util.ArrayList;
@@ -45,7 +47,7 @@ public class AccountStatus {
 	 * If status was true, contains information relevant to the
 	 * {@link AbstractAccountTask}, such as a user's token
 	 */
-	private JSONObject accountInformation = new JSONObject();
+	private JsonObject accountInformation = new JsonObject();
 
 	public AccountStatus(Status status) {
 		super();
@@ -59,7 +61,7 @@ public class AccountStatus {
 		this.errorMessages = errorMessages;
 	}
 
-	public AccountStatus(Status status, List<Integer> errorIndices, List<String> errorMessages, JSONObject accountInformation) {
+	public AccountStatus(Status status, List<Integer> errorIndices, List<String> errorMessages, JsonObject accountInformation) {
 		super();
 		this.status = status;
 		this.errorIndices = errorIndices;
@@ -79,7 +81,7 @@ public class AccountStatus {
 		return errorMessages;
 	}
 
-	public final JSONObject getAccountInformation() {
+	public final JsonObject getAccountInformation() {
 		return accountInformation;
 	}
 }

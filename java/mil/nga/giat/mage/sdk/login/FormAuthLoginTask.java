@@ -8,17 +8,7 @@ import android.util.Log;
 
 import com.google.common.base.Predicate;
 import com.google.gson.Gson;
-
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.HttpStatus;
-import org.apache.http.NameValuePair;
-import org.apache.http.client.entity.UrlEncodedFormEntity;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.message.BasicNameValuePair;
-import org.apache.http.util.EntityUtils;
-import org.json.JSONObject;
+import com.google.gson.JsonObject;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -32,7 +22,8 @@ import mil.nga.giat.mage.sdk.connectivity.ConnectivityUtility;
 import mil.nga.giat.mage.sdk.datastore.DaoStore;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.gson.deserializer.UserDeserializer;
-import mil.nga.giat.mage.sdk.http.client.HttpClientManager;
+import mil.nga.giat.mage.sdk.retrofit.resource.DeviceResource;
+import mil.nga.giat.mage.sdk.retrofit.resource.UserResource;
 import mil.nga.giat.mage.sdk.utils.DateFormatFactory;
 import mil.nga.giat.mage.sdk.utils.DeviceUuidFactory;
 import mil.nga.giat.mage.sdk.utils.PasswordUtility;
@@ -154,23 +145,12 @@ public class FormAuthLoginTask extends AbstractAccountTask {
 
 			// else the callback was a success
 
-			HttpEntity entity = null;
 			try {
-				DefaultHttpClient httpClient = HttpClientManager.getInstance(mApplicationContext).getHttpClient();
-				List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>(3);
-				nameValuePairs.add(new BasicNameValuePair("password", password));
-				nameValuePairs.add(new BasicNameValuePair("uid", uuid));
-				nameValuePairs.add(new BasicNameValuePair("username", username));
 				String buildVersion = sharedPreferences.getString(mApplicationContext.getString(R.string.buildVersionKey), null);
-				if (buildVersion != null) {
-					nameValuePairs.add(new BasicNameValuePair("appVersion", buildVersion));
-				}
-
-				UrlEncodedFormEntity authParams = new UrlEncodedFormEntity(nameValuePairs);
 
 				// Does the device need to be registered?
 				if (needToRegisterDevice) {
-					AccountStatus.Status regStatus = registerDevice(serverURL, authParams);
+					AccountStatus.Status regStatus = registerDevice(username, uuid, password);
 
 					if (regStatus.equals(AccountStatus.Status.SUCCESSFUL_REGISTRATION)) {
 						return new AccountStatus(regStatus);
@@ -179,33 +159,30 @@ public class FormAuthLoginTask extends AbstractAccountTask {
 					}
 				}
 
-				HttpPost post = new HttpPost(new URL(new URL(serverURL), "api/login").toURI());
-				post.setEntity(authParams);
-				HttpResponse response = httpClient.execute(post);
+				UserResource userResource = new UserResource(mApplicationContext);
+				JsonObject loginJson = userResource.login(username, uuid, password, buildVersion);
 
-				if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
-					entity = response.getEntity();
-					JSONObject json = new JSONObject(EntityUtils.toString(entity));
-
+				if (loginJson != null) {
 					// put the token information in the shared preferences
 					Editor editor = sharedPreferences.edit();
-					editor.putString(mApplicationContext.getString(R.string.tokenKey), json.getString("token").trim()).commit();
+
+					editor.putString(mApplicationContext.getString(R.string.tokenKey), loginJson.get("token").getAsString().trim());
 					Log.d(LOG_NAME, "Storing token: " + String.valueOf(sharedPreferences.getString(mApplicationContext.getString(R.string.tokenKey), null)));
 					try {
-						Date tokenExpiration = iso8601Format.parse(json.getString("expirationDate").trim());
+						Date tokenExpiration = iso8601Format.parse(loginJson.get("expirationDate").getAsString().trim());
 						long tokenExpirationLength = tokenExpiration.getTime() - (new Date()).getTime();
-						editor.putString(mApplicationContext.getString(R.string.tokenExpirationDateKey), iso8601Format.format(tokenExpiration)).commit();
-						editor.putLong(mApplicationContext.getString(R.string.tokenExpirationLengthKey), tokenExpirationLength).commit();
+						editor.putString(mApplicationContext.getString(R.string.tokenExpirationDateKey), iso8601Format.format(tokenExpiration));
+						editor.putLong(mApplicationContext.getString(R.string.tokenExpirationLengthKey), tokenExpirationLength);
 					} catch (java.text.ParseException e) {
 						Log.e(LOG_NAME, "Problem parsing token expiration date.", e);
 					}
 
 					// initialize the current user
-					JSONObject userJson = json.getJSONObject("user");
+					JsonObject userJson = loginJson.getAsJsonObject("user");
 
 					// if username is different, then clear the db
 					String oldUsername = sharedPreferences.getString(mApplicationContext.getString(R.string.usernameKey), mApplicationContext.getString(R.string.usernameDefaultValue));
-					String newUsername = userJson.getString("username");
+					String newUsername = userJson.get("username").getAsString();
 					if (oldUsername == null || !oldUsername.equals(newUsername)) {
 						DaoStore.getInstance(mApplicationContext).resetDatabase();
 					}
@@ -217,7 +194,7 @@ public class FormAuthLoginTask extends AbstractAccountTask {
 						user.setCurrentUser(true);
 						user.setFetchedDate(new Date());
 						user = userHelper.createOrUpdate(user);
-						editor.putString(mApplicationContext.getString(R.string.displayNameKey), user.getDisplayName()).commit();
+						editor.putString(mApplicationContext.getString(R.string.displayNameKey), user.getDisplayName());
 					} else {
 						Log.e(LOG_NAME, "Unable to Deserializer user.");
 						List<Integer> errorIndices = new ArrayList<Integer>();
@@ -227,10 +204,10 @@ public class FormAuthLoginTask extends AbstractAccountTask {
 						return new AccountStatus(AccountStatus.Status.FAILED_LOGIN, errorIndices, errorMessages);
 					}
 
-					return new AccountStatus(AccountStatus.Status.SUCCESSFUL_LOGIN, new ArrayList<Integer>(), new ArrayList<String>(), json);
-				} else if (response.getStatusLine().getStatusCode() == HttpStatus.SC_UNAUTHORIZED) {
-					entity = response.getEntity();
-					entity.consumeContent();
+					editor.commit();
+
+					return new AccountStatus(AccountStatus.Status.SUCCESSFUL_LOGIN, new ArrayList<Integer>(), new ArrayList<String>(), loginJson);
+				} else {
 					// Could be that the device is not registered.
 					if (!needToRegisterDevice) {
 						// Try to register it
@@ -240,13 +217,6 @@ public class FormAuthLoginTask extends AbstractAccountTask {
 				}
 			} catch (Exception e) {
 				Log.e(LOG_NAME, "Problem logging in.", e);
-			} finally {
-				try {
-					if (entity != null) {
-						entity.consumeContent();
-					}
-				} catch (Exception e) {
-				}
 			}
 
 		} catch (MalformedURLException e) {
@@ -260,37 +230,20 @@ public class FormAuthLoginTask extends AbstractAccountTask {
 		return new AccountStatus(AccountStatus.Status.FAILED_LOGIN);
 	}
 
-	private AccountStatus.Status registerDevice(String serverURL, UrlEncodedFormEntity authParams) {
-		HttpEntity entity = null;
+	private AccountStatus.Status registerDevice(String username, String uid, String password) {
 		try {
-			DefaultHttpClient httpClient = HttpClientManager.getInstance(mApplicationContext).getHttpClient();
-			HttpPost register = new HttpPost(new URL(new URL(serverURL), "api/devices").toURI());
-			register.setEntity(authParams);
-			HttpResponse response = httpClient.execute(register);
-			if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
-				entity = response.getEntity();
-				JSONObject jsonObject = new JSONObject(EntityUtils.toString(entity));
-				if (jsonObject.getBoolean("registered")) {
+			DeviceResource deviceResource = new DeviceResource(mApplicationContext);
+			JsonObject deviceJson = deviceResource.createDevice(username, uid, password);
+			if (deviceJson != null) {
+				if (deviceJson.get("registered").getAsBoolean()) {
 					return AccountStatus.Status.ALREADY_REGISTERED;
 				} else {
 					// device registration has been submitted
 					return AccountStatus.Status.SUCCESSFUL_REGISTRATION;
 				}
-			} else {
-				entity = response.getEntity();
-				String error = EntityUtils.toString(entity);
-				Log.e(LOG_NAME, "Bad request.");
-				Log.e(LOG_NAME, error);
 			}
 		} catch (Exception e) {
 			Log.e(LOG_NAME, "Problem registering device.", e);
-		} finally {
-			try {
-				if (entity != null) {
-					entity.consumeContent();
-				}
-			} catch (Exception e) {
-			}
 		}
 
 		return AccountStatus.Status.FAILED_LOGIN;

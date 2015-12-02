@@ -4,9 +4,12 @@ import android.content.Context;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
+import com.google.gson.JsonObject;
 import com.squareup.okhttp.MediaType;
 import com.squareup.okhttp.RequestBody;
 import com.squareup.okhttp.ResponseBody;
+
+import org.apache.commons.lang3.StringUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -28,6 +31,7 @@ import retrofit.Call;
 import retrofit.GsonConverterFactory;
 import retrofit.Response;
 import retrofit.Retrofit;
+import retrofit.http.Body;
 import retrofit.http.GET;
 import retrofit.http.Multipart;
 import retrofit.http.POST;
@@ -44,11 +48,17 @@ import retrofit.http.Path;
 public class UserResource {
 
     public interface UserService {
+        @POST("/api/login")
+        Call<JsonObject> login(@Body JsonObject body);
+
         @POST("/api/logout")
         Call<ResponseBody> logout();
 
         @GET("/api/users")
         Call<Collection<User>> getUsers();
+
+        @POST("/api/users")
+        Call<JsonObject> createUser(@Body JsonObject body);
 
         @GET("/api/users/{userId}")
         Call<User> getUser(@Path("userId") String userId);
@@ -73,6 +83,45 @@ public class UserResource {
 
     public UserResource(Context context) {
         this.context = context;
+    }
+
+    public JsonObject login(String username, String uid, String password, String appVersion) {
+        JsonObject loginJson = null;
+
+        String baseUrl = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.serverURLKey), context.getString(R.string.serverURLDefaultValue));
+
+        try {
+            Retrofit retrofit = new Retrofit.Builder()
+                    .baseUrl(baseUrl)
+                    .addConverterFactory(GsonConverterFactory.create())
+                    .client(HttpClient.httpClient(context))
+                    .build();
+
+            UserService service = retrofit.create(UserService.class);
+
+            JsonObject json = new JsonObject();
+            json.addProperty("username", username);
+            json.addProperty("uid", uid);
+            json.addProperty("password", password);
+
+            if (StringUtils.isNotEmpty(appVersion)) {
+                json.addProperty("appVersion", appVersion);
+            }
+
+            Response<JsonObject> response = service.login(json).execute();
+            if (response.isSuccess()) {
+                loginJson = response.body();
+            } else {
+                Log.e(LOG_NAME, "Bad request.");
+                if (response.errorBody() != null) {
+                    Log.e(LOG_NAME, response.errorBody().string());
+                }
+            }
+        } catch (Exception e) {
+            Log.e(LOG_NAME, "Bad request.", e);
+        }
+
+        return loginJson;
     }
 
     public boolean logout() {
@@ -128,6 +177,41 @@ public class UserResource {
         }
 
         return users;
+    }
+
+    public JsonObject createUser(String username, String displayname, String email, String uid, String password) throws Exception {
+        JsonObject user = null;
+
+        String baseUrl = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.serverURLKey), context.getString(R.string.serverURLDefaultValue));
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl(baseUrl)
+                .addConverterFactory(GsonConverterFactory.create())
+                .client(HttpClient.httpClient(context))
+                .build();
+
+        JsonObject json = new JsonObject();
+        json.addProperty("username", username);
+        json.addProperty("displayName", displayname);
+        json.addProperty("email", email);
+        json.addProperty("uid", uid);
+        json.addProperty("password", password);
+        json.addProperty("passwordconfirm", password);
+
+        UserService service = retrofit.create(UserService.class);
+        Response<JsonObject> response = service.createUser(json).execute();
+
+        if (response.isSuccess()) {
+            user = response.body();
+        } else {
+            Log.e(LOG_NAME, "Bad request.");
+            if (response.errorBody() != null) {
+                Log.e(LOG_NAME, response.errorBody().string());
+            }
+
+            throw new RuntimeException(response.errorBody().string());
+        }
+
+        return user;
     }
 
     public User getUser(String userId) throws IOException {
