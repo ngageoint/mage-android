@@ -14,7 +14,7 @@ import mil.nga.giat.mage.sdk.datastore.location.LocationHelper;
 import mil.nga.giat.mage.sdk.datastore.user.Event;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
-import mil.nga.giat.mage.sdk.retrofit.HttpClient;
+import mil.nga.giat.mage.sdk.retrofit.HttpClientManager;
 import mil.nga.giat.mage.sdk.retrofit.converter.LocationConverterFactory;
 import retrofit.Call;
 import retrofit.Response;
@@ -55,7 +55,7 @@ public class LocationResource {
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl(baseUrl)
                 .addConverterFactory(LocationConverterFactory.create(event, true))
-                .client(HttpClient.httpClient(context))
+                .client(HttpClientManager.getInstance(context).httpClient())
                 .build();
 
         try {
@@ -93,7 +93,7 @@ public class LocationResource {
             Retrofit retrofit = new Retrofit.Builder()
                     .baseUrl(baseUrl)
                     .addConverterFactory(LocationConverterFactory.create(event, false))
-                    .client(HttpClient.httpClient(context))
+                    .client(HttpClientManager.getInstance(context).httpClient())
                     .build();
 
             LocationService service = retrofit.create(LocationService.class);

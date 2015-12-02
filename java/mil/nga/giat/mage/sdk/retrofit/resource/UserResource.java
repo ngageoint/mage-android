@@ -25,7 +25,7 @@ import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.gson.deserializer.UserDeserializer;
 import mil.nga.giat.mage.sdk.gson.deserializer.UsersDeserializer;
-import mil.nga.giat.mage.sdk.retrofit.HttpClient;
+import mil.nga.giat.mage.sdk.retrofit.HttpClientManager;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
 import retrofit.Call;
 import retrofit.GsonConverterFactory;
@@ -94,7 +94,7 @@ public class UserResource {
             Retrofit retrofit = new Retrofit.Builder()
                     .baseUrl(baseUrl)
                     .addConverterFactory(GsonConverterFactory.create())
-                    .client(HttpClient.httpClient(context))
+                    .client(HttpClientManager.getInstance(context).httpClient())
                     .build();
 
             UserService service = retrofit.create(UserService.class);
@@ -133,7 +133,7 @@ public class UserResource {
             Retrofit retrofit = new Retrofit.Builder()
                     .baseUrl(baseUrl)
                     .addConverterFactory(GsonConverterFactory.create(UsersDeserializer.getGsonBuilder(context)))
-                    .client(HttpClient.httpClient(context))
+                    .client(HttpClientManager.getInstance(context).httpClient())
                     .build();
 
             UserService service = retrofit.create(UserService.class);
@@ -161,7 +161,7 @@ public class UserResource {
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl(baseUrl)
                 .addConverterFactory(GsonConverterFactory.create(UsersDeserializer.getGsonBuilder(context)))
-                .client(HttpClient.httpClient(context))
+                .client(HttpClientManager.getInstance(context).httpClient())
                 .build();
 
         UserService service = retrofit.create(UserService.class);
@@ -186,7 +186,7 @@ public class UserResource {
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl(baseUrl)
                 .addConverterFactory(GsonConverterFactory.create())
-                .client(HttpClient.httpClient(context))
+                .client(HttpClientManager.getInstance(context).httpClient())
                 .build();
 
         JsonObject json = new JsonObject();
@@ -221,7 +221,7 @@ public class UserResource {
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl(baseUrl)
                 .addConverterFactory(GsonConverterFactory.create(UserDeserializer.getGsonBuilder(context)))
-                .client(HttpClient.httpClient(context))
+                .client(HttpClientManager.getInstance(context).httpClient())
                 .build();
 
         UserService service = retrofit.create(UserService.class);
@@ -245,7 +245,7 @@ public class UserResource {
         String baseUrl = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.serverURLKey), context.getString(R.string.serverURLDefaultValue));
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl(baseUrl)
-                .client(HttpClient.httpClient(context))
+                .client(HttpClientManager.getInstance(context).httpClient())
                 .build();
 
         UserService service = retrofit.create(UserService.class);
@@ -269,7 +269,7 @@ public class UserResource {
         String baseUrl = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.serverURLKey), context.getString(R.string.serverURLDefaultValue));
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl(baseUrl)
-                .client(HttpClient.httpClient(context))
+                .client(HttpClientManager.getInstance(context).httpClient())
                 .build();
 
         UserService service = retrofit.create(UserService.class);
@@ -292,7 +292,7 @@ public class UserResource {
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl(baseUrl)
                 .addConverterFactory(GsonConverterFactory.create(UserDeserializer.getGsonBuilder(context)))
-                .client(HttpClient.httpClient(context))
+                .client(HttpClientManager.getInstance(context).httpClient())
                 .build();
 
         UserService service = retrofit.create(UserService.class);
@@ -317,7 +317,7 @@ public class UserResource {
             Retrofit retrofit = new Retrofit.Builder()
                     .baseUrl(baseUrl)
                     .addConverterFactory(GsonConverterFactory.create(UserDeserializer.getGsonBuilder(context)))
-                    .client(HttpClient.httpClient(context))
+                    .client(HttpClientManager.getInstance(context).httpClient())
                     .build();
 
             UserService service = retrofit.create(UserService.class);

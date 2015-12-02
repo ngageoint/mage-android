@@ -11,7 +11,7 @@ import java.util.Collection;
 import mil.nga.giat.mage.sdk.R;
 import mil.nga.giat.mage.sdk.datastore.user.Role;
 import mil.nga.giat.mage.sdk.gson.deserializer.RolesDeserializer;
-import mil.nga.giat.mage.sdk.retrofit.HttpClient;
+import mil.nga.giat.mage.sdk.retrofit.HttpClientManager;
 import retrofit.Call;
 import retrofit.GsonConverterFactory;
 import retrofit.Response;
@@ -46,7 +46,7 @@ public class RoleResource {
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl(baseUrl)
                 .addConverterFactory(GsonConverterFactory.create(RolesDeserializer.getGsonBuilder()))
-                .client(HttpClient.httpClient(context))
+                .client(HttpClientManager.getInstance(context).httpClient())
                 .build();
 
         RoleService service = retrofit.create(RoleService.class);

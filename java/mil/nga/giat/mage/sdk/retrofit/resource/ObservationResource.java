@@ -26,7 +26,7 @@ import mil.nga.giat.mage.sdk.datastore.observation.Attachment;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
 import mil.nga.giat.mage.sdk.datastore.user.Event;
-import mil.nga.giat.mage.sdk.retrofit.HttpClient;
+import mil.nga.giat.mage.sdk.retrofit.HttpClientManager;
 import mil.nga.giat.mage.sdk.retrofit.converter.AttachmentConverterFactory;
 import mil.nga.giat.mage.sdk.retrofit.converter.ObservationConverterFactory;
 import mil.nga.giat.mage.sdk.retrofit.converter.ObservationsConverterFactory;
@@ -64,6 +64,9 @@ public class ObservationResource {
         @GET("/api/events/{eventId}/form/icons.zip")
         Call<ResponseBody> getObservationIcons(@Path("eventId") String eventId);
 
+        @GET("/api/events/{eventId}/observations/{observationId}/attachments/{attachmentId}")
+        Call<ResponseBody> getAttachment(@Path("eventId") String eventId, @Path("observationId") String observationId, @Path("attachmentId") String attachmentId);
+
         @Multipart
         @POST("/api/events/{eventId}/observations/{observationId}/attachments")
         Call<Attachment> createAttachment(@Path("eventId") String eventId, @Path("observationId") String observationId, @PartMap Map<String, RequestBody> parts);
@@ -88,7 +91,7 @@ public class ObservationResource {
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl(baseUrl)
                 .addConverterFactory(ObservationsConverterFactory.create(event))
-                .client(HttpClient.httpClient(context))
+                .client(HttpClientManager.getInstance(context).httpClient())
                 .build();
 
         DateFormat iso8601Format = DateFormatFactory.ISO8601();
@@ -125,7 +128,7 @@ public class ObservationResource {
             Retrofit retrofit = new Retrofit.Builder()
                     .baseUrl(baseUrl)
                     .addConverterFactory(ObservationConverterFactory.create(observation.getEvent()))
-                    .client(HttpClient.httpClient(context))
+                    .client(HttpClientManager.getInstance(context).httpClient())
                     .build();
 
             ObservationService service = retrofit.create(ObservationService.class);
@@ -159,7 +162,7 @@ public class ObservationResource {
         String baseUrl = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.serverURLKey), context.getString(R.string.serverURLDefaultValue));
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl(baseUrl)
-                .client(HttpClient.httpClient(context))
+                .client(HttpClientManager.getInstance(context).httpClient())
                 .build();
 
         ObservationService service = retrofit.create(ObservationService.class);
@@ -178,13 +181,40 @@ public class ObservationResource {
         return inputStream;
     }
 
+    public ResponseBody getAttachment(Attachment attachment) throws IOException {
+        String baseUrl = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.serverURLKey), context.getString(R.string.serverURLDefaultValue));
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl(baseUrl)
+                .client(HttpClientManager.getInstance(context).httpClient())
+                .build();
+
+        ObservationService service = retrofit.create(ObservationService.class);
+
+        String eventId = attachment.getObservation().getEvent().getRemoteId();
+        String observationId = attachment.getObservation().getRemoteId();
+        String attachmentId = attachment.getRemoteId();
+        Response<ResponseBody> response = service.getAttachment(eventId, observationId, attachmentId).execute();
+
+
+        if (response.isSuccess()) {
+            return response.body();
+        } else {
+            Log.e(LOG_NAME, "Bad request.");
+            if (response.errorBody() != null) {
+                Log.e(LOG_NAME, response.errorBody().string());
+            }
+        }
+
+        return null;
+    }
+
     public Attachment createAttachment(Attachment attachment) {
         try {
             String baseUrl = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.serverURLKey), context.getString(R.string.serverURLDefaultValue));
             Retrofit retrofit = new Retrofit.Builder()
                     .baseUrl(baseUrl)
                     .addConverterFactory(AttachmentConverterFactory.create())
-                    .client(HttpClient.httpClient(context))
+                    .client(HttpClientManager.getInstance(context).httpClient())
                     .build();
 
             ObservationService service = retrofit.create(ObservationService.class);

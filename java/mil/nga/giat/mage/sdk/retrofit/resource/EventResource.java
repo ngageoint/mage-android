@@ -13,7 +13,7 @@ import mil.nga.giat.mage.sdk.R;
 import mil.nga.giat.mage.sdk.datastore.user.Event;
 import mil.nga.giat.mage.sdk.datastore.user.Team;
 import mil.nga.giat.mage.sdk.gson.deserializer.EventsDeserializer;
-import mil.nga.giat.mage.sdk.retrofit.HttpClient;
+import mil.nga.giat.mage.sdk.retrofit.HttpClientManager;
 import retrofit.Call;
 import retrofit.GsonConverterFactory;
 import retrofit.Response;
@@ -48,7 +48,7 @@ public class EventResource {
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl(baseUrl)
                 .addConverterFactory(GsonConverterFactory.create(EventsDeserializer.getGsonBuilder(context)))
-                .client(HttpClient.httpClient(context))
+                .client(HttpClientManager.getInstance(context).httpClient())
                 .build();
 
         EventService service = retrofit.create(EventService.class);

@@ -7,7 +7,7 @@ import com.squareup.okhttp.ResponseBody;
 
 import java.io.IOException;
 
-import mil.nga.giat.mage.sdk.retrofit.HttpClient;
+import mil.nga.giat.mage.sdk.retrofit.HttpClientManager;
 import retrofit.Call;
 import retrofit.Response;
 import retrofit.Retrofit;
@@ -38,7 +38,7 @@ public class ApiResource {
     public String getApi(String url) throws IOException {
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl(url)
-                .client(HttpClient.httpClient(context))
+                .client(HttpClientManager.getInstance(context).httpClient())
                 .build();
 
         ApiService service = retrofit.create(ApiService.class);

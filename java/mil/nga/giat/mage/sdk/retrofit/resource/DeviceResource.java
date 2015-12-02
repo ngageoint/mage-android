@@ -9,7 +9,7 @@ import com.google.gson.JsonObject;
 import java.io.IOException;
 
 import mil.nga.giat.mage.sdk.R;
-import mil.nga.giat.mage.sdk.retrofit.HttpClient;
+import mil.nga.giat.mage.sdk.retrofit.HttpClientManager;
 import retrofit.Call;
 import retrofit.GsonConverterFactory;
 import retrofit.Response;
@@ -46,7 +46,7 @@ public class DeviceResource {
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl(baseUrl)
                 .addConverterFactory(GsonConverterFactory.create())
-                .client(HttpClient.httpClient(context))
+                .client(HttpClientManager.getInstance(context).httpClient())
                 .build();
 
         DeviceService service = retrofit.create(DeviceService.class);
