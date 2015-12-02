@@ -11,12 +11,6 @@ import android.util.Log;
 import com.google.common.base.Predicate;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.HttpStatus;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.util.EntityUtils;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -30,7 +24,7 @@ import java.util.Set;
 
 import mil.nga.giat.mage.sdk.R;
 import mil.nga.giat.mage.sdk.connectivity.ConnectivityUtility;
-import mil.nga.giat.mage.sdk.http.client.HttpClientManager;
+import mil.nga.giat.mage.sdk.retrofit.resource.ApiResource;
 
 /**
  * Loads the default configuration from the local property files, and also loads
@@ -157,11 +151,11 @@ public class PreferenceHelper implements SharedPreferences.OnSharedPreferenceCha
 		}
 	}
 
-	public synchronized void readRemoteApi(URL serverURL, Predicate<Exception> callback) {
-        new RemotePreferenceColonizationApi(callback).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, serverURL);
+	public synchronized void readRemoteApi(String url, Predicate<Exception> callback) {
+        new RemotePreferenceColonizationApi(callback).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, url);
 	}
 
-	public void validateServerApi(String url, final Predicate<Exception> callback) {
+	public void validateServerApi(final String url, final Predicate<Exception> callback) {
 		try {
 			final URL serverURL = new URL(url);
 			// make sure you can get to the host!
@@ -169,7 +163,7 @@ public class PreferenceHelper implements SharedPreferences.OnSharedPreferenceCha
 				@Override
 				public boolean apply(Exception e) {
 					if (e == null) {
-						PreferenceHelper.getInstance(mContext).readRemoteApi(serverURL, new Predicate<Exception>() {
+						PreferenceHelper.getInstance(mContext).readRemoteApi(url, new Predicate<Exception>() {
 							public boolean apply(Exception e) {
 								if (e != null) {
 									return callback.apply(new Exception("No server information"));
@@ -225,7 +219,7 @@ public class PreferenceHelper implements SharedPreferences.OnSharedPreferenceCha
 		Log.d(LOG_NAME, "SharedPreferences changed. Now contains (key, value, type): (" + String.valueOf(key) + ", " + String.valueOf(value) + ", " + String.valueOf(valueType) + ")");
 	}
 
-	private class RemotePreferenceColonizationApi extends AsyncTask<URL, Void, Exception> {
+	private class RemotePreferenceColonizationApi extends AsyncTask<String, Void, Exception> {
 
         private Predicate<Exception> callback = null;
 
@@ -234,9 +228,9 @@ public class PreferenceHelper implements SharedPreferences.OnSharedPreferenceCha
         }
 
 		@Override
-		protected Exception doInBackground(URL... arg0) {
-			URL serverURL = arg0[0];
-			return initializeApi(serverURL);
+		protected Exception doInBackground(String... params) {
+			String url = params[0];
+			return initializeApi(url);
 		}
 
         @Override
@@ -270,15 +264,15 @@ public class PreferenceHelper implements SharedPreferences.OnSharedPreferenceCha
 
 						if(value instanceof Number) {
 							if(value instanceof Long) {
-								editor.putLong(keyString, (Long)value).commit();
+								editor.putLong(keyString, (Long)value);
 							} else if(value instanceof Float) {
-								editor.putFloat(keyString, (Float)value).commit();
+								editor.putFloat(keyString, (Float)value);
 							} else if(value instanceof Double) {
-								editor.putFloat(keyString, ((Double)value).floatValue()).commit();
+								editor.putFloat(keyString, ((Double)value).floatValue());
 							} else if(value instanceof Integer) {
 								editor.putInt(keyString, (Integer)value).commit();
 							} else if(value instanceof Short) {
-								editor.putInt(keyString, ((Short)value).intValue()).commit();
+								editor.putInt(keyString, ((Short)value).intValue());
 							} else {
 								Log.e(LOG_NAME, keyString + " with value " + String.valueOf(value) + " is not of valid number type. Skipping this key-value pair.");
 							}
@@ -287,11 +281,11 @@ public class PreferenceHelper implements SharedPreferences.OnSharedPreferenceCha
 						} else if(value instanceof String) {
 							editor.putString(keyString, (String)value).commit();
 						} else if(value instanceof Character) {
-							editor.putString(keyString, Character.toString((Character)value)).commit();
+							editor.putString(keyString, Character.toString((Character)value));
 						} else {
 							// don't know what type this is, just use toString
 							try {
-								editor.putString(keyString, value.toString()).commit();
+								editor.putString(keyString, value.toString());
 							} catch(Exception e) {
 								Log.e(LOG_NAME, keyString + " with value " + String.valueOf(value) + " is not of valid type. Skipping this key-value pair.");
 							}
@@ -317,41 +311,19 @@ public class PreferenceHelper implements SharedPreferences.OnSharedPreferenceCha
 			editor.commit();
 		}
 
-		private Exception initializeApi(URL serverURL) {
-            Exception exception = null;
-			HttpEntity entity = null;
+		private Exception initializeApi(String url) {
+			ApiResource apiResource = new ApiResource(mContext);
 			try {
-				DefaultHttpClient httpclient = HttpClientManager.getInstance(mContext).getHttpClient();
-                URL apiURL = new URL(serverURL, "api");
-				HttpGet get = new HttpGet(apiURL.toURI());
-				HttpResponse response = httpclient.execute(get);
-				if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
-					entity = response.getEntity();
-					JSONObject json = new JSONObject(EntityUtils.toString(entity));
-
-					removeValues("g");
-
-					// preface all global
-					populateValues("g", json);
-				} else {
-					entity = response.getEntity();
-					String error = EntityUtils.toString(entity);
-					Log.e(LOG_NAME, "Bad request.");
-					Log.e(LOG_NAME, error);
-                    exception = new Exception("Bad request." + error);
-				}
+				String api = apiResource.getApi(url);
+				JSONObject apiJson = new JSONObject(api);
+				removeValues("g");
+				populateValues("g", apiJson);
 			} catch (Exception e) {
-				Log.e(LOG_NAME, "Problem reading server api settings: " + serverURL, e);
-                exception = new Exception("Problem reading server api settings: " + serverURL);
-			} finally {
-				try {
-					if (entity != null) {
-						entity.consumeContent();
-					}
-				} catch (Exception e) {
-				}
+				Log.e(LOG_NAME, "Problem reading server api settings: " + url, e);
+				return e;
 			}
-            return exception;
+
+			return null;
 		}
 	}
 }

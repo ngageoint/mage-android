@@ -72,15 +72,16 @@ public class UserResource {
         boolean status = false;
 
         String baseUrl = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.serverURLKey), context.getString(R.string.serverURLDefaultValue));
-        Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl(baseUrl)
-                .addConverterFactory(GsonConverterFactory.create(UsersDeserializer.getGsonBuilder(context)))
-                .client(HttpClient.httpClient(context))
-                .build();
-
-        UserService service = retrofit.create(UserService.class);
 
         try {
+            Retrofit retrofit = new Retrofit.Builder()
+                    .baseUrl(baseUrl)
+                    .addConverterFactory(GsonConverterFactory.create(UsersDeserializer.getGsonBuilder(context)))
+                    .client(HttpClient.httpClient(context))
+                    .build();
+
+            UserService service = retrofit.create(UserService.class);
+
             Response<ResponseBody> response = service.logout().execute();
             if (response.isSuccess()) {
                 status = true;
