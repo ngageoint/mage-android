@@ -46,22 +46,13 @@ public class ProfilePictureViewerActivity extends Activity {
 					setProfilePicture(f, imageView);
 				} else {
 					if (avatarUrl != null) {
-						String localFilePath = MediaUtility.getAvatarDirectory() + "/" + user.getId() + ".png";
-
-						DownloadImageTask avatarImageTask = new DownloadImageTask(getApplicationContext(), Collections.singletonList(avatarUrl), Collections.singletonList(localFilePath), false) {
+						new DownloadImageTask(getApplicationContext(), Collections.singletonList(user), DownloadImageTask.ImageType.AVATAR, false, new DownloadImageTask.OnImageDownloadListener() {
 							@Override
-							protected Void doInBackground(Void... v) {
-								Void result = super.doInBackground(v);
-								if(!errors.get(0)) {
-									String lap = localFilePaths.get(0);
-									user.setLocalAvatarPath(lap);
-									File f = new File(user.getLocalAvatarPath());
-									setProfilePicture(f, imageView);
-								}
-								return result;
+							public void complete() {
+								File f = new File(user.getLocalAvatarPath());
+								setProfilePicture(f, imageView);
 							}
-						};
-						avatarImageTask.execute();
+						}).execute();
 					}
 				}
 			} catch(Exception e) {

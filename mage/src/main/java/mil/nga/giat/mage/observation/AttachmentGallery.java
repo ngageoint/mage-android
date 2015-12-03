@@ -88,11 +88,10 @@ public class AttachmentGallery {
                 Glide.with(context).load(R.drawable.ic_microphone).into(iv);
             }
         } else if (remoteId != null) {
-            String url = a.getUrl();
             if (contentType == null) {
                 Glide.with(context).load(R.drawable.ic_email_attachment).into(iv);
             } else if (contentType.startsWith("image")) {
-                Glide.with(context).load(url).placeholder(android.R.drawable.progress_indeterminate_horizontal).centerCrop().into(iv);
+                Glide.with(context).load(a).placeholder(android.R.drawable.progress_indeterminate_horizontal).centerCrop().into(iv);
             } else if (contentType.startsWith("video")) {
                 Glide.with(context).load(R.drawable.ic_video_2x).into(iv);
             } else if (contentType.startsWith("audio")) {

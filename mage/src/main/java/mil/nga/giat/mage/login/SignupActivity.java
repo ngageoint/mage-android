@@ -253,7 +253,7 @@ public class SignupActivity extends Activity implements AccountDelegate {
 			return;
 		}
 
-		List<String> accountInfo = new ArrayList<String>();
+		List<String> accountInfo = new ArrayList<>();
 		accountInfo.add(displayName);
 		accountInfo.add(username);
 		accountInfo.add(email);
@@ -282,7 +282,7 @@ public class SignupActivity extends Activity implements AccountDelegate {
 			Editor sp = sharedPreferences.edit();
 			if (TextUtils.isEmpty(oldUsername)) {
 				try {
-					sp.putString(getApplicationContext().getString(R.string.usernameKey), accountStatus.getAccountInformation().getString("username")).commit();
+					sp.putString(getApplicationContext().getString(R.string.usernameKey), accountStatus.getAccountInformation().get("username").getAsString()).commit();
 				} catch (Exception e) {
 					Log.w(LOG_NAME, "Unable to save username");
 				}

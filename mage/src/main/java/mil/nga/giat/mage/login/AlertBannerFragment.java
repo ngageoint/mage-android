@@ -14,7 +14,7 @@ import mil.nga.giat.mage.sdk.connectivity.ConnectivityUtility;
 import mil.nga.giat.mage.sdk.connectivity.NetworkChangeReceiver;
 import mil.nga.giat.mage.sdk.event.IConnectivityEventListener;
 import mil.nga.giat.mage.sdk.event.IUserEventListener;
-import mil.nga.giat.mage.sdk.http.client.HttpClientManager;
+import mil.nga.giat.mage.sdk.http.HttpClientManager;
 import mil.nga.giat.mage.sdk.utils.UserUtility;
 
 /**

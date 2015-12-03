@@ -300,9 +300,14 @@ public class LandingActivity extends Activity implements ListView.OnItemClickLis
         itemToSwitchTo = adapter.getItem(position);
         if (itemToSwitchTo.getFragment() == null) {
             if(itemToSwitchTo.getId() == logoutId) {
-                ((MAGE)getApplication()).onLogout(true);
-                startActivity(new Intent(getApplicationContext(), LoginActivity.class));
-                finish();
+                ((MAGE)getApplication()).onLogout(true, new MAGE.OnLogoutListener() {
+                    @Override
+                    public void onLogout() {
+                        startActivity(new Intent(getApplicationContext(), LoginActivity.class));
+                        finish();
+                    }
+                });
+
                 return;
             } else {
 				Log.e(LOG_NAME, "Your fragment was null. Fix the code.");
