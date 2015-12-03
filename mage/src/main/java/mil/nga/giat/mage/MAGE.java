@@ -13,13 +13,7 @@ import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.TaskStackBuilder;
 import android.util.Log;
 
-import com.bumptech.glide.Glide;
-import com.bumptech.glide.GlideBuilder;
-import com.bumptech.glide.load.model.GlideUrl;
-
 import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -49,14 +43,12 @@ import mil.nga.giat.mage.sdk.event.IUserEventListener;
 import mil.nga.giat.mage.sdk.fetch.LocationFetchIntentService;
 import mil.nga.giat.mage.sdk.fetch.ObservationFetchIntentService;
 import mil.nga.giat.mage.sdk.fetch.StaticFeatureServerFetch;
-import mil.nga.giat.mage.sdk.glide.MageDiskCache;
-import mil.nga.giat.mage.sdk.glide.MageUrlLoader;
-import mil.nga.giat.mage.sdk.http.client.HttpClientManager;
+import mil.nga.giat.mage.sdk.http.HttpClientManager;
+import mil.nga.giat.mage.sdk.http.resource.UserResource;
 import mil.nga.giat.mage.sdk.location.LocationService;
 import mil.nga.giat.mage.sdk.push.AttachmentPushService;
 import mil.nga.giat.mage.sdk.push.LocationPushIntentService;
 import mil.nga.giat.mage.sdk.push.ObservationPushIntentService;
-import mil.nga.giat.mage.sdk.retrofit.resource.UserResource;
 import mil.nga.giat.mage.sdk.screen.ScreenChangeReceiver;
 import mil.nga.giat.mage.sdk.utils.StorageUtility;
 import mil.nga.giat.mage.sdk.utils.StorageUtility.StorageType;
@@ -84,7 +76,7 @@ public class MAGE extends MultiDexApplication implements IUserEventListener {
 	private Intent locationPushIntent;
 	private Intent observationPushIntent;
 	private List<CacheOverlay> cacheOverlays = null;
-	private Collection<OnCacheOverlayListener> cacheOverlayListeners = new ArrayList<OnCacheOverlayListener>();
+	private Collection<OnCacheOverlayListener> cacheOverlayListeners = new ArrayList<>();
 
 	private ObservationNotificationListener observationNotificationListener = null;
 	private AttachmentPushService attachmentPushService = null;
@@ -93,18 +85,12 @@ public class MAGE extends MultiDexApplication implements IUserEventListener {
 
 	@Override
 	public void onCreate() {
-		try {
-			Glide.setup(new GlideBuilder(getApplicationContext()).setDiskCache(new MageDiskCache(getApplicationContext())));
-			Glide.get(getApplicationContext()).register(GlideUrl.class, InputStream.class, new MageUrlLoader.Factory());
-		} catch (IOException e) {
-			Log.e(LOG_NAME, "Unable to create Mage disk cache", e);
-		}
 		refreshTileOverlays();
 
 		// setup the screen unlock stuff
 		registerReceiver(ScreenChangeReceiver.getInstance(), new IntentFilter(Intent.ACTION_SCREEN_ON));
 
-        HttpClientManager.getInstance(getApplicationContext()).addListener(this);
+		HttpClientManager.getInstance(getApplicationContext()).addListener(this);
 
 		super.onCreate();
 	}

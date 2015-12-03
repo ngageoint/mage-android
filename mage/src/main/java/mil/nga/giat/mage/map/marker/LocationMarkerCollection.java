@@ -25,14 +25,11 @@ import com.vividsolutions.jts.geom.Point;
 
 import org.ocpsoft.prettytime.PrettyTime;
 
-import java.text.DateFormat;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
-import java.util.TimeZone;
 import java.util.concurrent.ConcurrentHashMap;
 
 import mil.nga.giat.mage.R;
@@ -45,7 +42,6 @@ import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
 import mil.nga.giat.mage.sdk.fetch.DownloadImageTask;
-import mil.nga.giat.mage.sdk.utils.DateFormatFactory;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
 
 public class LocationMarkerCollection implements PointCollection<Location>, OnMarkerClickListener, OnInfoWindowClickListener {
@@ -276,8 +272,6 @@ public class LocationMarkerCollection implements PointCollection<Location>, OnMa
 
 	private class LocationInfoWindowAdapter implements InfoWindowAdapter {
 
-        private final DateFormat dateFormat = DateFormatFactory.format("yyyy-MM-dd HH:mm zz", Locale.getDefault(), TimeZone.getTimeZone("Zulu"));
-
 		@Override
 		public View getInfoContents(final Marker marker) {
 			final Location location = markerIdToLocation.get(marker.getId());
@@ -293,27 +287,7 @@ public class LocationMarkerCollection implements PointCollection<Location>, OnMa
 			if (location.getUser().getLocalAvatarPath() != null) {
 				iconView.setImageBitmap(MediaUtility.resizeAndRoundCorners(BitmapFactory.decodeFile(location.getUser().getLocalAvatarPath()), 128));
 			} else if (location.getUser().getAvatarUrl() != null) {
-				String localFilePath = MediaUtility.getAvatarDirectory() + "/" + user.getId() + ".png";
-				DownloadImageTask avatarImageTask = new DownloadImageTask(context, Collections.singletonList(location.getUser().getAvatarUrl()), Collections.singletonList(localFilePath), false) {
-
-					@Override
-					protected Void doInBackground(Void... v) {
-						Void result = super.doInBackground(v);
-						if(!errors.get(0)) {
-							String lap = localFilePaths.get(0);
-							location.getUser().setLocalAvatarPath(lap);
-
-							try {
-								UserHelper.getInstance(context).update(location.getUser());
-							} catch (Exception e) {
-								Log.e(LOG_NAME, e.getMessage(), e);
-							}
-						}
-
-						return result;
-					}
-				};
-				avatarImageTask.execute();
+				new DownloadImageTask(context, Collections.singletonList(location.getUser()), DownloadImageTask.ImageType.AVATAR, false).execute();
 			}
 			
 			TextView location_name = (TextView) v.findViewById(R.id.location_name);

@@ -228,28 +228,13 @@ public class ProfileFragment extends Fragment implements OnMapReadyCallback {
 			setProfilePicture(f, imageView);
 		} else {
 			if (avatarUrl != null) {
-				String localFilePath = MediaUtility.getAvatarDirectory() + "/" + user.getId() + ".png";
-
-				DownloadImageTask avatarImageTask = new DownloadImageTask(getActivity().getApplicationContext(), Collections.singletonList(avatarUrl), Collections.singletonList(localFilePath), false) {
-
+				new DownloadImageTask(getActivity().getApplicationContext(), Collections.singletonList(user), DownloadImageTask.ImageType.AVATAR, false, new DownloadImageTask.OnImageDownloadListener() {
 					@Override
-					protected Void doInBackground(Void... v) {
-						Void result = super.doInBackground(v);
-						if(!errors.get(0)) {
-							String lap = localFilePaths.get(0);
-							user.setLocalAvatarPath(lap);
-							try {
-								UserHelper.getInstance(getActivity().getApplicationContext()).update(user);
-							} catch (Exception e) {
-								Log.e(LOG_NAME, e.getMessage(), e);
-							}
-							File f = new File(user.getLocalAvatarPath());
-							setProfilePicture(f, imageView);
-						}
-						return result;
+					public void complete() {
+						File f = new File(user.getLocalAvatarPath());
+						setProfilePicture(f, imageView);
 					}
-				};
-				avatarImageTask.execute();
+				}).execute();
 			}
 		}
 		
@@ -280,21 +265,24 @@ public class ProfileFragment extends Fragment implements OnMapReadyCallback {
 										startActivityForResult(intent, GALLERY_ACTIVITY_REQUEST_CODE);
 										break;
 									case 2:
-										// change the picture from the camera
-										Intent caputreIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-										File f = null;
-										try {
-											f = MediaUtility.createImageFile();
-										} catch (IOException ex) {
-											// Error occurred while creating the File
-											ex.printStackTrace();
+										Intent captureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+										if (captureIntent.resolveActivity(getActivity().getPackageManager()) != null) {
+											// change the picture from the camera
+											File f = null;
+											try {
+												f = MediaUtility.createImageFile();
+											} catch (IOException ex) {
+												// Error occurred while creating the File
+												ex.printStackTrace();
+											}
+											// Continue only if the File was successfully created
+											if (f != null) {
+												currentMediaUri = Uri.fromFile(f);
+												captureIntent.putExtra(MediaStore.EXTRA_OUTPUT, currentMediaUri);
+												startActivityForResult(captureIntent, CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE);
+											}
 										}
-										// Continue only if the File was successfully created
-										if (f != null) {
-											currentMediaUri = Uri.fromFile(f);
-											caputreIntent.putExtra(MediaStore.EXTRA_OUTPUT, currentMediaUri);
-											startActivityForResult(caputreIntent, CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE);
-										}
+
 										break;
 								}
 							}
@@ -336,6 +324,8 @@ public class ProfileFragment extends Fragment implements OnMapReadyCallback {
 	
 	@Override
 	public void onActivityResult(int requestCode, int resultCode, Intent data) {
+		super.onActivityResult(requestCode, resultCode, data);
+
 		if (resultCode != Activity.RESULT_OK) {
 			return;
 		}
@@ -368,7 +358,6 @@ public class ProfileFragment extends Fragment implements OnMapReadyCallback {
 
 			ImageView iv = (ImageView)getActivity().findViewById(R.id.profile_picture);
 			iv.setImageBitmap(b);
-			user.setLocalAvatarPath(filePath);
 			UpdateProfileTask task = new UpdateProfileTask(user, getActivity());
 			task.execute(filePath);
 		}

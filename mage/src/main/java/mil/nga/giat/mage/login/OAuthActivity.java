@@ -11,8 +11,7 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
-import org.json.JSONException;
-import org.json.JSONObject;
+import com.google.gson.JsonObject;
 
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.disclaimer.DisclaimerActivity;
@@ -111,14 +110,11 @@ public class OAuthActivity extends FragmentActivity implements AccountDelegate {
             setResult(RESULT_OK, intent);
             finish();
         } else if (accountStatus.getStatus().equals(AccountStatus.Status.FAILED_SIGNUP)) {
-            JSONObject json = accountStatus.getAccountInformation();
+            JsonObject json = accountStatus.getAccountInformation();
             String errorMessage = "Your account could not be created, please contact your MAGE administrator";
 
             if (json.has("errorMessage")) {
-                try {
-                    errorMessage = json.getString("errorMessage");
-                } catch (JSONException e) {
-                }
+                errorMessage = json.get("errorMessage").getAsString();
             }
 
             Intent intent = new Intent();

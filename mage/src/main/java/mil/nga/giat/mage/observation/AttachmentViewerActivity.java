@@ -14,25 +14,21 @@ import android.view.View;
 import android.widget.ImageView;
 
 import com.bumptech.glide.Glide;
+import com.squareup.okhttp.ResponseBody;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.DefaultHttpClient;
 
-import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.URL;
 
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.observation.RemoveAttachmentDialogFragment.RemoveAttachmentDialogListener;
 import mil.nga.giat.mage.sdk.datastore.DaoStore;
 import mil.nga.giat.mage.sdk.datastore.observation.Attachment;
-import mil.nga.giat.mage.sdk.http.client.HttpClientManager;
+import mil.nga.giat.mage.sdk.http.resource.ObservationResource;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
 
 public class AttachmentViewerActivity extends FragmentActivity implements RemoveAttachmentDialogListener {
@@ -98,7 +94,7 @@ public class AttachmentViewerActivity extends FragmentActivity implements Remove
 			uri = Uri.parse(url);
 			if (contentType.startsWith("image")) {
 				finalType = "image/*";
-				Glide.with(getApplicationContext()).load(url).placeholder(android.R.drawable.progress_indeterminate_horizontal).centerCrop().into(iv);
+				Glide.with(getApplicationContext()).load(a).placeholder(android.R.drawable.progress_indeterminate_horizontal).centerCrop().into(iv);
 			} else if (contentType.startsWith("video")) {
 				finalType = "video/*";
 				// TODO figure out how to set accepts to image/jpeg to ask the server for a thumbnail for the video
@@ -161,11 +157,10 @@ public class AttachmentViewerActivity extends FragmentActivity implements Remove
 	}
 
 	private void startDownload(Attachment attachment, String mimeType) {
-		String url = attachment.getUrl();
-		new DownloadFileAsync(mimeType).execute(url);
+		new DownloadFileAsync(mimeType).execute(attachment);
 	}
 
-	class DownloadFileAsync extends AsyncTask<String, Integer, String> {
+	class DownloadFileAsync extends AsyncTask<Attachment, Integer, String> {
 		String mimeType;
 
 		public DownloadFileAsync(String mimeType) {
@@ -179,46 +174,51 @@ public class AttachmentViewerActivity extends FragmentActivity implements Remove
 		}
 
 		@Override
-		protected String doInBackground(String... aurl) {
-			HttpEntity entity = null;
+		protected String doInBackground(Attachment... attachments) {
+			InputStream is = null;
+			OutputStream os = null;
 			try {
-				URL url = new URL(aurl[0]);
-				DefaultHttpClient httpclient = HttpClientManager.getInstance(getApplicationContext()).getHttpClient();
-				HttpGet get = new HttpGet(url.toURI());
-				HttpResponse response = httpclient.execute(get);
+				Attachment attachment = attachments[0];
+
+				ObservationResource observationResource = new ObservationResource(getApplicationContext());
+				ResponseBody response = observationResource.getAttachment(attachment);
 
 				// FIXME : I'm not sure this works
-				entity = response.getEntity();
-				Long lengthOfFile = Math.max(entity.getContentLength(), 1l);
+				Long contentLength = response.contentLength();
 
-				InputStream input = new BufferedInputStream(entity.getContent());
 				File stageDir = MediaUtility.getMediaStageDirectory();
 				File stagedFile = new File(stageDir, a.getName());
 				a.setLocalPath(stagedFile.getAbsolutePath());
-				OutputStream output = new FileOutputStream(a.getLocalPath());
+				os = new FileOutputStream(a.getLocalPath());
 
 				byte data[] = new byte[1024];
 
 				Long total = 0l;
 				int count;
-				while ((count = input.read(data)) != -1) {
+				is = response.byteStream();
+				while ((count = is.read(data)) != -1) {
 					total += count;
-					publishProgress(((Double)(100.0*(total.doubleValue()/lengthOfFile.doubleValue()))).intValue());
-					output.write(data, 0, count);
+					publishProgress(((Double)(100.0*(total.doubleValue()/contentLength.doubleValue()))).intValue());
+					os.write(data, 0, count);
 				}
-
-				output.flush();
-				output.close();
-				input.close();
 			} catch (Exception e) {
 				Log.e(LOG_NAME, "Problem downloading file.", e);
 			} finally {
-				try {
-					if (entity != null) {
-						entity.consumeContent();
+				if (is != null) {
+					try {
+						is.close();
+					} catch (IOException e) {
+						e.printStackTrace();
 					}
-				} catch (Exception e) {
-					Log.w(LOG_NAME, "Trouble cleaning up after request.", e);
+				}
+
+				if (os != null) {
+					try {
+						os.flush();
+						os.close();;
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
 				}
 			}
 			return null;

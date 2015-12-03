@@ -64,7 +64,7 @@ public class PeopleFeedFragment extends Fragment implements OnSharedPreferenceCh
         View rootView = inflater.inflate(R.layout.fragment_feed_people, container, false);
         setHasOptionsMenu(true);
 
-		FragmentManager fragmentManager = getFragmentManager();
+		FragmentManager fragmentManager = getChildFragmentManager();
 		fragmentManager.beginTransaction().add(R.id.people_event_holder, new EventBannerFragment()).commit();
 
         ListView lv = (ListView) rootView.findViewById(R.id.people_feed_list);
