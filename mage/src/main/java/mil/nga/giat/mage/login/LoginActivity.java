@@ -212,19 +212,16 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 	}
 
 	private void configureLogin() {
-		boolean noServer = StringUtils.isEmpty(mServerURL.getText());
-		findViewById(R.id.login_form).setVisibility(noServer ? View.GONE : View.VISIBLE);
-		findViewById(R.id.server_configuration).setVisibility(noServer ? View.VISIBLE : View.GONE);
-
 		PreferenceHelper preferenceHelper = PreferenceHelper.getInstance(getApplicationContext());
+
+		boolean noServer = StringUtils.isEmpty(mServerURL.getText());
 		boolean localAuthentication = preferenceHelper.containsLocalAuthentication();
 		boolean googleAuthentication = preferenceHelper.containsGoogleAuthentication();
 
-		if (localAuthentication && googleAuthentication) {
-			findViewById(R.id.or).setVisibility(View.VISIBLE);
-		} else {
-			findViewById(R.id.or).setVisibility(View.GONE);
-		}
+		findViewById(R.id.login_form).setVisibility(noServer ? View.GONE : View.VISIBLE);
+		findViewById(R.id.server_configuration).setVisibility(noServer ? View.VISIBLE : View.GONE);
+		findViewById(R.id.or).setVisibility(localAuthentication && googleAuthentication ? View.VISIBLE : View.GONE);
+		findViewById(R.id.sign_up).setVisibility(localAuthentication || googleAuthentication ? View.VISIBLE : View.GONE);
 
 		if (localAuthentication) {
 			Button localButton = (Button) findViewById(R.id.local_login_button);
@@ -332,7 +329,8 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 								@Override
 								public boolean apply(Exception e) {
 									if (e == null) {
-										mServerURL.setText(serverURL);
+										getServerUrlText().setText(serverURL);
+										getServerUrlText().setError(null);
 										mLoginButton.setEnabled(true);
 										serverEditText.setError(null);
 										alertDialog.dismiss();
