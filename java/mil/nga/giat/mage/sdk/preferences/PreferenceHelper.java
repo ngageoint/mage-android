@@ -188,13 +188,11 @@ public class PreferenceHelper implements SharedPreferences.OnSharedPreferenceCha
 										int serverMajorVersion = sharedPreferences.getInt(mContext.getString(R.string.serverVersionMajorKey), 0);
 										int serverMinorVersion = sharedPreferences.getInt(mContext.getString(R.string.serverVersionMinorKey), 0);
 
-										Log.d("BILLY", "server major version: " + serverMajorVersion);
-										Log.d("BILLY", "server minor version: " + serverMinorVersion);
+										Log.d(LOG_NAME, "server major version: " + serverMajorVersion);
+										Log.d(LOG_NAME, "server minor version: " + serverMinorVersion);
 
-										Log.d("BILLY", "compatibleMajorVersion: " + compatibleMajorVersion);
-										Log.d("BILLY", "compatibleMinorVersion: " + compatibleMinorVersion);
-
-
+										Log.d(LOG_NAME, "compatibleMajorVersion: " + compatibleMajorVersion);
+										Log.d(LOG_NAME, "compatibleMinorVersion: " + compatibleMinorVersion);
 
 										if (!compatibleMajorVersion.equals(serverMajorVersion)) {
 											return callback.apply(new Exception("This app is not compatible with this server"));
@@ -307,6 +305,18 @@ public class PreferenceHelper implements SharedPreferences.OnSharedPreferenceCha
 			}
 		}
 
+		private void removeValues(String sharedPreferenceName) {
+			SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(mContext);
+			SharedPreferences.Editor editor = sharedPreferences.edit();
+			for (String key : sharedPreferences.getAll().keySet()) {
+				if (key.startsWith(sharedPreferenceName)) {
+					editor.remove(key);
+				}
+			}
+
+			editor.commit();
+		}
+
 		private Exception initializeApi(URL serverURL) {
             Exception exception = null;
 			HttpEntity entity = null;
@@ -318,6 +328,9 @@ public class PreferenceHelper implements SharedPreferences.OnSharedPreferenceCha
 				if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
 					entity = response.getEntity();
 					JSONObject json = new JSONObject(EntityUtils.toString(entity));
+
+					removeValues("g");
+
 					// preface all global
 					populateValues("g", json);
 				} else {
