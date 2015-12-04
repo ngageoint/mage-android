@@ -217,7 +217,16 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 		findViewById(R.id.server_configuration).setVisibility(noServer ? View.VISIBLE : View.GONE);
 
 		PreferenceHelper preferenceHelper = PreferenceHelper.getInstance(getApplicationContext());
-		if (preferenceHelper.containsLocalAuthentication()) {
+		boolean localAuthentication = preferenceHelper.containsLocalAuthentication();
+		boolean googleAuthentication = preferenceHelper.containsGoogleAuthentication();
+
+		if (localAuthentication && googleAuthentication) {
+			findViewById(R.id.or).setVisibility(View.VISIBLE);
+		} else {
+			findViewById(R.id.or).setVisibility(View.GONE);
+		}
+
+		if (localAuthentication) {
 			Button localButton = (Button) findViewById(R.id.local_login_button);
 			localButton.setOnClickListener(new View.OnClickListener() {
 				@Override
@@ -225,9 +234,12 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 					login(v);
 				}
 			});
+			findViewById(R.id.local_auth).setVisibility(View.VISIBLE);
+		} else {
+			findViewById(R.id.local_auth).setVisibility(View.GONE);
 		}
 
-		if (preferenceHelper.containsGoogleAuthentication()) {
+		if (googleAuthentication) {
 			Button googleButton = (Button) findViewById(R.id.google_login_button);
 			googleButton.setOnClickListener(new View.OnClickListener() {
 				@Override
@@ -235,6 +247,10 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 					googleLogin();
 				}
 			});
+			findViewById(R.id.third_party_auth).setVisibility(View.VISIBLE);
+
+		} else {
+			findViewById(R.id.third_party_auth).setVisibility(View.GONE);
 		}
 	}
 
