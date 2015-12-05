@@ -43,6 +43,7 @@ import retrofit.http.PUT;
 import retrofit.http.PartMap;
 import retrofit.http.Path;
 import retrofit.http.Query;
+import retrofit.http.Streaming;
 
 /***
  * RESTful communication for observations
@@ -64,6 +65,7 @@ public class ObservationResource {
         @GET("/api/events/{eventId}/form/icons.zip")
         Call<ResponseBody> getObservationIcons(@Path("eventId") String eventId);
 
+        @Streaming
         @GET("/api/events/{eventId}/observations/{observationId}/attachments/{attachmentId}")
         Call<ResponseBody> getAttachment(@Path("eventId") String eventId, @Path("observationId") String observationId, @Path("attachmentId") String attachmentId);
 
@@ -194,7 +196,6 @@ public class ObservationResource {
         String observationId = attachment.getObservation().getRemoteId();
         String attachmentId = attachment.getRemoteId();
         Response<ResponseBody> response = service.getAttachment(eventId, observationId, attachmentId).execute();
-
 
         if (response.isSuccess()) {
             return response.body();
