@@ -107,7 +107,7 @@ public class ObservationEditActivity extends Activity implements OnMapReadyCallb
 	private static final long NEW_OBSERVATION = -1L;
 
 	private final DecimalFormat latLngFormat = new DecimalFormat("###.#####");
-	private ArrayList<Attachment> attachmentsToCreate = new ArrayList<Attachment>();
+	private ArrayList<Attachment> attachmentsToCreate = new ArrayList<>();
 
     private Location l;
 	private Observation observation;
@@ -123,9 +123,7 @@ public class ObservationEditActivity extends Activity implements OnMapReadyCallb
 
 	// control key to default position
 	private static Map<String, Integer> spinnersLastPositions = new HashMap<>();
-
-	List<View> controls = new ArrayList<>();
-
+	
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -138,14 +136,14 @@ public class ObservationEditActivity extends Activity implements OnMapReadyCallb
         attachmentLayout = (LinearLayout) findViewById(R.id.image_gallery);
         attachmentGallery = new AttachmentGallery(getApplicationContext(), 100, 100);
         attachmentGallery.addOnAttachmentClickListener(new AttachmentGallery.OnAttachmentClickListener() {
-			@Override
-			public void onAttachmentClick(Attachment attachment) {
-				Intent intent = new Intent(getApplicationContext(), AttachmentViewerActivity.class);
-				intent.putExtra(AttachmentViewerActivity.ATTACHMENT, attachment);
-				intent.putExtra(AttachmentViewerActivity.EDITABLE, false);
-				startActivity(intent);
-			}
-		});
+            @Override
+            public void onAttachmentClick(Attachment attachment) {
+                Intent intent = new Intent(getApplicationContext(), AttachmentViewerActivity.class);
+                intent.putExtra(AttachmentViewerActivity.ATTACHMENT_ID, attachment.getId());
+                intent.putExtra(AttachmentViewerActivity.EDITABLE, false);
+                startActivity(intent);
+            }
+        });
 		
 		final long observationId = getIntent().getLongExtra(OBSERVATION_ID, NEW_OBSERVATION);
 		JsonObject dynamicFormJson;
@@ -162,7 +160,7 @@ public class ObservationEditActivity extends Activity implements OnMapReadyCallb
 			}
 		}
 
-		controls = LayoutBaker.createControlsFromJson(this, ControlGenerationType.EDIT, dynamicFormJson);
+		List<View> controls = LayoutBaker.createControlsFromJson(this, ControlGenerationType.EDIT, dynamicFormJson);
 		for (View view : controls) {
 			if (view instanceof MageSpinner) {
 				MageSpinner mageSpinner = (MageSpinner) view;
@@ -219,7 +217,7 @@ public class ObservationEditActivity extends Activity implements OnMapReadyCallb
 
             observation.setEvent(EventHelper.getInstance(getApplicationContext()).getCurrentEvent());
 			observation.setTimestamp(new Date());
-			List<ObservationProperty> properties = new ArrayList<ObservationProperty>();
+			List<ObservationProperty> properties = new ArrayList<>();
 			properties.add(new ObservationProperty("timestamp", iso8601Format.format(observation.getTimestamp())));
 			observation.addProperties(properties);
 			try {
@@ -311,7 +309,7 @@ public class ObservationEditActivity extends Activity implements OnMapReadyCallb
 	/**
 	 * Hides keyboard when clicking elsewhere
 	 * 
-	 * @param view
+	 * @param view view
 	 */
 	private void hideKeyboardOnClick(View view) {
 		// Set up touch listener for non-text box views to hide keyboard.
@@ -660,7 +658,7 @@ public class ObservationEditActivity extends Activity implements OnMapReadyCallb
 	}
 
 	private List<Uri> getUris(Intent intent) {
-		List<Uri> uris = new ArrayList<Uri>();
+		List<Uri> uris = new ArrayList<>();
 		uris.addAll(getClipDataUris(intent));
 		if (intent.getData() != null) {
 			uris.add(intent.getData());
@@ -670,7 +668,7 @@ public class ObservationEditActivity extends Activity implements OnMapReadyCallb
 	
 	@TargetApi(16)
 	private List<Uri> getClipDataUris(Intent intent) {
-		List<Uri> uris = new ArrayList<Uri>();
+		List<Uri> uris = new ArrayList<>();
 		if (Build.VERSION.SDK_INT >= 16) {
 			ClipData cd = intent.getClipData();
 			if (cd != null) {

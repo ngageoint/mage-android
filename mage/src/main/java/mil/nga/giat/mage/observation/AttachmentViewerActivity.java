@@ -28,13 +28,14 @@ import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.observation.RemoveAttachmentDialogFragment.RemoveAttachmentDialogListener;
 import mil.nga.giat.mage.sdk.datastore.DaoStore;
 import mil.nga.giat.mage.sdk.datastore.observation.Attachment;
+import mil.nga.giat.mage.sdk.datastore.observation.AttachmentHelper;
 import mil.nga.giat.mage.sdk.http.resource.ObservationResource;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
 
 public class AttachmentViewerActivity extends FragmentActivity implements RemoveAttachmentDialogListener {
 
 	public final static String EDITABLE = "EDITABLE";
-	public final static String ATTACHMENT = "ATTACHMENT";
+	public final static String ATTACHMENT_ID = "ATTACHMENT_ID";
 	public final static String SHOULD_REMOVE = "SHOULD_REMOVE";
 	private static final String LOG_NAME = AttachmentViewerActivity.class.getName();
 	private ProgressDialog progressDialog;
@@ -52,7 +53,11 @@ public class AttachmentViewerActivity extends FragmentActivity implements Remove
 			findViewById(R.id.remove_btn).setVisibility(View.GONE);
 		}
 
-		a = intent.getParcelableExtra(ATTACHMENT);
+		try {
+			a = AttachmentHelper.getInstance(getApplicationContext()).read(getIntent().getLongExtra(ATTACHMENT_ID, 0L));
+		} catch (Exception e) {
+			Log.e(LOG_NAME, "Error getting attachment", e);
+		}
 
 		String absPath = a.getLocalPath();
 		String url = a.getUrl();
@@ -146,10 +151,9 @@ public class AttachmentViewerActivity extends FragmentActivity implements Remove
 	public void onDialogPositiveClick(DialogFragment dialog) {
 		Intent data = new Intent();
 		data.putExtra(SHOULD_REMOVE, true);
-		data.putExtra(ATTACHMENT, getIntent().getParcelableExtra(ATTACHMENT));
+		data.putExtra(ATTACHMENT_ID, a.getId());
 		setResult(RESULT_OK, data);
 		finish();
-
 	}
 
 	@Override
@@ -160,7 +164,7 @@ public class AttachmentViewerActivity extends FragmentActivity implements Remove
 		new DownloadFileAsync(mimeType).execute(attachment);
 	}
 
-	class DownloadFileAsync extends AsyncTask<Attachment, Integer, String> {
+	class DownloadFileAsync extends AsyncTask<Attachment, Integer, Boolean> {
 		String mimeType;
 
 		public DownloadFileAsync(String mimeType) {
@@ -174,7 +178,7 @@ public class AttachmentViewerActivity extends FragmentActivity implements Remove
 		}
 
 		@Override
-		protected String doInBackground(Attachment... attachments) {
+		protected Boolean doInBackground(Attachment... attachments) {
 			InputStream is = null;
 			OutputStream os = null;
 			try {
@@ -203,6 +207,7 @@ public class AttachmentViewerActivity extends FragmentActivity implements Remove
 				}
 			} catch (Exception e) {
 				Log.e(LOG_NAME, "Problem downloading file.", e);
+				return false;
 			} finally {
 				if (is != null) {
 					try {
@@ -221,8 +226,8 @@ public class AttachmentViewerActivity extends FragmentActivity implements Remove
 					}
 				}
 			}
-			return null;
 
+			return true;
 		}
 
 		protected void onProgressUpdate(Integer... progress) {
@@ -230,8 +235,14 @@ public class AttachmentViewerActivity extends FragmentActivity implements Remove
 		}
 
 		@Override
-		protected void onPostExecute(String unused) {
+		protected void onPostExecute(Boolean success) {
 			progressDialog.dismiss();
+
+			if (!success) {
+				// TODO pop up dialog
+				return;
+			}
+
 			try {
 				Attachment attachment = DaoStore.getInstance(getApplicationContext()).getAttachmentDao().queryForId(a.getId());
 				attachment.setLocalPath(a.getLocalPath());

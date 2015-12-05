@@ -27,8 +27,8 @@ import com.vividsolutions.jts.geom.Point;
 
 import java.text.DateFormat;
 import java.text.DecimalFormat;
-import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Locale;
 import java.util.Map;
 
@@ -94,7 +94,7 @@ public class ObservationViewActivity extends Activity implements OnMapReadyCallb
 
 			@Override
 			public void onObservationUpdated(Observation observation) {
-				updateObservation(Arrays.asList(observation));
+				updateObservation(Collections.singletonList(observation));
 			}
 
 			@Override
@@ -244,7 +244,7 @@ public class ObservationViewActivity extends Activity implements OnMapReadyCallb
                     @Override
                     public void onAttachmentClick(Attachment attachment) {
                         Intent intent = new Intent(getApplicationContext(), AttachmentViewerActivity.class);
-                        intent.putExtra(AttachmentViewerActivity.ATTACHMENT, attachment);
+                        intent.putExtra(AttachmentViewerActivity.ATTACHMENT_ID, attachment.getId());
                         intent.putExtra(AttachmentViewerActivity.EDITABLE, false);
                         startActivity(intent);
                     }
