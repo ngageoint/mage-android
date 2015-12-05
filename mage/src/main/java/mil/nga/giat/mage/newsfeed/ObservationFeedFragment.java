@@ -96,7 +96,7 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
             @Override
             public void onAttachmentClick(Attachment attachment) {
                 Intent intent = new Intent(getActivity().getApplicationContext(), AttachmentViewerActivity.class);
-                intent.putExtra(AttachmentViewerActivity.ATTACHMENT, attachment);
+                intent.putExtra(AttachmentViewerActivity.ATTACHMENT_ID, attachment.getId());
                 intent.putExtra(AttachmentViewerActivity.EDITABLE, false);
                 startActivity(intent);
             }
