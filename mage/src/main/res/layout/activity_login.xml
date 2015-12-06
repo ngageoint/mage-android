@@ -228,17 +228,33 @@
                 android:orientation="vertical">
 
 
-                <TextView
-                    android:id="@+id/server_url"
+                <RelativeLayout
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="center"
-                    android:textColor="#AAAAAA"
-                    android:textSize="13sp"
-                    android:focusable="true"
-                    android:focusableInTouchMode="true"
-                    android:clickable="true"
-                    android:onClick="changeServerURL"/>
+                    android:layout_height="wrap_content">
+
+                    <TextView
+                        android:id="@+id/server_url"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:textColor="#AAAAAA"
+                        android:textSize="13sp"
+                        android:clickable="true"
+                        android:text="https://magedemo.geointapps.org"
+                        android:onClick="changeServerURL"/>
+
+                    <TextView
+                        android:id="@+id/error_url"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentEnd="true"
+                        android:textColor="#AAAAAA"
+                        android:textSize="13sp"
+                        android:focusable="true"
+                        android:focusableInTouchMode="true"
+                        android:clickable="true" />
+
+                </RelativeLayout>
 
                 <TextView
                     android:id="@+id/login_version"
@@ -247,7 +263,8 @@
                     android:clickable="false"
                     android:gravity="center"
                     android:textColor="#AAAAAA"
-                    android:textSize="11dp" />
+                    android:textSize="11dp"
+                    android:text="App Version: 5.0.1"/>
 
 
             </LinearLayout>
