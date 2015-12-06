@@ -73,6 +73,7 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 	private EditText mUsernameEditText;
 	private EditText mPasswordEditText;
 	private TextView mServerURL;
+	private TextView mErrorURL;
 	private Button mLoginButton;
 	private String mOpenFilePath;
 
@@ -156,6 +157,7 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 		mPasswordEditText = (EditText) findViewById(R.id.login_password);
 		mPasswordEditText.setTypeface(Typeface.DEFAULT);
 		mServerURL = (TextView) findViewById(R.id.server_url);
+		mErrorURL = (TextView) findViewById(R.id.error_url);
 
 		mLoginButton = (Button) findViewById(R.id.local_login_button);
 
@@ -184,14 +186,14 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 				public boolean apply(Exception e) {
 					if (e == null) {
 						mLoginButton.setEnabled(true);
-						getServerUrlText().setError(null);
+						mErrorURL.setError(null);
 						configureLogin();
 
 						return true;
 					} else {
 						configureLogin();
-						getServerUrlText().setError(e.getMessage());
-						getServerUrlText().requestFocus();
+						mErrorURL.setError(e.getMessage());
+						mErrorURL.requestFocus();
 
 						return false;
 					}
@@ -317,6 +319,7 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 								public boolean apply(Exception e) {
 									if (e == null) {
 										mServerURL.setText(serverURL);
+										mErrorURL.setError(null);
 										mLoginButton.setEnabled(true);
 										serverEditText.setError(null);
 										alertDialog.dismiss();
@@ -335,7 +338,7 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 										progress.setVisibility(View.INVISIBLE);
 										button.setEnabled(true);
 										serverEditText.setError(e.getMessage());
-										getServerUrlText().setError(null);
+
 										return false;
 									}
 								}
