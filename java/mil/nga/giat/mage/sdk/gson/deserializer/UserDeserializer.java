@@ -150,13 +150,12 @@ public class UserDeserializer implements JsonDeserializer<User> {
 		}
 
 		Event event = null;
-		if (jsonUser.get("recentEventIds") != null && jsonUser.get("recentEventIds").isJsonArray()) {
-			for (JsonElement jsonEventId : jsonUser.get("recentEventIds").getAsJsonArray()) {
-				try {
-					event = eventHelper.read(jsonEventId.getAsString());
-				} catch (EventException e) {
-					Log.d(LOG_NAME, "Error reading event", e);
-				}
+		JsonArray recentEventIds = jsonUser.get("recentEventIds").getAsJsonArray();
+		if (recentEventIds.size() > 0) {
+			try {
+				event = eventHelper.read(recentEventIds.get(0).getAsString());
+			} catch (EventException e) {
+				Log.d(LOG_NAME, "Error reading event", e);
 			}
         } else {
             Log.w(LOG_NAME, "User has no recent events!");
