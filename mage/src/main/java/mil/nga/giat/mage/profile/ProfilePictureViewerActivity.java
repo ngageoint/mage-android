@@ -60,7 +60,7 @@ public class ProfilePictureViewerActivity extends Activity {
 			}
 		}
 
-		findViewById(R.id.remove_btn).setVisibility(View.GONE);
+//		findViewById(R.id.remove_btn).setVisibility(View.GONE);
 	}
 
 	private void setProfilePicture(File file, ImageView imageView) {

@@ -41,11 +41,14 @@ import java.util.List;
 import mil.nga.giat.mage.LandingActivity;
 import mil.nga.giat.mage.MAGE;
 import mil.nga.giat.mage.R;
+import mil.nga.giat.mage.cache.CacheUtils;
 import mil.nga.giat.mage.disclaimer.DisclaimerActivity;
 import mil.nga.giat.mage.event.EventActivity;
-import mil.nga.giat.mage.cache.CacheUtils;
 import mil.nga.giat.mage.sdk.connectivity.ConnectivityUtility;
 import mil.nga.giat.mage.sdk.datastore.DaoStore;
+import mil.nga.giat.mage.sdk.datastore.user.User;
+import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
+import mil.nga.giat.mage.sdk.exceptions.UserException;
 import mil.nga.giat.mage.sdk.login.AbstractAccountTask;
 import mil.nga.giat.mage.sdk.login.AccountDelegate;
 import mil.nga.giat.mage.sdk.login.AccountStatus;
@@ -92,6 +95,13 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+
+		User currentUser = null;
+		try {
+			currentUser = UserHelper.getInstance(getApplicationContext()).readCurrentUser();
+		} catch (UserException e) {
+			e.printStackTrace();
+		}
 
 		Intent intent = getIntent();
 		if (intent.getBooleanExtra("LOGOUT", false)) {

@@ -50,7 +50,7 @@ public class AttachmentViewerActivity extends FragmentActivity implements Remove
 		Intent intent = getIntent();
 		ImageView iv = (ImageView) findViewById(R.id.image);
 		if (!intent.getBooleanExtra(EDITABLE, false)) {
-			findViewById(R.id.remove_btn).setVisibility(View.GONE);
+//			findViewById(R.id.remove_btn).setVisibility(View.GONE);
 		}
 
 		try {
@@ -91,7 +91,11 @@ public class AttachmentViewerActivity extends FragmentActivity implements Remove
 				findViewById(R.id.video_overlay_image).setVisibility(View.VISIBLE);
 			} else if (contentType.startsWith("audio")) {
 				finalType = "audio/*";
-				Glide.with(getApplicationContext()).load(R.drawable.ic_microphone).into(iv);
+				iv.setAlpha(.54f);
+				Glide.with(getApplicationContext())
+						.load(R.drawable.ic_play_circle_outline_black_48dp)
+						.override(350, 350)
+						.into(iv);
 			} else {
 				finalType = null;
 			}
@@ -103,11 +107,18 @@ public class AttachmentViewerActivity extends FragmentActivity implements Remove
 			} else if (contentType.startsWith("video")) {
 				finalType = "video/*";
 				// TODO figure out how to set accepts to image/jpeg to ask the server for a thumbnail for the video
-				Glide.with(getApplicationContext()).load(R.drawable.ic_video_2x).into(iv);
-				findViewById(R.id.video_overlay_image).setVisibility(View.VISIBLE);
+				iv.setAlpha(.54f);
+				Glide.with(getApplicationContext())
+						.load(R.drawable.ic_play_circle_outline_black_48dp)
+						.override(350, 350)
+						.into(iv);
 			} else if (contentType.startsWith("audio")) {
 				finalType = "audio/*";
-				Glide.with(getApplicationContext()).load(R.drawable.ic_microphone).into(iv);
+				iv.setAlpha(.54f);
+				Glide.with(getApplicationContext())
+						.load(R.drawable.ic_play_circle_outline_black_48dp)
+						.override(350, 350)
+						.into(iv);
 			} else {
 				finalType = null;
 			}

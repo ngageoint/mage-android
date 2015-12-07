@@ -79,23 +79,29 @@ public class AttachmentGallery {
 
         if (absPath != null) {
             if (contentType == null) {
-                Glide.with(context).load(R.drawable.ic_email_attachment).into(iv);
+                iv.setAlpha(.54f);
+                Glide.with(context).load(R.drawable.ic_attachment_black_36dp).into(iv);
             } else if (contentType.startsWith("image")) {
                 Glide.with(context).load(new File(absPath)).placeholder(android.R.drawable.progress_indeterminate_horizontal).centerCrop().into(iv);
             } else if (contentType.startsWith("video")) {
-                Glide.with(context).load(R.drawable.ic_video_2x).into(iv);
+                iv.setAlpha(.54f);
+                Glide.with(context).load(R.drawable.ic_videocam_black_36dp).into(iv);
             } else if (contentType.startsWith("audio")) {
-                Glide.with(context).load(R.drawable.ic_microphone).into(iv);
+                iv.setAlpha(.54f);
+                Glide.with(context).load(R.drawable.ic_mic_black_36dp).into(iv);
             }
         } else if (remoteId != null) {
             if (contentType == null) {
-                Glide.with(context).load(R.drawable.ic_email_attachment).into(iv);
+                iv.setAlpha(.54f);
+                Glide.with(context).load(R.drawable.ic_attachment_black_36dp).into(iv);
             } else if (contentType.startsWith("image")) {
                 Glide.with(context).load(a).placeholder(android.R.drawable.progress_indeterminate_horizontal).centerCrop().into(iv);
             } else if (contentType.startsWith("video")) {
-                Glide.with(context).load(R.drawable.ic_video_2x).into(iv);
+                iv.setAlpha(.54f);
+                Glide.with(context).load(R.drawable.ic_videocam_black_36dp).into(iv);
             } else if (contentType.startsWith("audio")) {
-                Glide.with(context).load(R.drawable.ic_microphone).into(iv);
+                iv.setAlpha(.54f);
+                Glide.with(context).load(R.drawable.ic_mic_black_36dp).into(iv);
             }
         }
     }

@@ -3,7 +3,6 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="@drawable/list_background"
     android:orientation="vertical"
     android:padding="7dp">
 
@@ -24,13 +23,16 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textAppearance="?android:attr/textAppearanceSmall"
-                android:textStyle="bold"/>
+                android:textColor="#000000"
+                android:alpha=".87"/>
 
             <TextView
                 android:id="@+id/observation_infowindow_date"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textAppearance="?android:attr/textAppearanceSmall"/>
+                android:textAppearance="?android:attr/textAppearanceSmall"
+                android:textColor="#000000"
+                android:alpha=".54"/>
         </LinearLayout>
 
         <ImageView
@@ -39,7 +41,8 @@
             android:layout_gravity="center_horizontal|center_vertical"
             android:gravity="center_horizontal|center_vertical"
             android:paddingLeft="7dp"
-            android:src="@drawable/ic_info"/>
+            android:alpha=".54"
+            android:src="@drawable/ic_info_outline_black_24dp"/>
 
     </LinearLayout>
 
