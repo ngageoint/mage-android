@@ -126,7 +126,7 @@ public class EventActivity extends Activity implements AccountDelegate {
 								}
 								radioButton.setText(text);
 
-								if(userRecentEvent.getRemoteId().equals(e.getRemoteId())) {
+								if (userRecentEvent.getRemoteId().equals(e.getRemoteId())) {
 									radioButton.setChecked(true);
 								}
 

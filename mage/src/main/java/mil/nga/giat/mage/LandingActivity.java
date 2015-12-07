@@ -31,9 +31,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import mil.nga.geopackage.validate.GeoPackageValidate;
+import mil.nga.giat.mage.cache.GeoPackageCacheUtils;
 import mil.nga.giat.mage.event.EventFragment;
 import mil.nga.giat.mage.help.HelpFragment;
-import mil.nga.giat.mage.cache.GeoPackageCacheUtils;
 import mil.nga.giat.mage.login.AlertBannerFragment;
 import mil.nga.giat.mage.login.LoginActivity;
 import mil.nga.giat.mage.map.MapFragment;
@@ -81,14 +81,14 @@ public class LandingActivity extends Activity implements ListView.OnItemClickLis
         ((MAGE) getApplication()).onLogin();
 
         int id = 0;
-        mapItem = new DrawerItem.Builder("Map").id(id++).drawableId(R.drawable.ic_globe_white).fragment(new MapFragment()).build();
-		DrawerItem logoutItem = new DrawerItem.Builder("Logout").id(id++).secondary(true).build();
+        mapItem = new DrawerItem.Builder().id(id++).text("Map").drawableId(R.drawable.ic_map_white_24dp).fragment(new MapFragment()).build();
+		DrawerItem logoutItem = new DrawerItem.Builder().id(id++).text("Logout").drawableId(R.drawable.ic_power_settings_new_white_24dp).build();
 		logoutId = logoutItem.getId();
 
-		List<DrawerItem> drawerItems = new ArrayList<DrawerItem>();
+		List<DrawerItem> drawerItems = new ArrayList<>();
 		drawerItems.add(mapItem);
-		drawerItems.add(new DrawerItem.Builder("Observations").id(id++).drawableId(R.drawable.ic_map_marker_white).fragment(new ObservationFeedFragment()).build());
-		drawerItems.add(new DrawerItem.Builder("People").id(id++).drawableId(R.drawable.ic_users_white).fragment(new PeopleFeedFragment()).build());
+		drawerItems.add(new DrawerItem.Builder().id(id++).text("Observations").drawableId(R.drawable.ic_place_white_24dp).fragment(new ObservationFeedFragment()).build());
+		drawerItems.add(new DrawerItem.Builder().id(id++).text("People").drawableId(R.drawable.ic_people_white_24dp).fragment(new PeopleFeedFragment()).build());
 
 		int numberOfEvents = EventHelper.getInstance(getApplicationContext()).getEventsForCurrentUser().size();
 		try {
@@ -101,11 +101,12 @@ public class LandingActivity extends Activity implements ListView.OnItemClickLis
 		}
 
 		if(numberOfEvents > 1) {
-			drawerItems.add(new DrawerItem.Builder("Events").id(id++).drawableId(R.drawable.ic_events_white).fragment(new EventFragment()).build());
+			drawerItems.add(new DrawerItem.Builder().id(id++).text("Events").drawableId(R.drawable.ic_event_white_24dp).fragment(new EventFragment()).build());
 		}
-		drawerItems.add(new DrawerItem.Builder("My Profile").id(id++).drawableId(R.drawable.ic_fa_user).fragment(new ProfileFragment()).build());
-		drawerItems.add(new DrawerItem.Builder("Settings").id(id++).secondary(true).fragment(new GeneralPreferencesFragment()).build());
-		drawerItems.add(new DrawerItem.Builder("Help").id(id++).secondary(true).fragment(new HelpFragment()).build());
+		drawerItems.add(new DrawerItem.Builder().id(id++).text("My Profile").drawableId(R.drawable.ic_person_white_24dp).fragment(new ProfileFragment()).build());
+        drawerItems.add(new DrawerItem.Builder().id(id++).seperator(true).build());
+        drawerItems.add(new DrawerItem.Builder().id(id++).text("Settings").drawableId(R.drawable.ic_settings_white_24dp).fragment(new GeneralPreferencesFragment()).build());
+		drawerItems.add(new DrawerItem.Builder().id(id++).text("Help").drawableId(R.drawable.ic_help_outline_white_24dp).fragment(new HelpFragment()).build());
 		drawerItems.add(logoutItem);
 
         drawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -119,24 +120,20 @@ public class LandingActivity extends Activity implements ListView.OnItemClickLis
 
                 if (view == null) {
                     LayoutInflater inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-                    if (item.isHeader()) {
-                        view = inflater.inflate(R.layout.drawer_list_header_item, null);
-                        view.setEnabled(false);
-                        view.setOnClickListener(null);
-                    } else if (item.isSecondary()) {
-                        view = inflater.inflate(R.layout.drawer_list_secondary_item, null);
+                    if (item.isSeperator()) {
+                        view = inflater.inflate(R.layout.drawer_list_seperator_item, null);
+                        view.setClickable(false);
                     } else {
                         view = inflater.inflate(R.layout.drawer_list_item, null);
-
                         if (item.getDrawableId() != null) {
                             ImageView iv = (ImageView) view.findViewById(R.id.drawer_item_icon);
                             iv.setImageResource(item.getDrawableId());
                         }
+
+                        TextView text = (TextView) view.findViewById(R.id.text);
+                        text.setText(item.getText());
                     }
                 }
-
-                TextView text = (TextView) view.findViewById(R.id.text);
-                text.setText(item.getText());
 
                 return view;
             }

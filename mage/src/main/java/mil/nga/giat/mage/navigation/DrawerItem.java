@@ -7,8 +7,7 @@ public class DrawerItem {
     private String text;
     private Integer drawableId;
     private Fragment fragment;
-    private boolean isHeader;
-    private boolean isSecondary;
+    private boolean isSeperator;
 
     public String getText() {
         return text;
@@ -18,12 +17,8 @@ public class DrawerItem {
         return drawableId;
     }
 
-    public Boolean isHeader() {
-        return isHeader;
-    }
-    
-    public Boolean isSecondary() {
-        return isSecondary;
+    public Boolean isSeperator() {
+        return isSeperator;
     }
 
     public Fragment getFragment() {
@@ -37,8 +32,7 @@ public class DrawerItem {
     private DrawerItem(Builder builder) {
         this.id = builder.id;
         this.text = builder.text;
-        this.isHeader = builder.isHeader;
-        this.isSecondary = builder.isSecondary;
+        this.isSeperator = builder.isSeperator;
         this.drawableId = builder.drawableId;
         this.fragment = builder.fragment;
     }
@@ -46,27 +40,22 @@ public class DrawerItem {
     public static class Builder {
         private int id;
         private String text;
-        private boolean isHeader = false;
-        private boolean isSecondary = false;
+        private boolean isSeperator = false;
         private Integer drawableId;
         private Fragment fragment;
-
-        public Builder(String text) {
-            this.text = text;
-        }
 
         public Builder id(int id) {
             this.id = id;
             return this;
         }
-     
-        public Builder header(boolean isHeader) {
-            this.isHeader = isHeader;
+
+        public Builder text(String text) {
+            this.text = text;
             return this;
         }
         
-        public Builder secondary(boolean isSecondary) {
-            this.isSecondary = isSecondary;
+        public Builder seperator(boolean isSeperator) {
+            this.isSeperator = isSeperator;
             return this;
         }
         
