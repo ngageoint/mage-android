@@ -56,7 +56,8 @@ public class TeamHelper extends DaoHelper<Team> {
     /**
      * Only one-per JVM. Singleton.
      *
-     * @param pContext
+     * @param pContext context
+     * @param pContext context
      */
     private TeamHelper(Context pContext) {
         super(pContext);
@@ -75,13 +76,14 @@ public class TeamHelper extends DaoHelper<Team> {
 
     @Override
     public Team create(Team pTeam) throws TeamException {
-        Team createdTeam = null;
+        Team createdTeam;
         try {
             createdTeam = teamDao.createIfNotExists(pTeam);
         } catch (SQLException sqle) {
             Log.e(LOG_NAME, "There was a problem creating team: " + pTeam, sqle);
             throw new TeamException("There was a problem creating team: " + pTeam, sqle);
         }
+
         return createdTeam;
     }
 
@@ -96,7 +98,7 @@ public class TeamHelper extends DaoHelper<Team> {
     }
 
     public List<Team> readAll() throws EventException {
-        List<Team> teams = new ArrayList<Team>();
+        List<Team> teams = new ArrayList<>();
         try {
             teams.addAll(teamDao.queryForAll());
         } catch (SQLException sqle) {
@@ -170,7 +172,7 @@ public class TeamHelper extends DaoHelper<Team> {
     }
 
     public List<Team> getTeamsByUser(User pUser) {
-        List<Team> teams = new ArrayList<Team>();
+        List<Team> teams = new ArrayList<>();
         try {
             QueryBuilder<UserTeam, Long> userTeamQuery = userTeamDao.queryBuilder();
             userTeamQuery.selectColumns("team_id");
@@ -182,7 +184,7 @@ public class TeamHelper extends DaoHelper<Team> {
 
             teams = teamQuery.query();
             if(teams == null) {
-                teams = new ArrayList<Team>();
+                teams = new ArrayList<>();
             }
 
         } catch (SQLException sqle) {
@@ -191,8 +193,8 @@ public class TeamHelper extends DaoHelper<Team> {
         return teams;
     }
 
-    public List<Team> getTeamsByEvent(User pEvent) {
-        List<Team> teams = new ArrayList<Team>();
+    public List<Team> getTeamsByEvent(Event pEvent) {
+        List<Team> teams = new ArrayList<>();
         try {
             QueryBuilder<TeamEvent, Long> teamEventQuery = teamEventDao.queryBuilder();
             teamEventQuery.selectColumns("team_id");
@@ -204,7 +206,7 @@ public class TeamHelper extends DaoHelper<Team> {
 
             teams = teamQuery.query();
             if(teams == null) {
-                teams = new ArrayList<Team>();
+                teams = new ArrayList<>();
             }
 
         } catch (SQLException sqle) {

@@ -62,25 +62,28 @@ public class DownloadImageTask extends AsyncTask<Void, Void, Void> {
 	protected Void doInBackground(Void... params) {
 
 		for (User user : users) {
-			String localFilePath = null;
+			String newLocalFilePath = null;
+			String currentLocalFilePath = null;
 			switch (imageType) {
 				case AVATAR:
-					localFilePath = MediaUtility.getAvatarDirectory() + "/" + user.getId() + ".png";
+					newLocalFilePath = MediaUtility.getAvatarDirectory() + "/" + user.getId() + ".png";
+					currentLocalFilePath = user.getLocalAvatarPath();
 					break;
 				case ICON:
-					localFilePath = MediaUtility.getUserIconDirectory() + "/" + user.getId() + ".png";
+					newLocalFilePath = MediaUtility.getUserIconDirectory() + "/" + user.getId() + ".png";
+					currentLocalFilePath = user.getLocalIconPath();
 					break;
 			}
 
-			File localFile = new File(localFilePath);
-			if(!overwriteLocalFiles) {
+			File localFile = new File(newLocalFilePath);
+			if (overwriteLocalFiles || currentLocalFilePath == null) {
+				if (localFile.exists() && localFile.isFile()) {
+					localFile.delete();
+				}
+			} else {
 				if (localFile.exists()) {
 					Log.e(LOG_NAME, "File already exists, not downloading.");
 					continue;
-				}
-			} else {
-				if (localFile.exists() && localFile.isFile()) {
-					localFile.delete();
 				}
 			}
 
@@ -122,10 +125,10 @@ public class DownloadImageTask extends AsyncTask<Void, Void, Void> {
 
 					switch (imageType) {
 						case AVATAR:
-							user.setLocalAvatarPath(localFilePath);
+							user.setLocalAvatarPath(newLocalFilePath);
 							break;
 						case ICON:
-							user.setLocalIconPath(localFilePath);
+							user.setLocalIconPath(newLocalFilePath);
 							break;
 					}
 

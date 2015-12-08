@@ -198,7 +198,7 @@ public class InitialFetchIntentService extends ConnectivityAwareIntentService {
                     }
                 }
 
-//                avatarFetch = new DownloadImageTask(getApplicationContext(), avatarUsers, DownloadImageTask.ImageType.AVATAR, true);
+                avatarFetch = new DownloadImageTask(getApplicationContext(), avatarUsers, DownloadImageTask.ImageType.AVATAR, true);
                 iconFetch = new DownloadImageTask(getApplicationContext(), iconUsers, DownloadImageTask.ImageType.ICON, true);
 
                 didFetchUsers = Boolean.TRUE;
