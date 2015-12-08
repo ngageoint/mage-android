@@ -196,7 +196,7 @@ public class MAGE extends MultiDexApplication implements IUserEventListener {
 				.setOngoing(true)
 				.setPriority(NotificationCompat.PRIORITY_MAX)
 				.setContentText(notificationMsg)
-				.addAction(R.drawable.ic_power_off_white, "Logout", getLogoutPendingIntent());
+				.addAction(R.drawable.ic_power_settings_new_white_24dp, "Logout", getLogoutPendingIntent());
 
 		NotificationCompat.BigTextStyle bigTextStyle = new NotificationCompat.BigTextStyle();
 		bigTextStyle.setBigContentTitle("MAGE").bigText(notificationMsg);

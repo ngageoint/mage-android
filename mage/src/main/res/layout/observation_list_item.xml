@@ -22,7 +22,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:paddingRight="5dip"
-            android:src="@drawable/ic_pinpoint" />
+            android:src="@drawable/ic_place_gray_24dp" />
 
         <mil.nga.giat.mage.form.MageTextView
             android:layout_width="wrap_content"

@@ -91,7 +91,7 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 		View rootView = inflater.inflate(R.layout.fragment_news_feed, container, false);
 		setHasOptionsMenu(true);
 
-        attachmentGallery = new AttachmentGallery(getActivity().getApplicationContext(), 300, 300);
+        attachmentGallery = new AttachmentGallery(getActivity().getApplicationContext(), 200, 200);
         attachmentGallery.addOnAttachmentClickListener(new AttachmentGallery.OnAttachmentClickListener() {
             @Override
             public void onAttachmentClick(Attachment attachment) {

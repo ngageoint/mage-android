@@ -2,7 +2,9 @@ package mil.nga.giat.mage.newsfeed;
 
 import android.content.Context;
 import android.database.Cursor;
-import android.graphics.BitmapFactory;
+import android.graphics.Bitmap;
+import android.support.v4.graphics.drawable.RoundedBitmapDrawable;
+import android.support.v4.graphics.drawable.RoundedBitmapDrawableFactory;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -11,33 +13,42 @@ import android.widget.CursorAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.request.target.BitmapImageViewTarget;
+import com.google.common.base.Function;
+import com.google.common.collect.Collections2;
 import com.j256.ormlite.android.AndroidDatabaseResults;
 import com.j256.ormlite.stmt.PreparedQuery;
 
+import org.apache.commons.lang3.StringUtils;
 import org.ocpsoft.prettytime.PrettyTime;
 
 import java.sql.SQLException;
-import java.text.DateFormat;
-import java.util.Locale;
-import java.util.TimeZone;
+import java.util.Collection;
 
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.sdk.datastore.location.Location;
+import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
+import mil.nga.giat.mage.sdk.datastore.user.Team;
+import mil.nga.giat.mage.sdk.datastore.user.TeamHelper;
 import mil.nga.giat.mage.sdk.datastore.user.User;
-import mil.nga.giat.mage.sdk.utils.DateFormatFactory;
-import mil.nga.giat.mage.sdk.utils.MediaUtility;
 
 public class PeopleCursorAdapter extends CursorAdapter {
 	private static final String LOG_NAME = PeopleCursorAdapter.class.getName();
 	
 	private LayoutInflater inflater = null;
 	private PreparedQuery<Location> query;
-    private final DateFormat dateFormat = DateFormatFactory.format("yyyy-MM-dd HH:mm zz", Locale.getDefault(), TimeZone.getTimeZone("Zulu"));
+	private TeamHelper teamHelper;
+	Collection<Team> eventTeams;
 
 	public PeopleCursorAdapter(Context context, Cursor c, PreparedQuery<Location> query) {
 		super(context, c, false);
+
 		this.inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 		this.query = query;
+
+		teamHelper = TeamHelper.getInstance(context);
+		eventTeams = teamHelper.getTeamsByEvent(EventHelper.getInstance(context).getCurrentEvent());
 	}
 
 	@Override
@@ -46,32 +57,46 @@ public class PeopleCursorAdapter extends CursorAdapter {
 			Location location = query.mapRow(new AndroidDatabaseResults(cursor, null));
 			User user = location.getUser();
 
-			ImageView iconView = (ImageView) v.findViewById(R.id.iconImageView);
-			if (location.getUser().getLocalIconPath() != null) {
-				iconView.setImageBitmap(MediaUtility.resizeAndRoundCorners(BitmapFactory.decodeFile(location.getUser().getLocalIconPath()), 128));
-				iconView.setVisibility(View.VISIBLE);
-			} else {
-				iconView.setVisibility(View.GONE);
-			}
+			final ImageView avatarView = (ImageView) v.findViewById(R.id.avatarImageView);
+			Glide.with(context)
+					.load(user.getLocalAvatarPath())
+					.asBitmap()
+					.fallback(R.drawable.ic_person_gray_48dp)
+					.centerCrop()
+					.into(new BitmapImageViewTarget(avatarView) {
+						@Override
+						protected void setResource(Bitmap resource) {
+							RoundedBitmapDrawable circularBitmapDrawable = RoundedBitmapDrawableFactory.create(context.getResources(), resource);
+							circularBitmapDrawable.setCircular(true);
+							avatarView.setImageDrawable(circularBitmapDrawable);
+						}
+					});
 
-			TextView location_name = (TextView) v.findViewById(R.id.location_name);
-			location_name.setText(user.getDisplayName());
+			final ImageView iconView = (ImageView) v.findViewById(R.id.iconImageView);
+			Glide.with(context)
+					.load(user.getLocalIconPath())
+					.centerCrop()
+					.into(iconView);
 
-			TextView location_email = (TextView) v.findViewById(R.id.location_email);
-			String email = user.getEmail();
-			if (email != null && !email.trim().isEmpty()) {
-				location_email.setVisibility(View.VISIBLE);
-				location_email.setText(email);
-			} else {
-				location_email.setVisibility(View.GONE);
-			}
+			TextView name = (TextView) v.findViewById(R.id.name);
+			name.setText(user.getDisplayName());
 			
-			// set date
-			TextView location_date = (TextView) v.findViewById(R.id.location_date);
-
+			TextView date = (TextView) v.findViewById(R.id.date);
 			String timeText = new PrettyTime().format(location.getTimestamp());
+			date.setText(timeText);
 
-			location_date.setText(timeText);
+			Collection<Team> userTeams = teamHelper.getTeamsByUser(user);
+			userTeams.retainAll(eventTeams);
+			Collection<String> teamNames = Collections2.transform(userTeams, new Function<Team, String>() {
+				@Override
+				public String apply(Team team) {
+					return team.getName();
+				}
+			});
+
+			TextView teamsView = (TextView) v.findViewById(R.id.teams);
+			teamsView.setText(StringUtils.join(teamNames, ", "));
+
 		} catch (SQLException sqle) {
 			Log.e(LOG_NAME, "Could not set location view information.", sqle);
 		}

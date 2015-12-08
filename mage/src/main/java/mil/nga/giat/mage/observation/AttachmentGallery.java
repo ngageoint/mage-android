@@ -79,29 +79,23 @@ public class AttachmentGallery {
 
         if (absPath != null) {
             if (contentType == null) {
-                iv.setAlpha(.54f);
-                Glide.with(context).load(R.drawable.ic_attachment_black_36dp).into(iv);
+                Glide.with(context).load(R.drawable.ic_attachment_gray_48dp).into(iv);
             } else if (contentType.startsWith("image")) {
                 Glide.with(context).load(new File(absPath)).placeholder(android.R.drawable.progress_indeterminate_horizontal).centerCrop().into(iv);
             } else if (contentType.startsWith("video")) {
-                iv.setAlpha(.54f);
-                Glide.with(context).load(R.drawable.ic_videocam_black_36dp).into(iv);
+                Glide.with(context).load("").placeholder(R.drawable.ic_videocam_gray_48dp).into(iv);
             } else if (contentType.startsWith("audio")) {
-                iv.setAlpha(.54f);
-                Glide.with(context).load(R.drawable.ic_mic_black_36dp).into(iv);
+                Glide.with(context).load(R.drawable.ic_mic_gray_48dp).into(iv);
             }
         } else if (remoteId != null) {
             if (contentType == null) {
-                iv.setAlpha(.54f);
-                Glide.with(context).load(R.drawable.ic_attachment_black_36dp).into(iv);
+                Glide.with(context).load(R.drawable.ic_attachment_gray_48dp).into(iv);
             } else if (contentType.startsWith("image")) {
                 Glide.with(context).load(a).placeholder(android.R.drawable.progress_indeterminate_horizontal).centerCrop().into(iv);
             } else if (contentType.startsWith("video")) {
-                iv.setAlpha(.54f);
-                Glide.with(context).load(R.drawable.ic_videocam_black_36dp).into(iv);
+                Glide.with(context).load("").placeholder(R.drawable.ic_videocam_gray_48dp).into(iv);
             } else if (contentType.startsWith("audio")) {
-                iv.setAlpha(.54f);
-                Glide.with(context).load(R.drawable.ic_mic_black_36dp).into(iv);
+                Glide.with(context).load(R.drawable.ic_mic_gray_48dp).into(iv);
             }
         }
     }

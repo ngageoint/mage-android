@@ -293,22 +293,11 @@ public class LocationMarkerCollection implements PointCollection<Location>, OnMa
 				new DownloadImageTask(context, Collections.singletonList(location.getUser()), DownloadImageTask.ImageType.AVATAR, false).execute();
 			}
 			
-			TextView location_name = (TextView) v.findViewById(R.id.location_name);
-			location_name.setText(user.getDisplayName());
+			TextView name = (TextView) v.findViewById(R.id.name);
+			name.setText(user.getDisplayName());
 
-			TextView location_email = (TextView) v.findViewById(R.id.location_email);
-			String email = user.getEmail();
-			if (email != null && !email.trim().isEmpty()) {
-				location_email.setVisibility(View.VISIBLE);
-				location_email.setText(email);
-			} else {
-				location_email.setVisibility(View.GONE);
-			}
-
-			// set date
-			TextView location_date = (TextView) v.findViewById(R.id.location_date);
-
-			location_date.setText(new PrettyTime().format(location.getTimestamp()));
+			TextView date = (TextView) v.findViewById(R.id.date);
+			date.setText(new PrettyTime().format(location.getTimestamp()));
 
 			return v;
 		}
