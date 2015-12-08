@@ -19,19 +19,22 @@
         android:layout_width="fill_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:paddingBottom="7dp">
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp">
         
         <LinearLayout
             android:orientation="vertical"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:paddingRight="7dp"
-            android:paddingLeft="7dp">
+            android:paddingRight="16dp"
+            android:paddingLeft="16dp">
+
             <ImageView
                 android:id="@+id/profile_picture"
                 android:src="@drawable/ic_person_gray_48dp"
 	            android:layout_width="73dp"
 	            android:layout_height="73dp" />
+
             <TextView 
                 android:id="@+id/uploadStatus"
                 android:layout_width="wrap_content"
@@ -42,13 +45,13 @@
 	            android:textStyle="bold"
 	            android:visibility="gone"
 	            android:text="Uploading..."/>
+
         </LinearLayout>
         
         <LinearLayout
             android:orientation="vertical" 
             android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:paddingTop="7dp">
+            android:layout_height="wrap_content">
 
         	<TextView
 	            android:id="@+id/realName"
@@ -72,6 +75,7 @@
 	            android:textAppearance="?android:attr/textAppearanceSmall"
 	            android:textColor="#000000"
                 android:alpha=".54"/>
+
         </LinearLayout>
     </LinearLayout>
 

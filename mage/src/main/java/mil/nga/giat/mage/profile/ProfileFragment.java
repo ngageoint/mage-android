@@ -14,6 +14,8 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.support.v4.graphics.drawable.RoundedBitmapDrawable;
+import android.support.v4.graphics.drawable.RoundedBitmapDrawableFactory;
 import android.text.SpannableString;
 import android.text.style.UnderlineSpan;
 import android.util.Log;
@@ -25,6 +27,8 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.request.target.BitmapImageViewTarget;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapView;
@@ -223,16 +227,39 @@ public class ProfileFragment extends Fragment implements OnMapReadyCallback {
 		String avatarUrl = user.getAvatarUrl();
 		String localAvatarPath = user.getLocalAvatarPath();
 
+
+
+
 		if(StringUtils.isNotBlank(localAvatarPath)) {
-			File f = new File(localAvatarPath);
-			setProfilePicture(f, imageView);
+			Glide.with(getActivity().getApplicationContext())
+					.load(localAvatarPath)
+					.asBitmap()
+					.centerCrop()
+					.into(new BitmapImageViewTarget(imageView) {
+						@Override
+						protected void setResource(Bitmap resource) {
+							RoundedBitmapDrawable circularBitmapDrawable = RoundedBitmapDrawableFactory.create(getActivity().getApplicationContext().getResources(), resource);
+							circularBitmapDrawable.setCircular(true);
+							imageView.setImageDrawable(circularBitmapDrawable);
+						}
+					});
 		} else {
 			if (avatarUrl != null) {
 				new DownloadImageTask(getActivity().getApplicationContext(), Collections.singletonList(user), DownloadImageTask.ImageType.AVATAR, false, new DownloadImageTask.OnImageDownloadListener() {
 					@Override
 					public void complete() {
-						File f = new File(user.getLocalAvatarPath());
-						setProfilePicture(f, imageView);
+						Glide.with(getActivity().getApplicationContext())
+								.load(user.getLocalAvatarPath())
+								.asBitmap()
+								.centerCrop()
+								.into(new BitmapImageViewTarget(imageView) {
+									@Override
+									protected void setResource(Bitmap resource) {
+										RoundedBitmapDrawable circularBitmapDrawable = RoundedBitmapDrawableFactory.create(getActivity().getApplicationContext().getResources(), resource);
+										circularBitmapDrawable.setCircular(true);
+										imageView.setImageDrawable(circularBitmapDrawable);
+									}
+								});
 					}
 				}).execute();
 			}
