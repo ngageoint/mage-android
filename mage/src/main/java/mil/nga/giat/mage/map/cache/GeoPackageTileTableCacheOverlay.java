@@ -40,7 +40,7 @@ public class GeoPackageTileTableCacheOverlay extends GeoPackageTableCacheOverlay
 
     @Override
     public Integer getIconImageResourceId() {
-        return R.drawable.ic_layers;
+        return R.drawable.ic_layers_black_24dp;
     }
 
     @Override

@@ -13,7 +13,9 @@
     <ListView
         android:id="@+id/people_feed_list"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:divider="@drawable/people_feed_divider"
+        android:dividerHeight="1dp">
     </ListView>
 
 </LinearLayout>

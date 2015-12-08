@@ -96,32 +96,27 @@
         </activity>
         <activity
             android:name="mil.nga.giat.mage.preferences.LocationPreferencesActivity"
-            android:icon="@drawable/ic_compass_white"
             android:label="@string/location_settings"
-            android:parentActivityName="mil.nga.giat.mage.preferences.GeneralPreferencesFragment" >
+            android:parentActivityName="mil.nga.giat.mage.LandingActivity" >
         </activity>
         <activity
             android:name="mil.nga.giat.mage.preferences.FetchPreferencesActivity"
-            android:icon="@drawable/ic_download"
             android:label="@string/fetch_settings"
-            android:parentActivityName="mil.nga.giat.mage.preferences.GeneralPreferencesFragment" >
+            android:parentActivityName="mil.nga.giat.mage.LandingActivity" >
         </activity>
         <activity
             android:name="mil.nga.giat.mage.preferences.ClearDataPreferenceActivity"
-            android:icon="@drawable/ic_settings_white"
             android:label="Clear Data"
             android:uiOptions="splitActionBarWhenNarrow"
-            android:parentActivityName="mil.nga.giat.mage.preferences.GeneralPreferencesFragment" >
+            android:parentActivityName="mil.nga.giat.mage.LandingActivity" >
         </activity>
         <activity
             android:name="mil.nga.giat.mage.map.preference.MapPreferencesActivity"
-            android:icon="@drawable/ic_map_white"
             android:label="@string/map_settings"
             android:parentActivityName="mil.nga.giat.mage.LandingActivity" >
         </activity>
         <activity
             android:name="mil.nga.giat.mage.map.preference.TileOverlayPreferenceActivity"
-            android:icon="@drawable/ic_map_white"
             android:label="Overlay Maps"
             android:launchMode="singleTop"
             android:parentActivityName="mil.nga.giat.mage.map.preference.MapPreferencesActivity"
@@ -130,7 +125,6 @@
         </activity>
         <activity
             android:name="mil.nga.giat.mage.map.preference.FeatureOverlayPreferenceActivity"
-            android:icon="@drawable/ic_map_white"
             android:label="Feature Overlays"
             android:launchMode="singleTop"
             android:parentActivityName="mil.nga.giat.mage.map.preference.MapPreferencesActivity"

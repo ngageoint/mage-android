@@ -223,7 +223,7 @@ public class ObservationViewActivity extends Activity implements OnMapReadyCallb
 			if (o.getAttachments().size() == 0) {
 				findViewById(R.id.image_gallery).setVisibility(View.GONE);
 			} else {
-                attachmentGallery = new AttachmentGallery(getApplicationContext(), 300, 300);
+                attachmentGallery = new AttachmentGallery(getApplicationContext(), 150, 150);
                 attachmentGallery.addOnAttachmentClickListener(new AttachmentGallery.OnAttachmentClickListener() {
                     @Override
                     public void onAttachmentClick(Attachment attachment) {

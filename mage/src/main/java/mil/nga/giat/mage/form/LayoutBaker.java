@@ -262,7 +262,6 @@ public class LayoutBaker {
 					imageViewLayoutParams.gravity = Gravity.LEFT;
 					imageView.setLayoutParams(imageViewLayoutParams);
 					imageView.setFocusable(false);
-					imageView.setAlpha(.54f);
 					imageView.setImageResource(mil.nga.giat.mage.R.drawable.ic_mode_edit_black_24dp);
 
 					final MageTextView mageDateText = new MageTextView(context, null);

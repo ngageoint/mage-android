@@ -14,6 +14,9 @@ import android.view.View;
 import android.widget.ImageView;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.resource.drawable.GlideDrawable;
+import com.bumptech.glide.request.RequestListener;
+import com.bumptech.glide.request.target.Target;
 import com.squareup.okhttp.ResponseBody;
 
 import org.apache.commons.lang3.StringUtils;
@@ -84,18 +87,14 @@ public class AttachmentViewerActivity extends FragmentActivity implements Remove
 			uri = Uri.fromFile(f);
 			if (contentType.startsWith("image")) {
 				finalType = "image/*";
-				Glide.with(getApplicationContext()).load(f).placeholder(android.R.drawable.progress_indeterminate_horizontal).centerCrop().into(iv);
+				Glide.with(getApplicationContext()).load(f).centerCrop().into(iv);
 			} else if (contentType.startsWith("video")) {
 				finalType = "video/*";
 				iv.setImageBitmap(ThumbnailUtils.createVideoThumbnail(absPath, MediaStore.Video.Thumbnails.FULL_SCREEN_KIND));
 				findViewById(R.id.video_overlay_image).setVisibility(View.VISIBLE);
 			} else if (contentType.startsWith("audio")) {
 				finalType = "audio/*";
-				iv.setAlpha(.54f);
-				Glide.with(getApplicationContext())
-						.load(R.drawable.ic_play_circle_outline_black_48dp)
-						.override(350, 350)
-						.into(iv);
+				findViewById(R.id.play_image).setVisibility(View.VISIBLE);
 			} else {
 				finalType = null;
 			}
@@ -103,22 +102,28 @@ public class AttachmentViewerActivity extends FragmentActivity implements Remove
 			uri = Uri.parse(url);
 			if (contentType.startsWith("image")) {
 				finalType = "image/*";
-				Glide.with(getApplicationContext()).load(a).placeholder(android.R.drawable.progress_indeterminate_horizontal).centerCrop().into(iv);
+				findViewById(R.id.progress).setVisibility(View.VISIBLE);
+				Glide.with(getApplicationContext())
+						.load(a)
+						.listener(new RequestListener<Attachment, GlideDrawable>() {
+							@Override
+							public boolean onException(Exception e, Attachment model, Target<GlideDrawable> target, boolean isFirstResource) {
+								return false;
+							}
+
+							@Override
+							public boolean onResourceReady(GlideDrawable resource, Attachment model, Target<GlideDrawable> target, boolean isFromMemoryCache, boolean isFirstResource) {
+								findViewById(R.id.progress).setVisibility(View.INVISIBLE);
+								return false;
+							}
+						})
+						.into(iv);
 			} else if (contentType.startsWith("video")) {
 				finalType = "video/*";
-				// TODO figure out how to set accepts to image/jpeg to ask the server for a thumbnail for the video
-				iv.setAlpha(.54f);
-				Glide.with(getApplicationContext())
-						.load(R.drawable.ic_play_circle_outline_black_48dp)
-						.override(350, 350)
-						.into(iv);
+				findViewById(R.id.play_image).setVisibility(View.VISIBLE);
 			} else if (contentType.startsWith("audio")) {
 				finalType = "audio/*";
-				iv.setAlpha(.54f);
-				Glide.with(getApplicationContext())
-						.load(R.drawable.ic_play_circle_outline_black_48dp)
-						.override(350, 350)
-						.into(iv);
+				findViewById(R.id.play_image).setVisibility(View.VISIBLE);
 			} else {
 				finalType = null;
 			}
@@ -126,6 +131,7 @@ public class AttachmentViewerActivity extends FragmentActivity implements Remove
 			uri = null;
 			finalType = null;
 		}
+
 		if (uri != null && finalType != null) {
 			iv.setOnClickListener(new View.OnClickListener() {
 				@Override
@@ -198,7 +204,6 @@ public class AttachmentViewerActivity extends FragmentActivity implements Remove
 				ObservationResource observationResource = new ObservationResource(getApplicationContext());
 				ResponseBody response = observationResource.getAttachment(attachment);
 
-				// FIXME : I'm not sure this works
 				Long contentLength = response.contentLength();
 
 				File stageDir = MediaUtility.getMediaStageDirectory();
