@@ -6,6 +6,7 @@ import android.app.AlertDialog;
 import android.app.Fragment;
 import android.content.ActivityNotFoundException;
 import android.content.ClipData;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -105,28 +106,30 @@ public class ProfileFragment extends Fragment implements OnMapReadyCallback {
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 		View rootView = inflater.inflate(R.layout.fragment_profile, container, false);
 
+		final Context context = getActivity().getApplicationContext();
+
 		String userToLoad = getActivity().getIntent().getStringExtra(USER_ID);
 		try {
 			if (userToLoad != null) {
-				user = UserHelper.getInstance(getActivity().getApplicationContext()).read(userToLoad);
+				user = UserHelper.getInstance(context).read(userToLoad);
 			} else {
-				user = UserHelper.getInstance(getActivity().getApplicationContext()).readCurrentUser();
+				user = UserHelper.getInstance(context).readCurrentUser();
 			}
 
-			List<Location> lastLocation = LocationHelper.getInstance(getActivity()).getUserLocations(user.getId(), getActivity(), 1, true);
+			List<Location> lastLocation = LocationHelper.getInstance(context).getUserLocations(user.getId(), getActivity(), 1, true);
 			if (!lastLocation.isEmpty()) {
 				Geometry geo = lastLocation.get(0).getGeometry();
 				if (geo instanceof Point) {
 					Point point = (Point) geo;
 					latLng = new LatLng(point.getY(), point.getX());
-					icon = LocationBitmapFactory.bitmapDescriptor(getActivity(), lastLocation.get(0), user);
+					icon = LocationBitmapFactory.bitmapDescriptor(context, lastLocation.get(0), user);
 				}
 			}
 		} catch (UserException ue) {
 			Log.e(LOG_NAME, "Problem finding user.", ue);
 		}
 
-		MapsInitializer.initialize(getActivity().getApplicationContext());
+		MapsInitializer.initialize(context);
 
 		mapView = (MapView) rootView.findViewById(R.id.mapView);
 		mapView.onCreate(savedInstanceState);
@@ -148,7 +151,7 @@ public class ProfileFragment extends Fragment implements OnMapReadyCallback {
 			phoneTextView.setOnClickListener(new OnClickListener() {
 										 @Override
 										 public void onClick(View v) {
-											 AlertDialog.Builder mBuilder = new AlertDialog.Builder(getActivity());
+											 AlertDialog.Builder mBuilder = new AlertDialog.Builder(context);
 											 mBuilder.setMessage("Do you want to call or text " + displayName + "?");
 											 mBuilder.setNegativeButton("No", new DialogInterface.OnClickListener() {
 												 public void onClick(DialogInterface dialog, int id) {
@@ -192,7 +195,7 @@ public class ProfileFragment extends Fragment implements OnMapReadyCallback {
 			emailTextView.setOnClickListener(new OnClickListener() {
 												 @Override
 												 public void onClick(View v) {
-													 AlertDialog.Builder mBuilder = new AlertDialog.Builder(getActivity());
+													 AlertDialog.Builder mBuilder = new AlertDialog.Builder(context);
 													 mBuilder.setMessage("Do you want to email " + displayName + "?");
 													 mBuilder.setNegativeButton("No", new DialogInterface.OnClickListener() {
 														 public void onClick(DialogInterface dialog, int id) {
@@ -223,39 +226,37 @@ public class ProfileFragment extends Fragment implements OnMapReadyCallback {
 		} else {
 			emailTextView.setVisibility(View.GONE);
 		}
+
 		final ImageView imageView = (ImageView)rootView.findViewById(R.id.profile_picture);
 		String avatarUrl = user.getAvatarUrl();
 		String localAvatarPath = user.getLocalAvatarPath();
 
-
-
-
 		if(StringUtils.isNotBlank(localAvatarPath)) {
-			Glide.with(getActivity().getApplicationContext())
+			Glide.with(context)
 					.load(localAvatarPath)
 					.asBitmap()
 					.centerCrop()
 					.into(new BitmapImageViewTarget(imageView) {
 						@Override
 						protected void setResource(Bitmap resource) {
-							RoundedBitmapDrawable circularBitmapDrawable = RoundedBitmapDrawableFactory.create(getActivity().getApplicationContext().getResources(), resource);
+							RoundedBitmapDrawable circularBitmapDrawable = RoundedBitmapDrawableFactory.create(context.getResources(), resource);
 							circularBitmapDrawable.setCircular(true);
 							imageView.setImageDrawable(circularBitmapDrawable);
 						}
 					});
 		} else {
 			if (avatarUrl != null) {
-				new DownloadImageTask(getActivity().getApplicationContext(), Collections.singletonList(user), DownloadImageTask.ImageType.AVATAR, false, new DownloadImageTask.OnImageDownloadListener() {
+				new DownloadImageTask(context, Collections.singletonList(user), DownloadImageTask.ImageType.AVATAR, false, new DownloadImageTask.OnImageDownloadListener() {
 					@Override
 					public void complete() {
-						Glide.with(getActivity().getApplicationContext())
+						Glide.with(context)
 								.load(user.getLocalAvatarPath())
 								.asBitmap()
 								.centerCrop()
 								.into(new BitmapImageViewTarget(imageView) {
 									@Override
 									protected void setResource(Bitmap resource) {
-										RoundedBitmapDrawable circularBitmapDrawable = RoundedBitmapDrawableFactory.create(getActivity().getApplicationContext().getResources(), resource);
+										RoundedBitmapDrawable circularBitmapDrawable = RoundedBitmapDrawableFactory.create(context.getResources(), resource);
 										circularBitmapDrawable.setCircular(true);
 										imageView.setImageDrawable(circularBitmapDrawable);
 									}
@@ -265,7 +266,7 @@ public class ProfileFragment extends Fragment implements OnMapReadyCallback {
 			}
 		}
 		
-		final Intent intent = new Intent(getActivity().getApplicationContext(), ProfilePictureViewerActivity.class);
+		final Intent intent = new Intent(context, ProfilePictureViewerActivity.class);
 		intent.putExtra(ProfilePictureViewerActivity.USER_ID, user.getId());
 		
 		rootView.findViewById(R.id.profile_picture).setOnClickListener(new OnClickListener() {
@@ -273,7 +274,7 @@ public class ProfileFragment extends Fragment implements OnMapReadyCallback {
 			@Override
 			public void onClick(View v) {
 				try {
-					if (userId.equals(UserHelper.getInstance(getActivity().getApplicationContext()).readCurrentUser().getId())) {
+					if (userId.equals(UserHelper.getInstance(context).readCurrentUser().getId())) {
 						AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
 						builder.setItems(R.array.profileImageChoices, new DialogInterface.OnClickListener() {
 							public void onClick(DialogInterface dialog, int which) {

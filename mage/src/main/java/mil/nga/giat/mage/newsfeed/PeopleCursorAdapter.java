@@ -80,7 +80,7 @@ public class PeopleCursorAdapter extends CursorAdapter {
 
 			TextView name = (TextView) v.findViewById(R.id.name);
 			name.setText(user.getDisplayName());
-			
+
 			TextView date = (TextView) v.findViewById(R.id.date);
 			String timeText = new PrettyTime().format(location.getTimestamp());
 			date.setText(timeText);
