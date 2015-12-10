@@ -81,7 +81,6 @@ public class EventFragment extends Fragment {
 			Log.e(LOG_NAME, "Could not get current events!");
 		}
 
-
 		((Button)rootView.findViewById(R.id.event_fragment_continue_button)).setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {

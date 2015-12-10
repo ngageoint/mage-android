@@ -8,25 +8,27 @@
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="50dp"
         android:orientation="horizontal"
-        android:layout_marginBottom="16dp">
+        android:layout_marginBottom="6dp">
 
         <ImageView
             android:id="@+id/avatarImageView"
-            android:layout_width="40dip"
-            android:layout_height="40dip"
-            android:layout_marginTop="16dp"
-            android:layout_marginLeft="16dp"
-            android:layout_marginRight="16dp"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_gravity="center_vertical"
+            android:layout_marginEnd="8dp"
+            android:layout_marginStart="2dp"
+            android:layout_marginTop="3dp"
             android:src="@drawable/ic_person_gray_48dp"/>
 
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:orientation="vertical"
-            android:layout_marginTop="13dp">
+            android:layout_gravity="center_vertical"
+            android:layout_marginEnd="2dp"
+            android:orientation="vertical">
 
             <TextView
                 android:id="@+id/name"
@@ -36,25 +38,11 @@
 
             <TextView
                 android:id="@+id/date"
-                style="@style/ListTextSecondaryDark"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
-
-            <TextView
-                android:id="@+id/teams"
                 style="@style/ListTextSecondary"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content" />
 
         </LinearLayout>
-
-        <ImageView
-            android:id="@+id/iconImageView"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:layout_marginTop="16dp"
-            android:layout_marginLeft="16dp"
-            android:layout_marginRight="16dp"/>
 
     </LinearLayout>
 
