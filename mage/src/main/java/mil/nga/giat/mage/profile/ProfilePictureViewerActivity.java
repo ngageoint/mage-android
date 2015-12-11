@@ -17,6 +17,7 @@ import java.util.Collections;
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
+import mil.nga.giat.mage.sdk.datastore.user.UserLocal;
 import mil.nga.giat.mage.sdk.fetch.DownloadImageTask;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
 
@@ -36,10 +37,11 @@ public class ProfilePictureViewerActivity extends Activity {
 		if(userID >= 0) {
 			try {
 				final User user = UserHelper.getInstance(getApplicationContext()).read(userID);
+				final UserLocal userLocal = user.getUserLocal();
 				this.setTitle(user.getDisplayName());
 
 				String avatarUrl = user.getAvatarUrl();
-				String localAvatarPath = user.getLocalAvatarPath();
+				String localAvatarPath = userLocal.getLocalAvatarPath();
 
 				if(StringUtils.isNotBlank(localAvatarPath)) {
 					File f = new File(localAvatarPath);
@@ -49,7 +51,7 @@ public class ProfilePictureViewerActivity extends Activity {
 						new DownloadImageTask(getApplicationContext(), Collections.singletonList(user), DownloadImageTask.ImageType.AVATAR, false, new DownloadImageTask.OnImageDownloadListener() {
 							@Override
 							public void complete() {
-								File f = new File(user.getLocalAvatarPath());
+								File f = new File(userLocal.getLocalAvatarPath());
 								setProfilePicture(f, imageView);
 							}
 						}).execute();

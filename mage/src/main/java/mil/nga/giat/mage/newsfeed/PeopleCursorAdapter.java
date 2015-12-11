@@ -32,6 +32,7 @@ import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
 import mil.nga.giat.mage.sdk.datastore.user.Team;
 import mil.nga.giat.mage.sdk.datastore.user.TeamHelper;
 import mil.nga.giat.mage.sdk.datastore.user.User;
+import mil.nga.giat.mage.sdk.datastore.user.UserLocal;
 
 public class PeopleCursorAdapter extends CursorAdapter {
 	private static final String LOG_NAME = PeopleCursorAdapter.class.getName();
@@ -58,8 +59,9 @@ public class PeopleCursorAdapter extends CursorAdapter {
 			User user = location.getUser();
 
 			final ImageView avatarView = (ImageView) v.findViewById(R.id.avatarImageView);
+			UserLocal userLocal = user.getUserLocal();
 			Glide.with(context)
-					.load(user.getLocalAvatarPath())
+					.load(userLocal.getLocalAvatarPath())
 					.asBitmap()
 					.fallback(R.drawable.ic_person_gray_48dp)
 					.centerCrop()
@@ -74,7 +76,7 @@ public class PeopleCursorAdapter extends CursorAdapter {
 
 			final ImageView iconView = (ImageView) v.findViewById(R.id.iconImageView);
 			Glide.with(context)
-					.load(user.getLocalIconPath())
+					.load(userLocal.getLocalIconPath())
 					.centerCrop()
 					.into(iconView);
 

@@ -66,7 +66,7 @@ public class HistoricLocationLoadTask extends AsyncTask<Void, Location, Void> {
 		}
 		Where<? extends Temporal, Long> where = query.where();
 		if (currentUser != null) {
-			where.eq("user_id", currentUser.getId()).and().eq("event_id", currentUser.getCurrentEvent().getId());
+			where.eq("user_id", currentUser.getId()).and().eq("event_id", currentUser.getUserLocal().getCurrentEvent().getId());
 		}
 		if (filter != null) {
 			where = filter.where(where.and());
