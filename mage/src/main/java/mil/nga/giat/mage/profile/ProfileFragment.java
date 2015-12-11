@@ -56,6 +56,7 @@ import mil.nga.giat.mage.sdk.datastore.location.Location;
 import mil.nga.giat.mage.sdk.datastore.location.LocationHelper;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
+import mil.nga.giat.mage.sdk.datastore.user.UserLocal;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
 import mil.nga.giat.mage.sdk.fetch.DownloadImageTask;
 import mil.nga.giat.mage.sdk.profile.UpdateProfileTask;
@@ -109,9 +110,13 @@ public class ProfileFragment extends Fragment implements OnMapReadyCallback {
 		final Context context = getActivity().getApplicationContext();
 
 		String userToLoad = getActivity().getIntent().getStringExtra(USER_ID);
+		User currentUser = null;
 		try {
+			currentUser = UserHelper.getInstance(context).readCurrentUser();
+
 			if (userToLoad != null) {
 				user = UserHelper.getInstance(context).read(userToLoad);
+
 			} else {
 				user = UserHelper.getInstance(context).readCurrentUser();
 			}
@@ -138,7 +143,7 @@ public class ProfileFragment extends Fragment implements OnMapReadyCallback {
 		final Long userId = user.getId();
 
 		final String displayName = user.getDisplayName();
-		getActivity().getActionBar().setTitle(user.isCurrentUser() ? "My Profile" : displayName);
+		getActivity().getActionBar().setTitle(user.equals(currentUser) ? "My Profile" : displayName);
 
 		final TextView realNameTextView = (TextView)rootView.findViewById(R.id.realName);
 		realNameTextView.setText(displayName);
@@ -227,9 +232,10 @@ public class ProfileFragment extends Fragment implements OnMapReadyCallback {
 			emailTextView.setVisibility(View.GONE);
 		}
 
+		final UserLocal userLocal = user.getUserLocal();
 		final ImageView imageView = (ImageView)rootView.findViewById(R.id.profile_picture);
 		String avatarUrl = user.getAvatarUrl();
-		String localAvatarPath = user.getLocalAvatarPath();
+		String localAvatarPath = userLocal.getLocalAvatarPath();
 
 		if(StringUtils.isNotBlank(localAvatarPath)) {
 			Glide.with(context)
@@ -250,7 +256,7 @@ public class ProfileFragment extends Fragment implements OnMapReadyCallback {
 					@Override
 					public void complete() {
 						Glide.with(context)
-								.load(user.getLocalAvatarPath())
+								.load(userLocal.getLocalAvatarPath())
 								.asBitmap()
 								.centerCrop()
 								.into(new BitmapImageViewTarget(imageView) {

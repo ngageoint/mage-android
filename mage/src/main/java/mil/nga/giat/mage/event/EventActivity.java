@@ -101,18 +101,13 @@ public class EventActivity extends Activity implements AccountDelegate {
 						findViewById(R.id.event_bummer_info).setVisibility(View.VISIBLE);
 						findViewById(R.id.event_serverproblem_info).setVisibility(View.GONE);
 					} else {
-						Event userRecentEvent = currentUser.getCurrentEvent();
-
-						if (userRecentEvent == null) {
-							userRecentEvent = events.get(0);
-							currentUser.setCurrentEvent(userRecentEvent);
-							UserHelper.getInstance(getApplicationContext()).createOrUpdate(currentUser);
+						Event recentEvent = currentUser.getUserLocal().getCurrentEvent();
+						if (recentEvent == null) {
+							recentEvent = events.get(0);
 						}
 
-						if (events.size() == 1 && events.get(0).equals(userRecentEvent)) {
-							currentUser.setCurrentEvent(userRecentEvent);
-							UserHelper.getInstance(getApplicationContext()).createOrUpdate(currentUser);
-							chosenEvent = userRecentEvent;
+						if (events.size() == 1 && events.get(0).equals(recentEvent)) {
+							chosenEvent = recentEvent;
 							finishAccount(new AccountStatus(AccountStatus.Status.SUCCESSFUL_LOGIN));
 						} else {
 							List<Event> tempEventsForCurrentUser = EventHelper.getInstance(getApplicationContext()).getEventsForCurrentUser();
@@ -126,7 +121,7 @@ public class EventActivity extends Activity implements AccountDelegate {
 								}
 								radioButton.setText(text);
 
-								if (userRecentEvent.getRemoteId().equals(e.getRemoteId())) {
+								if (recentEvent.getRemoteId().equals(e.getRemoteId())) {
 									radioButton.setChecked(true);
 								}
 
@@ -196,9 +191,9 @@ public class EventActivity extends Activity implements AccountDelegate {
         }
 		// regardless of the return status, set the user's currentevent
 		try {
-			User currentUser = UserHelper.getInstance(getApplicationContext()).readCurrentUser();
-			currentUser.setCurrentEvent(chosenEvent);
-			UserHelper.getInstance(getApplicationContext()).createOrUpdate(currentUser);
+			UserHelper userHelper = UserHelper.getInstance(getApplicationContext());
+			User user = userHelper.readCurrentUser();
+			userHelper.setCurrentEvent(user, chosenEvent);
 		} catch(Exception e) {
 			Log.e(LOG_NAME, "Could not set current event.");
 		}

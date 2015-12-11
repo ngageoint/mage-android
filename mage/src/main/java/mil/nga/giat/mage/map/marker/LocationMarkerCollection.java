@@ -46,6 +46,7 @@ import mil.nga.giat.mage.sdk.datastore.location.LocationHelper;
 import mil.nga.giat.mage.sdk.datastore.location.LocationProperty;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
+import mil.nga.giat.mage.sdk.datastore.user.UserLocal;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
 import mil.nga.giat.mage.sdk.fetch.DownloadImageTask;
 
@@ -293,11 +294,12 @@ public class LocationMarkerCollection implements PointCollection<Location>, OnMa
 			View v = inflater.inflate(R.layout.people_info_window, null);
 
 			final ImageView avatarView = (ImageView) v.findViewById(R.id.avatarImageView);
-			if (user.getLocalAvatarPath() != null) {
+			UserLocal userLocal = user.getUserLocal();
+			if (userLocal.getLocalAvatarPath() != null) {
 				final Drawable avatar = avatars.get(marker);
 				if (avatar == null) {
 					Glide.with(context)
-							.load(user.getLocalAvatarPath())
+							.load(userLocal.getLocalAvatarPath())
 							.asBitmap()
 							.dontAnimate()
 							.centerCrop()
