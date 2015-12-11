@@ -30,12 +30,11 @@ import mil.nga.giat.mage.sdk.datastore.user.TeamHelper;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.datastore.user.UserTeam;
-import mil.nga.giat.mage.sdk.exceptions.UserException;
-import mil.nga.giat.mage.sdk.login.LoginTaskFactory;
 import mil.nga.giat.mage.sdk.http.resource.EventResource;
 import mil.nga.giat.mage.sdk.http.resource.RoleResource;
 import mil.nga.giat.mage.sdk.http.resource.TeamResource;
 import mil.nga.giat.mage.sdk.http.resource.UserResource;
+import mil.nga.giat.mage.sdk.login.LoginTaskFactory;
 
 /**
  * This class will fetch events, roles, users and teams just once.
@@ -157,14 +156,7 @@ public class InitialFetchIntentService extends ConnectivityAwareIntentService {
         final UserResource userResource = new UserResource(getApplicationContext());
         final UserHelper userHelper = UserHelper.getInstance(getApplicationContext());
 
-        User currentUser = null;
-        try {
-            currentUser = userHelper.readCurrentUser();
-        } catch (UserException e) {
-            Log.e(LOG_NAME, "Could not get current user.");
-        }
-
-        while(!didFetchUsers && !isCanceled && attemptCount < retryCount) {
+        while (!didFetchUsers && !isCanceled && attemptCount < retryCount) {
             Log.d(LOG_NAME, "Attempting to fetch users...");
 
             try {
@@ -177,21 +169,16 @@ public class InitialFetchIntentService extends ConnectivityAwareIntentService {
                     if (isCanceled) {
                         break;
                     }
-                    try {
-                        if (user != null) {
-                            if (currentUser != null) {
-                                boolean isCurrentUser = currentUser.getRemoteId().equalsIgnoreCase(user.getRemoteId());
-                                user.setCurrentUser(isCurrentUser);
-                            }
-                            user.setFetchedDate(new Date());
-                            user = userHelper.createOrUpdate(user);
 
-                            if (user.getAvatarUrl() != null) {
-                                avatarUsers.add(user);
-                            }
-                            if (user.getIconUrl() != null) {
-                                iconUsers.add(user);
-                            }
+                    try {
+                        user.setFetchedDate(new Date());
+                        user = userHelper.createOrUpdate(user);
+
+                        if (user.getAvatarUrl() != null) {
+                            avatarUsers.add(user);
+                        }
+                        if (user.getIconUrl() != null) {
+                            iconUsers.add(user);
                         }
                     } catch (Exception e) {
                         Log.e(LOG_NAME, "There was a failure while performing an user fetch operation.", e);

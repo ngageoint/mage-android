@@ -67,11 +67,11 @@ public class DownloadImageTask extends AsyncTask<Void, Void, Void> {
 			switch (imageType) {
 				case AVATAR:
 					newLocalFilePath = MediaUtility.getAvatarDirectory() + "/" + user.getId() + ".png";
-					currentLocalFilePath = user.getLocalAvatarPath();
+					currentLocalFilePath = user.getAvatarPath();
 					break;
 				case ICON:
 					newLocalFilePath = MediaUtility.getUserIconDirectory() + "/" + user.getId() + ".png";
-					currentLocalFilePath = user.getLocalIconPath();
+					currentLocalFilePath = user.getIconPath();
 					break;
 			}
 
@@ -125,14 +125,13 @@ public class DownloadImageTask extends AsyncTask<Void, Void, Void> {
 
 					switch (imageType) {
 						case AVATAR:
-							user.setLocalAvatarPath(newLocalFilePath);
+							userHelper.setAvatarPath(user, newLocalFilePath);
 							break;
 						case ICON:
-							user.setLocalIconPath(newLocalFilePath);
+							userHelper.setIconPath(user, newLocalFilePath);
 							break;
 					}
 
-					userHelper.update(user);
 				} catch (Exception e) {
 					Log.e(LOG_NAME, "Problem downloading image.");
 				} finally {

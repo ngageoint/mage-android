@@ -93,7 +93,15 @@ public class UpdateProfileTask extends AsyncTask<String, Void, User> {
 		
 		Log.i(LOG_NAME, "Pushing profile picture " + stagedFile);
 
-		return userResource.createAvatar(stagedFile.getAbsolutePath());
+		User user = userResource.createAvatar(stagedFile.getAbsolutePath());
+		return user;
 	}
 
+
+	@Override
+	protected void onPostExecute(User user) {
+		super.onPostExecute(user);
+
+		Log.i(LOG_NAME, "updated user avatar");
+	}
 }

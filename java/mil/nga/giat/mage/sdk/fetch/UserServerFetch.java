@@ -30,28 +30,15 @@ public class UserServerFetch extends AbstractServerFetch {
 					continue;
 				}
 
-				boolean isCurrentUser = false;
-				// is this a request for the current user?
-				if (userId.equalsIgnoreCase("myself")) {
-					isCurrentUser = true;
-				} else {
-					try {
-						User u = userHelper.readCurrentUser();
-						if (u != null) {
-							String rid = u.getRemoteId();
-							if (rid != null && rid.equalsIgnoreCase(userId)) {
-								isCurrentUser = true;
-							}
-						}
-					} catch (UserException e) {
-						Log.e(LOG_NAME, "Could not get current users.");
-					}
+				try {
+					User u = userHelper.readCurrentUser();
+				} catch (UserException e) {
+					Log.e(LOG_NAME, "Could not get current users.");
 				}
 
 				User user = userResource.getUser(userId);
 
 				if (user != null) {
-					user.setCurrentUser(isCurrentUser);
 					user.setFetchedDate(new Date());
 					userHelper.createOrUpdate(user);
 				}

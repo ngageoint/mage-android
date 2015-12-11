@@ -83,7 +83,7 @@ public class LocalAuthLoginTask extends AbstractAccountTask {
 			roleHelper.deleteAll();
 			
 			// delete active user(s)
-			userHelper.deleteCurrentUsers();
+			userHelper.deleteCurrentUser();
 			
 			Role defaultRole = new Role("NA", "LOCAL", "Local Auth", null);
 			defaultRole = roleHelper.create(defaultRole);
@@ -97,12 +97,12 @@ public class LocalAuthLoginTask extends AbstractAccountTask {
             defaultEvent = eventHelper.create(defaultEvent);
 
 			// create new active user.
-			User currentUser = new User("NA", "unknown", username, username, defaultRole, defaultEvent, null, null, null);
-			currentUser.setCurrentUser(Boolean.TRUE);
-			currentUser = userHelper.create(currentUser);
+            User user = new User("NA", username, username, "unknown", null, null, null, defaultEvent.getRemoteId(), defaultRole);
+            user = userHelper.create(user);
+            userHelper.setCurrentUser(user);
 
             // join tables
-            userHelper.create(new UserTeam(currentUser, defaultTeam));
+            userHelper.create(new UserTeam(user, defaultTeam));
             teamHelper.create(new TeamEvent(defaultTeam, defaultEvent));
 		} catch (Exception e) {
 			// for now, treat as a warning. Not a great state to be in.

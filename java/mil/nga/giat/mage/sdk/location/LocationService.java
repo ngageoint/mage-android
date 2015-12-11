@@ -394,7 +394,13 @@ public class LocationService extends Service implements LocationListener, OnShar
 			}
 			
 			// build location
-			mil.nga.giat.mage.sdk.datastore.location.Location loc = new mil.nga.giat.mage.sdk.datastore.location.Location("Feature", currentUser, locationProperties, geometryFactory.createPoint(new Coordinate(location.getLongitude(), location.getLatitude())), new Date(location.getTime()), currentUser.getCurrentEvent());
+			mil.nga.giat.mage.sdk.datastore.location.Location loc = new mil.nga.giat.mage.sdk.datastore.location.Location(
+					"Feature",
+					currentUser,
+					locationProperties,
+					geometryFactory.createPoint(new Coordinate(location.getLongitude(), location.getLatitude())),
+					new Date(location.getTime()),
+					currentUser.getUserLocal().getCurrentEvent());
 
 			// save the location
 			try {

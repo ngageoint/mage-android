@@ -16,13 +16,10 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collection;
 
-import mil.nga.giat.mage.sdk.datastore.user.Event;
-import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
 import mil.nga.giat.mage.sdk.datastore.user.Phone;
 import mil.nga.giat.mage.sdk.datastore.user.Role;
 import mil.nga.giat.mage.sdk.datastore.user.RoleHelper;
 import mil.nga.giat.mage.sdk.datastore.user.User;
-import mil.nga.giat.mage.sdk.exceptions.EventException;
 import mil.nga.giat.mage.sdk.exceptions.RoleException;
 
 /**
@@ -36,12 +33,9 @@ public class UserDeserializer implements JsonDeserializer<User> {
 	private static final String LOG_NAME = UserDeserializer.class.getName();
 
 	private Context mContext;
-	private EventHelper eventHelper;
-
 
 	public UserDeserializer(Context context) {
 		this.mContext = context;
-		eventHelper = EventHelper.getInstance(context);
 	}
 	
 	/**
@@ -70,14 +64,15 @@ public class UserDeserializer implements JsonDeserializer<User> {
 		JsonObject jsonUser = json.getAsJsonObject();
 
 		String remoteId = jsonUser.get("id").getAsString();
-		
+
+		String username = jsonUser.get("username").getAsString();
+
 		String email = "";
 		JsonElement emailElement = jsonUser.get("email");
 		if (emailElement != null) {
 		    email = emailElement.getAsString();
 		}
 		String displayName = jsonUser.get("displayName").getAsString();
-		String username = jsonUser.get("username").getAsString();
 
         Role role = null;
         if (jsonUser.get("role") != null) {
@@ -125,7 +120,7 @@ public class UserDeserializer implements JsonDeserializer<User> {
             throw new JsonParseException("Unable to find or make role for user!");
         }
 		
-		Collection<Phone> phones = new ArrayList<Phone>();
+		Collection<Phone> phones = new ArrayList<>();
 		String primaryPhone = null;
 		if (jsonUser.has("phones")) {
 			JsonArray phoneArray = jsonUser.get("phones").getAsJsonArray();
@@ -149,18 +144,14 @@ public class UserDeserializer implements JsonDeserializer<User> {
 			iconUrl = jsonUser.get("iconUrl").getAsString();
 		}
 
-		Event event = null;
+		String recentEventId = null;
 		JsonArray recentEventIds = jsonUser.get("recentEventIds").getAsJsonArray();
 		if (recentEventIds.size() > 0) {
-			try {
-				event = eventHelper.read(recentEventIds.get(0).getAsString());
-			} catch (EventException e) {
-				Log.d(LOG_NAME, "Error reading event", e);
-			}
+			recentEventId= recentEventIds.get(0).getAsString();
         } else {
             Log.w(LOG_NAME, "User has no recent events!");
         }
 
-		return new User(remoteId, email, displayName, username, role, event, primaryPhone, avatarUrl, iconUrl);
+		return new User(remoteId, username, displayName, email, primaryPhone, avatarUrl, iconUrl, recentEventId, role);
 	}
 }

@@ -11,6 +11,8 @@ import java.util.Date;
 @DatabaseTable(tableName = "users")
 public class User {
 
+	public static final String COLUMN_NAME_USER_LOCAL_ID = "user_local_id";
+
 	@DatabaseField(generatedId = true)
 	private Long _id;
 
@@ -26,17 +28,11 @@ public class User {
 	@DatabaseField(canBeNull = false, unique = true)
 	private String username;
 
-	@DatabaseField(canBeNull = false)
-	private Boolean isCurrentUser = Boolean.FALSE;
-
 	@DatabaseField(canBeNull = false, columnName = "fetched_date")
 	private Date fetchedDate = new Date(0);
 
 	@DatabaseField(canBeNull = false, foreign = true, foreignAutoRefresh = true)
 	private Role role;
-
-    @DatabaseField(canBeNull = true, foreign = true, foreignAutoRefresh = true)
-    private Event currentEvent;
 
 	@DatabaseField
 	private String primaryPhone;
@@ -45,29 +41,29 @@ public class User {
 	private String avatarUrl;
 	
 	@DatabaseField
-	private String localAvatarPath;
-	
-	@DatabaseField
-	private String localIconPath;
-	
-	@DatabaseField
 	private String iconUrl;
+
+	@DatabaseField
+	private String recentEventId;
+
+	@DatabaseField(canBeNull = false, foreign = true, foreignAutoRefresh = true, columnName = COLUMN_NAME_USER_LOCAL_ID)
+	private UserLocal userLocal;
 
 	public User() {
 		// ORMLite needs a no-arg constructor
 	}
 
-	public User(String remoteId, String email, String displayName, String username, Role role, Event currentEvent, String primaryPhone, String avatarUrl, String iconUrl) {
+	public User(String remoteId, String username, String displayName, String email, String primaryPhone, String avatarUrl, String iconUrl, String recentEventId, Role role) {
 		super();
 		this.remoteId = remoteId;
 		this.email = email;
 		this.displayName = displayName;
 		this.username = username;
-		this.role = role;
-        this.currentEvent = currentEvent;
 		this.primaryPhone = primaryPhone;
 		this.avatarUrl = avatarUrl;
 		this.iconUrl = iconUrl;
+		this.recentEventId = recentEventId;
+		this.role = role;
 	}
 
 	public Long getId() {
@@ -98,30 +94,6 @@ public class User {
 		return username;
 	}
 
-	public Role getRole() {
-		return role;
-	}
-
-	public void setRole(Role role) {
-		this.role = role;
-	}
-
-    public Event getCurrentEvent() {
-        return currentEvent;
-    }
-
-    public void setCurrentEvent(Event currentEvent) {
-        this.currentEvent = currentEvent;
-    }
-
-	public Boolean isCurrentUser() {
-		return isCurrentUser;
-	}
-
-	public void setCurrentUser(Boolean isCurrentUser) {
-		this.isCurrentUser = isCurrentUser;
-	}
-
 	public Date getFetchedDate() {
 		return fetchedDate;
 	}
@@ -145,15 +117,7 @@ public class User {
 	public void setAvatarUrl(String avatarUrl) {
 		this.avatarUrl = avatarUrl;
 	}
-	
-	public String getLocalAvatarPath() {
-		return localAvatarPath;
-	}
-	
-	public void setLocalAvatarPath(String localAvatarPath) {
-		this.localAvatarPath = localAvatarPath;
-	}
-	
+
 	public String getIconUrl() {
 		return iconUrl;
 	}
@@ -161,13 +125,45 @@ public class User {
 	public void setIconUrl(String iconUrl) {
 		this.iconUrl = iconUrl;
 	}
-	
-	public String getLocalIconPath() {
-		return localIconPath;
+
+	public String getRecentEventId() {
+		return recentEventId;
 	}
-	
-	public void setLocalIconPath(String localIconPath) {
-		this.localIconPath = localIconPath;
+
+	public void setRecentEventId(String recentEventId) {
+		this.recentEventId = recentEventId;
+	}
+
+	public Role getRole() {
+		return role;
+	}
+
+	public void setRole(Role role) {
+		this.role = role;
+	}
+
+	public UserLocal getUserLocal() {
+		return userLocal;
+	}
+
+	public void setUserLocal(UserLocal userLocal) {
+		this.userLocal = userLocal;
+	}
+
+	public boolean isCurrentUser() {
+		return userLocal.isCurrentUser();
+	}
+
+	public Event getCurrentEvent() {
+		return userLocal.getCurrentEvent();
+	}
+
+	public String getAvatarPath() {
+		return userLocal.getLocalAvatarPath();
+	}
+
+	public String getIconPath() {
+		return userLocal.getLocalIconPath();
 	}
 
 	@Override

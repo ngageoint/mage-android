@@ -8,7 +8,6 @@ import android.util.Log;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import com.google.gson.JsonSyntaxException;
 
 import java.text.DateFormat;
 import java.util.ArrayList;
@@ -81,9 +80,11 @@ public class OAuthLoginTask extends AbstractAccountTask {
 				Gson userDeserializer = UserDeserializer.getGsonBuilder(mApplicationContext);
 				User user = userDeserializer.fromJson(userJson.toString(), User.class);
 				if (user != null) {
-					user.setCurrentUser(true);
 					user.setFetchedDate(new Date());
-					user = UserHelper.getInstance(mApplicationContext).createOrUpdate(user);
+					UserHelper userHelper = UserHelper.getInstance(mApplicationContext);
+					user = userHelper.createOrUpdate(user);
+
+					userHelper.setCurrentUser(user);
 				} else {
 					Log.e(LOG_NAME, "Unable to Deserializer user.");
 					List<Integer> errorIndices = new ArrayList<Integer>();
@@ -115,7 +116,7 @@ public class OAuthLoginTask extends AbstractAccountTask {
 
 				return new AccountStatus(AccountStatus.Status.FAILED_LOGIN);
 			}
-		} catch (JsonSyntaxException e) {
+		} catch (Exception e) {
 			Log.e(LOG_NAME, "Problem with oauth login attempt", e);
 			return new AccountStatus(AccountStatus.Status.FAILED_LOGIN);
 		}

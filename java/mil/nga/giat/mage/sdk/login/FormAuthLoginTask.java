@@ -89,18 +89,18 @@ public class FormAuthLoginTask extends AbstractAccountTask {
 				Log.e(LOG_NAME, "Could not hash password", e);
 			}
 
-			List<Integer> errorIndices = new ArrayList<Integer>();
+			List<Integer> errorIndices = new ArrayList<>();
 			errorIndices.add(2);
-			List<String> errorMessages = new ArrayList<String>();
+			List<String> errorMessages = new ArrayList<>();
 			errorMessages.add("No connection.");
 			return new AccountStatus(AccountStatus.Status.FAILED_LOGIN, errorIndices, errorMessages);
 		}
 
 		String uuid = new DeviceUuidFactory(mApplicationContext).getDeviceUuid().toString();
 		if (uuid == null) {
-			List<Integer> errorIndices = new ArrayList<Integer>();
+			List<Integer> errorIndices = new ArrayList<>();
 			errorIndices.add(2);
-			List<String> errorMessages = new ArrayList<String>();
+			List<String> errorMessages = new ArrayList<>();
 			errorMessages.add("Problem generating device uuid");
 			return new AccountStatus(AccountStatus.Status.FAILED_LOGIN, errorIndices, errorMessages);
 		}
@@ -116,9 +116,9 @@ public class FormAuthLoginTask extends AbstractAccountTask {
 						callbackStatus = new AccountStatus(AccountStatus.Status.SUCCESSFUL_LOGIN);
 						return true;
 					} else {
-						List<Integer> errorIndices = new ArrayList<Integer>();
+						List<Integer> errorIndices = new ArrayList<>();
 						errorIndices.add(2);
-						List<String> errorMessages = new ArrayList<String>();
+						List<String> errorMessages = new ArrayList<>();
 						errorMessages.add("Bad hostname");
 						callbackStatus = new AccountStatus(AccountStatus.Status.FAILED_LOGIN, errorIndices, errorMessages);
 						return false;
@@ -191,15 +191,17 @@ public class FormAuthLoginTask extends AbstractAccountTask {
 
 					User user = userDeserializer.fromJson(userJson.toString(), User.class);
 					if (user != null) {
-						user.setCurrentUser(true);
 						user.setFetchedDate(new Date());
 						user = userHelper.createOrUpdate(user);
+
+						userHelper.setCurrentUser(user);
+
 						editor.putString(mApplicationContext.getString(R.string.displayNameKey), user.getDisplayName());
 					} else {
 						Log.e(LOG_NAME, "Unable to Deserializer user.");
-						List<Integer> errorIndices = new ArrayList<Integer>();
+						List<Integer> errorIndices = new ArrayList<>();
 						errorIndices.add(2);
-						List<String> errorMessages = new ArrayList<String>();
+						List<String> errorMessages = new ArrayList<>();
 						errorMessages.add("Problem retrieving your user.");
 						return new AccountStatus(AccountStatus.Status.FAILED_LOGIN, errorIndices, errorMessages);
 					}
@@ -220,9 +222,9 @@ public class FormAuthLoginTask extends AbstractAccountTask {
 			}
 
 		} catch (MalformedURLException e) {
-			List<Integer> errorIndices = new ArrayList<Integer>();
+			List<Integer> errorIndices = new ArrayList<>();
 			errorIndices.add(2);
-			List<String> errorMessages = new ArrayList<String>();
+			List<String> errorMessages = new ArrayList<>();
 			errorMessages.add("Bad URL");
 			return new AccountStatus(AccountStatus.Status.FAILED_LOGIN, errorIndices, errorMessages);
 		}

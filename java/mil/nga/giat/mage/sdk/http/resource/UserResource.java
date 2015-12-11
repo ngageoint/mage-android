@@ -331,17 +331,18 @@ public class UserResource {
             Response<User> response = service.createAvatar(parts).execute();
 
             if (response.isSuccess()) {
-                User currentUser = UserHelper.getInstance(context).readCurrentUser();
-                User returnedUser = response.body();
+                User user = response.body();
 
-                currentUser.setAvatarUrl(returnedUser.getAvatarUrl());
-                currentUser.setLocalAvatarPath(avatarPath);
                 UserHelper userHelper = UserHelper.getInstance(context);
+                User currentUser = userHelper.readCurrentUser();
+                currentUser.setAvatarUrl(user.getAvatarUrl());
+                UserHelper.getInstance(context).update(currentUser);
 
-                userHelper.update(currentUser);
-                Log.d(LOG_NAME, "Updated user with remote_id " + returnedUser.getRemoteId());
+                userHelper.setAvatarPath(user, avatarPath);
 
-                return returnedUser;
+                Log.d(LOG_NAME, "Updated user with remote_id " + user.getRemoteId());
+
+                return user;
             } else {
                 Log.e(LOG_NAME, "Bad request.");
                 if (response.errorBody() != null) {
