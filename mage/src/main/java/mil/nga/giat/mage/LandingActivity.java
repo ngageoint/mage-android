@@ -346,7 +346,7 @@ public class LandingActivity extends Activity implements ListView.OnItemClickLis
 	public static void deleteAllData(Context context) {
 		DaoStore.getInstance(context).resetDatabase();
 		PreferenceManager.getDefaultSharedPreferences(context).edit().clear().commit();
-		deleteDir(MediaUtility.getMediaStageDirectory());
+		deleteDir(MediaUtility.getMediaStageDirectory(context));
 		clearApplicationData(context);
 	}
 

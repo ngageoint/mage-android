@@ -97,6 +97,7 @@ public class MAGE extends MultiDexApplication implements IUserEventListener {
 
 	public void onLogin() {
 		createNotification();
+
 		// Start location services
 		initLocationService();
 
