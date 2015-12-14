@@ -169,7 +169,7 @@ public class AttachmentHelper extends DaoHelper<Attachment> implements IEventDis
 	 * @param attachment
 	 */
 	public void stageForUpload(Attachment attachment) throws Exception {
-		File stageDir = MediaUtility.getMediaStageDirectory();
+		File stageDir = MediaUtility.getMediaStageDirectory(mApplicationContext);
 		File inFile = new File(attachment.getLocalPath());
 		// add random string to the front of the filename to avoid conflicts
 		File stagedFile = new File(stageDir, new BigInteger(30, random).toString(32) + new File(attachment.getLocalPath()).getName());

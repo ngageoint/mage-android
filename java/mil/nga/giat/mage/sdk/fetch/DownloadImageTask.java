@@ -34,6 +34,7 @@ public class DownloadImageTask extends AsyncTask<Void, Void, Void> {
 
 	protected static final String LOG_NAME = DownloadImageTask.class.getName();
 
+	protected Context context;
 	protected ImageType imageType;
 	protected Collection<User> users;
 	protected UserResource userResource;
@@ -42,6 +43,7 @@ public class DownloadImageTask extends AsyncTask<Void, Void, Void> {
 	protected OnImageDownloadListener listener = null;
 
 	public DownloadImageTask(Context context, Collection<User> users, ImageType imageType, boolean overwriteLocalFiles) {
+		this.context = context;
 		this.users = users;
 		this.imageType = imageType;
 		this.overwriteLocalFiles = overwriteLocalFiles;
@@ -50,6 +52,7 @@ public class DownloadImageTask extends AsyncTask<Void, Void, Void> {
 	}
 
 	public DownloadImageTask(Context context, Collection<User> users, ImageType imageType, boolean overwriteLocalFiles, OnImageDownloadListener listener) {
+		this.context = context;
 		this.users = users;
 		this.imageType = imageType;
 		this.overwriteLocalFiles = overwriteLocalFiles;
@@ -66,11 +69,11 @@ public class DownloadImageTask extends AsyncTask<Void, Void, Void> {
 			String currentLocalFilePath = null;
 			switch (imageType) {
 				case AVATAR:
-					newLocalFilePath = MediaUtility.getAvatarDirectory() + "/" + user.getId() + ".png";
+					newLocalFilePath = MediaUtility.getAvatarDirectory(context) + "/" + user.getId() + ".png";
 					currentLocalFilePath = user.getAvatarPath();
 					break;
 				case ICON:
-					newLocalFilePath = MediaUtility.getUserIconDirectory() + "/" + user.getId() + ".png";
+					newLocalFilePath = MediaUtility.getUserIconDirectory(context) + "/" + user.getId() + ".png";
 					currentLocalFilePath = user.getIconPath();
 					break;
 			}

@@ -119,8 +119,8 @@ public class MediaUtility {
 	    // Create an image file name
 	    String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
 	    String imageFileName = "MAGE_" + timeStamp;
-	    File storageDir = Environment.getExternalStoragePublicDirectory(
-				Environment.DIRECTORY_PICTURES);
+	    File storageDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
+
 	    return File.createTempFile(
 				imageFileName,  /* prefix */
 				".jpg",         /* suffix */
@@ -128,37 +128,34 @@ public class MediaUtility {
 		);
 	}
 	
-	public static File getMediaStageDirectory() {
-		File sd = Environment.getExternalStorageDirectory();
-		File mediaFolder = new File(sd, "/MAGE/Media");
-		if (sd.canWrite()) {
-			if (!mediaFolder.exists()) {
-				mediaFolder.mkdirs();
-			}
+	public static File getMediaStageDirectory(Context context) {
+		File directory = context.getFilesDir();
+		File mediaFolder = new File(directory, "/media");
+		if (!mediaFolder.exists()) {
+			mediaFolder.mkdirs();
 		}
+
 		return mediaFolder;
 	}
 	
-	public static File getAvatarDirectory() {
-		File ms = getMediaStageDirectory();
-		File mediaFolder = new File(ms, "/user/avatars");
-		if (ms.canWrite()) {
-			if (!mediaFolder.exists()) {
-				mediaFolder.mkdirs();
-			}
+	public static File getAvatarDirectory(Context context) {
+		File directory = getMediaStageDirectory(context);
+		File avatarDirectory = new File(directory, "/user/avatars");
+		if (!avatarDirectory.exists()) {
+			avatarDirectory.mkdirs();
 		}
-		return mediaFolder;
+
+		return avatarDirectory;
 	}
 	
-	public static File getUserIconDirectory() {
-		File ms = getMediaStageDirectory();
-		File mediaFolder = new File(ms, "/user/icons");
-		if (ms.canWrite()) {
-			if (!mediaFolder.exists()) {
-				mediaFolder.mkdirs();
-			}
+	public static File getUserIconDirectory(Context context) {
+		File directory = getMediaStageDirectory(context);
+		File iconDirectory = new File(directory, "/user/icons");
+		if (!iconDirectory.exists()) {
+			iconDirectory.mkdirs();
 		}
-		return mediaFolder;
+
+		return iconDirectory;
 	}
 	
     /**

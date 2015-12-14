@@ -47,7 +47,7 @@ public class UpdateProfileTask extends AsyncTask<String, Void, User> {
 			return user;
 		}
 		
-		File stageDir = MediaUtility.getMediaStageDirectory();
+		File stageDir = MediaUtility.getMediaStageDirectory(context);
 		File inFile = new File(fileToUpload);
 		// add random string to the front of the filename to avoid conflicts
 		File stagedFile = new File(stageDir, new BigInteger(30, random).toString(32) + new File(fileToUpload).getName());

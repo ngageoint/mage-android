@@ -36,9 +36,7 @@ import mil.nga.giat.mage.sdk.http.resource.ApiResource;
 public class PreferenceHelper implements SharedPreferences.OnSharedPreferenceChangeListener {
 
 	private static final String LOG_NAME = PreferenceHelper.class.getName();
-	
-	private final static String DEFAULT_DYNAMIC_FORM = "dynamic-form/default-dynamic-form.json";
-	
+
 	private PreferenceHelper() {
 	}
 
@@ -83,17 +81,16 @@ public class PreferenceHelper implements SharedPreferences.OnSharedPreferenceCha
 		if (forceReinitialize) {
 			sharedPreferences.edit().clear().commit();
 		}
-		Set<Integer> resourcesToLoad = new LinkedHashSet<Integer>();
+		Set<Integer> resourcesToLoad = new LinkedHashSet<>();
 
-		for(Class c : xmlClasses) {
-			final Field[] fields = c.getDeclaredFields();
-			// add any other files you might have added
-			for (int i = 0, max = fields.length; i < max; i++) {
-				try {
-					final int resourceId = fields[i].getInt(new R.xml());
-					resourcesToLoad.add(resourceId);
-				} catch (Exception e) {
-					continue;
+		for (Class xmlClass : xmlClasses) {
+			for (Field field : xmlClass.getDeclaredFields()) {
+				if (field.getName().endsWith("preference")) {
+					try {
+						resourcesToLoad.add(field.getInt(new R.xml()));
+					} catch (Exception e) {
+						Log.e(LOG_NAME, "Error loading preference file", e);
+					}
 				}
 			}
 		}
@@ -244,8 +241,8 @@ public class PreferenceHelper implements SharedPreferences.OnSharedPreferenceCha
         /**
 		 * Flattens the json from the server and puts key, value pairs in the DefaultSharedPreferences
 		 * 
-		 * @param sharedPreferenceName
-		 * @param json
+		 * @param sharedPreferenceName preference name
+		 * @param json json value
 		 */
 		private void populateValues(String sharedPreferenceName, JSONObject json) {
 			@SuppressWarnings("unchecked")

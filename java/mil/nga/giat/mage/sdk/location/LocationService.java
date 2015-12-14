@@ -382,7 +382,7 @@ public class LocationService extends Service implements LocationListener, OnShar
 			locationProperties.add(new LocationProperty("altitude", location.getAltitude()));
 
 			int level = batteryStatus.getIntExtra(BatteryManager.EXTRA_LEVEL, -1);
-			if(level != -1) {
+			if (level != -1) {
 				locationProperties.add(new LocationProperty("battery_level", level));
 			}
 
@@ -392,7 +392,7 @@ public class LocationService extends Service implements LocationListener, OnShar
 			} catch (UserException e) {
 				Log.e(LOG_NAME, "Could not get current User!");
 			}
-			
+
 			// build location
 			mil.nga.giat.mage.sdk.datastore.location.Location loc = new mil.nga.giat.mage.sdk.datastore.location.Location(
 					"Feature",
@@ -400,7 +400,7 @@ public class LocationService extends Service implements LocationListener, OnShar
 					locationProperties,
 					geometryFactory.createPoint(new Coordinate(location.getLongitude(), location.getLatitude())),
 					new Date(location.getTime()),
-					currentUser.getUserLocal().getCurrentEvent());
+					currentUser.getCurrentEvent());
 
 			// save the location
 			try {
