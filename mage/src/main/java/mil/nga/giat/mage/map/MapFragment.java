@@ -307,11 +307,14 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 
 		// Check if any map preferences changed that I care about
 		boolean locationServiceEnabled = preferences.getBoolean(getResources().getString(R.string.locationServiceEnabledKey), false);
-		map.setMyLocationEnabled(locationServiceEnabled);
 
-		if (locationServiceEnabled) {
-			map.setLocationSource(this);
-			locationService.registerOnLocationListener(this);
+		if (locationService != null && locationServiceEnabled) {
+			map.setMyLocationEnabled(locationServiceEnabled);
+
+			if (locationServiceEnabled) {
+				map.setLocationSource(this);
+				locationService.registerOnLocationListener(this);
+			}
 		}
 	}
 

@@ -37,9 +37,8 @@ public class LocationBitmapFactory {
 		Bitmap bitmap = createDot(context, location, user);
 		Log.d(LOG_NAME, "Drawing the bitmap for user " + user.getDisplayName());
 		final String iconPath = user.getUserLocal().getLocalIconPath();
-		Bitmap bitmapUser = bitmapUser(context, iconPath);
-		if (bitmapUser != null) {
-			bitmap = combineIconAndDot(bitmap.copy(Bitmap.Config.ARGB_8888, true), bitmapUser);
+		if (iconPath != null) {
+			bitmap = combineIconAndDot(bitmap.copy(Bitmap.Config.ARGB_8888, true),  bitmapUser(context, iconPath));
 		}
 		
 		return bitmap;

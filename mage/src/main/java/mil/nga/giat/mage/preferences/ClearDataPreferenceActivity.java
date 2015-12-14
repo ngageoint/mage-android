@@ -156,7 +156,7 @@ public class ClearDataPreferenceActivity extends ListActivity {
 
 				if (checkedItems.indexOfKey(2) >=0 && checkedItems.valueAt(checkedItems.indexOfKey(2))) {
 					// delete attachments
-					LandingActivity.deleteDir(MediaUtility.getMediaStageDirectory());
+					LandingActivity.deleteDir(MediaUtility.getMediaStageDirectory(getApplicationContext()));
 				}
 
 				if (checkedItems.indexOfKey(3) >=0 && checkedItems.valueAt(checkedItems.indexOfKey(3))) {

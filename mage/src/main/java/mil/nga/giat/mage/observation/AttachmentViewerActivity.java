@@ -9,6 +9,7 @@ import android.os.Bundle;
 import android.provider.MediaStore;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.FragmentActivity;
+import android.support.v4.content.FileProvider;
 import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
@@ -143,10 +144,11 @@ public class AttachmentViewerActivity extends FragmentActivity implements Remove
 						progressDialog.setCancelable(false);
 						startDownload(a, finalType);
 					} else {
-						File f = new File(a.getLocalPath());
-						Uri uri = Uri.fromFile(f);
+						File file = new File(a.getLocalPath());
+						Uri uri = FileProvider.getUriForFile(getApplicationContext(), "mil.nga.giat.mage.fileprovider", file);
 						Log.i(LOG_NAME, "launching viewer for " + uri + " type " + finalType);
 						Intent intent = new Intent(Intent.ACTION_VIEW);
+						intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
 						intent.setDataAndType(uri, finalType);
 						startActivity(intent);
 					}
@@ -206,7 +208,7 @@ public class AttachmentViewerActivity extends FragmentActivity implements Remove
 
 				Long contentLength = response.contentLength();
 
-				File stageDir = MediaUtility.getMediaStageDirectory();
+				File stageDir = MediaUtility.getMediaStageDirectory(getApplicationContext());
 				File stagedFile = new File(stageDir, a.getName());
 				a.setLocalPath(stagedFile.getAbsolutePath());
 				os = new FileOutputStream(a.getLocalPath());
