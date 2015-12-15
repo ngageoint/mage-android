@@ -1,16 +1,23 @@
 package mil.nga.giat.mage;
 
+import android.Manifest;
 import android.app.Activity;
 import android.app.Fragment;
 import android.app.FragmentManager;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v4.app.ActionBarDrawerToggle;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentTransaction;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.AlertDialog;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
@@ -60,6 +67,8 @@ public class LandingActivity extends Activity implements ListView.OnItemClickLis
      */
     public static final String EXTRA_OPEN_FILE_PATH = "extra_open_file_path";
 
+    private static final int PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 1;
+
 	private static final String LOG_NAME = LandingActivity.class.getName();
 
     private DrawerLayout drawerLayout;
@@ -72,6 +81,7 @@ public class LandingActivity extends Activity implements ListView.OnItemClickLis
 	private int logoutId;
     private boolean switchFragment;
     private DrawerItem itemToSwitchTo;
+    private boolean locationPermissionGranted = false;
     
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -79,6 +89,27 @@ public class LandingActivity extends Activity implements ListView.OnItemClickLis
         setContentView(R.layout.activity_landing);
 
         ((MAGE) getApplication()).onLogin();
+
+        // Ask for permissions
+        locationPermissionGranted = ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
+        if (!locationPermissionGranted) {
+            if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.ACCESS_FINE_LOCATION)) {
+                new AlertDialog.Builder(LandingActivity.this, R.style.AppCompatAlertDialogStyle)
+                        .setTitle(R.string.location_access_rational_title)
+                        .setMessage(R.string.location_access_rational_message)
+                        .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                ActivityCompat.requestPermissions(LandingActivity.this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION);
+                            }
+                        })
+                        .create()
+                        .show();
+
+            } else {
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION);
+            }
+        }
 
         int id = 0;
         mapItem = new DrawerItem.Builder().id(id++).text("Map").drawableId(R.drawable.ic_map_white_24dp).fragment(new MapFragment()).build();
@@ -156,6 +187,36 @@ public class LandingActivity extends Activity implements ListView.OnItemClickLis
         }
 
         goToMap();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        if (locationPermissionGranted != (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED)) {
+            locationPermissionGranted = ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
+
+            // notify location services that the permissions have changed.
+            ((MAGE) getApplication()).getLocationService().onLocationPermissionsChanged();
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
+        switch (requestCode) {
+            case PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION: {
+                // If request is cancelled, the result arrays are empty.
+                SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).edit();
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    editor.putBoolean(getResources().getString(R.string.locationServiceEnabledKey), true);
+                } else {
+                    editor.putBoolean(getResources().getString(R.string.locationServiceEnabledKey), false);
+                }
+
+                editor.apply();
+                break;
+            }
+        }
     }
 
     private void goToMap() {
