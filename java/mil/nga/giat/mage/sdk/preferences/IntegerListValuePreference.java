@@ -9,6 +9,7 @@ import android.widget.TextView;
 
 import mil.nga.giat.mage.sdk.R;
 
+
 public class IntegerListValuePreference extends IntegerListPreference {
 
 	private TextView value;

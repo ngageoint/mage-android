@@ -35,7 +35,7 @@
     <!-- *************** set in generalpreferences.xml *************** -->
 
     <string name="locationServiceEnabledKey">locationServiceEnabled</string>
-    <bool name="locationServiceEnabledDefaultValue">true</bool>
+    <bool name="locationServiceEnabledDefaultValue">false</bool>
 
     <string name="dataFetchEnabledKey">dataFetchEnabled</string>
     <bool name="dataFetchEnabledDefaultValue">true</bool>

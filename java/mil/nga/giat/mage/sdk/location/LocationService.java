@@ -1,5 +1,6 @@
 package mil.nga.giat.mage.sdk.location;
 
+import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.app.Service;
@@ -9,16 +10,19 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
+import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.BatteryManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
+import android.support.v4.content.ContextCompat;
 import android.util.Log;
 
 import com.vividsolutions.jts.geom.Coordinate;
@@ -103,7 +107,11 @@ public class LocationService extends Service implements LocationListener, OnShar
 	}
 	
 	protected final synchronized boolean getLocationServiceEnabled() {
-        return PreferenceManager.getDefaultSharedPreferences(mContext).getBoolean(mContext.getString(R.string.locationServiceEnabledKey), mContext.getResources().getBoolean(R.bool.locationServiceEnabledDefaultValue));
+		if (android.os.Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+			return PreferenceManager.getDefaultSharedPreferences(mContext).getBoolean(mContext.getString(R.string.locationServiceEnabledKey), mContext.getResources().getBoolean(R.bool.locationServiceEnabledDefaultValue));
+		} else {
+			return ContextCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
+		}
 	}
 	
     protected final synchronized boolean shouldReportUserLocation() {
@@ -145,15 +153,18 @@ public class LocationService extends Service implements LocationListener, OnShar
 		if (locationManager != null) {
 			final List<String> providers = locationManager.getAllProviders();
 			if (providers != null) {
-				
-				if (providers.contains(LocationManager.GPS_PROVIDER)) {
-					locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, getMinimumDistanceChangeForUpdates(), this);
-					locationUpdatesEnabled = true;
-				}
-				
-				if (providers.contains(LocationManager.NETWORK_PROVIDER)) {
-					locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, getMinimumDistanceChangeForUpdates(), this);
-					locationUpdatesEnabled = true;
+
+				if (ContextCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+
+					if (providers.contains(LocationManager.GPS_PROVIDER)) {
+						locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, getMinimumDistanceChangeForUpdates(), this);
+						locationUpdatesEnabled = true;
+					}
+
+					if (providers.contains(LocationManager.NETWORK_PROVIDER)) {
+						locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, getMinimumDistanceChangeForUpdates(), this);
+						locationUpdatesEnabled = true;
+					}
 				}
 			}
 		}
@@ -172,13 +183,17 @@ public class LocationService extends Service implements LocationListener, OnShar
 	public Location getLocation() {
 		Location location = null;
 
-		// if GPS Enabled get Location using GPS Services
-		if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-			location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+		if (ContextCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+			// if GPS Enabled get Location using GPS Services
+			if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+				location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+			}
+
+			if (location == null && locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)) {
+				location = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+			}
 		}
-		if(location == null && locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)) {
-			location = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
-		}
+
 		return location;
 	}
 
@@ -251,6 +266,14 @@ public class LocationService extends Service implements LocationListener, OnShar
 	
 	public void init() {
 	    if (getLocationServiceEnabled()) start();
+	}
+
+	public void onLocationPermissionsChanged() {
+		if (getLocationServiceEnabled()) {
+			start();
+		} else {
+			stop();
+		}
 	}
 
 	/**

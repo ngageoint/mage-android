@@ -13,7 +13,7 @@
         <item>30 minutes</item>
         <item>Never</item>
     </string-array>
-    <integer-array name="userReportingFrequencyValues">
+    <string-array name="userReportingFrequencyValues">
         <item>15000</item>
         <item>30000</item>
         <item>60000</item>
@@ -22,7 +22,7 @@
         <item>600000</item>
         <item>1800000</item>
         <item>0</item>
-    </integer-array>
+    </string-array>
     <string-array name="gpsSensitivities">
         <item>3 Kilometers</item>
         <item>1 Kilometer</item>
@@ -30,13 +30,13 @@
         <item>10 Meters</item>
         <item>1 Meter</item>
     </string-array>
-    <integer-array name="gpsSensitivityValues">
+    <string-array name="gpsSensitivityValues">
         <item>3000</item>
         <item>1000</item>
         <item>100</item>
         <item>10</item>
         <item>1</item>
-    </integer-array>
+    </string-array>
     <string-array name="locationPushFrequencies">
         <item>5 seconds</item>
         <item>10 seconds</item>
@@ -47,7 +47,7 @@
         <item>10 minutes</item>
         <item>30 minutes</item>
     </string-array>
-    <integer-array name="locationPushFrequencyValues">
+    <string-array name="locationPushFrequencyValues">
         <item>5000</item>
         <item>10000</item>
         <item>20000</item>
@@ -56,7 +56,7 @@
         <item>300000</item>
         <item>600000</item>
         <item>1800000</item>
-    </integer-array>
+    </string-array>
 
     <!-- ************************************************************* -->
 
@@ -71,7 +71,7 @@
         <item>10 minutes</item>
         <item>30 minutes</item>
     </string-array>
-    <integer-array name="userFetchFrequencyValues">
+    <string-array name="userFetchFrequencyValues">
         <item>15000</item>
         <item>30000</item>
         <item>60000</item>
@@ -79,7 +79,7 @@
         <item>300000</item>
         <item>600000</item>
         <item>1800000</item>
-    </integer-array>
+    </string-array>
     <string-array name="observationFetchFrequencies">
         <item>15 seconds</item>
         <item>30 seconds</item>
@@ -89,7 +89,7 @@
         <item>10 minutes</item>
         <item>30 minutes</item>
     </string-array>
-    <integer-array name="observationFetchFrequencyValues">
+    <string-array name="observationFetchFrequencyValues">
         <item>15000</item>
         <item>30000</item>
         <item>60000</item>
@@ -97,7 +97,7 @@
         <item>300000</item>
         <item>600000</item>
         <item>1800000</item>
-    </integer-array>
+    </string-array>
 
     <!-- ************************************************************* -->
 
