@@ -23,6 +23,9 @@
     <string name="no">No</string>
     <string name="force_submit"><u>Force Submit</u></string>
 
+    <string name="location_access_rational_title">Enable <font color='#DD000000'>MAGE</font> location services</string>
+    <string name="location_access_rational_message">MAGE shares your location with the team, and enables you to add observations at your current position</string>
+
     <string name="disconnected_mode">DISCONNECTED</string>
     <string name="connected_mode">CONNECTED</string>
     <!-- map overlay menus -->
@@ -37,5 +40,9 @@
     <string name="clear_data_message">You are about to delete the selected data and logout.\n\n Are you sure you want to do this?</string>
 
     <string name="overlay_cache_directory">MapCache</string>
+
+    <string name="gpsPreferencesCategoryKey">gpsPreferencesCategory</string>
+    <string name="locationsPushPreferencesCategoryKey">locationsPushPreferencesCategory</string>
+    <string name="locationServiceDisabledKey">locationServiceDisabled</string>
 
 </resources>

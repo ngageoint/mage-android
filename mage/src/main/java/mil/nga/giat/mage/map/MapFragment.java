@@ -1,5 +1,6 @@
 package mil.nga.giat.mage.map;
 
+import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Fragment;
@@ -8,10 +9,12 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
+import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationListener;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.support.v4.content.ContextCompat;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
@@ -306,15 +309,13 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 		StaticFeatureHelper.getInstance(getActivity().getApplicationContext()).addListener(this);
 
 		// Check if any map preferences changed that I care about
-		boolean locationServiceEnabled = preferences.getBoolean(getResources().getString(R.string.locationServiceEnabledKey), false);
-
-		if (locationService != null && locationServiceEnabled) {
-			map.setMyLocationEnabled(locationServiceEnabled);
-
-			if (locationServiceEnabled) {
-				map.setLocationSource(this);
-				locationService.registerOnLocationListener(this);
-			}
+		if (locationService != null && ContextCompat.checkSelfPermission(getActivity().getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+			map.setMyLocationEnabled(true);
+			map.setLocationSource(this);
+			locationService.registerOnLocationListener(this);
+		} else {
+			map.setMyLocationEnabled(false);
+			map.setLocationSource(null);
 		}
 	}
 

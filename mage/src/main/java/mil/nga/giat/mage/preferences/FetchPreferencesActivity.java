@@ -6,6 +6,7 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
+import android.preference.PreferenceFragment;
 import android.preference.PreferenceManager;
 import android.view.Gravity;
 import android.view.MenuItem;
@@ -18,20 +19,14 @@ public class FetchPreferencesActivity extends PreferenceActivity {
 
     private final FetchPreferenceFragment preference = new FetchPreferenceFragment();
 
-    public static class FetchPreferenceFragment extends PreferenceFragmentSummary implements CompoundButton.OnCheckedChangeListener {
+    public static class FetchPreferenceFragment extends PreferenceFragment implements CompoundButton.OnCheckedChangeListener {
 
         private Switch fetchSwitch;
-
-		public FetchPreferenceFragment() {
-			Bundle bundle = new Bundle();
-			bundle.putInt(PreferenceFragmentSummary.xmlResourceClassKey, R.xml.fetchpreferences);
-			setArguments(bundle);
-		}
 
         public void onCreate(final Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
 
-            PreferenceManager.getDefaultSharedPreferences(getActivity()).registerOnSharedPreferenceChangeListener(this);
+            addPreferencesFromResource(R.xml.fetchpreferences);
 
             Activity activity = getActivity();
             ActionBar actionbar = activity.getActionBar();

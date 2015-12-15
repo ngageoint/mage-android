@@ -64,4 +64,8 @@
         <item name="android:background">#333333</item>
     </style>
 
+    <style name="AppCompatAlertDialogStyle" parent="Theme.AppCompat.Light.Dialog.Alert">
+        <item name="android:textColorPrimary">#89000000</item>
+    </style>
+
 </resources>

@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.preference.Preference;
 import android.preference.Preference.OnPreferenceClickListener;
 import android.preference.PreferenceActivity;
+import android.preference.PreferenceFragment;
 import android.util.Log;
 
 import org.apache.commons.lang3.StringUtils;
@@ -16,7 +17,6 @@ import java.util.HashSet;
 import java.util.Set;
 
 import mil.nga.giat.mage.R;
-import mil.nga.giat.mage.preferences.PreferenceFragmentSummary;
 import mil.nga.giat.mage.sdk.datastore.layer.Layer;
 import mil.nga.giat.mage.sdk.datastore.layer.LayerHelper;
 import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
@@ -38,13 +38,7 @@ public class MapPreferencesActivity extends PreferenceActivity {
 
 	private MapPreferenceFragment preference = new MapPreferenceFragment();
 
-	public static class MapPreferenceFragment extends PreferenceFragmentSummary {
-
-		public MapPreferenceFragment() {
-			Bundle bundle = new Bundle();
-			bundle.putInt(PreferenceFragmentSummary.xmlResourceClassKey, R.xml.mappreferences);
-			setArguments(bundle);
-		}
+	public static class MapPreferenceFragment extends PreferenceFragment {
 
 		@Override
 		public void onCreate(final Bundle savedInstanceState) {
