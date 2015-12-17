@@ -23,8 +23,16 @@
     <string name="no">No</string>
     <string name="force_submit"><u>Force Submit</u></string>
 
-    <string name="location_access_rational_title">Enable <font color='#DD000000'>MAGE</font> location services</string>
+    <string name="location_no_event_title"><font color='#DD000000'>Not a member of this event</font></string>
+    <string name="location_no_event_message">You are an administrator and not a member of the current event.  You can not create an observation in this event.</string>
+
+    <string name="location_missing_title"><font color='#DD000000'>No Location Available</font></string>
+    <string name="location_missing_message">The device has not received a location yet.  To make an observation manually, long press on the map.</string>
+
+    <string name="location_access_rational_title">Use <font color='#DD000000'>MAGE</font> location services</string>
     <string name="location_access_rational_message">MAGE shares your location with the team, and enables you to add observations at your current position</string>
+    <string name="location_access_observation_title"><font color='#DD000000'>Location Services Disabled</font></string>
+    <string name="location_access_observation_message"><font color='#DD000000'>MAGE</font> has been denied access to location services.  To create an observation at your current location please go into your devices settings and enable location services for MAGE, otherwise long press on the map.</string>
 
     <string name="disconnected_mode">DISCONNECTED</string>
     <string name="connected_mode">CONNECTED</string>

@@ -46,7 +46,7 @@ public class LocationPreferencesActivity extends PreferenceActivity {
             reportLocationPreference = findPreference(getActivity().getResources().getString(R.string.reportLocationKey));
             gpsPreference = findPreference(getActivity().getResources().getString(R.string.gpsPreferencesCategoryKey));
             locationPushPreference = findPreference(getActivity().getResources().getString(R.string.locationsPushPreferencesCategoryKey));
-            locationServicesDisabledPreference = findPreference(getActivity().getResources().getString(R.string.locationServiceDisabledKey));
+            locationServicesDisabledPreference = findPreference(getActivity().getResources().getString(R.string.locationServiceEnabledKey));
 
             if (locationServicesEnabled) {
                 getPreferenceScreen().removePreference(locationServicesDisabledPreference);
@@ -56,7 +56,7 @@ public class LocationPreferencesActivity extends PreferenceActivity {
                 getPreferenceScreen().removePreference(locationPushPreference);
             }
         }
-        
+
         @Override
         public void onResume() {
             super.onResume();
@@ -73,7 +73,7 @@ public class LocationPreferencesActivity extends PreferenceActivity {
                 } else {
                     getPreferenceScreen().removePreference(reportLocationPreference);
                     getPreferenceScreen().removePreference(gpsPreference);
-                    getPreferenceScreen().removePreference(locationPushPreference);
+                    getPreferenceScreen().addPreference(locationPushPreference);
 
                     getPreferenceScreen().addPreference(locationServicesDisabledPreference);
                 }
