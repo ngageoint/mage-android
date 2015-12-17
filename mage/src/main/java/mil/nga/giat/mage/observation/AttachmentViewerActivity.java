@@ -268,10 +268,12 @@ public class AttachmentViewerActivity extends FragmentActivity implements Remove
 			} catch (Exception e) {
 				Log.e(LOG_NAME, "Error saving attachment to DB", e);
 			}
-			File f = new File(a.getLocalPath());
-			Uri uri = Uri.fromFile(f);
+
+			File file = new File(a.getLocalPath());
+			Uri uri = FileProvider.getUriForFile(getApplicationContext(), "mil.nga.giat.mage.fileprovider", file);
 			Log.i(LOG_NAME, "launching viewer for " + uri + " type " + mimeType);
 			Intent intent = new Intent(Intent.ACTION_VIEW);
+			intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
 			intent.setDataAndType(uri, mimeType);
 			startActivity(intent);
 		}
