@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
     <Preference
-        android:summary="Click to configure GPS sensitivity and tracking options."
+        android:summary="Click to configure GPS sensitivy and tracking options."
         android:title="Location Services">
         <intent
             android:action="android.intent.action.VIEW"

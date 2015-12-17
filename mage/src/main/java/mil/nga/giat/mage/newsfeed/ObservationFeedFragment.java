@@ -1,16 +1,21 @@
 package mil.nga.giat.mage.newsfeed;
 
+import android.Manifest;
 import android.app.AlertDialog;
-import android.app.Fragment;
-import android.app.FragmentManager;
+import android.app.Dialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.location.Location;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.app.Fragment;
+import android.app.FragmentManager;
+import android.support.v13.app.FragmentCompat;
+import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -64,7 +69,9 @@ import mil.nga.giat.mage.sdk.location.LocationService;
 public class ObservationFeedFragment extends Fragment implements IObservationEventListener, OnItemClickListener, OnSharedPreferenceChangeListener {
 
 	private static final String LOG_NAME = ObservationFeedFragment.class.getName();
-	
+
+	private static final int PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 1;
+
 	private ObservationFeedCursorAdapter adapter;
 	private PreparedQuery<Observation> query;
 	private Dao<Observation, Long> oDao;
@@ -166,56 +173,88 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 	public boolean onOptionsItemSelected(MenuItem item) {
 		switch (item.getItemId()) {
 		case R.id.observation_new:
-			Intent intent = new Intent(getActivity(), ObservationEditActivity.class);
-
-			Location l = null;
-			if (locationService != null) {
-				l = locationService.getLocation();
-			}
-
-			// if there is not a location from the location service, then try to pull one from the database.
-			if (l == null) {
-				List<mil.nga.giat.mage.sdk.datastore.location.Location> tLocations = LocationHelper.getInstance(getActivity().getApplicationContext()).getCurrentUserLocations(getActivity().getApplicationContext(), 1, true);
-				if (!tLocations.isEmpty()) {
-					mil.nga.giat.mage.sdk.datastore.location.Location tLocation = tLocations.get(0);
-					Geometry geo = tLocation.getGeometry();
-					Map<String, LocationProperty> propertiesMap = tLocation.getPropertiesMap();
-					if (geo instanceof Point) {
-						Point point = (Point) geo;
-						String provider = "manual";
-						if (propertiesMap.get("provider").getValue() != null) {
-							provider = propertiesMap.get("provider").getValue().toString();
-						}
-						l = new Location(provider);
-						l.setTime(tLocation.getTimestamp().getTime());
-						if (propertiesMap.get("accuracy").getValue() != null) {
-							l.setAccuracy(Float.valueOf(propertiesMap.get("accuracy").getValue().toString()));
-						}
-						l.setLatitude(point.getY());
-						l.setLongitude(point.getX());
-					}
-				}
-			} else {
-				l = new Location(l);
-			}
-			if(!UserHelper.getInstance(getActivity().getApplicationContext()).isCurrentUserPartOfCurrentEvent()) {
-				new AlertDialog.Builder(getActivity()).setTitle("Not a member of this event").setMessage("You are an administrator and not a member of the current event.  You can not create an observation in this event.").setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
-					public void onClick(DialogInterface dialog, int which) {
-					}
-				}).show();
-			} else if(l != null) {
-				intent.putExtra(ObservationEditActivity.LOCATION, l);
-				startActivity(intent);
-			} else {
-				new AlertDialog.Builder(getActivity()).setTitle("No Location Available").setMessage("The device has not received a location yet.  To make an observation manually, long press on the map.").setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
-					public void onClick(DialogInterface dialog, int which) {
-						dialog.dismiss();
-					}
-				}).show();
-			}
+			onNewObservation();
+			break;
 		}
 
 		return super.onOptionsItemSelected(item);
+	}
+
+	@Override
+	public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
+		switch (requestCode) {
+			case PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION: {
+				// If request is cancelled, the result arrays are empty.
+				if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+					onNewObservation();
+				}
+				break;
+			}
+		}
+	}
+
+	private void onNewObservation() {
+		Intent intent = new Intent(getActivity(), ObservationEditActivity.class);
+
+		Location l = null;
+		if (locationService != null) {
+			l = locationService.getLocation();
+		}
+
+		// if there is not a location from the location service, then try to pull one from the database.
+		if (l == null) {
+			List<mil.nga.giat.mage.sdk.datastore.location.Location> tLocations = LocationHelper.getInstance(getActivity().getApplicationContext()).getCurrentUserLocations(getActivity().getApplicationContext(), 1, true);
+			if (!tLocations.isEmpty()) {
+				mil.nga.giat.mage.sdk.datastore.location.Location tLocation = tLocations.get(0);
+				Geometry geo = tLocation.getGeometry();
+				Map<String, LocationProperty> propertiesMap = tLocation.getPropertiesMap();
+				if (geo instanceof Point) {
+					Point point = (Point) geo;
+					String provider = "manual";
+					if (propertiesMap.get("provider").getValue() != null) {
+						provider = propertiesMap.get("provider").getValue().toString();
+					}
+					l = new Location(provider);
+					l.setTime(tLocation.getTimestamp().getTime());
+					if (propertiesMap.get("accuracy").getValue() != null) {
+						l.setAccuracy(Float.valueOf(propertiesMap.get("accuracy").getValue().toString()));
+					}
+					l.setLatitude(point.getY());
+					l.setLongitude(point.getX());
+				}
+			}
+		} else {
+			l = new Location(l);
+		}
+		if(!UserHelper.getInstance(getActivity().getApplicationContext()).isCurrentUserPartOfCurrentEvent()) {
+			new AlertDialog.Builder(getActivity(), R.style.AppCompatAlertDialogStyle)
+					.setTitle(getActivity().getResources().getString(R.string.location_no_event_title))
+					.setMessage(getActivity().getResources().getString(R.string.location_no_event_message))
+					.setPositiveButton(android.R.string.ok, null)
+					.show();
+		} else if(l != null) {
+			intent.putExtra(ObservationEditActivity.LOCATION, l);
+			startActivity(intent);
+		} else {
+			if (ContextCompat.checkSelfPermission(getActivity().getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+				new AlertDialog.Builder(getActivity(), R.style.AppCompatAlertDialogStyle)
+						.setTitle(getActivity().getResources().getString(R.string.location_missing_title))
+						.setMessage(getActivity().getResources().getString(R.string.location_missing_message))
+						.setPositiveButton(android.R.string.ok, null)
+						.show();
+			} else {
+				new AlertDialog.Builder(getActivity(), R.style.AppCompatAlertDialogStyle)
+						.setTitle(getActivity().getResources().getString(R.string.location_access_observation_title))
+						.setMessage(getActivity().getResources().getString(R.string.location_access_observation_message))
+						.setPositiveButton(android.R.string.ok, new Dialog.OnClickListener() {
+							@Override
+							public void onClick(DialogInterface dialog, int which) {
+								FragmentCompat.requestPermissions(ObservationFeedFragment.this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION);
+							}
+						})
+						.show();
+			}
+		}
 	}
 
 	private PreparedQuery<Observation> buildQuery(Dao<Observation, Long> oDao, int filterId) throws SQLException {

@@ -2,18 +2,17 @@ package mil.nga.giat.mage;
 
 import android.Manifest;
 import android.app.Activity;
-import android.app.Fragment;
-import android.app.FragmentManager;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v4.app.ActionBarDrawerToggle;
 import android.support.v4.app.ActivityCompat;
+import android.app.Fragment;
+import android.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.widget.DrawerLayout;
@@ -57,7 +56,7 @@ import mil.nga.giat.mage.sdk.utils.MediaUtility;
 
 /**
  * This is the Activity that holds other fragments. Map, feeds, etc. It 
- * starts and stops much of the application. It also contains menus.
+ * starts and stops much of the application. It also contains menus .
  * 
  */
 public class LandingActivity extends Activity implements ListView.OnItemClickListener {
@@ -177,7 +176,7 @@ public class LandingActivity extends Activity implements ListView.OnItemClickLis
 
 		if (savedInstanceState == null) {
 			Fragment alertBannerFragment = new AlertBannerFragment();
-			getFragmentManager().beginTransaction().add(android.R.id.content, alertBannerFragment).commit();
+            getFragmentManager().beginTransaction().add(android.R.id.content, alertBannerFragment).commit();
 		}
 
         // Check if MAGE was launched with a local file
@@ -205,15 +204,11 @@ public class LandingActivity extends Activity implements ListView.OnItemClickLis
     public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
         switch (requestCode) {
             case PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION: {
-                // If request is cancelled, the result arrays are empty.
-                SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).edit();
-                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    editor.putBoolean(getResources().getString(R.string.locationServiceEnabledKey), true);
-                } else {
-                    editor.putBoolean(getResources().getString(R.string.locationServiceEnabledKey), false);
+                locationPermissionGranted = grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED;
+                if (locationPermissionGranted) {
+                    ((MAGE) getApplication()).getLocationService().onLocationPermissionsChanged();
                 }
 
-                editor.apply();
                 break;
             }
         }
