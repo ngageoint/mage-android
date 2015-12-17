@@ -419,7 +419,9 @@ public class LandingActivity extends Activity implements ListView.OnItemClickLis
 				}
 			}
 		}
-	}
+
+       deleteDir(MediaUtility.getMediaStageDirectory(context));
+    }
 
 	public static boolean deleteDir(File dir) {
 		if (dir != null && dir.isDirectory()) {

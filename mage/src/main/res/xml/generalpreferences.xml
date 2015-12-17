@@ -3,7 +3,7 @@
     <mil.nga.giat.mage.sdk.preferences.PreferenceScreenSwitch
         android:defaultValue="@bool/locationServiceEnabledDefaultValue"
         android:key="@string/locationServiceEnabledKey"
-        android:summary="Click to configure GPS sensitivity and tracking options."
+        android:summary="@string/location_services_enabled_summary"
         android:title="Location Services">
         <intent
             android:action="android.intent.action.VIEW"

@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
     <Preference
-        android:summary="Click to configure GPS sensitivy and tracking options."
-        android:title="Location Services">
+        android:summary="@string/location_services_enabled_summary"
+        android:title="Location Services"
+        android:key="@string/locationServiceEnabledKey">
         <intent
             android:action="android.intent.action.VIEW"
             android:targetClass="mil.nga.giat.mage.preferences.LocationPreferencesActivity"
