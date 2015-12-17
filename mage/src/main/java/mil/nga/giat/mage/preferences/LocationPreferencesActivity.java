@@ -1,17 +1,14 @@
 package mil.nga.giat.mage.preferences;
 
-import android.Manifest;
 import android.app.ActionBar;
 import android.app.Activity;
 import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceFragment;
 import android.preference.PreferenceManager;
-import android.support.v4.content.ContextCompat;
 import android.view.Gravity;
 import android.view.MenuItem;
 import android.widget.CompoundButton;
@@ -26,58 +23,13 @@ public class LocationPreferencesActivity extends PreferenceActivity {
 
     public static class LocationPreferenceFragment extends PreferenceFragment implements CompoundButton.OnCheckedChangeListener {
 
-        private Preference reportLocationPreference;
-        private Preference gpsPreference;
-        private Preference locationPushPreference;
-        private Preference locationServicesDisabledPreference;
-
 		private Switch locationSwitch;
-        private boolean locationServicesEnabled;
 
         public void onCreate(final Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
 
             Activity activity = getActivity();
-            locationServicesEnabled = ContextCompat.checkSelfPermission(activity.getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
             locationSwitch = new Switch(activity);
-
-            addPreferencesFromResource(R.xml.locationpreferences);
-
-            reportLocationPreference = findPreference(getActivity().getResources().getString(R.string.reportLocationKey));
-            gpsPreference = findPreference(getActivity().getResources().getString(R.string.gpsPreferencesCategoryKey));
-            locationPushPreference = findPreference(getActivity().getResources().getString(R.string.locationsPushPreferencesCategoryKey));
-            locationServicesDisabledPreference = findPreference(getActivity().getResources().getString(R.string.locationServiceEnabledKey));
-
-            if (locationServicesEnabled) {
-                getPreferenceScreen().removePreference(locationServicesDisabledPreference);
-            } else {
-                getPreferenceScreen().removePreference(reportLocationPreference);
-                getPreferenceScreen().removePreference(gpsPreference);
-                getPreferenceScreen().removePreference(locationPushPreference);
-            }
-        }
-
-        @Override
-        public void onResume() {
-            super.onResume();
-
-            if (locationServicesEnabled != (ContextCompat.checkSelfPermission(getActivity().getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED)) {
-                locationServicesEnabled = ContextCompat.checkSelfPermission(getActivity().getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
-
-                if (locationServicesEnabled) {
-                    getPreferenceScreen().addPreference(reportLocationPreference);
-                    getPreferenceScreen().addPreference(gpsPreference);
-                    getPreferenceScreen().addPreference(locationPushPreference);
-
-                    getPreferenceScreen().removePreference(locationServicesDisabledPreference);
-                } else {
-                    getPreferenceScreen().removePreference(reportLocationPreference);
-                    getPreferenceScreen().removePreference(gpsPreference);
-                    getPreferenceScreen().addPreference(locationPushPreference);
-
-                    getPreferenceScreen().addPreference(locationServicesDisabledPreference);
-                }
-            }
 
             if (android.os.Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
                 ActionBar actionbar = getActivity().getActionBar();
@@ -88,19 +40,22 @@ public class LocationPreferencesActivity extends PreferenceActivity {
                                 Gravity.CENTER_VERTICAL | Gravity.RIGHT));
             }
 
-            if (locationServicesEnabled) {
-                updateEnabled();
-                locationSwitch.setOnCheckedChangeListener(this);
-            }
+            addPreferencesFromResource(R.xml.locationpreferences);
+        }
+
+        @Override
+        public void onResume() {
+            super.onResume();
+
+            updateEnabled();
+            locationSwitch.setOnCheckedChangeListener(this);
         }
 
         @Override
         public void onPause() {
             super.onPause();
 
-            if (locationServicesEnabled) {
-                locationSwitch.setOnCheckedChangeListener(null);
-            }
+            locationSwitch.setOnCheckedChangeListener(null);
         }
 
         @Override
@@ -110,6 +65,12 @@ public class LocationPreferencesActivity extends PreferenceActivity {
         }
         
         protected void updateEnabled() {
+            if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                // Location services permissions are enabled/disabled outside the app in the phones
+                // settings.  We won't switch manually
+                return;
+            }
+
             SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
             boolean locationServiceEnabled = preferences.getBoolean(getString(R.string.locationServiceEnabledKey), getResources().getBoolean(R.bool.locationServiceEnabledDefaultValue));
             locationSwitch.setChecked(locationServiceEnabled);

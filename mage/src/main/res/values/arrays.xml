@@ -29,15 +29,13 @@
     <string-array name="clearDataEntries">
         <item>Database</item>
         <item>Preferences</item>
-        <item>Attachments</item>
-        <item>App Filesystem</item>
+        <item>Application Data</item>
     </string-array>
 
     <string-array name="clearDataValues">
         <item>0</item>
         <item>1</item>
         <item>2</item>
-        <item>3</item>
     </string-array>
 
     <string-array name="profileImageChoices">

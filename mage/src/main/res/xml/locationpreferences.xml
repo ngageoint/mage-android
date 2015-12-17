@@ -40,11 +40,4 @@
             android:title="Time Interval"/>
     </PreferenceCategory>
 
-    <EditTextPreference
-        android:key="@string/locationServiceDisabledKey"
-        android:title="Location Services Disabled"
-        android:summary="Location Services for MAGE has been disabled at the application level.  Enable in your phones Settings application to use Location Services within MAGE."
-        android:selectable="false">
-    </EditTextPreference>
-
 </PreferenceScreen>

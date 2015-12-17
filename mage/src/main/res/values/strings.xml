@@ -23,6 +23,9 @@
     <string name="no">No</string>
     <string name="force_submit"><u>Force Submit</u></string>
 
+    <string name="location_services_enabled_summary">Click to configure GPS sensitivy and tracking options.</string>
+    <string name="location_services_disabled_summary">MAGE location services have been disabled. Click here to go to settings and enabled the location permission.</string>
+
     <string name="location_no_event_title"><font color='#DD000000'>Not a member of this event</font></string>
     <string name="location_no_event_message">You are an administrator and not a member of the current event.  You can not create an observation in this event.</string>
 
