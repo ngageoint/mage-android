@@ -35,7 +35,18 @@
     <string name="location_access_rational_title">Use <font color='#DD000000'>MAGE</font> location services</string>
     <string name="location_access_rational_message">MAGE shares your location with the team, and enables you to add observations at your current position</string>
     <string name="location_access_observation_title"><font color='#DD000000'>Location Services Disabled</font></string>
-    <string name="location_access_observation_message"><font color='#DD000000'>MAGE</font> has been denied access to location services.  To create an observation at your current location please go into your devices settings and enable location services for MAGE, otherwise long press on the map.</string>
+    <string name="location_access_observation_message"><font color='#DD000000'>MAGE</font> has been denied access to location services.  To create an observation at your current location please go into your devices settings and enable the Location permission, otherwise long press on the map.</string>
+
+    <string name="camera_access_title"><font color='#DD000000'>Camera Permission Denied</font></string>
+    <string name="camera_access_message"><font color='#DD000000'>MAGE</font> has been denied access to the camera.  To use the camera please go into the MAGE application settings on your device and enable the Camera permission.</string>
+
+    <string name="audio_access_title"><font color='#DD000000'>Microphone Permission Denied</font></string>
+    <string name="audio_access_message"><font color='#DD000000'>MAGE</font> has been denied access to the microphone.  To use the microphone please go into the MAGE application settings on your device and enable the Microphone permission.</string>
+
+    <string name="gallery_access_title"><font color='#DD000000'>Storage Permission Denied</font></string>
+    <string name="gallery_access_message"><font color='#DD000000'>MAGE</font> has been denied access to external storage.  To pick media from the Gallery please go into the MAGE application settings on your device and enable the Storage permission.</string>
+
+    <string name="settings">Settings</string>
 
     <string name="disconnected_mode">DISCONNECTED</string>
     <string name="connected_mode">CONNECTED</string>
