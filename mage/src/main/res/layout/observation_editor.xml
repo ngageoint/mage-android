@@ -42,7 +42,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:contentDescription="voice"
-                    android:onClick="voiceButtonPressed"
+                    android:onClick="onAudioClick"
                     android:src="@drawable/ic_mic_gray_24dp"/>
 
                 <ImageButton
@@ -51,7 +51,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:onClick="cameraButtonPressed"
+                    android:onClick="onCameraClick"
                     android:src="@drawable/ic_photo_camera_gray_24dp"
                     android:text="camera"/>
 
@@ -61,7 +61,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:onClick="videoButtonPressed"
+                    android:onClick="onVideoClick"
                     android:src="@drawable/ic_videocam_gray_24dp"/>
 
                 <ImageButton
@@ -70,7 +70,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:onClick="fromGalleryButtonPressed"
+                    android:onClick="onGalleryClick"
                     android:src="@drawable/ic_image_gray_24dp"/>
             </LinearLayout>
 

@@ -304,10 +304,9 @@ public class ProfileFragment extends Fragment implements OnMapReadyCallback {
 											// change the picture from the camera
 											File f = null;
 											try {
-												f = MediaUtility.createImageFile();
-											} catch (IOException ex) {
-												// Error occurred while creating the File
-												ex.printStackTrace();
+												f = MediaUtility.createMediaFile(context, ".jpg");
+											} catch (IOException e) {
+												Log.e(LOG_NAME, "Error creating avatar file", e);
 											}
 											// Continue only if the File was successfully created
 											if (f != null) {
