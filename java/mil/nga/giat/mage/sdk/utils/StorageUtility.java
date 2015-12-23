@@ -32,9 +32,9 @@ public class StorageUtility {
     }
     
     public static File getDefaultStorageLocation(long bytes) {
-        Map<StorageType, File> map = getAllStorageLocations();
+        Map<StorageType, File> map = getWritableStorageLocations();
         
-        if(map.isEmpty()) {
+        if (map.isEmpty()) {
             return null;
         }
         
@@ -49,25 +49,45 @@ public class StorageUtility {
         return null;
     }
     
-    public static Map<StorageType, File> getAllStorageLocations() {
+    public static Map<StorageType, File> getWritableStorageLocations() {
         if (Build.VERSION.SDK_INT >=  Build.VERSION_CODES.KITKAT) {
-            return getAllNewStorageLocations();
+            return getAllNewStorageLocations(true);
         } else {
-            return getAllLegacyStorageLocations();
+            return getAllLegacyStorageLocations(true);
+        }
+    }
+
+    public static Map<StorageType, File> getReadableStorageLocations() {
+        if (Build.VERSION.SDK_INT >=  Build.VERSION_CODES.KITKAT) {
+            return getAllNewStorageLocations(false);
+        } else {
+            return getAllLegacyStorageLocations(false);
         }
     }
     
-    private static Map<StorageType, File> getAllNewStorageLocations() {
-        Map<StorageType, File> locations = new LinkedHashMap<StorageType, File>();
+    private static Map<StorageType, File> getAllNewStorageLocations(boolean writeable) {
+        Map<StorageType, File> locations = new LinkedHashMap<>();
         String externalStorage = System.getenv("EXTERNAL_STORAGE");
         if (externalStorage != null) {
             File externalStorageDir = new File(externalStorage);
-            if (externalStorageDir.exists() && externalStorageDir.canWrite()) locations.put(StorageType.LOCAL, externalStorageDir);
+            if (writeable && externalStorageDir.exists() && externalStorageDir.canWrite()) {
+                locations.put(StorageType.LOCAL, externalStorageDir);
+            }
+
+            if (!writeable && externalStorageDir.exists() && externalStorageDir.canRead()) {
+                locations.put(StorageType.LOCAL, externalStorageDir);
+            }
         }
         String secondaryStorage = System.getenv("SECONDARY_STORAGE");
         if (secondaryStorage != null){
             File secondaryStorageDir = new File(secondaryStorage);
-            if (secondaryStorageDir.exists() && secondaryStorageDir.canWrite()) locations.put(StorageType.EXTERNAL, secondaryStorageDir);
+            if (writeable && secondaryStorageDir.exists() && secondaryStorageDir.canWrite()) {
+                locations.put(StorageType.EXTERNAL, secondaryStorageDir);
+            }
+
+            if (!writeable && secondaryStorageDir.exists() && secondaryStorageDir.canRead()) {
+                locations.put(StorageType.EXTERNAL, secondaryStorageDir);
+            }
         }
 
         return locations;
@@ -76,11 +96,11 @@ public class StorageUtility {
     /**
      * @return A map of all storage locations available
      */
-    private static Map<StorageType, File> getAllLegacyStorageLocations() {
-        Map<StorageType, File> map = new LinkedHashMap<StorageType, File>();
+    private static Map<StorageType, File> getAllLegacyStorageLocations(boolean writeable) {
+        Map<StorageType, File> map = new LinkedHashMap<>();
 
-        List<String> mMounts = new ArrayList<String>();
-        List<String> mVold = new ArrayList<String>();
+        List<String> mMounts = new ArrayList<>();
+        List<String> mVold = new ArrayList<>();
         mMounts.add("/mnt/sdcard");
         mVold.add("/mnt/sdcard");
 
@@ -135,11 +155,11 @@ public class StorageUtility {
         }
         mVold.clear();
 
-        List<String> mountHash = new ArrayList<String>(10);
+        List<String> mountHash = new ArrayList<>(10);
 
         for (String mount : mMounts) {
             File root = new File(mount);
-            if (root.exists() && root.isDirectory() && root.canWrite()) {
+            if (root.exists() && root.isDirectory() && ((root.canWrite() && writeable) || root.canRead() && !writeable)) {
                 File[] list = root.listFiles();
                 String hash = "[";
                 if (list != null) {
