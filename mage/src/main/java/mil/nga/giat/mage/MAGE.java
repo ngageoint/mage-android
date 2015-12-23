@@ -371,7 +371,7 @@ public class MAGE extends MultiDexApplication implements IUserEventListener {
 			addGeoPackageCacheOverlays(context, overlays, geoPackageManager);
 
 			// Add each cache file or directory structure
-			Map<StorageType, File> storageLocations = StorageUtility.getAllStorageLocations();
+			Map<StorageType, File> storageLocations = StorageUtility.getReadableStorageLocations();
 			for (File storageLocation : storageLocations.values()) {
 				File root = new File(storageLocation, getString(R.string.overlay_cache_directory));
 				if (root.exists() && root.isDirectory() && root.canRead()) {

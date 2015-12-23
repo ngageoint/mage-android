@@ -152,23 +152,21 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 	private RefreshMarkersTask refreshLocationsMarkersTask;
 	private RefreshMarkersTask refreshMyHistoricLocationsMarkersTask;
 
-	private final BlockingQueue<Runnable> queue = new ArrayBlockingQueue<Runnable>(64);
+	private final BlockingQueue<Runnable> queue = new ArrayBlockingQueue<>(64);
 	private final ThreadPoolExecutor executor = new ThreadPoolExecutor(8, 8, 10, TimeUnit.SECONDS, queue);
 
 	private PointCollection<Observation> observations;
 	private PointCollection<mil.nga.giat.mage.sdk.datastore.location.Location> locations;
 	private PointCollection<mil.nga.giat.mage.sdk.datastore.location.Location> historicLocations;
 	private StaticGeometryCollection staticGeometryCollection;
-	private List<Marker> searchMarkers = new ArrayList<Marker>();
+	private List<Marker> searchMarkers = new ArrayList<>();
 
-	private Map<String, CacheOverlay> cacheOverlays = new HashMap<String, CacheOverlay>();
+	private Map<String, CacheOverlay> cacheOverlays = new HashMap<>();
 
 	// GeoPackage cache of open GeoPackage connections
 	private GeoPackageCache geoPackageCache;
 
 	private LocationService locationService;
-
-	public static String INITIAL_LOCATION = "INITIAL_LOCATION";
 
 	SharedPreferences preferences;
 
@@ -789,10 +787,10 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 		// Add all overlays that are in the preferences
 
 		// Track enabled cache overlays
-		Map<String, CacheOverlay> enabledCacheOverlays = new HashMap<String, CacheOverlay>();
+		Map<String, CacheOverlay> enabledCacheOverlays = new HashMap<>();
 
 		// Track enabled GeoPackages
-		Set<String> enabledGeoPackages = new HashSet<String>();
+		Set<String> enabledGeoPackages = new HashSet<>();
 
 		for (CacheOverlay cacheOverlay : cacheOverlays) {
 			// The user has asked for this overlay

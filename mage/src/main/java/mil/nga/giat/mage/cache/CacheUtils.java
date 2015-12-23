@@ -64,7 +64,7 @@ public class CacheUtils {
 
         File directory = null;
 
-        Map<StorageUtility.StorageType, File> storageLocations = StorageUtility.getAllStorageLocations();
+        Map<StorageUtility.StorageType, File> storageLocations = StorageUtility.getWritableStorageLocations();
         for (File storageLocation : storageLocations.values()) {
             File temp = new File(storageLocation, context.getString(R.string.overlay_cache_directory));
 
