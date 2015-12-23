@@ -92,10 +92,10 @@ public class ObservationEditActivity extends Activity implements OnMapReadyCallb
 
 	private static final String LOG_NAME = ObservationEditActivity.class.getName();
 
-	private static final int PERMISSIONS_REQUEST_CAMERA = 1;
-	private static final int PERMISSIONS_REQUEST_VIDEO = 2;
-	private static final int PERMISSIONS_REQUEST_AUDIO = 3;
-	private static final int PERMISSIONS_REQUEST_STORAGE = 4;
+	private static final int PERMISSIONS_REQUEST_CAMERA = 100;
+	private static final int PERMISSIONS_REQUEST_VIDEO = 200;
+	private static final int PERMISSIONS_REQUEST_AUDIO = 300;
+	private static final int PERMISSIONS_REQUEST_STORAGE = 400;
 
 	private final DateFormat iso8601Format = DateFormatFactory.ISO8601();
 
@@ -668,7 +668,7 @@ public class ObservationEditActivity extends Activity implements OnMapReadyCallb
 			}
 			case PERMISSIONS_REQUEST_STORAGE: {
 				if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-					launchAudioIntent();
+					launchGalleryIntent();
 				} else {
 					if (!ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.READ_EXTERNAL_STORAGE)) {
 						// User denied storage with never ask again.  Since they will get here
