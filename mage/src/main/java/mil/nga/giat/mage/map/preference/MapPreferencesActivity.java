@@ -32,8 +32,8 @@ public class MapPreferencesActivity extends PreferenceActivity {
 
 	public static String LOG_NAME = MapPreferencesActivity.class.getName();
 
-	public static final int TILE_OVERLAY_ACTIVITY = 0;
-	public static final int FEATURE_OVERLAY_ACTIVITY = 1;
+	public static final int TILE_OVERLAY_ACTIVITY = 100;
+	public static final int FEATURE_OVERLAY_ACTIVITY = 200;
 	public static final String OVERLAY_EXTENDED_DATA_KEY = "overlay";
 
 	private MapPreferenceFragment preference = new MapPreferenceFragment();

@@ -1,11 +1,15 @@
 package mil.nga.giat.mage.map.preference;
 
+import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ExpandableListActivity;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -37,6 +41,8 @@ import mil.nga.giat.mage.sdk.utils.StorageUtility;
 
 public class TileOverlayPreferenceActivity extends ExpandableListActivity implements OnCacheOverlayListener {
 
+    private static final int PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE = 100;
+
     private MAGE mage;
     private ProgressBar progressBar;
     private MenuItem refreshButton;
@@ -52,6 +58,26 @@ public class TileOverlayPreferenceActivity extends ExpandableListActivity implem
 
         getExpandableListView().setEnabled(false);
         progressBar.setVisibility(View.VISIBLE);
+
+        if (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+            if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.READ_EXTERNAL_STORAGE)) {
+                new AlertDialog.Builder(this, R.style.AppCompatAlertDialogStyle)
+                        .setTitle(R.string.overlay_access_title)
+                        .setMessage(R.string.overlay_access_message)
+                        .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                ActivityCompat.requestPermissions(TileOverlayPreferenceActivity.this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE);
+                            }
+                        })
+                        .setNegativeButton(android.R.string.cancel, null)
+                        .create()
+                        .show();
+
+            } else {
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE);
+            }
+        }
     }
 
     @Override
@@ -138,6 +164,19 @@ public class TileOverlayPreferenceActivity extends ExpandableListActivity implem
         intent.putStringArrayListExtra(MapPreferencesActivity.OVERLAY_EXTENDED_DATA_KEY, getSelectedOverlays());
         setResult(Activity.RESULT_OK, intent);
         finish();
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
+        switch (requestCode) {
+            case PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE: {
+                if(grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    ((MAGE) getApplication()).refreshTileOverlays();
+                };
+
+                break;
+            }
+        }
     }
 
     /**
@@ -464,7 +503,7 @@ public class TileOverlayPreferenceActivity extends ExpandableListActivity implem
         // Attempt to delete the cache file if it is in the cache directory
         File pathDirectory = path.getParentFile();
         if(path.canWrite() && pathDirectory != null){
-            Map<StorageUtility.StorageType, File> storageLocations = StorageUtility.getAllStorageLocations();
+            Map<StorageUtility.StorageType, File> storageLocations = StorageUtility.getWritableStorageLocations();
             for (File storageLocation : storageLocations.values()) {
                 File root = new File(storageLocation, getString(R.string.overlay_cache_directory));
                 if (root.equals(pathDirectory)) {

@@ -96,7 +96,7 @@ public class LandingActivity extends Activity implements ListView.OnItemClickLis
                 new AlertDialog.Builder(LandingActivity.this, R.style.AppCompatAlertDialogStyle)
                         .setTitle(R.string.location_access_rational_title)
                         .setMessage(R.string.location_access_rational_message)
-                        .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                        .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
                                 ActivityCompat.requestPermissions(LandingActivity.this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION);

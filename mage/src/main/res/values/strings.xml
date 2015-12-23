@@ -46,6 +46,9 @@
     <string name="gallery_access_title"><font color='#DD000000'>Storage Permission Denied</font></string>
     <string name="gallery_access_message"><font color='#DD000000'>MAGE</font> has been denied access to external storage.  To pick media from the Gallery please go into the MAGE application settings on your device and enable the Storage permission.</string>
 
+    <string name="overlay_access_title"><font color='#DD000000'>Storage Permission Denied</font></string>
+    <string name="overlay_access_message"><font color='#DD000000'>MAGE</font> has been denied access to read external storage. Please enable if you would like access to tile overlays that reside in external storage.</string>
+
     <string name="settings">Settings</string>
 
     <string name="disconnected_mode">DISCONNECTED</string>
