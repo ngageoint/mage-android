@@ -2,6 +2,8 @@ package mil.nga.giat.mage;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.Fragment;
+import android.app.FragmentManager;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -11,8 +13,6 @@ import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v4.app.ActionBarDrawerToggle;
 import android.support.v4.app.ActivityCompat;
-import android.app.Fragment;
-import android.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.widget.DrawerLayout;
@@ -66,7 +66,8 @@ public class LandingActivity extends Activity implements ListView.OnItemClickLis
      */
     public static final String EXTRA_OPEN_FILE_PATH = "extra_open_file_path";
 
-    private static final int PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 1;
+    private static final int PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 100;
+    private static final int PERMISSIONS_REQUEST_OPEN_GEOPACKAGE = 200;
 
 	private static final String LOG_NAME = LandingActivity.class.getName();
 
@@ -81,6 +82,7 @@ public class LandingActivity extends Activity implements ListView.OnItemClickLis
     private boolean switchFragment;
     private DrawerItem itemToSwitchTo;
     private boolean locationPermissionGranted = false;
+    private String openFilePath;
     
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -180,9 +182,9 @@ public class LandingActivity extends Activity implements ListView.OnItemClickLis
 		}
 
         // Check if MAGE was launched with a local file
-        String openFilePath = getIntent().getStringExtra(EXTRA_OPEN_FILE_PATH);
-        if(openFilePath != null){
-            handleOpenFilePath(openFilePath);
+        openFilePath = getIntent().getStringExtra(EXTRA_OPEN_FILE_PATH);
+        if (openFilePath != null) {
+            handleOpenFilePath();
         }
 
         goToMap();
@@ -210,6 +212,11 @@ public class LandingActivity extends Activity implements ListView.OnItemClickLis
                 }
 
                 break;
+            }
+            case PERMISSIONS_REQUEST_OPEN_GEOPACKAGE: {
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    handleOpenGeoPackage();
+                }
             }
         }
     }
@@ -380,24 +387,31 @@ public class LandingActivity extends Activity implements ListView.OnItemClickLis
 
     /**
      * Handle opening the file path that MAGE was launched with
-     * @param path
      */
-    private void handleOpenFilePath(String path){
-
-        File cacheFile = new File(path);
+    private void handleOpenFilePath() {
 
         // Handle GeoPackage files by linking them to their current location
-        if(GeoPackageValidate.hasGeoPackageExtension(cacheFile)){
+        if (GeoPackageValidate.hasGeoPackageExtension(new File(openFilePath))) {
 
             // Import the GeoPackage if needed
-            String cacheName = GeoPackageCacheUtils.importGeoPackage(this, cacheFile);
-            if(cacheName != null){
-                MAGE mage = ((MAGE) getApplication());
-                mage.enableAndRefreshTileOverlays(cacheName);
+            if (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, PERMISSIONS_REQUEST_OPEN_GEOPACKAGE);
+            } else {
+                handleOpenGeoPackage();
             }
         }
-
     }
+
+    private void handleOpenGeoPackage() {
+        File cacheFile = new File(openFilePath);
+
+        String cacheName = GeoPackageCacheUtils.importGeoPackage(this, cacheFile);
+        if (cacheName != null) {
+            MAGE mage = ((MAGE) getApplication());
+            mage.enableAndRefreshTileOverlays(cacheName);
+        }
+    }
+
 
 	public static void deleteAllData(Context context) {
 		DaoStore.getInstance(context).resetDatabase();
