@@ -283,14 +283,10 @@ public class TileOverlayPreferenceActivity extends ExpandableListActivity implem
                 view = inflater.inflate(R.layout.cache_overlay_group, viewGroup, false);
             }
 
-            ImageView imageView = (ImageView) view
-                    .findViewById(R.id.cache_overlay_group_image);
-            TextView cacheName = (TextView) view
-                    .findViewById(R.id.cache_overlay_group_name);
-            TextView childCount = (TextView) view
-                    .findViewById(R.id.cache_overlay_group_count);
-            CheckBox checkBox = (CheckBox) view
-                    .findViewById(R.id.cache_overlay_group_checkbox);
+            ImageView imageView = (ImageView) view.findViewById(R.id.cache_overlay_group_image);
+            TextView cacheName = (TextView) view.findViewById(R.id.cache_overlay_group_name);
+            TextView childCount = (TextView) view.findViewById(R.id.cache_overlay_group_count);
+            CheckBox checkBox = (CheckBox) view.findViewById(R.id.cache_overlay_group_checkbox);
 
             final CacheOverlay overlay = overlays.get(i);
 
@@ -333,24 +329,22 @@ public class TileOverlayPreferenceActivity extends ExpandableListActivity implem
         }
 
         @Override
-        public View getChildView(int i, int j, boolean b, View view,
-                                 ViewGroup viewGroup) {
-            if (view == null) {
+        public View getChildView(int groupPosition, int childPosition, boolean isLastChild, View convertView, ViewGroup parent) {
+
+            if (convertView == null) {
                 LayoutInflater inflater = LayoutInflater.from(activity);
-                view = inflater.inflate(R.layout.cache_overlay_child, viewGroup, false);
+                convertView = inflater.inflate(R.layout.cache_overlay_child, parent, false);
             }
 
-            final CacheOverlay overlay = overlays.get(i);
-            final CacheOverlay childCache = overlay.getChildren().get(j);
+            final CacheOverlay overlay = overlays.get(groupPosition);
+            final CacheOverlay childCache = overlay.getChildren().get(childPosition);
 
-            ImageView imageView = (ImageView) view
-                    .findViewById(R.id.cache_overlay_child_image);
-            TextView tableName = (TextView) view
-                    .findViewById(R.id.cache_overlay_child_name);
-            TextView info = (TextView) view
-                    .findViewById(R.id.cache_overlay_child_info);
-            CheckBox checkBox = (CheckBox) view
-                    .findViewById(R.id.cache_overlay_child_checkbox);
+            ImageView imageView = (ImageView) convertView.findViewById(R.id.cache_overlay_child_image);
+            TextView tableName = (TextView) convertView.findViewById(R.id.cache_overlay_child_name);
+            TextView info = (TextView) convertView.findViewById(R.id.cache_overlay_child_info);
+            CheckBox checkBox = (CheckBox) convertView.findViewById(R.id.cache_overlay_child_checkbox);
+
+            convertView.findViewById(R.id.divider).setVisibility(isLastChild ? View.VISIBLE : View.INVISIBLE);
 
             checkBox.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -389,13 +383,13 @@ public class TileOverlayPreferenceActivity extends ExpandableListActivity implem
             checkBox.setChecked(childCache.isEnabled());
 
             Integer imageResource = childCache.getIconImageResourceId();
-            if(imageResource != null){
+            if (imageResource != null){
                 imageView.setImageResource(imageResource);
-            }else{
+            } else {
                 imageView.setImageResource(-1);
             }
 
-            return view;
+            return convertView;
         }
 
         @Override
