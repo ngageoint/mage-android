@@ -15,7 +15,7 @@ import retrofit.GsonConverterFactory;
 import retrofit.Response;
 import retrofit.Retrofit;
 import retrofit.http.Body;
-import retrofit.http.GET;
+import retrofit.http.POST;
 
 /***
  * RESTful communication for devices
@@ -27,7 +27,7 @@ public class DeviceResource {
 
     public interface DeviceService {
 
-        @GET("/api/devices")
+        @POST("/api/devices")
         Call<JsonObject> createDevice(@Body JsonObject device);
     }
 
