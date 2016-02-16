@@ -92,13 +92,14 @@ import mil.nga.geopackage.tiles.overlay.FeatureOverlayQuery;
 import mil.nga.geopackage.tiles.overlay.GeoPackageOverlayFactory;
 import mil.nga.geopackage.tiles.user.TileDao;
 import mil.nga.giat.mage.MAGE;
-import mil.nga.giat.mage.MAGE.OnCacheOverlayListener;
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.event.EventBannerFragment;
 import mil.nga.giat.mage.filter.DateTimeFilter;
 import mil.nga.giat.mage.filter.Filter;
 import mil.nga.giat.mage.map.GoogleMapWrapper.OnMapPanListener;
 import mil.nga.giat.mage.map.cache.CacheOverlay;
+import mil.nga.giat.mage.map.cache.CacheProvider;
+import mil.nga.giat.mage.map.cache.CacheProvider.OnCacheOverlayListener;
 import mil.nga.giat.mage.map.cache.GeoPackageCacheOverlay;
 import mil.nga.giat.mage.map.cache.GeoPackageFeatureTableCacheOverlay;
 import mil.nga.giat.mage.map.cache.GeoPackageTileTableCacheOverlay;
@@ -307,7 +308,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 
 		updateStaticFeatureLayers();
 
-		mage.registerCacheOverlayListener(this);
+		CacheProvider.getInstance(getActivity().getApplicationContext()).registerCacheOverlayListener(this);
 		StaticFeatureHelper.getInstance(getActivity().getApplicationContext()).addListener(this);
 
 		// Check if any map preferences changed that I care about
@@ -401,7 +402,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 
 		PreferenceManager.getDefaultSharedPreferences(getActivity().getApplicationContext()).unregisterOnSharedPreferenceChangeListener(this);
 
-		mage.unregisterCacheOverlayListener(this);
+		CacheProvider.getInstance(getActivity().getApplicationContext()).unregisterCacheOverlayListener(this);
 		StaticFeatureHelper.getInstance(getActivity().getApplicationContext()).removeListener(this);
 
 		if (map != null) {

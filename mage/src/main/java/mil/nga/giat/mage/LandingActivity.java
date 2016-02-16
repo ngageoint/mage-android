@@ -2,6 +2,7 @@ package mil.nga.giat.mage;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.Dialog;
 import android.app.Fragment;
 import android.app.FragmentManager;
 import android.content.Context;
@@ -9,8 +10,10 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
+import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.provider.Settings;
 import android.support.v4.app.ActionBarDrawerToggle;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentTransaction;
@@ -43,6 +46,7 @@ import mil.nga.giat.mage.help.HelpFragment;
 import mil.nga.giat.mage.login.AlertBannerFragment;
 import mil.nga.giat.mage.login.LoginActivity;
 import mil.nga.giat.mage.map.MapFragment;
+import mil.nga.giat.mage.map.cache.CacheProvider;
 import mil.nga.giat.mage.navigation.DrawerItem;
 import mil.nga.giat.mage.newsfeed.ObservationFeedFragment;
 import mil.nga.giat.mage.newsfeed.PeopleFeedFragment;
@@ -67,9 +71,10 @@ public class LandingActivity extends Activity implements ListView.OnItemClickLis
     public static final String EXTRA_OPEN_FILE_PATH = "extra_open_file_path";
 
     private static final int PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 100;
-    private static final int PERMISSIONS_REQUEST_OPEN_GEOPACKAGE = 200;
+    private static final int PERMISSIONS_REQUEST_ACCESS_STORAGE= 200;
+    private static final int PERMISSIONS_REQUEST_OPEN_FILE = 300;
 
-	private static final String LOG_NAME = LandingActivity.class.getName();
+    private static final String LOG_NAME = LandingActivity.class.getName();
 
     private DrawerLayout drawerLayout;
     private ListView drawerList;
@@ -82,7 +87,8 @@ public class LandingActivity extends Activity implements ListView.OnItemClickLis
     private boolean switchFragment;
     private DrawerItem itemToSwitchTo;
     private boolean locationPermissionGranted = false;
-    private String openFilePath;
+    private Uri openUri;
+    private String openPath;
     
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -90,6 +96,7 @@ public class LandingActivity extends Activity implements ListView.OnItemClickLis
         setContentView(R.layout.activity_landing);
 
         ((MAGE) getApplication()).onLogin();
+        CacheProvider.getInstance(getApplicationContext()).refreshTileOverlays();
 
         // Ask for permissions
         locationPermissionGranted = ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
@@ -182,9 +189,27 @@ public class LandingActivity extends Activity implements ListView.OnItemClickLis
 		}
 
         // Check if MAGE was launched with a local file
-        openFilePath = getIntent().getStringExtra(EXTRA_OPEN_FILE_PATH);
-        if (openFilePath != null) {
-            handleOpenFilePath();
+        openPath = getIntent().getStringExtra(EXTRA_OPEN_FILE_PATH);
+        if (openPath != null) {
+            if (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
+                    new android.app.AlertDialog.Builder(this, R.style.AppCompatAlertDialogStyle)
+                            .setTitle(R.string.cache_access_rational_title)
+                            .setMessage(R.string.cache_access_rational_message)
+                            .setPositiveButton(android.R.string.ok, new Dialog.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    ActivityCompat.requestPermissions(LandingActivity.this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, PERMISSIONS_REQUEST_OPEN_FILE);
+                                }
+                            })
+                            .show();
+                } else {
+                    ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, PERMISSIONS_REQUEST_OPEN_FILE);
+                }
+            } else {
+                // Else, store the path to pass to further intents
+                handleOpenFilePath();
+            }
         }
 
         goToMap();
@@ -213,12 +238,47 @@ public class LandingActivity extends Activity implements ListView.OnItemClickLis
 
                 break;
             }
-            case PERMISSIONS_REQUEST_OPEN_GEOPACKAGE: {
+            case PERMISSIONS_REQUEST_ACCESS_STORAGE: {
                 if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    handleOpenGeoPackage();
+                    CacheProvider.getInstance(getApplicationContext()).refreshTileOverlays();
                 }
+
+                break;
+            }
+            case PERMISSIONS_REQUEST_OPEN_FILE: {
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    handleOpenFilePath();
+                } else {
+                    if (!ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.READ_EXTERNAL_STORAGE)) {
+                        // User denied storage with never ask again.  Since they will get here
+                        // by opening a cache into MAGE, give them a dialog that will
+                        // by opening a cache into MAGE, give them a dialog that will
+                        // guide them to settings if they want to enable the permission
+                        showDisabledPermissionsDialog(
+                                getResources().getString(R.string.cache_access_title),
+                                getResources().getString(R.string.cache_access_message));
+                    }
+                }
+
+                break;
             }
         }
+    }
+
+    private void showDisabledPermissionsDialog(String title, String message) {
+        new android.app.AlertDialog.Builder(this, R.style.AppCompatAlertDialogStyle)
+                .setTitle(title)
+                .setMessage(message)
+                .setPositiveButton(R.string.settings, new Dialog.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+                        intent.setData(Uri.fromParts("package", getApplicationContext().getPackageName(), null));
+                        startActivity(intent);
+                    }
+                })
+                .setNegativeButton(android.R.string.cancel, null)
+                .show();
     }
 
     private void goToMap() {
@@ -390,28 +450,17 @@ public class LandingActivity extends Activity implements ListView.OnItemClickLis
      */
     private void handleOpenFilePath() {
 
-        // Handle GeoPackage files by linking them to their current location
-        if (GeoPackageValidate.hasGeoPackageExtension(new File(openFilePath))) {
+        File cacheFile = new File(openPath);
 
-            // Import the GeoPackage if needed
-            if (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, PERMISSIONS_REQUEST_OPEN_GEOPACKAGE);
-            } else {
-                handleOpenGeoPackage();
+        // Handle GeoPackage files by linking them to their current location
+        if (GeoPackageValidate.hasGeoPackageExtension(cacheFile)) {
+
+            String cacheName = GeoPackageCacheUtils.importGeoPackage(this, cacheFile);
+            if (cacheName != null) {
+                CacheProvider.getInstance(getApplicationContext()).enableAndRefreshTileOverlays(cacheName);
             }
         }
     }
-
-    private void handleOpenGeoPackage() {
-        File cacheFile = new File(openFilePath);
-
-        String cacheName = GeoPackageCacheUtils.importGeoPackage(this, cacheFile);
-        if (cacheName != null) {
-            MAGE mage = ((MAGE) getApplication());
-            mage.enableAndRefreshTileOverlays(cacheName);
-        }
-    }
-
 
 	public static void deleteAllData(Context context) {
 		DaoStore.getInstance(context).resetDatabase();
