@@ -200,6 +200,7 @@
             </LinearLayout>
 
             <LinearLayout
+                android:id="@+id/sign_up"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:layout_marginTop="40dip"
