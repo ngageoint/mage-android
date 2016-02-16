@@ -8,7 +8,9 @@
         android:summary="Track and report device location"
         android:title="Report Location"/>
 
-    <PreferenceCategory android:title="GPS TIME/DISTANCE SENSITIVITY">
+    <PreferenceCategory android:title="GPS TIME/DISTANCE SENSITIVITY"
+        android:key="@string/gpsPreferencesCategoryKey">
+
         <mil.nga.giat.mage.sdk.preferences.IntegerListValuePreference
             android:defaultValue="@integer/userReportingFrequencyDefaultValue"
             android:entries="@array/userReportingFrequencies"
@@ -25,8 +27,10 @@
             android:title="GPS Distance Sensitivity"/>
     </PreferenceCategory>
 
-    <PreferenceCategory android:title="SERVER PUSH TIME">
-        <!-- How often to push locations? -->
+    <PreferenceCategory android:title="SERVER PUSH TIME"
+        android:key="@string/locationsPushPreferencesCategoryKey">
+
+    <!-- How often to push locations? -->
         <mil.nga.giat.mage.sdk.preferences.IntegerListValuePreference
             android:defaultValue="@integer/locationPushFrequencyDefaultValue"
             android:entries="@array/locationPushFrequencies"

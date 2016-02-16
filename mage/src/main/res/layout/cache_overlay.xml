@@ -7,36 +7,34 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:paddingBottom="15dp"
-        android:paddingTop="15dp" >
+        android:orientation="vertical">
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal" >
-
-            <TextView
-                android:layout_width="0dip"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:paddingBottom="4dp"
-                android:text="AVAILABLE OVERLAYS"
-                android:textSize="14sp" />
+            android:layout_height="48dp"
+            android:orientation="horizontal">
 
             <ProgressBar
                 android:id="@+id/overlay_progress_bar"
-                style="?android:attr/progressBarStyle"
+                style="?android:attr/progressBarStyleSmall"
+                android:layout_marginStart="8dp"
                 android:indeterminate="true"
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
-                android:visibility="gone" />
+                android:visibility="visible" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                style="@style/ListSubheader"
+                android:layout_gravity="center_vertical"
+                android:layout_marginStart="8dp"
+                android:text="AVAILABLE OVERLAYS" />
+
+
+
         </LinearLayout>
 
-        <View
-            android:layout_width="fill_parent"
-            android:layout_height="2dip"
-            android:background="?android:attr/dividerHorizontal" />
     </LinearLayout>
 
     <ExpandableListView
@@ -46,6 +44,8 @@
         android:layout_weight="1"
         android:drawSelectorOnTop="false"
         android:groupIndicator="@android:color/transparent"
+        android:divider="@drawable/people_feed_divider"
+        android:dividerHeight="1dp"
         android:childDivider="#00000000" />
 
 </LinearLayout>

@@ -1,16 +1,25 @@
 package mil.nga.giat.mage;
 
+import android.Manifest;
 import android.app.Activity;
+import android.app.Dialog;
 import android.app.Fragment;
 import android.app.FragmentManager;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.content.res.Configuration;
+import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.provider.Settings;
 import android.support.v4.app.ActionBarDrawerToggle;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentTransaction;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.AlertDialog;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
@@ -31,12 +40,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 import mil.nga.geopackage.validate.GeoPackageValidate;
+import mil.nga.giat.mage.cache.GeoPackageCacheUtils;
 import mil.nga.giat.mage.event.EventFragment;
 import mil.nga.giat.mage.help.HelpFragment;
-import mil.nga.giat.mage.cache.GeoPackageCacheUtils;
 import mil.nga.giat.mage.login.AlertBannerFragment;
 import mil.nga.giat.mage.login.LoginActivity;
 import mil.nga.giat.mage.map.MapFragment;
+import mil.nga.giat.mage.map.cache.CacheProvider;
 import mil.nga.giat.mage.navigation.DrawerItem;
 import mil.nga.giat.mage.newsfeed.ObservationFeedFragment;
 import mil.nga.giat.mage.newsfeed.PeopleFeedFragment;
@@ -50,7 +60,7 @@ import mil.nga.giat.mage.sdk.utils.MediaUtility;
 
 /**
  * This is the Activity that holds other fragments. Map, feeds, etc. It 
- * starts and stops much of the application. It also contains menus.
+ * starts and stops much of the application. It also contains menus .
  * 
  */
 public class LandingActivity extends Activity implements ListView.OnItemClickListener {
@@ -60,7 +70,11 @@ public class LandingActivity extends Activity implements ListView.OnItemClickLis
      */
     public static final String EXTRA_OPEN_FILE_PATH = "extra_open_file_path";
 
-	private static final String LOG_NAME = LandingActivity.class.getName();
+    private static final int PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 100;
+    private static final int PERMISSIONS_REQUEST_ACCESS_STORAGE= 200;
+    private static final int PERMISSIONS_REQUEST_OPEN_FILE = 300;
+
+    private static final String LOG_NAME = LandingActivity.class.getName();
 
     private DrawerLayout drawerLayout;
     private ListView drawerList;
@@ -72,6 +86,9 @@ public class LandingActivity extends Activity implements ListView.OnItemClickLis
 	private int logoutId;
     private boolean switchFragment;
     private DrawerItem itemToSwitchTo;
+    private boolean locationPermissionGranted = false;
+    private Uri openUri;
+    private String openPath;
     
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -79,16 +96,38 @@ public class LandingActivity extends Activity implements ListView.OnItemClickLis
         setContentView(R.layout.activity_landing);
 
         ((MAGE) getApplication()).onLogin();
+        CacheProvider.getInstance(getApplicationContext()).refreshTileOverlays();
+
+        // Ask for permissions
+        locationPermissionGranted = ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
+        if (!locationPermissionGranted) {
+            if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.ACCESS_FINE_LOCATION)) {
+                new AlertDialog.Builder(LandingActivity.this, R.style.AppCompatAlertDialogStyle)
+                        .setTitle(R.string.location_access_rational_title)
+                        .setMessage(R.string.location_access_rational_message)
+                        .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                ActivityCompat.requestPermissions(LandingActivity.this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION);
+                            }
+                        })
+                        .create()
+                        .show();
+
+            } else {
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION);
+            }
+        }
 
         int id = 0;
-        mapItem = new DrawerItem.Builder("Map").id(id++).drawableId(R.drawable.ic_globe_white).fragment(new MapFragment()).build();
-		DrawerItem logoutItem = new DrawerItem.Builder("Logout").id(id++).secondary(true).build();
+        mapItem = new DrawerItem.Builder().id(id++).text("Map").drawableId(R.drawable.ic_map_white_24dp).fragment(new MapFragment()).build();
+		DrawerItem logoutItem = new DrawerItem.Builder().id(id++).text("Logout").drawableId(R.drawable.ic_power_settings_new_white_24dp).build();
 		logoutId = logoutItem.getId();
 
-		List<DrawerItem> drawerItems = new ArrayList<DrawerItem>();
+		List<DrawerItem> drawerItems = new ArrayList<>();
 		drawerItems.add(mapItem);
-		drawerItems.add(new DrawerItem.Builder("Observations").id(id++).drawableId(R.drawable.ic_map_marker_white).fragment(new ObservationFeedFragment()).build());
-		drawerItems.add(new DrawerItem.Builder("People").id(id++).drawableId(R.drawable.ic_users_white).fragment(new PeopleFeedFragment()).build());
+		drawerItems.add(new DrawerItem.Builder().id(id++).text("Observations").drawableId(R.drawable.ic_place_white_24dp).fragment(new ObservationFeedFragment()).build());
+		drawerItems.add(new DrawerItem.Builder().id(id++).text("People").drawableId(R.drawable.ic_people_white_24dp).fragment(new PeopleFeedFragment()).build());
 
 		int numberOfEvents = EventHelper.getInstance(getApplicationContext()).getEventsForCurrentUser().size();
 		try {
@@ -101,11 +140,12 @@ public class LandingActivity extends Activity implements ListView.OnItemClickLis
 		}
 
 		if(numberOfEvents > 1) {
-			drawerItems.add(new DrawerItem.Builder("Events").id(id++).drawableId(R.drawable.ic_events_white).fragment(new EventFragment()).build());
+			drawerItems.add(new DrawerItem.Builder().id(id++).text("Events").drawableId(R.drawable.ic_event_white_24dp).fragment(new EventFragment()).build());
 		}
-		drawerItems.add(new DrawerItem.Builder("My Profile").id(id++).drawableId(R.drawable.ic_fa_user).fragment(new ProfileFragment()).build());
-		drawerItems.add(new DrawerItem.Builder("Settings").id(id++).secondary(true).fragment(new GeneralPreferencesFragment()).build());
-		drawerItems.add(new DrawerItem.Builder("Help").id(id++).secondary(true).fragment(new HelpFragment()).build());
+		drawerItems.add(new DrawerItem.Builder().id(id++).text("My Profile").drawableId(R.drawable.ic_person_white_24dp).fragment(new ProfileFragment()).build());
+        drawerItems.add(new DrawerItem.Builder().id(id++).seperator(true).build());
+        drawerItems.add(new DrawerItem.Builder().id(id++).text("Settings").drawableId(R.drawable.ic_settings_white_24dp).fragment(new GeneralPreferencesFragment()).build());
+		drawerItems.add(new DrawerItem.Builder().id(id++).text("Help").drawableId(R.drawable.ic_help_outline_white_24dp).fragment(new HelpFragment()).build());
 		drawerItems.add(logoutItem);
 
         drawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -119,24 +159,20 @@ public class LandingActivity extends Activity implements ListView.OnItemClickLis
 
                 if (view == null) {
                     LayoutInflater inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-                    if (item.isHeader()) {
-                        view = inflater.inflate(R.layout.drawer_list_header_item, null);
-                        view.setEnabled(false);
-                        view.setOnClickListener(null);
-                    } else if (item.isSecondary()) {
-                        view = inflater.inflate(R.layout.drawer_list_secondary_item, null);
+                    if (item.isSeperator()) {
+                        view = inflater.inflate(R.layout.drawer_list_seperator_item, null);
+                        view.setClickable(false);
                     } else {
                         view = inflater.inflate(R.layout.drawer_list_item, null);
-
                         if (item.getDrawableId() != null) {
                             ImageView iv = (ImageView) view.findViewById(R.id.drawer_item_icon);
                             iv.setImageResource(item.getDrawableId());
                         }
+
+                        TextView text = (TextView) view.findViewById(R.id.text);
+                        text.setText(item.getText());
                     }
                 }
-
-                TextView text = (TextView) view.findViewById(R.id.text);
-                text.setText(item.getText());
 
                 return view;
             }
@@ -149,16 +185,100 @@ public class LandingActivity extends Activity implements ListView.OnItemClickLis
 
 		if (savedInstanceState == null) {
 			Fragment alertBannerFragment = new AlertBannerFragment();
-			getFragmentManager().beginTransaction().add(android.R.id.content, alertBannerFragment).commit();
+            getFragmentManager().beginTransaction().add(android.R.id.content, alertBannerFragment).commit();
 		}
 
         // Check if MAGE was launched with a local file
-        String openFilePath = getIntent().getStringExtra(EXTRA_OPEN_FILE_PATH);
-        if(openFilePath != null){
-            handleOpenFilePath(openFilePath);
+        openPath = getIntent().getStringExtra(EXTRA_OPEN_FILE_PATH);
+        if (openPath != null) {
+            if (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
+                    new android.app.AlertDialog.Builder(this, R.style.AppCompatAlertDialogStyle)
+                            .setTitle(R.string.cache_access_rational_title)
+                            .setMessage(R.string.cache_access_rational_message)
+                            .setPositiveButton(android.R.string.ok, new Dialog.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    ActivityCompat.requestPermissions(LandingActivity.this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, PERMISSIONS_REQUEST_OPEN_FILE);
+                                }
+                            })
+                            .show();
+                } else {
+                    ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, PERMISSIONS_REQUEST_OPEN_FILE);
+                }
+            } else {
+                // Else, store the path to pass to further intents
+                handleOpenFilePath();
+            }
         }
 
         goToMap();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        if (locationPermissionGranted != (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED)) {
+            locationPermissionGranted = ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
+
+            // notify location services that the permissions have changed.
+            ((MAGE) getApplication()).getLocationService().onLocationPermissionsChanged();
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
+        switch (requestCode) {
+            case PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION: {
+                locationPermissionGranted = grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED;
+                if (locationPermissionGranted) {
+                    ((MAGE) getApplication()).getLocationService().onLocationPermissionsChanged();
+                }
+
+                break;
+            }
+            case PERMISSIONS_REQUEST_ACCESS_STORAGE: {
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    CacheProvider.getInstance(getApplicationContext()).refreshTileOverlays();
+                }
+
+                break;
+            }
+            case PERMISSIONS_REQUEST_OPEN_FILE: {
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    handleOpenFilePath();
+                } else {
+                    if (!ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.READ_EXTERNAL_STORAGE)) {
+                        // User denied storage with never ask again.  Since they will get here
+                        // by opening a cache into MAGE, give them a dialog that will
+                        // by opening a cache into MAGE, give them a dialog that will
+                        // guide them to settings if they want to enable the permission
+                        showDisabledPermissionsDialog(
+                                getResources().getString(R.string.cache_access_title),
+                                getResources().getString(R.string.cache_access_message));
+                    }
+                }
+
+                break;
+            }
+        }
+    }
+
+    private void showDisabledPermissionsDialog(String title, String message) {
+        new android.app.AlertDialog.Builder(this, R.style.AppCompatAlertDialogStyle)
+                .setTitle(title)
+                .setMessage(message)
+                .setPositiveButton(R.string.settings, new Dialog.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+                        intent.setData(Uri.fromParts("package", getApplicationContext().getPackageName(), null));
+                        startActivity(intent);
+                    }
+                })
+                .setNegativeButton(android.R.string.cancel, null)
+                .show();
     }
 
     private void goToMap() {
@@ -300,9 +420,14 @@ public class LandingActivity extends Activity implements ListView.OnItemClickLis
         itemToSwitchTo = adapter.getItem(position);
         if (itemToSwitchTo.getFragment() == null) {
             if(itemToSwitchTo.getId() == logoutId) {
-                ((MAGE)getApplication()).onLogout(true);
-                startActivity(new Intent(getApplicationContext(), LoginActivity.class));
-                finish();
+                ((MAGE)getApplication()).onLogout(true, new MAGE.OnLogoutListener() {
+                    @Override
+                    public void onLogout() {
+                        startActivity(new Intent(getApplicationContext(), LoginActivity.class));
+                        finish();
+                    }
+                });
+
                 return;
             } else {
 				Log.e(LOG_NAME, "Your fragment was null. Fix the code.");
@@ -322,29 +447,25 @@ public class LandingActivity extends Activity implements ListView.OnItemClickLis
 
     /**
      * Handle opening the file path that MAGE was launched with
-     * @param path
      */
-    private void handleOpenFilePath(String path){
+    private void handleOpenFilePath() {
 
-        File cacheFile = new File(path);
+        File cacheFile = new File(openPath);
 
         // Handle GeoPackage files by linking them to their current location
-        if(GeoPackageValidate.hasGeoPackageExtension(cacheFile)){
+        if (GeoPackageValidate.hasGeoPackageExtension(cacheFile)) {
 
-            // Import the GeoPackage if needed
             String cacheName = GeoPackageCacheUtils.importGeoPackage(this, cacheFile);
-            if(cacheName != null){
-                MAGE mage = ((MAGE) getApplication());
-                mage.enableAndRefreshTileOverlays(cacheName);
+            if (cacheName != null) {
+                CacheProvider.getInstance(getApplicationContext()).enableAndRefreshTileOverlays(cacheName);
             }
         }
-
     }
 
 	public static void deleteAllData(Context context) {
 		DaoStore.getInstance(context).resetDatabase();
 		PreferenceManager.getDefaultSharedPreferences(context).edit().clear().commit();
-		deleteDir(MediaUtility.getMediaStageDirectory());
+		deleteDir(MediaUtility.getMediaStageDirectory(context));
 		clearApplicationData(context);
 	}
 
@@ -361,7 +482,9 @@ public class LandingActivity extends Activity implements ListView.OnItemClickLis
 				}
 			}
 		}
-	}
+
+       deleteDir(MediaUtility.getMediaStageDirectory(context));
+    }
 
 	public static boolean deleteDir(File dir) {
 		if (dir != null && dir.isDirectory()) {

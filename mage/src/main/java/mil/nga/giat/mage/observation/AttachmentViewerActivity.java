@@ -9,36 +9,37 @@ import android.os.Bundle;
 import android.provider.MediaStore;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.FragmentActivity;
+import android.support.v4.content.FileProvider;
 import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.resource.drawable.GlideDrawable;
+import com.bumptech.glide.request.RequestListener;
+import com.bumptech.glide.request.target.Target;
+import com.squareup.okhttp.ResponseBody;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.DefaultHttpClient;
 
-import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.URL;
 
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.observation.RemoveAttachmentDialogFragment.RemoveAttachmentDialogListener;
 import mil.nga.giat.mage.sdk.datastore.DaoStore;
 import mil.nga.giat.mage.sdk.datastore.observation.Attachment;
-import mil.nga.giat.mage.sdk.http.client.HttpClientManager;
+import mil.nga.giat.mage.sdk.datastore.observation.AttachmentHelper;
+import mil.nga.giat.mage.sdk.http.resource.ObservationResource;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
 
 public class AttachmentViewerActivity extends FragmentActivity implements RemoveAttachmentDialogListener {
 
 	public final static String EDITABLE = "EDITABLE";
-	public final static String ATTACHMENT = "ATTACHMENT";
+	public final static String ATTACHMENT_ID = "ATTACHMENT_ID";
 	public final static String SHOULD_REMOVE = "SHOULD_REMOVE";
 	private static final String LOG_NAME = AttachmentViewerActivity.class.getName();
 	private ProgressDialog progressDialog;
@@ -53,10 +54,14 @@ public class AttachmentViewerActivity extends FragmentActivity implements Remove
 		Intent intent = getIntent();
 		ImageView iv = (ImageView) findViewById(R.id.image);
 		if (!intent.getBooleanExtra(EDITABLE, false)) {
-			findViewById(R.id.remove_btn).setVisibility(View.GONE);
+//			findViewById(R.id.remove_btn).setVisibility(View.GONE);
 		}
 
-		a = intent.getParcelableExtra(ATTACHMENT);
+		try {
+			a = AttachmentHelper.getInstance(getApplicationContext()).read(getIntent().getLongExtra(ATTACHMENT_ID, 0L));
+		} catch (Exception e) {
+			Log.e(LOG_NAME, "Error getting attachment", e);
+		}
 
 		String absPath = a.getLocalPath();
 		String url = a.getUrl();
@@ -83,14 +88,14 @@ public class AttachmentViewerActivity extends FragmentActivity implements Remove
 			uri = Uri.fromFile(f);
 			if (contentType.startsWith("image")) {
 				finalType = "image/*";
-				Glide.with(getApplicationContext()).load(f).placeholder(android.R.drawable.progress_indeterminate_horizontal).centerCrop().into(iv);
+				Glide.with(getApplicationContext()).load(f).centerCrop().into(iv);
 			} else if (contentType.startsWith("video")) {
 				finalType = "video/*";
 				iv.setImageBitmap(ThumbnailUtils.createVideoThumbnail(absPath, MediaStore.Video.Thumbnails.FULL_SCREEN_KIND));
 				findViewById(R.id.video_overlay_image).setVisibility(View.VISIBLE);
 			} else if (contentType.startsWith("audio")) {
 				finalType = "audio/*";
-				Glide.with(getApplicationContext()).load(R.drawable.ic_microphone).into(iv);
+				findViewById(R.id.play_image).setVisibility(View.VISIBLE);
 			} else {
 				finalType = null;
 			}
@@ -98,15 +103,28 @@ public class AttachmentViewerActivity extends FragmentActivity implements Remove
 			uri = Uri.parse(url);
 			if (contentType.startsWith("image")) {
 				finalType = "image/*";
-				Glide.with(getApplicationContext()).load(url).placeholder(android.R.drawable.progress_indeterminate_horizontal).centerCrop().into(iv);
+				findViewById(R.id.progress).setVisibility(View.VISIBLE);
+				Glide.with(getApplicationContext())
+						.load(a)
+						.listener(new RequestListener<Attachment, GlideDrawable>() {
+							@Override
+							public boolean onException(Exception e, Attachment model, Target<GlideDrawable> target, boolean isFirstResource) {
+								return false;
+							}
+
+							@Override
+							public boolean onResourceReady(GlideDrawable resource, Attachment model, Target<GlideDrawable> target, boolean isFromMemoryCache, boolean isFirstResource) {
+								findViewById(R.id.progress).setVisibility(View.INVISIBLE);
+								return false;
+							}
+						})
+						.into(iv);
 			} else if (contentType.startsWith("video")) {
 				finalType = "video/*";
-				// TODO figure out how to set accepts to image/jpeg to ask the server for a thumbnail for the video
-				Glide.with(getApplicationContext()).load(R.drawable.ic_video_2x).into(iv);
-				findViewById(R.id.video_overlay_image).setVisibility(View.VISIBLE);
+				findViewById(R.id.play_image).setVisibility(View.VISIBLE);
 			} else if (contentType.startsWith("audio")) {
 				finalType = "audio/*";
-				Glide.with(getApplicationContext()).load(R.drawable.ic_microphone).into(iv);
+				findViewById(R.id.play_image).setVisibility(View.VISIBLE);
 			} else {
 				finalType = null;
 			}
@@ -114,6 +132,7 @@ public class AttachmentViewerActivity extends FragmentActivity implements Remove
 			uri = null;
 			finalType = null;
 		}
+
 		if (uri != null && finalType != null) {
 			iv.setOnClickListener(new View.OnClickListener() {
 				@Override
@@ -125,10 +144,11 @@ public class AttachmentViewerActivity extends FragmentActivity implements Remove
 						progressDialog.setCancelable(false);
 						startDownload(a, finalType);
 					} else {
-						File f = new File(a.getLocalPath());
-						Uri uri = Uri.fromFile(f);
+						File file = new File(a.getLocalPath());
+						Uri uri = FileProvider.getUriForFile(getApplicationContext(), "mil.nga.giat.mage.fileprovider", file);
 						Log.i(LOG_NAME, "launching viewer for " + uri + " type " + finalType);
 						Intent intent = new Intent(Intent.ACTION_VIEW);
+						intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
 						intent.setDataAndType(uri, finalType);
 						startActivity(intent);
 					}
@@ -150,10 +170,9 @@ public class AttachmentViewerActivity extends FragmentActivity implements Remove
 	public void onDialogPositiveClick(DialogFragment dialog) {
 		Intent data = new Intent();
 		data.putExtra(SHOULD_REMOVE, true);
-		data.putExtra(ATTACHMENT, getIntent().getParcelableExtra(ATTACHMENT));
+		data.putExtra(ATTACHMENT_ID, a.getId());
 		setResult(RESULT_OK, data);
 		finish();
-
 	}
 
 	@Override
@@ -161,11 +180,10 @@ public class AttachmentViewerActivity extends FragmentActivity implements Remove
 	}
 
 	private void startDownload(Attachment attachment, String mimeType) {
-		String url = attachment.getUrl();
-		new DownloadFileAsync(mimeType).execute(url);
+		new DownloadFileAsync(mimeType).execute(attachment);
 	}
 
-	class DownloadFileAsync extends AsyncTask<String, Integer, String> {
+	class DownloadFileAsync extends AsyncTask<Attachment, Integer, Boolean> {
 		String mimeType;
 
 		public DownloadFileAsync(String mimeType) {
@@ -179,50 +197,55 @@ public class AttachmentViewerActivity extends FragmentActivity implements Remove
 		}
 
 		@Override
-		protected String doInBackground(String... aurl) {
-			HttpEntity entity = null;
+		protected Boolean doInBackground(Attachment... attachments) {
+			InputStream is = null;
+			OutputStream os = null;
 			try {
-				URL url = new URL(aurl[0]);
-				DefaultHttpClient httpclient = HttpClientManager.getInstance(getApplicationContext()).getHttpClient();
-				HttpGet get = new HttpGet(url.toURI());
-				HttpResponse response = httpclient.execute(get);
+				Attachment attachment = attachments[0];
 
-				// FIXME : I'm not sure this works
-				entity = response.getEntity();
-				Long lengthOfFile = Math.max(entity.getContentLength(), 1l);
+				ObservationResource observationResource = new ObservationResource(getApplicationContext());
+				ResponseBody response = observationResource.getAttachment(attachment);
 
-				InputStream input = new BufferedInputStream(entity.getContent());
-				File stageDir = MediaUtility.getMediaStageDirectory();
+				Long contentLength = response.contentLength();
+
+				File stageDir = MediaUtility.getMediaStageDirectory(getApplicationContext());
 				File stagedFile = new File(stageDir, a.getName());
 				a.setLocalPath(stagedFile.getAbsolutePath());
-				OutputStream output = new FileOutputStream(a.getLocalPath());
+				os = new FileOutputStream(a.getLocalPath());
 
 				byte data[] = new byte[1024];
 
 				Long total = 0l;
 				int count;
-				while ((count = input.read(data)) != -1) {
+				is = response.byteStream();
+				while ((count = is.read(data)) != -1) {
 					total += count;
-					publishProgress(((Double)(100.0*(total.doubleValue()/lengthOfFile.doubleValue()))).intValue());
-					output.write(data, 0, count);
+					publishProgress(((Double)(100.0*(total.doubleValue()/contentLength.doubleValue()))).intValue());
+					os.write(data, 0, count);
 				}
-
-				output.flush();
-				output.close();
-				input.close();
 			} catch (Exception e) {
 				Log.e(LOG_NAME, "Problem downloading file.", e);
+				return false;
 			} finally {
-				try {
-					if (entity != null) {
-						entity.consumeContent();
+				if (is != null) {
+					try {
+						is.close();
+					} catch (IOException e) {
+						e.printStackTrace();
 					}
-				} catch (Exception e) {
-					Log.w(LOG_NAME, "Trouble cleaning up after request.", e);
+				}
+
+				if (os != null) {
+					try {
+						os.flush();
+						os.close();;
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
 				}
 			}
-			return null;
 
+			return true;
 		}
 
 		protected void onProgressUpdate(Integer... progress) {
@@ -230,8 +253,14 @@ public class AttachmentViewerActivity extends FragmentActivity implements Remove
 		}
 
 		@Override
-		protected void onPostExecute(String unused) {
+		protected void onPostExecute(Boolean success) {
 			progressDialog.dismiss();
+
+			if (!success) {
+				// TODO pop up dialog
+				return;
+			}
+
 			try {
 				Attachment attachment = DaoStore.getInstance(getApplicationContext()).getAttachmentDao().queryForId(a.getId());
 				attachment.setLocalPath(a.getLocalPath());
@@ -239,10 +268,12 @@ public class AttachmentViewerActivity extends FragmentActivity implements Remove
 			} catch (Exception e) {
 				Log.e(LOG_NAME, "Error saving attachment to DB", e);
 			}
-			File f = new File(a.getLocalPath());
-			Uri uri = Uri.fromFile(f);
+
+			File file = new File(a.getLocalPath());
+			Uri uri = FileProvider.getUriForFile(getApplicationContext(), "mil.nga.giat.mage.fileprovider", file);
 			Log.i(LOG_NAME, "launching viewer for " + uri + " type " + mimeType);
 			Intent intent = new Intent(Intent.ACTION_VIEW);
+			intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
 			intent.setDataAndType(uri, mimeType);
 			startActivity(intent);
 		}

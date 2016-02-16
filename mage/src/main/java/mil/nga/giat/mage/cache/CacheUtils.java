@@ -1,36 +1,35 @@
 package mil.nga.giat.mage.cache;
 
-import android.app.Activity;
 import android.content.Context;
 import android.net.Uri;
+import android.os.Environment;
 
 import java.io.File;
-import java.util.Map;
 
 import mil.nga.geopackage.validate.GeoPackageValidate;
-import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
-import mil.nga.giat.mage.sdk.utils.StorageUtility;
 
 /**
  * Cache File Utilities
  */
 public class CacheUtils {
 
+    public static String CACHE_DIRECTORY = "caches";
+
     /**
      * Copy the Uri to the cache directory in a background task
      *
-     * @param activity
+     * @param context
      * @param uri
-     * @param path
+     * @param path bn
      */
-    public static void copyToCache(Activity activity, Uri uri, String path) {
+    public static void copyToCache(Context context, Uri uri, String path) {
 
         // Get the Uri display name, which should be the file name with extension
-        String name = MediaUtility.getDisplayName(activity, uri, path);
+        String name = MediaUtility.getDisplayName(context, uri, path);
 
         // Get a cache directory to write to
-        File cacheDirectory = CacheUtils.getWritableCacheDirectory(activity);
+        File cacheDirectory = CacheUtils.getApplicationCacheDirectory(context);
         if (cacheDirectory != null) {
 
             // Verify that the file is a cache file by its extension
@@ -38,7 +37,7 @@ public class CacheUtils {
             if (isCacheFile(cacheFile)) {
 
                 // Copy the file in a background task
-                CopyCacheStreamTask task = new CopyCacheStreamTask(activity, uri, cacheFile);
+                CopyCacheStreamTask task = new CopyCacheStreamTask(context, uri, cacheFile);
                 task.execute();
             }
         }
@@ -60,28 +59,23 @@ public class CacheUtils {
      * @param context
      * @return file directory or null
      */
-    public static File getWritableCacheDirectory(Context context) {
+    public static File getApplicationCacheDirectory(Context context) {
+        File directory = context.getFilesDir();
 
-        File directory = null;
-
-        Map<StorageUtility.StorageType, File> storageLocations = StorageUtility.getAllStorageLocations();
-        for (File storageLocation : storageLocations.values()) {
-            File temp = new File(storageLocation, context.getString(R.string.overlay_cache_directory));
-
-            if (temp.exists()) {
-                if (temp.canWrite()) {
-                    directory = temp;
-                }
-            } else if (temp.mkdirs()) {
-                directory = temp;
-            }
-
-            if (directory != null) {
-                break;
+        String state = Environment.getExternalStorageState();
+        if (Environment.MEDIA_MOUNTED.equals(state)) {
+            File externalDirectory = context.getExternalFilesDir(null);
+            if (externalDirectory != null) {
+                directory = externalDirectory;
             }
         }
 
-        return directory;
+        File cacheDirectory = new File(directory, CACHE_DIRECTORY);
+        if (!cacheDirectory.exists()) {
+            cacheDirectory.mkdir();
+        }
+
+        return cacheDirectory;
     }
 
 }

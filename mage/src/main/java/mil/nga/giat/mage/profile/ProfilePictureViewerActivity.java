@@ -17,6 +17,7 @@ import java.util.Collections;
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
+import mil.nga.giat.mage.sdk.datastore.user.UserLocal;
 import mil.nga.giat.mage.sdk.fetch.DownloadImageTask;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
 
@@ -36,32 +37,24 @@ public class ProfilePictureViewerActivity extends Activity {
 		if(userID >= 0) {
 			try {
 				final User user = UserHelper.getInstance(getApplicationContext()).read(userID);
+				final UserLocal userLocal = user.getUserLocal();
 				this.setTitle(user.getDisplayName());
 
 				String avatarUrl = user.getAvatarUrl();
-				String localAvatarPath = user.getLocalAvatarPath();
+				String localAvatarPath = userLocal.getLocalAvatarPath();
 
 				if(StringUtils.isNotBlank(localAvatarPath)) {
 					File f = new File(localAvatarPath);
 					setProfilePicture(f, imageView);
 				} else {
 					if (avatarUrl != null) {
-						String localFilePath = MediaUtility.getAvatarDirectory() + "/" + user.getId() + ".png";
-
-						DownloadImageTask avatarImageTask = new DownloadImageTask(getApplicationContext(), Collections.singletonList(avatarUrl), Collections.singletonList(localFilePath), false) {
+						new DownloadImageTask(getApplicationContext(), Collections.singletonList(user), DownloadImageTask.ImageType.AVATAR, false, new DownloadImageTask.OnImageDownloadListener() {
 							@Override
-							protected Void doInBackground(Void... v) {
-								Void result = super.doInBackground(v);
-								if(!errors.get(0)) {
-									String lap = localFilePaths.get(0);
-									user.setLocalAvatarPath(lap);
-									File f = new File(user.getLocalAvatarPath());
-									setProfilePicture(f, imageView);
-								}
-								return result;
+							public void complete() {
+								File f = new File(userLocal.getLocalAvatarPath());
+								setProfilePicture(f, imageView);
 							}
-						};
-						avatarImageTask.execute();
+						}).execute();
 					}
 				}
 			} catch(Exception e) {
@@ -69,7 +62,7 @@ public class ProfilePictureViewerActivity extends Activity {
 			}
 		}
 
-		findViewById(R.id.remove_btn).setVisibility(View.GONE);
+//		findViewById(R.id.remove_btn).setVisibility(View.GONE);
 	}
 
 	private void setProfilePicture(File file, ImageView imageView) {

@@ -64,7 +64,7 @@ public class PeopleFeedFragment extends Fragment implements OnSharedPreferenceCh
         View rootView = inflater.inflate(R.layout.fragment_feed_people, container, false);
         setHasOptionsMenu(true);
 
-		FragmentManager fragmentManager = getFragmentManager();
+		FragmentManager fragmentManager = getChildFragmentManager();
 		fragmentManager.beginTransaction().add(R.id.people_event_holder, new EventBannerFragment()).commit();
 
         ListView lv = (ListView) rootView.findViewById(R.id.people_feed_list);
@@ -215,7 +215,7 @@ public class PeopleFeedFragment extends Fragment implements OnSharedPreferenceCh
 		}
 		Where<Location, Long> where = qb.where().gt("timestamp", c.getTime());
 		if (currentUser != null) {
-			where.and().ne("user_id", currentUser.getId()).and().eq("event_id", currentUser.getCurrentEvent().getId());
+			where.and().ne("user_id", currentUser.getId()).and().eq("event_id", currentUser.getUserLocal().getCurrentEvent().getId());
 		}
 
 		qb.orderBy("timestamp", false);

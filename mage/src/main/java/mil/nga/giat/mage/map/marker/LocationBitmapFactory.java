@@ -36,9 +36,13 @@ public class LocationBitmapFactory {
 	public static Bitmap bitmap(Context context, Location location, User user) {
 		Bitmap bitmap = createDot(context, location, user);
 		Log.d(LOG_NAME, "Drawing the bitmap for user " + user.getDisplayName());
-		final String iconPath = user.getLocalIconPath();
+		final String iconPath = user.getUserLocal().getLocalIconPath();
+
 		if (iconPath != null) {
-			bitmap = combineIconAndDot(bitmap.copy(Bitmap.Config.ARGB_8888, true), bitmapUser(context, iconPath));
+			Bitmap userIcon = bitmapUser(context, iconPath);
+			if (userIcon != null) {
+				bitmap = combineIconAndDot(bitmap.copy(Bitmap.Config.ARGB_8888, true), userIcon);
+			}
 		}
 		
 		return bitmap;
@@ -60,9 +64,10 @@ public class LocationBitmapFactory {
 	@TargetApi(Build.VERSION_CODES.JELLY_BEAN)
 	public static Bitmap bitmapUser(Context context, String iconPath) {
 		Bitmap bitmap = BitmapFactory.decodeFile(iconPath);
-		if(bitmap == null) {
-			return bitmap;
+		if (bitmap == null) {
+			return null;
 		}
+
 		Integer maxDimension = Math.max(bitmap.getWidth(), bitmap.getHeight());
 		float density = context.getResources().getDisplayMetrics().xdpi;
 		double scale = (density/3.5) / maxDimension;

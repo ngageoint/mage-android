@@ -3,7 +3,7 @@
     <mil.nga.giat.mage.sdk.preferences.PreferenceScreenSwitch
         android:defaultValue="@bool/locationServiceEnabledDefaultValue"
         android:key="@string/locationServiceEnabledKey"
-        android:summary="GPS sensitivy and tracking options"
+        android:summary="@string/location_services_enabled_summary"
         android:title="Location Services">
         <intent
             android:action="android.intent.action.VIEW"
@@ -51,24 +51,28 @@
     </PreferenceCategory>
     <PreferenceCategory
         android:title="ABOUT">
-        <EditTextPreference
+        <mil.nga.giat.mage.sdk.preferences.EditTextSummaryPreference
             android:defaultValue="@string/serverURLDefaultValue"
             android:key="@string/serverURLKey"
             android:selectable="false"
-            android:title="Server URL"/>
-        <EditTextPreference
+            android:title="Server URL"
+            android:summary="%s"/>
+        <mil.nga.giat.mage.sdk.preferences.EditTextSummaryPreference
             android:defaultValue="@string/usernameDefaultValue"
             android:key="@string/displayNameKey"
             android:selectable="false"
-            android:title="Name"/>
-        <EditTextPreference
+            android:title="Name"
+            android:summary="%s"/>
+        <mil.nga.giat.mage.sdk.preferences.EditTextSummaryPreference
             android:key="@string/currentEventKey"
             android:selectable="false"
-            android:title="Current Event"/>
-        <EditTextPreference
+            android:title="Current Event"
+            android:summary="%s"/>
+        <mil.nga.giat.mage.sdk.preferences.EditTextSummaryPreference
             android:key="@string/buildVersionKey"
             android:selectable="false"
-            android:title="MAGE App Version"/>
+            android:title="MAGE App Version"
+            android:summary="%s"/>
     </PreferenceCategory>
     <PreferenceCategory
         android:title="ADMIN">

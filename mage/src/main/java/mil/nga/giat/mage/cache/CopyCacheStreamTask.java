@@ -1,7 +1,7 @@
 package mil.nga.giat.mage.cache;
 
-import android.app.Activity;
 import android.content.ContentResolver;
+import android.content.Context;
 import android.net.Uri;
 import android.os.AsyncTask;
 
@@ -9,7 +9,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 
-import mil.nga.giat.mage.MAGE;
+import mil.nga.giat.mage.map.cache.CacheProvider;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
 
 /**
@@ -18,9 +18,9 @@ import mil.nga.giat.mage.sdk.utils.MediaUtility;
 public class CopyCacheStreamTask extends AsyncTask<Void, Void, String> {
 
     /**
-     * Activity
+     * Context
      */
-    private Activity activity;
+    private Context context;
 
     /**
      * Intent Uri used to launch MAGE
@@ -35,12 +35,12 @@ public class CopyCacheStreamTask extends AsyncTask<Void, Void, String> {
     /**
      * Constructor
      *
-     * @param activity
+     * @param context
      * @param uri       Uri containing stream
      * @param cacheFile copy to cache file location
      */
-    public CopyCacheStreamTask(Activity activity, Uri uri, File cacheFile) {
-        this.activity = activity;
+    public CopyCacheStreamTask(Context context, Uri uri, File cacheFile) {
+        this.context = context;
         this.uri = uri;
         this.cacheFile = cacheFile;
     }
@@ -56,7 +56,7 @@ public class CopyCacheStreamTask extends AsyncTask<Void, Void, String> {
 
         String error = null;
 
-        final ContentResolver resolver = activity.getContentResolver();
+        final ContentResolver resolver = context.getContentResolver();
         try {
             InputStream stream = resolver.openInputStream(uri);
             MediaUtility.copyStream(stream, cacheFile);
@@ -75,9 +75,8 @@ public class CopyCacheStreamTask extends AsyncTask<Void, Void, String> {
     @Override
     protected void onPostExecute(String result) {
         if (result == null) {
-            MAGE mage = ((MAGE) activity.getApplication());
             String cacheName = MediaUtility.getFileNameWithoutExtension(cacheFile);
-            mage.enableAndRefreshTileOverlays(cacheName);
+            CacheProvider.getInstance(context).enableAndRefreshTileOverlays(cacheName);
         }
     }
 

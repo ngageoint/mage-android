@@ -34,7 +34,6 @@ import mil.nga.giat.mage.sdk.login.RecentEventTask;
 
 public class EventActivity extends Activity implements AccountDelegate {
 
-	public static final String EXTRA_CHOOSE_CURRENT_EVENT = "CHOOSE_CURRENT_EVENT";
 	private static final String STATE_EVENT = "stateEvent";
 
 	private static final String LOG_NAME = EventActivity.class.getName();
@@ -43,7 +42,7 @@ public class EventActivity extends Activity implements AccountDelegate {
 
     private int uniqueChildIdIndex = uniqueChildStartingIdIndex;
 
-    private List<Event> events = new ArrayList<Event>();
+    private List<Event> events = new ArrayList<>();
 
     private Event chosenEvent = null;
 
@@ -58,19 +57,17 @@ public class EventActivity extends Activity implements AccountDelegate {
 
 		uniqueChildIdIndex = uniqueChildStartingIdIndex;
 		if(savedInstanceState == null) {
-			events = new ArrayList<Event>();
+			events = new ArrayList<>();
 		} else {
-			long[] te = savedInstanceState.getLongArray(STATE_EVENT);
+			long[] eventIds = savedInstanceState.getLongArray(STATE_EVENT);
 			try {
-				for(int i = 0; i < te.length; i++) {
-					events.add(EventHelper.getInstance(getApplicationContext()).read(te[i]));
+				for (long eventId : eventIds) {
+					events.add(EventHelper.getInstance(getApplicationContext()).read(eventId));
 				}
 			} catch(Exception e) {
 				Log.e(LOG_NAME, "Could not hydrate events!");
 			}
 		}
-
-		final boolean pickDefaultEvent = getIntent().getBooleanExtra(EXTRA_CHOOSE_CURRENT_EVENT, false);
 
 		BroadcastReceiver initialFetchReceiver = new BroadcastReceiver() {
 			@Override
@@ -92,9 +89,10 @@ public class EventActivity extends Activity implements AccountDelegate {
 						Log.e(LOG_NAME, "Could not get current events!");
 					}
 
-					if(events.isEmpty() || currentUser == null) {
+					if (events.isEmpty() || currentUser == null) {
 						Log.e(LOG_NAME, "User is part of no events!");
-						((MAGE) getApplication()).onLogout(true);
+
+						((MAGE) getApplication()).onLogout(true, null);
 						findViewById(R.id.event_status).setVisibility(View.GONE);
 						findViewById(R.id.event_content).setVisibility(View.VISIBLE);
 						findViewById(R.id.event_continue_button).setVisibility(View.GONE);
@@ -103,21 +101,13 @@ public class EventActivity extends Activity implements AccountDelegate {
 						findViewById(R.id.event_bummer_info).setVisibility(View.VISIBLE);
 						findViewById(R.id.event_serverproblem_info).setVisibility(View.GONE);
 					} else {
-						Event userRecentEvent = currentUser.getCurrentEvent();
-
-						if(userRecentEvent == null) {
-							userRecentEvent = events.get(0);
-							currentUser.setCurrentEvent(userRecentEvent);
-							UserHelper.getInstance(getApplicationContext()).createOrUpdate(currentUser);
+						Event recentEvent = currentUser.getUserLocal().getCurrentEvent();
+						if (recentEvent == null) {
+							recentEvent = events.get(0);
 						}
 
-						if(events.size() == 1 && events.get(0).equals(userRecentEvent)) {
-							currentUser.setCurrentEvent(userRecentEvent);
-							UserHelper.getInstance(getApplicationContext()).createOrUpdate(currentUser);
-							chosenEvent = userRecentEvent;
-							finishAccount(new AccountStatus(AccountStatus.Status.SUCCESSFUL_LOGIN));
-						} else if (pickDefaultEvent && events.contains(userRecentEvent)) {
-							chosenEvent = userRecentEvent;
+						if (events.size() == 1 && events.get(0).equals(recentEvent)) {
+							chosenEvent = recentEvent;
 							finishAccount(new AccountStatus(AccountStatus.Status.SUCCESSFUL_LOGIN));
 						} else {
 							List<Event> tempEventsForCurrentUser = EventHelper.getInstance(getApplicationContext()).getEventsForCurrentUser();
@@ -131,7 +121,7 @@ public class EventActivity extends Activity implements AccountDelegate {
 								}
 								radioButton.setText(text);
 
-								if(userRecentEvent.getRemoteId().equals(e.getRemoteId())) {
+								if (recentEvent.getRemoteId().equals(e.getRemoteId())) {
 									radioButton.setChecked(true);
 								}
 
@@ -142,10 +132,11 @@ public class EventActivity extends Activity implements AccountDelegate {
 						}
 					}
 				} else {
+					Log.e(LOG_NAME, "User is part of no event!");
+
+					((MAGE) getApplication()).onLogout(true, null);
 					findViewById(R.id.event_status).setVisibility(View.GONE);
 					findViewById(R.id.event_content).setVisibility(View.VISIBLE);
-					Log.e(LOG_NAME, "User is part of no event!");
-					((MAGE) getApplication()).onLogout(true);
 					findViewById(R.id.event_continue_button).setVisibility(View.GONE);
 					findViewById(R.id.event_select_content).setVisibility(View.GONE);
 					findViewById(R.id.event_back_button).setVisibility(View.VISIBLE);
@@ -155,25 +146,23 @@ public class EventActivity extends Activity implements AccountDelegate {
 			}
 		};
 
-		// receive response from initial pull
+		// receive response from initial fetch
 		IntentFilter statusIntentFilter = new IntentFilter(InitialFetchIntentService.InitialFetchIntentServiceAction);
 		statusIntentFilter.addCategory(Intent.CATEGORY_DEFAULT);
-
 		LocalBroadcastManager.getInstance(getApplicationContext()).registerReceiver(initialFetchReceiver, statusIntentFilter);
-
 		getApplicationContext().startService(new Intent(getApplicationContext(), InitialFetchIntentService.class));
 	}
 
 	public void onSaveInstanceState(Bundle savedInstanceState) {
 
-		long[] te = new long[events.size()];
+		long[] eventIds = new long[events.size()];
 
-		for(int i = 0; i < events.size(); i++) {
+		for (int i = 0; i < events.size(); i++) {
 			Event e = events.get(i);
-			te[i] = e.getId();
+			eventIds[i] = e.getId();
 		}
 
-		savedInstanceState.putLongArray(STATE_EVENT, te);
+		savedInstanceState.putLongArray(STATE_EVENT, eventIds);
 		super.onSaveInstanceState(savedInstanceState);
 	}
 
@@ -185,7 +174,7 @@ public class EventActivity extends Activity implements AccountDelegate {
         int eventIndex = (((RadioGroup)findViewById(R.id.event_radiogroup)).getCheckedRadioButtonId() - uniqueChildStartingIdIndex);
         chosenEvent = events.get(eventIndex);
 
-        List<String> userRecentEventInfo = new ArrayList<String>();
+        List<String> userRecentEventInfo = new ArrayList<>();
         userRecentEventInfo.add(chosenEvent.getRemoteId());
 
         new RecentEventTask(this, this.getApplicationContext()).execute(userRecentEventInfo.toArray(new String[userRecentEventInfo.size()]));
@@ -202,20 +191,22 @@ public class EventActivity extends Activity implements AccountDelegate {
         }
 		// regardless of the return status, set the user's currentevent
 		try {
-			User currentUser = UserHelper.getInstance(getApplicationContext()).readCurrentUser();
-			currentUser.setCurrentEvent(chosenEvent);
-			UserHelper.getInstance(getApplicationContext()).createOrUpdate(currentUser);
+			UserHelper userHelper = UserHelper.getInstance(getApplicationContext());
+			User user = userHelper.readCurrentUser();
+			userHelper.setCurrentEvent(user, chosenEvent);
 		} catch(Exception e) {
 			Log.e(LOG_NAME, "Could not set current event.");
 		}
 
-        SharedPreferences.Editor sp = PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).edit();
-        sp.putString(getString(R.string.currentEventKey), String.valueOf(chosenEvent.getName())).commit();
+        SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).edit();
+		editor.putString(getString(R.string.currentEventKey), String.valueOf(chosenEvent.getName()));
 
 		// disable pushing locations
 		if(!UserHelper.getInstance(getApplicationContext()).isCurrentUserPartOfCurrentEvent()) {
-			sp.putBoolean(getString(R.string.reportLocationKey), false).commit();
+			editor.putBoolean(getString(R.string.reportLocationKey), false);
 		}
+
+		editor.apply();
 
         // start up the landing activity!
 		Intent intent = new Intent(getApplicationContext(), LandingActivity.class);

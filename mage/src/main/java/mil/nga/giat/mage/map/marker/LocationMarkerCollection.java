@@ -2,13 +2,18 @@ package mil.nga.giat.mage.map.marker;
 
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.BitmapFactory;
+import android.graphics.Bitmap;
+import android.graphics.drawable.Drawable;
+import android.support.v4.graphics.drawable.RoundedBitmapDrawable;
+import android.support.v4.graphics.drawable.RoundedBitmapDrawableFactory;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.request.target.BitmapImageViewTarget;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.GoogleMap.InfoWindowAdapter;
 import com.google.android.gms.maps.GoogleMap.OnInfoWindowClickListener;
@@ -25,14 +30,12 @@ import com.vividsolutions.jts.geom.Point;
 
 import org.ocpsoft.prettytime.PrettyTime;
 
-import java.text.DateFormat;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
-import java.util.Locale;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.TimeZone;
 import java.util.concurrent.ConcurrentHashMap;
 
 import mil.nga.giat.mage.R;
@@ -43,10 +46,9 @@ import mil.nga.giat.mage.sdk.datastore.location.LocationHelper;
 import mil.nga.giat.mage.sdk.datastore.location.LocationProperty;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
+import mil.nga.giat.mage.sdk.datastore.user.UserLocal;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
 import mil.nga.giat.mage.sdk.fetch.DownloadImageTask;
-import mil.nga.giat.mage.sdk.utils.DateFormatFactory;
-import mil.nga.giat.mage.sdk.utils.MediaUtility;
 
 public class LocationMarkerCollection implements PointCollection<Location>, OnMarkerClickListener, OnInfoWindowClickListener {
 
@@ -275,8 +277,7 @@ public class LocationMarkerCollection implements PointCollection<Location>, OnMa
 	}
 
 	private class LocationInfoWindowAdapter implements InfoWindowAdapter {
-
-        private final DateFormat dateFormat = DateFormatFactory.format("yyyy-MM-dd HH:mm zz", Locale.getDefault(), TimeZone.getTimeZone("Zulu"));
+		private final Map<Marker, Drawable> avatars = new HashMap<>();
 
 		@Override
 		public View getInfoContents(final Marker marker) {
@@ -287,51 +288,44 @@ public class LocationMarkerCollection implements PointCollection<Location>, OnMa
 			User user = location.getUser();
 
 			LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-			View v = inflater.inflate(R.layout.people_list_item, null);
-			
-			ImageView iconView = (ImageView) v.findViewById(R.id.iconImageView);
-			if (location.getUser().getLocalAvatarPath() != null) {
-				iconView.setImageBitmap(MediaUtility.resizeAndRoundCorners(BitmapFactory.decodeFile(location.getUser().getLocalAvatarPath()), 128));
-			} else if (location.getUser().getAvatarUrl() != null) {
-				String localFilePath = MediaUtility.getAvatarDirectory() + "/" + user.getId() + ".png";
-				DownloadImageTask avatarImageTask = new DownloadImageTask(context, Collections.singletonList(location.getUser().getAvatarUrl()), Collections.singletonList(localFilePath), false) {
+			View v = inflater.inflate(R.layout.people_info_window, null);
 
-					@Override
-					protected Void doInBackground(Void... v) {
-						Void result = super.doInBackground(v);
-						if(!errors.get(0)) {
-							String lap = localFilePaths.get(0);
-							location.getUser().setLocalAvatarPath(lap);
+			final ImageView avatarView = (ImageView) v.findViewById(R.id.avatarImageView);
+			UserLocal userLocal = user.getUserLocal();
+			if (userLocal.getLocalAvatarPath() != null) {
+				final Drawable avatar = avatars.get(marker);
+				if (avatar == null) {
+					Glide.with(context)
+							.load(userLocal.getLocalAvatarPath())
+							.asBitmap()
+							.dontAnimate()
+							.centerCrop()
+							.into(new BitmapImageViewTarget(avatarView) {
+								@Override
+								protected void setResource(Bitmap resource) {
+									RoundedBitmapDrawable circularBitmapDrawable = RoundedBitmapDrawableFactory.create(context.getResources(), resource);
+									circularBitmapDrawable.setCircular(true);
 
-							try {
-								UserHelper.getInstance(context).update(location.getUser());
-							} catch (Exception e) {
-								Log.e(LOG_NAME, e.getMessage(), e);
-							}
-						}
+									avatars.put(marker, circularBitmapDrawable);
+									marker.showInfoWindow();
+								}
 
-						return result;
-					}
-				};
-				avatarImageTask.execute();
-			}
-			
-			TextView location_name = (TextView) v.findViewById(R.id.location_name);
-			location_name.setText(user.getDisplayName());
-
-			TextView location_email = (TextView) v.findViewById(R.id.location_email);
-			String email = user.getEmail();
-			if (email != null && !email.trim().isEmpty()) {
-				location_email.setVisibility(View.VISIBLE);
-				location_email.setText(email);
-			} else {
-				location_email.setVisibility(View.GONE);
+								@Override public void onLoadCleared(Drawable placeholder) {
+									avatars.remove(marker);
+								}
+							});
+				} else {
+					avatarView.setImageDrawable(avatar);
+				}
+			} else if (user.getAvatarUrl() != null) {
+				new DownloadImageTask(context, Collections.singletonList(user), DownloadImageTask.ImageType.AVATAR, false).execute();
 			}
 
-			// set date
-			TextView location_date = (TextView) v.findViewById(R.id.location_date);
+			TextView name = (TextView) v.findViewById(R.id.name);
+			name.setText(user.getDisplayName());
 
-			location_date.setText(new PrettyTime().format(location.getTimestamp()));
+			TextView date = (TextView) v.findViewById(R.id.date);
+			date.setText(new PrettyTime().format(location.getTimestamp()));
 
 			return v;
 		}

@@ -19,74 +19,52 @@
         android:layout_width="fill_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:paddingTop="7dp"
-        android:paddingBottom="7dp">
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp">
         
         <LinearLayout
             android:orientation="vertical"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:paddingRight="7dp"
-            android:paddingLeft="7dp">
+            android:paddingRight="16dp"
+            android:paddingLeft="16dp">
+
             <ImageView
                 android:id="@+id/profile_picture"
-                android:src="@drawable/missing_avatar"
+                android:src="@drawable/ic_person_gray_48dp"
 	            android:layout_width="73dp"
-	            android:layout_height="73dp"/>
-            <TextView 
-                android:id="@+id/uploadStatus"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:paddingTop="3dp"
-                android:textAppearance="?android:attr/textAppearanceSmall"
-	            android:textColor="#111111"
-	            android:textStyle="bold"
-	            android:visibility="gone"
-	            android:text="Uploading..."/>
+	            android:layout_height="73dp" />
+
         </LinearLayout>
         
         <LinearLayout
             android:orientation="vertical" 
             android:layout_width="fill_parent"
             android:layout_height="wrap_content">
+
         	<TextView
 	            android:id="@+id/realName"
 	            android:layout_width="wrap_content"
 	            android:layout_height="wrap_content"
 	            android:textAppearance="?android:attr/textAppearanceSmall"
-	            android:textColor="#111111"
-	            android:textStyle="bold" />
+	            android:textColor="#000000"
+                android:alpha=".87" />
          	<TextView
 	            android:id="@+id/phone"
 	            android:layout_width="wrap_content"
 	            android:layout_height="wrap_content"
 	            android:textAppearance="?android:attr/textAppearanceSmall"
-	            android:textColor="#111111" />
+	            android:textColor="#000000"
+                android:alpha=".54"/>
         	<TextView
 	            android:id="@+id/email"
 	            android:layout_width="wrap_content"
 	            android:layout_height="wrap_content"
 	            android:textAppearance="?android:attr/textAppearanceSmall"
-	            android:textColor="#111111" />
+	            android:textColor="#000000"
+                android:alpha=".54"/>
+
         </LinearLayout>
     </LinearLayout>
-    
-    <!-- <LinearLayout android:orientation="horizontal"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:paddingTop="15dp"
-        android:paddingBottom="15dp"
-        android:paddingLeft="7dp"
-        android:paddingRight="7dp"
-        android:layout_marginLeft="12dp"
-        android:layout_marginRight="12dp"
-        android:background="@drawable/profile_button">
-        <TextView
-	            android:layout_width="wrap_content"
-	            android:layout_height="wrap_content"
-	            android:textAppearance="?android:attr/textAppearanceMedium"
-	            android:textColor="#111111"
-				android:text="Location History"/>
-    </LinearLayout> -->
 
 </LinearLayout>

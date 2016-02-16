@@ -1,11 +1,15 @@
 package mil.nga.giat.mage.map.preference;
 
+import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ExpandableListActivity;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -27,17 +31,19 @@ import java.util.Map;
 
 import mil.nga.geopackage.GeoPackageManager;
 import mil.nga.geopackage.factory.GeoPackageFactory;
-import mil.nga.giat.mage.MAGE;
-import mil.nga.giat.mage.MAGE.OnCacheOverlayListener;
 import mil.nga.giat.mage.R;
+import mil.nga.giat.mage.cache.CacheUtils;
 import mil.nga.giat.mage.map.cache.CacheOverlay;
+import mil.nga.giat.mage.map.cache.CacheProvider;
+import mil.nga.giat.mage.map.cache.CacheProvider.OnCacheOverlayListener;
 import mil.nga.giat.mage.map.cache.GeoPackageCacheOverlay;
 import mil.nga.giat.mage.map.cache.XYZDirectoryCacheOverlay;
 import mil.nga.giat.mage.sdk.utils.StorageUtility;
 
 public class TileOverlayPreferenceActivity extends ExpandableListActivity implements OnCacheOverlayListener {
 
-    private MAGE mage;
+    private static final int PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE = 100;
+
     private ProgressBar progressBar;
     private MenuItem refreshButton;
     private OverlayAdapter overlayAdapter;
@@ -47,17 +53,35 @@ public class TileOverlayPreferenceActivity extends ExpandableListActivity implem
         super.onCreate(savedInstanceState);
         setContentView(R.layout.cache_overlay);
 
-        mage = (MAGE) getApplication();
         progressBar = (ProgressBar) findViewById(R.id.overlay_progress_bar);
 
         getExpandableListView().setEnabled(false);
         progressBar.setVisibility(View.VISIBLE);
+
+        if (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+            if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.READ_EXTERNAL_STORAGE)) {
+                new AlertDialog.Builder(this, R.style.AppCompatAlertDialogStyle)
+                        .setTitle(R.string.overlay_access_title)
+                        .setMessage(R.string.overlay_access_message)
+                        .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                ActivityCompat.requestPermissions(TileOverlayPreferenceActivity.this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE);
+                            }
+                        })
+                        .create()
+                        .show();
+
+            } else {
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE);
+            }
+        }
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
-        mage.unregisterCacheOverlayListener(this);
+        CacheProvider.getInstance(getApplicationContext()).unregisterCacheOverlayListener(this);
     }
 
     @Override
@@ -87,7 +111,7 @@ public class TileOverlayPreferenceActivity extends ExpandableListActivity implem
         });
         refreshButton.setEnabled(true);
         getExpandableListView().setEnabled(true);
-        progressBar.setVisibility(View.GONE);
+        progressBar.setVisibility(View.INVISIBLE);
     }
 
     @Override
@@ -99,7 +123,7 @@ public class TileOverlayPreferenceActivity extends ExpandableListActivity implem
         // before I register as the call back will set it to enabled
         // the problem is that onResume gets called before this so my menu is
         // not yet setup and I will not have a handle on this button
-        mage.registerCacheOverlayListener(this);
+        CacheProvider.getInstance(getApplicationContext()).registerCacheOverlayListener(this);
 
         return super.onPrepareOptionsMenu(menu);
     }
@@ -122,7 +146,7 @@ public class TileOverlayPreferenceActivity extends ExpandableListActivity implem
                 progressBar.setVisibility(View.VISIBLE);
                 getExpandableListView().setEnabled(false);
 
-                ((MAGE) getApplication()).refreshTileOverlays();
+                CacheProvider.getInstance(getApplicationContext()).refreshTileOverlays();
                 return true;
             case android.R.id.home:
                 onBackPressed();
@@ -138,6 +162,19 @@ public class TileOverlayPreferenceActivity extends ExpandableListActivity implem
         intent.putStringArrayListExtra(MapPreferencesActivity.OVERLAY_EXTENDED_DATA_KEY, getSelectedOverlays());
         setResult(Activity.RESULT_OK, intent);
         finish();
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
+        switch (requestCode) {
+            case PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE: {
+                if(grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    CacheProvider.getInstance(getApplicationContext()).refreshTileOverlays();
+                };
+
+                break;
+            }
+        }
     }
 
     /**
@@ -244,14 +281,10 @@ public class TileOverlayPreferenceActivity extends ExpandableListActivity implem
                 view = inflater.inflate(R.layout.cache_overlay_group, viewGroup, false);
             }
 
-            ImageView imageView = (ImageView) view
-                    .findViewById(R.id.cache_overlay_group_image);
-            TextView cacheName = (TextView) view
-                    .findViewById(R.id.cache_overlay_group_name);
-            TextView childCount = (TextView) view
-                    .findViewById(R.id.cache_overlay_group_count);
-            CheckBox checkBox = (CheckBox) view
-                    .findViewById(R.id.cache_overlay_group_checkbox);
+            ImageView imageView = (ImageView) view.findViewById(R.id.cache_overlay_group_image);
+            TextView cacheName = (TextView) view.findViewById(R.id.cache_overlay_group_name);
+            TextView childCount = (TextView) view.findViewById(R.id.cache_overlay_group_count);
+            CheckBox checkBox = (CheckBox) view.findViewById(R.id.cache_overlay_group_checkbox);
 
             final CacheOverlay overlay = overlays.get(i);
 
@@ -294,24 +327,22 @@ public class TileOverlayPreferenceActivity extends ExpandableListActivity implem
         }
 
         @Override
-        public View getChildView(int i, int j, boolean b, View view,
-                                 ViewGroup viewGroup) {
-            if (view == null) {
+        public View getChildView(int groupPosition, int childPosition, boolean isLastChild, View convertView, ViewGroup parent) {
+
+            if (convertView == null) {
                 LayoutInflater inflater = LayoutInflater.from(activity);
-                view = inflater.inflate(R.layout.cache_overlay_child, viewGroup, false);
+                convertView = inflater.inflate(R.layout.cache_overlay_child, parent, false);
             }
 
-            final CacheOverlay overlay = overlays.get(i);
-            final CacheOverlay childCache = overlay.getChildren().get(j);
+            final CacheOverlay overlay = overlays.get(groupPosition);
+            final CacheOverlay childCache = overlay.getChildren().get(childPosition);
 
-            ImageView imageView = (ImageView) view
-                    .findViewById(R.id.cache_overlay_child_image);
-            TextView tableName = (TextView) view
-                    .findViewById(R.id.cache_overlay_child_name);
-            TextView info = (TextView) view
-                    .findViewById(R.id.cache_overlay_child_info);
-            CheckBox checkBox = (CheckBox) view
-                    .findViewById(R.id.cache_overlay_child_checkbox);
+            ImageView imageView = (ImageView) convertView.findViewById(R.id.cache_overlay_child_image);
+            TextView tableName = (TextView) convertView.findViewById(R.id.cache_overlay_child_name);
+            TextView info = (TextView) convertView.findViewById(R.id.cache_overlay_child_info);
+            CheckBox checkBox = (CheckBox) convertView.findViewById(R.id.cache_overlay_child_checkbox);
+
+            convertView.findViewById(R.id.divider).setVisibility(isLastChild ? View.VISIBLE : View.INVISIBLE);
 
             checkBox.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -350,13 +381,13 @@ public class TileOverlayPreferenceActivity extends ExpandableListActivity implem
             checkBox.setChecked(childCache.isEnabled());
 
             Integer imageResource = childCache.getIconImageResourceId();
-            if(imageResource != null){
+            if (imageResource != null){
                 imageView.setImageResource(imageResource);
-            }else{
+            } else {
                 imageView.setImageResource(-1);
             }
 
-            return view;
+            return convertView;
         }
 
         @Override
@@ -416,7 +447,7 @@ public class TileOverlayPreferenceActivity extends ExpandableListActivity implem
 
         }
 
-        ((MAGE) getApplication()).refreshTileOverlays();
+        CacheProvider.getInstance(getApplicationContext()).refreshTileOverlays();
     }
 
     /**
@@ -463,11 +494,22 @@ public class TileOverlayPreferenceActivity extends ExpandableListActivity implem
 
         // Attempt to delete the cache file if it is in the cache directory
         File pathDirectory = path.getParentFile();
-        if(path.canWrite() && pathDirectory != null){
-            Map<StorageUtility.StorageType, File> storageLocations = StorageUtility.getAllStorageLocations();
+        if(path.canWrite() && pathDirectory != null) {
+            Map<StorageUtility.StorageType, File> storageLocations = StorageUtility.getWritableStorageLocations();
             for (File storageLocation : storageLocations.values()) {
                 File root = new File(storageLocation, getString(R.string.overlay_cache_directory));
                 if (root.equals(pathDirectory)) {
+                    path.delete();
+                    break;
+                }
+            }
+        }
+
+        // Check internal/external application storage
+        File applicationCacheDirectory = CacheUtils.getApplicationCacheDirectory(getApplicationContext());
+        if (applicationCacheDirectory != null && applicationCacheDirectory.exists()) {
+            for (File cache : applicationCacheDirectory.listFiles()) {
+                if (cache.equals(path)) {
                     path.delete();
                     break;
                 }

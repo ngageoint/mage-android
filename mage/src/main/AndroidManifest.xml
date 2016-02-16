@@ -10,17 +10,15 @@
 
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_GPS" />
-    <uses-permission android:name="android.permission.ACCESS_LOCATION" />
-    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="android.permission.CALL_PHONE" />
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
     <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="com.google.android.providers.gsf.permission.READ_GSERVICES" />
 
@@ -38,6 +36,17 @@
         android:logo="@drawable/ic_wand"
         android:label="@string/app_name"
         android:theme="@style/AppTheme" >
+
+        <provider
+            android:name="android.support.v4.content.FileProvider"
+            android:authorities="mil.nga.giat.mage.fileprovider"
+            android:grantUriPermissions="true"
+            android:exported="false">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/filepaths" />
+        </provider>
+
         <activity
             android:name="mil.nga.giat.mage.disclaimer.DisclaimerActivity"
             android:label="@string/app_name"
@@ -96,32 +105,27 @@
         </activity>
         <activity
             android:name="mil.nga.giat.mage.preferences.LocationPreferencesActivity"
-            android:icon="@drawable/ic_compass_white"
             android:label="@string/location_settings"
-            android:parentActivityName="mil.nga.giat.mage.preferences.GeneralPreferencesFragment" >
+            android:parentActivityName="mil.nga.giat.mage.LandingActivity" >
         </activity>
         <activity
             android:name="mil.nga.giat.mage.preferences.FetchPreferencesActivity"
-            android:icon="@drawable/ic_download"
             android:label="@string/fetch_settings"
-            android:parentActivityName="mil.nga.giat.mage.preferences.GeneralPreferencesFragment" >
+            android:parentActivityName="mil.nga.giat.mage.LandingActivity" >
         </activity>
         <activity
             android:name="mil.nga.giat.mage.preferences.ClearDataPreferenceActivity"
-            android:icon="@drawable/ic_settings_white"
             android:label="Clear Data"
             android:uiOptions="splitActionBarWhenNarrow"
-            android:parentActivityName="mil.nga.giat.mage.preferences.GeneralPreferencesFragment" >
+            android:parentActivityName="mil.nga.giat.mage.LandingActivity" >
         </activity>
         <activity
             android:name="mil.nga.giat.mage.map.preference.MapPreferencesActivity"
-            android:icon="@drawable/ic_map_white"
             android:label="@string/map_settings"
             android:parentActivityName="mil.nga.giat.mage.LandingActivity" >
         </activity>
         <activity
             android:name="mil.nga.giat.mage.map.preference.TileOverlayPreferenceActivity"
-            android:icon="@drawable/ic_map_white"
             android:label="Overlay Maps"
             android:launchMode="singleTop"
             android:parentActivityName="mil.nga.giat.mage.map.preference.MapPreferencesActivity"
@@ -130,7 +134,6 @@
         </activity>
         <activity
             android:name="mil.nga.giat.mage.map.preference.FeatureOverlayPreferenceActivity"
-            android:icon="@drawable/ic_map_white"
             android:label="Feature Overlays"
             android:launchMode="singleTop"
             android:parentActivityName="mil.nga.giat.mage.map.preference.MapPreferencesActivity"
@@ -195,6 +198,11 @@
         <meta-data
             android:name="com.google.android.gms.version"
             android:value="@integer/google_play_services_version" />
+
+        <meta-data
+            android:name="mil.nga.giat.mage.glide.MageGlideModule"
+            android:value="GlideModule" />
+
     </application>
 
 </manifest>

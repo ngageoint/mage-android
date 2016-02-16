@@ -41,11 +41,14 @@ import java.util.List;
 import mil.nga.giat.mage.LandingActivity;
 import mil.nga.giat.mage.MAGE;
 import mil.nga.giat.mage.R;
+import mil.nga.giat.mage.cache.CacheUtils;
 import mil.nga.giat.mage.disclaimer.DisclaimerActivity;
 import mil.nga.giat.mage.event.EventActivity;
-import mil.nga.giat.mage.cache.CacheUtils;
 import mil.nga.giat.mage.sdk.connectivity.ConnectivityUtility;
 import mil.nga.giat.mage.sdk.datastore.DaoStore;
+import mil.nga.giat.mage.sdk.datastore.user.User;
+import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
+import mil.nga.giat.mage.sdk.exceptions.UserException;
 import mil.nga.giat.mage.sdk.login.AbstractAccountTask;
 import mil.nga.giat.mage.sdk.login.AccountDelegate;
 import mil.nga.giat.mage.sdk.login.AccountStatus;
@@ -73,6 +76,7 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 	private EditText mUsernameEditText;
 	private EditText mPasswordEditText;
 	private TextView mServerURL;
+	private TextView mErrorURL;
 	private Button mLoginButton;
 	private String mOpenFilePath;
 
@@ -92,9 +96,16 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 
+		User currentUser = null;
+		try {
+			currentUser = UserHelper.getInstance(getApplicationContext()).readCurrentUser();
+		} catch (UserException e) {
+			e.printStackTrace();
+		}
+
 		Intent intent = getIntent();
 		if (intent.getBooleanExtra("LOGOUT", false)) {
-			((MAGE) getApplication()).onLogout(true);
+			((MAGE) getApplication()).onLogout(true, null);
 		}
 
 		// IMPORTANT: load the configuration from preferences files and server
@@ -105,7 +116,7 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 
 		// check if the database needs to be upgraded, and if so log them out
 		if (DaoStore.DATABASE_VERSION != sharedPreferences.getInt(getResources().getString(R.string.databaseVersionKey), 0)) {
-			((MAGE) getApplication()).onLogout(true);
+			((MAGE) getApplication()).onLogout(true, null);
 		}
 
 		sharedPreferences.edit().putInt(getString(R.string.databaseVersionKey), DaoStore.DATABASE_VERSION).commit();
@@ -136,7 +147,7 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 
 		// Handle when MAGE was launched with a Uri (such as a local or remote cache file)
 		Uri uri = intent.getData();
-		if(uri != null) {
+		if (uri != null) {
 			handleUri(uri);
 		}
 
@@ -156,6 +167,7 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 		mPasswordEditText = (EditText) findViewById(R.id.login_password);
 		mPasswordEditText.setTypeface(Typeface.DEFAULT);
 		mServerURL = (TextView) findViewById(R.id.server_url);
+		mErrorURL = (TextView) findViewById(R.id.error_url);
 
 		mLoginButton = (Button) findViewById(R.id.local_login_button);
 
@@ -184,14 +196,14 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 				public boolean apply(Exception e) {
 					if (e == null) {
 						mLoginButton.setEnabled(true);
-						getServerUrlText().setError(null);
+						mErrorURL.setError(null);
 						configureLogin();
 
 						return true;
 					} else {
 						configureLogin();
-						getServerUrlText().setError(e.getMessage());
-						getServerUrlText().requestFocus();
+						mErrorURL.setError(e.getMessage());
+						mErrorURL.requestFocus();
 
 						return false;
 					}
@@ -349,7 +361,7 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 										progress.setVisibility(View.INVISIBLE);
 										button.setEnabled(true);
 										serverEditText.setError(e.getMessage());
-										getServerUrlText().setError(null);
+
 										return false;
 									}
 								}
@@ -374,15 +386,17 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 	 * Handle the Uri used to launch MAGE
 	 * @param uri
 	 */
-	private void handleUri(Uri uri){
+	private void handleUri(Uri uri) {
 
 		// Attempt to get a local file path
 		String openPath = MediaUtility.getPath(this, uri);
 
 		// If not a local or temporary file path, copy the file to cache
-		if(openPath == null || MediaUtility.isTemporaryPath(openPath)){
+		// Cannot pass this to another activity to handle as the URI might
+		// become invalid between now and then.  Copy it now
+		if (openPath == null || MediaUtility.isTemporaryPath(openPath)) {
 			CacheUtils.copyToCache(this, uri, openPath);
-		}else{
+		} else {
 			// Else, store the path to pass to further intents
 			mOpenFilePath = openPath;
 		}
@@ -552,7 +566,7 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 				new Intent(getApplicationContext(), EventActivity.class);
 
 		// If launched with a local file path, save as an extra
-		if(mOpenFilePath != null){
+		if (mOpenFilePath != null) {
 			intent.putExtra(LandingActivity.EXTRA_OPEN_FILE_PATH, mOpenFilePath);
 		}
 
@@ -564,13 +578,10 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 		SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
 		boolean disclaimerAccepted = sharedPreferences.getBoolean(getString(R.string.disclaimerAcceptedKey), getResources().getBoolean(R.bool.disclaimerAcceptedDefaultValue));
 
-		Intent intent = disclaimerAccepted ?
-				new Intent(getApplicationContext(), EventActivity.class) :
-				new Intent(getApplicationContext(), DisclaimerActivity.class);
+		Intent intent = new Intent(getApplicationContext(), LandingActivity.class);
 
-		intent.putExtra(EventActivity.EXTRA_CHOOSE_CURRENT_EVENT, true);
 		// If launched with a local file path, save as an extra
-		if(mOpenFilePath != null){
+		if (mOpenFilePath != null) {
 			intent.putExtra(LandingActivity.EXTRA_OPEN_FILE_PATH, mOpenFilePath);
 		}
 
@@ -583,7 +594,7 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 		super.onResume();
 
 		if (getIntent().getBooleanExtra("LOGOUT", false)) {
-			((MAGE) getApplication()).onLogout(true);
+			((MAGE) getApplication()).onLogout(true, null);
 		}
 
 		configureLogin();

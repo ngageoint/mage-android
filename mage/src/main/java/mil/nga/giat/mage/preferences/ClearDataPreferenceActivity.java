@@ -26,7 +26,6 @@ import mil.nga.giat.mage.MAGE;
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.login.LoginActivity;
 import mil.nga.giat.mage.sdk.datastore.DaoStore;
-import mil.nga.giat.mage.sdk.utils.MediaUtility;
 
 /**
  * Clear Data screen
@@ -52,11 +51,11 @@ public class ClearDataPreferenceActivity extends ListActivity {
 
 
 				if (checkedItems.indexOfKey(position) >=0 && checkedItems.valueAt(checkedItems.indexOfKey(position))) {
-					if (position == 0 || position == 3) {
+					if (position == 0 || position == 2) {
 						getListView().setItemChecked(1, true);
 					}
 				} else if (position == 1) {
-					if ((checkedItems.indexOfKey(0) >=0 && checkedItems.valueAt(checkedItems.indexOfKey(0))) || (checkedItems.indexOfKey(3) >=0 && checkedItems.valueAt(checkedItems.indexOfKey(3)))) {
+					if ((checkedItems.indexOfKey(0) >=0 && checkedItems.valueAt(checkedItems.indexOfKey(0))) || (checkedItems.indexOfKey(2) >=0 && checkedItems.valueAt(checkedItems.indexOfKey(2)))) {
 						getListView().setItemChecked(position, true);
 					}
 				}
@@ -137,44 +136,40 @@ public class ClearDataPreferenceActivity extends ListActivity {
 
 	public void deleteDataDialog(final View view) {
 
-		new AlertDialog.Builder(view.getContext()).setTitle("Delete All Data").setMessage(R.string.clear_data_message).setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
-			public void onClick(DialogInterface dialog, int which) {
-				// stop doing stuff
-				((MAGE) getApplication()).onLogout(false);
+		new AlertDialog.Builder(view.getContext(), R.style.AppCompatAlertDialogStyle)
+				.setTitle("Delete All Data")
+				.setMessage(R.string.clear_data_message)
+				.setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+					public void onClick(DialogInterface dialog, int which) {
+						// stop doing stuff
+						((MAGE) getApplication()).onLogout(false, null);
 
-				SparseBooleanArray checkedItems = getListView().getCheckedItemPositions();
+						SparseBooleanArray checkedItems = getListView().getCheckedItemPositions();
 
-				if (checkedItems.indexOfKey(0) >=0 && checkedItems.valueAt(checkedItems.indexOfKey(0))) {
-					// delete database
-					DaoStore.getInstance(view.getContext()).resetDatabase();
-				}
+						if (checkedItems.indexOfKey(0) >= 0 && checkedItems.valueAt(checkedItems.indexOfKey(0))) {
+							// delete database
+							DaoStore.getInstance(view.getContext()).resetDatabase();
+						}
 
-				if (checkedItems.indexOfKey(1) >=0 && checkedItems.valueAt(checkedItems.indexOfKey(1))) {
-					// clear preferences
-					PreferenceManager.getDefaultSharedPreferences(view.getContext()).edit().clear().commit();
-				}
+						if (checkedItems.indexOfKey(1) >= 0 && checkedItems.valueAt(checkedItems.indexOfKey(1))) {
+							// clear preferences
+							PreferenceManager.getDefaultSharedPreferences(view.getContext()).edit().clear().commit();
+						}
 
-				if (checkedItems.indexOfKey(2) >=0 && checkedItems.valueAt(checkedItems.indexOfKey(2))) {
-					// delete attachments
-					LandingActivity.deleteDir(MediaUtility.getMediaStageDirectory());
-				}
+						if (checkedItems.indexOfKey(2) >= 0 && checkedItems.valueAt(checkedItems.indexOfKey(2))) {
+							// delete the application contents on the filesystem
+							LandingActivity.clearApplicationData(getApplicationContext());
+						}
 
-				if (checkedItems.indexOfKey(3) >=0 && checkedItems.valueAt(checkedItems.indexOfKey(3))) {
-					// delete the application contents on the filesystem
-					LandingActivity.clearApplicationData(getApplicationContext());
-				}
+						// go to login activity
+						startActivity(new Intent(getApplicationContext(), LoginActivity.class));
 
-				// go to login activity
-				startActivity(new Intent(getApplicationContext(), LoginActivity.class));
-
-				// finish the activity
-				finish();
-			}
-		}).setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
-			public void onClick(DialogInterface dialog, int which) {
-				dialog.dismiss();
-			}
-		}).show();
+						// finish the activity
+						finish();
+					}
+				})
+				.setNegativeButton(android.R.string.no, null)
+				.show();
 	}
 
 	@Override

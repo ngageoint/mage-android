@@ -24,7 +24,7 @@ import java.util.Stack;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationProperty;
 import mil.nga.giat.mage.sdk.datastore.user.Event;
-import mil.nga.giat.mage.sdk.http.get.MageServerGetRequests;
+import mil.nga.giat.mage.sdk.fetch.ObservationBitmapFetch;
 
 public class ObservationBitmapFactory {
 	
@@ -88,7 +88,7 @@ public class ObservationBitmapFactory {
 			}
 
             // make path from type and variant
-            File path = new File(new File(new File(context.getFilesDir() + MageServerGetRequests.OBSERVATION_ICON_PATH), event.getRemoteId()), "icons");
+            File path = new File(new File(new File(context.getFilesDir() + ObservationBitmapFetch.OBSERVATION_ICON_PATH), event.getRemoteId()), "icons");
 
             Stack<ObservationProperty> iconProperties = new Stack<ObservationProperty>();
             iconProperties.add(variant);

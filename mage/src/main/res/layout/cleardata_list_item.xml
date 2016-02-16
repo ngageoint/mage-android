@@ -10,7 +10,8 @@
         android:layout_height="wrap_content"
         android:background="@null"
         android:paddingRight="5dip"
-        android:src="@drawable/ic_pinpoint"
+        android:src="@drawable/ic_place_black_24dp"
+        android:alpha=".54"
         android:visibility="gone" />
 
     <CheckedTextView

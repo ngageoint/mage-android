@@ -8,7 +8,8 @@
             android:entries="@array/baseLayerEntries"
             android:entryValues="@array/baseLayerValues"
             android:key="@string/baseLayerKey"
-            android:title="Base Layer"/>
+            android:title="Base Layer"
+            android:summary="%s"/>
 
         <mil.nga.giat.mage.map.preference.OverlayPreference
             android:key="@string/tileOverlaysKey"

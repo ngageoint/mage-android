@@ -1,6 +1,7 @@
 package mil.nga.giat.mage.event;
 
 import android.app.Fragment;
+import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Bundle;
@@ -38,7 +39,7 @@ public class EventFragment extends Fragment {
 
 	private static final int uniqueChildStartingIdIndex = 10000;
 	private int uniqueChildIdIndex = uniqueChildStartingIdIndex;
-	private List<Event> events = new ArrayList<Event>();
+	private List<Event> events = new ArrayList<>();
 	private RadioGroup radioGroup;
 	private int checkedID;
 
@@ -47,6 +48,8 @@ public class EventFragment extends Fragment {
 		uniqueChildIdIndex = uniqueChildStartingIdIndex;
 		View rootView = inflater.inflate(R.layout.fragment_events, container, false);
 		getActivity().getActionBar().setTitle("Events");
+
+		final Context context = getActivity().getApplicationContext();
 
 		try {
 			final User currentUser = UserHelper.getInstance(getActivity().getApplicationContext()).readCurrentUser();
@@ -57,7 +60,7 @@ public class EventFragment extends Fragment {
 				events = EventHelper.getInstance(getActivity().getApplicationContext()).getEventsForCurrentUser();
 			}
 
-			Event currentEvent = currentUser.getCurrentEvent();
+			Event currentEvent = currentUser.getUserLocal().getCurrentEvent();
 
 			radioGroup = ((RadioGroup)rootView.findViewById(R.id.event_fragment_radiogroup));
 			radioGroup.removeAllViews();
@@ -81,16 +84,16 @@ public class EventFragment extends Fragment {
 			Log.e(LOG_NAME, "Could not get current events!");
 		}
 
-
 		((Button)rootView.findViewById(R.id.event_fragment_continue_button)).setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
 				try {
-					final User currentUser = UserHelper.getInstance(getActivity().getApplicationContext()).readCurrentUser();
+					UserHelper userHelper = UserHelper.getInstance(context);
+					User user = userHelper.readCurrentUser();
 					int eventIndex = radioGroup.getCheckedRadioButtonId() - uniqueChildStartingIdIndex;
 					Event chosenEvent = events.get(eventIndex);
 
-					List<String> userRecentEventInfo = new ArrayList<String>();
+					List<String> userRecentEventInfo = new ArrayList<>();
 					userRecentEventInfo.add(chosenEvent.getRemoteId());
 
 					new RecentEventTask(new AccountDelegate() {
@@ -98,15 +101,16 @@ public class EventFragment extends Fragment {
 						public void finishAccount(AccountStatus accountStatus) {
 
 						}
-					}, getActivity().getApplicationContext()).execute(userRecentEventInfo.toArray(new String[userRecentEventInfo.size()]));
+					}, context).execute(userRecentEventInfo.toArray(new String[userRecentEventInfo.size()]));
 
 					// regardless of the return status, set the user's currentevent which will fire off local onEventChanged
 					SharedPreferences.Editor sp = PreferenceManager.getDefaultSharedPreferences(getActivity().getApplicationContext()).edit();
 					if (!UserHelper.getInstance(getActivity().getApplicationContext()).isCurrentUserPartOfEvent(chosenEvent)) {
 						sp.putBoolean(getString(R.string.reportLocationKey), false).commit();
 					}
-					currentUser.setCurrentEvent(chosenEvent);
-					UserHelper.getInstance(getActivity().getApplicationContext()).createOrUpdate(currentUser);
+
+					userHelper.setCurrentEvent(user, chosenEvent);
+
 					sp.putString(getString(R.string.currentEventKey), String.valueOf(chosenEvent.getName())).commit();
 				} catch (Exception e) {
 					Log.e(LOG_NAME, "Could not set current event.");

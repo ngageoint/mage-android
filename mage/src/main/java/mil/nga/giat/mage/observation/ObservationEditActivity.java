@@ -1,9 +1,11 @@
 package mil.nga.giat.mage.observation;
 
+import android.Manifest;
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.Dialog;
 import android.app.FragmentManager;
 import android.content.ClipData;
 import android.content.DialogInterface;
@@ -14,9 +16,11 @@ import android.location.Location;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
 import android.os.SystemClock;
 import android.provider.MediaStore;
+import android.provider.Settings;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -62,7 +66,6 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 
 import mil.nga.giat.mage.R;
@@ -89,13 +92,18 @@ public class ObservationEditActivity extends Activity implements OnMapReadyCallb
 
 	private static final String LOG_NAME = ObservationEditActivity.class.getName();
 
-    private final DateFormat iso8601Format = DateFormatFactory.ISO8601();
+	private static final int PERMISSIONS_REQUEST_CAMERA = 100;
+	private static final int PERMISSIONS_REQUEST_VIDEO = 200;
+	private static final int PERMISSIONS_REQUEST_AUDIO = 300;
+	private static final int PERMISSIONS_REQUEST_STORAGE = 400;
+
+	private final DateFormat iso8601Format = DateFormatFactory.ISO8601();
 
 	public static final String OBSERVATION_ID = "OBSERVATION_ID";
 	public static final String LOCATION = "LOCATION";
 	public static final String INITIAL_LOCATION = "INITIAL_LOCATION";
 	public static final String INITIAL_ZOOM = "INITIAL_ZOOM";
-	private static final String CURRENT_MEDIA_URI = "CURRENT_MEDIA_URI";
+	private static final String CURRENT_MEDIA_PATH = "CURRENT_MEDIA_PATH";
 
 	private static final int CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE = 100;
 	private static final int CAPTURE_VIDEO_ACTIVITY_REQUEST_CODE = 200;
@@ -106,7 +114,7 @@ public class ObservationEditActivity extends Activity implements OnMapReadyCallb
 	private static final long NEW_OBSERVATION = -1L;
 
 	private final DecimalFormat latLngFormat = new DecimalFormat("###.#####");
-	private ArrayList<Attachment> attachmentsToCreate = new ArrayList<Attachment>();
+	private ArrayList<Attachment> attachmentsToCreate = new ArrayList<>();
 
     private Location l;
 	private Observation observation;
@@ -118,10 +126,10 @@ public class ObservationEditActivity extends Activity implements OnMapReadyCallb
     private LinearLayout attachmentLayout;
     private AttachmentGallery attachmentGallery;
 
-	private Uri currentMediaUri;
+	private String currentMediaPath;
 
 	// control key to default position
-	private static Map<String, Integer> spinnersLastPositions = new HashMap<String, Integer>();
+	private static Map<String, Integer> spinnersLastPositions = new HashMap<>();
 	
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -138,7 +146,7 @@ public class ObservationEditActivity extends Activity implements OnMapReadyCallb
             @Override
             public void onAttachmentClick(Attachment attachment) {
                 Intent intent = new Intent(getApplicationContext(), AttachmentViewerActivity.class);
-                intent.putExtra(AttachmentViewerActivity.ATTACHMENT, attachment);
+                intent.putExtra(AttachmentViewerActivity.ATTACHMENT_ID, attachment.getId());
                 intent.putExtra(AttachmentViewerActivity.EDITABLE, false);
                 startActivity(intent);
             }
@@ -216,7 +224,7 @@ public class ObservationEditActivity extends Activity implements OnMapReadyCallb
 
             observation.setEvent(EventHelper.getInstance(getApplicationContext()).getCurrentEvent());
 			observation.setTimestamp(new Date());
-			List<ObservationProperty> properties = new ArrayList<ObservationProperty>();
+			List<ObservationProperty> properties = new ArrayList<>();
 			properties.add(new ObservationProperty("timestamp", iso8601Format.format(observation.getTimestamp())));
 			observation.addProperties(properties);
 			try {
@@ -308,7 +316,7 @@ public class ObservationEditActivity extends Activity implements OnMapReadyCallb
 	/**
 	 * Hides keyboard when clicking elsewhere
 	 * 
-	 * @param view
+	 * @param view view
 	 */
 	private void hideKeyboardOnClick(View view) {
 		// Set up touch listener for non-text box views to hide keyboard.
@@ -451,7 +459,7 @@ public class ObservationEditActivity extends Activity implements OnMapReadyCallb
 
 		LinearLayout form = (LinearLayout) findViewById(R.id.form);
 		LayoutBaker.populateLayoutFromBundle(form, ControlGenerationType.EDIT, savedInstanceState);
-		currentMediaUri = savedInstanceState.getParcelable(CURRENT_MEDIA_URI);
+		currentMediaPath = savedInstanceState.getParcelable(CURRENT_MEDIA_PATH);
 	}
 
 	@Override
@@ -459,7 +467,7 @@ public class ObservationEditActivity extends Activity implements OnMapReadyCallb
 		LayoutBaker.populateBundleFromLayout((LinearLayout) findViewById(R.id.form), outState);
 		outState.putParcelable("location", l);
 		outState.putParcelableArrayList("attachmentsToCreate", attachmentsToCreate);
-		outState.putParcelable(CURRENT_MEDIA_URI, currentMediaUri);
+		outState.putString(CURRENT_MEDIA_PATH, currentMediaPath);
 		super.onSaveInstanceState(outState);
 	}
 
@@ -522,76 +530,93 @@ public class ObservationEditActivity extends Activity implements OnMapReadyCallb
 
 			break;
 		case R.id.observation_cancel:
-			new AlertDialog.Builder(this).setTitle("Discard Changes").setMessage(R.string.cancel_edit).setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
-				public void onClick(DialogInterface dialog, int which) {
-					finish();
-				}
-			}).setNegativeButton(R.string.no, new DialogInterface.OnClickListener() {
-				public void onClick(DialogInterface dialog, int which) {
-				}
-			}).show();
+			new AlertDialog.Builder(this)
+				.setTitle("Discard Changes")
+				.setMessage(R.string.cancel_edit)
+				.setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
+					public void onClick(DialogInterface dialog, int which) {
+						finish();
+					}
+				}).setNegativeButton(R.string.no, null)
+				.show();
 			break;
 		}
 
 		return super.onOptionsItemSelected(item);
 	}
 
-	public void cameraButtonPressed(View v) {
-		Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-		File f = null;
-        try {
-        	f = MediaUtility.createImageFile();
-        } catch (IOException ex) {
-            // Error occurred while creating the File
-        	ex.printStackTrace();
-        }
-        // Continue only if the File was successfully created
-        if (f != null) {
-        	currentMediaUri = Uri.fromFile(f);
-            intent.putExtra(MediaStore.EXTRA_OUTPUT, currentMediaUri);
-            startActivityForResult(intent, CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE);
-        }
+	public void onCameraClick(View v) {
+		if (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+			ActivityCompat.requestPermissions(ObservationEditActivity.this, new String[]{Manifest.permission.CAMERA}, PERMISSIONS_REQUEST_CAMERA);
+		} else {
+			launchCameraIntent();
+		}
 	}
 
-	public void videoButtonPressed(View v) {
-		Intent intent = new Intent(MediaStore.ACTION_VIDEO_CAPTURE);
-		currentMediaUri = getOutputVideoUri(); // create a file to save the video in specific folder
-		
-		if (currentMediaUri != null) {
-			intent.putExtra(MediaStore.EXTRA_OUTPUT, currentMediaUri);
+	public void onVideoClick(View v) {
+		if (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+			ActivityCompat.requestPermissions(ObservationEditActivity.this, new String[]{Manifest.permission.CAMERA}, PERMISSIONS_REQUEST_VIDEO);
+		} else {
+			launchVideoIntent();
 		}
-		startActivityForResult(intent, CAPTURE_VIDEO_ACTIVITY_REQUEST_CODE);
 	}
-	
-	private static Uri getOutputVideoUri() {
-		if (Environment.getExternalStorageState() == null) {
-			return null;
-		}
 
-		File mediaStorage = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM), "MAGE_VIDEO");
-		if (!mediaStorage.exists() && !mediaStorage.mkdirs()) {
-			Log.e(LOG_NAME, "failed to create directory: " + mediaStorage);
-			return null;
+	public void onAudioClick(View v) {
+		if (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+			ActivityCompat.requestPermissions(ObservationEditActivity.this, new String[]{Manifest.permission.RECORD_AUDIO}, PERMISSIONS_REQUEST_AUDIO);
+		} else {
+			launchAudioIntent();
 		}
+	}
 
-		// Create a media file name
-        DateFormat dateFormat = DateFormatFactory.format("yyyyMMdd_HHmmss", Locale.getDefault());
-		String timeStamp = dateFormat.format(new Date());
-		//File mediaFile = new File(mediaStorage, "VID_" + timeStamp + ".mp4");
+	public void onGalleryClick(View v) {
+		if (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+			ActivityCompat.requestPermissions(ObservationEditActivity.this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, PERMISSIONS_REQUEST_STORAGE);
+		} else {
+			launchGalleryIntent();
+		}
+	}
+
+	private void launchCameraIntent() {
 		try {
-			File mediaFile = File.createTempFile(
-				"VID_" + timeStamp,  /* prefix */
-				".mp4",         /* suffix */
-				mediaStorage      /* directory */
-		    );
-			return Uri.fromFile(mediaFile);
-		} catch (Exception e) {
-			Log.e(LOG_NAME, "failed to create temp video file: " + mediaStorage + "/VID_" + timeStamp + ".mp4", e);
-			return null;
+			File file = MediaUtility.createMediaFile(getApplicationContext(), ".png");
+			currentMediaPath = file.getAbsolutePath();
+			Uri uri = Uri.fromFile(file);
+			Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+			intent.putExtra(MediaStore.EXTRA_OUTPUT, uri);
+			intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+			startActivityForResult(intent, CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE);
+		} catch (IOException e) {
+			Log.e(LOG_NAME, "Error creating video media file", e);
 		}
 	}
 
-	public void voiceButtonPressed(View v) {
+	private void launchVideoIntent() {
+		try {
+			File file = MediaUtility.createMediaFile(getApplicationContext(), ".mp4");
+			currentMediaPath = file.getAbsolutePath();
+			Uri uri = Uri.fromFile(file);
+			Intent intent = new Intent(MediaStore.ACTION_VIDEO_CAPTURE);
+			intent.putExtra(MediaStore.EXTRA_OUTPUT, uri);
+			intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+			startActivityForResult(intent, CAPTURE_VIDEO_ACTIVITY_REQUEST_CODE);
+		} catch (IOException e) {
+			Log.e(LOG_NAME, "Error creating video media file", e);
+		}
+	}
+
+	private void launchGalleryIntent() {
+		Intent intent = new Intent();
+		intent.setType("image/*, video/*");
+		intent.setAction(Intent.ACTION_GET_CONTENT);
+		Log.i(LOG_NAME, "build version sdk int: " + Build.VERSION.SDK_INT);
+		if (Build.VERSION.SDK_INT >=  Build.VERSION_CODES.JELLY_BEAN_MR2) {
+			intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+		}
+		startActivityForResult(intent, GALLERY_ACTIVITY_REQUEST_CODE);
+	}
+
+	private void launchAudioIntent() {
 		Intent intent = new Intent(MediaStore.Audio.Media.RECORD_SOUND_ACTION);
 		List<ResolveInfo> resolveInfo = getApplicationContext().getPackageManager().queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY);
 		if (resolveInfo.size() > 0) {
@@ -601,15 +626,79 @@ public class ObservationEditActivity extends Activity implements OnMapReadyCallb
 		}
 	}
 
-	public void fromGalleryButtonPressed(View v) {
-		Intent intent = new Intent();
-		intent.setType("image/*, video/*");
-		intent.setAction(Intent.ACTION_GET_CONTENT);
-		Log.i(LOG_NAME, "build version sdk int: " + Build.VERSION.SDK_INT);
-		if (Build.VERSION.SDK_INT >= 18) {
-			intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+	@Override
+	public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
+		switch (requestCode) {
+			case PERMISSIONS_REQUEST_CAMERA:
+			case PERMISSIONS_REQUEST_VIDEO: {
+				if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+					if (requestCode == PERMISSIONS_REQUEST_CAMERA) {
+						launchCameraIntent();
+					} else {
+						launchVideoIntent();
+					}
+				} else {
+					if (!ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.CAMERA)) {
+						// User denied camera with never ask again.  Since they will get here
+						// by clicking the camera button give them a dialog that will
+						// guide them to settings if they want to enable the permission
+						showDisabledPermissionsDialog(
+								getResources().getString(R.string.camera_access_title),
+								getResources().getString(R.string.camera_access_message));
+					}
+				}
+
+				break;
+			}
+			case PERMISSIONS_REQUEST_AUDIO: {
+				if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+					launchAudioIntent();
+				} else {
+					if (!ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.RECORD_AUDIO)) {
+						// User denied audio with never ask again.  Since they will get here
+						// by clicking the audio button give them a dialog that will
+						// guide them to settings if they want to enable the permission
+						showDisabledPermissionsDialog(
+								getResources().getString(R.string.audio_access_title),
+								getResources().getString(R.string.audio_access_message));
+					}
+				}
+
+				break;
+			}
+			case PERMISSIONS_REQUEST_STORAGE: {
+				if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+					launchGalleryIntent();
+				} else {
+					if (!ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.READ_EXTERNAL_STORAGE)) {
+						// User denied storage with never ask again.  Since they will get here
+						// by clicking the gallery button give them a dialog that will
+						// guide them to settings if they want to enable the permission
+						showDisabledPermissionsDialog(
+								getResources().getString(R.string.gallery_access_title),
+								getResources().getString(R.string.gallery_access_message));
+					}
+				}
+
+				break;
+			}
 		}
-		startActivityForResult(intent, GALLERY_ACTIVITY_REQUEST_CODE);
+	}
+
+	private void showDisabledPermissionsDialog(String title, String message) {
+		new AlertDialog.Builder(this, R.style.AppCompatAlertDialogStyle)
+				.setTitle(title)
+				.setMessage(message)
+				.setPositiveButton(R.string.settings, new Dialog.OnClickListener() {
+					@Override
+					public void onClick(DialogInterface dialog, int which) {
+						Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+						intent.setData(Uri.fromParts("package", getApplicationContext().getPackageName(), null));
+						startActivity(intent);
+					}
+				})
+				.setNegativeButton(android.R.string.cancel, null)
+				.show();
 	}
 
 	@Override
@@ -620,9 +709,8 @@ public class ObservationEditActivity extends Activity implements OnMapReadyCallb
 		switch (requestCode) {
 		case CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE:
 		case CAPTURE_VIDEO_ACTIVITY_REQUEST_CODE:
-			MediaUtility.addImageToGallery(getApplicationContext(), currentMediaUri);
 			Attachment capture = new Attachment();
-			capture.setLocalPath(MediaUtility.getFileAbsolutePath(currentMediaUri, this));
+			capture.setLocalPath(currentMediaPath);
 			attachmentsToCreate.add(capture);
             attachmentGallery.addAttachment(attachmentLayout, capture);
 			break;
@@ -645,7 +733,7 @@ public class ObservationEditActivity extends Activity implements OnMapReadyCallb
 	}
 
 	private List<Uri> getUris(Intent intent) {
-		List<Uri> uris = new ArrayList<Uri>();
+		List<Uri> uris = new ArrayList<>();
 		uris.addAll(getClipDataUris(intent));
 		if (intent.getData() != null) {
 			uris.add(intent.getData());
@@ -655,7 +743,7 @@ public class ObservationEditActivity extends Activity implements OnMapReadyCallb
 	
 	@TargetApi(16)
 	private List<Uri> getClipDataUris(Intent intent) {
-		List<Uri> uris = new ArrayList<Uri>();
+		List<Uri> uris = new ArrayList<>();
 		if (Build.VERSION.SDK_INT >= 16) {
 			ClipData cd = intent.getClipData();
 			if (cd != null) {

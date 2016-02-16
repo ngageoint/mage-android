@@ -23,6 +23,39 @@
     <string name="no">No</string>
     <string name="force_submit"><u>Force Submit</u></string>
 
+    <string name="location_services_enabled_summary">Click to configure GPS sensitivy and tracking options.</string>
+    <string name="location_services_disabled_summary">MAGE location services have been disabled. Click here to go to settings and enabled the location permission.</string>
+
+    <string name="location_no_event_title"><font color='#DD000000'>Not a member of this event</font></string>
+    <string name="location_no_event_message">You are an administrator and not a member of the current event.  You can not create an observation in this event.</string>
+
+    <string name="location_missing_title"><font color='#DD000000'>No Location Available</font></string>
+    <string name="location_missing_message">The device has not received a location yet.  To make an observation manually, long press on the map.</string>
+
+    <string name="location_access_rational_title">Use <font color='#DD000000'>MAGE</font> location services</string>
+    <string name="location_access_rational_message">MAGE shares your location with the team, and enables you to add observations at your current position</string>
+    <string name="location_access_observation_title"><font color='#DD000000'>Location Services Disabled</font></string>
+    <string name="location_access_observation_message"><font color='#DD000000'>MAGE</font> has been denied access to location services.  To create an observation at your current location please go into your devices settings and enable the Location permission, otherwise long press on the map.</string>
+
+    <string name="cache_access_rational_title">Use <font color='#DD000000'>MAGE</font> Offline Maps</string>
+    <string name="cache_access_rational_message">MAGE is looking for offline maps that may reside in external storage on your device. Please allow MAGE to access external media to view this map.</string>
+    <string name="cache_access_title"><font color='#DD000000'>Storage Permission Denied</font></string>
+    <string name="cache_access_message"><font color='#DD000000'>MAGE</font> has been denied access to external storage.  To access map caches that reside in external storage please go into the MAGE application settings on your device and enable the Storage permission.</string>
+
+    <string name="camera_access_title"><font color='#DD000000'>Camera Permission Denied</font></string>
+    <string name="camera_access_message"><font color='#DD000000'>MAGE</font> has been denied access to the camera.  To use the camera please go into the MAGE application settings on your device and enable the Camera permission.</string>
+
+    <string name="audio_access_title"><font color='#DD000000'>Microphone Permission Denied</font></string>
+    <string name="audio_access_message"><font color='#DD000000'>MAGE</font> has been denied access to the microphone.  To use the microphone please go into the MAGE application settings on your device and enable the Microphone permission.</string>
+
+    <string name="gallery_access_title"><font color='#DD000000'>Storage Permission Denied</font></string>
+    <string name="gallery_access_message"><font color='#DD000000'>MAGE</font> has been denied access to external storage.  To pick media from the Gallery please go into the MAGE application settings on your device and enable the Storage permission.</string>
+
+    <string name="overlay_access_title"><font color='#DD000000'>Storage Permission Denied</font></string>
+    <string name="overlay_access_message"><font color='#DD000000'>MAGE</font> has been denied access to read external storage. Please enable if you would like access to tile overlays that reside in external storage.</string>
+
+    <string name="settings">Settings</string>
+
     <string name="disconnected_mode">DISCONNECTED</string>
     <string name="connected_mode">CONNECTED</string>
     <!-- map overlay menus -->
@@ -37,5 +70,9 @@
     <string name="clear_data_message">You are about to delete the selected data and logout.\n\n Are you sure you want to do this?</string>
 
     <string name="overlay_cache_directory">MapCache</string>
+
+    <string name="gpsPreferencesCategoryKey">gpsPreferencesCategory</string>
+    <string name="locationsPushPreferencesCategoryKey">locationsPushPreferencesCategory</string>
+    <string name="locationServiceDisabledKey">locationServiceDisabled</string>
 
 </resources>

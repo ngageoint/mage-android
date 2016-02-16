@@ -42,8 +42,8 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:contentDescription="voice"
-                    android:onClick="voiceButtonPressed"
-                    android:src="@drawable/ic_microphone"/>
+                    android:onClick="onAudioClick"
+                    android:src="@drawable/ic_mic_gray_24dp"/>
 
                 <ImageButton
                     android:id="@+id/camera_btn"
@@ -51,8 +51,8 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:onClick="cameraButtonPressed"
-                    android:src="@drawable/ic_camera"
+                    android:onClick="onCameraClick"
+                    android:src="@drawable/ic_photo_camera_gray_24dp"
                     android:text="camera"/>
 
                 <ImageButton
@@ -61,8 +61,8 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:onClick="videoButtonPressed"
-                    android:src="@drawable/ic_video"/>
+                    android:onClick="onVideoClick"
+                    android:src="@drawable/ic_videocam_gray_24dp"/>
 
                 <ImageButton
                     android:id="@+id/from_gallery_btn"
@@ -70,8 +70,8 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:onClick="fromGalleryButtonPressed"
-                    android:src="@drawable/ic_picture"/>
+                    android:onClick="onGalleryClick"
+                    android:src="@drawable/ic_image_gray_24dp"/>
             </LinearLayout>
 
             <ScrollView
@@ -116,7 +116,7 @@
                                 android:layout_width="18dip"
                                 android:layout_height="18dip"
                                 android:layout_gravity="center_vertical"
-                                android:src="@drawable/ic_edit"/>
+                                android:src="@drawable/ic_mode_edit_gray_24dp"/>
 
                             <mil.nga.giat.mage.form.MageTextView
                                 android:id="@+id/date"
@@ -143,7 +143,7 @@
                                 android:layout_width="18dip"
                                 android:layout_height="18dip"
                                 android:layout_gravity="center_vertical"
-                                android:src="@drawable/ic_edit"/>
+                                android:src="@drawable/ic_mode_edit_gray_24dp"/>
 
                             <TextView
                                 android:id="@+id/location"
