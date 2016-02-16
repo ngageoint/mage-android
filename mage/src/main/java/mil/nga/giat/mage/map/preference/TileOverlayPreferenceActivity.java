@@ -31,10 +31,11 @@ import java.util.Map;
 
 import mil.nga.geopackage.GeoPackageManager;
 import mil.nga.geopackage.factory.GeoPackageFactory;
-import mil.nga.giat.mage.MAGE;
-import mil.nga.giat.mage.MAGE.OnCacheOverlayListener;
 import mil.nga.giat.mage.R;
+import mil.nga.giat.mage.cache.CacheUtils;
 import mil.nga.giat.mage.map.cache.CacheOverlay;
+import mil.nga.giat.mage.map.cache.CacheProvider;
+import mil.nga.giat.mage.map.cache.CacheProvider.OnCacheOverlayListener;
 import mil.nga.giat.mage.map.cache.GeoPackageCacheOverlay;
 import mil.nga.giat.mage.map.cache.XYZDirectoryCacheOverlay;
 import mil.nga.giat.mage.sdk.utils.StorageUtility;
@@ -43,7 +44,6 @@ public class TileOverlayPreferenceActivity extends ExpandableListActivity implem
 
     private static final int PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE = 100;
 
-    private MAGE mage;
     private ProgressBar progressBar;
     private MenuItem refreshButton;
     private OverlayAdapter overlayAdapter;
@@ -53,7 +53,6 @@ public class TileOverlayPreferenceActivity extends ExpandableListActivity implem
         super.onCreate(savedInstanceState);
         setContentView(R.layout.cache_overlay);
 
-        mage = (MAGE) getApplication();
         progressBar = (ProgressBar) findViewById(R.id.overlay_progress_bar);
 
         getExpandableListView().setEnabled(false);
@@ -70,7 +69,6 @@ public class TileOverlayPreferenceActivity extends ExpandableListActivity implem
                                 ActivityCompat.requestPermissions(TileOverlayPreferenceActivity.this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE);
                             }
                         })
-                        .setNegativeButton(android.R.string.cancel, null)
                         .create()
                         .show();
 
@@ -83,7 +81,7 @@ public class TileOverlayPreferenceActivity extends ExpandableListActivity implem
     @Override
     public void onDestroy() {
         super.onDestroy();
-        mage.unregisterCacheOverlayListener(this);
+        CacheProvider.getInstance(getApplicationContext()).unregisterCacheOverlayListener(this);
     }
 
     @Override
@@ -113,7 +111,7 @@ public class TileOverlayPreferenceActivity extends ExpandableListActivity implem
         });
         refreshButton.setEnabled(true);
         getExpandableListView().setEnabled(true);
-        progressBar.setVisibility(View.GONE);
+        progressBar.setVisibility(View.INVISIBLE);
     }
 
     @Override
@@ -125,7 +123,7 @@ public class TileOverlayPreferenceActivity extends ExpandableListActivity implem
         // before I register as the call back will set it to enabled
         // the problem is that onResume gets called before this so my menu is
         // not yet setup and I will not have a handle on this button
-        mage.registerCacheOverlayListener(this);
+        CacheProvider.getInstance(getApplicationContext()).registerCacheOverlayListener(this);
 
         return super.onPrepareOptionsMenu(menu);
     }
@@ -148,7 +146,7 @@ public class TileOverlayPreferenceActivity extends ExpandableListActivity implem
                 progressBar.setVisibility(View.VISIBLE);
                 getExpandableListView().setEnabled(false);
 
-                ((MAGE) getApplication()).refreshTileOverlays();
+                CacheProvider.getInstance(getApplicationContext()).refreshTileOverlays();
                 return true;
             case android.R.id.home:
                 onBackPressed();
@@ -171,7 +169,7 @@ public class TileOverlayPreferenceActivity extends ExpandableListActivity implem
         switch (requestCode) {
             case PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE: {
                 if(grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    ((MAGE) getApplication()).refreshTileOverlays();
+                    CacheProvider.getInstance(getApplicationContext()).refreshTileOverlays();
                 };
 
                 break;
@@ -449,7 +447,7 @@ public class TileOverlayPreferenceActivity extends ExpandableListActivity implem
 
         }
 
-        ((MAGE) getApplication()).refreshTileOverlays();
+        CacheProvider.getInstance(getApplicationContext()).refreshTileOverlays();
     }
 
     /**
@@ -496,11 +494,22 @@ public class TileOverlayPreferenceActivity extends ExpandableListActivity implem
 
         // Attempt to delete the cache file if it is in the cache directory
         File pathDirectory = path.getParentFile();
-        if(path.canWrite() && pathDirectory != null){
+        if(path.canWrite() && pathDirectory != null) {
             Map<StorageUtility.StorageType, File> storageLocations = StorageUtility.getWritableStorageLocations();
             for (File storageLocation : storageLocations.values()) {
                 File root = new File(storageLocation, getString(R.string.overlay_cache_directory));
                 if (root.equals(pathDirectory)) {
+                    path.delete();
+                    break;
+                }
+            }
+        }
+
+        // Check internal/external application storage
+        File applicationCacheDirectory = CacheUtils.getApplicationCacheDirectory(getApplicationContext());
+        if (applicationCacheDirectory != null && applicationCacheDirectory.exists()) {
+            for (File cache : applicationCacheDirectory.listFiles()) {
+                if (cache.equals(path)) {
                     path.delete();
                     break;
                 }

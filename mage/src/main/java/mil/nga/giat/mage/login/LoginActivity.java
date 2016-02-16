@@ -147,7 +147,7 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 
 		// Handle when MAGE was launched with a Uri (such as a local or remote cache file)
 		Uri uri = intent.getData();
-		if(uri != null) {
+		if (uri != null) {
 			handleUri(uri);
 		}
 
@@ -386,15 +386,17 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 	 * Handle the Uri used to launch MAGE
 	 * @param uri
 	 */
-	private void handleUri(Uri uri){
+	private void handleUri(Uri uri) {
 
 		// Attempt to get a local file path
 		String openPath = MediaUtility.getPath(this, uri);
 
 		// If not a local or temporary file path, copy the file to cache
-		if(openPath == null || MediaUtility.isTemporaryPath(openPath)){
+		// Cannot pass this to another activity to handle as the URI might
+		// become invalid between now and then.  Copy it now
+		if (openPath == null || MediaUtility.isTemporaryPath(openPath)) {
 			CacheUtils.copyToCache(this, uri, openPath);
-		}else{
+		} else {
 			// Else, store the path to pass to further intents
 			mOpenFilePath = openPath;
 		}
@@ -564,7 +566,7 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 				new Intent(getApplicationContext(), EventActivity.class);
 
 		// If launched with a local file path, save as an extra
-		if(mOpenFilePath != null){
+		if (mOpenFilePath != null) {
 			intent.putExtra(LandingActivity.EXTRA_OPEN_FILE_PATH, mOpenFilePath);
 		}
 
@@ -579,7 +581,7 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 		Intent intent = new Intent(getApplicationContext(), LandingActivity.class);
 
 		// If launched with a local file path, save as an extra
-		if(mOpenFilePath != null){
+		if (mOpenFilePath != null) {
 			intent.putExtra(LandingActivity.EXTRA_OPEN_FILE_PATH, mOpenFilePath);
 		}
 

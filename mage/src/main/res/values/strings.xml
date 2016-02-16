@@ -37,6 +37,11 @@
     <string name="location_access_observation_title"><font color='#DD000000'>Location Services Disabled</font></string>
     <string name="location_access_observation_message"><font color='#DD000000'>MAGE</font> has been denied access to location services.  To create an observation at your current location please go into your devices settings and enable the Location permission, otherwise long press on the map.</string>
 
+    <string name="cache_access_rational_title">Use <font color='#DD000000'>MAGE</font> Offline Maps</string>
+    <string name="cache_access_rational_message">MAGE is looking for offline maps that may reside in external storage on your device. Please allow MAGE to access external media to view this map.</string>
+    <string name="cache_access_title"><font color='#DD000000'>Storage Permission Denied</font></string>
+    <string name="cache_access_message"><font color='#DD000000'>MAGE</font> has been denied access to external storage.  To access map caches that reside in external storage please go into the MAGE application settings on your device and enable the Storage permission.</string>
+
     <string name="camera_access_title"><font color='#DD000000'>Camera Permission Denied</font></string>
     <string name="camera_access_message"><font color='#DD000000'>MAGE</font> has been denied access to the camera.  To use the camera please go into the MAGE application settings on your device and enable the Camera permission.</string>
 
