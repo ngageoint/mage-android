@@ -147,6 +147,15 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 
 		// Handle when MAGE was launched with a Uri (such as a local or remote cache file)
 		Uri uri = intent.getData();
+		if(uri == null){
+			Bundle bundle = intent.getExtras();
+			if(bundle != null){
+				Object objectUri = bundle.get(Intent.EXTRA_STREAM);
+				if(objectUri != null){
+					uri = (Uri)objectUri;
+				}
+			}
+		}
 		if (uri != null) {
 			handleUri(uri);
 		}
