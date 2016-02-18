@@ -73,9 +73,13 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
+import mil.nga.geopackage.BoundingBox;
 import mil.nga.geopackage.GeoPackage;
 import mil.nga.geopackage.GeoPackageCache;
 import mil.nga.geopackage.GeoPackageManager;
+import mil.nga.geopackage.core.contents.Contents;
+import mil.nga.geopackage.core.contents.ContentsDao;
+import mil.nga.geopackage.extension.link.FeatureTileTableLinker;
 import mil.nga.geopackage.factory.GeoPackageFactory;
 import mil.nga.geopackage.features.index.FeatureIndexManager;
 import mil.nga.geopackage.features.user.FeatureCursor;
@@ -85,8 +89,14 @@ import mil.nga.geopackage.geom.GeoPackageGeometryData;
 import mil.nga.geopackage.geom.map.GoogleMapShape;
 import mil.nga.geopackage.geom.map.GoogleMapShapeConverter;
 import mil.nga.geopackage.projection.Projection;
+import mil.nga.geopackage.projection.ProjectionConstants;
+import mil.nga.geopackage.projection.ProjectionFactory;
+import mil.nga.geopackage.projection.ProjectionTransform;
+import mil.nga.geopackage.tiles.TileBoundingBoxUtils;
 import mil.nga.geopackage.tiles.features.FeatureTiles;
+import mil.nga.geopackage.tiles.features.MapFeatureTiles;
 import mil.nga.geopackage.tiles.features.custom.NumberFeaturesTile;
+import mil.nga.geopackage.tiles.overlay.BoundedOverlay;
 import mil.nga.geopackage.tiles.overlay.FeatureOverlay;
 import mil.nga.geopackage.tiles.overlay.FeatureOverlayQuery;
 import mil.nga.geopackage.tiles.overlay.GeoPackageOverlayFactory;
@@ -166,6 +176,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 
 	// GeoPackage cache of open GeoPackage connections
 	private GeoPackageCache geoPackageCache;
+	private BoundingBox addedCacheBoundingBox;
 
 	private LocationService locationService;
 
@@ -793,6 +804,9 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 		// Track enabled GeoPackages
 		Set<String> enabledGeoPackages = new HashSet<>();
 
+		// Reset the bounding box for newly added caches
+		addedCacheBoundingBox = null;
+
 		for (CacheOverlay cacheOverlay : cacheOverlays) {
 			// The user has asked for this overlay
 			if (cacheOverlay.isEnabled()) {
@@ -809,6 +823,8 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 						break;
 				}
 			}
+
+			cacheOverlay.setAdded(false);
 		}
 
 		// Remove any overlays that are on the map but no longer selected in
@@ -821,6 +837,26 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 		// Close GeoPackages no longer enabled
 		geoPackageCache.closeRetain(enabledGeoPackages);
 
+		// If a new cache was added, zoom to the bounding box area
+		if(addedCacheBoundingBox != null){
+
+			final LatLngBounds.Builder boundsBuilder = new LatLngBounds.Builder();
+			boundsBuilder.include(new LatLng(addedCacheBoundingBox.getMinLatitude(), addedCacheBoundingBox
+					.getMinLongitude()));
+			boundsBuilder.include(new LatLng(addedCacheBoundingBox.getMinLatitude(), addedCacheBoundingBox
+					.getMaxLongitude()));
+			boundsBuilder.include(new LatLng(addedCacheBoundingBox.getMaxLatitude(), addedCacheBoundingBox
+					.getMinLongitude()));
+			boundsBuilder.include(new LatLng(addedCacheBoundingBox.getMaxLatitude(), addedCacheBoundingBox
+					.getMaxLongitude()));
+
+			try {
+				map.animateCamera(CameraUpdateFactory.newLatLngBounds(
+						boundsBuilder.build(), 0));
+			} catch (Exception e) {
+				Log.e(LOG_NAME, "Unable to move camera to newly added cache location", e);
+			}
+		}
 	}
 
 	/**
@@ -864,13 +900,38 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 				// Handle tile and feature tables
 				switch(tableCacheOverlay.getType()){
 					case GEOPACKAGE_TILE_TABLE:
-						addGeoPackageTileCacheOverlay(enabledCacheOverlays, (GeoPackageTileTableCacheOverlay)tableCacheOverlay, geoPackage);
+						addGeoPackageTileCacheOverlay(enabledCacheOverlays, (GeoPackageTileTableCacheOverlay)tableCacheOverlay, geoPackage, false);
 						break;
 					case GEOPACKAGE_FEATURE_TABLE:
 						addGeoPackageFeatureCacheOverlay(enabledCacheOverlays, (GeoPackageFeatureTableCacheOverlay)tableCacheOverlay, geoPackage);
 						break;
 					default:
 						throw new UnsupportedOperationException("Unsupported GeoPackage type: " + tableCacheOverlay.getType());
+				}
+
+				// If a newly added cache, update the bounding box for zooming
+				if(geoPackageCacheOverlay.isAdded()){
+
+					try {
+						ContentsDao contentsDao = geoPackage.getContentsDao();
+						Contents contents = contentsDao.queryForId(tableCacheOverlay.getName());
+						BoundingBox contentsBoundingBox = contents.getBoundingBox();
+						Projection projection = ProjectionFactory
+								.getProjection(contents.getSrs().getOrganizationCoordsysId());
+
+						ProjectionTransform transform = projection.getTransformation(ProjectionConstants.EPSG_WORLD_GEODETIC_SYSTEM);
+						BoundingBox boundingBox = transform.transform(contentsBoundingBox);
+						boundingBox = TileBoundingBoxUtils.boundWgs84BoundingBoxWithWebMercatorLimits(boundingBox);
+
+						if (addedCacheBoundingBox == null) {
+							addedCacheBoundingBox = boundingBox;
+						} else {
+							addedCacheBoundingBox = TileBoundingBoxUtils.union(addedCacheBoundingBox, boundingBox);
+						}
+					}catch(Exception e){
+						Log.e(LOG_NAME, "Failed to retrieve GeoPackage Table bounding box. GeoPackage: "
+								+ geoPackage.getName() + ", Table: " + tableCacheOverlay.getName(), e);
+					}
 				}
 			}
 		}
@@ -881,17 +942,42 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 	 * @param enabledCacheOverlays
 	 * @param tileTableCacheOverlay
 	 * @param geoPackage
+	 * @param linkedToFeatures
 	 */
-	private void addGeoPackageTileCacheOverlay(Map<String, CacheOverlay> enabledCacheOverlays, GeoPackageTileTableCacheOverlay tileTableCacheOverlay, GeoPackage geoPackage){
+	private void addGeoPackageTileCacheOverlay(Map<String, CacheOverlay> enabledCacheOverlays, GeoPackageTileTableCacheOverlay tileTableCacheOverlay, GeoPackage geoPackage, boolean linkedToFeatures){
 		// Retrieve the cache overlay if it already exists (and remove from cache overlays)
 		CacheOverlay cacheOverlay = cacheOverlays.remove(tileTableCacheOverlay.getCacheName());
 		if(cacheOverlay == null){
 			// Create a new GeoPackage tile provider and add to the map
 			TileDao tileDao = geoPackage.getTileDao(tileTableCacheOverlay.getName());
-			TileProvider geoPackageTileProvider = GeoPackageOverlayFactory.getTileProvider(tileDao);
-			TileOverlayOptions overlayOptions = createTileOverlayOptions(geoPackageTileProvider);
+			BoundedOverlay geoPackageTileProvider = GeoPackageOverlayFactory.getBoundedOverlay(tileDao);
+			TileOverlayOptions overlayOptions = null;
+			if(linkedToFeatures){
+				overlayOptions = createFeatureTileOverlayOptions(geoPackageTileProvider);
+			}else {
+				overlayOptions = createTileOverlayOptions(geoPackageTileProvider);
+			}
 			TileOverlay tileOverlay = map.addTileOverlay(overlayOptions);
 			tileTableCacheOverlay.setTileOverlay(tileOverlay);
+
+			// Check for linked feature tables
+			tileTableCacheOverlay.clearFeatureOverlayQueries();
+			FeatureTileTableLinker linker = new FeatureTileTableLinker(geoPackage);
+			List<FeatureDao> featureDaos = linker.getFeatureDaosForTileTable(tileDao.getTableName());
+			for(FeatureDao featureDao: featureDaos){
+
+				// Create the feature tiles
+				FeatureTiles featureTiles = new MapFeatureTiles(getActivity(), featureDao);
+
+				// Create an index manager
+				FeatureIndexManager indexer = new FeatureIndexManager(getActivity(), geoPackage, featureDao);
+				featureTiles.setIndexManager(indexer);
+
+				// Add the feature overlay query
+				FeatureOverlayQuery featureOverlayQuery = new FeatureOverlayQuery(getActivity(), geoPackageTileProvider, featureTiles);
+				tileTableCacheOverlay.addFeatureOverlayQuery(featureOverlayQuery);
+			}
+
 			cacheOverlay = tileTableCacheOverlay;
 		}
 		// Add the cache overlay to the enabled cache overlays
@@ -913,7 +999,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 
 			// If indexed, add as a tile overlay
 			if(featureTableCacheOverlay.isIndexed()){
-				FeatureTiles featureTiles = new FeatureTiles(getActivity(), featureDao);
+				FeatureTiles featureTiles = new MapFeatureTiles(getActivity(), featureDao);
 				Integer maxFeaturesPerTile = null;
 				if(featureDao.getGeometryType() == GeometryType.POINT){
 					maxFeaturesPerTile = getResources().getInteger(R.integer.geopackage_feature_tiles_max_points_per_tile);
@@ -930,6 +1016,11 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 				// features are drawn on tiles
 				FeatureOverlay featureOverlay = new FeatureOverlay(featureTiles);
 				featureOverlay.setMinZoom(featureTableCacheOverlay.getMinZoom());
+
+				FeatureTileTableLinker linker = new FeatureTileTableLinker(geoPackage);
+				List<TileDao> tileDaos = linker.getTileDaosForFeatureTable(featureDao.getTableName());
+				featureOverlay.ignoreTileDaos(tileDaos);
+
 				FeatureOverlayQuery featureOverlayQuery = new FeatureOverlayQuery(getActivity(), featureOverlay);
 				featureTableCacheOverlay.setFeatureOverlayQuery(featureOverlayQuery);
 				TileOverlayOptions overlayOptions = createFeatureTileOverlayOptions(featureOverlay);
@@ -974,8 +1065,19 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 					featureCursor.close();
 				}
 			}
+
+			// Add linked tile tables
+			for(GeoPackageTileTableCacheOverlay linkedTileTable: featureTableCacheOverlay.getLinkedTileTables()){
+				addGeoPackageTileCacheOverlay(enabledCacheOverlays, linkedTileTable, geoPackage, true);
+			}
+
 			cacheOverlay = featureTableCacheOverlay;
+		}else{
+			for(GeoPackageTileTableCacheOverlay linkedTileTable: featureTableCacheOverlay.getLinkedTileTables()){
+				cacheOverlays.remove(linkedTileTable.getCacheName());
+			}
 		}
+
 		// Add the cache overlay to the enabled cache overlays
 		enabledCacheOverlays.put(cacheOverlay.getCacheName(), cacheOverlay);
 	}

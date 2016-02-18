@@ -5,7 +5,9 @@ import com.google.android.gms.maps.MapView;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.TileOverlay;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import mil.nga.geopackage.geom.map.GoogleMapShape;
@@ -47,9 +49,14 @@ public class GeoPackageFeatureTableCacheOverlay extends GeoPackageTableCacheOver
     private TileOverlay tileOverlay;
 
     /**
-     * Feature Overlay Query
+     * Used to query the backing feature table
      */
     private FeatureOverlayQuery featureOverlayQuery;
+
+    /**
+     * Linked tile table cache overlays
+     */
+    private List<GeoPackageTileTableCacheOverlay> linkedTiles = new ArrayList<>();
 
     /**
      * Constructor
@@ -78,6 +85,10 @@ public class GeoPackageFeatureTableCacheOverlay extends GeoPackageTableCacheOver
             tileOverlay.remove();
             tileOverlay = null;
         }
+
+        for(GeoPackageTileTableCacheOverlay linkedTileTable: linkedTiles){
+            linkedTileTable.removeFromMap();
+        }
     }
 
     @Override
@@ -87,7 +98,13 @@ public class GeoPackageFeatureTableCacheOverlay extends GeoPackageTableCacheOver
 
     @Override
     public String getInfo() {
-        return "features: " + getCount() + ", zoom: " + getMinZoom() + " - " + getMaxZoom();
+        int minZoom = getMinZoom();
+        int maxZoom = getMaxZoom();
+        for(GeoPackageTileTableCacheOverlay linkedTileTable: linkedTiles){
+            minZoom = Math.min(minZoom, linkedTileTable.getMinZoom());
+            maxZoom = Math.max(maxZoom, linkedTileTable.getMaxZoom());
+        }
+        return "features: " + getCount() + ", zoom: " + minZoom + " - " + maxZoom;
     }
 
     @Override
@@ -200,6 +217,24 @@ public class GeoPackageFeatureTableCacheOverlay extends GeoPackageTableCacheOver
      */
     public void setFeatureOverlayQuery(FeatureOverlayQuery featureOverlayQuery) {
         this.featureOverlayQuery = featureOverlayQuery;
+    }
+
+    /**
+     * Add a linked tile table cache overlay
+     *
+     * @param tileTable tile table cache overlay
+     */
+    public void addLinkedTileTable(GeoPackageTileTableCacheOverlay tileTable){
+        linkedTiles.add(tileTable);
+    }
+
+    /**
+     * Get the linked tile table cache overlays
+     *
+     * @return linked tile table cache overlays
+     */
+    public List<GeoPackageTileTableCacheOverlay> getLinkedTileTables(){
+        return linkedTiles;
     }
 
 }
