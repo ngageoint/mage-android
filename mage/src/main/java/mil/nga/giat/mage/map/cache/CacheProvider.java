@@ -10,6 +10,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -17,6 +18,7 @@ import java.util.Set;
 
 import mil.nga.geopackage.GeoPackage;
 import mil.nga.geopackage.GeoPackageManager;
+import mil.nga.geopackage.extension.link.FeatureTileTableLinker;
 import mil.nga.geopackage.factory.GeoPackageFactory;
 import mil.nga.geopackage.features.index.FeatureIndexManager;
 import mil.nga.geopackage.features.user.FeatureDao;
@@ -174,6 +176,7 @@ public class CacheProvider {
 
                     update = true;
                     cacheOverlay.setEnabled(true);
+                    cacheOverlay.setAdded(true);
                     if (cacheOverlay.isSupportsChildren()) {
                         for (CacheOverlay childCache : cacheOverlay.getChildren()) {
                             childCache.setEnabled(true);
@@ -271,7 +274,8 @@ public class CacheProvider {
 
             List<CacheOverlay> tables = new ArrayList<>();
 
-            // GeoPackage tile tables
+            // GeoPackage tile tables, build a mapping between table name and the created cache overlays
+            Map<String, GeoPackageTileTableCacheOverlay> tileCacheOverlays = new HashMap<>();
             List<String> tileTables = geoPackage.getTileTables();
             for (String tileTable : tileTables) {
                 String tableCacheName = CacheOverlay.buildChildCacheName(database, tileTable);
@@ -279,9 +283,13 @@ public class CacheProvider {
                 int count = tileDao.count();
                 int minZoom = (int) tileDao.getMinZoom();
                 int maxZoom = (int) tileDao.getMaxZoom();
-                GeoPackageTableCacheOverlay tableCache = new GeoPackageTileTableCacheOverlay(tileTable, database, tableCacheName, count, minZoom, maxZoom);
-                tables.add(tableCache);
+                GeoPackageTileTableCacheOverlay tableCache = new GeoPackageTileTableCacheOverlay(tileTable, database, tableCacheName, count, minZoom, maxZoom);
+                tileCacheOverlays.put(tileTable, tableCache);
             }
+
+            // Get a linker to find tile tables linked to features
+            FeatureTileTableLinker linker = new FeatureTileTableLinker(geoPackage);
+            Map<String, GeoPackageTileTableCacheOverlay> linkedTileCacheOverlays = new HashMap<>();
 
             // GeoPackage feature tables
             List<String> featureTables = geoPackage.getFeatureTables();
@@ -298,8 +306,36 @@ public class CacheProvider {
                     minZoom = Math.max(minZoom, 0);
                     minZoom = Math.min(minZoom, GeoPackageFeatureTableCacheOverlay.MAX_ZOOM);
                 }
-                GeoPackageTableCacheOverlay tableCache = new GeoPackageFeatureTableCacheOverlay(featureTable, database, tableCacheName, count, minZoom, indexed, geometryType);
+                GeoPackageFeatureTableCacheOverlay tableCache = new GeoPackageFeatureTableCacheOverlay(featureTable, database, tableCacheName, count, minZoom, indexed, geometryType);
+
+                // If indexed, check for linked tile tables
+                if(indexed){
+                    List<String> linkedTileTables = linker.getTileTablesForFeatureTable(featureTable);
+                    for(String linkedTileTable: linkedTileTables){
+                        // Get the tile table cache overlay
+                        GeoPackageTileTableCacheOverlay tileCacheOverlay = tileCacheOverlays.get(linkedTileTable);
+                        if(tileCacheOverlay != null){
+                            // Remove from tile cache overlays so the tile table is not added as stand alone, and add to the linked overlays
+                            tileCacheOverlays.remove(linkedTileTable);
+                            linkedTileCacheOverlays.put(linkedTileTable, tileCacheOverlay);
+                        }else{
+                            // Another feature table may already be linked to this table, so check the linked overlays
+                            tileCacheOverlay = linkedTileCacheOverlays.get(linkedTileTable);
+                        }
+
+                        // Add the linked tile table to the feature table
+                        if(tileCacheOverlay != null){
+                            tableCache.addLinkedTileTable(tileCacheOverlay);
+                        }
+                    }
+                }
+
                 tables.add(tableCache);
+            }
+
+            // Add stand alone tile tables that were not linked to feature tables
+            for(GeoPackageTileTableCacheOverlay tileCacheOverlay: tileCacheOverlays.values()){
+                tables.add(tileCacheOverlay);
             }
 
             // Create the GeoPackage overlay with child tables

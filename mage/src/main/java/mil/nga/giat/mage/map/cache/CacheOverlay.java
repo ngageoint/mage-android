@@ -35,6 +35,11 @@ public abstract class CacheOverlay {
     private boolean enabled = false;
 
     /**
+     * True when the cache was newly added, such as a file opened with MAGE
+     */
+    private boolean added = false;
+
+    /**
      * True if the cache type supports child caches
      */
     private final boolean supportsChildren;
@@ -88,6 +93,14 @@ public abstract class CacheOverlay {
 
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
+    }
+
+    public boolean isAdded() {
+        return added;
+    }
+
+    public void setAdded(boolean added) {
+        this.added = added;
     }
 
     /**
