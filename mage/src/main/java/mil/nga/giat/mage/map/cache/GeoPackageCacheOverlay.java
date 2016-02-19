@@ -25,10 +25,17 @@ public class GeoPackageCacheOverlay extends CacheOverlay {
      * @param name   GeoPackage name
      * @param tables tables
      */
-    public GeoPackageCacheOverlay(String name, List<CacheOverlay> tables) {
+    public GeoPackageCacheOverlay(String name, List<GeoPackageTableCacheOverlay> tables) {
         super(name, CacheOverlayType.GEOPACKAGE, true);
 
-        for (CacheOverlay table : tables) {
+        for (GeoPackageTableCacheOverlay table : tables) {
+            table.setParent(this);
+            if(table.getType() == CacheOverlayType.GEOPACKAGE_FEATURE_TABLE){
+                GeoPackageFeatureTableCacheOverlay featureTable = (GeoPackageFeatureTableCacheOverlay) table;
+                for(GeoPackageTileTableCacheOverlay linkedTileTable: featureTable.getLinkedTileTables()){
+                    linkedTileTable.setParent(this);
+                }
+            }
             this.tables.put(table.getCacheName(), table);
         }
     }

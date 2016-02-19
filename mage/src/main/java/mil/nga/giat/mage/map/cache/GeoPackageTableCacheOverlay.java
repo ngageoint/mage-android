@@ -28,6 +28,11 @@ public abstract class GeoPackageTableCacheOverlay extends CacheOverlay {
     private final int maxZoom;
 
     /**
+     * Cache overlay parent
+     */
+    private CacheOverlay parent;
+
+    /**
      * Constructor
      *
      * @param name       GeoPackage table name
@@ -44,6 +49,25 @@ public abstract class GeoPackageTableCacheOverlay extends CacheOverlay {
         this.count = count;
         this.minZoom = minZoom;
         this.maxZoom = maxZoom;
+    }
+
+    @Override
+    public boolean isChild(){
+        return true;
+    }
+
+    @Override
+    public CacheOverlay getParent(){
+        return parent;
+    }
+
+    /**
+     * Set the parent cache overlay
+     *
+     * @param parent
+     */
+    public void setParent(CacheOverlay parent) {
+        this.parent = parent;
     }
 
     /**
