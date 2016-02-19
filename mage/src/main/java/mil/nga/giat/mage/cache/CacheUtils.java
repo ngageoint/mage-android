@@ -7,6 +7,7 @@ import android.os.Environment;
 import java.io.File;
 
 import mil.nga.geopackage.validate.GeoPackageValidate;
+import mil.nga.giat.mage.map.cache.CacheProvider;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
 
 /**
@@ -36,8 +37,14 @@ public class CacheUtils {
             File cacheFile = new File(cacheDirectory, name);
             if (isCacheFile(cacheFile)) {
 
+                if(cacheFile.exists()) {
+                    cacheFile.delete();
+                }
+                String cacheName = MediaUtility.getFileNameWithoutExtension(cacheFile);
+                CacheProvider.getInstance(context).removeCacheOverlay(cacheName);
+
                 // Copy the file in a background task
-                CopyCacheStreamTask task = new CopyCacheStreamTask(context, uri, cacheFile);
+                CopyCacheStreamTask task = new CopyCacheStreamTask(context, uri, cacheFile, cacheName);
                 task.execute();
             }
         }

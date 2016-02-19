@@ -131,6 +131,24 @@ public abstract class CacheOverlay {
     }
 
     /**
+     * Return true if a child cache overlay, false if a top level with or without children
+     *
+     * @return true if a child
+     */
+    public boolean isChild(){
+        return false;
+    }
+
+    /**
+     * Get the child's parent cache overlay
+     *
+     * @return parent cache overlay
+     */
+    public CacheOverlay getParent(){
+        return null;
+    }
+
+    /**
      * Get information about the cache to display
      *
      * @return

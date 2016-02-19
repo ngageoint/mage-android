@@ -33,16 +33,23 @@ public class CopyCacheStreamTask extends AsyncTask<Void, Void, String> {
     private File cacheFile;
 
     /**
+     * Cache name
+     */
+    private String cacheName;
+
+    /**
      * Constructor
      *
      * @param context
      * @param uri       Uri containing stream
      * @param cacheFile copy to cache file location
+     * @param cacheName cache name
      */
-    public CopyCacheStreamTask(Context context, Uri uri, File cacheFile) {
+    public CopyCacheStreamTask(Context context, Uri uri, File cacheFile, String cacheName) {
         this.context = context;
         this.uri = uri;
         this.cacheFile = cacheFile;
+        this.cacheName = cacheName;
     }
 
     /**
@@ -75,7 +82,6 @@ public class CopyCacheStreamTask extends AsyncTask<Void, Void, String> {
     @Override
     protected void onPostExecute(String result) {
         if (result == null) {
-            String cacheName = MediaUtility.getFileNameWithoutExtension(cacheFile);
             CacheProvider.getInstance(context).enableAndRefreshTileOverlays(cacheName);
         }
     }

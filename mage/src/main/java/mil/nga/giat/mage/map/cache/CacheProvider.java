@@ -12,6 +12,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -64,6 +65,22 @@ public class CacheProvider {
         cacheOverlayListeners.add(listener);
         if (cacheOverlays != null)
             listener.onCacheOverlay(cacheOverlays);
+    }
+
+    public boolean removeCacheOverlay(String name){
+        boolean removed = false;
+        if(cacheOverlays != null){
+            Iterator<CacheOverlay> iterator = cacheOverlays.iterator();
+            while(iterator.hasNext()){
+                CacheOverlay cacheOverlay = iterator.next();
+                if(cacheOverlay.getCacheName().equalsIgnoreCase(name)){
+                    iterator.remove();
+                    removed = true;
+                    break;
+                }
+            }
+        }
+        return removed;
     }
 
     public void unregisterCacheOverlayListener(OnCacheOverlayListener listener) {
@@ -172,7 +189,7 @@ public class CacheProvider {
                 }
 
                 // Check for new caches to enable in the overlays and preferences
-                if (enable.contains(cacheName) && !cacheOverlay.isEnabled()) {
+                if (enable.contains(cacheName)) {
 
                     update = true;
                     cacheOverlay.setEnabled(true);
@@ -272,7 +289,7 @@ public class CacheProvider {
         try {
             geoPackage = geoPackageManager.open(database);
 
-            List<CacheOverlay> tables = new ArrayList<>();
+            List<GeoPackageTableCacheOverlay> tables = new ArrayList<>();
 
             // GeoPackage tile tables, build a mapping between table name and the created cache overlays
             Map<String, GeoPackageTileTableCacheOverlay> tileCacheOverlays = new HashMap<>();

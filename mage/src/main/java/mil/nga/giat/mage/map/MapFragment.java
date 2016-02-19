@@ -108,6 +108,7 @@ import mil.nga.giat.mage.filter.DateTimeFilter;
 import mil.nga.giat.mage.filter.Filter;
 import mil.nga.giat.mage.map.GoogleMapWrapper.OnMapPanListener;
 import mil.nga.giat.mage.map.cache.CacheOverlay;
+import mil.nga.giat.mage.map.cache.CacheOverlayType;
 import mil.nga.giat.mage.map.cache.CacheProvider;
 import mil.nga.giat.mage.map.cache.CacheProvider.OnCacheOverlayListener;
 import mil.nga.giat.mage.map.cache.GeoPackageCacheOverlay;
@@ -808,6 +809,14 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 		addedCacheBoundingBox = null;
 
 		for (CacheOverlay cacheOverlay : cacheOverlays) {
+
+			// If this cache overlay potentially replaced by a new version
+			if(cacheOverlay.isAdded()){
+				if(cacheOverlay.getType() == CacheOverlayType.GEOPACKAGE){
+					geoPackageCache.close(cacheOverlay.getName());
+				}
+			}
+
 			// The user has asked for this overlay
 			if (cacheOverlay.isEnabled()) {
 
@@ -947,6 +956,12 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 	private void addGeoPackageTileCacheOverlay(Map<String, CacheOverlay> enabledCacheOverlays, GeoPackageTileTableCacheOverlay tileTableCacheOverlay, GeoPackage geoPackage, boolean linkedToFeatures){
 		// Retrieve the cache overlay if it already exists (and remove from cache overlays)
 		CacheOverlay cacheOverlay = cacheOverlays.remove(tileTableCacheOverlay.getCacheName());
+		if(cacheOverlay != null){
+			// If the existing cache overlay is being replaced, create a new cache overlay
+			if(tileTableCacheOverlay.getParent().isAdded()){
+				cacheOverlay = null;
+			}
+		}
 		if(cacheOverlay == null){
 			// Create a new GeoPackage tile provider and add to the map
 			TileDao tileDao = geoPackage.getTileDao(tileTableCacheOverlay.getName());
@@ -993,6 +1008,19 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 	private void addGeoPackageFeatureCacheOverlay(Map<String, CacheOverlay> enabledCacheOverlays, GeoPackageFeatureTableCacheOverlay featureTableCacheOverlay, GeoPackage geoPackage){
 		// Retrieve the cache overlay if it already exists (and remove from cache overlays)
 		CacheOverlay cacheOverlay = cacheOverlays.remove(featureTableCacheOverlay.getCacheName());
+		if(cacheOverlay != null){
+			// If the existing cache overlay is being replaced, create a new cache overlay
+			if(featureTableCacheOverlay.getParent().isAdded()){
+				cacheOverlay = null;
+			}
+			for(GeoPackageTileTableCacheOverlay linkedTileTable: featureTableCacheOverlay.getLinkedTileTables()){
+				if(cacheOverlay != null){
+					// Add the existing linked tile cache overlays
+					addGeoPackageTileCacheOverlay(enabledCacheOverlays, linkedTileTable, geoPackage, true);
+				}
+				cacheOverlays.remove(linkedTileTable.getCacheName());
+			}
+		}
 		if(cacheOverlay == null) {
 			// Add the features to the map
 			FeatureDao featureDao = geoPackage.getFeatureDao(featureTableCacheOverlay.getName());
@@ -1072,10 +1100,6 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 			}
 
 			cacheOverlay = featureTableCacheOverlay;
-		}else{
-			for(GeoPackageTileTableCacheOverlay linkedTileTable: featureTableCacheOverlay.getLinkedTileTables()){
-				cacheOverlays.remove(linkedTileTable.getCacheName());
-			}
 		}
 
 		// Add the cache overlay to the enabled cache overlays
