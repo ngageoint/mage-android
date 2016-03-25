@@ -96,7 +96,7 @@ public class SignupTask extends AbstractAccountTask {
 			nameValuePairs.add(new BasicNameValuePair("uid", uuid));
 			nameValuePairs.add(new BasicNameValuePair("username", username));
 			nameValuePairs.add(new BasicNameValuePair("email", email));
-			nameValuePairs.add(new BasicNameValuePair("displayname", displayName));
+			nameValuePairs.add(new BasicNameValuePair("displayName", displayName));
 			post.setEntity(new UrlEncodedFormEntity(nameValuePairs));
 			HttpResponse response = httpclient.execute(post);
 
