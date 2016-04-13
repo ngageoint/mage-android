@@ -41,9 +41,11 @@ import mil.nga.giat.mage.sdk.datastore.observation.Attachment;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationProperty;
+import mil.nga.giat.mage.sdk.datastore.user.Permission;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.event.IObservationEventListener;
+import mil.nga.giat.mage.sdk.exceptions.UserException;
 import mil.nga.giat.mage.sdk.utils.DateFormatFactory;
 
 public class ObservationViewActivity extends Activity implements OnMapReadyCallback {
@@ -58,6 +60,7 @@ public class ObservationViewActivity extends Activity implements OnMapReadyCallb
     private AttachmentGallery attachmentGallery;
 	private IObservationEventListener observationEventListener;
 	private Observation o;
+	private boolean canEditObservation = false;
 	private Marker marker;
 	private DecimalFormat latLngFormat = new DecimalFormat("###.#####");
 
@@ -77,6 +80,14 @@ public class ObservationViewActivity extends Activity implements OnMapReadyCallb
 			LayoutBaker.populateLayoutWithControls((LinearLayout) findViewById(R.id.propertyContainer), LayoutBaker.createControlsFromJson(this, ControlGenerationType.VIEW, ObservationHelper.getInstance(getApplicationContext()).read(getIntent().getLongExtra(OBSERVATION_ID, 0L)).getEvent().getForm()));
 		} catch(Exception e) {
 			Log.e(LOG_NAME, "Problem getting observation.", e);
+		}
+
+		try {
+			User user = UserHelper.getInstance(getApplicationContext()).readCurrentUser();
+			Collection<Permission> permissions = user.getRole().getPermissions().getPermissions();
+			canEditObservation = permissions.contains(Permission.UPDATE_OBSERVATION_ALL) || permissions.contains(Permission.UPDATE_OBSERVATION_EVENT);
+		} catch (UserException e) {
+			Log.e(LOG_NAME, "Cannot read current user", e);
 		}
 
 		observationEventListener = new IObservationEventListener() {
@@ -125,6 +136,11 @@ public class ObservationViewActivity extends Activity implements OnMapReadyCallb
 	public boolean onCreateOptionsMenu(Menu menu) {
 		// Inflate the menu; this adds items to the action bar if it is present.
 		getMenuInflater().inflate(R.menu.observation_view_menu, menu);
+
+		if (!canEditObservation) {
+			menu.removeItem(R.id.observation_edit);
+		}
+
 		return true;
 	}
 
