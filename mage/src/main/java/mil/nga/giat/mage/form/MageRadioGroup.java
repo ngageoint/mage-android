@@ -80,4 +80,9 @@ public class MageRadioGroup extends RadioGroup implements MageControl {
 			}
 		}
 	}
+
+	@Override
+	public CharSequence getError() {
+		return null;
+	}
 }

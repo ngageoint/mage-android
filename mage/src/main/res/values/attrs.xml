@@ -9,6 +9,7 @@
 	        <enum name="multichoice" value="3"/>
 	        <enum name="user" value="4"/>
 	        <enum name="location" value="5"/>
+			<enum name="number" value="6"/>
 		</attr>
 	</declare-styleable>
     <declare-styleable name="OpensourceItemFragment">

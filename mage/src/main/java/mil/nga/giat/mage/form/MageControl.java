@@ -20,4 +20,6 @@ public interface MageControl {
 
 	public void setRequired(Boolean required);
 
+	public CharSequence getError();
+
 }

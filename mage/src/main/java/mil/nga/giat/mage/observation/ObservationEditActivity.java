@@ -53,6 +53,7 @@ import com.vividsolutions.jts.geom.Point;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.Serializable;
 import java.text.DateFormat;
 import java.text.DecimalFormat;
 import java.text.ParseException;
@@ -121,8 +122,10 @@ public class ObservationEditActivity extends Activity implements OnMapReadyCallb
 	private Uri currentMediaUri;
 
 	// control key to default position
-	private static Map<String, Integer> spinnersLastPositions = new HashMap<String, Integer>();
-	
+	private static Map<String, Integer> spinnersLastPositions = new HashMap<>();
+
+	List<View> controls = new ArrayList<>();
+
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -135,14 +138,14 @@ public class ObservationEditActivity extends Activity implements OnMapReadyCallb
         attachmentLayout = (LinearLayout) findViewById(R.id.image_gallery);
         attachmentGallery = new AttachmentGallery(getApplicationContext(), 100, 100);
         attachmentGallery.addOnAttachmentClickListener(new AttachmentGallery.OnAttachmentClickListener() {
-            @Override
-            public void onAttachmentClick(Attachment attachment) {
-                Intent intent = new Intent(getApplicationContext(), AttachmentViewerActivity.class);
-                intent.putExtra(AttachmentViewerActivity.ATTACHMENT, attachment);
-                intent.putExtra(AttachmentViewerActivity.EDITABLE, false);
-                startActivity(intent);
-            }
-        });
+			@Override
+			public void onAttachmentClick(Attachment attachment) {
+				Intent intent = new Intent(getApplicationContext(), AttachmentViewerActivity.class);
+				intent.putExtra(AttachmentViewerActivity.ATTACHMENT, attachment);
+				intent.putExtra(AttachmentViewerActivity.EDITABLE, false);
+				startActivity(intent);
+			}
+		});
 		
 		final long observationId = getIntent().getLongExtra(OBSERVATION_ID, NEW_OBSERVATION);
 		JsonObject dynamicFormJson;
@@ -159,7 +162,7 @@ public class ObservationEditActivity extends Activity implements OnMapReadyCallb
 			}
 		}
 
-		List<View> controls = LayoutBaker.createControlsFromJson(this, ControlGenerationType.EDIT, dynamicFormJson);
+		controls = LayoutBaker.createControlsFromJson(this, ControlGenerationType.EDIT, dynamicFormJson);
 		for (View view : controls) {
 			if (view instanceof MageSpinner) {
 				MageSpinner mageSpinner = (MageSpinner) view;
@@ -261,9 +264,9 @@ public class ObservationEditActivity extends Activity implements OnMapReadyCallb
 				final DatePicker datePicker = (DatePicker) dialogView.findViewById(R.id.date_picker);
 				final TimePicker timePicker = (TimePicker) dialogView.findViewById(R.id.time_picker);
 
-                String value = ((MageTextView) findViewById(R.id.date)).getPropertyValue();
+                Serializable value = ((MageTextView) findViewById(R.id.date)).getPropertyValue();
                 try {
-                    Date date = iso8601Format.parse(value);
+                    Date date = iso8601Format.parse(value.toString());
                     Calendar c = Calendar.getInstance();
                     c.setTime(date);
                     datePicker.updateDate(c.get(Calendar.YEAR), c.get(Calendar.MONTH), c.get(Calendar.DAY_OF_MONTH));
@@ -467,15 +470,25 @@ public class ObservationEditActivity extends Activity implements OnMapReadyCallb
 	public boolean onCreateOptionsMenu(Menu menu) {
 		// Inflate the menu; this adds items to the action bar if it is present.
 		getMenuInflater().inflate(R.menu.observation_edit_menu, menu);
+
 		return true;
 	}
-	
 
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
 		switch (item.getItemId()) {
 
 		case R.id.observation_save:
+			List<View> invalid = LayoutBaker.validateControls(controls);
+			if (!invalid.isEmpty()) {
+				// scroll to first invalid control
+				View firstInvalid = invalid.get(0);
+				findViewById(R.id.properties).scrollTo(0, firstInvalid.getBottom());
+				firstInvalid.clearFocus();
+				firstInvalid.requestFocus();
+				break;
+			}
+
 			observation.setState(State.ACTIVE);
 			observation.setDirty(true);
 			observation.setGeometry(new GeometryFactory().createPoint(new Coordinate(l.getLongitude(), l.getLatitude())));

@@ -67,4 +67,9 @@ public class MageSpinner extends Spinner implements MageControl {
 			setSelection(0);
 		}
 	}
+
+	@Override
+	public CharSequence getError() {
+		return null;
+	}
 }
