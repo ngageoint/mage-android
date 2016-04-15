@@ -47,7 +47,11 @@ public class MageEditText extends EditText implements MageControl {
 	public Serializable getPropertyValue() {
 		switch (propertyType) {
 			case NUMBER:
-				return Double.parseDouble(getText().toString());
+				try {
+					return Double.parseDouble(getText().toString());
+				} catch (NumberFormatException e) {
+					return null;
+				}
 			default:
 				return getText().toString();
 		}

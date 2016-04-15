@@ -208,11 +208,19 @@ public class LayoutBaker {
 
 						@Override
 						public void afterTextChanged(Editable s) {
-							double value = Double.parseDouble(s.toString());
-							if (value < min) {
-								mageEditText.setError("Must be greater than " + min);
-							} else if (value > max) {
-								mageEditText.setError("Must be less than " + max);
+							if (s.toString().isEmpty()) {
+								return;
+							}
+
+							try {
+								double value = Double.parseDouble(s.toString());
+								if (value < min) {
+									mageEditText.setError("Must be greater than " + min);
+								} else if (value > max) {
+									mageEditText.setError("Must be less than " + max);
+								}
+							} catch (NumberFormatException e) {
+								mageEditText.setError("Value must be a number");
 							}
 						}
 					});
