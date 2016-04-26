@@ -71,7 +71,7 @@ Check the [build configuration](mage/build.gradle#L8-L9) for the version of andr
 
 ### Signing
 
-Android requires that you sign your applications.  You will need to create an idenity to sign your MAGE Android build.  If you don't plan on releasing your build of MAGE, use *Debug Build* instructions, otherwise use the *Release Build* instructions.  If you aren't sure, follow the *Debug Build* instructions.
+Android requires that you sign your applications.  You will need to create an identity to sign your MAGE Android build.  If you don't plan on releasing your build of MAGE, use *Debug Build* instructions, otherwise use the *Release Build* instructions.  If you aren't sure, follow the *Debug Build* instructions.
 
 ##### Debug Build
 
@@ -101,22 +101,22 @@ keytool -list -keystore  ~/.android/release.keystore
 
 ### Google Maps Android API
 
-MAGE Android uses Google Maps.  Whether you build a dubug or release version of the application, you will need to obtain a Google Maps API key to use Android Google's Maps.
+MAGE Android uses Google Maps.  Whether you build a debug or release version of the application, you will need to obtain a Google Maps API key to use Android Google's Maps.
 
-First, go to [Google's API Library](https://console.developers.google.com/) with a valid Google account, and enable the *Google Maps Android API* in the *APIs & Auth* -> *APIs* section.  Next, in the *Credentials* section, *Add Credentials* -> *API key* -> *Android key*.  Enter a key name, or accept the default.  Add package anme and fingerprint, enter *mil.nga.giat.mage* for the package name, and the SHA-1 certificate fingerprint from the keystore you made.  You can get the SHA-1 hash from the debug.keystore (If this is a release build, use your release keystore instead) you made using the command line:
+First, go to [Google's API Library](https://console.developers.google.com/) with a valid Google account, and enable the *Google Maps Android API* in the *API Manager* -> *APIs* section.  Next, in the *Credentials* section, *Create Credentials* -> *API key* -> *Android key*.  Enter a key name, or accept the default.  Add package name and fingerprint, enter *mil.nga.giat.mage* for the package name, and the SHA-1 certificate fingerprint from the keystore you made.  You can get the SHA-1 hash from the debug.keystore (if this is a release build, use your release keystore instead) you made using the command line:
 ```bash
 keytool -list -keystore ~/.android/debug.keystore
 ```
 
 If prompted for a password, enter *android*.  Finally, click *Create* in Google's developer console.  Once created, you should be prompted with a hash that represents the Android Google Maps API key.
 
-To link the mage applicaiton with this api key you have just made, you must edit the *DEBUG_MAPS_API_KEY* value in [gradle.properties file](gradle.properties) and enter your Android Google Maps API key hash.  Congratulations!  You are all done configuring your very own debug build of MAGE Android.
+To link the MAGE application with this api key you have just made, you must edit the *DEBUG_MAPS_API_KEY* value in [gradle.properties file](gradle.properties) and enter your Android Google Maps API key hash.  Congratulations!  You are all done configuring your very own debug build of MAGE Android.
 
 ### Build
 
 The MAGE Android application (apk) is built using [gradle](http://gradle.org/).  These instructions build a debug version of the application that is **not for release**.
 
-Before you build the MAGE Android applicaiton, make sure to download the and build the MAGE [sdk](https://github.com/ngageoint/mage-android-sdk) dependency first.
+Before you build the MAGE Android application, make sure to download and build the MAGE [sdk](https://github.com/ngageoint/mage-android-sdk) dependency first.
 
 This command will create the Android package that you will install on the phone:
 
