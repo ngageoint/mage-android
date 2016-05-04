@@ -1,18 +1,33 @@
 package mil.nga.giat.mage.observation;
 
+import android.Manifest;
+import android.app.ActionBar;
+import android.app.AlertDialog;
+import android.app.Dialog;
 import android.app.ProgressDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
-import android.media.ThumbnailUtils;
+import android.content.pm.PackageManager;
+import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.provider.MediaStore;
+import android.os.Environment;
+import android.preference.PreferenceManager;
+import android.provider.Settings;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.FragmentActivity;
-import android.support.v4.content.FileProvider;
+import android.support.v4.content.ContextCompat;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
+import android.widget.MediaController;
+import android.widget.Toast;
+import android.widget.VideoView;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.resource.drawable.GlideDrawable;
@@ -40,10 +55,15 @@ public class AttachmentViewerActivity extends FragmentActivity implements Remove
 
 	public final static String EDITABLE = "EDITABLE";
 	public final static String ATTACHMENT_ID = "ATTACHMENT_ID";
+	public final static String ATTACHMENT_PATH = "ATTACHMENT_PATH";
 	public final static String SHOULD_REMOVE = "SHOULD_REMOVE";
 	private static final String LOG_NAME = AttachmentViewerActivity.class.getName();
+
+	private static final int PERMISSIONS_REQUEST_STORAGE = 100;
+
 	private ProgressDialog progressDialog;
-	private Attachment a;
+	private Attachment attachment;
+	private String contentType;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -51,61 +71,74 @@ public class AttachmentViewerActivity extends FragmentActivity implements Remove
 		setContentView(R.layout.attachment_viewer);
 		this.setTitle("Observation Attachment");
 
+		ActionBar actionBar = getActionBar();
+		actionBar.setDisplayHomeAsUpEnabled(true);
+
 		Intent intent = getIntent();
 		ImageView iv = (ImageView) findViewById(R.id.image);
 		if (!intent.getBooleanExtra(EDITABLE, false)) {
 //			findViewById(R.id.remove_btn).setVisibility(View.GONE);
 		}
 
-		try {
-			a = AttachmentHelper.getInstance(getApplicationContext()).read(getIntent().getLongExtra(ATTACHMENT_ID, 0L));
-		} catch (Exception e) {
-			Log.e(LOG_NAME, "Error getting attachment", e);
-		}
+		String url = null;
+		String path = getIntent().getStringExtra(ATTACHMENT_PATH);
 
-		String absPath = a.getLocalPath();
-		String url = a.getUrl();
+		if (path == null) {
+			try {
+				attachment = AttachmentHelper.getInstance(getApplicationContext()).read(getIntent().getLongExtra(ATTACHMENT_ID, 0L));
+				path = attachment.getLocalPath();
+				url = attachment.getUrl();
+				contentType = attachment.getContentType();
 
-		// get content type from everywhere I can think of
-		String contentType = a.getContentType();
-		String name = null;
-		if (StringUtils.isBlank(contentType) || "application/octet-stream".equalsIgnoreCase(contentType)) {
-			name = a.getName();
-			if (name == null) {
-				name = a.getLocalPath();
-				if (name == null) {
-					name = a.getRemotePath();
+				// get content type from everywhere I can think of
+				if (StringUtils.isBlank(contentType) || "application/octet-stream".equalsIgnoreCase(contentType)) {
+					String name = attachment.getName();
+					if (name == null) {
+						name = attachment.getLocalPath();
+						if (name == null) {
+							name = attachment.getRemotePath();
+						}
+					}
+					contentType = MediaUtility.getMimeType(name);
 				}
+
+			} catch (Exception e) {
+				Log.e(LOG_NAME, "Error getting attachment", e);
 			}
-			contentType = MediaUtility.getMimeType(name);
+		} else {
+			contentType = MediaUtility.getMimeType(path);
 		}
 
-		final String finalType;
-		final Uri uri;
-
-		if (absPath != null) {
-			File f = new File(absPath);
-			uri = Uri.fromFile(f);
+		if (path != null) {
+			File f = new File(path);
+			Uri uri = Uri.fromFile(f);
 			if (contentType.startsWith("image")) {
-				finalType = "image/*";
 				Glide.with(getApplicationContext()).load(f).centerCrop().into(iv);
 			} else if (contentType.startsWith("video")) {
-				finalType = "video/*";
-				iv.setImageBitmap(ThumbnailUtils.createVideoThumbnail(absPath, MediaStore.Video.Thumbnails.FULL_SCREEN_KIND));
-				findViewById(R.id.video_overlay_image).setVisibility(View.VISIBLE);
+				final VideoView videoView = (VideoView) findViewById(R.id.video);
+				MediaController mediaController = new MediaController(this);
+				mediaController.setAnchorView(videoView);
+				videoView.setMediaController(mediaController);
+
+				videoView.setVideoURI(uri);
+
+				findViewById(R.id.video).setVisibility(View.VISIBLE);
+
+				videoView.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+					@Override
+					public void onPrepared(MediaPlayer mp) {
+						videoView.start();
+					}
+				});
 			} else if (contentType.startsWith("audio")) {
-				finalType = "audio/*";
 				findViewById(R.id.play_image).setVisibility(View.VISIBLE);
-			} else {
-				finalType = null;
 			}
 		} else if (url != null) {
-			uri = Uri.parse(url);
 			if (contentType.startsWith("image")) {
-				finalType = "image/*";
+				Uri uri = Uri.parse(url);
 				findViewById(R.id.progress).setVisibility(View.VISIBLE);
 				Glide.with(getApplicationContext())
-						.load(a)
+						.load(attachment)
 						.listener(new RequestListener<Attachment, GlideDrawable>() {
 							@Override
 							public boolean onException(Exception e, Attachment model, Target<GlideDrawable> target, boolean isFirstResource) {
@@ -120,42 +153,84 @@ public class AttachmentViewerActivity extends FragmentActivity implements Remove
 						})
 						.into(iv);
 			} else if (contentType.startsWith("video")) {
-				finalType = "video/*";
-				findViewById(R.id.play_image).setVisibility(View.VISIBLE);
-			} else if (contentType.startsWith("audio")) {
-				finalType = "audio/*";
-				findViewById(R.id.play_image).setVisibility(View.VISIBLE);
-			} else {
-				finalType = null;
-			}
-		} else {
-			uri = null;
-			finalType = null;
-		}
+				// TODO pass token in header
+				String token = PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).getString(getApplicationContext().getString(mil.nga.giat.mage.sdk.R.string.tokenKey), null);
+				Uri uri = Uri.parse(url + "?access_token=" + token);
 
-		if (uri != null && finalType != null) {
-			iv.setOnClickListener(new View.OnClickListener() {
-				@Override
-				public void onClick(View v) {
-					if (a.getLocalPath() == null) {
-						progressDialog = new ProgressDialog(AttachmentViewerActivity.this);
-						progressDialog.setMessage("Downloading file...");
-						progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-						progressDialog.setCancelable(false);
-						startDownload(a, finalType);
-					} else {
-						File file = new File(a.getLocalPath());
-						Uri uri = FileProvider.getUriForFile(getApplicationContext(), "mil.nga.giat.mage.fileprovider", file);
-						Log.i(LOG_NAME, "launching viewer for " + uri + " type " + finalType);
-						Intent intent = new Intent(Intent.ACTION_VIEW);
-						intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-						intent.setDataAndType(uri, finalType);
-						startActivity(intent);
+				final VideoView videoView = (VideoView) findViewById(R.id.video);
+				MediaController mediaController = new MediaController(this);
+				mediaController.setAnchorView(videoView);
+				videoView.setMediaController(mediaController);
+
+				videoView.setVideoURI(uri);
+
+				findViewById(R.id.video).setVisibility(View.VISIBLE);
+
+				videoView.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+					@Override
+					public void onPrepared(MediaPlayer mp) {
+						videoView.start();
 					}
-				}
-			});
+				});
+			} else if (contentType.startsWith("audio")) {
+				findViewById(R.id.play_image).setVisibility(View.VISIBLE);
+			}
 		}
 	}
+
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+		MenuInflater inflater = getMenuInflater();
+		if (attachment != null && attachment.getLocalPath() == null) {
+			inflater.inflate(R.menu.attachment_save_menu, menu);
+		}
+
+		return true;
+	}
+
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		switch (item.getItemId()) {
+			case android.R.id.home:
+				this.finish();
+				return true;
+			case R.id.save:
+				saveAttachment();
+				return true;
+			default:
+				return super.onOptionsItemSelected(item);
+		}
+	}
+
+	@Override
+	public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
+		switch (requestCode) {
+			case PERMISSIONS_REQUEST_STORAGE: {
+				if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+					new DownloadFileAsync().execute(attachment);
+				} else {
+					if (!ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.READ_EXTERNAL_STORAGE)) {
+						new AlertDialog.Builder(this, R.style.AppCompatAlertDialogStyle)
+								.setTitle(R.string.storage_access_title)
+								.setMessage(R.string.storage_access_message)
+								.setPositiveButton(R.string.settings, new Dialog.OnClickListener() {
+									@Override
+									public void onClick(DialogInterface dialog, int which) {
+										Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+										intent.setData(Uri.fromParts("package", getApplicationContext().getPackageName(), null));
+										startActivity(intent);
+									}
+								})
+								.setNegativeButton(android.R.string.cancel, null)
+								.show();
+					}
+				}
+
+				break;
+			}
+		}
+	}
+
 
 	public void removeImage(View v) {
 		DialogFragment dialog = new RemoveAttachmentDialogFragment();
@@ -170,7 +245,7 @@ public class AttachmentViewerActivity extends FragmentActivity implements Remove
 	public void onDialogPositiveClick(DialogFragment dialog) {
 		Intent data = new Intent();
 		data.putExtra(SHOULD_REMOVE, true);
-		data.putExtra(ATTACHMENT_ID, a.getId());
+		data.putExtra(ATTACHMENT_ID, attachment);
 		setResult(RESULT_OK, data);
 		finish();
 	}
@@ -179,20 +254,24 @@ public class AttachmentViewerActivity extends FragmentActivity implements Remove
 	public void onDialogNegativeClick(DialogFragment dialog) {
 	}
 
-	private void startDownload(Attachment attachment, String mimeType) {
-		new DownloadFileAsync(mimeType).execute(attachment);
+	private void saveAttachment() {
+		if (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+			ActivityCompat.requestPermissions(AttachmentViewerActivity.this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, PERMISSIONS_REQUEST_STORAGE);
+		} else {
+			new DownloadFileAsync().execute(attachment);
+		}
 	}
 
 	class DownloadFileAsync extends AsyncTask<Attachment, Integer, Boolean> {
-		String mimeType;
-
-		public DownloadFileAsync(String mimeType) {
-			this.mimeType = mimeType;
-		}
+		ProgressDialog progressDialog;
 
 		@Override
 		protected void onPreExecute() {
 			super.onPreExecute();
+			progressDialog = new ProgressDialog(AttachmentViewerActivity.this);
+			progressDialog.setMessage("Saving file...");
+			progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+			progressDialog.setCancelable(false);
 			progressDialog.show();
 		}
 
@@ -208,10 +287,21 @@ public class AttachmentViewerActivity extends FragmentActivity implements Remove
 
 				Long contentLength = response.contentLength();
 
-				File stageDir = MediaUtility.getMediaStageDirectory(getApplicationContext());
-				File stagedFile = new File(stageDir, a.getName());
-				a.setLocalPath(stagedFile.getAbsolutePath());
-				os = new FileOutputStream(a.getLocalPath());
+				String type;
+				if (contentType.startsWith("image")) {
+					type = Environment.DIRECTORY_PICTURES;
+				} else if (contentType.startsWith("video")) {
+					type = Environment.DIRECTORY_MOVIES;
+				} else if (contentType.startsWith("audio")) {
+					type = Environment.DIRECTORY_MUSIC;
+				} else {
+					type = Environment.DIRECTORY_DOWNLOADS;
+				}
+
+				File directory = MediaUtility.getPublicAttachmentsDirectory(type);
+				File stagedFile = new File(directory, AttachmentViewerActivity.this.attachment.getName());
+				AttachmentViewerActivity.this.attachment.setLocalPath(stagedFile.getAbsolutePath());
+				os = new FileOutputStream(AttachmentViewerActivity.this.attachment.getLocalPath());
 
 				byte data[] = new byte[1024];
 
@@ -257,25 +347,23 @@ public class AttachmentViewerActivity extends FragmentActivity implements Remove
 			progressDialog.dismiss();
 
 			if (!success) {
-				// TODO pop up dialog
+				Toast toast = Toast.makeText(getApplicationContext(), "Attachment Failed to Save", Toast.LENGTH_SHORT);
+				toast.show();
 				return;
 			}
 
 			try {
-				Attachment attachment = DaoStore.getInstance(getApplicationContext()).getAttachmentDao().queryForId(a.getId());
-				attachment.setLocalPath(a.getLocalPath());
+				Attachment attachment = DaoStore.getInstance(getApplicationContext()).getAttachmentDao().queryForId(AttachmentViewerActivity.this.attachment.getId());
+				attachment.setLocalPath(AttachmentViewerActivity.this.attachment.getLocalPath());
 				DaoStore.getInstance(getApplicationContext()).getAttachmentDao().update(attachment);
+
+				MediaUtility.addImageToGallery(getApplicationContext(), Uri.fromFile(new File(AttachmentViewerActivity.this.attachment.getLocalPath())));
+
+				Toast toast = Toast.makeText(getApplicationContext(), "Attachment Successfully Saved", Toast.LENGTH_SHORT);
+				toast.show();
 			} catch (Exception e) {
 				Log.e(LOG_NAME, "Error saving attachment to DB", e);
 			}
-
-			File file = new File(a.getLocalPath());
-			Uri uri = FileProvider.getUriForFile(getApplicationContext(), "mil.nga.giat.mage.fileprovider", file);
-			Log.i(LOG_NAME, "launching viewer for " + uri + " type " + mimeType);
-			Intent intent = new Intent(Intent.ACTION_VIEW);
-			intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-			intent.setDataAndType(uri, mimeType);
-			startActivity(intent);
 		}
 	}
 
