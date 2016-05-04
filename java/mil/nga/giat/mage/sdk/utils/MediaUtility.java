@@ -115,20 +115,55 @@ public class MediaUtility {
 	    c.sendBroadcast(mediaScanIntent);
 	}
 
-	public static File createMediaFile(Context context, String extension) throws IOException {
+	public static File createImageFile() throws IOException {
+		// Create an image file name
 		String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
-		String fileName = "MAGE_" + timeStamp + extension;
-		File directory = getMediaStageDirectory(context);
+		String imageFileName = "MAGE_" + timeStamp;
+		File pictures = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
+		File directory = new File(pictures, "MAGE");
 
 		if (!directory.exists()) {
 			directory.mkdirs();
 		}
 
-		return new File(directory, fileName);
+		return File.createTempFile(
+				imageFileName,  /* prefix */
+				".jpg",         /* suffix */
+				directory      /* directory */
+		);
 	}
-	
+
+	public static File createVideoFile() throws IOException {
+		// Create an image file name
+		String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+		String imageFileName = "MAGE_" + timeStamp;
+		File movies = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MOVIES);
+		File directory = new File(movies, "MAGE");
+
+		if (!directory.exists()) {
+			directory.mkdirs();
+		}
+
+		return File.createTempFile(
+				imageFileName,  /* prefix */
+				".mp4",         /* suffix */
+				directory      /* directory */
+		);
+	}
+
+	public static File getPublicAttachmentsDirectory(String type) {
+		File pictures = Environment.getExternalStoragePublicDirectory(type);
+		File directory = new File(pictures, "MAGE");
+
+		if (!directory.exists()) {
+			directory.mkdirs();
+		}
+
+		return directory;
+	}
+
 	public static File getMediaStageDirectory(Context context) {
-		File directory = context.getExternalFilesDir("Media");
+		File directory = new File(context.getFilesDir(), "media");
 		if (!directory.exists()) {
 			directory.mkdirs();
 		}

@@ -103,7 +103,7 @@ public class ObservationFetchIntentService extends ConnectivityAwareIntentServic
 							Log.d(LOG_NAME, "Updated observation with remote_id " + observation.getRemoteId());
 						}
 					} catch (Exception e) {
-						Log.e(LOG_NAME, "There was a failure while performing an Observation Fetch opperation.", e);
+						Log.e(LOG_NAME, "There was a failure while performing an Observation Fetch operation.", e);
 					}
 				}
 			} else {
