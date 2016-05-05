@@ -240,7 +240,6 @@
                         android:textColor="#AAAAAA"
                         android:textSize="13sp"
                         android:clickable="true"
-                        android:text="https://magedemo.geointapps.org"
                         android:onClick="changeServerURL"/>
 
                     <TextView

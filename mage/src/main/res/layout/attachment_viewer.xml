@@ -25,6 +25,13 @@
             android:layout_centerVertical="true"
             android:visibility="gone"/>
 
+        <VideoView
+            android:id="@+id/video"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_centerInParent="true"
+            android:visibility="gone"/>
+
         <ImageView
             android:id="@+id/video_overlay_image"
             android:src="@drawable/ic_play_circle_outline_white_36dp"
