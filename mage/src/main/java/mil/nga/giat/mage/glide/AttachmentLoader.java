@@ -33,6 +33,8 @@ public class AttachmentLoader extends BaseGlideUrlLoader<Attachment> {
 
 	@Override
 	protected String getUrl(Attachment attachment, int width, int height) {
+		if (attachment.getUrl() == null) return null;
+
 		HttpUrl url = HttpUrl.parse(attachment.getUrl())
 				.newBuilder()
 				.addQueryParameter("size", String.valueOf(Math.max(width, height)))
@@ -43,7 +45,7 @@ public class AttachmentLoader extends BaseGlideUrlLoader<Attachment> {
 
 	public static class Factory implements ModelLoaderFactory<Attachment, InputStream> {
 		@Override public StreamModelLoader<Attachment> build(Context context, GenericLoaderFactory factories) {
-			return new AttachmentLoader(  context);
+			return new AttachmentLoader(context);
 		}
 
 		@Override public void teardown() {

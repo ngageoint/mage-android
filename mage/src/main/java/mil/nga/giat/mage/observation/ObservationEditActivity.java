@@ -147,7 +147,13 @@ public class ObservationEditActivity extends Activity implements OnMapReadyCallb
             @Override
             public void onAttachmentClick(Attachment attachment) {
                 Intent intent = new Intent(getApplicationContext(), AttachmentViewerActivity.class);
-                intent.putExtra(AttachmentViewerActivity.ATTACHMENT_ID, attachment.getId());
+
+				if (attachment.getId() != null) {
+					intent.putExtra(AttachmentViewerActivity.ATTACHMENT_ID, attachment.getId());
+				} else {
+					intent.putExtra(AttachmentViewerActivity.ATTACHMENT_PATH, attachment.getLocalPath());
+				}
+
                 intent.putExtra(AttachmentViewerActivity.EDITABLE, false);
                 startActivity(intent);
             }
@@ -559,24 +565,27 @@ public class ObservationEditActivity extends Activity implements OnMapReadyCallb
 	}
 
 	public void onCameraClick(View v) {
-		if (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
-			ActivityCompat.requestPermissions(ObservationEditActivity.this, new String[]{Manifest.permission.CAMERA}, PERMISSIONS_REQUEST_CAMERA);
+		if (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED ||
+			ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+			ActivityCompat.requestPermissions(ObservationEditActivity.this, new String[]{Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE}, PERMISSIONS_REQUEST_CAMERA);
 		} else {
 			launchCameraIntent();
 		}
 	}
 
 	public void onVideoClick(View v) {
-		if (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
-			ActivityCompat.requestPermissions(ObservationEditActivity.this, new String[]{Manifest.permission.CAMERA}, PERMISSIONS_REQUEST_VIDEO);
+		if (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED ||
+		ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+			ActivityCompat.requestPermissions(ObservationEditActivity.this, new String[]{Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE}, PERMISSIONS_REQUEST_VIDEO);
 		} else {
 			launchVideoIntent();
 		}
 	}
 
 	public void onAudioClick(View v) {
-		if (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
-			ActivityCompat.requestPermissions(ObservationEditActivity.this, new String[]{Manifest.permission.RECORD_AUDIO}, PERMISSIONS_REQUEST_AUDIO);
+		if (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED ||
+			ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+			ActivityCompat.requestPermissions(ObservationEditActivity.this, new String[]{Manifest.permission.RECORD_AUDIO,  Manifest.permission.WRITE_EXTERNAL_STORAGE}, PERMISSIONS_REQUEST_AUDIO);
 		} else {
 			launchAudioIntent();
 		}
@@ -592,7 +601,7 @@ public class ObservationEditActivity extends Activity implements OnMapReadyCallb
 
 	private void launchCameraIntent() {
 		try {
-			File file = MediaUtility.createMediaFile(getApplicationContext(), ".png");
+			File file = MediaUtility.createImageFile();
 			currentMediaPath = file.getAbsolutePath();
 			Uri uri = Uri.fromFile(file);
 			Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
@@ -606,7 +615,7 @@ public class ObservationEditActivity extends Activity implements OnMapReadyCallb
 
 	private void launchVideoIntent() {
 		try {
-			File file = MediaUtility.createMediaFile(getApplicationContext(), ".mp4");
+			File file = MediaUtility.createVideoFile();
 			currentMediaPath = file.getAbsolutePath();
 			Uri uri = Uri.fromFile(file);
 			Intent intent = new Intent(MediaStore.ACTION_VIDEO_CAPTURE);
@@ -644,37 +653,53 @@ public class ObservationEditActivity extends Activity implements OnMapReadyCallb
 		switch (requestCode) {
 			case PERMISSIONS_REQUEST_CAMERA:
 			case PERMISSIONS_REQUEST_VIDEO: {
-				if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+				Map<String, Integer> grants = new HashMap<>();
+				grants.put(Manifest.permission.CAMERA, PackageManager.PERMISSION_GRANTED);
+				grants.put(Manifest.permission.WRITE_EXTERNAL_STORAGE, PackageManager.PERMISSION_GRANTED);
+
+				for (int i = 0; i < grantResults.length; i++) {
+					grants.put(permissions[i], grantResults[i]);
+				}
+
+				if (grants.get(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED &&
+					grants.get(Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
 					if (requestCode == PERMISSIONS_REQUEST_CAMERA) {
 						launchCameraIntent();
 					} else {
 						launchVideoIntent();
 					}
-				} else {
-					if (!ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.CAMERA)) {
-						// User denied camera with never ask again.  Since they will get here
-						// by clicking the camera button give them a dialog that will
-						// guide them to settings if they want to enable the permission
-						showDisabledPermissionsDialog(
-								getResources().getString(R.string.camera_access_title),
-								getResources().getString(R.string.camera_access_message));
-					}
+				} else if ((!ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.CAMERA) && grants.get(Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) ||
+						(!ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) && grants.get(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) ||
+						!ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.CAMERA) && !ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
+
+					// User denied camera or storage with never ask again.  Since they will get here
+					// by clicking the camera button give them a dialog that will
+					// guide them to settings if they want to enable the permission
+					showDisabledPermissionsDialog(
+							getResources().getString(R.string.camera_access_title),
+							getResources().getString(R.string.camera_access_message));
 				}
 
 				break;
 			}
 			case PERMISSIONS_REQUEST_AUDIO: {
-				if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+				Map<String, Integer> grants = new HashMap<String, Integer>();
+				grants.put(Manifest.permission.RECORD_AUDIO, PackageManager.PERMISSION_GRANTED);
+				grants.put(Manifest.permission.WRITE_EXTERNAL_STORAGE, PackageManager.PERMISSION_GRANTED);
+
+				if (grants.get(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED &&
+					grants.get(Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
 					launchAudioIntent();
-				} else {
-					if (!ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.RECORD_AUDIO)) {
-						// User denied audio with never ask again.  Since they will get here
-						// by clicking the audio button give them a dialog that will
-						// guide them to settings if they want to enable the permission
-						showDisabledPermissionsDialog(
-								getResources().getString(R.string.audio_access_title),
-								getResources().getString(R.string.audio_access_message));
-					}
+				} else if ((!ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.RECORD_AUDIO) && grants.get(Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) ||
+						(!ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) && grants.get(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) ||
+						!ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.RECORD_AUDIO) && !ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
+
+					// User denied camera or storage with never ask again.  Since they will get here
+					// by clicking the camera button give them a dialog that will
+					// guide them to settings if they want to enable the permission
+					showDisabledPermissionsDialog(
+							getResources().getString(R.string.camera_access_title),
+							getResources().getString(R.string.camera_access_message));
 				}
 
 				break;
@@ -726,6 +751,7 @@ public class ObservationEditActivity extends Activity implements OnMapReadyCallb
 			capture.setLocalPath(currentMediaPath);
 			attachmentsToCreate.add(capture);
             attachmentGallery.addAttachment(attachmentLayout, capture);
+			MediaUtility.addImageToGallery(getApplicationContext(), Uri.fromFile(new File(currentMediaPath)));
 			break;
 		case GALLERY_ACTIVITY_REQUEST_CODE:
 		case CAPTURE_VOICE_ACTIVITY_REQUEST_CODE:

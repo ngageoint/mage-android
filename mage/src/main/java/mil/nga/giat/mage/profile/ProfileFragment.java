@@ -54,7 +54,9 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.map.marker.LocationBitmapFactory;
@@ -320,8 +322,9 @@ public class ProfileFragment extends Fragment implements OnMapReadyCallback, OnC
 								break;
 							}
 							case 2: {
-								if (ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
-									FragmentCompat.requestPermissions(ProfileFragment.this, new String[]{Manifest.permission.CAMERA}, PERMISSIONS_REQUEST_CAMERA);
+								if (ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED ||
+									ContextCompat.checkSelfPermission(context, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+									FragmentCompat.requestPermissions(ProfileFragment.this, new String[]{Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE}, PERMISSIONS_REQUEST_CAMERA);
 								} else {
 									launchCameraIntent();
 								}
@@ -344,7 +347,7 @@ public class ProfileFragment extends Fragment implements OnMapReadyCallback, OnC
 
 	private void launchCameraIntent() {
 		try {
-			File file = MediaUtility.createMediaFile(getActivity().getApplicationContext(), ".jpg");
+			File file = MediaUtility.createImageFile();
 			currentMediaPath = file.getAbsolutePath();
 			Uri uri = Uri.fromFile(file);
 			Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
@@ -371,17 +374,27 @@ public class ProfileFragment extends Fragment implements OnMapReadyCallback, OnC
 	public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
 		switch (requestCode) {
 			case PERMISSIONS_REQUEST_CAMERA: {
-				if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+				Map<String, Integer> grants = new HashMap<String, Integer>();
+				grants.put(Manifest.permission.CAMERA, PackageManager.PERMISSION_GRANTED);
+				grants.put(Manifest.permission.WRITE_EXTERNAL_STORAGE, PackageManager.PERMISSION_GRANTED);
+
+				for (int i = 0; i < grantResults.length; i++) {
+					grants.put(permissions[i], grantResults[i]);
+				}
+
+				if (grants.get(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED &&
+					grants.get(Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
 					launchCameraIntent();
-				} else {
-					if (!FragmentCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.CAMERA)) {
-						// User denied camera with never ask again.  Since they will get here
-						// by clicking the camera button give them a dialog that will
-						// guide them to settings if they want to enable the permission
-						showDisabledPermissionsDialog(
-								getResources().getString(R.string.camera_access_title),
-								getResources().getString(R.string.camera_access_message));
-					}
+				} else if ((!FragmentCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.CAMERA) && grants.get(Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) ||
+						(!FragmentCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) && grants.get(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) ||
+						!FragmentCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.CAMERA) && !FragmentCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
+
+					// User denied camera or storage with never ask again.  Since they will get here
+					// by clicking the camera button give them a dialog that will
+					// guide them to settings if they want to enable the permission
+					showDisabledPermissionsDialog(
+							getResources().getString(R.string.camera_access_title),
+							getResources().getString(R.string.camera_access_message));
 				}
 
 				break;

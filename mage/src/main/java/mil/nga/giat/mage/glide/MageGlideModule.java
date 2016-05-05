@@ -24,5 +24,7 @@ public class MageGlideModule implements com.bumptech.glide.module.GlideModule {
     @Override
     public void registerComponents(Context context, Glide glide) {
         glide.register(Attachment.class, InputStream.class, new AttachmentLoader.Factory());
+//        glide.register(Attachment.class, Bitmap.class, new AttachmentVideoLoader.Factory());
+
     }
 }
