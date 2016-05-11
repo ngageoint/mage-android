@@ -7,7 +7,6 @@ import android.preference.PreferenceManager;
 import android.util.Log;
 
 import com.google.common.base.Predicate;
-import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 
 import java.net.MalformedURLException;
@@ -21,9 +20,9 @@ import mil.nga.giat.mage.sdk.R;
 import mil.nga.giat.mage.sdk.connectivity.ConnectivityUtility;
 import mil.nga.giat.mage.sdk.datastore.DaoStore;
 import mil.nga.giat.mage.sdk.datastore.user.User;
-import mil.nga.giat.mage.sdk.gson.deserializer.UserDeserializer;
 import mil.nga.giat.mage.sdk.http.resource.DeviceResource;
 import mil.nga.giat.mage.sdk.http.resource.UserResource;
+import mil.nga.giat.mage.sdk.jackson.deserializer.UserDeserializer;
 import mil.nga.giat.mage.sdk.utils.DateFormatFactory;
 import mil.nga.giat.mage.sdk.utils.DeviceUuidFactory;
 import mil.nga.giat.mage.sdk.utils.PasswordUtility;
@@ -37,11 +36,14 @@ public class FormAuthLoginTask extends AbstractAccountTask {
 
 	private static final String LOG_NAME = FormAuthLoginTask.class.getName();
 	private DateFormat iso8601Format = DateFormatFactory.ISO8601();
+	private UserDeserializer userDeserializer;
 
 	private volatile AccountStatus callbackStatus = null;
 
 	public FormAuthLoginTask(AccountDelegate delegate, Context context) {
 		super(delegate, context);
+
+		userDeserializer = new UserDeserializer(context);
 	}
 
 	/**
@@ -187,9 +189,7 @@ public class FormAuthLoginTask extends AbstractAccountTask {
 						DaoStore.getInstance(mApplicationContext).resetDatabase();
 					}
 
-					final Gson userDeserializer = UserDeserializer.getGsonBuilder(mApplicationContext);
-
-					User user = userDeserializer.fromJson(userJson.toString(), User.class);
+					User user = userDeserializer.parseUser(userJson.toString());
 					if (user != null) {
 						user.setFetchedDate(new Date());
 						user = userHelper.createOrUpdate(user);

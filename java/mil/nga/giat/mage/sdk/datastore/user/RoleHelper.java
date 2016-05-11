@@ -8,6 +8,8 @@ import com.j256.ormlite.stmt.DeleteBuilder;
 import com.j256.ormlite.stmt.QueryBuilder;
 
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import mil.nga.giat.mage.sdk.datastore.DaoHelper;
@@ -155,4 +157,16 @@ public class RoleHelper extends DaoHelper<Role> {
         }
         return role;
     }
+
+	public Collection<Role> readAll() throws RoleException {
+		Collection<Role> roles = new ArrayList<>();
+		try {
+			roles.addAll(roleDao.queryForAll());
+		} catch (SQLException sqle) {
+			Log.e(LOG_NAME, "Unable to read Observations", sqle);
+			throw new RoleException("Unable to read Roles.", sqle);
+		}
+
+		return roles;
+	}
 }

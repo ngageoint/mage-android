@@ -23,9 +23,9 @@ import mil.nga.giat.mage.sdk.R;
 import mil.nga.giat.mage.sdk.datastore.user.Event;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
-import mil.nga.giat.mage.sdk.gson.deserializer.UserDeserializer;
-import mil.nga.giat.mage.sdk.gson.deserializer.UsersDeserializer;
 import mil.nga.giat.mage.sdk.http.HttpClientManager;
+import mil.nga.giat.mage.sdk.http.converter.UserConverterFactory;
+import mil.nga.giat.mage.sdk.http.converter.UsersConverterFactory;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
 import retrofit.Call;
 import retrofit.GsonConverterFactory;
@@ -132,7 +132,7 @@ public class UserResource {
         try {
             Retrofit retrofit = new Retrofit.Builder()
                     .baseUrl(baseUrl)
-                    .addConverterFactory(GsonConverterFactory.create(UsersDeserializer.getGsonBuilder(context)))
+                    .addConverterFactory(GsonConverterFactory.create())
                     .client(HttpClientManager.getInstance(context).httpClient())
                     .build();
 
@@ -160,7 +160,7 @@ public class UserResource {
         String baseUrl = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.serverURLKey), context.getString(R.string.serverURLDefaultValue));
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl(baseUrl)
-                .addConverterFactory(GsonConverterFactory.create(UsersDeserializer.getGsonBuilder(context)))
+                .addConverterFactory(UsersConverterFactory.create(context))
                 .client(HttpClientManager.getInstance(context).httpClient())
                 .build();
 
@@ -220,7 +220,7 @@ public class UserResource {
         String baseUrl = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.serverURLKey), context.getString(R.string.serverURLDefaultValue));
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl(baseUrl)
-                .addConverterFactory(GsonConverterFactory.create(UserDeserializer.getGsonBuilder(context)))
+                .addConverterFactory(UserConverterFactory.create(context))
                 .client(HttpClientManager.getInstance(context).httpClient())
                 .build();
 
@@ -291,7 +291,7 @@ public class UserResource {
         String baseUrl = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.serverURLKey), context.getString(R.string.serverURLDefaultValue));
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl(baseUrl)
-                .addConverterFactory(GsonConverterFactory.create(UserDeserializer.getGsonBuilder(context)))
+                .addConverterFactory(UserConverterFactory.create(context))
                 .client(HttpClientManager.getInstance(context).httpClient())
                 .build();
 
@@ -316,7 +316,7 @@ public class UserResource {
 
             Retrofit retrofit = new Retrofit.Builder()
                     .baseUrl(baseUrl)
-                    .addConverterFactory(GsonConverterFactory.create(UserDeserializer.getGsonBuilder(context)))
+                    .addConverterFactory(UserConverterFactory.create(context))
                     .client(HttpClientManager.getInstance(context).httpClient())
                     .build();
 

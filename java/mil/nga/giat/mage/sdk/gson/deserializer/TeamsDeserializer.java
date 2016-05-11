@@ -3,6 +3,7 @@ package mil.nga.giat.mage.sdk.gson.deserializer;
 import android.content.Context;
 import android.util.Log;
 
+import com.fasterxml.jackson.core.JsonFactory;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
@@ -13,6 +14,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.reflect.TypeToken;
 
+import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -23,6 +25,7 @@ import mil.nga.giat.mage.sdk.datastore.user.Team;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
+import mil.nga.giat.mage.sdk.jackson.deserializer.UserDeserializer;
 
 /**
  * JSON to {@link Team}
@@ -35,12 +38,14 @@ public class TeamsDeserializer implements JsonDeserializer<Map<Team, Collection<
     private static final String LOG_NAME = TeamsDeserializer.class.getName();
 
     private UserHelper userHelper;
-    private Gson userDeserializer;
+    private UserDeserializer userDeserializer;
     private Gson teamDeserializer;
+    private JsonFactory factory = new JsonFactory();
+
 
     public TeamsDeserializer(Context context) {
         userHelper = UserHelper.getInstance(context);
-        userDeserializer = UserDeserializer.getGsonBuilder(context);
+        userDeserializer = new UserDeserializer(context);
         teamDeserializer = TeamDeserializer.getGsonBuilder();
     }
 
@@ -83,7 +88,11 @@ public class TeamsDeserializer implements JsonDeserializer<Map<Team, Collection<
             }
 
             if (user == null) {
-                user = userDeserializer.fromJson(jsonUser, User.class);
+                try {
+                    user = userDeserializer.parseUser(jsonUser.toString());
+                } catch (IOException e) {
+                    Log.e(LOG_NAME, "Error parsing user", e);
+                }
             }
 
             if (user != null) {

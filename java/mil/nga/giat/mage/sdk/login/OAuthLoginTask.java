@@ -5,7 +5,6 @@ import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
-import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
@@ -18,7 +17,7 @@ import mil.nga.giat.mage.sdk.R;
 import mil.nga.giat.mage.sdk.datastore.DaoStore;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
-import mil.nga.giat.mage.sdk.gson.deserializer.UserDeserializer;
+import mil.nga.giat.mage.sdk.jackson.deserializer.UserDeserializer;
 import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
 import mil.nga.giat.mage.sdk.utils.DateFormatFactory;
 
@@ -32,9 +31,12 @@ public class OAuthLoginTask extends AbstractAccountTask {
 
 	private static final String LOG_NAME = OAuthLoginTask.class.getName();
 	private DateFormat iso8601Format = DateFormatFactory.ISO8601();
+	private UserDeserializer userDeserializer;
 
 	public OAuthLoginTask(AccountDelegate delegate, Context context) {
 		super(delegate, context);
+
+		userDeserializer = new UserDeserializer(context);
 	}
 
 	/**
@@ -77,8 +79,7 @@ public class OAuthLoginTask extends AbstractAccountTask {
 					DaoStore.getInstance(mApplicationContext).resetDatabase();
 				}
 
-				Gson userDeserializer = UserDeserializer.getGsonBuilder(mApplicationContext);
-				User user = userDeserializer.fromJson(userJson.toString(), User.class);
+				User user = userDeserializer.parseUser(userJson.toString());
 				if (user != null) {
 					user.setFetchedDate(new Date());
 					UserHelper userHelper = UserHelper.getInstance(mApplicationContext);

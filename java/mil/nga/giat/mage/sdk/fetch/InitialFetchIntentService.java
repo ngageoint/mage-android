@@ -69,10 +69,25 @@ public class InitialFetchIntentService extends ConnectivityAwareIntentService {
 
         if (isConnected && isDataFetchEnabled && !LoginTaskFactory.getInstance(getApplicationContext()).isLocalLogin()) {
             Log.d(LOG_NAME, "The device is currently connected.");
+            long start = System.currentTimeMillis();
             fetchAndSaveRoles();
-			fetchAndSaveUsers();
+            long end = System.currentTimeMillis();
+            Log.d(LOG_NAME, "Pulled and saved roles in " + (end - start) / 1000 + " seconds");
+
+            start = System.currentTimeMillis();
+            fetchAndSaveUsers();
+            end = System.currentTimeMillis();
+            Log.d(LOG_NAME, "Pulled and saved users in " + (end - start) / 1000 + " seconds");
+
+            start = System.currentTimeMillis();
             fetchAndSaveTeams();
+            end = System.currentTimeMillis();
+            Log.d(LOG_NAME, "Pulled and saved teams in " + (end - start) / 1000 + " seconds");
+
+            start = System.currentTimeMillis();
             fetchAndSaveEvents();
+            end = System.currentTimeMillis();
+            Log.d(LOG_NAME, "Pulled and saved events in " + (end - start) / 1000 + " seconds");
 
             Handler handler = new Handler(Looper.getMainLooper());
 			// users are updated, finish getting image content
@@ -190,7 +205,7 @@ public class InitialFetchIntentService extends ConnectivityAwareIntentService {
 
                 didFetchUsers = Boolean.TRUE;
             } catch (Exception e) {
-                Log.e(LOG_NAME, "Problem fetching users.  Will try again soon.");
+                Log.e(LOG_NAME, "Problem fetching users.  Will try again soon.", e);
                 didFetchUsers = Boolean.FALSE;
                 try {
                     Thread.sleep(retryTime);
