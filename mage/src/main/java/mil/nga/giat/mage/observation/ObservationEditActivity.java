@@ -396,7 +396,9 @@ public class ObservationEditActivity extends Activity implements OnMapReadyCallb
 
 		if (observationMarker != null) {
 			observationMarker.setPosition(location);
+			// make sure to set the Anchor after this call as well, because the size of the icon might have changed
 			observationMarker.setIcon(ObservationBitmapFactory.bitmapDescriptor(this, observation));
+			observationMarker.setAnchor(0.5f, 1.0f);
 		} else {
 			observationMarker = map.addMarker(new MarkerOptions().position(location).icon(ObservationBitmapFactory.bitmapDescriptor(this, observation)));
 		}

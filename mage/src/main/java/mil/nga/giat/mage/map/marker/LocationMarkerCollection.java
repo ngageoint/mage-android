@@ -102,10 +102,9 @@ public class LocationMarkerCollection implements PointCollection<Location>, OnMa
 			Point point = g.getCentroid();
 
 			LatLng latLng = new LatLng(point.getY(), point.getX());
-			MarkerOptions options = new MarkerOptions().position(latLng).visible(visible);
+			MarkerOptions options = new MarkerOptions().position(latLng).visible(visible).icon(LocationBitmapFactory.bitmapDescriptor(context, l, l.getUser()));
 
 			Marker marker = markerCollection.addMarker(options);
-			marker.setIcon(LocationBitmapFactory.bitmapDescriptor(context, l, l.getUser()));
 
 			userIdToLocationId.put(l.getUser().getId(), l.getId());
 			
@@ -178,7 +177,9 @@ public class LocationMarkerCollection implements PointCollection<Location>, OnMa
 		}
 
 		map.setInfoWindowAdapter(infoWindowAdapter);
+		// make sure to set the Anchor after this call as well, because the size of the icon might have changed
 		marker.setIcon(LocationBitmapFactory.bitmapDescriptor(context, l, l.getUser()));
+		marker.setAnchor(0.5f, 1.0f);
 		marker.showInfoWindow();
 		return true;
 	}
@@ -198,7 +199,9 @@ public class LocationMarkerCollection implements PointCollection<Location>, OnMa
 			if (tl != null) {
 				boolean showWindow = m.isInfoWindowShown();
 				try {
+					// make sure to set the Anchor after this call as well, because the size of the icon might have changed
 					m.setIcon(LocationBitmapFactory.bitmapDescriptor(context, tl, UserHelper.getInstance(context).read(tl.getUser().getId())));
+					m.setAnchor(0.5f, 1.0f);
 				} catch (UserException ue) {
 					Log.e(LOG_NAME, "Error refreshing the icon for user: " + tl.getUser().getId(), ue);
 				}
