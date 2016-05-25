@@ -124,7 +124,8 @@ public class FeatureOverlayPreferenceActivity extends ListActivity implements IL
 				Layer l = overlayAdapter.getItem(i);
 
 				if (l != null) {
-					overlayAdapter.notifyDataSetChanged();
+                    l.setLoaded(layer.isLoaded());
+                    overlayAdapter.notifyDataSetChanged();
 				} else {
 					Log.d(LOG_NAME, "Static layer " + layer.getName() + ":" + layer.getId() + " is not available, adapter size is: " + overlayAdapter.getCount());
 				}

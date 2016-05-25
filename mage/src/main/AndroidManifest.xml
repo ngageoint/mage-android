@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="mil.nga.giat.mage"
-    android:versionCode="15"
+    android:versionCode="16"
     android:versionName="5.0.4">
 
     <permission
