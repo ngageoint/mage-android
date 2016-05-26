@@ -102,7 +102,7 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
             }
         });
 
-		FragmentManager fragmentManager = getFragmentManager();
+		FragmentManager fragmentManager = getChildFragmentManager();
 		fragmentManager.beginTransaction().add(R.id.news_feed_event_holder, new EventBannerFragment()).commit();
 
 		lv = (ListView) rootView.findViewById(R.id.news_feed_list);

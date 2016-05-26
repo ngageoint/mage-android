@@ -19,7 +19,7 @@ android {
 
     defaultConfig {
         applicationId "mil.nga.giat.mage"
-        minSdkVersion 16
+        minSdkVersion 17
         targetSdkVersion 22
         multiDexEnabled true
         resValue "string", "serverURLDefaultValue", serverURL
