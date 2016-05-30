@@ -111,7 +111,18 @@ public class SignupTask extends AbstractAccountTask {
 				Log.e(LOG_NAME, error);
 				if(!StringUtils.isBlank(error)) {
 					List<Integer> errorIndices = new ArrayList<Integer>();
-					errorIndices.add(5);
+					if (error.contains("displayName")) {
+						errorIndices.add(0);
+					} else if (error.contains("username")) {
+						errorIndices.add(1);
+					} else if (error.contains("email")) {
+						errorIndices.add(2);
+					} else if (error.contains("password")) {
+						errorIndices.add(3);
+					} else {
+						errorIndices.add(5);
+					}
+
 					List<String> errorMessages = new ArrayList<String>();
 					errorMessages.add(error);
 					return new AccountStatus(AccountStatus.Status.FAILED_SIGNUP, errorIndices, errorMessages);
