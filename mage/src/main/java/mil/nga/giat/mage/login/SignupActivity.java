@@ -312,6 +312,12 @@ public class SignupActivity extends Activity implements AccountDelegate {
 					} else if (errorIndex == 3) {
 						getPasswordEditText().setError(message);
 						getPasswordEditText().requestFocus();
+					} else if (errorIndex == 5) {
+						new AlertDialog.Builder(this)
+							.setTitle("Signup Failed")
+							.setMessage(message)
+							.setPositiveButton(android.R.string.ok, null)
+							.show();
 					}
 				}
 			}
