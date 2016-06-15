@@ -48,8 +48,10 @@ import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.GeometryFactory;
@@ -76,6 +78,7 @@ import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.event.EventBannerFragment;
 import mil.nga.giat.mage.form.LayoutBaker;
 import mil.nga.giat.mage.form.LayoutBaker.ControlGenerationType;
+import mil.nga.giat.mage.form.MageSelectView;
 import mil.nga.giat.mage.form.MageSpinner;
 import mil.nga.giat.mage.form.MageTextView;
 import mil.nga.giat.mage.map.marker.ObservationBitmapFactory;
@@ -114,8 +117,13 @@ public class ObservationEditActivity extends Activity implements OnMapReadyCallb
 	private static final int CAPTURE_VOICE_ACTIVITY_REQUEST_CODE = 300;
 	private static final int GALLERY_ACTIVITY_REQUEST_CODE = 400;
 	private static final int LOCATION_EDIT_ACTIVITY_REQUEST_CODE = 600;
+	private static final int SELECT_ACTIVITY_REQUEST_CODE = 700;
 
 	private static final long NEW_OBSERVATION = -1L;
+
+	private static Integer FIELD_ID_MULTISELECT = 7;
+
+	private Map<Integer, View> fieldIdMap = new HashMap<>(); //FieldId / View
 
 	private final DecimalFormat latLngFormat = new DecimalFormat("###.#####");
 	private ArrayList<Attachment> attachmentsToCreate = new ArrayList<>();
@@ -163,7 +171,7 @@ public class ObservationEditActivity extends Activity implements OnMapReadyCallb
                 startActivity(intent);
             }
         });
-		
+
 		final long observationId = getIntent().getLongExtra(OBSERVATION_ID, NEW_OBSERVATION);
 		JsonObject dynamicFormJson;
 		if (observationId == NEW_OBSERVATION) {
@@ -220,6 +228,17 @@ public class ObservationEditActivity extends Activity implements OnMapReadyCallb
 					public void onNothingSelected(AdapterView<?> parent) {
 					}
 				});
+			} else if (view instanceof MageSelectView) {
+				final MageSelectView selectView = (MageSelectView) view;
+				fieldIdMap.put(FIELD_ID_MULTISELECT, selectView); //throw 'this' in?
+
+				selectView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+					@Override
+					public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+						selectClick(selectView.getJsonObject());
+					}
+				});
+
 			}
 		}
 
@@ -270,7 +289,7 @@ public class ObservationEditActivity extends Activity implements OnMapReadyCallb
 			}
 			LayoutBaker.populateLayoutFromMap((LinearLayout) findViewById(R.id.form), ControlGenerationType.EDIT, propertiesMap);
 		}
-		
+
 		findViewById(R.id.date_edit).setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
@@ -323,11 +342,12 @@ public class ObservationEditActivity extends Activity implements OnMapReadyCallb
 				startActivityForResult(intent, LOCATION_EDIT_ACTIVITY_REQUEST_CODE);
 			}
 		});
+
 	}
-	
+
 	/**
 	 * Hides keyboard when clicking elsewhere
-	 * 
+	 *
 	 * @param view view
 	 */
 	private void hideKeyboardOnClick(View view) {
@@ -420,7 +440,7 @@ public class ObservationEditActivity extends Activity implements OnMapReadyCallb
 			observationMarker = map.addMarker(new MarkerOptions().position(location).icon(ObservationBitmapFactory.bitmapDescriptor(this, observation)));
 		}
 	}
-	
+
 	@SuppressLint("NewApi")
 	private long getElapsedTimeInMilliseconds() {
 		long elapsedTimeInMilliseconds = 0;
@@ -437,10 +457,10 @@ public class ObservationEditActivity extends Activity implements OnMapReadyCallb
 
 	private String elapsedTime(long ms) {
 		String s = "";
-		
+
 		long sec = ms / 1000;
 		long min = sec / 60;
-		
+
 		if (observation.getRemoteId() == null) {
 			if (ms < 1000) {
 				return "now";
@@ -529,7 +549,7 @@ public class ObservationEditActivity extends Activity implements OnMapReadyCallb
 			if (provider == null || provider.trim().isEmpty()) {
 				provider = "manual";
 			}
-			
+
 			propertyMap.put("provider", new ObservationProperty("provider", provider));
 			if (!"manual".equalsIgnoreCase(provider)) {
 				propertyMap.put("delta", new ObservationProperty("delta", Long.toString(locationElapsedTimeMilliseconds)));
@@ -749,33 +769,45 @@ public class ObservationEditActivity extends Activity implements OnMapReadyCallb
 			return;
 		}
 		switch (requestCode) {
-		case CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE:
-		case CAPTURE_VIDEO_ACTIVITY_REQUEST_CODE:
-			Attachment capture = new Attachment();
-			capture.setLocalPath(currentMediaPath);
-			attachmentsToCreate.add(capture);
-			attachmentGallery.addAttachment(attachmentLayout, capture);
-			MediaUtility.addImageToGallery(getApplicationContext(), Uri.fromFile(new File(currentMediaPath)));
-			break;
-		case GALLERY_ACTIVITY_REQUEST_CODE:
-		case CAPTURE_VOICE_ACTIVITY_REQUEST_CODE:
-			Collection<Uri> uris = getUris(data);
-			for (Uri uri : uris) {
-				try {
-					File file = MediaUtility.copyImageFromGallery(getContentResolver().openInputStream(uri));
-					Attachment a = new Attachment();
-					a.setLocalPath(file.getAbsolutePath());
-					attachmentsToCreate.add(a);
-					attachmentGallery.addAttachment(attachmentLayout, a);
-				} catch (IOException e) {
-					Log.e(LOG_NAME, "Error copying gallery file to local storage", e);
+			case CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE:
+			case CAPTURE_VIDEO_ACTIVITY_REQUEST_CODE:
+				Attachment capture = new Attachment();
+				capture.setLocalPath(currentMediaPath);
+				attachmentsToCreate.add(capture);
+				attachmentGallery.addAttachment(attachmentLayout, capture);
+				MediaUtility.addImageToGallery(getApplicationContext(), Uri.fromFile(new File(currentMediaPath)));
+				break;
+			case GALLERY_ACTIVITY_REQUEST_CODE:
+			case CAPTURE_VOICE_ACTIVITY_REQUEST_CODE:
+				Collection<Uri> uris = getUris(data);
+				for (Uri uri : uris) {
+					try {
+						File file = MediaUtility.copyImageFromGallery(getContentResolver().openInputStream(uri));
+						Attachment a = new Attachment();
+						a.setLocalPath(file.getAbsolutePath());
+						attachmentsToCreate.add(a);
+						attachmentGallery.addAttachment(attachmentLayout, a);
+					} catch (IOException e) {
+						Log.e(LOG_NAME, "Error copying gallery file to local storage", e);
+					}
 				}
-			}
-			break;
-		case LOCATION_EDIT_ACTIVITY_REQUEST_CODE:
-			l = data.getParcelableExtra(LocationEditActivity.LOCATION);
-			setupMap();
-			break;
+				break;
+			case LOCATION_EDIT_ACTIVITY_REQUEST_CODE:
+				l = data.getParcelableExtra(LocationEditActivity.LOCATION);
+				setupMap();
+				break;
+			case SELECT_ACTIVITY_REQUEST_CODE:
+				JsonParser jsonParser = new JsonParser();
+				String selectedChoices = data.getStringExtra(SelectEditActivity.MULTISELECT_SELECTED);
+				JsonArray selectedChoicesArray = jsonParser.parse(selectedChoices).getAsJsonArray();
+
+				//TODO: set the textView with the returned values
+				//TODO: save to the observation
+				MageSelectView mageSelectView = (MageSelectView) fieldIdMap.get(FIELD_ID_MULTISELECT);
+				//Is the json fieldId mapping needed?
+				//selectView.setValue(selectedChoicesArray);
+
+				break;
 		}
 	}
 
@@ -787,7 +819,7 @@ public class ObservationEditActivity extends Activity implements OnMapReadyCallb
 		uris.addAll(getClipDataUris(intent));
 		return uris;
 	}
-	
+
 	@TargetApi(16)
 	private Collection<Uri> getClipDataUris(Intent intent) {
 		Collection<Uri> uris = new ArrayList<>();
@@ -808,4 +840,15 @@ public class ObservationEditActivity extends Activity implements OnMapReadyCallb
 		}
 		observationMarker = map.addMarker(new MarkerOptions().position(new LatLng(l.getLatitude(), l.getLongitude())).icon(ObservationBitmapFactory.bitmapDescriptor(this, observation)));
 	}
+
+	public void selectClick(JsonObject field) {
+		Intent intent = new Intent(ObservationEditActivity.this, SelectEditActivity.class);
+		JsonArray jsonArray = field.getAsJsonArray(SelectEditActivity.MULTISELECT_JSON_CHOICE_KEY);
+		Log.d("SelectChoices", jsonArray.toString());
+		intent.putExtra(SelectEditActivity.MULTISELECT_CHOICES, jsonArray.toString());
+		//TODO: update to previously selected
+		intent.putExtra(SelectEditActivity.MULTISELECT_SELECTED, jsonArray.toString());
+		startActivityForResult(intent, SELECT_ACTIVITY_REQUEST_CODE);
+	}
+
 }
