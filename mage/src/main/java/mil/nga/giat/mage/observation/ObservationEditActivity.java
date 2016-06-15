@@ -48,6 +48,7 @@ import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.vividsolutions.jts.geom.Coordinate;
@@ -76,6 +77,7 @@ import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.event.EventBannerFragment;
 import mil.nga.giat.mage.form.LayoutBaker;
 import mil.nga.giat.mage.form.LayoutBaker.ControlGenerationType;
+import mil.nga.giat.mage.form.MageSelectView;
 import mil.nga.giat.mage.form.MageSpinner;
 import mil.nga.giat.mage.form.MageTextView;
 import mil.nga.giat.mage.map.marker.ObservationBitmapFactory;
@@ -114,8 +116,13 @@ public class ObservationEditActivity extends Activity implements OnMapReadyCallb
 	private static final int CAPTURE_VOICE_ACTIVITY_REQUEST_CODE = 300;
 	private static final int GALLERY_ACTIVITY_REQUEST_CODE = 400;
 	private static final int LOCATION_EDIT_ACTIVITY_REQUEST_CODE = 600;
+	private static final int SELECT_ACTIVITY_REQUEST_CODE = 700;
 
 	private static final long NEW_OBSERVATION = -1L;
+
+	private static Integer FIELD_ID_SELECT = 7;
+
+	private Map<String, View> fieldIdMap = new HashMap<>(); //FieldId + " " + UnqiueId / View
 
 	private final DecimalFormat latLngFormat = new DecimalFormat("###.#####");
 	private ArrayList<Attachment> attachmentsToCreate = new ArrayList<>();
@@ -163,7 +170,7 @@ public class ObservationEditActivity extends Activity implements OnMapReadyCallb
                 startActivity(intent);
             }
         });
-		
+
 		final long observationId = getIntent().getLongExtra(OBSERVATION_ID, NEW_OBSERVATION);
 		JsonObject dynamicFormJson;
 		if (observationId == NEW_OBSERVATION) {
@@ -220,6 +227,32 @@ public class ObservationEditActivity extends Activity implements OnMapReadyCallb
 					public void onNothingSelected(AdapterView<?> parent) {
 					}
 				});
+			} else if (view instanceof MageSelectView) {
+				final MageSelectView selectView = (MageSelectView) view;
+				fieldIdMap.put(getSelectId(selectView.getId()), selectView);
+
+				selectView.setOnClickListener(new View.OnClickListener() {
+					@Override
+					public void onClick(View v) {
+						selectClick(selectView);
+					}
+				});
+			} else if( view instanceof  LinearLayout) {
+				LinearLayout currentView = (LinearLayout) view;
+				for (int index = 0; index < currentView.getChildCount(); index++) {
+					View childView = currentView.getChildAt(index);
+					if (childView instanceof MageSelectView) {
+						final MageSelectView childSelectView = (MageSelectView) childView;
+						fieldIdMap.put(getSelectId(childSelectView.getId()), childSelectView);
+
+						childSelectView.setOnClickListener(new View.OnClickListener() {
+							@Override
+							public void onClick(View v) {
+								selectClick(childSelectView);
+							}
+						});
+					}
+				}
 			}
 		}
 
@@ -236,9 +269,13 @@ public class ObservationEditActivity extends Activity implements OnMapReadyCallb
 
             observation.setEvent(EventHelper.getInstance(getApplicationContext()).getCurrentEvent());
 			observation.setTimestamp(new Date());
-			List<ObservationProperty> properties = new ArrayList<>();
-			properties.add(new ObservationProperty("timestamp", iso8601Format.format(observation.getTimestamp())));
-			observation.addProperties(properties);
+			Serializable timestamp = iso8601Format.format(observation.getTimestamp());
+			ObservationProperty timestampProperty = new ObservationProperty("timestamp", timestamp);
+
+			Map<String, ObservationProperty> propertyMap = LayoutBaker.populateMapFromLayout((LinearLayout) findViewById(R.id.form));
+			propertyMap.put("timestamp", timestampProperty);
+
+			observation.addProperties(propertyMap.values());
 			try {
 				User u = UserHelper.getInstance(getApplicationContext()).readCurrentUser();
 				if (u != null) {
@@ -270,7 +307,7 @@ public class ObservationEditActivity extends Activity implements OnMapReadyCallb
 			}
 			LayoutBaker.populateLayoutFromMap((LinearLayout) findViewById(R.id.form), ControlGenerationType.EDIT, propertiesMap);
 		}
-		
+
 		findViewById(R.id.date_edit).setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
@@ -323,11 +360,12 @@ public class ObservationEditActivity extends Activity implements OnMapReadyCallb
 				startActivityForResult(intent, LOCATION_EDIT_ACTIVITY_REQUEST_CODE);
 			}
 		});
+
 	}
-	
+
 	/**
 	 * Hides keyboard when clicking elsewhere
-	 * 
+	 *
 	 * @param view view
 	 */
 	private void hideKeyboardOnClick(View view) {
@@ -420,7 +458,7 @@ public class ObservationEditActivity extends Activity implements OnMapReadyCallb
 			observationMarker = map.addMarker(new MarkerOptions().position(location).icon(ObservationBitmapFactory.bitmapDescriptor(this, observation)));
 		}
 	}
-	
+
 	@SuppressLint("NewApi")
 	private long getElapsedTimeInMilliseconds() {
 		long elapsedTimeInMilliseconds = 0;
@@ -437,10 +475,10 @@ public class ObservationEditActivity extends Activity implements OnMapReadyCallb
 
 	private String elapsedTime(long ms) {
 		String s = "";
-		
+
 		long sec = ms / 1000;
 		long min = sec / 60;
-		
+
 		if (observation.getRemoteId() == null) {
 			if (ms < 1000) {
 				return "now";
@@ -529,7 +567,7 @@ public class ObservationEditActivity extends Activity implements OnMapReadyCallb
 			if (provider == null || provider.trim().isEmpty()) {
 				provider = "manual";
 			}
-			
+
 			propertyMap.put("provider", new ObservationProperty("provider", provider));
 			if (!"manual".equalsIgnoreCase(provider)) {
 				propertyMap.put("delta", new ObservationProperty("delta", Long.toString(locationElapsedTimeMilliseconds)));
@@ -749,33 +787,51 @@ public class ObservationEditActivity extends Activity implements OnMapReadyCallb
 			return;
 		}
 		switch (requestCode) {
-		case CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE:
-		case CAPTURE_VIDEO_ACTIVITY_REQUEST_CODE:
-			Attachment capture = new Attachment();
-			capture.setLocalPath(currentMediaPath);
-			attachmentsToCreate.add(capture);
-			attachmentGallery.addAttachment(attachmentLayout, capture);
-			MediaUtility.addImageToGallery(getApplicationContext(), Uri.fromFile(new File(currentMediaPath)));
-			break;
-		case GALLERY_ACTIVITY_REQUEST_CODE:
-		case CAPTURE_VOICE_ACTIVITY_REQUEST_CODE:
-			Collection<Uri> uris = getUris(data);
-			for (Uri uri : uris) {
-				try {
-					File file = MediaUtility.copyImageFromGallery(getContentResolver().openInputStream(uri));
-					Attachment a = new Attachment();
-					a.setLocalPath(file.getAbsolutePath());
-					attachmentsToCreate.add(a);
-					attachmentGallery.addAttachment(attachmentLayout, a);
-				} catch (IOException e) {
-					Log.e(LOG_NAME, "Error copying gallery file to local storage", e);
+			case CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE:
+			case CAPTURE_VIDEO_ACTIVITY_REQUEST_CODE:
+				Attachment capture = new Attachment();
+				capture.setLocalPath(currentMediaPath);
+				attachmentsToCreate.add(capture);
+				attachmentGallery.addAttachment(attachmentLayout, capture);
+				MediaUtility.addImageToGallery(getApplicationContext(), Uri.fromFile(new File(currentMediaPath)));
+				break;
+			case GALLERY_ACTIVITY_REQUEST_CODE:
+			case CAPTURE_VOICE_ACTIVITY_REQUEST_CODE:
+				Collection<Uri> uris = getUris(data);
+				for (Uri uri : uris) {
+					try {
+						File file = MediaUtility.copyImageFromGallery(getContentResolver().openInputStream(uri));
+						Attachment a = new Attachment();
+						a.setLocalPath(file.getAbsolutePath());
+						attachmentsToCreate.add(a);
+						attachmentGallery.addAttachment(attachmentLayout, a);
+					} catch (IOException e) {
+						Log.e(LOG_NAME, "Error copying gallery file to local storage", e);
+					}
 				}
-			}
-			break;
-		case LOCATION_EDIT_ACTIVITY_REQUEST_CODE:
-			l = data.getParcelableExtra(LocationEditActivity.LOCATION);
-			setupMap();
-			break;
+				break;
+			case LOCATION_EDIT_ACTIVITY_REQUEST_CODE:
+				l = data.getParcelableExtra(LocationEditActivity.LOCATION);
+				setupMap();
+				break;
+			case SELECT_ACTIVITY_REQUEST_CODE:
+				ArrayList<String> selectedChoices = data.getStringArrayListExtra(SelectEditActivity.SELECT_SELECTED);
+				Integer fieldId = data.getIntExtra(SelectEditActivity.FIELD_ID, 0);
+				MageSelectView mageSelectView = (MageSelectView) fieldIdMap.get(getSelectId(fieldId));
+				Serializable selectedChoicesSerialized = null;
+				if (selectedChoices != null) {
+					if (mageSelectView.isMultiSelect()) {
+						selectedChoicesSerialized = selectedChoices;
+					} else {
+						if (!selectedChoices.isEmpty()) {
+							selectedChoicesSerialized = selectedChoices.get(0);
+						}
+					}
+				}
+				mageSelectView.setPropertyValue(selectedChoicesSerialized);
+
+
+				break;
 		}
 	}
 
@@ -787,7 +843,7 @@ public class ObservationEditActivity extends Activity implements OnMapReadyCallb
 		uris.addAll(getClipDataUris(intent));
 		return uris;
 	}
-	
+
 	@TargetApi(16)
 	private Collection<Uri> getClipDataUris(Intent intent) {
 		Collection<Uri> uris = new ArrayList<>();
@@ -808,4 +864,35 @@ public class ObservationEditActivity extends Activity implements OnMapReadyCallb
 		}
 		observationMarker = map.addMarker(new MarkerOptions().position(new LatLng(l.getLatitude(), l.getLongitude())).icon(ObservationBitmapFactory.bitmapDescriptor(this, observation)));
 	}
+
+	private String getSelectId(Integer fieldId) {
+		return FIELD_ID_SELECT + " " + fieldId;
+	}
+
+	public void selectClick(MageSelectView mageSelectView) {
+		JsonObject field = mageSelectView.getJsonObject();
+		Boolean isMultiSelect = mageSelectView.isMultiSelect();
+		Integer fieldId = mageSelectView.getId();
+
+		Intent intent = new Intent(ObservationEditActivity.this, SelectEditActivity.class);
+		JsonArray jsonArray = field.getAsJsonArray(SelectEditActivity.MULTISELECT_JSON_CHOICE_KEY);
+		intent.putExtra(SelectEditActivity.SELECT_CHOICES, jsonArray.toString());
+
+		Serializable serializableValue = mageSelectView.getPropertyValue();
+		ArrayList<String> selectedValues = null;
+		if (serializableValue != null) {
+			if (isMultiSelect) {
+				selectedValues = (ArrayList<String>) serializableValue;
+			} else {
+				String selectedValue = (String) serializableValue;
+				selectedValues = new ArrayList<String>();
+				selectedValues.add(selectedValue);
+			}
+		}
+		intent.putStringArrayListExtra(SelectEditActivity.SELECT_SELECTED, selectedValues);
+		intent.putExtra(SelectEditActivity.IS_MULTISELECT, isMultiSelect);
+		intent.putExtra(SelectEditActivity.FIELD_ID, fieldId);
+		startActivityForResult(intent, SELECT_ACTIVITY_REQUEST_CODE);
+	}
+
 }

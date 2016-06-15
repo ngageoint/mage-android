@@ -30,42 +30,43 @@
         android:required="true" />
 
     <application
-        android:name="MAGE"
+        android:name=".MAGE"
         android:allowBackup="true"
         android:icon="@drawable/ic_launcher"
-        android:logo="@drawable/ic_wand"
         android:label="@string/app_name"
-        android:theme="@style/AppTheme" >
-
+        android:logo="@drawable/ic_wand"
+        android:theme="@style/AppTheme">
         <provider
             android:name="android.support.v4.content.FileProvider"
             android:authorities="mil.nga.giat.mage.fileprovider"
-            android:grantUriPermissions="true"
-            android:exported="false">
+            android:exported="false"
+            android:grantUriPermissions="true">
             <meta-data
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/filepaths" />
         </provider>
 
         <activity
-            android:name="mil.nga.giat.mage.disclaimer.DisclaimerActivity"
+            android:name=".disclaimer.DisclaimerActivity"
             android:label="@string/app_name"
             android:noHistory="true"
-            android:windowSoftInputMode="adjustResize" >
-        </activity>
+            android:windowSoftInputMode="adjustResize" />
         <activity
-            android:name="mil.nga.giat.mage.login.LoginActivity"
+            android:name=".login.LoginActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
             android:windowSoftInputMode="stateAlwaysHidden">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
             <!-- Open files with matching extensions from a file browser -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <action android:name="android.intent.action.SEND" />
+
                 <category android:name="android.intent.category.DEFAULT" />
+
                 <data android:scheme="file" />
                 <data android:mimeType="*/*" />
                 <data android:pathPattern=".*\\.gpkg" /> <!-- GeoPackage -->
@@ -76,7 +77,9 @@
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <action android:name="android.intent.action.SEND" />
+
                 <category android:name="android.intent.category.DEFAULT" />
+
                 <data android:scheme="content" />
                 <data android:mimeType="application/octet-stream" />
             </intent-filter>
@@ -84,128 +87,111 @@
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <action android:name="android.intent.action.SEND" />
+
                 <category android:name="android.intent.category.DEFAULT" />
+
                 <data android:mimeType="application/octet-stream" />
             </intent-filter>
         </activity>
         <activity
-            android:name="mil.nga.giat.mage.login.OAuthActivity"
-            android:windowSoftInputMode="adjustResize" >
-        </activity>
+            android:name=".login.OAuthActivity"
+            android:windowSoftInputMode="adjustResize" />
         <activity
-            android:name="mil.nga.giat.mage.login.SignupActivity"
-            android:windowSoftInputMode="stateAlwaysHidden" >
-        </activity>
+            android:name=".login.SignupActivity"
+            android:windowSoftInputMode="stateAlwaysHidden" />
         <activity
-            android:name="mil.nga.giat.mage.event.EventActivity"
-            android:label="@string/app_name">
-        </activity>
+            android:name=".event.EventActivity"
+            android:label="@string/app_name" />
         <activity
-            android:name="mil.nga.giat.mage.LandingActivity"
+            android:name=".LandingActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
             android:label="@string/app_name"
-            android:launchMode="singleTop">
-        </activity>
+            android:launchMode="singleTop" />
         <activity
-            android:name="mil.nga.giat.mage.preferences.LocationPreferencesActivity"
+            android:name=".preferences.LocationPreferencesActivity"
             android:label="@string/location_settings"
-            android:parentActivityName="mil.nga.giat.mage.LandingActivity" >
-        </activity>
+            android:parentActivityName=".LandingActivity" />
         <activity
-            android:name="mil.nga.giat.mage.preferences.FetchPreferencesActivity"
+            android:name=".preferences.FetchPreferencesActivity"
             android:label="@string/fetch_settings"
-            android:parentActivityName="mil.nga.giat.mage.LandingActivity" >
-        </activity>
+            android:parentActivityName=".LandingActivity" />
         <activity
-            android:name="mil.nga.giat.mage.preferences.ClearDataPreferenceActivity"
+            android:name=".preferences.ClearDataPreferenceActivity"
             android:label="Clear Data"
-            android:uiOptions="splitActionBarWhenNarrow"
-            android:parentActivityName="mil.nga.giat.mage.LandingActivity" >
-        </activity>
+            android:parentActivityName=".LandingActivity"
+            android:uiOptions="splitActionBarWhenNarrow" />
         <activity
-            android:name="mil.nga.giat.mage.map.preference.MapPreferencesActivity"
+            android:name=".map.preference.MapPreferencesActivity"
             android:label="@string/map_settings"
-            android:parentActivityName="mil.nga.giat.mage.LandingActivity" >
-        </activity>
+            android:parentActivityName=".LandingActivity" />
         <activity
-            android:name="mil.nga.giat.mage.map.preference.TileOverlayPreferenceActivity"
+            android:name=".map.preference.TileOverlayPreferenceActivity"
             android:label="Overlay Maps"
             android:launchMode="singleTop"
-            android:parentActivityName="mil.nga.giat.mage.map.preference.MapPreferencesActivity"
+            android:parentActivityName=".map.preference.MapPreferencesActivity"
             android:theme="@style/AppBaseTheme.ActionBar.OverlayMap"
-            android:uiOptions="splitActionBarWhenNarrow" >
-        </activity>
+            android:uiOptions="splitActionBarWhenNarrow" />
         <activity
-            android:name="mil.nga.giat.mage.map.preference.FeatureOverlayPreferenceActivity"
+            android:name=".map.preference.FeatureOverlayPreferenceActivity"
             android:label="Feature Overlays"
             android:launchMode="singleTop"
-            android:parentActivityName="mil.nga.giat.mage.map.preference.MapPreferencesActivity"
+            android:parentActivityName=".map.preference.MapPreferencesActivity"
             android:theme="@style/AppBaseTheme.ActionBar.OverlayMap"
-            android:uiOptions="splitActionBarWhenNarrow" >
-        </activity>
+            android:uiOptions="splitActionBarWhenNarrow" />
         <activity
-            android:name="mil.nga.giat.mage.observation.ObservationViewActivity"
-            android:label="@string/observation_view" >
-        </activity>
+            android:name=".observation.ObservationViewActivity"
+            android:label="@string/observation_view" />
         <activity
-            android:name="mil.nga.giat.mage.observation.ObservationEditActivity"
-            android:uiOptions="splitActionBarWhenNarrow" >
-        </activity>
-        <activity android:name="mil.nga.giat.mage.observation.AttachmentViewerActivity" >
-        </activity>
-        <activity android:name="mil.nga.giat.mage.profile.ProfilePictureViewerActivity" >
-        </activity>
-        <activity android:name="mil.nga.giat.mage.profile.ProfileActivity" >
-        </activity>
-        <activity android:name="mil.nga.giat.mage.observation.LocationEditActivity" >
-        </activity>
+            android:name=".observation.ObservationEditActivity"
+            android:uiOptions="splitActionBarWhenNarrow" />
+        <activity android:name=".observation.AttachmentViewerActivity" />
+        <activity android:name=".profile.ProfilePictureViewerActivity" />
+        <activity android:name=".profile.ProfileActivity" />
+        <activity android:name=".observation.LocationEditActivity" />
 
-        <receiver android:name="mil.nga.giat.mage.sdk.connectivity.NetworkChangeReceiver" >
+        <receiver android:name=".sdk.connectivity.NetworkChangeReceiver">
             <intent-filter>
                 <action android:name="android.net.conn.CONNECTIVITY_CHANGE" />
             </intent-filter>
         </receiver>
 
         <service
-            android:name="mil.nga.giat.mage.sdk.fetch.LocationFetchIntentService"
+            android:name=".sdk.fetch.LocationFetchIntentService"
             android:exported="false" />
-
         <service
-            android:name="mil.nga.giat.mage.sdk.fetch.ObservationFetchIntentService"
+            android:name=".sdk.fetch.ObservationFetchIntentService"
             android:exported="false" />
-
         <service
-            android:name="mil.nga.giat.mage.sdk.fetch.InitialFetchIntentService"
+            android:name=".sdk.fetch.InitialFetchIntentService"
             android:exported="false" />
-
         <service
-            android:name="mil.nga.giat.mage.sdk.push.LocationPushIntentService"
+            android:name=".sdk.push.LocationPushIntentService"
             android:exported="false" />
-
         <service
-            android:name="mil.nga.giat.mage.sdk.push.ObservationPushIntentService"
+            android:name=".sdk.push.ObservationPushIntentService"
             android:exported="false" />
 
         <receiver
-            android:name="mil.nga.giat.mage.sdk.push.AttachmentPushAlarmReceiver"
+            android:name=".sdk.push.AttachmentPushAlarmReceiver"
             android:exported="false" />
 
         <service
-            android:name="mil.nga.giat.mage.sdk.push.AttachmentPushIntentService"
+            android:name=".sdk.push.AttachmentPushIntentService"
             android:exported="false" />
 
         <meta-data
             android:name="com.google.android.maps.v2.API_KEY"
             android:value="@string/GOOGLE_MAPS_ANDROID_API_KEY" />
-
         <meta-data
             android:name="com.google.android.gms.version"
             android:value="@integer/google_play_services_version" />
-
         <meta-data
             android:name="mil.nga.giat.mage.glide.MageGlideModule"
             android:value="GlideModule" />
 
+        <activity
+            android:name=".observation.SelectEditActivity"
+            android:windowSoftInputMode="stateHidden"></activity>
     </application>
 
 </manifest>

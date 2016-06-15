@@ -13,7 +13,6 @@ import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup.LayoutParams;
-import android.widget.ArrayAdapter;
 import android.widget.DatePicker;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -45,9 +44,9 @@ import mil.nga.giat.mage.sdk.utils.DateFormatFactory;
 
 /**
  * Use this class to build and populate the views concerned with form like information.
- * 
+ *
  * @author wiedemanns
- * 
+ *
  */
 public class LayoutBaker {
 
@@ -96,12 +95,23 @@ public class LayoutBaker {
 			}
 
 			Boolean required = field.get("required").getAsBoolean();
-			String value = null;
+			Serializable value = null;
 			JsonElement jsonValue = field.get("value");
-			if (jsonValue != null && !jsonValue.isJsonNull() && jsonValue.isJsonPrimitive()) {
-				value = jsonValue.getAsString();
+			if (jsonValue != null && !jsonValue.isJsonNull()) {
+				if (jsonValue.isJsonPrimitive()) {
+					value = jsonValue.getAsString();
+				} else if (jsonValue.isJsonArray()) {
+					JsonArray jsonArray = (JsonArray) jsonValue;
+					ArrayList<String> stringArrayList = new ArrayList<>();
+					for (JsonElement element: jsonArray) {
+						if (!element.isJsonNull()) {
+							stringArrayList.add(element.getAsString());
+						}
+					}
+					value = stringArrayList;
+				}
 			}
-			
+
 
 			Boolean archived = false;
 			JsonElement jsonArchived = field.get("archived");
@@ -111,7 +121,7 @@ public class LayoutBaker {
 			if(archived) {
 				continue;
 			}
-			
+
 			String name = field.get("name").getAsString();
 			JsonArray choicesJson = field.get("choices").getAsJsonArray();
 			Collection<String> choices = new LinkedHashSet<>();
@@ -266,28 +276,12 @@ public class LayoutBaker {
 					mageCheckBox.setRequired(required);
 					mageCheckBox.setPropertyKey(name);
 					mageCheckBox.setPropertyType(MagePropertyType.STRING);
-					if(value != null && !value.trim().isEmpty()) {
-						mageCheckBox.setPropertyValue(Boolean.valueOf(value));
+					if(value != null && !((String)value).trim().isEmpty()) {
+						mageCheckBox.setPropertyValue(Boolean.valueOf(((String)value)));
 					}
 
 					views.add(textView);
 					views.add((View) mageCheckBox);
-					break;
-				case DROPDOWN:
-					MageSpinner mageSpinner = new MageSpinner(context, null);
-					mageSpinner.setId(id);
-					mageSpinner.setLayoutParams(controlParams);
-					mageSpinner.setRequired(required);
-					mageSpinner.setPropertyKey(name);
-					mageSpinner.setPropertyType(MagePropertyType.MULTICHOICE);
-
-					ArrayAdapter<String> spinnerArrayAdapter = new ArrayAdapter<>(context, android.R.layout.simple_spinner_item, choices.toArray(new String[choices.size()]));
-					spinnerArrayAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-					mageSpinner.setAdapter(spinnerArrayAdapter);
-					mageSpinner.setPropertyValue(value);
-
-					views.add(textView);
-					views.add(mageSpinner);
 					break;
 				case DATE:
 					// don't create the timestamp control on the edit page
@@ -313,10 +307,10 @@ public class LayoutBaker {
 					mageDateText.setPropertyType(MagePropertyType.DATE);
 					mageDateText.setTextSize(16);
 
-					if (value != null && !value.trim().isEmpty()) {
+					if (value != null && !((String)value).trim().isEmpty()) {
 						try {
                             DateFormat dateFormat = DateFormatFactory.ISO8601();
-							mageDateText.setPropertyValue(dateFormat.parse(value));
+							mageDateText.setPropertyValue(dateFormat.parse(((String)value)));
 						} catch (ParseException pe) {
 							Log.e(LOG_NAME, "Problem parsing date.", pe);
 						}
@@ -361,6 +355,37 @@ public class LayoutBaker {
 					views.add(linearLayout);
 
 					break;
+				case DROPDOWN:
+						MageSelectView mageSingleSelectView = new MageSelectView(context, null, field, false);
+						mageSingleSelectView.setId(id);
+						mageSingleSelectView.setLayoutParams(controlParams);
+						mageSingleSelectView.setRequired(required);
+						mageSingleSelectView.setPropertyKey(name);
+						mageSingleSelectView.setPropertyType(MagePropertyType.STRING);
+						mageSingleSelectView.setPropertyValue(value);
+						mageSingleSelectView.setFocusable(false);
+						mageSingleSelectView.setTextIsSelectable(false);
+						mageSingleSelectView.setClickable(true);
+						mageSingleSelectView.setTextSize(18);
+						views.add(textView);
+						views.add(mageSingleSelectView);
+
+						break;
+				case MULTISELECTDROPDOWN:
+						MageSelectView mageMultiSelectView = new MageSelectView(context, null, field, true);
+						mageMultiSelectView.setId(id);
+						mageMultiSelectView.setLayoutParams(controlParams);
+						mageMultiSelectView.setRequired(required);
+						mageMultiSelectView.setPropertyKey(name);
+						mageMultiSelectView.setPropertyType(MagePropertyType.MULTICHOICE);
+						mageMultiSelectView.setPropertyValue(value);
+						mageMultiSelectView.setFocusable(false);
+						mageMultiSelectView.setTextIsSelectable(false);
+						mageMultiSelectView.setClickable(true);
+						mageMultiSelectView.setTextSize(18);
+						views.add(textView);
+						views.add(mageMultiSelectView);
+					break;
 				default:
 					break;
 				}
@@ -382,7 +407,6 @@ public class LayoutBaker {
 				case TEXTFIELD:
 				case NUMBERFIELD:
 				case EMAIL:
-				case DROPDOWN:
 				case RADIO:
 					linearLayout.addView(textView);
 					linearLayout.addView(mageTextView);
@@ -394,8 +418,8 @@ public class LayoutBaker {
 					mageCheckBox.setLayoutParams(controlParams);
 					mageCheckBox.setPropertyKey(name);
 					mageCheckBox.setPropertyType(MagePropertyType.STRING);
-					if(value != null && !value.trim().isEmpty()) {
-						mageCheckBox.setPropertyValue(Boolean.valueOf(value));
+					if(value != null && !((String)value).trim().isEmpty()) {
+						mageCheckBox.setPropertyValue(Boolean.valueOf(((String)value)));
 					}
 					mageCheckBox.setEnabled(false);
 					linearLayout.addView(textView);
@@ -419,6 +443,18 @@ public class LayoutBaker {
 					linearLayout.addView(textView);
 					linearLayout.addView(mageTextView);
 					views.add(linearLayout);
+					break;
+				case DROPDOWN:
+					mageTextView.setPadding((int) (5 * density), (int) (5 * density), (int) (5 * density), (int) (5 * density));
+					mageTextView.setPropertyType(MagePropertyType.STRING);
+					views.add(textView);
+					views.add(mageTextView);
+					break;
+				case MULTISELECTDROPDOWN:
+					mageTextView.setPadding((int) (5 * density), (int) (5 * density), (int) (5 * density), (int) (5 * density));
+					mageTextView.setPropertyType(MagePropertyType.MULTICHOICE);
+					views.add(textView);
+					views.add(mageTextView);
 					break;
 				default:
 					break;
@@ -451,7 +487,7 @@ public class LayoutBaker {
 
 	/**
 	 * Populates the linearLayout from the key, value pairs in the propertiesMap
-	 * 
+	 *
 	 * @param linearLayout
 	 * @param propertiesMap
 	 */
@@ -462,7 +498,7 @@ public class LayoutBaker {
 				MageControl mageControl = (MageControl) v;
 				String propertyKey = mageControl.getPropertyKey();
 				ObservationProperty property = propertiesMap.get(propertyKey);
-				
+
 				Serializable propertyValue = null;
 				if (property != null && property.getValue() != null) {
 					propertyValue = property.getValue();
@@ -501,7 +537,7 @@ public class LayoutBaker {
 
 	/**
 	 * Returns a map of key value pairs form the layout
-	 * 
+	 *
 	 * @param linearLayout
 	 * @return
 	 */
@@ -538,7 +574,7 @@ public class LayoutBaker {
 	}
 
 	/**
-	 * 
+	 *
 	 * @param linearLayout
 	 * @return true if there were no issues with the form, false otherwise
 	 */
