@@ -13,7 +13,6 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import com.google.gson.JsonPrimitive;
 
 import java.util.ArrayList;
 
@@ -26,7 +25,8 @@ public class SelectEditActivity extends Activity {
     public static String MULTISELECT_JSON_CHOICE_KEY = "choices";
     public static String MULTISELECT_JSON_CHOICE_TITLE = "title";
 
-    private JsonArray userSelectedChoices;
+    private static String DEFAULT_TEXT = "Please select a value below.";
+    private ArrayList<String> userSelectedChoices;
     private ListView choicesListView;
     private TextView selectedChoicesTextView;
 
@@ -34,20 +34,18 @@ public class SelectEditActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_select_edit);
-        userSelectedChoices = new JsonArray();
+        userSelectedChoices = new ArrayList<String>();
 
         Intent intent = getIntent();
         JsonParser jsonParser = new JsonParser();
 
         String choices = intent.getStringExtra(MULTISELECT_CHOICES);
         JsonArray choicesArray = jsonParser.parse(choices).getAsJsonArray();
-        final ArrayList<String> choicesList = parseChoicesToGetTitles(choicesArray);
+        ArrayList<String> choicesList = parseChoicesToGetTitles(choicesArray);
 
-        String selected = intent.getStringExtra(MULTISELECT_SELECTED);
-        JsonArray selectedArray = jsonParser.parse(selected).getAsJsonArray();
-        ArrayList<String> selectedList = parseChoicesToGetTitles(selectedArray);
 
         choicesListView = (ListView) findViewById(R.id.select_choices);
+        //TODO: Verify a custom adapter is not needed
         choicesListView.setAdapter(new ArrayAdapter<String>(this, android.R.layout.simple_list_item_multiple_choice, choicesList));
         choicesListView.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);
 
@@ -55,32 +53,35 @@ public class SelectEditActivity extends Activity {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 String selectedItem = (String) parent.getItemAtPosition(position);
-                JsonPrimitive item = new JsonPrimitive(selectedItem);
                 if (choicesListView.isItemChecked(position)) {
-                    userSelectedChoices.add(item);
+                    userSelectedChoices.add(selectedItem);
                 } else {
-                    if (userSelectedChoices.contains(item)) {
-                        userSelectedChoices.remove(item);
+                    if (userSelectedChoices.contains(selectedItem)) {
+                        userSelectedChoices.remove(selectedItem);
                     }
                 }
-                selectedChoicesTextView.setText(userSelectedChoices.toString());
+                if (userSelectedChoices.isEmpty()) {
+                    selectedChoicesTextView.setText(DEFAULT_TEXT);
+                } else {
+                    selectedChoicesTextView.setText(getSelectedChoicesString(userSelectedChoices));
+                }
             }
         });
 
         selectedChoicesTextView = (TextView) findViewById(R.id.selected_choices);
 
-        if (selectedList.isEmpty()) {
-            selectedChoicesTextView.setText("Please select a value below.");
+        userSelectedChoices = intent.getStringArrayListExtra(MULTISELECT_SELECTED);
+
+        if (userSelectedChoices.isEmpty()) {
+            selectedChoicesTextView.setText(DEFAULT_TEXT);
         } else {
-            selectedChoicesTextView.setText(selectedList.toString());
-            //TODO: Clean up
-            for (int count = 0; count < selectedList.size(); count++) {
-                int index = choicesList.indexOf(selectedList.get(count));
+            for (int count = 0; count < userSelectedChoices.size(); count++) {
+                int index = choicesList.indexOf(userSelectedChoices.get(count));
                 if (index != -1) {
                     choicesListView.setItemChecked(index, true);
-                    userSelectedChoices.add(new JsonPrimitive(selectedList.get(count)));
                 }
             }
+            selectedChoicesTextView.setText(getSelectedChoicesString(userSelectedChoices));
         }
 
     }
@@ -92,13 +93,16 @@ public class SelectEditActivity extends Activity {
     public void updateSelected(View v) {
         Intent data = new Intent();
         data.setData(getIntent().getData());
-
-        if (userSelectedChoices.size() == 0) {
-            userSelectedChoices.add(new JsonPrimitive(""));
-        }
-        data.putExtra(MULTISELECT_SELECTED, userSelectedChoices.toString());
+        data.putStringArrayListExtra(MULTISELECT_SELECTED, userSelectedChoices);
         setResult(RESULT_OK, data);
         finish();
+    }
+
+    public void clearSelected(View v) {
+        choicesListView.clearChoices();
+        choicesListView.invalidateViews();
+        selectedChoicesTextView.setText(DEFAULT_TEXT);
+        userSelectedChoices.clear();
     }
 
     private ArrayList<String> parseChoicesToGetTitles(JsonArray jsonArray) {
@@ -110,11 +114,22 @@ public class SelectEditActivity extends Activity {
             for (int count = 0; count < jsonArray.size(); count++) {
                 jsonElement = jsonParser.parse(jsonArray.get(count).toString());
                 jsonObject = jsonElement.getAsJsonObject();
-                parsedList.add(jsonObject.get(MULTISELECT_JSON_CHOICE_TITLE).toString());
+                parsedList.add(jsonObject.get(MULTISELECT_JSON_CHOICE_TITLE).getAsString());
             }
         }
-
         return parsedList;
+    }
+
+    private String getSelectedChoicesString(ArrayList<String> selectedChoices) {
+        StringBuilder displayValue = new StringBuilder();
+        for (int count = 0; count < selectedChoices.size(); count++) {
+            if (count < selectedChoices.size() - 1) {
+                displayValue.append(selectedChoices.get(count) + ", ");
+            } else {
+                displayValue.append(selectedChoices.get(count));
+            }
+        }
+        return displayValue.toString();
     }
 
 }

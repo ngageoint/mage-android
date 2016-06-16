@@ -51,7 +51,6 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.GeometryFactory;
@@ -224,15 +223,14 @@ public class ObservationEditActivity extends Activity implements OnMapReadyCallb
 				});
 			} else if (view instanceof MageSelectView) {
 				final MageSelectView selectView = (MageSelectView) view;
-				fieldIdMap.put(FIELD_ID_MULTISELECT, selectView); //throw 'this' in?
+				fieldIdMap.put(FIELD_ID_MULTISELECT, selectView);
 
-				selectView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+				selectView.setOnClickListener(new View.OnClickListener() {
 					@Override
-					public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-						selectClick(selectView.getJsonObject());
+					public void onClick(View v) {
+						selectClick(selectView.getJsonObject(), (ArrayList<String>) selectView.getPropertyValue());
 					}
 				});
-
 			}
 		}
 
@@ -519,7 +517,7 @@ public class ObservationEditActivity extends Activity implements OnMapReadyCallb
 			}
 
 			Map<String, ObservationProperty> propertyMap = LayoutBaker.populateMapFromLayout((LinearLayout) findViewById(R.id.form));
-
+//TODO: Verify the provided keyvalue pair works for Array of Strings on save
 			try {
 				observation.setTimestamp(iso8601Format.parse(propertyMap.get("timestamp").getValue().toString()));
 			} catch (ParseException pe) {
@@ -776,16 +774,11 @@ public class ObservationEditActivity extends Activity implements OnMapReadyCallb
 				setupMap();
 				break;
 			case SELECT_ACTIVITY_REQUEST_CODE:
-				JsonParser jsonParser = new JsonParser();
-				String selectedChoices = data.getStringExtra(SelectEditActivity.MULTISELECT_SELECTED);
-				JsonArray selectedChoicesArray = jsonParser.parse(selectedChoices).getAsJsonArray();
-
-				//TODO: set the textView with the returned values
+				ArrayList<String> selectedChoices = data.getStringArrayListExtra(SelectEditActivity.MULTISELECT_SELECTED);
 				//TODO: save to the observation
 				MageSelectView mageSelectView = (MageSelectView) fieldIdMap.get(FIELD_ID_MULTISELECT);
 				//Is the json fieldId mapping needed?
-				//selectView.setValue(selectedChoicesArray);
-
+				mageSelectView.setPropertyValue(selectedChoices);
 				break;
 		}
 	}
@@ -822,13 +815,11 @@ public class ObservationEditActivity extends Activity implements OnMapReadyCallb
 		observationMarker = map.addMarker(new MarkerOptions().position(new LatLng(l.getLatitude(), l.getLongitude())).icon(ObservationBitmapFactory.bitmapDescriptor(this, observation)));
 	}
 
-	public void selectClick(JsonObject field) {
+	public void selectClick(JsonObject field, ArrayList<String> selectedValues) {
 		Intent intent = new Intent(ObservationEditActivity.this, SelectEditActivity.class);
 		JsonArray jsonArray = field.getAsJsonArray(SelectEditActivity.MULTISELECT_JSON_CHOICE_KEY);
-		Log.d("SelectChoices", jsonArray.toString());
 		intent.putExtra(SelectEditActivity.MULTISELECT_CHOICES, jsonArray.toString());
-		//TODO: update to previously selected
-		intent.putExtra(SelectEditActivity.MULTISELECT_SELECTED, jsonArray.toString());
+		intent.putStringArrayListExtra(SelectEditActivity.MULTISELECT_SELECTED, selectedValues);
 		startActivityForResult(intent, SELECT_ACTIVITY_REQUEST_CODE);
 	}
 

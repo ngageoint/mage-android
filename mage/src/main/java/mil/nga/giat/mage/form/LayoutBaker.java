@@ -324,28 +324,20 @@ public class LayoutBaker {
 					break;
 				case MULTISELECTDROPDOWN:
 
-					TextView choiceView = new TextView(context);
-					choiceView.setText("example selected choices");
-					choiceView.setFocusable(false);
-					choiceView.setTextIsSelectable(false);
-					choiceView.setClickable(false);
-					choiceView.setLayoutParams(textParams);
-
-					views.add(textView);
-					views.add(choiceView);
-
 					MageSelectView selectView = new MageSelectView(context, null, field);
 					selectView.setId(id);
 					selectView.setLayoutParams(controlParams);
 					selectView.setRequired(required);
 					selectView.setPropertyKey(name);
 					selectView.setPropertyType(MagePropertyType.MULTICHOICE);
-
-					//TODO: Need to update MageSelectView to contain the textView for choice selection
-                    String[] sample = {"clickHere"};//choices.toArray(new String[choices.size()])
-                    selectView.setAdapter(new ArrayAdapter<String>(context, android.R.layout.simple_list_item_multiple_choice, sample));
 					selectView.setPropertyValue(value);
+					selectView.setFocusable(true);
+					selectView.setTextIsSelectable(false);
+					selectView.setClickable(true);
+					selectView.setLayoutParams(textParams);
+					selectView.setTextSize(18);
 
+					views.add(textView);
 					views.add(selectView);
 					break;
 				default:
