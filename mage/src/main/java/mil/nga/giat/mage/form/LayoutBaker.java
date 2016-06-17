@@ -323,22 +323,21 @@ public class LayoutBaker {
 
 					break;
 				case MULTISELECTDROPDOWN:
-
-					MageSelectView selectView = new MageSelectView(context, null, field);
-					selectView.setId(id);
-					selectView.setLayoutParams(controlParams);
-					selectView.setRequired(required);
-					selectView.setPropertyKey(name);
-					selectView.setPropertyType(MagePropertyType.MULTICHOICE);
-					selectView.setPropertyValue(value);
-					selectView.setFocusable(true);
-					selectView.setTextIsSelectable(false);
-					selectView.setClickable(true);
-					selectView.setLayoutParams(textParams);
-					selectView.setTextSize(18);
+					MageSelectView mageSelectView = new MageSelectView(context, null, field);
+					mageSelectView.setId(id);
+					mageSelectView.setLayoutParams(controlParams);
+					mageSelectView.setRequired(required);
+					mageSelectView.setPropertyKey(name);
+					mageSelectView.setPropertyType(MagePropertyType.MULTICHOICE);
+					mageSelectView.setPropertyValue(value);
+					mageSelectView.setFocusable(true);
+					mageSelectView.setTextIsSelectable(false);
+					mageSelectView.setClickable(true);
+					mageSelectView.setLayoutParams(textParams);
+					mageSelectView.setTextSize(18);
 
 					views.add(textView);
-					views.add(selectView);
+					views.add(mageSelectView);
 					break;
 				default:
 					break;
@@ -399,13 +398,22 @@ public class LayoutBaker {
 					views.add(linearLayout);
 					break;
 				case MULTISELECTDROPDOWN:
-
-					//TODO: Need to implement
+					MageSelectView mageSelectView = new MageSelectView(context, null, field);
+					mageSelectView.setId(id);
+					mageSelectView.setLayoutParams(controlParams);
+					mageSelectView.setRequired(required);
+					mageSelectView.setPropertyKey(name);
+					mageSelectView.setPropertyType(MagePropertyType.MULTICHOICE);
+					mageSelectView.setPropertyValue(value);
+					mageSelectView.setFocusable(true);
+					mageSelectView.setTextIsSelectable(false);
+					mageSelectView.setClickable(true);
+					mageSelectView.setLayoutParams(textParams);
+					mageSelectView.setTextSize(18);
 
 					linearLayout.addView(textView);
-					linearLayout.addView(mageTextView);
+					linearLayout.addView(mageSelectView);
 					views.add(linearLayout);
-
 					break;
 				default:
 					break;
