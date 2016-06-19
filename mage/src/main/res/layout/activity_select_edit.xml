@@ -6,28 +6,28 @@
     android:paddingLeft="@dimen/activity_horizontal_margin"
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:orientation="vertical"
-    tools:context="mil.nga.giat.mage.observation.SelectEditActivity">
+    tools:context="mil.nga.giat.mage.observation.SelectEditActivity"
+    android:id="@+id/select_parent">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        style="@android:style/Widget.Holo.ActionBar"
         android:orientation="horizontal">
+        <EditText
+            android:id="@+id/filter_choices"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:hint="Filter Choices..."
+            android:inputType="textVisiblePassword"/>
         <Button
-            android:text="Cancel"
-            android:id="@+id/cancel_btn"
-            android:onClick="cancel"
+            android:id="@+id/filter_clear"
+            android:text="X"
+            android:onClick="clearFilter"
             android:layout_width="fill_parent"
             android:layout_height="match_parent"
             style="@android:style/Widget.Holo.ActionButton"
-            android:layout_weight="1"/>
-        <Button
-            android:text="Save"
-            android:onClick="updateSelected"
-            android:layout_width="fill_parent"
-            android:layout_height="match_parent"
-            style="@android:style/Widget.Holo.ActionButton"
-            android:layout_weight="1"/>
+            android:layout_weight="6"/>
     </LinearLayout>
 
     <LinearLayout
@@ -50,10 +50,40 @@
             android:layout_weight="4"/>
     </LinearLayout>
 
-
-    <ListView
-        android:id="@+id/select_choices"
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
-    </ListView>
+        android:layout_height="0dp"
+        android:orientation="vertical"
+        android:layout_weight="1">
+        <ListView
+            android:id="@+id/select_choices"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+        </ListView>
+    </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            style="@android:style/Widget.Holo.ActionBar"
+            android:orientation="horizontal">
+            <Button
+                android:text="Cancel"
+                android:id="@+id/cancel_btn"
+                android:onClick="cancel"
+                android:layout_width="fill_parent"
+                android:layout_height="match_parent"
+                style="@android:style/Widget.Holo.ActionButton"
+                android:layout_weight="1"/>
+            <Button
+                android:text="Save"
+                android:onClick="updateSelected"
+                android:layout_width="fill_parent"
+                android:layout_height="match_parent"
+                style="@android:style/Widget.Holo.ActionButton"
+                android:layout_weight="1"/>
+        </LinearLayout>
+
+
+
 </LinearLayout>
