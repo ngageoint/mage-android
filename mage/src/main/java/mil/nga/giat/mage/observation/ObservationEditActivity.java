@@ -517,7 +517,7 @@ public class ObservationEditActivity extends Activity implements OnMapReadyCallb
 			}
 
 			Map<String, ObservationProperty> propertyMap = LayoutBaker.populateMapFromLayout((LinearLayout) findViewById(R.id.form));
-//TODO: Verify the provided keyvalue pair works for Array of Strings on save
+
 			try {
 				observation.setTimestamp(iso8601Format.parse(propertyMap.get("timestamp").getValue().toString()));
 			} catch (ParseException pe) {
@@ -775,9 +775,7 @@ public class ObservationEditActivity extends Activity implements OnMapReadyCallb
 				break;
 			case SELECT_ACTIVITY_REQUEST_CODE:
 				ArrayList<String> selectedChoices = data.getStringArrayListExtra(SelectEditActivity.MULTISELECT_SELECTED);
-				//TODO: save to the observation
 				MageSelectView mageSelectView = (MageSelectView) fieldIdMap.get(FIELD_ID_MULTISELECT);
-				//Is the json fieldId mapping needed?
 				mageSelectView.setPropertyValue(selectedChoices);
 				break;
 		}
@@ -820,6 +818,7 @@ public class ObservationEditActivity extends Activity implements OnMapReadyCallb
 		JsonArray jsonArray = field.getAsJsonArray(SelectEditActivity.MULTISELECT_JSON_CHOICE_KEY);
 		intent.putExtra(SelectEditActivity.MULTISELECT_CHOICES, jsonArray.toString());
 		intent.putStringArrayListExtra(SelectEditActivity.MULTISELECT_SELECTED, selectedValues);
+		//TODO: Send over single or multi select
 		startActivityForResult(intent, SELECT_ACTIVITY_REQUEST_CODE);
 	}
 

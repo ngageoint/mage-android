@@ -189,7 +189,9 @@
             android:name="mil.nga.giat.mage.glide.MageGlideModule"
             android:value="GlideModule" />
 
-        <activity android:name=".observation.SelectEditActivity"></activity>
+        <activity
+            android:name=".observation.SelectEditActivity"
+            android:windowSoftInputMode="stateHidden"></activity>
     </application>
 
 </manifest>

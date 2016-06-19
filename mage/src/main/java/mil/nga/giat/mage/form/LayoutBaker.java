@@ -533,7 +533,6 @@ public class LayoutBaker {
 			if (v instanceof MageControl) {
 				MageControl mageControl = (MageControl) v;
 				if (mageControl.isRequired()) {
-					//TODO: Make sure multiselect is handled here
 					String value = (mageControl.getPropertyValue()==null)?null:mageControl.getPropertyValue().toString();
 					Boolean controlStatus = !(value == null || value.isEmpty());
 					if (!controlStatus) {
