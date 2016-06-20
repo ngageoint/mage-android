@@ -116,9 +116,9 @@ public class ObservationEditActivity extends Activity implements OnMapReadyCallb
 
 	private static final long NEW_OBSERVATION = -1L;
 
-	private static Integer FIELD_ID_MULTISELECT = 7;
+	private static Integer FIELD_ID_SELECT = 7;
 
-	private Map<Integer, View> fieldIdMap = new HashMap<>(); //FieldId / View
+	private Map<String, View> fieldIdMap = new HashMap<>(); //FieldId + " " + UnqiueId / View
 
 	private final DecimalFormat latLngFormat = new DecimalFormat("###.#####");
 	private ArrayList<Attachment> attachmentsToCreate = new ArrayList<>();
@@ -223,12 +223,15 @@ public class ObservationEditActivity extends Activity implements OnMapReadyCallb
 				});
 			} else if (view instanceof MageSelectView) {
 				final MageSelectView selectView = (MageSelectView) view;
-				fieldIdMap.put(FIELD_ID_MULTISELECT, selectView);
+				fieldIdMap.put(getSelectId(selectView.getId()), selectView);
 
 				selectView.setOnClickListener(new View.OnClickListener() {
 					@Override
 					public void onClick(View v) {
-						selectClick(selectView.getJsonObject(), (ArrayList<String>) selectView.getPropertyValue());
+						selectClick(selectView.getJsonObject(),
+								(ArrayList<String>) selectView.getPropertyValue(),
+								selectView.isMultiSelect(),
+								selectView.getId());
 					}
 				});
 			}
@@ -774,8 +777,10 @@ public class ObservationEditActivity extends Activity implements OnMapReadyCallb
 				setupMap();
 				break;
 			case SELECT_ACTIVITY_REQUEST_CODE:
-				ArrayList<String> selectedChoices = data.getStringArrayListExtra(SelectEditActivity.MULTISELECT_SELECTED);
-				MageSelectView mageSelectView = (MageSelectView) fieldIdMap.get(FIELD_ID_MULTISELECT);
+				ArrayList<String> selectedChoices = data.getStringArrayListExtra(SelectEditActivity.SELECT_SELECTED);
+				Integer fieldId = data.getIntExtra(SelectEditActivity.FIELD_ID, 0);
+				MageSelectView mageSelectView = (MageSelectView) fieldIdMap.get(getSelectId(fieldId));
+
 				mageSelectView.setPropertyValue(selectedChoices);
 				break;
 		}
@@ -813,12 +818,17 @@ public class ObservationEditActivity extends Activity implements OnMapReadyCallb
 		observationMarker = map.addMarker(new MarkerOptions().position(new LatLng(l.getLatitude(), l.getLongitude())).icon(ObservationBitmapFactory.bitmapDescriptor(this, observation)));
 	}
 
-	public void selectClick(JsonObject field, ArrayList<String> selectedValues) {
+	private String getSelectId(Integer fieldId) {
+		return FIELD_ID_SELECT + " " + fieldId;
+	}
+
+	public void selectClick(JsonObject field, ArrayList<String> selectedValues, Boolean isMultiSelect, Integer fieldId) {
 		Intent intent = new Intent(ObservationEditActivity.this, SelectEditActivity.class);
 		JsonArray jsonArray = field.getAsJsonArray(SelectEditActivity.MULTISELECT_JSON_CHOICE_KEY);
-		intent.putExtra(SelectEditActivity.MULTISELECT_CHOICES, jsonArray.toString());
-		intent.putStringArrayListExtra(SelectEditActivity.MULTISELECT_SELECTED, selectedValues);
-		//TODO: Send over single or multi select
+		intent.putExtra(SelectEditActivity.SELECT_CHOICES, jsonArray.toString());
+		intent.putStringArrayListExtra(SelectEditActivity.SELECT_SELECTED, selectedValues);
+		intent.putExtra(SelectEditActivity.IS_MULTISELECT, isMultiSelect);
+		intent.putExtra(SelectEditActivity.FIELD_ID, fieldId);
 		startActivityForResult(intent, SELECT_ACTIVITY_REQUEST_CODE);
 	}
 

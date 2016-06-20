@@ -11,7 +11,6 @@ import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup.LayoutParams;
-import android.widget.ArrayAdapter;
 import android.widget.DatePicker;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -234,22 +233,6 @@ public class LayoutBaker {
 					views.add(textView);
 					views.add((View) mageCheckBox);
 					break;
-				case DROPDOWN:
-					MageSpinner mageSpinner = new MageSpinner(context, null);
-					mageSpinner.setId(id);
-					mageSpinner.setLayoutParams(controlParams);
-					mageSpinner.setRequired(required);
-					mageSpinner.setPropertyKey(name);
-					mageSpinner.setPropertyType(MagePropertyType.MULTICHOICE);
-
-					ArrayAdapter<String> spinnerArrayAdapter = new ArrayAdapter<String>(context, android.R.layout.simple_spinner_item, choices.toArray(new String[choices.size()]));
-					spinnerArrayAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-					mageSpinner.setAdapter(spinnerArrayAdapter);
-					mageSpinner.setPropertyValue(value);
-
-					views.add(textView);
-					views.add((View) mageSpinner);
-					break;
 				case DATE:
 					// don't create the timestamp control on the edit page
 					if (name.equals("timestamp")) {
@@ -322,22 +305,39 @@ public class LayoutBaker {
 					views.add(linearLayout);
 
 					break;
-				case MULTISELECTDROPDOWN:
-					MageSelectView mageSelectView = new MageSelectView(context, null, field);
-					mageSelectView.setId(id);
-					mageSelectView.setLayoutParams(controlParams);
-					mageSelectView.setRequired(required);
-					mageSelectView.setPropertyKey(name);
-					mageSelectView.setPropertyType(MagePropertyType.MULTICHOICE);
-					mageSelectView.setPropertyValue(value);
-					mageSelectView.setFocusable(true);
-					mageSelectView.setTextIsSelectable(false);
-					mageSelectView.setClickable(true);
-					mageSelectView.setLayoutParams(textParams);
-					mageSelectView.setTextSize(18);
+				case DROPDOWN:
+						MageSelectView mageSingleSelectView = new MageSelectView(context, null, field, false);
+						mageSingleSelectView.setId(id);
+						mageSingleSelectView.setLayoutParams(controlParams);
+						mageSingleSelectView.setRequired(required);
+						mageSingleSelectView.setPropertyKey(name);
+						mageSingleSelectView.setPropertyType(MagePropertyType.STRING);
+						mageSingleSelectView.setPropertyValue(value);
+						mageSingleSelectView.setFocusable(true);
+						mageSingleSelectView.setTextIsSelectable(false);
+						mageSingleSelectView.setClickable(true);
+						mageSingleSelectView.setLayoutParams(textParams);
+						mageSingleSelectView.setTextSize(18);
 
-					views.add(textView);
-					views.add(mageSelectView);
+						views.add(textView);
+						views.add(mageSingleSelectView);
+					break;
+				case MULTISELECTDROPDOWN:
+						MageSelectView mageMultiSelectView = new MageSelectView(context, null, field, true);
+						mageMultiSelectView.setId(id);
+						mageMultiSelectView.setLayoutParams(controlParams);
+						mageMultiSelectView.setRequired(required);
+						mageMultiSelectView.setPropertyKey(name);
+						mageMultiSelectView.setPropertyType(MagePropertyType.MULTICHOICE);
+						mageMultiSelectView.setPropertyValue(value);
+						mageMultiSelectView.setFocusable(true);
+						mageMultiSelectView.setTextIsSelectable(false);
+						mageMultiSelectView.setClickable(true);
+						mageMultiSelectView.setLayoutParams(textParams);
+						mageMultiSelectView.setTextSize(18);
+
+						views.add(textView);
+						views.add(mageMultiSelectView);
 					break;
 				default:
 					break;
@@ -359,7 +359,6 @@ public class LayoutBaker {
 				switch (type) {
 				case TEXTFIELD:
 				case EMAIL:
-				case DROPDOWN:
 				case RADIO:
 					linearLayout.addView(textView);
 					linearLayout.addView(mageTextView);
@@ -397,22 +396,40 @@ public class LayoutBaker {
 					linearLayout.addView(mageTextView);
 					views.add(linearLayout);
 					break;
-				case MULTISELECTDROPDOWN:
-					MageSelectView mageSelectView = new MageSelectView(context, null, field);
-					mageSelectView.setId(id);
-					mageSelectView.setLayoutParams(controlParams);
-					mageSelectView.setRequired(required);
-					mageSelectView.setPropertyKey(name);
-					mageSelectView.setPropertyType(MagePropertyType.MULTICHOICE);
-					mageSelectView.setPropertyValue(value);
-					mageSelectView.setFocusable(true);
-					mageSelectView.setTextIsSelectable(false);
-					mageSelectView.setClickable(true);
-					mageSelectView.setLayoutParams(textParams);
-					mageSelectView.setTextSize(18);
+				case DROPDOWN:
+					MageSelectView mageSingleSelectView = new MageSelectView(context, null, field, false);
+					mageSingleSelectView.setId(id);
+					mageSingleSelectView.setLayoutParams(controlParams);
+					mageSingleSelectView.setRequired(required);
+					mageSingleSelectView.setPropertyKey(name);
+					mageSingleSelectView.setPropertyType(MagePropertyType.STRING);
+					mageSingleSelectView.setPropertyValue(value);
+					mageSingleSelectView.setFocusable(true);
+					mageSingleSelectView.setTextIsSelectable(false);
+					mageSingleSelectView.setClickable(true);
+					mageSingleSelectView.setLayoutParams(textParams);
+					mageSingleSelectView.setTextSize(18);
 
 					linearLayout.addView(textView);
-					linearLayout.addView(mageSelectView);
+					linearLayout.addView(mageSingleSelectView);
+					views.add(linearLayout);
+					break;
+				case MULTISELECTDROPDOWN:
+					MageSelectView mageMultiSelectView = new MageSelectView(context, null, field, true);
+					mageMultiSelectView.setId(id);
+					mageMultiSelectView.setLayoutParams(controlParams);
+					mageMultiSelectView.setRequired(required);
+					mageMultiSelectView.setPropertyKey(name);
+					mageMultiSelectView.setPropertyType(MagePropertyType.MULTICHOICE);
+					mageMultiSelectView.setPropertyValue(value);
+					mageMultiSelectView.setFocusable(true);
+					mageMultiSelectView.setTextIsSelectable(false);
+					mageMultiSelectView.setClickable(true);
+					mageMultiSelectView.setLayoutParams(textParams);
+					mageMultiSelectView.setTextSize(18);
+
+					linearLayout.addView(textView);
+					linearLayout.addView(mageMultiSelectView);
 					views.add(linearLayout);
 					break;
 				default:
