@@ -234,10 +234,7 @@ public class ObservationEditActivity extends Activity implements OnMapReadyCallb
 				selectView.setOnClickListener(new View.OnClickListener() {
 					@Override
 					public void onClick(View v) {
-						selectClick(selectView.getJsonObject(),
-								(ArrayList<String>) selectView.getPropertyValue(),
-								selectView.isMultiSelect(),
-								selectView.getId());
+						selectClick(selectView);
 					}
 				});
 			}
@@ -801,8 +798,19 @@ public class ObservationEditActivity extends Activity implements OnMapReadyCallb
 				ArrayList<String> selectedChoices = data.getStringArrayListExtra(SelectEditActivity.SELECT_SELECTED);
 				Integer fieldId = data.getIntExtra(SelectEditActivity.FIELD_ID, 0);
 				MageSelectView mageSelectView = (MageSelectView) fieldIdMap.get(getSelectId(fieldId));
+				Serializable selectedChoicesSerialized = null;
+				if (selectedChoices != null) {
+					if (mageSelectView.isMultiSelect()) {
+						selectedChoicesSerialized = selectedChoices;
+					} else {
+						if (!selectedChoices.isEmpty()) {
+							selectedChoicesSerialized = selectedChoices.get(0);
+						}
+					}
+				}
+				mageSelectView.setPropertyValue(selectedChoicesSerialized);
 
-				mageSelectView.setPropertyValue(selectedChoices);
+
 				break;
 		}
 	}
@@ -841,10 +849,26 @@ public class ObservationEditActivity extends Activity implements OnMapReadyCallb
 		return FIELD_ID_SELECT + " " + fieldId;
 	}
 
-	public void selectClick(JsonObject field, ArrayList<String> selectedValues, Boolean isMultiSelect, Integer fieldId) {
+	public void selectClick(MageSelectView selectView) {
+		JsonObject field = selectView.getJsonObject();
+		Boolean isMultiSelect = selectView.isMultiSelect();
+		Integer fieldId = selectView.getId();
+
 		Intent intent = new Intent(ObservationEditActivity.this, SelectEditActivity.class);
 		JsonArray jsonArray = field.getAsJsonArray(SelectEditActivity.MULTISELECT_JSON_CHOICE_KEY);
 		intent.putExtra(SelectEditActivity.SELECT_CHOICES, jsonArray.toString());
+
+		Serializable serializableValue = selectView.getPropertyValue();
+		ArrayList<String> selectedValues = null;
+		if (serializableValue != null) {
+			if (isMultiSelect) {
+				selectedValues = (ArrayList<String>) serializableValue;
+			} else {
+				String selectedValue = (String) serializableValue;
+				selectedValues = new ArrayList<String>();
+				selectedValues.add(selectedValue);
+			}
+		}
 		intent.putStringArrayListExtra(SelectEditActivity.SELECT_SELECTED, selectedValues);
 		intent.putExtra(SelectEditActivity.IS_MULTISELECT, isMultiSelect);
 		intent.putExtra(SelectEditActivity.FIELD_ID, fieldId);
