@@ -65,8 +65,13 @@ public class MageSelectView extends TextView implements MageControl {
     @Override
     public Serializable getPropertyValue() {
         Serializable returnValue = null;
+        //if multi select return ArrayList else return string
         if (!selectedChoices.isEmpty()) {
-            returnValue = selectedChoices;
+            if (isMultiSelect) {
+                returnValue = selectedChoices;
+            } else {
+                returnValue = selectedChoices.get(0);
+            }
         }
         return returnValue;
     }
@@ -85,20 +90,28 @@ public class MageSelectView extends TextView implements MageControl {
     public void setPropertyValue(Serializable value) {
         selectedChoices.clear();
         if (value != null) {
-            selectedChoices = (ArrayList<String>) value;
-            if (!selectedChoices.isEmpty()) {
-                StringBuilder displayValue = new StringBuilder();
-                for (int count = 0; count < selectedChoices.size(); count++) {
-                    if (count < selectedChoices.size() - 1) {
-                        displayValue.append(selectedChoices.get(count) + ", ");
-                    } else {
-                        displayValue.append(selectedChoices.get(count));
+
+            if (isMultiSelect) {
+                selectedChoices = (ArrayList<String>) value;
+                if (!selectedChoices.isEmpty()) {
+                    StringBuilder displayValue = new StringBuilder();
+                    for (int count = 0; count < selectedChoices.size(); count++) {
+                        if (count < selectedChoices.size() - 1) {
+                            displayValue.append(selectedChoices.get(count) + ", ");
+                        } else {
+                            displayValue.append(selectedChoices.get(count));
+                        }
                     }
+                    setText(displayValue.toString());
+                } else {
+                    setText(DEFAULT_TEXT);
                 }
-                setText(displayValue.toString());
             } else {
-                setText(DEFAULT_TEXT);
+                selectedChoices.add((String) value);
+                setText((String) value);
             }
+
+
         } else {
             setText(DEFAULT_TEXT);
         }
