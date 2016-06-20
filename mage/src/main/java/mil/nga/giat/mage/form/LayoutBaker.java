@@ -13,7 +13,6 @@ import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup.LayoutParams;
-import android.widget.ArrayAdapter;
 import android.widget.DatePicker;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -45,9 +44,9 @@ import mil.nga.giat.mage.sdk.utils.DateFormatFactory;
 
 /**
  * Use this class to build and populate the views concerned with form like information.
- * 
+ *
  * @author wiedemanns
- * 
+ *
  */
 public class LayoutBaker {
 
@@ -101,7 +100,7 @@ public class LayoutBaker {
 			if (jsonValue != null && !jsonValue.isJsonNull() && jsonValue.isJsonPrimitive()) {
 				value = jsonValue.getAsString();
 			}
-			
+
 
 			Boolean archived = false;
 			JsonElement jsonArchived = field.get("archived");
@@ -111,7 +110,7 @@ public class LayoutBaker {
 			if(archived) {
 				continue;
 			}
-			
+
 			String name = field.get("name").getAsString();
 			JsonArray choicesJson = field.get("choices").getAsJsonArray();
 			Collection<String> choices = new LinkedHashSet<>();
@@ -273,22 +272,6 @@ public class LayoutBaker {
 					views.add(textView);
 					views.add((View) mageCheckBox);
 					break;
-				case DROPDOWN:
-					MageSpinner mageSpinner = new MageSpinner(context, null);
-					mageSpinner.setId(id);
-					mageSpinner.setLayoutParams(controlParams);
-					mageSpinner.setRequired(required);
-					mageSpinner.setPropertyKey(name);
-					mageSpinner.setPropertyType(MagePropertyType.MULTICHOICE);
-
-					ArrayAdapter<String> spinnerArrayAdapter = new ArrayAdapter<>(context, android.R.layout.simple_spinner_item, choices.toArray(new String[choices.size()]));
-					spinnerArrayAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-					mageSpinner.setAdapter(spinnerArrayAdapter);
-					mageSpinner.setPropertyValue(value);
-
-					views.add(textView);
-					views.add(mageSpinner);
-					break;
 				case DATE:
 					// don't create the timestamp control on the edit page
 					if (name.equals("timestamp")) {
@@ -361,22 +344,39 @@ public class LayoutBaker {
 					views.add(linearLayout);
 
 					break;
-				case MULTISELECTDROPDOWN:
-					MageSelectView mageSelectView = new MageSelectView(context, null, field);
-					mageSelectView.setId(id);
-					mageSelectView.setLayoutParams(controlParams);
-					mageSelectView.setRequired(required);
-					mageSelectView.setPropertyKey(name);
-					mageSelectView.setPropertyType(MagePropertyType.MULTICHOICE);
-					mageSelectView.setPropertyValue(value);
-					mageSelectView.setFocusable(true);
-					mageSelectView.setTextIsSelectable(false);
-					mageSelectView.setClickable(true);
-					mageSelectView.setLayoutParams(textParams);
-					mageSelectView.setTextSize(18);
+				case DROPDOWN:
+						MageSelectView mageSingleSelectView = new MageSelectView(context, null, field, false);
+						mageSingleSelectView.setId(id);
+						mageSingleSelectView.setLayoutParams(controlParams);
+						mageSingleSelectView.setRequired(required);
+						mageSingleSelectView.setPropertyKey(name);
+						mageSingleSelectView.setPropertyType(MagePropertyType.STRING);
+						mageSingleSelectView.setPropertyValue(value);
+						mageSingleSelectView.setFocusable(true);
+						mageSingleSelectView.setTextIsSelectable(false);
+						mageSingleSelectView.setClickable(true);
+						mageSingleSelectView.setLayoutParams(textParams);
+						mageSingleSelectView.setTextSize(18);
 
-					views.add(textView);
-					views.add(mageSelectView);
+						views.add(textView);
+						views.add(mageSingleSelectView);
+					break;
+				case MULTISELECTDROPDOWN:
+						MageSelectView mageMultiSelectView = new MageSelectView(context, null, field, true);
+						mageMultiSelectView.setId(id);
+						mageMultiSelectView.setLayoutParams(controlParams);
+						mageMultiSelectView.setRequired(required);
+						mageMultiSelectView.setPropertyKey(name);
+						mageMultiSelectView.setPropertyType(MagePropertyType.MULTICHOICE);
+						mageMultiSelectView.setPropertyValue(value);
+						mageMultiSelectView.setFocusable(true);
+						mageMultiSelectView.setTextIsSelectable(false);
+						mageMultiSelectView.setClickable(true);
+						mageMultiSelectView.setLayoutParams(textParams);
+						mageMultiSelectView.setTextSize(18);
+
+						views.add(textView);
+						views.add(mageMultiSelectView);
 					break;
 				default:
 					break;
@@ -399,7 +399,6 @@ public class LayoutBaker {
 				case TEXTFIELD:
 				case NUMBERFIELD:
 				case EMAIL:
-				case DROPDOWN:
 				case RADIO:
 					linearLayout.addView(textView);
 					linearLayout.addView(mageTextView);
@@ -437,22 +436,40 @@ public class LayoutBaker {
 					linearLayout.addView(mageTextView);
 					views.add(linearLayout);
 					break;
-				case MULTISELECTDROPDOWN:
-					MageSelectView mageSelectView = new MageSelectView(context, null, field);
-					mageSelectView.setId(id);
-					mageSelectView.setLayoutParams(controlParams);
-					mageSelectView.setRequired(required);
-					mageSelectView.setPropertyKey(name);
-					mageSelectView.setPropertyType(MagePropertyType.MULTICHOICE);
-					mageSelectView.setPropertyValue(value);
-					mageSelectView.setFocusable(true);
-					mageSelectView.setTextIsSelectable(false);
-					mageSelectView.setClickable(true);
-					mageSelectView.setLayoutParams(textParams);
-					mageSelectView.setTextSize(18);
+				case DROPDOWN:
+					MageSelectView mageSingleSelectView = new MageSelectView(context, null, field, false);
+					mageSingleSelectView.setId(id);
+					mageSingleSelectView.setLayoutParams(controlParams);
+					mageSingleSelectView.setRequired(required);
+					mageSingleSelectView.setPropertyKey(name);
+					mageSingleSelectView.setPropertyType(MagePropertyType.STRING);
+					mageSingleSelectView.setPropertyValue(value);
+					mageSingleSelectView.setFocusable(true);
+					mageSingleSelectView.setTextIsSelectable(false);
+					mageSingleSelectView.setClickable(true);
+					mageSingleSelectView.setLayoutParams(textParams);
+					mageSingleSelectView.setTextSize(18);
 
 					linearLayout.addView(textView);
-					linearLayout.addView(mageSelectView);
+					linearLayout.addView(mageSingleSelectView);
+					views.add(linearLayout);
+					break;
+				case MULTISELECTDROPDOWN:
+					MageSelectView mageMultiSelectView = new MageSelectView(context, null, field, true);
+					mageMultiSelectView.setId(id);
+					mageMultiSelectView.setLayoutParams(controlParams);
+					mageMultiSelectView.setRequired(required);
+					mageMultiSelectView.setPropertyKey(name);
+					mageMultiSelectView.setPropertyType(MagePropertyType.MULTICHOICE);
+					mageMultiSelectView.setPropertyValue(value);
+					mageMultiSelectView.setFocusable(true);
+					mageMultiSelectView.setTextIsSelectable(false);
+					mageMultiSelectView.setClickable(true);
+					mageMultiSelectView.setLayoutParams(textParams);
+					mageMultiSelectView.setTextSize(18);
+
+					linearLayout.addView(textView);
+					linearLayout.addView(mageMultiSelectView);
 					views.add(linearLayout);
 					break;
 				default:
@@ -486,7 +503,7 @@ public class LayoutBaker {
 
 	/**
 	 * Populates the linearLayout from the key, value pairs in the propertiesMap
-	 * 
+	 *
 	 * @param linearLayout
 	 * @param propertiesMap
 	 */
@@ -497,7 +514,7 @@ public class LayoutBaker {
 				MageControl mageControl = (MageControl) v;
 				String propertyKey = mageControl.getPropertyKey();
 				ObservationProperty property = propertiesMap.get(propertyKey);
-				
+
 				Serializable propertyValue = null;
 				if (property != null && property.getValue() != null) {
 					propertyValue = property.getValue();
@@ -536,7 +553,7 @@ public class LayoutBaker {
 
 	/**
 	 * Returns a map of key value pairs form the layout
-	 * 
+	 *
 	 * @param linearLayout
 	 * @return
 	 */
@@ -573,7 +590,7 @@ public class LayoutBaker {
 	}
 
 	/**
-	 * 
+	 *
 	 * @param linearLayout
 	 * @return true if there were no issues with the form, false otherwise
 	 */

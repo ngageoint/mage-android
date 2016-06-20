@@ -19,10 +19,11 @@ public class MageSelectView extends TextView implements MageControl {
     private JsonObject jsonObject;
     private static String DEFAULT_TEXT = "Click to select a value.";
     private ArrayList<String> selectedChoices;
+    private Boolean isMultiSelect = false;
     protected Boolean isRequired = Boolean.FALSE;
 
 
-    public MageSelectView(Context context, AttributeSet attrs, JsonObject jsonObject) {
+    public MageSelectView(Context context, AttributeSet attrs, JsonObject jsonObject, Boolean isMultiSelect) {
         super(context, attrs);
         TypedArray typedArray = context.obtainStyledAttributes(attrs, R.styleable.MageFormElement);
         setPropertyKey(typedArray.getString(R.styleable.MageFormElement_propertyKey));
@@ -30,10 +31,15 @@ public class MageSelectView extends TextView implements MageControl {
         typedArray.recycle();
         this.jsonObject = jsonObject;
         this.selectedChoices = new ArrayList<String>();
+        this.isMultiSelect = isMultiSelect;
     }
 
     public JsonObject getJsonObject() {
         return jsonObject;
+    }
+
+    public Boolean isMultiSelect() {
+        return isMultiSelect;
     }
 
     @Override
@@ -58,8 +64,11 @@ public class MageSelectView extends TextView implements MageControl {
 
     @Override
     public Serializable getPropertyValue() {
-        //TODO: Update for single select vs multi?
-        return selectedChoices;
+        Serializable returnValue = null;
+        if (!selectedChoices.isEmpty()) {
+            returnValue = selectedChoices;
+        }
+        return returnValue;
     }
 
     @Override
