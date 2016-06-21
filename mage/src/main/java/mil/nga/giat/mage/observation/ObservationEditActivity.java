@@ -131,7 +131,9 @@ public class ObservationEditActivity extends Activity implements OnMapReadyCallb
 
 	// control key to default position
 	private static Map<String, Integer> spinnersLastPositions = new HashMap<>();
-	
+
+	private List<View> controls = new ArrayList<>();
+
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -174,7 +176,7 @@ public class ObservationEditActivity extends Activity implements OnMapReadyCallb
 			}
 		}
 
-		List<View> controls = LayoutBaker.createControlsFromJson(this, ControlGenerationType.EDIT, dynamicFormJson);
+		controls = LayoutBaker.createControlsFromJson(this, ControlGenerationType.EDIT, dynamicFormJson);
 		for (View view : controls) {
 			if (view instanceof MageSpinner) {
 				MageSpinner mageSpinner = (MageSpinner) view;
@@ -750,7 +752,7 @@ public class ObservationEditActivity extends Activity implements OnMapReadyCallb
 			Attachment capture = new Attachment();
 			capture.setLocalPath(currentMediaPath);
 			attachmentsToCreate.add(capture);
-            attachmentGallery.addAttachment(attachmentLayout, capture);
+			attachmentGallery.addAttachment(attachmentLayout, capture);
 			MediaUtility.addImageToGallery(getApplicationContext(), Uri.fromFile(new File(currentMediaPath)));
 			break;
 		case GALLERY_ACTIVITY_REQUEST_CODE:
