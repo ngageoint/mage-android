@@ -91,30 +91,27 @@ public class ObservationViewActivity extends Activity implements OnMapReadyCallb
 		}
 
 		observationEventListener = new IObservationEventListener() {
-
 			@Override
 			public void onObservationUpdated(Observation observation) {
 				updateObservation(Collections.singletonList(observation));
 			}
 
 			@Override
-			public void onObservationCreated(Collection<Observation> observations, Boolean sendUserNotifcations) {
+			public void onObservationCreated(Collection<Observation> observations, Boolean sendUserNotifications) {
 				updateObservation(observations);
 			}
 
 			private void updateObservation(Collection<Observation> observations) {
+				if (map == null) return;
+
 				for (Observation observation : observations) {
-					if (observation.getId().equals(o.getId()) && !observation.isDirty()) {
+					if (observation.getId().equals(o.getId())) {
 						ObservationViewActivity.this.runOnUiThread(new Runnable() {
 							@Override
 							public void run() {
-								if (map != null) {
-									setupObservation();
-								}
+								setupObservation();
 							}
 						});
-						ObservationHelper.getInstance(getApplicationContext()).removeListener(this);
-						break;
 					}
 				}
 			}
@@ -127,6 +124,7 @@ public class ObservationViewActivity extends Activity implements OnMapReadyCallb
 			public void onError(Throwable error) {
 			}
 		};
+
 		ObservationHelper.getInstance(getApplicationContext()).addListener(observationEventListener);
 
 		((MapFragment) getFragmentManager().findFragmentById(R.id.mini_map)).getMapAsync(this);
