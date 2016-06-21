@@ -126,7 +126,9 @@ public class ObservationMarkerCollection implements PointCollection<Observation>
 			Observation to = markerIdToObservation.get(m.getId());
 			if (to != null) {
 				boolean showWindow = m.isInfoWindowShown();
+                // make sure to set the Anchor after this call as well, because the size of the icon might have changed
 				m.setIcon(ObservationBitmapFactory.bitmapDescriptor(context, markerIdToObservation.get(m.getId())));
+                m.setAnchor(0.5f, 1.0f);
 				if(showWindow) {
 					m.showInfoWindow();
 				}

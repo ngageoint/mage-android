@@ -87,7 +87,9 @@ public class ObservationFeedCursorAdapter extends CursorAdapter {
 	public View newView(Context context, Cursor cursor, ViewGroup parentView) {
 		View v = inflater.inflate(R.layout.observation_list_item, parentView, false);
 		try {
-			LayoutBaker.populateLayoutWithControls((LinearLayout) v.findViewById(R.id.observation_list_dynamic_content), LayoutBaker.createControlsFromJson(v.getContext(), ControlGenerationType.VIEW, query.mapRow(new AndroidDatabaseResults(cursor, null)).getEvent().getForm()));
+			LayoutBaker.populateLayoutWithControls(
+					(LinearLayout) v.findViewById(R.id.observation_list_dynamic_content),
+					LayoutBaker.createControlsFromJson(v.getContext(), ControlGenerationType.VIEW, query.mapRow(new AndroidDatabaseResults(cursor, null)).getEvent().getForm()));
 		} catch (java.sql.SQLException e) {
 			Log.e(LOG_NAME, "Problem getting observation.", e);
 		}

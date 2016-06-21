@@ -85,7 +85,9 @@ public class MyHistoricalLocationMarkerCollection extends LocationMarkerCollecti
 			Location tl = markerIdToLocation.get(m.getId());
 			if (tl != null) {
 				boolean showWindow = m.isInfoWindowShown();
+				// make sure to set the Anchor after this call as well, because the size of the icon might have changed
 				m.setIcon(LocationBitmapFactory.dotBitmapDescriptor(context, tl, tl.getUser()));
+				m.setAnchor(0.5f, 1.0f);
 				if (showWindow) {
 					m.showInfoWindow();
 				}

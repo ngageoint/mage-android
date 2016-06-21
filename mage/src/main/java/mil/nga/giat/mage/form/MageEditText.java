@@ -44,8 +44,17 @@ public class MageEditText extends EditText implements MageControl {
 	}
 
 	@Override
-	public String getPropertyValue() {
-		return getText().toString();
+	public Serializable getPropertyValue() {
+		switch (propertyType) {
+			case NUMBER:
+				try {
+					return Double.parseDouble(getText().toString());
+				} catch (NumberFormatException e) {
+					return null;
+				}
+			default:
+				return getText().toString();
+		}
 	}
 
 	@Override
@@ -64,5 +73,10 @@ public class MageEditText extends EditText implements MageControl {
 			return;
 		}
 		setText(value.toString());
+	}
+
+	@Override
+	public CharSequence getError() {
+		return super.getError();
 	}
 }

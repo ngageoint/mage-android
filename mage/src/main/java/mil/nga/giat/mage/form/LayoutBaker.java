@@ -4,7 +4,9 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.os.Bundle;
+import android.text.Editable;
 import android.text.InputType;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.ContextThemeWrapper;
 import android.view.Gravity;
@@ -42,9 +44,9 @@ import mil.nga.giat.mage.sdk.utils.DateFormatFactory;
 
 /**
  * Use this class to build and populate the views concerned with form like information.
- * 
+ *
  * @author wiedemanns
- * 
+ *
  */
 public class LayoutBaker {
 
@@ -60,11 +62,11 @@ public class LayoutBaker {
 		// add the theme to the context
 		final Context context = new ContextThemeWrapper(pContext, R.style.AppTheme);
 
-		List<View> views = new ArrayList<View>();
+		List<View> views = new ArrayList<>();
 
 		JsonArray dynamicFormFields = dynamicFormJson.get("fields").getAsJsonArray();
 
-		Map<Integer, JsonObject> dynamicFormFieldsCollection = new TreeMap<Integer, JsonObject>();
+		Map<Integer, JsonObject> dynamicFormFieldsCollection = new TreeMap<>();
 
 		for (int i = 0; i < dynamicFormFields.size(); i++) {
 			JsonObject field = dynamicFormFields.get(i).getAsJsonObject();
@@ -98,7 +100,7 @@ public class LayoutBaker {
 			if (jsonValue != null && !jsonValue.isJsonNull() && jsonValue.isJsonPrimitive()) {
 				value = jsonValue.getAsString();
 			}
-			
+
 
 			Boolean archived = false;
 			JsonElement jsonArchived = field.get("archived");
@@ -108,10 +110,10 @@ public class LayoutBaker {
 			if(archived) {
 				continue;
 			}
-			
+
 			String name = field.get("name").getAsString();
 			JsonArray choicesJson = field.get("choices").getAsJsonArray();
-			Collection<String> choices = new LinkedHashSet<String>();
+			Collection<String> choices = new LinkedHashSet<>();
 			if (choicesJson != null && !choicesJson.isJsonNull()) {
 				for (int j = 0; j < choicesJson.size(); j++) {
 					JsonObject choiceJson = choicesJson.get(j).getAsJsonObject();
@@ -130,8 +132,8 @@ public class LayoutBaker {
 
 			final float density = context.getResources().getDisplayMetrics().density;
 
-			LinearLayout.LayoutParams textParams = new LinearLayout.LayoutParams((int) LayoutParams.MATCH_PARENT, (int) LayoutParams.WRAP_CONTENT);
-			LinearLayout.LayoutParams controlParams = new LinearLayout.LayoutParams((int) LayoutParams.MATCH_PARENT, (int) LayoutParams.WRAP_CONTENT);
+			LinearLayout.LayoutParams textParams = new LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
+			LinearLayout.LayoutParams controlParams = new LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
 
 			TextView textView = new TextView(context);
 			textView.setText(title);
@@ -174,7 +176,7 @@ public class LayoutBaker {
 			// FIXME: set required, add remaining controls
 			switch (controlGenerationType) {
 			case EDIT:
-				MageEditText mageEditText = new MageEditText(context, null);
+				final MageEditText mageEditText = new MageEditText(context, null);
 				mageEditText.setId(id);
 				mageEditText.setLayoutParams(controlParams);
 				mageEditText.setHint(title);
@@ -186,19 +188,56 @@ public class LayoutBaker {
 				case EMAIL:
 					mageEditText.setPropertyType(MagePropertyType.STRING);
 					views.add(textView);
-					views.add((View) mageEditText);
+					views.add(mageEditText);
+					break;
+				case NUMBERFIELD:
+					final double min = field.get("min").getAsDouble();
+					final double max = field.get("max").getAsDouble();
+
+					mageEditText.setPropertyType(MagePropertyType.NUMBER);
+					mageEditText.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
+					mageEditText.addTextChangedListener(new TextWatcher() {
+						@Override
+						public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+						}
+
+						@Override
+						public void onTextChanged(CharSequence s, int start, int before, int count) {
+						}
+
+						@Override
+						public void afterTextChanged(Editable s) {
+							if (s.toString().isEmpty()) {
+								return;
+							}
+
+							try {
+								double value = Double.parseDouble(s.toString());
+								if (value < min) {
+									mageEditText.setError("Must be greater than " + min);
+								} else if (value > max) {
+									mageEditText.setError("Must be less than " + max);
+								}
+							} catch (NumberFormatException e) {
+								mageEditText.setError("Value must be a number");
+							}
+						}
+					});
+
+					views.add(textView);
+					views.add(mageEditText);
 					break;
 				case PASSWORD:
 					mageEditText.setPropertyType(MagePropertyType.STRING);
 					views.add(textView);
 					mageEditText.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
-					views.add((View) mageEditText);
+					views.add(mageEditText);
 					break;
 				case TEXTAREA:
 					mageEditText.setMinLines(2);
 					mageEditText.setPropertyType(MagePropertyType.MULTILINE);
 					views.add(textView);
-					views.add((View) mageEditText);
+					views.add(mageEditText);
 					break;
 				case RADIO:
 					MageRadioGroup mageRadioGroup = new MageRadioGroup(context, null);
@@ -217,7 +256,7 @@ public class LayoutBaker {
 					mageRadioGroup.setPropertyValue(value);
 
 					views.add(textView);
-					views.add((View) mageRadioGroup);
+					views.add(mageRadioGroup);
 					break;
 				case CHECKBOX:
 					MageCheckBox mageCheckBox = new MageCheckBox(context, null);
@@ -271,7 +310,7 @@ public class LayoutBaker {
 					linearLayout.setLayoutParams(controlParams);
 					linearLayout.setOrientation(LinearLayout.HORIZONTAL);
 					linearLayout.addView(imageView);
-					linearLayout.addView((View) mageDateText);
+					linearLayout.addView(mageDateText);
 					linearLayout.setOnClickListener(new View.OnClickListener() {
 						@Override
 						public void onClick(View v) {
@@ -355,9 +394,10 @@ public class LayoutBaker {
 				mageTextView.setPropertyKey(name);
 				mageTextView.setPropertyType(MagePropertyType.STRING);
 				LinearLayout linearLayout = new LinearLayout(context);
-				linearLayout.setLayoutParams(new LinearLayout.LayoutParams((int) LayoutParams.WRAP_CONTENT, (int) LayoutParams.WRAP_CONTENT));
+				linearLayout.setLayoutParams(new LinearLayout.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT));
 				switch (type) {
 				case TEXTFIELD:
+				case NUMBERFIELD:
 				case EMAIL:
 				case RADIO:
 					linearLayout.addView(textView);
@@ -442,15 +482,28 @@ public class LayoutBaker {
 		return views;
 	}
 
-	public static void populateLayoutWithControls(final LinearLayout linearLayout, List<View> controls) {
+	public static void populateLayoutWithControls(final LinearLayout linearLayout, Collection<View> controls) {
 		for (View control : controls) {
 			linearLayout.addView(control);
 		}
 	}
 
+	public static List<View> validateControls(Collection<View> views) {
+		List<View> invalid = new ArrayList<>();
+		for (View view : views) {
+			if (view instanceof  MageControl) {
+				if (((MageControl) view).getError() != null) {
+					invalid.add(view);
+				}
+			}
+		}
+
+		return invalid;
+	}
+
 	/**
 	 * Populates the linearLayout from the key, value pairs in the propertiesMap
-	 * 
+	 *
 	 * @param linearLayout
 	 * @param propertiesMap
 	 */
@@ -461,7 +514,7 @@ public class LayoutBaker {
 				MageControl mageControl = (MageControl) v;
 				String propertyKey = mageControl.getPropertyKey();
 				ObservationProperty property = propertiesMap.get(propertyKey);
-				
+
 				Serializable propertyValue = null;
 				if (property != null && property.getValue() != null) {
 					propertyValue = property.getValue();
@@ -490,7 +543,7 @@ public class LayoutBaker {
 	}
 
 	public static void populateLayoutFromBundle(final LinearLayout linearLayout, ControlGenerationType controlGenerationType, Bundle savedInstanceState) {
-		Map<String, ObservationProperty> propertiesMap = new HashMap<String, ObservationProperty>();
+		Map<String, ObservationProperty> propertiesMap = new HashMap<>();
 		for (Map.Entry<String, Serializable> entry : ((Map<String, Serializable>) savedInstanceState.getSerializable(EXTRA_PROPERTY_MAP)).entrySet()) {
 			propertiesMap.put(entry.getKey(), new ObservationProperty(entry.getKey(), entry.getValue()));
 		}
@@ -500,12 +553,12 @@ public class LayoutBaker {
 
 	/**
 	 * Returns a map of key value pairs form the layout
-	 * 
+	 *
 	 * @param linearLayout
 	 * @return
 	 */
 	public static Map<String, ObservationProperty> populateMapFromLayout(LinearLayout linearLayout) {
-		Map<String, ObservationProperty> properties = new HashMap<String, ObservationProperty>();
+		Map<String, ObservationProperty> properties = new HashMap<>();
 		return populateMapFromLayout(linearLayout, properties);
 	}
 
@@ -528,7 +581,7 @@ public class LayoutBaker {
 	}
 
 	public static void populateBundleFromLayout(LinearLayout linearLayout, Bundle outState) {
-		HashMap<String, Serializable> properties = new HashMap<String, Serializable>();
+		HashMap<String, Serializable> properties = new HashMap<>();
 		for (Map.Entry<String, ObservationProperty> entry : populateMapFromLayout(linearLayout).entrySet()) {
 			properties.put(entry.getKey(), entry.getValue().getValue());
 		}
@@ -537,7 +590,7 @@ public class LayoutBaker {
 	}
 
 	/**
-	 * 
+	 *
 	 * @param linearLayout
 	 * @return true if there were no issues with the form, false otherwise
 	 */

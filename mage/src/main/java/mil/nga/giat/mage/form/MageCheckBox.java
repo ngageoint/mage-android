@@ -69,4 +69,9 @@ public class MageCheckBox extends CheckBox implements MageControl {
 			setChecked(Boolean.valueOf((String) value));
 		}
 	}
+
+	@Override
+	public CharSequence getError() {
+		return super.getError();
+	}
 }

@@ -7,7 +7,7 @@ package mil.nga.giat.mage.form;
  * 
  */
 public enum MagePropertyType {
-	STRING, DATE, MULTILINE, MULTICHOICE, USER, LOCATION;
+	STRING, DATE, MULTILINE, MULTICHOICE, USER, LOCATION, NUMBER;
 
 	public static MagePropertyType getPropertyType(int code) {
 		switch (code) {
@@ -23,6 +23,8 @@ public enum MagePropertyType {
 			return MagePropertyType.USER;
 		case 5:
 			return MagePropertyType.LOCATION;
+		case 6:
+			return MagePropertyType.NUMBER;
 		default:
 			return MagePropertyType.STRING;
 		}

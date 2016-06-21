@@ -56,8 +56,8 @@ public class MageTextView extends TextView implements MageControl {
 	}
 
 	@Override
-	public String getPropertyValue() {
-		String value = "";
+	public Serializable getPropertyValue() {
+		Serializable value = null;
 
 		switch (getPropertyType()) {
 		case STRING:
@@ -72,6 +72,9 @@ public class MageTextView extends TextView implements MageControl {
 		case LOCATION:
 			break;
 		case MULTICHOICE:
+			break;
+		case NUMBER:
+			value = Double.parseDouble(getText().toString());
 			break;
 		default:
 			break;
@@ -124,5 +127,10 @@ public class MageTextView extends TextView implements MageControl {
 		default:
 			break;
 		}
+	}
+
+	@Override
+	public CharSequence getError() {
+		return super.getError();
 	}
 }

@@ -350,8 +350,8 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 								@Override
 								public boolean apply(Exception e) {
 									if (e == null) {
-										getServerUrlText().setText(serverURL);
-										getServerUrlText().setError(null);
+										mServerURL.setText(serverURL);
+										mErrorURL.setError(null);
 										mLoginButton.setEnabled(true);
 										serverEditText.setError(null);
 										alertDialog.dismiss();

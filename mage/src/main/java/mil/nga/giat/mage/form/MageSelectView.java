@@ -116,5 +116,10 @@ public class MageSelectView extends TextView implements MageControl {
             setText(DEFAULT_TEXT);
         }
     }
-}
 
+    @Override
+    public CharSequence getError() {
+      return super.getError();
+    }
+
+}

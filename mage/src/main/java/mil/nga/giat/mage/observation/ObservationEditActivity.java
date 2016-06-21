@@ -138,7 +138,9 @@ public class ObservationEditActivity extends Activity implements OnMapReadyCallb
 
 	// control key to default position
 	private static Map<String, Integer> spinnersLastPositions = new HashMap<>();
-	
+
+	private List<View> controls = new ArrayList<>();
+
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -165,7 +167,7 @@ public class ObservationEditActivity extends Activity implements OnMapReadyCallb
                 startActivity(intent);
             }
         });
-		
+
 		final long observationId = getIntent().getLongExtra(OBSERVATION_ID, NEW_OBSERVATION);
 		JsonObject dynamicFormJson;
 		if (observationId == NEW_OBSERVATION) {
@@ -181,7 +183,7 @@ public class ObservationEditActivity extends Activity implements OnMapReadyCallb
 			}
 		}
 
-		List<View> controls = LayoutBaker.createControlsFromJson(this, ControlGenerationType.EDIT, dynamicFormJson);
+		controls = LayoutBaker.createControlsFromJson(this, ControlGenerationType.EDIT, dynamicFormJson);
 		for (View view : controls) {
 			if (view instanceof MageSpinner) {
 				MageSpinner mageSpinner = (MageSpinner) view;
@@ -282,7 +284,7 @@ public class ObservationEditActivity extends Activity implements OnMapReadyCallb
 			}
 			LayoutBaker.populateLayoutFromMap((LinearLayout) findViewById(R.id.form), ControlGenerationType.EDIT, propertiesMap);
 		}
-		
+
 		findViewById(R.id.date_edit).setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
@@ -293,9 +295,9 @@ public class ObservationEditActivity extends Activity implements OnMapReadyCallb
 				final DatePicker datePicker = (DatePicker) dialogView.findViewById(R.id.date_picker);
 				final TimePicker timePicker = (TimePicker) dialogView.findViewById(R.id.time_picker);
 
-                String value = ((MageTextView) findViewById(R.id.date)).getPropertyValue();
+                Serializable value = ((MageTextView) findViewById(R.id.date)).getPropertyValue();
                 try {
-                    Date date = iso8601Format.parse(value);
+                    Date date = iso8601Format.parse(value.toString());
                     Calendar c = Calendar.getInstance();
                     c.setTime(date);
                     datePicker.updateDate(c.get(Calendar.YEAR), c.get(Calendar.MONTH), c.get(Calendar.DAY_OF_MONTH));
@@ -337,10 +339,10 @@ public class ObservationEditActivity extends Activity implements OnMapReadyCallb
 		});
 
 	}
-	
+
 	/**
 	 * Hides keyboard when clicking elsewhere
-	 * 
+	 *
 	 * @param view view
 	 */
 	private void hideKeyboardOnClick(View view) {
@@ -426,12 +428,14 @@ public class ObservationEditActivity extends Activity implements OnMapReadyCallb
 
 		if (observationMarker != null) {
 			observationMarker.setPosition(location);
+			// make sure to set the Anchor after this call as well, because the size of the icon might have changed
 			observationMarker.setIcon(ObservationBitmapFactory.bitmapDescriptor(this, observation));
+			observationMarker.setAnchor(0.5f, 1.0f);
 		} else {
 			observationMarker = map.addMarker(new MarkerOptions().position(location).icon(ObservationBitmapFactory.bitmapDescriptor(this, observation)));
 		}
 	}
-	
+
 	@SuppressLint("NewApi")
 	private long getElapsedTimeInMilliseconds() {
 		long elapsedTimeInMilliseconds = 0;
@@ -448,10 +452,10 @@ public class ObservationEditActivity extends Activity implements OnMapReadyCallb
 
 	private String elapsedTime(long ms) {
 		String s = "";
-		
+
 		long sec = ms / 1000;
 		long min = sec / 60;
-		
+
 		if (observation.getRemoteId() == null) {
 			if (ms < 1000) {
 				return "now";
@@ -500,15 +504,25 @@ public class ObservationEditActivity extends Activity implements OnMapReadyCallb
 	public boolean onCreateOptionsMenu(Menu menu) {
 		// Inflate the menu; this adds items to the action bar if it is present.
 		getMenuInflater().inflate(R.menu.observation_edit_menu, menu);
+
 		return true;
 	}
-	
 
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
 		switch (item.getItemId()) {
 
 		case R.id.observation_save:
+			List<View> invalid = LayoutBaker.validateControls(controls);
+			if (!invalid.isEmpty()) {
+				// scroll to first invalid control
+				View firstInvalid = invalid.get(0);
+				findViewById(R.id.properties).scrollTo(0, firstInvalid.getBottom());
+				firstInvalid.clearFocus();
+				firstInvalid.requestFocus();
+				break;
+			}
+
 			observation.setState(State.ACTIVE);
 			observation.setDirty(true);
 			observation.setGeometry(new GeometryFactory().createPoint(new Coordinate(l.getLongitude(), l.getLatitude())));
@@ -530,7 +544,7 @@ public class ObservationEditActivity extends Activity implements OnMapReadyCallb
 			if (provider == null || provider.trim().isEmpty()) {
 				provider = "manual";
 			}
-			
+
 			propertyMap.put("provider", new ObservationProperty("provider", provider));
 			if (!"manual".equalsIgnoreCase(provider)) {
 				propertyMap.put("delta", new ObservationProperty("delta", Long.toString(locationElapsedTimeMilliseconds)));
@@ -789,8 +803,6 @@ public class ObservationEditActivity extends Activity implements OnMapReadyCallb
 					}
 				}
 				mageSelectView.setPropertyValue(selectedChoicesSerialized);
-
-
 				break;
 		}
 	}
@@ -803,7 +815,7 @@ public class ObservationEditActivity extends Activity implements OnMapReadyCallb
 		}
 		return uris;
 	}
-	
+
 	@TargetApi(16)
 	private List<Uri> getClipDataUris(Intent intent) {
 		List<Uri> uris = new ArrayList<>();
