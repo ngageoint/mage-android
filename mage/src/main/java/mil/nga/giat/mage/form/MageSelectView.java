@@ -17,7 +17,7 @@ public class MageSelectView extends TextView implements MageControl {
     private String propertyKey;
     private MagePropertyType propertyType;
     private JsonObject jsonObject;
-    private static String DEFAULT_TEXT = "Click to select a value.";
+    private static String DEFAULT_TEXT = "No value selected.";
     private ArrayList<String> selectedChoices;
     private Boolean isMultiSelect = false;
     protected Boolean isRequired = Boolean.FALSE;

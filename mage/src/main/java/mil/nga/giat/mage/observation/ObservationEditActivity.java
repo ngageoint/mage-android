@@ -843,16 +843,16 @@ public class ObservationEditActivity extends Activity implements OnMapReadyCallb
 		return FIELD_ID_SELECT + " " + fieldId;
 	}
 
-	public void selectClick(MageSelectView selectView) {
-		JsonObject field = selectView.getJsonObject();
-		Boolean isMultiSelect = selectView.isMultiSelect();
-		Integer fieldId = selectView.getId();
+	public void selectClick(MageSelectView mageSelectView) {
+		JsonObject field = mageSelectView.getJsonObject();
+		Boolean isMultiSelect = mageSelectView.isMultiSelect();
+		Integer fieldId = mageSelectView.getId();
 
 		Intent intent = new Intent(ObservationEditActivity.this, SelectEditActivity.class);
 		JsonArray jsonArray = field.getAsJsonArray(SelectEditActivity.MULTISELECT_JSON_CHOICE_KEY);
 		intent.putExtra(SelectEditActivity.SELECT_CHOICES, jsonArray.toString());
 
-		Serializable serializableValue = selectView.getPropertyValue();
+		Serializable serializableValue = mageSelectView.getPropertyValue();
 		ArrayList<String> selectedValues = null;
 		if (serializableValue != null) {
 			if (isMultiSelect) {
