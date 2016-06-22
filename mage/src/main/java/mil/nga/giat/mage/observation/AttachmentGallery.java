@@ -93,7 +93,7 @@ public class AttachmentGallery {
 
         if (absPath != null) {
             if (contentType == null) {
-                Glide.with(context).load(R.drawable.ic_attachment_gray_48dp).into(iv);
+                Glide.with(context).load("").placeholder(R.drawable.ic_attachment_gray_48dp).into(iv);
             } else if (contentType.startsWith("image")) {
                 Glide.with(context).load(new File(absPath)).placeholder(android.R.drawable.progress_indeterminate_horizontal).centerCrop().into(iv);
             } else if (contentType.startsWith("video")) {
@@ -112,7 +112,7 @@ public class AttachmentGallery {
                         .error(R.drawable.ic_videocam_gray_48dp)
                         .into(iv);
             } else if (contentType.startsWith("audio")) {
-                Glide.with(context).load(R.drawable.ic_mic_gray_48dp).into(iv);
+                Glide.with(context).load("").placeholder(R.drawable.ic_mic_gray_48dp).into(iv);
             }
         } else if (remoteId != null) {
             if (contentType == null) {
@@ -153,7 +153,7 @@ public class AttachmentGallery {
                         })
                         .into(iv);
             } else if (contentType.startsWith("audio")) {
-                Glide.with(context).load(R.drawable.ic_mic_gray_48dp).into(iv);
+                Glide.with(context).load("").placeholder(R.drawable.ic_mic_gray_48dp).into(iv);
             }
         }
     }

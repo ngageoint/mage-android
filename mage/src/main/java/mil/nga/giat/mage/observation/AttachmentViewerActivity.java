@@ -45,7 +45,6 @@ import java.io.OutputStream;
 
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.observation.RemoveAttachmentDialogFragment.RemoveAttachmentDialogListener;
-import mil.nga.giat.mage.sdk.datastore.DaoStore;
 import mil.nga.giat.mage.sdk.datastore.observation.Attachment;
 import mil.nga.giat.mage.sdk.datastore.observation.AttachmentHelper;
 import mil.nga.giat.mage.sdk.http.resource.ObservationResource;
@@ -131,7 +130,27 @@ public class AttachmentViewerActivity extends FragmentActivity implements Remove
 					}
 				});
 			} else if (contentType.startsWith("audio")) {
-				findViewById(R.id.play_image).setVisibility(View.VISIBLE);
+				findViewById(R.id.audio_image).setVisibility(View.VISIBLE);
+
+				final VideoView videoView = (VideoView) findViewById(R.id.video);
+				final MediaController mediaController = new MediaController(this) {
+					@Override
+					public void hide() {
+						//Do not hide.
+					}
+				};
+				mediaController.setAnchorView(videoView);
+				videoView.setMediaController(mediaController);
+				videoView.setVideoURI(uri);
+
+				findViewById(R.id.video).setVisibility(View.VISIBLE);
+				videoView.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+					@Override
+					public void onPrepared(MediaPlayer mp) {
+						videoView.start();
+						mediaController.show();
+					}
+				});
 			}
 		} else if (url != null) {
 			if (contentType.startsWith("image")) {
@@ -173,7 +192,33 @@ public class AttachmentViewerActivity extends FragmentActivity implements Remove
 					}
 				});
 			} else if (contentType.startsWith("audio")) {
-				findViewById(R.id.play_image).setVisibility(View.VISIBLE);
+				findViewById(R.id.audio_image).setVisibility(View.VISIBLE);
+
+				String token = PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).getString(getApplicationContext().getString(mil.nga.giat.mage.sdk.R.string.tokenKey), null);
+				Uri uri = Uri.parse(url + "?access_token=" + token);
+
+				final VideoView videoView = (VideoView) findViewById(R.id.video);
+				videoView.setBackground(ContextCompat.getDrawable(this, R.drawable.ic_mic_gray_48dp));
+				videoView.setBackgroundColor(ContextCompat.getColor(this, android.R.color.white));
+				final MediaController mediaController = new MediaController(this) {
+					@Override
+					public void hide() {
+						//Do not hide.
+					}
+				};
+
+				mediaController.setAnchorView(videoView);
+				videoView.setMediaController(mediaController);
+				videoView.setVideoURI(uri);
+				findViewById(R.id.video).setVisibility(View.VISIBLE);
+
+				videoView.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+					@Override
+					public void onPrepared(MediaPlayer mp) {
+						videoView.start();
+						mediaController.show();
+					}
+				});
 			}
 		}
 	}
@@ -353,11 +398,14 @@ public class AttachmentViewerActivity extends FragmentActivity implements Remove
 			}
 
 			try {
-				Attachment attachment = DaoStore.getInstance(getApplicationContext()).getAttachmentDao().queryForId(AttachmentViewerActivity.this.attachment.getId());
+				AttachmentHelper attachmentHelper = AttachmentHelper.getInstance(getApplicationContext());
+				Attachment attachment = attachmentHelper.read(AttachmentViewerActivity.this.attachment.getId());
 				attachment.setLocalPath(AttachmentViewerActivity.this.attachment.getLocalPath());
-				DaoStore.getInstance(getApplicationContext()).getAttachmentDao().update(attachment);
+				attachmentHelper.update(attachment);
 
 				MediaUtility.addImageToGallery(getApplicationContext(), Uri.fromFile(new File(AttachmentViewerActivity.this.attachment.getLocalPath())));
+
+				AttachmentViewerActivity.this.invalidateOptionsMenu();
 
 				Toast toast = Toast.makeText(getApplicationContext(), "Attachment Successfully Saved", Toast.LENGTH_SHORT);
 				toast.show();
