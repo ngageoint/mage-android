@@ -47,41 +47,36 @@
 	    	    android:layout_height="wrap_content"
 	    	    android:textColor="#111"
 	       		android:textSize="18sp"/>
-            <RadioButton 
-                android:id="@+id/last_hour_rb"
-                android:text="Last Hour"
-                android:layout_width="wrap_content"
-	    	    android:layout_height="wrap_content"
-	    	    android:textColor="#111"
-	       		android:textSize="18sp"/>
-            <RadioButton 
-                android:id="@+id/last_six_hours_rb"
-                android:text="Last 6 Hours"
-                android:layout_width="wrap_content"
-	    	    android:layout_height="wrap_content"
-	    	    android:textColor="#111"
-	       		android:textSize="18sp"/>
-            <RadioButton 
-                android:id="@+id/last_twelve_hours_rb"
-                android:text="Last 12 Hours"
-                android:layout_width="wrap_content"
-	    	    android:layout_height="wrap_content"
-	    	    android:textColor="#111"
-	       		android:textSize="18sp"/>
-            <RadioButton 
-                android:id="@+id/last_24_hours_rb"
-                android:text="Last 24 Hours"
-                android:layout_width="wrap_content"
-	    	    android:layout_height="wrap_content"
-	    	    android:textColor="#111"
-	       		android:textSize="18sp"/>
-            <RadioButton 
+            <RadioButton
                 android:id="@+id/since_midnight_rb"
                 android:text="Today"
                 android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="#111"
+                android:textSize="18sp"/>
+            <RadioButton
+                android:id="@+id/last_24_hours_rb"
+                android:text="Last 24 Hours"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="#111"
+                android:textSize="18sp"/>
+            <RadioButton 
+                android:id="@+id/last_week_rb"
+                android:text="Last Week"
+                android:layout_width="wrap_content"
 	    	    android:layout_height="wrap_content"
 	    	    android:textColor="#111"
 	       		android:textSize="18sp"/>
+            <RadioButton 
+                android:id="@+id/last_month_rb"
+                android:text="Last Month"
+                android:layout_width="wrap_content"
+	    	    android:layout_height="wrap_content"
+	    	    android:textColor="#111"
+	       		android:textSize="18sp"/>
+
+
         </RadioGroup>
     </LinearLayout>
     <View
