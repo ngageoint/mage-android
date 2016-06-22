@@ -8,6 +8,7 @@ Adheres to [Semantic Versioning](http://semver.org/).
 * TBD
 
 ##### Features
+* Updated time filter intervals.
 
 ##### Bug Fixes
 * Fix issue with duplicate attachments showing up in observation when picked from google photos gallery.
