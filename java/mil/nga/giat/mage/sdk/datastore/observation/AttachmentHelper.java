@@ -108,7 +108,15 @@ public class AttachmentHelper extends DaoHelper<Attachment> implements IEventDis
 	}
 
 	@Override
-	public Attachment create(Attachment attachment) throws Exception {
+	public Attachment create(Attachment attachment) throws SQLException {
+		try {
+			Attachment oldAttachment = read(attachment.getId());
+			if (oldAttachment != null && attachment.getLocalPath() == null) {
+				attachment.setLocalPath(oldAttachment.getLocalPath());
+			}
+		} catch (Exception e) {
+		}
+
 		attachmentDao.createOrUpdate(attachment);
 
 		for (IAttachmentEventListener listener : listeners) {
@@ -118,13 +126,51 @@ public class AttachmentHelper extends DaoHelper<Attachment> implements IEventDis
 		return attachment;
 	}
 
+	/**
+	 *  Persist attachment to database.
+	 *
+	 * The localPath member will not be set to null (removed).  Please use
+	 * the  {@link AttachmentHelper#removeLocalPath(Attachment)} method to
+	 * set the localPath to null.
+	 *
+	 * @param attachment
+	 * @return the attachment
+	 * @throws SQLException
+	 */
 	@Override
 	public Attachment update(Attachment attachment) throws SQLException {
+		try {
+			Attachment oldAttachment = read(attachment.getId());
+			if (oldAttachment != null && attachment.getLocalPath() == null) {
+				attachment.setLocalPath(oldAttachment.getLocalPath());
+			}
+		} catch (Exception e) {
+		}
+
 		attachmentDao.update(attachment);
 
 		for (IAttachmentEventListener listener : listeners) {
 			listener.onAttachmentUpdated(attachment);
 		}
+
+		return attachment;
+	}
+
+	/**
+	 * Removes this attachments local path.
+	 *
+	 * The localPath member cannot be set to null (removed) from the update method.
+	 * This is to protect from overriding a local path value when we pull updates for this
+	 * attachment from the server since localPath does not come from the server and
+	 * will always be null.
+	 *
+	 * @param attachment
+	 * @return the attachment
+	 * @throws SQLException
+	 */
+	public Attachment removeLocalPath(Attachment attachment) throws SQLException {
+		attachment.setLocalPath(null);
+		attachmentDao.update(attachment);
 
 		return attachment;
 	}
