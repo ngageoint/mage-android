@@ -5,21 +5,22 @@ import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.CompressFormat;
 import android.graphics.BitmapFactory;
+import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
-import com.google.common.io.Files;
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.stmt.QueryBuilder;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
-import java.math.BigInteger;
 import java.security.SecureRandom;
 import java.sql.SQLException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -215,29 +216,28 @@ public class AttachmentHelper extends DaoHelper<Attachment> implements IEventDis
 	 * @param attachment
 	 */
 	public void stageForUpload(Attachment attachment) throws Exception {
-		File stageDir = MediaUtility.getMediaStageDirectory(mApplicationContext);
-		File inFile = new File(attachment.getLocalPath());
-		// add random string to the front of the filename to avoid conflicts
-		File stagedFile = new File(stageDir, new BigInteger(30, random).toString(32) + new File(attachment.getLocalPath()).getName());
-
-		Log.d(LOG_NAME, "Staging file: " + stagedFile.getAbsolutePath());
-		Log.d(LOG_NAME, "Local path is: " + attachment.getLocalPath());
-		if (stagedFile.getAbsolutePath().equalsIgnoreCase(attachment.getLocalPath())) {
-			Log.d(LOG_NAME, "Attachment is already staged.  Nothing to do.");
-			return;
-		}
 		SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(mApplicationContext);
 		Integer outImageSize = sharedPreferences.getInt(mApplicationContext.getString(R.string.imageUploadSizeKey), mApplicationContext.getResources().getInteger(R.integer.imageUploadSizeDefaultValue));
 
-		if (MediaUtility.isImage(stagedFile.getAbsolutePath())) {
-
+		File file = new File(attachment.getLocalPath());
+		if (MediaUtility.isImage(file.getAbsolutePath())) {
 			// if not original image size
 			if (outImageSize > 0) {
+				File cacheDir = mApplicationContext.getCacheDir();
+
+				String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+				String imageFileName = "MAGE_" + timeStamp;
+				File directory  = new File(Environment.getExternalStorageDirectory(), "MAGE");
+				File thumbnail =  File.createTempFile(
+						imageFileName,  /* prefix */
+						".jpg",         /* suffix */
+						directory      /* directory */
+				);
 
 				BitmapFactory.Options options = new BitmapFactory.Options();
 				options.inPreferredConfig = Bitmap.Config.RGB_565;
 				options.inSampleSize = 2;
-				Bitmap bitmap = BitmapFactory.decodeFile(inFile.getAbsolutePath(), options);
+				Bitmap bitmap = BitmapFactory.decodeFile(file.getAbsolutePath(), options);
 
 				// Scale file
 				Integer inWidth = bitmap.getWidth();
@@ -257,23 +257,20 @@ public class AttachmentHelper extends DaoHelper<Attachment> implements IEventDis
 
 				// TODO: TESTING, might still run out of memory...
 				if(outImageSize <= 1024) {
-					bitmap = MediaUtility.orientBitmap(bitmap, inFile.getAbsolutePath(), true);
+					bitmap = MediaUtility.orientBitmap(bitmap, file.getAbsolutePath(), true);
 				}
 
-				OutputStream out = new FileOutputStream(stagedFile);
+				OutputStream out = new FileOutputStream(thumbnail);
 				bitmap.compress(CompressFormat.JPEG, 100, out);
 
 				out.flush();
 				out.close();
 				bitmap.recycle();
-				MediaUtility.copyExifData(inFile, stagedFile);
-			} else {
-				Files.copy(inFile, stagedFile);
+				MediaUtility.copyExifData(file, thumbnail);
+				attachment.setLocalPath(thumbnail.getAbsolutePath());
 			}
-		} else {
-			Files.copy(inFile, stagedFile);
 		}
-		attachment.setLocalPath(stagedFile.getAbsolutePath());
+
 		AttachmentHelper.getInstance(mApplicationContext).uploadableAttachment(attachment);
 	}
 

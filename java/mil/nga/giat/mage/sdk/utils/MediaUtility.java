@@ -25,6 +25,8 @@ import android.provider.MediaStore;
 import android.util.Log;
 import android.webkit.MimeTypeMap;
 
+import com.google.common.io.ByteStreams;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.sanselan.Sanselan;
 import org.apache.sanselan.common.IImageMetadata;
@@ -113,6 +115,39 @@ public class MediaUtility {
 	    Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
 	    mediaScanIntent.setData(contentUri);
 	    c.sendBroadcast(mediaScanIntent);
+	}
+
+	public static File copyImageFromGallery(InputStream is) throws IOException {
+		OutputStream os = null;
+		try {
+			String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+			String imageFileName = "MAGE_" + timeStamp;
+			File directory  = new File(Environment.getExternalStorageDirectory(), "MAGE");
+			File file =  File.createTempFile(
+					imageFileName,  /* prefix */
+					".jpg",         /* suffix */
+					directory      /* directory */
+			);
+
+			os = new FileOutputStream(file);
+			ByteStreams.copy(is, os);
+
+			return file;
+		}  finally {
+			if (is != null) {
+				try {
+					is.close();
+				} catch (IOException e) {
+				}
+			}
+
+			if (os != null) {
+				try {
+					os.close();
+				} catch (IOException e) {
+				}
+			}
+		}
 	}
 
 	public static File createImageFile() throws IOException {
