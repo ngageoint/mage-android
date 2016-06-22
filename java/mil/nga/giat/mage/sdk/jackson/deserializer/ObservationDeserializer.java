@@ -162,8 +162,16 @@ public class ObservationDeserializer extends Deserializer {
 		while (parser.nextToken() != JsonToken.END_OBJECT) {
 			String key = parser.getCurrentName();
 			JsonToken token = parser.nextToken();
-			if (token == JsonToken.START_OBJECT || token == JsonToken.START_ARRAY) {
+			if (token == JsonToken.START_OBJECT) {
 				parser.skipChildren();
+			} else if (token == JsonToken.START_ARRAY) {
+				ArrayList<String> stringArrayList = new ArrayList<>();
+				while (parser.nextToken() != JsonToken.END_ARRAY) {
+					String arrayValue = parser.getValueAsString();
+					stringArrayList.add(arrayValue);
+				}
+				Serializable value = stringArrayList;
+				properties.add(new ObservationProperty(key, value));
 			} else {
 				Serializable value = parser.getText();
 				if (token.isNumeric()) {

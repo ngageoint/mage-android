@@ -2,6 +2,7 @@ package mil.nga.giat.mage.sdk.gson.serializer;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -11,6 +12,7 @@ import com.google.gson.JsonSerializer;
 
 import java.io.Serializable;
 import java.lang.reflect.Type;
+import java.util.ArrayList;
 
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationProperty;
@@ -82,6 +84,10 @@ public class ObservationSerializer implements JsonSerializer<Observation> {
 				pJsonObject.add(property, new JsonPrimitive((Float) toAdd));
 			} else if (toAdd instanceof Boolean) {
 				pJsonObject.add(property, new JsonPrimitive((Boolean) toAdd));
+			} else if (toAdd instanceof ArrayList){
+				JsonParser jsonParser = new JsonParser();
+				JsonArray choicesArray = jsonParser.parse(toAdd.toString()).getAsJsonArray();
+				pJsonObject.add(property, choicesArray);
 			} else {
 				pJsonObject.add(property, new JsonPrimitive(toAdd.toString()));
 			}
