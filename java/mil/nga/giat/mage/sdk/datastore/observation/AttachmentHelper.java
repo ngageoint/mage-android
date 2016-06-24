@@ -255,11 +255,6 @@ public class AttachmentHelper extends DaoHelper<Attachment> implements IEventDis
 				}
 				bitmap = Bitmap.createScaledBitmap(bitmap, outWidth, outHeight, true);
 
-				// TODO: TESTING, might still run out of memory...
-				if(outImageSize <= 1024) {
-					bitmap = MediaUtility.orientBitmap(bitmap, file.getAbsolutePath(), true);
-				}
-
 				OutputStream out = new FileOutputStream(thumbnail);
 				bitmap.compress(CompressFormat.JPEG, 100, out);
 
@@ -267,6 +262,7 @@ public class AttachmentHelper extends DaoHelper<Attachment> implements IEventDis
 				out.close();
 				bitmap.recycle();
 				MediaUtility.copyExifData(file, thumbnail);
+
 				attachment.setLocalPath(thumbnail.getAbsolutePath());
 			}
 		}

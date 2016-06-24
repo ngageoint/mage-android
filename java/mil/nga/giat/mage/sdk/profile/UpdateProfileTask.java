@@ -79,7 +79,6 @@ public class UpdateProfileTask extends AsyncTask<String, Void, User> {
 		bitmap = Bitmap.createScaledBitmap(bitmap, outWidth, outHeight, true);
 
 		try {
-			bitmap = MediaUtility.orientBitmap(bitmap, inFile.getAbsolutePath(), true);
 			OutputStream out = new FileOutputStream(stagedFile);
 			bitmap.compress(CompressFormat.JPEG, 100, out);
 
