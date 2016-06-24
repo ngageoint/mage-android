@@ -95,10 +95,21 @@ public class LayoutBaker {
 			}
 
 			Boolean required = field.get("required").getAsBoolean();
-			String value = null;
+			Serializable value = null;
 			JsonElement jsonValue = field.get("value");
-			if (jsonValue != null && !jsonValue.isJsonNull() && jsonValue.isJsonPrimitive()) {
-				value = jsonValue.getAsString();
+			if (jsonValue != null && !jsonValue.isJsonNull()) {
+				if (jsonValue.isJsonPrimitive()) {
+					value = jsonValue.getAsString();
+				} else if (jsonValue.isJsonArray()) {
+					JsonArray jsonArray = (JsonArray) jsonValue;
+					ArrayList<String> stringArrayList = new ArrayList<>();
+					for (JsonElement element: jsonArray) {
+						if (!element.isJsonNull()) {
+							stringArrayList.add(element.getAsString());
+						}
+					}
+					value = stringArrayList;
+				}
 			}
 
 
@@ -265,8 +276,8 @@ public class LayoutBaker {
 					mageCheckBox.setRequired(required);
 					mageCheckBox.setPropertyKey(name);
 					mageCheckBox.setPropertyType(MagePropertyType.STRING);
-					if(value != null && !value.trim().isEmpty()) {
-						mageCheckBox.setPropertyValue(Boolean.valueOf(value));
+					if(value != null && !((String)value).trim().isEmpty()) {
+						mageCheckBox.setPropertyValue(Boolean.valueOf(((String)value)));
 					}
 
 					views.add(textView);
@@ -296,10 +307,10 @@ public class LayoutBaker {
 					mageDateText.setPropertyType(MagePropertyType.DATE);
 					mageDateText.setTextSize(16);
 
-					if (value != null && !value.trim().isEmpty()) {
+					if (value != null && !((String)value).trim().isEmpty()) {
 						try {
                             DateFormat dateFormat = DateFormatFactory.ISO8601();
-							mageDateText.setPropertyValue(dateFormat.parse(value));
+							mageDateText.setPropertyValue(dateFormat.parse(((String)value)));
 						} catch (ParseException pe) {
 							Log.e(LOG_NAME, "Problem parsing date.", pe);
 						}
@@ -410,8 +421,8 @@ public class LayoutBaker {
 					mageCheckBox.setLayoutParams(controlParams);
 					mageCheckBox.setPropertyKey(name);
 					mageCheckBox.setPropertyType(MagePropertyType.STRING);
-					if(value != null && !value.trim().isEmpty()) {
-						mageCheckBox.setPropertyValue(Boolean.valueOf(value));
+					if(value != null && !((String)value).trim().isEmpty()) {
+						mageCheckBox.setPropertyValue(Boolean.valueOf(((String)value)));
 					}
 					mageCheckBox.setEnabled(false);
 					linearLayout.addView(textView);

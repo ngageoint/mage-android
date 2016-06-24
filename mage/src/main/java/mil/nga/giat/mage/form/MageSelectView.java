@@ -88,9 +88,8 @@ public class MageSelectView extends TextView implements MageControl {
 
     @Override
     public void setPropertyValue(Serializable value) {
-        selectedChoices.clear();
+        selectedChoices = new ArrayList<String>();
         if (value != null) {
-
             if (isMultiSelect) {
                 selectedChoices = (ArrayList<String>) value;
                 if (!selectedChoices.isEmpty()) {
@@ -110,8 +109,6 @@ public class MageSelectView extends TextView implements MageControl {
                 selectedChoices.add((String) value);
                 setText((String) value);
             }
-
-
         } else {
             setText(DEFAULT_TEXT);
         }
