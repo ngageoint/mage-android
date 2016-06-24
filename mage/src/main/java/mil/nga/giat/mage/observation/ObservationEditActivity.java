@@ -250,9 +250,13 @@ public class ObservationEditActivity extends Activity implements OnMapReadyCallb
 
             observation.setEvent(EventHelper.getInstance(getApplicationContext()).getCurrentEvent());
 			observation.setTimestamp(new Date());
-			List<ObservationProperty> properties = new ArrayList<>();
-			properties.add(new ObservationProperty("timestamp", iso8601Format.format(observation.getTimestamp())));
-			observation.addProperties(properties);
+			Serializable timestamp = iso8601Format.format(observation.getTimestamp());
+			ObservationProperty timestampProperty = new ObservationProperty("timestamp", timestamp);
+
+			Map<String, ObservationProperty> propertyMap = LayoutBaker.populateMapFromLayout((LinearLayout) findViewById(R.id.form));
+			propertyMap.put("timestamp", timestampProperty);
+
+			observation.addProperties(propertyMap.values());
 			try {
 				User u = UserHelper.getInstance(getApplicationContext()).readCurrentUser();
 				if (u != null) {
