@@ -105,7 +105,7 @@ public class ObservationViewActivity extends Activity implements OnMapReadyCallb
 				if (map == null) return;
 
 				for (Observation observation : observations) {
-					if (observation.getId().equals(o.getId())) {
+					if (o == null || (observation.getId().equals(o.getId()) && !observation.getLastModified().equals(o.getLastModified()))) {
 						ObservationViewActivity.this.runOnUiThread(new Runnable() {
 							@Override
 							public void run() {
@@ -196,6 +196,7 @@ public class ObservationViewActivity extends Activity implements OnMapReadyCallb
 			if (observationProperty != null) {
 				this.setTitle(observationProperty.getValue().toString());
 			}
+
 			Geometry geo = o.getGeometry();
 			if (geo instanceof Point) {
 				Point pointGeo = (Point) geo;
