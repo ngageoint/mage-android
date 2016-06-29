@@ -9,7 +9,9 @@ import android.widget.TextView;
 import java.io.Serializable;
 import java.text.DateFormat;
 import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 
 import mil.nga.giat.mage.R;
@@ -25,6 +27,7 @@ public class MageTextView extends TextView implements MageControl {
 	private String propertyKey;
 	private MagePropertyType propertyType;
 	private Date propertyDate = new Date();
+	private List<String> multiChoiceList = new ArrayList<>();
 	protected Boolean isRequired = Boolean.FALSE;
 
 	public MageTextView(Context context, AttributeSet attrs) {
@@ -72,6 +75,7 @@ public class MageTextView extends TextView implements MageControl {
 		case LOCATION:
 			break;
 		case MULTICHOICE:
+			value = new ArrayList<>(multiChoiceList);
 			break;
 		case NUMBER:
 			value = Double.parseDouble(getText().toString());
@@ -122,7 +126,8 @@ public class MageTextView extends TextView implements MageControl {
 			// location is not a property, it lives in the parent
 			break;
 		case MULTICHOICE:
-
+			multiChoiceList = new ArrayList<>((ArrayList<String>)value);
+			setText(value.toString().substring(1, value.toString().length() - 1));
 			break;
 		default:
 			break;

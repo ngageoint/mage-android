@@ -234,6 +234,22 @@ public class ObservationEditActivity extends Activity implements OnMapReadyCallb
 						selectClick(selectView);
 					}
 				});
+			} else if( view instanceof  LinearLayout) {
+				LinearLayout currentView = (LinearLayout) view;
+				for (int index = 0; index < currentView.getChildCount(); index++) {
+					View childView = currentView.getChildAt(index);
+					if (childView instanceof MageSelectView) {
+						final MageSelectView childSelectView = (MageSelectView) childView;
+						fieldIdMap.put(getSelectId(childSelectView.getId()), childSelectView);
+
+						childSelectView.setOnClickListener(new View.OnClickListener() {
+							@Override
+							public void onClick(View v) {
+								selectClick(childSelectView);
+							}
+						});
+					}
+				}
 			}
 		}
 
