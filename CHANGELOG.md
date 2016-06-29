@@ -8,14 +8,18 @@ Adheres to [Semantic Versioning](http://semver.org/).
 * TBD
 
 ##### Features
+* Updated time filter intervals.
 
 ##### Bug Fixes
+* Fix issue with duplicate attachments showing up in observation when picked from google photos gallery.
+* Copy attachments picked from gallery to mage local storage in case gallery image is deleted before mage has
+  a chance to send the attachment to the server.
 
 ## [5.0.4](https://github.com/ngageoint/mage-android/releases/tag/5.0.4) (05-25-2016)
 ##### Bug Fixes
 * Fix issue with location marker anchor.  At higher zoom levels the marker was appearing in the wrong location
 * Fixed issue with progress for feature overlay not being removed when the layer has been refreshed.
-* Fixed issue on older devices with app crashing after launching camera app from new observation and then discarding the observation. 
+* Fixed issue on older devices with app crashing after launching camera app from new observation and then discarding the observation.
 
 ## [5.0.3](https://github.com/ngageoint/mage-android/releases/tag/5.0.3) (04-15-2016)
 ##### Features

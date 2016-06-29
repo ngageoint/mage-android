@@ -472,25 +472,40 @@ public class ProfileFragment extends Fragment implements OnMapReadyCallback, OnC
 			case GALLERY_ACTIVITY_REQUEST_CODE:
 				List<Uri> uris = getUris(data);
 				for (Uri uri : uris) {
-					filePath = MediaUtility.getPath(getActivity().getApplicationContext(), uri);
+					try {
+						File avatarFile = MediaUtility.copyImageFromGallery(getActivity().getContentResolver().openInputStream(uri));
+						filePath = avatarFile.getAbsolutePath();
+					} catch (IOException e) {
+						Log.e(LOG_NAME, "Error copying gallery file for avatar to local storage", e);
+					}
 				}
 				break;
 		}
 
 		if (filePath != null) {
-			BitmapFactory.Options options = new BitmapFactory.Options();
-			options.inPreferredConfig = Bitmap.Config.RGB_565;
-			options.inSampleSize = 2;
-			Bitmap bitmap = BitmapFactory.decodeFile(filePath, options);
-			Bitmap b = MediaUtility.resizeAndRoundCorners(bitmap, 150);
+			final Context context = getActivity().getApplicationContext();
+			final ImageView iv = (ImageView) getActivity().findViewById(R.id.profile_picture);
+			Glide.with(context).load(filePath).centerCrop().into(iv);
+			Glide.with(context)
+					.load(filePath)
+					.asBitmap()
+					.fallback(R.id.profile_picture)
+					.centerCrop()
+					.into(new BitmapImageViewTarget(iv) {
+						@Override
+						protected void setResource(Bitmap resource) {
+							RoundedBitmapDrawable circularBitmapDrawable = RoundedBitmapDrawableFactory.create(context.getResources(), resource);
+							circularBitmapDrawable.setCircular(true);
+							iv.setImageDrawable(circularBitmapDrawable);
+						}
+					});
+
 			try {
-				b = MediaUtility.orientBitmap(b, filePath, false);
-			} catch (Exception e) {
-				Log.e(LOG_NAME, "failed to rotate image", e);
+				UserHelper.getInstance(context).setAvatarPath(user, filePath);
+			} catch (UserException e) {
+				Log.e(LOG_NAME, "Error setting local avatar path", e);
 			}
 
-			ImageView iv = (ImageView)getActivity().findViewById(R.id.profile_picture);
-			iv.setImageBitmap(b);
 			UpdateProfileTask task = new UpdateProfileTask(user, getActivity());
 			task.execute(filePath);
 		}
@@ -508,6 +523,7 @@ public class ProfileFragment extends Fragment implements OnMapReadyCallback, OnC
 		if (intent.getData() != null) {
 			uris.add(intent.getData());
 		}
+
 		return uris;
 	}
 	

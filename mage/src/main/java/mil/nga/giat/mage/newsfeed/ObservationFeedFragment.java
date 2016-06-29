@@ -268,20 +268,15 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 			// no filter
 			c.setTime(new Date(0));
 			break;
-		case R.id.last_hour_rb:
-			title = "Last Hour";
-			footerText = "End of results for Last Hour filter";
-			c.add(Calendar.HOUR, -1);
+		case R.id.last_month_rb:
+			title = "Last Month";
+			footerText = "End of results for Last Month filter";
+			c.add(Calendar.MONTH, -1);
 			break;
-		case R.id.last_six_hours_rb:
-			title = "Last 6 Hours";
-			footerText = "End of results for Last 6 Hours filter";
-			c.add(Calendar.HOUR, -6);
-			break;
-		case R.id.last_twelve_hours_rb:
-			title = "Last 12 Hours";
-			footerText = "End of results for Last 12 Hours filter";
-			c.add(Calendar.HOUR, -12);
+		case R.id.last_week_rb:
+			title = "Last Week";
+			footerText = "End of results for Last Week filter";
+			c.add(Calendar.DAY_OF_MONTH, -7);
 			break;
 		case R.id.last_24_hours_rb:
 			title = "Last 24 Hours";
@@ -302,7 +297,7 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 		footerTextView.setText(footerText);
 		getActivity().getActionBar().setTitle(title);
 		qb.where()
-        .gt("last_modified", c.getTime())
+        .gt("timestamp", c.getTime())
         .and()
         .eq("event_id", currentEventId);
 		qb.orderBy("timestamp", false);

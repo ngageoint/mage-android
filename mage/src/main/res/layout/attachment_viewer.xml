@@ -16,20 +16,20 @@
             android:layout_centerHorizontal="true"
             android:layout_centerVertical="true" />
 
-        <ImageView
-            android:id="@+id/play_image"
-            android:src="@drawable/ic_play_circle_outline_gray_48dp"
-            android:layout_width="96dp"
-            android:layout_height="96dp"
-            android:layout_centerHorizontal="true"
-            android:layout_centerVertical="true"
-            android:visibility="gone"/>
-
         <VideoView
             android:id="@+id/video"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_centerInParent="true"
+            android:visibility="gone"/>
+
+        <ImageView
+            android:id="@+id/audio_image"
+            android:src="@drawable/ic_mic_gray_48dp"
+            android:layout_width="96dp"
+            android:layout_height="96dp"
+            android:layout_centerHorizontal="true"
+            android:layout_centerVertical="true"
             android:visibility="gone"/>
 
         <ImageView

@@ -1237,7 +1237,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 		if (getResources().getString(R.string.activeTimeFilterKey).equalsIgnoreCase(key)) {
 			observations.clear();
 			ObservationLoadTask observationLoad = new ObservationLoadTask(getActivity(), observations);
-			observationLoad.setFilter(getTemporalFilter("last_modified"));
+			observationLoad.setFilter(getTemporalFilter("timestamp"));
 			observationLoad.executeOnExecutor(executor);
 
 			locations.clear();
@@ -1256,14 +1256,11 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 
 		Calendar c = Calendar.getInstance();
 		switch (timeFilter) {
-		case R.id.last_hour_rb:
-			c.add(Calendar.HOUR, -1);
+		case R.id.last_month_rb:
+			c.add(Calendar.MONTH, -1);
 			break;
-		case R.id.last_six_hours_rb:
-			c.add(Calendar.HOUR, -6);
-			break;
-		case R.id.last_twelve_hours_rb:
-			c.add(Calendar.HOUR, -12);
+		case R.id.last_week_rb:
+			c.add(Calendar.DAY_OF_WEEK, -7);
 			break;
 		case R.id.last_24_hours_rb:
 			c.add(Calendar.HOUR, -24);
@@ -1293,14 +1290,11 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 		String title = "MAGE";
 		int timeFilter = preferences.getInt(getResources().getString(R.string.activeTimeFilterKey), R.id.none_rb);
 		switch (timeFilter) {
-		case R.id.last_hour_rb:
-			title = "Last Hour";
+		case R.id.last_month_rb:
+			title = "Last Month";
 			break;
-		case R.id.last_six_hours_rb:
-			title = "Last 6 Hours";
-			break;
-		case R.id.last_twelve_hours_rb:
-			title = "Last 12 Hours";
+		case R.id.last_week_rb:
+			title = "Last Week";
 			break;
 		case R.id.last_24_hours_rb:
 			title = "Last 24 Hours";

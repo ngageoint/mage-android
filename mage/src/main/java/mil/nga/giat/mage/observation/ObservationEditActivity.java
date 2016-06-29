@@ -64,11 +64,14 @@ import java.text.DecimalFormat;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.event.EventBannerFragment;
@@ -668,9 +671,8 @@ public class ObservationEditActivity extends Activity implements OnMapReadyCallb
 	}
 
 	private void launchGalleryIntent() {
-		Intent intent = new Intent();
+		Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
 		intent.setType("image/*, video/*");
-		intent.setAction(Intent.ACTION_GET_CONTENT);
 		Log.i(LOG_NAME, "build version sdk int: " + Build.VERSION.SDK_INT);
 		if (Build.VERSION.SDK_INT >=  Build.VERSION_CODES.JELLY_BEAN_MR2) {
 			intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
@@ -795,13 +797,17 @@ public class ObservationEditActivity extends Activity implements OnMapReadyCallb
 				break;
 			case GALLERY_ACTIVITY_REQUEST_CODE:
 			case CAPTURE_VOICE_ACTIVITY_REQUEST_CODE:
-				List<Uri> uris = getUris(data);
+				Collection<Uri> uris = getUris(data);
 				for (Uri uri : uris) {
-					String path = MediaUtility.getPath(getApplicationContext(), uri);
-					Attachment a = new Attachment();
-					a.setLocalPath(path);
-					attachmentsToCreate.add(a);
-					attachmentGallery.addAttachment(attachmentLayout, a);
+					try {
+						File file = MediaUtility.copyImageFromGallery(getContentResolver().openInputStream(uri));
+						Attachment a = new Attachment();
+						a.setLocalPath(file.getAbsolutePath());
+						attachmentsToCreate.add(a);
+						attachmentGallery.addAttachment(attachmentLayout, a);
+					} catch (IOException e) {
+						Log.e(LOG_NAME, "Error copying gallery file to local storage", e);
+					}
 				}
 				break;
 			case LOCATION_EDIT_ACTIVITY_REQUEST_CODE:
@@ -827,24 +833,22 @@ public class ObservationEditActivity extends Activity implements OnMapReadyCallb
 		}
 	}
 
-	private List<Uri> getUris(Intent intent) {
-		List<Uri> uris = new ArrayList<>();
-		uris.addAll(getClipDataUris(intent));
+	private Collection<Uri> getUris(Intent intent) {
+		Set<Uri> uris = new HashSet<>();
 		if (intent.getData() != null) {
 			uris.add(intent.getData());
 		}
+		uris.addAll(getClipDataUris(intent));
 		return uris;
 	}
 
 	@TargetApi(16)
-	private List<Uri> getClipDataUris(Intent intent) {
-		List<Uri> uris = new ArrayList<>();
-		if (Build.VERSION.SDK_INT >= 16) {
-			ClipData cd = intent.getClipData();
-			if (cd != null) {
-				for (int i = 0; i < cd.getItemCount(); i++) {
-					uris.add(cd.getItemAt(i).getUri());
-				}
+	private Collection<Uri> getClipDataUris(Intent intent) {
+		Collection<Uri> uris = new ArrayList<>();
+		ClipData cd = intent.getClipData();
+		if (cd != null) {
+			for (int i = 0; i < cd.getItemCount(); i++) {
+				uris.add(cd.getItemAt(i).getUri());
 			}
 		}
 		return uris;
