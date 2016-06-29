@@ -32,7 +32,6 @@ public class MageSelectView extends EditText implements MageControl {
         this.jsonObject = jsonObject;
         this.selectedChoices = new ArrayList<String>();
         this.isMultiSelect = isMultiSelect;
-        this.setFocusable(false);
     }
 
     public JsonObject getJsonObject() {
