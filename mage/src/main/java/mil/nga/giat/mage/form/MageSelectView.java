@@ -3,7 +3,7 @@ package mil.nga.giat.mage.form;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.util.AttributeSet;
-import android.widget.TextView;
+import android.widget.EditText;
 
 import com.google.gson.JsonObject;
 
@@ -12,12 +12,12 @@ import java.util.ArrayList;
 
 import mil.nga.giat.mage.R;
 
-public class MageSelectView extends TextView implements MageControl {
+public class MageSelectView extends EditText implements MageControl {
 
     private String propertyKey;
     private MagePropertyType propertyType;
     private JsonObject jsonObject;
-    private static String DEFAULT_TEXT = "No value selected.";
+    private static String DEFAULT_TEXT = "";
     private ArrayList<String> selectedChoices;
     private Boolean isMultiSelect = false;
     protected Boolean isRequired = Boolean.FALSE;
@@ -32,6 +32,7 @@ public class MageSelectView extends TextView implements MageControl {
         this.jsonObject = jsonObject;
         this.selectedChoices = new ArrayList<String>();
         this.isMultiSelect = isMultiSelect;
+        this.setFocusable(false);
     }
 
     public JsonObject getJsonObject() {
