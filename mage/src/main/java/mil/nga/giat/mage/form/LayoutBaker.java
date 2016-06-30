@@ -358,7 +358,7 @@ public class LayoutBaker {
 				case DROPDOWN:
 						MageSelectView mageSingleSelectView = new MageSelectView(context, null, field, false);
 						mageSingleSelectView.setId(id);
-						mageSingleSelectView.setLayoutParams(controlParams);
+						mageSingleSelectView.setLayoutParams(textParams);
 						mageSingleSelectView.setRequired(required);
 						mageSingleSelectView.setPropertyKey(name);
 						mageSingleSelectView.setPropertyType(MagePropertyType.STRING);
@@ -372,6 +372,11 @@ public class LayoutBaker {
 						selectLinearLayout.setLayoutParams(new LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
 
 						LinearLayout.LayoutParams selectTextParams = new LinearLayout.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
+						int textMarginTop = (int) (5 * density);
+						int textMarginBottom = (int) (0 * density);
+						int textMarginLeft = (int) (0 * density);
+						int textMarginRight = (int) (0 * density);
+						selectTextParams.setMargins(textMarginLeft, textMarginTop, textMarginRight, textMarginBottom);
 						textView.setLayoutParams(selectTextParams);
 
 						selectLinearLayout.addView(textView);
