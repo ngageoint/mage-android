@@ -10,7 +10,9 @@ import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
 
@@ -18,6 +20,8 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.ArrayList;
 
@@ -32,12 +36,15 @@ public class SelectEditActivity extends Activity {
     public static String MULTISELECT_JSON_CHOICE_KEY = "choices";
     public static String MULTISELECT_JSON_CHOICE_TITLE = "title";
 
-    private static String DEFAULT_TEXT = "Please select a value below.";
+    private static String DEFAULT_TEXT = "";
 
     private ArrayList<String> userSelectedChoices;
     private ListView choicesListView;
     private TextView selectedChoicesTextView;
     private EditText filterChoices;
+    private LinearLayout filterButtonLayout;
+    private LinearLayout filterSearchLayout;
+    private Button filterSearchButton;
     private ArrayAdapter<String> adapter;
     private Integer fieldId;
     private Boolean isMultiSelect = Boolean.FALSE;
@@ -110,6 +117,19 @@ public class SelectEditActivity extends Activity {
             selectedChoicesTextView.setText(getSelectedChoicesString(userSelectedChoices));
         }
 
+        filterButtonLayout = (LinearLayout) findViewById(R.id.filter_button_layout);
+        filterSearchLayout = (LinearLayout) findViewById(R.id.filter_search_layout);
+        filterSearchButton = (Button) findViewById(R.id.filter_button);
+        filterSearchButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                filterButtonLayout.setVisibility(View.GONE);
+                filterSearchLayout.setVisibility(View.VISIBLE);
+                filterChoices.requestFocus();
+                showKeyboard();
+            }
+        });
+
         filterChoices = (EditText) findViewById(R.id.filter_choices);
         filterChoices.addTextChangedListener(new TextWatcher() {
             @Override
@@ -129,10 +149,11 @@ public class SelectEditActivity extends Activity {
                 {
                     if (s.length() <= choicesList.get(position).length())
                     {
-                        //TODO: Update if contains substring search is wanted
-                        if(s.toString().equalsIgnoreCase((String) choicesList.get(position).subSequence(0, s.length())))
+                        String filterString = s.toString();
+                        String currentChoice = choicesList.get(position);
+                        if(StringUtils.containsIgnoreCase(currentChoice, filterString))
                         {
-                            filteredChoicesList.add(choicesList.get(position));
+                            filteredChoicesList.add(currentChoice);
                         }
                     }
                 }
@@ -177,6 +198,7 @@ public class SelectEditActivity extends Activity {
     }
 
     public void clearSelected(View v) {
+
         choicesListView.clearChoices();
         choicesListView.invalidateViews();
         selectedChoicesTextView.setText(DEFAULT_TEXT);
@@ -188,11 +210,21 @@ public class SelectEditActivity extends Activity {
         filteredChoicesList.clear();
         filteredChoicesList.addAll(choicesList);
         checkSelected();
+        filterButtonLayout.setVisibility(View.VISIBLE);
+        filterSearchLayout.setVisibility(View.INVISIBLE);
+        hideKeyboard();
     }
 
     private void hideKeyboard() {
         InputMethodManager inputMethodManager = (InputMethodManager) getSystemService(Activity.INPUT_METHOD_SERVICE);
-        inputMethodManager.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(), 0);
+        if (getCurrentFocus() != null) {
+            inputMethodManager.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(), 0);
+        }
+    }
+
+    private void showKeyboard() {
+        InputMethodManager inputMethodManager = (InputMethodManager) getSystemService(Activity.INPUT_METHOD_SERVICE);
+        inputMethodManager.toggleSoftInput(InputMethodManager.SHOW_IMPLICIT, 0);
     }
 
     private ArrayList<String> parseChoicesToGetTitles(JsonArray jsonArray) {
