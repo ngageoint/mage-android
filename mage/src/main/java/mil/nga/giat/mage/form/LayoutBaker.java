@@ -358,7 +358,7 @@ public class LayoutBaker {
 				case DROPDOWN:
 						MageSelectView mageSingleSelectView = new MageSelectView(context, null, field, false);
 						mageSingleSelectView.setId(id);
-						mageSingleSelectView.setLayoutParams(textParams);
+						mageSingleSelectView.setLayoutParams(controlParams);
 						mageSingleSelectView.setRequired(required);
 						mageSingleSelectView.setPropertyKey(name);
 						mageSingleSelectView.setPropertyType(MagePropertyType.STRING);
@@ -367,21 +367,9 @@ public class LayoutBaker {
 						mageSingleSelectView.setTextIsSelectable(false);
 						mageSingleSelectView.setClickable(true);
 						mageSingleSelectView.setTextSize(18);
+						views.add(textView);
+						views.add(mageSingleSelectView);
 
-						LinearLayout selectLinearLayout = new LinearLayout(context);
-						selectLinearLayout.setLayoutParams(new LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
-
-						LinearLayout.LayoutParams selectTextParams = new LinearLayout.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
-						int textMarginTop = (int) (5 * density);
-						int textMarginBottom = (int) (0 * density);
-						int textMarginLeft = (int) (0 * density);
-						int textMarginRight = (int) (0 * density);
-						selectTextParams.setMargins(textMarginLeft, textMarginTop, textMarginRight, textMarginBottom);
-						textView.setLayoutParams(selectTextParams);
-
-						selectLinearLayout.addView(textView);
-						selectLinearLayout.addView(mageSingleSelectView);
-						views.add(selectLinearLayout);
 						break;
 				case MULTISELECTDROPDOWN:
 						MageSelectView mageMultiSelectView = new MageSelectView(context, null, field, true);
@@ -457,9 +445,10 @@ public class LayoutBaker {
 					views.add(linearLayout);
 					break;
 				case DROPDOWN:
-					linearLayout.addView(textView);
-					linearLayout.addView(mageTextView);
-					views.add(linearLayout);
+					mageTextView.setPadding((int) (5 * density), (int) (5 * density), (int) (5 * density), (int) (5 * density));
+					mageTextView.setPropertyType(MagePropertyType.STRING);
+					views.add(textView);
+					views.add(mageTextView);
 					break;
 				case MULTISELECTDROPDOWN:
 					mageTextView.setPadding((int) (5 * density), (int) (5 * density), (int) (5 * density), (int) (5 * density));
