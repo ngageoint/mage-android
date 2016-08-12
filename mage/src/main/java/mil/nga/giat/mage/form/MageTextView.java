@@ -99,38 +99,37 @@ public class MageTextView extends TextView implements MageControl {
 
 	@Override
 	public void setPropertyValue(Serializable value) {
-		if(value == null) {
-			value = "";
+		if (value == null) {
+			return;
 		}
-		switch (getPropertyType()) {
-		case STRING:
-		case MULTILINE:
-			setText(value.toString());
-			break;
-		case USER:
 
-			break;
-		case DATE:
-			if (value instanceof Date) {
-				propertyDate = (Date) value;
-			} else if (value instanceof String) {
-				try {
-					propertyDate = iso8601Format.parse((String) value);
-				} catch (ParseException e) {
-					Log.e(LOG_NAME, "Could not parse date: " + value);
+		switch (getPropertyType()) {
+			case USER:
+			case LOCATION:
+				// Not properties, they live in the parent
+				break;
+			case STRING:
+			case MULTILINE:
+				setText(value.toString());
+				break;
+			case DATE:
+				if (value instanceof Date) {
+					propertyDate = (Date) value;
+				} else if (value instanceof String) {
+					try {
+						propertyDate = iso8601Format.parse((String) value);
+					} catch (ParseException e) {
+						Log.e(LOG_NAME, "Could not parse date: " + value);
+					}
 				}
-			}
-			setText(dateFormat.format(propertyDate));
-			break;
-		case LOCATION:
-			// location is not a property, it lives in the parent
-			break;
-		case MULTICHOICE:
-			multiChoiceList = new ArrayList<>((ArrayList<String>)value);
-			setText(value.toString().substring(1, value.toString().length() - 1));
-			break;
-		default:
-			break;
+				setText(dateFormat.format(propertyDate));
+				break;
+			case MULTICHOICE:
+				multiChoiceList = new ArrayList<>((ArrayList<String>)value);
+				setText(value.toString().substring(1, value.toString().length() - 1));
+				break;
+			default:
+				break;
 		}
 	}
 
