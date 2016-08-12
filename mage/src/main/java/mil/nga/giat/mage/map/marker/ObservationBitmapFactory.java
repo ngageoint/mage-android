@@ -32,11 +32,12 @@ public class ObservationBitmapFactory {
 
 	private static final String DEFAULT_ASSET = "markers/default.png";
 	private static final String TYPE_PROPERTY = "type";
+	private static final String ICON_PREFIX = "icon.";
 
 	@TargetApi(Build.VERSION_CODES.JELLY_BEAN)
 	public static Bitmap bitmap(Context context, Observation observation) {
 		InputStream iconStream = getIconStream(context, observation);
-		
+
 		// scale the image to a good size
 		Bitmap bitmap = BitmapFactory.decodeStream(iconStream);
 		Integer maxDimension = Math.max(bitmap.getWidth(), bitmap.getHeight());
@@ -57,20 +58,20 @@ public class ObservationBitmapFactory {
 	private static final FileFilter fileFilter = new FileFilter() {
 	    @Override
 	    public boolean accept(File pathname) {
-	        return pathname.isFile();
+	        return pathname.isFile() && pathname.getName().startsWith(ICON_PREFIX);
 	    }
 	};
-	
+
 	/**
 	 * Figure out which icon to navigate to
-	 * 
+	 *
 	 * @param observation
 	 * @return
 	 */
 	private static InputStream getIconStream(Context context, Observation observation) {
 		InputStream iconStream = null;
 		if (observation != null) {
-	
+
 			Map<String, ObservationProperty> properties = observation.getPropertiesMap();
 			// get type
 			ObservationProperty type = properties.get(TYPE_PROPERTY);
@@ -79,7 +80,7 @@ public class ObservationBitmapFactory {
 
 			// get variantField
 			JsonObject dynamicFormJson = event.getForm();
-			
+
 			// get variant
 			ObservationProperty variant = null;
 			JsonElement variantField = dynamicFormJson.get("variantField");
@@ -114,7 +115,7 @@ public class ObservationBitmapFactory {
 
 		return iconStream;
 	}
-	
+
 	private static File recurseGetIconPath(Stack<ObservationProperty> iconProperties, File path, int i) {
 		if (iconProperties.size() > 0) {
 			ObservationProperty property = iconProperties.pop();
@@ -130,7 +131,7 @@ public class ObservationBitmapFactory {
 			i--;
 		}
 		if (path == null || !path.exists()) return null;
-		
+
 		File[] files = path.listFiles(fileFilter);
 		return files.length == 0 ? null : files[0];
 	}
