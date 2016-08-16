@@ -30,7 +30,6 @@ import android.view.View;
 import android.view.View.OnTouchListener;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
-import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.DatePicker;
 import android.widget.EditText;
@@ -49,7 +48,6 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Geometry;
@@ -65,7 +63,6 @@ import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -78,7 +75,6 @@ import mil.nga.giat.mage.event.EventBannerFragment;
 import mil.nga.giat.mage.form.LayoutBaker;
 import mil.nga.giat.mage.form.LayoutBaker.ControlGenerationType;
 import mil.nga.giat.mage.form.MageSelectView;
-import mil.nga.giat.mage.form.MageSpinner;
 import mil.nga.giat.mage.form.MageTextView;
 import mil.nga.giat.mage.map.marker.ObservationBitmapFactory;
 import mil.nga.giat.mage.sdk.datastore.observation.Attachment;
@@ -188,46 +184,7 @@ public class ObservationEditActivity extends Activity implements OnMapReadyCallb
 
 		controls = LayoutBaker.createControlsFromJson(this, ControlGenerationType.EDIT, dynamicFormJson);
 		for (View view : controls) {
-			if (view instanceof MageSpinner) {
-				MageSpinner mageSpinner = (MageSpinner) view;
-				String key = mageSpinner.getPropertyKey();
-				Integer spinnerPosition = spinnersLastPositions.get(key);
-				if (spinnerPosition == null) {
-					spinnerPosition = mageSpinner.getSelectedItemPosition();
-				}
-				spinnerPosition = Math.min(Math.max(0, spinnerPosition), mageSpinner.getAdapter().getCount());
-				spinnersLastPositions.put(key, spinnerPosition);
-
-				mageSpinner.setSelection(spinnerPosition);
-				mageSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-					@Override
-					public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-						MageSpinner ms = ((MageSpinner) parent);
-						String k = ms.getPropertyKey();
-						if (observationId == NEW_OBSERVATION) {
-							spinnersLastPositions.put(k, position);
-						}
-
-						JsonObject dynamicFormJson = observation.getEvent().getForm();
-
-						// get variantField
-						JsonElement variantField = dynamicFormJson.get("variantField");
-						String variantFieldString = null;
-						if(variantField != null && !variantField.isJsonNull()) {
-							variantFieldString = variantField.getAsString();
-						}
-
-						if (k.equals("type") || (variantFieldString != null && k.equals(variantFieldString))) {
-							observation.addProperties(Collections.singleton(new ObservationProperty(k, parent.getItemAtPosition(position).toString())));
-							updateMapIcon();
-						}
-					}
-
-					@Override
-					public void onNothingSelected(AdapterView<?> parent) {
-					}
-				});
-			} else if (view instanceof MageSelectView) {
+			if (view instanceof MageSelectView) {
 				final MageSelectView selectView = (MageSelectView) view;
 				fieldIdMap.put(getSelectId(selectView.getId()), selectView);
 
@@ -543,16 +500,13 @@ public class ObservationEditActivity extends Activity implements OnMapReadyCallb
 				findViewById(R.id.properties).scrollTo(0, firstInvalid.getBottom());
 				firstInvalid.clearFocus();
 				firstInvalid.requestFocus();
+				firstInvalid.requestFocusFromTouch();
 				break;
 			}
 
 			observation.setState(State.ACTIVE);
 			observation.setDirty(true);
 			observation.setGeometry(new GeometryFactory().createPoint(new Coordinate(l.getLongitude(), l.getLatitude())));
-
-			if (!LayoutBaker.checkAndFlagRequiredFields((LinearLayout) findViewById(R.id.form))) {
-				return super.onOptionsItemSelected(item);
-			}
 
 			Map<String, ObservationProperty> propertyMap = LayoutBaker.populateMapFromLayout((LinearLayout) findViewById(R.id.form));
 

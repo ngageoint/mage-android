@@ -356,35 +356,38 @@ public class LayoutBaker {
 
 					break;
 				case DROPDOWN:
-						MageSelectView mageSingleSelectView = new MageSelectView(context, null, field, false);
-						mageSingleSelectView.setId(id);
-						mageSingleSelectView.setLayoutParams(controlParams);
-						mageSingleSelectView.setRequired(required);
-						mageSingleSelectView.setPropertyKey(name);
-						mageSingleSelectView.setPropertyType(MagePropertyType.STRING);
-						mageSingleSelectView.setPropertyValue(value);
-						mageSingleSelectView.setFocusable(false);
-						mageSingleSelectView.setTextIsSelectable(false);
-						mageSingleSelectView.setClickable(true);
-						mageSingleSelectView.setTextSize(18);
-						views.add(textView);
-						views.add(mageSingleSelectView);
-
-						break;
+					MageSelectView mageSingleSelectView = new MageSelectView(context, null, field, false);
+					mageSingleSelectView.setId(id);
+					mageSingleSelectView.setLayoutParams(controlParams);
+					mageSingleSelectView.setRequired(required);
+					mageSingleSelectView.setPropertyKey(name);
+					mageSingleSelectView.setPropertyType(MagePropertyType.STRING);
+					mageSingleSelectView.setPropertyValue(value);
+					mageSingleSelectView.setFocusableInTouchMode(false);
+					mageSingleSelectView.setFocusable(true);
+					mageSingleSelectView.setTextIsSelectable(false);
+					mageSingleSelectView.setCursorVisible(false);
+					mageSingleSelectView.setClickable(false);
+					mageSingleSelectView.setTextSize(18);
+					views.add(textView);
+					views.add(mageSingleSelectView);
+					break;
 				case MULTISELECTDROPDOWN:
-						MageSelectView mageMultiSelectView = new MageSelectView(context, null, field, true);
-						mageMultiSelectView.setId(id);
-						mageMultiSelectView.setLayoutParams(controlParams);
-						mageMultiSelectView.setRequired(required);
-						mageMultiSelectView.setPropertyKey(name);
-						mageMultiSelectView.setPropertyType(MagePropertyType.MULTICHOICE);
-						mageMultiSelectView.setPropertyValue(value);
-						mageMultiSelectView.setFocusable(false);
-						mageMultiSelectView.setTextIsSelectable(false);
-						mageMultiSelectView.setClickable(true);
-						mageMultiSelectView.setTextSize(18);
-						views.add(textView);
-						views.add(mageMultiSelectView);
+					MageSelectView mageMultiSelectView = new MageSelectView(context, null, field, true);
+					mageMultiSelectView.setId(id);
+					mageMultiSelectView.setLayoutParams(controlParams);
+					mageMultiSelectView.setRequired(required);
+					mageMultiSelectView.setPropertyKey(name);
+					mageMultiSelectView.setPropertyType(MagePropertyType.MULTICHOICE);
+					mageMultiSelectView.setPropertyValue(value);
+					mageMultiSelectView.setFocusableInTouchMode(false);
+					mageMultiSelectView.setFocusable(true);
+					mageMultiSelectView.setTextIsSelectable(false);
+					mageMultiSelectView.setCursorVisible(false);
+					mageMultiSelectView.setClickable(false);
+					mageMultiSelectView.setTextSize(18);
+					views.add(textView);
+					views.add(mageMultiSelectView);
 					break;
 				default:
 					break;
@@ -473,6 +476,8 @@ public class LayoutBaker {
 	}
 
 	public static List<View> validateControls(Collection<View> views) {
+		validateRequired(views);
+
 		List<View> invalid = new ArrayList<>();
 		for (View view : views) {
 			if (view instanceof  MageControl) {
@@ -575,14 +580,13 @@ public class LayoutBaker {
 
 	/**
 	 *
-	 * @param linearLayout
+	 * @param views
 	 * @return true if there were no issues with the form, false otherwise
 	 */
-	public static Boolean checkAndFlagRequiredFields(LinearLayout linearLayout) {
-		final String error = "Can not be blank";
+	private static Boolean validateRequired(Collection<View> views) {
+		final String error = "Cannot be blank";
 		Boolean status = true;
-		for (int i = linearLayout.getChildCount() - 1; i >= 0; i--) {
-			View v = linearLayout.getChildAt(i);
+		for (View v : views) {
 
 			if (v instanceof MageControl) {
 				MageControl mageControl = (MageControl) v;
@@ -594,7 +598,7 @@ public class LayoutBaker {
 					}
 					if (mageControl instanceof MageTextView) {
 						MageTextView textView = (MageTextView) v;
-						if (!controlStatus) {
+						if (controlStatus) {
 							textView.requestFocus();
 						}
 						textView.setError(controlStatus ? null : error);
@@ -604,20 +608,23 @@ public class LayoutBaker {
 							editText.requestFocus();
 						}
 						editText.setError(controlStatus ? null : error);
-					} else if (mageControl instanceof MageSpinner) {
-						// Don't need to check this, as one will already be selected
+					} else if (mageControl instanceof MageSelectView) {
+						MageSelectView selectView = (MageSelectView) v;
+						if (!controlStatus) {
+							selectView.requestFocusFromTouch();
+						}
+
+						selectView.setError(controlStatus ? null : error);
 					} else if (mageControl instanceof MageRadioGroup) {
 						// Don't need to check this, as one will already be selected
 					} else if (mageControl instanceof MageCheckBox) {
 						MageCheckBox checkBox = (MageCheckBox) v;
-						if (!controlStatus) {
+						if (controlStatus) {
 							checkBox.requestFocus();
 						}
 						checkBox.setError(controlStatus ? null : error);
 					}
 				}
-			} else if (v instanceof LinearLayout) {
-				status = status && checkAndFlagRequiredFields((LinearLayout) v);
 			}
 		}
 		return status;

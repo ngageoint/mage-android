@@ -7,6 +7,8 @@ import android.widget.EditText;
 
 import com.google.gson.JsonObject;
 
+import org.apache.commons.lang3.StringUtils;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 
@@ -102,13 +104,19 @@ public class MageSelectView extends EditText implements MageControl {
                         }
                     }
                     setText(displayValue.toString());
+                    setError(null);
                 } else {
                     setText(DEFAULT_TEXT);
                 }
             } else {
                 selectedChoices.add((String) value);
                 setText((String) value);
+
+                if (StringUtils.isNoneBlank((String) value)) {
+                    setError(null);
+                }
             }
+
         } else {
             setText(DEFAULT_TEXT);
         }
