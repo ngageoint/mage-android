@@ -20,20 +20,20 @@ public class MageSelectView extends EditText implements MageControl {
     private MagePropertyType propertyType;
     private JsonObject jsonObject;
     private static String DEFAULT_TEXT = "";
-    private ArrayList<String> selectedChoices;
+    private ArrayList<String> selectedChoices = new ArrayList<>();;
     private Boolean isMultiSelect = false;
     protected Boolean isRequired = Boolean.FALSE;
 
 
     public MageSelectView(Context context, AttributeSet attrs, JsonObject jsonObject, Boolean isMultiSelect) {
         super(context, attrs);
+        this.jsonObject = jsonObject;
+        this.isMultiSelect = isMultiSelect;
+
         TypedArray typedArray = context.obtainStyledAttributes(attrs, R.styleable.MageFormElement);
         setPropertyKey(typedArray.getString(R.styleable.MageFormElement_propertyKey));
         setPropertyType(MagePropertyType.getPropertyType(typedArray.getInt(R.styleable.MageFormElement_propertyType, 0)));
         typedArray.recycle();
-        this.jsonObject = jsonObject;
-        this.selectedChoices = new ArrayList<String>();
-        this.isMultiSelect = isMultiSelect;
     }
 
     public JsonObject getJsonObject() {
@@ -66,16 +66,12 @@ public class MageSelectView extends EditText implements MageControl {
 
     @Override
     public Serializable getPropertyValue() {
-        Serializable returnValue = null;
-        //if multi select return ArrayList else return string
-        if (!selectedChoices.isEmpty()) {
-            if (isMultiSelect) {
-                returnValue = selectedChoices;
-            } else {
-                returnValue = selectedChoices.get(0);
-            }
+        // If multi select return ArrayList else return string
+        if (isMultiSelect) {
+            return selectedChoices;
+        } else {
+            return selectedChoices.isEmpty() ? "" : selectedChoices.get(0);
         }
-        return returnValue;
     }
 
     @Override
@@ -90,7 +86,7 @@ public class MageSelectView extends EditText implements MageControl {
 
     @Override
     public void setPropertyValue(Serializable value) {
-        selectedChoices = new ArrayList<String>();
+        selectedChoices = new ArrayList<>();
         if (value != null) {
             if (isMultiSelect) {
                 selectedChoices = (ArrayList<String>) value;
