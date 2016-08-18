@@ -517,7 +517,11 @@ public class LayoutBaker {
 				}
 				v.setVisibility(View.VISIBLE);
 
-				if(controlGenerationType.equals(ControlGenerationType.VIEW) && v instanceof MageTextView && (propertyValue == null || (propertyValue instanceof String && StringUtils.isBlank((String)propertyValue)))) {
+				if(controlGenerationType.equals(ControlGenerationType.VIEW) && v instanceof MageTextView &&
+						(propertyValue == null ||
+								(propertyValue instanceof String && StringUtils.isBlank((String)propertyValue)) ||
+								(propertyValue instanceof Collection && ((Collection) propertyValue).isEmpty())
+						)) {
 					textView = linearLayout.getChildAt(Math.max(0, i - 1));
 					if(textView != null && textView instanceof TextView) {
 						textView.setVisibility(View.GONE);
