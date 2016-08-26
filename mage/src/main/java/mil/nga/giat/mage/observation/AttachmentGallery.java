@@ -91,7 +91,7 @@ public class AttachmentGallery {
             contentType = MediaUtility.getMimeType(name);
         }
 
-        if (absPath != null) {
+        if (absPath != null && new File(absPath).exists()) {
             if (contentType == null) {
                 Glide.with(context).load("").placeholder(R.drawable.ic_attachment_gray_48dp).into(iv);
             } else if (contentType.startsWith("image")) {

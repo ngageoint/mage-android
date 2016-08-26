@@ -101,15 +101,22 @@ public class ObservationBitmapFactory {
                 try {
                     iconStream = new FileInputStream(path);
                 } catch (FileNotFoundException e) {
-                    Log.e(LOG_NAME, "Can find icon.", e);
+                    Log.e(LOG_NAME, "Cannot find icon.", e);
                 }
             }
+
+			if (iconStream != null) {
+				Log.i(LOG_NAME, "path for icon stream: " + path.getAbsolutePath());
+			}
 		}
-		if(iconStream == null) {
+
+		if (iconStream == null) {
+			Log.i(LOG_NAME, "Could not find icon, using default " + DEFAULT_ASSET);
+
 			try {
 				iconStream = context.getAssets().open(DEFAULT_ASSET);
 			} catch (IOException e) {
-				Log.e(LOG_NAME, "Can find default icon.", e);
+				Log.e(LOG_NAME, "Cannot find default icon.", e);
 			}
 		}
 
@@ -126,6 +133,7 @@ public class ObservationBitmapFactory {
 				}
 			}
 		}
+
 		while (path != null && path.listFiles(fileFilter) != null && path.listFiles(fileFilter).length == 0 && i >= 0) {
 			path = path.getParentFile();
 			i--;

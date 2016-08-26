@@ -1,108 +1,399 @@
-<android.support.v4.widget.DrawerLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<android.support.v4.widget.DrawerLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/drawer_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
+
     <!-- The main content view -->
     <FrameLayout
         android:id="@+id/content_frame"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
+
     <!-- The navigation drawer -->
-    <ListView android:id="@+id/left_drawer"
+    <ListView
+        android:id="@+id/left_drawer"
         android:layout_width="300dp"
         android:layout_height="match_parent"
         android:layout_gravity="start"
+        android:background="#333"
         android:choiceMode="singleChoice"
         android:divider="@android:color/transparent"
         android:dividerHeight="0dp"
-        android:background="#333"
-        android:paddingTop="10dp"/>
-    
-    <LinearLayout 
-        android:background="#EEE"
+        android:paddingTop="10dp" />
+
+    <LinearLayout
         android:id="@+id/filter_drawer"
-        android:layout_width="240dp"
-        android:layout_height="wrap_content"
-        android:layout_gravity="right"
-        android:orientation="vertical">
-    <LinearLayout 
-        android:padding="7dp"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical">
-        <TextView 
-            android:text="TIME"
-            style="?android:attr/listSeparatorTextViewStyle"
+        android:layout_height="match_parent"
+        android:layout_gravity="end"
+        android:orientation="vertical"
+        android:background="#333"
+        android:clickable="true">
+
+        <ScrollView
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"/>
-        <RadioGroup 
-            android:id="@+id/time_filter_radio_gorup"
-            android:layout_width="wrap_content"
-	    	android:layout_height="wrap_content">
-            <RadioButton 
-                android:id="@+id/none_rb"
-                android:text="All"
-                android:layout_width="wrap_content"
-	    	    android:layout_height="wrap_content"
-	    	    android:textColor="#111"
-	       		android:textSize="18sp"/>
-            <RadioButton
-                android:id="@+id/since_midnight_rb"
-                android:text="Today"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textColor="#111"
-                android:textSize="18sp"/>
-            <RadioButton
-                android:id="@+id/last_24_hours_rb"
-                android:text="Last 24 Hours"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textColor="#111"
-                android:textSize="18sp"/>
-            <RadioButton 
-                android:id="@+id/last_week_rb"
-                android:text="Last Week"
-                android:layout_width="wrap_content"
-	    	    android:layout_height="wrap_content"
-	    	    android:textColor="#111"
-	       		android:textSize="18sp"/>
-            <RadioButton 
-                android:id="@+id/last_month_rb"
-                android:text="Last Month"
-                android:layout_width="wrap_content"
-	    	    android:layout_height="wrap_content"
-	    	    android:textColor="#111"
-	       		android:textSize="18sp"/>
+            android:layout_height="0dp"
+            android:layout_weight="1">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="44dp"
+                    android:layout_marginStart="16dip"
+                    android:gravity="center_vertical"
+                    android:layout_marginTop="3dip"
+                    android:textColor="#A7FFFFFF"
+                    android:text="OBSERVATION FILTER"
+                    android:textSize="14sp"
+                    android:fontFamily="sans-serif-medium" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="60dp"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:clickable="true"
+                        android:onClick="onFavoriteFilter"
+                        android:background="?android:attr/selectableItemBackground">
+
+                        <CheckBox
+                            android:id="@+id/status_favorite"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="16dp"
+                            android:theme="@android:style/Theme.Holo"
+                            android:clickable="false"/>
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="32dp"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Favorites"
+                                android:textColor="#FFFFFF"
+                                android:textSize="13sp"/>
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Show my favorite observations."
+                                android:textColor="#A7FFFFFF"
+                                android:textSize="13sp"/>
+                        </LinearLayout>
+
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="60dp"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:clickable="true"
+                        android:onClick="onImportantFilter"
+                        android:background="?android:attr/selectableItemBackground">
+
+                        <CheckBox
+                            android:id="@+id/status_important"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="16dp"
+                            android:theme="@android:style/Theme.Holo"
+                            android:clickable="false"/>
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="32dp"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Important"
+                                android:textColor="#FFFFFF"
+                                android:textSize="13sp"/>
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Show observations flagged as important."
+                                android:textColor="#A7FFFFFF"
+                                android:textSize="13sp"/>
+                        </LinearLayout>
+
+                    </LinearLayout>
+
+                    <View
+                        android:layout_width="fill_parent"
+                        android:layout_height="1dip"
+                        android:background="#1FFFFFFF" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="44dp"
+                        android:layout_marginStart="16dip"
+                        android:gravity="center_vertical"
+                        android:layout_marginTop="3dip"
+                        android:textColor="#A7FFFFFF"
+                        android:text="TIME FILTER (Observations and Locations)"
+                        android:textSize="14sp"
+                        android:fontFamily="sans-serif-medium" />
+
+                    <LinearLayout
+                        android:id="@+id/none_time_filter"
+                        android:layout_width="match_parent"
+                        android:layout_height="60dp"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:background="?android:attr/selectableItemBackground">
+
+                        <RadioButton
+                            android:id="@+id/none_rb"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="16dp"
+                            android:theme="@android:style/Theme.Holo"
+                            android:clickable="false" />
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="32dp"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="All"
+                                android:textColor="#FFFFFF"
+                                android:textStyle="normal"
+                                android:textSize="13sp"
+                                android:fontFamily="sans-serif"/>
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Do not filter observations on time."
+                                android:textColor="#A7FFFFFF"
+                                android:textStyle="normal"
+                                android:textSize="13sp"
+                                android:fontFamily="sans-serif"/>
+                        </LinearLayout>
+
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:id="@+id/today_time_filter"
+                        android:layout_width="match_parent"
+                        android:layout_height="60dp"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:background="?android:attr/selectableItemBackground">
+
+                        <RadioButton
+                            android:id="@+id/since_midnight_rb"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="16dp"
+                            android:theme="@android:style/Theme.Holo"
+                            android:clickable="false" />
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="32dp"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Today"
+                                android:textColor="#FFFFFF"
+                                android:textStyle="normal"
+                                android:textSize="13sp"
+                                android:fontFamily="sans-serif"/>
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Show todays observations."
+                                android:textColor="#A7FFFFFF"
+                                android:textStyle="normal"
+                                android:textSize="13sp"
+                                android:fontFamily="sans-serif"/>
+                        </LinearLayout>
+
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:id="@+id/last_24_hours_time_filter"
+                        android:layout_width="match_parent"
+                        android:layout_height="60dp"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:background="?android:attr/selectableItemBackground">
+
+                        <RadioButton
+                            android:id="@+id/last_24_hours_rb"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="16dp"
+                            android:theme="@android:style/Theme.Holo" />
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="32dp"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="24 Hours"
+                                android:textColor="#FFFFFF"
+                                android:textStyle="normal"
+                                android:textSize="13sp"
+                                android:fontFamily="sans-serif"/>
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Show observations for last 24 hours."
+                                android:textColor="#A7FFFFFF"
+                                android:textStyle="normal"
+                                android:textSize="13sp"
+                                android:fontFamily="sans-serif"/>
+                        </LinearLayout>
+
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:id="@+id/last_week_time_filter"
+                        android:layout_width="match_parent"
+                        android:layout_height="60dp"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:background="?android:attr/selectableItemBackground">
+
+                        <RadioButton
+                            android:id="@+id/last_week_rb"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="16dp"
+                            android:theme="@android:style/Theme.Holo" />
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="32dp"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Last Week"
+                                android:textColor="#FFFFFF"
+                                android:textStyle="normal"
+                                android:textSize="13sp"
+                                android:fontFamily="sans-serif"/>
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Show observations for last week."
+                                android:textColor="#A7FFFFFF"
+                                android:textStyle="normal"
+                                android:textSize="13sp"
+                                android:fontFamily="sans-serif"/>
+                        </LinearLayout>
+
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:id="@+id/last_month_time_filter"
+                        android:layout_width="match_parent"
+                        android:layout_height="60dp"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:background="?android:attr/selectableItemBackground">
+
+                        <RadioButton
+                            android:id="@+id/last_month_rb"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="16dp"
+                            android:theme="@android:style/Theme.Holo" />
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="32dp"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Last Month"
+                                android:textColor="#FFFFFF"
+                                android:textStyle="normal"
+                                android:textSize="13sp"
+                                android:fontFamily="sans-serif"/>
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Show observations for last month."
+                                android:textColor="#A7FFFFFF"
+                                android:textStyle="normal"
+                                android:textSize="13sp"
+                                android:fontFamily="sans-serif"/>
+                        </LinearLayout>
+
+                    </LinearLayout>
+
+                </LinearLayout>
 
 
-        </RadioGroup>
+        </ScrollView>
+
+        <View
+            android:layout_width="fill_parent"
+            android:layout_height="1dip"
+            android:background="#1FFFFFFF" />
+
+        <LinearLayout
+            style="?android:attr/buttonBarStyle"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_horizontal|end"
+            android:layout_gravity="end"
+            android:measureWithLargestChild="true"
+            android:orientation="horizontal"
+            android:paddingLeft="2dip"
+            android:paddingRight="2dip"
+            android:paddingTop="0dip">
+
+            <Button
+                android:id="@+id/filter_ok_btn"
+                style="?android:attr/buttonBarButtonStyle"
+                android:layout_width="0dip"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:onClick="filterOkClick"
+                android:text="Filter"
+                android:textColor="#FFFFFF" />
+
+        </LinearLayout>
+
+
     </LinearLayout>
-    <View
-		    android:layout_width="fill_parent"
-		    android:layout_height="1dip"
-		    android:background="?android:attr/dividerHorizontal" />
-		<LinearLayout 
-		    android:layout_width="fill_parent"
-		    android:layout_height="wrap_content"
-		    android:paddingTop="0dip"
-		    android:paddingLeft="2dip"
-		    android:paddingRight="2dip"
-		    android:measureWithLargestChild="true"
-		    style="?android:attr/buttonBarStyle"
-		    android:orientation="horizontal"
-		    android:gravity="center_horizontal">
-		    
-		    <Button
-		     android:layout_height="wrap_content"
-		     android:layout_width="0dip"
-		     android:layout_weight="1"
-		 	 android:textColor="#111"
-		     android:text="Done"
-		     android:onClick="filterOkClick"
-		     style="?android:attr/buttonBarButtonStyle"
-		     android:id="@+id/filter_ok_btn"/>
-		</LinearLayout>
-    </LinearLayout>
+
 </android.support.v4.widget.DrawerLayout>

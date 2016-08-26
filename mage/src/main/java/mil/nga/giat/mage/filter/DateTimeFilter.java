@@ -1,5 +1,6 @@
 package mil.nga.giat.mage.filter;
 
+import com.j256.ormlite.stmt.QueryBuilder;
 import com.j256.ormlite.stmt.Where;
 
 import java.sql.SQLException;
@@ -19,7 +20,14 @@ public class DateTimeFilter implements Filter<Temporal> {
 	}
 
 	@Override
-	public Where<? extends Temporal, Long> where(Where<? extends Temporal, Long> where) throws SQLException {
+	public QueryBuilder<? extends Temporal, Long> query() {
+		return null;
+	}
+
+	@Override
+	public void and(Where<? extends Temporal, Long> where) throws SQLException {
+		where.and();
+
 		if (start != null && end != null) {
 			where.between(columnName, start, end);
 		} else if (start != null) {
@@ -27,8 +35,6 @@ public class DateTimeFilter implements Filter<Temporal> {
 		} else {
 			where.lt(columnName, end);
 		}
-
-		return where;
 	}
 
 	@Override

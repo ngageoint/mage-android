@@ -242,6 +242,9 @@ public class MAGE extends MultiDexApplication implements IUserEventListener {
 
 		attachmentPushService = new AttachmentPushService(getApplicationContext());
 		attachmentPushService.start();
+
+		attachmentPushService = new AttachmentPushService(getApplicationContext());
+		attachmentPushService.start();
 	}
 
 	/**

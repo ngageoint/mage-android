@@ -37,7 +37,9 @@
     <string name="disclaimerAcceptedKey">disclaimerAccepted</string>
     <bool name="disclaimerAcceptedDefaultValue">false</bool>
 
-    <!-- FIXME: what is this stuff? why is it in shared prefs? -->
     <string name="activeTimeFilterKey">activeTimeFilter</string>
+    <string name="activeFavoritesFilterKey">activeFavoritesFilter</string>
+    <string name="activeImportantFilterKey">activeImportantFilter</string>
+
 
 </resources>

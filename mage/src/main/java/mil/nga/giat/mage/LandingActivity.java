@@ -8,11 +8,13 @@ import android.app.FragmentManager;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.provider.MediaStore;
 import android.provider.Settings;
 import android.support.v4.app.ActionBarDrawerToggle;
 import android.support.v4.app.ActivityCompat;
@@ -30,8 +32,11 @@ import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.ListView;
+import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.TextView;
 
@@ -63,7 +68,7 @@ import mil.nga.giat.mage.sdk.utils.MediaUtility;
  * starts and stops much of the application. It also contains menus .
  * 
  */
-public class LandingActivity extends Activity implements ListView.OnItemClickListener {
+public class LandingActivity extends Activity implements ListView.OnItemClickListener, CompoundButton.OnCheckedChangeListener {
 
     /**
      * Extra key for storing the local file path used to launch MAGE
@@ -80,7 +85,16 @@ public class LandingActivity extends Activity implements ListView.OnItemClickLis
     private ListView drawerList;
     private ActionBarDrawerToggle drawerToggle;
     private DrawerItem currentActivity;
+
+    private int timeFilter = 0;
     private int activeTimeFilter = 0;
+
+    private CheckBox favoriteCheckBox;
+    private boolean activeFavoriteFilter = false;
+
+    private CheckBox importantCheckBox;
+    private boolean activeImportantFilter = false;
+
     private String currentTitle = "";
     private DrawerItem mapItem;
 	private int logoutId;
@@ -97,6 +111,59 @@ public class LandingActivity extends Activity implements ListView.OnItemClickLis
 
         ((MAGE) getApplication()).onLogin();
         CacheProvider.getInstance(getApplicationContext()).refreshTileOverlays();
+
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+        timeFilter = activeTimeFilter = preferences.getInt(getResources().getString(R.string.activeTimeFilterKey), R.id.none_rb);
+        activeFavoriteFilter = preferences.getBoolean(getResources().getString(R.string.activeFavoritesFilterKey), false);
+        activeImportantFilter = preferences.getBoolean(getResources().getString(R.string.activeImportantFilterKey), false);
+
+        final RadioButton noneRadioButton = ((RadioButton) findViewById(R.id.none_rb));
+        noneRadioButton.setOnCheckedChangeListener(this);
+        findViewById(R.id.none_time_filter).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                onCheckedChanged(noneRadioButton, false);
+            }
+        });
+
+        final RadioButton todayRadioButton = ((RadioButton) findViewById(R.id.since_midnight_rb));
+        todayRadioButton.setOnCheckedChangeListener(this);
+        findViewById(R.id.today_time_filter).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                onCheckedChanged(todayRadioButton, false);
+            }
+        });
+
+        final RadioButton last24HoursRadioButton = ((RadioButton) findViewById(R.id.last_24_hours_rb));
+        last24HoursRadioButton.setOnCheckedChangeListener(this);
+        findViewById(R.id.last_24_hours_time_filter).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                onCheckedChanged(last24HoursRadioButton, false);
+            }
+        });
+
+        final RadioButton lastWeekRadioButton = ((RadioButton) findViewById(R.id.last_week_rb));
+        lastWeekRadioButton.setOnCheckedChangeListener(this);
+        findViewById(R.id.last_week_time_filter).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                onCheckedChanged(lastWeekRadioButton, false);
+            }
+        });
+
+        final RadioButton lastMonthRadioButton = ((RadioButton) findViewById(R.id.last_month_rb));
+        lastMonthRadioButton.setOnCheckedChangeListener(this);
+        findViewById(R.id.last_month_time_filter).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                onCheckedChanged(lastMonthRadioButton, false);
+            }
+        });
+
+        importantCheckBox = (CheckBox) findViewById(R.id.status_important);
+        favoriteCheckBox = (CheckBox) findViewById(R.id.status_favorite);
 
         // Ask for permissions
         locationPermissionGranted = ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
@@ -265,6 +332,28 @@ public class LandingActivity extends Activity implements ListView.OnItemClickLis
         }
     }
 
+    @Override
+    public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+        int filter = buttonView.getId();
+        if (timeFilter != filter) {
+            ((RadioButton) findViewById(timeFilter)).setChecked(false);
+            timeFilter = filter;
+            buttonView.setChecked(true);
+        }
+    }
+
+    public void onFavoriteFilter(View view) {
+        favoriteCheckBox.setChecked(!favoriteCheckBox.isChecked());
+    }
+
+    public void onImportantFilter(View view) {
+        importantCheckBox.setChecked(!importantCheckBox.isChecked());
+    }
+
+    public void onTimeFilter(View view) {
+        onCheckedChanged((CompoundButton) view, false);
+    }
+
     private void showDisabledPermissionsDialog(String title, String message) {
         new android.app.AlertDialog.Builder(this, R.style.AppCompatAlertDialogStyle)
                 .setTitle(title)
@@ -320,9 +409,19 @@ public class LandingActivity extends Activity implements ListView.OnItemClickLis
                 currentTitle = (String) getActionBar().getTitle();
                 if (drawerView.getId() == R.id.filter_drawer) {
                     getActionBar().setTitle("Filter");
-                    RadioGroup rg = (RadioGroup) findViewById(R.id.time_filter_radio_gorup);
-                    int checkedFilter = PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).getInt(getResources().getString(R.string.activeTimeFilterKey), R.id.none_rb);
-                    rg.check(checkedFilter);
+
+                    SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+
+                    int checkedFilter = preferences.getInt(getResources().getString(R.string.activeTimeFilterKey), R.id.none_rb);
+                    ((RadioButton) findViewById(checkedFilter)).setChecked(true);
+
+                    boolean favorite = preferences.getBoolean(getResources().getString(R.string.activeFavoritesFilterKey), false);
+                    CheckBox favoriteCheckBox = (CheckBox) findViewById(R.id.status_favorite);
+                    favoriteCheckBox.setChecked(favorite);
+
+                    boolean important = preferences.getBoolean(getResources().getString(R.string.activeImportantFilterKey), false);
+                    CheckBox importantCheckBox = (CheckBox) findViewById(R.id.status_important);
+                    importantCheckBox.setChecked(important);
                 }
             }
 
@@ -335,16 +434,30 @@ public class LandingActivity extends Activity implements ListView.OnItemClickLis
     }
 
     public void filterOkClick(View v) {
-        // setFilter();
         drawerLayout.closeDrawer(findViewById(R.id.filter_drawer));
     }
 
     public void setFilter() {
-        RadioGroup rg = (RadioGroup) findViewById(R.id.time_filter_radio_gorup);
-        if (activeTimeFilter != rg.getCheckedRadioButtonId()) {
-            activeTimeFilter = rg.getCheckedRadioButtonId();
-            PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).edit().putInt(getResources().getString(R.string.activeTimeFilterKey), rg.getCheckedRadioButtonId()).commit();
+        SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).edit();
+
+        if (activeTimeFilter != timeFilter) {
+            activeTimeFilter = timeFilter;
+            editor.putInt(getResources().getString(R.string.activeTimeFilterKey), activeTimeFilter);
         }
+
+        CheckBox favorite = (CheckBox) findViewById(R.id.status_favorite);
+        if (activeFavoriteFilter != favorite.isChecked()) {
+            activeFavoriteFilter = favorite.isChecked();
+            editor.putBoolean(getResources().getString(R.string.activeFavoritesFilterKey), activeFavoriteFilter);
+        }
+
+        CheckBox important = (CheckBox) findViewById(R.id.status_important);
+        if (activeImportantFilter != important.isChecked()) {
+            activeImportantFilter = important.isChecked();
+            editor.putBoolean(getResources().getString(R.string.activeImportantFilterKey), activeImportantFilter);
+        }
+
+        editor.commit();
     }
 
     @Override

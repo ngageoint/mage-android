@@ -68,9 +68,11 @@ public class HistoricLocationLoadTask extends AsyncTask<Void, Location, Void> {
 		if (currentUser != null) {
 			where.eq("user_id", currentUser.getId()).and().eq("event_id", currentUser.getUserLocal().getCurrentEvent().getId());
 		}
+
 		if (filter != null) {
-			where = filter.where(where.and());
+			filter.and(where);
 		}
+
 		query.orderBy("timestamp", false);
 
 		return query;

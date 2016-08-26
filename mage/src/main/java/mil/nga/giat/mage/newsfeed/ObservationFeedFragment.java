@@ -3,6 +3,8 @@ package mil.nga.giat.mage.newsfeed;
 import android.Manifest;
 import android.app.AlertDialog;
 import android.app.Dialog;
+import android.app.Fragment;
+import android.app.FragmentManager;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -12,8 +14,6 @@ import android.database.Cursor;
 import android.location.Location;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
-import android.app.Fragment;
-import android.app.FragmentManager;
 import android.support.v13.app.FragmentCompat;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
@@ -52,6 +52,7 @@ import mil.nga.giat.mage.MAGE;
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.event.EventBannerFragment;
 import mil.nga.giat.mage.observation.AttachmentGallery;
+import mil.nga.giat.mage.observation.ObservationShareTask;
 import mil.nga.giat.mage.observation.AttachmentViewerActivity;
 import mil.nga.giat.mage.observation.ObservationEditActivity;
 import mil.nga.giat.mage.observation.ObservationViewActivity;
@@ -60,13 +61,17 @@ import mil.nga.giat.mage.sdk.datastore.location.LocationHelper;
 import mil.nga.giat.mage.sdk.datastore.location.LocationProperty;
 import mil.nga.giat.mage.sdk.datastore.observation.Attachment;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
+import mil.nga.giat.mage.sdk.datastore.observation.ObservationFavorite;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
+import mil.nga.giat.mage.sdk.datastore.observation.ObservationImportant;
 import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
+import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.event.IObservationEventListener;
+import mil.nga.giat.mage.sdk.exceptions.UserException;
 import mil.nga.giat.mage.sdk.location.LocationService;
 
-public class ObservationFeedFragment extends Fragment implements IObservationEventListener, OnItemClickListener, OnSharedPreferenceChangeListener {
+public class ObservationFeedFragment extends Fragment implements IObservationEventListener, OnItemClickListener, OnSharedPreferenceChangeListener, ObservationFeedCursorAdapter.ObservationShareListener {
 
 	private static final String LOG_NAME = ObservationFeedFragment.class.getName();
 
@@ -82,13 +87,20 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 	private ViewGroup footer;
 	private ListView lv;
 	private Long currentEventId;
+	private User currentUser;
 	private LocationService locationService;
     private AttachmentGallery attachmentGallery;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		this.currentEventId = EventHelper.getInstance(getActivity().getApplicationContext()).getCurrentEvent().getId();
+		currentEventId = EventHelper.getInstance(getActivity().getApplicationContext()).getCurrentEvent().getId();
+
+		try {
+			currentUser= UserHelper.getInstance(getActivity().getApplicationContext()).readCurrentUser();
+		} catch (UserException e) {
+			Log.e(LOG_NAME, "Error reading current user", e);
+		}
 
 		locationService = ((MAGE) getActivity().getApplication()).getLocationService();
 	}
@@ -123,7 +135,8 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 			oDao = DaoStore.getInstance(getActivity().getApplicationContext()).getObservationDao();
 			query = buildQuery(oDao, getTimeFilterId());
 			Cursor c = obtainCursor(query, oDao);
-			adapter = new ObservationFeedCursorAdapter(getActivity().getApplicationContext(), c, query, attachmentGallery);
+			adapter = new ObservationFeedCursorAdapter(getActivity(), c, query, attachmentGallery);
+			adapter.setObservationShareListener(this);
 			lv.setAdapter(adapter);
 			lv.setOnItemClickListener(this);
 
@@ -293,13 +306,34 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 			break;
 		}
 		requeryTime = c.getTimeInMillis();
-		TextView footerTextView = (TextView)footer.findViewById(R.id.footer_text);
+		TextView footerTextView = (TextView) footer.findViewById(R.id.footer_text);
 		footerTextView.setText(footerText);
 		getActivity().getActionBar().setTitle(title);
-		qb.where()
-        .gt("timestamp", c.getTime())
-        .and()
-        .eq("event_id", currentEventId);
+		qb.where().gt("timestamp", c.getTime())
+			.and()
+			.eq("event_id", currentEventId);
+
+		boolean favorites = sp.getBoolean(getResources().getString(R.string.activeFavoritesFilterKey), false);
+		if (favorites && currentUser != null) {
+			Dao<ObservationFavorite, Long> observationFavoriteDao = DaoStore.getInstance(getActivity().getApplicationContext()).getObservationFavoriteDao();
+			QueryBuilder<ObservationFavorite, Long> favoriteQb = observationFavoriteDao.queryBuilder();
+			favoriteQb.where()
+				.eq("user_id", currentUser.getRemoteId())
+				.and()
+				.eq("is_favorite", true);
+
+			qb.join(favoriteQb);
+		}
+
+		boolean important = sp.getBoolean(getResources().getString(R.string.activeImportantFilterKey), false);
+		if (important) {
+			Dao<ObservationImportant, Long> observationImportantDao = DaoStore.getInstance(getActivity().getApplicationContext()).getObservationImportantDao();
+			QueryBuilder<ObservationImportant, Long> importantQb = observationImportantDao.queryBuilder();
+			importantQb.where().eq("is_important", true);
+
+			qb.join(importantQb);
+		}
+
 		qb.orderBy("timestamp", false);
 
 		return qb.prepare();
@@ -321,7 +355,7 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 			}
 			queryUpdateHandle = scheduler.schedule(new Runnable() {
 				public void run() {
-					updateTimeFilter(getTimeFilterId());
+					updateFilter();
 				}
 			}, oldestTime - requeryTime, TimeUnit.MILLISECONDS);
 			c.moveToFirst();
@@ -386,21 +420,30 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 	@Override
 	public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
 		if (getResources().getString(R.string.activeTimeFilterKey).equalsIgnoreCase(key)) {
-			updateTimeFilter(sharedPreferences.getInt(key, 0));
+			updateFilter();
+		} else if (getResources().getString(R.string.activeFavoritesFilterKey).equalsIgnoreCase(key)) {
+			updateFilter();
+		} else if (getResources().getString(R.string.activeImportantFilterKey).equalsIgnoreCase(key)) {
+			updateFilter();
 		}
 	}
 
-	private void updateTimeFilter(final int filterId) {
+	private void updateFilter() {
 		getActivity().runOnUiThread(new Runnable() {
 			@Override
 			public void run() {
 				try {
-					query = buildQuery(oDao, filterId);
+					query = buildQuery(oDao, getTimeFilterId());
 					adapter.changeCursor(obtainCursor(query, oDao));
 				} catch (Exception e) {
 					Log.e(LOG_NAME, "Unable to change cursor", e);
 				}
 			}
 		});
+	}
+
+	@Override
+	public void onObservationShare(final Observation observation) {
+		new ObservationShareTask(getActivity(), observation).execute();
 	}
 }

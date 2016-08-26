@@ -69,7 +69,7 @@ public class LocationLoadTask extends AsyncTask<Void, Location, Void> {
 			where.and().ne("user_id", currentUser.getId()).and().eq("event_id", currentUser.getUserLocal().getCurrentEvent().getId());
 		}
 		if (filter != null) {
-			where = filter.where(where.and());
+			filter.and(where);
 		}
 		query.orderBy("timestamp", false);
 

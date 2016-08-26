@@ -2,7 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="mil.nga.giat.mage"
     android:versionCode="22"
-    android:versionName="5.1.2">
+    android:versionName="5.2.0">
 
     <permission
         android:name="mil.nga.giat.mage.permission.MAPS_RECEIVE"
@@ -140,6 +140,7 @@
             android:uiOptions="splitActionBarWhenNarrow" />
         <activity
             android:name=".observation.ObservationViewActivity"
+            android:launchMode="singleTop"
             android:label="@string/observation_view" />
         <activity
             android:name=".observation.ObservationEditActivity"
@@ -149,8 +150,10 @@
         <activity android:name=".profile.ProfileActivity" />
         <activity android:name=".observation.LocationEditActivity" />
         <activity
-            android:name=".observation.SelectEditActivity"
-            android:windowSoftInputMode="stateHidden"></activity>
+            android:name=".people.PeopleActivity"
+            android:label="Favorited by"
+            android:launchMode="singleTop"
+            android:parentActivityName=".observation.ObservationViewActivity" />
 
         <receiver android:name=".sdk.connectivity.NetworkChangeReceiver">
             <intent-filter>

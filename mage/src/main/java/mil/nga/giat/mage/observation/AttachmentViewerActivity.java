@@ -108,11 +108,10 @@ public class AttachmentViewerActivity extends FragmentActivity implements Remove
 			contentType = MediaUtility.getMimeType(path);
 		}
 
-		if (path != null) {
-			File f = new File(path);
-			Uri uri = Uri.fromFile(f);
+		if (path != null && new File(path).exists()) {
+			Uri uri = Uri.fromFile(new File(path));
 			if (contentType.startsWith("image")) {
-				Glide.with(getApplicationContext()).load(f).centerCrop().into(iv);
+				Glide.with(getApplicationContext()).load(uri).centerCrop().into(iv);
 			} else if (contentType.startsWith("video")) {
 				final VideoView videoView = (VideoView) findViewById(R.id.video);
 				MediaController mediaController = new MediaController(this);

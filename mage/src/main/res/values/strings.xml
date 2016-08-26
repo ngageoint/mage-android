@@ -57,6 +57,8 @@
     <string name="overlay_access_title"><font color='#DD000000'>Storage Permission Denied</font></string>
     <string name="overlay_access_message"><font color='#DD000000'>MAGE</font> has been denied access to read external storage. Please enable if you would like access to tile overlays that reside in external storage.</string>
 
+    <string name="important_flagged_by">%s flagged as important.</string>
+
     <string name="settings">Settings</string>
 
     <string name="disconnected_mode">DISCONNECTED</string>

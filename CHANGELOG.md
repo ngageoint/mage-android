@@ -3,12 +3,21 @@ All notable changes to this project will be documented in this file.
 Adheres to [Semantic Versioning](http://semver.org/).
 
 ---
-## 5.1.2 (TBD)
+## 5.2.1 (TBD)
 
 * TBD
 
 ##### Features
-* Added number of features to static layer list item
+
+##### Bug Fixes
+
+## [5.2.0](https://github.com/ngageoint/mage-android/releases/tag/5.2.0) (01-09-2017)
+
+##### Features
+* Users can now favorite observations
+* Users with event edit permission can flag observations as important
+* Users can share observations with other applications on the device, ie email.
+* Added number of features to static layer list item.
 
 ##### Bug Fixes
 
@@ -18,6 +27,7 @@ Adheres to [Semantic Versioning](http://semver.org/).
 
 ##### Bug Fixes
 * Media picked from gallery stored in wrong location causing attachment failure in some cases.
+
 
 ## [5.1.0](https://github.com/ngageoint/mage-android/releases/tag/5.1.0) (08-11-2016)
 
