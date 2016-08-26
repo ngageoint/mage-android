@@ -119,6 +119,15 @@ public class UserHelper extends DaoHelper<User> implements IEventDispatcher<IEve
         return user;
     }
 
+	public List<User> read(Collection<String> remoteIds) throws UserException {
+		try {
+			return userDao.queryBuilder().where().in("remote_id", remoteIds).query();
+		} catch (SQLException sqle) {
+			Log.e(LOG_NAME, "Unable to query for existence for remote_ids = '" + remoteIds + "'", sqle);
+			throw new UserException("Unable to query for existence for remote_ids = '" + remoteIds.toString() + "'", sqle);
+		}
+	}
+
 	public User readCurrentUser() throws UserException {
 		User user;
 

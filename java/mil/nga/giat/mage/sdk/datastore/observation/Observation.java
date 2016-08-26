@@ -62,16 +62,22 @@ public class Observation implements Comparable<Observation>, Temporal {
     private State state = State.ACTIVE;
 
 	@DatabaseField(canBeNull = false, dataType = DataType.SERIALIZABLE)
-	private Geometry geometry;
+    private Geometry geometry;
 
     @DatabaseField(canBeNull = false, foreign = true, foreignAutoRefresh = true)
     private Event event;
 
     @ForeignCollectionField(eager = true)
-    private Collection<ObservationProperty> properties = new ArrayList<ObservationProperty>();
+    private Collection<ObservationProperty> properties = new ArrayList<>();
 
     @ForeignCollectionField(eager = true)
-    private Collection<Attachment> attachments = new ArrayList<Attachment>();
+    private Collection<Attachment> attachments = new ArrayList<>();
+
+    @DatabaseField(canBeNull = true, foreign = true, foreignAutoRefresh = true, foreignAutoCreate = true)
+    private ObservationImportant important;
+
+    @ForeignCollectionField(eager = true)
+    private Collection<ObservationFavorite> favorites = new ArrayList<>();
 
     public Observation() {
         // ORMLite needs a no-arg constructor
@@ -204,6 +210,22 @@ public class Observation implements Comparable<Observation>, Temporal {
         this.attachments = attachments;
     }
 
+    public ObservationImportant getImportant() {
+        return important;
+    }
+
+    public void setImportant(ObservationImportant important) {
+        this.important = important;
+    }
+
+    public Collection<ObservationFavorite> getFavorites() {
+        return favorites;
+    }
+
+    public void setFavorites(Collection<ObservationFavorite> favorites) {
+        this.favorites = favorites;
+    }
+
     /**
      * A convenience method used for returning an Observation's properties in a
      * more useful data-structure.
@@ -211,12 +233,29 @@ public class Observation implements Comparable<Observation>, Temporal {
      * @return
      */
     public final Map<String, ObservationProperty> getPropertiesMap() {
-        Map<String, ObservationProperty> propertiesMap = new HashMap<String, ObservationProperty>();
+        Map<String, ObservationProperty> propertiesMap = new HashMap<>();
         for (ObservationProperty property : properties) {
             propertiesMap.put(property.getKey(), property);
         }
 
         return propertiesMap;
+    }
+
+    /**
+     * A convenience method used for returning an Observation's favorites in a
+     * more useful data-structure.
+     *
+     * Map key is the userId who favorited the observation.
+     *
+     * @return
+     */
+    public final Map<String, ObservationFavorite> getFavoritesMap() {
+        Map<String, ObservationFavorite> favoritesMap = new HashMap<>();
+        for (ObservationFavorite favorite : favorites) {
+            favoritesMap.put(favorite.getUserId(), favorite);
+        }
+
+        return favoritesMap;
     }
 
     @Override

@@ -16,6 +16,8 @@ import mil.nga.giat.mage.sdk.datastore.location.Location;
 import mil.nga.giat.mage.sdk.datastore.location.LocationProperty;
 import mil.nga.giat.mage.sdk.datastore.observation.Attachment;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
+import mil.nga.giat.mage.sdk.datastore.observation.ObservationFavorite;
+import mil.nga.giat.mage.sdk.datastore.observation.ObservationImportant;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationProperty;
 import mil.nga.giat.mage.sdk.datastore.staticfeature.StaticFeature;
 import mil.nga.giat.mage.sdk.datastore.staticfeature.StaticFeatureProperty;
@@ -42,11 +44,13 @@ public class DaoStore extends OrmLiteSqliteOpenHelper {
 	private static final String DATABASE_NAME = "mage.db";
 	private static final String LOG_NAME = DaoStore.class.getName();
 	// Making this public so we can check if it has been upgraded and log the user out
-	public static final int DATABASE_VERSION = 9;
+	public static final int DATABASE_VERSION = 11;
 
 	// Observation DAOS
 	private Dao<Observation, Long> observationDao;
 	private Dao<ObservationProperty, Long> observationPropertyDao;
+	private Dao<ObservationImportant, Long> observationImportantDao;
+	private Dao<ObservationFavorite, Long> observationFavoriteDao;
 	private Dao<Attachment, Long> attachmentDao;
 
 	// User and Location DAOS
@@ -91,6 +95,8 @@ public class DaoStore extends OrmLiteSqliteOpenHelper {
 		try {
 			getObservationDao();
 			getObservationPropertyDao();
+			getObservationImportantDao();
+			getObservationFavoriteDao();
 			getAttachmentDao();
 			getUserDao();
 			getUserLocalDao();
@@ -116,6 +122,8 @@ public class DaoStore extends OrmLiteSqliteOpenHelper {
 		try {
 			countOfAllRecords += getObservationDao().countOf();
 			countOfAllRecords += getObservationPropertyDao().countOf();
+			countOfAllRecords += getObservationImportantDao().countOf();
+			countOfAllRecords += getObservationFavoriteDao().countOf();
 			countOfAllRecords += getAttachmentDao().countOf();
 			countOfAllRecords += getUserDao().countOf();
 			countOfAllRecords += getUserLocalDao().countOf();
@@ -139,6 +147,8 @@ public class DaoStore extends OrmLiteSqliteOpenHelper {
 	private void createTables() throws SQLException {
 		TableUtils.createTable(connectionSource, Observation.class);
 		TableUtils.createTable(connectionSource, ObservationProperty.class);
+		TableUtils.createTable(connectionSource, ObservationImportant.class);
+		TableUtils.createTable(connectionSource, ObservationFavorite.class);
 		TableUtils.createTable(connectionSource, Attachment.class);
 
 		TableUtils.createTable(connectionSource, User.class);
@@ -169,6 +179,8 @@ public class DaoStore extends OrmLiteSqliteOpenHelper {
 		TableUtils.dropTable(connectionSource, Observation.class, Boolean.TRUE);
 
 		TableUtils.dropTable(connectionSource, ObservationProperty.class, Boolean.TRUE);
+		TableUtils.dropTable(connectionSource, ObservationImportant.class, Boolean.TRUE);
+		TableUtils.dropTable(connectionSource, ObservationFavorite.class, Boolean.TRUE);
 		TableUtils.dropTable(connectionSource, Attachment.class, Boolean.TRUE);
 
 		TableUtils.dropTable(connectionSource, User.class, Boolean.TRUE);
@@ -236,6 +248,32 @@ public class DaoStore extends OrmLiteSqliteOpenHelper {
 			observationPropertyDao = getDao(ObservationProperty.class);
 		}
 		return observationPropertyDao;
+	}
+
+	/**
+	 * Getter for the ObservationImportantDao
+	 *
+	 * @return This instance's ObservationImportantDao
+	 * @throws SQLException
+	 */
+	public Dao<ObservationImportant, Long> getObservationImportantDao() throws SQLException {
+		if (observationImportantDao == null) {
+			observationImportantDao = getDao(ObservationImportant.class);
+		}
+		return observationImportantDao;
+	}
+
+	/**
+	 * Getter for the ObservationFavoriteDao
+	 *
+	 * @return This instance's ObservationFavoriteDao
+	 * @throws SQLException
+	 */
+	public Dao<ObservationFavorite, Long> getObservationFavoriteDao() throws SQLException {
+		if (observationFavoriteDao == null) {
+			observationFavoriteDao = getDao(ObservationFavorite.class);
+		}
+		return observationFavoriteDao;
 	}
 
 	/**

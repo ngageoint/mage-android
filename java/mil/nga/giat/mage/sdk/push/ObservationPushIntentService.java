@@ -6,17 +6,19 @@ import android.util.Log;
 
 import java.util.Collection;
 import java.util.Date;
-import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import mil.nga.giat.mage.sdk.ConnectivityAwareIntentService;
 import mil.nga.giat.mage.sdk.R;
 import mil.nga.giat.mage.sdk.connectivity.ConnectivityUtility;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
+import mil.nga.giat.mage.sdk.datastore.observation.ObservationFavorite;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
+import mil.nga.giat.mage.sdk.datastore.observation.ObservationImportant;
 import mil.nga.giat.mage.sdk.event.IObservationEventListener;
-import mil.nga.giat.mage.sdk.login.LoginTaskFactory;
+import mil.nga.giat.mage.sdk.exceptions.ObservationException;
 import mil.nga.giat.mage.sdk.http.resource.ObservationResource;
+import mil.nga.giat.mage.sdk.login.LoginTaskFactory;
 
 public class ObservationPushIntentService extends ConnectivityAwareIntentService implements IObservationEventListener {
 
@@ -47,18 +49,14 @@ public class ObservationPushIntentService extends ConnectivityAwareIntentService
 				pushFrequency = getObservationPushFrequency();
 
 				// push dirty observations
-				ObservationHelper observationHelper = ObservationHelper.getInstance(getApplicationContext());
-				List<Observation> observations = observationHelper.getDirty();
-				for (Observation observation : observations) {
-					if (isCanceled) {
-						break;
-					}
-					Log.d(LOG_NAME, "Pushing observation with id: " + observation.getId());
-					observation = observationResource.saveObservation(observation);
-					if(observation != null) {
-						Log.d(LOG_NAME, "Pushed observation with remote_id: " + observation.getRemoteId());
-					}
-				}
+				pushObservations(observationResource);
+
+				// push dirty observation favorites
+				pushImportant(observationResource);
+
+				// push dirty observation important
+				pushFavorite(observationResource);
+
 			} else {
 				Log.d(LOG_NAME, "The device is currently disconnected. Can't push observations.");
 			}
@@ -89,7 +87,7 @@ public class ObservationPushIntentService extends ConnectivityAwareIntentService
 	@Override
 	public void onObservationCreated(Collection<Observation> observations, Boolean sendUserNotifcations) {
 		for (Observation observation : observations) {
-			if (observation.isDirty()) {
+			if (isObservationDirty(observation)) {
 				synchronized (pushSemaphore) {
 					pushSemaphore.set(true);
 					pushSemaphore.notifyAll();
@@ -101,7 +99,7 @@ public class ObservationPushIntentService extends ConnectivityAwareIntentService
 
 	@Override
 	public void onObservationUpdated(Observation observation) {
-		if (observation.isDirty()) {
+		if (isObservationDirty(observation)) {
 			synchronized (pushSemaphore) {
 				pushSemaphore.set(true);
 				pushSemaphore.notifyAll();
@@ -121,5 +119,65 @@ public class ObservationPushIntentService extends ConnectivityAwareIntentService
 	@Override
 	public void onObservationDeleted(Observation observation) {
 		// TODO Auto-generated method stub
+	}
+
+	private boolean isObservationDirty(Observation observation) {
+
+		if (observation.isDirty()) return true;
+
+		ObservationImportant important = observation.getImportant();
+		if (important != null && important.isDirty()) {
+			return true;
+		}
+
+		for (ObservationFavorite favorite : observation.getFavorites()) {
+			if (favorite.isDirty()) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	private void pushObservations(ObservationResource observationResource) {
+		ObservationHelper observationHelper = ObservationHelper.getInstance(getApplicationContext());
+		for (Observation observation : observationHelper.getDirty()) {
+			if (isCanceled) {
+				break;
+			}
+			Log.d(LOG_NAME, "Pushing observation with id: " + observation.getId());
+			observation = observationResource.saveObservation(observation);
+			if (observation != null) {
+				Log.d(LOG_NAME, "Pushed observation with remote_id: " + observation.getRemoteId());
+			}
+		}
+	}
+
+	private void pushImportant(ObservationResource observationResource) {
+		ObservationHelper observationHelper = ObservationHelper.getInstance(getApplicationContext());
+		try {
+			for (Observation observation : observationHelper.getDirtyImportant()) {
+				observationResource.toogleImporant(observation);
+				if (observation != null) {
+					Log.d(LOG_NAME, "Pushed observation important with remote_id: " + observation.getRemoteId());
+				}
+			}
+		} catch (ObservationException e) {
+			Log.e(LOG_NAME, "Error pushing observation important", e);
+		}
+	}
+
+	private void pushFavorite(ObservationResource observationResource) {
+		ObservationHelper observationHelper = ObservationHelper.getInstance(getApplicationContext());
+		try {
+			for (ObservationFavorite favorite : observationHelper.getDirtyFavorites()) {
+				Observation observation = observationResource.toogleFavorite(favorite);
+				if (observation != null) {
+					Log.d(LOG_NAME, "Pushed observation favorite with remote_id: " + observation.getRemoteId());
+				}
+			}
+		} catch (ObservationException e) {
+			Log.e(LOG_NAME, "Error pushing observation favorite", e);
+		}
 	}
 }

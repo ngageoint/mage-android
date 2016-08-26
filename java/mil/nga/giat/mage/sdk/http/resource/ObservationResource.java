@@ -4,6 +4,7 @@ import android.content.Context;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
+import com.google.gson.JsonObject;
 import com.squareup.okhttp.MediaType;
 import com.squareup.okhttp.RequestBody;
 import com.squareup.okhttp.ResponseBody;
@@ -24,11 +25,14 @@ import mil.nga.giat.mage.sdk.R;
 import mil.nga.giat.mage.sdk.datastore.DaoStore;
 import mil.nga.giat.mage.sdk.datastore.observation.Attachment;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
+import mil.nga.giat.mage.sdk.datastore.observation.ObservationFavorite;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
+import mil.nga.giat.mage.sdk.datastore.observation.ObservationImportant;
 import mil.nga.giat.mage.sdk.datastore.user.Event;
 import mil.nga.giat.mage.sdk.http.HttpClientManager;
 import mil.nga.giat.mage.sdk.http.converter.AttachmentConverterFactory;
 import mil.nga.giat.mage.sdk.http.converter.ObservationConverterFactory;
+import mil.nga.giat.mage.sdk.http.converter.ObservationImportantConverterFactory;
 import mil.nga.giat.mage.sdk.http.converter.ObservationsConverterFactory;
 import mil.nga.giat.mage.sdk.utils.DateFormatFactory;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
@@ -36,6 +40,7 @@ import retrofit.Call;
 import retrofit.Response;
 import retrofit.Retrofit;
 import retrofit.http.Body;
+import retrofit.http.DELETE;
 import retrofit.http.GET;
 import retrofit.http.Multipart;
 import retrofit.http.POST;
@@ -72,6 +77,18 @@ public class ObservationResource {
         @Multipart
         @POST("/api/events/{eventId}/observations/{observationId}/attachments")
         Call<Attachment> createAttachment(@Path("eventId") String eventId, @Path("observationId") String observationId, @PartMap Map<String, RequestBody> parts);
+
+        @PUT("/api/events/{eventId}/observations/{observationId}/favorite")
+        Call<Observation> favoriteObservation(@Path("eventId") String eventId, @Path("observationId") String observationId);
+
+        @DELETE("/api/events/{eventId}/observations/{observationId}/favorite")
+        Call<Observation> unfavoriteObservation(@Path("eventId") String eventId, @Path("observationId") String observationId);
+
+        @PUT("/api/events/{eventId}/observations/{observationId}/important")
+        Call<Observation> addImportant(@Path("eventId") String eventId, @Path("observationId") String observationId, @Body JsonObject important);
+
+        @DELETE("/api/events/{eventId}/observations/{observationId}/important")
+        Call<Observation> removeImportant(@Path("eventId") String eventId, @Path("observationId") String observationId);
     }
 
     private static final String LOG_NAME = ObservationResource.class.getName();
@@ -253,5 +270,92 @@ public class ObservationResource {
         }
 
         return attachment;
+    }
+
+    public Observation toogleFavorite(ObservationFavorite favorite) {
+        ObservationHelper observationHelper = ObservationHelper.getInstance(context);
+        Observation observation = favorite.getObservation();
+        Observation savedObservation = null;
+
+        try {
+            String baseUrl = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.serverURLKey), context.getString(R.string.serverURLDefaultValue));
+            Retrofit retrofit = new Retrofit.Builder()
+                    .baseUrl(baseUrl)
+                    .addConverterFactory(ObservationConverterFactory.create(observation.getEvent()))
+                    .client(HttpClientManager.getInstance(context).httpClient())
+                    .build();
+
+            ObservationService service = retrofit.create(ObservationService.class);
+
+            Response<Observation> response;
+            if (favorite.isFavorite()) {
+                response = service.favoriteObservation(observation.getEvent().getRemoteId(), observation.getRemoteId()).execute();
+            } else {
+                response = service.unfavoriteObservation(observation.getEvent().getRemoteId(), observation.getRemoteId()).execute();
+            }
+
+            if (response.isSuccess()) {
+                Observation returnedObservation = response.body();
+                ObservationFavorite returnedFavorite = returnedObservation.getFavoritesMap().get(favorite.getUserId());
+                if (returnedFavorite != null) {
+                    returnedFavorite.setDirty(Boolean.FALSE);
+
+                }
+                returnedObservation.setId(observation.getId());
+                savedObservation = observationHelper.update(returnedObservation);
+            } else {
+                Log.e(LOG_NAME, "Bad request.");
+                if (response.errorBody() != null) {
+                    Log.e(LOG_NAME, response.errorBody().string());
+                }
+            }
+        } catch (Exception e) {
+            Log.e(LOG_NAME, "Failure toogling observation favorite.", e);
+        }
+
+        return savedObservation;
+    }
+
+    public Observation toogleImporant(Observation observation) {
+        ObservationHelper observationHelper = ObservationHelper.getInstance(context);
+        ObservationImportant important = observation.getImportant();
+        Observation savedObservation = null;
+
+        try {
+            String baseUrl = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.serverURLKey), context.getString(R.string.serverURLDefaultValue));
+            Retrofit retrofit = new Retrofit.Builder()
+                    .baseUrl(baseUrl)
+                    .addConverterFactory(ObservationImportantConverterFactory.create(observation.getEvent()))
+                    .client(HttpClientManager.getInstance(context).httpClient())
+                    .build();
+
+            ObservationService service = retrofit.create(ObservationService.class);
+
+            Response<Observation> response;
+            if (important.isImportant()) {
+                JsonObject jsonImportant = new JsonObject();
+                jsonImportant.addProperty("description", important.getDescription());
+
+                response = service.addImportant(observation.getEvent().getRemoteId(), observation.getRemoteId(), jsonImportant).execute();
+            } else {
+                response = service.removeImportant(observation.getEvent().getRemoteId(), observation.getRemoteId()).execute();
+            }
+
+            if (response.isSuccess()) {
+                Observation returnedObservation = response.body();
+                important.setDirty(Boolean.FALSE);
+                returnedObservation.setId(observation.getId());
+                savedObservation = observationHelper.update(returnedObservation);
+            } else {
+                Log.e(LOG_NAME, "Bad request.");
+                if (response.errorBody() != null) {
+                    Log.e(LOG_NAME, response.errorBody().string());
+                }
+            }
+        } catch (Exception e) {
+            Log.e(LOG_NAME, "Failure toogling observation important.", e);
+        }
+
+        return savedObservation;
     }
 }
