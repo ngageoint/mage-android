@@ -627,7 +627,9 @@ public class ObservationEditActivity extends Activity implements OnMapReadyCallb
 	private void launchGalleryIntent() {
 		Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
 		intent.setType("image/*, video/*");
-		Log.i(LOG_NAME, "build version sdk int: " + Build.VERSION.SDK_INT);
+		intent.addCategory(Intent.CATEGORY_OPENABLE);
+		intent.putExtra(Intent.EXTRA_MIME_TYPES, new String[] {"image/*", "video/*"});
+
 		if (Build.VERSION.SDK_INT >=  Build.VERSION_CODES.JELLY_BEAN_MR2) {
 			intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
 		}
@@ -752,9 +754,10 @@ public class ObservationEditActivity extends Activity implements OnMapReadyCallb
 			case GALLERY_ACTIVITY_REQUEST_CODE:
 			case CAPTURE_VOICE_ACTIVITY_REQUEST_CODE:
 				Collection<Uri> uris = getUris(data);
+
 				for (Uri uri : uris) {
 					try {
-						File file = MediaUtility.copyImageFromGallery(getContentResolver().openInputStream(uri));
+						File file = MediaUtility.copyMediaFromUri(getApplicationContext(), uri);
 						Attachment a = new Attachment();
 						a.setLocalPath(file.getAbsolutePath());
 						attachmentsToCreate.add(a);

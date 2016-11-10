@@ -3,13 +3,20 @@ All notable changes to this project will be documented in this file.
 Adheres to [Semantic Versioning](http://semver.org/).
 
 ---
-## 5.1.1 (TBD)
+## 5.1.2 (TBD)
 
 * TBD
 
 ##### Features
 
 ##### Bug Fixes
+
+## [5.1.1](https://github.com/ngageoint/mage-android/releases/tag/5.1.1) (11-10-2016)
+
+##### Features
+
+##### Bug Fixes
+* Media picked from gallery stored in wrong location causing attachment failure in some cases.
 
 ## [5.1.0](https://github.com/ngageoint/mage-android/releases/tag/5.1.0) (08-11-2016)
 

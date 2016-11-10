@@ -473,7 +473,7 @@ public class ProfileFragment extends Fragment implements OnMapReadyCallback, OnC
 				List<Uri> uris = getUris(data);
 				for (Uri uri : uris) {
 					try {
-						File avatarFile = MediaUtility.copyImageFromGallery(getActivity().getContentResolver().openInputStream(uri));
+						File avatarFile = MediaUtility.copyMediaFromUri(getActivity(),uri);
 						filePath = avatarFile.getAbsolutePath();
 					} catch (IOException e) {
 						Log.e(LOG_NAME, "Error copying gallery file for avatar to local storage", e);
