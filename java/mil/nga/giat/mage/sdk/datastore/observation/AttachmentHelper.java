@@ -5,7 +5,6 @@ import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.CompressFormat;
 import android.graphics.BitmapFactory;
-import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
@@ -227,7 +226,7 @@ public class AttachmentHelper extends DaoHelper<Attachment> implements IEventDis
 
 				String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
 				String imageFileName = "MAGE_" + timeStamp;
-				File directory  = new File(Environment.getExternalStorageDirectory(), "MAGE");
+				File directory  = mApplicationContext.getExternalFilesDir("media");
 				File thumbnail =  File.createTempFile(
 						imageFileName,  /* prefix */
 						".jpg",         /* suffix */

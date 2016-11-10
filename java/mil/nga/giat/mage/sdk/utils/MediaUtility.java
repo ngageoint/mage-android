@@ -14,7 +14,6 @@ import android.graphics.PorterDuff.Mode;
 import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
 import android.graphics.RectF;
-import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
@@ -115,18 +114,26 @@ public class MediaUtility {
 	    c.sendBroadcast(mediaScanIntent);
 	}
 
-	public static File copyImageFromGallery(InputStream is) throws IOException {
+	public static File copyMediaFromUri(Context context, Uri uri) throws IOException {
+		InputStream is = null;
 		OutputStream os = null;
 		try {
+			ContentResolver contentResolver = context.getContentResolver();
+
 			String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
 			String imageFileName = "MAGE_" + timeStamp;
-			File directory  = new File(Environment.getExternalStorageDirectory(), "MAGE");
+
+			MimeTypeMap mime = MimeTypeMap.getSingleton();
+			String extension = "." + mime.getExtensionFromMimeType(contentResolver.getType(uri));
+
+			File directory  = context.getExternalFilesDir("media");
 			File file =  File.createTempFile(
 					imageFileName,  /* prefix */
-					".jpeg",         /* suffix */
+					extension,         /* suffix */
 					directory      /* directory */
 			);
 
+			is = contentResolver.openInputStream(uri);
 			os = new FileOutputStream(file);
 			ByteStreams.copy(is, os);
 
