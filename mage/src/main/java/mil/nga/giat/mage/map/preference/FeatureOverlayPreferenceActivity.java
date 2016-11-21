@@ -17,7 +17,6 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
-import android.widget.CheckedTextView;
 import android.widget.ListView;
 import android.widget.TextView;
 
@@ -75,7 +74,7 @@ public class FeatureOverlayPreferenceActivity extends ListActivity implements IL
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-				Collection<Layer> layers = new ArrayList<Layer>();
+				Collection<Layer> layers = new ArrayList<>();
 
 				try {
 					layers = LayerHelper.getInstance(getApplicationContext()).readByEvent(EventHelper.getInstance(getApplicationContext()).getCurrentEvent());
@@ -85,7 +84,7 @@ public class FeatureOverlayPreferenceActivity extends ListActivity implements IL
                 ListView listView = getListView();
                 listView.clearChoices();
 
-                overlayAdapter = new OverlayAdapter(FeatureOverlayPreferenceActivity.this, new ArrayList<Layer>(layers));
+                overlayAdapter = new OverlayAdapter(FeatureOverlayPreferenceActivity.this, new ArrayList<>(layers));
                 setListAdapter(overlayAdapter);
 
                 // Set what should be checked based on preferences.
@@ -213,7 +212,7 @@ public class FeatureOverlayPreferenceActivity extends ListActivity implements IL
     }
 
     private ArrayList<String> getSelectedOverlays() {
-        ArrayList<String> overlays = new ArrayList<String>();
+        ArrayList<String> overlays = new ArrayList<>();
         SparseBooleanArray checked = getListView().getCheckedItemPositions();
         for (int i = 0; i < checked.size(); i++) {
             if (checked.valueAt(i)) {
@@ -229,7 +228,7 @@ public class FeatureOverlayPreferenceActivity extends ListActivity implements IL
         private List<Layer> layers;
 
         public OverlayAdapter(Context context, List<Layer> overlays) {
-            super(context, R.layout.feature_layer_list_item, R.id.checkedTextView, overlays);
+            super(context, R.layout.feature_layer_list_item, R.id.title, overlays);
 
             this.layers = overlays;
         }
@@ -240,8 +239,11 @@ public class FeatureOverlayPreferenceActivity extends ListActivity implements IL
 
             Layer layer = getItem(position);
             String name = layer.getName();
-            CheckedTextView checkedView = (CheckedTextView) view.findViewById(R.id.checkedTextView);
-            checkedView.setText(name);
+            TextView title = (TextView) view.findViewById(R.id.title);
+            title.setText(name);
+
+            TextView summary = (TextView) view.findViewById(R.id.summary);
+            summary.setText(layer.getStaticFeatures().size() + " features");
 
             View progressBar = view.findViewById(R.id.progressBar);
             progressBar.setVisibility(layer.isLoaded() ? View.GONE : View.VISIBLE);

@@ -39,7 +39,9 @@
             android:layout_width="match_parent"
             android:layout_height="0dip"
             android:layout_weight="1"
-            android:drawSelectorOnTop="false" />
+            android:drawSelectorOnTop="false"
+            android:divider="@drawable/static_layer_divider"
+            android:dividerHeight="1dip"/>
     </LinearLayout>
 
     <LinearLayout

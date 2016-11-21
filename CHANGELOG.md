@@ -8,6 +8,7 @@ Adheres to [Semantic Versioning](http://semver.org/).
 * TBD
 
 ##### Features
+* Added number of features to static layer list item
 
 ##### Bug Fixes
 

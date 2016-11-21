@@ -2,14 +2,15 @@ package mil.nga.giat.mage.widget;
 
 import android.content.Context;
 import android.util.AttributeSet;
-import android.view.View;
+import android.widget.CheckBox;
 import android.widget.Checkable;
-import android.widget.CheckedTextView;
 import android.widget.LinearLayout;
+
+import mil.nga.giat.mage.R;
 
 public class CheckedLinearLayout extends LinearLayout implements Checkable {
     
-    private CheckedTextView checkedTextView;
+    private CheckBox checkBox;
     
     public CheckedLinearLayout(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -18,32 +19,26 @@ public class CheckedLinearLayout extends LinearLayout implements Checkable {
     @Override
     protected void onFinishInflate() {
         super.onFinishInflate();
-        // find checked text view
-        int childCount = getChildCount();
-        for (int i = 0; i < childCount; ++i) {
-            View v = getChildAt(i);
-            if (v instanceof CheckedTextView) {
-                checkedTextView = (CheckedTextView)v;
-            }
-        }       
+
+        checkBox = (CheckBox) findViewById(R.id.checkbox);
     }
     
     @Override 
     public boolean isChecked() { 
-        return checkedTextView != null ? checkedTextView.isChecked() : false; 
+        return checkBox != null ? checkBox.isChecked() : false;
     }
     
     @Override 
     public void setChecked(boolean checked) {
-        if (checkedTextView != null) {
-            checkedTextView.setChecked(checked);
+        if (checkBox != null) {
+            checkBox.setChecked(checked);
         }
     }
     
     @Override 
     public void toggle() { 
-        if (checkedTextView != null) {
-            checkedTextView.toggle();
+        if (checkBox != null) {
+            checkBox.toggle();
         }
     } 
 } 
