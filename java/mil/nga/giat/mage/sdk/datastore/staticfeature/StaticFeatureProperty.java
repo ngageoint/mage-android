@@ -10,7 +10,9 @@ import mil.nga.giat.mage.sdk.datastore.Property;
 @DatabaseTable(tableName = "staticfeature_properties")
 public class StaticFeatureProperty extends Property {
 
-	@DatabaseField(foreign = true, uniqueCombo = true)
+	public static final String STATIC_FEATURE_ID = "staticFeature_id";
+
+	@DatabaseField(foreign = true, uniqueCombo = true, columnName = STATIC_FEATURE_ID)
 	private StaticFeature staticFeature;
 
 	public StaticFeatureProperty() {

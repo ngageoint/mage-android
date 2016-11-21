@@ -10,6 +10,7 @@ import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.net.URL;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Collection;
 
 import mil.nga.giat.mage.sdk.connectivity.ConnectivityUtility;
@@ -22,8 +23,8 @@ import mil.nga.giat.mage.sdk.datastore.staticfeature.StaticFeatureProperty;
 import mil.nga.giat.mage.sdk.datastore.user.Event;
 import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
 import mil.nga.giat.mage.sdk.exceptions.StaticFeatureException;
-import mil.nga.giat.mage.sdk.login.LoginTaskFactory;
 import mil.nga.giat.mage.sdk.http.resource.LayerResource;
+import mil.nga.giat.mage.sdk.login.LoginTaskFactory;
 
 public class StaticFeatureServerFetch extends AbstractServerFetch {
 
@@ -80,11 +81,18 @@ public class StaticFeatureServerFetch extends AbstractServerFetch {
 						Collection<StaticFeature> staticFeatures = layerResource.getFeatures(layer);
 
 						// Pull down the icons
+						Collection<String> failedIconUrls = new ArrayList<>();
 						for (StaticFeature staticFeature : staticFeatures) {
 							StaticFeatureProperty property = staticFeature.getPropertiesMap().get("styleiconstyleiconhref");
 							if (property != null) {
 								String iconUrlString = property.getValue();
+
+								if (failedIconUrls.contains(iconUrlString)) {
+									continue;
+								}
+
 								if (iconUrlString != null) {
+									File iconFile = null;
 									try {
 										URL iconUrl = new URL(iconUrlString);
 										String filename = iconUrl.getFile();
@@ -96,7 +104,7 @@ public class StaticFeatureServerFetch extends AbstractServerFetch {
 											}
 										}
 
-										File iconFile = new File(mContext.getFilesDir() + "/icons/staticfeatures", filename);
+										iconFile = new File(mContext.getFilesDir() + "/icons/staticfeatures", filename);
 										if (!iconFile.exists()) {
 											iconFile.getParentFile().mkdirs();
 											iconFile.createNewFile();
@@ -111,6 +119,10 @@ public class StaticFeatureServerFetch extends AbstractServerFetch {
 									} catch (Exception e) {
 										// this block should never flow exceptions up! Log for now.
 										Log.w(LOG_NAME, "Could not get icon.", e);
+										failedIconUrls.add(iconUrlString);
+										if (iconFile != null && iconFile.exists()) {
+											iconFile.delete();
+										}
 									}
 								}
 							}

@@ -5,6 +5,7 @@ import android.util.Log;
 
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.misc.TransactionManager;
+import com.j256.ormlite.stmt.DeleteBuilder;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -187,29 +188,28 @@ public class StaticFeatureHelper extends DaoHelper<StaticFeature> implements IEv
 		return staticFeatures;
 	}
 
-	public void deleteAll(Long pLayerId) throws StaticFeatureException {
-		for(StaticFeature staticFeature : readAll(pLayerId)) {
-			delete(staticFeature.getId());
+	public void deleteAll(Long layerId) throws StaticFeatureException {
+		List<StaticFeature> features = readAll(layerId);
+		Collection<Long> ids = new ArrayList<>(features.size());
+		for (StaticFeature feature : features) {
+			ids.add(feature.getId());
 		}
-	}
 
-	public void delete(Long pPrimaryKey) throws StaticFeatureException {
 		try {
-			StaticFeature staticFeature = staticFeatureDao.queryForId(pPrimaryKey);
+			// Delete the properties (children)
+			DeleteBuilder propertyDeleteBuilder = staticFeaturePropertyDao.deleteBuilder();
+			propertyDeleteBuilder.where().in(StaticFeatureProperty.STATIC_FEATURE_ID, ids);
+			int propertiesDeleted = staticFeaturePropertyDao.delete(propertyDeleteBuilder.prepare());
+			Log.i(LOG_NAME, propertiesDeleted + " static feature properties deleted");
 
-			// delete properties.
-			Collection<StaticFeatureProperty> properties = staticFeature.getProperties();
-			if (properties != null) {
-				for (StaticFeatureProperty property : properties) {
-					staticFeaturePropertyDao.deleteById(property.getId());
-				}
-			}
-
-			// finally, delete the Observation.
-			staticFeatureDao.deleteById(pPrimaryKey);
+			// All children deleted, delete the static feature.
+			DeleteBuilder featureDeleteBuilder = staticFeatureDao.deleteBuilder();
+			featureDeleteBuilder.where().eq(StaticFeature.STATIC_FEATURE_LAYER_ID, layerId);
+			int featuresDeleted = staticFeatureDao.delete(featureDeleteBuilder.prepare());
+			Log.i(LOG_NAME, featureDeleteBuilder + " features deleted");
 		} catch (SQLException sqle) {
-			Log.e(LOG_NAME, "Unable to delete Static Feature: " + pPrimaryKey, sqle);
-			throw new StaticFeatureException("Unable to delete Static Feature: " + pPrimaryKey, sqle);
+			Log.e(LOG_NAME, "Unable to delete Static Feature: " + ids, sqle);
+			throw new StaticFeatureException("Unable to delete Static Feature: " + ids, sqle);
 		}
 	}
 

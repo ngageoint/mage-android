@@ -20,13 +20,17 @@ import mil.nga.giat.mage.sdk.datastore.layer.Layer;
 @DatabaseTable(tableName = "staticfeatures")
 public class StaticFeature implements Comparable<StaticFeature> {
 
+	public static final String STATIC_FEATURE_ID = "id";
+	public static final String STATIC_FEATURE_REMOTE_ID = "remote_id";
+	public static final String STATIC_FEATURE_LAYER_ID = "layer_id";
+
 	@DatabaseField(generatedId = true)
 	private Long id;
 
-	@DatabaseField(unique = true, columnName = "remote_id")
+	@DatabaseField(unique = true, columnName = STATIC_FEATURE_REMOTE_ID)
 	private String remoteId;
 
-	@DatabaseField(canBeNull = false, foreign = true, foreignAutoRefresh = true)
+	@DatabaseField(canBeNull = false, foreign = true, foreignAutoRefresh = true, columnName = STATIC_FEATURE_LAYER_ID)
 	private Layer layer;
 
 	@DatabaseField(canBeNull = false, dataType = DataType.SERIALIZABLE)
