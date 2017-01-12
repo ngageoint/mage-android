@@ -86,6 +86,11 @@
         </LinearLayout>
     </RelativeLayout>
 
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#DDDDDD"/>
+
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="0dp"
@@ -110,6 +115,77 @@
                     android:layout_marginStart="8dip"
                     android:layout_marginEnd="8dip"/>
             </HorizontalScrollView>
+
+            <LinearLayout
+                android:id="@+id/favorites"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:clickable="true">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dip"
+                    android:layout_marginBottom="16dip"
+                    android:layout_marginStart="8dip"
+                    android:layout_marginEnd="8dip"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:id="@+id/favoritesCount"
+                        style="@style/ListTextSecondaryDark"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textStyle="bold"
+                        android:textSize="12sp"
+                        android:layout_marginEnd="5dip"/>
+
+                    <TextView
+                        android:id="@+id/favoritesLabel"
+                        style="@style/ListTextSecondary"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textSize="12sp"/>
+                </LinearLayout>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:background="#DDDDDD"/>
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginEnd="16dip"
+                android:gravity="start">
+
+                <ImageView
+                    android:id="@+id/favoriteIcon"
+                    android:layout_width="56dip"
+                    android:layout_height="44dip"
+                    android:paddingTop="10dip"
+                    android:paddingBottom="10dip"
+                    android:paddingStart="16dp"
+                    android:paddingEnd="16dip"
+                    android:clickable="true"
+                    android:src="@drawable/ic_favorite_gray_24dp"/>
+
+                <ImageView
+                    android:id="@+id/shareIcon"
+                    android:layout_width="56dip"
+                    android:layout_height="44dip"
+                    android:paddingTop="10dip"
+                    android:paddingBottom="10dip"
+                    android:paddingStart="16dp"
+                    android:paddingEnd="16dp"
+                    android:clickable="true"
+                    android:src="@drawable/share_button"/>
+
+            </LinearLayout>
 
             <LinearLayout
                 android:id="@+id/important"
@@ -179,7 +255,6 @@
                 android:id="@+id/addImportant"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginEnd="12dip"
                 android:orientation="vertical"
                 android:visibility="gone">
 
@@ -255,83 +330,6 @@
 
             </LinearLayout>
 
-            <View
-                android:id="@+id/importantDivider"
-                android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:background="#DDDDDD"
-                android:visibility="gone"/>
-
-            <LinearLayout
-                android:id="@+id/favorites"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="8dip"
-                android:layout_marginEnd="8dip"
-                android:orientation="vertical"
-                android:clickable="true">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="16dip"
-                    android:layout_marginBottom="16dip"
-                    android:orientation="horizontal">
-
-                    <TextView
-                        android:id="@+id/favoritesCount"
-                        style="@style/ListTextSecondaryDark"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:textStyle="bold"
-                        android:textSize="12sp"
-                        android:layout_marginEnd="5dip"/>
-
-                    <TextView
-                        android:id="@+id/favoritesLabel"
-                        style="@style/ListTextSecondary"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:textSize="12sp"/>
-                </LinearLayout>
-
-                <View
-                    android:layout_width="match_parent"
-                    android:layout_height="1dp"
-                    android:background="#DDDDDD"/>
-
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginEnd="16dip"
-                android:gravity="start">
-
-                <ImageView
-                    android:id="@+id/favoriteIcon"
-                    android:layout_width="56dip"
-                    android:layout_height="44dip"
-                    android:paddingTop="10dip"
-                    android:paddingBottom="10dip"
-                    android:paddingStart="16dp"
-                    android:paddingEnd="16dip"
-                    android:clickable="true"
-                    android:src="@drawable/ic_favorite_gray_24dp"/>
-
-                <ImageView
-                    android:id="@+id/shareIcon"
-                    android:layout_width="56dip"
-                    android:layout_height="44dip"
-                    android:paddingTop="10dip"
-                    android:paddingBottom="10dip"
-                    android:paddingStart="16dp"
-                    android:paddingEnd="16dp"
-                    android:clickable="true"
-                    android:src="@drawable/share_button"/>
-
-            </LinearLayout>
 
             <View
                 android:layout_width="match_parent"
