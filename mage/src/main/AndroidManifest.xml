@@ -150,6 +150,9 @@
         <activity android:name=".profile.ProfileActivity" />
         <activity android:name=".observation.LocationEditActivity" />
         <activity
+            android:name=".observation.SelectEditActivity"
+            android:windowSoftInputMode="stateHidden"/>
+        <activity
             android:name=".people.PeopleActivity"
             android:label="Favorited by"
             android:launchMode="singleTop"
