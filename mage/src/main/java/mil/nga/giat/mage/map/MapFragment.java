@@ -105,9 +105,7 @@ import mil.nga.giat.mage.MAGE;
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.event.EventBannerFragment;
 import mil.nga.giat.mage.filter.DateTimeFilter;
-import mil.nga.giat.mage.filter.FavoriteFilter;
 import mil.nga.giat.mage.filter.Filter;
-import mil.nga.giat.mage.filter.ImportantFilter;
 import mil.nga.giat.mage.map.GoogleMapWrapper.OnMapPanListener;
 import mil.nga.giat.mage.map.cache.CacheOverlay;
 import mil.nga.giat.mage.map.cache.CacheOverlayType;
@@ -282,11 +280,6 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 
 			staticGeometryCollection = new StaticGeometryCollection();
 
-			observations = new ObservationMarkerCollection(getActivity(), map);
-			ObservationLoadTask observationLoad = new ObservationLoadTask(getActivity(), observations);
-			observationLoad.addFilter(getTemporalFilter("last_modified"));
-			observationLoad.executeOnExecutor(executor);
-
 			locations = new LocationMarkerCollection(getActivity(), map);
 			LocationLoadTask locationLoad = new LocationLoadTask(getActivity(), locations);
 			locationLoad.setFilter(getTemporalFilter("timestamp"));
@@ -299,6 +292,15 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 			ObservationHelper.getInstance(getActivity().getApplicationContext()).addListener(this);
 			LocationHelper.getInstance(getActivity().getApplicationContext()).addListener(this);
 		}
+
+		if (observations != null) {
+			observations.clear();
+		}
+
+		observations = new ObservationMarkerCollection(getActivity(), map);
+		ObservationLoadTask observationLoad = new ObservationLoadTask(getActivity(), observations);
+		observationLoad.addFilter(getTemporalFilter("last_modified"));
+		observationLoad.executeOnExecutor(executor);
 
 		updateMapView();
 
@@ -1290,28 +1292,6 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 			Date end = null;
 
 			filter = new DateTimeFilter(start, end, columnName);
-		}
-
-		return filter;
-	}
-
-	private Filter<Observation> getImportantFilter() {
-		Filter<Observation> filter = null;
-
-		boolean important = preferences.getBoolean(getResources().getString(R.string.activeImportantFilterKey), false);
-		if (important) {
-			filter = new ImportantFilter(getActivity());
-		}
-
-		return filter;
-	}
-
-	private Filter<Observation> getFavoriteFilter() {
-		Filter<Observation> filter = null;
-
-		boolean important = preferences.getBoolean(getResources().getString(R.string.activeFavoritesFilterKey), false);
-		if (important) {
-			filter = new FavoriteFilter(getActivity());
 		}
 
 		return filter;
