@@ -312,7 +312,7 @@
                         style="?android:attr/buttonStyleSmall"
                         android:background="?android:attr/selectableItemBackground"
                         android:gravity="center"
-                        android:text="UPDATE FLAG"
+                        android:text="UPDATE"
                         android:textColor="#1B4069"
                         android:onClick="onUpdateImportantClick"/>
 
@@ -322,7 +322,7 @@
                         style="?android:attr/buttonStyleSmall"
                         android:background="?android:attr/selectableItemBackground"
                         android:gravity="center"
-                        android:text="REMOVE FLAG"
+                        android:text="REMOVE"
                         android:textColor="#F44336"
                         android:onClick="onRemoveImportantClick"/>
                 </LinearLayout>
