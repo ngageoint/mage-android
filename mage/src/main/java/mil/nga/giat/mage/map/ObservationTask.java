@@ -49,12 +49,11 @@ public class ObservationTask extends AsyncTask<Observation, Observation, Void> {
     @Override
     protected Void doInBackground(Observation... observations) {
         for (Observation o : observations) {
-
             boolean passesFilter = true;
             for (Filter filter : filters) {
                 passesFilter = filter.passesFilter(o);
                 if (!passesFilter) {
-                    continue;
+                    break;
                 }
             }
 
