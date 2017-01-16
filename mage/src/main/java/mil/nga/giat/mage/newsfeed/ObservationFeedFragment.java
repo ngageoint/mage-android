@@ -90,6 +90,7 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 	private User currentUser;
 	private LocationService locationService;
     private AttachmentGallery attachmentGallery;
+	private EventBannerFragment eventBannerFragment;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -122,7 +123,8 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
         });
 
 		FragmentManager fragmentManager = getChildFragmentManager();
-		fragmentManager.beginTransaction().add(R.id.news_feed_event_holder, new EventBannerFragment()).commit();
+		eventBannerFragment = new EventBannerFragment();
+		fragmentManager.beginTransaction().add(R.id.news_feed_event_holder, eventBannerFragment).commit();
 
 		lv = (ListView) rootView.findViewById(R.id.news_feed_list);
 		footer = (ViewGroup) inflater.inflate(R.layout.feed_footer, lv, false);
@@ -421,10 +423,10 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 	public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
 		if (getResources().getString(R.string.activeTimeFilterKey).equalsIgnoreCase(key)) {
 			updateFilter();
-		} else if (getResources().getString(R.string.activeFavoritesFilterKey).equalsIgnoreCase(key)) {
+		} else if (getResources().getString(R.string.activeFavoritesFilterKey).equalsIgnoreCase(key) ||
+				   getResources().getString(R.string.activeImportantFilterKey).equalsIgnoreCase(key)) {
 			updateFilter();
-		} else if (getResources().getString(R.string.activeImportantFilterKey).equalsIgnoreCase(key)) {
-			updateFilter();
+			eventBannerFragment.refresh();
 		}
 	}
 

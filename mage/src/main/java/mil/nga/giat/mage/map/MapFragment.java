@@ -183,12 +183,15 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 
 	SharedPreferences preferences;
 
+	EventBannerFragment eventBannerFragment;
+
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 		View view = inflater.inflate(R.layout.fragment_map, container, false);
 
 		FragmentManager fragmentManager = getChildFragmentManager();
-		fragmentManager.beginTransaction().add(R.id.map_event_holder, new EventBannerFragment()).commit();
+		eventBannerFragment = new EventBannerFragment();
+		fragmentManager.beginTransaction().add(R.id.map_event_holder, eventBannerFragment).commit();
 
 		setHasOptionsMenu(true);
 
@@ -1257,6 +1260,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 			observationLoad.executeOnExecutor(executor);
 
 			getActivity().getActionBar().setTitle(getTemporalFilterTitle());
+			eventBannerFragment.refresh();
 		}
 	}
 
