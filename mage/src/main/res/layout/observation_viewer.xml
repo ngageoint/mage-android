@@ -174,17 +174,6 @@
                     android:clickable="true"
                     android:src="@drawable/ic_favorite_gray_24dp"/>
 
-                <ImageView
-                    android:id="@+id/shareIcon"
-                    android:layout_width="56dip"
-                    android:layout_height="44dip"
-                    android:paddingTop="10dip"
-                    android:paddingBottom="10dip"
-                    android:paddingStart="16dp"
-                    android:paddingEnd="16dp"
-                    android:clickable="true"
-                    android:src="@drawable/share_button"/>
-
             </LinearLayout>
 
             <LinearLayout

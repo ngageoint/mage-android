@@ -217,13 +217,6 @@ public class ObservationViewActivity extends Activity implements OnMapReadyCallb
 						onFavoritesClick(o.getFavorites());
 					}
 				});
-
-				findViewById(R.id.shareIcon).setOnClickListener(new View.OnClickListener() {
-					@Override
-					public void onClick(View v) {
-						share(o);
-					}
-				});
 			}
 
 			o = ObservationHelper.getInstance(getApplicationContext()).read(getIntent().getLongExtra(OBSERVATION_ID, 0L));
