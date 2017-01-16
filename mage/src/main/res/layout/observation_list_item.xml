@@ -131,17 +131,6 @@
 
             </LinearLayout>
 
-            <ImageView
-                android:id="@+id/share"
-                android:layout_width="72dip"
-                android:layout_height="68dip"
-                android:paddingTop="24dip"
-                android:paddingBottom="20dip"
-                android:paddingStart="24dp"
-                android:paddingEnd="24dp"
-                android:clickable="true"
-                android:src="@drawable/share_button"/>
-
         </LinearLayout>
 
     </LinearLayout>

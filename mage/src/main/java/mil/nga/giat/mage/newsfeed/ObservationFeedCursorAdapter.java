@@ -146,15 +146,6 @@ public class ObservationFeedCursorAdapter extends CursorAdapter {
 			});
 			setFavoriteImage(observation.getFavorites(), favorite, isFavorite(observation));
 
-			v.findViewById(R.id.share).setOnClickListener(new View.OnClickListener() {
-				@Override
-				public void onClick(View v) {
-					if (observationShareListener != null) {
-						observationShareListener.onObservationShare(observation);
-					}
-				}
-			});
-
 		} catch (java.sql.SQLException e) {
 			Log.e(LOG_NAME, "Problem getting observation.", e);
 		}

@@ -217,13 +217,6 @@ public class ObservationViewActivity extends Activity implements OnMapReadyCallb
 						onFavoritesClick(o.getFavorites());
 					}
 				});
-
-				findViewById(R.id.shareIcon).setOnClickListener(new View.OnClickListener() {
-					@Override
-					public void onClick(View v) {
-						share(o);
-					}
-				});
 			}
 
 			o = ObservationHelper.getInstance(getApplicationContext()).read(getIntent().getLongExtra(OBSERVATION_ID, 0L));
@@ -332,7 +325,6 @@ public class ObservationViewActivity extends Activity implements OnMapReadyCallb
 		View imporantView = findViewById(R.id.important);
 		if (isImportant) {
 			imporantView.setVisibility(View.VISIBLE);
-			findViewById(R.id.importantDivider).setVisibility(View.VISIBLE);
 
 			String displayName = "Unknown user";
 			try {
@@ -353,12 +345,10 @@ public class ObservationViewActivity extends Activity implements OnMapReadyCallb
 
 			findViewById(R.id.addImportant).setVisibility(View.GONE);
 			findViewById(R.id.importantActions).setVisibility(canEdit ? View.VISIBLE : View.GONE);
-			findViewById(R.id.importantDivider).setVisibility(canEdit ? View.VISIBLE : View.GONE);
 		} else {
 			imporantView.setVisibility(View.GONE);
 			findViewById(R.id.importantActions).setVisibility(View.GONE);
 			findViewById(R.id.addImportant).setVisibility(canEdit ? View.VISIBLE : View.GONE);
-			findViewById(R.id.importantDivider).setVisibility(canEdit ? View.VISIBLE : View.GONE);
 		}
 	}
 

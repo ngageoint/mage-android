@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="mil.nga.giat.mage"
-    android:versionCode="22"
+    android:versionCode="24"
     android:versionName="5.2.0">
 
     <permission
@@ -149,6 +149,9 @@
         <activity android:name=".profile.ProfilePictureViewerActivity" />
         <activity android:name=".profile.ProfileActivity" />
         <activity android:name=".observation.LocationEditActivity" />
+        <activity
+            android:name=".observation.SelectEditActivity"
+            android:windowSoftInputMode="stateHidden"/>
         <activity
             android:name=".people.PeopleActivity"
             android:label="Favorited by"
