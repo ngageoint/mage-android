@@ -23,6 +23,8 @@ import mil.nga.giat.mage.sdk.utils.MediaUtility;
  */
 public class DownloadImageTask extends AsyncTask<Void, Void, Void> {
 
+	private int MAX_DIMENSION = 1024;
+
 	public enum ImageType {
 		AVATAR,
 		ICON
@@ -92,18 +94,14 @@ public class DownloadImageTask extends AsyncTask<Void, Void, Void> {
 
 			Log.d(LOG_NAME, "Downloading icon for user " + user.getDisplayName() + " and saving to " + localFile + ".");
 
-			int imageWidth = Integer.MAX_VALUE;
-			int imageHeight = Integer.MAX_VALUE;
 			InputStream in = null;
 
+			BitmapFactory.Options bitmapOptions = new BitmapFactory.Options();
 			try {
 				in = imageType == ImageType.AVATAR ? userResource.getAvatar(user) : userResource.getIcon(user);
 
-				BitmapFactory.Options bitmapOptions = new BitmapFactory.Options();
 				bitmapOptions.inJustDecodeBounds = true;
 				BitmapFactory.decodeStream(in, null, bitmapOptions);
-				imageWidth = bitmapOptions.outWidth;
-				imageHeight = bitmapOptions.outHeight;
 			} catch (Exception e) {
 				Log.e(LOG_NAME, e.getMessage(), e);
 				continue;
@@ -117,44 +115,42 @@ public class DownloadImageTask extends AsyncTask<Void, Void, Void> {
 				}
 			}
 
-			if (Math.max(imageWidth, imageHeight) <= 1024) {
-				FileOutputStream out = null;
-				try {
-					in = imageType == ImageType.AVATAR ? userResource.getAvatar(user) : userResource.getIcon(user);
-					Bitmap image = BitmapFactory.decodeStream(in);
+			FileOutputStream out = null;
+			try {
+				bitmapOptions.inJustDecodeBounds = false;
+				bitmapOptions.inSampleSize = calculateInSampleSize(bitmapOptions);;
+				in = imageType == ImageType.AVATAR ? userResource.getAvatar(user) : userResource.getIcon(user);
+				Bitmap image = BitmapFactory.decodeStream(in, null, bitmapOptions);
 
-					out = new FileOutputStream(localFile);
-					image.compress(Bitmap.CompressFormat.PNG, 90, out);
+				out = new FileOutputStream(localFile);
+				image.compress(Bitmap.CompressFormat.PNG, 90, out);
 
-					switch (imageType) {
-						case AVATAR:
-							userHelper.setAvatarPath(user, newLocalFilePath);
-							break;
-						case ICON:
-							userHelper.setIconPath(user, newLocalFilePath);
-							break;
-					}
-
-				} catch (Exception e) {
-					Log.e(LOG_NAME, "Problem downloading image.");
-				} finally {
-					try {
-						if (in != null) {
-							in.close();
-						}
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
-					try {
-						if (out != null) {
-							out.close();
-						}
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
+				switch (imageType) {
+					case AVATAR:
+						userHelper.setAvatarPath(user, newLocalFilePath);
+						break;
+					case ICON:
+						userHelper.setIconPath(user, newLocalFilePath);
+						break;
 				}
-			} else {
-				Log.w(LOG_NAME, "User '" + user.getDisplayName() + "' avatar was too big to download.  Skipping.");
+
+			} catch (Exception e) {
+				Log.e(LOG_NAME, "Problem downloading image.");
+			} finally {
+				try {
+					if (in != null) {
+						in.close();
+					}
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+				try {
+					if (out != null) {
+						out.close();
+					}
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
 			}
 		}
 
@@ -166,6 +162,23 @@ public class DownloadImageTask extends AsyncTask<Void, Void, Void> {
 		if (listener != null) {
 			listener.complete();
 		}
+	}
+
+	private int calculateInSampleSize(BitmapFactory.Options options) {
+		// Raw height and width of image
+		final int height = options.outHeight;
+		final int width = options.outWidth;
+		int inSampleSize = 1;
+
+		if (height > MAX_DIMENSION || width > MAX_DIMENSION) {
+			// Calculate the largest inSampleSize value that is a power of 2 and will ensure
+			// height and width is smaller than the max image we can process
+			while ((height / inSampleSize) >= MAX_DIMENSION && (height / inSampleSize) >= MAX_DIMENSION) {
+				inSampleSize *= 2;
+			}
+		}
+
+		return inSampleSize;
 	}
 
 }
