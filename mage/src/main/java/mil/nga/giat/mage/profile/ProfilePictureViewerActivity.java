@@ -1,6 +1,7 @@
 package mil.nga.giat.mage.profile;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Intent;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
@@ -18,6 +19,7 @@ import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.datastore.user.UserLocal;
+import mil.nga.giat.mage.sdk.exceptions.UserException;
 import mil.nga.giat.mage.sdk.fetch.DownloadImageTask;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
 
@@ -51,8 +53,25 @@ public class ProfilePictureViewerActivity extends Activity {
 						new DownloadImageTask(getApplicationContext(), Collections.singletonList(user), DownloadImageTask.ImageType.AVATAR, false, new DownloadImageTask.OnImageDownloadListener() {
 							@Override
 							public void complete() {
-								File f = new File(userLocal.getLocalAvatarPath());
-								setProfilePicture(f, imageView);
+								try {
+									User updatedUser = UserHelper.getInstance(getApplicationContext()).read(user.getId());
+									String avatarPath = updatedUser.getUserLocal().getLocalAvatarPath();
+									if (avatarPath != null) {
+										File f = new File(avatarPath);
+										setProfilePicture(f, imageView);
+									} else {
+										new AlertDialog.Builder(ProfilePictureViewerActivity.this, R.style.AppCompatAlertDialogStyle)
+												.setTitle("Error Downloading Avatar")
+												.setMessage("MAGE could not download this users avatar.  Please try again later.")
+												.setPositiveButton(android.R.string.ok, null)
+												.create()
+												.show();
+									}
+								} catch (UserException e) {
+									e.printStackTrace();
+								}
+
+
 							}
 						}).execute();
 					}

@@ -156,8 +156,6 @@ public class ProfileFragment extends Fragment implements OnMapReadyCallback, OnC
 		mapView.onCreate(savedInstanceState);
 		mapView.getMapAsync(this);
 
-		final Long userId = user.getId();
-
 		final String displayName = user.getDisplayName();
 		getActivity().getActionBar().setTitle(user.equals(currentUser) ? "My Profile" : displayName);
 
@@ -245,10 +243,9 @@ public class ProfileFragment extends Fragment implements OnMapReadyCallback, OnC
 			emailTextView.setVisibility(View.GONE);
 		}
 
-		final UserLocal userLocal = user.getUserLocal();
 		final ImageView imageView = (ImageView)rootView.findViewById(R.id.profile_picture);
 		String avatarUrl = user.getAvatarUrl();
-		String localAvatarPath = userLocal.getLocalAvatarPath();
+		String localAvatarPath = user.getUserLocal().getLocalAvatarPath();
 
 		if(StringUtils.isNotBlank(localAvatarPath)) {
 			Glide.with(context)
@@ -268,18 +265,25 @@ public class ProfileFragment extends Fragment implements OnMapReadyCallback, OnC
 				new DownloadImageTask(context, Collections.singletonList(user), DownloadImageTask.ImageType.AVATAR, false, new DownloadImageTask.OnImageDownloadListener() {
 					@Override
 					public void complete() {
-						Glide.with(context)
-								.load(userLocal.getLocalAvatarPath())
-								.asBitmap()
-								.centerCrop()
-								.into(new BitmapImageViewTarget(imageView) {
-									@Override
-									protected void setResource(Bitmap resource) {
-										RoundedBitmapDrawable circularBitmapDrawable = RoundedBitmapDrawableFactory.create(context.getResources(), resource);
-										circularBitmapDrawable.setCircular(true);
-										imageView.setImageDrawable(circularBitmapDrawable);
-									}
-								});
+						try {
+							user = UserHelper.getInstance(context).read(user.getId());
+							UserLocal userLocal = user.getUserLocal();
+							if (userLocal.getLocalAvatarPath() != null) {
+								Glide.with(context)
+										.load(userLocal.getLocalAvatarPath())
+										.asBitmap()
+										.centerCrop()
+										.into(new BitmapImageViewTarget(imageView) {
+											@Override
+											protected void setResource(Bitmap resource) {
+												RoundedBitmapDrawable circularBitmapDrawable = RoundedBitmapDrawableFactory.create(context.getResources(), resource);
+												circularBitmapDrawable.setCircular(true);
+												imageView.setImageDrawable(circularBitmapDrawable);
+											}
+										});
+							}
+						} catch (UserException e) {
+						}
 					}
 				}).execute();
 			}
