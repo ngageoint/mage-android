@@ -3,18 +3,20 @@
                   android:title="Data Fetching">
 
     <PreferenceCategory android:title="DATA FETCH FREQUENCY">
-        <mil.nga.giat.mage.sdk.preferences.IntegerListValuePreference
+        <mil.nga.giat.mage.sdk.preferences.IntegerListPreference
             android:defaultValue="@integer/userFetchFrequencyDefaultValue"
             android:entries="@array/userFetchFrequencies"
             android:entryValues="@array/userFetchFrequencyValues"
             android:key="@string/userFetchFrequencyKey"
-            android:title="Users"/>
-        <mil.nga.giat.mage.sdk.preferences.IntegerListValuePreference
+            android:title="Users"
+            android:summary="%s"/>
+        <mil.nga.giat.mage.sdk.preferences.IntegerListPreference
             android:defaultValue="@integer/observationFetchFrequencyDefaultValue"
             android:entries="@array/observationFetchFrequencies"
             android:entryValues="@array/observationFetchFrequencyValues"
             android:key="@string/observationFetchFrequencyKey"
-            android:title="Observations"/>
+            android:title="Observations"
+            android:summary="%s"/>
     </PreferenceCategory>
 
 </PreferenceScreen>

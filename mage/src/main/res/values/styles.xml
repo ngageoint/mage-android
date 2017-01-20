@@ -1,23 +1,65 @@
 <resources xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <!--
-        Base application theme, dependent on API level. This theme is replaced
-        by AppBaseTheme from res/values-vXX/styles.xml on newer devices.
-    -->
-    <style name="AppBaseTheme" parent="android:Theme.Holo.Light.DarkActionBar">
-        <!--
-            Theme customizations available in newer API levels can go in
-            res/values-vXX/styles.xml, while customizations related to
-            backward-compatibility can go here.
-        -->
+    <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
+        <item name="colorPrimary">@color/md_blue_600</item>
+        <item name="colorPrimaryDark">@color/md_blue_800</item>
+        <item name="colorAccent">@color/md_orange_A200</item>
+
+        <item name="preferenceTheme">@style/PreferenceThemeOverlay.v14.Material</item>
     </style>
 
-    <style name="AppBaseTheme.ActionBar.OverlayMap" parent="AppBaseTheme">
-        <item name="android:actionMenuTextColor">@drawable/overlay_actionbar_text</item>
+    <style name="AppTheme.NoActionBar">
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
     </style>
 
-    <!-- Application theme. -->
-    <style name="AppTheme" parent="AppBaseTheme">
+    <style name="AppTheme.Toolbar">
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+
+        <item name="android:actionOverflowButtonStyle">@style/AppTheme.Toolbar.Overflow</item>
+    </style>
+
+    <style name="AppTheme.Toolbar.Overflow" parent="Widget.AppCompat.ActionButton.Overflow">
+        <item name="android:tint">@color/md_white_1000</item>
+    </style>
+
+    <style name="AppTheme.PrimaryAccent">
+        <item name="colorAccent">@color/md_blue_600</item>
+    </style>
+
+    <style name="AppTheme.White">
+        <item name="colorControlNormal">#8AFFFFFF</item>
+        <item name="colorControlActivated">@color/md_white_1000</item>
+        <item name="editTextStyle">@style/AppTheme.EditTextStyle.White</item>
+    </style>
+
+    <style name="AppTheme.EditTextStyle.White" parent="@style/Widget.AppCompat.EditText">
+        <item name="android:textColor">@color/md_white_1000</item>
+    </style>
+
+    <style name="AppTheme.Radio">
+        <item name="colorControlActivated">?attr/colorPrimary</item>
+    </style>
+
+    <style name="AppTheme.SearchView" parent="Widget.AppCompat.Light.SearchView">
+        <item name="searchHintIcon">@null</item>
+    </style>
+
+    <style name="AppTheme.Radio.Light" parent="Theme.AppCompat.Light">
+        <item name="android:textColor">#FFFFFF</item>
+        <item name="colorControlNormal">#8AFFFFFF</item>
+        <item name="colorControlActivated">@color/md_white_1000</item>
+    </style>
+
+    <style name="AppTheme.AlternateButton" parent="Widget.AppCompat.Button">
+        <item name="android:tint">@color/md_blue_600</item>
+        <item name="colorAccent">@color/md_white_1000</item>
+    </style>
+
+    <style name="AppTheme.PrimaryButton" parent="Widget.AppCompat.Button">
+        <item name="android:tint">@color/md_white_1000</item>
+        <item name="colorAccent">@color/md_orange_A200</item>
     </style>
 
     <style name="ListSubheader">

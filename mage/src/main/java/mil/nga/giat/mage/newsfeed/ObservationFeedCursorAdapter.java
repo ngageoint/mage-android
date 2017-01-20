@@ -4,7 +4,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.database.Cursor;
 import android.graphics.Bitmap;
-import android.support.v4.content.res.ResourcesCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.widget.CursorAdapter;
 import android.text.format.DateUtils;
 import android.util.Log;
@@ -154,9 +154,9 @@ public class ObservationFeedCursorAdapter extends CursorAdapter {
 	private void setFavoriteImage(Collection<ObservationFavorite> favorites, View view, boolean isFavorite) {
 		ImageView favoriteIcon = (ImageView) view.findViewById(R.id.favoriteIcon);
 		if (isFavorite) {
-			favoriteIcon.setImageDrawable(ResourcesCompat.getDrawable(mContext.getResources(), R.drawable.ic_favorite_active_24dp, null));
+			favoriteIcon.setColorFilter(ContextCompat.getColor(mContext, R.color.observation_favorite_active));
 		} else {
-			favoriteIcon.setImageDrawable(ResourcesCompat.getDrawable(mContext.getResources(), R.drawable.ic_favorite_gray_24dp, null));
+			favoriteIcon.setColorFilter(ContextCompat.getColor(mContext, R.color.observation_favorite_inactive));
 		}
 
 		TextView favoriteCount = (TextView) view.findViewById(R.id.favoriteCount);

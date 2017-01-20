@@ -1,18 +1,71 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout
+<LinearLayout
     android:id="@+id/observation_edit"
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:mageForm="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:orientation="vertical">
 
-    <FrameLayout
-        android:id="@+id/observation_edit_event_holder"
+    <android.support.v7.widget.Toolbar
+        android:id="@+id/observation_actions"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"/>
+        android:layout_height="wrap_content"
+        android:background="@color/md_white_1000">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <ImageButton
+                android:id="@+id/voice_btn"
+                style="?android:attr/buttonBarButtonStyle"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:contentDescription="voice"
+                android:onClick="onAudioClick"
+                android:tint="#8AFFFFFF"
+                android:src="@drawable/ic_mic_black_24dp"/>
+
+            <ImageButton
+                android:id="@+id/camera_btn"
+                style="?android:attr/buttonBarButtonStyle"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:onClick="onCameraClick"
+                android:tint="#8AFFFFFF"
+                android:src="@drawable/ic_photo_camera_black_24dp"
+                android:text="camera"/>
+
+            <ImageButton
+                android:id="@+id/video_btn"
+                style="?android:attr/buttonBarButtonStyle"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:onClick="onVideoClick"
+                android:tint="#8AFFFFFF"
+                android:src="@drawable/ic_videocam_black_24dp"/>
+
+            <ImageButton
+                android:id="@+id/from_gallery_btn"
+                style="?android:attr/buttonBarButtonStyle"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:onClick="onGalleryClick"
+                android:tint="#8AFFFFFF"
+                android:src="@drawable/ic_image_black_24dp"/>
+        </LinearLayout>
+
+
+    </android.support.v7.widget.Toolbar>
 
     <RelativeLayout
-        android:layout_below="@id/observation_edit_event_holder"
+        android:layout_below="@id/observation_actions"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
@@ -27,52 +80,6 @@
             android:layout_height="fill_parent"
             android:background="@drawable/semi_see_through_background"
             android:orientation="vertical">
-
-            <LinearLayout
-                style="?android:attr/buttonBarStyle"
-                android:layout_width="fill_parent"
-                android:layout_height="wrap_content"
-                android:background="@drawable/semi_see_through_background"
-                android:orientation="horizontal">
-
-                <ImageButton
-                    android:id="@+id/voice_btn"
-                    style="?android:attr/buttonBarButtonStyle"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:contentDescription="voice"
-                    android:onClick="onAudioClick"
-                    android:src="@drawable/ic_mic_gray_24dp"/>
-
-                <ImageButton
-                    android:id="@+id/camera_btn"
-                    style="?android:attr/buttonBarButtonStyle"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:onClick="onCameraClick"
-                    android:src="@drawable/ic_photo_camera_gray_24dp"
-                    android:text="camera"/>
-
-                <ImageButton
-                    android:id="@+id/video_btn"
-                    style="?android:attr/buttonBarButtonStyle"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:onClick="onVideoClick"
-                    android:src="@drawable/ic_videocam_gray_24dp"/>
-
-                <ImageButton
-                    android:id="@+id/from_gallery_btn"
-                    style="?android:attr/buttonBarButtonStyle"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:onClick="onGalleryClick"
-                    android:src="@drawable/ic_image_gray_24dp"/>
-            </LinearLayout>
 
             <ScrollView
                 android:id="@+id/properties"
@@ -117,7 +124,8 @@
                                 android:layout_width="18dip"
                                 android:layout_height="18dip"
                                 android:layout_gravity="center_vertical"
-                                android:src="@drawable/ic_mode_edit_gray_24dp"/>
+                                android:tint="#8AFFFFFF"
+                                android:src="@drawable/ic_mode_edit_black_24dp"/>
 
                             <mil.nga.giat.mage.form.MageTextView
                                 android:id="@+id/date"
@@ -144,7 +152,8 @@
                                 android:layout_width="18dip"
                                 android:layout_height="18dip"
                                 android:layout_gravity="center_vertical"
-                                android:src="@drawable/ic_mode_edit_gray_24dp"/>
+                                android:tint="#8AFFFFFF"
+                                android:src="@drawable/ic_mode_edit_black_24dp"/>
 
                             <TextView
                                 android:id="@+id/location"
@@ -202,4 +211,4 @@
             </ScrollView>
         </LinearLayout>
     </RelativeLayout>
-</RelativeLayout>
+</LinearLayout>

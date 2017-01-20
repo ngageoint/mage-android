@@ -1,40 +1,39 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
-    <mil.nga.giat.mage.sdk.preferences.PreferenceScreenSwitch
-        android:defaultValue="@bool/locationServiceEnabledDefaultValue"
-        android:key="@string/locationServiceEnabledKey"
+    <Preference
         android:summary="@string/location_services_enabled_summary"
-        android:title="Location Services">
+        android:title="Location Services"
+        android:key="@string/locationServiceEnabledKey">
         <intent
             android:action="android.intent.action.VIEW"
             android:targetClass="mil.nga.giat.mage.preferences.LocationPreferencesActivity"
             android:targetPackage="mil.nga.giat.mage"/>
-    </mil.nga.giat.mage.sdk.preferences.PreferenceScreenSwitch>
-    <mil.nga.giat.mage.sdk.preferences.PreferenceScreenSwitch
+    </Preference>
+    <Preference
         android:defaultValue="@bool/dataFetchEnabledDefaultValue"
         android:key="@string/dataFetchEnabledKey"
-        android:summary="User and Observation fetching options"
+        android:summary="Click to configure user and observation fetching options"
         android:title="Data Fetching">
         <intent
             android:action="android.intent.action.VIEW"
             android:targetClass="mil.nga.giat.mage.preferences.FetchPreferencesActivity"
             android:targetPackage="mil.nga.giat.mage"/>
-    </mil.nga.giat.mage.sdk.preferences.PreferenceScreenSwitch>
-    <mil.nga.giat.mage.sdk.preferences.PreferenceScreenSwitch
+    </Preference>
+    <android.support.v7.preference.SwitchPreferenceCompat
         android:defaultValue="@bool/notificationsEnabledDefaultValue"
         android:key="@string/notificationsEnabledKey"
-        android:summary="Receive notifications when new observations are loaded"
+        android:summary="Receive notifications for new observations"
         android:title="Notifications">
-    </mil.nga.giat.mage.sdk.preferences.PreferenceScreenSwitch>
+    </android.support.v7.preference.SwitchPreferenceCompat>
     <PreferenceCategory
         android:title="MEDIA">
-        <mil.nga.giat.mage.sdk.preferences.IntegerListValuePreference
+        <mil.nga.giat.mage.sdk.preferences.IntegerListPreference
             android:defaultValue="@integer/imageUploadSizeDefaultValue"
             android:entries="@array/imageUploadSize"
             android:entryValues="@array/imageUploadSizeValues"
             android:key="@string/imageUploadSizeKey"
-            android:summary="Automatically scale down the images you upload"
-            android:title="Image Upload Size"/>
+            android:summary="%s"
+            android:title="Image Attachment Upload Size"/>
     </PreferenceCategory>
     <PreferenceCategory
         android:title="WEARABLE">
@@ -64,11 +63,6 @@
             android:title="Name"
             android:summary="%s"/>
         <mil.nga.giat.mage.sdk.preferences.EditTextSummaryPreference
-            android:key="@string/currentEventKey"
-            android:selectable="false"
-            android:title="Current Event"
-            android:summary="%s"/>
-        <mil.nga.giat.mage.sdk.preferences.EditTextSummaryPreference
             android:key="@string/buildVersionKey"
             android:selectable="false"
             android:title="MAGE App Version"
@@ -76,17 +70,14 @@
     </PreferenceCategory>
     <PreferenceCategory
         android:title="ADMIN">
-        <mil.nga.giat.mage.preferences.DialogPreference
+        <Preference
             android:key="@string/clearDataKey"
-            android:defaultValue="@array/empty_array"
-            android:entries="@array/clearDataEntries"
-            android:entryValues="@array/clearDataValues"
             android:title="Clear Data">
             <intent
                 android:action="android.intent.action.VIEW"
                 android:targetClass="mil.nga.giat.mage.preferences.ClearDataPreferenceActivity"
                 android:targetPackage="mil.nga.giat.mage"/>
-            </mil.nga.giat.mage.preferences.DialogPreference>
+        </Preference>
     </PreferenceCategory>
 
 </PreferenceScreen>

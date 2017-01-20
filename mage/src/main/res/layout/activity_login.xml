@@ -9,9 +9,9 @@
 
     <RelativeLayout
         android:layout_width="fill_parent"
-        android:layout_height="fill_parent"
+        android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:background="@drawable/mage_gradient" >
+        android:background="?attr/colorPrimary" >
 
         <include
             android:id="@+id/login_header"
@@ -76,7 +76,7 @@
                     android:layout_height="wrap_content"
                     android:gravity="center"
                     android:text="MAGE server URL not set, click here to change."
-                    android:textColor="#AAAAAA"
+                    android:textColor="#A8FFFFFF"
                     android:textSize="20sp" />
 
             </LinearLayout>
@@ -105,9 +105,10 @@
                     android:layout_width="fill_parent"
                     android:layout_height="wrap_content"
                     android:text="Sign in with Google"
-                    android:background="@drawable/common_plus_signin_btn_text_light_normal"
-                    android:textColor="#dd4b39"
-                    android:fontFamily="sans-serif-medium"/>
+                    android:background="@drawable/common_google_signin_btn_text_light"
+                    android:textColor="#8A000000"
+                    android:textAlignment="gravity"
+                    android:gravity="center" />
 
             </LinearLayout>
 
@@ -123,7 +124,7 @@
                 <View
                     android:layout_width="0dip"
                     android:layout_height="1dp"
-                    android:background="@android:color/darker_gray"
+                    android:background="#A8FFFFFF"
                     android:layout_weight=".5"
                     android:layout_marginTop="10dip"/>
 
@@ -132,13 +133,13 @@
                     android:layout_height="wrap_content"
                     android:gravity="center"
                     android:text="or"
-                    android:textColor="@android:color/darker_gray"
+                    android:textColor="#A8FFFFFF"
                     android:layout_weight=".15" />
 
                 <View
                     android:layout_width="0dip"
                     android:layout_height="1dp"
-                    android:background="@android:color/darker_gray"
+                    android:background="#A8FFFFFF"
                     android:layout_weight=".5"
                     android:layout_marginTop="10dip"/>
 
@@ -157,34 +158,47 @@
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="7dip"
                     android:layout_marginTop="7dip"
-                    android:background="@drawable/form_field"
                     android:hint="Username"
-                    android:fontFamily="sans-serif"
-                    android:textColorHint="#CCCCCC"
                     android:imeOptions="actionNext"
                     android:inputType="textVisiblePassword|textNoSuggestions"
-                    android:singleLine="true" />
+                    android:maxLines="1"
+                    android:theme="@style/AppTheme.White"/>
 
-                <EditText
-                    android:id="@+id/login_password"
-                    android:layout_width="fill_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="7dip"
-                    android:layout_marginTop="7dip"
-                    android:background="@drawable/form_field"
-                    android:hint="Password"
-                    android:fontFamily="sans-serif"
-                    android:textColorHint="#CCCCCC"
-                    android:inputType="textPassword"
-                    android:imeActionLabel="Log In"
-                    android:singleLine="true" />
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
 
-                <CheckBox
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:onClick="togglePassword"
-                    android:text="Show Password"
-                    android:textColor="#EEEEEE" />
+                    <EditText
+                        android:id="@+id/login_password"
+                        android:layout_width="fill_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="7dip"
+                        android:layout_marginTop="7dip"
+                        android:hint="Password"
+                        android:inputType="textPassword"
+                        android:imeActionLabel="Log In"
+                        android:maxLines="1"
+                        android:theme="@style/AppTheme.White" />
+
+                    <TextView
+                        android:id="@+id/toggle_password"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentEnd="true"
+                        android:layout_centerInParent="true"
+                        android:layout_marginEnd="2dp"
+                        android:paddingTop="15dp"
+                        android:paddingBottom="15dp"
+                        android:paddingEnd="2dp"
+                        android:textColor="@color/md_white_1000"
+                        android:textSize="12dip"
+                        android:text="SHOW"
+                        android:textStyle="bold|italic"
+                        android:clickable="true"
+                        android:visibility="gone">
+                    </TextView>
+
+                </RelativeLayout>
 
                 <!-- Login button -->
                 <Button
@@ -194,8 +208,8 @@
                     android:layout_marginTop="10dip"
                     android:background="@drawable/login_button_states"
                     android:text="Log In"
-                    android:textColor="#EEEEEE"
-                    android:fontFamily="sans-serif-medium"/>
+                    android:enabled="false"
+                    android:textColor="#EEEEEE" />
 
             </LinearLayout>
 
@@ -219,54 +233,52 @@
                     android:textSize="20sp" />
             </LinearLayout>
 
-            <LinearLayout
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dip"
+            android:layout_alignParentBottom="true"
+            android:orientation="vertical">
+
+            <RelativeLayout
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_marginTop="40dip"
-                android:layout_marginBottom="7dip"
-                android:layout_alignParentBottom="true"
-                android:orientation="vertical">
-
-
-                <RelativeLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content">
-
-                    <TextView
-                        android:id="@+id/server_url"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:gravity="center"
-                        android:textColor="#AAAAAA"
-                        android:textSize="13sp"
-                        android:clickable="true"
-                        android:onClick="changeServerURL"/>
-
-                    <TextView
-                        android:id="@+id/error_url"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_alignParentEnd="true"
-                        android:textColor="#AAAAAA"
-                        android:textSize="13sp"
-                        android:focusable="true"
-                        android:focusableInTouchMode="true"
-                        android:clickable="true" />
-
-                </RelativeLayout>
+                android:layout_height="wrap_content">
 
                 <TextView
-                    android:id="@+id/login_version"
-                    android:layout_width="fill_parent"
+                    android:id="@+id/server_url"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:clickable="false"
                     android:gravity="center"
-                    android:textColor="#AAAAAA"
-                    android:textSize="11dp"
-                    android:text="App Version: 5.0.1"/>
+                    android:textColor="#8AFFFFFF"
+                    android:textSize="13sp"
+                    android:clickable="true"
+                    android:onClick="changeServerURL"/>
 
+                <TextView
+                    android:id="@+id/error_url"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentEnd="true"
+                    android:textColor="#8AFFFFFF"
+                    android:textSize="13sp"
+                    android:focusable="true"
+                    android:focusableInTouchMode="true"
+                    android:clickable="true" />
 
-            </LinearLayout>
+            </RelativeLayout>
+
+            <TextView
+                android:id="@+id/login_version"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:clickable="false"
+                android:gravity="center"
+                android:textColor="#8AFFFFFF"
+                android:textSize="11dp"
+                android:text="App Version: 5.0.1"/>
 
         </LinearLayout>
 

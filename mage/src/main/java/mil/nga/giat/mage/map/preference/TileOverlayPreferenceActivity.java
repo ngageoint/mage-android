@@ -2,14 +2,16 @@ package mil.nga.giat.mage.map.preference;
 
 import android.Manifest;
 import android.app.Activity;
-import android.app.AlertDialog;
-import android.app.ExpandableListActivity;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.ListFragment;
 import android.support.v4.content.ContextCompat;
+import android.support.v7.app.AlertDialog;
+import android.support.v7.app.AppCompatActivity;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -40,114 +42,31 @@ import mil.nga.giat.mage.map.cache.GeoPackageCacheOverlay;
 import mil.nga.giat.mage.map.cache.XYZDirectoryCacheOverlay;
 import mil.nga.giat.mage.sdk.utils.StorageUtility;
 
-public class TileOverlayPreferenceActivity extends ExpandableListActivity implements OnCacheOverlayListener {
+public class TileOverlayPreferenceActivity extends AppCompatActivity  {
 
     private static final int PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE = 100;
 
-    private ProgressBar progressBar;
-    private MenuItem refreshButton;
-    private OverlayAdapter overlayAdapter;
+    private OverlayListFragment overlayFragment;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.cache_overlay);
 
-        progressBar = (ProgressBar) findViewById(R.id.overlay_progress_bar);
-
-        getExpandableListView().setEnabled(false);
-        progressBar.setVisibility(View.VISIBLE);
-
-        if (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-            if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.READ_EXTERNAL_STORAGE)) {
-                new AlertDialog.Builder(this, R.style.AppCompatAlertDialogStyle)
-                        .setTitle(R.string.overlay_access_title)
-                        .setMessage(R.string.overlay_access_message)
-                        .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                ActivityCompat.requestPermissions(TileOverlayPreferenceActivity.this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE);
-                            }
-                        })
-                        .create()
-                        .show();
-
-            } else {
-                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE);
-            }
-        }
+        overlayFragment = (OverlayListFragment) getSupportFragmentManager().findFragmentById(R.id.overlay_fragment);
     }
 
     @Override
-    public void onDestroy() {
-        super.onDestroy();
-        CacheProvider.getInstance(getApplicationContext()).unregisterCacheOverlayListener(this);
-    }
-
-    @Override
-    public void onCacheOverlay(List<CacheOverlay> cacheOverlays) {
-
-        overlayAdapter = new OverlayAdapter(this, cacheOverlays);
-
-        setListAdapter(overlayAdapter);
-        getExpandableListView().setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
-            @Override
-            public boolean onItemLongClick(AdapterView<?> parent, View view,
-                                           int position, long id) {
-                int itemType = ExpandableListView.getPackedPositionType(id);
-                if (itemType == ExpandableListView.PACKED_POSITION_TYPE_CHILD) {
-                    int childPosition = ExpandableListView.getPackedPositionChild(id);
-                    int groupPosition = ExpandableListView.getPackedPositionGroup(id);
-                    // Handle child row long clicks here
-                    return true;
-                } else if (itemType == ExpandableListView.PACKED_POSITION_TYPE_GROUP) {
-                    int groupPosition = ExpandableListView.getPackedPositionGroup(id);
-                    CacheOverlay cacheOverlay = (CacheOverlay) overlayAdapter.getGroup(groupPosition);
-                    deleteCacheOverlayConfirm(cacheOverlay);
-                    return true;
-                }
-                return false;
-            }
-        });
-        refreshButton.setEnabled(true);
-        getExpandableListView().setEnabled(true);
-        progressBar.setVisibility(View.INVISIBLE);
-    }
-
-    @Override
-    public boolean onPrepareOptionsMenu(Menu menu) {
-        refreshButton = menu.findItem(R.id.tile_overlay_refresh);
-        refreshButton.setEnabled(false);
-
-        // This really should be done in the onResume, but I need to have my refreshButton
-        // before I register as the call back will set it to enabled
-        // the problem is that onResume gets called before this so my menu is
-        // not yet setup and I will not have a handle on this button
-        CacheProvider.getInstance(getApplicationContext()).registerCacheOverlayListener(this);
-
-        return super.onPrepareOptionsMenu(menu);
-    }
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu items for use in the action bar
-        MenuInflater inflater = getMenuInflater();
-        inflater.inflate(R.menu.tile_overlay_menu, menu);
-
-        return super.onCreateOptionsMenu(menu);
+    public void onBackPressed() {
+        Intent intent = new Intent();
+        intent.putStringArrayListExtra(MapPreferencesActivity.OVERLAY_EXTENDED_DATA_KEY, overlayFragment.getSelectedOverlays());
+        setResult(Activity.RESULT_OK, intent);
+        finish();
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle presses on the action bar items
         switch (item.getItemId()) {
-            case R.id.tile_overlay_refresh:
-                item.setEnabled(false);
-                progressBar.setVisibility(View.VISIBLE);
-                getExpandableListView().setEnabled(false);
-
-                CacheProvider.getInstance(getApplicationContext()).refreshTileOverlays();
-                return true;
             case android.R.id.home:
                 onBackPressed();
                 return true;
@@ -156,51 +75,275 @@ public class TileOverlayPreferenceActivity extends ExpandableListActivity implem
         }
     }
 
-    @Override
-    public void onBackPressed() {
-        Intent intent = new Intent();
-        intent.putStringArrayListExtra(MapPreferencesActivity.OVERLAY_EXTENDED_DATA_KEY, getSelectedOverlays());
-        setResult(Activity.RESULT_OK, intent);
-        finish();
-    }
+    public static class OverlayListFragment extends ListFragment implements OnCacheOverlayListener {
 
-    @Override
-    public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
-        switch (requestCode) {
-            case PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE: {
-                if(grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    CacheProvider.getInstance(getApplicationContext()).refreshTileOverlays();
-                };
+        private OverlayAdapter overlayAdapter;
+        private ExpandableListView listView;
+        private ProgressBar progressBar;
+        private MenuItem refreshButton;
 
-                break;
+        @Override
+        public void onCreate(@Nullable Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+
+            setHasOptionsMenu(true);
+        }
+
+        @Override
+        public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+            View view = inflater.inflate(R.layout.fragment_cache_overlay, container, false);
+            listView = (ExpandableListView) view.findViewById(android.R.id.list);
+            listView.setEnabled(true);
+
+            progressBar = (ProgressBar) view.findViewById(R.id.overlay_progress_bar);
+            progressBar.setVisibility(View.VISIBLE);
+
+            if (ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                if (ActivityCompat.shouldShowRequestPermissionRationale(getActivity(), Manifest.permission.READ_EXTERNAL_STORAGE)) {
+                    new AlertDialog.Builder(getActivity(), R.style.AppCompatAlertDialogStyle)
+                            .setTitle(R.string.overlay_access_title)
+                            .setMessage(R.string.overlay_access_message)
+                            .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE);
+                                }
+                            })
+                            .create()
+                            .show();
+
+                } else {
+                    requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE);
+                }
+            }
+
+            return view;
+        }
+
+        @Override
+        public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+            inflater.inflate(R.menu.tile_overlay_menu, menu);
+
+            refreshButton = menu.findItem(R.id.tile_overlay_refresh);
+            refreshButton.setEnabled(false);
+
+            // This really should be done in the onResume, but I need to have my refreshButton
+            // before I register as the call back will set it to enabled
+            // the problem is that onResume gets called before this so my menu is
+            // not yet setup and I will not have a handle on this button
+            CacheProvider.getInstance(getActivity()).registerCacheOverlayListener(this);
+        }
+
+        @Override
+        public boolean onOptionsItemSelected(MenuItem item) {
+            switch (item.getItemId()) {
+                case R.id.tile_overlay_refresh:
+                    item.setEnabled(false);
+                    progressBar.setVisibility(View.VISIBLE);
+                    listView.setEnabled(false);
+                    CacheProvider.getInstance(getActivity()).refreshTileOverlays();
+                    return true;
+                default:
+                    return super.onOptionsItemSelected(item);
             }
         }
-    }
 
-    /**
-     * Get the selected cache overlays and child cache overlays
-     *
-     * @return
-     */
-    private ArrayList<String> getSelectedOverlays() {
-        ArrayList<String> overlays = new ArrayList<String>();
-        if (overlayAdapter != null) {
-            for (CacheOverlay cacheOverlay : overlayAdapter.getOverlays()) {
+        @Override
+        public void onDestroy() {
+            super.onDestroy();
 
-                boolean childAdded = false;
-                for (CacheOverlay childCache : cacheOverlay.getChildren()) {
-                    if (childCache.isEnabled()) {
-                        overlays.add(childCache.getCacheName());
-                        childAdded = true;
+            CacheProvider.getInstance(getActivity()).unregisterCacheOverlayListener(this);
+        }
+
+        @Override
+        public void onCacheOverlay(List<CacheOverlay> cacheOverlays) {
+
+            overlayAdapter = new OverlayAdapter(getActivity(), cacheOverlays);
+
+            listView.setAdapter(overlayAdapter);
+            listView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+                @Override
+                public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+                    int itemType = ExpandableListView.getPackedPositionType(id);
+                    if (itemType == ExpandableListView.PACKED_POSITION_TYPE_CHILD) {
+                        int childPosition = ExpandableListView.getPackedPositionChild(id);
+                        int groupPosition = ExpandableListView.getPackedPositionGroup(id);
+                        // Handle child row long clicks here
+                        return true;
+                    } else if (itemType == ExpandableListView.PACKED_POSITION_TYPE_GROUP) {
+                        int groupPosition = ExpandableListView.getPackedPositionGroup(id);
+                        CacheOverlay cacheOverlay = (CacheOverlay) overlayAdapter.getGroup(groupPosition);
+                        deleteCacheOverlayConfirm(cacheOverlay);
+                        return true;
+                    }
+                    return false;
+                }
+            });
+
+            refreshButton.setEnabled(true);
+            listView.setEnabled(true);
+            progressBar.setVisibility(View.INVISIBLE);
+        }
+
+        @Override
+        public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
+            switch (requestCode) {
+                case PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE: {
+                    if(grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                        CacheProvider.getInstance(getActivity()).refreshTileOverlays();
+                    };
+
+                    break;
+                }
+            }
+        }
+
+        /**
+         * Get the selected cache overlays and child cache overlays
+         *
+         * @return
+         */
+        public ArrayList<String> getSelectedOverlays() {
+            ArrayList<String> overlays = new ArrayList<>();
+            if (overlayAdapter != null) {
+                for (CacheOverlay cacheOverlay : overlayAdapter.getOverlays()) {
+
+                    boolean childAdded = false;
+                    for (CacheOverlay childCache : cacheOverlay.getChildren()) {
+                        if (childCache.isEnabled()) {
+                            overlays.add(childCache.getCacheName());
+                            childAdded = true;
+                        }
+                    }
+
+                    if (!childAdded && cacheOverlay.isEnabled()) {
+                        overlays.add(cacheOverlay.getCacheName());
                     }
                 }
+            }
+            return overlays;
+        }
 
-                if (!childAdded && cacheOverlay.isEnabled()) {
-                    overlays.add(cacheOverlay.getCacheName());
+        /**
+         * Delete the cache overlay
+         * @param cacheOverlay
+         */
+        private void deleteCacheOverlayConfirm(final CacheOverlay cacheOverlay) {
+            AlertDialog deleteDialog = new AlertDialog.Builder(getActivity())
+                    .setTitle("Delete Cache")
+                    .setMessage("Delete " + cacheOverlay.getName() + " Cache?")
+                    .setPositiveButton("Delete",
+
+                            new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog,
+                                                    int which) {
+                                    deleteCacheOverlay(cacheOverlay);
+                                }
+                            })
+
+                    .setNegativeButton(getString(R.string.cancel),
+                            new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog,
+                                                    int which) {
+                                    dialog.dismiss();
+                                }
+                            }).create();
+            deleteDialog.show();
+        }
+
+        /**
+         * Delete the XYZ cache overlay
+         * @param xyzCacheOverlay
+         */
+        private void deleteXYZCacheOverlay(XYZDirectoryCacheOverlay xyzCacheOverlay){
+
+            File directory = xyzCacheOverlay.getDirectory();
+
+            if(directory.canWrite()){
+                deleteFile(directory);
+            }
+
+        }
+
+        /**
+         * Delete the base directory file
+         * @param base directory
+         */
+        private void deleteFile(File base) {
+            if (base.isDirectory()) {
+                for (File file : base.listFiles()) {
+                    deleteFile(file);
+                }
+            }
+            base.delete();
+        }
+
+        /**
+         * Delete the cache overlay
+         * @param cacheOverlay
+         */
+        private void deleteCacheOverlay(CacheOverlay cacheOverlay){
+
+            progressBar.setVisibility(View.VISIBLE);
+            listView.setEnabled(false);
+
+            switch(cacheOverlay.getType()) {
+
+                case XYZ_DIRECTORY:
+                    deleteXYZCacheOverlay((XYZDirectoryCacheOverlay)cacheOverlay);
+                    break;
+
+                case GEOPACKAGE:
+                    deleteGeoPackageCacheOverlay((GeoPackageCacheOverlay)cacheOverlay);
+                    break;
+
+            }
+
+            CacheProvider.getInstance(getActivity()).refreshTileOverlays();
+        }
+
+        /**
+         * Delete the GeoPackage cache overlay
+         * @param geoPackageCacheOverlay
+         */
+        private void deleteGeoPackageCacheOverlay(GeoPackageCacheOverlay geoPackageCacheOverlay){
+
+            String database = geoPackageCacheOverlay.getName();
+
+            // Get the GeoPackage file
+            GeoPackageManager manager = GeoPackageFactory.getManager(getActivity());
+            File path = manager.getFile(database);
+
+            // Delete the cache from the GeoPackage manager
+            manager.delete(database);
+
+            // Attempt to delete the cache file if it is in the cache directory
+            File pathDirectory = path.getParentFile();
+            if(path.canWrite() && pathDirectory != null) {
+                Map<StorageUtility.StorageType, File> storageLocations = StorageUtility.getWritableStorageLocations();
+                for (File storageLocation : storageLocations.values()) {
+                    File root = new File(storageLocation, getString(R.string.overlay_cache_directory));
+                    if (root.equals(pathDirectory)) {
+                        path.delete();
+                        break;
+                    }
+                }
+            }
+
+            // Check internal/external application storage
+            File applicationCacheDirectory = CacheUtils.getApplicationCacheDirectory(getActivity());
+            if (applicationCacheDirectory != null && applicationCacheDirectory.exists()) {
+                for (File cache : applicationCacheDirectory.listFiles()) {
+                    if (cache.equals(path)) {
+                        path.delete();
+                        break;
+                    }
                 }
             }
         }
-        return overlays;
+
     }
 
     /**
@@ -211,7 +354,7 @@ public class TileOverlayPreferenceActivity extends ExpandableListActivity implem
         /**
          * Context
          */
-        private TileOverlayPreferenceActivity activity;
+        private Activity activity;
 
         /**
          * List of cache overlays
@@ -224,7 +367,7 @@ public class TileOverlayPreferenceActivity extends ExpandableListActivity implem
          * @param activity
          * @param overlays
          */
-        public OverlayAdapter(TileOverlayPreferenceActivity activity, List<CacheOverlay> overlays) {
+        public OverlayAdapter(Activity activity, List<CacheOverlay> overlays) {
             this.activity = activity;
             this.overlays = overlays;
         }
@@ -394,127 +537,5 @@ public class TileOverlayPreferenceActivity extends ExpandableListActivity implem
         public boolean isChildSelectable(int i, int j) {
             return true;
         }
-
     }
-
-    /**
-     * Delete the cache overlay
-     * @param cacheOverlay
-     */
-    private void deleteCacheOverlayConfirm(final CacheOverlay cacheOverlay) {
-        AlertDialog deleteDialog = new AlertDialog.Builder(this)
-                .setTitle("Delete Cache")
-                .setMessage("Delete " + cacheOverlay.getName() + " Cache?")
-                .setPositiveButton("Delete",
-
-                        new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog,
-                                                int which) {
-                                deleteCacheOverlay(cacheOverlay);
-                            }
-                        })
-
-                .setNegativeButton(getString(R.string.cancel),
-                        new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog,
-                                                int which) {
-                                dialog.dismiss();
-                            }
-                        }).create();
-        deleteDialog.show();
-    }
-
-    /**
-     * Delete the cache overlay
-     * @param cacheOverlay
-     */
-    private void deleteCacheOverlay(CacheOverlay cacheOverlay){
-
-        progressBar.setVisibility(View.VISIBLE);
-        getExpandableListView().setEnabled(false);
-
-        switch(cacheOverlay.getType()) {
-
-            case XYZ_DIRECTORY:
-                deleteXYZCacheOverlay((XYZDirectoryCacheOverlay)cacheOverlay);
-                break;
-
-            case GEOPACKAGE:
-                deleteGeoPackageCacheOverlay((GeoPackageCacheOverlay)cacheOverlay);
-                break;
-
-        }
-
-        CacheProvider.getInstance(getApplicationContext()).refreshTileOverlays();
-    }
-
-    /**
-     * Delete the XYZ cache overlay
-     * @param xyzCacheOverlay
-     */
-    private void deleteXYZCacheOverlay(XYZDirectoryCacheOverlay xyzCacheOverlay){
-
-        File directory = xyzCacheOverlay.getDirectory();
-
-        if(directory.canWrite()){
-            deleteFile(directory);
-        }
-
-    }
-
-    /**
-     * Delete the base directory file
-     * @param base directory
-     */
-    private void deleteFile(File base) {
-        if (base.isDirectory()) {
-            for (File file : base.listFiles()) {
-                deleteFile(file);
-            }
-        }
-        base.delete();
-    }
-
-    /**
-     * Delete the GeoPackage cache overlay
-     * @param geoPackageCacheOverlay
-     */
-    private void deleteGeoPackageCacheOverlay(GeoPackageCacheOverlay geoPackageCacheOverlay){
-
-        String database = geoPackageCacheOverlay.getName();
-
-        // Get the GeoPackage file
-        GeoPackageManager manager = GeoPackageFactory.getManager(this);
-        File path = manager.getFile(database);
-
-        // Delete the cache from the GeoPackage manager
-        manager.delete(database);
-
-        // Attempt to delete the cache file if it is in the cache directory
-        File pathDirectory = path.getParentFile();
-        if(path.canWrite() && pathDirectory != null) {
-            Map<StorageUtility.StorageType, File> storageLocations = StorageUtility.getWritableStorageLocations();
-            for (File storageLocation : storageLocations.values()) {
-                File root = new File(storageLocation, getString(R.string.overlay_cache_directory));
-                if (root.equals(pathDirectory)) {
-                    path.delete();
-                    break;
-                }
-            }
-        }
-
-        // Check internal/external application storage
-        File applicationCacheDirectory = CacheUtils.getApplicationCacheDirectory(getApplicationContext());
-        if (applicationCacheDirectory != null && applicationCacheDirectory.exists()) {
-            for (File cache : applicationCacheDirectory.listFiles()) {
-                if (cache.equals(path)) {
-                    path.delete();
-                    break;
-                }
-            }
-        }
-    }
-
 }

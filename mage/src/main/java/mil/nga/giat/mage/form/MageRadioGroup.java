@@ -2,6 +2,7 @@ package mil.nga.giat.mage.form;
 
 import android.content.Context;
 import android.content.res.TypedArray;
+import android.support.v7.widget.AppCompatRadioButton;
 import android.util.AttributeSet;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
@@ -47,7 +48,7 @@ public class MageRadioGroup extends RadioGroup implements MageControl {
 	@Override
 	public String getPropertyValue() {
 		String value = null;
-		RadioButton radioButton = (RadioButton) findViewById(getCheckedRadioButtonId());
+		RadioButton radioButton = (AppCompatRadioButton) findViewById(getCheckedRadioButtonId());
 		if (radioButton != null) {
 			value = (String) radioButton.getText();
 		}

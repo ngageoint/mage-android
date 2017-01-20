@@ -9,6 +9,19 @@
         android:layout_height="match_parent"
         android:gravity="center">
 
+        <RelativeLayout
+            android:id="@id/progress"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <ProgressBar
+                android:layout_width="100dp"
+                android:layout_height="100dp"
+                android:layout_centerVertical="true"
+                android:layout_centerHorizontal="true" />
+
+        </RelativeLayout>
+
         <ImageView
             android:id="@+id/image"
             android:layout_width="match_parent"
@@ -50,6 +63,8 @@
             android:layout_centerHorizontal="true"
             android:layout_centerVertical="true"
             android:visibility="gone"/>
+
+
 
     </RelativeLayout>
 

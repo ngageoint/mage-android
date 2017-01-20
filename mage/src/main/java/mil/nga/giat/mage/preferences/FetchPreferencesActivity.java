@@ -1,86 +1,73 @@
 package mil.nga.giat.mage.preferences;
 
-import android.app.ActionBar;
-import android.app.Activity;
-import android.content.SharedPreferences;
+import android.content.Context;
 import android.os.Bundle;
-import android.preference.Preference;
-import android.preference.PreferenceActivity;
-import android.preference.PreferenceFragment;
 import android.preference.PreferenceManager;
-import android.view.Gravity;
+import android.support.v7.app.AppCompatActivity;
+import android.support.v7.preference.PreferenceFragmentCompat;
+import android.support.v7.view.ContextThemeWrapper;
+import android.support.v7.widget.SwitchCompat;
+import android.support.v7.widget.Toolbar;
+import android.view.LayoutInflater;
 import android.view.MenuItem;
+import android.view.View;
+import android.view.ViewGroup;
 import android.widget.CompoundButton;
-import android.widget.Switch;
 
 import mil.nga.giat.mage.R;
 
-public class FetchPreferencesActivity extends PreferenceActivity {
+public class FetchPreferencesActivity extends AppCompatActivity {
 
     private final FetchPreferenceFragment preference = new FetchPreferenceFragment();
 
-    public static class FetchPreferenceFragment extends PreferenceFragment implements CompoundButton.OnCheckedChangeListener {
+    private Toolbar toolbar;
+    private View noContentView;
 
-        private Switch fetchSwitch;
+    public static class FetchPreferenceFragment extends PreferenceFragmentCompat {
 
-        public void onCreate(final Bundle savedInstanceState) {
-            super.onCreate(savedInstanceState);
-
+        @Override
+        public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
             addPreferencesFromResource(R.xml.fetchpreferences);
-
-            Activity activity = getActivity();
-            ActionBar actionbar = activity.getActionBar();
-            fetchSwitch = new Switch(activity);
-
-            actionbar.setDisplayOptions(ActionBar.DISPLAY_SHOW_CUSTOM, ActionBar.DISPLAY_SHOW_CUSTOM);
-            actionbar.setCustomView(fetchSwitch,
-                    new ActionBar.LayoutParams(ActionBar.LayoutParams.WRAP_CONTENT, 
-                            ActionBar.LayoutParams.WRAP_CONTENT, 
-                            Gravity.CENTER_VERTICAL | Gravity.RIGHT));
-        }
-        
-        @Override
-        public void onResume() {
-            super.onResume();
-			updateEnabled();
-            fetchSwitch.setOnCheckedChangeListener(this);
         }
 
         @Override
-        public void onPause() {
-			fetchSwitch.setOnCheckedChangeListener(null);
-            super.onPause();
-        }
-
-        @Override
-        public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-			PreferenceManager.getDefaultSharedPreferences(getActivity()).edit().putBoolean(getResources().getString(R.string.dataFetchEnabledKey), isChecked).commit();
-
-			updateEnabled();
-        }
-        
-        protected void updateEnabled() {
-            SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
-            boolean dataFetchEnabled = preferences.getBoolean(getString(R.string.dataFetchEnabledKey), getResources().getBoolean(R.bool.dataFetchEnabledDefaultValue));
-            fetchSwitch.setChecked(dataFetchEnabled);
-
-            int count = getPreferenceScreen().getPreferenceCount();
-            for (int i = 0; i < count; ++i) {
-                Preference pref = getPreferenceScreen().getPreference(i);
-                pref.setEnabled(dataFetchEnabled);
-            }
+        public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+            final Context contextThemeWrapper = new ContextThemeWrapper(getActivity(), R.style.AppTheme_PrimaryAccent);
+            LayoutInflater localInflater = inflater.cloneInContext(contextThemeWrapper);
+            return super.onCreateView(localInflater, container, savedInstanceState);
         }
     }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        getFragmentManager().beginTransaction().replace(android.R.id.content, preference).commit();
+
+        setContentView(R.layout.activity_fetch_preferences);
+
+        toolbar = (Toolbar) findViewById(R.id.toolbar);
+        toolbar.inflateMenu(R.menu.fetch_preferences_menu);
+
+        noContentView = findViewById(R.id.no_content_frame);
+
+        boolean fetchEnabled = PreferenceManager.getDefaultSharedPreferences(this).getBoolean(getResources().getString(R.string.dataFetchEnabledKey), false);
+
+        SwitchCompat dataEnabledSwitch = (SwitchCompat) toolbar.findViewById(R.id.toolbar_switch);
+        dataEnabledSwitch.setChecked(fetchEnabled);
+        dataEnabledSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                PreferenceManager.getDefaultSharedPreferences(FetchPreferencesActivity.this).edit().putBoolean(getResources().getString(R.string.dataFetchEnabledKey), isChecked).commit();
+                updateView(isChecked);
+            }
+        });
+
+        updateView(fetchEnabled);
+
+        getSupportFragmentManager().beginTransaction().replace(R.id.content_frame, preference).commit();
     }
 
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
-		// Handle presses on the action bar items
 		switch (item.getItemId()) {
 			case android.R.id.home:
 				onBackPressed();
@@ -89,4 +76,9 @@ public class FetchPreferencesActivity extends PreferenceActivity {
 				return super.onOptionsItemSelected(item);
 		}
 	}
+
+    private void updateView(boolean fetchEnabled) {
+        toolbar.setTitle(fetchEnabled ? "On" : "Off");
+        noContentView.setVisibility(fetchEnabled ? View.GONE : View.VISIBLE);
+    }
 }

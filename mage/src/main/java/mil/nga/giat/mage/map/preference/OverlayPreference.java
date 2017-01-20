@@ -4,7 +4,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Parcel;
 import android.os.Parcelable;
-import android.preference.Preference;
+import android.support.v7.preference.Preference;
 import android.util.AttributeSet;
 
 import java.util.ArrayList;
@@ -14,12 +14,12 @@ import java.util.Set;
 
 public class OverlayPreference extends Preference {
 
-    private Set<String> overlays = new HashSet<String>();
+    private Set<String> overlays = new HashSet<>();
 
     public OverlayPreference(Context context) {
         super(context);
     }
-    
+
     public OverlayPreference(Context context, AttributeSet attrs) {
         super(context, attrs);
     }
@@ -49,7 +49,7 @@ public class OverlayPreference extends Preference {
         setValues(restoreValue ? getPersistedStringSet(overlays) : (Set<String>) defaultValue);
     }
     
-    protected Set<String> getPersistedStringSet(Set<String> defaultReturnValue) {
+    private Set<String> getPersistedStringSet(Set<String> defaultReturnValue) {
         if (!shouldPersist()) {
             return defaultReturnValue;
         }
@@ -57,7 +57,7 @@ public class OverlayPreference extends Preference {
         return getPreferenceManager().getSharedPreferences().getStringSet(getKey(), defaultReturnValue);
     }
     
-    protected boolean persistStringSet(Set<String> values) {
+    private boolean persistStringSet(Set<String> values) {
         if (shouldPersist()) {
             // Shouldn't store null
             if (values.equals(getPersistedStringSet(null))) {
@@ -89,9 +89,9 @@ public class OverlayPreference extends Preference {
     private static class SavedState extends BaseSavedState {
         Set<String> values;
 
-        public SavedState(Parcel source) {
+        SavedState(Parcel source) {
             super(source);
-            values = new HashSet<String>();
+            values = new HashSet<>();
 			int length = source.readInt();
             if (length >= 0) {
 				List<String> strings = new ArrayList<String>(length);
@@ -104,7 +104,7 @@ public class OverlayPreference extends Preference {
             }
         }
 
-        public SavedState(Parcelable superState) {
+        SavedState(Parcelable superState) {
             super(superState);
         }
 

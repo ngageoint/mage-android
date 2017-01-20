@@ -3,7 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="fill_parent"
     android:layout_height="wrap_content"
-    android:background="@android:color/holo_green_dark"
+    android:background="@color/md_green_500"
     android:orientation="horizontal"
     android:paddingRight="3dp"
     android:paddingLeft="3dp" >
@@ -11,13 +11,13 @@
     <TextView 
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textColor="#DDDDDD"
+        android:textColor="#FFFFFF"
         android:text="Saved to the server:"/>
     <TextView
         android:id="@+id/observation_sync_date"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:textColor="#DDDDDD"
+        android:textColor="#FFFFFF"
         android:gravity="right"
         android:textStyle="bold"/>
 

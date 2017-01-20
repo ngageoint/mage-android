@@ -1,10 +1,7 @@
 package mil.nga.giat.mage.newsfeed;
 
 import android.Manifest;
-import android.app.AlertDialog;
 import android.app.Dialog;
-import android.app.Fragment;
-import android.app.FragmentManager;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -14,8 +11,10 @@ import android.database.Cursor;
 import android.location.Location;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
-import android.support.v13.app.FragmentCompat;
+import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
+import android.support.v7.app.AlertDialog;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -37,7 +36,10 @@ import com.j256.ormlite.stmt.QueryBuilder;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.Point;
 
+import org.apache.commons.lang3.StringUtils;
+
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
@@ -50,11 +52,11 @@ import java.util.concurrent.TimeUnit;
 
 import mil.nga.giat.mage.MAGE;
 import mil.nga.giat.mage.R;
-import mil.nga.giat.mage.event.EventBannerFragment;
+import mil.nga.giat.mage.filter.FilterActivity;
 import mil.nga.giat.mage.observation.AttachmentGallery;
-import mil.nga.giat.mage.observation.ObservationShareTask;
 import mil.nga.giat.mage.observation.AttachmentViewerActivity;
 import mil.nga.giat.mage.observation.ObservationEditActivity;
+import mil.nga.giat.mage.observation.ObservationShareTask;
 import mil.nga.giat.mage.observation.ObservationViewActivity;
 import mil.nga.giat.mage.sdk.datastore.DaoStore;
 import mil.nga.giat.mage.sdk.datastore.location.LocationHelper;
@@ -90,7 +92,6 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 	private User currentUser;
 	private LocationService locationService;
     private AttachmentGallery attachmentGallery;
-	private EventBannerFragment eventBannerFragment;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -111,6 +112,13 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 		View rootView = inflater.inflate(R.layout.fragment_news_feed, container, false);
 		setHasOptionsMenu(true);
 
+		rootView.findViewById(R.id.new_observation_button).setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				onNewObservation();
+			}
+		});
+
         attachmentGallery = new AttachmentGallery(getActivity().getApplicationContext(), 200, 200);
         attachmentGallery.addOnAttachmentClickListener(new AttachmentGallery.OnAttachmentClickListener() {
             @Override
@@ -121,10 +129,6 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
                 startActivity(intent);
             }
         });
-
-		FragmentManager fragmentManager = getChildFragmentManager();
-		eventBannerFragment = new EventBannerFragment();
-		fragmentManager.beginTransaction().add(R.id.news_feed_event_holder, eventBannerFragment).commit();
 
 		lv = (ListView) rootView.findViewById(R.id.news_feed_list);
 		footer = (ViewGroup) inflater.inflate(R.layout.feed_footer, lv, false);
@@ -162,6 +166,23 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 	}
 
 	@Override
+	public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+		inflater.inflate(R.menu.filter, menu);
+	}
+
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		switch (item.getItemId()) {
+			case R.id.filter_button:
+				Intent intent = new Intent(getActivity(), FilterActivity.class);
+				startActivity(intent);
+				return true;
+			default:
+				return super.onOptionsItemSelected(item);
+		}
+	}
+
+	@Override
 	public void onItemClick(AdapterView<?> adapter, View arg1, int position, long id) {
 		HeaderViewListAdapter headerAdapter = (HeaderViewListAdapter)adapter.getAdapter();
 		Cursor c = ((ObservationFeedCursorAdapter) headerAdapter.getWrappedAdapter()).getCursor();
@@ -174,25 +195,6 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 		} catch (Exception e) {
 			Log.e(LOG_NAME, "Problem.", e);
 		}
-	}
-
-	@Override
-	public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-		super.onCreateOptionsMenu(menu, inflater);
-
-		inflater.inflate(R.menu.observation_new, menu);
-	    inflater.inflate(R.menu.filter, menu);
-	}
-
-	@Override
-	public boolean onOptionsItemSelected(MenuItem item) {
-		switch (item.getItemId()) {
-		case R.id.observation_new:
-			onNewObservation();
-			break;
-		}
-
-		return super.onOptionsItemSelected(item);
 	}
 
 	@Override
@@ -264,7 +266,7 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 						.setPositiveButton(android.R.string.ok, new Dialog.OnClickListener() {
 							@Override
 							public void onClick(DialogInterface dialog, int which) {
-								FragmentCompat.requestPermissions(ObservationFeedFragment.this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION);
+								requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION);
 							}
 						})
 						.show();
@@ -275,45 +277,41 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 	private PreparedQuery<Observation> buildQuery(Dao<Observation, Long> oDao, int filterId) throws SQLException {
 		QueryBuilder<Observation, Long> qb = oDao.queryBuilder();
 		Calendar c = Calendar.getInstance();
-		String title = "All Observations";
+		List<String> filters = new ArrayList<>();
 		String footerText = "All observations have been returned";
-		switch (filterId) {
-		default:
-		case 0:
-			// no filter
-			c.setTime(new Date(0));
-			break;
-		case 4:
-			title = "Last Month";
+
+		if (filterId == getResources().getInteger(R.integer.time_filter_last_month)) {
+			filters.add("Last Month");
 			footerText = "End of results for Last Month filter";
 			c.add(Calendar.MONTH, -1);
-			break;
-		case 3:
-			title = "Last Week";
+		} else if (filterId == getResources().getInteger(R.integer.time_filter_last_week)) {
+			filters.add("Last Week");
 			footerText = "End of results for Last Week filter";
 			c.add(Calendar.DAY_OF_MONTH, -7);
-			break;
-		case 2:
-			title = "Last 24 Hours";
+		} else if (filterId == getResources().getInteger(R.integer.time_filter_last_24_hours)) {
+			filters.add("Last 24 Hours");
 			footerText = "End of results for Last 24 Hours filter";
 			c.add(Calendar.HOUR, -24);
-			break;
-		case 1:
-			title = "Since Midnight";
+		} else if (filterId == getResources().getInteger(R.integer.time_filter_today)) {
+			filters.add("Since Midnight");
 			footerText = "End of results for Today filter";
 			c.set(Calendar.HOUR_OF_DAY, 0);
 			c.set(Calendar.MINUTE, 0);
 			c.set(Calendar.SECOND, 0);
 			c.set(Calendar.MILLISECOND, 0);
-			break;
+		} else {
+			// no filter
+			c.setTime(new Date(0));
 		}
+
 		requeryTime = c.getTimeInMillis();
 		TextView footerTextView = (TextView) footer.findViewById(R.id.footer_text);
 		footerTextView.setText(footerText);
-		getActivity().getActionBar().setTitle(title);
-		qb.where().gt("timestamp", c.getTime())
+		qb.where().ge("timestamp", c.getTime())
 			.and()
 			.eq("event_id", currentEventId);
+
+		List<String> actionFilters = new ArrayList<>();
 
 		boolean favorites = sp.getBoolean(getResources().getString(R.string.activeFavoritesFilterKey), false);
 		if (favorites && currentUser != null) {
@@ -325,6 +323,8 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 				.eq("is_favorite", true);
 
 			qb.join(favoriteQb);
+
+			actionFilters.add("Favorites");
 		}
 
 		boolean important = sp.getBoolean(getResources().getString(R.string.activeImportantFilterKey), false);
@@ -334,9 +334,17 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 			importantQb.where().eq("is_important", true);
 
 			qb.join(importantQb);
+
+			actionFilters.add("Important");
 		}
 
 		qb.orderBy("timestamp", false);
+
+		if (!actionFilters.isEmpty()) {
+			filters.add(StringUtils.join(actionFilters, " & "));
+		}
+
+		((AppCompatActivity) getActivity()).getSupportActionBar().setSubtitle(StringUtils.join(filters, ", "));
 
 		return qb.prepare();
 	}
@@ -366,8 +374,7 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 	}
 	
 	private int getTimeFilterId() {
-		int[] timeFilterValues = getResources().getIntArray(R.array.timeFilterValues);
-		return sp.getInt(getResources().getString(R.string.activeTimeFilterKey), timeFilterValues[0]);
+		return sp.getInt(getResources().getString(R.string.activeTimeFilterKey), getResources().getInteger(R.integer.time_filter_none));
 	}
 
 	@Override
@@ -427,7 +434,6 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 		} else if (getResources().getString(R.string.activeFavoritesFilterKey).equalsIgnoreCase(key) ||
 				   getResources().getString(R.string.activeImportantFilterKey).equalsIgnoreCase(key)) {
 			updateFilter();
-			eventBannerFragment.refresh();
 		}
 	}
 

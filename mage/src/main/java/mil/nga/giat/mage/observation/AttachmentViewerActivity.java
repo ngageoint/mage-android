@@ -1,8 +1,6 @@
 package mil.nga.giat.mage.observation;
 
 import android.Manifest;
-import android.app.ActionBar;
-import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
@@ -17,8 +15,9 @@ import android.preference.PreferenceManager;
 import android.provider.Settings;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.DialogFragment;
-import android.support.v4.app.FragmentActivity;
 import android.support.v4.content.ContextCompat;
+import android.support.v7.app.AlertDialog;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -50,7 +49,7 @@ import mil.nga.giat.mage.sdk.datastore.observation.AttachmentHelper;
 import mil.nga.giat.mage.sdk.http.resource.ObservationResource;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
 
-public class AttachmentViewerActivity extends FragmentActivity implements RemoveAttachmentDialogListener {
+public class AttachmentViewerActivity extends AppCompatActivity implements RemoveAttachmentDialogListener {
 
 	public final static String EDITABLE = "EDITABLE";
 	public final static String ATTACHMENT_ID = "ATTACHMENT_ID";
@@ -70,8 +69,7 @@ public class AttachmentViewerActivity extends FragmentActivity implements Remove
 		setContentView(R.layout.attachment_viewer);
 		this.setTitle("Observation Attachment");
 
-		ActionBar actionBar = getActionBar();
-		actionBar.setDisplayHomeAsUpEnabled(true);
+		getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
 		Intent intent = getIntent();
 		ImageView iv = (ImageView) findViewById(R.id.image);
@@ -254,7 +252,7 @@ public class AttachmentViewerActivity extends FragmentActivity implements Remove
 					new DownloadFileAsync().execute(attachment);
 				} else {
 					if (!ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.READ_EXTERNAL_STORAGE)) {
-						new AlertDialog.Builder(this, R.style.AppCompatAlertDialogStyle)
+						new AlertDialog.Builder(this)
 								.setTitle(R.string.storage_access_title)
 								.setMessage(R.string.storage_access_message)
 								.setPositiveButton(R.string.settings, new Dialog.OnClickListener() {

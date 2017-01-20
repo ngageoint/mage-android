@@ -1,11 +1,9 @@
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
             xmlns:mage="http://schemas.android.com/apk/res-auto"
-            xmlns:tools="http://schemas.android.com/tools"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:paddingLeft="10dp"
-            android:paddingRight="10dp"
-            tools:context=".MainActivity$DummySectionFragment">
+            android:paddingRight="10dp">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -16,7 +14,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             mage:license="This product includes software licensed under the Creative Commons BY 2.5 License http://creativecommons.org/licenses/by/2.5/"
-            mage:name="Android Action Bar Icons"/>
+            mage:name="Android Action Bar Icons" />
 
         <mil.nga.giat.mage.help.OpensourceItemFragment
             android:layout_width="match_parent"

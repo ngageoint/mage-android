@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:paddingLeft="24dip"
-                android:paddingRight="24dip"
-                android:orientation="vertical">
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingLeft="24dip"
+    android:paddingRight="24dip"
+    android:orientation="vertical">
 
     <TextView
         android:id="@+id/event_info"
@@ -13,28 +13,21 @@
         android:paddingBottom="20dip"
         android:paddingTop="20dip"
         android:text="You are part of multiple events.  The observations you create and your reported location will be part of the selected event."
-        android:textColor="#000000"/>
-
-    <TextView
-        android:id="@+id/event_fragment_info_select"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:paddingBottom="20dip"
-        android:text="Current event:"
-        android:textColor="#000000"/>
+        android:textColor="?attr/colorPrimaryDark"/>
 
     <ScrollView
         android:id="@+id/event_fragment_scrollview"
         android:layout_width="match_parent"
         android:layout_height="0dip"
-        android:layout_gravity="left"
+        android:layout_gravity="start"
         android:layout_weight="1"
         android:paddingBottom="20dip">
 
         <RadioGroup
             android:id="@+id/event_fragment_radiogroup"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"/>
+            android:layout_height="wrap_content">
+        </RadioGroup>
 
     </ScrollView>
 
@@ -42,9 +35,9 @@
         android:id="@+id/event_fragment_continue_button"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="10dip"
-        android:layout_marginTop="10dip"
+        android:layout_marginBottom="20dp"
         android:text="Choose Event"
-        android:textSize="20sp"/>
+        android:background="@drawable/login_button_states"
+        android:textColor="#DEFFFFFF" />
 
 </LinearLayout>

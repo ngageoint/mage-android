@@ -20,11 +20,14 @@
     <string name="cancel_edit">Do you want to discard your changes?</string>
     <string name="cancel">Cancel</string>
     <string name="yes">Yes</string>
+    <string name="discard_changes">Yes, Discard</string>
     <string name="no">No</string>
     <string name="force_submit"><u>Force Submit</u></string>
 
-    <string name="location_services_enabled_summary">Click to configure GPS sensitivy and tracking options.</string>
-    <string name="location_services_disabled_summary">MAGE location services have been disabled. Click here to go to settings and enabled the location permission.</string>
+    <string name="reauthentication_message"><b>You</b> were logged in as &lt;b>%s&lt;/b>, and your MAGE session has expired. Please login to resume using MAGE.</string>
+
+    <string name="location_services_enabled_summary">Click to configure GPS sensitivy and tracking options</string>
+    <string name="location_services_disabled_summary">MAGE location services have been disabled. Click here to go to settings and enabled the location permission</string>
 
     <string name="location_no_event_title"><font color='#DD000000'>Not a member of this event</font></string>
     <string name="location_no_event_message">You are an administrator and not a member of the current event.  You can not create an observation in this event.</string>
@@ -64,9 +67,9 @@
     <string name="disconnected_mode">DISCONNECTED</string>
     <string name="connected_mode">CONNECTED</string>
     <!-- map overlay menus -->
-    <string name="overlay_map_refresh_enabled">REFRESH MAP OVERLAYS</string>
+    <string name="overlay_map_refresh_enabled">Refresh</string>
     <string name="overlay_map_refresh_disabled">DISCOVERING MAP OVERLAYS&#8230;</string>
-    <string name="feature_overlay_refresh_enabled">REFRESH FEATURE OVERLAYS</string>
+    <string name="feature_overlay_refresh_enabled">Refresh</string>
     <string name="feature_overlay_refresh_disabled">DOWNLOADING FEATURE OVERLAYS&#8230;</string>
     <string name="feature_overlay_no_content_title">No Feature Overlays</string>
     <string name="feature_overlay_no_content_loading">Loading Feature Overlays&#8230;</string>

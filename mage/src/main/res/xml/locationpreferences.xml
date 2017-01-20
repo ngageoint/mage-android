@@ -11,14 +11,14 @@
     <PreferenceCategory android:title="GPS TIME/DISTANCE SENSITIVITY"
         android:key="@string/gpsPreferencesCategoryKey">
 
-        <mil.nga.giat.mage.sdk.preferences.IntegerListValuePreference
+        <mil.nga.giat.mage.sdk.preferences.IntegerListPreference
             android:defaultValue="@integer/userReportingFrequencyDefaultValue"
             android:entries="@array/userReportingFrequencies"
             android:entryValues="@array/userReportingFrequencyValues"
             android:key="@string/userReportingFrequencyKey"
             android:summary="Minimum time interval between location updates. Smaller intervals will report your location more often regardless of distance moved."
             android:title="Time Interval"/>
-        <mil.nga.giat.mage.sdk.preferences.IntegerListValuePreference
+        <mil.nga.giat.mage.sdk.preferences.IntegerListPreference
             android:defaultValue="@integer/gpsSensitivityDefaultValue"
             android:entries="@array/gpsSensitivities"
             android:entryValues="@array/gpsSensitivityValues"
@@ -31,7 +31,7 @@
         android:key="@string/locationsPushPreferencesCategoryKey">
 
     <!-- How often to push locations? -->
-        <mil.nga.giat.mage.sdk.preferences.IntegerListValuePreference
+        <mil.nga.giat.mage.sdk.preferences.IntegerListPreference
             android:defaultValue="@integer/locationPushFrequencyDefaultValue"
             android:entries="@array/locationPushFrequencies"
             android:entryValues="@array/locationPushFrequencyValues"

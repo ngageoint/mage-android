@@ -1,7 +1,6 @@
 package mil.nga.giat.mage.login;
 
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -9,6 +8,8 @@ import android.content.SharedPreferences.Editor;
 import android.graphics.Typeface;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.support.v7.app.AlertDialog;
+import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
 import android.util.Log;
 import android.util.Patterns;
@@ -38,7 +39,7 @@ import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
  *
  * @author wiedemanns
  */
-public class SignupActivity extends Activity implements AccountDelegate {
+public class SignupActivity extends AppCompatActivity implements AccountDelegate {
 
 	public static final int EXTRA_OAUTH_RESULT = 1;
 

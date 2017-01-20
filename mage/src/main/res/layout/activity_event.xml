@@ -1,25 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-              android:layout_width="fill_parent"
-              android:layout_height="fill_parent"
-              android:background="@drawable/mage_gradient"
-              android:fillViewport="true"
-              android:orientation="vertical"
-              android:paddingLeft="24dip"
-              android:paddingRight="24dip">
-
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:fillViewport="true"
+    android:orientation="vertical"
+    android:paddingLeft="24dip"
+    android:paddingRight="24dip"
+    android:background="?attr/colorPrimary">
 
     <RelativeLayout
         android:id="@+id/event_status"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
-        android:background="@drawable/mage_gradient"
         android:orientation="vertical">
 
         <include
             android:id="@+id/login_header"
             layout="@layout/mage_header"/>
-
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -146,8 +143,7 @@
             android:background="@drawable/login_button_states"
             android:onClick="chooseEvent"
             android:text="Go"
-            android:textColor="#def3ff"
-            android:textSize="26sp"/>
+            android:textColor="#D8FFFF" />
 
         <Button
             android:id="@+id/event_back_button"
@@ -159,8 +155,7 @@
             android:background="@drawable/login_button_states"
             android:onClick="bummerEvent"
             android:text="Bummer"
-            android:textColor="#def3ff"
-            android:textSize="26sp"
+            android:textColor="#D8FFFF"
             android:visibility="gone"/>
     </LinearLayout>
 </LinearLayout>

@@ -1,17 +1,18 @@
 package mil.nga.giat.mage.newsfeed;
 
-import android.app.Fragment;
-import android.app.FragmentManager;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.support.v4.app.Fragment;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
@@ -37,9 +38,9 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 import mil.nga.giat.mage.R;
-import mil.nga.giat.mage.event.EventBannerFragment;
-import mil.nga.giat.mage.profile.ProfileFragment;
+import mil.nga.giat.mage.filter.FilterActivity;
 import mil.nga.giat.mage.profile.ProfileActivity;
+import mil.nga.giat.mage.profile.ProfileFragment;
 import mil.nga.giat.mage.sdk.datastore.DaoStore;
 import mil.nga.giat.mage.sdk.datastore.location.Location;
 import mil.nga.giat.mage.sdk.datastore.location.LocationHelper;
@@ -63,9 +64,6 @@ public class PeopleFeedFragment extends Fragment implements OnSharedPreferenceCh
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_feed_people, container, false);
         setHasOptionsMenu(true);
-
-		FragmentManager fragmentManager = getChildFragmentManager();
-		fragmentManager.beginTransaction().add(R.id.people_event_holder, new EventBannerFragment()).commit();
 
         ListView lv = (ListView) rootView.findViewById(R.id.people_feed_list);
         footer = (ViewGroup) inflater.inflate(R.layout.feed_footer, lv, false);
@@ -91,8 +89,7 @@ public class PeopleFeedFragment extends Fragment implements OnSharedPreferenceCh
     }
     
     private int getTimeFilterId() {
-        int[] timeFilterValues = getResources().getIntArray(R.array.timeFilterValues);
-        return sp.getInt(getResources().getString(R.string.activeTimeFilterKey), timeFilterValues[0]);
+        return sp.getInt(getResources().getString(R.string.activeTimeFilterKey), getResources().getInteger(R.integer.time_filter_none));
     }
 
     private Cursor obtainCursor(PreparedQuery<Location> query, Dao<Location, Long> lDao) throws SQLException {
@@ -115,31 +112,44 @@ public class PeopleFeedFragment extends Fragment implements OnSharedPreferenceCh
         }
         return c;
     }
-    
+
     @Override
-    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-        super.onCreateOptionsMenu(menu, inflater);
-        inflater.inflate(R.menu.filter, menu);
-    }
-    
     public void onResume() {
     	super.onResume();
     	LocationHelper.getInstance(getActivity()).addListener(this);
     }
-    
+
+    @Override
     public void onPause() {
     	super.onPause();
     	LocationHelper.getInstance(getActivity()).removeListener(this);
     }
     
     @Override
-    public void onDestroy() {
+    public void onDestroyView() {
         sp.unregisterOnSharedPreferenceChangeListener(this);
         if (queryUpdateHandle != null) {
             queryUpdateHandle.cancel(true);
         }
 
-        super.onDestroy();
+        super.onDestroyView();
+    }
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        inflater.inflate(R.menu.filter, menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.filter_button:
+                Intent intent = new Intent(getActivity(), FilterActivity.class);
+                startActivity(intent);
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
     }
 
     @Override
@@ -167,42 +177,35 @@ public class PeopleFeedFragment extends Fragment implements OnSharedPreferenceCh
     private PreparedQuery<Location> buildQuery(Dao<Location, Long> lDao, int filterId) throws SQLException {
         QueryBuilder<Location, Long> qb = lDao.queryBuilder();
         Calendar c = Calendar.getInstance();
-		String title = "All People";
+		String subtitle = "";
 		String footerText = "All people have been returned";
-        switch (filterId) {
-        default:
-        case 0:
-            // no filter
-            c.setTime(new Date(0));
-            break;
-        case 4:
-            title = "Last Month";
+
+        if (filterId == getResources().getInteger(R.integer.time_filter_last_month)) {
+            subtitle = "Last Month";
             footerText = "End of results for Last Month filter";
             c.add(Calendar.MONTH, -1);
-            break;
-        case 3:
-            title = "Last Week";
+        } else if (filterId == getResources().getInteger(R.integer.time_filter_last_week)) {
+            subtitle = "Last Week";
             footerText = "End of results for Last Week filter";
             c.add(Calendar.DAY_OF_MONTH, -7);
-            break;
-        case 2:
-            title = "Last 24 Hours";
+        } else if (filterId == getResources().getInteger(R.integer.time_filter_last_24_hours)) {
+            subtitle = "Last 24 Hours";
             footerText = "End of results for Last 24 Hours filter";
             c.add(Calendar.HOUR, -24);
-            break;
-        case 1:
-            title = "Since Midnight";
+        } else if (filterId == getResources().getInteger(R.integer.time_filter_today)) {
+            subtitle = "Since Midnight";
             footerText = "End of results for Today filter";
             c.set(Calendar.HOUR_OF_DAY, 0);
             c.set(Calendar.MINUTE, 0);
             c.set(Calendar.SECOND, 0);
             c.set(Calendar.MILLISECOND, 0);
-            break;
+        } else {
+            // no filter
+            c.setTime(new Date(0));
         }
-        
+
         TextView footerTextView = (TextView)footer.findViewById(R.id.footer_text);
         footerTextView.setText(footerText);
-		getActivity().getActionBar().setTitle(title);
 		User currentUser = null;
 		try {
 			currentUser = UserHelper.getInstance(getActivity().getApplicationContext()).readCurrentUser();
@@ -215,6 +218,9 @@ public class PeopleFeedFragment extends Fragment implements OnSharedPreferenceCh
 		}
 
 		qb.orderBy("timestamp", false);
+
+
+        ((AppCompatActivity) getActivity()).getSupportActionBar().setSubtitle(subtitle);
 
         return qb.prepare();
     }
@@ -236,16 +242,6 @@ public class PeopleFeedFragment extends Fragment implements OnSharedPreferenceCh
 		} catch (Exception e) {
 			Log.e(LOG_NAME, "Problem.", e);
 		}
-			
-//			  Point p = (Point)l.getLocationGeometry().getGeometry();
-//            Editor e = sp.edit();
-//            e.putFloat(getResources().getString(R.string.mapZoomLatKey), Double.valueOf(p.getY()).floatValue()).commit();
-//            e.putFloat(getResources().getString(R.string.mapZoomLonKey), Double.valueOf(p.getX()).floatValue()).commit();
-//            FragmentManager fragmentManager = getFragmentManager();
-//            fragmentManager.beginTransaction().remove(this).commit();
-//            DrawerItem mapItem = ((LandingActivity)getActivity()).getMapItem();
-//            fragmentManager.beginTransaction().add(R.id.content_frame, ((MapFragment)mapItem.getFragment())).commit();
-//            ((LandingActivity)getActivity()).setCurrentItem(mapItem);
 	}
 
 	@Override

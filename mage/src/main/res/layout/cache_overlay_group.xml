@@ -17,8 +17,7 @@
             android:layout_height="24dp"
             android:layout_gravity="center_vertical"
             android:layout_marginLeft="16dp"
-            android:layout_marginRight="16dp"
-            android:alpha=".87" />
+            android:layout_marginRight="16dp" />
 
         <TextView
             android:id="@+id/cache_overlay_group_name"

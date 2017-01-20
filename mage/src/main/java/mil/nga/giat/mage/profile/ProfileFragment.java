@@ -2,10 +2,7 @@ package mil.nga.giat.mage.profile;
 
 import android.Manifest;
 import android.annotation.TargetApi;
-import android.app.Activity;
-import android.app.AlertDialog;
 import android.app.Dialog;
-import android.app.Fragment;
 import android.content.ActivityNotFoundException;
 import android.content.ClipData;
 import android.content.Context;
@@ -19,16 +16,18 @@ import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.provider.Settings;
-import android.support.v13.app.FragmentCompat;
+import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.graphics.drawable.RoundedBitmapDrawable;
 import android.support.v4.graphics.drawable.RoundedBitmapDrawableFactory;
+import android.support.v7.app.ActionBar;
+import android.support.v7.app.AlertDialog;
+import android.support.v7.app.AppCompatActivity;
 import android.text.SpannableString;
 import android.text.style.UnderlineSpan;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -70,7 +69,7 @@ import mil.nga.giat.mage.sdk.fetch.DownloadImageTask;
 import mil.nga.giat.mage.sdk.profile.UpdateProfileTask;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
 
-public class ProfileFragment extends Fragment implements OnMapReadyCallback, OnClickListener {
+public class ProfileFragment extends Fragment implements OnMapReadyCallback, View.OnClickListener {
 
 	private static final String LOG_NAME = ProfileFragment.class.getName();
 
@@ -96,19 +95,19 @@ public class ProfileFragment extends Fragment implements OnMapReadyCallback, OnC
 		mapView.onDestroy();
 		super.onDestroy();
 	}
-	
+
 	@Override
 	public void onLowMemory() {
 		super.onLowMemory();
 		mapView.onLowMemory();
 	}
-	
+
 	@Override
 	public void onResume() {
 		super.onResume();
 		mapView.onResume();
 	}
-	
+
 	@Override
 	public void onPause() {
 		super.onPause();
@@ -157,7 +156,12 @@ public class ProfileFragment extends Fragment implements OnMapReadyCallback, OnC
 		mapView.getMapAsync(this);
 
 		final String displayName = user.getDisplayName();
-		getActivity().getActionBar().setTitle(user.equals(currentUser) ? "My Profile" : displayName);
+
+		ActionBar actionBar = ((AppCompatActivity) getActivity()).getSupportActionBar();
+		actionBar.setTitle(user.equals(currentUser) ? "My Profile" : displayName);
+		actionBar.setSubtitle(null);
+
+		setHasOptionsMenu(true);
 
 		final TextView realNameTextView = (TextView)rootView.findViewById(R.id.realName);
 		realNameTextView.setText(displayName);
@@ -169,7 +173,7 @@ public class ProfileFragment extends Fragment implements OnMapReadyCallback, OnC
 			SpannableString primaryPhone = new SpannableString(user.getPrimaryPhone());
 			primaryPhone.setSpan(new UnderlineSpan(), 0, primaryPhone.length(), 0);
 			phoneTextView.setText(primaryPhone);
-			phoneTextView.setOnClickListener(new OnClickListener() {
+			phoneTextView.setOnClickListener(new View.OnClickListener() {
 				@Override
 				public void onClick(View v) {
 					AlertDialog.Builder mBuilder = new AlertDialog.Builder(context);
@@ -210,7 +214,7 @@ public class ProfileFragment extends Fragment implements OnMapReadyCallback, OnC
 			SpannableString emailAddress = new SpannableString(user.getEmail());
 			emailAddress.setSpan(new UnderlineSpan(), 0, emailAddress.length(), 0);
 			emailTextView.setText(emailAddress);
-			emailTextView.setOnClickListener(new OnClickListener() {
+			emailTextView.setOnClickListener(new View.OnClickListener() {
 				 @Override
 				 public void onClick(View v) {
 					 AlertDialog.Builder mBuilder = new AlertDialog.Builder(context);
@@ -288,9 +292,9 @@ public class ProfileFragment extends Fragment implements OnMapReadyCallback, OnC
 				}).execute();
 			}
 		}
-		
 
-		
+
+
 		return rootView;
 	}
 
@@ -319,7 +323,7 @@ public class ProfileFragment extends Fragment implements OnMapReadyCallback, OnC
 							}
 							case 1: {
 								if (ContextCompat.checkSelfPermission(context, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-									FragmentCompat.requestPermissions(ProfileFragment.this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, PERMISSIONS_REQUEST_STORAGE);
+									requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, PERMISSIONS_REQUEST_STORAGE);
 								} else {
 									launchGalleryIntent();
 								}
@@ -328,7 +332,7 @@ public class ProfileFragment extends Fragment implements OnMapReadyCallback, OnC
 							case 2: {
 								if (ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED ||
 									ContextCompat.checkSelfPermission(context, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-									FragmentCompat.requestPermissions(ProfileFragment.this, new String[]{Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE}, PERMISSIONS_REQUEST_CAMERA);
+									requestPermissions(new String[]{Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE}, PERMISSIONS_REQUEST_CAMERA);
 								} else {
 									launchCameraIntent();
 								}
@@ -389,9 +393,9 @@ public class ProfileFragment extends Fragment implements OnMapReadyCallback, OnC
 				if (grants.get(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED &&
 					grants.get(Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
 					launchCameraIntent();
-				} else if ((!FragmentCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.CAMERA) && grants.get(Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) ||
-						(!FragmentCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) && grants.get(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) ||
-						!FragmentCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.CAMERA) && !FragmentCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
+				} else if ((!shouldShowRequestPermissionRationale(Manifest.permission.CAMERA) && grants.get(Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) ||
+						(!shouldShowRequestPermissionRationale(Manifest.permission.WRITE_EXTERNAL_STORAGE) && grants.get(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) ||
+						!shouldShowRequestPermissionRationale(Manifest.permission.CAMERA) && !shouldShowRequestPermissionRationale(Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
 
 					// User denied camera or storage with never ask again.  Since they will get here
 					// by clicking the camera button give them a dialog that will
@@ -407,7 +411,7 @@ public class ProfileFragment extends Fragment implements OnMapReadyCallback, OnC
 				if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
 					launchGalleryIntent();
 				} else {
-					if (!FragmentCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.READ_EXTERNAL_STORAGE)) {
+					if (!shouldShowRequestPermissionRationale(Manifest.permission.READ_EXTERNAL_STORAGE)) {
 						// User denied storage with never ask again.  Since they will get here
 						// by clicking the gallery button give them a dialog that will
 						// guide them to settings if they want to enable the permission
@@ -463,7 +467,7 @@ public class ProfileFragment extends Fragment implements OnMapReadyCallback, OnC
 	public void onActivityResult(int requestCode, int resultCode, Intent data) {
 		super.onActivityResult(requestCode, resultCode, data);
 
-		if (resultCode != Activity.RESULT_OK) {
+		if (resultCode != AppCompatActivity.RESULT_OK) {
 			return;
 		}
 		String filePath = null;
@@ -530,7 +534,7 @@ public class ProfileFragment extends Fragment implements OnMapReadyCallback, OnC
 
 		return uris;
 	}
-	
+
 	@TargetApi(16)
 	private List<Uri> getClipDataUris(Intent intent) {
 		List<Uri> uris = new ArrayList<Uri>();

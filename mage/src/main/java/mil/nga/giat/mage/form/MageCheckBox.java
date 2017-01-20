@@ -2,14 +2,14 @@ package mil.nga.giat.mage.form;
 
 import android.content.Context;
 import android.content.res.TypedArray;
+import android.support.v7.widget.AppCompatCheckBox;
 import android.util.AttributeSet;
-import android.widget.CheckBox;
 
 import java.io.Serializable;
 
 import mil.nga.giat.mage.R;
 
-public class MageCheckBox extends CheckBox implements MageControl {
+public class MageCheckBox extends AppCompatCheckBox implements MageControl {
 
 	private String propertyKey;
 	private MagePropertyType propertyType;

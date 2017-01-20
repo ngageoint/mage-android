@@ -1,8 +1,8 @@
 package mil.nga.giat.mage.people;
 
-import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -20,7 +20,7 @@ import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
 import mil.nga.giat.mage.widget.DividerItemDecoration;
 
-public class PeopleActivity extends Activity implements PeopleRecyclerAdapter.OnPersonClickListener {
+public class PeopleActivity extends AppCompatActivity implements PeopleRecyclerAdapter.OnPersonClickListener {
 
     public static final String USER_REMOTE_IDS = "USER_REMOTE_IDS";
 
