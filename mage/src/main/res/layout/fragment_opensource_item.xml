@@ -10,7 +10,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="start|center_vertical"
         android:paddingTop="10dp"
-        android:textColor="#000"
+        android:textColor="#D8000000"
         android:textStyle="bold"/>
 
     <TextView
@@ -28,8 +28,9 @@
         android:autoLink="web"
         android:paddingBottom="20dp"
         android:paddingTop="12dp"
-        android:textColor="#000"
-        android:textStyle="bold"/>
+        android:textColor="#D8000000"
+        android:textStyle="bold"
+        android:textColorLink="?attr/colorPrimaryDark"/>
 
     <TableRow>
 

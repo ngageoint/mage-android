@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <group android:checkableBehavior="single">
+
+        <item
+            android:id="@+id/map_navigation"
+            android:enabled="true"
+            android:icon="@drawable/ic_map_white_24dp"
+            android:title="Map"
+            app:showAsAction="always" />
+
+        <item
+            android:id="@+id/observations_navigation"
+            android:enabled="true"
+            android:icon="@drawable/ic_place_white_24dp"
+            android:title="Observations"
+            app:showAsAction="always" />
+
+        <item
+            android:id="@+id/people_navigation"
+            android:enabled="true"
+            android:icon="@drawable/ic_people_white_24dp"
+            android:title="People"/>
+
+        <item
+            android:id="@+id/events_navigation"
+            android:enabled="true"
+            android:icon="@drawable/ic_event_white_24dp"
+            android:title="Events"
+            app:showAsAction="always" />
+
+        <item
+            android:id="@+id/profile_navigation"
+            android:enabled="true"
+            android:icon="@drawable/ic_person_white_24dp"
+            android:title="Profile"
+            app:showAsAction="always" />
+
+    </group>
+
+    <group android:id="@+id/group_two"
+        android:checkableBehavior="single">
+
+        <item
+            android:id="@+id/settings_navigation"
+            android:enabled="true"
+            android:icon="@drawable/ic_settings_white_24dp"
+            android:title="Settings"
+            app:showAsAction="always" />
+
+        <item
+            android:id="@+id/help_navigation"
+            android:enabled="true"
+            android:icon="@drawable/ic_help_outline_white_24dp"
+            android:title="Help"
+            app:showAsAction="always" />
+
+        <item
+            android:id="@+id/logout_navigation"
+            android:enabled="true"
+            android:icon="@drawable/ic_power_settings_new_white_24dp"
+            android:title="Logout"
+            app:showAsAction="always" />
+    </group>
+
+</menu>

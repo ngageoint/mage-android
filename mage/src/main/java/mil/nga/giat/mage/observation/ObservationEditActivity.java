@@ -4,9 +4,7 @@ import android.Manifest;
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.app.Dialog;
-import android.app.FragmentManager;
 import android.content.ClipData;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -21,7 +19,10 @@ import android.provider.MediaStore;
 import android.provider.Settings;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
+import android.support.v7.app.AlertDialog;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -71,7 +72,6 @@ import java.util.Map;
 import java.util.Set;
 
 import mil.nga.giat.mage.R;
-import mil.nga.giat.mage.event.EventBannerFragment;
 import mil.nga.giat.mage.form.LayoutBaker;
 import mil.nga.giat.mage.form.LayoutBaker.ControlGenerationType;
 import mil.nga.giat.mage.form.MageSelectView;
@@ -82,6 +82,7 @@ import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationProperty;
 import mil.nga.giat.mage.sdk.datastore.observation.State;
+import mil.nga.giat.mage.sdk.datastore.user.Event;
 import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
@@ -90,7 +91,7 @@ import mil.nga.giat.mage.sdk.exceptions.UserException;
 import mil.nga.giat.mage.sdk.utils.DateFormatFactory;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
 
-public class ObservationEditActivity extends Activity implements OnMapReadyCallback {
+public class ObservationEditActivity extends AppCompatActivity implements OnMapReadyCallback {
 
 	private static final String LOG_NAME = ObservationEditActivity.class.getName();
 
@@ -146,8 +147,13 @@ public class ObservationEditActivity extends Activity implements OnMapReadyCallb
 
 		setContentView(R.layout.observation_editor);
 
-		FragmentManager fragmentManager = getFragmentManager();
-		fragmentManager.beginTransaction().add(R.id.observation_edit_event_holder, new EventBannerFragment()).commit();
+		Event event = EventHelper.getInstance(getApplicationContext()).getCurrentEvent();
+		if (event != null) {
+			getSupportActionBar().setSubtitle(event.getName());
+		}
+
+		getSupportActionBar().setHomeAsUpIndicator(R.drawable.ic_close_white_24dp);
+		getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
         attachmentLayout = (LinearLayout) findViewById(R.id.image_gallery);
         attachmentGallery = new AttachmentGallery(getApplicationContext(), 100, 100);
@@ -221,7 +227,7 @@ public class ObservationEditActivity extends Activity implements OnMapReadyCallb
 		hideKeyboardOnClick(findViewById(R.id.observation_edit));
 
 		if (observationId == NEW_OBSERVATION) {
-			this.setTitle("Create New Observation");
+			getSupportActionBar().setTitle("New Observation");
 			l = getIntent().getParcelableExtra(LOCATION);
 
             observation.setEvent(EventHelper.getInstance(getApplicationContext()).getCurrentEvent());
@@ -243,7 +249,7 @@ public class ObservationEditActivity extends Activity implements OnMapReadyCallb
 			}
 			LayoutBaker.populateLayoutFromMap((LinearLayout) findViewById(R.id.form), ControlGenerationType.EDIT, observation.getPropertiesMap());
 		} else {
-			this.setTitle("Edit Observation");
+			getSupportActionBar().setTitle("Edit Observation");
 			// this is an edit of an existing observation
             attachmentGallery.addAttachments(attachmentLayout, observation.getAttachments());
 
@@ -489,8 +495,38 @@ public class ObservationEditActivity extends Activity implements OnMapReadyCallb
 	}
 
 	@Override
+	public boolean onKeyDown(int keyCode, KeyEvent event) {
+		if ((keyCode == KeyEvent.KEYCODE_BACK)) {
+			new AlertDialog.Builder(this)
+					.setTitle("Discard Changes")
+					.setMessage(R.string.cancel_edit)
+					.setPositiveButton(R.string.discard_changes, new DialogInterface.OnClickListener() {
+						public void onClick(DialogInterface dialog, int which) {
+							finish();
+						}
+					}).setNegativeButton(R.string.no, null)
+					.show();
+		}
+
+		return false;
+	}
+
+	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
 		switch (item.getItemId()) {
+
+		case android.R.id.home:
+			new AlertDialog.Builder(this)
+					.setTitle("Discard Changes")
+					.setMessage(R.string.cancel_edit)
+					.setPositiveButton(R.string.discard_changes, new DialogInterface.OnClickListener() {
+						public void onClick(DialogInterface dialog, int which) {
+							finish();
+						}
+					}).setNegativeButton(R.string.no, null)
+					.show();
+
+			break;
 
 		case R.id.observation_save:
 			List<View> invalid = LayoutBaker.validateControls(controls);
@@ -544,17 +580,6 @@ public class ObservationEditActivity extends Activity implements OnMapReadyCallb
 				Log.e(LOG_NAME, e.getMessage(), e);
 			}
 
-			break;
-		case R.id.observation_cancel:
-			new AlertDialog.Builder(this)
-				.setTitle("Discard Changes")
-				.setMessage(R.string.cancel_edit)
-				.setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
-					public void onClick(DialogInterface dialog, int which) {
-						finish();
-					}
-				}).setNegativeButton(R.string.no, null)
-				.show();
 			break;
 		}
 
@@ -642,7 +667,7 @@ public class ObservationEditActivity extends Activity implements OnMapReadyCallb
 		if (resolveInfo.size() > 0) {
 			startActivityForResult(intent, CAPTURE_VOICE_ACTIVITY_REQUEST_CODE);
 		} else {
-			Toast.makeText(getApplicationContext(), "Device has no voice recorder.", Toast.LENGTH_SHORT).show();
+			Toast.makeText(getApplicationContext(), "Device has no voice recorder application.", Toast.LENGTH_SHORT).show();
 		}
 	}
 
@@ -830,6 +855,7 @@ public class ObservationEditActivity extends Activity implements OnMapReadyCallb
 		JsonObject field = mageSelectView.getJsonObject();
 		Boolean isMultiSelect = mageSelectView.isMultiSelect();
 		Integer fieldId = mageSelectView.getId();
+		String fieldTitle = field.get("title").getAsString();
 
 		Intent intent = new Intent(ObservationEditActivity.this, SelectEditActivity.class);
 		JsonArray jsonArray = field.getAsJsonArray(SelectEditActivity.MULTISELECT_JSON_CHOICE_KEY);
@@ -849,6 +875,7 @@ public class ObservationEditActivity extends Activity implements OnMapReadyCallb
 		intent.putStringArrayListExtra(SelectEditActivity.SELECT_SELECTED, selectedValues);
 		intent.putExtra(SelectEditActivity.IS_MULTISELECT, isMultiSelect);
 		intent.putExtra(SelectEditActivity.FIELD_ID, fieldId);
+		intent.putExtra(SelectEditActivity.FIELD_TITLE, fieldTitle);
 		startActivityForResult(intent, SELECT_ACTIVITY_REQUEST_CODE);
 	}
 

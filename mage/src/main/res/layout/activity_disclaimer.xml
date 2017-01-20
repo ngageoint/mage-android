@@ -2,7 +2,7 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
-    android:background="@drawable/mage_gradient"
+    android:background="?attr/colorPrimary"
     android:fillViewport="true"
     android:orientation="vertical"
     android:windowSoftInputMode="stateVisible" >
@@ -25,7 +25,7 @@
             android:layout_height="wrap_content"
             android:gravity="center"
             android:paddingBottom="20dip"
-            android:textColor="#EEEEEE"
+            android:textColor="#DEFFFFFF"
             android:textSize="26sp" />
 
         <ScrollView
@@ -39,7 +39,7 @@
                 android:layout_height="wrap_content"
                 android:gravity="center_vertical|left"
                 android:text="@string/disclaimerText"
-                android:textColor="#DDDDDD" />
+                android:textColor="#DEFFFFFF" />
         </ScrollView>
 
         <LinearLayout
@@ -53,11 +53,10 @@
                 android:layout_marginLeft="5dp"
                 android:layout_marginRight="5dp"
                 android:layout_weight="1"
-                android:background="@drawable/login_button"
+                android:background="@drawable/login_button_states"
                 android:onClick="exit"
                 android:text="Exit"
-                android:textColor="#EEEEEE"
-                android:textSize="26sp" />
+                android:textColor="#EEEEEE" />
 
             <Button
                 android:layout_width="wrap_content"
@@ -65,11 +64,10 @@
                 android:layout_marginLeft="5dp"
                 android:layout_marginRight="5dp"
                 android:layout_weight="1"
-                android:background="@drawable/login_button"
+                android:background="@drawable/login_button_states"
                 android:onClick="agree"
                 android:text="Agree"
-                android:textColor="#EEEEEE"
-                android:textSize="26sp" />
+                android:textColor="#EEEEEE" />
         </LinearLayout>
     </LinearLayout>
 

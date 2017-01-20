@@ -1,18 +1,16 @@
 package mil.nga.giat.mage.observation;
 
-import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
-import android.text.Editable;
-import android.text.TextWatcher;
-import android.view.MotionEvent;
+import android.support.v7.app.AppCompatActivity;
+import android.support.v7.view.ContextThemeWrapper;
+import android.support.v7.widget.SearchView;
+import android.support.v7.widget.Toolbar;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
-import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
 
@@ -27,12 +25,13 @@ import java.util.ArrayList;
 
 import mil.nga.giat.mage.R;
 
-public class SelectEditActivity extends Activity {
+public class SelectEditActivity extends AppCompatActivity {
 
     public static String SELECT_CHOICES = "MULTISELECT_CHOICES";
     public static String SELECT_SELECTED = "MULTISELECT_SELECTED";
     public static String IS_MULTISELECT = "IS_MULTISELECT";
     public static String FIELD_ID = "FIELD_ID";
+    public static String FIELD_TITLE = "FIELD_TITLE";
     public static String MULTISELECT_JSON_CHOICE_KEY = "choices";
     public static String MULTISELECT_JSON_CHOICE_TITLE = "title";
 
@@ -41,39 +40,43 @@ public class SelectEditActivity extends Activity {
     private ArrayList<String> userSelectedChoices;
     private ListView choicesListView;
     private TextView selectedChoicesTextView;
-    private EditText filterChoices;
-    private LinearLayout filterButtonLayout;
-    private LinearLayout filterSearchLayout;
-    private Button filterSearchButton;
     private ArrayAdapter<String> adapter;
     private Integer fieldId;
     private Boolean isMultiSelect = Boolean.FALSE;
     private ArrayList<String> choicesList;
-    private ArrayList<String> filteredChoicesList;
+    private ArrayList<String> filteredChoicesList = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_select_edit);
-        filteredChoicesList = new ArrayList<String>();
 
         Intent intent = getIntent();
-        JsonParser jsonParser = new JsonParser();
+
+        Toolbar toolbar = (Toolbar) findViewById(R.id.search_toolbar);
+        setSupportActionBar(toolbar);
+        toolbar.inflateMenu(R.menu.edit_select_menu);
+
+        String title = intent.getStringExtra(FIELD_TITLE);
+        getSupportActionBar().setHomeAsUpIndicator(R.drawable.ic_close_white_24dp);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        getSupportActionBar().setTitle(title);
 
         isMultiSelect = intent.getBooleanExtra(IS_MULTISELECT, false);
         fieldId = intent.getIntExtra(FIELD_ID, 0);
         String choices = intent.getStringExtra(SELECT_CHOICES);
-        JsonArray choicesArray = jsonParser.parse(choices).getAsJsonArray();
+        JsonArray choicesArray = new JsonParser().parse(choices).getAsJsonArray();
         choicesList = parseChoicesToGetTitles(choicesArray);
         filteredChoicesList.addAll(choicesList);
 
         choicesListView = (ListView) findViewById(R.id.select_choices);
+        ContextThemeWrapper wrapper = new ContextThemeWrapper(this, R.style.AppTheme_PrimaryAccent);
         if (isMultiSelect) {
-            adapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_multiple_choice, filteredChoicesList);
+            adapter = new ArrayAdapter<>(wrapper, android.R.layout.simple_list_item_multiple_choice, filteredChoicesList);
             choicesListView.setAdapter(adapter);
             choicesListView.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);
         } else {
-            adapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_single_choice, filteredChoicesList);
+            adapter = new ArrayAdapter<>(wrapper, android.R.layout.simple_list_item_single_choice, filteredChoicesList);
             choicesListView.setAdapter(adapter);
             choicesListView.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
         }
@@ -108,7 +111,7 @@ public class SelectEditActivity extends Activity {
         userSelectedChoices = intent.getStringArrayListExtra(SELECT_SELECTED);
 
         if (userSelectedChoices == null) {
-            userSelectedChoices = new ArrayList<String>();
+            userSelectedChoices = new ArrayList<>();
         }
         if (userSelectedChoices.isEmpty()) {
             selectedChoicesTextView.setText(DEFAULT_TEXT);
@@ -117,78 +120,78 @@ public class SelectEditActivity extends Activity {
             selectedChoicesTextView.setText(getSelectedChoicesString(userSelectedChoices));
         }
 
-        filterButtonLayout = (LinearLayout) findViewById(R.id.filter_button_layout);
-        filterSearchLayout = (LinearLayout) findViewById(R.id.filter_search_layout);
-        filterSearchButton = (Button) findViewById(R.id.filter_button);
-        filterSearchButton.setOnClickListener(new View.OnClickListener() {
+        SearchView searchView = (SearchView) findViewById(R.id.search_view);
+        searchView.setIconified(false);
+        searchView.setIconifiedByDefault(false);
+        searchView.clearFocus();
+        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
-            public void onClick(View v) {
-                filterButtonLayout.setVisibility(View.GONE);
-                filterSearchLayout.setVisibility(View.VISIBLE);
-                filterChoices.requestFocus();
-                showKeyboard();
-            }
-        });
-
-        filterChoices = (EditText) findViewById(R.id.filter_choices);
-        filterChoices.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-                // TODO Auto-generated method stub
-            }
-
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
-                // TODO Auto-generated method stub
-            }
-
-            @Override
-            public void afterTextChanged(Editable s) {
-                filteredChoicesList.clear();
-                for (int position = 0; position < choicesList.size(); position++)
-                {
-                    if (s.length() <= choicesList.get(position).length())
-                    {
-                        String filterString = s.toString();
-                        String currentChoice = choicesList.get(position);
-                        if(StringUtils.containsIgnoreCase(currentChoice, filterString))
-                        {
-                            filteredChoicesList.add(currentChoice);
-                        }
-                    }
-                }
-
-                if (isMultiSelect) {
-                    adapter = new ArrayAdapter<String>(SelectEditActivity.this, android.R.layout.simple_list_item_multiple_choice, filteredChoicesList);
-                    choicesListView.setAdapter(adapter);
-                    choicesListView.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);
-                } else {
-                    adapter = new ArrayAdapter<String>(SelectEditActivity.this, android.R.layout.simple_list_item_single_choice, filteredChoicesList);
-                    choicesListView.setAdapter(adapter);
-                    choicesListView.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
-                }
-
-
-                checkSelected();
-            }
-        });
-
-        View main = findViewById(R.id.select_parent);
-        main.setOnTouchListener(new View.OnTouchListener() {
-            @Override
-            public boolean onTouch(View v, MotionEvent event) {
-                hideKeyboard();
+            public boolean onQueryTextSubmit(String query) {
                 return false;
             }
-        });
 
+            @Override
+            public boolean onQueryTextChange(String newText) {
+                onSearchTextChanged(newText);
+                return true;
+            }
+        });
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.edit_select_menu, menu);
+
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case android.R.id.home:
+                finish();
+            case R.id.done:
+                done();
+                return true;
+            case R.id.clear_selection:
+                clearSelected();
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+    }
+
+    private void onSearchTextChanged(String text) {
+        filteredChoicesList.clear();
+
+        for (int position = 0; position < choicesList.size(); position++) {
+            if (text.length() <= choicesList.get(position).length()) {
+                String currentChoice = choicesList.get(position);
+                if(StringUtils.containsIgnoreCase(currentChoice, text)) {
+                    filteredChoicesList.add(currentChoice);
+                }
+            }
+        }
+
+        ContextThemeWrapper wrapper = new ContextThemeWrapper(this, R.style.AppTheme_PrimaryAccent);
+        if (isMultiSelect) {
+            adapter = new ArrayAdapter<>(wrapper, android.R.layout.simple_list_item_multiple_choice, filteredChoicesList);
+            choicesListView.setAdapter(adapter);
+            choicesListView.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);
+        } else {
+            adapter = new ArrayAdapter<>(wrapper, android.R.layout.simple_list_item_single_choice, filteredChoicesList);
+            choicesListView.setAdapter(adapter);
+            choicesListView.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
+        }
+
+        checkSelected();
     }
 
     public void cancel(View v) {
         onBackPressed();
     }
 
-    public void updateSelected(View v) {
+    public void done() {
         Intent data = new Intent();
         data.setData(getIntent().getData());
         data.putStringArrayListExtra(SELECT_SELECTED, userSelectedChoices);
@@ -197,38 +200,15 @@ public class SelectEditActivity extends Activity {
         finish();
     }
 
-    public void clearSelected(View v) {
-
+    private void clearSelected() {
         choicesListView.clearChoices();
         choicesListView.invalidateViews();
         selectedChoicesTextView.setText(DEFAULT_TEXT);
         userSelectedChoices.clear();
     }
 
-    public void clearFilter(View v) {
-        filterChoices.getText().clear();
-        filteredChoicesList.clear();
-        filteredChoicesList.addAll(choicesList);
-        checkSelected();
-        filterButtonLayout.setVisibility(View.VISIBLE);
-        filterSearchLayout.setVisibility(View.INVISIBLE);
-        hideKeyboard();
-    }
-
-    private void hideKeyboard() {
-        InputMethodManager inputMethodManager = (InputMethodManager) getSystemService(Activity.INPUT_METHOD_SERVICE);
-        if (getCurrentFocus() != null) {
-            inputMethodManager.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(), 0);
-        }
-    }
-
-    private void showKeyboard() {
-        InputMethodManager inputMethodManager = (InputMethodManager) getSystemService(Activity.INPUT_METHOD_SERVICE);
-        inputMethodManager.toggleSoftInput(InputMethodManager.SHOW_IMPLICIT, 0);
-    }
-
     private ArrayList<String> parseChoicesToGetTitles(JsonArray jsonArray) {
-        ArrayList<String> parsedList = new ArrayList<String>();
+        ArrayList<String> parsedList = new ArrayList<>();
         JsonParser jsonParser = new JsonParser();
         JsonElement jsonElement;
         JsonObject jsonObject;

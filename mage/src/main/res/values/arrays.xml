@@ -67,11 +67,11 @@
     </string-array>
 
     <integer-array name="timeFilterValues">
-        <item>0</item>
-        <item>1</item>
-        <item>2</item>
-        <item>3</item>
-        <item>4</item>
+        <item>@integer/time_filter_none</item>
+        <item>@integer/time_filter_today</item>
+        <item>@integer/time_filter_last_24_hours</item>
+        <item>@integer/time_filter_last_week</item>
+        <item>@integer/time_filter_last_month</item>
     </integer-array>
 
 </resources>

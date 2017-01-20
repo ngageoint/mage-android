@@ -3,10 +3,9 @@ package mil.nga.giat.mage.map.preference;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
-import android.preference.Preference;
-import android.preference.Preference.OnPreferenceClickListener;
-import android.preference.PreferenceActivity;
-import android.preference.PreferenceFragment;
+import android.support.v7.app.AppCompatActivity;
+import android.support.v7.preference.Preference;
+import android.support.v7.preference.PreferenceFragmentCompat;
 import android.util.Log;
 
 import org.apache.commons.lang3.StringUtils;
@@ -28,7 +27,7 @@ import mil.nga.giat.mage.sdk.exceptions.LayerException;
  *
  * @author newmanw
  */
-public class MapPreferencesActivity extends PreferenceActivity {
+public class MapPreferencesActivity extends AppCompatActivity {
 
 	public static String LOG_NAME = MapPreferencesActivity.class.getName();
 
@@ -38,11 +37,10 @@ public class MapPreferencesActivity extends PreferenceActivity {
 
 	private MapPreferenceFragment preference = new MapPreferenceFragment();
 
-	public static class MapPreferenceFragment extends PreferenceFragment {
+	public static class MapPreferenceFragment extends PreferenceFragmentCompat {
 
 		@Override
-		public void onCreate(final Bundle savedInstanceState) {
-			super.onCreate(savedInstanceState);
+		public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
 			addPreferencesFromResource(R.xml.mappreferences);
 		}
 
@@ -50,7 +48,7 @@ public class MapPreferencesActivity extends PreferenceActivity {
 		public void onResume() {
 			super.onResume();
 
-			findPreference(getString(R.string.tileOverlaysKey)).setOnPreferenceClickListener(new OnPreferenceClickListener() {
+			findPreference(getString(R.string.tileOverlaysKey)).setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
 				@Override
 				public boolean onPreferenceClick(Preference preference) {
 					Intent intent = new Intent(getActivity(), TileOverlayPreferenceActivity.class);
@@ -59,7 +57,7 @@ public class MapPreferencesActivity extends PreferenceActivity {
 				}
 			});
 
-			findPreference(getString(R.string.staticFeatureLayersKey)).setOnPreferenceClickListener(new OnPreferenceClickListener() {
+			findPreference(getString(R.string.staticFeatureLayersKey)).setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
 				@Override
 				public boolean onPreferenceClick(Preference preference) {
 					Intent intent = new Intent(getActivity(), FeatureOverlayPreferenceActivity.class);
@@ -69,7 +67,12 @@ public class MapPreferencesActivity extends PreferenceActivity {
 			});
 
 			// TODO : Remove the below and rework OverlayPreference to have a 'entities' similar to a list preference, these would be the 'display values'
-			OverlayPreference p = (OverlayPreference) findPreference(getResources().getString(R.string.staticFeatureLayersKey));
+			OverlayPreference p = (OverlayPreference) findPreference(getResources().getString(R.string.tileOverlaysKey));
+			Set<String> overlays = p.getValues();
+			p.setSummary(StringUtils.join(overlays, "\n"));
+
+			// TODO : Remove the below and rework OverlayPreference to have a 'entities' similar to a list preference, these would be the 'display values'
+			p = (OverlayPreference) findPreference(getResources().getString(R.string.staticFeatureLayersKey));
 			try {
 				Set<String> layerIds = p.getValues();
 				Collection<String> values = new ArrayList<>(layerIds.size());
@@ -98,7 +101,7 @@ public class MapPreferencesActivity extends PreferenceActivity {
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		getFragmentManager().beginTransaction().replace(android.R.id.content, preference).commit();
+		getSupportFragmentManager().beginTransaction().replace(android.R.id.content, preference).commit();
 	}
 
 	@Override

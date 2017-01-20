@@ -8,8 +8,8 @@
 
     <RelativeLayout
         android:layout_width="fill_parent"
-        android:layout_height="fill_parent"
-        android:background="@drawable/mage_gradient" >
+        android:layout_height="wrap_content"
+        android:background="?attr/colorPrimary" >
 
         <include
             android:id="@+id/signup_header"
@@ -64,9 +64,9 @@
                     android:id="@+id/google_signup_button"
                     android:layout_width="fill_parent"
                     android:layout_height="wrap_content"
-                    android:background="@drawable/common_plus_signin_btn_text_light_normal"
+                    android:background="@drawable/common_google_signin_btn_text_light_normal"
                     android:text="Sign up with Google"
-                    android:textColor="#dd4b39"
+                    android:textColor="#8A000000"
                     android:fontFamily="sans-serif-medium"/>
 
             </LinearLayout>
@@ -83,7 +83,7 @@
                 <View
                     android:layout_width="0dip"
                     android:layout_height="1dp"
-                    android:background="@android:color/darker_gray"
+                    android:background="#A8FFFFFF"
                     android:layout_weight=".5"
                     android:layout_marginTop="10dip"/>
 
@@ -92,13 +92,13 @@
                     android:layout_height="wrap_content"
                     android:gravity="center"
                     android:text="or"
-                    android:textColor="@android:color/darker_gray"
+                    android:textColor="#A8FFFFFF"
                     android:layout_weight=".15" />
 
                 <View
                     android:layout_width="0dip"
                     android:layout_height="1dp"
-                    android:background="@android:color/darker_gray"
+                    android:background="#A8FFFFFF"
                     android:layout_weight=".5"
                     android:layout_marginTop="10dip"/>
 
@@ -110,11 +110,10 @@
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="7dip"
                 android:layout_marginTop="7dip"
-                android:background="@drawable/form_field"
                 android:hint="Display Name"
                 android:fontFamily="sans-serif"
                 android:inputType="textPersonName|textCapSentences|textNoSuggestions"
-                android:singleLine="true" />
+                android:maxLines="1" />
 
             <EditText
                 android:id="@+id/signup_username"
@@ -122,7 +121,6 @@
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="7dip"
                 android:layout_marginTop="7dip"
-                android:background="@drawable/form_field"
                 android:hint="Username"
                 android:fontFamily="sans-serif"
                 android:inputType="textVisiblePassword|textNoSuggestions"
@@ -134,11 +132,10 @@
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="7dip"
                 android:layout_marginTop="7dip"
-                android:background="@drawable/form_field"
                 android:hint="Password"
                 android:fontFamily="sans-serif"
                 android:inputType="textPassword"
-                android:singleLine="true" />
+                android:maxLines="1" />
 
             <EditText
                 android:id="@+id/signup_confirmpassword"
@@ -146,11 +143,10 @@
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="7dip"
                 android:layout_marginTop="7dip"
-                android:background="@drawable/form_field"
                 android:hint="Confirm Password"
                 android:fontFamily="sans-serif"
                 android:inputType="textPassword"
-                android:singleLine="true" />
+                android:maxLines="1" />
 
             <EditText
                 android:id="@+id/signup_email"
@@ -158,12 +154,11 @@
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="7dip"
                 android:layout_marginTop="7dip"
-                android:background="@drawable/form_field"
                 android:hint="Email"
                 android:fontFamily="sans-serif"
                 android:imeActionLabel="Sign up"
                 android:inputType="textEmailAddress"
-                android:singleLine="true" />
+                android:maxLines="1" />
 
             <!-- Sign in button -->
             <Button
@@ -174,8 +169,7 @@
                 android:background="@drawable/login_button_states"
                 android:onClick="signup"
                 android:text="Signup"
-                android:textColor="#EEEEEE"
-                android:fontFamily="sans-serif-medium"/>
+                android:textColor="#EEEEEE" />
 
             <!-- Link to Login Screen -->
             <TextView

@@ -1,19 +1,20 @@
 package mil.nga.giat.mage.preferences;
 
-import android.app.AlertDialog;
-import android.app.ListActivity;
+import android.app.ListFragment;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.support.v7.app.AlertDialog;
+import android.support.v7.app.AppCompatActivity;
 import android.util.SparseBooleanArray;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.CheckedTextView;
 import android.widget.ListView;
@@ -32,49 +33,16 @@ import mil.nga.giat.mage.sdk.datastore.DaoStore;
  *
  * @author wiedemanns
  */
-public class ClearDataPreferenceActivity extends ListActivity {
-
-	private MenuItem clearDataButton;
+public class ClearDataPreferenceActivity extends AppCompatActivity {
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		setContentView(R.layout.fragment_cleardata);
 
-		ListView listView = getListView();
-		listView.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);
-		listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-			@Override
-			public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+		getSupportActionBar().setTitle("MAGE Data");
 
-				SparseBooleanArray checkedItems = getListView().getCheckedItemPositions();
-
-
-				if (checkedItems.indexOfKey(position) >=0 && checkedItems.valueAt(checkedItems.indexOfKey(position))) {
-					if (position == 0 || position == 2) {
-						getListView().setItemChecked(1, true);
-					}
-				} else if (position == 1) {
-					if ((checkedItems.indexOfKey(0) >=0 && checkedItems.valueAt(checkedItems.indexOfKey(0))) || (checkedItems.indexOfKey(2) >=0 && checkedItems.valueAt(checkedItems.indexOfKey(2)))) {
-						getListView().setItemChecked(position, true);
-					}
-				}
-
-				for(int i = 0, size = getListView().getCheckedItemPositions().size(); i < size; i++) {
-					Boolean b = getListView().getCheckedItemPositions().valueAt(i);
-					if(b) {
-						clearDataButton.setEnabled(true);
-						return;
-					}
-				}
-				clearDataButton.setEnabled(false);
-			}
-		});
-
-		List<String> clearDataEntries = Arrays.asList(getResources().getStringArray(R.array.clearDataEntries));
-
-		ClearDataAdapter clearDataAdapter = new ClearDataAdapter(ClearDataPreferenceActivity.this, clearDataEntries);
-		setListAdapter(clearDataAdapter);
+		ClearDataFragment fragment = new ClearDataFragment();
+		getFragmentManager().beginTransaction().replace(android.R.id.content, fragment).commit();
 	}
 
 	public static class ClearDataAdapter extends ArrayAdapter<String> {
@@ -103,78 +71,114 @@ public class ClearDataPreferenceActivity extends ListActivity {
 		}
 	}
 
-	@Override
-	public boolean onPrepareOptionsMenu(Menu menu) {
-		clearDataButton = menu.findItem(R.id.clear_data);
-		clearDataButton.setEnabled(false);
-		return super.onPrepareOptionsMenu(menu);
-	}
 
-	@Override
-	public boolean onCreateOptionsMenu(Menu menu) {
-		// Inflate the menu items for use in the action bar
-		MenuInflater inflater = getMenuInflater();
-		inflater.inflate(R.menu.cleardata_menu, menu);
+	public static class ClearDataFragment extends ListFragment {
 
-		return super.onCreateOptionsMenu(menu);
-	}
+		private MenuItem clearDataButton;
 
-	@Override
-	public boolean onOptionsItemSelected(MenuItem item) {
-		// Handle presses on the action bar items
-		switch (item.getItemId()) {
-			case R.id.clear_data:
-				deleteDataDialog(getListView());
-				return true;
-			case android.R.id.home:
-				onBackPressed();
-				return true;
-			default:
-				return super.onOptionsItemSelected(item);
+		@Override
+		public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+			setHasOptionsMenu(true);
+
+			return inflater.inflate(R.layout.fragment_cleardata, container, false);
 		}
-	}
 
-	public void deleteDataDialog(final View view) {
+		@Override
+		public void onViewCreated(View view, Bundle savedInstanceState) {
+			super.onViewCreated(view, savedInstanceState);
 
-		new AlertDialog.Builder(view.getContext(), R.style.AppCompatAlertDialogStyle)
-				.setTitle("Delete All Data")
-				.setMessage(R.string.clear_data_message)
-				.setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
-					public void onClick(DialogInterface dialog, int which) {
-						// stop doing stuff
-						((MAGE) getApplication()).onLogout(false, null);
+			ListView listView = getListView();
+			listView.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);
+			List<String> clearDataEntries = Arrays.asList(getResources().getStringArray(R.array.clearDataEntries));
 
-						SparseBooleanArray checkedItems = getListView().getCheckedItemPositions();
+			ClearDataAdapter clearDataAdapter = new ClearDataAdapter(getActivity(), clearDataEntries);
+			setListAdapter(clearDataAdapter);
+		}
 
-						if (checkedItems.indexOfKey(0) >= 0 && checkedItems.valueAt(checkedItems.indexOfKey(0))) {
-							// delete database
-							DaoStore.getInstance(view.getContext()).resetDatabase();
+		@Override
+		public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+			super.onCreateOptionsMenu(menu, inflater);
+
+			inflater.inflate(R.menu.cleardata_menu, menu);
+
+			clearDataButton = menu.findItem(R.id.clear_data);
+			clearDataButton.setEnabled(false);
+		}
+
+		@Override
+		public boolean onOptionsItemSelected(MenuItem item) {
+			switch (item.getItemId()) {
+				case R.id.clear_data:
+					deleteDataDialog(getListView());
+					return true;
+				case android.R.id.home:
+					getActivity().finish();
+					return true;
+				default:
+					return super.onOptionsItemSelected(item);
+			}
+		}
+
+		public void onListItemClick(ListView listView, View view, int position, long id) {
+			SparseBooleanArray checkedItems = getListView().getCheckedItemPositions();
+
+			if (checkedItems.indexOfKey(position) >=0 && checkedItems.valueAt(checkedItems.indexOfKey(position))) {
+				if (position == 0 || position == 2) {
+					getListView().setItemChecked(1, true);
+				}
+			} else if (position == 1) {
+				if ((checkedItems.indexOfKey(0) >=0 && checkedItems.valueAt(checkedItems.indexOfKey(0))) || (checkedItems.indexOfKey(2) >=0 && checkedItems.valueAt(checkedItems.indexOfKey(2)))) {
+					getListView().setItemChecked(position, true);
+				}
+			}
+
+			for(int i = 0, size = getListView().getCheckedItemPositions().size(); i < size; i++) {
+				Boolean b = getListView().getCheckedItemPositions().valueAt(i);
+				if(b) {
+					clearDataButton.setEnabled(true);
+					return;
+				}
+			}
+
+			clearDataButton.setEnabled(false);
+		}
+
+		public void deleteDataDialog(final View view) {
+
+			new AlertDialog.Builder(getActivity())
+					.setTitle("Delete All Data")
+					.setMessage(R.string.clear_data_message)
+					.setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+						public void onClick(DialogInterface dialog, int which) {
+							// stop doing stuff
+							((MAGE) getActivity().getApplication()).onLogout(false, null);
+
+							SparseBooleanArray checkedItems = getListView().getCheckedItemPositions();
+
+							if (checkedItems.indexOfKey(0) >= 0 && checkedItems.valueAt(checkedItems.indexOfKey(0))) {
+								// delete database
+								DaoStore.getInstance(view.getContext()).resetDatabase();
+							}
+
+							if (checkedItems.indexOfKey(1) >= 0 && checkedItems.valueAt(checkedItems.indexOfKey(1))) {
+								// clear preferences
+								PreferenceManager.getDefaultSharedPreferences(view.getContext()).edit().clear().commit();
+							}
+
+							if (checkedItems.indexOfKey(2) >= 0 && checkedItems.valueAt(checkedItems.indexOfKey(2))) {
+								// delete the application contents on the filesystem
+								LandingActivity.clearApplicationData(getActivity());
+							}
+
+							// go to login activity
+							startActivity(new Intent(getActivity(), LoginActivity.class));
+
+							// finish the activity
+							getActivity().finish();
 						}
-
-						if (checkedItems.indexOfKey(1) >= 0 && checkedItems.valueAt(checkedItems.indexOfKey(1))) {
-							// clear preferences
-							PreferenceManager.getDefaultSharedPreferences(view.getContext()).edit().clear().commit();
-						}
-
-						if (checkedItems.indexOfKey(2) >= 0 && checkedItems.valueAt(checkedItems.indexOfKey(2))) {
-							// delete the application contents on the filesystem
-							LandingActivity.clearApplicationData(getApplicationContext());
-						}
-
-						// go to login activity
-						startActivity(new Intent(getApplicationContext(), LoginActivity.class));
-
-						// finish the activity
-						finish();
-					}
-				})
-				.setNegativeButton(android.R.string.no, null)
-				.show();
-	}
-
-	@Override
-	public void onBackPressed() {
-		super.onBackPressed();
-		finish();
+					})
+					.setNegativeButton(android.R.string.no, null)
+					.show();
+		}
 	}
 }

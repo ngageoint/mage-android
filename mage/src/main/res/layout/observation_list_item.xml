@@ -69,7 +69,8 @@
                 android:layout_width="16dip"
                 android:layout_height="16dip"
                 android:layout_gravity="end"
-                android:src="@drawable/ic_flag_active_24dp"/>
+                android:tint="@color/observation_flag_active"
+                android:src="@drawable/ic_flag_white_24dp"/>
 
         </LinearLayout>
 
@@ -120,7 +121,8 @@
                     android:layout_width="24dip"
                     android:layout_height="24dip"
                     android:layout_marginEnd="3dip"
-                    android:src="@drawable/ic_favorite_gray_24dp"/>
+                    android:tint="#8AFFFFFF"
+                    android:src="@drawable/ic_favorite_white_24dp"/>
 
                 <TextView
                     android:id="@+id/favoriteCount"

@@ -1,23 +1,26 @@
 package mil.nga.giat.mage.preferences;
 
 import android.Manifest;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.preference.Preference;
-import android.preference.PreferenceFragment;
 import android.provider.Settings;
 import android.support.v4.content.ContextCompat;
+import android.support.v7.app.ActionBar;
+import android.support.v7.app.AppCompatActivity;
+import android.support.v7.preference.Preference;
+import android.support.v7.preference.PreferenceFragmentCompat;
+import android.support.v7.view.ContextThemeWrapper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ListView;
 
 import mil.nga.giat.mage.R;
 
-public class GeneralPreferencesFragment extends PreferenceFragment {
+public class GeneralPreferencesFragment extends PreferenceFragmentCompat {
 
 	private boolean locationServicesEnabled;
 	private Preference locationServicesPreference;
@@ -25,9 +28,14 @@ public class GeneralPreferencesFragment extends PreferenceFragment {
 	@Override
 	public void onCreate(final Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		getActivity().getActionBar().setTitle("Settings");
 
+		setHasOptionsMenu(false);
+	}
+
+	@Override
+	public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
 		addPreferencesFromResource(R.xml.generalpreferences);
+
 		locationServicesPreference = findPreference(getActivity().getResources().getString(R.string.locationServiceEnabledKey));
 
 		locationServicesEnabled = ContextCompat.checkSelfPermission(getActivity().getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
@@ -49,26 +57,34 @@ public class GeneralPreferencesFragment extends PreferenceFragment {
 	}
 
 	@Override
-	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-		View view = super.onCreateView(inflater, container, savedInstanceState);
-		if (view != null) {
-			ListView listView = (ListView) view.findViewById(android.R.id.list);
-			listView.setPadding(listView.getPaddingLeft(), listView.getPaddingTop(), 0, listView.getPaddingBottom());
-		}
+	public void onActivityCreated(Bundle savedInstanceState) {
+		super.onActivityCreated(savedInstanceState);
 
-		return view;
+		ActionBar actionBar = ((AppCompatActivity) getActivity()).getSupportActionBar();
+		actionBar.setTitle("Settings");
+		actionBar.setSubtitle(null);
+	}
+
+	@Override
+	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+		final Context contextThemeWrapper = new ContextThemeWrapper(getActivity(), R.style.AppTheme_PrimaryAccent);
+		LayoutInflater localInflater = inflater.cloneInContext(contextThemeWrapper);
+		return super.onCreateView(localInflater, container, savedInstanceState);
 	}
 
 	@Override
 	public void onResume() {
 		super.onResume();
 
+		getActivity().invalidateOptionsMenu();
+
 		if (locationServicesEnabled != (ContextCompat.checkSelfPermission(getActivity().getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED)) {
 			locationServicesEnabled = ContextCompat.checkSelfPermission(getActivity().getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
 			setLocationServicesSummary();
 		}
-
 	}
+
+
 
 	private void setLocationServicesSummary() {
 		if (locationServicesEnabled) {

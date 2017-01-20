@@ -1,14 +1,14 @@
 package mil.nga.giat.mage.form;
 
-import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.os.Bundle;
+import android.support.v7.app.AlertDialog;
+import android.support.v7.view.ContextThemeWrapper;
 import android.text.Editable;
 import android.text.InputType;
 import android.text.TextWatcher;
 import android.util.Log;
-import android.view.ContextThemeWrapper;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -38,7 +38,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-import mil.nga.giat.mage.sdk.R;
+import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationProperty;
 import mil.nga.giat.mage.sdk.utils.DateFormatFactory;
 
@@ -58,9 +58,9 @@ public class LayoutBaker {
 		VIEW, EDIT
 	}
 
-	public static List<View> createControlsFromJson(Context pContext, ControlGenerationType controlGenerationType, JsonObject dynamicFormJson) {
+	public static List<View> createControlsFromJson(final Context pContext, ControlGenerationType controlGenerationType, JsonObject dynamicFormJson) {
 		// add the theme to the context
-		final Context context = new ContextThemeWrapper(pContext, R.style.AppTheme);
+		final ContextThemeWrapper context = new ContextThemeWrapper(pContext, R.style.AppTheme_PrimaryAccent);
 
 		List<View> views = new ArrayList<>();
 

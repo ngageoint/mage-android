@@ -2,9 +2,9 @@ package mil.nga.giat.mage.form;
 
 import android.content.Context;
 import android.content.res.TypedArray;
+import android.support.v7.widget.AppCompatTextView;
 import android.util.AttributeSet;
 import android.util.Log;
-import android.widget.TextView;
 
 import java.io.Serializable;
 import java.text.DateFormat;
@@ -17,7 +17,7 @@ import java.util.Locale;
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.sdk.utils.DateFormatFactory;
 
-public class MageTextView extends TextView implements MageControl {
+public class MageTextView extends AppCompatTextView implements MageControl {
 
 	private static final String LOG_NAME = MageTextView.class.getName();
 

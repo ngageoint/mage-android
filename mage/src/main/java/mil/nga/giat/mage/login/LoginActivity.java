@@ -1,7 +1,6 @@
 package mil.nga.giat.mage.login;
 
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnClickListener;
@@ -12,20 +11,21 @@ import android.graphics.Typeface;
 import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
-import android.support.v4.app.FragmentActivity;
+import android.support.v7.app.AlertDialog;
+import android.support.v7.app.AppCompatActivity;
+import android.text.Editable;
 import android.text.InputType;
 import android.text.TextUtils;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnTouchListener;
 import android.view.ViewGroup;
-import android.view.Window;
 import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
-import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.TextView;
 
@@ -46,6 +46,7 @@ import mil.nga.giat.mage.disclaimer.DisclaimerActivity;
 import mil.nga.giat.mage.event.EventActivity;
 import mil.nga.giat.mage.sdk.connectivity.ConnectivityUtility;
 import mil.nga.giat.mage.sdk.datastore.DaoStore;
+import mil.nga.giat.mage.sdk.datastore.user.Event;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
@@ -63,22 +64,28 @@ import mil.nga.giat.mage.sdk.utils.UserUtility;
  *
  * @author wiedemanns
  */
-public class LoginActivity extends FragmentActivity implements AccountDelegate {
+public class LoginActivity extends AppCompatActivity implements AccountDelegate {
 
 	public static final int EXTRA_OAUTH_RESULT = 1;
 
 	public static final String EXTRA_PICK_DEFAULT_EVENT = "PICK_DEFAULT_EVENT";
 	public static final String EXTRA_OAUTH_ERROR = "OAUTH_ERROR";
 	public static final String EXTRA_OAUTH_UNREGISTERED_DEVICE = "OAUTH_UNREGISTERED_DEVICE";
+	public static final String EXTRA_CONTINUE_SESSION = "CONTINUE_SESSION";
+	public static final String EXTRA_CONTINUE_SESSION_WHILE_USING = "CONTINUE_SESSION_WHILE_USING";
 
 	private static final String LOG_NAME = LoginActivity.class.getName();
 
 	private EditText mUsernameEditText;
 	private EditText mPasswordEditText;
+	private TextView mPasswordToggle;
 	private TextView mServerURL;
 	private TextView mErrorURL;
 	private Button mLoginButton;
 	private String mOpenFilePath;
+
+	private String currentUsername;
+	private boolean mContinueSession;
 
 	public final EditText getUsernameEditText() {
 		return mUsernameEditText;
@@ -96,14 +103,16 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 
-		User currentUser = null;
-		try {
-			currentUser = UserHelper.getInstance(getApplicationContext()).readCurrentUser();
-		} catch (UserException e) {
-			e.printStackTrace();
+		Intent intent = getIntent();
+
+		mContinueSession = getIntent().getBooleanExtra(EXTRA_CONTINUE_SESSION, false);
+
+		boolean continueSessionWhileUsing = getIntent().getBooleanExtra(EXTRA_CONTINUE_SESSION_WHILE_USING, false);
+		intent.removeExtra(EXTRA_CONTINUE_SESSION_WHILE_USING);
+		if (continueSessionWhileUsing && savedInstanceState == null) {
+			showSessionExpiredDialog();
 		}
 
-		Intent intent = getIntent();
 		if (intent.getBooleanExtra("LOGOUT", false)) {
 			((MAGE) getApplication()).onLogout(true, null);
 		}
@@ -166,7 +175,6 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 		}
 
 		// no title bar
-		requestWindowFeature(Window.FEATURE_NO_TITLE);
 		setContentView(R.layout.activity_login);
 		hideKeyboardOnClick(findViewById(R.id.login));
 
@@ -179,6 +187,13 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 		mErrorURL = (TextView) findViewById(R.id.error_url);
 
 		mLoginButton = (Button) findViewById(R.id.local_login_button);
+		mPasswordToggle = (TextView) findViewById(R.id.toggle_password);
+		mPasswordToggle.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				togglePassword(v);
+			}
+		});
 
 		// set the default values
 		getUsernameEditText().setText(sharedPreferences.getString(getString(R.string.usernameKey), getString(R.string.usernameDefaultValue)));
@@ -193,6 +208,23 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 				} else {
 					return false;
 				}
+			}
+		});
+
+		mPasswordEditText.addTextChangedListener(new TextWatcher() {
+			@Override
+			public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+			}
+
+			@Override
+			public void onTextChanged(CharSequence s, int start, int before, int count) {
+
+			}
+
+			@Override
+			public void afterTextChanged(Editable s) {
+				mPasswordToggle.setVisibility(s.length() == 0 ? View.GONE : View.VISIBLE);
 			}
 		});
 
@@ -221,11 +253,29 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 		}
 	}
 
+	@Override
+	public void onBackPressed() {
+		if (mContinueSession) {
+			// In this case the activity stack was preserved. Don't allow the user to go back to an activity without logging in.
+			// Since this is the application entry point, assume back means go home.
+			Intent intent = new Intent(Intent.ACTION_MAIN);
+			intent.addCategory(Intent.CATEGORY_HOME);
+			intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+			startActivity(intent);
+			return;
+		}
+
+		super.onBackPressed();
+	}
+
 	public void togglePassword(View v) {
-		CheckBox checkbox = (CheckBox) v;
-		if (checkbox.isChecked()) {
+		TextView textView = (TextView) v;
+
+		if (textView.getText().toString().equalsIgnoreCase("SHOW")) {
+			textView.setText("HIDE");
 			mPasswordEditText.setInputType(InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD);
 		} else {
+			textView.setText("SHOW");
 			mPasswordEditText.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
 		}
 		mPasswordEditText.setSelection(mPasswordEditText.getText().length());
@@ -423,6 +473,9 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 			inputMethodManager.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(), 0);
 		}
 
+		SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+		currentUsername = sharedPreferences.getString(getApplicationContext().getString(mil.nga.giat.mage.sdk.R.string.usernameKey), null);
+
 		// reset errors
 		getUsernameEditText().setError(null);
 		getPasswordEditText().setError(null);
@@ -456,7 +509,6 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 		findViewById(R.id.login_form).setVisibility(View.GONE);
 		findViewById(R.id.login_status).setVisibility(View.VISIBLE);
 
-		SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
 		String serverURLPref =  sharedPreferences.getString(getString(R.string.serverURLKey), getString(R.string.serverURLDefaultValue));
 
 		// if the username is different, then clear the token information
@@ -504,27 +556,34 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 	@Override
 	public void finishAccount(AccountStatus accountStatus) {
 		if (accountStatus.getStatus().equals(AccountStatus.Status.SUCCESSFUL_LOGIN) || accountStatus.getStatus().equals(AccountStatus.Status.DISCONNECTED_LOGIN)) {
-			Editor sp = PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).edit();
-			sp.putString(getApplicationContext().getString(R.string.usernameKey), getUsernameEditText().getText().toString()).commit();
+			SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+			Editor editor = sharedPreferences.edit();
+			editor.putString(getApplicationContext().getString(R.string.usernameKey), getUsernameEditText().getText().toString()).commit();
 			try {
 				String hashedPassword = PasswordUtility.getSaltedHash(getPasswordEditText().getText().toString());
-				sp.putString(getApplicationContext().getString(R.string.passwordHashKey), hashedPassword).commit();
+				editor.putString(getApplicationContext().getString(R.string.passwordHashKey), hashedPassword).commit();
 			} catch (Exception e) {
 				Log.e(LOG_NAME, "Could not hash password", e);
 			}
 
 			PreferenceHelper.getInstance(getApplicationContext()).logKeyValuePairs();
 
+			final boolean sameUser = sharedPreferences.getString(getApplicationContext().getString(mil.nga.giat.mage.sdk.R.string.usernameKey), "").equals(currentUsername);
+			final boolean preserveActivityStack = sameUser && mContinueSession;
+
 			if (accountStatus.getStatus().equals(AccountStatus.Status.DISCONNECTED_LOGIN)) {
-				new AlertDialog.Builder(this).setTitle("Disconnected Login").setMessage("You are logging into MAGE in disconnected mode.  You must re-establish a connection in order to push and pull information to and from your server.").setPositiveButton(android.R.string.ok, new OnClickListener() {
+				new AlertDialog.Builder(this)
+						.setTitle("Disconnected Login")
+						.setMessage("You are logging into MAGE in disconnected mode.  You must re-establish a connection in order to push and pull information to and from your server.")
+						.setPositiveButton(android.R.string.ok, new OnClickListener() {
 					@Override
 					public void onClick(DialogInterface dialog, int which) {
 						dialog.dismiss();
-						startNextActivityAndFinish();
+						startNextActivityAndFinish(preserveActivityStack);
 					}
 				}).show();
 			} else {
-				startNextActivityAndFinish();
+				startNextActivityAndFinish(preserveActivityStack);
 			}
 		} else if (accountStatus.getStatus().equals(AccountStatus.Status.SUCCESSFUL_REGISTRATION)) {
 			Editor sp = PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).edit();
@@ -534,7 +593,10 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 			if (accountStatus.getErrorIndices().isEmpty()) {
 				getUsernameEditText().setError(null);
 				getPasswordEditText().setError(null);
-				new AlertDialog.Builder(this).setTitle("Incorrect Credentials").setMessage("The username or password you entered was incorrect.").setPositiveButton(android.R.string.ok, new OnClickListener() {
+				new AlertDialog.Builder(this)
+						.setTitle("Incorrect Credentials")
+						.setMessage("The username or password you entered was incorrect.")
+						.setPositiveButton(android.R.string.ok, new OnClickListener() {
 					@Override
 					public void onClick(DialogInterface dialog, int which) {
 						dialog.dismiss();
@@ -566,28 +628,45 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 		}
 	}
 
-	public void startNextActivityAndFinish() {
-		SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-		boolean showDisclaimer = sharedPreferences.getBoolean(getString(R.string.serverDisclaimerShow), false);
+	public void startNextActivityAndFinish(boolean preserveActivityStack) {
 
-		Intent intent = showDisclaimer ?
-				new Intent(getApplicationContext(), DisclaimerActivity.class) :
-				new Intent(getApplicationContext(), EventActivity.class);
+		if (preserveActivityStack) {
+			// We are going to return user to the app where they last left off,
+			// make sure to start up MAGE services
+			((MAGE) getApplication()).onLogin();
 
-		// If launched with a local file path, save as an extra
-		if (mOpenFilePath != null) {
-			intent.putExtra(LandingActivity.EXTRA_OPEN_FILE_PATH, mOpenFilePath);
+			// TODO look at refreshing the event here...
+		} else {
+			SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+			boolean showDisclaimer = sharedPreferences.getBoolean(getString(R.string.serverDisclaimerShow), false);
+
+			Intent intent = showDisclaimer ?
+					new Intent(getApplicationContext(), DisclaimerActivity.class) :
+					new Intent(getApplicationContext(), EventActivity.class);
+
+			// If launched with a local file path, save as an extra
+			if (mOpenFilePath != null) {
+				intent.putExtra(LandingActivity.EXTRA_OPEN_FILE_PATH, mOpenFilePath);
+			}
+
+			startActivity(intent);
 		}
 
-		startActivity(intent);
 		finish();
 	}
 
 	public void skipLogin() {
-		SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-		boolean disclaimerAccepted = sharedPreferences.getBoolean(getString(R.string.disclaimerAcceptedKey), getResources().getBoolean(R.bool.disclaimerAcceptedDefaultValue));
+		Event event = null;
+		try {
+			User user = UserHelper.getInstance(getApplicationContext()).readCurrentUser();
+			event = user.getCurrentEvent();
+		} catch (UserException e) {
+			e.printStackTrace();
+		}
 
-		Intent intent = new Intent(getApplicationContext(), LandingActivity.class);
+		Intent intent = event == null ?
+				new Intent(getApplicationContext(), EventActivity.class) :
+				new Intent(getApplicationContext(), LandingActivity.class);
 
 		// If launched with a local file path, save as an extra
 		if (mOpenFilePath != null) {
@@ -635,4 +714,15 @@ public class LoginActivity extends FragmentActivity implements AccountDelegate {
 					}
 				}).show();
 	}
-}
+
+	private void showSessionExpiredDialog() {
+		AlertDialog dialog = new AlertDialog.Builder(this)
+				.setTitle("Session Expired")
+				.setCancelable(false)
+				.setMessage("We apologize, but it looks like your MAGE session has expired.  Please login and we will take you back to what you were doing.")
+				.setPositiveButton(android.R.string.ok, null).create();
+
+		dialog.setCanceledOnTouchOutside(false);
+
+		dialog.show();
+	}}

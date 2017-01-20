@@ -2,14 +2,14 @@ package mil.nga.giat.mage.form;
 
 import android.content.Context;
 import android.content.res.TypedArray;
+import android.support.v7.widget.AppCompatEditText;
 import android.util.AttributeSet;
-import android.widget.EditText;
 
 import java.io.Serializable;
 
 import mil.nga.giat.mage.R;
 
-public class MageEditText extends EditText implements MageControl {
+public class MageEditText extends AppCompatEditText implements MageControl {
 
 	private String propertyKey;
 	private MagePropertyType propertyType;

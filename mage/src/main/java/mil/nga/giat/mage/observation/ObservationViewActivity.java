@@ -1,15 +1,14 @@
 package mil.nga.giat.mage.observation;
 
-import android.app.ActionBar;
-import android.app.Activity;
-import android.app.AlertDialog;
 import android.app.FragmentManager;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.v4.content.res.ResourcesCompat;
+import android.support.design.widget.FloatingActionButton;
+import android.support.v4.content.ContextCompat;
+import android.support.v7.app.AlertDialog;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
-import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.FrameLayout;
@@ -42,7 +41,6 @@ import java.util.Locale;
 import java.util.Map;
 
 import mil.nga.giat.mage.R;
-import mil.nga.giat.mage.event.EventBannerFragment;
 import mil.nga.giat.mage.form.LayoutBaker;
 import mil.nga.giat.mage.form.LayoutBaker.ControlGenerationType;
 import mil.nga.giat.mage.map.marker.ObservationBitmapFactory;
@@ -53,6 +51,8 @@ import mil.nga.giat.mage.sdk.datastore.observation.ObservationFavorite;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationImportant;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationProperty;
+import mil.nga.giat.mage.sdk.datastore.user.Event;
+import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
 import mil.nga.giat.mage.sdk.datastore.user.Permission;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
@@ -61,13 +61,14 @@ import mil.nga.giat.mage.sdk.exceptions.ObservationException;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
 import mil.nga.giat.mage.sdk.utils.DateFormatFactory;
 
-public class ObservationViewActivity extends Activity implements OnMapReadyCallback {
+public class ObservationViewActivity extends AppCompatActivity implements OnMapReadyCallback {
 
 	private static final String LOG_NAME = ObservationViewActivity.class.getName();
-	private static final int ATTACHMENT_VIEW_ACTIVITY_REQUEST_CODE = 500;
+
 	public static String OBSERVATION_ID = "OBSERVATION_ID";
 	public static String INITIAL_LOCATION = "INITIAL_LOCATION";
 	public static String INITIAL_ZOOM = "INITIAL_ZOOM";
+
 	private final DateFormat dateFormat = DateFormatFactory.format("yyyy-MM-dd HH:mm zz", Locale.getDefault());
 	private GoogleMap map;
     private AttachmentGallery attachmentGallery;
@@ -84,11 +85,12 @@ public class ObservationViewActivity extends Activity implements OnMapReadyCallb
 
 		setContentView(R.layout.observation_viewer);
 
-		FragmentManager fragmentManager = getFragmentManager();
-		fragmentManager.beginTransaction().add(R.id.observation_view_event_holder, new EventBannerFragment()).commit();
+		getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
-		ActionBar actionBar = getActionBar();
-		actionBar.setDisplayHomeAsUpEnabled(true);
+		Event event = EventHelper.getInstance(getApplicationContext()).getCurrentEvent();
+		if (event != null) {
+			getSupportActionBar().setSubtitle(event.getName());
+		}
 
 		try {
 			LayoutBaker.populateLayoutWithControls((LinearLayout) findViewById(R.id.propertyContainer), LayoutBaker.createControlsFromJson(this, ControlGenerationType.VIEW, ObservationHelper.getInstance(getApplicationContext()).read(getIntent().getLongExtra(OBSERVATION_ID, 0L)).getEvent().getForm()));
@@ -103,6 +105,15 @@ public class ObservationViewActivity extends Activity implements OnMapReadyCallb
 		} catch (UserException e) {
 			Log.e(LOG_NAME, "Cannot read current user", e);
 		}
+
+		final FloatingActionButton editButton = (FloatingActionButton) findViewById(R.id.edit_button);
+		editButton.setVisibility(canEditObservation ? View.VISIBLE : View.GONE);
+		editButton.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				editObservation();
+			}
+		});
 
 		observationEventListener = new IObservationEventListener() {
 			@Override
@@ -144,42 +155,12 @@ public class ObservationViewActivity extends Activity implements OnMapReadyCallb
 		((MapFragment) getFragmentManager().findFragmentById(R.id.mini_map)).getMapAsync(this);
   	}
 
-	@Override
-	public boolean onCreateOptionsMenu(Menu menu) {
-		// Inflate the menu; this adds items to the action bar if it is present.
-		getMenuInflater().inflate(R.menu.observation_view_menu, menu);
-
-		if (!canEditObservation) {
-			menu.removeItem(R.id.observation_edit);
-		}
-
-		return true;
-	}
 
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
 		switch (item.getItemId()) {
 			case android.R.id.home:
 				this.finish();
-				return true;
-			case R.id.observation_edit:
-				if(!UserHelper.getInstance(getApplicationContext()).isCurrentUserPartOfCurrentEvent()) {
-					new AlertDialog.Builder(this).setTitle("Not a member of this event").setMessage("You are an administrator and not a member of the current event.  You can not edit this observation.").setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
-						public void onClick(DialogInterface dialog, int which) {
-						}
-					}).show();
-				} else {
-					Intent intent = new Intent(this, ObservationEditActivity.class);
-					intent.putExtra(ObservationEditActivity.OBSERVATION_ID, o.getId());
-
-					if (map != null) {
-						intent.putExtra(ObservationViewActivity.INITIAL_LOCATION, map.getCameraPosition().target);
-						intent.putExtra(ObservationViewActivity.INITIAL_ZOOM, map.getCameraPosition().zoom);
-					}
-
-					startActivityForResult(intent, 2);
-				}
-
 				return true;
 			default:
 				return super.onOptionsItemSelected(item);
@@ -273,7 +254,7 @@ public class ObservationViewActivity extends Activity implements OnMapReadyCallb
             LinearLayout galleryLayout = (LinearLayout) findViewById(R.id.image_gallery);
             galleryLayout.removeAllViews();
 			if (o.getAttachments().size() == 0) {
-				findViewById(R.id.image_gallery).setVisibility(View.GONE);
+				findViewById(R.id.gallery_container).setVisibility(View.GONE);
 			} else {
                 attachmentGallery = new AttachmentGallery(getApplicationContext(), 150, 150);
                 attachmentGallery.addOnAttachmentClickListener(new AttachmentGallery.OnAttachmentClickListener() {
@@ -308,6 +289,26 @@ public class ObservationViewActivity extends Activity implements OnMapReadyCallb
 		} catch (Exception e) {
 			Log.e(LOG_NAME, e.getMessage(), e);
 		}
+	}
+
+	private void editObservation() {
+		if(!UserHelper.getInstance(getApplicationContext()).isCurrentUserPartOfCurrentEvent()) {
+			new AlertDialog.Builder(this).setTitle("Not a member of this event").setMessage("You are an administrator and not a member of the current event.  You can not edit this observation.").setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+				public void onClick(DialogInterface dialog, int which) {
+				}
+			}).show();
+		} else {
+			Intent intent = new Intent(this, ObservationEditActivity.class);
+			intent.putExtra(ObservationEditActivity.OBSERVATION_ID, o.getId());
+
+			if (map != null) {
+				intent.putExtra(ObservationViewActivity.INITIAL_LOCATION, map.getCameraPosition().target);
+				intent.putExtra(ObservationViewActivity.INITIAL_ZOOM, map.getCameraPosition().zoom);
+			}
+
+			startActivityForResult(intent, 2);
+		}
+
 	}
 
 	private void setupImportant(ObservationImportant important) {
@@ -466,9 +467,9 @@ public class ObservationViewActivity extends Activity implements OnMapReadyCallb
 
 	private void setFavoriteImage(ImageView imageView, boolean isFavorite) {
 		if (isFavorite) {
-			imageView.setImageDrawable(ResourcesCompat.getDrawable(getResources(), R.drawable.ic_favorite_active_24dp, null));
+			imageView.setColorFilter(ContextCompat.getColor(this, R.color.observation_favorite_active));
 		} else {
-			imageView.setImageDrawable(ResourcesCompat.getDrawable(getResources(), R.drawable.ic_favorite_gray_24dp, null));
+			imageView.setColorFilter(ContextCompat.getColor(this, R.color.observation_favorite_inactive));
 		}
 	}
 

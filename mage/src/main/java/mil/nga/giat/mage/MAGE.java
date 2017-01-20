@@ -1,11 +1,14 @@
 package mil.nga.giat.mage;
 
+import android.app.Activity;
+import android.app.Application;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.multidex.MultiDexApplication;
 import android.support.v4.app.NotificationCompat;
@@ -13,9 +16,13 @@ import android.support.v4.app.TaskStackBuilder;
 import android.util.Log;
 
 import mil.nga.giat.mage.login.LoginActivity;
+import mil.nga.giat.mage.login.TokenExpiredActivity;
 import mil.nga.giat.mage.observation.ObservationNotificationListener;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
+import mil.nga.giat.mage.sdk.datastore.user.User;
+import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.event.IUserEventListener;
+import mil.nga.giat.mage.sdk.exceptions.UserException;
 import mil.nga.giat.mage.sdk.fetch.LocationFetchIntentService;
 import mil.nga.giat.mage.sdk.fetch.ObservationFetchIntentService;
 import mil.nga.giat.mage.sdk.fetch.StaticFeatureServerFetch;
@@ -29,7 +36,7 @@ import mil.nga.giat.mage.sdk.screen.ScreenChangeReceiver;
 import mil.nga.giat.mage.sdk.utils.UserUtility;
 import mil.nga.giat.mage.wearable.InitializeMAGEWearBridge;
 
-public class MAGE extends MultiDexApplication implements IUserEventListener {
+public class MAGE extends MultiDexApplication implements IUserEventListener, Application.ActivityLifecycleCallbacks {
 
 	private static final String LOG_NAME = MAGE.class.getName();
 
@@ -50,12 +57,16 @@ public class MAGE extends MultiDexApplication implements IUserEventListener {
 
 	private StaticFeatureServerFetch staticFeatureServerFetch = null;
 
+	private Activity runningActivity;
+
 	@Override
 	public void onCreate() {
 		// setup the screen unlock stuff
 		registerReceiver(ScreenChangeReceiver.getInstance(), new IntentFilter(Intent.ACTION_SCREEN_ON));
 
 		HttpClientManager.getInstance(getApplicationContext()).addListener(this);
+
+		registerActivityLifecycleCallbacks(this);
 
 		super.onCreate();
 	}
@@ -67,8 +78,10 @@ public class MAGE extends MultiDexApplication implements IUserEventListener {
 		initLocationService();
 
 		//set up Observation notifications
-		observationNotificationListener = new ObservationNotificationListener(getApplicationContext());
-		ObservationHelper.getInstance(getApplicationContext()).addListener(observationNotificationListener);
+		if (observationNotificationListener == null) {
+			observationNotificationListener = new ObservationNotificationListener(getApplicationContext());
+			ObservationHelper.getInstance(getApplicationContext()).addListener(observationNotificationListener);
+		}
 
 		// Start fetching and pushing observations and locations
 		startFetching();
@@ -100,6 +113,7 @@ public class MAGE extends MultiDexApplication implements IUserEventListener {
 
 		if (observationNotificationListener != null) {
 			ObservationHelper.getInstance(getApplicationContext()).removeListener(observationNotificationListener);
+			observationNotificationListener = null;
 		}
 
 		destroyFetching();
@@ -131,11 +145,19 @@ public class MAGE extends MultiDexApplication implements IUserEventListener {
 			}
 		}
 
+		unregisterActivityLifecycleCallbacks(this);
+
 		SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
 		SharedPreferences.Editor editor = sharedPreferences.edit();
-		editor.remove(getApplicationContext().getString(mil.nga.giat.mage.sdk.R.string.currentEventKey)).commit();
-
 		editor.putBoolean(getString(R.string.disclaimerAcceptedKey), false).commit();
+
+		try {
+			UserHelper userHelper = UserHelper.getInstance(getApplicationContext());
+			User user = userHelper.readCurrentUser();
+			userHelper.removeCurrentEvent(user);
+		} catch (UserException e) {
+			e.printStackTrace();
+		}
 
 		Boolean deleteAllDataOnLogout = sharedPreferences.getBoolean(getApplicationContext().getString(R.string.deleteAllDataOnLogoutKey), getResources().getBoolean(R.bool.deleteAllDataOnLogoutDefaultValue));
 
@@ -144,7 +166,7 @@ public class MAGE extends MultiDexApplication implements IUserEventListener {
 		}
 	}
 
-	private void destroyNotification(){
+	private void destroyNotification() {
 		NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 		notificationManager.cancel(MAGE_NOTIFICATION_ID);
 		notificationManager.cancel(ObservationNotificationListener.OBSERVATION_NOTIFICATION_ID);
@@ -296,6 +318,62 @@ public class MAGE extends MultiDexApplication implements IUserEventListener {
 		createNotification();
 
 		PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).edit().putBoolean(getString(R.string.disclaimerAcceptedKey), false).commit();
+
+		if (runningActivity != null && !(runningActivity instanceof LoginActivity) && !(runningActivity instanceof TokenExpiredActivity)) {
+			forceLogin(true);
+		}
+	}
+
+	@Override
+	public void onActivityCreated(Activity activity, Bundle savedInstanceState) {
+
+	}
+
+	@Override
+	public void onActivityStarted(Activity activity) {
+
+	}
+
+	@Override
+	public void onActivityResumed(Activity activity) {
+
+		if (UserUtility.getInstance(getApplicationContext()).isTokenExpired() && !(activity instanceof LoginActivity) && !(activity instanceof TokenExpiredActivity)) {
+			forceLogin(false);
+		}
+
+		runningActivity = activity;
+	}
+
+	@Override
+	public void onActivityPaused(Activity activity) {
+		runningActivity = null;
+	}
+
+	@Override
+	public void onActivityStopped(Activity activity) {
+
+	}
+
+	@Override
+	public void onActivitySaveInstanceState(Activity activity, Bundle outState) {
+
+	}
+
+	@Override
+	public void onActivityDestroyed(Activity activity) {
+
+	}
+
+	private void forceLogin(boolean applicationInUse) {
+		Intent intent = new Intent(this, LoginActivity.class);
+		intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+		intent.putExtra(LoginActivity.EXTRA_CONTINUE_SESSION, true);
+
+		if (applicationInUse) {
+			intent.putExtra(LoginActivity.EXTRA_CONTINUE_SESSION_WHILE_USING, true);
+		}
+
+		startActivity(intent);
 	}
 
 }

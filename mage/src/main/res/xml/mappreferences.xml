@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+<android.support.v7.preference.PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
                   android:title="@string/map_settings">
 
-    <PreferenceCategory android:title="MAPS">
+    <android.support.v7.preference.PreferenceCategory android:title="MAPS">
         <mil.nga.giat.mage.sdk.preferences.IntegerListPreference
             android:defaultValue="@integer/baseLayerDefaultValue"
             android:entries="@array/baseLayerEntries"
@@ -14,30 +14,40 @@
         <mil.nga.giat.mage.map.preference.OverlayPreference
             android:key="@string/tileOverlaysKey"
             android:title="Overlay Maps"/>
-    </PreferenceCategory>
-    <PreferenceCategory android:title="OBSERVATIONS">
-        <CheckBoxPreference
+    </android.support.v7.preference.PreferenceCategory>
+
+    <android.support.v7.preference.PreferenceCategory android:title="OBSERVATIONS">
+        <android.support.v7.preference.SwitchPreferenceCompat
             android:defaultValue="@bool/showObservationsDefaultValue"
             android:key="@string/showObservationsKey"
             android:summary="Show observations on map"
-            android:title="Show Observations"/>
-    </PreferenceCategory>
-    <PreferenceCategory android:title="PEOPLE">
-        <CheckBoxPreference
+            android:title="Show Observations">
+        </android.support.v7.preference.SwitchPreferenceCompat>
+
+    </android.support.v7.preference.PreferenceCategory>
+
+    <android.support.v7.preference.PreferenceCategory android:title="LOCATIONS" android:summary="foo">
+
+        <android.support.v7.preference.SwitchPreferenceCompat
             android:defaultValue="@bool/showLocationsDefaultValue"
             android:key="@string/showLocationsKey"
             android:summary="Show users locations on map"
-            android:title="Show People"/>
-        <CheckBoxPreference
+            android:title="Show People">
+        </android.support.v7.preference.SwitchPreferenceCompat>
+
+        <android.support.v7.preference.SwitchPreferenceCompat
             android:defaultValue="@bool/showMyLocationHistoryDefaultValue"
             android:key="@string/showMyLocationHistoryKey"
             android:summary="Show your history on the map"
-            android:title="Show My Location History"/>
-    </PreferenceCategory>
-    <PreferenceCategory android:title="STATIC FEATURES">
+            android:title="Show My Location History">
+        </android.support.v7.preference.SwitchPreferenceCompat>
+
+    </android.support.v7.preference.PreferenceCategory>
+
+    <android.support.v7.preference.PreferenceCategory android:title="STATIC FEATURES">
         <mil.nga.giat.mage.map.preference.OverlayPreference
             android:key="@string/staticFeatureLayersKey"
             android:title="Feature Overlays"/>
-    </PreferenceCategory>
+    </android.support.v7.preference.PreferenceCategory>
 
-</PreferenceScreen>
+</android.support.v7.preference.PreferenceScreen>

@@ -1,6 +1,5 @@
 package mil.nga.giat.mage.event;
 
-import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -9,10 +8,13 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v4.content.LocalBroadcastManager;
+import android.support.v4.widget.TextViewCompat;
+import android.support.v7.app.AppCompatActivity;
+import android.support.v7.view.ContextThemeWrapper;
+import android.support.v7.widget.AppCompatRadioButton;
 import android.util.Log;
 import android.view.View;
 import android.view.Window;
-import android.widget.RadioButton;
 import android.widget.RadioGroup;
 
 import java.util.ArrayList;
@@ -27,12 +29,13 @@ import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
 import mil.nga.giat.mage.sdk.datastore.user.RoleHelper;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
+import mil.nga.giat.mage.sdk.exceptions.EventException;
 import mil.nga.giat.mage.sdk.fetch.InitialFetchIntentService;
 import mil.nga.giat.mage.sdk.login.AccountDelegate;
 import mil.nga.giat.mage.sdk.login.AccountStatus;
 import mil.nga.giat.mage.sdk.login.RecentEventTask;
 
-public class EventActivity extends Activity implements AccountDelegate {
+public class EventActivity extends AppCompatActivity implements AccountDelegate {
 
 	private static final String STATE_EVENT = "stateEvent";
 
@@ -74,16 +77,18 @@ public class EventActivity extends Activity implements AccountDelegate {
 			public void onReceive(Context context, Intent intent) {
 				LocalBroadcastManager.getInstance(getApplicationContext()).unregisterReceiver(this);
 
+				EventHelper eventHelper = EventHelper.getInstance(getApplicationContext());
+
 				// status?
 				if (intent.getBooleanExtra("status", false)) {
 					User currentUser = null;
 					try {
 						currentUser = UserHelper.getInstance(getApplicationContext()).readCurrentUser();
-						if(currentUser.getRole().equals(RoleHelper.getInstance(getApplicationContext()).readAdmin())) {
+						if (currentUser.getRole().equals(RoleHelper.getInstance(getApplicationContext()).readAdmin())) {
 							// now that ADMINS can be part of any event, make sure they don't push data to events they are not part of!!
-							events = EventHelper.getInstance(getApplicationContext()).readAll();
+							events = eventHelper.readAll();
 						} else {
-							events = EventHelper.getInstance(getApplicationContext()).getEventsForCurrentUser();
+							events = eventHelper.getEventsForCurrentUser();
 						}
 					} catch(Exception e) {
 						Log.e(LOG_NAME, "Could not get current events!");
@@ -101,7 +106,13 @@ public class EventActivity extends Activity implements AccountDelegate {
 						findViewById(R.id.event_bummer_info).setVisibility(View.VISIBLE);
 						findViewById(R.id.event_serverproblem_info).setVisibility(View.GONE);
 					} else {
-						Event recentEvent = currentUser.getUserLocal().getCurrentEvent();
+						Event recentEvent = null;
+						try {
+							recentEvent = eventHelper.getRecentEvent();
+						} catch (EventException e) {
+							Log.e(LOG_NAME, "Error getting recent event", e);
+						}
+
 						if (recentEvent == null) {
 							recentEvent = events.get(0);
 						}
@@ -113,7 +124,9 @@ public class EventActivity extends Activity implements AccountDelegate {
 							List<Event> tempEventsForCurrentUser = EventHelper.getInstance(getApplicationContext()).getEventsForCurrentUser();
 							((RadioGroup)findViewById(R.id.event_radiogroup)).removeAllViews();
 							for (Event e : events) {
-								RadioButton radioButton = new RadioButton(getApplicationContext());
+								ContextThemeWrapper wrapper = new ContextThemeWrapper(EventActivity.this, R.style.AppTheme_Radio_Light);
+								AppCompatRadioButton radioButton = new AppCompatRadioButton(wrapper);
+								TextViewCompat.setTextAppearance(radioButton, R.style.AppTheme_Radio_Light);
 								radioButton.setId(uniqueChildIdIndex++);
 								String text = e.getName();
 								if(!tempEventsForCurrentUser.contains(e)) {
@@ -198,15 +211,11 @@ public class EventActivity extends Activity implements AccountDelegate {
 			Log.e(LOG_NAME, "Could not set current event.");
 		}
 
-        SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).edit();
-		editor.putString(getString(R.string.currentEventKey), String.valueOf(chosenEvent.getName()));
-
 		// disable pushing locations
 		if(!UserHelper.getInstance(getApplicationContext()).isCurrentUserPartOfCurrentEvent()) {
-			editor.putBoolean(getString(R.string.reportLocationKey), false);
+			SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).edit();
+			editor.putBoolean(getString(R.string.reportLocationKey), false).apply();
 		}
-
-		editor.apply();
 
         // start up the landing activity!
 		Intent intent = new Intent(getApplicationContext(), LandingActivity.class);

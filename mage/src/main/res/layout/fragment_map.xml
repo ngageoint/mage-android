@@ -1,5 +1,5 @@
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-                xmlns:map="http://schemas.android.com/apk/res-auto"
+<android.support.design.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                xmlns:app="http://schemas.android.com/apk/res-auto"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent">
 
@@ -17,42 +17,83 @@
             android:id="@+id/mapView"
             android:layout_width="match_parent"
             android:layout_height="fill_parent"
-
-            map:uiCompass="false"
-            map:uiRotateGestures="false"
-            map:uiTiltGestures="false"/>
+            app:uiCompass="false"
+            app:uiRotateGestures="false"
+            app:uiTiltGestures="false"/>
 
         <RelativeLayout
             android:id="@+id/search_layout"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:layout_marginLeft="60dp"
-            android:layout_marginRight="60dp"
-            android:layout_marginTop="10dp"
-            android:background="@drawable/google_maps_button"
+            android:layout_marginLeft="80dp"
+            android:layout_marginRight="80dp"
+            android:layout_marginTop="20dp"
             android:orientation="horizontal"
             android:visibility="gone">
 
-            <mil.nga.giat.mage.map.ClearableEditText
-                android:id="@+id/edittext_search"
-                android:layout_width="fill_parent"
-                android:layout_height="wrap_content"
-                android:hint="Search"
-                android:imeActionLabel="Search"
-                android:imeOptions="actionSearch"
-                android:inputType="text"/>
+                <LinearLayout
+                    android:id="@+id/search_container"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:background="@drawable/map_search_foreground">
+
+                    <android.support.v7.widget.SearchView
+                        android:id="@+id/search_view"
+                        android:layout_width="fill_parent"
+                        android:layout_height="wrap_content"
+                        app:queryHint="Search address"
+                        app:searchIcon="@null"
+                        android:textColor="#A8000000"
+                        android:imeActionLabel="Search"
+                        android:imeOptions="actionSearch"
+                        android:inputType="text" />
+
+                </LinearLayout>
+
         </RelativeLayout>
 
-        <ImageButton
-            android:id="@+id/map_settings"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignParentLeft="true"
-            android:layout_alignParentTop="true"
-            android:layout_marginLeft="10dp"
-            android:layout_marginTop="10dp"
-            android:background="@drawable/google_maps_button"
-            android:src="@drawable/map"/>
     </RelativeLayout>
 
-</RelativeLayout>
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/map_settings"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|start"
+        android:layout_margin="16dp"
+        app:theme="@style/AppTheme.AlternateButton"
+        android:src="@drawable/ic_layers_black_24dp" />
+
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/zoom_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|start"
+        android:layout_marginTop="88dp"
+        android:layout_marginStart="16dp"
+        app:theme="@style/AppTheme.AlternateButton"
+        android:src="@drawable/ic_my_location_black_24dp" />
+
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/map_search_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|end"
+        android:layout_marginTop="16dp"
+        android:layout_marginBottom="16dp"
+        android:layout_marginEnd="16dp"
+        app:theme="@style/AppTheme.AlternateButton"
+        android:src="@drawable/ic_search_black_24dp" />
+
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/new_observation_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:theme="@style/AppTheme.PrimaryButton"
+        android:layout_gravity="end|bottom"
+        android:layout_marginBottom="16dp"
+        android:layout_marginEnd="16dp"
+        android:src="@drawable/ic_add_black_24dp" />
+
+</android.support.design.widget.CoordinatorLayout>

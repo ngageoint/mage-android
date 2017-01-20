@@ -1,16 +1,18 @@
 package mil.nga.giat.mage.map.preference;
 
 import android.app.Activity;
-import android.app.AlertDialog;
-import android.app.ListActivity;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.support.v4.app.ListFragment;
+import android.support.v7.app.AlertDialog;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.util.SparseBooleanArray;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -35,193 +37,213 @@ import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
 import mil.nga.giat.mage.sdk.event.ILayerEventListener;
 import mil.nga.giat.mage.sdk.event.IStaticFeatureEventListener;
 
-public class FeatureOverlayPreferenceActivity extends ListActivity implements ILayerEventListener, IStaticFeatureEventListener {
+public class FeatureOverlayPreferenceActivity extends AppCompatActivity {
 
 	private static final String LOG_NAME = FeatureOverlayPreferenceActivity.class.getName();
-	
-    private OverlayAdapter overlayAdapter;
-    private MenuItem refreshButton;
-    private View contentView;
-    private View noContentView;
+
+    private FeatureListFragment featureFragment;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.fragment_feature_overlay);
+        setContentView(R.layout.activity_feature_overlay);
 
-        ListView listView = getListView();
-        listView.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);
-
-        contentView = findViewById(R.id.content);
-        noContentView = findViewById(R.id.no_content);
+        featureFragment = (FeatureListFragment) getSupportFragmentManager().findFragmentById(R.id.feature_fragment);
     }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-        getListView().setEnabled(false);
-    }
-
-    @Override
-    public void onPause() {
-        super.onPause();
-        LayerHelper.getInstance(this).removeListener(this);
-        StaticFeatureHelper.getInstance(this).removeListener(this);
-    }
-
-    @Override
-    public void onLayerCreated(Layer layer) {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-				Collection<Layer> layers = new ArrayList<>();
-
-				try {
-					layers = LayerHelper.getInstance(getApplicationContext()).readByEvent(EventHelper.getInstance(getApplicationContext()).getCurrentEvent());
-				} catch(Exception e) {
-					Log.e(LOG_NAME, "Problem getting layers.", e);
-				}
-                ListView listView = getListView();
-                listView.clearChoices();
-
-                overlayAdapter = new OverlayAdapter(FeatureOverlayPreferenceActivity.this, new ArrayList<>(layers));
-                setListAdapter(overlayAdapter);
-
-                // Set what should be checked based on preferences.
-                SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(FeatureOverlayPreferenceActivity.this);
-                Set<String> overlays = preferences.getStringSet(getResources().getString(R.string.staticFeatureLayersKey), Collections.<String> emptySet());
-                for (int i = 0; i < listView.getCount(); i++) {
-                    Layer layer = (Layer) listView.getItemAtPosition(i);
-                    if (overlays.contains(layer.getId().toString())) {
-                        listView.setItemChecked(i, true);
-                    }
-                }
-
-                if (!layers.isEmpty()) {
-                    noContentView.setVisibility(View.GONE);
-                    contentView.setVisibility(View.VISIBLE);
-                } else {
-                    noContentView.setVisibility(View.VISIBLE);
-                    contentView.setVisibility(View.GONE);
-                    ((TextView) noContentView.findViewById(R.id.title)).setText(getResources().getString(R.string.feature_overlay_no_content_text));
-                    noContentView.findViewById(R.id.summary).setVisibility(View.VISIBLE);
-                    noContentView.findViewById(R.id.progressBar).setVisibility(View.GONE);
-                }
-
-                refreshButton.setEnabled(true);
-                getListView().setEnabled(true);
-            }
-        });
-    }
-
-	@Override
-	public void onStaticFeaturesCreated(final Layer layer) {
-		runOnUiThread(new Runnable() {
-			@Override
-			public void run() {
-				int i = overlayAdapter.getPosition(layer);
-				Layer l = overlayAdapter.getItem(i);
-
-				if (l != null) {
-                    l.setLoaded(layer.isLoaded());
-                    overlayAdapter.notifyDataSetChanged();
-				} else {
-					Log.d(LOG_NAME, "Static layer " + layer.getName() + ":" + layer.getId() + " is not available, adapter size is: " + overlayAdapter.getCount());
-				}
-			}
-		});
-	}
-
-    @Override
-    public void onError(Throwable error) {
-    }
-
-    @Override
-    public boolean onPrepareOptionsMenu(Menu menu) {
-        refreshButton = menu.findItem(R.id.feature_overlay_refresh);
-        refreshButton.setEnabled(false);
-
-        // This really should be done in the onResume, but I need to have
-        // the refreshButton
-        // before I register as the call back will set it to enabled
-        // the problem is that onResume gets called before this so my menu is
-        // not yet setup and I will not have a handle on this button
-
-		onLayerCreated(null);
-
-        LayerHelper.getInstance(this).addListener(this);
-        StaticFeatureHelper.getInstance(this).addListener(this);
-
-        return super.onPrepareOptionsMenu(menu);
-    }
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu items for use in the action bar
-        MenuInflater inflater = getMenuInflater();
-        inflater.inflate(R.menu.feature_overlay_menu, menu);
-
-        return super.onCreateOptionsMenu(menu);
-    }
-
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle presses on the action bar items
         switch (item.getItemId()) {
-        case R.id.feature_overlay_refresh:
-            refreshOverlays();
-            return true;
-        case android.R.id.home:
-            onBackPressed();
-            return true;
-        default:
-            return super.onOptionsItemSelected(item);
+            case android.R.id.home:
+                onBackPressed();
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
         }
-    }
-    
-    private void refreshOverlays() {
-        new AlertDialog.Builder(this)
-            .setTitle("Refresh Feature Overlays")
-            .setMessage(R.string.feature_overlay_refresh)
-            .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
-                public void onClick(DialogInterface dialog, int which) {
-                    refreshButton.setEnabled(false);
-                    getListView().setEnabled(false);
-                    noContentView.setVisibility(View.VISIBLE);
-                    contentView.setVisibility(View.GONE);
-                    ((TextView) noContentView.findViewById(R.id.title)).setText(getResources().getString(R.string.feature_overlay_no_content_loading));
-                    noContentView.findViewById(R.id.summary).setVisibility(View.GONE);
-                    noContentView.findViewById(R.id.progressBar).setVisibility(View.VISIBLE);
-                    
-                    overlayAdapter.clear();
-                    overlayAdapter.notifyDataSetChanged();
-                    ((MAGE) getApplication()).loadStaticFeatures(true);                
-                }
-            }).setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
-                public void onClick(DialogInterface dialog, int which) {
-                }
-            }).show();
     }
 
     @Override
     public void onBackPressed() {
         Intent intent = new Intent();
-        intent.putStringArrayListExtra(MapPreferencesActivity.OVERLAY_EXTENDED_DATA_KEY, getSelectedOverlays());
+        intent.putStringArrayListExtra(MapPreferencesActivity.OVERLAY_EXTENDED_DATA_KEY, featureFragment.getSelectedOverlays());
         setResult(Activity.RESULT_OK, intent);
         finish();
     }
 
-    private ArrayList<String> getSelectedOverlays() {
-        ArrayList<String> overlays = new ArrayList<>();
-        SparseBooleanArray checked = getListView().getCheckedItemPositions();
-        for (int i = 0; i < checked.size(); i++) {
-            if (checked.valueAt(i)) {
-                Layer layer = (Layer) getListView().getItemAtPosition(checked.keyAt(i));
-                overlays.add(layer.getId().toString());
+    public static class FeatureListFragment extends ListFragment implements ILayerEventListener, IStaticFeatureEventListener {
+
+        private OverlayAdapter overlayAdapter;
+        private MenuItem refreshButton;
+        private View contentView;
+        private View noContentView;
+
+        @Override
+        public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+            View view = inflater.inflate(R.layout.fragment_feature_overlay, container, false);
+
+            contentView = view.findViewById(R.id.content);
+            noContentView = view.findViewById(R.id.no_content);
+
+            setHasOptionsMenu(true);
+
+            return view;
+        }
+
+        @Override
+        public void onViewCreated(View view, Bundle savedInstanceState) {
+            super.onViewCreated(view, savedInstanceState);
+
+            ListView listView = getListView();
+            listView.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);
+        }
+
+        @Override
+        public void onResume() {
+            super.onResume();
+            getListView().setEnabled(false);
+        }
+
+        @Override
+        public void onPause() {
+            super.onPause();
+            LayerHelper.getInstance(getActivity()).removeListener(this);
+            StaticFeatureHelper.getInstance(getActivity()).removeListener(this);
+        }
+        @Override
+        public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+            inflater.inflate(R.menu.feature_overlay_menu, menu);
+
+            refreshButton = menu.findItem(R.id.feature_overlay_refresh);
+            refreshButton.setEnabled(false);
+
+            // This really should be done in the onResume, but I need to have
+            // the refreshButton
+            // before I register as the call back will set it to enabled
+            // the problem is that onResume gets called before this so my menu is
+            // not yet setup and I will not have a handle on this button
+
+            onLayerCreated(null);
+
+            LayerHelper.getInstance(getActivity()).addListener(this);
+            StaticFeatureHelper.getInstance(getActivity()).addListener(this);
+        }
+
+        @Override
+        public boolean onOptionsItemSelected(MenuItem item) {
+            // Handle presses on the action bar items
+            switch (item.getItemId()) {
+                case R.id.feature_overlay_refresh:
+                    refreshOverlays();
+                    return true;
+                default:
+                    return super.onOptionsItemSelected(item);
             }
         }
 
-        return overlays;
+
+        @Override
+        public void onLayerCreated(Layer layer) {
+            getActivity().runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    Collection<Layer> layers = new ArrayList<>();
+
+                    try {
+                        layers = LayerHelper.getInstance(getActivity()).readByEvent(EventHelper.getInstance(getActivity()).getCurrentEvent());
+                    } catch(Exception e) {
+                        Log.e(LOG_NAME, "Problem getting layers.", e);
+                    }
+                    ListView listView = getListView();
+                    listView.clearChoices();
+
+                    overlayAdapter = new OverlayAdapter(getActivity(), new ArrayList<>(layers));
+                    setListAdapter(overlayAdapter);
+
+                    // Set what should be checked based on preferences.
+                    SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
+                    Set<String> overlays = preferences.getStringSet(getResources().getString(R.string.staticFeatureLayersKey), Collections.<String> emptySet());
+                    for (int i = 0; i < listView.getCount(); i++) {
+                        Layer layer = (Layer) listView.getItemAtPosition(i);
+                        if (overlays.contains(layer.getId().toString())) {
+                            listView.setItemChecked(i, true);
+                        }
+                    }
+
+                    if (!layers.isEmpty()) {
+                        noContentView.setVisibility(View.GONE);
+                        contentView.setVisibility(View.VISIBLE);
+                    } else {
+                        noContentView.setVisibility(View.VISIBLE);
+                        contentView.setVisibility(View.GONE);
+                        ((TextView) noContentView.findViewById(R.id.title)).setText(getResources().getString(R.string.feature_overlay_no_content_text));
+                        noContentView.findViewById(R.id.summary).setVisibility(View.VISIBLE);
+                        noContentView.findViewById(R.id.progressBar).setVisibility(View.GONE);
+                    }
+
+                    refreshButton.setEnabled(true);
+                    getListView().setEnabled(true);
+                }
+            });
+        }
+
+        @Override
+        public void onStaticFeaturesCreated(final Layer layer) {
+            getActivity().runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    int i = overlayAdapter.getPosition(layer);
+                    Layer l = overlayAdapter.getItem(i);
+
+                    if (l != null) {
+                        l.setLoaded(layer.isLoaded());
+                        overlayAdapter.notifyDataSetChanged();
+                    } else {
+                        Log.d(LOG_NAME, "Static layer " + layer.getName() + ":" + layer.getId() + " is not available, adapter size is: " + overlayAdapter.getCount());
+                    }
+                }
+            });
+        }
+
+        @Override
+        public void onError(Throwable error) {
+
+        }
+
+        public ArrayList<String> getSelectedOverlays() {
+            ArrayList<String> overlays = new ArrayList<>();
+            SparseBooleanArray checked = getListView().getCheckedItemPositions();
+            for (int i = 0; i < checked.size(); i++) {
+                if (checked.valueAt(i)) {
+                    Layer layer = (Layer) getListView().getItemAtPosition(checked.keyAt(i));
+                    overlays.add(layer.getId().toString());
+                }
+            }
+
+            return overlays;
+        }
+
+        private void refreshOverlays() {
+            new AlertDialog.Builder(getActivity())
+                    .setTitle("Refresh Feature Overlays")
+                    .setMessage(R.string.feature_overlay_refresh)
+                    .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int which) {
+                            refreshButton.setEnabled(false);
+                            getListView().setEnabled(false);
+                            noContentView.setVisibility(View.VISIBLE);
+                            contentView.setVisibility(View.GONE);
+                            ((TextView) noContentView.findViewById(R.id.title)).setText(getResources().getString(R.string.feature_overlay_no_content_loading));
+                            noContentView.findViewById(R.id.summary).setVisibility(View.GONE);
+                            noContentView.findViewById(R.id.progressBar).setVisibility(View.VISIBLE);
+
+                            overlayAdapter.clear();
+                            overlayAdapter.notifyDataSetChanged();
+                            ((MAGE) getActivity().getApplication()).loadStaticFeatures(true);
+                        }
+                    }).setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface dialog, int which) {
+                }
+            }).show();
+        }
     }
 
     public static class OverlayAdapter extends ArrayAdapter<Layer> {

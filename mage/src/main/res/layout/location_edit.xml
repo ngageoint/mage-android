@@ -1,74 +1,82 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical">
-    <TextView android:layout_width="fill_parent"
-          android:layout_height="wrap_content"
-          style="@style/EditTextView"
-          android:text="Latitude"/>
-    <EditText 
-        android:id="@+id/location_edit_latitude"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="5dip"
-        android:hint="Latitude"/>
-    <TextView android:layout_width="fill_parent"
-          android:layout_height="wrap_content"
-          style="@style/EditTextView"
-          android:text="Longitude"/>
-    <EditText 
-        android:id="@+id/location_edit_longitude"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="5dip"
-        android:hint="Longitude"/>
-<!--     <TextView android:layout_width="fill_parent"
-          android:layout_height="wrap_content"
-          style="@style/EditTextView"
-          android:text="USNG"/>
-    <EditText 
-        android:id="@+id/location_edit_usng"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="5dip"
-        android:hint="USNG"/> -->
+    android:orientation="vertical"
+    android:focusableInTouchMode="true">
+
+    <android.support.design.widget.AppBarLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <android.support.v7.widget.Toolbar
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
+            app:popupTheme="@style/ThemeOverlay.AppCompat.Light">
+
+        </android.support.v7.widget.Toolbar>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
+            android:orientation="vertical">
+
+            <TextView android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:text="Latitude"
+                android:textColor="@color/md_white_1000"/>
+
+            <EditText
+                android:id="@+id/location_edit_latitude"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:hint="Latitude"
+                android:inputType="number|numberDecimal"
+                android:theme="@style/AppTheme.White"
+                android:imeOptions="actionDone"/>
+
+            <TextView
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="Longitude"
+                android:textColor="@color/md_white_1000"/>
+
+            <EditText
+                android:id="@+id/location_edit_longitude"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:hint="Longitude"
+                android:inputType="number|numberDecimal"
+                android:theme="@style/AppTheme.White"
+                android:imeOptions="actionDone"/>
+
+        </LinearLayout>
+
+    </android.support.design.widget.AppBarLayout>
+
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1">
-        <!-- <FrameLayout android:id="@+id/location_edit_map_holder"
+
+        <fragment
+            android:id="@+id/location_edit_map"
             android:layout_width="match_parent"
-        android:layout_height="match_parent"/> -->
-    <fragment
-        android:id="@+id/location_edit_map"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:name="com.google.android.gms.maps.MapFragment"/>
-    <ImageView 
-        android:id="@+id/location_edit_marker"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_centerInParent="true"/>
+            android:layout_height="match_parent"
+            android:name="com.google.android.gms.maps.MapFragment"/>
+
+        <ImageView
+            android:id="@+id/location_edit_marker"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"/>
     </RelativeLayout>
-    <LinearLayout 
-        android:layout_height="wrap_content"
-        android:layout_width="match_parent"
-        style="@android:style/Widget.Holo.ActionBar"
-        android:orientation="horizontal">
-        <Button android:text="Cancel"
-            android:id="@+id/cancel_btn"
-            android:onClick="cancel"
-            android:layout_height="match_parent"
-            android:layout_width="fill_parent"
-            style="@android:style/Widget.Holo.ActionButton"
-            android:layout_weight="1"/>
-        <Button android:text="Set Location"
-            android:onClick="updateLocation"
-            android:layout_height="match_parent"
-            android:layout_width="fill_parent"
-            style="@android:style/Widget.Holo.ActionButton"
-            android:layout_weight="1"/>
-    </LinearLayout>
+
 
 </LinearLayout>
