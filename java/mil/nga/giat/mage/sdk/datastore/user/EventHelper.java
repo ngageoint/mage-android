@@ -221,6 +221,23 @@ public class EventHelper extends DaoHelper<Event> {
         return event;
     }
 
+    public Event getRecentEvent() throws EventException {
+        Event event = null;
+        try {
+            User user = UserHelper.getInstance(mApplicationContext).readCurrentUser();
+            if (user != null) {
+                List<Event> events = eventDao.queryBuilder().limit(1l).where().eq(Event.COLUMN_NAME_REMOTE_ID, user.getRecentEventId()).query();
+                event = events.isEmpty() ? null : events.get(0);
+            } else {
+                Log.d(LOG_NAME, "Current user is null.  Why?");
+            }
+        } catch(Exception e) {
+            throw new EventException("There was a problem reading users current event");
+        }
+
+        return event;
+    }
+
 
     /**
      * Remove any events from the database that are not in this event list.

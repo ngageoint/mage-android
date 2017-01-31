@@ -52,13 +52,9 @@
     <string name="serverURLKey">serverURL</string>
     <string name="serverURLDefaultValue"></string>
 
-    <string name="userIdKey">usernameId</string>
     <string name="usernameKey">username</string>
     <string name="displayNameKey">displayName</string>
     <string name="usernameDefaultValue"></string>
-
-    <!-- set programmatically-->
-    <string name="currentEventKey">currentEvent</string>
 
     <!-- set programmatically-->
     <string name="buildVersionKey">buildVersion</string>

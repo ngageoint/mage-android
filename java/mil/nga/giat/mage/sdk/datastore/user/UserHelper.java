@@ -264,6 +264,22 @@ public class UserHelper extends DaoHelper<User> implements IEventDispatcher<IEve
 		return user;
 	}
 
+	public User removeCurrentEvent(User user) throws UserException {
+		try {
+			UpdateBuilder<UserLocal, Long> builder = userLocalDao.updateBuilder();
+			builder.where().idEq(user.getUserLocal().getId());
+			builder.updateColumnValue(UserLocal.COLUMN_NAME_CURRENT_EVENT, null);
+			builder.update();
+
+			userDao.refresh(user);
+		} catch (SQLException e) {
+			Log.e(LOG_NAME, "Unable to clear current event for user '" + user.getDisplayName() + "'");
+			throw new UserException("Unable to update UserLocal table", e);
+		}
+
+		return user;
+	}
+
 	public User setAvatarPath(User user, String path) throws UserException {
 		try {
 			UpdateBuilder<UserLocal, Long> builder = userLocalDao.updateBuilder();

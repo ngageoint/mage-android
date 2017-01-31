@@ -50,6 +50,7 @@ public class UserDeserializer extends Deserializer {
 
 	public User parseUser(InputStream is) throws IOException {
 		JsonParser parser = factory.createParser(is);
+		parser.nextToken();
 		return parseUser(parser);
 	}
 
@@ -130,14 +131,7 @@ public class UserDeserializer extends Deserializer {
 			}
 		}
 
-		try {
-			role = roles.containsKey(role.getRemoteId()) ?
-					roles.get(role.getRemoteId()) :
-					roleHelper.create(role);
-		} catch (RoleException e) {
-			Log.e(LOG_NAME, "Could not find matching role for user.");
-		}
-
+		role = roles.containsKey(role.getRemoteId()) ? roles.get(role.getRemoteId()) : roleHelper.createOrUpdate(role);
 		return role;
 	}
 

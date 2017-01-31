@@ -73,7 +73,7 @@ public class OAuthLoginTask extends AbstractAccountTask {
 				JsonObject userJson = jsonObject.getAsJsonObject("user");
 
 				// if user id is different, then clear the db
-				String oldUserId = sharedPreferences.getString(mApplicationContext.getString(R.string.userIdKey), null);
+				String oldUserId = sharedPreferences.getString(mApplicationContext.getString(R.string.usernameKey), null);
 				String newUserId = userJson.get("id").getAsString();
 				if (oldUserId == null || !oldUserId.equals(newUserId)) {
 					DaoStore.getInstance(mApplicationContext).resetDatabase();
@@ -95,7 +95,7 @@ public class OAuthLoginTask extends AbstractAccountTask {
 					return new AccountStatus(AccountStatus.Status.FAILED_LOGIN, errorIndices, errorMessages);
 				}
 
-				editor.putString(mApplicationContext.getString(R.string.userIdKey), newUserId);
+				editor.putString(mApplicationContext.getString(R.string.usernameKey), newUserId);
 				editor.putString(mApplicationContext.getString(R.string.displayNameKey), user.getDisplayName());
 
 				PreferenceHelper.getInstance(mApplicationContext).logKeyValuePairs();
@@ -109,7 +109,7 @@ public class OAuthLoginTask extends AbstractAccountTask {
 						JsonObject userJson = jsonObject.getAsJsonObject("user");
 						String userId = userJson.get("id").getAsString();
 
-						editor.putString(mApplicationContext.getString(R.string.userIdKey), userId);
+						editor.putString(mApplicationContext.getString(R.string.usernameKey), userId);
 
 						return new AccountStatus(AccountStatus.Status.SUCCESSFUL_REGISTRATION);
 					}

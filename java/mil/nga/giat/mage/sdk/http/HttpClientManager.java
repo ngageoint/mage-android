@@ -74,10 +74,17 @@ public class HttpClientManager implements IEventDispatcher<IUserEventListener> {
 
                 int statusCode = response.code();
                 if (statusCode == HTTP_UNAUTHORIZED) {
-                    UserUtility.getInstance(context).clearTokenInformation();
-                    for (IUserEventListener listener : listeners) {
-                        listener.onTokenExpired();
+                    UserUtility userUtility = UserUtility.getInstance(context);
+
+                    // If token has not expired yet, expire it and send notification to listeners
+                    if (!userUtility.isTokenExpired()) {
+                        UserUtility.getInstance(context).clearTokenInformation();
+
+                        for (IUserEventListener listener : listeners) {
+                            listener.onTokenExpired();
+                        }
                     }
+
                     Log.w(LOG_NAME, "TOKEN EXPIRED");
                 } else if (statusCode == HTTP_NOT_FOUND) {
                     Log.w(LOG_NAME, "404 Not Found.");

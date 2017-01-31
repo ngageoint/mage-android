@@ -11,10 +11,12 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 @DatabaseTable(tableName = "events")
 public class Event {
 
+	public static final String COLUMN_NAME_REMOTE_ID = "remote_id";
+
 	@DatabaseField(generatedId = true)
 	private Long _id;
 
-	@DatabaseField(unique = true, columnName = "remote_id")
+	@DatabaseField(unique = true, columnName = COLUMN_NAME_REMOTE_ID)
 	private String remoteId;
 
 	@DatabaseField(canBeNull = false)
