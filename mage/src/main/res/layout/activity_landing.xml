@@ -156,12 +156,13 @@
                         android:background="?android:attr/selectableItemBackground">
 
                         <RadioButton
-                            android:id="@+id/none_rb"
+                            android:id="@+id/none_radio"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginStart="16dp"
                             android:theme="@android:style/Theme.Holo"
-                            android:clickable="false" />
+                            android:clickable="false"
+                            android:tag="0"/>
 
                         <LinearLayout
                             android:layout_width="match_parent"
@@ -176,7 +177,7 @@
                                 android:textColor="#FFFFFF"
                                 android:textStyle="normal"
                                 android:textSize="13sp"
-                                android:fontFamily="sans-serif"/>
+                                android:fontFamily="sans-serif" />
 
                             <TextView
                                 android:layout_width="wrap_content"
@@ -199,12 +200,13 @@
                         android:background="?android:attr/selectableItemBackground">
 
                         <RadioButton
-                            android:id="@+id/since_midnight_rb"
+                            android:id="@+id/since_midnight_radio"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginStart="16dp"
                             android:theme="@android:style/Theme.Holo"
-                            android:clickable="false" />
+                            android:clickable="false"
+                            android:tag="1"/>
 
                         <LinearLayout
                             android:layout_width="match_parent"
@@ -219,7 +221,7 @@
                                 android:textColor="#FFFFFF"
                                 android:textStyle="normal"
                                 android:textSize="13sp"
-                                android:fontFamily="sans-serif"/>
+                                android:fontFamily="sans-serif" />
 
                             <TextView
                                 android:layout_width="wrap_content"
@@ -242,11 +244,12 @@
                         android:background="?android:attr/selectableItemBackground">
 
                         <RadioButton
-                            android:id="@+id/last_24_hours_rb"
+                            android:id="@+id/last_24_hours_radio"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginStart="16dp"
-                            android:theme="@android:style/Theme.Holo" />
+                            android:theme="@android:style/Theme.Holo"
+                            android:tag="2" />
 
                         <LinearLayout
                             android:layout_width="match_parent"
@@ -257,11 +260,11 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="24 Hours"
+                                android:text="Last 24 Hours"
                                 android:textColor="#FFFFFF"
                                 android:textStyle="normal"
                                 android:textSize="13sp"
-                                android:fontFamily="sans-serif"/>
+                                android:fontFamily="sans-serif" />
 
                             <TextView
                                 android:layout_width="wrap_content"
@@ -284,11 +287,12 @@
                         android:background="?android:attr/selectableItemBackground">
 
                         <RadioButton
-                            android:id="@+id/last_week_rb"
+                            android:id="@+id/last_week_radio"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginStart="16dp"
-                            android:theme="@android:style/Theme.Holo" />
+                            android:theme="@android:style/Theme.Holo"
+                            android:tag="3"/>
 
                         <LinearLayout
                             android:layout_width="match_parent"
@@ -326,11 +330,12 @@
                         android:background="?android:attr/selectableItemBackground">
 
                         <RadioButton
-                            android:id="@+id/last_month_rb"
+                            android:id="@+id/last_month_radio"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginStart="16dp"
-                            android:theme="@android:style/Theme.Holo" />
+                            android:theme="@android:style/Theme.Holo"
+                            android:tag="4"/>
 
                         <LinearLayout
                             android:layout_width="match_parent"

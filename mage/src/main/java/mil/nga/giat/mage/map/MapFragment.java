@@ -1265,22 +1265,23 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 	}
 
 	private Filter<Temporal> getTemporalFilter(String columnName) {
-		int timeFilter = preferences.getInt(getResources().getString(R.string.activeTimeFilterKey), R.id.none_rb);
+		int[] timeFilterValues = getResources().getIntArray(R.array.timeFilterValues);
+		int timeFilter = preferences.getInt(getResources().getString(R.string.activeTimeFilterKey), timeFilterValues[0]);
 
 		Filter<Temporal> filter = null;
 
 		Calendar c = Calendar.getInstance();
 		switch (timeFilter) {
-		case R.id.last_month_rb:
+		case 4:
 			c.add(Calendar.MONTH, -1);
 			break;
-		case R.id.last_week_rb:
+		case 3:
 			c.add(Calendar.DAY_OF_WEEK, -7);
 			break;
-		case R.id.last_24_hours_rb:
+		case 2:
 			c.add(Calendar.HOUR, -24);
 			break;
-		case R.id.since_midnight_rb:
+		case 1:
 			c.set(Calendar.HOUR_OF_DAY, 0);
 			c.set(Calendar.MINUTE, 0);
 			c.set(Calendar.SECOND, 0);
@@ -1303,18 +1304,19 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 
 	private String getTemporalFilterTitle() {
 		String title = "MAGE";
-		int timeFilter = preferences.getInt(getResources().getString(R.string.activeTimeFilterKey), R.id.none_rb);
+		int[] timeFilterValues = getResources().getIntArray(R.array.timeFilterValues);
+		int timeFilter = preferences.getInt(getResources().getString(R.string.activeTimeFilterKey), timeFilterValues[0]);
 		switch (timeFilter) {
-		case R.id.last_month_rb:
+		case 4:
 			title = "Last Month";
 			break;
-		case R.id.last_week_rb:
+		case 3:
 			title = "Last Week";
 			break;
-		case R.id.last_24_hours_rb:
+		case 2:
 			title = "Last 24 Hours";
 			break;
-		case R.id.since_midnight_rb:
+		case 1:
 			title = "Since Midnight";
 			break;
 		default:

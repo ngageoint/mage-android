@@ -91,7 +91,8 @@ public class PeopleFeedFragment extends Fragment implements OnSharedPreferenceCh
     }
     
     private int getTimeFilterId() {
-        return sp.getInt(getResources().getString(R.string.activeTimeFilterKey), R.id.none_rb);
+        int[] timeFilterValues = getResources().getIntArray(R.array.timeFilterValues);
+        return sp.getInt(getResources().getString(R.string.activeTimeFilterKey), timeFilterValues[0]);
     }
 
     private Cursor obtainCursor(PreparedQuery<Location> query, Dao<Location, Long> lDao) throws SQLException {
@@ -170,26 +171,26 @@ public class PeopleFeedFragment extends Fragment implements OnSharedPreferenceCh
 		String footerText = "All people have been returned";
         switch (filterId) {
         default:
-        case R.id.none_rb:
+        case 0:
             // no filter
             c.setTime(new Date(0));
             break;
-        case R.id.last_month_rb:
+        case 4:
             title = "Last Month";
             footerText = "End of results for Last Month filter";
             c.add(Calendar.MONTH, -1);
             break;
-        case R.id.last_week_rb:
+        case 3:
             title = "Last Week";
             footerText = "End of results for Last Week filter";
             c.add(Calendar.DAY_OF_MONTH, -7);
             break;
-        case R.id.last_24_hours_rb:
+        case 2:
             title = "Last 24 Hours";
             footerText = "End of results for Last 24 Hours filter";
             c.add(Calendar.HOUR, -24);
             break;
-        case R.id.since_midnight_rb:
+        case 1:
             title = "Since Midnight";
             footerText = "End of results for Today filter";
             c.set(Calendar.HOUR_OF_DAY, 0);

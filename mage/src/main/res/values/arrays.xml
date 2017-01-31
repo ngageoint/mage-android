@@ -58,4 +58,20 @@
         <item>3</item>
     </string-array>
 
+    <string-array name="timeFilterEntries">
+        <item>All</item>
+        <item>Today</item>
+        <item>Last 24 Hours</item>
+        <item>Last Week</item>
+        <item>Last Month</item>
+    </string-array>
+
+    <integer-array name="timeFilterValues">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+        <item>4</item>
+    </integer-array>
+
 </resources>

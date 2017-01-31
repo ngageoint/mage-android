@@ -86,8 +86,8 @@ public class LandingActivity extends Activity implements ListView.OnItemClickLis
     private ActionBarDrawerToggle drawerToggle;
     private DrawerItem currentActivity;
 
-    private int timeFilter = 0;
-    private int activeTimeFilter = 0;
+    private Integer timeFilter = 0;
+    private Integer activeTimeFilter = 0;
 
     private CheckBox favoriteCheckBox;
     private boolean activeFavoriteFilter = false;
@@ -113,11 +113,16 @@ public class LandingActivity extends Activity implements ListView.OnItemClickLis
         CacheProvider.getInstance(getApplicationContext()).refreshTileOverlays();
 
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-        timeFilter = activeTimeFilter = preferences.getInt(getResources().getString(R.string.activeTimeFilterKey), R.id.none_rb);
+        int[] timeFilterValues = getResources().getIntArray(R.array.timeFilterValues);
+        timeFilter = activeTimeFilter = preferences.getInt(getResources().getString(R.string.activeTimeFilterKey), timeFilterValues[0]);
+        if (findViewById(android.R.id.content).findViewWithTag(timeFilter.toString()) == null) {
+            timeFilter = activeTimeFilter = timeFilterValues[0];
+        }
+
         activeFavoriteFilter = preferences.getBoolean(getResources().getString(R.string.activeFavoritesFilterKey), false);
         activeImportantFilter = preferences.getBoolean(getResources().getString(R.string.activeImportantFilterKey), false);
 
-        final RadioButton noneRadioButton = ((RadioButton) findViewById(R.id.none_rb));
+        final RadioButton noneRadioButton = ((RadioButton) findViewById(R.id.none_radio));
         noneRadioButton.setOnCheckedChangeListener(this);
         findViewById(R.id.none_time_filter).setOnClickListener(new View.OnClickListener() {
             @Override
@@ -126,7 +131,7 @@ public class LandingActivity extends Activity implements ListView.OnItemClickLis
             }
         });
 
-        final RadioButton todayRadioButton = ((RadioButton) findViewById(R.id.since_midnight_rb));
+        final RadioButton todayRadioButton = ((RadioButton) findViewById(R.id.since_midnight_radio));
         todayRadioButton.setOnCheckedChangeListener(this);
         findViewById(R.id.today_time_filter).setOnClickListener(new View.OnClickListener() {
             @Override
@@ -135,7 +140,7 @@ public class LandingActivity extends Activity implements ListView.OnItemClickLis
             }
         });
 
-        final RadioButton last24HoursRadioButton = ((RadioButton) findViewById(R.id.last_24_hours_rb));
+        final RadioButton last24HoursRadioButton = ((RadioButton) findViewById(R.id.last_24_hours_radio));
         last24HoursRadioButton.setOnCheckedChangeListener(this);
         findViewById(R.id.last_24_hours_time_filter).setOnClickListener(new View.OnClickListener() {
             @Override
@@ -144,7 +149,7 @@ public class LandingActivity extends Activity implements ListView.OnItemClickLis
             }
         });
 
-        final RadioButton lastWeekRadioButton = ((RadioButton) findViewById(R.id.last_week_rb));
+        final RadioButton lastWeekRadioButton = ((RadioButton) findViewById(R.id.last_week_radio));
         lastWeekRadioButton.setOnCheckedChangeListener(this);
         findViewById(R.id.last_week_time_filter).setOnClickListener(new View.OnClickListener() {
             @Override
@@ -153,7 +158,7 @@ public class LandingActivity extends Activity implements ListView.OnItemClickLis
             }
         });
 
-        final RadioButton lastMonthRadioButton = ((RadioButton) findViewById(R.id.last_month_rb));
+        final RadioButton lastMonthRadioButton = ((RadioButton) findViewById(R.id.last_month_radio));
         lastMonthRadioButton.setOnCheckedChangeListener(this);
         findViewById(R.id.last_month_time_filter).setOnClickListener(new View.OnClickListener() {
             @Override
@@ -334,9 +339,11 @@ public class LandingActivity extends Activity implements ListView.OnItemClickLis
 
     @Override
     public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-        int filter = buttonView.getId();
+        int filter = Integer.parseInt(buttonView.getTag().toString());
         if (timeFilter != filter) {
-            ((RadioButton) findViewById(timeFilter)).setChecked(false);
+            RadioButton oldFilterRadioButton = (RadioButton) findViewById(android.R.id.content).findViewWithTag(timeFilter.toString());
+            oldFilterRadioButton.setChecked(false);
+
             timeFilter = filter;
             buttonView.setChecked(true);
         }
@@ -412,8 +419,14 @@ public class LandingActivity extends Activity implements ListView.OnItemClickLis
 
                     SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
 
-                    int checkedFilter = preferences.getInt(getResources().getString(R.string.activeTimeFilterKey), R.id.none_rb);
-                    ((RadioButton) findViewById(checkedFilter)).setChecked(true);
+                    int[] timeFilterValues = getResources().getIntArray(R.array.timeFilterValues);
+                    Integer checkedFilter = preferences.getInt(getResources().getString(R.string.activeTimeFilterKey), timeFilterValues[0]);
+                    View view = findViewById(android.R.id.content).findViewWithTag(checkedFilter.toString());
+                    if (view == null) {
+                        view = findViewById(android.R.id.content).findViewWithTag("0");
+                    }
+
+                    ((RadioButton) view).setChecked(true);
 
                     boolean favorite = preferences.getBoolean(getResources().getString(R.string.activeFavoritesFilterKey), false);
                     CheckBox favoriteCheckBox = (CheckBox) findViewById(R.id.status_favorite);

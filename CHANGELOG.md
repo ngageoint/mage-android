@@ -3,13 +3,20 @@ All notable changes to this project will be documented in this file.
 Adheres to [Semantic Versioning](http://semver.org/).
 
 ---
-## 5.2.1 (TBD)
+## 5.2.2 (TBD)
 
 * TBD
 
 ##### Features
 
 ##### Bug Fixes
+
+## [5.2.1](https://github.com/ngageoint/mage-android/releases/tag/5.2.1) (01-31-2017)
+
+##### Features
+
+##### Bug Fixes
+* Bug fix preventing app crash when opening filter drawer
 
 ## [5.2.0](https://github.com/ngageoint/mage-android/releases/tag/5.2.0) (01-09-2017)
 
