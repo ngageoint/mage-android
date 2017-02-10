@@ -62,7 +62,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="top|start"
         android:layout_margin="16dp"
-        app:theme="@style/AppTheme.AlternateButton"
+        app:theme="@style/AppTheme.AlternateFAB"
         android:src="@drawable/ic_layers_black_24dp" />
 
     <android.support.design.widget.FloatingActionButton
@@ -72,7 +72,7 @@
         android:layout_gravity="top|start"
         android:layout_marginTop="88dp"
         android:layout_marginStart="16dp"
-        app:theme="@style/AppTheme.AlternateButton"
+        app:theme="@style/AppTheme.AlternateFAB"
         android:src="@drawable/ic_my_location_black_24dp" />
 
     <android.support.design.widget.FloatingActionButton
@@ -83,14 +83,15 @@
         android:layout_marginTop="16dp"
         android:layout_marginBottom="16dp"
         android:layout_marginEnd="16dp"
-        app:theme="@style/AppTheme.AlternateButton"
+        app:backgroundTint="@color/map_search_button"
+        app:theme="@style/AppTheme.AlternateFAB"
         android:src="@drawable/ic_search_black_24dp" />
 
     <android.support.design.widget.FloatingActionButton
         android:id="@+id/new_observation_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        app:theme="@style/AppTheme.PrimaryButton"
+        app:theme="@style/AppTheme.PrimaryFAB"
         android:layout_gravity="end|bottom"
         android:layout_marginBottom="16dp"
         android:layout_marginEnd="16dp"

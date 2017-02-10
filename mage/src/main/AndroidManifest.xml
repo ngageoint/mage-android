@@ -98,16 +98,11 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".login.TokenExpiredActivity"
-            android:theme="@style/AppTheme.NoActionBar"
-            android:windowSoftInputMode="adjustResize"
-            android:launchMode="singleTask"/>
-        <activity
             android:name=".login.OAuthActivity"
             android:windowSoftInputMode="adjustResize" />
         <activity
             android:name=".login.SignupActivity"
-            android:theme="@style/AppTheme.White"
+            android:theme="@style/AppTheme.NoActionBar"
             android:windowSoftInputMode="stateAlwaysHidden" />
         <activity
             android:name=".event.EventActivity"

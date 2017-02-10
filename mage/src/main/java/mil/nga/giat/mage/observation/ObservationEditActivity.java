@@ -18,12 +18,12 @@ import android.os.SystemClock;
 import android.provider.MediaStore;
 import android.provider.Settings;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.KeyEvent;
-import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
@@ -32,11 +32,9 @@ import android.view.View.OnTouchListener;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
-import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import android.widget.TimePicker;
 import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -62,7 +60,6 @@ import java.text.DateFormat;
 import java.text.DecimalFormat;
 import java.text.ParseException;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
@@ -274,42 +271,24 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 		findViewById(R.id.date_edit).setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				AlertDialog.Builder builder = new AlertDialog.Builder(ObservationEditActivity.this);
-				// Get the layout inflater
-				LayoutInflater inflater = getLayoutInflater();
-				View dialogView = inflater.inflate(R.layout.date_time_dialog, null);
-				final DatePicker datePicker = (DatePicker) dialogView.findViewById(R.id.date_picker);
-				final TimePicker timePicker = (TimePicker) dialogView.findViewById(R.id.time_picker);
+				Serializable value = ((MageTextView) findViewById(R.id.date)).getPropertyValue();
+				Date date = null;
+				try {
+					date = DateFormatFactory.ISO8601().parse(value.toString());
+				} catch (ParseException pe) {
+					Log.e(LOG_NAME, "Problem parsing date.", pe);
+				}
 
-                Serializable value = ((MageTextView) findViewById(R.id.date)).getPropertyValue();
-                try {
-                    Date date = iso8601Format.parse(value.toString());
-                    Calendar c = Calendar.getInstance();
-                    c.setTime(date);
-                    datePicker.updateDate(c.get(Calendar.YEAR), c.get(Calendar.MONTH), c.get(Calendar.DAY_OF_MONTH));
-                    timePicker.setCurrentHour(c.get(Calendar.HOUR_OF_DAY));
-                    timePicker.setCurrentMinute(c.get(Calendar.MINUTE));
-
-                } catch (ParseException e) {
-                    e.printStackTrace();
-                }
-                // Inflate and set the layout for the dialog
-				// Pass null as the parent view because its going in the dialog layout
-				builder.setView(dialogView).setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+				DateTimePickerDialog dialog = DateTimePickerDialog.newInstance(date);
+				dialog.setOnDateTimeChangedListener(new DateTimePickerDialog.OnDateTimeChangedListener() {
 					@Override
-					public void onClick(DialogInterface dialog, int id) {
-						Calendar c = Calendar.getInstance();
-						c.set(datePicker.getYear(), datePicker.getMonth(), datePicker.getDayOfMonth(), timePicker.getCurrentHour(), timePicker.getCurrentMinute(), 0);
-						c.set(Calendar.MILLISECOND, 0);
-						((MageTextView) findViewById(R.id.date)).setPropertyValue(c.getTime());
-					}
-				}).setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
-					public void onClick(DialogInterface dialog, int id) {
-						dialog.cancel();
+					public void onDateTimeChanged(Date date) {
+						((MageTextView) findViewById(R.id.date)).setPropertyValue(date);
 					}
 				});
-				AlertDialog ad = builder.create();
-				ad.show();
+
+				FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
+				dialog.show(ft, "DATE_TIME_PICKER_DIALOG");
 			}
 		});
 
@@ -323,7 +302,6 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 				startActivityForResult(intent, LOCATION_EDIT_ACTIVITY_REQUEST_CODE);
 			}
 		});
-
 	}
 
 	/**

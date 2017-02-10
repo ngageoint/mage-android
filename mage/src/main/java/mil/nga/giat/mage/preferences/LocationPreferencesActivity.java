@@ -1,9 +1,15 @@
 package mil.nga.giat.mage.preferences;
 
+import android.Manifest;
 import android.content.Context;
+import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.provider.Settings;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.preference.Preference;
 import android.support.v7.preference.PreferenceFragmentCompat;
@@ -54,10 +60,10 @@ public class LocationPreferencesActivity extends AppCompatActivity {
         setContentView(R.layout.activity_location_preferences);
 
         toolbar = (Toolbar) findViewById(R.id.toolbar);
+        noContentView = findViewById(R.id.no_content_frame);
+
         if (android.os.Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
             toolbar.inflateMenu(R.menu.fetch_preferences_menu);
-
-            noContentView = findViewById(R.id.no_content_frame);
 
             boolean locationServicesEnabled = PreferenceManager.getDefaultSharedPreferences(this).getBoolean(getResources().getString(R.string.locationServiceEnabledKey), false);
 
@@ -74,7 +80,8 @@ public class LocationPreferencesActivity extends AppCompatActivity {
             updateView(locationServicesEnabled);
         } else {
             toolbar.setVisibility(View.GONE);
-            noContentView.setVisibility(View.GONE);
+            boolean locationServicesEnabled = ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
+            findViewById(R.id.no_content_frame_new).setVisibility(locationServicesEnabled ? View.GONE : View.VISIBLE);
         }
 
         getSupportFragmentManager().beginTransaction().replace(R.id.content_frame, preference).commit();
@@ -92,8 +99,17 @@ public class LocationPreferencesActivity extends AppCompatActivity {
 		}
 	}
 
+    public void launchPermissions(View view) {
+        Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+        intent.setData(Uri.fromParts("package", getPackageName(), null));
+        startActivity(intent);
+    }
+
     private void updateView(boolean locationServicesEnabled) {
         toolbar.setTitle(locationServicesEnabled ? "On" : "Off");
-        noContentView.setVisibility(locationServicesEnabled ? View.GONE : View.VISIBLE);
+
+        if (android.os.Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+            noContentView.setVisibility(locationServicesEnabled ? View.GONE : View.VISIBLE);
+        }
     }
 }
