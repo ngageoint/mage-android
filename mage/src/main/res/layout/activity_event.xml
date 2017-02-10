@@ -140,10 +140,9 @@
             android:layout_below="@id/event_select_content"
             android:layout_marginBottom="10dip"
             android:layout_marginTop="10dip"
-            android:background="@drawable/login_button_states"
             android:onClick="chooseEvent"
             android:text="Go"
-            android:textColor="#D8FFFF" />
+            android:theme="@style/AppTheme.PrimaryDarkButton"/>
 
         <Button
             android:id="@+id/event_back_button"
@@ -152,10 +151,10 @@
             android:layout_below="@id/event_bummer_info"
             android:layout_marginBottom="10dip"
             android:layout_marginTop="10dip"
-            android:background="@drawable/login_button_states"
             android:onClick="bummerEvent"
             android:text="Bummer"
-            android:textColor="#D8FFFF"
-            android:visibility="gone"/>
+            android:visibility="gone"
+            android:theme="@style/AppTheme.PrimaryDarkButton"/>
+
     </LinearLayout>
 </LinearLayout>

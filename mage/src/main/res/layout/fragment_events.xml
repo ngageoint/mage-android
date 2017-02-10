@@ -37,7 +37,6 @@
         android:layout_height="wrap_content"
         android:layout_marginBottom="20dp"
         android:text="Choose Event"
-        android:background="@drawable/login_button_states"
-        android:textColor="#DEFFFFFF" />
+        android:theme="@style/AppTheme.PrimaryDarkButton"/>
 
 </LinearLayout>

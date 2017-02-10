@@ -11,6 +11,7 @@ import android.graphics.Typeface;
 import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.support.design.widget.TextInputLayout;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.text.Editable;
@@ -77,11 +78,13 @@ public class LoginActivity extends AppCompatActivity implements AccountDelegate 
 	private static final String LOG_NAME = LoginActivity.class.getName();
 
 	private EditText mUsernameEditText;
+	private TextInputLayout mUsernameLayout;
+
 	private EditText mPasswordEditText;
-	private TextView mPasswordToggle;
+	private TextInputLayout mPasswordLayout;
+
 	private TextView mServerURL;
-	private TextView mErrorURL;
-	private Button mLoginButton;
+
 	private String mOpenFilePath;
 
 	private String currentUsername;
@@ -181,32 +184,33 @@ public class LoginActivity extends AppCompatActivity implements AccountDelegate 
 		((TextView) findViewById(R.id.login_version)).setText("App Version: " + sharedPreferences.getString(getString(R.string.buildVersionKey), "NA"));
 
 		mUsernameEditText = (EditText) findViewById(R.id.login_username);
+		mUsernameLayout = (TextInputLayout) findViewById(R.id.username_layout);
+
 		mPasswordEditText = (EditText) findViewById(R.id.login_password);
+		mPasswordLayout = (TextInputLayout) findViewById(R.id.password_layout);
+
 		mPasswordEditText.setTypeface(Typeface.DEFAULT);
 		mServerURL = (TextView) findViewById(R.id.server_url);
-		mErrorURL = (TextView) findViewById(R.id.error_url);
-
-		mLoginButton = (Button) findViewById(R.id.local_login_button);
-		mPasswordToggle = (TextView) findViewById(R.id.toggle_password);
-		mPasswordToggle.setOnClickListener(new View.OnClickListener() {
-			@Override
-			public void onClick(View v) {
-				togglePassword(v);
-			}
-		});
 
 		// set the default values
 		getUsernameEditText().setText(sharedPreferences.getString(getString(R.string.usernameKey), getString(R.string.usernameDefaultValue)));
 		getUsernameEditText().setSelection(getUsernameEditText().getText().length());
 
-		mPasswordEditText.setOnKeyListener(new View.OnKeyListener() {
+		mUsernameEditText.addTextChangedListener(new TextWatcher() {
 			@Override
-			public boolean onKey(View v, int keyCode, KeyEvent event) {
-				if (keyCode == KeyEvent.KEYCODE_ENTER) {
-					login(v);
-					return true;
-				} else {
-					return false;
+			public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+			}
+
+			@Override
+			public void onTextChanged(CharSequence s, int start, int before, int count) {
+
+			}
+
+			@Override
+			public void afterTextChanged(Editable s) {
+				if (StringUtils.isNoneBlank(s)) {
+					mUsernameLayout.setError(null);
 				}
 			}
 		});
@@ -224,7 +228,21 @@ public class LoginActivity extends AppCompatActivity implements AccountDelegate 
 
 			@Override
 			public void afterTextChanged(Editable s) {
-				mPasswordToggle.setVisibility(s.length() == 0 ? View.GONE : View.VISIBLE);
+				if (StringUtils.isNoneBlank(s)) {
+					mPasswordLayout.setError(null);
+				}
+			}
+		});
+
+		mPasswordEditText.setOnKeyListener(new View.OnKeyListener() {
+			@Override
+			public boolean onKey(View v, int keyCode, KeyEvent event) {
+				if (keyCode == KeyEvent.KEYCODE_ENTER) {
+					login(v);
+					return true;
+				} else {
+					return false;
+				}
 			}
 		});
 
@@ -235,19 +253,8 @@ public class LoginActivity extends AppCompatActivity implements AccountDelegate 
 			PreferenceHelper.getInstance(getApplicationContext()).validateServerApi(serverURL, new Predicate<Exception>() {
 				@Override
 				public boolean apply(Exception e) {
-					if (e == null) {
-						mLoginButton.setEnabled(true);
-						mErrorURL.setError(null);
-						configureLogin();
-
-						return true;
-					} else {
-						configureLogin();
-						mErrorURL.setError(e.getMessage());
-						mErrorURL.requestFocus();
-
-						return false;
-					}
+					configureLogin();
+					return e == null;
 				}
 			});
 		}
@@ -355,6 +362,8 @@ public class LoginActivity extends AppCompatActivity implements AccountDelegate 
 		if (ConnectivityUtility.isOnline(getApplicationContext())) {
 			View dialogView = getLayoutInflater().inflate(R.layout.dialog_server, null);
 			final EditText serverEditText = (EditText) dialogView.findViewById(R.id.server_url);
+			final TextInputLayout serverEditLayout = (TextInputLayout) dialogView.findViewById(R.id.server_url_layout);
+
 			final View progress = dialogView.findViewById(R.id.progress);
 
 			final SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
@@ -401,9 +410,7 @@ public class LoginActivity extends AppCompatActivity implements AccountDelegate 
 								public boolean apply(Exception e) {
 									if (e == null) {
 										mServerURL.setText(serverURL);
-										mErrorURL.setError(null);
-										mLoginButton.setEnabled(true);
-										serverEditText.setError(null);
+										serverEditLayout.setError(null);
 										alertDialog.dismiss();
 
 										final DaoStore daoStore = DaoStore.getInstance(getApplicationContext());
@@ -419,7 +426,7 @@ public class LoginActivity extends AppCompatActivity implements AccountDelegate 
 									} else {
 										progress.setVisibility(View.INVISIBLE);
 										button.setEnabled(true);
-										serverEditText.setError(e.getMessage());
+										serverEditLayout.setError(e.getMessage());
 
 										return false;
 									}
@@ -477,8 +484,8 @@ public class LoginActivity extends AppCompatActivity implements AccountDelegate 
 		currentUsername = sharedPreferences.getString(getApplicationContext().getString(mil.nga.giat.mage.sdk.R.string.usernameKey), null);
 
 		// reset errors
-		getUsernameEditText().setError(null);
-		getPasswordEditText().setError(null);
+		mUsernameLayout.setError(null);
+		mPasswordLayout.setError(null);
 		mServerURL.setError(null);
 
 		String username = getUsernameEditText().getText().toString();
@@ -487,14 +494,12 @@ public class LoginActivity extends AppCompatActivity implements AccountDelegate 
 
 		// are the inputs valid?
 		if (TextUtils.isEmpty(username)) {
-			getUsernameEditText().setError("Username can not be blank");
-			getUsernameEditText().requestFocus();
+			mUsernameLayout.setError("Username can not be blank");
 			return;
 		}
 
 		if (TextUtils.isEmpty(password)) {
-			getPasswordEditText().setError("Password can not be blank");
-			getPasswordEditText().requestFocus();
+			mPasswordLayout.setError("Password can not be blank");
 			return;
 		}
 
@@ -617,8 +622,11 @@ public class LoginActivity extends AppCompatActivity implements AccountDelegate 
 						getPasswordEditText().setError(message);
 						getPasswordEditText().requestFocus();
 					} else if (errorIndex == 2) {
-						mServerURL.setError(message);
-						mServerURL.requestFocus();
+						new AlertDialog.Builder(this)
+							.setTitle("Login Failed")
+							.setMessage(message)
+							.setPositiveButton(android.R.string.ok, null)
+							.show();
 					}
 				}
 			}

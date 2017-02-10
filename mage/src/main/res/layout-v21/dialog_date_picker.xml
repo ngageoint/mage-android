@@ -8,13 +8,7 @@
         android:id="@+id/date_picker"
         android:layout_width="match_parent"
         android:datePickerMode="calendar"
-        android:layout_weight="4"
-        android:layout_height="0dp" />
-
-    <TimePicker
-        android:id="@+id/time_picker"
-        android:layout_weight="4"
-        android:layout_width="match_parent"
-        android:layout_height="0dp" />
+        android:layout_height="wrap_content"
+        android:theme="@style/AppTheme.PrimaryAccent"/>
 
 </LinearLayout>

@@ -53,10 +53,9 @@
                 android:layout_marginLeft="5dp"
                 android:layout_marginRight="5dp"
                 android:layout_weight="1"
-                android:background="@drawable/login_button_states"
                 android:onClick="exit"
                 android:text="Exit"
-                android:textColor="#EEEEEE" />
+                android:theme="@style/AppTheme.PrimaryDarkButton"/>
 
             <Button
                 android:layout_width="wrap_content"
@@ -64,10 +63,10 @@
                 android:layout_marginLeft="5dp"
                 android:layout_marginRight="5dp"
                 android:layout_weight="1"
-                android:background="@drawable/login_button_states"
                 android:onClick="agree"
                 android:text="Agree"
-                android:textColor="#EEEEEE" />
+                android:theme="@style/AppTheme.PrimaryDarkButton"/>
+
         </LinearLayout>
     </LinearLayout>
 

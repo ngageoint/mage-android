@@ -48,7 +48,7 @@ public class MageRadioGroup extends RadioGroup implements MageControl {
 	@Override
 	public String getPropertyValue() {
 		String value = null;
-		RadioButton radioButton = (AppCompatRadioButton) findViewById(getCheckedRadioButtonId());
+		AppCompatRadioButton radioButton = (AppCompatRadioButton) findViewById(getCheckedRadioButtonId());
 		if (radioButton != null) {
 			value = (String) radioButton.getText();
 		}

@@ -16,9 +16,45 @@
         android:background="@color/md_blue_200"/>
 
     <FrameLayout
-        android:id="@+id/no_content_frame"
+        android:id="@+id/no_content_frame_new"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        android:visibility="gone">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="48dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:layout_marginEnd="16dp"
+                android:gravity="center"
+                android:textSize="16sp"
+                android:text="MAGE Location services are turned off.  Please update the application permissions for MAGE to allow the 'Location' permission. "/>
+
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="32dp"
+                android:theme="@style/AppTheme.PrimaryButton"
+                android:text="Permissions"
+                android:onClick="launchPermissions"/>
+
+        </LinearLayout>
+
+    </FrameLayout>
+
+    <FrameLayout
+        android:id="@+id/no_content_frame_old"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone">
 
         <LinearLayout
             android:layout_width="wrap_content"

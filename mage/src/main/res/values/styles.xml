@@ -38,6 +38,10 @@
         <item name="android:textColor">@color/md_white_1000</item>
     </style>
 
+    <style name="AppTheme.ErrorTextAppearance" parent="@style/TextAppearance.AppCompat">
+        <item name="android:textColor">#A8DD2C00</item>
+    </style>
+
     <style name="AppTheme.Radio">
         <item name="colorControlActivated">?attr/colorPrimary</item>
     </style>
@@ -52,14 +56,26 @@
         <item name="colorControlActivated">@color/md_white_1000</item>
     </style>
 
-    <style name="AppTheme.AlternateButton" parent="Widget.AppCompat.Button">
+    <style name="AppTheme.AlternateFAB" parent="Widget.AppCompat.Button">
         <item name="android:tint">@color/md_blue_600</item>
         <item name="colorAccent">@color/md_white_1000</item>
+
+        <item name="colorButtonNormal">@color/md_blue_600</item>
     </style>
 
-    <style name="AppTheme.PrimaryButton" parent="Widget.AppCompat.Button">
+    <style name="AppTheme.PrimaryFAB" parent="Widget.AppCompat.Button">
         <item name="android:tint">@color/md_white_1000</item>
         <item name="colorAccent">@color/md_orange_A200</item>
+    </style>
+
+    <style name="AppTheme.PrimaryButton">
+        <item name="colorButtonNormal">@color/md_blue_600</item>
+        <item name="android:textColor">@color/md_white_1000</item>
+    </style>
+
+    <style name="AppTheme.PrimaryDarkButton">
+        <item name="backgroundTint">?attr/colorPrimaryDark</item>
+        <item name="buttonStyle">@style/Widget.AppCompat.Button.Colored</item>
     </style>
 
     <style name="ListSubheader">
@@ -118,8 +134,8 @@
     </style>
 
     <style name="EditTextView" parent="@android:style/TextAppearance.Small">
-        <item name="android:textColor">#372c24</item>
-        <item name="android:textStyle">bold</item>
+        <item name="android:textColor">#59000000</item>
+        <item name="android:textSize">12sp</item>
     </style>
 
     <style name="ViewTextView" parent="@android:style/TextAppearance.Small">

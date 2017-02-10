@@ -1,14 +1,7 @@
 package mil.nga.giat.mage.preferences;
 
-import android.Manifest;
 import android.content.Context;
-import android.content.Intent;
-import android.content.pm.PackageManager;
-import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
-import android.provider.Settings;
-import android.support.v4.content.ContextCompat;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.preference.Preference;
@@ -35,25 +28,6 @@ public class GeneralPreferencesFragment extends PreferenceFragmentCompat {
 	@Override
 	public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
 		addPreferencesFromResource(R.xml.generalpreferences);
-
-		locationServicesPreference = findPreference(getActivity().getResources().getString(R.string.locationServiceEnabledKey));
-
-		locationServicesEnabled = ContextCompat.checkSelfPermission(getActivity().getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
-		setLocationServicesSummary();
-
-		locationServicesPreference.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
-			@Override
-			public boolean onPreferenceClick(Preference preference) {
-				if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !locationServicesEnabled) {
-					Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
-					intent.setData(Uri.fromParts("package", getActivity().getPackageName(), null));
-					startActivity(intent);
-					return true;
-				}
-
-				return false;
-			}
-		});
 	}
 
 	@Override
@@ -70,27 +44,5 @@ public class GeneralPreferencesFragment extends PreferenceFragmentCompat {
 		final Context contextThemeWrapper = new ContextThemeWrapper(getActivity(), R.style.AppTheme_PrimaryAccent);
 		LayoutInflater localInflater = inflater.cloneInContext(contextThemeWrapper);
 		return super.onCreateView(localInflater, container, savedInstanceState);
-	}
-
-	@Override
-	public void onResume() {
-		super.onResume();
-
-		getActivity().invalidateOptionsMenu();
-
-		if (locationServicesEnabled != (ContextCompat.checkSelfPermission(getActivity().getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED)) {
-			locationServicesEnabled = ContextCompat.checkSelfPermission(getActivity().getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
-			setLocationServicesSummary();
-		}
-	}
-
-
-
-	private void setLocationServicesSummary() {
-		if (locationServicesEnabled) {
-			locationServicesPreference.setSummary(getActivity().getApplicationContext().getResources().getString(R.string.location_services_enabled_summary));
-		} else {
-			locationServicesPreference.setSummary(getActivity().getApplicationContext().getResources().getString(R.string.location_services_disabled_summary));
-		}
 	}
 }

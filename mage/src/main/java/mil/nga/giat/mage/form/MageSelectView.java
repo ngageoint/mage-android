@@ -2,7 +2,7 @@ package mil.nga.giat.mage.form;
 
 import android.content.Context;
 import android.content.res.TypedArray;
-import android.support.v7.widget.AppCompatEditText;
+import android.support.design.widget.TextInputLayout;
 import android.util.AttributeSet;
 
 import com.google.gson.JsonObject;
@@ -14,7 +14,7 @@ import java.util.ArrayList;
 
 import mil.nga.giat.mage.R;
 
-public class MageSelectView extends AppCompatEditText implements MageControl {
+public class MageSelectView extends TextInputLayout implements MageControl {
 
     private String propertyKey;
     private MagePropertyType propertyType;
@@ -99,14 +99,14 @@ public class MageSelectView extends AppCompatEditText implements MageControl {
                             displayValue.append(selectedChoices.get(count));
                         }
                     }
-                    setText(displayValue.toString());
+                    getEditText().setText(displayValue.toString());
                     setError(null);
                 } else {
-                    setText(DEFAULT_TEXT);
+                    getEditText().setText(DEFAULT_TEXT);
                 }
             } else {
                 selectedChoices.add((String) value);
-                setText((String) value);
+                getEditText().setText((String) value);
 
                 if (StringUtils.isNoneBlank((String) value)) {
                     setError(null);
@@ -114,7 +114,7 @@ public class MageSelectView extends AppCompatEditText implements MageControl {
             }
 
         } else {
-            setText(DEFAULT_TEXT);
+            getEditText().setText(DEFAULT_TEXT);
         }
     }
 

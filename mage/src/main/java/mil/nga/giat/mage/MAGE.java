@@ -16,7 +16,7 @@ import android.support.v4.app.TaskStackBuilder;
 import android.util.Log;
 
 import mil.nga.giat.mage.login.LoginActivity;
-import mil.nga.giat.mage.login.TokenExpiredActivity;
+import mil.nga.giat.mage.login.SignupActivity;
 import mil.nga.giat.mage.observation.ObservationNotificationListener;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
 import mil.nga.giat.mage.sdk.datastore.user.User;
@@ -319,7 +319,7 @@ public class MAGE extends MultiDexApplication implements IUserEventListener, App
 
 		PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).edit().putBoolean(getString(R.string.disclaimerAcceptedKey), false).commit();
 
-		if (runningActivity != null && !(runningActivity instanceof LoginActivity) && !(runningActivity instanceof TokenExpiredActivity)) {
+		if (runningActivity != null && !(runningActivity instanceof LoginActivity) && !(runningActivity instanceof SignupActivity)) {
 			forceLogin(true);
 		}
 	}
@@ -337,7 +337,7 @@ public class MAGE extends MultiDexApplication implements IUserEventListener, App
 	@Override
 	public void onActivityResumed(Activity activity) {
 
-		if (UserUtility.getInstance(getApplicationContext()).isTokenExpired() && !(activity instanceof LoginActivity) && !(activity instanceof TokenExpiredActivity)) {
+		if (UserUtility.getInstance(getApplicationContext()).isTokenExpired() && !(activity instanceof LoginActivity) && !(activity instanceof SignupActivity)) {
 			forceLogin(false);
 		}
 

@@ -8,17 +8,14 @@ import android.content.SharedPreferences.Editor;
 import android.graphics.Typeface;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.support.design.widget.TextInputLayout;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
 import android.util.Log;
 import android.util.Patterns;
 import android.view.KeyEvent;
-import android.view.MotionEvent;
 import android.view.View;
-import android.view.View.OnTouchListener;
-import android.view.ViewGroup;
-import android.view.Window;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
@@ -49,10 +46,19 @@ public class SignupActivity extends AppCompatActivity implements AccountDelegate
 	private static final String LOG_NAME = SignupActivity.class.getName();
 
 	private EditText mDisplayNameEditText;
+	private TextInputLayout mDisplayNameLayout;
+
 	private EditText mUsernameEditText;
+	private TextInputLayout mUsernameLayout;
+
 	private EditText mEmailEditText;
+	private TextInputLayout mEmailLayout;
+
 	private EditText mPasswordEditText;
+	private TextInputLayout mPasswordLayout;
+
 	private EditText mConfirmPasswordEditText;
+	private TextInputLayout mConfirmPasswordLayout;
 
 	private String serverURL;
 
@@ -80,18 +86,24 @@ public class SignupActivity extends AppCompatActivity implements AccountDelegate
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 
-		// no title bar
-		requestWindowFeature(Window.FEATURE_NO_TITLE);
 		setContentView(R.layout.activity_signup);
-		hideKeyboardOnClick(findViewById(R.id.signup));
 
 		mDisplayNameEditText = (EditText) findViewById(R.id.signup_displayname);
+		mDisplayNameLayout = (TextInputLayout) findViewById(R.id.displayname_layout);
+
 		mUsernameEditText = (EditText) findViewById(R.id.signup_username);
+		mUsernameLayout = (TextInputLayout) findViewById(R.id.username_layout);
+
 		mEmailEditText = (EditText) findViewById(R.id.signup_email);
+		mEmailLayout = (TextInputLayout) findViewById(R.id.email_layout);
+
 		mPasswordEditText = (EditText) findViewById(R.id.signup_password);
 		mPasswordEditText.setTypeface(Typeface.DEFAULT);
+		mPasswordLayout = (TextInputLayout) findViewById(R.id.password_layout);
+
 		mConfirmPasswordEditText = (EditText) findViewById(R.id.signup_confirmpassword);
 		mConfirmPasswordEditText.setTypeface(Typeface.DEFAULT);
+		mConfirmPasswordLayout = (TextInputLayout) findViewById(R.id.confirmpassword_layout);
 
 		SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
 		serverURL = sharedPreferences.getString(getString(R.string.serverURLKey), getString(R.string.serverURLDefaultValue));
@@ -135,35 +147,6 @@ public class SignupActivity extends AppCompatActivity implements AccountDelegate
 	}
 
 	/**
-	 * Hides keyboard when clicking elsewhere
-	 *
-	 * @param view
-	 */
-	private void hideKeyboardOnClick(View view) {
-		// Set up touch listener for non-text box views to hide keyboard.
-		if (!(view instanceof EditText) && !(view instanceof Button)) {
-			view.setOnTouchListener(new OnTouchListener() {
-				@Override
-				public boolean onTouch(View v, MotionEvent event) {
-					InputMethodManager inputMethodManager = (InputMethodManager) getSystemService(Activity.INPUT_METHOD_SERVICE);
-					if (getCurrentFocus() != null) {
-						inputMethodManager.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(), 0);
-					}
-					return false;
-				}
-			});
-		}
-
-		// If a layout container, iterate over children and seed recursion.
-		if (view instanceof ViewGroup) {
-			for (int i = 0; i < ((ViewGroup) view).getChildCount(); i++) {
-				View innerView = ((ViewGroup) view).getChildAt(i);
-				hideKeyboardOnClick(innerView);
-			}
-		}
-	}
-
-	/**
 	 * Fired when user clicks login
 	 *
 	 * @param view
@@ -188,11 +171,11 @@ public class SignupActivity extends AppCompatActivity implements AccountDelegate
 	 */
 	public void signup(View view) {
 		// reset errors
-		getDisplayNameEditText().setError(null);
-		getUsernameEditText().setError(null);
-		getEmailEditText().setError(null);
-		getPasswordEditText().setError(null);
-		getConfirmPasswordEditText().setError(null);
+		mDisplayNameLayout.setError(null);
+		mUsernameLayout.setError(null);
+		mEmailLayout.setError(null);
+		mPasswordLayout.setError(null);
+		mConfirmPasswordLayout.setError(null);
 
 		String displayName = getDisplayNameEditText().getText().toString();
 		String username = getUsernameEditText().getText().toString();
@@ -202,55 +185,47 @@ public class SignupActivity extends AppCompatActivity implements AccountDelegate
 
 		// are the inputs valid?
 		if (TextUtils.isEmpty(displayName)) {
-			getDisplayNameEditText().setError("Display name can not be blank");
-			getDisplayNameEditText().requestFocus();
+			mDisplayNameLayout.setError("Display name can not be blank");
 			return;
 		}
 
 		if (TextUtils.isEmpty(username)) {
-			getUsernameEditText().setError("Username can not be blank");
-			getUsernameEditText().requestFocus();
+			mUsernameLayout.setError("Username can not be blank");
 			return;
 		}
 
 		if (TextUtils.isEmpty(email)) {
-			getEmailEditText().setError("Email can not be blank");
-			getEmailEditText().requestFocus();
+			mEmailLayout.setError("Email can not be blank");
 			return;
 		}
 
 		// is email address the right syntax?
 		if (StringUtils.isNotEmpty(email) && !Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-			getEmailEditText().setError("Not an Email address");
-			getEmailEditText().requestFocus();
+			mEmailLayout.setError("Please enter a valid email address");
 			return;
 		}
 
 		if (TextUtils.isEmpty(password)) {
-			getPasswordEditText().setError("Password can not be blank");
-			getPasswordEditText().requestFocus();
+			mPasswordLayout.setError("Password can not be blank");
 			return;
 		}
 
 		SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
 		Integer passwordLength = sharedPreferences.getInt(getString(R.string.passwordMinLengthKey), getResources().getInteger(R.integer.passwordMinLengthDefaultValue));
 		if (password.length() < passwordLength) {
-			getPasswordEditText().setError("Password must be " + passwordLength + " characters");
-			getPasswordEditText().requestFocus();
+			mPasswordLayout.setError("Password must be " + passwordLength + " characters");
 			return;
 		}
 
 		if (TextUtils.isEmpty(confirmpassword)) {
-			getConfirmPasswordEditText().setError("Enter password again");
-			getConfirmPasswordEditText().requestFocus();
+			mConfirmPasswordLayout.setError("Enter password again");
 			return;
 		}
 
 		// do passwords match?
 		if (!password.equals(confirmpassword)) {
-			getPasswordEditText().setError("Passwords do not match");
-			getConfirmPasswordEditText().setError("Passwords do not match");
-			getConfirmPasswordEditText().requestFocus();
+			mPasswordLayout.setError("Passwords do not match");
+			mConfirmPasswordLayout.setError("Passwords do not match");
 			return;
 		}
 
@@ -302,17 +277,13 @@ public class SignupActivity extends AppCompatActivity implements AccountDelegate
 						message = accountStatus.getErrorMessages().get(errorMessageIndex++);
 					}
 					if (errorIndex == 0) {
-						getDisplayNameEditText().setError(message);
-						getDisplayNameEditText().requestFocus();
+						mDisplayNameLayout.setError(message);
 					} else if (errorIndex == 1) {
-						getUsernameEditText().setError(message);
-						getUsernameEditText().requestFocus();
+						mUsernameLayout.setError(message);
 					} else if (errorIndex == 2) {
-						getEmailEditText().setError(message);
-						getEmailEditText().requestFocus();
+						mEmailLayout.setError(message);
 					} else if (errorIndex == 3) {
-						getPasswordEditText().setError(message);
-						getPasswordEditText().requestFocus();
+						mPasswordLayout.setError(message);
 					} else if (errorIndex == 5) {
 						new AlertDialog.Builder(this)
 							.setTitle("Signup Failed")

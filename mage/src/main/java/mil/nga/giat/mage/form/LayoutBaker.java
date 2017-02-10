@@ -1,24 +1,21 @@
 package mil.nga.giat.mage.form;
 
-import android.content.Context;
-import android.content.DialogInterface;
 import android.os.Bundle;
-import android.support.v7.app.AlertDialog;
+import android.support.design.widget.TextInputLayout;
+import android.support.v4.app.DialogFragment;
+import android.support.v4.app.FragmentTransaction;
+import android.support.v7.app.AppCompatActivity;
 import android.support.v7.view.ContextThemeWrapper;
+import android.support.v7.widget.AppCompatEditText;
+import android.support.v7.widget.AppCompatRadioButton;
 import android.text.Editable;
 import android.text.InputType;
 import android.text.TextWatcher;
 import android.util.Log;
-import android.view.Gravity;
-import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup.LayoutParams;
-import android.widget.DatePicker;
-import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.RadioButton;
 import android.widget.TextView;
-import android.widget.TimePicker;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -32,6 +29,7 @@ import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -39,6 +37,7 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import mil.nga.giat.mage.R;
+import mil.nga.giat.mage.observation.DateTimePickerDialog;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationProperty;
 import mil.nga.giat.mage.sdk.utils.DateFormatFactory;
 
@@ -58,9 +57,9 @@ public class LayoutBaker {
 		VIEW, EDIT
 	}
 
-	public static List<View> createControlsFromJson(final Context pContext, ControlGenerationType controlGenerationType, JsonObject dynamicFormJson) {
+	public static List<View> createControlsFromJson(final AppCompatActivity activity, ControlGenerationType controlGenerationType, JsonObject dynamicFormJson) {
 		// add the theme to the context
-		final ContextThemeWrapper context = new ContextThemeWrapper(pContext, R.style.AppTheme_PrimaryAccent);
+		final ContextThemeWrapper context = new ContextThemeWrapper(activity, R.style.AppTheme_PrimaryAccent);
 
 		List<View> views = new ArrayList<>();
 
@@ -187,27 +186,30 @@ public class LayoutBaker {
 			// FIXME: set required, add remaining controls
 			switch (controlGenerationType) {
 			case EDIT:
-				final MageEditText mageEditText = new MageEditText(context, null);
-				mageEditText.setId(id);
-				mageEditText.setLayoutParams(controlParams);
-				mageEditText.setHint(title);
-				mageEditText.setRequired(required);
-				mageEditText.setPropertyKey(name);
-				mageEditText.setPropertyValue(value);
+				final MageEditText editText = new MageEditText(context, null);
+				editText.setId(id);
+				editText.setHint(title);
+				editText.setRequired(required);
+				editText.setPropertyKey(name);
+				editText.setPropertyValue(value);
+
+				final TextInputLayout editTextLayout = new TextInputLayout(context, null);
+				editTextLayout.setLayoutParams(controlParams);
+				editTextLayout.addView(editText);
+
 				switch (type) {
 				case TEXTFIELD:
 				case EMAIL:
-					mageEditText.setPropertyType(MagePropertyType.STRING);
-					views.add(textView);
-					views.add(mageEditText);
+					editText.setPropertyType(MagePropertyType.STRING);
+					views.add(editTextLayout);
 					break;
 				case NUMBERFIELD:
 					final double min = field.get("min").getAsDouble();
 					final double max = field.get("max").getAsDouble();
 
-					mageEditText.setPropertyType(MagePropertyType.NUMBER);
-					mageEditText.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
-					mageEditText.addTextChangedListener(new TextWatcher() {
+					editText.setPropertyType(MagePropertyType.NUMBER);
+					editText.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
+					editText.addTextChangedListener(new TextWatcher() {
 						@Override
 						public void beforeTextChanged(CharSequence s, int start, int count, int after) {
 						}
@@ -225,30 +227,28 @@ public class LayoutBaker {
 							try {
 								double value = Double.parseDouble(s.toString());
 								if (value < min) {
-									mageEditText.setError("Must be greater than " + min);
+									editText.setError("Must be greater than " + min);
 								} else if (value > max) {
-									mageEditText.setError("Must be less than " + max);
+									editText.setError("Must be less than " + max);
 								}
 							} catch (NumberFormatException e) {
-								mageEditText.setError("Value must be a number");
+								editText.setError("Value must be a number");
 							}
 						}
 					});
 
-					views.add(textView);
-					views.add(mageEditText);
+					views.add(editTextLayout);
 					break;
 				case PASSWORD:
-					mageEditText.setPropertyType(MagePropertyType.STRING);
-					views.add(textView);
-					mageEditText.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
-					views.add(mageEditText);
+					editText.setPropertyType(MagePropertyType.STRING);
+					editText.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+					editTextLayout.setPasswordVisibilityToggleEnabled(true);
+					views.add(editTextLayout);
 					break;
 				case TEXTAREA:
-					mageEditText.setMinLines(2);
-					mageEditText.setPropertyType(MagePropertyType.MULTILINE);
-					views.add(textView);
-					views.add(mageEditText);
+					editText.setMinLines(2);
+					editText.setPropertyType(MagePropertyType.MULTILINE);
+					views.add(editTextLayout);
 					break;
 				case RADIO:
 					MageRadioGroup mageRadioGroup = new MageRadioGroup(context, null);
@@ -259,7 +259,7 @@ public class LayoutBaker {
 					mageRadioGroup.setPropertyType(MagePropertyType.MULTICHOICE);
 
 					for (String choice : choices) {
-						RadioButton radioButton = new RadioButton(context);
+						AppCompatRadioButton radioButton = new AppCompatRadioButton(context);
 						radioButton.setId(uniqueChildIdIndex++);
 						radioButton.setText(choice);
 						mageRadioGroup.addView(radioButton);
@@ -270,18 +270,18 @@ public class LayoutBaker {
 					views.add(mageRadioGroup);
 					break;
 				case CHECKBOX:
-					MageCheckBox mageCheckBox = new MageCheckBox(context, null);
-					mageCheckBox.setId(id);
-					mageCheckBox.setLayoutParams(controlParams);
-					mageCheckBox.setRequired(required);
-					mageCheckBox.setPropertyKey(name);
-					mageCheckBox.setPropertyType(MagePropertyType.STRING);
+					MageCheckBox checkBox = new MageCheckBox(context, null);
+					checkBox.setId(id);
+					checkBox.setLayoutParams(controlParams);
+					checkBox.setRequired(required);
+					checkBox.setPropertyKey(name);
+					checkBox.setPropertyType(MagePropertyType.STRING);
 					if(value != null && !((String)value).trim().isEmpty()) {
-						mageCheckBox.setPropertyValue(Boolean.valueOf(((String)value)));
+						checkBox.setPropertyValue(Boolean.valueOf(((String)value)));
 					}
 
 					views.add(textView);
-					views.add((View) mageCheckBox);
+					views.add(checkBox);
 					break;
 				case DATE:
 					// don't create the timestamp control on the edit page
@@ -289,105 +289,96 @@ public class LayoutBaker {
 						break;
 					}
 
-					ImageView imageView = new ImageView(context);
-					// dip?
-					LinearLayout.LayoutParams imageViewLayoutParams = new LinearLayout.LayoutParams((int) (18 * density), (int) (18 * density));
-					imageViewLayoutParams.gravity = Gravity.LEFT;
-					imageView.setLayoutParams(imageViewLayoutParams);
-					imageView.setFocusable(false);
-					imageView.setImageResource(mil.nga.giat.mage.R.drawable.ic_mode_edit_black_24dp);
-
-					final MageTextView mageDateText = new MageTextView(context, null);
+					final MageEditText mageDateText = new MageEditText(context, null);
 					mageDateText.setId(id);
-					LinearLayout.LayoutParams mageDateTextLayoutParams = new LinearLayout.LayoutParams((int) LayoutParams.MATCH_PARENT, (int) LayoutParams.WRAP_CONTENT);
-					mageDateText.setLayoutParams(mageDateTextLayoutParams);
-					mageDateText.setTextAppearance(context, mil.nga.giat.mage.R.style.EditTextView);
+					mageDateText.setHint(title);
+					mageDateText.setFocusableInTouchMode(false);
+					mageDateText.setFocusable(true);
+					mageDateText.setTextIsSelectable(false);
+					mageDateText.setCursorVisible(false);
+					mageDateText.setClickable(false);
 					mageDateText.setRequired(required);
 					mageDateText.setPropertyKey(name);
 					mageDateText.setPropertyType(MagePropertyType.DATE);
-					mageDateText.setTextSize(16);
 
 					if (value != null && !((String)value).trim().isEmpty()) {
 						try {
                             DateFormat dateFormat = DateFormatFactory.ISO8601();
-							mageDateText.setPropertyValue(dateFormat.parse(((String)value)));
+							mageDateText.setPropertyValue(dateFormat.parse(value.toString()));
 						} catch (ParseException pe) {
 							Log.e(LOG_NAME, "Problem parsing date.", pe);
 						}
 					}
 
-					LinearLayout linearLayout = new LinearLayout(context);
-					linearLayout.setFocusable(false);
-					linearLayout.setLayoutParams(controlParams);
-					linearLayout.setOrientation(LinearLayout.HORIZONTAL);
-					linearLayout.addView(imageView);
-					linearLayout.addView(mageDateText);
-					linearLayout.setOnClickListener(new View.OnClickListener() {
+					mageDateText.setOnClickListener(new View.OnClickListener() {
 						@Override
 						public void onClick(View v) {
-							AlertDialog.Builder builder = new AlertDialog.Builder(context);
-							// Get the layout inflater
-							LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-							View dialogView = inflater.inflate(mil.nga.giat.mage.R.layout.date_time_dialog, null);
-							final DatePicker datePicker = (DatePicker) dialogView.findViewById(mil.nga.giat.mage.R.id.date_picker);
-							final TimePicker timePicker = (TimePicker) dialogView.findViewById(mil.nga.giat.mage.R.id.time_picker);
-							// Inflate and set the layout for the dialog
-							// Pass null as the parent view because its going in the dialog layout
-							builder.setView(dialogView).setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+							Date date = null;
+							try {
+								date = DateFormatFactory.ISO8601().parse(mageDateText.getPropertyValue().toString());
+							} catch (ParseException pe) {
+								Log.e(LOG_NAME, "Problem parsing date.", pe);
+							}
+
+							DateTimePickerDialog dialog = DateTimePickerDialog.newInstance(date);
+							dialog.setOnDateTimeChangedListener(new DateTimePickerDialog.OnDateTimeChangedListener() {
 								@Override
-								public void onClick(DialogInterface dialog, int id) {
-									Calendar c = Calendar.getInstance();
-									c.set(datePicker.getYear(), datePicker.getMonth(), datePicker.getDayOfMonth(), timePicker.getCurrentHour(), timePicker.getCurrentMinute(), 0);
-									c.set(Calendar.MILLISECOND, 0);
-									mageDateText.setPropertyValue(c.getTime());
-								}
-							}).setNegativeButton(mil.nga.giat.mage.R.string.cancel, new DialogInterface.OnClickListener() {
-								public void onClick(DialogInterface dialog, int id) {
-									dialog.cancel();
+								public void onDateTimeChanged(Date date) {
+									mageDateText.setPropertyValue(date);
 								}
 							});
-							AlertDialog ad = builder.create();
-							ad.show();
+
+							FragmentTransaction ft = activity.getSupportFragmentManager().beginTransaction();
+							dialog.show(ft, "DATE_TIME_PICKER_DIALOG");
 						}
 					});
 
-					views.add(textView);
-					views.add(linearLayout);
+					final TextInputLayout dateEditTextLayout = new TextInputLayout(context, null);
+					dateEditTextLayout.setLayoutParams(controlParams);
+					dateEditTextLayout.addView(mageDateText);
 
+					views.add(dateEditTextLayout);
 					break;
 				case DROPDOWN:
-					MageSelectView mageSingleSelectView = new MageSelectView(context, null, field, false);
-					mageSingleSelectView.setId(id);
-					mageSingleSelectView.setLayoutParams(controlParams);
-					mageSingleSelectView.setRequired(required);
-					mageSingleSelectView.setPropertyKey(name);
-					mageSingleSelectView.setPropertyType(MagePropertyType.STRING);
-					mageSingleSelectView.setPropertyValue(value);
-					mageSingleSelectView.setFocusableInTouchMode(false);
-					mageSingleSelectView.setFocusable(true);
-					mageSingleSelectView.setTextIsSelectable(false);
-					mageSingleSelectView.setCursorVisible(false);
-					mageSingleSelectView.setClickable(false);
-					mageSingleSelectView.setTextSize(18);
-					views.add(textView);
-					views.add(mageSingleSelectView);
+					AppCompatEditText selectEditText = new AppCompatEditText(context, null);
+					selectEditText.setHint(title);
+					selectEditText.setFocusableInTouchMode(false);
+					selectEditText.setFocusable(true);
+					selectEditText.setTextIsSelectable(false);
+					selectEditText.setCursorVisible(false);
+					selectEditText.setClickable(false);
+
+					MageSelectView selectView = new MageSelectView(context, null, field, false);
+					selectView.setId(id);
+					selectView.addView(selectEditText);
+					selectView.setLayoutParams(controlParams);
+					selectView.setRequired(required);
+					selectView.setPropertyKey(name);
+					selectView.setPropertyType(MagePropertyType.STRING);
+					selectView.setPropertyValue(value);
+
+					views.add(selectView);
 					break;
 				case MULTISELECTDROPDOWN:
-					MageSelectView mageMultiSelectView = new MageSelectView(context, null, field, true);
-					mageMultiSelectView.setId(id);
-					mageMultiSelectView.setLayoutParams(controlParams);
-					mageMultiSelectView.setRequired(required);
-					mageMultiSelectView.setPropertyKey(name);
-					mageMultiSelectView.setPropertyType(MagePropertyType.MULTICHOICE);
-					mageMultiSelectView.setPropertyValue(value);
-					mageMultiSelectView.setFocusableInTouchMode(false);
-					mageMultiSelectView.setFocusable(true);
-					mageMultiSelectView.setTextIsSelectable(false);
-					mageMultiSelectView.setCursorVisible(false);
-					mageMultiSelectView.setClickable(false);
-					mageMultiSelectView.setTextSize(18);
-					views.add(textView);
-					views.add(mageMultiSelectView);
+					AppCompatEditText multiSelectEditText = new AppCompatEditText(context, null);
+					multiSelectEditText.setHint(title);
+					multiSelectEditText.setFocusableInTouchMode(false);
+					multiSelectEditText.setFocusable(true);
+					multiSelectEditText.setTextIsSelectable(false);
+					multiSelectEditText.setCursorVisible(false);
+					multiSelectEditText.setClickable(false);
+					multiSelectEditText.setTextSize(18);
+
+					MageSelectView multiSelectView = new MageSelectView(context, null, field, true);
+					multiSelectView.setId(id);
+					multiSelectView.addView(multiSelectEditText);
+					multiSelectView.setLayoutParams(controlParams);
+					multiSelectView.setRequired(required);
+					multiSelectView.setPropertyKey(name);
+					multiSelectView.setPropertyType(MagePropertyType.STRING);
+					multiSelectView.setPropertyValue(value);
+
+					views.add(multiSelectView);
 					break;
 				default:
 					break;
