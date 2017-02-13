@@ -88,11 +88,6 @@ public class MageTextView extends AppCompatTextView implements MageControl {
 	}
 
 	@Override
-	public Boolean isRequired() {
-		return isRequired;
-	}
-
-	@Override
 	public void setRequired(Boolean isRequired) {
 		this.isRequired = isRequired;
 	}
@@ -134,7 +129,16 @@ public class MageTextView extends AppCompatTextView implements MageControl {
 	}
 
 	@Override
-	public CharSequence getError() {
-		return super.getError();
+	public boolean validate() {
+		Serializable value = getPropertyValue();
+
+		String error = null;
+		if (isRequired && value == null) {
+			error = "Required, cannot be blank";
+		}
+
+		setError(error);
+
+		return error == null;
 	}
 }

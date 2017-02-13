@@ -223,15 +223,7 @@ public class SelectEditActivity extends AppCompatActivity {
     }
 
     private String getSelectedChoicesString(ArrayList<String> selectedChoices) {
-        StringBuilder displayValue = new StringBuilder();
-        for (int count = 0; count < selectedChoices.size(); count++) {
-            if (count < selectedChoices.size() - 1) {
-                displayValue.append(selectedChoices.get(count) + ", ");
-            } else {
-                displayValue.append(selectedChoices.get(count));
-            }
-        }
-        return displayValue.toString();
+        return StringUtils.join(selectedChoices, " | ");
     }
 
     private void checkSelected() {

@@ -191,7 +191,7 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 				final MageSelectView selectView = (MageSelectView) view;
 				fieldIdMap.put(getSelectId(selectView.getId()), selectView);
 
-				selectView.setOnClickListener(new View.OnClickListener() {
+				selectView.getEditText().setOnClickListener(new View.OnClickListener() {
 					@Override
 					public void onClick(View v) {
 						selectClick(selectView);
