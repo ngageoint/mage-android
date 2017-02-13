@@ -3,6 +3,9 @@ package mil.nga.giat.mage.form;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.support.design.widget.TextInputLayout;
+import android.support.v7.widget.AppCompatEditText;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.AttributeSet;
 
 import com.google.gson.JsonObject;
@@ -14,7 +17,7 @@ import java.util.ArrayList;
 
 import mil.nga.giat.mage.R;
 
-public class MageSelectView extends TextInputLayout implements MageControl {
+public class MageSelectView extends TextInputLayout implements MageControl, TextWatcher {
 
     private String propertyKey;
     private MagePropertyType propertyType;
@@ -29,6 +32,15 @@ public class MageSelectView extends TextInputLayout implements MageControl {
         super(context, attrs);
         this.jsonObject = jsonObject;
         this.isMultiSelect = isMultiSelect;
+
+        AppCompatEditText editText = new AppCompatEditText(context, attrs);
+        editText.setFocusableInTouchMode(false);
+        editText.setFocusable(true);
+        editText.setTextIsSelectable(false);
+        editText.setCursorVisible(false);
+        editText.setClickable(false);
+        editText.addTextChangedListener(this);
+        addView(editText);
 
         TypedArray typedArray = context.obtainStyledAttributes(attrs, R.styleable.MageFormElement);
         setPropertyKey(typedArray.getString(R.styleable.MageFormElement_propertyKey));
@@ -75,11 +87,6 @@ public class MageSelectView extends TextInputLayout implements MageControl {
     }
 
     @Override
-    public Boolean isRequired() {
-        return isRequired;
-    }
-
-    @Override
     public void setRequired(Boolean isRequired) {
         this.isRequired = isRequired;
     }
@@ -100,17 +107,12 @@ public class MageSelectView extends TextInputLayout implements MageControl {
                         }
                     }
                     getEditText().setText(displayValue.toString());
-                    setError(null);
                 } else {
                     getEditText().setText(DEFAULT_TEXT);
                 }
             } else {
                 selectedChoices.add((String) value);
                 getEditText().setText((String) value);
-
-                if (StringUtils.isNoneBlank((String) value)) {
-                    setError(null);
-                }
             }
 
         } else {
@@ -119,8 +121,34 @@ public class MageSelectView extends TextInputLayout implements MageControl {
     }
 
     @Override
-    public CharSequence getError() {
-        return super.getError();
+    public boolean validate() {
+        Serializable value = getPropertyValue();
+
+        String error = null;
+        if (isRequired && (isMultiSelect && selectedChoices.isEmpty()) || StringUtils.isBlank(value.toString())) {
+            error = "Required, cannot be blank";
+        }
+
+        setError(error);
+
+        return error == null;
+    }
+
+    @Override
+    public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+    }
+
+    @Override
+    public void onTextChanged(CharSequence s, int start, int before, int count) {
+        if (StringUtils.isNoneBlank(s)) {
+            validate();
+        }
+    }
+
+    @Override
+    public void afterTextChanged(Editable s) {
+
     }
 }
 

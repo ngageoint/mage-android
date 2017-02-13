@@ -15,11 +15,9 @@ public interface MageControl {
 	public void setPropertyType(MagePropertyType propertyType);
 
 	public MagePropertyType getPropertyType();
-
-	public Boolean isRequired();
-
+	
 	public void setRequired(Boolean required);
 
-	public CharSequence getError();
+	public boolean validate();
 
 }

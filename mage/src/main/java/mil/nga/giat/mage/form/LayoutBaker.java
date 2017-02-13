@@ -1,16 +1,12 @@
 package mil.nga.giat.mage.form;
 
 import android.os.Bundle;
-import android.support.design.widget.TextInputLayout;
-import android.support.v4.app.DialogFragment;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.view.ContextThemeWrapper;
 import android.support.v7.widget.AppCompatEditText;
 import android.support.v7.widget.AppCompatRadioButton;
-import android.text.Editable;
 import android.text.InputType;
-import android.text.TextWatcher;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup.LayoutParams;
@@ -27,7 +23,6 @@ import java.io.Serializable;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
@@ -183,72 +178,41 @@ public class LayoutBaker {
 			}
 			textView.setLayoutParams(textParams);
 
-			// FIXME: set required, add remaining controls
 			switch (controlGenerationType) {
 			case EDIT:
 				final MageEditText editText = new MageEditText(context, null);
+				editText.setLayoutParams(controlParams);
 				editText.setId(id);
 				editText.setHint(title);
 				editText.setRequired(required);
 				editText.setPropertyKey(name);
 				editText.setPropertyValue(value);
 
-				final TextInputLayout editTextLayout = new TextInputLayout(context, null);
-				editTextLayout.setLayoutParams(controlParams);
-				editTextLayout.addView(editText);
-
 				switch (type) {
 				case TEXTFIELD:
 				case EMAIL:
 					editText.setPropertyType(MagePropertyType.STRING);
-					views.add(editTextLayout);
+					views.add(editText);
 					break;
 				case NUMBERFIELD:
-					final double min = field.get("min").getAsDouble();
-					final double max = field.get("max").getAsDouble();
-
-					editText.setPropertyType(MagePropertyType.NUMBER);
-					editText.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
-					editText.addTextChangedListener(new TextWatcher() {
-						@Override
-						public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-						}
-
-						@Override
-						public void onTextChanged(CharSequence s, int start, int before, int count) {
-						}
-
-						@Override
-						public void afterTextChanged(Editable s) {
-							if (s.toString().isEmpty()) {
-								return;
-							}
-
-							try {
-								double value = Double.parseDouble(s.toString());
-								if (value < min) {
-									editText.setError("Must be greater than " + min);
-								} else if (value > max) {
-									editText.setError("Must be less than " + max);
-								}
-							} catch (NumberFormatException e) {
-								editText.setError("Value must be a number");
-							}
-						}
-					});
-
-					views.add(editTextLayout);
+					final MageNumberControl numberControl = new MageNumberControl(context, null, field.get("min").getAsDouble(), field.get("max").getAsDouble());
+					numberControl.setLayoutParams(controlParams);
+					numberControl.setId(id);
+					numberControl.setHint(title);
+					numberControl.setRequired(required);
+					numberControl.setPropertyKey(name);
+					numberControl.setPropertyValue(value);
+					views.add(numberControl);
 					break;
 				case PASSWORD:
 					editText.setPropertyType(MagePropertyType.STRING);
-					editText.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
-					editTextLayout.setPasswordVisibilityToggleEnabled(true);
-					views.add(editTextLayout);
+					editText.getEditText().setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+					editText.setPasswordVisibilityToggleEnabled(true);
+					views.add(editText);
 					break;
 				case TEXTAREA:
-					editText.setMinLines(2);
 					editText.setPropertyType(MagePropertyType.MULTILINE);
-					views.add(editTextLayout);
+					views.add(editText);
 					break;
 				case RADIO:
 					MageRadioGroup mageRadioGroup = new MageRadioGroup(context, null);
@@ -262,8 +226,9 @@ public class LayoutBaker {
 						AppCompatRadioButton radioButton = new AppCompatRadioButton(context);
 						radioButton.setId(uniqueChildIdIndex++);
 						radioButton.setText(choice);
-						mageRadioGroup.addView(radioButton);
+						mageRadioGroup.addRadioButton(radioButton);
 					}
+
 					mageRadioGroup.setPropertyValue(value);
 
 					views.add(textView);
@@ -276,7 +241,7 @@ public class LayoutBaker {
 					checkBox.setRequired(required);
 					checkBox.setPropertyKey(name);
 					checkBox.setPropertyType(MagePropertyType.STRING);
-					if(value != null && !((String)value).trim().isEmpty()) {
+					if (value != null && !((String)value).trim().isEmpty()) {
 						checkBox.setPropertyValue(Boolean.valueOf(((String)value)));
 					}
 
@@ -291,12 +256,13 @@ public class LayoutBaker {
 
 					final MageEditText mageDateText = new MageEditText(context, null);
 					mageDateText.setId(id);
+					mageDateText.setLayoutParams(controlParams);
 					mageDateText.setHint(title);
-					mageDateText.setFocusableInTouchMode(false);
-					mageDateText.setFocusable(true);
-					mageDateText.setTextIsSelectable(false);
-					mageDateText.setCursorVisible(false);
-					mageDateText.setClickable(false);
+					mageDateText.getEditText().setFocusableInTouchMode(false);
+					mageDateText.getEditText().setFocusable(true);
+					mageDateText.getEditText().setTextIsSelectable(false);
+					mageDateText.getEditText().setCursorVisible(false);
+					mageDateText.getEditText().setClickable(false);
 					mageDateText.setRequired(required);
 					mageDateText.setPropertyKey(name);
 					mageDateText.setPropertyType(MagePropertyType.DATE);
@@ -310,7 +276,7 @@ public class LayoutBaker {
 						}
 					}
 
-					mageDateText.setOnClickListener(new View.OnClickListener() {
+					mageDateText.getEditText().setOnClickListener(new View.OnClickListener() {
 						@Override
 						public void onClick(View v) {
 							Date date = null;
@@ -333,24 +299,12 @@ public class LayoutBaker {
 						}
 					});
 
-					final TextInputLayout dateEditTextLayout = new TextInputLayout(context, null);
-					dateEditTextLayout.setLayoutParams(controlParams);
-					dateEditTextLayout.addView(mageDateText);
-
-					views.add(dateEditTextLayout);
+					views.add(mageDateText);
 					break;
 				case DROPDOWN:
-					AppCompatEditText selectEditText = new AppCompatEditText(context, null);
-					selectEditText.setHint(title);
-					selectEditText.setFocusableInTouchMode(false);
-					selectEditText.setFocusable(true);
-					selectEditText.setTextIsSelectable(false);
-					selectEditText.setCursorVisible(false);
-					selectEditText.setClickable(false);
-
 					MageSelectView selectView = new MageSelectView(context, null, field, false);
 					selectView.setId(id);
-					selectView.addView(selectEditText);
+					selectView.getEditText().setHint(title);
 					selectView.setLayoutParams(controlParams);
 					selectView.setRequired(required);
 					selectView.setPropertyKey(name);
@@ -360,18 +314,9 @@ public class LayoutBaker {
 					views.add(selectView);
 					break;
 				case MULTISELECTDROPDOWN:
-					AppCompatEditText multiSelectEditText = new AppCompatEditText(context, null);
-					multiSelectEditText.setHint(title);
-					multiSelectEditText.setFocusableInTouchMode(false);
-					multiSelectEditText.setFocusable(true);
-					multiSelectEditText.setTextIsSelectable(false);
-					multiSelectEditText.setCursorVisible(false);
-					multiSelectEditText.setClickable(false);
-					multiSelectEditText.setTextSize(18);
-
 					MageSelectView multiSelectView = new MageSelectView(context, null, field, true);
 					multiSelectView.setId(id);
-					multiSelectView.addView(multiSelectEditText);
+					multiSelectView.getEditText().setHint(title);
 					multiSelectView.setLayoutParams(controlParams);
 					multiSelectView.setRequired(required);
 					multiSelectView.setPropertyKey(name);
@@ -467,12 +412,14 @@ public class LayoutBaker {
 	}
 
 	public static List<View> validateControls(Collection<View> views) {
-		validateRequired(views);
-
 		List<View> invalid = new ArrayList<>();
+
 		for (View view : views) {
-			if (view instanceof  MageControl) {
-				if (((MageControl) view).getError() != null) {
+			if (view instanceof MageControl) {
+				MageControl control = (MageControl) view;
+				boolean valid = control.validate();
+
+				if (!valid) {
 					invalid.add(view);
 				}
 			}
@@ -571,58 +518,6 @@ public class LayoutBaker {
 		}
 
 		outState.putSerializable(EXTRA_PROPERTY_MAP, properties);
-	}
-
-	/**
-	 *
-	 * @param views
-	 * @return true if there were no issues with the form, false otherwise
-	 */
-	private static Boolean validateRequired(Collection<View> views) {
-		final String error = "Cannot be blank";
-		Boolean status = true;
-		for (View v : views) {
-
-			if (v instanceof MageControl) {
-				MageControl mageControl = (MageControl) v;
-				if (mageControl.isRequired()) {
-					String value = (mageControl.getPropertyValue()==null)?null:mageControl.getPropertyValue().toString();
-					Boolean controlStatus = !(value == null || value.isEmpty());
-					if (!controlStatus) {
-						status = false;
-					}
-					if (mageControl instanceof MageTextView) {
-						MageTextView textView = (MageTextView) v;
-						if (controlStatus) {
-							textView.requestFocus();
-						}
-						textView.setError(controlStatus ? null : error);
-					} else if (mageControl instanceof MageEditText) {
-						MageEditText editText = (MageEditText) v;
-						if (!controlStatus) {
-							editText.requestFocus();
-						}
-						editText.setError(controlStatus ? null : error);
-					} else if (mageControl instanceof MageSelectView) {
-						MageSelectView selectView = (MageSelectView) v;
-						if (!controlStatus) {
-							selectView.requestFocusFromTouch();
-						}
-
-						selectView.setError(controlStatus ? null : error);
-					} else if (mageControl instanceof MageRadioGroup) {
-						// Don't need to check this, as one will already be selected
-					} else if (mageControl instanceof MageCheckBox) {
-						MageCheckBox checkBox = (MageCheckBox) v;
-						if (controlStatus) {
-							checkBox.requestFocus();
-						}
-						checkBox.setError(controlStatus ? null : error);
-					}
-				}
-			}
-		}
-		return status;
 	}
 
 }

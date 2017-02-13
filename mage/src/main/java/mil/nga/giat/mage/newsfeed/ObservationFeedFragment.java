@@ -135,8 +135,7 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
         lv.addFooterView(footer, null, false);
 		
 		sp = PreferenceManager.getDefaultSharedPreferences(getActivity().getApplicationContext());
-		sp.registerOnSharedPreferenceChangeListener(this);
-		
+
 		try {
 			oDao = DaoStore.getInstance(getActivity().getApplicationContext()).getObservationDao();
 			query = buildQuery(oDao, getTimeFilterId());
@@ -147,22 +146,36 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 			lv.setOnItemClickListener(this);
 
 			ObservationHelper.getInstance(getActivity().getApplicationContext()).addListener(this);
-
-        } catch (Exception e) {
+		} catch (Exception e) {
         	Log.e(LOG_NAME, "Problem getting cursor or setting adapter.", e);
         }
+
 		return rootView;
 	}
 
 	@Override
-	public void onDestroy() {
-		sp.unregisterOnSharedPreferenceChangeListener(this);
+	public void onDestroyView() {
+		super.onDestroyView();
+
+		ObservationHelper.getInstance(getActivity().getApplicationContext()).removeListener(this);
+
 		if (queryUpdateHandle != null) {
 			queryUpdateHandle.cancel(true);
 		}
-		ObservationHelper.getInstance(getActivity().getApplicationContext()).removeListener(this);
+	}
 
-		super.onDestroy();
+	@Override
+	public void onResume() {
+		super.onResume();
+
+		sp.registerOnSharedPreferenceChangeListener(this);
+	}
+
+	@Override
+	public void onPause() {
+		super.onPause();
+
+		sp.unregisterOnSharedPreferenceChangeListener(this);
 	}
 
 	@Override

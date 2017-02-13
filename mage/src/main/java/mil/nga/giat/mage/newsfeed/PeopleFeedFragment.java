@@ -70,8 +70,7 @@ public class PeopleFeedFragment extends Fragment implements OnSharedPreferenceCh
         lv.addFooterView(footer, null, false);
         
         sp = PreferenceManager.getDefaultSharedPreferences(getActivity().getApplicationContext());
-        sp.registerOnSharedPreferenceChangeListener(this);
-        
+
         try {
         	Dao<Location, Long> locationDao = DaoStore.getInstance(getActivity().getApplicationContext()).getLocationDao();
             query = buildQuery(locationDao, getTimeFilterId());
@@ -116,23 +115,26 @@ public class PeopleFeedFragment extends Fragment implements OnSharedPreferenceCh
     @Override
     public void onResume() {
     	super.onResume();
-    	LocationHelper.getInstance(getActivity()).addListener(this);
+
+        sp.registerOnSharedPreferenceChangeListener(this);
+        LocationHelper.getInstance(getActivity()).addListener(this);
     }
 
     @Override
     public void onPause() {
     	super.onPause();
-    	LocationHelper.getInstance(getActivity()).removeListener(this);
+
+        sp.unregisterOnSharedPreferenceChangeListener(this);
+        LocationHelper.getInstance(getActivity()).removeListener(this);
     }
     
     @Override
     public void onDestroyView() {
-        sp.unregisterOnSharedPreferenceChangeListener(this);
+        super.onDestroyView();
+
         if (queryUpdateHandle != null) {
             queryUpdateHandle.cancel(true);
         }
-
-        super.onDestroyView();
     }
 
     @Override
