@@ -3,13 +3,20 @@ All notable changes to this project will be documented in this file.
 Adheres to [Semantic Versioning](http://semver.org/).
 
 ---
-## 5.2.2 (TBD)
+## 5.2.3 (TBD)
 
 * TBD
 
 ##### Features
 
 ##### Bug Fixes
+
+## [5.2.2](https://github.com/ngageoint/mage-android/releases/tag/5.2.2) (02-13-2017)
+
+##### Features
+
+##### Bug Fixes
+* Fixed an issue where attaching a image to an observation would cause the application to crash in some instances.
 
 ## [5.2.1](https://github.com/ngageoint/mage-android/releases/tag/5.2.1) (01-31-2017)
 

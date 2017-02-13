@@ -468,7 +468,7 @@ public class ObservationEditActivity extends Activity implements OnMapReadyCallb
 
 		LinearLayout form = (LinearLayout) findViewById(R.id.form);
 		LayoutBaker.populateLayoutFromBundle(form, ControlGenerationType.EDIT, savedInstanceState);
-		currentMediaPath = savedInstanceState.getParcelable(CURRENT_MEDIA_PATH);
+		currentMediaPath = savedInstanceState.getString(CURRENT_MEDIA_PATH);
 	}
 
 	@Override
