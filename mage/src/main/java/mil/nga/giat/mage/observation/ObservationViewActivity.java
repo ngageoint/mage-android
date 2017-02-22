@@ -155,7 +155,6 @@ public class ObservationViewActivity extends AppCompatActivity implements OnMapR
 		((MapFragment) getFragmentManager().findFragmentById(R.id.mini_map)).getMapAsync(this);
   	}
 
-
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
 		switch (item.getItemId()) {
@@ -189,6 +188,12 @@ public class ObservationViewActivity extends AppCompatActivity implements OnMapR
 					@Override
 					public void onClick(View v) {
 						toggleFavorite(o, favoriteIcon);
+					}
+				});
+				findViewById(R.id.directions).setOnClickListener(new View.OnClickListener() {
+					@Override
+					public void onClick(View v) {
+						getDirections();
 					}
 				});
 
@@ -289,6 +294,11 @@ public class ObservationViewActivity extends AppCompatActivity implements OnMapR
 		} catch (Exception e) {
 			Log.e(LOG_NAME, e.getMessage(), e);
 		}
+	}
+
+	private void getDirections() {
+		Intent intent = new Intent(android.content.Intent.ACTION_VIEW, o.getGoogleMapsUri());
+		startActivity(intent);
 	}
 
 	private void editObservation() {

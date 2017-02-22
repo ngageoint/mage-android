@@ -62,7 +62,6 @@ import mil.nga.giat.mage.filter.FilterActivity;
 import mil.nga.giat.mage.observation.AttachmentGallery;
 import mil.nga.giat.mage.observation.AttachmentViewerActivity;
 import mil.nga.giat.mage.observation.ObservationEditActivity;
-import mil.nga.giat.mage.observation.ObservationShareTask;
 import mil.nga.giat.mage.observation.ObservationViewActivity;
 import mil.nga.giat.mage.sdk.datastore.DaoStore;
 import mil.nga.giat.mage.sdk.datastore.location.LocationHelper;
@@ -80,7 +79,7 @@ import mil.nga.giat.mage.sdk.exceptions.UserException;
 import mil.nga.giat.mage.sdk.fetch.ObservationRefreshIntent;
 import mil.nga.giat.mage.sdk.location.LocationService;
 
-public class ObservationFeedFragment extends Fragment implements IObservationEventListener, OnItemClickListener, OnSharedPreferenceChangeListener, ObservationFeedCursorAdapter.ObservationShareListener {
+public class ObservationFeedFragment extends Fragment implements IObservationEventListener, OnItemClickListener, OnSharedPreferenceChangeListener, ObservationFeedCursorAdapter.ObservationActionListener {
 
 	private static final String LOG_NAME = ObservationFeedFragment.class.getName();
 
@@ -496,8 +495,9 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 	}
 
 	@Override
-	public void onObservationShare(final Observation observation) {
-		new ObservationShareTask(getActivity(), observation).execute();
+	public void onObservationDirections(Observation observation) {
+		Intent intent = new Intent(android.content.Intent.ACTION_VIEW, observation.getGoogleMapsUri());
+		startActivity(intent);
 	}
 
 	public class ObservationRefreshReceiver extends BroadcastReceiver {
