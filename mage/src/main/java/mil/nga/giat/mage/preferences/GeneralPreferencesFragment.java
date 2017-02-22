@@ -4,7 +4,6 @@ import android.content.Context;
 import android.os.Bundle;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.preference.Preference;
 import android.support.v7.preference.PreferenceFragmentCompat;
 import android.support.v7.view.ContextThemeWrapper;
 import android.view.LayoutInflater;
@@ -14,9 +13,6 @@ import android.view.ViewGroup;
 import mil.nga.giat.mage.R;
 
 public class GeneralPreferencesFragment extends PreferenceFragmentCompat {
-
-	private boolean locationServicesEnabled;
-	private Preference locationServicesPreference;
 
 	@Override
 	public void onCreate(final Bundle savedInstanceState) {
