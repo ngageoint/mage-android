@@ -74,7 +74,6 @@
 
         </LinearLayout>
 
-
     </LinearLayout>
 
     <LinearLayout
@@ -104,7 +103,6 @@
             android:layout_marginEnd="16dip"
             android:gravity="start">
 
-
             <LinearLayout
                 android:id="@+id/favorite"
                 android:layout_width="wrap_content"
@@ -114,14 +112,15 @@
                 android:paddingBottom="20dip"
                 android:paddingStart="24dp"
                 android:paddingEnd="24dip"
-                android:clickable="true">
+                android:clickable="true"
+                android:background="?attr/selectableItemBackgroundBorderless">
 
                 <ImageView
                     android:id="@+id/favoriteIcon"
                     android:layout_width="24dip"
                     android:layout_height="24dip"
                     android:layout_marginEnd="3dip"
-                    android:tint="#8AFFFFFF"
+                    android:tint="#8A000000"
                     android:src="@drawable/ic_favorite_white_24dp"/>
 
                 <TextView
@@ -132,6 +131,17 @@
                     style="@style/ListTextSecondary" />
 
             </LinearLayout>
+
+            <ImageButton
+                android:id="@+id/directions"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingTop="24dip"
+                android:paddingBottom="20dip"
+                android:paddingStart="24dp"
+                android:paddingEnd="24dip"
+                android:src="@drawable/ic_directions_24dp"
+                android:background="?attr/selectableItemBackgroundBorderless"/>
 
         </LinearLayout>
 

@@ -40,8 +40,8 @@ import mil.nga.giat.mage.sdk.exceptions.UserException;
 
 public class ObservationFeedCursorAdapter extends CursorAdapter {
 
-	public interface ObservationShareListener {
-		void onObservationShare(Observation observation);
+	public interface ObservationActionListener {
+		void onObservationDirections(Observation observation);
 	}
 
 	private static final String LOG_NAME = ObservationFeedCursorAdapter.class.getName();
@@ -53,7 +53,7 @@ public class ObservationFeedCursorAdapter extends CursorAdapter {
 	private PreparedQuery<Observation> query;
     private AttachmentGallery attachmentGallery;
 	private User currentUser;
-	private ObservationShareListener observationShareListener;
+	private ObservationActionListener observationActionListener;
 
 	public ObservationFeedCursorAdapter(Activity activity, Cursor c, PreparedQuery<Observation> query, AttachmentGallery attachmentGallery) {
 		super(activity, c, false);
@@ -63,8 +63,8 @@ public class ObservationFeedCursorAdapter extends CursorAdapter {
         this.attachmentGallery = attachmentGallery;
 	}
 
-	public void setObservationShareListener(ObservationShareListener observationShareListener) {
-		this.observationShareListener = observationShareListener;
+	public void setObservationShareListener(ObservationActionListener observationActionListener) {
+		this.observationActionListener = observationActionListener;
 	}
 
 	@Override
@@ -127,7 +127,6 @@ public class ObservationFeedCursorAdapter extends CursorAdapter {
 
 			((TextView) v.findViewById(R.id.user)).setText(userDisplayName);
 
-
 			LinearLayout attachmentLayout = (LinearLayout) v.findViewById(R.id.image_gallery);
             attachmentLayout.removeAllViews();
             if (observation.getAttachments().size() == 0) {
@@ -145,6 +144,13 @@ public class ObservationFeedCursorAdapter extends CursorAdapter {
 				}
 			});
 			setFavoriteImage(observation.getFavorites(), favorite, isFavorite(observation));
+
+			v.findViewById(R.id.directions).setOnClickListener(new View.OnClickListener() {
+				@Override
+				public void onClick(View v) {
+					getDirections(observation);
+				}
+			});
 
 		} catch (java.sql.SQLException e) {
 			Log.e(LOG_NAME, "Problem getting observation.", e);
@@ -193,5 +199,11 @@ public class ObservationFeedCursorAdapter extends CursorAdapter {
 		}
 
 		return isFavorite;
+	}
+
+	private void getDirections(Observation observation) {
+		if (observationActionListener != null) {
+			observationActionListener.onObservationDirections(observation);
+		}
 	}
 }

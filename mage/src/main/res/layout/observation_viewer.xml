@@ -176,7 +176,7 @@
                     android:layout_marginEnd="16dip"
                     android:gravity="start">
 
-                    <ImageView
+                    <ImageButton
                         android:id="@+id/favoriteIcon"
                         android:layout_width="56dip"
                         android:layout_height="44dip"
@@ -185,7 +185,19 @@
                         android:paddingStart="16dp"
                         android:paddingEnd="16dip"
                         android:clickable="true"
-                        android:src="@drawable/ic_favorite_white_24dp"/>
+                        android:src="@drawable/ic_favorite_white_24dp"
+                        android:background="?attr/selectableItemBackgroundBorderless"/>
+
+                    <ImageButton
+                        android:id="@+id/directions"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:paddingTop="10dip"
+                        android:paddingBottom="10dip"
+                        android:paddingStart="16dp"
+                        android:paddingEnd="16dip"
+                        android:src="@drawable/ic_directions_24dp"
+                        android:background="?attr/selectableItemBackgroundBorderless"/>
 
                 </LinearLayout>
 
