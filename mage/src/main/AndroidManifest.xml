@@ -183,7 +183,13 @@
             android:name=".sdk.fetch.LocationFetchIntentService"
             android:exported="false" />
         <service
+            android:name=".sdk.fetch.LocationRefreshIntent"
+            android:exported="false" />
+        <service
             android:name=".sdk.fetch.ObservationFetchIntentService"
+            android:exported="false" />
+        <service
+            android:name=".sdk.fetch.ObservationRefreshIntent"
             android:exported="false" />
         <service
             android:name=".sdk.fetch.InitialFetchIntentService"

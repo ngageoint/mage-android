@@ -8,6 +8,7 @@ Adheres to [Semantic Versioning](http://semver.org/).
 * TBD
 
 ##### Features
+* Added pull to refresh on observation and people lists.
 * Pulled in appcompat and support libraries to support material design.  
 * Updated all views to be consistient with material design spec.
 * Added new BottomNavigationView to allow users to quickly cycle through observations,
