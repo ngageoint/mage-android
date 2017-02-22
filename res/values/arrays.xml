@@ -63,8 +63,6 @@
     <!-- **************** set in fetchpreferences.xml **************** -->
 
     <string-array name="userFetchFrequencies">
-        <item>15 seconds</item>
-        <item>30 seconds</item>
         <item>1 minute</item>
         <item>2 minutes</item>
         <item>5 minutes</item>
@@ -72,8 +70,6 @@
         <item>30 minutes</item>
     </string-array>
     <string-array name="userFetchFrequencyValues">
-        <item>15000</item>
-        <item>30000</item>
         <item>60000</item>
         <item>120000</item>
         <item>300000</item>
@@ -81,8 +77,6 @@
         <item>1800000</item>
     </string-array>
     <string-array name="observationFetchFrequencies">
-        <item>15 seconds</item>
-        <item>30 seconds</item>
         <item>1 minute</item>
         <item>2 minutes</item>
         <item>5 minutes</item>
@@ -90,8 +84,6 @@
         <item>30 minutes</item>
     </string-array>
     <string-array name="observationFetchFrequencyValues">
-        <item>15000</item>
-        <item>30000</item>
         <item>60000</item>
         <item>120000</item>
         <item>300000</item>
