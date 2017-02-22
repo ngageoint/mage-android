@@ -2,8 +2,11 @@ package mil.nga.giat.mage.newsfeed;
 
 import android.Manifest;
 import android.app.Dialog;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.content.pm.PackageManager;
@@ -11,8 +14,11 @@ import android.database.Cursor;
 import android.location.Location;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.support.design.widget.CoordinatorLayout;
+import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -71,6 +77,7 @@ import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.event.IObservationEventListener;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
+import mil.nga.giat.mage.sdk.fetch.ObservationRefreshIntent;
 import mil.nga.giat.mage.sdk.location.LocationService;
 
 public class ObservationFeedFragment extends Fragment implements IObservationEventListener, OnItemClickListener, OnSharedPreferenceChangeListener, ObservationFeedCursorAdapter.ObservationShareListener {
@@ -91,7 +98,10 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 	private Long currentEventId;
 	private User currentUser;
 	private LocationService locationService;
-    private AttachmentGallery attachmentGallery;
+	private SwipeRefreshLayout swipeContainer;
+	private AttachmentGallery attachmentGallery;
+	private CoordinatorLayout coordinatorLayout;
+	private ObservationRefreshReceiver observationRefreshReceiver;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -105,12 +115,24 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 		}
 
 		locationService = ((MAGE) getActivity().getApplication()).getLocationService();
+		observationRefreshReceiver = new ObservationRefreshReceiver();
 	}
 
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 		View rootView = inflater.inflate(R.layout.fragment_news_feed, container, false);
 		setHasOptionsMenu(true);
+
+		coordinatorLayout = (CoordinatorLayout) rootView.findViewById(R.id.coordinator_layout);
+
+		swipeContainer = (SwipeRefreshLayout) rootView.findViewById(R.id.swipeContainer);
+		swipeContainer.setColorSchemeResources(R.color.md_blue_600, R.color.md_orange_A200);
+		swipeContainer.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+			@Override
+			public void onRefresh() {
+				refreshObservations();
+			}
+		});
 
 		rootView.findViewById(R.id.new_observation_button).setOnClickListener(new View.OnClickListener() {
 			@Override
@@ -168,12 +190,16 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 	public void onResume() {
 		super.onResume();
 
+		observationRefreshReceiver.register();
+
 		sp.registerOnSharedPreferenceChangeListener(this);
 	}
 
 	@Override
 	public void onPause() {
 		super.onPause();
+
+		observationRefreshReceiver.unregister();
 
 		sp.unregisterOnSharedPreferenceChangeListener(this);
 	}
@@ -221,6 +247,11 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 				break;
 			}
 		}
+	}
+
+	private void refreshObservations() {
+		Intent intent = new Intent(getContext(), ObservationRefreshIntent.class);
+		getActivity().startService(intent);
 	}
 
 	private void onNewObservation() {
@@ -467,5 +498,36 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 	@Override
 	public void onObservationShare(final Observation observation) {
 		new ObservationShareTask(getActivity(), observation).execute();
+	}
+
+	public class ObservationRefreshReceiver extends BroadcastReceiver {
+		public void register() {
+			IntentFilter filter = new IntentFilter(ObservationRefreshIntent.ACTION_OBSERVATIONS_REFRESHED);
+			filter.addCategory(Intent.CATEGORY_DEFAULT);
+			getContext().registerReceiver(observationRefreshReceiver, filter);
+		}
+
+		public void unregister() {
+			getContext().unregisterReceiver(observationRefreshReceiver);
+		}
+
+		@Override
+		public void onReceive(Context context, Intent intent) {
+			swipeContainer.setRefreshing(false);
+
+			String status = intent.getExtras().getString(ObservationRefreshIntent.EXTRA_OBSERVATIONS_REFRESH_STATUS, null);
+			if (status != null) {
+				final Snackbar snackbar = Snackbar
+					.make(coordinatorLayout, status, Snackbar.LENGTH_LONG)
+					.setAction("RETRY", new View.OnClickListener() {
+						@Override
+						public void onClick(View view) {
+							refreshObservations();
+						}
+					});
+
+				snackbar.show();
+			}
+		}
 	}
 }

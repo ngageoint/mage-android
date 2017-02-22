@@ -1,12 +1,19 @@
 package mil.nga.giat.mage.newsfeed;
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.support.annotation.Nullable;
+import android.support.design.widget.CoordinatorLayout;
+import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -48,6 +55,7 @@ import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.event.ILocationEventListener;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
+import mil.nga.giat.mage.sdk.fetch.LocationRefreshIntent;
 
 public class PeopleFeedFragment extends Fragment implements OnSharedPreferenceChangeListener, OnItemClickListener, ILocationEventListener {
 	
@@ -59,11 +67,32 @@ public class PeopleFeedFragment extends Fragment implements OnSharedPreferenceCh
     private SharedPreferences sp;
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
     private ScheduledFuture<?> queryUpdateHandle;
+    private SwipeRefreshLayout swipeContainer;
+    private CoordinatorLayout coordinatorLayout;
+    private LocationRefreshReceiver locationRefreshReceiver;
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        locationRefreshReceiver = new LocationRefreshReceiver();
+    }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_feed_people, container, false);
         setHasOptionsMenu(true);
+
+        coordinatorLayout = (CoordinatorLayout) rootView.findViewById(R.id.coordinator_layout);
+
+        swipeContainer = (SwipeRefreshLayout) rootView.findViewById(R.id.swipeContainer);
+        swipeContainer.setColorSchemeResources(R.color.md_blue_600, R.color.md_orange_A200);
+        swipeContainer.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                refreshLocations();
+            }
+        });
 
         ListView lv = (ListView) rootView.findViewById(R.id.people_feed_list);
         footer = (ViewGroup) inflater.inflate(R.layout.feed_footer, lv, false);
@@ -86,31 +115,6 @@ public class PeopleFeedFragment extends Fragment implements OnSharedPreferenceCh
         }
         return rootView;
     }
-    
-    private int getTimeFilterId() {
-        return sp.getInt(getResources().getString(R.string.activeTimeFilterKey), getResources().getInteger(R.integer.time_filter_none));
-    }
-
-    private Cursor obtainCursor(PreparedQuery<Location> query, Dao<Location, Long> lDao) throws SQLException {
-        Cursor c = null;
-        CloseableIterator<Location> iterator = lDao.iterator(query);
-
-        // get the raw results which can be cast under Android
-        AndroidDatabaseResults results = (AndroidDatabaseResults) iterator.getRawResults();
-        c = results.getRawCursor();
-        if (c.moveToLast()) {
-            if (queryUpdateHandle != null) {
-                queryUpdateHandle.cancel(true);
-            }
-            queryUpdateHandle = scheduler.schedule(new Runnable() {
-                public void run() {
-                    updateTimeFilter(getTimeFilterId());
-                }
-            }, 30*1000, TimeUnit.MILLISECONDS);
-            c.moveToFirst();
-        }
-        return c;
-    }
 
     @Override
     public void onResume() {
@@ -118,6 +122,7 @@ public class PeopleFeedFragment extends Fragment implements OnSharedPreferenceCh
 
         sp.registerOnSharedPreferenceChangeListener(this);
         LocationHelper.getInstance(getActivity()).addListener(this);
+        locationRefreshReceiver.register();
     }
 
     @Override
@@ -126,6 +131,7 @@ public class PeopleFeedFragment extends Fragment implements OnSharedPreferenceCh
 
         sp.unregisterOnSharedPreferenceChangeListener(this);
         LocationHelper.getInstance(getActivity()).removeListener(this);
+        locationRefreshReceiver.unregister();
     }
     
     @Override
@@ -159,6 +165,36 @@ public class PeopleFeedFragment extends Fragment implements OnSharedPreferenceCh
         if (getResources().getString(R.string.activeTimeFilterKey).equalsIgnoreCase(key)) {
             updateTimeFilter(sharedPreferences.getInt(key, 0));
         }
+    }
+
+    private void refreshLocations() {
+        Intent intent = new Intent(getContext(), LocationRefreshIntent.class);
+        getActivity().startService(intent);
+    }
+
+    private int getTimeFilterId() {
+        return sp.getInt(getResources().getString(R.string.activeTimeFilterKey), getResources().getInteger(R.integer.time_filter_none));
+    }
+
+    private Cursor obtainCursor(PreparedQuery<Location> query, Dao<Location, Long> lDao) throws SQLException {
+        Cursor c = null;
+        CloseableIterator<Location> iterator = lDao.iterator(query);
+
+        // get the raw results which can be cast under Android
+        AndroidDatabaseResults results = (AndroidDatabaseResults) iterator.getRawResults();
+        c = results.getRawCursor();
+        if (c.moveToLast()) {
+            if (queryUpdateHandle != null) {
+                queryUpdateHandle.cancel(true);
+            }
+            queryUpdateHandle = scheduler.schedule(new Runnable() {
+                public void run() {
+                    updateTimeFilter(getTimeFilterId());
+                }
+            }, 30*1000, TimeUnit.MILLISECONDS);
+            c.moveToFirst();
+        }
+        return c;
     }
 
     private void updateTimeFilter(final int filterId) {
@@ -265,4 +301,35 @@ public class PeopleFeedFragment extends Fragment implements OnSharedPreferenceCh
 	public void onLocationDeleted(Collection<Location> location) {
 		updateTimeFilter(getTimeFilterId());
 	}
+
+    public class LocationRefreshReceiver extends BroadcastReceiver {
+        public void register() {
+            IntentFilter filter = new IntentFilter(LocationRefreshIntent.ACTION_LOCATIONS_REFRESHED);
+            filter.addCategory(Intent.CATEGORY_DEFAULT);
+            getContext().registerReceiver(locationRefreshReceiver, filter);
+        }
+
+        public void unregister() {
+            getContext().unregisterReceiver(locationRefreshReceiver);
+        }
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            swipeContainer.setRefreshing(false);
+
+            String status = intent.getExtras().getString(LocationRefreshIntent.EXTRA_LOCATIONS_REFRESH_STATUS, null);
+            if (status != null) {
+                final Snackbar snackbar = Snackbar
+                        .make(coordinatorLayout, status, Snackbar.LENGTH_LONG)
+                        .setAction("RETRY", new View.OnClickListener() {
+                            @Override
+                            public void onClick(View view) {
+                                refreshLocations();
+                            }
+                        });
+
+                snackbar.show();
+            }
+        }
+    }
 }
