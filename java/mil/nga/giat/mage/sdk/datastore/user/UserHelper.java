@@ -265,6 +265,10 @@ public class UserHelper extends DaoHelper<User> implements IEventDispatcher<IEve
 	}
 
 	public User removeCurrentEvent(User user) throws UserException {
+		if (user == null || user.getUserLocal() == null) {
+			return user;
+		}
+
 		try {
 			UpdateBuilder<UserLocal, Long> builder = userLocalDao.updateBuilder();
 			builder.where().idEq(user.getUserLocal().getId());

@@ -1,5 +1,6 @@
 package mil.nga.giat.mage.sdk.datastore.observation;
 
+import android.net.Uri;
 import android.support.annotation.NonNull;
 
 import com.j256.ormlite.field.DataType;
@@ -7,11 +8,13 @@ import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.field.ForeignCollectionField;
 import com.j256.ormlite.table.DatabaseTable;
 import com.vividsolutions.jts.geom.Geometry;
+import com.vividsolutions.jts.geom.Point;
 
 import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -256,6 +259,19 @@ public class Observation implements Comparable<Observation>, Temporal {
         }
 
         return favoritesMap;
+    }
+
+    public Uri getGoogleMapsUri() {
+        DecimalFormat latLngFormat = new DecimalFormat("###.#####");
+        String uriString = "http://maps.google.com/maps";
+
+        Geometry geometry = getGeometry();
+        if (geometry instanceof Point) {
+            Point point = (Point) geometry;
+            uriString += String.format("?daddr=%1$s,%2$s",  latLngFormat.format(point.getY()), latLngFormat.format(point.getX()));
+        }
+
+        return Uri.parse(uriString);
     }
 
     @Override
