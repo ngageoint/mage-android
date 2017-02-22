@@ -5,6 +5,8 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
+import android.support.v7.app.ActionBar;
+import android.support.v7.app.AppCompatActivity;
 import android.support.v7.view.ContextThemeWrapper;
 import android.support.v7.widget.AppCompatRadioButton;
 import android.util.Log;
@@ -53,6 +55,10 @@ public class ChangeEventFragment extends Fragment {
 		View view = inflater.inflate(R.layout.fragment_events, container, false);
 
 		setHasOptionsMenu(true);
+
+		ActionBar actionBar = ((AppCompatActivity) getActivity()).getSupportActionBar();
+		actionBar.setTitle("Events");
+		actionBar.setSubtitle(null);
 
 		uniqueChildIdIndex = uniqueChildStartingIdIndex;
 

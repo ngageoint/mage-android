@@ -37,6 +37,6 @@
         android:layout_height="wrap_content"
         android:layout_marginBottom="20dp"
         android:text="Choose Event"
-        android:theme="@style/AppTheme.PrimaryDarkButton"/>
+        android:theme="@style/AppTheme.PrimaryButton"/>
 
 </LinearLayout>
