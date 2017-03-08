@@ -5,4 +5,8 @@
         android:minSdkVersion="17"
         android:targetSdkVersion="25" />
 
+    <application>
+        <meta-data android:name="mil.nga.giat.mage.sdk.source_refspec" android:value="${source_refspec}"/>
+    </application>
+
 </manifest>
