@@ -58,13 +58,6 @@ android {
             // if you build without a flavor gradle will build all flavors.
             // Lets define this flavor to provide a flavor we can build with no overrides
         }
-
-        local {
-            resValue "string", "serverURLDefaultValue", "http://192.168.1.1:4242"
-            //resValue "string", "usernameDefaultValue", "admin"
-            resValue "integer", "gpsSensitivityDefaultValue", "1"
-        }
-
         wear {
             resValue "bool", "isWearBuildDefaultValue", "true"
         }
