@@ -152,7 +152,9 @@ dependencies {
     compile files('libs/GeocoderPlus.jar')
 }
 
-task androidAppVersion {
+task androidArtifactVersion {
+    group = 'android'
+    description = 'Print the application ID, version code, and version name this build will produce in AndroidManifest.xml'
     doLast {
         com.android.build.gradle.AppExtension appExt = project.extensions.android;
         println "applicationId: ${appExt.defaultConfig.applicationId}"
