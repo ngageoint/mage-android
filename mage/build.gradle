@@ -71,35 +71,42 @@ android {
     }
 }
 
+def configurePom(pom) {
+    pom.packaging 'apk'
+    pom.withXml {
+        // for dependencies and exclusions
+        def dependenciesNode = asNode().appendNode('dependencies')
+        project.configurations.compile.allDependencies.each { Dependency dep ->
+            if (dep instanceof SelfResolvingDependency) {
+                // apparently the files() dependency results in a SelfResolvingDependency - skip it
+                return;
+            }
+
+            def dependencyNode = dependenciesNode.appendNode('dependency')
+            dependencyNode.appendNode('groupId', dep.group)
+            dependencyNode.appendNode('artifactId', dep.name)
+            dependencyNode.appendNode('version', dep.version)
+
+            // for exclusions
+            if (dep.excludeRules.size() > 0) {
+                def exclusions = dependencyNode.appendNode('exclusions')
+                dep.excludeRules.each { ExcludeRule ex ->
+                    def exclusion = exclusions.appendNode('exclusion')
+                    exclusion.appendNode('groupId', ex.group)
+                    exclusion.appendNode('artifactId', ex.module)
+                }
+            }
+        }
+    }
+}
+
 publishing {
     publications {
         defaultsUnsignedApk(MavenPublication) {
+            configurePom(pom)
             artifact "${project.buildDir}/outputs/apk/${archivesBaseName}-defaults-release-unsigned.apk", {
                 artifactId archivesBaseName
-            }
-            pom.withXml {
-                // for dependencies and exclusions
-                def dependenciesNode = asNode().appendNode('dependencies')
-                configurations.compile.allDependencies.each { Dependency dep ->
-                    if (dep instanceof SelfResolvingDependency) {
-                        // apparently the files() dependency results in a SelfResolvingDependency - skip it
-                        return;
-                    }
-                    def dependencyNode = dependenciesNode.appendNode('dependency')
-                    dependencyNode.appendNode('groupId', dep.group)
-                    dependencyNode.appendNode('artifactId', dep.name)
-                    dependencyNode.appendNode('version', dep.version)
-
-                    // for exclusions
-                    if (dep.excludeRules.size() > 0) {
-                        def exclusions = dependencyNode.appendNode('exclusions')
-                        dep.excludeRules.each { ExcludeRule ex ->
-                            def exclusion = exclusions.appendNode('exclusion')
-                            exclusion.appendNode('groupId', ex.group)
-                            exclusion.appendNode('artifactId', ex.module)
-                        }
-                    }
-                }
+                classifier 'unsigned'
             }
         }
     }
