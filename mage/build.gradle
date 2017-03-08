@@ -109,12 +109,16 @@ def configurePom(pom) {
 
 publishing {
     publications {
-        defaultsUnsignedApk(MavenPublication) {
+        defaultsApk(MavenPublication) {
+            artifactId archivesBaseName
             configurePom(pom)
             artifact "${project.buildDir}/outputs/apk/${archivesBaseName}-defaults-release-unsigned.apk", {
-                artifactId archivesBaseName
                 classifier 'unsigned'
             }
+            artifact "${project.buildDir}/outputs/apk/${archivesBaseName}-defaults-debug.apk", {
+                classifier 'debug'
+            }
+            artifact project.properties['SIGNED_APK_PATH'] ?: "${project.buildDir}/outputs/apk/${archivesBaseName}-defaults-release.apk"
         }
     }
 }
