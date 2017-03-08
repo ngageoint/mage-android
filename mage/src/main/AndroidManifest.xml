@@ -37,7 +37,7 @@
         android:logo="@drawable/ic_wand"
         android:theme="@style/AppTheme">
 
-        <meta-data android:name="source_refspec" android:value="${source_refspec}"/>
+        <meta-data android:name="${applicationId}.source_refspec" android:value="${source_refspec}"/>
 
         <provider
             android:name="android.support.v4.content.FileProvider"
