@@ -1,5 +1,9 @@
+import org.ajoberstar.grgit.Commit
+import org.ajoberstar.grgit.Grgit
+
 plugins {
     id 'net.linguica.maven-settings' version '0.5'
+    id 'org.ajoberstar.grgit' version '1.6.0'
 }
 apply plugin: 'com.android.application'
 apply plugin: 'maven-publish'
@@ -13,6 +17,7 @@ archivesBaseName = 'mage-android'
 version '5.3.0'
 ext {
     versionCode = 25
+    sourceRefspec = Grgit.open().head().id
 }
 
 android {
@@ -38,7 +43,9 @@ android {
         resValue "string", "serverURLDefaultValue", serverURL
         resValue "string", "recentMapXYZDefaultValue", "263.0,40.0,3"
         resValue "bool", "isWearBuildDefaultValue", "false"
-        //buildConfigField "String", "EXTRALOGGING", "\"true\""
+        resValue 'string', 'source_refspec', project.sourceRefspec
+        manifestPlaceholders source_refspec: project.sourceRefspec
+        buildConfigField 'String', 'SOURCE_REFSPEC', $/"${project.sourceRefspec}"/$
     }
 
     buildTypes {
