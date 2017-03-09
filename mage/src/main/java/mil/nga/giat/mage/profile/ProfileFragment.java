@@ -43,8 +43,6 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
-import com.vividsolutions.jts.geom.Geometry;
-import com.vividsolutions.jts.geom.Point;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -68,6 +66,9 @@ import mil.nga.giat.mage.sdk.exceptions.UserException;
 import mil.nga.giat.mage.sdk.fetch.DownloadImageTask;
 import mil.nga.giat.mage.sdk.profile.UpdateProfileTask;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
+import mil.nga.wkb.geom.Geometry;
+import mil.nga.wkb.geom.GeometryType;
+import mil.nga.wkb.geom.Point;
 
 public class ProfileFragment extends Fragment implements OnMapReadyCallback, View.OnClickListener {
 
@@ -139,7 +140,7 @@ public class ProfileFragment extends Fragment implements OnMapReadyCallback, Vie
 			List<Location> lastLocation = LocationHelper.getInstance(context).getUserLocations(user.getId(), getActivity(), 1, true);
 			if (!lastLocation.isEmpty()) {
 				Geometry geo = lastLocation.get(0).getGeometry();
-				if (geo instanceof Point) {
+				if (geo.getGeometryType() == GeometryType.POINT) {
 					Point point = (Point) geo;
 					latLng = new LatLng(point.getY(), point.getX());
 					icon = LocationBitmapFactory.bitmapDescriptor(context, lastLocation.get(0), user);

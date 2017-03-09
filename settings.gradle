@@ -1,3 +1,4 @@
 include ':mage'
-//include ':sdk' // uncomment me to build locally
+include ':sdk' // uncomment me to build locally
 //include ':bridge' // uncomment me to build wearable locally
+project(':sdk').projectDir = new File('../mage-android-sdk/sdk')

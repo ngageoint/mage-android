@@ -5,7 +5,6 @@ import android.content.Intent;
 import android.util.Log;
 
 import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.maps.android.clustering.ClusterItem;
@@ -13,7 +12,6 @@ import com.google.maps.android.clustering.ClusterManager;
 import com.google.maps.android.clustering.ClusterManager.OnClusterItemClickListener;
 import com.google.maps.android.clustering.algo.GridBasedAlgorithm;
 import com.google.maps.android.clustering.algo.PreCachingAlgorithmDecorator;
-import com.vividsolutions.jts.geom.Point;
 
 import java.util.Collection;
 import java.util.Date;
@@ -23,6 +21,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import mil.nga.giat.mage.map.marker.ObservationClusterCollection.ObservationClusterItem;
 import mil.nga.giat.mage.observation.ObservationViewActivity;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
+import mil.nga.wkb.geom.Point;
 
 public class ObservationClusterCollection implements PointCollection<Observation>, OnClusterItemClickListener<ObservationClusterItem> {
 
@@ -115,7 +114,17 @@ public class ObservationClusterCollection implements PointCollection<Observation
             Point point = (Point) observation.getGeometry();
             return new LatLng(point.getY(), point.getX());
         }
-        
+
+        @Override
+        public String getTitle() {
+            return null;
+        }
+
+        @Override
+        public String getSnippet() {
+            return null;
+        }
+
         public Long getId() {
             return observation.getId();
         }
@@ -144,8 +153,8 @@ public class ObservationClusterCollection implements PointCollection<Observation
     }
 
     @Override
-    public void onCameraChange(CameraPosition cameraPosition) {
-        clusterManager.onCameraChange(cameraPosition);
+    public void onCameraIdle() {
+        clusterManager.onCameraIdle();
     }
 
     @Override

@@ -273,7 +273,7 @@ public class PeopleFeedFragment extends Fragment implements OnSharedPreferenceCh
 		Cursor c = ((PeopleCursorAdapter) headerAdapter.getWrappedAdapter()).getCursor();
 		c.moveToPosition(position);
 		try {
-			Location l = query.mapRow(new AndroidDatabaseResults(c, null));
+			Location l = query.mapRow(new AndroidDatabaseResults(c, null, false));
 			Intent profileView = new Intent(getActivity().getApplicationContext(), ProfileActivity.class);
 			profileView.putExtra(ProfileFragment.USER_ID, l.getUser().getRemoteId());
 			getActivity().startActivityForResult(profileView, 2);

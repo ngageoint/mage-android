@@ -53,8 +53,6 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.TileOverlay;
 import com.google.android.gms.maps.model.TileOverlayOptions;
 import com.google.android.gms.maps.model.TileProvider;
-import com.vividsolutions.jts.geom.Geometry;
-import com.vividsolutions.jts.geom.Point;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -86,20 +84,20 @@ import mil.nga.geopackage.features.user.FeatureCursor;
 import mil.nga.geopackage.features.user.FeatureDao;
 import mil.nga.geopackage.features.user.FeatureRow;
 import mil.nga.geopackage.geom.GeoPackageGeometryData;
-import mil.nga.geopackage.geom.map.GoogleMapShape;
-import mil.nga.geopackage.geom.map.GoogleMapShapeConverter;
+import mil.nga.geopackage.map.geom.GoogleMapShape;
+import mil.nga.geopackage.map.geom.GoogleMapShapeConverter;
+import mil.nga.geopackage.map.tiles.overlay.BoundedOverlay;
+import mil.nga.geopackage.map.tiles.overlay.FeatureOverlay;
+import mil.nga.geopackage.map.tiles.overlay.FeatureOverlayQuery;
+import mil.nga.geopackage.map.tiles.overlay.GeoPackageOverlayFactory;
 import mil.nga.geopackage.projection.Projection;
 import mil.nga.geopackage.projection.ProjectionConstants;
 import mil.nga.geopackage.projection.ProjectionFactory;
 import mil.nga.geopackage.projection.ProjectionTransform;
 import mil.nga.geopackage.tiles.TileBoundingBoxUtils;
+import mil.nga.geopackage.tiles.features.DefaultFeatureTiles;
 import mil.nga.geopackage.tiles.features.FeatureTiles;
-import mil.nga.geopackage.tiles.features.MapFeatureTiles;
 import mil.nga.geopackage.tiles.features.custom.NumberFeaturesTile;
-import mil.nga.geopackage.tiles.overlay.BoundedOverlay;
-import mil.nga.geopackage.tiles.overlay.FeatureOverlay;
-import mil.nga.geopackage.tiles.overlay.FeatureOverlayQuery;
-import mil.nga.geopackage.tiles.overlay.GeoPackageOverlayFactory;
 import mil.nga.geopackage.tiles.user.TileDao;
 import mil.nga.giat.mage.MAGE;
 import mil.nga.giat.mage.R;
@@ -139,7 +137,9 @@ import mil.nga.giat.mage.sdk.event.IStaticFeatureEventListener;
 import mil.nga.giat.mage.sdk.exceptions.LayerException;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
 import mil.nga.giat.mage.sdk.location.LocationService;
+import mil.nga.wkb.geom.Geometry;
 import mil.nga.wkb.geom.GeometryType;
+import mil.nga.wkb.geom.Point;
 
 public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapClickListener, OnMapLongClickListener, OnMarkerClickListener, OnInfoWindowClickListener, OnMapPanListener, OnMyLocationButtonClickListener, OnClickListener, LocationSource, LocationListener, OnCacheOverlayListener,
 		IObservationEventListener, ILocationEventListener, IStaticFeatureEventListener {
@@ -492,7 +492,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 				mil.nga.giat.mage.sdk.datastore.location.Location tLocation = tLocations.get(0);
 				Geometry geo = tLocation.getGeometry();
 				Map<String, LocationProperty> propertiesMap = tLocation.getPropertiesMap();
-				if (geo instanceof Point) {
+				if (geo.getGeometryType() == GeometryType.POINT) {
 					Point point = (Point) geo;
 					String provider = "manual";
 					if (propertiesMap.get("provider").getValue() != null) {
@@ -1003,7 +1003,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 			for(FeatureDao featureDao: featureDaos){
 
 				// Create the feature tiles
-				FeatureTiles featureTiles = new MapFeatureTiles(getActivity(), featureDao);
+				FeatureTiles featureTiles = new DefaultFeatureTiles(getActivity(), featureDao);
 
 				// Create an index manager
 				FeatureIndexManager indexer = new FeatureIndexManager(getActivity(), geoPackage, featureDao);
@@ -1048,7 +1048,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 
 			// If indexed, add as a tile overlay
 			if(featureTableCacheOverlay.isIndexed()){
-				FeatureTiles featureTiles = new MapFeatureTiles(getActivity(), featureDao);
+				FeatureTiles featureTiles = new DefaultFeatureTiles(getActivity(), featureDao);
 				Integer maxFeaturesPerTile = null;
 				if(featureDao.getGeometryType() == GeometryType.POINT){
 					maxFeaturesPerTile = getResources().getInteger(R.integer.geopackage_feature_tiles_max_points_per_tile);

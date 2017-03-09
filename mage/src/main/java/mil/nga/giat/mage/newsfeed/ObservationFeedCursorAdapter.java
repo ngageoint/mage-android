@@ -80,7 +80,7 @@ public class ObservationFeedCursorAdapter extends CursorAdapter {
 	@Override
 	public void bindView(View v, Context context, Cursor cursor) {
 		try {
-			final Observation observation = query.mapRow(new AndroidDatabaseResults(cursor, null));
+			final Observation observation = query.mapRow(new AndroidDatabaseResults(cursor, null, false));
 
 			boolean isFlagged = observation.getImportant() != null && observation.getImportant().isImportant();
 			v.findViewById(R.id.flagged).setVisibility(isFlagged ? View.VISIBLE : View.GONE);

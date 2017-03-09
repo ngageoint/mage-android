@@ -26,8 +26,6 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.common.base.Function;
 import com.google.common.collect.Collections2;
-import com.vividsolutions.jts.geom.Geometry;
-import com.vividsolutions.jts.geom.Point;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -60,6 +58,9 @@ import mil.nga.giat.mage.sdk.event.IObservationEventListener;
 import mil.nga.giat.mage.sdk.exceptions.ObservationException;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
 import mil.nga.giat.mage.sdk.utils.DateFormatFactory;
+import mil.nga.wkb.geom.Geometry;
+import mil.nga.wkb.geom.GeometryType;
+import mil.nga.wkb.geom.Point;
 
 public class ObservationViewActivity extends AppCompatActivity implements OnMapReadyCallback {
 
@@ -215,7 +216,7 @@ public class ObservationViewActivity extends AppCompatActivity implements OnMapR
 			}
 
 			Geometry geo = o.getGeometry();
-			if (geo instanceof Point) {
+			if (geo.getGeometryType() == GeometryType.POINT) {
 				Point pointGeo = (Point) geo;
 				((TextView) findViewById(R.id.location)).setText(latLngFormat.format(pointGeo.getY()) + ", " + latLngFormat.format(pointGeo.getX()));
 				if (propertiesMap.containsKey("provider")) {

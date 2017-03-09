@@ -13,7 +13,6 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.maps.android.MarkerManager;
-import com.vividsolutions.jts.geom.Point;
 
 import org.ocpsoft.prettytime.PrettyTime;
 
@@ -26,6 +25,7 @@ import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.observation.ObservationViewActivity;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationProperty;
+import mil.nga.wkb.geom.Point;
 
 public class ObservationMarkerCollection implements PointCollection<Observation>, OnMarkerClickListener {
 
@@ -150,7 +150,7 @@ public class ObservationMarkerCollection implements PointCollection<Observation>
     }
 
     @Override
-    public void onCameraChange(CameraPosition cameraPosition) {
+    public void onCameraIdle() {
         // do nothing I don't care
     }
 

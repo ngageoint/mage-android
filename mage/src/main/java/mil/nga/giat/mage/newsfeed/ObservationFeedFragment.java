@@ -39,8 +39,6 @@ import com.j256.ormlite.dao.CloseableIterator;
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.stmt.PreparedQuery;
 import com.j256.ormlite.stmt.QueryBuilder;
-import com.vividsolutions.jts.geom.Geometry;
-import com.vividsolutions.jts.geom.Point;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -78,6 +76,9 @@ import mil.nga.giat.mage.sdk.event.IObservationEventListener;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
 import mil.nga.giat.mage.sdk.fetch.ObservationRefreshIntent;
 import mil.nga.giat.mage.sdk.location.LocationService;
+import mil.nga.wkb.geom.Geometry;
+import mil.nga.wkb.geom.GeometryType;
+import mil.nga.wkb.geom.Point;
 
 public class ObservationFeedFragment extends Fragment implements IObservationEventListener, OnItemClickListener, OnSharedPreferenceChangeListener, ObservationFeedCursorAdapter.ObservationActionListener {
 
@@ -226,7 +227,7 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 		Cursor c = ((ObservationFeedCursorAdapter) headerAdapter.getWrappedAdapter()).getCursor();
 		c.moveToPosition(position);
 		try {
-			Observation o = query.mapRow(new AndroidDatabaseResults(c, null));
+			Observation o = query.mapRow(new AndroidDatabaseResults(c, null, false));
 			Intent observationView = new Intent(getActivity().getApplicationContext(), ObservationViewActivity.class);
 			observationView.putExtra(ObservationViewActivity.OBSERVATION_ID, o.getId());
 			getActivity().startActivityForResult(observationView, 2);
@@ -268,7 +269,7 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 				mil.nga.giat.mage.sdk.datastore.location.Location tLocation = tLocations.get(0);
 				Geometry geo = tLocation.getGeometry();
 				Map<String, LocationProperty> propertiesMap = tLocation.getPropertiesMap();
-				if (geo instanceof Point) {
+				if (geo.getGeometryType() == GeometryType.POINT) {
 					Point point = (Point) geo;
 					String provider = "manual";
 					if (propertiesMap.get("provider").getValue() != null) {

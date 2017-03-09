@@ -17,7 +17,6 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.squareup.okhttp.ResponseBody;
-import com.vividsolutions.jts.geom.Point;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -39,6 +38,7 @@ import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
 import mil.nga.giat.mage.sdk.http.resource.ObservationResource;
+import mil.nga.wkb.geom.Point;
 
 /**
  * Created by wnewman on 8/27/16.

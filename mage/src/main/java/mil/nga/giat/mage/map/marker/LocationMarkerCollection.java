@@ -18,15 +18,12 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.GoogleMap.InfoWindowAdapter;
 import com.google.android.gms.maps.GoogleMap.OnInfoWindowClickListener;
 import com.google.android.gms.maps.GoogleMap.OnMarkerClickListener;
-import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.Circle;
 import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.maps.android.MarkerManager;
-import com.vividsolutions.jts.geom.Geometry;
-import com.vividsolutions.jts.geom.Point;
 
 import org.ocpsoft.prettytime.PrettyTime;
 
@@ -49,6 +46,8 @@ import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.datastore.user.UserLocal;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
 import mil.nga.giat.mage.sdk.fetch.DownloadImageTask;
+import mil.nga.wkb.geom.Geometry;
+import mil.nga.wkb.geom.Point;
 
 public class LocationMarkerCollection implements PointCollection<Location>, OnMarkerClickListener, OnInfoWindowClickListener {
 
@@ -101,7 +100,7 @@ public class LocationMarkerCollection implements PointCollection<Location>, OnMa
 			// remove it from the map and clean-up my collections
 			remove(l);
 
-			Point point = g.getCentroid();
+			Point point = null; // TODO g.getCentroid();
 
 			LatLng latLng = new LatLng(point.getY(), point.getX());
 			MarkerOptions options = new MarkerOptions().position(latLng).visible(visible).icon(LocationBitmapFactory.bitmapDescriptor(context, l, l.getUser()));
@@ -161,7 +160,7 @@ public class LocationMarkerCollection implements PointCollection<Location>, OnMa
 
 		final Geometry g = l.getGeometry();
 		if (g != null) {
-			Point point = g.getCentroid();
+			Point point = null; // TODO g.getCentroid();
 			LatLng latLng = new LatLng(point.getY(), point.getX());
 			LocationProperty accuracyProperty = l.getPropertiesMap().get("accuracy");
 			if (accuracyProperty != null && !accuracyProperty.getValue().toString().trim().isEmpty()) {
@@ -225,7 +224,7 @@ public class LocationMarkerCollection implements PointCollection<Location>, OnMa
 	}
 
 	@Override
-	public void onCameraChange(CameraPosition cameraPosition) {
+	public void onCameraIdle() {
 		// Don't care about this, I am not clustered
 	}
 

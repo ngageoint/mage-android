@@ -48,10 +48,6 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
-import com.vividsolutions.jts.geom.Coordinate;
-import com.vividsolutions.jts.geom.Geometry;
-import com.vividsolutions.jts.geom.GeometryFactory;
-import com.vividsolutions.jts.geom.Point;
 
 import java.io.File;
 import java.io.IOException;
@@ -87,6 +83,9 @@ import mil.nga.giat.mage.sdk.exceptions.ObservationException;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
 import mil.nga.giat.mage.sdk.utils.DateFormatFactory;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
+import mil.nga.wkb.geom.Geometry;
+import mil.nga.wkb.geom.GeometryType;
+import mil.nga.wkb.geom.Point;
 
 public class ObservationEditActivity extends AppCompatActivity implements OnMapReadyCallback {
 
@@ -252,7 +251,7 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 
 			Map<String, ObservationProperty> propertiesMap = observation.getPropertiesMap();
 			Geometry geo = observation.getGeometry();
-			if (geo instanceof Point) {
+			if (geo.getGeometryType() == GeometryType.POINT) {
 				Point point = (Point) geo;
 				String provider = "manual";
 				if (propertiesMap.get("provider") != null) {
@@ -520,7 +519,7 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 
 			observation.setState(State.ACTIVE);
 			observation.setDirty(true);
-			observation.setGeometry(new GeometryFactory().createPoint(new Coordinate(l.getLongitude(), l.getLatitude())));
+			observation.setGeometry(new Point(l.getLongitude(), l.getLatitude()));
 
 			Map<String, ObservationProperty> propertyMap = LayoutBaker.populateMapFromLayout((LinearLayout) findViewById(R.id.form));
 
