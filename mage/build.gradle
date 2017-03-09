@@ -1,8 +1,23 @@
+import org.ajoberstar.grgit.Grgit
+
+plugins {
+    id 'net.linguica.maven-settings' version '0.5'
+    id 'org.ajoberstar.grgit' version '1.6.0'
+}
 apply plugin: 'com.android.application'
+apply plugin: 'maven-publish'
 
 def serverURL = hasProperty('SERVER_URL') ? SERVER_URL : ''
 def googleMapsApiReleaseKey = hasProperty('RELEASE_MAPS_API_KEY') ? RELEASE_MAPS_API_KEY: ''
 def googleMapsApiDebugKey = hasProperty('DEBUG_MAPS_API_KEY') ? DEBUG_MAPS_API_KEY: ''
+
+group 'mil.nga.giat.mage'
+archivesBaseName = 'mage-android'
+version '5.3.0'
+ext {
+    versionCode = 25
+    sourceRefspec = Grgit.open().head().id
+}
 
 android {
     compileSdkVersion 25
@@ -19,13 +34,17 @@ android {
 
     defaultConfig {
         applicationId "mil.nga.giat.mage"
+        versionName project.version
+        versionCode project.versionCode as int
         minSdkVersion 17
         targetSdkVersion 25
         multiDexEnabled true
         resValue "string", "serverURLDefaultValue", serverURL
         resValue "string", "recentMapXYZDefaultValue", "263.0,40.0,3"
         resValue "bool", "isWearBuildDefaultValue", "false"
-        //buildConfigField "String", "EXTRALOGGING", "\"true\""
+        resValue 'string', 'source_refspec', project.sourceRefspec
+        manifestPlaceholders source_refspec: project.sourceRefspec
+        buildConfigField 'String', 'SOURCE_REFSPEC', $/"${project.sourceRefspec}"/$
     }
 
     buildTypes {
@@ -45,13 +64,6 @@ android {
             // if you build without a flavor gradle will build all flavors.
             // Lets define this flavor to provide a flavor we can build with no overrides
         }
-
-        local {
-            resValue "string", "serverURLDefaultValue", "http://192.168.1.1:4242"
-            //resValue "string", "usernameDefaultValue", "admin"
-            resValue "integer", "gpsSensitivityDefaultValue", "1"
-        }
-
         wear {
             resValue "bool", "isWearBuildDefaultValue", "true"
         }
@@ -66,21 +78,81 @@ android {
     }
 }
 
+def configurePom(pom) {
+    pom.withXml {
+        // for dependencies and exclusions
+        def dependenciesNode = asNode().appendNode('dependencies')
+        project.configurations.compile.allDependencies.each { Dependency dep ->
+            if (dep instanceof SelfResolvingDependency) {
+                // apparently the files() dependency results in a SelfResolvingDependency - skip it
+                return;
+            }
+
+            def dependencyNode = dependenciesNode.appendNode('dependency')
+            dependencyNode.appendNode('groupId', dep.group)
+            dependencyNode.appendNode('artifactId', dep.name)
+            dependencyNode.appendNode('version', dep.version)
+
+            // for exclusions
+            if (dep.excludeRules.size() > 0) {
+                def exclusions = dependencyNode.appendNode('exclusions')
+                dep.excludeRules.each { ExcludeRule ex ->
+                    def exclusion = exclusions.appendNode('exclusion')
+                    exclusion.appendNode('groupId', ex.group)
+                    exclusion.appendNode('artifactId', ex.module)
+                }
+            }
+        }
+    }
+}
+
+publishing {
+    publications {
+        defaultsApk(MavenPublication) {
+            artifactId archivesBaseName
+            pom.packaging 'apk'
+            configurePom(pom)
+            artifact "${project.buildDir}/outputs/apk/${archivesBaseName}-defaults-release-unsigned.apk", {
+                classifier 'unsigned'
+            }
+            artifact "${project.buildDir}/outputs/apk/${archivesBaseName}-defaults-debug.apk", {
+                classifier 'debug'
+            }
+            artifact project.properties['SIGNED_APK_PATH'] ?: "${project.buildDir}/outputs/apk/${archivesBaseName}-defaults-release.apk"
+        }
+    }
+}
+
+repositories {
+    def buildRepo = maven {
+        name 'build'
+        url project.properties['repositories.build.url'] ?: "${buildDir}/m2"
+    }
+    publishing.repositories.add buildRepo
+
+    if (project.hasProperty('repositories.shared.name')) {
+        def sharedRepo = maven {
+            name project.properties['repositories.shared.name']
+            url project.properties['repositories.shared.url']
+        }
+        publishing.repositories.add sharedRepo
+    }
+}
+
 dependencies {
 
     // this block allows the mage-android-wear-bridge to be pulled in dynamically when that flavor is built
     gradle.startParameter.taskRequests.each { taskRequest ->
         taskRequest.args.each { taskName ->
-            String flavorName = "wear";
-            if (taskName.toLowerCase().contains(flavorName.toLowerCase())) {
+            if (taskName.toLowerCase().contains("wear")) {
                 //wearCompile project(':bridge') // uncomment me to build wearable locally
                 wearCompile "mil.nga.giat.mage.wearable:bridge:1.0.0" // uncomment me to build wearable.  comment me if building wearable locally.
             }
         }
     }
 
-    compile project(':sdk') // uncomment me to build locally
-    //compile "mil.nga.giat.mage:sdk:5.3.0" // comment me to build locally
+//    compile project(':sdk') // uncomment me to build locally, and see top-level build.gradle
+    compile 'mil.nga.giat.mage:mage-android-sdk:5.3.0' // comment me to build locally
     compile 'com.android.support:multidex:1.0.1'
     compile 'com.android.support:support-v13:25.1.1'
     compile 'com.android.support:recyclerview-v7:25.1.1'
@@ -95,6 +167,17 @@ dependencies {
     compile 'com.github.bumptech.glide:glide:3.6.1'
     compile 'com.github.bumptech.glide:okhttp-integration:1.3.1@aar'
     compile files('libs/GeocoderPlus.jar')
+}
+
+task androidArtifactVersion {
+    group = 'android'
+    description = 'Print the application ID, version code, and version name this build will produce in AndroidManifest.xml'
+    doLast {
+        com.android.build.gradle.AppExtension appExt = project.extensions.android;
+        println "applicationId: ${appExt.defaultConfig.applicationId}"
+        println "versionCode: ${appExt.defaultConfig.versionCode}"
+        println "versionName: ${appExt.defaultConfig.versionName}"
+    }
 }
 
 configure extensions.android, {
