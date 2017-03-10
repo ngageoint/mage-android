@@ -17,6 +17,7 @@ import mil.nga.giat.mage.sdk.datastore.location.LocationHelper;
 import mil.nga.giat.mage.sdk.push.LocationPushIntentService;
 import mil.nga.wkb.geom.Geometry;
 import mil.nga.wkb.geom.Point;
+import mil.nga.wkb.util.GeometryUtils;
 
 /**
  * Class uses a queue like structure to limit the Collection size. Size determined 
@@ -57,7 +58,7 @@ public class MyHistoricalLocationMarkerCollection extends LocationMarkerCollecti
 				marker.remove();
 			}
 
-			Point point = null; // TODO g.getCentroid();
+			Point point = GeometryUtils.getCentroid(g);
 			MarkerOptions options = new MarkerOptions().position(new LatLng(point.getY(), point.getX())).icon(LocationBitmapFactory.dotBitmapDescriptor(context, l, l.getUser())).visible(visible);
 
 			marker = markerCollection.addMarker(options);

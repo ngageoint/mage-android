@@ -48,6 +48,7 @@ import mil.nga.giat.mage.sdk.exceptions.UserException;
 import mil.nga.giat.mage.sdk.fetch.DownloadImageTask;
 import mil.nga.wkb.geom.Geometry;
 import mil.nga.wkb.geom.Point;
+import mil.nga.wkb.util.GeometryUtils;
 
 public class LocationMarkerCollection implements PointCollection<Location>, OnMarkerClickListener, OnInfoWindowClickListener {
 
@@ -100,7 +101,7 @@ public class LocationMarkerCollection implements PointCollection<Location>, OnMa
 			// remove it from the map and clean-up my collections
 			remove(l);
 
-			Point point = null; // TODO g.getCentroid();
+			Point point = GeometryUtils.getCentroid(g);
 
 			LatLng latLng = new LatLng(point.getY(), point.getX());
 			MarkerOptions options = new MarkerOptions().position(latLng).visible(visible).icon(LocationBitmapFactory.bitmapDescriptor(context, l, l.getUser()));
@@ -160,7 +161,7 @@ public class LocationMarkerCollection implements PointCollection<Location>, OnMa
 
 		final Geometry g = l.getGeometry();
 		if (g != null) {
-			Point point = null; // TODO g.getCentroid();
+			Point point = GeometryUtils.getCentroid(g);
 			LatLng latLng = new LatLng(point.getY(), point.getX());
 			LocationProperty accuracyProperty = l.getPropertiesMap().get("accuracy");
 			if (accuracyProperty != null && !accuracyProperty.getValue().toString().trim().isEmpty()) {
