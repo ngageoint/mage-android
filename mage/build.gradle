@@ -18,6 +18,7 @@ ext {
 def serverURL = hasProperty('SERVER_URL') ? SERVER_URL : ''
 def googleMapsApiReleaseKey = hasProperty('RELEASE_MAPS_API_KEY') ? RELEASE_MAPS_API_KEY : ''
 def googleMapsApiDebugKey = hasProperty('DEBUG_MAPS_API_KEY') ? DEBUG_MAPS_API_KEY : ''
+def signedApkPath = hasProperty('SIGNED_APK_PATH') ? SIGNED_APK_PATH: "${project.buildDir}/outputs/apk/${archivesBaseName}-defaults-release.apk"
 
 android {
     compileSdkVersion 25
@@ -119,7 +120,9 @@ publishing {
             artifact "${project.buildDir}/outputs/apk/${archivesBaseName}-defaults-debug.apk", {
                 classifier 'debug'
             }
-            artifact project.properties['SIGNED_APK_PATH'] ?: "${project.buildDir}/outputs/apk/${archivesBaseName}-defaults-release.apk"
+            if (file(signedApkPath).exists()) {
+                artifact signedApkPath
+            }
         }
     }
 }
