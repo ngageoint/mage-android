@@ -120,6 +120,7 @@ import mil.nga.giat.mage.map.marker.PointCollection;
 import mil.nga.giat.mage.map.marker.StaticGeometryCollection;
 import mil.nga.giat.mage.map.preference.MapPreferencesActivity;
 import mil.nga.giat.mage.observation.ObservationEditActivity;
+import mil.nga.giat.mage.observation.ObservationLocation;
 import mil.nga.giat.mage.sdk.Temporal;
 import mil.nga.giat.mage.sdk.datastore.layer.Layer;
 import mil.nga.giat.mage.sdk.datastore.layer.LayerHelper;
@@ -483,10 +484,10 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 
 	private void onNewObservation() {
 		Intent intent = new Intent(getActivity().getApplicationContext(), ObservationEditActivity.class);
-		Location l = locationService.getLocation();
+		ObservationLocation location = new ObservationLocation(locationService.getLocation());
 
 		// if there is not a location from the location service, then try to pull one from the database.
-		if (l == null) {
+		if (location == null) {
 			List<mil.nga.giat.mage.sdk.datastore.location.Location> tLocations = LocationHelper.getInstance(getActivity().getApplicationContext()).getCurrentUserLocations(getActivity().getApplicationContext(), 1, true);
 			if (!tLocations.isEmpty()) {
 				mil.nga.giat.mage.sdk.datastore.location.Location tLocation = tLocations.get(0);
@@ -494,21 +495,19 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 				Map<String, LocationProperty> propertiesMap = tLocation.getPropertiesMap();
 				if (geo.getGeometryType() == GeometryType.POINT) {
 					Point point = (Point) geo;
-					String provider = "manual";
+					String provider = ObservationLocation.MANUAL_PROVIDER;
 					if (propertiesMap.get("provider").getValue() != null) {
 						provider = propertiesMap.get("provider").getValue().toString();
 					}
-					l = new Location(provider);
-					l.setTime(tLocation.getTimestamp().getTime());
+					location = new ObservationLocation(provider, point);
+					location.setTime(tLocation.getTimestamp().getTime());
 					if (propertiesMap.get("accuracy").getValue() != null) {
-						l.setAccuracy(Float.valueOf(propertiesMap.get("accuracy").getValue().toString()));
+						location.setAccuracy(Float.valueOf(propertiesMap.get("accuracy").getValue().toString()));
 					}
-					l.setLatitude(point.getY());
-					l.setLongitude(point.getX());
 				}
 			}
 		} else {
-			l = new Location(l);
+			location = new ObservationLocation(location);
 		}
 
 		if (!UserHelper.getInstance(getActivity().getApplicationContext()).isCurrentUserPartOfCurrentEvent()) {
@@ -517,8 +516,8 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 				.setMessage(getActivity().getResources().getString(R.string.location_no_event_message))
 				.setPositiveButton(android.R.string.ok, null)
 				.show();
-		} else if (l != null) {
-			intent.putExtra(ObservationEditActivity.LOCATION, l);
+		} else if (location != null) {
+			intent.putExtra(ObservationEditActivity.LOCATION, location);
 			intent.putExtra(ObservationEditActivity.INITIAL_LOCATION, map.getCameraPosition().target);
 			intent.putExtra(ObservationEditActivity.INITIAL_ZOOM, map.getCameraPosition().zoom);
 			startActivity(intent);
@@ -717,10 +716,8 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 				.show();
 		} else {
 			Intent intent = new Intent(getActivity().getApplicationContext(), ObservationEditActivity.class);
-			Location l = new Location("manual");
+			ObservationLocation l = new ObservationLocation(ObservationLocation.MANUAL_PROVIDER, point);
 			l.setAccuracy(0.0f);
-			l.setLatitude(point.latitude);
-			l.setLongitude(point.longitude);
 			l.setTime(new Date().getTime());
 			intent.putExtra(ObservationEditActivity.LOCATION, l);
 			startActivity(intent);

@@ -3,7 +3,6 @@ package mil.nga.giat.mage.observation;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
-import android.location.Location;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -30,13 +29,14 @@ import com.google.android.gms.maps.model.LatLng;
 import java.util.Locale;
 
 import mil.nga.giat.mage.R;
+import mil.nga.wkb.geom.Point;
 
 public class LocationEditActivity extends AppCompatActivity implements TextWatcher, View.OnFocusChangeListener, GoogleMap.OnMapClickListener, OnMapReadyCallback, GoogleMap.OnCameraMoveListener {
 
 	public static String LOCATION = "LOCATION";
 	public static String MARKER_BITMAP = "MARKER_BITMAP";
 
-	private Location l;
+	private ObservationLocation location;
 	private Bitmap markerBitmap;
 	private GoogleMap map;
 	private EditText longitudeEdit;
@@ -54,7 +54,7 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
 		getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
 		Intent intent = getIntent();
-		l = intent.getParcelableExtra(LOCATION);
+		location = intent.getParcelableExtra(LOCATION);
 		markerBitmap = intent.getParcelableExtra(MARKER_BITMAP);
 
 		longitudeEdit = (EditText) findViewById(R.id.location_edit_longitude);
@@ -73,9 +73,9 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
 	public void onMapReady(GoogleMap map) {
 		this.map = map;
 
-		LatLng location = new LatLng(l.getLatitude(), l.getLongitude());
+		LatLng latLng = location.getLatLng();
 
-		map.moveCamera(CameraUpdateFactory.newLatLngZoom(location, 18));
+		map.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 18));
 
 		ImageView iv = (ImageView) findViewById(R.id.location_edit_marker);
 		iv.setImageBitmap(markerBitmap);
@@ -83,8 +83,8 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
 		map.setOnCameraMoveListener(this);
 		map.setOnMapClickListener(this);
 
-		longitudeEdit.setText(String.format(Locale.getDefault(), "%.6f", l.getLongitude()));
-		latitudeEdit.setText(String.format(Locale.getDefault(), "%.6f", l.getLatitude()));
+		longitudeEdit.setText(String.format(Locale.getDefault(), "%.6f", latLng.longitude));
+		latitudeEdit.setText(String.format(Locale.getDefault(), "%.6f", latLng.latitude));
 
 		longitudeEdit.addTextChangedListener(this);
 		longitudeEdit.setOnFocusChangeListener(this);
@@ -172,15 +172,14 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
 
 	private void updateLocation() {
 		LatLng center = map.getCameraPosition().target;
-		l.setLatitude(center.latitude);
-		l.setLongitude(center.longitude);
-		l.setProvider("manual");
-		l.setAccuracy(0.0f);
-		l.setTime(System.currentTimeMillis());
+		location.setGeometry(new Point(center.longitude, center.latitude));
+		location.setProvider(ObservationLocation.MANUAL_PROVIDER);
+		location.setAccuracy(0.0f);
+		location.setTime(System.currentTimeMillis());
 
 		Intent data = new Intent();
 		data.setData(getIntent().getData());
-		data.putExtra(LOCATION, l);
+		data.putExtra(LOCATION, location);
 		setResult(RESULT_OK, data);
 
 		finish();
