@@ -59,8 +59,6 @@ import mil.nga.giat.mage.sdk.exceptions.ObservationException;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
 import mil.nga.giat.mage.sdk.utils.DateFormatFactory;
 import mil.nga.wkb.geom.Geometry;
-import mil.nga.wkb.geom.GeometryType;
-import mil.nga.wkb.geom.Point;
 
 public class ObservationViewActivity extends AppCompatActivity implements OnMapReadyCallback {
 
@@ -79,6 +77,7 @@ public class ObservationViewActivity extends AppCompatActivity implements OnMapR
 	private boolean canEditObservation = false;
 	private Marker marker;
 	private DecimalFormat latLngFormat = new DecimalFormat("###.#####");
+	private MapFragment mapFragment;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -153,7 +152,8 @@ public class ObservationViewActivity extends AppCompatActivity implements OnMapR
 
 		ObservationHelper.getInstance(getApplicationContext()).addListener(observationEventListener);
 
-		((MapFragment) getFragmentManager().findFragmentById(R.id.mini_map)).getMapAsync(this);
+		mapFragment = (MapFragment) getFragmentManager().findFragmentById(R.id.mini_map);
+		mapFragment.getMapAsync(this);
   	}
 
 	@Override
@@ -215,39 +215,37 @@ public class ObservationViewActivity extends AppCompatActivity implements OnMapR
 				this.setTitle(observationProperty.getValue().toString());
 			}
 
-			Geometry geo = o.getGeometry();
-			if (geo.getGeometryType() == GeometryType.POINT) {
-				Point pointGeo = (Point) geo;
-				((TextView) findViewById(R.id.location)).setText(latLngFormat.format(pointGeo.getY()) + ", " + latLngFormat.format(pointGeo.getX()));
-				if (propertiesMap.containsKey("provider")) {
-					((TextView) findViewById(R.id.location_provider)).setText("(" + propertiesMap.get("provider").getValue() + ")");
-				} else {
-					findViewById(R.id.location_provider).setVisibility(View.GONE);
-				}
-				if (propertiesMap.containsKey("accuracy") && Float.parseFloat(propertiesMap.get("accuracy").getValue().toString()) > 0f) {
-					((TextView) findViewById(R.id.location_accuracy)).setText("\u00B1" + propertiesMap.get("accuracy").getValue().toString() + "m");
-				} else {
-					findViewById(R.id.location_accuracy).setVisibility(View.GONE);
-				}
+			Geometry geometry = o.getGeometry();
+			ObservationLocation location = new ObservationLocation(geometry);
+			LatLng latLng = location.getCentroidLatLng();
+			// TODO Geometry
+			((TextView) findViewById(R.id.location)).setText(latLngFormat.format(latLng.latitude) + ", " + latLngFormat.format(latLng.longitude));
+			if (propertiesMap.containsKey("provider")) {
+				((TextView) findViewById(R.id.location_provider)).setText("(" + propertiesMap.get("provider").getValue() + ")");
+			} else {
+				findViewById(R.id.location_provider).setVisibility(View.GONE);
+			}
+			if (propertiesMap.containsKey("accuracy") && Float.parseFloat(propertiesMap.get("accuracy").getValue().toString()) > 0f) {
+				((TextView) findViewById(R.id.location_accuracy)).setText("\u00B1" + propertiesMap.get("accuracy").getValue().toString() + "m");
+			} else {
+				findViewById(R.id.location_accuracy).setVisibility(View.GONE);
+			}
 
-				map.getUiSettings().setZoomControlsEnabled(false);
+			map.getUiSettings().setZoomControlsEnabled(false);
 
-				if (marker == null) {
-					LatLng latLng = getIntent().getParcelableExtra(INITIAL_LOCATION);
-					if (latLng == null) {
-						latLng = new LatLng(0, 0);
-					}
-					float zoom = getIntent().getFloatExtra(INITIAL_ZOOM, 0);
-					map.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, zoom));
-
-					LatLng location = new LatLng(pointGeo.getY(), pointGeo.getX());
-					map.animateCamera(CameraUpdateFactory.newLatLngZoom(location, 15));
-					marker = map.addMarker(new MarkerOptions().position(location).icon(ObservationBitmapFactory.bitmapDescriptor(this, o)));
-				} else {
-					LatLng location = new LatLng(pointGeo.getY(), pointGeo.getX());
-					map.moveCamera(CameraUpdateFactory.newLatLngZoom(location, map.getCameraPosition().zoom));
-					marker.setPosition(location);
+			if (marker == null) {
+				LatLng initialLatLng = getIntent().getParcelableExtra(INITIAL_LOCATION);
+				if (initialLatLng == null) {
+					initialLatLng = new LatLng(0, 0);
 				}
+				float zoom = getIntent().getFloatExtra(INITIAL_ZOOM, 0);
+				map.moveCamera(CameraUpdateFactory.newLatLngZoom(initialLatLng, zoom));
+
+				map.animateCamera(location.getCameraUpdate(mapFragment.getView(), 15));
+				marker = map.addMarker(new MarkerOptions().position(latLng).icon(ObservationBitmapFactory.bitmapDescriptor(this, o)));
+			} else {
+				map.moveCamera(location.getCameraUpdate(mapFragment.getView(), map.getCameraPosition().zoom));
+				marker.setPosition(latLng);
 			}
 
 			setupImportant(o.getImportant());

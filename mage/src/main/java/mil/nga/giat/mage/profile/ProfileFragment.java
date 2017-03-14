@@ -67,8 +67,8 @@ import mil.nga.giat.mage.sdk.fetch.DownloadImageTask;
 import mil.nga.giat.mage.sdk.profile.UpdateProfileTask;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
 import mil.nga.wkb.geom.Geometry;
-import mil.nga.wkb.geom.GeometryType;
 import mil.nga.wkb.geom.Point;
+import mil.nga.wkb.util.GeometryUtils;
 
 public class ProfileFragment extends Fragment implements OnMapReadyCallback, View.OnClickListener {
 
@@ -140,11 +140,9 @@ public class ProfileFragment extends Fragment implements OnMapReadyCallback, Vie
 			List<Location> lastLocation = LocationHelper.getInstance(context).getUserLocations(user.getId(), getActivity(), 1, true);
 			if (!lastLocation.isEmpty()) {
 				Geometry geo = lastLocation.get(0).getGeometry();
-				if (geo.getGeometryType() == GeometryType.POINT) {
-					Point point = (Point) geo;
-					latLng = new LatLng(point.getY(), point.getX());
-					icon = LocationBitmapFactory.bitmapDescriptor(context, lastLocation.get(0), user);
-				}
+				Point point = GeometryUtils.getCentroid(geo);
+				latLng = new LatLng(point.getY(), point.getX());
+				icon = LocationBitmapFactory.bitmapDescriptor(context, lastLocation.get(0), user);
 			}
 		} catch (UserException ue) {
 			Log.e(LOG_NAME, "Problem finding user.", ue);

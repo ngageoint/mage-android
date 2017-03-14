@@ -123,6 +123,7 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 	private Marker observationMarker;
 	private Circle accuracyCircle;
 	private long locationElapsedTimeMilliseconds = 0;
+	private MapFragment mapFragment;
 
     private LinearLayout attachmentLayout;
     private AttachmentGallery attachmentGallery;
@@ -215,7 +216,8 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 		// add dynamic controls to view
 		LayoutBaker.populateLayoutWithControls((LinearLayout) findViewById(R.id.location_dynamic_form), controls);
 
-		((MapFragment) getFragmentManager().findFragmentById(R.id.background_map)).getMapAsync(this);
+		mapFragment = (MapFragment) getFragmentManager().findFragmentById(R.id.background_map);
+		mapFragment.getMapAsync(this);
 
 		hideKeyboardOnClick(findViewById(R.id.observation_edit));
 
@@ -337,8 +339,9 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 	private void setupMap() {
 		if (map == null) return;
 
-		LatLng pointLatLng = location.getLatLng();
+		LatLng pointLatLng = location.getCentroidLatLng();
 
+		// TODO Geometry
 		((TextView) findViewById(R.id.location)).setText(latLngFormat.format(pointLatLng.latitude) + ", " + latLngFormat.format(pointLatLng.longitude));
 		if (location.getProvider() != null) {
 			((TextView)findViewById(R.id.location_provider)).setText("("+location.getProvider()+")");
@@ -360,29 +363,32 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 			findViewById(R.id.location_elapsed_time).setVisibility(View.GONE);
 		}
 
-		LatLng latLng = getIntent().getParcelableExtra(INITIAL_LOCATION);
-		if (latLng == null) {
-			latLng = new LatLng(0,0);
+		LatLng initialLatLng = getIntent().getParcelableExtra(INITIAL_LOCATION);
+		if (initialLatLng == null) {
+			initialLatLng = new LatLng(0,0);
 		}
 
 		float zoom = getIntent().getFloatExtra(INITIAL_ZOOM, 0);
 
-		map.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, zoom));
+		map.moveCamera(CameraUpdateFactory.newLatLngZoom(initialLatLng, zoom));
 
-		map.animateCamera(CameraUpdateFactory.newLatLngZoom(pointLatLng, 18));
+		map.animateCamera(location.getCameraUpdate(mapFragment.getView()));
 
 		if (accuracyCircle != null) {
 			accuracyCircle.remove();
 		}
 
-		CircleOptions circleOptions = new CircleOptions()
-				.fillColor(getResources().getColor(R.color.accuracy_circle_fill))
-				.strokeColor(getResources().getColor(R.color.accuracy_circle_stroke))
-				.strokeWidth(5)
-				.center(pointLatLng)
-				.radius(location.getAccuracy());
-		accuracyCircle = map.addCircle(circleOptions);
+		if(location.getAccuracy() > 0) {
+			CircleOptions circleOptions = new CircleOptions()
+					.fillColor(getResources().getColor(R.color.accuracy_circle_fill))
+					.strokeColor(getResources().getColor(R.color.accuracy_circle_stroke))
+					.strokeWidth(5)
+					.center(pointLatLng)
+					.radius(location.getAccuracy());
+			accuracyCircle = map.addCircle(circleOptions);
+		}
 
+		// TODO Geometry
 		if (observationMarker != null) {
 			observationMarker.setPosition(pointLatLng);
 			// make sure to set the Anchor after this call as well, because the size of the icon might have changed
@@ -807,15 +813,6 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 			}
 		}
 		return uris;
-	}
-
-	private void updateMapIcon() {
-		if (map == null) return;
-
-		if (observationMarker != null) {
-			observationMarker.remove();
-		}
-		observationMarker = map.addMarker(new MarkerOptions().position(location.getLatLng()).icon(ObservationBitmapFactory.bitmapDescriptor(this, observation)));
 	}
 
 	private String getSelectId(Integer fieldId) {

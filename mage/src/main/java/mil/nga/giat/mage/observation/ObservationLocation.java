@@ -3,13 +3,29 @@ package mil.nga.giat.mage.observation;
 import android.location.Location;
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.util.Log;
+import android.view.View;
 
+import com.google.android.gms.maps.CameraUpdate;
+import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.LatLngBounds;
 
 import mil.nga.giat.mage.sdk.utils.GeometryUtility;
+import mil.nga.wkb.geom.CompoundCurve;
 import mil.nga.wkb.geom.Geometry;
+import mil.nga.wkb.geom.GeometryCollection;
+import mil.nga.wkb.geom.GeometryEnvelope;
 import mil.nga.wkb.geom.GeometryType;
+import mil.nga.wkb.geom.LineString;
+import mil.nga.wkb.geom.MultiLineString;
+import mil.nga.wkb.geom.MultiPoint;
+import mil.nga.wkb.geom.MultiPolygon;
 import mil.nga.wkb.geom.Point;
+import mil.nga.wkb.geom.Polygon;
+import mil.nga.wkb.geom.PolyhedralSurface;
+import mil.nga.wkb.util.GeometryEnvelopeBuilder;
+import mil.nga.wkb.util.GeometryUtils;
 
 /**
  * Observation location containing the geometry and location collection information
@@ -22,6 +38,16 @@ public class ObservationLocation implements Parcelable {
      * Provider for manually set locations
      */
     public static final String MANUAL_PROVIDER = "manual";
+
+    /**
+     * Default camera single point zoom level
+     */
+    public static final int DEFAULT_POINT_ZOOM = 18;
+
+    /**
+     * Default camera padding percentage when building a camera update for geometry zoom
+     */
+    public static final float DEFAULT_PADDING_PERCENTAGE = .1f;
 
     /**
      * Parcelable CREATOR implementation
@@ -81,6 +107,15 @@ public class ObservationLocation implements Parcelable {
     }
 
     /**
+     * Constructor with geometry
+     *
+     * @param geometry geometry
+     */
+    public ObservationLocation(Geometry geometry) {
+        this(null, geometry);
+    }
+
+    /**
      * Constructor with specified provider and geometry
      *
      * @param provider provider
@@ -89,6 +124,15 @@ public class ObservationLocation implements Parcelable {
     public ObservationLocation(String provider, Geometry geometry) {
         setProvider(provider);
         setGeometry(geometry);
+    }
+
+    /**
+     * Constructor with {@link LatLng}
+     *
+     * @param latLng   lat lng point
+     */
+    public ObservationLocation(LatLng latLng) {
+        this(null, latLng);
     }
 
     /**
@@ -233,12 +277,58 @@ public class ObservationLocation implements Parcelable {
      *
      * @return point
      */
-    public Point getPoint() {
-        // TODO get the first point from any geometry?
+    public Point getFirstPoint() {
+        return getFirstPoint(geometry);
+    }
+
+    /**
+     * Get the first point in the geometry
+     *
+     * @param geometry geometry
+     * @return first point
+     */
+    private Point getFirstPoint(Geometry geometry) {
+
         Point point = null;
-        if (geometry.getGeometryType() == GeometryType.POINT) {
-            point = (Point) geometry;
+
+        GeometryType type = geometry.getGeometryType();
+        switch (type) {
+            case POINT:
+                point = (Point) geometry;
+                break;
+            case MULTIPOINT:
+                point = ((MultiPoint) geometry).getPoints().get(0);
+                break;
+            case LINESTRING:
+            case CIRCULARSTRING:
+                point = ((LineString) geometry).getPoints().get(0);
+                break;
+            case MULTILINESTRING:
+                point = getFirstPoint(((MultiLineString) geometry).getLineStrings().get(0));
+                break;
+            case COMPOUNDCURVE:
+                point = getFirstPoint(((CompoundCurve) geometry).getLineStrings().get(0));
+                break;
+            case POLYGON:
+            case TRIANGLE:
+                point = getFirstPoint(((Polygon) geometry).getRings().get(0));
+                break;
+            case MULTIPOLYGON:
+                point = getFirstPoint(((MultiPolygon) geometry).getPolygons().get(0));
+                break;
+            case POLYHEDRALSURFACE:
+            case TIN:
+                point = getFirstPoint(((PolyhedralSurface) geometry).getPolygons().get(0));
+                break;
+            case GEOMETRYCOLLECTION:
+                @SuppressWarnings("unchecked")
+                GeometryCollection<Geometry> geomCollection = (GeometryCollection<Geometry>) geometry;
+                point = getFirstPoint(geomCollection.getGeometries().get(0));
+                break;
+            default:
+                Log.e(this.getClass().getSimpleName(), "Unsupported Geometry Type: " + type);
         }
+
         return point;
     }
 
@@ -247,10 +337,131 @@ public class ObservationLocation implements Parcelable {
      *
      * @return lat lng
      */
-    public LatLng getLatLng() {
-        Point point = getPoint();
+    public LatLng getFirstLatLng() {
+        Point point = getFirstPoint();
         LatLng latLng = new LatLng(point.getY(), point.getX());
         return latLng;
+    }
+
+    /**
+     * Get the geometry centroid
+     *
+     * @return centroid point
+     */
+    public Point getCentroid() {
+        return GeometryUtils.getCentroid(geometry);
+    }
+
+    /**
+     * Get the geometry centroid as a LatLng
+     *
+     * @return centroid point lat lng
+     */
+    public LatLng getCentroidLatLng() {
+        Point point = GeometryUtils.getCentroid(geometry);
+        LatLng latLng = new LatLng(point.getY(), point.getX());
+        return latLng;
+    }
+
+    /**
+     * Get a geometry envelope that includes the entire geometry
+     *
+     * @return geometry envelope
+     */
+    public GeometryEnvelope getGeometryEnvelope() {
+        return GeometryEnvelopeBuilder.buildEnvelope(geometry);
+    }
+
+    /**
+     * Get the camera update for zooming to the geometry
+     *
+     * @return camera update
+     */
+    public CameraUpdate getCameraUpdate() {
+        return getCameraUpdate(null);
+    }
+
+    /**
+     * Get the camera update for zooming to the geometry
+     *
+     * @param view view
+     * @return camera update
+     */
+    public CameraUpdate getCameraUpdate(View view) {
+        return getCameraUpdate(view, DEFAULT_POINT_ZOOM, DEFAULT_PADDING_PERCENTAGE);
+    }
+
+    /**
+     * Get the camera update for zooming to the geometry
+     *
+     * @param view              view
+     * @param pointZoom         point zoom
+     * @return camera update
+     */
+    public CameraUpdate getCameraUpdate(View view, int pointZoom) {
+        return getCameraUpdate(view, pointZoom, DEFAULT_PADDING_PERCENTAGE);
+    }
+
+    /**
+     * Get the camera update for zooming to the geometry
+     *
+     * @param pointZoom         point zoom
+     * @return camera update
+     */
+    public CameraUpdate getCameraUpdate(int pointZoom) {
+        return getCameraUpdate(null, pointZoom);
+    }
+
+    /**
+     * Get the camera update for zooming to the geometry
+     *
+     * @param view              view
+     * @param paddingPercentage padding percentage
+     * @return camera update
+     */
+    public CameraUpdate getCameraUpdate(View view, float paddingPercentage) {
+        return getCameraUpdate(view, DEFAULT_POINT_ZOOM, paddingPercentage);
+    }
+
+    /**
+     * Get the camera update for zooming to the geometry
+     *
+     * @param view              view
+     * @param pointZoom         point zoom
+     * @param paddingPercentage padding percentage
+     * @return camera update
+     */
+    public CameraUpdate getCameraUpdate(View view, int pointZoom, float paddingPercentage) {
+
+        CameraUpdate update = null;
+
+        if (geometry.getGeometryType() == GeometryType.POINT) {
+
+            update = CameraUpdateFactory.newLatLngZoom(getFirstLatLng(), pointZoom);
+
+        } else {
+
+            GeometryEnvelope envelope = getGeometryEnvelope();
+
+            final LatLngBounds.Builder boundsBuilder = new LatLngBounds.Builder();
+            boundsBuilder.include(new LatLng(envelope.getMinY(), envelope.getMinX()));
+            boundsBuilder.include(new LatLng(envelope.getMinY(), envelope.getMaxX()));
+            boundsBuilder.include(new LatLng(envelope.getMaxY(), envelope.getMinX()));
+            boundsBuilder.include(new LatLng(envelope.getMaxY(), envelope.getMaxX()));
+
+            int padding = 0;
+            if(view != null) {
+                int minViewLength = Math.min(view.getWidth(), view.getHeight());
+                padding = (int) Math.floor(minViewLength
+                        * paddingPercentage);
+            }
+
+            update = CameraUpdateFactory.newLatLngBounds(
+                    boundsBuilder.build(), padding);
+
+        }
+
+        return update;
     }
 
     /**

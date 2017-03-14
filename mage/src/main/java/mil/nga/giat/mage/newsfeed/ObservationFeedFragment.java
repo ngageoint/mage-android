@@ -271,17 +271,14 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 				mil.nga.giat.mage.sdk.datastore.location.Location tLocation = tLocations.get(0);
 				Geometry geo = tLocation.getGeometry();
 				Map<String, LocationProperty> propertiesMap = tLocation.getPropertiesMap();
-				if (geo.getGeometryType() == GeometryType.POINT) {
-					Point point = (Point) geo;
-					String provider = ObservationLocation.MANUAL_PROVIDER;
-					if (propertiesMap.get("provider").getValue() != null) {
-						provider = propertiesMap.get("provider").getValue().toString();
-					}
-					location = new ObservationLocation(provider, point);
-					location.setTime(tLocation.getTimestamp().getTime());
-					if (propertiesMap.get("accuracy").getValue() != null) {
-						location.setAccuracy(Float.valueOf(propertiesMap.get("accuracy").getValue().toString()));
-					}
+				String provider = ObservationLocation.MANUAL_PROVIDER;
+				if (propertiesMap.get("provider").getValue() != null) {
+					provider = propertiesMap.get("provider").getValue().toString();
+				}
+				location = new ObservationLocation(provider, geo);
+				location.setTime(tLocation.getTimestamp().getTime());
+				if (propertiesMap.get("accuracy").getValue() != null) {
+					location.setAccuracy(Float.valueOf(propertiesMap.get("accuracy").getValue().toString()));
 				}
 			}
 		} else {

@@ -41,6 +41,7 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
 	private GoogleMap map;
 	private EditText longitudeEdit;
 	private EditText latitudeEdit;
+	private MapFragment mapFragment;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -62,7 +63,8 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
 		latitudeEdit = (EditText) findViewById(R.id.location_edit_latitude);
 		latitudeEdit.clearFocus();
 
-		((MapFragment) getFragmentManager().findFragmentById(R.id.location_edit_map)).getMapAsync(this);
+		mapFragment = (MapFragment) getFragmentManager().findFragmentById(R.id.location_edit_map);
+		mapFragment.getMapAsync(this);
 	}
 
 	public void cancel(View v) {
@@ -73,9 +75,7 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
 	public void onMapReady(GoogleMap map) {
 		this.map = map;
 
-		LatLng latLng = location.getLatLng();
-
-		map.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 18));
+		map.moveCamera(location.getCameraUpdate(mapFragment.getView()));
 
 		ImageView iv = (ImageView) findViewById(R.id.location_edit_marker);
 		iv.setImageBitmap(markerBitmap);
@@ -83,8 +83,10 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
 		map.setOnCameraMoveListener(this);
 		map.setOnMapClickListener(this);
 
-		longitudeEdit.setText(String.format(Locale.getDefault(), "%.6f", latLng.longitude));
-		latitudeEdit.setText(String.format(Locale.getDefault(), "%.6f", latLng.latitude));
+		// TODO Geometry
+		Point point = location.getCentroid();
+		longitudeEdit.setText(String.format(Locale.getDefault(), "%.6f", point.getX()));
+		latitudeEdit.setText(String.format(Locale.getDefault(), "%.6f", point.getY()));
 
 		longitudeEdit.addTextChangedListener(this);
 		longitudeEdit.setOnFocusChangeListener(this);
