@@ -186,7 +186,7 @@ task androidArtifactVersion {
 }
 
 configure extensions.android, {
-    if (project.hasProperty('RELEASE_STORE_FILE') && new File((String)project.getProperty('RELEASE_STORE_FILE')).exists()) {
+    if (project.hasProperty('RELEASE_STORE_FILE') && file(project.getProperty('RELEASE_STORE_FILE')).exists()) {
         signingConfigs {
             release {
                 storeFile file(RELEASE_STORE_FILE)
@@ -197,11 +197,19 @@ configure extensions.android, {
         }
         buildTypes {
             release {
-                setSigningConfig(signingConfigs.release)
+                signingConfig signingConfigs.release
             }
         }
     }
     else {
         println 'no release keystore configured'
+    }
+
+    if (project.hasProperty('SKIP_DEBUG_SIGNING')) {
+        buildTypes {
+            debug {
+                signingConfig null
+            }
+        }
     }
 }
