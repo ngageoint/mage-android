@@ -20,6 +20,7 @@ import android.provider.Settings;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.content.FileProvider;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -68,6 +69,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import mil.nga.giat.mage.BuildConfig;
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.form.LayoutBaker;
 import mil.nga.giat.mage.form.LayoutBaker.ControlGenerationType;
@@ -603,7 +605,7 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 		try {
 			File file = MediaUtility.createImageFile();
 			currentMediaPath = file.getAbsolutePath();
-			Uri uri = Uri.fromFile(file);
+			Uri uri = FileProvider.getUriForFile(this, BuildConfig.APPLICATION_ID + ".fileprovider", file);
 			Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
 			intent.putExtra(MediaStore.EXTRA_OUTPUT, uri);
 			intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
@@ -617,7 +619,7 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 		try {
 			File file = MediaUtility.createVideoFile();
 			currentMediaPath = file.getAbsolutePath();
-			Uri uri = Uri.fromFile(file);
+			Uri uri = FileProvider.getUriForFile(this, BuildConfig.APPLICATION_ID + ".fileprovider", file);
 			Intent intent = new Intent(MediaStore.ACTION_VIDEO_CAPTURE);
 			intent.putExtra(MediaStore.EXTRA_OUTPUT, uri);
 			intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
