@@ -140,6 +140,9 @@ import mil.nga.giat.mage.sdk.exceptions.UserException;
 import mil.nga.giat.mage.sdk.location.LocationService;
 import mil.nga.wkb.geom.Geometry;
 import mil.nga.wkb.geom.GeometryType;
+import mil.nga.wkb.geom.LineString;
+import mil.nga.wkb.geom.Point;
+import mil.nga.wkb.geom.Polygon;
 
 public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapClickListener, OnMapLongClickListener, OnMarkerClickListener, OnInfoWindowClickListener, OnMapPanListener, OnMyLocationButtonClickListener, OnClickListener, LocationSource, LocationListener, OnCacheOverlayListener,
 		IObservationEventListener, ILocationEventListener, IStaticFeatureEventListener {
@@ -634,6 +637,9 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 	@Override
 	public boolean onMarkerClick(Marker marker) {
 		hideKeyboard();
+
+		observations.offMarkerClick();
+
 		// search marker
 		if(searchMarkers != null) {
 			for(Marker m :searchMarkers) {
@@ -678,6 +684,9 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 		hideKeyboard();
 		// remove old accuracy circle
 		((LocationMarkerCollection) locations).offMarkerClick();
+		observations.offMarkerClick();
+
+		observations.onMapClick(latLng);
 
 		staticGeometryCollection.onMapClick(map, latLng, getActivity());
 
@@ -713,6 +722,27 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 		} else {
 			Intent intent = new Intent(getActivity().getApplicationContext(), ObservationEditActivity.class);
 			ObservationLocation l = new ObservationLocation(ObservationLocation.MANUAL_PROVIDER, point);
+
+			// TODO Geometry, make a temp geometry, delete this
+			Point origPoint = l.getFirstPoint();
+			Geometry geometry = null;
+			LineString lineString = new LineString();
+			lineString.addPoint(origPoint);
+			lineString.addPoint(new Point(origPoint.getX() - (Math.random() * 2.0), origPoint.getY() - (Math.random() * 2.0)));
+			lineString.addPoint(new Point(origPoint.getX() - (Math.random() * 2.0), origPoint.getY() - 2.0 - (Math.random() * 2.0)));
+			lineString.addPoint(new Point(origPoint.getX() + (Math.random() * 2.0), origPoint.getY() - 2.0 - (Math.random() * 2.0)));
+			lineString.addPoint(new Point(origPoint.getX() + (Math.random() * 2.0), origPoint.getY() - (Math.random() * 2.0)));
+
+			if(Math.random() < .5) {
+				lineString.addPoint(origPoint);
+				Polygon polygon = new Polygon();
+				polygon.addRing(lineString);
+				geometry = polygon;
+			}else{
+				geometry = lineString;
+			}
+			l.setGeometry(geometry);
+
 			l.setAccuracy(0.0f);
 			l.setTime(new Date().getTime());
 			intent.putExtra(ObservationEditActivity.LOCATION, l);

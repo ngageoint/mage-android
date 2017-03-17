@@ -8,5 +8,8 @@
 
     <color name="observation_flag_active">#A8D0021B</color>
 
+    <color name="polyline_color">#FF000000</color>
+    <color name="polygon_color">#FF000000</color>
+    <color name="polygon_fill_color">#20000000</color>
 
 </resources>

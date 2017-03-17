@@ -22,6 +22,7 @@ import mil.nga.giat.mage.map.marker.ObservationClusterCollection.ObservationClus
 import mil.nga.giat.mage.observation.ObservationViewActivity;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.wkb.geom.Point;
+import mil.nga.wkb.util.GeometryUtils;
 
 public class ObservationClusterCollection implements PointCollection<Observation>, OnClusterItemClickListener<ObservationClusterItem> {
 
@@ -80,7 +81,15 @@ public class ObservationClusterCollection implements PointCollection<Observation
     	// TODO : figure this out?
     	Log.d(LOG_NAME, "TODO: refreshme");
     }
-    
+
+    @Override
+    public void onMapClick(LatLng latLng) {
+    }
+
+    @Override
+    public void offMarkerClick(){
+    }
+
     @Override
     public void setVisibility(boolean visible) {
         // TODO not even sure what to do here with ClusterItem
@@ -111,7 +120,7 @@ public class ObservationClusterCollection implements PointCollection<Observation
 
         @Override
         public LatLng getPosition() {
-            Point point = (Point) observation.getGeometry();
+            Point point = GeometryUtils.getCentroid(observation.getGeometry());
             return new LatLng(point.getY(), point.getX());
         }
 

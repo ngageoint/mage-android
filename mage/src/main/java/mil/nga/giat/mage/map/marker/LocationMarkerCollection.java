@@ -186,12 +186,12 @@ public class LocationMarkerCollection implements PointCollection<Location>, OnMa
 		return true;
 	}
 
-	public boolean offMarkerClick() {
+	@Override
+	public void offMarkerClick() {
 		if (clickedAccuracyCircle != null) {
 			clickedAccuracyCircle.remove();
 			clickedAccuracyCircle = null;
 		}
-		return true;
 	}
 
 	@Override
@@ -213,6 +213,10 @@ public class LocationMarkerCollection implements PointCollection<Location>, OnMa
 				}
 			}
 		}
+	}
+
+	@Override
+	public void onMapClick(LatLng latLng) {
 	}
 
 	@Override
