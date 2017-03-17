@@ -3,16 +3,13 @@ package mil.nga.giat.mage.observation;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
-import com.google.android.gms.maps.model.Polygon;
-import com.google.android.gms.maps.model.Polyline;
-import com.google.maps.android.PolyUtil;
 
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
-import mil.nga.geopackage.map.geom.GoogleMapShape;
 import mil.nga.geopackage.map.geom.GoogleMapShapeType;
+import mil.nga.giat.mage.map.MapUtils;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 
 /**
@@ -184,40 +181,26 @@ public class MapObservations {
      */
     public MapShapeObservation getClickedShape(GoogleMap map, LatLng latLng) {
 
-        MapShapeObservation mapShapeObservation = null;
-
-        // TODO
         // how many meters away form the click can the geometry be?
-        Double circumferenceOfEarthInMeters = 2 * Math.PI * 6371000;
-        // Double tileWidthAtZoomLevelAtEquatorInDegrees = 360.0/Math.pow(2.0, map.getCameraPosition().zoom);
-        Double pixelSizeInMetersAtLatitude = (circumferenceOfEarthInMeters * Math.cos(map.getCameraPosition().target.latitude * (Math.PI / 180.0))) / Math.pow(2.0, map.getCameraPosition().zoom + 8.0);
-        Double tolerance = pixelSizeInMetersAtLatitude * Math.sqrt(2.0) * 10.0;
+        double tolerance = MapUtils.lineTolerance(map);
 
+        // Find the first polyline with the point on it, else find the first polygon
+        MapShapeObservation mapShapeObservation = null;
         for (MapShapeObservation observationShape : getShapes()) {
-
-            GoogleMapShape mapShape = observationShape.getShape();
-            GoogleMapShapeType shapeType = mapShape.getShapeType();
-            switch (shapeType) {
-                case POLYLINE:
-                    Polyline polyline = (Polyline) mapShape.getShape();
-                    if (PolyUtil.isLocationOnPath(latLng, polyline.getPoints(), true, tolerance)) {
-                        mapShapeObservation = observationShape;
+            GoogleMapShapeType shapeType = observationShape.getShape().getShapeType();
+            if (mapShapeObservation == null || shapeType == GoogleMapShapeType.POLYLINE) {
+                if (observationShape.pointIsOnShape(latLng, tolerance)) {
+                    mapShapeObservation = observationShape;
+                    if (shapeType == GoogleMapShapeType.POLYLINE) {
+                        break;
                     }
-                    break;
-                case POLYGON:
-                    Polygon polygon = (Polygon) mapShape.getShape();
-                    if (PolyUtil.containsLocation(latLng, polygon.getPoints(), true)) {
-                        mapShapeObservation = observationShape;
-                    }
-                    break;
+                }
             }
         }
 
-        // Find closest to center or do lines first?
-        // TODO
-
         return mapShapeObservation;
     }
+
 
     /**
      * Get all markers as an iterable

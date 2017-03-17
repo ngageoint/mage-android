@@ -24,8 +24,10 @@ import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.map.marker.ObservationBitmapFactory;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.wkb.geom.Geometry;
+import mil.nga.wkb.geom.GeometryEnvelope;
 import mil.nga.wkb.geom.GeometryType;
 import mil.nga.wkb.geom.Point;
+import mil.nga.wkb.util.GeometryEnvelopeBuilder;
 import mil.nga.wkb.util.GeometryUtils;
 
 /**
@@ -82,8 +84,9 @@ public class MapObservationManager {
             GoogleMapShape shape = shapeConverter.toShape(geometry);
             prepareShapeOptions(observation, shape, visible);
             GoogleMapShape mapShape = GoogleMapShapeConverter.addShapeToMap(map, shape);
+            GeometryEnvelope envelope = GeometryEnvelopeBuilder.buildEnvelope(geometry);
 
-            observationShape = new MapShapeObservation(observation, mapShape);
+            observationShape = new MapShapeObservation(observation, mapShape, envelope);
         }
 
         return observationShape;
