@@ -34,7 +34,7 @@ import java.util.TreeMap;
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.observation.DateTimePickerDialog;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationProperty;
-import mil.nga.giat.mage.sdk.utils.DateFormatFactory;
+import mil.nga.giat.mage.sdk.utils.ISO8601DateFormatFactory;
 
 /**
  * Use this class to build and populate the views concerned with form like information.
@@ -269,7 +269,7 @@ public class LayoutBaker {
 
 					if (value != null && !((String)value).trim().isEmpty()) {
 						try {
-                            DateFormat dateFormat = DateFormatFactory.ISO8601();
+                            DateFormat dateFormat = ISO8601DateFormatFactory.ISO8601();
 							mageDateText.setPropertyValue(dateFormat.parse(value.toString()));
 						} catch (ParseException pe) {
 							Log.e(LOG_NAME, "Problem parsing date.", pe);
@@ -281,7 +281,7 @@ public class LayoutBaker {
 						public void onClick(View v) {
 							Date date = null;
 							try {
-								date = DateFormatFactory.ISO8601().parse(mageDateText.getPropertyValue().toString());
+								date = ISO8601DateFormatFactory.ISO8601().parse(mageDateText.getPropertyValue().toString());
 							} catch (ParseException pe) {
 								Log.e(LOG_NAME, "Problem parsing date.", pe);
 							}

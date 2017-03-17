@@ -17,7 +17,8 @@ import java.util.Date;
 import java.util.Locale;
 
 import mil.nga.giat.mage.R;
-import mil.nga.giat.mage.sdk.utils.DateFormatFactory;
+import mil.nga.giat.mage.sdk.utils.ISO8601DateFormatFactory;
+import mil.nga.giat.mage.utils.DateFormatFactory;
 
 public class MageEditText extends TextInputLayout implements MageControl, TextWatcher {
 
@@ -25,12 +26,13 @@ public class MageEditText extends TextInputLayout implements MageControl, TextWa
 	private MagePropertyType propertyType;
 	protected Boolean isRequired = Boolean.FALSE;
 	private Date propertyDate = null;
-	private final DateFormat iso8601Format = DateFormatFactory.ISO8601();
-	private final DateFormat dateFormat = DateFormatFactory.format("yyyy-MM-dd HH:mm zz", Locale.getDefault());
+	private final DateFormat iso8601Format = ISO8601DateFormatFactory.ISO8601();
+	private DateFormat dateFormat;
 
 	public MageEditText(Context context, AttributeSet attrs) {
 		super(context, attrs);
 
+		dateFormat = DateFormatFactory.format("yyyy-MM-dd HH:mm zz", Locale.getDefault(), context);
 		AppCompatEditText editText = new AppCompatEditText(context, attrs);
 		addView(editText);
 
