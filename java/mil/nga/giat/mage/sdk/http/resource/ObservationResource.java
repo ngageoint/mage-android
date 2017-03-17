@@ -34,7 +34,7 @@ import mil.nga.giat.mage.sdk.http.converter.AttachmentConverterFactory;
 import mil.nga.giat.mage.sdk.http.converter.ObservationConverterFactory;
 import mil.nga.giat.mage.sdk.http.converter.ObservationImportantConverterFactory;
 import mil.nga.giat.mage.sdk.http.converter.ObservationsConverterFactory;
-import mil.nga.giat.mage.sdk.utils.DateFormatFactory;
+import mil.nga.giat.mage.sdk.utils.ISO8601DateFormatFactory;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
 import retrofit.Call;
 import retrofit.Response;
@@ -113,7 +113,7 @@ public class ObservationResource {
                 .client(HttpClientManager.getInstance(context).httpClient())
                 .build();
 
-        DateFormat iso8601Format = DateFormatFactory.ISO8601();
+        DateFormat iso8601Format = ISO8601DateFormatFactory.ISO8601();
         ObservationHelper observationHelper = ObservationHelper.getInstance(context);
         Date lastModifiedDate = observationHelper.getLatestCleanLastModified(context, event);
         Log.d(LOG_NAME, "Fetching all observations after: " + iso8601Format.format(lastModifiedDate));

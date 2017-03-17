@@ -19,14 +19,14 @@ import java.util.Map;
 import mil.nga.giat.mage.sdk.datastore.location.Location;
 import mil.nga.giat.mage.sdk.datastore.location.LocationProperty;
 import mil.nga.giat.mage.sdk.datastore.user.Event;
-import mil.nga.giat.mage.sdk.utils.DateFormatFactory;
+import mil.nga.giat.mage.sdk.utils.ISO8601DateFormatFactory;
 
 public class LocationDeserializer extends Deserializer {
 
     private static final String LOG_NAME = LocationDeserializer.class.getName();
 	
 	private GeometryDeserializer geometryDeserializer = new GeometryDeserializer();
-    private DateFormat iso8601Format = DateFormatFactory.ISO8601();
+    private DateFormat iso8601Format = ISO8601DateFormatFactory.ISO8601();
 
 	private Event event = null;
 

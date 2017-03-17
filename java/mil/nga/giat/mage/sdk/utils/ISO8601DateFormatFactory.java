@@ -5,7 +5,7 @@ import java.text.SimpleDateFormat;
 import java.util.Locale;
 import java.util.TimeZone;
 
-public class DateFormatFactory {
+public class ISO8601DateFormatFactory {
 
 	static String ISO8601_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'";
 
@@ -15,12 +15,12 @@ public class DateFormatFactory {
     }
 
     public static final DateFormat format(String format, Locale locale, TimeZone timeZone) {
-        DateFormat dateFormat = DateFormatFactory.format(format, Locale.getDefault());
+        DateFormat dateFormat = ISO8601DateFormatFactory.format(format, Locale.getDefault());
         dateFormat.setTimeZone(timeZone);
         return dateFormat;
     }
 
 	public static final DateFormat ISO8601() {
-        return DateFormatFactory.format(ISO8601_FORMAT, Locale.getDefault(), TimeZone.getTimeZone("Zulu"));
+        return ISO8601DateFormatFactory.format(ISO8601_FORMAT, Locale.getDefault(), TimeZone.getTimeZone("Zulu"));
 	}
 }

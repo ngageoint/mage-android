@@ -20,7 +20,7 @@ import java.util.List;
 import mil.nga.giat.mage.sdk.datastore.location.Location;
 import mil.nga.giat.mage.sdk.datastore.location.LocationProperty;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
-import mil.nga.giat.mage.sdk.utils.DateFormatFactory;
+import mil.nga.giat.mage.sdk.utils.ISO8601DateFormatFactory;
 
 /**
  * Used to convert a Location object into a json String.
@@ -30,7 +30,7 @@ import mil.nga.giat.mage.sdk.utils.DateFormatFactory;
  */
 public class LocationSerializer implements JsonSerializer<Collection<Location>> {
 
-    private DateFormat iso8601Format = DateFormatFactory.ISO8601();
+    private DateFormat iso8601Format = ISO8601DateFormatFactory.ISO8601();
 
 	@Override
 	public JsonElement serialize(Collection<Location> locations, Type locationType, JsonSerializationContext context) {

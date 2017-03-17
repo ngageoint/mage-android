@@ -21,7 +21,7 @@ import mil.nga.giat.mage.sdk.R;
 public class UserUtility {
 
 	private static final String LOG_NAME = UserUtility.class.getName();
-    private DateFormat iso8601Format = DateFormatFactory.ISO8601();
+    private DateFormat iso8601Format = ISO8601DateFormatFactory.ISO8601();
 
 	private UserUtility() {
 	}

@@ -23,7 +23,7 @@ import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.http.resource.DeviceResource;
 import mil.nga.giat.mage.sdk.http.resource.UserResource;
 import mil.nga.giat.mage.sdk.jackson.deserializer.UserDeserializer;
-import mil.nga.giat.mage.sdk.utils.DateFormatFactory;
+import mil.nga.giat.mage.sdk.utils.ISO8601DateFormatFactory;
 import mil.nga.giat.mage.sdk.utils.DeviceUuidFactory;
 import mil.nga.giat.mage.sdk.utils.PasswordUtility;
 
@@ -35,7 +35,7 @@ import mil.nga.giat.mage.sdk.utils.PasswordUtility;
 public class FormAuthLoginTask extends AbstractAccountTask {
 
 	private static final String LOG_NAME = FormAuthLoginTask.class.getName();
-	private DateFormat iso8601Format = DateFormatFactory.ISO8601();
+	private DateFormat iso8601Format = ISO8601DateFormatFactory.ISO8601();
 	private UserDeserializer userDeserializer;
 
 	private volatile AccountStatus callbackStatus = null;

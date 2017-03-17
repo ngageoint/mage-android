@@ -23,7 +23,7 @@ import mil.nga.giat.mage.sdk.datastore.user.TeamEvent;
 import mil.nga.giat.mage.sdk.datastore.user.TeamHelper;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserTeam;
-import mil.nga.giat.mage.sdk.utils.DateFormatFactory;
+import mil.nga.giat.mage.sdk.utils.ISO8601DateFormatFactory;
 import mil.nga.giat.mage.sdk.utils.PasswordUtility;
 
 /**
@@ -36,7 +36,7 @@ import mil.nga.giat.mage.sdk.utils.PasswordUtility;
 public class LocalAuthLoginTask extends AbstractAccountTask {
 
 	private static final String LOG_NAME = LocalAuthLoginTask.class.getName();
-    private DateFormat iso8601Format = DateFormatFactory.ISO8601();
+    private DateFormat iso8601Format = ISO8601DateFormatFactory.ISO8601();
 	
 	public LocalAuthLoginTask(AccountDelegate delegate, Context applicationContext) {
 		super(delegate, applicationContext);

@@ -24,7 +24,7 @@ import mil.nga.giat.mage.sdk.datastore.observation.ObservationImportant;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationProperty;
 import mil.nga.giat.mage.sdk.datastore.observation.State;
 import mil.nga.giat.mage.sdk.datastore.user.Event;
-import mil.nga.giat.mage.sdk.utils.DateFormatFactory;
+import mil.nga.giat.mage.sdk.utils.ISO8601DateFormatFactory;
 
 public class ObservationDeserializer extends Deserializer {
 
@@ -32,7 +32,7 @@ public class ObservationDeserializer extends Deserializer {
 
 	private GeometryDeserializer geometryDeserializer = new GeometryDeserializer();
 	private AttachmentDeserializer attachmentDeserializer = new AttachmentDeserializer();
-	private DateFormat iso8601Format = DateFormatFactory.ISO8601();
+	private DateFormat iso8601Format = ISO8601DateFormatFactory.ISO8601();
 
     private Event event = null;
 
