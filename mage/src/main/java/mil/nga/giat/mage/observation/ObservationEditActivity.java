@@ -87,7 +87,7 @@ import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.exceptions.ObservationException;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
-import mil.nga.giat.mage.sdk.utils.DateFormatFactory;
+import mil.nga.giat.mage.sdk.utils.ISO8601DateFormatFactory;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
 
 public class ObservationEditActivity extends AppCompatActivity implements OnMapReadyCallback {
@@ -99,7 +99,7 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 	private static final int PERMISSIONS_REQUEST_AUDIO = 300;
 	private static final int PERMISSIONS_REQUEST_STORAGE = 400;
 
-	private final DateFormat iso8601Format = DateFormatFactory.ISO8601();
+	private final DateFormat iso8601Format = ISO8601DateFormatFactory.ISO8601();
 
 	public static final String OBSERVATION_ID = "OBSERVATION_ID";
 	public static final String LOCATION = "LOCATION";
@@ -276,7 +276,7 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 				Serializable value = ((MageTextView) findViewById(R.id.date)).getPropertyValue();
 				Date date = null;
 				try {
-					date = DateFormatFactory.ISO8601().parse(value.toString());
+					date = ISO8601DateFormatFactory.ISO8601().parse(value.toString());
 				} catch (ParseException pe) {
 					Log.e(LOG_NAME, "Problem parsing date.", pe);
 				}

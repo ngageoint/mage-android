@@ -41,5 +41,9 @@
     <string name="activeFavoritesFilterKey">activeFavoritesFilter</string>
     <string name="activeImportantFilterKey">activeImportantFilter</string>
 
+    <!-- TIME DISPLAY -->
+    <string name="timeZoneKey">timeZones</string>
+    <integer name="timeZoneDefaultValue">0</integer>
+
 
 </resources>

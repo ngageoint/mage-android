@@ -3,7 +3,9 @@ package mil.nga.giat.mage.observation;
 import android.app.FragmentManager;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
@@ -39,6 +41,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.Locale;
 import java.util.Map;
+import java.util.TimeZone;
 
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.form.LayoutBaker;
@@ -59,7 +62,7 @@ import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.event.IObservationEventListener;
 import mil.nga.giat.mage.sdk.exceptions.ObservationException;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
-import mil.nga.giat.mage.sdk.utils.DateFormatFactory;
+import mil.nga.giat.mage.utils.DateFormatFactory;
 
 public class ObservationViewActivity extends AppCompatActivity implements OnMapReadyCallback {
 
@@ -69,7 +72,7 @@ public class ObservationViewActivity extends AppCompatActivity implements OnMapR
 	public static String INITIAL_LOCATION = "INITIAL_LOCATION";
 	public static String INITIAL_ZOOM = "INITIAL_ZOOM";
 
-	private final DateFormat dateFormat = DateFormatFactory.format("yyyy-MM-dd HH:mm zz", Locale.getDefault());
+	private DateFormat dateFormat;
 	private GoogleMap map;
     private AttachmentGallery attachmentGallery;
 	private IObservationEventListener observationEventListener;
@@ -79,9 +82,13 @@ public class ObservationViewActivity extends AppCompatActivity implements OnMapR
 	private Marker marker;
 	private DecimalFormat latLngFormat = new DecimalFormat("###.#####");
 
+	SharedPreferences preferences;
+
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+
+		dateFormat = DateFormatFactory.format("yyyy-MM-dd HH:mm zz", Locale.getDefault(), getApplicationContext());
 
 		setContentView(R.layout.observation_viewer);
 
