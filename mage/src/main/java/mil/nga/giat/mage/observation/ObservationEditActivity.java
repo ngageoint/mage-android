@@ -398,7 +398,7 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 		if (mapObservation != null) {
 			mapObservation.remove();
 		}
-		mapObservation = mapObservationManager.addToMap(observation, true);
+		mapObservation = mapObservationManager.addToMap(observation);
 	}
 
 	@SuppressLint("NewApi")

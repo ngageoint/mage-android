@@ -62,6 +62,16 @@ public class MapObservationManager {
      * Add an observation to the map as a marker or shape
      *
      * @param observation observation
+     * @return map observation
+     */
+    public MapObservation addToMap(Observation observation) {
+        return addToMap(observation, true);
+    }
+
+    /**
+     * Add an observation to the map as a marker or shape
+     *
+     * @param observation observation
      * @param visible     visible state
      * @return map observation
      */

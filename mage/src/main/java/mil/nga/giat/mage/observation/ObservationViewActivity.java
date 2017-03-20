@@ -252,7 +252,7 @@ public class ObservationViewActivity extends AppCompatActivity implements OnMapR
 				mapObservation.remove();
 				map.moveCamera(location.getCameraUpdate(mapFragment.getView(), map.getCameraPosition().zoom));
 			}
-			mapObservation = mapObservationManager.addToMap(o, true);
+			mapObservation = mapObservationManager.addToMap(o);
 
 			setupImportant(o.getImportant());
 			setFavorites(o.getFavorites());
