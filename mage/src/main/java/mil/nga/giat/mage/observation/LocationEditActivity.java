@@ -15,9 +15,10 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemSelectedListener;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
-import android.widget.ImageView;
 import android.widget.Spinner;
 import android.widget.TextView;
 
@@ -28,27 +29,35 @@ import com.google.android.gms.maps.GoogleMap.OnCameraMoveListener;
 import com.google.android.gms.maps.GoogleMap.OnMapClickListener;
 import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.MarkerOptions;
 
 import java.util.Locale;
 
+import mil.nga.geopackage.map.geom.GoogleMapShape;
+import mil.nga.geopackage.map.geom.GoogleMapShapeConverter;
+import mil.nga.geopackage.map.geom.GoogleMapShapeMarkers;
 import mil.nga.giat.mage.R;
+import mil.nga.wkb.geom.Geometry;
+import mil.nga.wkb.geom.GeometryType;
 import mil.nga.wkb.geom.Point;
 
-public class LocationEditActivity extends AppCompatActivity implements TextWatcher, View.OnFocusChangeListener, OnMapClickListener, OnMapReadyCallback, OnCameraMoveListener, OnCameraIdleListener {
+public class LocationEditActivity extends AppCompatActivity implements TextWatcher, View.OnFocusChangeListener, OnMapClickListener, OnMapReadyCallback, OnCameraMoveListener, OnCameraIdleListener, OnItemSelectedListener {
 
 	public static String LOCATION = "LOCATION";
 	public static String MARKER_BITMAP = "MARKER_BITMAP";
 
 	private ObservationLocation location;
-	private Bitmap markerBitmap;
 	private GoogleMap map;
 	private Spinner shapeTypeSpinner;
 	private EditText longitudeEdit;
 	private EditText latitudeEdit;
 	private MapFragment mapFragment;
-	private MapObservationManager mapObservationManager;
+	private GoogleMapShapeMarkers shapeMarkers;
+	private final GoogleMapShapeConverter shapeConverter = new GoogleMapShapeConverter();
+	private final MarkerOptions markerOptions = new MarkerOptions();
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -63,7 +72,8 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
 
 		Intent intent = getIntent();
 		location = intent.getParcelableExtra(LOCATION);
-		markerBitmap = intent.getParcelableExtra(MARKER_BITMAP);
+		Bitmap markerBitmap = intent.getParcelableExtra(MARKER_BITMAP);
+		markerOptions.icon(BitmapDescriptorFactory.fromBitmap(markerBitmap));
 
 		shapeTypeSpinner = (Spinner) findViewById(R.id.location_edit_shape_type);
 		ArrayAdapter shapeTypeAdapter = ArrayAdapter.createFromResource(this, R.array.observationShapeType, R.layout.location_edit_spinner);
@@ -85,7 +95,6 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
 	@Override
 	public void onMapReady(GoogleMap map) {
 		this.map = map;
-		mapObservationManager = new MapObservationManager(this, map);
 		map.setOnCameraIdleListener(this);
 	}
 
@@ -99,13 +108,17 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
 
 		map.moveCamera(location.getCameraUpdate(mapFragment.getView()));
 
-		ImageView iv = (ImageView) findViewById(R.id.location_edit_marker);
-		iv.setImageBitmap(markerBitmap);
+		// TODO
+		//ImageView iv = (ImageView) findViewById(R.id.location_edit_marker);
+		//iv.setImageBitmap(markerBitmap);
 
 		map.setOnCameraMoveListener(this);
 		map.setOnMapClickListener(this);
 
-		// TODO Geometry
+		shapeTypeSpinner.setOnItemSelectedListener(this);
+
+		addMapShape(location.getGeometry());
+
 		Point point = location.getCentroid();
 		longitudeEdit.setText(String.format(Locale.getDefault(), "%.6f", point.getX()));
 		latitudeEdit.setText(String.format(Locale.getDefault(), "%.6f", point.getY()));
@@ -143,6 +156,61 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
 				return false;
 			}
 		});
+	}
+
+	@Override
+	public void onItemSelected(AdapterView<?> parent, View v, int position, long id) {
+		switch (parent.getId()){
+			case R.id.location_edit_shape_type:
+				GeometryType newShapeType = null;
+				switch(parent.getSelectedItemPosition()){
+					case 0:
+						newShapeType = GeometryType.POINT;
+						break;
+					case 1:
+						newShapeType = GeometryType.LINESTRING;
+						break;
+					case 2:
+						newShapeType = GeometryType.POLYGON;
+						break;
+					default:
+						throw new IllegalArgumentException("Unsupported Shape Type item position: " + parent.getSelectedItemPosition());
+				}
+				changeShapeType(newShapeType);
+				break;
+			default:
+				throw new IllegalArgumentException("Unsupported item selected adapter view: " + parent.getId());
+		}
+	}
+
+	@Override
+	public void onNothingSelected(AdapterView<?> parent){
+		switch (parent.getId()){
+			case R.id.location_edit_shape_type:
+				changeShapeType(GeometryType.POINT);
+				break;
+			default:
+				throw new IllegalArgumentException("Unsupported item selected adapter view: " + parent.getId());
+		}
+	}
+
+	private void confirmAndChangeShapeType(GeometryType selectedType){
+		if(shapeMarkers == null || selectedType != shapeMarkers.getShape().getGeometryType()){
+			// TODO
+			changeShapeType(selectedType);
+		}
+	}
+
+	private void changeShapeType(GeometryType selectedType){
+	// TODO
+	}
+
+	private void addMapShape(Geometry geometry){
+		if(shapeMarkers != null){
+			shapeMarkers.remove();
+		}
+		GoogleMapShape shape = shapeConverter.toShape(geometry);
+		shapeMarkers = shapeConverter.addShapeToMapAsMarkers(map, shape, markerOptions, null, null, null, null, null);
 	}
 
 	@Override
