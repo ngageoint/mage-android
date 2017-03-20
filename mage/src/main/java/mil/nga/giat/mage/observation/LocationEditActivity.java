@@ -15,12 +15,17 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.Spinner;
 import android.widget.TextView;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.GoogleMap.OnCameraIdleListener;
+import com.google.android.gms.maps.GoogleMap.OnCameraMoveListener;
+import com.google.android.gms.maps.GoogleMap.OnMapClickListener;
 import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.model.CameraPosition;
@@ -31,7 +36,7 @@ import java.util.Locale;
 import mil.nga.giat.mage.R;
 import mil.nga.wkb.geom.Point;
 
-public class LocationEditActivity extends AppCompatActivity implements TextWatcher, View.OnFocusChangeListener, GoogleMap.OnMapClickListener, OnMapReadyCallback, GoogleMap.OnCameraMoveListener {
+public class LocationEditActivity extends AppCompatActivity implements TextWatcher, View.OnFocusChangeListener, OnMapClickListener, OnMapReadyCallback, OnCameraMoveListener, OnCameraIdleListener {
 
 	public static String LOCATION = "LOCATION";
 	public static String MARKER_BITMAP = "MARKER_BITMAP";
@@ -39,9 +44,11 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
 	private ObservationLocation location;
 	private Bitmap markerBitmap;
 	private GoogleMap map;
+	private Spinner shapeTypeSpinner;
 	private EditText longitudeEdit;
 	private EditText latitudeEdit;
 	private MapFragment mapFragment;
+	private MapObservationManager mapObservationManager;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -58,6 +65,10 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
 		location = intent.getParcelableExtra(LOCATION);
 		markerBitmap = intent.getParcelableExtra(MARKER_BITMAP);
 
+		shapeTypeSpinner = (Spinner) findViewById(R.id.location_edit_shape_type);
+		ArrayAdapter shapeTypeAdapter = ArrayAdapter.createFromResource(this, R.array.observationShapeType, R.layout.location_edit_spinner);
+		shapeTypeAdapter.setDropDownViewResource(R.layout.location_edit_spinner_dropdown);
+		shapeTypeSpinner.setAdapter(shapeTypeAdapter);
 		longitudeEdit = (EditText) findViewById(R.id.location_edit_longitude);
 		longitudeEdit.clearFocus();
 		latitudeEdit = (EditText) findViewById(R.id.location_edit_latitude);
@@ -74,6 +85,17 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
 	@Override
 	public void onMapReady(GoogleMap map) {
 		this.map = map;
+		mapObservationManager = new MapObservationManager(this, map);
+		map.setOnCameraIdleListener(this);
+	}
+
+	@Override
+	public void onCameraIdle() {
+		map.setOnCameraIdleListener(null);
+		setupMap();
+	}
+
+	private void setupMap() {
 
 		map.moveCamera(location.getCameraUpdate(mapFragment.getView()));
 

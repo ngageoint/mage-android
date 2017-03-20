@@ -19,11 +19,10 @@ import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.GoogleMap.OnCameraIdleListener;
 import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.Marker;
-import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.common.base.Function;
 import com.google.common.collect.Collections2;
 
@@ -41,7 +40,6 @@ import java.util.Map;
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.form.LayoutBaker;
 import mil.nga.giat.mage.form.LayoutBaker.ControlGenerationType;
-import mil.nga.giat.mage.map.marker.ObservationBitmapFactory;
 import mil.nga.giat.mage.people.PeopleActivity;
 import mil.nga.giat.mage.sdk.datastore.observation.Attachment;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
@@ -60,7 +58,7 @@ import mil.nga.giat.mage.sdk.exceptions.UserException;
 import mil.nga.giat.mage.sdk.utils.DateFormatFactory;
 import mil.nga.wkb.geom.Geometry;
 
-public class ObservationViewActivity extends AppCompatActivity implements OnMapReadyCallback {
+public class ObservationViewActivity extends AppCompatActivity implements OnMapReadyCallback, OnCameraIdleListener {
 
 	private static final String LOG_NAME = ObservationViewActivity.class.getName();
 
@@ -75,9 +73,10 @@ public class ObservationViewActivity extends AppCompatActivity implements OnMapR
 	private Observation o;
 	private User currentUser;
 	private boolean canEditObservation = false;
-	private Marker marker;
+	private MapObservation mapObservation;
 	private DecimalFormat latLngFormat = new DecimalFormat("###.#####");
 	private MapFragment mapFragment;
+	private MapObservationManager mapObservationManager;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -178,6 +177,13 @@ public class ObservationViewActivity extends AppCompatActivity implements OnMapR
 	@Override
 	public void onMapReady(GoogleMap map) {
 		this.map = map;
+		mapObservationManager = new MapObservationManager(this, map);
+		map.setOnCameraIdleListener(this);
+	}
+
+	@Override
+	public void onCameraIdle() {
+		map.setOnCameraIdleListener(null);
 		setupObservation();
 	}
 
@@ -233,7 +239,7 @@ public class ObservationViewActivity extends AppCompatActivity implements OnMapR
 
 			map.getUiSettings().setZoomControlsEnabled(false);
 
-			if (marker == null) {
+			if (mapObservation == null) {
 				LatLng initialLatLng = getIntent().getParcelableExtra(INITIAL_LOCATION);
 				if (initialLatLng == null) {
 					initialLatLng = new LatLng(0, 0);
@@ -242,11 +248,11 @@ public class ObservationViewActivity extends AppCompatActivity implements OnMapR
 				map.moveCamera(CameraUpdateFactory.newLatLngZoom(initialLatLng, zoom));
 
 				map.animateCamera(location.getCameraUpdate(mapFragment.getView(), 15));
-				marker = map.addMarker(new MarkerOptions().position(latLng).icon(ObservationBitmapFactory.bitmapDescriptor(this, o)));
 			} else {
+				mapObservation.remove();
 				map.moveCamera(location.getCameraUpdate(mapFragment.getView(), map.getCameraPosition().zoom));
-				marker.setPosition(latLng);
 			}
+			mapObservation = mapObservationManager.addToMap(o, true);
 
 			setupImportant(o.getImportant());
 			setFavorites(o.getFavorites());

@@ -38,13 +38,12 @@ import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.GoogleMap.OnCameraIdleListener;
 import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.model.Circle;
 import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.Marker;
-import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 
@@ -84,7 +83,7 @@ import mil.nga.giat.mage.sdk.utils.DateFormatFactory;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
 import mil.nga.wkb.geom.Geometry;
 
-public class ObservationEditActivity extends AppCompatActivity implements OnMapReadyCallback {
+public class ObservationEditActivity extends AppCompatActivity implements OnMapReadyCallback, OnCameraIdleListener {
 
 	private static final String LOG_NAME = ObservationEditActivity.class.getName();
 
@@ -120,10 +119,11 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
     private ObservationLocation location;
 	private Observation observation;
 	private GoogleMap map;
-	private Marker observationMarker;
+	private MapObservation mapObservation;
 	private Circle accuracyCircle;
 	private long locationElapsedTimeMilliseconds = 0;
 	private MapFragment mapFragment;
+	private MapObservationManager mapObservationManager;
 
     private LinearLayout attachmentLayout;
     private AttachmentGallery attachmentGallery;
@@ -225,6 +225,7 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 			getSupportActionBar().setTitle("New Observation");
 			location = getIntent().getParcelableExtra(LOCATION);
 
+			observation.setGeometry(location.getGeometry());
             observation.setEvent(EventHelper.getInstance(getApplicationContext()).getCurrentEvent());
 			observation.setTimestamp(new Date());
 			Serializable timestamp = iso8601Format.format(observation.getTimestamp());
@@ -332,7 +333,13 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 	public void onMapReady(GoogleMap map) {
 		this.map = map;
 		map.getUiSettings().setZoomControlsEnabled(false);
+		mapObservationManager = new MapObservationManager(this, map);
+		map.setOnCameraIdleListener(this);
+	}
 
+	@Override
+	public void onCameraIdle() {
+		map.setOnCameraIdleListener(null);
 		setupMap();
 	}
 
@@ -388,15 +395,10 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 			accuracyCircle = map.addCircle(circleOptions);
 		}
 
-		// TODO Geometry
-		if (observationMarker != null) {
-			observationMarker.setPosition(pointLatLng);
-			// make sure to set the Anchor after this call as well, because the size of the icon might have changed
-			observationMarker.setIcon(ObservationBitmapFactory.bitmapDescriptor(this, observation));
-			observationMarker.setAnchor(0.5f, 1.0f);
-		} else {
-			observationMarker = map.addMarker(new MarkerOptions().position(pointLatLng).icon(ObservationBitmapFactory.bitmapDescriptor(this, observation)));
+		if (mapObservation != null) {
+			mapObservation.remove();
 		}
+		mapObservation = mapObservationManager.addToMap(observation, true);
 	}
 
 	@SuppressLint("NewApi")
@@ -771,6 +773,7 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 				break;
 			case LOCATION_EDIT_ACTIVITY_REQUEST_CODE:
 				location = data.getParcelableExtra(LocationEditActivity.LOCATION);
+				observation.setGeometry(location.getGeometry());
 				setupMap();
 				break;
 			case SELECT_ACTIVITY_REQUEST_CODE:

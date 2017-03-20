@@ -26,8 +26,17 @@
             android:layout_marginEnd="16dp"
             android:orientation="vertical">
 
+            <Spinner
+                android:id="@+id/location_edit_shape_type"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:entries="@array/observationShapeType"
+                android:prompt="@string/observation_view"
+                android:theme="@style/AppTheme.White"/>
+
             <TextView android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
                 android:text="Latitude"
                 android:textColor="@color/md_white_1000"/>
 
