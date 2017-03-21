@@ -83,4 +83,6 @@
     <string name="locationsPushPreferencesCategoryKey">locationsPushPreferencesCategory</string>
     <string name="locationServiceDisabledKey">locationServiceDisabled</string>
 
+    <string name="shape_edit_delete_label">Delete</string>
+
 </resources>

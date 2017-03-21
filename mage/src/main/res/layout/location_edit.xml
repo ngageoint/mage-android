@@ -93,10 +93,18 @@
             android:name="com.google.android.gms.maps.MapFragment"/>
 
         <ImageView
+            android:id="@+id/location_edit_center_alignment_view"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true" />
+
+        <ImageView
             android:id="@+id/location_edit_marker"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_centerInParent="true"/>
+            android:layout_centerInParent="true"
+            android:layout_above="@id/location_edit_center_alignment_view" />
+
     </RelativeLayout>
 
 

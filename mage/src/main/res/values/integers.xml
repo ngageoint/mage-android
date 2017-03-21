@@ -13,4 +13,7 @@
     <integer name="time_filter_last_week">3</integer>
     <integer name="time_filter_last_month">4</integer>
 
+    <integer name="shape_edit_drag_long_click_vibrate">50</integer>
+    <integer name="shape_edit_add_long_click_vibrate">50</integer>
+
 </resources>

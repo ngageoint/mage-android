@@ -168,8 +168,9 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
         });
 
 		final long observationId = getIntent().getLongExtra(OBSERVATION_ID, NEW_OBSERVATION);
+		final boolean newObservation = observationId == NEW_OBSERVATION;
 		JsonObject dynamicFormJson;
-		if (observationId == NEW_OBSERVATION) {
+		if (newObservation) {
 			observation = new Observation();
 			dynamicFormJson = EventHelper.getInstance(getApplicationContext()).getCurrentEvent().getForm();
 		} else {
@@ -221,7 +222,7 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 
 		hideKeyboardOnClick(findViewById(R.id.observation_edit));
 
-		if (observationId == NEW_OBSERVATION) {
+		if (newObservation) {
 			getSupportActionBar().setTitle("New Observation");
 			location = getIntent().getParcelableExtra(LOCATION);
 
@@ -295,6 +296,7 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 				Intent intent = new Intent(ObservationEditActivity.this, LocationEditActivity.class);
 				intent.putExtra(LocationEditActivity.LOCATION, location);
 				intent.putExtra(LocationEditActivity.MARKER_BITMAP, ObservationBitmapFactory.bitmap(ObservationEditActivity.this, observation));
+				intent.putExtra(LocationEditActivity.NEW_OBSERVATION, newObservation);
 				startActivityForResult(intent, LOCATION_EDIT_ACTIVITY_REQUEST_CODE);
 			}
 		});
