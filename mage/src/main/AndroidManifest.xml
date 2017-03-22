@@ -164,7 +164,7 @@
         <activity android:name=".profile.ProfileActivity" />
         <activity android:name=".observation.LocationEditActivity"
             android:label="Edit Location"
-            android:windowSoftInputMode="stateAlwaysHidden"
+            android:windowSoftInputMode="adjustResize"
             android:theme="@style/AppTheme.NoActionBar"/>
         <activity
             android:name=".observation.SelectEditActivity"

@@ -86,6 +86,7 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
     private MenuItem acceptMenuItem;
     private boolean newObservation;
     private GeometryType shapeType = GeometryType.POINT;
+    private Marker selectedMarker = null;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -155,10 +156,6 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
         setShapeType(geometry);
         addMapShape(geometry);
 
-        Point point = location.getCentroid();
-        longitudeEdit.setText(String.format(Locale.getDefault(), "%.6f", point.getX()));
-        latitudeEdit.setText(String.format(Locale.getDefault(), "%.6f", point.getY()));
-
         longitudeEdit.addTextChangedListener(this);
         longitudeEdit.setOnFocusChangeListener(this);
 
@@ -170,11 +167,8 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
             public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
                 if (actionId == EditorInfo.IME_ACTION_DONE) {
                     latitudeEdit.clearFocus();
-                    InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-                    imm.hideSoftInputFromWindow(latitudeEdit.getApplicationWindowToken(), 0);
                     return true;
                 }
-
                 return false;
             }
         });
@@ -184,11 +178,8 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
             public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
                 if (actionId == EditorInfo.IME_ACTION_DONE) {
                     longitudeEdit.clearFocus();
-                    InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-                    imm.hideSoftInputFromWindow(longitudeEdit.getApplicationWindowToken(), 0);
                     return true;
                 }
-
                 return false;
             }
         });
@@ -268,11 +259,14 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
         }
         if (geometry.getGeometryType() == GeometryType.POINT) {
             imageView.setImageBitmap(markerBitmap);
+            Point point = (Point) location.getGeometry();
+            updateLatitudeLongitudeText(point.getY(), point.getX());
         } else {
             imageView.setImageBitmap(null);
             GoogleMapShape shape = shapeConverter.toShape(geometry);
             shapeMarkers = shapeConverter.addShapeToMapAsMarkers(map, shape, null,
                     editMarkerOptions, editMarkerOptions, null, editPolylineOptions, editPolygonOptions);
+            selectShapeMarker(shapeMarkers.getShapeMarkersMap().values().iterator().next().getMarkers().get(0));
         }
     }
 
@@ -289,8 +283,8 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
     }
 
     private void updateLatitudeLongitudeText(double latitude, double longitude){
-        latitudeEdit.setText(String.format(Locale.getDefault(), "%.6f", latitude));
-        longitudeEdit.setText(String.format(Locale.getDefault(), "%.6f", longitude));
+        latitudeEdit.setText(String.format(Locale.getDefault(), "%.5f", latitude));
+        longitudeEdit.setText(String.format(Locale.getDefault(), "%.5f", longitude));
     }
 
     @Override
@@ -299,11 +293,19 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
             return;
         }
 
-        double latitude = Double.parseDouble(latitudeEdit.getText().toString());
-        double longitude = Double.parseDouble(longitudeEdit.getText().toString());
-        LatLng latLng = new LatLng(latitude, longitude);
+        String latitudeString = latitudeEdit.getText().toString();
+        String longitudeString = longitudeEdit.getText().toString();
+        if (!latitudeString.isEmpty() && !longitudeString.isEmpty()) {
+            double latitude = Double.parseDouble(latitudeString);
+            double longitude = Double.parseDouble(longitudeString);
+            LatLng latLng = new LatLng(latitude, longitude);
 
-        map.moveCamera(CameraUpdateFactory.newLatLng(latLng));
+            map.moveCamera(CameraUpdateFactory.newLatLng(latLng));
+            if (shapeType != GeometryType.POINT && selectedMarker != null) {
+                selectedMarker.setPosition(latLng);
+                updateShape();
+            }
+        }
     }
 
     @Override
@@ -362,7 +364,17 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
     public void onFocusChange(View v, boolean hasFocus) {
         if (hasFocus && (v == longitudeEdit || v == latitudeEdit)) {
             map.setOnCameraMoveListener(null);
+            if(shapeType != GeometryType.POINT && selectedMarker != null){
+                map.moveCamera(CameraUpdateFactory.newLatLng(selectedMarker.getPosition()));
+            }
         } else {
+            if(v == longitudeEdit){
+                InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+                imm.hideSoftInputFromWindow(longitudeEdit.getApplicationWindowToken(), 0);
+            }else if(v == latitudeEdit){
+                InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+                imm.hideSoftInputFromWindow(latitudeEdit.getApplicationWindowToken(), 0);
+            }
             map.setOnCameraMoveListener(this);
         }
     }
@@ -383,7 +395,7 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
     public void onMarkerDragStart(Marker marker) {
         vibrator.vibrate(getResources().getInteger(
                 R.integer.shape_edit_drag_long_click_vibrate));
-        updateLatitudeLongitudeText(marker.getPosition());
+        selectShapeMarker(marker);
     }
 
     @Override
@@ -391,7 +403,6 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
         if(shapeType != GeometryType.POINT){
             vibrator.vibrate(getResources().getInteger(
                     R.integer.shape_edit_add_long_click_vibrate));
-            updateLatitudeLongitudeText(point);
 
             if(shapeMarkers == null){
                 Geometry geometry = null;
@@ -442,6 +453,7 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
                         throw new IllegalArgumentException("Unsupported Shape Type: " + mapShape.getShapeType());
                 }
                 shapeMarkers.add(marker, shape);
+                selectShapeMarker(marker);
                 updateShape();
             }
         }
@@ -453,40 +465,56 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
         if(shapeType != GeometryType.POINT){
             final ShapeMarkers shape = shapeMarkers.getShapeMarkers(marker);
             if(shape != null){
-                updateLatitudeLongitudeText(marker.getPosition());
 
-                ArrayAdapter<String> adapter = new ArrayAdapter(this, android.R.layout.select_dialog_item);
-                adapter.add(getString(R.string.shape_edit_delete_label));
+                if(selectedMarker == null || !selectedMarker.getId().equals(marker.getId())){
 
-                AlertDialog.Builder builder = new AlertDialog.Builder(this, R.style.AppCompatAlertDialogStyle);
-                DecimalFormat formatter = new DecimalFormat("0.0###");
-                LatLng position = marker.getPosition();
-                final String title = "(lat=" + formatter.format(position.latitude)
-                        + ", lon=" + formatter.format(position.longitude) + ")";
-                builder.setTitle(title);
-                builder.setAdapter(adapter, new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int item) {
+                    selectShapeMarker(marker);
 
-                        if (item >= 0) {
-                            switch (item) {
-                                case 0:
-                                    shapeMarkers.delete(marker);
-                                    updateShape();
-                                    break;
-                                default:
+                }else {
+
+                    ArrayAdapter<String> adapter = new ArrayAdapter(this, android.R.layout.select_dialog_item);
+                    adapter.add(getString(R.string.shape_edit_delete_label));
+
+                    AlertDialog.Builder builder = new AlertDialog.Builder(this, R.style.AppCompatAlertDialogStyle);
+                    DecimalFormat formatter = new DecimalFormat("0.00000");
+                    LatLng position = marker.getPosition();
+                    final String title = "(lat=" + formatter.format(position.latitude)
+                            + ", lon=" + formatter.format(position.longitude) + ")";
+                    builder.setTitle(title);
+                    builder.setAdapter(adapter, new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int item) {
+
+                            if (item >= 0) {
+                                switch (item) {
+                                    case 0:
+                                        shapeMarkers.delete(marker);
+                                        selectedMarker = null;
+                                        updateShape();
+                                        break;
+                                    default:
+                                }
                             }
                         }
-                    }
-                });
+                    });
 
-                AlertDialog alert = builder.create();
-                alert.show();
+                    AlertDialog alert = builder.create();
+                    alert.show();
+                }
 
                 handled = true;
             }
         }
 
         return handled;
+    }
+
+    private void selectShapeMarker(Marker marker){
+        if(selectedMarker != null && !selectedMarker.getId().equals(marker.getId())){
+            selectedMarker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.ic_shape_edit));
+        }
+        selectedMarker = marker;
+        updateLatitudeLongitudeText(marker.getPosition());
+        marker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.ic_shape_edit_selected));
     }
 
     private void updateShape(){
