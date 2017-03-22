@@ -339,9 +339,16 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
     }
 
     private void updateLocation() {
-        // TODO
-        LatLng center = map.getCameraPosition().target;
-        location.setGeometry(new Point(center.longitude, center.latitude));
+
+        Geometry geometry = null;
+        if(shapeType == GeometryType.POINT){
+            LatLng center = map.getCameraPosition().target;
+            geometry = new Point(center.longitude, center.latitude);
+        }else{
+            geometry = shapeConverter.toGeometry(shapeMarkers.getShape());
+        }
+
+        location.setGeometry(geometry);
         location.setProvider(ObservationLocation.MANUAL_PROVIDER);
         location.setAccuracy(0.0f);
         location.setTime(System.currentTimeMillis());
