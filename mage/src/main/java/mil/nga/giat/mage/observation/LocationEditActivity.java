@@ -46,6 +46,7 @@ import com.google.android.gms.maps.model.PolygonOptions;
 import com.google.android.gms.maps.model.PolylineOptions;
 
 import java.text.DecimalFormat;
+import java.util.List;
 import java.util.Locale;
 
 import mil.nga.geopackage.map.geom.GoogleMapShape;
@@ -84,7 +85,7 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
     private PolygonOptions editPolygonOptions;
     private Vibrator vibrator;
     private MenuItem acceptMenuItem;
-    private boolean newObservation;
+    private boolean newDrawing;
     private GeometryType shapeType = GeometryType.POINT;
     private Marker selectedMarker = null;
 
@@ -102,7 +103,7 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
         Intent intent = getIntent();
         location = intent.getParcelableExtra(LOCATION);
         markerBitmap = intent.getParcelableExtra(MARKER_BITMAP);
-        newObservation = intent.getBooleanExtra(NEW_OBSERVATION, false);
+        newDrawing = intent.getBooleanExtra(NEW_OBSERVATION, false);
 
         shapeTypeSpinner = (Spinner) findViewById(R.id.location_edit_shape_type);
         ArrayAdapter shapeTypeAdapter = ArrayAdapter.createFromResource(this, R.array.observationShapeType, R.layout.location_edit_spinner);
@@ -185,10 +186,10 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
         });
     }
 
-    private void setShapeType(Geometry geometry){
+    private void setShapeType(Geometry geometry) {
         shapeType = geometry.getGeometryType();
         int index = -1;
-        switch(geometry.getGeometryType()){
+        switch (geometry.getGeometryType()) {
             case POINT:
                 index = 0;
                 break;
@@ -249,40 +250,134 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
     }
 
     private void changeShapeType(GeometryType selectedType) {
-        shapeType = selectedType;
         // TODO
+
+        Geometry geometry = null;
+
+        if (shapeType == GeometryType.POINT) {
+            LatLng center = map.getCameraPosition().target;
+            Point firstPoint = new Point(center.longitude, center.latitude);
+            LineString lineString = new LineString();
+            lineString.addPoint(firstPoint);
+
+            switch (selectedType) {
+                case LINESTRING:
+                    geometry = lineString;
+                    break;
+                case POLYGON:
+                    Polygon polygon = new Polygon();
+                    polygon.addRing(lineString);
+                    geometry = polygon;
+                    break;
+            }
+            newDrawing = true;
+        } else if (selectedType == GeometryType.POINT) {
+            LatLng newPointPosition = null;
+            if (selectedMarker != null) {
+                newPointPosition = selectedMarker.getPosition();
+            } else {
+                String latitudeString = latitudeEdit.getText().toString();
+                String longitudeString = longitudeEdit.getText().toString();
+                double latitude = 0;
+                double longitude = 0;
+                if (!latitudeString.isEmpty() && !longitudeString.isEmpty()) {
+                    latitude = Double.parseDouble(latitudeString);
+                    longitude = Double.parseDouble(longitudeString);
+                } else {
+                    CameraPosition position = map.getCameraPosition();
+                    latitude = position.target.latitude;
+                    longitude = position.target.longitude;
+                }
+                newPointPosition = new LatLng(latitude, longitude);
+            }
+            geometry = new Point(newPointPosition.longitude, newPointPosition.latitude);
+            map.moveCamera(CameraUpdateFactory.newLatLng(newPointPosition));
+        } else {
+            LineString lineString = null;
+            if (shapeMarkers != null) {
+                GoogleMapShape mapShape = shapeMarkers.getShape();
+                List<LatLng> latLngPoints = null;
+                switch(mapShape.getShapeType()){
+                    case POLYLINE_MARKERS:
+                        PolylineMarkers polylineMarkers = (PolylineMarkers) mapShape.getShape();
+                        latLngPoints = polylineMarkers.getPolyline().getPoints();
+                        break;
+                    case POLYGON_MARKERS:
+                        PolygonMarkers polygonMarkers = (PolygonMarkers) mapShape.getShape();
+                        latLngPoints = polygonMarkers.getPolygon().getPoints();
+                        if(latLngPoints.size() > 1 && latLngPoints.get(0).equals(latLngPoints.get(latLngPoints.size() - 1))){
+                            latLngPoints.remove(latLngPoints.size() - 1);
+                        }
+                        break;
+                }
+                lineString = shapeConverter.toLineString(latLngPoints);
+            }
+
+            List<Point> points = lineString.getPoints();
+            switch (selectedType) {
+                case LINESTRING:
+                    newDrawing = points.size() <= 1;
+                    geometry = lineString;
+                    break;
+                case POLYGON:
+                    Polygon polygon = new Polygon();
+                    polygon.addRing(lineString);
+                    newDrawing = points.size() <= 2;
+                    geometry = polygon;
+                    break;
+            }
+        }
+
+        addMapShape(geometry);
+        shapeType = selectedType;
     }
 
     private void addMapShape(Geometry geometry) {
+
+        LatLng previousSelectedMarkerLocation = null;
+        if(selectedMarker != null){
+            previousSelectedMarkerLocation = selectedMarker.getPosition();
+            selectedMarker = null;
+        }
         if (shapeMarkers != null) {
             shapeMarkers.remove();
         }
         if (geometry.getGeometryType() == GeometryType.POINT) {
             imageView.setImageBitmap(markerBitmap);
-            Point point = (Point) location.getGeometry();
+            Point point = (Point) geometry;
             updateLatitudeLongitudeText(point.getY(), point.getX());
         } else {
             imageView.setImageBitmap(null);
             GoogleMapShape shape = shapeConverter.toShape(geometry);
             shapeMarkers = shapeConverter.addShapeToMapAsMarkers(map, shape, null,
                     editMarkerOptions, editMarkerOptions, null, editPolylineOptions, editPolygonOptions);
-            selectShapeMarker(shapeMarkers.getShapeMarkersMap().values().iterator().next().getMarkers().get(0));
+            List<Marker> markers = shapeMarkers.getShapeMarkersMap().values().iterator().next().getMarkers();
+            Marker selectMarker = markers.get(0);
+            if(previousSelectedMarkerLocation != null){
+                for(Marker marker: markers){
+                    if(marker.getPosition().equals(previousSelectedMarkerLocation)){
+                        selectMarker = marker;
+                        break;
+                    }
+                }
+            }
+            selectShapeMarker(selectMarker);
         }
     }
 
     @Override
     public void onCameraMove() {
-        if(shapeType == GeometryType.POINT) {
+        if (shapeType == GeometryType.POINT) {
             CameraPosition position = map.getCameraPosition();
             updateLatitudeLongitudeText(position.target.latitude, position.target.longitude);
         }
     }
 
-    private void updateLatitudeLongitudeText(LatLng latLng){
+    private void updateLatitudeLongitudeText(LatLng latLng) {
         updateLatitudeLongitudeText(latLng.latitude, latLng.longitude);
     }
 
-    private void updateLatitudeLongitudeText(double latitude, double longitude){
+    private void updateLatitudeLongitudeText(double latitude, double longitude) {
         latitudeEdit.setText(String.format(Locale.getDefault(), "%.5f", latitude));
         longitudeEdit.setText(String.format(Locale.getDefault(), "%.5f", longitude));
     }
@@ -331,20 +426,21 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
         switch (item.getItemId()) {
             case android.R.id.home:
                 finish();
+                break;
             case R.id.apply:
                 updateLocation();
             default:
-                return super.onOptionsItemSelected(item);
         }
+        return super.onOptionsItemSelected(item);
     }
 
     private void updateLocation() {
 
         Geometry geometry = null;
-        if(shapeType == GeometryType.POINT){
+        if (shapeType == GeometryType.POINT) {
             LatLng center = map.getCameraPosition().target;
             geometry = new Point(center.longitude, center.latitude);
-        }else{
+        } else {
             geometry = shapeConverter.toGeometry(shapeMarkers.getShape());
         }
 
@@ -371,14 +467,14 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
     public void onFocusChange(View v, boolean hasFocus) {
         if (hasFocus && (v == longitudeEdit || v == latitudeEdit)) {
             map.setOnCameraMoveListener(null);
-            if(shapeType != GeometryType.POINT && selectedMarker != null){
+            if (shapeType != GeometryType.POINT && selectedMarker != null) {
                 map.moveCamera(CameraUpdateFactory.newLatLng(selectedMarker.getPosition()));
             }
         } else {
-            if(v == longitudeEdit){
+            if (v == longitudeEdit) {
                 InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
                 imm.hideSoftInputFromWindow(longitudeEdit.getApplicationWindowToken(), 0);
-            }else if(v == latitudeEdit){
+            } else if (v == latitudeEdit) {
                 InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
                 imm.hideSoftInputFromWindow(latitudeEdit.getApplicationWindowToken(), 0);
             }
@@ -407,14 +503,14 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
 
     @Override
     public void onMapLongClick(LatLng point) {
-        if(shapeType != GeometryType.POINT){
+        if (shapeType != GeometryType.POINT) {
             vibrator.vibrate(getResources().getInteger(
                     R.integer.shape_edit_add_long_click_vibrate));
 
-            if(shapeMarkers == null){
+            if (shapeMarkers == null) {
                 Geometry geometry = null;
                 Point firstPoint = new Point(point.longitude, point.latitude);
-                switch(shapeType){
+                switch (shapeType) {
                     case LINESTRING:
                         LineString lineString = new LineString();
                         lineString.addPoint(firstPoint);
@@ -431,7 +527,7 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
                         throw new IllegalArgumentException("Unsupported Geometry Type: " + shapeType);
                 }
                 addMapShape(geometry);
-            }else {
+            } else {
                 MarkerOptions markerOptions = getEditMarkerOptions();
                 markerOptions.position(point);
                 Marker marker = map.addMarker(markerOptions);
@@ -441,7 +537,7 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
                     case POLYLINE_MARKERS:
                         PolylineMarkers polylineMarkers = (PolylineMarkers) mapShape.getShape();
                         shape = polylineMarkers;
-                        if (newObservation) {
+                        if (newDrawing) {
                             polylineMarkers.add(marker);
                         } else {
                             polylineMarkers.addNew(marker);
@@ -450,7 +546,7 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
                     case POLYGON_MARKERS:
                         PolygonMarkers polygonMarkers = (PolygonMarkers) shapeMarkers.getShape().getShape();
                         shape = polygonMarkers;
-                        if (newObservation) {
+                        if (newDrawing) {
                             polygonMarkers.add(marker);
                         } else {
                             polygonMarkers.addNew(marker);
@@ -469,15 +565,15 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
     @Override
     public boolean onMarkerClick(final Marker marker) {
         boolean handled = false;
-        if(shapeType != GeometryType.POINT){
+        if (shapeType != GeometryType.POINT) {
             final ShapeMarkers shape = shapeMarkers.getShapeMarkers(marker);
-            if(shape != null){
+            if (shape != null) {
 
-                if(selectedMarker == null || !selectedMarker.getId().equals(marker.getId())){
+                if (selectedMarker == null || !selectedMarker.getId().equals(marker.getId())) {
 
                     selectShapeMarker(marker);
 
-                }else {
+                } else {
 
                     ArrayAdapter<String> adapter = new ArrayAdapter(this, android.R.layout.select_dialog_item);
                     adapter.add(getString(R.string.shape_edit_delete_label));
@@ -515,8 +611,8 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
         return handled;
     }
 
-    private void selectShapeMarker(Marker marker){
-        if(selectedMarker != null && !selectedMarker.getId().equals(marker.getId())){
+    private void selectShapeMarker(Marker marker) {
+        if (selectedMarker != null && !selectedMarker.getId().equals(marker.getId())) {
             selectedMarker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.ic_shape_edit));
         }
         selectedMarker = marker;
@@ -524,13 +620,13 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
         marker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.ic_shape_edit_selected));
     }
 
-    private void updateShape(){
+    private void updateShape() {
         if (shapeMarkers != null) {
             shapeMarkers.update();
-            if(shapeMarkers.isEmpty()){
+            if (shapeMarkers.isEmpty()) {
                 shapeMarkers = null;
             }
-            if(acceptMenuItem != null) {
+            if (acceptMenuItem != null) {
                 acceptMenuItem.setEnabled(shapeMarkers != null && shapeMarkers.isValid());
             }
         }

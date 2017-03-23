@@ -722,27 +722,6 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 		} else {
 			Intent intent = new Intent(getActivity().getApplicationContext(), ObservationEditActivity.class);
 			ObservationLocation l = new ObservationLocation(ObservationLocation.MANUAL_PROVIDER, point);
-
-			// TODO Geometry, make a temp geometry, delete this
-			Point origPoint = l.getFirstPoint();
-			Geometry geometry = null;
-			LineString lineString = new LineString();
-			lineString.addPoint(origPoint);
-			lineString.addPoint(new Point(origPoint.getX() - (Math.random() * 2.0), origPoint.getY() - (Math.random() * 2.0)));
-			lineString.addPoint(new Point(origPoint.getX() - (Math.random() * 2.0), origPoint.getY() - 2.0 - (Math.random() * 2.0)));
-			lineString.addPoint(new Point(origPoint.getX() + (Math.random() * 2.0), origPoint.getY() - 2.0 - (Math.random() * 2.0)));
-			lineString.addPoint(new Point(origPoint.getX() + (Math.random() * 2.0), origPoint.getY() - (Math.random() * 2.0)));
-
-			if(Math.random() < .5) {
-				lineString.addPoint(origPoint);
-				Polygon polygon = new Polygon();
-				polygon.addRing(lineString);
-				geometry = polygon;
-			}else{
-				geometry = lineString;
-			}
-			l.setGeometry(geometry);
-
 			l.setAccuracy(0.0f);
 			l.setTime(new Date().getTime());
 			intent.putExtra(ObservationEditActivity.LOCATION, l);
