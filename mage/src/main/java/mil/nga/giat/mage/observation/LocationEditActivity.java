@@ -250,7 +250,6 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
     }
 
     private void changeShapeType(GeometryType selectedType) {
-        // TODO
 
         Geometry geometry = null;
 
@@ -368,6 +367,8 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
     @Override
     public void onCameraMove() {
         if (shapeType == GeometryType.POINT) {
+            longitudeEdit.clearFocus();
+            latitudeEdit.clearFocus();
             CameraPosition position = map.getCameraPosition();
             updateLatitudeLongitudeText(position.target.latitude, position.target.longitude);
         }
@@ -396,10 +397,11 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
             LatLng latLng = new LatLng(latitude, longitude);
 
             map.moveCamera(CameraUpdateFactory.newLatLng(latLng));
-            if (shapeType != GeometryType.POINT && selectedMarker != null) {
+            if(selectedMarker != null) {
                 selectedMarker.setPosition(latLng);
                 updateShape();
             }
+
         }
     }
 
@@ -466,7 +468,6 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
     @Override
     public void onFocusChange(View v, boolean hasFocus) {
         if (hasFocus && (v == longitudeEdit || v == latitudeEdit)) {
-            map.setOnCameraMoveListener(null);
             if (shapeType != GeometryType.POINT && selectedMarker != null) {
                 map.moveCamera(CameraUpdateFactory.newLatLng(selectedMarker.getPosition()));
             }
@@ -478,7 +479,6 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
                 InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
                 imm.hideSoftInputFromWindow(latitudeEdit.getApplicationWindowToken(), 0);
             }
-            map.setOnCameraMoveListener(this);
         }
     }
 
@@ -496,6 +496,8 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
 
     @Override
     public void onMarkerDragStart(Marker marker) {
+        longitudeEdit.clearFocus();
+        latitudeEdit.clearFocus();
         vibrator.vibrate(getResources().getInteger(
                 R.integer.shape_edit_drag_long_click_vibrate));
         selectShapeMarker(marker);
