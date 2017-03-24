@@ -88,6 +88,7 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
     private boolean newDrawing;
     private GeometryType shapeType = GeometryType.POINT;
     private Marker selectedMarker = null;
+    private final DecimalFormat formatter = new DecimalFormat("0.00000");
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -154,7 +155,7 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
 
         shapeTypeSpinner.setOnItemSelectedListener(this);
         Geometry geometry = location.getGeometry();
-        setShapeType(geometry);
+        setShapeType(geometry.getGeometryType());
         addMapShape(geometry);
 
         longitudeEdit.addTextChangedListener(this);
@@ -186,10 +187,10 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
         });
     }
 
-    private void setShapeType(Geometry geometry) {
-        shapeType = geometry.getGeometryType();
+    private void setShapeType(GeometryType geometryType) {
+        shapeType = geometryType;
         int index = -1;
-        switch (geometry.getGeometryType()) {
+        switch (geometryType) {
             case POINT:
                 index = 0;
                 break;
@@ -200,7 +201,7 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
                 index = 2;
                 break;
             default:
-                throw new IllegalArgumentException("Unsupported Geometry Type: " + geometry.getGeometryType());
+                throw new IllegalArgumentException("Unsupported Geometry Type: " + geometryType);
 
         }
         shapeTypeSpinner.setSelection(index);
@@ -242,10 +243,43 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
         }
     }
 
-    private void confirmAndChangeShapeType(GeometryType selectedType) {
+    private void confirmAndChangeShapeType(final GeometryType selectedType) {
         if (selectedType != shapeType) {
-            // TODO
-            changeShapeType(selectedType);
+
+            if(selectedType == GeometryType.POINT && shapeMarkers != null && shapeMarkers.getSize() > 1){
+                LatLng newPointPosition = getShapeToPointLocation();
+
+                AlertDialog deleteDialog = new AlertDialog.Builder(this, R.style.AppCompatAlertDialogStyle)
+                        .setTitle(getString(R.string.shape_edit_change_shape_title))
+                        .setMessage(String.format(getString(R.string.shape_edit_change_shape_message), formatter.format(newPointPosition.latitude), formatter.format(newPointPosition.longitude)))
+                        .setPositiveButton(getString(R.string.yes),
+
+                                new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialog, int which) {
+                                        changeShapeType(selectedType);
+                                    }
+                                })
+                        .setOnCancelListener(
+                                new DialogInterface.OnCancelListener() {
+                                    @Override
+                                    public void onCancel(DialogInterface dialog) {
+                                        setShapeType(shapeType);
+                                    }
+                                })
+                        .setNegativeButton(getString(R.string.no),
+                                new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialog,
+                                                        int which) {
+                                        setShapeType(shapeType);
+                                        dialog.dismiss();
+                                    }
+                                }).create();
+                deleteDialog.show();
+            }else{
+                changeShapeType(selectedType);
+            }
         }
     }
 
@@ -271,24 +305,7 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
             }
             newDrawing = true;
         } else if (selectedType == GeometryType.POINT) {
-            LatLng newPointPosition = null;
-            if (selectedMarker != null) {
-                newPointPosition = selectedMarker.getPosition();
-            } else {
-                String latitudeString = latitudeEdit.getText().toString();
-                String longitudeString = longitudeEdit.getText().toString();
-                double latitude = 0;
-                double longitude = 0;
-                if (!latitudeString.isEmpty() && !longitudeString.isEmpty()) {
-                    latitude = Double.parseDouble(latitudeString);
-                    longitude = Double.parseDouble(longitudeString);
-                } else {
-                    CameraPosition position = map.getCameraPosition();
-                    latitude = position.target.latitude;
-                    longitude = position.target.longitude;
-                }
-                newPointPosition = new LatLng(latitude, longitude);
-            }
+            LatLng newPointPosition = getShapeToPointLocation();
             geometry = new Point(newPointPosition.longitude, newPointPosition.latitude);
             map.moveCamera(CameraUpdateFactory.newLatLng(newPointPosition));
         } else {
@@ -329,6 +346,28 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
 
         addMapShape(geometry);
         shapeType = selectedType;
+    }
+
+    private LatLng getShapeToPointLocation(){
+        LatLng newPointPosition = null;
+        if (selectedMarker != null) {
+            newPointPosition = selectedMarker.getPosition();
+        } else {
+            String latitudeString = latitudeEdit.getText().toString();
+            String longitudeString = longitudeEdit.getText().toString();
+            double latitude = 0;
+            double longitude = 0;
+            if (!latitudeString.isEmpty() && !longitudeString.isEmpty()) {
+                latitude = Double.parseDouble(latitudeString);
+                longitude = Double.parseDouble(longitudeString);
+            } else {
+                CameraPosition position = map.getCameraPosition();
+                latitude = position.target.latitude;
+                longitude = position.target.longitude;
+            }
+            newPointPosition = new LatLng(latitude, longitude);
+        }
+        return newPointPosition;
     }
 
     private void addMapShape(Geometry geometry) {
@@ -581,7 +620,6 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
                     adapter.add(getString(R.string.shape_edit_delete_label));
 
                     AlertDialog.Builder builder = new AlertDialog.Builder(this, R.style.AppCompatAlertDialogStyle);
-                    DecimalFormat formatter = new DecimalFormat("0.00000");
                     LatLng position = marker.getPosition();
                     final String title = "(lat=" + formatter.format(position.latitude)
                             + ", lon=" + formatter.format(position.longitude) + ")";
