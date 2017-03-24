@@ -251,7 +251,8 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
 
                 AlertDialog deleteDialog = new AlertDialog.Builder(this, R.style.AppCompatAlertDialogStyle)
                         .setTitle(getString(R.string.shape_edit_change_shape_title))
-                        .setMessage(String.format(getString(R.string.shape_edit_change_shape_message), formatter.format(newPointPosition.latitude), formatter.format(newPointPosition.longitude)))
+                        .setMessage(String.format(getString(R.string.shape_edit_change_shape_message),
+                                formatter.format(newPointPosition.latitude), formatter.format(newPointPosition.longitude)))
                         .setPositiveButton(getString(R.string.yes),
 
                                 new DialogInterface.OnClickListener() {
@@ -308,6 +309,7 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
             LatLng newPointPosition = getShapeToPointLocation();
             geometry = new Point(newPointPosition.longitude, newPointPosition.latitude);
             map.moveCamera(CameraUpdateFactory.newLatLng(newPointPosition));
+            newDrawing = false;
         } else {
             LineString lineString = null;
             if (shapeMarkers != null) {
@@ -342,6 +344,10 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
                     geometry = polygon;
                     break;
             }
+        }
+
+        if (acceptMenuItem != null) {
+            acceptMenuItem.setEnabled(!newDrawing);
         }
 
         addMapShape(geometry);
@@ -621,8 +627,7 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
 
                     AlertDialog.Builder builder = new AlertDialog.Builder(this, R.style.AppCompatAlertDialogStyle);
                     LatLng position = marker.getPosition();
-                    final String title = "(lat=" + formatter.format(position.latitude)
-                            + ", lon=" + formatter.format(position.longitude) + ")";
+                    final String title = formatter.format(position.latitude) + ", " + formatter.format(position.longitude);
                     builder.setTitle(title);
                     builder.setAdapter(adapter, new DialogInterface.OnClickListener() {
                         public void onClick(DialogInterface dialog, int item) {
