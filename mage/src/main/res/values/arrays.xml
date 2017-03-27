@@ -77,6 +77,7 @@
     <string-array name="observationShapeType">
         <item>Point</item>
         <item>Line</item>
+        <item>Rectangle</item>
         <item>Polygon</item>
     </string-array>
 

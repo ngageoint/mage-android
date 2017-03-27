@@ -87,8 +87,12 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
     private MenuItem acceptMenuItem;
     private boolean newDrawing;
     private GeometryType shapeType = GeometryType.POINT;
+    private boolean isRectangle = false;
     private Marker selectedMarker = null;
     private final DecimalFormat formatter = new DecimalFormat("0.00000");
+    private Marker rectangleSameXMarker;
+    private Marker rectangleSameYMarker;
+    private boolean rectangleSameXSide1;
 
     /**
      * {@inheritDoc}
@@ -162,7 +166,7 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
 
         shapeTypeSpinner.setOnItemSelectedListener(this);
         Geometry geometry = location.getGeometry();
-        setShapeType(geometry.getGeometryType());
+        setShapeType(geometry);
         addMapShape(geometry);
 
         longitudeEdit.addTextChangedListener(this);
@@ -205,12 +209,63 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
     /**
      * Update the current shape type
      *
-     * @param geometryType geometry shape type
+     * @param geometry geometry
      */
-    private void setShapeType(GeometryType geometryType) {
-        shapeType = geometryType;
+    private void setShapeType(Geometry geometry) {
+        shapeType = geometry.getGeometryType();
+        checkIfRectangle(geometry);
+        setShapeTypeSelection();
+    }
+
+    /**
+     * Check if the geometry is a rectangle polygon
+     *
+     * @param geometry geometry
+     */
+    private void checkIfRectangle(Geometry geometry) {
+        isRectangle = false;
+        if (geometry.getGeometryType() == GeometryType.POLYGON) {
+            Polygon polygon = (Polygon) geometry;
+            LineString ring = polygon.getRings().get(0);
+            List<Point> points = ring.getPoints();
+            int size = points.size();
+            if (size == 4 || size == 5) {
+                Point point1 = points.get(0);
+                Point lastPoint = points.get(points.size() - 1);
+                boolean closed = point1.getX() == lastPoint.getX() && point1.getY() == lastPoint.getY();
+                if ((closed && size == 5) || (!closed && size == 4)) {
+                    Point point2 = points.get(1);
+                    Point point3 = points.get(2);
+                    Point point4 = points.get(3);
+                    if (point1.getX() == point2.getX() && point2.getY() == point3.getY()) {
+                        if (point1.getY() == point4.getY() && point3.getX() == point4.getX()) {
+                            isRectangle = true;
+                            rectangleSameXSide1 = true;
+                        }
+                    } else if (point1.getY() == point2.getY() && point2.getX() == point3.getX()) {
+                        if (point1.getX() == point4.getX() && point3.getY() == point4.getY()) {
+                            isRectangle = true;
+                            rectangleSameXSide1 = false;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Revert the selected shape type to the current shape type
+     */
+    private void revertShapeType() {
+        setShapeTypeSelection();
+    }
+
+    /**
+     * Set the shape type selection to match the current shape type
+     */
+    private void setShapeTypeSelection() {
         int index = -1;
-        switch (geometryType) {
+        switch (shapeType) {
             case POINT:
                 index = 0;
                 break;
@@ -219,10 +274,12 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
                 break;
             case POLYGON:
                 index = 2;
+                if (!isRectangle) {
+                    index++;
+                }
                 break;
             default:
-                throw new IllegalArgumentException("Unsupported Geometry Type: " + geometryType);
-
+                throw new IllegalArgumentException("Unsupported Geometry Type: " + shapeType);
         }
         shapeTypeSpinner.setSelection(index);
     }
@@ -236,6 +293,7 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
             case R.id.location_edit_shape_type:
                 // User has changed the shape type
                 GeometryType newShapeType = null;
+                boolean newRectangle = false;
                 switch (parent.getSelectedItemPosition()) {
                     case 0:
                         newShapeType = GeometryType.POINT;
@@ -244,12 +302,14 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
                         newShapeType = GeometryType.LINESTRING;
                         break;
                     case 2:
+                        newRectangle = true;
+                    case 3:
                         newShapeType = GeometryType.POLYGON;
                         break;
                     default:
                         throw new IllegalArgumentException("Unsupported Shape Type item position: " + parent.getSelectedItemPosition());
                 }
-                confirmAndChangeShapeType(newShapeType);
+                confirmAndChangeShapeType(newShapeType, newRectangle);
                 break;
             default:
                 throw new IllegalArgumentException("Unsupported item selected adapter view: " + parent.getId());
@@ -264,7 +324,7 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
         switch (parent.getId()) {
             case R.id.location_edit_shape_type:
                 // Default to point shape
-                changeShapeType(GeometryType.POINT);
+                changeShapeType(GeometryType.POINT, false);
                 break;
             default:
                 throw new IllegalArgumentException("Unsupported item selected adapter view: " + parent.getId());
@@ -274,12 +334,13 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
     /**
      * If a new shape type was selected, confirm data loss changes and change the shape
      *
-     * @param selectedType newly selected shape type
+     * @param selectedType      newly selected shape type
+     * @param selectedRectangle true if a rectangle polygon
      */
-    private void confirmAndChangeShapeType(final GeometryType selectedType) {
+    private void confirmAndChangeShapeType(final GeometryType selectedType, final boolean selectedRectangle) {
 
         // Only care if not the current shape type
-        if (selectedType != shapeType) {
+        if (selectedType != shapeType || selectedRectangle != isRectangle) {
 
             // If changing to a point and there are multiple points in the current shape, confirm selection
             if (selectedType == GeometryType.POINT && shapeMarkers != null && shapeMarkers.getSize() > 1) {
@@ -294,14 +355,14 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
                                 new DialogInterface.OnClickListener() {
                                     @Override
                                     public void onClick(DialogInterface dialog, int which) {
-                                        changeShapeType(selectedType);
+                                        changeShapeType(selectedType, selectedRectangle);
                                     }
                                 })
                         .setOnCancelListener(
                                 new DialogInterface.OnCancelListener() {
                                     @Override
                                     public void onCancel(DialogInterface dialog) {
-                                        setShapeType(shapeType);
+                                        revertShapeType();
                                     }
                                 })
                         .setNegativeButton(getString(R.string.no),
@@ -309,13 +370,13 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
                                     @Override
                                     public void onClick(DialogInterface dialog,
                                                         int which) {
-                                        setShapeType(shapeType);
+                                        revertShapeType();
                                         dialog.dismiss();
                                     }
                                 }).create();
                 deleteDialog.show();
             } else {
-                changeShapeType(selectedType);
+                changeShapeType(selectedType, selectedRectangle);
             }
         }
     }
@@ -323,9 +384,12 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
     /**
      * Change the current shape type
      *
-     * @param selectedType newly selected shape type
+     * @param selectedType      newly selected shape type
+     * @param selectedRectangle true if a rectangle polygon
      */
-    private void changeShapeType(GeometryType selectedType) {
+    private void changeShapeType(GeometryType selectedType, boolean selectedRectangle) {
+
+        isRectangle = selectedRectangle;
 
         Geometry geometry = null;
 
@@ -447,6 +511,7 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
         if (selectedMarker != null) {
             previousSelectedMarkerLocation = selectedMarker.getPosition();
             selectedMarker = null;
+            clearRectangleCorners();
         }
         if (shapeMarkers != null) {
             shapeMarkers.remove();
@@ -528,6 +593,7 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
             map.moveCamera(CameraUpdateFactory.newLatLng(latLng));
             if (selectedMarker != null) {
                 selectedMarker.setPosition(latLng);
+                updateRectangleCorners(selectedMarker);
                 updateShape();
             }
 
@@ -634,6 +700,7 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
     @Override
     public void onMarkerDrag(Marker marker) {
         updateLatitudeLongitudeText(marker.getPosition());
+        updateRectangleCorners(marker);
         updateShape();
     }
 
@@ -643,7 +710,11 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
     @Override
     public void onMarkerDragEnd(Marker marker) {
         updateLatitudeLongitudeText(marker.getPosition());
+        updateRectangleCorners(marker);
         updateShape();
+        if (isRectangle && shapeMarkers != null) {
+            shapeMarkers.setVisibleMarkers(true);
+        }
     }
 
     /**
@@ -655,6 +726,63 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
         vibrator.vibrate(getResources().getInteger(
                 R.integer.shape_edit_drag_long_click_vibrate));
         selectShapeMarker(marker);
+        if (isRectangle && shapeMarkers != null) {
+            shapeMarkers.setVisibleMarkers(false);
+        }
+    }
+
+    /**
+     * Find the neighboring rectangle corners
+     *
+     * @param marker selected marker
+     */
+    private void findRectangleCorners(Marker marker) {
+        clearRectangleCorners();
+        if (shapeMarkers != null && isRectangle) {
+            List<Marker> markers = shapeMarkers.getShapeMarkersMap().values().iterator().next().getMarkers();
+            boolean afterMatchesX = rectangleSameXSide1;
+            for (int i = 0; i < markers.size(); i++) {
+                Marker shapeMarker = markers.get(i);
+                if (shapeMarker.getId().equals(marker.getId())) {
+                    int beforeIndex = i > 0 ? i - 1 : markers.size() - 1;
+                    int afterIndex = i < markers.size() - 1 ? i + 1 : 0;
+                    Marker before = markers.get(beforeIndex);
+                    Marker after = markers.get(afterIndex);
+                    if (afterMatchesX) {
+                        rectangleSameXMarker = after;
+                        rectangleSameYMarker = before;
+                    } else {
+                        rectangleSameXMarker = before;
+                        rectangleSameYMarker = after;
+                    }
+                }
+                afterMatchesX = !afterMatchesX;
+            }
+        }
+    }
+
+    /**
+     * Update the neighboring rectangle corners from the modified marker
+     *
+     * @param marker modified marker
+     */
+    private void updateRectangleCorners(Marker marker) {
+        if (rectangleSameXMarker != null) {
+            rectangleSameXMarker.setPosition(
+                    new LatLng(rectangleSameXMarker.getPosition().latitude, marker.getPosition().longitude));
+        }
+        if (rectangleSameYMarker != null) {
+            rectangleSameYMarker.setPosition(
+                    new LatLng(marker.getPosition().latitude, rectangleSameYMarker.getPosition().longitude));
+        }
+    }
+
+    /**
+     * Clear the rectangle corners
+     */
+    private void clearRectangleCorners() {
+        rectangleSameXMarker = null;
+        rectangleSameYMarker = null;
     }
 
     /**
@@ -664,7 +792,7 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
     public void onMapLongClick(LatLng point) {
 
         // Add a new point to a line or polygon
-        if (shapeType != GeometryType.POINT) {
+        if (shapeType != GeometryType.POINT && !isRectangle) {
             vibrator.vibrate(getResources().getInteger(
                     R.integer.shape_edit_add_long_click_vibrate));
 
@@ -739,7 +867,7 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
 
                     selectShapeMarker(marker);
 
-                } else {
+                } else if (!isRectangle) {
 
                     ArrayAdapter<String> adapter = new ArrayAdapter(this, android.R.layout.select_dialog_item);
                     adapter.add(getString(R.string.shape_edit_delete_label));
@@ -787,6 +915,7 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
         selectedMarker = marker;
         updateLatitudeLongitudeText(marker.getPosition());
         marker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.ic_shape_edit_selected));
+        findRectangleCorners(marker);
     }
 
     /**
