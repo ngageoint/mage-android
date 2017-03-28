@@ -3,9 +3,15 @@ All notable changes to this project will be documented in this file.
 Adheres to [Semantic Versioning](http://semver.org/).
 
 ---
-## 5.3.0 (TBD)
+## 5.3.1 (TBD)
 
 * TBD
+
+##### Features
+
+##### Bug Fixes
+
+## [5.3.0](https://github.com/ngageoint/mage-android/releases/tag/5.3.0) (03-28-2017)
 
 ##### Features
 * Added pull to refresh on observation and people lists.
@@ -15,6 +21,7 @@ Adheres to [Semantic Versioning](http://semver.org/).
   people and the map.  
 * Take users to login screen on token expiration.  Upon successful authentication the user will be taken
   back to where they left off before thier token expired.
+* Choose between Local time and GMT for display and editing
 
 ##### Bug Fixes
 * Fixed bug with being authenticated but not having picked an event.  In this case the user will be
