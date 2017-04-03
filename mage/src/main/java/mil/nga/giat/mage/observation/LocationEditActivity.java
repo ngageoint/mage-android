@@ -942,6 +942,7 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
      * @param marker marker to select
      */
     private void selectShapeMarker(Marker marker) {
+        clearRectangleCorners();
         if (selectedMarker != null && !selectedMarker.getId().equals(marker.getId())) {
             selectedMarker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.ic_shape_edit));
         }
