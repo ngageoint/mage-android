@@ -46,6 +46,7 @@ import com.google.android.gms.maps.model.PolygonOptions;
 import com.google.android.gms.maps.model.PolylineOptions;
 
 import java.text.DecimalFormat;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
@@ -448,24 +449,52 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
             LineString lineString = null;
             if (shapeMarkers != null) {
                 GoogleMapShape mapShape = shapeMarkers.getShape();
-                List<LatLng> latLngPoints = null;
+
+                // Get the shape markers
+                List<Marker> markers = null;
                 switch (mapShape.getShapeType()) {
                     case POLYLINE_MARKERS:
                         PolylineMarkers polylineMarkers = (PolylineMarkers) mapShape.getShape();
-                        latLngPoints = polylineMarkers.getPolyline().getPoints();
+                        markers = polylineMarkers.getMarkers();
                         break;
                     case POLYGON_MARKERS:
                         PolygonMarkers polygonMarkers = (PolygonMarkers) mapShape.getShape();
-                        latLngPoints = polygonMarkers.getPolygon().getPoints();
-                        // Break the polygon closure when changing to a line
-                        if (selectedType == GeometryType.LINESTRING && latLngPoints.size() > 1 && latLngPoints.get(0).equals(latLngPoints.get(latLngPoints.size() - 1))) {
-                            latLngPoints.remove(latLngPoints.size() - 1);
-                        }
+                        markers = polygonMarkers.getMarkers();
                         break;
                     default:
                         throw new IllegalArgumentException("Unsupported Shape Type: " + mapShape.getShapeType());
                 }
+
+                // Add each marker location and find the selected marker index
+                List<LatLng> latLngPoints = new ArrayList<>();
+                Integer startLocation = null;
+                for (Marker marker : markers) {
+                    if (startLocation == null && selectedMarker != null && selectedMarker.equals(marker)) {
+                        startLocation = latLngPoints.size();
+                    }
+                    latLngPoints.add(marker.getPosition());
+                }
+
+                // When going from the polygon or rectangle to a line
+                if (selectedType == GeometryType.LINESTRING) {
+                    // Break the polygon closure when changing to a line
+                    if (latLngPoints.size() > 1 && latLngPoints.get(0).equals(latLngPoints.get(latLngPoints.size() - 1))) {
+                        latLngPoints.remove(latLngPoints.size() - 1);
+                    }
+                    // Break the line apart at the selected location
+                    if (startLocation != null && startLocation < latLngPoints.size()) {
+                        List<LatLng> latLngPointsTemp = new ArrayList<>();
+                        latLngPointsTemp.addAll(latLngPoints.subList(startLocation, latLngPoints.size()));
+                        latLngPointsTemp.addAll(latLngPoints.subList(0, startLocation));
+                        latLngPoints = latLngPointsTemp;
+                    }
+                }
+
                 lineString = shapeConverter.toLineString(latLngPoints);
+            } else {
+                LatLng newPointPosition = getShapeToPointLocation();
+                lineString = new LineString();
+                lineString.addPoint(shapeConverter.toPoint(newPointPosition));
             }
 
             switch (selectedType) {
@@ -945,10 +974,12 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
         clearRectangleCorners();
         if (selectedMarker != null && !selectedMarker.getId().equals(marker.getId())) {
             selectedMarker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.ic_shape_edit));
+            selectedMarker.setZIndex(0.0f);
         }
         selectedMarker = marker;
         updateLatitudeLongitudeText(marker.getPosition());
         marker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.ic_shape_edit_selected));
+        marker.setZIndex(1.0f);
         findRectangleCorners(marker);
     }
 
@@ -969,8 +1000,10 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
      * Update the accept button state
      */
     private void updateAcceptState() {
-        boolean acceptEnabled = true;
-        if (shapeMarkers != null) {
+        boolean acceptEnabled = false;
+        if (shapeType == GeometryType.POINT) {
+            acceptEnabled = true;
+        } else if (shapeMarkers != null) {
             acceptEnabled = shapeMarkersValid();
         }
         if (acceptMenuItem != null) {
