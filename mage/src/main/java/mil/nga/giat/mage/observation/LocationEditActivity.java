@@ -57,10 +57,12 @@ import mil.nga.geopackage.map.geom.PolylineMarkers;
 import mil.nga.geopackage.map.geom.ShapeMarkers;
 import mil.nga.giat.mage.R;
 import mil.nga.wkb.geom.Geometry;
+import mil.nga.wkb.geom.GeometryEnvelope;
 import mil.nga.wkb.geom.GeometryType;
 import mil.nga.wkb.geom.LineString;
 import mil.nga.wkb.geom.Point;
 import mil.nga.wkb.geom.Polygon;
+import mil.nga.wkb.util.GeometryEnvelopeBuilder;
 
 public class LocationEditActivity extends AppCompatActivity implements TextWatcher, View.OnFocusChangeListener,
         OnMapClickListener, OnMapReadyCallback, OnCameraMoveListener, OnCameraIdleListener, OnItemSelectedListener,
@@ -228,25 +230,34 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
             Polygon polygon = (Polygon) geometry;
             LineString ring = polygon.getRings().get(0);
             List<Point> points = ring.getPoints();
-            int size = points.size();
-            if (size == 4 || size == 5) {
-                Point point1 = points.get(0);
-                Point lastPoint = points.get(points.size() - 1);
-                boolean closed = point1.getX() == lastPoint.getX() && point1.getY() == lastPoint.getY();
-                if ((closed && size == 5) || (!closed && size == 4)) {
-                    Point point2 = points.get(1);
-                    Point point3 = points.get(2);
-                    Point point4 = points.get(3);
-                    if (point1.getX() == point2.getX() && point2.getY() == point3.getY()) {
-                        if (point1.getY() == point4.getY() && point3.getX() == point4.getX()) {
-                            isRectangle = true;
-                            rectangleSameXSide1 = true;
-                        }
-                    } else if (point1.getY() == point2.getY() && point2.getX() == point3.getX()) {
-                        if (point1.getX() == point4.getX() && point3.getY() == point4.getY()) {
-                            isRectangle = true;
-                            rectangleSameXSide1 = false;
-                        }
+            checkIfRectangle(points);
+        }
+    }
+
+    /**
+     * Check if the points form a rectangle
+     *
+     * @param points points
+     */
+    private void checkIfRectangle(List<Point> points) {
+        int size = points.size();
+        if (size == 4 || size == 5) {
+            Point point1 = points.get(0);
+            Point lastPoint = points.get(points.size() - 1);
+            boolean closed = point1.getX() == lastPoint.getX() && point1.getY() == lastPoint.getY();
+            if ((closed && size == 5) || (!closed && size == 4)) {
+                Point point2 = points.get(1);
+                Point point3 = points.get(2);
+                Point point4 = points.get(3);
+                if (point1.getX() == point2.getX() && point2.getY() == point3.getY()) {
+                    if (point1.getY() == point4.getY() && point3.getX() == point4.getX()) {
+                        isRectangle = true;
+                        rectangleSameXSide1 = true;
+                    }
+                } else if (point1.getY() == point2.getY() && point2.getX() == point3.getX()) {
+                    if (point1.getX() == point4.getX() && point3.getY() == point4.getY()) {
+                        isRectangle = true;
+                        rectangleSameXSide1 = false;
                     }
                 }
             }
@@ -393,13 +404,24 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
 
         Geometry geometry = null;
 
-        // Changing from point to single point line or polygon
+        // Changing from point to a shape
         if (shapeType == GeometryType.POINT) {
             LatLng center = map.getCameraPosition().target;
             Point firstPoint = new Point(center.longitude, center.latitude);
             LineString lineString = new LineString();
             lineString.addPoint(firstPoint);
-
+            // Changing to a rectangle
+            if (selectedRectangle) {
+                // Closed rectangle polygon all at the same point
+                lineString.addPoint(firstPoint);
+                lineString.addPoint(firstPoint);
+                lineString.addPoint(firstPoint);
+                lineString.addPoint(firstPoint);
+            }
+            // Changing to a line or polygon
+            else {
+                newDrawing = true;
+            }
             switch (selectedType) {
                 case LINESTRING:
                     geometry = lineString;
@@ -412,7 +434,6 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
                 default:
                     throw new IllegalArgumentException("Unsupported Geometry Type: " + selectedType);
             }
-            newDrawing = true;
         }
         // Changing from line or polygon to a point
         else if (selectedType == GeometryType.POINT) {
@@ -421,8 +442,9 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
             map.moveCamera(CameraUpdateFactory.newLatLng(newPointPosition));
             newDrawing = false;
         }
-        // Changing from between a line and polygon
+        // Changing from between a line, polygon, and rectangle
         else {
+
             LineString lineString = null;
             if (shapeMarkers != null) {
                 GoogleMapShape mapShape = shapeMarkers.getShape();
@@ -436,7 +458,7 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
                         PolygonMarkers polygonMarkers = (PolygonMarkers) mapShape.getShape();
                         latLngPoints = polygonMarkers.getPolygon().getPoints();
                         // Break the polygon closure when changing to a line
-                        if (latLngPoints.size() > 1 && latLngPoints.get(0).equals(latLngPoints.get(latLngPoints.size() - 1))) {
+                        if (selectedType == GeometryType.LINESTRING && latLngPoints.size() > 1 && latLngPoints.get(0).equals(latLngPoints.get(latLngPoints.size() - 1))) {
                             latLngPoints.remove(latLngPoints.size() - 1);
                         }
                         break;
@@ -446,30 +468,41 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
                 lineString = shapeConverter.toLineString(latLngPoints);
             }
 
-            List<Point> points = lineString.getPoints();
             switch (selectedType) {
+
                 case LINESTRING:
-                    newDrawing = points.size() <= 1;
+                    newDrawing = lineString.getPoints().size() <= 1;
                     geometry = lineString;
                     break;
+
                 case POLYGON:
+
+                    // If converting to a rectangle, use the current shape bounds
+                    if (selectedRectangle) {
+                        GeometryEnvelope envelope = GeometryEnvelopeBuilder.buildEnvelope(lineString);
+                        lineString = new LineString();
+                        lineString.addPoint(new Point(envelope.getMinX(), envelope.getMaxY()));
+                        lineString.addPoint(new Point(envelope.getMinX(), envelope.getMinY()));
+                        lineString.addPoint(new Point(envelope.getMaxX(), envelope.getMinY()));
+                        lineString.addPoint(new Point(envelope.getMaxX(), envelope.getMaxY()));
+                        lineString.addPoint(new Point(envelope.getMinX(), envelope.getMaxY()));
+                        checkIfRectangle(lineString.getPoints());
+                    }
+
                     Polygon polygon = new Polygon();
                     polygon.addRing(lineString);
-                    newDrawing = points.size() <= 2;
+                    newDrawing = lineString.getPoints().size() <= 2;
                     geometry = polygon;
                     break;
+
                 default:
                     throw new IllegalArgumentException("Unsupported Geometry Type: " + selectedType);
             }
         }
 
-        // Adjust the enabled state of the accept button
-        if (acceptMenuItem != null) {
-            acceptMenuItem.setEnabled(!newDrawing);
-        }
-
         addMapShape(geometry);
         shapeType = selectedType;
+        updateAcceptState();
     }
 
     /**
@@ -927,10 +960,44 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
             if (shapeMarkers.isEmpty()) {
                 shapeMarkers = null;
             }
-            if (acceptMenuItem != null) {
-                acceptMenuItem.setEnabled(shapeMarkers != null && shapeMarkers.isValid());
+        }
+        updateAcceptState();
+    }
+
+    /**
+     * Update the accept button state
+     */
+    private void updateAcceptState() {
+        boolean acceptEnabled = true;
+        if (shapeMarkers != null) {
+            acceptEnabled = shapeMarkersValid();
+        }
+        if (acceptMenuItem != null) {
+            acceptMenuItem.setEnabled(acceptEnabled);
+        }
+    }
+
+    /**
+     * Validate that the shape markers are a valid shape and contain multiple unique positions
+     *
+     * @return true if valid
+     */
+    private boolean shapeMarkersValid() {
+        boolean valid = shapeMarkers != null && shapeMarkers.isValid();
+        if (valid) {
+            List<Marker> markers = shapeMarkers.getShapeMarkersMap().values().iterator().next().getMarkers();
+            LatLng position = null;
+            valid = false;
+            for (Marker marker : markers) {
+                if (position == null) {
+                    position = marker.getPosition();
+                } else if (!position.equals(marker.getPosition())) {
+                    valid = true;
+                    break;
+                }
             }
         }
+        return valid;
     }
 
     /**
