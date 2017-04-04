@@ -83,7 +83,7 @@
         android:layout_marginTop="16dp"
         android:layout_marginBottom="16dp"
         android:layout_marginEnd="16dp"
-        app:backgroundTint="@color/map_search_button"
+        app:backgroundTint="@color/toggle_button"
         app:theme="@style/AppTheme.AlternateFAB"
         android:src="@drawable/ic_search_black_24dp" />
 

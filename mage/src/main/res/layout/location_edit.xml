@@ -26,29 +26,8 @@
             android:layout_marginEnd="16dp"
             android:orientation="vertical">
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal">
-
-                <TextView android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Shape Type:"
-                    android:textColor="@color/md_white_1000"/>
-
-                <Spinner
-                    android:id="@+id/location_edit_shape_type"
-                    android:layout_width="fill_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginLeft="16dp"
-                    android:entries="@array/observationShapeType"
-                    android:theme="@style/AppTheme.White"/>
-
-            </LinearLayout>
-
             <TextView android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
                 android:text="Latitude"
                 android:textColor="@color/md_white_1000"/>
 
@@ -92,11 +71,69 @@
             android:layout_height="match_parent"
             android:name="com.google.android.gms.maps.MapFragment"/>
 
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="top|start"
+            android:orientation="vertical">
+
+            <android.support.design.widget.FloatingActionButton
+                android:id="@+id/location_edit_point_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="16dp"
+                android:layout_marginRight="16dp"
+                android:layout_marginTop="16dp"
+                app:theme="@style/AppTheme.AlternateFAB"
+                android:src="@drawable/ic_place_black_24dp"
+                app:backgroundTint="@color/toggle_button"
+                app:fabSize="mini"/>
+
+            <android.support.design.widget.FloatingActionButton
+                android:id="@+id/location_edit_line_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="16dp"
+                android:layout_marginRight="16dp"
+                android:layout_marginTop="16dp"
+                app:theme="@style/AppTheme.AlternateFAB"
+                android:src="@drawable/ic_ray_start_end_black_24dp"
+                app:backgroundTint="@color/toggle_button"
+                app:fabSize="mini"/>
+
+            <android.support.design.widget.FloatingActionButton
+                android:id="@+id/location_edit_rectangle_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="16dp"
+                android:layout_marginRight="16dp"
+                android:layout_marginTop="16dp"
+                app:theme="@style/AppTheme.AlternateFAB"
+                android:src="@drawable/ic_square_outline_black_24dp"
+                app:backgroundTint="@color/toggle_button"
+                app:fabSize="mini"/>
+
+            <android.support.design.widget.FloatingActionButton
+                android:id="@+id/location_edit_polygon_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="16dp"
+                android:layout_marginRight="16dp"
+                android:layout_marginTop="16dp"
+                android:layout_marginBottom="16dp"
+                app:theme="@style/AppTheme.AlternateFAB"
+                android:src="@drawable/ic_pentagon_outline_black_24dp"
+                app:backgroundTint="@color/toggle_button"
+                app:fabSize="mini"/>
+
+        </LinearLayout>
+
         <ImageView
             android:id="@+id/location_edit_center_alignment_view"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_centerInParent="true" />
+            android:layout_centerInParent="true"
+            android:visibility="invisible"/>
 
         <ImageView
             android:id="@+id/location_edit_marker"

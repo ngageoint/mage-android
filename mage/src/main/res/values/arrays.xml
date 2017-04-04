@@ -74,11 +74,4 @@
         <item>@integer/time_filter_last_month</item>
     </integer-array>
 
-    <string-array name="observationShapeType">
-        <item>Point</item>
-        <item>Line</item>
-        <item>Rectangle</item>
-        <item>Polygon</item>
-    </string-array>
-
 </resources>

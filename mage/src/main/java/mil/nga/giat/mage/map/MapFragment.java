@@ -140,9 +140,6 @@ import mil.nga.giat.mage.sdk.exceptions.UserException;
 import mil.nga.giat.mage.sdk.location.LocationService;
 import mil.nga.wkb.geom.Geometry;
 import mil.nga.wkb.geom.GeometryType;
-import mil.nga.wkb.geom.LineString;
-import mil.nga.wkb.geom.Point;
-import mil.nga.wkb.geom.Polygon;
 
 public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapClickListener, OnMapLongClickListener, OnMarkerClickListener, OnInfoWindowClickListener, OnMapPanListener, OnMyLocationButtonClickListener, OnClickListener, LocationSource, LocationListener, OnCacheOverlayListener,
 		IObservationEventListener, ILocationEventListener, IStaticFeatureEventListener {
@@ -198,7 +195,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 
 		searchButton = (FloatingActionButton) view.findViewById(R.id.map_search_button);
 		Drawable drawable = DrawableCompat.wrap(searchButton.getDrawable());
-		DrawableCompat.setTintList(drawable, AppCompatResources.getColorStateList(getContext(), R.color.map_search_icon));
+		DrawableCompat.setTintList(drawable, AppCompatResources.getColorStateList(getContext(), R.color.toggle_button_selected));
 		searchButton.setImageDrawable(drawable);
 
 		searchButton.setOnClickListener(new OnClickListener() {
