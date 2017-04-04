@@ -47,7 +47,7 @@ public class ObservationLocation implements Parcelable {
     /**
      * Default camera padding percentage when building a camera update for geometry zoom
      */
-    public static final float DEFAULT_PADDING_PERCENTAGE = .1f;
+    public static final float DEFAULT_PADDING_PERCENTAGE = .18f;
 
     /**
      * Parcelable CREATOR implementation

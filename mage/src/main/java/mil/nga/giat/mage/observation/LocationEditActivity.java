@@ -384,21 +384,23 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
             String message = null;
 
             // Changing to a point or rectangle, and there are multiple unique positions in the shape
-            if ((selectedType == GeometryType.POINT || selectedRectangle) && shapeMarkersMultiplePositions()) {
+            if ((selectedType == GeometryType.POINT || selectedRectangle) && multipleShapeMarkerPositions()) {
 
                 if (selectedRectangle) {
                     // Changing to a rectangle
                     List<Marker> markers = getShapeMarkers();
+                    boolean formRectangle = false;
                     if (markers.size() == 4 || markers.size() == 5) {
                         List<Point> points = new ArrayList<>();
                         for (Marker marker : markers) {
                             points.add(shapeConverter.toPoint(marker.getPosition()));
                         }
-                        if (!checkIfRectangle(points)) {
-                            // Points currently do not form a rectangle
-                            title = getString(R.string.location_edit_to_rectangle_title);
-                            message = getString(R.string.location_edit_to_rectangle_message);
-                        }
+                        formRectangle = checkIfRectangle(points);
+                    }
+                    if (!formRectangle) {
+                        // Points currently do not form a rectangle
+                        title = getString(R.string.location_edit_to_rectangle_title);
+                        message = getString(R.string.location_edit_to_rectangle_message);
                     }
 
                 } else {
@@ -504,10 +506,16 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
             LineString lineString = null;
             if (shapeMarkers != null) {
 
+                List<Marker> markers = getShapeMarkers();
+
+                // If all markers are in the same spot only keep one
+                if (!markers.isEmpty() && !multipleMarkerPositions(markers)) {
+                    markers = markers.subList(0, 1);
+                }
+
                 // Add each marker location and find the selected marker index
                 List<LatLng> latLngPoints = new ArrayList<>();
                 Integer startLocation = null;
-                List<Marker> markers = getShapeMarkers();
                 for (Marker marker : markers) {
                     if (startLocation == null && selectedMarker != null && selectedMarker.equals(marker)) {
                         startLocation = latLngPoints.size();
@@ -1075,7 +1083,7 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
      * @return true if valid
      */
     private boolean shapeMarkersValid() {
-        return shapeMarkersMultiplePositions() && shapeMarkers.isValid();
+        return multipleShapeMarkerPositions() && shapeMarkers.isValid();
     }
 
     /**
@@ -1083,18 +1091,29 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
      *
      * @return true if multiple positions
      */
-    private boolean shapeMarkersMultiplePositions() {
+    private boolean multipleShapeMarkerPositions() {
         boolean multiple = false;
         if (shapeMarkers != null) {
-            List<Marker> markers = getShapeMarkers();
-            LatLng position = null;
-            for (Marker marker : markers) {
-                if (position == null) {
-                    position = marker.getPosition();
-                } else if (!position.equals(marker.getPosition())) {
-                    multiple = true;
-                    break;
-                }
+            multiple = multipleMarkerPositions(getShapeMarkers());
+        }
+        return multiple;
+    }
+
+    /**
+     * Determine if the are multiple unique locational positions in the markers
+     *
+     * @param markers markers
+     * @return true if multiple positions
+     */
+    private boolean multipleMarkerPositions(List<Marker> markers) {
+        boolean multiple = false;
+        LatLng position = null;
+        for (Marker marker : markers) {
+            if (position == null) {
+                position = marker.getPosition();
+            } else if (!position.equals(marker.getPosition())) {
+                multiple = true;
+                break;
             }
         }
         return multiple;
