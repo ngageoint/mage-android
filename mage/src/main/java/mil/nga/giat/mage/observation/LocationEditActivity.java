@@ -655,8 +655,7 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
             map.moveCamera(CameraUpdateFactory.newLatLng(latLng));
             if (selectedMarker != null) {
                 selectedMarker.setPosition(latLng);
-                updateRectangleCorners(selectedMarker);
-                updateShape();
+                updateShape(selectedMarker);
             }
 
         }
@@ -762,8 +761,7 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
     @Override
     public void onMarkerDrag(Marker marker) {
         updateLatitudeLongitudeText(marker.getPosition());
-        updateRectangleCorners(marker);
-        updateShape();
+        updateShape(marker);
     }
 
     /**
@@ -772,8 +770,7 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
     @Override
     public void onMarkerDragEnd(Marker marker) {
         updateLatitudeLongitudeText(marker.getPosition());
-        updateRectangleCorners(marker);
-        updateShape();
+        updateShape(marker);
         if (isRectangle && shapeMarkers != null) {
             shapeMarkers.setVisibleMarkers(true);
         }
@@ -854,61 +851,70 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
     public void onMapLongClick(LatLng point) {
 
         // Add a new point to a line or polygon
-        if (shapeType != GeometryType.POINT && !isRectangle) {
-            vibrator.vibrate(getResources().getInteger(
-                    R.integer.shape_edit_add_long_click_vibrate));
+        if (shapeType != GeometryType.POINT) {
 
-            if (shapeMarkers == null) {
-                Geometry geometry = null;
-                Point firstPoint = new Point(point.longitude, point.latitude);
-                switch (shapeType) {
-                    case LINESTRING:
-                        LineString lineString = new LineString();
-                        lineString.addPoint(firstPoint);
-                        geometry = lineString;
-                        break;
-                    case POLYGON:
-                        Polygon polygon = new Polygon();
-                        LineString ring = new LineString();
-                        ring.addPoint(firstPoint);
-                        polygon.addRing(ring);
-                        geometry = polygon;
-                        break;
-                    default:
-                        throw new IllegalArgumentException("Unsupported Geometry Type: " + shapeType);
+            if (!isRectangle) {
+                vibrator.vibrate(getResources().getInteger(
+                        R.integer.shape_edit_add_long_click_vibrate));
+
+                if (shapeMarkers == null) {
+                    Geometry geometry = null;
+                    Point firstPoint = new Point(point.longitude, point.latitude);
+                    switch (shapeType) {
+                        case LINESTRING:
+                            LineString lineString = new LineString();
+                            lineString.addPoint(firstPoint);
+                            geometry = lineString;
+                            break;
+                        case POLYGON:
+                            Polygon polygon = new Polygon();
+                            LineString ring = new LineString();
+                            ring.addPoint(firstPoint);
+                            polygon.addRing(ring);
+                            geometry = polygon;
+                            break;
+                        default:
+                            throw new IllegalArgumentException("Unsupported Geometry Type: " + shapeType);
+                    }
+                    addMapShape(geometry);
+                } else {
+                    MarkerOptions markerOptions = getEditMarkerOptions();
+                    markerOptions.position(point);
+                    Marker marker = map.addMarker(markerOptions);
+                    ShapeMarkers shape = null;
+                    GoogleMapShape mapShape = shapeMarkers.getShape();
+                    switch (mapShape.getShapeType()) {
+                        case POLYLINE_MARKERS:
+                            PolylineMarkers polylineMarkers = (PolylineMarkers) mapShape.getShape();
+                            shape = polylineMarkers;
+                            if (newDrawing) {
+                                polylineMarkers.add(marker);
+                            } else {
+                                polylineMarkers.addNew(marker);
+                            }
+                            break;
+                        case POLYGON_MARKERS:
+                            PolygonMarkers polygonMarkers = (PolygonMarkers) shapeMarkers.getShape().getShape();
+                            shape = polygonMarkers;
+                            if (newDrawing) {
+                                polygonMarkers.add(marker);
+                            } else {
+                                polygonMarkers.addNew(marker);
+                            }
+                            break;
+                        default:
+                            throw new IllegalArgumentException("Unsupported Shape Type: " + mapShape.getShapeType());
+                    }
+                    shapeMarkers.add(marker, shape);
+                    selectShapeMarker(marker);
+                    updateShape();
                 }
-                addMapShape(geometry);
-            } else {
-                MarkerOptions markerOptions = getEditMarkerOptions();
-                markerOptions.position(point);
-                Marker marker = map.addMarker(markerOptions);
-                ShapeMarkers shape = null;
-                GoogleMapShape mapShape = shapeMarkers.getShape();
-                switch (mapShape.getShapeType()) {
-                    case POLYLINE_MARKERS:
-                        PolylineMarkers polylineMarkers = (PolylineMarkers) mapShape.getShape();
-                        shape = polylineMarkers;
-                        if (newDrawing) {
-                            polylineMarkers.add(marker);
-                        } else {
-                            polylineMarkers.addNew(marker);
-                        }
-                        break;
-                    case POLYGON_MARKERS:
-                        PolygonMarkers polygonMarkers = (PolygonMarkers) shapeMarkers.getShape().getShape();
-                        shape = polygonMarkers;
-                        if (newDrawing) {
-                            polygonMarkers.add(marker);
-                        } else {
-                            polygonMarkers.addNew(marker);
-                        }
-                        break;
-                    default:
-                        throw new IllegalArgumentException("Unsupported Shape Type: " + mapShape.getShapeType());
-                }
-                shapeMarkers.add(marker, shape);
-                selectShapeMarker(marker);
-                updateShape();
+            } else if (!shapeMarkersValid() && selectedMarker != null) {
+                // Allow long click to expand a zero area rectangle
+                vibrator.vibrate(getResources().getInteger(
+                        R.integer.shape_edit_add_long_click_vibrate));
+                selectedMarker.setPosition(point);
+                updateShape(selectedMarker);
             }
         }
     }
@@ -981,6 +987,16 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
         marker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.ic_shape_edit_selected));
         marker.setZIndex(1.0f);
         findRectangleCorners(marker);
+    }
+
+    /**
+     * Update the shape with any modifications, adjust the accept menu button state
+     *
+     * @param selectedMarker selected marker
+     */
+    private void updateShape(Marker selectedMarker) {
+        updateRectangleCorners(selectedMarker);
+        updateShape();
     }
 
     /**
