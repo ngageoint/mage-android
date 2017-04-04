@@ -416,7 +416,7 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
             // If changing to a point and there are multiple points in the current shape, confirm selection
             if (message != null) {
 
-                AlertDialog deleteDialog = new AlertDialog.Builder(this, R.style.AppCompatAlertDialogStyle)
+                AlertDialog changeDialog = new AlertDialog.Builder(this, R.style.AppCompatAlertDialogStyle)
                         .setTitle(title)
                         .setMessage(message)
                         .setPositiveButton(getString(R.string.yes),
@@ -443,7 +443,7 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
                                         dialog.dismiss();
                                     }
                                 }).create();
-                deleteDialog.show();
+                changeDialog.show();
             } else {
                 changeShapeType(selectedType, selectedRectangle);
             }
@@ -957,7 +957,7 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
                     }
                     shapeMarkers.add(marker, shape);
                     selectShapeMarker(marker);
-                    updateShape();
+                    updateShape(marker);
                 }
             } else if (!shapeMarkersValid() && selectedMarker != null) {
                 // Allow long click to expand a zero area rectangle
@@ -985,7 +985,7 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
 
                     selectShapeMarker(marker);
 
-                } else if (!isRectangle) {
+                } else if (!isRectangle && shapeMarkers.size() > 1) {
 
                     ArrayAdapter<String> adapter = new ArrayAdapter(this, android.R.layout.select_dialog_item);
                     adapter.add(getString(R.string.location_edit_delete_point_label));
@@ -1000,9 +1000,36 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
                             if (item >= 0) {
                                 switch (item) {
                                     case 0:
+
+                                        List<Marker> markers = getShapeMarkers();
+
+                                        // Find the index of the marker being deleted
+                                        int index = 1;
+                                        for (int i = 0; i < markers.size(); i++) {
+                                            if (markers.get(i).equals(marker)) {
+                                                index = i;
+                                                break;
+                                            }
+                                        }
+                                        // Get the previous marker index
+                                        if (index > 0) {
+                                            index--;
+                                        } else if (shapeType == GeometryType.LINESTRING) {
+                                            // Select next marker in the line
+                                            index++;
+                                        } else {
+                                            // Select previous polygon marker
+                                            index = markers.size() - 1;
+                                        }
+                                        // Get the new marker to select
+                                        Marker selectMarker = markers.get(index);
+
+                                        // Delete the marker, select the new, and update the shape
                                         shapeMarkers.delete(marker);
                                         selectedMarker = null;
-                                        updateShape();
+                                        selectShapeMarker(selectMarker);
+                                        updateShape(selectMarker);
+
                                         break;
                                     default:
                                 }
@@ -1046,13 +1073,6 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
      */
     private void updateShape(Marker selectedMarker) {
         updateRectangleCorners(selectedMarker);
-        updateShape();
-    }
-
-    /**
-     * Update the shape with any modifications, adjust the accept menu button state
-     */
-    private void updateShape() {
         if (shapeMarkers != null) {
             shapeMarkers.update();
             if (shapeMarkers.isEmpty()) {
