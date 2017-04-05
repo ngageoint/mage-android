@@ -103,6 +103,7 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
     private FloatingActionButton lineButton;
     private FloatingActionButton rectangleButton;
     private FloatingActionButton polygonButton;
+    private boolean validLocation = true;
 
     /**
      * {@inheritDoc}
@@ -702,34 +703,51 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
     public void afterTextChanged(Editable s) {
         // Only handle when the longitude or latitude entries have focus
         if (getCurrentFocus() != longitudeEdit && getCurrentFocus() != latitudeEdit) {
+            if(!validLocation){
+                validLocation = true;
+                updateAcceptState();
+            }
             return;
         }
 
         // Move the camera and update selected markers & shape
         String latitudeString = latitudeEdit.getText().toString();
         String longitudeString = longitudeEdit.getText().toString();
-        if (!latitudeString.isEmpty() && !longitudeString.isEmpty()) {
-            double latitude;
+
+        Double latitude = null;
+        if (!latitudeString.isEmpty()) {
             try {
                 latitude = Double.parseDouble(latitudeString);
             } catch (NumberFormatException e) {
-                latitude = 0.0;
             }
-            double longitude;
+        }
+        Double longitude = null;
+        if (!longitudeString.isEmpty()) {
             try {
                 longitude = Double.parseDouble(longitudeString);
             } catch (NumberFormatException e) {
-                longitude = 0.0;
             }
-            LatLng latLng = new LatLng(latitude, longitude);
-
-            map.moveCamera(CameraUpdateFactory.newLatLng(latLng));
-            if (selectedMarker != null) {
-                selectedMarker.setPosition(latLng);
-                updateShape(selectedMarker);
-            }
-
         }
+
+        validLocation = latitude != null && longitude != null;
+
+        if(latitude == null){
+            latitude = 0.0;
+        }
+        if(longitude == null){
+            longitude = 0.0;
+        }
+
+        LatLng latLng = new LatLng(latitude, longitude);
+
+        map.moveCamera(CameraUpdateFactory.newLatLng(latLng));
+        if (selectedMarker != null) {
+            selectedMarker.setPosition(latLng);
+            updateShape(selectedMarker);
+        }else{
+            updateAcceptState();
+        }
+
     }
 
     /**
@@ -1103,6 +1121,7 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
         } else if (shapeMarkers != null) {
             acceptEnabled = shapeMarkersValid();
         }
+        acceptEnabled = acceptEnabled && validLocation;
         if (acceptMenuItem != null) {
             acceptMenuItem.setEnabled(acceptEnabled);
         }
