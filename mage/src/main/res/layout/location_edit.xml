@@ -3,8 +3,8 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:focusableInTouchMode="true">
+    android:focusableInTouchMode="true"
+    android:orientation="vertical">
 
     <android.support.design.widget.AppBarLayout
         android:layout_width="match_parent"
@@ -14,51 +14,63 @@
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
-            app:popupTheme="@style/ThemeOverlay.AppCompat.Light">
+            app:popupTheme="@style/ThemeOverlay.AppCompat.Light"
+            app:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar">
 
         </android.support.v7.widget.Toolbar>
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
             android:layout_marginEnd="16dp"
+            android:layout_marginStart="16dp"
             android:orientation="vertical">
 
-            <android.support.design.widget.TextInputLayout
-                android:id="@+id/location_edit_latitude_layout"
-                android:layout_width="match_parent"
+            <LinearLayout
+                android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
-                android:theme="@style/AppTheme.White">
+                android:orientation="horizontal"
+                android:weightSum="2">
 
-                <EditText
-                    android:id="@+id/location_edit_latitude"
+                <android.support.design.widget.TextInputLayout
+                    android:id="@+id/location_edit_latitude_layout"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="Latitude"
-                    android:inputType="numberDecimal|numberSigned"
-                    android:theme="@style/AppTheme.White"
-                    android:imeOptions="actionDone"/>
+                    android:layout_marginRight="4dp"
+                    android:layout_weight="1"
+                    android:theme="@style/AppTheme.White">
 
-            </android.support.design.widget.TextInputLayout>
+                    <EditText
+                        android:id="@+id/location_edit_latitude"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="Latitude"
+                        android:imeOptions="actionDone"
+                        android:inputType="numberDecimal|numberSigned"
+                        android:theme="@style/AppTheme.White" />
 
-            <android.support.design.widget.TextInputLayout
-                android:id="@+id/location_edit_longitude_layout"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:theme="@style/AppTheme.White">
+                </android.support.design.widget.TextInputLayout>
 
-                <EditText
-                    android:id="@+id/location_edit_longitude"
+                <android.support.design.widget.TextInputLayout
+                    android:id="@+id/location_edit_longitude_layout"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="Longitude"
-                    android:inputType="numberDecimal|numberSigned"
-                    android:theme="@style/AppTheme.White"
-                    android:imeOptions="actionDone"/>
+                    android:layout_marginLeft="4dp"
+                    android:layout_weight="1"
+                    android:theme="@style/AppTheme.White">
 
-            </android.support.design.widget.TextInputLayout>
+                    <EditText
+                        android:id="@+id/location_edit_longitude"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="Longitude"
+                        android:imeOptions="actionDone"
+                        android:inputType="numberDecimal|numberSigned"
+                        android:theme="@style/AppTheme.White" />
+
+                </android.support.design.widget.TextInputLayout>
+
+            </LinearLayout>
 
         </LinearLayout>
 
@@ -71,9 +83,9 @@
 
         <fragment
             android:id="@+id/location_edit_map"
+            android:name="com.google.android.gms.maps.MapFragment"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:name="com.google.android.gms.maps.MapFragment"/>
+            android:layout_height="match_parent" />
 
         <LinearLayout
             android:layout_width="wrap_content"
@@ -88,10 +100,10 @@
                 android:layout_marginLeft="16dp"
                 android:layout_marginRight="16dp"
                 android:layout_marginTop="16dp"
-                app:theme="@style/AppTheme.AlternateFAB"
                 android:src="@drawable/ic_place_black_24dp"
                 app:backgroundTint="@color/toggle_button"
-                app:fabSize="mini"/>
+                app:fabSize="mini"
+                app:theme="@style/AppTheme.AlternateFAB" />
 
             <android.support.design.widget.FloatingActionButton
                 android:id="@+id/location_edit_line_button"
@@ -100,10 +112,10 @@
                 android:layout_marginLeft="16dp"
                 android:layout_marginRight="16dp"
                 android:layout_marginTop="16dp"
-                app:theme="@style/AppTheme.AlternateFAB"
                 android:src="@drawable/ic_ray_start_end_black_24dp"
                 app:backgroundTint="@color/toggle_button"
-                app:fabSize="mini"/>
+                app:fabSize="mini"
+                app:theme="@style/AppTheme.AlternateFAB" />
 
             <android.support.design.widget.FloatingActionButton
                 android:id="@+id/location_edit_rectangle_button"
@@ -112,23 +124,23 @@
                 android:layout_marginLeft="16dp"
                 android:layout_marginRight="16dp"
                 android:layout_marginTop="16dp"
-                app:theme="@style/AppTheme.AlternateFAB"
                 android:src="@drawable/ic_square_outline_black_24dp"
                 app:backgroundTint="@color/toggle_button"
-                app:fabSize="mini"/>
+                app:fabSize="mini"
+                app:theme="@style/AppTheme.AlternateFAB" />
 
             <android.support.design.widget.FloatingActionButton
                 android:id="@+id/location_edit_polygon_button"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
                 android:layout_marginLeft="16dp"
                 android:layout_marginRight="16dp"
                 android:layout_marginTop="16dp"
-                android:layout_marginBottom="16dp"
-                app:theme="@style/AppTheme.AlternateFAB"
                 android:src="@drawable/ic_pentagon_outline_black_24dp"
                 app:backgroundTint="@color/toggle_button"
-                app:fabSize="mini"/>
+                app:fabSize="mini"
+                app:theme="@style/AppTheme.AlternateFAB" />
 
         </LinearLayout>
 
@@ -137,14 +149,14 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_centerInParent="true"
-            android:visibility="invisible"/>
+            android:visibility="invisible" />
 
         <ImageView
             android:id="@+id/location_edit_marker"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_centerInParent="true"
-            android:layout_above="@id/location_edit_center_alignment_view" />
+            android:layout_above="@id/location_edit_center_alignment_view"
+            android:layout_centerInParent="true" />
 
     </RelativeLayout>
 
