@@ -181,7 +181,7 @@ public class MapObservations {
      */
     public MapShapeObservation getClickedShape(GoogleMap map, LatLng latLng) {
 
-        // how many meters away form the click can the geometry be?
+        // how many meters away from the click can the geometry be?
         double tolerance = MapUtils.lineTolerance(map);
 
         // Find the first polyline with the point on it, else find the first polygon
