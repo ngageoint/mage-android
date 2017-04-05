@@ -83,7 +83,8 @@
     <string name="locationsPushPreferencesCategoryKey">locationsPushPreferencesCategory</string>
     <string name="locationServiceDisabledKey">locationServiceDisabled</string>
 
-    <string name="location_edit_delete_point_label">Delete</string>
+    <string name="location_edit_delete_point_title">Delete Point</string>
+    <string name="location_edit_delete_point_message">Do you want to delete this point?\n%1$s, %2$s</string>
     <string name="location_edit_to_point_title">Change to Point</string>
     <string name="location_edit_to_point_message">Change shape to single point?\n%1$s, %2$s</string>
     <string name="location_edit_to_rectangle_title">Change to Rectangle</string>

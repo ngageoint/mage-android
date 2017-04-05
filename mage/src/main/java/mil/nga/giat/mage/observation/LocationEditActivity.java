@@ -23,7 +23,6 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
-import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -74,6 +73,9 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
     public static String MARKER_BITMAP = "MARKER_BITMAP";
     public static String NEW_OBSERVATION = "NEW_OBSERVATION";
 
+    private static final String LOCATION_PRECISION = "%.6f";
+    private final DecimalFormat locationFormatter = new DecimalFormat("0.000000");
+
     private ObservationLocation location;
     private GoogleMap map;
     private EditText longitudeEdit;
@@ -92,7 +94,6 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
     private GeometryType shapeType = GeometryType.POINT;
     private boolean isRectangle = false;
     private Marker selectedMarker = null;
-    private final DecimalFormat formatter = new DecimalFormat("0.00000");
     private Marker rectangleSameXMarker;
     private Marker rectangleSameYMarker;
     private boolean rectangleSameXSide1;
@@ -408,7 +409,7 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
                     LatLng newPointPosition = getShapeToPointLocation();
                     title = getString(R.string.location_edit_to_point_title);
                     message = String.format(getString(R.string.location_edit_to_point_message),
-                            formatter.format(newPointPosition.latitude), formatter.format(newPointPosition.longitude));
+                            locationFormatter.format(newPointPosition.latitude), locationFormatter.format(newPointPosition.longitude));
                 }
 
             }
@@ -416,34 +417,33 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
             // If changing to a point and there are multiple points in the current shape, confirm selection
             if (message != null) {
 
-                AlertDialog changeDialog = new AlertDialog.Builder(this, R.style.AppCompatAlertDialogStyle)
-                        .setTitle(title)
-                        .setMessage(message)
-                        .setPositiveButton(getString(R.string.yes),
-
-                                new DialogInterface.OnClickListener() {
-                                    @Override
-                                    public void onClick(DialogInterface dialog, int which) {
-                                        changeShapeType(selectedType, selectedRectangle);
-                                    }
-                                })
-                        .setOnCancelListener(
-                                new DialogInterface.OnCancelListener() {
-                                    @Override
-                                    public void onCancel(DialogInterface dialog) {
-                                        revertShapeType();
-                                    }
-                                })
-                        .setNegativeButton(getString(R.string.no),
-                                new DialogInterface.OnClickListener() {
-                                    @Override
-                                    public void onClick(DialogInterface dialog,
-                                                        int which) {
-                                        revertShapeType();
-                                        dialog.dismiss();
-                                    }
-                                }).create();
+                AlertDialog.Builder changeDialog = new AlertDialog.Builder(this);
+                changeDialog.setTitle(title);
+                changeDialog.setMessage(message);
+                changeDialog.setNegativeButton(R.string.no,
+                        new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog,
+                                                int which) {
+                                revertShapeType();
+                            }
+                        });
+                changeDialog.setOnCancelListener(
+                        new DialogInterface.OnCancelListener() {
+                            @Override
+                            public void onCancel(DialogInterface dialog) {
+                                revertShapeType();
+                            }
+                        });
+                changeDialog.setPositiveButton(R.string.yes,
+                        new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                changeShapeType(selectedType, selectedRectangle);
+                            }
+                        });
                 changeDialog.show();
+
             } else {
                 changeShapeType(selectedType, selectedRectangle);
             }
@@ -680,8 +680,8 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
      * @param longitude longitude
      */
     private void updateLatitudeLongitudeText(double latitude, double longitude) {
-        latitudeEdit.setText(String.format(Locale.getDefault(), "%.5f", latitude));
-        longitudeEdit.setText(String.format(Locale.getDefault(), "%.5f", longitude));
+        latitudeEdit.setText(String.format(Locale.getDefault(), LOCATION_PRECISION, latitude));
+        longitudeEdit.setText(String.format(Locale.getDefault(), LOCATION_PRECISION, longitude));
     }
 
     /**
@@ -987,58 +987,48 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
 
                 } else if (!isRectangle && shapeMarkers.size() > 1) {
 
-                    ArrayAdapter<String> adapter = new ArrayAdapter(this, android.R.layout.select_dialog_item);
-                    adapter.add(getString(R.string.location_edit_delete_point_label));
-
-                    AlertDialog.Builder builder = new AlertDialog.Builder(this, R.style.AppCompatAlertDialogStyle);
+                    AlertDialog.Builder deleteDialog = new AlertDialog.Builder(this);
                     LatLng position = marker.getPosition();
-                    final String title = formatter.format(position.latitude) + ", " + formatter.format(position.longitude);
-                    builder.setTitle(title);
-                    builder.setAdapter(adapter, new DialogInterface.OnClickListener() {
-                        public void onClick(DialogInterface dialog, int item) {
+                    deleteDialog.setTitle(R.string.location_edit_delete_point_title);
+                    deleteDialog.setMessage(String.format(getString(R.string.location_edit_delete_point_message),
+                            locationFormatter.format(position.latitude), locationFormatter.format(position.longitude)));
+                    deleteDialog.setNegativeButton(R.string.no, null);
+                    deleteDialog.setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int which) {
 
-                            if (item >= 0) {
-                                switch (item) {
-                                    case 0:
+                            List<Marker> markers = getShapeMarkers();
 
-                                        List<Marker> markers = getShapeMarkers();
-
-                                        // Find the index of the marker being deleted
-                                        int index = 1;
-                                        for (int i = 0; i < markers.size(); i++) {
-                                            if (markers.get(i).equals(marker)) {
-                                                index = i;
-                                                break;
-                                            }
-                                        }
-                                        // Get the previous marker index
-                                        if (index > 0) {
-                                            index--;
-                                        } else if (shapeType == GeometryType.LINESTRING) {
-                                            // Select next marker in the line
-                                            index++;
-                                        } else {
-                                            // Select previous polygon marker
-                                            index = markers.size() - 1;
-                                        }
-                                        // Get the new marker to select
-                                        Marker selectMarker = markers.get(index);
-
-                                        // Delete the marker, select the new, and update the shape
-                                        shapeMarkers.delete(marker);
-                                        selectedMarker = null;
-                                        selectShapeMarker(selectMarker);
-                                        updateShape(selectMarker);
-
-                                        break;
-                                    default:
+                            // Find the index of the marker being deleted
+                            int index = 1;
+                            for (int i = 0; i < markers.size(); i++) {
+                                if (markers.get(i).equals(marker)) {
+                                    index = i;
+                                    break;
                                 }
                             }
+                            // Get the previous marker index
+                            if (index > 0) {
+                                index--;
+                            } else if (shapeType == GeometryType.LINESTRING) {
+                                // Select next marker in the line
+                                index++;
+                            } else {
+                                // Select previous polygon marker
+                                index = markers.size() - 1;
+                            }
+                            // Get the new marker to select
+                            Marker selectMarker = markers.get(index);
+
+                            // Delete the marker, select the new, and update the shape
+                            shapeMarkers.delete(marker);
+                            selectedMarker = null;
+                            selectShapeMarker(selectMarker);
+                            updateShape(selectMarker);
+
                         }
                     });
+                    deleteDialog.show();
 
-                    AlertDialog alert = builder.create();
-                    alert.show();
                 }
 
                 handled = true;
