@@ -171,6 +171,8 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
 
         imageView = (ImageView) findViewById(R.id.location_edit_marker);
 
+        map.getUiSettings().setCompassEnabled(false);
+        map.getUiSettings().setRotateGesturesEnabled(false);
         map.setOnCameraMoveListener(this);
         map.setOnMapClickListener(this);
         map.setOnMapLongClickListener(this);
