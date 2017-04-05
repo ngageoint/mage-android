@@ -36,7 +36,7 @@
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
                 android:hint="Latitude"
-                android:inputType="number|numberDecimal"
+                android:inputType="numberDecimal|numberSigned"
                 android:theme="@style/AppTheme.White"
                 android:imeOptions="actionDone"/>
 
@@ -52,7 +52,7 @@
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
                 android:hint="Longitude"
-                android:inputType="number|numberDecimal"
+                android:inputType="numberDecimal|numberSigned"
                 android:theme="@style/AppTheme.White"
                 android:imeOptions="actionDone"/>
 

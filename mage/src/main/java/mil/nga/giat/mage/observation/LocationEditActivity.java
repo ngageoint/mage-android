@@ -15,6 +15,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.content.res.AppCompatResources;
 import android.support.v7.widget.Toolbar;
 import android.text.Editable;
+import android.text.InputFilter;
 import android.text.TextWatcher;
 import android.view.KeyEvent;
 import android.view.Menu;
@@ -75,6 +76,7 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
 
     private static final String LOCATION_PRECISION = "%.6f";
     private final DecimalFormat locationFormatter = new DecimalFormat("0.000000");
+    private final int LOCATION_MAX_PRECISION = 6;
 
     private ObservationLocation location;
     private GoogleMap map;
@@ -123,6 +125,13 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
 
         longitudeEdit = (EditText) findViewById(R.id.location_edit_longitude);
         latitudeEdit = (EditText) findViewById(R.id.location_edit_latitude);
+        longitudeEdit
+                .setFilters(new InputFilter[]{new InputFilterDecimal(
+                        -180.0, 180.0, LOCATION_MAX_PRECISION)});
+        latitudeEdit
+                .setFilters(new InputFilter[]{new InputFilterDecimal(
+                        -90.0, 90.0, LOCATION_MAX_PRECISION)});
+
         clearLatitudeAndLongitudeFocus();
 
         vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
@@ -420,7 +429,7 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
                 AlertDialog.Builder changeDialog = new AlertDialog.Builder(this);
                 changeDialog.setTitle(title);
                 changeDialog.setMessage(message);
-                changeDialog.setNegativeButton(R.string.no,
+                changeDialog.setNegativeButton(R.string.cancel,
                         new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog,
@@ -435,7 +444,7 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
                                 revertShapeType();
                             }
                         });
-                changeDialog.setPositiveButton(R.string.yes,
+                changeDialog.setPositiveButton(R.string.change,
                         new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
@@ -698,8 +707,18 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
         String latitudeString = latitudeEdit.getText().toString();
         String longitudeString = longitudeEdit.getText().toString();
         if (!latitudeString.isEmpty() && !longitudeString.isEmpty()) {
-            double latitude = Double.parseDouble(latitudeString);
-            double longitude = Double.parseDouble(longitudeString);
+            double latitude;
+            try {
+                latitude = Double.parseDouble(latitudeString);
+            } catch (NumberFormatException e) {
+                latitude = 0.0;
+            }
+            double longitude;
+            try {
+                longitude = Double.parseDouble(longitudeString);
+            } catch (NumberFormatException e) {
+                longitude = 0.0;
+            }
             LatLng latLng = new LatLng(latitude, longitude);
 
             map.moveCamera(CameraUpdateFactory.newLatLng(latLng));
@@ -992,8 +1011,8 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
                     deleteDialog.setTitle(R.string.location_edit_delete_point_title);
                     deleteDialog.setMessage(String.format(getString(R.string.location_edit_delete_point_message),
                             locationFormatter.format(position.latitude), locationFormatter.format(position.longitude)));
-                    deleteDialog.setNegativeButton(R.string.no, null);
-                    deleteDialog.setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
+                    deleteDialog.setNegativeButton(R.string.cancel, null);
+                    deleteDialog.setPositiveButton(R.string.delete, new DialogInterface.OnClickListener() {
                         public void onClick(DialogInterface dialog, int which) {
 
                             List<Marker> markers = getShapeMarkers();
