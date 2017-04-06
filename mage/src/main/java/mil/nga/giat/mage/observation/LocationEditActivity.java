@@ -82,6 +82,7 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
     private GoogleMap map;
     private EditText longitudeEdit;
     private EditText latitudeEdit;
+    private TextView hintText;
     private MapFragment mapFragment;
     private GoogleMapShapeMarkers shapeMarkers;
     private final GoogleMapShapeConverter shapeConverter = new GoogleMapShapeConverter();
@@ -134,6 +135,8 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
                         -90.0, 90.0, LOCATION_MAX_PRECISION)});
 
         clearLatitudeAndLongitudeFocus();
+
+        hintText = (TextView) findViewById(R.id.location_edit_hint);
 
         vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
 
@@ -393,6 +396,8 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
         // Only care if not the current shape type
         if (selectedType != shapeType || selectedRectangle != isRectangle) {
 
+            clearLatitudeAndLongitudeFocus();
+
             String title = null;
             String message = null;
 
@@ -589,8 +594,8 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
             }
         }
 
-        addMapShape(geometry);
         shapeType = selectedType;
+        addMapShape(geometry);
         setShapeTypeSelection();
         updateAcceptState();
     }
@@ -661,6 +666,63 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
             }
             selectShapeMarker(selectMarker);
         }
+
+        updateHint();
+    }
+
+    /**
+     * Update the hint text
+     */
+    private void updateHint() {
+        updateHint(false);
+    }
+
+    /**
+     * Update the hint text
+     *
+     * @param dragging true if a point is currently being dragged
+     */
+    private void updateHint(boolean dragging) {
+
+        boolean locationEdit = getCurrentFocus() == longitudeEdit || getCurrentFocus() == latitudeEdit;
+
+        String hint = "";
+
+        switch (shapeType) {
+            case POINT:
+                if (locationEdit) {
+                    hint = getString(R.string.location_edit_hint_point_edit);
+                } else {
+                    hint = getString(R.string.location_edit_hint_point);
+                }
+                break;
+            case POLYGON:
+                if (isRectangle) {
+                    if (locationEdit) {
+                        hint = getString(R.string.location_edit_hint_rectangle_edit);
+                    } else if (dragging) {
+                        hint = getString(R.string.location_edit_hint_rectangle_drag);
+                    } else if (!multipleShapeMarkerPositions()) {
+                        hint = getString(R.string.location_edit_hint_rectangle_new);
+                    } else {
+                        hint = getString(R.string.location_edit_hint_rectangle);
+                    }
+                    break;
+                }
+            case LINESTRING:
+                if (locationEdit) {
+                    hint = getString(R.string.location_edit_hint_shape_edit);
+                } else if (dragging) {
+                    hint = getString(R.string.location_edit_hint_shape_drag);
+                } else if (newDrawing) {
+                    hint = getString(R.string.location_edit_hint_shape_new);
+                } else {
+                    hint = getString(R.string.location_edit_hint_shape);
+                }
+                break;
+        }
+
+        hintText.setText(hint);
     }
 
     /**
@@ -703,7 +765,7 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
     public void afterTextChanged(Editable s) {
         // Only handle when the longitude or latitude entries have focus
         if (getCurrentFocus() != longitudeEdit && getCurrentFocus() != latitudeEdit) {
-            if(!validLocation){
+            if (!validLocation) {
                 validLocation = true;
                 updateAcceptState();
             }
@@ -731,10 +793,10 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
 
         validLocation = latitude != null && longitude != null;
 
-        if(latitude == null){
+        if (latitude == null) {
             latitude = 0.0;
         }
-        if(longitude == null){
+        if (longitude == null) {
             longitude = 0.0;
         }
 
@@ -744,7 +806,7 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
         if (selectedMarker != null) {
             selectedMarker.setPosition(latLng);
             updateShape(selectedMarker);
-        }else{
+        } else {
             updateAcceptState();
         }
 
@@ -840,7 +902,7 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
                 InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
                 imm.hideSoftInputFromWindow(v.getApplicationWindowToken(), 0);
             }
-
+            updateHint();
         }
     }
 
@@ -863,6 +925,7 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
         if (isRectangle && shapeMarkers != null) {
             shapeMarkers.setVisibleMarkers(true);
         }
+        updateHint();
     }
 
     /**
@@ -871,6 +934,7 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
     @Override
     public void onMarkerDragStart(Marker marker) {
         clearLatitudeAndLongitudeFocus();
+        updateHint(true);
         vibrator.vibrate(getResources().getInteger(
                 R.integer.shape_edit_drag_long_click_vibrate));
         selectShapeMarker(marker);
@@ -1004,6 +1068,7 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
                         R.integer.shape_edit_add_long_click_vibrate));
                 selectedMarker.setPosition(point);
                 updateShape(selectedMarker);
+                updateHint();
             }
         }
     }
@@ -1063,6 +1128,7 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
                             selectedMarker = null;
                             selectShapeMarker(selectMarker);
                             updateShape(selectMarker);
+                            updateHint();
 
                         }
                     });
