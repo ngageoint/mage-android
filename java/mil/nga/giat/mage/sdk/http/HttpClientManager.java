@@ -33,6 +33,7 @@ public class HttpClientManager implements IEventDispatcher<IUserEventListener> {
     private static final String LOG_NAME = HttpClientManager.class.getName();
 
     private static HttpClientManager httpClientManager;
+    private String userAgent;
 
     private Context context;
     private Collection<IUserEventListener> listeners = new CopyOnWriteArrayList<>();
@@ -43,14 +44,18 @@ public class HttpClientManager implements IEventDispatcher<IUserEventListener> {
         }
 
         if (httpClientManager == null) {
-            httpClientManager = new HttpClientManager(context);
+            String userAgent = System.getProperty("http.agent");
+            userAgent = (userAgent == null) ? "" : userAgent;
+
+            httpClientManager = new HttpClientManager(context, userAgent);
         }
 
         return httpClientManager;
     }
 
-    private HttpClientManager(Context context) {
+    private HttpClientManager(Context context, String userAgent) {
         this.context = context;
+        this.userAgent = userAgent;
     }
 
     public OkHttpClient httpClient() {
@@ -68,7 +73,8 @@ public class HttpClientManager implements IEventDispatcher<IUserEventListener> {
                 }
 
                 // add Accept-Encoding:gzip
-                builder.addHeader("Accept-Encoding", "gzip");
+                builder.addHeader("Accept-Encoding", "gzip")
+                    .addHeader("User-Agent", userAgent);
 
                 Response response = chain.proceed(builder.build());
 
