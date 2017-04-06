@@ -93,13 +93,13 @@
     <string name="location_edit_to_rectangle_message">Change to a shape encompassing rectangle?</string>
     <string name="location_edit_hint_point">Drag map to move point</string>
     <string name="location_edit_hint_point_edit">Manually modify point coordinates</string>
-    <string name="location_edit_hint_rectangle">"Long click point to adjust corner"</string>
-    <string name="location_edit_hint_rectangle_new">"Long click map or point to draw rectangle"</string>
-    <string name="location_edit_hint_rectangle_drag">"Drag and release to adjust corner"</string>
+    <string name="location_edit_hint_rectangle">Long click point to adjust corner</string>
+    <string name="location_edit_hint_rectangle_new">Long click map or point to draw rectangle</string>
+    <string name="location_edit_hint_rectangle_drag">Drag and release to adjust corner</string>
     <string name="location_edit_hint_rectangle_edit">Manually modify corner coordinates</string>
-    <string name="location_edit_hint_shape">"Long click map to insert point between nearest points"</string>
-    <string name="location_edit_hint_shape_new">"Long click map to add next point"</string>
-    <string name="location_edit_hint_shape_drag">"Drag and release to adjust location"</string>
-    <string name="location_edit_hint_shape_edit">"Manually modify point coordinates"</string>
+    <string name="location_edit_hint_shape">Long click map to insert point between nearest points</string>
+    <string name="location_edit_hint_shape_new">Long click map to add next point</string>
+    <string name="location_edit_hint_shape_drag">Drag and release to adjust location</string>
+    <string name="location_edit_hint_shape_edit">Manually modify point coordinates</string>
 
 </resources>
