@@ -140,7 +140,6 @@ public class UserDeserializer extends Deserializer {
 
 		Collection<Permission> permissions = new ArrayList<>();
 		while (parser.nextToken() != JsonToken.END_ARRAY) {
-			parser.nextToken();
 			String permission = parser.getText().toUpperCase(Locale.US);
 			permissions.add(Permission.valueOf(permission));
 		}
