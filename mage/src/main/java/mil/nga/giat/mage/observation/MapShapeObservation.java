@@ -15,7 +15,7 @@ public abstract class MapShapeObservation extends MapObservation {
     /**
      * Flag indicating whether to use geodesic observation shapes
      */
-    public static final boolean GEODESIC = true;
+    public static final boolean GEODESIC = false;
 
     /**
      * Map shape
