@@ -1265,6 +1265,7 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
     private PolylineOptions getEditPolylineOptions() {
         PolylineOptions polylineOptions = new PolylineOptions();
         polylineOptions.color(ContextCompat.getColor(this, R.color.polyline_edit_color));
+        polylineOptions.geodesic(MapShapeObservation.GEODESIC);
         return polylineOptions;
     }
 
@@ -1277,6 +1278,7 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
         PolygonOptions polygonOptions = new PolygonOptions();
         polygonOptions.strokeColor(ContextCompat.getColor(this, R.color.polygon_edit_color));
         polygonOptions.fillColor(ContextCompat.getColor(this, R.color.polygon_edit_fill_color));
+        polygonOptions.geodesic(MapShapeObservation.GEODESIC);
         return polygonOptions;
     }
 
