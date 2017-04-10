@@ -11,6 +11,7 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 
+import mil.nga.geopackage.projection.ProjectionConstants;
 import mil.nga.giat.mage.sdk.utils.GeometryUtility;
 import mil.nga.wkb.geom.CompoundCurve;
 import mil.nga.wkb.geom.Geometry;
@@ -369,7 +370,7 @@ public class ObservationLocation implements Parcelable {
      * @return geometry envelope
      */
     public GeometryEnvelope getGeometryEnvelope() {
-        return GeometryEnvelopeBuilder.buildEnvelope(geometry);
+        return GeometryEnvelopeBuilder.buildEnvelope(geometry, 2 * ProjectionConstants.WGS84_HALF_WORLD_LON_WIDTH);
     }
 
     /**

@@ -57,6 +57,7 @@ import mil.nga.geopackage.map.geom.GoogleMapShapeMarkers;
 import mil.nga.geopackage.map.geom.PolygonMarkers;
 import mil.nga.geopackage.map.geom.PolylineMarkers;
 import mil.nga.geopackage.map.geom.ShapeMarkers;
+import mil.nga.geopackage.projection.ProjectionConstants;
 import mil.nga.giat.mage.R;
 import mil.nga.wkb.geom.Geometry;
 import mil.nga.wkb.geom.GeometryEnvelope;
@@ -573,7 +574,7 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
 
                     // If converting to a rectangle, use the current shape bounds
                     if (selectedRectangle) {
-                        GeometryEnvelope envelope = GeometryEnvelopeBuilder.buildEnvelope(lineString);
+                        GeometryEnvelope envelope = GeometryEnvelopeBuilder.buildEnvelope(lineString, 2 * ProjectionConstants.WGS84_HALF_WORLD_LON_WIDTH);
                         lineString = new LineString();
                         lineString.addPoint(new Point(envelope.getMinX(), envelope.getMaxY()));
                         lineString.addPoint(new Point(envelope.getMinX(), envelope.getMinY()));
