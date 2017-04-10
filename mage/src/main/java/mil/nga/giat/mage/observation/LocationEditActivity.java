@@ -304,47 +304,6 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
     }
 
     /**
-     * Check if the points form a rectangle
-     *
-     * @param points points
-     * @return true if a rectangle
-     */
-    private boolean checkIfRectangle(List<Point> points) {
-        return checkIfRectangleAndFindSide(points) != null;
-    }
-
-    /**
-     * Check if the points form a rectangle and return if the side one has the same x
-     *
-     * @param points points
-     * @return null if not a rectangle, true if same x side 1, false if same y side 1
-     */
-    private Boolean checkIfRectangleAndFindSide(List<Point> points) {
-        Boolean sameXSide1 = null;
-        int size = points.size();
-        if (size == 4 || size == 5) {
-            Point point1 = points.get(0);
-            Point lastPoint = points.get(points.size() - 1);
-            boolean closed = point1.getX() == lastPoint.getX() && point1.getY() == lastPoint.getY();
-            if ((closed && size == 5) || (!closed && size == 4)) {
-                Point point2 = points.get(1);
-                Point point3 = points.get(2);
-                Point point4 = points.get(3);
-                if (point1.getX() == point2.getX() && point2.getY() == point3.getY()) {
-                    if (point1.getY() == point4.getY() && point3.getX() == point4.getX()) {
-                        sameXSide1 = true;
-                    }
-                } else if (point1.getY() == point2.getY() && point2.getX() == point3.getX()) {
-                    if (point1.getX() == point4.getX() && point3.getY() == point4.getY()) {
-                        sameXSide1 = false;
-                    }
-                }
-            }
-        }
-        return sameXSide1;
-    }
-
-    /**
      * Revert the selected shape type to the current shape type
      */
     private void revertShapeType() {
@@ -414,7 +373,7 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
                         for (Marker marker : markers) {
                             points.add(shapeConverter.toPoint(marker.getPosition()));
                         }
-                        formRectangle = checkIfRectangle(points);
+                        formRectangle = ObservationLocation.checkIfRectangle(points);
                     }
                     if (!formRectangle) {
                         // Points currently do not form a rectangle

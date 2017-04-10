@@ -82,6 +82,7 @@ import mil.nga.giat.mage.sdk.exceptions.UserException;
 import mil.nga.giat.mage.sdk.utils.DateFormatFactory;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
 import mil.nga.wkb.geom.Geometry;
+import mil.nga.wkb.geom.GeometryType;
 
 public class ObservationEditActivity extends AppCompatActivity implements OnMapReadyCallback, OnCameraIdleListener {
 
@@ -350,17 +351,24 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 
 		LatLng pointLatLng = location.getCentroidLatLng();
 
-		// TODO Geometry
-		((TextView) findViewById(R.id.location)).setText(latLngFormat.format(pointLatLng.latitude) + ", " + latLngFormat.format(pointLatLng.longitude));
-		if (location.getProvider() != null) {
-			((TextView)findViewById(R.id.location_provider)).setText("("+location.getProvider()+")");
-		} else {
-			findViewById(R.id.location_provider).setVisibility(View.GONE);
+		Geometry geometry = location.getGeometry();
+		TextView locationTextView = (TextView) findViewById(R.id.location);
+		if(geometry.getGeometryType() == GeometryType.POINT) {
+			locationTextView.setText(latLngFormat.format(pointLatLng.latitude) + ", " + latLngFormat.format(pointLatLng.longitude));
+		}else{
+			locationTextView.setText(location.getShapeLabel());
 		}
-		if (location.getAccuracy() != 0) {
-			((TextView)findViewById(R.id.location_accuracy)).setText("\u00B1" + location.getAccuracy() + "m");
+		TextView providerTextView = (TextView) findViewById(R.id.location_provider);
+		if (location.getProvider() != null) {
+			providerTextView.setText("("+location.getProvider()+")");
 		} else {
-			findViewById(R.id.location_accuracy).setVisibility(View.GONE);
+			providerTextView.setVisibility(View.GONE);
+		}
+		TextView accuracyTextView = (TextView) findViewById(R.id.location_accuracy);
+		if (location.getAccuracy() != 0) {
+			accuracyTextView.setText("\u00B1" + location.getAccuracy() + "m");
+		} else {
+			accuracyTextView.setVisibility(View.GONE);
 		}
 
 		locationElapsedTimeMilliseconds = getElapsedTimeInMilliseconds();

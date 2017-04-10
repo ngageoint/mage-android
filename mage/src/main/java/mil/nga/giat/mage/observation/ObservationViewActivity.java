@@ -57,6 +57,7 @@ import mil.nga.giat.mage.sdk.exceptions.ObservationException;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
 import mil.nga.giat.mage.sdk.utils.DateFormatFactory;
 import mil.nga.wkb.geom.Geometry;
+import mil.nga.wkb.geom.GeometryType;
 
 public class ObservationViewActivity extends AppCompatActivity implements OnMapReadyCallback, OnCameraIdleListener {
 
@@ -223,18 +224,24 @@ public class ObservationViewActivity extends AppCompatActivity implements OnMapR
 
 			Geometry geometry = o.getGeometry();
 			ObservationLocation location = new ObservationLocation(geometry);
-			LatLng latLng = location.getCentroidLatLng();
-			// TODO Geometry
-			((TextView) findViewById(R.id.location)).setText(latLngFormat.format(latLng.latitude) + ", " + latLngFormat.format(latLng.longitude));
-			if (propertiesMap.containsKey("provider")) {
-				((TextView) findViewById(R.id.location_provider)).setText("(" + propertiesMap.get("provider").getValue() + ")");
-			} else {
-				findViewById(R.id.location_provider).setVisibility(View.GONE);
+			TextView locationTextView = (TextView) findViewById(R.id.location);
+			if(geometry.getGeometryType() == GeometryType.POINT) {
+				LatLng latLng = location.getCentroidLatLng();
+				locationTextView.setText(latLngFormat.format(latLng.latitude) + ", " + latLngFormat.format(latLng.longitude));
+			}else{
+				locationTextView.setText(location.getShapeLabel());
 			}
-			if (propertiesMap.containsKey("accuracy") && Float.parseFloat(propertiesMap.get("accuracy").getValue().toString()) > 0f) {
-				((TextView) findViewById(R.id.location_accuracy)).setText("\u00B1" + propertiesMap.get("accuracy").getValue().toString() + "m");
+			TextView providerTextView = (TextView) findViewById(R.id.location_provider);
+			if (propertiesMap.containsKey("provider")) {
+				providerTextView.setText("(" + propertiesMap.get("provider").getValue() + ")");
 			} else {
-				findViewById(R.id.location_accuracy).setVisibility(View.GONE);
+				providerTextView.setVisibility(View.GONE);
+			}
+			TextView accuracyTextView = (TextView) findViewById(R.id.location_accuracy);
+			if (propertiesMap.containsKey("accuracy") && Float.parseFloat(propertiesMap.get("accuracy").getValue().toString()) > 0f) {
+				accuracyTextView.setText("\u00B1" + propertiesMap.get("accuracy").getValue().toString() + "m");
+			} else {
+				accuracyTextView.setVisibility(View.GONE);
 			}
 
 			map.getUiSettings().setZoomControlsEnabled(false);
