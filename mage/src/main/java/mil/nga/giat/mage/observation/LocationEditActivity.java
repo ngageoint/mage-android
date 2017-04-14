@@ -234,8 +234,8 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
      */
     private void setupMapButton(FloatingActionButton button) {
         Drawable drawable = DrawableCompat.wrap(button.getDrawable());
-        DrawableCompat.setTintList(drawable, AppCompatResources.getColorStateList(this, R.color.toggle_button_selected));
         button.setImageDrawable(drawable);
+        DrawableCompat.setTintList(drawable, AppCompatResources.getColorStateList(this, R.color.toggle_button_selected));
         button.setOnClickListener(this);
     }
 
