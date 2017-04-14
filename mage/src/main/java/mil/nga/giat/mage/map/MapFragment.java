@@ -197,8 +197,8 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 
 		searchButton = (FloatingActionButton) view.findViewById(R.id.map_search_button);
 		Drawable drawable = DrawableCompat.wrap(searchButton.getDrawable());
-		DrawableCompat.setTintList(drawable, AppCompatResources.getColorStateList(getContext(), R.color.map_search_icon));
 		searchButton.setImageDrawable(drawable);
+		DrawableCompat.setTintList(drawable, AppCompatResources.getColorStateList(getContext(), R.color.map_search_icon));
 
 		searchButton.setOnClickListener(new OnClickListener() {
 			@Override
