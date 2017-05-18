@@ -372,7 +372,9 @@ public class ObservationLocation implements Parcelable {
      * @return geometry envelope
      */
     public GeometryEnvelope getGeometryEnvelope() {
-        return GeometryEnvelopeBuilder.buildEnvelope(geometry, 2 * ProjectionConstants.WGS84_HALF_WORLD_LON_WIDTH);
+        Geometry geometryCopy = geometry.copy();
+        GeometryUtils.minimizeGeometry(geometryCopy, ProjectionConstants.WGS84_HALF_WORLD_LON_WIDTH);
+        return GeometryEnvelopeBuilder.buildEnvelope(geometryCopy);
     }
 
     /**

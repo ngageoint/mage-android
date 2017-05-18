@@ -66,6 +66,7 @@ import mil.nga.wkb.geom.LineString;
 import mil.nga.wkb.geom.Point;
 import mil.nga.wkb.geom.Polygon;
 import mil.nga.wkb.util.GeometryEnvelopeBuilder;
+import mil.nga.wkb.util.GeometryUtils;
 
 public class LocationEditActivity extends AppCompatActivity implements TextWatcher, View.OnFocusChangeListener,
         OnMapClickListener, OnMapReadyCallback, OnCameraMoveListener, OnCameraIdleListener,
@@ -533,7 +534,9 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
 
                     // If converting to a rectangle, use the current shape bounds
                     if (selectedRectangle) {
-                        GeometryEnvelope envelope = GeometryEnvelopeBuilder.buildEnvelope(lineString, 2 * ProjectionConstants.WGS84_HALF_WORLD_LON_WIDTH);
+                        LineString lineStringCopy = (LineString)lineString.copy();
+                        GeometryUtils.minimizeGeometry(lineStringCopy, ProjectionConstants.WGS84_HALF_WORLD_LON_WIDTH);
+                        GeometryEnvelope envelope = GeometryEnvelopeBuilder.buildEnvelope(lineStringCopy);
                         lineString = new LineString();
                         lineString.addPoint(new Point(envelope.getMinX(), envelope.getMaxY()));
                         lineString.addPoint(new Point(envelope.getMinX(), envelope.getMinY()));
