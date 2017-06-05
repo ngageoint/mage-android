@@ -232,12 +232,8 @@ public class ObservationViewActivity extends AppCompatActivity implements OnMapR
 			Geometry geometry = o.getGeometry();
 			ObservationLocation location = new ObservationLocation(geometry);
 			TextView locationTextView = (TextView) findViewById(R.id.location);
-			if(geometry.getGeometryType() == GeometryType.POINT) {
-				LatLng latLng = location.getCentroidLatLng();
-				locationTextView.setText(latLngFormat.format(latLng.latitude) + ", " + latLngFormat.format(latLng.longitude));
-			}else{
-				locationTextView.setText(location.getShapeLabel());
-			}
+			LatLng latLng = location.getCentroidLatLng();
+			locationTextView.setText(latLngFormat.format(latLng.latitude) + ", " + latLngFormat.format(latLng.longitude));
 			TextView providerTextView = (TextView) findViewById(R.id.location_provider);
 			if (propertiesMap.containsKey("provider")) {
 				providerTextView.setText("(" + propertiesMap.get("provider").getValue() + ")");

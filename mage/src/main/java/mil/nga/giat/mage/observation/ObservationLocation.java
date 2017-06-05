@@ -470,37 +470,6 @@ public class ObservationLocation implements Parcelable {
     }
 
     /**
-     * Get the shape string label
-     *
-     * @return shape label
-     */
-    public String getShapeLabel() {
-        GeometryType geometryType = geometry.getGeometryType();
-        String label = null;
-        switch (geometryType) {
-            case POINT:
-                label = geometryType.getName();
-                break;
-            case LINESTRING:
-                label = "Line";
-                break;
-            case POLYGON:
-                Polygon polygon = (Polygon) geometry;
-                List<LineString> rings = polygon.getRings();
-                if (!rings.isEmpty() && checkIfRectangle(rings.get(0).getPoints())) {
-                    label = "Rectangle";
-                } else {
-                    label = geometryType.getName();
-                }
-                break;
-        }
-
-        label = label.substring(0, 1).toUpperCase() + label.substring(1).toLowerCase();
-
-        return label;
-    }
-
-    /**
      * {@inheritDoc}
      */
     @Override

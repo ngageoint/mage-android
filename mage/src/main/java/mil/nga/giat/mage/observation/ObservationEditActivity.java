@@ -355,11 +355,7 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 
 		Geometry geometry = location.getGeometry();
 		TextView locationTextView = (TextView) findViewById(R.id.location);
-		if(geometry.getGeometryType() == GeometryType.POINT) {
-			locationTextView.setText(latLngFormat.format(pointLatLng.latitude) + ", " + latLngFormat.format(pointLatLng.longitude));
-		}else{
-			locationTextView.setText(location.getShapeLabel());
-		}
+		locationTextView.setText(latLngFormat.format(pointLatLng.latitude) + ", " + latLngFormat.format(pointLatLng.longitude));
 		TextView providerTextView = (TextView) findViewById(R.id.location_provider);
 		if (location.getProvider() != null) {
 			providerTextView.setText("("+location.getProvider()+")");
