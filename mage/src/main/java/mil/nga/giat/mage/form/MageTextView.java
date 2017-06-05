@@ -15,14 +15,15 @@ import java.util.List;
 import java.util.Locale;
 
 import mil.nga.giat.mage.R;
-import mil.nga.giat.mage.sdk.utils.DateFormatFactory;
+import mil.nga.giat.mage.sdk.utils.ISO8601DateFormatFactory;
+import mil.nga.giat.mage.utils.DateFormatFactory;
 
 public class MageTextView extends AppCompatTextView implements MageControl {
 
 	private static final String LOG_NAME = MageTextView.class.getName();
 
-    private final DateFormat iso8601Format = DateFormatFactory.ISO8601();
-	private final DateFormat dateFormat = DateFormatFactory.format("yyyy-MM-dd HH:mm zz", Locale.getDefault());
+    private final DateFormat iso8601Format = ISO8601DateFormatFactory.ISO8601();
+	private DateFormat dateFormat;
 
 	private String propertyKey;
 	private MagePropertyType propertyType;
@@ -32,6 +33,7 @@ public class MageTextView extends AppCompatTextView implements MageControl {
 
 	public MageTextView(Context context, AttributeSet attrs) {
 		super(context, attrs);
+		dateFormat = DateFormatFactory.format("yyyy-MM-dd HH:mm zz", Locale.getDefault(), context);
 		TypedArray typedArray = context.obtainStyledAttributes(attrs, R.styleable.MageFormElement);
 		setPropertyKey(typedArray.getString(R.styleable.MageFormElement_propertyKey));
 		setPropertyType(MagePropertyType.getPropertyType(typedArray.getInt(R.styleable.MageFormElement_propertyType, 0)));

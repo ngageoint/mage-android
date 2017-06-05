@@ -125,6 +125,9 @@ public class SignupActivity extends AppCompatActivity implements AccountDelegate
 
 	private void configureSignup() {
 		PreferenceHelper preferenceHelper = PreferenceHelper.getInstance(getApplicationContext());
+		boolean googleAuthentication = preferenceHelper.containsGoogleAuthentication();
+		boolean localAuthentication = preferenceHelper.containsLocalAuthentication();
+
 		if (preferenceHelper.containsLocalAuthentication()) {
 			Button localButton = (Button) findViewById(R.id.local_signup_button);
 			localButton.setOnClickListener(new View.OnClickListener() {
@@ -135,8 +138,10 @@ public class SignupActivity extends AppCompatActivity implements AccountDelegate
 			});
 		}
 
+		Button googleButton = (Button) findViewById(R.id.google_signup_button);
+		googleButton.setVisibility(googleAuthentication ? View.VISIBLE : View.GONE);
+		findViewById(R.id.or).setVisibility(localAuthentication && googleAuthentication ? View.VISIBLE : View.GONE);
 		if (preferenceHelper.containsGoogleAuthentication()) {
-			Button googleButton = (Button) findViewById(R.id.google_signup_button);
 			googleButton.setOnClickListener(new View.OnClickListener() {
 				@Override
 				public void onClick(View v) {

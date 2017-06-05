@@ -18,13 +18,16 @@ import android.view.ViewGroup;
 import android.widget.DatePicker;
 import android.widget.TimePicker;
 
+import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.TimeZone;
 
 import mil.nga.giat.mage.R;
+import mil.nga.giat.mage.utils.DateFormatFactory;
 
 /**
  * Created by wnewman on 2/9/17.
@@ -40,8 +43,10 @@ public class DateTimePickerDialog extends DialogFragment {
 
     private Calendar calendar = Calendar.getInstance();
 
-    private SimpleDateFormat dateFormat = new SimpleDateFormat("MMM dd, yyyy", java.util.Locale.getDefault());
-    private SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm", java.util.Locale.getDefault());
+    private DateFormat dateFormat;
+    //new SimpleDateFormat("MMM dd, yyyy", java.util.Locale.getDefault());
+    private DateFormat timeFormat;
+    //new SimpleDateFormat("HH:mm",java.util.Locale.getDefault());
 
     private OnDateTimeChangedListener onDateTimeChangedListener;
 
@@ -59,7 +64,9 @@ public class DateTimePickerDialog extends DialogFragment {
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
+        dateFormat = DateFormatFactory.format("MMM dd, yyyy", java.util.Locale.getDefault(), getContext());
+        timeFormat = DateFormatFactory.format("HH:mm zz", java.util.Locale.getDefault(), getContext());
+        calendar.setTimeZone(dateFormat.getTimeZone());
         Date date = (Date) getArguments().getSerializable(DATE_TIME_EXTRA);
         if (date == null) {
             date = new Date();
@@ -71,7 +78,7 @@ public class DateTimePickerDialog extends DialogFragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         final Context contextThemeWrapper = new ContextThemeWrapper(getActivity(), R.style.AppTheme_PrimaryAccent);
-        LayoutInflater localInflater = inflater.cloneInContext(contextThemeWrapper);
+        LayoutInflater localInflater = inflater.cloneInContext(getContext());
         View view = localInflater.inflate(R.layout.date_time_dialog, container, false);
 
         final TabLayout tabLayout = (TabLayout) view.findViewById(R.id.tab_layout);
@@ -168,7 +175,6 @@ public class DateTimePickerDialog extends DialogFragment {
             Bundle bundle = new Bundle();
             bundle.putSerializable(DATE_TIME_EXTRA, date);
             fragment.setArguments(bundle);
-
             return fragment;
         }
 
@@ -180,6 +186,8 @@ public class DateTimePickerDialog extends DialogFragment {
             if (date == null) {
                 date = new Date();
             }
+
+            calendar.setTimeZone(DateFormatFactory.getTimeZone(getContext()));
 
             calendar.setTime(date);
         }
@@ -229,6 +237,7 @@ public class DateTimePickerDialog extends DialogFragment {
             if (date == null) {
                 date = new Date();
             }
+            calendar.setTimeZone(DateFormatFactory.getTimeZone(getContext()));
 
             calendar.setTime(date);
         }

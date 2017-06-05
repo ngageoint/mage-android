@@ -26,6 +26,16 @@
         <item>1024</item>
     </string-array>
 
+    <string-array name="timeZones">
+        <item>Local</item>
+        <item>GMT</item>
+    </string-array>
+
+    <string-array name="timeZoneValues">
+        <item>0</item>
+        <item>1</item>
+    </string-array>
+
     <string-array name="clearDataEntries">
         <item>Database</item>
         <item>Preferences</item>

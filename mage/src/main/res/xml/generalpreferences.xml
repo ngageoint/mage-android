@@ -19,6 +19,13 @@
             android:targetClass="mil.nga.giat.mage.preferences.FetchPreferencesActivity"
             android:targetPackage="mil.nga.giat.mage"/>
     </Preference>
+    <mil.nga.giat.mage.sdk.preferences.IntegerListPreference
+        android:defaultValue="@integer/timeZoneDefaultValue"
+        android:entries="@array/timeZones"
+        android:entryValues="@array/timeZoneValues"
+        android:key="@string/timeZoneKey"
+        android:summary="%s"
+        android:title="Time zone for display and editing"/>
     <android.support.v7.preference.SwitchPreferenceCompat
         android:defaultValue="@bool/notificationsEnabledDefaultValue"
         android:key="@string/notificationsEnabledKey"

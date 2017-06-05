@@ -19,6 +19,7 @@ import android.provider.Settings;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.content.FileProvider;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -62,6 +63,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import mil.nga.giat.mage.BuildConfig;
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.form.LayoutBaker;
 import mil.nga.giat.mage.form.LayoutBaker.ControlGenerationType;
@@ -79,7 +81,7 @@ import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.exceptions.ObservationException;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
-import mil.nga.giat.mage.sdk.utils.DateFormatFactory;
+import mil.nga.giat.mage.sdk.utils.ISO8601DateFormatFactory;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
 import mil.nga.wkb.geom.Geometry;
 import mil.nga.wkb.geom.GeometryType;
@@ -93,7 +95,7 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 	private static final int PERMISSIONS_REQUEST_AUDIO = 300;
 	private static final int PERMISSIONS_REQUEST_STORAGE = 400;
 
-	private final DateFormat iso8601Format = DateFormatFactory.ISO8601();
+	private final DateFormat iso8601Format = ISO8601DateFormatFactory.ISO8601();
 
 	public static final String OBSERVATION_ID = "OBSERVATION_ID";
 	public static final String LOCATION = "LOCATION";
@@ -272,7 +274,7 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 				Serializable value = ((MageTextView) findViewById(R.id.date)).getPropertyValue();
 				Date date = null;
 				try {
-					date = DateFormatFactory.ISO8601().parse(value.toString());
+					date = ISO8601DateFormatFactory.ISO8601().parse(value.toString());
 				} catch (ParseException pe) {
 					Log.e(LOG_NAME, "Problem parsing date.", pe);
 				}
@@ -614,7 +616,7 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 		try {
 			File file = MediaUtility.createImageFile();
 			currentMediaPath = file.getAbsolutePath();
-			Uri uri = Uri.fromFile(file);
+			Uri uri = FileProvider.getUriForFile(this, BuildConfig.APPLICATION_ID + ".fileprovider", file);
 			Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
 			intent.putExtra(MediaStore.EXTRA_OUTPUT, uri);
 			intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
@@ -628,7 +630,7 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 		try {
 			File file = MediaUtility.createVideoFile();
 			currentMediaPath = file.getAbsolutePath();
-			Uri uri = Uri.fromFile(file);
+			Uri uri = FileProvider.getUriForFile(this, BuildConfig.APPLICATION_ID + ".fileprovider", file);
 			Intent intent = new Intent(MediaStore.ACTION_VIDEO_CAPTURE);
 			intent.putExtra(MediaStore.EXTRA_OUTPUT, uri);
 			intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);

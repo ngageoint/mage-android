@@ -9,6 +9,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:calendarViewShown="false"
+        android:datePickerMode="spinner"
         android:theme="@style/AppTheme.PrimaryAccent"/>
 
 </LinearLayout>

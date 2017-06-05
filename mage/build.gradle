@@ -7,10 +7,6 @@ plugins {
 apply plugin: 'com.android.application'
 apply plugin: 'maven-publish'
 
-def serverURL = hasProperty('SERVER_URL') ? SERVER_URL : ''
-def googleMapsApiReleaseKey = hasProperty('RELEASE_MAPS_API_KEY') ? RELEASE_MAPS_API_KEY: ''
-def googleMapsApiDebugKey = hasProperty('DEBUG_MAPS_API_KEY') ? DEBUG_MAPS_API_KEY: ''
-
 group 'mil.nga.giat.mage'
 archivesBaseName = 'mage-android'
 version '5.3.0'
@@ -18,6 +14,12 @@ ext {
     versionCode = 25
     sourceRefspec = Grgit.open().head().id
 }
+
+def serverURL = hasProperty('SERVER_URL') ? SERVER_URL : ''
+def googleMapsApiReleaseKey = hasProperty('RELEASE_MAPS_API_KEY') ? RELEASE_MAPS_API_KEY : ''
+def googleMapsApiDebugKey = hasProperty('DEBUG_MAPS_API_KEY') ? DEBUG_MAPS_API_KEY : ''
+def signedApkPath = hasProperty('SIGNED_APK_PATH') ? SIGNED_APK_PATH : "${project.buildDir}/outputs/apk/${archivesBaseName}-defaults-release.apk"
+def signedDebugApkPath = hasProperty('SIGNED_DEBUG_APK_PATH') ? SIGNED_DEBUG_APK_PATH : "${project.buildDir}/outputs/apk/${archivesBaseName}-defaults-debug.apk"
 
 android {
     compileSdkVersion 25
@@ -42,18 +44,20 @@ android {
         resValue "string", "serverURLDefaultValue", serverURL
         resValue "string", "recentMapXYZDefaultValue", "263.0,40.0,3"
         resValue "bool", "isWearBuildDefaultValue", "false"
-        resValue 'string', 'source_refspec', project.sourceRefspec
+        resValue "string", "source_refspec", project.sourceRefspec
         manifestPlaceholders source_refspec: project.sourceRefspec
-        buildConfigField 'String', 'SOURCE_REFSPEC', $/"${project.sourceRefspec}"/$
+        buildConfigField "String", "SOURCE_REFSPEC", $/"${project.sourceRefspec}"/$
     }
 
     buildTypes {
         release {
             minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
+            proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.txt"
             resValue "string", "GOOGLE_MAPS_ANDROID_API_KEY", googleMapsApiReleaseKey
         }
         debug {
+            applicationIdSuffix ".debug"
+            versionNameSuffix "-debug"
             minifyEnabled false
             resValue "string", "GOOGLE_MAPS_ANDROID_API_KEY", googleMapsApiDebugKey
         }
@@ -61,8 +65,8 @@ android {
 
     productFlavors {
         defaults {
-            // if you build without a flavor gradle will build all flavors.
-            // Lets define this flavor to provide a flavor we can build with no overrides
+            // if you build without a flavor gradle will build all flavors
+            // define this flavor to provide a flavor we can build with no overrides
         }
         wear {
             resValue "bool", "isWearBuildDefaultValue", "true"
@@ -115,10 +119,19 @@ publishing {
             artifact "${project.buildDir}/outputs/apk/${archivesBaseName}-defaults-release-unsigned.apk", {
                 classifier 'unsigned'
             }
-            artifact "${project.buildDir}/outputs/apk/${archivesBaseName}-defaults-debug.apk", {
-                classifier 'debug'
+            if (file(signedApkPath).exists()) {
+                artifact signedApkPath
             }
-            artifact project.properties['SIGNED_APK_PATH'] ?: "${project.buildDir}/outputs/apk/${archivesBaseName}-defaults-release.apk"
+            if (file(signedDebugApkPath).exists()) {
+                artifact signedDebugApkPath, {
+                    classifier 'debug'
+                }
+            }
+            if (project.hasProperty('SKIP_DEBUG_SIGNING')) {
+                artifact "${project.buildDir}/outputs/apk/${archivesBaseName}-defaults-debug-unsigned.apk", {
+                    classifier 'debug-unsigned'
+                }
+            }
         }
     }
 }
@@ -181,7 +194,7 @@ task androidArtifactVersion {
 }
 
 configure extensions.android, {
-    if (project.hasProperty('RELEASE_STORE_FILE') && new File((String)project.getProperty('RELEASE_STORE_FILE')).exists()) {
+    if (project.hasProperty('RELEASE_STORE_FILE') && file(project.getProperty('RELEASE_STORE_FILE')).exists()) {
         signingConfigs {
             release {
                 storeFile file(RELEASE_STORE_FILE)
@@ -192,11 +205,19 @@ configure extensions.android, {
         }
         buildTypes {
             release {
-                setSigningConfig(signingConfigs.release)
+                signingConfig signingConfigs.release
             }
         }
     }
     else {
         println 'no release keystore configured'
+    }
+
+    if (project.hasProperty('SKIP_DEBUG_SIGNING')) {
+        buildTypes {
+            debug {
+                signingConfig null
+            }
+        }
     }
 }

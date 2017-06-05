@@ -146,6 +146,8 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 
 	private static final String LOG_NAME = MapFragment.class.getName();
 
+	private static final String MAP_VIEW_STATE = "MAP_VIEW_STATE";
+
 	private static final int PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 1;
 
 	private MAGE mage;
@@ -196,7 +198,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 		searchButton = (FloatingActionButton) view.findViewById(R.id.map_search_button);
 		Drawable drawable = DrawableCompat.wrap(searchButton.getDrawable());
 		searchButton.setImageDrawable(drawable);
-		DrawableCompat.setTintList(drawable, AppCompatResources.getColorStateList(getContext(), R.color.toggle_button_selected));
+		DrawableCompat.setTintList(drawable, AppCompatResources.getColorStateList(getContext(), R.color.map_search_icon));
 
 		searchButton.setOnClickListener(new OnClickListener() {
 			@Override
@@ -232,7 +234,8 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 		mapWrapper.addView(view);
 
 		mapView = (MapView) view.findViewById(R.id.mapView);
-		mapView.onCreate(savedInstanceState);
+		Bundle mapState = (savedInstanceState != null) ? savedInstanceState.getBundle(MAP_VIEW_STATE): null;
+		mapView.onCreate(mapState);
 		mapView.getMapAsync(this);
 
 		// Initialize the GeoPackage cache with a GeoPackage manager
@@ -397,6 +400,15 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 	}
 
 	@Override
+	public void onSaveInstanceState(Bundle outState) {
+		super.onSaveInstanceState(outState);
+
+		Bundle mapState = new Bundle();
+		mapView.onSaveInstanceState(mapState);
+		outState.putBundle(MAP_VIEW_STATE, mapState);
+	}
+
+	@Override
 	public void onResume() {
 		super.onResume();
 
@@ -451,7 +463,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 			refreshMyHistoricLocationsMarkersTask.cancel(true);
 			refreshMyHistoricLocationsMarkersTask = null;
 		}
-		
+
 		mapView.onPause();
 
 		CacheProvider.getInstance(getActivity().getApplicationContext()).unregisterCacheOverlayListener(this);
@@ -624,7 +636,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 		}
 		*/
 	}
-	
+
 	@Override
 	public void onInfoWindowClick(Marker marker) {
 		observations.onInfoWindowClick(marker);
@@ -642,11 +654,11 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 			for(Marker m :searchMarkers) {
 				 if(marker.getId().equals(m.getId())) {
 						m.showInfoWindow();
-						return true;		 
+						return true;
 				 }
 			}
 		}
-		
+
 		// You can only have one marker click listener per map.
 		// Lets listen here and shell out the click event to all
 		// my marker collections. Each one need to handle
