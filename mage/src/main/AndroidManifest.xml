@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     package="mil.nga.giat.mage"
     android:versionCode="1"
     android:versionName="1">
@@ -30,7 +31,8 @@
 
     <application
         android:name=".MAGE"
-        android:allowBackup="true"
+        tools:replace="android:allowBackup"
+        android:allowBackup="false"
         android:icon="@drawable/ic_launcher"
         android:label="@string/app_name"
         android:logo="@drawable/ic_wand"
