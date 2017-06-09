@@ -14,6 +14,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -91,60 +92,72 @@ public class ObservationHelper extends DaoHelper<Observation> implements IEventD
 		return create(observation, true);
 	}
 
-	public Observation create(Observation observation, Boolean sendUserNotifcations) throws ObservationException {
-
-		Observation createdObservation;
-
-		// Now we try and create the Observation structure.
+	public Observation create(final Observation observation, final Boolean sendUserNotifcations) throws ObservationException {
+		Observation savedObservation = null;
 		try {
-			// set last Modified
-			if (observation.getLastModified() == null) {
-				observation.setLastModified(new Date());
-			}
+			 savedObservation =  observationDao.callBatchTasks(new Callable<Observation>() {
+                @Override
+                public Observation call() throws Exception {
+					Observation createdObservation;
 
-			// create the Observation.
-			observationDao.create(observation);
+					// Now we try and create the Observation structure.
+					try {
+						// set last Modified
+						if (observation.getLastModified() == null) {
+							observation.setLastModified(new Date());
+						}
 
-			// create Observation properties.
-			Collection<ObservationProperty> properties = observation.getProperties();
-			if (properties != null) {
-				for (ObservationProperty property : properties) {
-					property.setObservation(observation);
-					observationPropertyDao.create(property);
-				}
-			}
+						// create the Observation.
+						observationDao.create(observation);
 
-			// create Observation favorites.
-			Collection<ObservationFavorite> favorites = observation.getFavorites();
-			if (favorites != null) {
-				for (ObservationFavorite favorite : favorites) {
-					favorite.setObservation(observation);
-					observationFavoriteDao.create(favorite);
-				}
-			}
+						// create Observation properties.
+						Collection<ObservationProperty> properties = observation.getProperties();
+						if (properties != null) {
+							for (ObservationProperty property : properties) {
+								property.setObservation(observation);
+								observationPropertyDao.create(property);
+							}
+						}
 
-			// create Observation attachments.
-			Collection<Attachment> attachments = observation.getAttachments();
-			for (Attachment attachment : attachments) {
-				try {
-					attachment.setObservation(observation);
-					AttachmentHelper.getInstance(mApplicationContext).create(attachment);
-				} catch (Exception e) {
-					throw new ObservationException("There was a problem creating the observations attachment: " + attachment + ".", e);
-				}
-			}
+						// create Observation favorites.
+						Collection<ObservationFavorite> favorites = observation.getFavorites();
+						if (favorites != null) {
+							for (ObservationFavorite favorite : favorites) {
+								favorite.setObservation(observation);
+								observationFavoriteDao.create(favorite);
+							}
+						}
 
-		} catch (SQLException sqle) {
-			Log.e(LOG_NAME, "There was a problem creating the observation: " + observation + ".", sqle);
-			throw new ObservationException("There was a problem creating the observation: " + observation + ".", sqle);
+						// create Observation attachments.
+						Collection<Attachment> attachments = observation.getAttachments();
+						for (Attachment attachment : attachments) {
+							try {
+								attachment.setObservation(observation);
+								AttachmentHelper.getInstance(mApplicationContext).create(attachment);
+							} catch (Exception e) {
+								throw new ObservationException("There was a problem creating the observations attachment: " + attachment + ".", e);
+							}
+						}
+
+					} catch (SQLException sqle) {
+						Log.e(LOG_NAME, "There was a problem creating the observation: " + observation + ".", sqle);
+						throw new ObservationException("There was a problem creating the observation: " + observation + ".", sqle);
+					}
+
+					// fire the event
+					for (IObservationEventListener listener : listeners) {
+						listener.onObservationCreated(Collections.singletonList(observation), sendUserNotifcations);
+					}
+
+					return observation;
+                }
+            });
+
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
 
-		// fire the event
-		for (IObservationEventListener listener : listeners) {
-			listener.onObservationCreated(Collections.singletonList(observation), sendUserNotifcations);
-		}
-
-		return observation;
+		return savedObservation;
 	}
 
 	@Override
@@ -189,122 +202,126 @@ public class ObservationHelper extends DaoHelper<Observation> implements IEventD
 	 * @throws ObservationException
 	 */
 	@Override
-	public Observation update(Observation observation) throws ObservationException {
+	public Observation update(final Observation observation) throws ObservationException {
 		Log.i(LOG_NAME, "Updating observation w/ id: " + observation.getId());
-
-		// set all the ids as needed
-	    Observation oldObservation = read(observation.getId());
-
-		Log.i(LOG_NAME, "Old Observation attachments " + oldObservation.getAttachments().size());
-
-		// if the observation is dirty, set the last_modified date!
-		// FIXME this is a server property and should not be set by the client,
-		// investigate why we are setting this
-		if (observation.isDirty()) {
-			observation.setLastModified(new Date());
-		}
-
-		// do the update
+		Observation updatedObservation = null;
 		try {
+			updatedObservation = observationDao.callBatchTasks(new Callable<Observation>() {
+                @Override
+                public Observation call() throws Exception {
+					// set all the ids as needed
+					Observation oldObservation = read(observation.getId());
 
-			ObservationImportant important = observation.getImportant();
-			ObservationImportant oldImportant = oldObservation.getImportant();
-			if (important != null) {
-				if (oldImportant != null) {
-					important.setId(oldImportant.getId());
-				}
+					Log.i(LOG_NAME, "Old Observation attachments " + oldObservation.getAttachments().size());
 
-				observationImportantDao.createOrUpdate(important);
-			} else {
-				if (oldImportant != null) {
-					observationImportantDao.deleteById(oldImportant.getId());
-				}
-			}
-
-			observationDao.update(observation);
-
-			Map<String, ObservationProperty> properties = observation.getPropertiesMap();
-			Map<String, ObservationProperty> oldProperties = oldObservation.getPropertiesMap();
-			Collection<String> commonProperties = Sets.intersection(properties.keySet(), oldProperties.keySet());
-
-			// Map database ids from old properties to new properties
-			for (String propertyKey : commonProperties) {
-				properties.get(propertyKey).setId(oldProperties.get(propertyKey).getId());
-			}
-
-			for (ObservationProperty property : properties.values()) {
-				property.setObservation(observation);
-				observationPropertyDao.createOrUpdate(property);
-			}
-
-			// Remove any properties that existed in the old observation but do not exist
-			// in the new observation.
-			for (String property : Sets.difference(oldProperties.keySet(), properties.keySet())) {
-				observationPropertyDao.deleteById(oldProperties.get(property).getId());
-			}
-
-			Map<String, ObservationFavorite> favorites = observation.getFavoritesMap();
-			Map<String, ObservationFavorite> oldFavorites = oldObservation.getFavoritesMap();
-			Collection<String> commonFavorites = Sets.intersection(favorites.keySet(), oldFavorites.keySet());
-
-			// Map database ids from old properties to new properties
-			for (String favoriteKey : commonFavorites) {
-				favorites.get(favoriteKey).setId(oldFavorites.get(favoriteKey).getId());
-			}
-
-			for (ObservationFavorite favorite : favorites.values()) {
-				favorite.setObservation(observation);
-				observationFavoriteDao.createOrUpdate(favorite);
-			}
-
-			// Remove any favorites that existed in the old observation but do not exist
-			// in the new observation.
-			for (String favorite : Sets.difference(oldFavorites.keySet(), favorites.keySet())) {
-				observationFavoriteDao.deleteById(oldFavorites.get(favorite).getId());
-			}
-
-			Log.i(LOG_NAME, "Observation attachments " + observation.getAttachments().size());
-
-			// FIXME : make this run faster?
-			for (Attachment a : observation.getAttachments()) {
-				for (Attachment oa : oldObservation.getAttachments()) {
-					if (a.getRemoteId() != null && a.getRemoteId().equalsIgnoreCase(oa.getRemoteId())) {
-						a.setId(oa.getId());
-						break;
+					// if the observation is dirty, set the last_modified date!
+					// FIXME this is a server property and should not be set by the client,
+					// investigate why we are setting this
+					if (observation.isDirty()) {
+						observation.setLastModified(new Date());
 					}
-				}
-			}
 
-			for (Attachment attachment : observation.getAttachments()) {
-				try {
-					attachment.setObservation(observation);
-					AttachmentHelper.getInstance(mApplicationContext).create(attachment);
-				} catch (Exception e) {
-					throw new ObservationException("There was a problem creating/updating the observations attachment: " + attachment + ".", e);
-				}
-			}
+					ObservationImportant important = observation.getImportant();
+					ObservationImportant oldImportant = oldObservation.getImportant();
+					if (important != null) {
+						if (oldImportant != null) {
+							important.setId(oldImportant.getId());
+						}
 
-			observationDao.refresh(observation);
-
-			if (observation.getRemoteId() != null) {
-				for (Attachment attachment : observation.getAttachments()) {
-					if (attachment.isDirty()) {
-						AttachmentHelper.getInstance(mApplicationContext).uploadableAttachment(attachment);
+						observationImportantDao.createOrUpdate(important);
+					} else {
+						if (oldImportant != null) {
+							observationImportantDao.deleteById(oldImportant.getId());
+						}
 					}
-				}
-			}
 
-		} catch (SQLException sqle) {
-			Log.e(LOG_NAME, "There was a problem updating the observation: " + observation + ".", sqle);
-			throw new ObservationException("There was a problem updating the observation: " + observation + ".", sqle);
+					observationDao.update(observation);
+
+					Map<String, ObservationProperty> properties = observation.getPropertiesMap();
+					Map<String, ObservationProperty> oldProperties = oldObservation.getPropertiesMap();
+					Collection<String> commonProperties = Sets.intersection(properties.keySet(), oldProperties.keySet());
+
+					// Map database ids from old properties to new properties
+					for (String propertyKey : commonProperties) {
+						properties.get(propertyKey).setId(oldProperties.get(propertyKey).getId());
+					}
+
+					for (ObservationProperty property : properties.values()) {
+						property.setObservation(observation);
+						observationPropertyDao.createOrUpdate(property);
+					}
+
+					// Remove any properties that existed in the old observation but do not exist
+					// in the new observation.
+					for (String property : Sets.difference(oldProperties.keySet(), properties.keySet())) {
+						observationPropertyDao.deleteById(oldProperties.get(property).getId());
+					}
+
+					Map<String, ObservationFavorite> favorites = observation.getFavoritesMap();
+					Map<String, ObservationFavorite> oldFavorites = oldObservation.getFavoritesMap();
+					Collection<String> commonFavorites = Sets.intersection(favorites.keySet(), oldFavorites.keySet());
+
+					// Map database ids from old properties to new properties
+					for (String favoriteKey : commonFavorites) {
+						favorites.get(favoriteKey).setId(oldFavorites.get(favoriteKey).getId());
+					}
+
+					for (ObservationFavorite favorite : favorites.values()) {
+						favorite.setObservation(observation);
+						observationFavoriteDao.createOrUpdate(favorite);
+					}
+
+					// Remove any favorites that existed in the old observation but do not exist
+					// in the new observation.
+					for (String favorite : Sets.difference(oldFavorites.keySet(), favorites.keySet())) {
+						observationFavoriteDao.deleteById(oldFavorites.get(favorite).getId());
+					}
+
+					Log.i(LOG_NAME, "Observation attachments " + observation.getAttachments().size());
+
+					// FIXME : make this run faster?
+					for (Attachment a : observation.getAttachments()) {
+						for (Attachment oa : oldObservation.getAttachments()) {
+							if (a.getRemoteId() != null && a.getRemoteId().equalsIgnoreCase(oa.getRemoteId())) {
+								a.setId(oa.getId());
+								break;
+							}
+						}
+					}
+
+					for (Attachment attachment : observation.getAttachments()) {
+						try {
+							attachment.setObservation(observation);
+							AttachmentHelper.getInstance(mApplicationContext).create(attachment);
+						} catch (Exception e) {
+							throw new ObservationException("There was a problem creating/updating the observations attachment: " + attachment + ".", e);
+						}
+					}
+
+					observationDao.refresh(observation);
+
+					if (observation.getRemoteId() != null) {
+						for (Attachment attachment : observation.getAttachments()) {
+							if (attachment.isDirty()) {
+								AttachmentHelper.getInstance(mApplicationContext).uploadableAttachment(attachment);
+							}
+						}
+					}
+
+					return observation;
+				}
+            });
+		} catch (Exception e) {
+			Log.e(LOG_NAME, "There was a problem updating the observation: " + observation + ".", e);
+			throw new ObservationException("There was a problem updating the observation: " + observation + ".", e);
 		}
-		
+
 		// fire the event
 		for (IObservationEventListener listener : listeners) {
-			listener.onObservationUpdated(observation);
+			listener.onObservationUpdated(updatedObservation);
 		}
 		
-		return observation;
+		return updatedObservation;
 	}
 
 
