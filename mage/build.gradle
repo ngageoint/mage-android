@@ -45,6 +45,7 @@ android {
         resValue "string", "recentMapXYZDefaultValue", "263.0,40.0,3"
         resValue "bool", "isWearBuildDefaultValue", "false"
         resValue "string", "source_refspec", project.sourceRefspec
+        resValue "string", "applicationId", applicationId
         manifestPlaceholders source_refspec: project.sourceRefspec
         buildConfigField "String", "SOURCE_REFSPEC", $/"${project.sourceRefspec}"/$
     }
@@ -60,6 +61,7 @@ android {
             versionNameSuffix "-debug"
             minifyEnabled false
             resValue "string", "GOOGLE_MAPS_ANDROID_API_KEY", googleMapsApiDebugKey
+            resValue "string", "applicationId", defaultConfig.applicationId + applicationIdSuffix
         }
     }
 
