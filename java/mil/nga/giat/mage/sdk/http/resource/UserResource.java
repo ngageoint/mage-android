@@ -179,7 +179,7 @@ public class UserResource {
         return users;
     }
 
-    public JsonObject createUser(String username, String displayname, String email, String uid, String password) throws Exception {
+    public JsonObject createUser(String username, String displayname, String email, String phone, String uid, String password) throws Exception {
         JsonObject user = null;
 
         String baseUrl = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.serverURLKey), context.getString(R.string.serverURLDefaultValue));
@@ -193,6 +193,7 @@ public class UserResource {
         json.addProperty("username", username);
         json.addProperty("displayName", displayname);
         json.addProperty("email", email);
+        json.addProperty("phone", phone);
         json.addProperty("uid", uid);
         json.addProperty("password", password);
         json.addProperty("passwordconfirm", password);

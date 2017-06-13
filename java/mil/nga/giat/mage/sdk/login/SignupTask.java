@@ -43,26 +43,27 @@ public class SignupTask extends AbstractAccountTask {
 	protected AccountStatus doInBackground(String... params) {
 
 		// get inputs
-		String displayName = params[0];
-		String username = params[1];
+		String username = params[0];
+		String displayName = params[1];
 		String email = params[2];
-		String password = params[3];
-		String serverURL = params[4];
+		String phone = params[3];
+		String password = params[4];
+		String serverURL = params[5];
 
 		// Make sure you have connectivity
 		if (!ConnectivityUtility.isOnline(mApplicationContext)) {
-			List<Integer> errorIndices = new ArrayList<Integer>();
+			List<Integer> errorIndices = new ArrayList<>();
 			errorIndices.add(5);
-			List<String> errorMessages = new ArrayList<String>();
+			List<String> errorMessages = new ArrayList<>();
 			errorMessages.add("No connection");
 			return new AccountStatus(AccountStatus.Status.FAILED_SIGNUP, errorIndices, errorMessages);
 		}
 
         String uuid = new DeviceUuidFactory(mApplicationContext).getDeviceUuid().toString();
 		if (uuid == null) {
-			List<Integer> errorIndices = new ArrayList<Integer>();
+			List<Integer> errorIndices = new ArrayList<>();
 			errorIndices.add(5);
-			List<String> errorMessages = new ArrayList<String>();
+			List<String> errorMessages = new ArrayList<>();
 			errorMessages.add("Problem generating device uuid");
 			return new AccountStatus(AccountStatus.Status.FAILED_SIGNUP, errorIndices, errorMessages);
 		}
@@ -71,23 +72,23 @@ public class SignupTask extends AbstractAccountTask {
 		try {
 			new URL(serverURL);
 		} catch (MalformedURLException e) {
-			List<Integer> errorIndices = new ArrayList<Integer>();
+			List<Integer> errorIndices = new ArrayList<>();
 			errorIndices.add(5);
-			List<String> errorMessages = new ArrayList<String>();
+			List<String> errorMessages = new ArrayList<>();
 			errorMessages.add("Bad URL");
 			return new AccountStatus(AccountStatus.Status.FAILED_SIGNUP, errorIndices, errorMessages);
 		}
 
 		try {
 			UserResource userResource = new UserResource(mApplicationContext);
-			JsonObject jsonUser = userResource.createUser(username, displayName, email, uuid, password);
+			JsonObject jsonUser = userResource.createUser(username, displayName, email, phone, uuid, password);
 			return new AccountStatus(AccountStatus.Status.SUCCESSFUL_SIGNUP, new ArrayList<Integer>(), new ArrayList<String>(), jsonUser);
 		} catch (Exception e) {
 			Log.e(LOG_NAME, "Problem signing up.", e);
 			if (!StringUtils.isBlank(e.getMessage())) {
-				List<Integer> errorIndices = new ArrayList<Integer>();
+				List<Integer> errorIndices = new ArrayList<>();
 				errorIndices.add(5);
-				List<String> errorMessages = new ArrayList<String>();
+				List<String> errorMessages = new ArrayList<>();
 				errorMessages.add(e.getMessage());
 				return new AccountStatus(AccountStatus.Status.FAILED_SIGNUP, errorIndices, errorMessages);
 			}
