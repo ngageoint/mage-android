@@ -11,7 +11,7 @@
         <FrameLayout
             android:id="@+id/sync_status"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content" >
+            android:layout_height="wrap_content">
         </FrameLayout>
 
         <RelativeLayout
@@ -301,6 +301,7 @@
                             android:gravity="center"
                             android:text="FLAG AS IMPORTANT"
                             android:textColor="@color/observation_flag_active"
+                            android:alpha=".87"
                             android:onClick="onUpdateImportantClick"/>
 
                     </LinearLayout>
