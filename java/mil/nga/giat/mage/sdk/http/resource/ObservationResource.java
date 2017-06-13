@@ -25,10 +25,12 @@ import mil.nga.giat.mage.sdk.R;
 import mil.nga.giat.mage.sdk.datastore.DaoStore;
 import mil.nga.giat.mage.sdk.datastore.observation.Attachment;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
+import mil.nga.giat.mage.sdk.datastore.observation.ObservationError;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationFavorite;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationImportant;
 import mil.nga.giat.mage.sdk.datastore.user.Event;
+import mil.nga.giat.mage.sdk.exceptions.ObservationException;
 import mil.nga.giat.mage.sdk.http.HttpClientManager;
 import mil.nga.giat.mage.sdk.http.converter.AttachmentConverterFactory;
 import mil.nga.giat.mage.sdk.http.converter.ObservationConverterFactory;
@@ -163,15 +165,43 @@ public class ObservationResource {
                 Observation returnedObservation = response.body();
                 returnedObservation.setDirty(Boolean.FALSE);
                 returnedObservation.setId(observation.getId());
-                savedObservation = observationHelper.update(returnedObservation);
+
+                try {
+                    savedObservation = observationHelper.update(returnedObservation);
+                } catch (ObservationException oe) {
+                    Log.e(LOG_NAME, "Problem updating observation after server response", oe);
+                }
             } else {
                 Log.e(LOG_NAME, "Bad request.");
+
+                ObservationError observationError = new ObservationError();
+                observationError.setStatusCode(response.code());
+                observationError.setDescription(response.message());
+
                 if (response.errorBody() != null) {
-                    Log.e(LOG_NAME, response.errorBody().string());
+                    String errorBody = response.errorBody().string();
+                    Log.e(LOG_NAME, errorBody);
+
+                    observationError.setMessage(errorBody);
+                }
+
+                try {
+                    observationHelper.update(observation);
+                } catch (ObservationException oe) {
+                    Log.e(LOG_NAME, "Problem updating observation error", oe);
                 }
             }
-        } catch (Exception e) {
+        } catch (IOException e) {
             Log.e(LOG_NAME, "Failure saving observation.", e);
+
+            ObservationError observationError = new ObservationError();
+            observationError.setMessage("The Internet connection appears to be offline.");
+            observation.setError(observationError);
+            try {
+                observationHelper.update(observation);
+            } catch (ObservationException oe) {
+                Log.e(LOG_NAME, "Problem updating observation error", oe);
+            }
         }
 
         return savedObservation;

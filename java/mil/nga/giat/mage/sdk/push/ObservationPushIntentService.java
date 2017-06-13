@@ -18,7 +18,6 @@ import mil.nga.giat.mage.sdk.datastore.observation.ObservationImportant;
 import mil.nga.giat.mage.sdk.event.IObservationEventListener;
 import mil.nga.giat.mage.sdk.exceptions.ObservationException;
 import mil.nga.giat.mage.sdk.http.resource.ObservationResource;
-import mil.nga.giat.mage.sdk.login.LoginTaskFactory;
 
 public class ObservationPushIntentService extends ConnectivityAwareIntentService implements IObservationEventListener {
 
@@ -45,21 +44,17 @@ public class ObservationPushIntentService extends ConnectivityAwareIntentService
 
 		ObservationResource observationResource = new ObservationResource(getApplicationContext());
 		while (!isCanceled) {
-			if (isConnected && !LoginTaskFactory.getInstance(getApplicationContext()).isLocalLogin()) {
-				pushFrequency = getObservationPushFrequency();
+			pushFrequency = getObservationPushFrequency();
 
-				// push dirty observations
-				pushObservations(observationResource);
+			// push dirty observations
+			pushObservations(observationResource);
 
-				// push dirty observation favorites
-				pushImportant(observationResource);
+			// push dirty observation favorites
+			pushImportant(observationResource);
 
-				// push dirty observation important
-				pushFavorite(observationResource);
+			// push dirty observation important
+			pushFavorite(observationResource);
 
-			} else {
-				Log.d(LOG_NAME, "The device is currently disconnected. Can't push observations.");
-			}
 			long lastFetchTime = new Date().getTime();
 			long currentTime = new Date().getTime();
 
