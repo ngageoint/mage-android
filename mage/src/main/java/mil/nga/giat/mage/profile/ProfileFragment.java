@@ -24,7 +24,6 @@ import android.support.v7.app.ActionBar;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.text.SpannableString;
-import android.text.style.UnderlineSpan;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -170,37 +169,18 @@ public class ProfileFragment extends Fragment implements OnMapReadyCallback, Vie
 
 		if (StringUtils.isNotBlank(user.getPrimaryPhone())) {
 			SpannableString primaryPhone = new SpannableString(user.getPrimaryPhone());
-			primaryPhone.setSpan(new UnderlineSpan(), 0, primaryPhone.length(), 0);
 			phoneTextView.setText(primaryPhone);
 			phoneTextView.setOnClickListener(new View.OnClickListener() {
 				@Override
 				public void onClick(View v) {
-					AlertDialog.Builder mBuilder = new AlertDialog.Builder(context);
-					mBuilder.setMessage("Do you want to call or text " + displayName + "?");
-					mBuilder.setNegativeButton("No", new DialogInterface.OnClickListener() {
-						public void onClick(DialogInterface dialog, int id) {
-							dialog.cancel();
-						}
-					});
-					mBuilder.setNeutralButton("Call", new DialogInterface.OnClickListener() {
-						public void onClick(DialogInterface dialog, int id) {
-						try {
-							Intent callIntent = new Intent(Intent.ACTION_CALL);
-							callIntent.setData(Uri.parse("tel:" + phoneTextView.getText().toString()));
-							startActivity(callIntent);
-						} catch (ActivityNotFoundException ae) {
-							Toast.makeText(getActivity(), "Could not call user.", Toast.LENGTH_SHORT).show();
-							Log.e(LOG_NAME, "Could not call user.", ae);
-						}
-						}
-					});
-					mBuilder.setPositiveButton("Text", new DialogInterface.OnClickListener() {
-						public void onClick(DialogInterface dialog, int id) {
-							Intent textIntent = new Intent(Intent.ACTION_VIEW, Uri.fromParts("sms", phoneTextView.getText().toString(), null));
-							startActivity(textIntent);
-						}
-					});
-					mBuilder.create().show();
+					try {
+						Intent callIntent = new Intent(Intent.ACTION_DIAL);
+						callIntent.setData(Uri.parse("tel:" + phoneTextView.getText().toString()));
+						startActivity(callIntent);
+					} catch (ActivityNotFoundException ae) {
+						Toast.makeText(getActivity(), "Could not call user.", Toast.LENGTH_SHORT).show();
+						Log.e(LOG_NAME, "Could not call user.", ae);
+					}
 				}
 			});
 			phoneTextView.setVisibility(View.VISIBLE);
@@ -211,34 +191,20 @@ public class ProfileFragment extends Fragment implements OnMapReadyCallback, Vie
 		final TextView emailTextView = (TextView)rootView.findViewById(R.id.email);
 		if (StringUtils.isNotBlank(user.getEmail())) {
 			SpannableString emailAddress = new SpannableString(user.getEmail());
-			emailAddress.setSpan(new UnderlineSpan(), 0, emailAddress.length(), 0);
 			emailTextView.setText(emailAddress);
 			emailTextView.setOnClickListener(new View.OnClickListener() {
 				 @Override
 				 public void onClick(View v) {
-					 AlertDialog.Builder mBuilder = new AlertDialog.Builder(context);
-					 mBuilder.setMessage("Do you want to email " + displayName + "?");
-					 mBuilder.setNegativeButton("No", new DialogInterface.OnClickListener() {
-						 public void onClick(DialogInterface dialog, int id) {
-							 dialog.cancel();
-						 }
-					 });
-					 mBuilder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
-						 public void onClick(DialogInterface dialog, int id) {
-
-							 Intent emailIntent = new Intent(Intent.ACTION_SEND);
-							 emailIntent.setType("message/rfc822");
-							 emailIntent.putExtra(Intent.EXTRA_EMAIL, new String[]{emailTextView.getText().toString()});
-							 emailIntent.putExtra(Intent.EXTRA_SUBJECT, "MAGE");
-							 try {
-								 startActivity(Intent.createChooser(emailIntent, "Send mail..."));
-							 } catch (ActivityNotFoundException ae) {
-								 Toast.makeText(getActivity(), "There are no email clients installed.", Toast.LENGTH_SHORT).show();
-								 Log.e(LOG_NAME, "Could not email user.", ae);
-							 }
-						 }
-					 });
-					 mBuilder.create().show();
+					 Intent emailIntent = new Intent(Intent.ACTION_SEND);
+					 emailIntent.setType("message/rfc822");
+					 emailIntent.putExtra(Intent.EXTRA_EMAIL, new String[]{emailTextView.getText().toString()});
+					 emailIntent.putExtra(Intent.EXTRA_SUBJECT, "MAGE");
+					 try {
+						 startActivity(Intent.createChooser(emailIntent, "Send mail..."));
+					 } catch (ActivityNotFoundException ae) {
+						 Toast.makeText(getActivity(), "There are no email clients installed.", Toast.LENGTH_SHORT).show();
+						 Log.e(LOG_NAME, "Could not email user.", ae);
+					 }
 				 }
 			 });
 			emailTextView.setVisibility(View.VISIBLE);

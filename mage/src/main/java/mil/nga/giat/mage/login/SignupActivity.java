@@ -54,6 +54,9 @@ public class SignupActivity extends AppCompatActivity implements AccountDelegate
 	private EditText mEmailEditText;
 	private TextInputLayout mEmailLayout;
 
+	private EditText mPhoneEditText;
+	private TextInputLayout mPhoneLayout;
+
 	private EditText mPasswordEditText;
 	private TextInputLayout mPasswordLayout;
 
@@ -72,6 +75,10 @@ public class SignupActivity extends AppCompatActivity implements AccountDelegate
 
 	public final EditText getEmailEditText() {
 		return mEmailEditText;
+	}
+
+	public final EditText getPhoneEditText() {
+		return mPhoneEditText;
 	}
 
 	public final EditText getPasswordEditText() {
@@ -97,6 +104,9 @@ public class SignupActivity extends AppCompatActivity implements AccountDelegate
 		mEmailEditText = (EditText) findViewById(R.id.signup_email);
 		mEmailLayout = (TextInputLayout) findViewById(R.id.email_layout);
 
+		mPhoneEditText = (EditText) findViewById(R.id.signup_phone);
+		mPhoneLayout = (TextInputLayout) findViewById(R.id.phone_layout);
+
 		mPasswordEditText = (EditText) findViewById(R.id.signup_password);
 		mPasswordEditText.setTypeface(Typeface.DEFAULT);
 		mPasswordLayout = (TextInputLayout) findViewById(R.id.password_layout);
@@ -108,7 +118,7 @@ public class SignupActivity extends AppCompatActivity implements AccountDelegate
 		SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
 		serverURL = sharedPreferences.getString(getString(R.string.serverURLKey), getString(R.string.serverURLDefaultValue));
 
-		mEmailEditText.setOnKeyListener(new View.OnKeyListener() {
+		mConfirmPasswordEditText.setOnKeyListener(new View.OnKeyListener() {
 			@Override
 			public boolean onKey(View v, int keyCode, KeyEvent event) {
 				if (keyCode == KeyEvent.KEYCODE_ENTER) {
@@ -185,6 +195,7 @@ public class SignupActivity extends AppCompatActivity implements AccountDelegate
 		String displayName = getDisplayNameEditText().getText().toString();
 		String username = getUsernameEditText().getText().toString();
 		String email = getEmailEditText().getText().toString();
+		String phone = getPhoneEditText().getText().toString();
 		String password = getPasswordEditText().getText().toString();
 		String confirmpassword = getConfirmPasswordEditText().getText().toString();
 
@@ -196,11 +207,6 @@ public class SignupActivity extends AppCompatActivity implements AccountDelegate
 
 		if (TextUtils.isEmpty(username)) {
 			mUsernameLayout.setError("Username can not be blank");
-			return;
-		}
-
-		if (TextUtils.isEmpty(email)) {
-			mEmailLayout.setError("Email can not be blank");
 			return;
 		}
 
@@ -235,9 +241,10 @@ public class SignupActivity extends AppCompatActivity implements AccountDelegate
 		}
 
 		List<String> accountInfo = new ArrayList<>();
-		accountInfo.add(displayName);
 		accountInfo.add(username);
+		accountInfo.add(displayName);
 		accountInfo.add(email);
+		accountInfo.add(phone);
 		accountInfo.add(password);
 		accountInfo.add(serverURL);
 

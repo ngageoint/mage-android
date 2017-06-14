@@ -7,7 +7,7 @@
         <intent
             android:action="android.intent.action.VIEW"
             android:targetClass="mil.nga.giat.mage.preferences.LocationPreferencesActivity"
-            android:targetPackage="mil.nga.giat.mage"/>
+            android:targetPackage="@string/applicationId"/>
     </Preference>
     <Preference
         android:defaultValue="@bool/dataFetchEnabledDefaultValue"
@@ -17,7 +17,7 @@
         <intent
             android:action="android.intent.action.VIEW"
             android:targetClass="mil.nga.giat.mage.preferences.FetchPreferencesActivity"
-            android:targetPackage="mil.nga.giat.mage"/>
+            android:targetPackage="@string/applicationId"/>
     </Preference>
     <mil.nga.giat.mage.sdk.preferences.IntegerListPreference
         android:defaultValue="@integer/timeZoneDefaultValue"

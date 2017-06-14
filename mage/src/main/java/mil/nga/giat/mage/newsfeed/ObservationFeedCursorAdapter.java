@@ -30,6 +30,7 @@ import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.map.marker.ObservationBitmapFactory;
 import mil.nga.giat.mage.observation.AttachmentGallery;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
+import mil.nga.giat.mage.sdk.datastore.observation.ObservationError;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationFavorite;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationProperty;
@@ -84,6 +85,16 @@ public class ObservationFeedCursorAdapter extends CursorAdapter {
 
 			boolean isFlagged = observation.getImportant() != null && observation.getImportant().isImportant();
 			v.findViewById(R.id.flagged).setVisibility(isFlagged ? View.VISIBLE : View.GONE);
+
+			ObservationError error = observation.getError();
+			if (error != null) {
+				boolean hasValidationError = error.getStatusCode() != null;
+				v.findViewById(R.id.sync_status).setVisibility(hasValidationError ? View.GONE : View.VISIBLE);
+				v.findViewById(R.id.error_status).setVisibility(hasValidationError ? View.VISIBLE : View.GONE);
+			} else {
+				v.findViewById(R.id.sync_status).setVisibility(View.GONE);
+				v.findViewById(R.id.error_status).setVisibility(View.GONE);
+			}
 
 			ImageView markerView = (ImageView) v.findViewById(R.id.observation_marker);
 			Bitmap marker = ObservationBitmapFactory.bitmap(context, observation);

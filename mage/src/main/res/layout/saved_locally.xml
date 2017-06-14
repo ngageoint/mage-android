@@ -3,24 +3,32 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="fill_parent"
     android:layout_height="wrap_content"
-    android:background="@android:color/holo_orange_light"
-    android:orientation="horizontal"
-    android:paddingRight="3dp"
-    android:paddingLeft="3dp" >
+    android:gravity="center"
+    android:background="@color/md_orange_800"
+    android:orientation="vertical">
 
-    <TextView
+    <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Saved locally. Will be submitted."
-        android:textColor="#333333" />
+        android:paddingTop="4dp"
+        android:paddingBottom="4dp"
+        android:gravity="center"
+        android:orientation="horizontal">
 
-    <TextView
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:visibility="gone"
-        android:textColor="#DDDDDD"
-        android:gravity="right"
-        android:textStyle="bold"
-        android:text="@string/force_submit"/>
+        <ImageView
+            android:layout_width="16dp"
+            android:layout_height="16dp"
+            android:layout_marginRight="8dp"
+            android:src="@drawable/ic_sync_white_24dp"/>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Saved locally. Will be submitted."
+            android:textColor="@android:color/white"
+            style="@style/ListTextSecondary"
+            android:alpha="1"/>
+
+    </LinearLayout>
 
 </LinearLayout>
