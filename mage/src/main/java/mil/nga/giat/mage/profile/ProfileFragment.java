@@ -168,6 +168,7 @@ public class ProfileFragment extends Fragment implements OnMapReadyCallback, Vie
 
 		rootView.findViewById(R.id.profile_picture).setOnClickListener(this);
 
+		View phoneLayout = rootView.findViewById(R.id.phone_layout);
 		if (StringUtils.isNotBlank(user.getPrimaryPhone())) {
 			SpannableString primaryPhone = new SpannableString(user.getPrimaryPhone());
 			phoneTextView.setText(primaryPhone);
@@ -184,12 +185,13 @@ public class ProfileFragment extends Fragment implements OnMapReadyCallback, Vie
 					}
 				}
 			});
-			phoneTextView.setVisibility(View.VISIBLE);
+			phoneLayout.setVisibility(View.VISIBLE);
 		} else {
-			phoneTextView.setVisibility(View.GONE);
+			phoneLayout.setVisibility(View.GONE);
 		}
 
 		final TextView emailTextView = (TextView)rootView.findViewById(R.id.email);
+		View emailLayout = rootView.findViewById(R.id.email_layout);
 		if (StringUtils.isNotBlank(user.getEmail())) {
 			SpannableString emailAddress = new SpannableString(user.getEmail());
 			emailTextView.setText(emailAddress);
@@ -208,9 +210,9 @@ public class ProfileFragment extends Fragment implements OnMapReadyCallback, Vie
 					 }
 				 }
 			 });
-			emailTextView.setVisibility(View.VISIBLE);
+			emailLayout.setVisibility(View.VISIBLE);
 		} else {
-			emailTextView.setVisibility(View.GONE);
+			emailLayout.setVisibility(View.GONE);
 		}
 
 		final ImageView imageView = (ImageView)rootView.findViewById(R.id.profile_picture);
