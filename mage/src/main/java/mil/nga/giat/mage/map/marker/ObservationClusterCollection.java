@@ -5,9 +5,9 @@ import android.content.Intent;
 import android.util.Log;
 
 import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
+import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.maps.android.clustering.ClusterItem;
 import com.google.maps.android.clustering.ClusterManager;
 import com.google.maps.android.clustering.ClusterManager.OnClusterItemClickListener;
@@ -15,7 +15,6 @@ import com.google.maps.android.clustering.algo.GridBasedAlgorithm;
 import com.google.maps.android.clustering.algo.PreCachingAlgorithmDecorator;
 import com.vividsolutions.jts.geom.Point;
 
-import java.util.Collection;
 import java.util.Date;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -47,35 +46,18 @@ public class ObservationClusterCollection implements PointCollection<Observation
     }
 
     @Override
-    public void add(Observation o) {
+    public void add(MarkerOptions options, Observation o) {
         ObservationClusterItem item = new ObservationClusterItem(o);
         items.put(o.getId(), item);
         observations.put(o.getId(), o);
         clusterManager.addItem(item);
         clusterManager.cluster();
-        
+
         if (o.getLastModified().after(latestObservationDate)) {
             latestObservationDate = o.getLastModified();
         }
     }
 
-    @Override
-    public void addAll(Collection<Observation> all) {
-        System.out.println("Adding " + all.size() + " observations to the map");
-        
-        for (Observation o : all) {
-            ObservationClusterItem item = new ObservationClusterItem(o);
-            items.put(o.getId(), item);
-            observations.put(o.getId(), o);
-            clusterManager.addItem(item);
-        }
-        
-        System.out.println("clustering " + all.size() + " observations");
-        clusterManager.cluster();
-        System.out.println("DONE clustering " + all.size() + " observations");
-
-    }
-    
     @Override
     public void refreshMarkerIcons() {
     	// TODO : figure this out?
@@ -115,7 +97,17 @@ public class ObservationClusterCollection implements PointCollection<Observation
             Point point = (Point) observation.getGeometry();
             return new LatLng(point.getY(), point.getX());
         }
-        
+
+        @Override
+        public String getTitle() {
+            return "";
+        }
+
+        @Override
+        public String getSnippet() {
+            return "";
+        }
+
         public Long getId() {
             return observation.getId();
         }
@@ -126,7 +118,7 @@ public class ObservationClusterCollection implements PointCollection<Observation
         Intent o = new Intent(context, ObservationViewActivity.class);
         o.putExtra(ObservationViewActivity.OBSERVATION_ID, item.getId());
         context.startActivity(o);
-        
+
         return false;
     }
 
@@ -141,11 +133,6 @@ public class ObservationClusterCollection implements PointCollection<Observation
     @Override
     public boolean onMarkerClick(Marker marker) {
         return clusterManager.onMarkerClick(marker);
-    }
-
-    @Override
-    public void onCameraChange(CameraPosition cameraPosition) {
-        clusterManager.onCameraChange(cameraPosition);
     }
 
     @Override

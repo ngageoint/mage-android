@@ -4,11 +4,15 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.preference.PreferenceManager;
+import android.util.Pair;
 
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.MarkerOptions;
 import com.j256.ormlite.dao.CloseableIterator;
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.stmt.QueryBuilder;
 import com.j256.ormlite.stmt.Where;
+import com.vividsolutions.jts.geom.Point;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -18,13 +22,14 @@ import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.filter.FavoriteFilter;
 import mil.nga.giat.mage.filter.Filter;
 import mil.nga.giat.mage.filter.ImportantFilter;
+import mil.nga.giat.mage.map.marker.ObservationBitmapFactory;
 import mil.nga.giat.mage.map.marker.PointCollection;
 import mil.nga.giat.mage.sdk.Temporal;
 import mil.nga.giat.mage.sdk.datastore.DaoStore;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
 
-public class ObservationLoadTask extends AsyncTask<Void, Observation, Void> {
+public class ObservationLoadTask extends AsyncTask<Void, Pair<MarkerOptions, Observation>, Void> {
     
     private Context context;
 
@@ -62,7 +67,11 @@ public class ObservationLoadTask extends AsyncTask<Void, Observation, Void> {
         try {
             iterator = iterator();
             while (iterator.hasNext()) {
-                publishProgress(iterator.next());
+                Observation o = iterator.current();
+                Point point = (Point) o.getGeometry();
+                MarkerOptions options = new MarkerOptions().position(new LatLng(point.getY(), point.getX())).icon(ObservationBitmapFactory.bitmapDescriptor(context, o));
+
+                publishProgress(new Pair<>(options, o));
             }
 
         } catch (SQLException e) {
@@ -77,10 +86,10 @@ public class ObservationLoadTask extends AsyncTask<Void, Observation, Void> {
     }
 
     @Override
-    protected void onProgressUpdate(Observation... observations) {
-        observationCollection.add(observations[0]);
+    protected void onProgressUpdate(Pair<MarkerOptions, Observation>... pairs) {
+        observationCollection.add(pairs[0].first, pairs[0].second);
     }
-    
+
     private CloseableIterator<Observation> iterator() throws SQLException {
         Dao<Observation, Long> dao = DaoStore.getInstance(context).getObservationDao();
         QueryBuilder<Observation, Long> query = dao.queryBuilder();

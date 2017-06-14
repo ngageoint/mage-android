@@ -2,17 +2,20 @@ package mil.nga.giat.mage.map;
 
 import android.content.Context;
 import android.os.AsyncTask;
+import android.util.Pair;
 
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.MarkerOptions;
+import com.j256.ormlite.dao.CloseableIterator;
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.stmt.QueryBuilder;
 import com.j256.ormlite.stmt.Where;
+import com.vividsolutions.jts.geom.Point;
 
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 import mil.nga.giat.mage.filter.Filter;
+import mil.nga.giat.mage.map.marker.LocationBitmapFactory;
 import mil.nga.giat.mage.map.marker.PointCollection;
 import mil.nga.giat.mage.sdk.Temporal;
 import mil.nga.giat.mage.sdk.datastore.DaoStore;
@@ -21,13 +24,13 @@ import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
 
-public class LocationLoadTask extends AsyncTask<Void, Location, Void> {
+public class LocationLoadTask extends AsyncTask<Void, Pair<MarkerOptions, Pair<Location, User>>, Void> {
 
 	private Context context;
 	private Filter<Temporal> filter;
-	private final PointCollection<Location> locationCollection;
+	private final PointCollection<Pair<Location, User>> locationCollection;
 
-	public LocationLoadTask(Context context, PointCollection<Location> locationCollection) {
+	public LocationLoadTask(Context context, PointCollection<Pair<Location, User>> locationCollection) {
 		this.context = context.getApplicationContext();
 		this.locationCollection = locationCollection;
 	}
@@ -38,24 +41,34 @@ public class LocationLoadTask extends AsyncTask<Void, Location, Void> {
 
 	@Override
 	protected Void doInBackground(Void... params) {
+		CloseableIterator<Location> iterator = null;
 		try {
-			List<Location> locations = getQuery().query();
-			publishProgress(locations.toArray(new Location[locations.size()]));
+			iterator = iterator();
+			while (iterator.hasNext()) {
+				Location location = iterator.current();
+				Point point = location.getGeometry().getCentroid();
+				LatLng latLng = new LatLng(point.getY(), point.getX());
+				MarkerOptions options = new MarkerOptions().position(latLng).icon(LocationBitmapFactory.bitmapDescriptor(context, location, location.getUser()));
+
+				publishProgress(new Pair<>(options, new Pair<>(location, location.getUser())));
+			}
 		} catch (SQLException e) {
 			e.printStackTrace();
+		} finally {
+			if (iterator != null) {
+				iterator.closeQuietly();
+			}
 		}
 
 		return null;
 	}
 
 	@Override
-	protected void onProgressUpdate(Location... locations) {
-		synchronized (locationCollection) {
-			locationCollection.addAll(new ArrayList<Location>(Arrays.asList(locations)));
-		}
+	protected void onProgressUpdate(Pair<MarkerOptions, Pair<Location, User>>... pairs) {
+		locationCollection.add(pairs[0].first, pairs[0].second);
 	}
 
-	private QueryBuilder<Location, Long> getQuery() throws SQLException {
+	private CloseableIterator<Location> iterator() throws SQLException {
 		Dao<Location, Long> dao = DaoStore.getInstance(context).getLocationDao();
 		QueryBuilder<Location, Long> query = dao.queryBuilder();
 		Where<? extends Temporal, Long> where = query.where().ge("timestamp", locationCollection.getLatestDate());
@@ -73,6 +86,7 @@ public class LocationLoadTask extends AsyncTask<Void, Location, Void> {
 		}
 		query.orderBy("timestamp", false);
 
-		return query;
+
+		return dao.iterator(query.prepare());
 	}
 }

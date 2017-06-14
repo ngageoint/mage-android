@@ -8,19 +8,14 @@ import android.widget.TextView;
 
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.GoogleMap.OnMarkerClickListener;
-import com.google.android.gms.maps.model.CameraPosition;
-import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
-import com.google.maps.android.MarkerManager;
-import com.vividsolutions.jts.geom.Point;
 
 import org.ocpsoft.prettytime.PrettyTime;
 
-import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.observation.ObservationViewActivity;
@@ -35,50 +30,34 @@ public class ObservationMarkerCollection implements PointCollection<Observation>
 
     private boolean visible = true;
 
-    private Map<Long, Marker> observationIdToMarker = new ConcurrentHashMap<Long, Marker>();
-    private Map<String, Observation> markerIdToObservation = new ConcurrentHashMap<String, Observation>();
+    private Map<Long, Marker> observationIdToMarker = new HashMap<>();
+    private Map<String, Observation> markerIdToObservation = new HashMap<>();
 
 	protected GoogleMap.InfoWindowAdapter infoWindowAdapter = new ObservationInfoWindowAdapter();
-
-    private MarkerManager.Collection markerCollection;
 
     public ObservationMarkerCollection(Context context, GoogleMap map) {
         this.map = map;
         this.context = context;
-
-        MarkerManager markerManager = new MarkerManager(map);
-        markerCollection = markerManager.newCollection();
     }
 
     @Override
-    public void add(Observation o) {
+    public void add(MarkerOptions options, Observation observation) {
         // If I got an observation that I already have in my list
         // remove it from the map and clean-up my collections
-        Marker marker = observationIdToMarker.remove(o.getId());
+        Marker marker = observationIdToMarker.remove(observation.getId());
         if (marker != null) {
             markerIdToObservation.remove(marker.getId());
             marker.remove();
         }
 
-        Point point = (Point) o.getGeometry();
-        MarkerOptions options = new MarkerOptions()
-            .position(new LatLng(point.getY(), point.getX()))
-            .icon(ObservationBitmapFactory.bitmapDescriptor(context, o))
-            .visible(visible);
+        options.visible(visible);
 
-        marker = markerCollection.addMarker(options);
-        observationIdToMarker.put(o.getId(), marker);
-        markerIdToObservation.put(marker.getId(), o);
-        
-        if (o.getLastModified().after(latestObservationDate)) {
-            latestObservationDate = o.getLastModified();
-        }
-    }
+        marker = map.addMarker(options);
+        observationIdToMarker.put(observation.getId(), marker);
+        markerIdToObservation.put(marker.getId(), observation);
 
-    @Override
-    public void addAll(Collection<Observation> observations) {
-        for (Observation o : observations) {
-            add(o);
+        if (observation.getLastModified().after(latestObservationDate)) {
+            latestObservationDate = observation.getLastModified();
         }
     }
 
@@ -103,7 +82,6 @@ public class ObservationMarkerCollection implements PointCollection<Observation>
         Marker marker = observationIdToMarker.remove(o.getId());
         if (marker != null) {
             markerIdToObservation.remove(marker.getId());
-            markerCollection.remove(marker);
             marker.remove();
         }
     }
@@ -122,7 +100,7 @@ public class ObservationMarkerCollection implements PointCollection<Observation>
     
 	@Override
 	public void refreshMarkerIcons() {
-		for (Marker m : markerCollection.getMarkers()) {
+		for (Marker m : observationIdToMarker.values()) {
 			Observation to = markerIdToObservation.get(m.getId());
 			if (to != null) {
 				boolean showWindow = m.isInfoWindowShown();
@@ -138,20 +116,18 @@ public class ObservationMarkerCollection implements PointCollection<Observation>
 
     @Override
     public void clear() {
+        for (Marker marker : observationIdToMarker.values()) {
+            marker.remove();
+        }
+
         observationIdToMarker.clear();
         markerIdToObservation.clear();
-        markerCollection.clear();
         latestObservationDate = new Date(0);
     }
 
     @Override
     public Date getLatestDate() {
         return latestObservationDate;
-    }
-
-    @Override
-    public void onCameraChange(CameraPosition cameraPosition) {
-        // do nothing I don't care
     }
 
 	@Override

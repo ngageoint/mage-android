@@ -21,6 +21,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.content.res.AppCompatResources;
 import android.support.v7.widget.SearchView;
 import android.util.Log;
+import android.util.Pair;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -170,8 +171,8 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 	private final ThreadPoolExecutor executor = new ThreadPoolExecutor(8, 8, 10, TimeUnit.SECONDS, queue);
 
 	private PointCollection<Observation> observations;
-	private PointCollection<mil.nga.giat.mage.sdk.datastore.location.Location> locations;
-	private PointCollection<mil.nga.giat.mage.sdk.datastore.location.Location> historicLocations;
+	private PointCollection<Pair<mil.nga.giat.mage.sdk.datastore.location.Location, User>> locations;
+	private PointCollection<Pair<mil.nga.giat.mage.sdk.datastore.location.Location, User>> historicLocations;
 	private StaticGeometryCollection staticGeometryCollection;
 	private List<Marker> searchMarkers = new ArrayList<>();
 
@@ -599,13 +600,13 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 		for (mil.nga.giat.mage.sdk.datastore.location.Location l : ls) {
 			if (currentUser != null && !currentUser.getRemoteId().equals(l.getUser().getRemoteId())) {
 				if (locations != null) {
-					LocationTask task = new LocationTask(LocationTask.Type.ADD, locations);
+					LocationTask task = new LocationTask(getActivity(), LocationTask.Type.ADD, locations);
 					task.setFilter(getTemporalFilter("timestamp"));
 					task.executeOnExecutor(executor, l);
 				}
 			} else {
 				if (historicLocations != null) {
-					new LocationTask(LocationTask.Type.ADD, historicLocations).executeOnExecutor(executor, l);
+					new LocationTask(getActivity(), LocationTask.Type.ADD, historicLocations).executeOnExecutor(executor, l);
 				}
 			}
 		}
@@ -615,13 +616,13 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 	public void onLocationUpdated(mil.nga.giat.mage.sdk.datastore.location.Location l) {
 		if (currentUser != null && !currentUser.getRemoteId().equals(l.getUser().getRemoteId())) {
 			if (locations != null) {
-				LocationTask task = new LocationTask(LocationTask.Type.UPDATE, locations);
+				LocationTask task = new LocationTask(getActivity(), LocationTask.Type.UPDATE, locations);
 				task.setFilter(getTemporalFilter("timestamp"));
 				task.executeOnExecutor(executor, l);
 			}
 		} else {
 			if (historicLocations != null) {
-				new LocationTask(LocationTask.Type.UPDATE, historicLocations).executeOnExecutor(executor, l);
+				new LocationTask(getActivity(), LocationTask.Type.UPDATE, historicLocations).executeOnExecutor(executor, l);
 			}
 		}
 	}
@@ -1286,21 +1287,16 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 
 	private String getFilterTitle() {
 		List<String> filters = new ArrayList<>();
-		switch (getTimeFilterId()) {
-		case R.integer.time_filter_last_month:
+
+		int filterId = getTimeFilterId();
+		if (filterId == getResources().getInteger(R.integer.time_filter_last_month)) {
 			filters.add("Last Month");
-			break;
-		case R.integer.time_filter_last_week:
+		} else if (filterId == getResources().getInteger(R.integer.time_filter_last_week)) {
 			filters.add("Last Week");
-			break;
-		case R.integer.time_filter_last_24_hours:
+		} else if (filterId == getResources().getInteger(R.integer.time_filter_last_24_hours)) {
 			filters.add("Last 24 Hours");
-			break;
-		case R.integer.time_filter_today:
+		} else if (filterId == getResources().getInteger(R.integer.time_filter_today)) {
 			filters.add("Since Midnight");
-			break;
-		default:
-			break;
 		}
 
 		List<String> actionFilters = new ArrayList<>();

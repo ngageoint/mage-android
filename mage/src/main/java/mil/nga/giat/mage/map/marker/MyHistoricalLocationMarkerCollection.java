@@ -1,21 +1,19 @@
 package mil.nga.giat.mage.map.marker;
 
 import android.content.Context;
+import android.util.Pair;
 
 import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.common.collect.MinMaxPriorityQueue;
 import com.vividsolutions.jts.geom.Geometry;
-import com.vividsolutions.jts.geom.Point;
 
 import java.util.Comparator;
 import java.util.Date;
-import java.util.Set;
 
 import mil.nga.giat.mage.sdk.datastore.location.Location;
-import mil.nga.giat.mage.sdk.datastore.location.LocationHelper;
+import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.push.LocationPushIntentService;
 
 /**
@@ -28,10 +26,10 @@ import mil.nga.giat.mage.sdk.push.LocationPushIntentService;
 public class MyHistoricalLocationMarkerCollection extends LocationMarkerCollection {
 
 	// use a queue like structure to limit the Collection size
-	protected MinMaxPriorityQueue<Location> locationQueue = MinMaxPriorityQueue.orderedBy(new Comparator<Location>() {
+	protected MinMaxPriorityQueue<Pair<Location, User>> locationQueue = MinMaxPriorityQueue.orderedBy(new Comparator<Pair<Location, User>>() {
 		@Override
-		public int compare(Location lhs, Location rhs) {
-			return lhs.getTimestamp().compareTo(rhs.getTimestamp());
+		public int compare(Pair<Location, User> lhs, Pair<Location, User> rhs) {
+			return lhs.first.getTimestamp().compareTo(rhs.first.getTimestamp());
 		}
 	}).expectedSize(LocationPushIntentService.minNumberOfLocationsToKeep).create();
 
@@ -41,76 +39,56 @@ public class MyHistoricalLocationMarkerCollection extends LocationMarkerCollecti
 
 	@Override
 	public boolean onMarkerClick(Marker marker) {
-		Location l = markerIdToLocation.get(marker.getId());
+		Location l = markerIdToPair.get(marker.getId()).first;
         return (l != null);
 	}
 
 	@Override
-	public void add(Location l) {
-		final Geometry g = l.getGeometry();
+	public void add(MarkerOptions options, Pair<Location, User> pair) {
+		Location location = pair.first;
+		User user = pair.second;
+
+		final Geometry g = location.getGeometry();
 		if (g != null) {
 			// If I got an observation that I already have in my list
 			// remove it from the map and clean-up my collections
-			Marker marker = locationIdToMarker.remove(l.getId());
+			Marker marker = userIdToMarker.remove(user.getId());
 			if (marker != null) {
-				markerIdToLocation.remove(marker.getId());
+				markerIdToPair.remove(marker.getId());
 				marker.remove();
 			}
 
-			Point point = g.getCentroid();
-			MarkerOptions options = new MarkerOptions().position(new LatLng(point.getY(), point.getX())).icon(LocationBitmapFactory.dotBitmapDescriptor(context, l, l.getUser())).visible(visible);
+			marker = map.addMarker(options);
 
-			marker = markerCollection.addMarker(options);
-
-			locationIdToMarker.put(l.getId(), marker);
-			markerIdToLocation.put(marker.getId(), l);
-			locationQueue.add(l);
+			userIdToMarker.put(user.getId(), marker);
+			markerIdToPair.put(marker.getId(), pair);
+			locationQueue.add(pair);
 
 			while (locationQueue.size() > LocationPushIntentService.minNumberOfLocationsToKeep) {
 				remove(locationQueue.poll());
 			}
-			
-			removeOldMarkers();
 		}
 	}
 	
 	@Override
 	public Date getLatestDate() {
-		return locationQueue.peekLast().getTimestamp();
+		return locationQueue.peekLast().first.getTimestamp();
 	}
 
 	@Override
 	public void refreshMarkerIcons() {
-		for (Marker m : markerCollection.getMarkers()) {
-			Location tl = markerIdToLocation.get(m.getId());
-			if (tl != null) {
+		for (Marker m : userIdToMarker.values()) {
+			Pair<Location, User> pair = markerIdToPair.get(m.getId());
+			Location location = pair.first;
+			User user = pair.second;
+
+			if (user != null && location != null) {
 				boolean showWindow = m.isInfoWindowShown();
 				// make sure to set the Anchor after this call as well, because the size of the icon might have changed
-				m.setIcon(LocationBitmapFactory.dotBitmapDescriptor(context, tl, tl.getUser()));
+				m.setIcon(LocationBitmapFactory.dotBitmapDescriptor(context, location, user));
 				m.setAnchor(0.5f, 1.0f);
 				if (showWindow) {
 					m.showInfoWindow();
-				}
-			}
-		}
-	}
-
-	/**
-	 * Used to remove markers for locations that have been removed from the local datastore.
-	 */
-	@Override
-	public void removeOldMarkers() {
-		LocationHelper lh = LocationHelper.getInstance(context.getApplicationContext());
-		Set<Long> locationIds = locationIdToMarker.keySet();
-		for (Long locationId : locationIds) {
-			Location locationExists = new Location();
-			locationExists.setId(locationId);
-			if (!lh.exists(locationExists)) {
-				Marker marker = locationIdToMarker.remove(locationId);
-				if (marker != null) {
-					Location l = markerIdToLocation.remove(marker.getId());
-					locationQueue.remove(l);
-					marker.remove();
 				}
 			}
 		}
