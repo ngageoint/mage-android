@@ -348,7 +348,6 @@ public class ObservationHelper extends DaoHelper<Observation> implements IEventD
 		try {
 			User currentUser = UserHelper.getInstance(context.getApplicationContext()).readCurrentUser();
 			if (currentUser != null) {
-				// TODO ask Scott about this???  Why do we check if user is not us
 				queryBuilder.where().eq("dirty", Boolean.FALSE).and().ne("user_id", String.valueOf(currentUser.getRemoteId())).and().eq("event_id", currentEvent.getId());
 				queryBuilder.orderBy("last_modified", false);
 				queryBuilder.limit(1L);
