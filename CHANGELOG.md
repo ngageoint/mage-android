@@ -8,20 +8,10 @@ Adheres to [Semantic Versioning](http://semver.org/).
 * TBD
 
 ##### Features
-* Added pull to refresh on observation and people lists.
-* Pulled in appcompat and support libraries to support material design.  
-* Updated all views to be consistient with material design spec.
-* Added new BottomNavigationView to allow users to quickly cycle through observations,
-  people and the map.  
-* Take users to login screen on token expiration.  Upon successful authentication the user will be taken
-  back to where they left off before thier token expired.
 
 ##### Bug Fixes
-* Fixed bug with being authenticated but not having picked an event.  In this case the user will be
-  returned to the event picker activity.
-* Updated android.hardware.telephony to not be required, which will enable tablet installation from the play store.
 
-## [5.3.0](https://github.com/ngageoint/mage-android/releases/tag/5.3.0) (03-28-2017)
+## [5.3.0](https://github.com/ngageoint/mage-android/releases/tag/5.3.0) (06-15-2017)
 
 ##### Features
 * Added pull to refresh on observation and people lists.
