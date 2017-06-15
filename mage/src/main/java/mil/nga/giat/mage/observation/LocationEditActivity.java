@@ -8,7 +8,6 @@ import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Vibrator;
 import android.support.design.widget.FloatingActionButton;
-import android.support.v4.content.ContextCompat;
 import android.support.v4.graphics.drawable.DrawableCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -143,8 +142,9 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
         vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
 
         editMarkerOptions = getEditMarkerOptions();
-        editPolylineOptions = getEditPolylineOptions();
-        editPolygonOptions = getEditPolygonOptions();
+        ObservationShapeStyle style = new ObservationShapeStyle(this);
+        editPolylineOptions = getEditPolylineOptions(style);
+        editPolygonOptions = getEditPolygonOptions(style);
 
         mapFragment = (MapFragment) getFragmentManager().findFragmentById(R.id.location_edit_map);
         mapFragment.getMapAsync(this);
@@ -534,7 +534,7 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
 
                     // If converting to a rectangle, use the current shape bounds
                     if (selectedRectangle) {
-                        LineString lineStringCopy = (LineString)lineString.copy();
+                        LineString lineStringCopy = (LineString) lineString.copy();
                         GeometryUtils.minimizeGeometry(lineStringCopy, ProjectionConstants.WGS84_HALF_WORLD_LON_WIDTH);
                         GeometryEnvelope envelope = GeometryEnvelopeBuilder.buildEnvelope(lineStringCopy);
                         lineString = new LineString();
@@ -1223,11 +1223,13 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
     /**
      * Get the edit polyline options
      *
+     * @param style observation shape style
      * @return edit polyline options
      */
-    private PolylineOptions getEditPolylineOptions() {
+    private PolylineOptions getEditPolylineOptions(ObservationShapeStyle style) {
         PolylineOptions polylineOptions = new PolylineOptions();
-        polylineOptions.color(ContextCompat.getColor(this, R.color.polyline_edit_color));
+        polylineOptions.width(style.getStrokeWidth());
+        polylineOptions.color(style.getStrokeColor());
         polylineOptions.geodesic(MapShapeObservation.GEODESIC);
         return polylineOptions;
     }
@@ -1235,12 +1237,14 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
     /**
      * Get the edit polygon options
      *
+     * @param style observation shape style
      * @return edit polygon options
      */
-    private PolygonOptions getEditPolygonOptions() {
+    private PolygonOptions getEditPolygonOptions(ObservationShapeStyle style) {
         PolygonOptions polygonOptions = new PolygonOptions();
-        polygonOptions.strokeColor(ContextCompat.getColor(this, R.color.polygon_edit_color));
-        polygonOptions.fillColor(ContextCompat.getColor(this, R.color.polygon_edit_fill_color));
+        polygonOptions.strokeWidth(style.getStrokeWidth());
+        polygonOptions.strokeColor(style.getStrokeColor());
+        polygonOptions.fillColor(style.getFillColor());
         polygonOptions.geodesic(MapShapeObservation.GEODESIC);
         return polygonOptions;
     }

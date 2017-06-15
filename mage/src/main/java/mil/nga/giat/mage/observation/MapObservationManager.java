@@ -2,7 +2,6 @@ package mil.nga.giat.mage.observation;
 
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.support.v4.content.ContextCompat;
 
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
@@ -20,7 +19,6 @@ import mil.nga.geopackage.map.geom.GoogleMapShapeType;
 import mil.nga.geopackage.map.geom.MultiLatLng;
 import mil.nga.geopackage.map.geom.MultiPolygonOptions;
 import mil.nga.geopackage.map.geom.MultiPolylineOptions;
-import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.map.marker.ObservationBitmapFactory;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.wkb.geom.Geometry;
@@ -141,6 +139,8 @@ public class MapObservationManager {
      */
     private void prepareShapeOptions(Observation observation, GoogleMapShape shape, boolean visible) {
 
+        ObservationShapeStyle style = MapShapeObservation.style(context, observation);
+
         GoogleMapShapeType shapeType = shape.getShapeType();
         switch (shapeType) {
 
@@ -155,12 +155,12 @@ public class MapObservationManager {
             case POLYLINE_OPTIONS:
                 PolylineOptions polylineOptions = (PolylineOptions) shape
                         .getShape();
-                setPolylineOptions(polylineOptions, visible);
+                setPolylineOptions(style, polylineOptions, visible);
                 break;
 
             case POLYGON_OPTIONS:
                 PolygonOptions polygonOptions = (PolygonOptions) shape.getShape();
-                setPolygonOptions(polygonOptions, visible);
+                setPolygonOptions(style, polygonOptions, visible);
                 break;
 
             case MULTI_LAT_LNG:
@@ -173,7 +173,7 @@ public class MapObservationManager {
                 MultiPolylineOptions multiPolylineOptions = (MultiPolylineOptions) shape
                         .getShape();
                 PolylineOptions sharedPolylineOptions = new PolylineOptions();
-                setPolylineOptions(sharedPolylineOptions, visible);
+                setPolylineOptions(style, sharedPolylineOptions, visible);
                 multiPolylineOptions.setOptions(sharedPolylineOptions);
                 break;
 
@@ -181,7 +181,7 @@ public class MapObservationManager {
                 MultiPolygonOptions multiPolygonOptions = (MultiPolygonOptions) shape
                         .getShape();
                 PolygonOptions sharedPolygonOptions = new PolygonOptions();
-                setPolygonOptions(sharedPolygonOptions, visible);
+                setPolygonOptions(style, sharedPolygonOptions, visible);
                 multiPolygonOptions.setOptions(sharedPolygonOptions);
                 break;
 
@@ -200,11 +200,13 @@ public class MapObservationManager {
     /**
      * Set the polyline options
      *
+     * @param style           shape style
      * @param polylineOptions polyline options
      * @param visible         visible flag
      */
-    private void setPolylineOptions(PolylineOptions polylineOptions, boolean visible) {
-        polylineOptions.color(ContextCompat.getColor(context, R.color.polyline_color));
+    private void setPolylineOptions(ObservationShapeStyle style, PolylineOptions polylineOptions, boolean visible) {
+        polylineOptions.width(style.getStrokeWidth());
+        polylineOptions.color(style.getStrokeColor());
         polylineOptions.visible(visible);
         polylineOptions.geodesic(MapShapeObservation.GEODESIC);
     }
@@ -212,12 +214,14 @@ public class MapObservationManager {
     /**
      * Set the polygon options
      *
+     * @param style          shape style
      * @param polygonOptions polygon options
      * @param visible        visible flag
      */
-    private void setPolygonOptions(PolygonOptions polygonOptions, boolean visible) {
-        polygonOptions.strokeColor(ContextCompat.getColor(context, R.color.polygon_color));
-        polygonOptions.fillColor(ContextCompat.getColor(context, R.color.polygon_fill_color));
+    private void setPolygonOptions(ObservationShapeStyle style, PolygonOptions polygonOptions, boolean visible) {
+        polygonOptions.strokeWidth(style.getStrokeWidth());
+        polygonOptions.strokeColor(style.getStrokeColor());
+        polygonOptions.fillColor(style.getFillColor());
         polygonOptions.visible(visible);
         polygonOptions.geodesic(MapShapeObservation.GEODESIC);
     }

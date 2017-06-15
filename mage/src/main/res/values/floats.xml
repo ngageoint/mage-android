@@ -1,0 +1,5 @@
+<resources>
+
+    <item name="fill_default_stroke_width" type="dimen" format="float">2.0</item>
+
+</resources>
