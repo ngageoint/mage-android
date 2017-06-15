@@ -62,6 +62,11 @@ public class PreferenceHelper implements SharedPreferences.OnSharedPreferenceCha
 	public synchronized void initialize(Boolean forceReinitialize, final Class<?>... xmlClasses) {
 		SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(mContext);
 
+		// TODO preserve the server url.
+		// We really should have seperate preference files for each user.  Server url will be part
+		// of the 'global' preferences and not cleared when a different user logs in
+		String oldServerURL = PreferenceManager.getDefaultSharedPreferences(mContext).getString(mContext.getString(R.string.serverURLKey), mContext.getString(R.string.serverURLDefaultValue));
+
 		String oldBuildVersion = sharedPreferences.getString(mContext.getString(R.string.buildVersionKey), null);
 		String newBuildVersion = null;
 		try {
@@ -100,9 +105,12 @@ public class PreferenceHelper implements SharedPreferences.OnSharedPreferenceCha
 
 		// add programmatic preferences
 		Editor editor = sharedPreferences.edit();
-		if(!StringUtils.isBlank(newBuildVersion)) {
+		if (!StringUtils.isBlank(newBuildVersion)) {
 			editor.putString(mContext.getString(R.string.buildVersionKey), newBuildVersion).commit();
 		}
+
+		// add back in the server url
+		editor.putString(mContext.getString(R.string.serverURLKey), oldServerURL).commit();
 
 		logKeyValuePairs();
 		sharedPreferences.registerOnSharedPreferenceChangeListener(this);
