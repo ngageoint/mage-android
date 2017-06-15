@@ -15,7 +15,6 @@ import android.support.design.widget.TextInputLayout;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.text.Editable;
-import android.text.InputType;
 import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.util.Log;
@@ -273,20 +272,6 @@ public class LoginActivity extends AppCompatActivity implements AccountDelegate 
 		}
 
 		super.onBackPressed();
-	}
-
-	public void togglePassword(View v) {
-		TextView textView = (TextView) v;
-
-		if (textView.getText().toString().equalsIgnoreCase("SHOW")) {
-			textView.setText("HIDE");
-			mPasswordEditText.setInputType(InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD);
-		} else {
-			textView.setText("SHOW");
-			mPasswordEditText.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
-		}
-		mPasswordEditText.setSelection(mPasswordEditText.getText().length());
-		mPasswordEditText.setTypeface(Typeface.DEFAULT);
 	}
 
 	private void configureLogin() {
