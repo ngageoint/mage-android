@@ -111,26 +111,25 @@ public class LocationMarkerCollection implements PointCollection<Pair<Location, 
 	
 	@Override
 	public void onInfoWindowClick(Marker marker) {
-		User user = markerIdToPair.get(marker.getId()).second;
-
-		if (user == null) {
+		Pair<Location, User> pair =  markerIdToPair.get(marker.getId());
+		if (pair == null) {
 			return;
 		}
 		
 		Intent profileView = new Intent(context, ProfileActivity.class);
-		profileView.putExtra(ProfileFragment.USER_ID, user.getRemoteId());
+		profileView.putExtra(ProfileFragment.USER_ID, pair.second.getRemoteId());
 		context.startActivity(profileView);
 	}
 
 	@Override
 	public boolean onMarkerClick(Marker marker) {
 		Pair<Location, User> pair = markerIdToPair.get(marker.getId());
-		Location location = pair.first;
-		User user = pair.second;
-
-		if (user == null || location == null) {
+		if (pair == null) {
 			return false;
 		}
+
+		Location location = pair.first;
+		User user = pair.second;
 
 		final Geometry g = location.getGeometry();
 		if (g != null) {
@@ -173,19 +172,17 @@ public class LocationMarkerCollection implements PointCollection<Pair<Location, 
 			Pair<Location, User> pair = markerIdToPair.get(m.getId());
 			Location location = pair.first;
 			User user = pair.second;
-			if (user != null) {
-				boolean showWindow = m.isInfoWindowShown();
-				try {
-					// make sure to set the Anchor after this call as well, because the size of the icon might have changed
-					m.setIcon(LocationBitmapFactory.bitmapDescriptor(context, location, user));
-					m.setAnchor(0.5f, 1.0f);
-				} catch (Exception ue) {
-					Log.e(LOG_NAME, "Error refreshing the icon for user: " + user.getId(), ue);
-				}
+			boolean showWindow = m.isInfoWindowShown();
+			try {
+				// make sure to set the Anchor after this call as well, because the size of the icon might have changed
+				m.setIcon(LocationBitmapFactory.bitmapDescriptor(context, location, user));
+				m.setAnchor(0.5f, 1.0f);
+			} catch (Exception ue) {
+				Log.e(LOG_NAME, "Error refreshing the icon for user: " + user.getId(), ue);
+			}
 
-				if (showWindow) {
-					m.showInfoWindow();
-				}
+			if (showWindow) {
+				m.showInfoWindow();
 			}
 		}
 	}

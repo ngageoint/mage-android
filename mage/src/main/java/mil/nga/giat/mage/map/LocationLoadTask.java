@@ -46,11 +46,16 @@ public class LocationLoadTask extends AsyncTask<Void, Pair<MarkerOptions, Pair<L
 			iterator = iterator();
 			while (iterator.hasNext()) {
 				Location location = iterator.current();
+				User user = location.getUser();
+				if (user == null) {
+					continue;
+				}
+
 				Point point = location.getGeometry().getCentroid();
 				LatLng latLng = new LatLng(point.getY(), point.getX());
-				MarkerOptions options = new MarkerOptions().position(latLng).icon(LocationBitmapFactory.bitmapDescriptor(context, location, location.getUser()));
+				MarkerOptions options = new MarkerOptions().position(latLng).icon(LocationBitmapFactory.bitmapDescriptor(context, location, user));
 
-				publishProgress(new Pair<>(options, new Pair<>(location, location.getUser())));
+				publishProgress(new Pair<>(options, new Pair<>(location, user)));
 			}
 		} catch (SQLException e) {
 			e.printStackTrace();

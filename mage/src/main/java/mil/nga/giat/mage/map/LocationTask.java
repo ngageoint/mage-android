@@ -40,15 +40,20 @@ public class LocationTask extends AsyncTask<Location, Pair<MarkerOptions, Pair<L
     @Override
     protected Void doInBackground(Location... locations) {        
     	for (Location location : locations) {
+            User user = location.getUser();
+            if (user == null) {
+                continue;
+            }
+
             if (filter != null && !filter.passesFilter(location)) {
             	continue;
             }
 
             Point point = location.getGeometry().getCentroid();
             LatLng latLng = new LatLng(point.getY(), point.getX());
-            MarkerOptions options = new MarkerOptions().position(latLng).icon(LocationBitmapFactory.bitmapDescriptor(context, location, location.getUser()));
+            MarkerOptions options = new MarkerOptions().position(latLng).icon(LocationBitmapFactory.bitmapDescriptor(context, location, user));
 
-            publishProgress(new Pair<>(options, new Pair<>(location, location.getUser())));
+            publishProgress(new Pair<>(options, new Pair<>(location, user)));
         }
         
         return null;
