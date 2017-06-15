@@ -1,7 +1,5 @@
 package mil.nga.giat.mage.observation;
 
-import android.content.Context;
-
 import com.google.android.gms.maps.model.LatLng;
 
 import mil.nga.geopackage.map.geom.GoogleMapShape;
@@ -90,21 +88,5 @@ public abstract class MapShapeObservation extends MapObservation {
      * @return true if point is on shape
      */
     public abstract boolean pointIsOnShape(LatLng latLng, double tolerance);
-
-    /**
-     * Get the observation style
-     *
-     * @param context     application context
-     * @param observation observation
-     * @return shape style
-     */
-    public static ObservationShapeStyle style(Context context, Observation observation) {
-
-        ObservationShapeStyle style = new ObservationShapeStyle(context);
-
-        // TODO parse style
-
-        return style;
-    }
 
 }

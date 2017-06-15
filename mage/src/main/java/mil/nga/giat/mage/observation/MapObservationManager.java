@@ -139,7 +139,7 @@ public class MapObservationManager {
      */
     private void prepareShapeOptions(Observation observation, GoogleMapShape shape, boolean visible) {
 
-        ObservationShapeStyle style = MapShapeObservation.style(context, observation);
+        ObservationShapeStyle style = ObservationShapeStyleParser.getStyle(context, observation);
 
         GoogleMapShapeType shapeType = shape.getShapeType();
         switch (shapeType) {

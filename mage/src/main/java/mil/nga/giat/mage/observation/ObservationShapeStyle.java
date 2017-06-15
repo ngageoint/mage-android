@@ -9,6 +9,8 @@ import mil.nga.giat.mage.R;
 
 /**
  * Observation shape style for lines and polygons including stroke width, stroke color, and fill color
+ *
+ * @author osbornb
  */
 public class ObservationShapeStyle {
 
