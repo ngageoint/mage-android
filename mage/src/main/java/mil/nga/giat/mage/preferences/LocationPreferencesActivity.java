@@ -30,7 +30,6 @@ public class LocationPreferencesActivity extends AppCompatActivity {
 	private final LocationPreferenceFragment preference = new LocationPreferenceFragment();
 
     private Toolbar toolbar;
-    private View noContentView;
 
     public static class LocationPreferenceFragment extends PreferenceFragmentCompat {
 
@@ -60,12 +59,13 @@ public class LocationPreferencesActivity extends AppCompatActivity {
         setContentView(R.layout.activity_location_preferences);
 
         toolbar = (Toolbar) findViewById(R.id.toolbar);
-        noContentView = findViewById(R.id.no_content_frame);
 
+        boolean locationServicesEnabled = false;
         if (android.os.Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
             toolbar.inflateMenu(R.menu.fetch_preferences_menu);
+            toolbar.setVisibility(View.VISIBLE);
 
-            boolean locationServicesEnabled = PreferenceManager.getDefaultSharedPreferences(this).getBoolean(getResources().getString(R.string.locationServiceEnabledKey), false);
+            locationServicesEnabled = PreferenceManager.getDefaultSharedPreferences(this).getBoolean(getResources().getString(R.string.locationServiceEnabledKey), getResources().getBoolean(R.bool.locationServiceEnabledDefaultValue));
 
             SwitchCompat locationServicesEnabledSwitch = (SwitchCompat) toolbar.findViewById(R.id.toolbar_switch);
             locationServicesEnabledSwitch.setChecked(locationServicesEnabled);
@@ -76,13 +76,13 @@ public class LocationPreferencesActivity extends AppCompatActivity {
                     updateView(isChecked);
                 }
             });
-
-            updateView(locationServicesEnabled);
         } else {
             toolbar.setVisibility(View.GONE);
-            boolean locationServicesEnabled = ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
-            findViewById(R.id.no_content_frame_new).setVisibility(locationServicesEnabled ? View.GONE : View.VISIBLE);
+            locationServicesEnabled = ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
+            findViewById(R.id.no_content).setVisibility(locationServicesEnabled ? View.GONE : View.VISIBLE);
         }
+
+        updateView(locationServicesEnabled);
 
         getSupportFragmentManager().beginTransaction().replace(R.id.content_frame, preference).commit();
     }
@@ -108,8 +108,9 @@ public class LocationPreferencesActivity extends AppCompatActivity {
     private void updateView(boolean locationServicesEnabled) {
         toolbar.setTitle(locationServicesEnabled ? "On" : "Off");
 
-        if (android.os.Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
-            noContentView.setVisibility(locationServicesEnabled ? View.GONE : View.VISIBLE);
-        }
+        View noContentView = android.os.Build.VERSION.SDK_INT < Build.VERSION_CODES.M ?
+                findViewById(R.id.no_content_frame_pre_m) :
+                findViewById(R.id.no_content_frame_l);
+        noContentView.setVisibility(locationServicesEnabled ? View.GONE : View.VISIBLE);
     }
 }

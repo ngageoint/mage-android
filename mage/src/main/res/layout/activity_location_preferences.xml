@@ -16,7 +16,7 @@
         android:background="@color/md_blue_200"/>
 
     <FrameLayout
-        android:id="@+id/no_content_frame_new"
+        android:id="@+id/no_content_frame_l"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:visibility="gone">
@@ -51,7 +51,7 @@
     </FrameLayout>
 
     <FrameLayout
-        android:id="@+id/no_content_frame_old"
+        android:id="@+id/no_content_frame_pre_m"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:visibility="gone">

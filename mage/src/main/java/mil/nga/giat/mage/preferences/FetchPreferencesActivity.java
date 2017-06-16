@@ -49,7 +49,7 @@ public class FetchPreferencesActivity extends AppCompatActivity {
 
         noContentView = findViewById(R.id.no_content_frame);
 
-        boolean fetchEnabled = PreferenceManager.getDefaultSharedPreferences(this).getBoolean(getResources().getString(R.string.dataFetchEnabledKey), false);
+        boolean fetchEnabled = PreferenceManager.getDefaultSharedPreferences(this).getBoolean(getResources().getString(R.string.dataFetchEnabledKey), getResources().getBoolean(R.bool.dataFetchEnabledDefaultValue));
 
         SwitchCompat dataEnabledSwitch = (SwitchCompat) toolbar.findViewById(R.id.toolbar_switch);
         dataEnabledSwitch.setChecked(fetchEnabled);
