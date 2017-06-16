@@ -76,13 +76,14 @@ public class LocationPreferencesActivity extends AppCompatActivity {
                     updateView(isChecked);
                 }
             });
+
+            updateView(locationServicesEnabled);
+
         } else {
             toolbar.setVisibility(View.GONE);
             locationServicesEnabled = ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
-            findViewById(R.id.no_content).setVisibility(locationServicesEnabled ? View.GONE : View.VISIBLE);
+            findViewById(R.id.no_content_frame_l).setVisibility(locationServicesEnabled ? View.GONE : View.VISIBLE);
         }
-
-        updateView(locationServicesEnabled);
 
         getSupportFragmentManager().beginTransaction().replace(R.id.content_frame, preference).commit();
     }
@@ -107,10 +108,6 @@ public class LocationPreferencesActivity extends AppCompatActivity {
 
     private void updateView(boolean locationServicesEnabled) {
         toolbar.setTitle(locationServicesEnabled ? "On" : "Off");
-
-        View noContentView = android.os.Build.VERSION.SDK_INT < Build.VERSION_CODES.M ?
-                findViewById(R.id.no_content_frame_pre_m) :
-                findViewById(R.id.no_content_frame_l);
-        noContentView.setVisibility(locationServicesEnabled ? View.GONE : View.VISIBLE);
+        findViewById(R.id.no_content_frame_pre_m).setVisibility(locationServicesEnabled ? View.GONE : View.VISIBLE);
     }
 }
