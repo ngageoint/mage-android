@@ -373,7 +373,7 @@ public class ObservationHelper extends DaoHelper<Observation> implements IEventD
 	 */
 	public List<Observation> getDirty() {
 		QueryBuilder<Observation, Long> queryBuilder = observationDao.queryBuilder();
-		List<Observation> observations = new ArrayList<Observation>();
+		List<Observation> observations = new ArrayList<>();
 
 		try {
 			queryBuilder.where().eq("dirty", true);
@@ -392,48 +392,55 @@ public class ObservationHelper extends DaoHelper<Observation> implements IEventD
 	 * @param observation
 	 * @throws ObservationException
 	 */
-	public void delete(Observation observation) throws ObservationException {
+	public void delete(final Observation observation) throws ObservationException {
 		try {
-			// delete Observation properties.
-			Collection<ObservationProperty> properties = observation.getProperties();
-			if (properties != null) {
-				for (ObservationProperty property : properties) {
-					observationPropertyDao.deleteById(property.getId());
+			observationDao.callBatchTasks(new Callable<Void>() {
+				@Override
+				public Void call() throws Exception {
+					// delete Observation properties.
+					Collection<ObservationProperty> properties = observation.getProperties();
+					if (properties != null) {
+						for (ObservationProperty property : properties) {
+							observationPropertyDao.deleteById(property.getId());
+						}
+					}
+
+					// delete Observation favorites.
+					Collection<ObservationFavorite> favorites = observation.getFavorites();
+					if (favorites != null) {
+						for (ObservationFavorite favorite : favorites) {
+							observationFavoriteDao.deleteById(favorite.getId());
+						}
+					}
+
+					// delete Observation attachments.
+					Collection<Attachment> attachments = observation.getAttachments();
+					if (attachments != null) {
+						AttachmentHelper attachmentHelper = AttachmentHelper.getInstance(mApplicationContext);
+						for (Attachment attachment : attachments) {
+							attachmentHelper.delete(attachment);
+						}
+					}
+
+					// delete important
+					ObservationImportant important = observation.getImportant();
+					if (important != null) {
+						observationImportantDao.deleteById(important.getId());
+					}
+
+					// finally, delete the Observation.
+					observationDao.deleteById(observation.getId());
+
+					for (IObservationEventListener listener : listeners) {
+						listener.onObservationDeleted(observation);
+					}
+
+					return null;
 				}
-			}
-
-			// delete Observation favorites.
-			Collection<ObservationFavorite> favorites = observation.getFavorites();
-			if (favorites != null) {
-				for (ObservationFavorite favorite : favorites) {
-					observationFavoriteDao.deleteById(favorite.getId());
-				}
-			}
-
-			// delete Observation attachments.
-			Collection<Attachment> attachments = observation.getAttachments();
-			if (attachments != null) {
-				AttachmentHelper attachmentHelper = AttachmentHelper.getInstance(mApplicationContext);
-				for (Attachment attachment : attachments) {
-					attachmentHelper.delete(attachment);
-				}
-			}
-
-			// delete important
-			ObservationImportant important = observation.getImportant();
-			if (important != null) {
-				observationImportantDao.deleteById(important.getId());
-			}
-
-			// finally, delete the Observation.
-			observationDao.deleteById(observation.getId());
-			
-			for (IObservationEventListener listener : listeners) {
-				listener.onObservationDeleted(observation);
-			}
-		} catch (SQLException sqle) {
-			Log.e(LOG_NAME, "Unable to delete Observation: " + observation.getId(), sqle);
-			throw new ObservationException("Unable to delete Observation: " + observation.getId(), sqle);
+			});
+		} catch (Exception e) {
+			Log.e(LOG_NAME, "Unable to delete Observation: " + observation.getId(), e);
+			throw new ObservationException("Unable to delete Observation: " + observation.getId(), e);
 		}
 	}
 
