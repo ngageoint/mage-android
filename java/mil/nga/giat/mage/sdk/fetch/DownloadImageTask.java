@@ -16,6 +16,7 @@ import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.http.resource.UserResource;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
+import mil.nga.giat.mage.sdk.utils.UserUtility;
 
 /**
  * Basic task to download and save images on the filesystem.
@@ -136,6 +137,15 @@ public class DownloadImageTask extends AsyncTask<Void, Void, Void> {
 
 			} catch (Exception e) {
 				Log.e(LOG_NAME, "Problem downloading image.");
+
+				// TODO should probably create a service for this task and cancel/stop
+				// the service when the user logs out.
+				if (UserUtility.getInstance(context).isTokenExpired()) {
+					// If we could not download the image due to token expiration
+					// don't continue to try the rest
+					Log.i(LOG_NAME, "Token expired stop downloading images");
+					break;
+				}
 			} finally {
 				try {
 					if (in != null) {
