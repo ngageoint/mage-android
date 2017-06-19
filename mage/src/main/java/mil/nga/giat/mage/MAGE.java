@@ -130,13 +130,13 @@ public class MAGE extends MultiDexApplication implements IUserEventListener, App
 						Log.e(LOG_NAME, "Unable to logout from server.");
 					}
 
-					UserUtility.getInstance(getApplicationContext()).clearTokenInformation();
-
 					if (logoutListener != null) {
 						logoutListener.onLogout();
 					}
 				}
 			};
+
+			UserUtility.getInstance(getApplicationContext()).clearTokenInformation();
 
 			new Thread(runnable).start();
 		} else {
