@@ -12,7 +12,7 @@ Adheres to [Semantic Versioning](http://semver.org/).
 
 ##### Bug Fixes
 
-## [5.3.0](https://github.com/ngageoint/mage-android/releases/tag/5.3.0) (03-28-2017)
+## [5.3.0](https://github.com/ngageoint/mage-android/releases/tag/5.3.0) (06-15-2017)
 
 ##### Features
 * Added pull to refresh on observation and people lists.

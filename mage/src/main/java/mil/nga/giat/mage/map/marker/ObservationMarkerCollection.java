@@ -10,10 +10,10 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.GoogleMap.OnMarkerClickListener;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
+import com.google.android.gms.maps.model.MarkerOptions;
 
 import org.ocpsoft.prettytime.PrettyTime;
 
-import java.util.Collection;
 import java.util.Date;
 
 import mil.nga.giat.mage.R;
@@ -54,23 +54,16 @@ public class ObservationMarkerCollection implements PointCollection<Observation>
     }
 
     @Override
-    public void add(Observation o) {
+    public void add(MarkerOptions options, Observation observation) {
         // If I got an observation that I already have remove it
-        mapObservations.remove(o.getId());
+        mapObservations.remove(observation.getId());
 
         // Add the new observation to the map and maintain it
-        MapObservation mapObservation = mapObservationManager.addToMap(o, visible);
+        MapObservation mapObservation = mapObservationManager.addToMap(observation, options, visible);
         mapObservations.add(mapObservation);
 
-        if (o.getLastModified().after(latestObservationDate)) {
-            latestObservationDate = o.getLastModified();
-        }
-    }
-
-    @Override
-    public void addAll(Collection<Observation> observations) {
-        for (Observation o : observations) {
-            add(o);
+        if (observation.getLastModified().after(latestObservationDate)) {
+            latestObservationDate = observation.getLastModified();
         }
     }
 

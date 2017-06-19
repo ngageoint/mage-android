@@ -7,6 +7,7 @@ import android.graphics.drawable.Drawable;
 import android.support.v4.graphics.drawable.RoundedBitmapDrawable;
 import android.support.v4.graphics.drawable.RoundedBitmapDrawableFactory;
 import android.util.Log;
+import android.util.Pair;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.ImageView;
@@ -23,34 +24,27 @@ import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
-import com.google.maps.android.MarkerManager;
 
 import org.ocpsoft.prettytime.PrettyTime;
 
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.profile.ProfileActivity;
 import mil.nga.giat.mage.profile.ProfileFragment;
 import mil.nga.giat.mage.sdk.datastore.location.Location;
-import mil.nga.giat.mage.sdk.datastore.location.LocationHelper;
 import mil.nga.giat.mage.sdk.datastore.location.LocationProperty;
 import mil.nga.giat.mage.sdk.datastore.user.User;
-import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.datastore.user.UserLocal;
-import mil.nga.giat.mage.sdk.exceptions.UserException;
 import mil.nga.giat.mage.sdk.fetch.DownloadImageTask;
 import mil.nga.wkb.geom.Geometry;
 import mil.nga.wkb.geom.Point;
 import mil.nga.wkb.util.GeometryUtils;
 
-public class LocationMarkerCollection implements PointCollection<Location>, OnMarkerClickListener, OnInfoWindowClickListener {
+public class LocationMarkerCollection implements PointCollection<Pair<Location, User>>, OnMarkerClickListener, OnInfoWindowClickListener {
 
 	private static final String LOG_NAME = LocationMarkerCollection.class.getName();
 
@@ -58,112 +52,91 @@ public class LocationMarkerCollection implements PointCollection<Location>, OnMa
 	protected Context context;
 	protected Date latestLocationDate = new Date(0);
 
-	protected Long clickedAccuracyCircleLocationId;
+	protected Long clickedAccuracyCircleUserId;
 	protected Circle clickedAccuracyCircle;
 	protected InfoWindowAdapter infoWindowAdapter = new LocationInfoWindowAdapter();
 
 	protected boolean visible = true;
 
-	protected Map<Long, Long> userIdToLocationId = new ConcurrentHashMap<Long, Long>();
-	protected Map<Long, Marker> locationIdToMarker = new ConcurrentHashMap<Long, Marker>();
-	protected Map<String, Location> markerIdToLocation = new ConcurrentHashMap<String, Location>();
-
-	protected MarkerManager.Collection markerCollection;
+	protected Map<Long, Marker> userIdToMarker = new HashMap<>();
+	protected Map<String, Pair<Location, User>> markerIdToPair = new HashMap<>();
 
 	public LocationMarkerCollection(Context context, GoogleMap map) {
 		this.context = context;
 		this.map = map;
-
-		MarkerManager markerManager = new MarkerManager(map);
-		markerCollection = markerManager.newCollection();
 	}
 
 	@Override
-	public void add(Location l) {
-		final Geometry g = l.getGeometry();
+	public void add(MarkerOptions options, Pair<Location, User> pair) {
+		Location location = pair.first;
+		User user = pair.second;
+
+		final Geometry g = location.getGeometry();
 		if (g != null) {
-			
+
 			// one user has one location
-			Long locId = userIdToLocationId.get(l.getUser().getId());
-			if(locId != null) {
-				if(locationIdToMarker.get(locId) != null) {
-					Location oldLoc = markerIdToLocation.get(locationIdToMarker.get(locId).getId());
-					if(oldLoc.getTimestamp().before(l.getTimestamp())) {
-						remove(oldLoc);
-					} else {
-						removeOldMarkers();
-						return;
+			Marker marker = userIdToMarker.get(user.getId());
+			if (marker != null) {
+				markerIdToPair.remove(marker.getId());
+				marker.remove();
+
+				if (clickedAccuracyCircleUserId != null && clickedAccuracyCircleUserId.equals(user.getId())) {
+					if (clickedAccuracyCircle != null) {
+						clickedAccuracyCircle.remove();
+						clickedAccuracyCircle = null;
 					}
 				}
 			}
-			
-			// If I got an observation that I already have in my list
-			// remove it from the map and clean-up my collections
-			remove(l);
 
-			Point point = GeometryUtils.getCentroid(g);
+			options.visible(visible);
 
-			LatLng latLng = new LatLng(point.getY(), point.getX());
-			MarkerOptions options = new MarkerOptions().position(latLng).visible(visible).icon(LocationBitmapFactory.bitmapDescriptor(context, l, l.getUser()));
+			marker = map.addMarker(options);
+			userIdToMarker.put(user.getId(), marker);
+			markerIdToPair.put(marker.getId(), pair);
 
-			Marker marker = markerCollection.addMarker(options);
-
-			userIdToLocationId.put(l.getUser().getId(), l.getId());
-			
-			locationIdToMarker.put(l.getId(), marker);
-			markerIdToLocation.put(marker.getId(), l);
-
-			if (l.getTimestamp().after(latestLocationDate)) {
-				latestLocationDate = l.getTimestamp();
+			if (location.getTimestamp().after(latestLocationDate)) {
+				latestLocationDate = location.getTimestamp();
 			}
-			removeOldMarkers();
-		}
-	}
-
-	@Override
-	public void addAll(Collection<Location> locations) {
-		for (Location l : locations) {
-			add(l);
 		}
 	}
 
 	// TODO: this should preserve latestLocationDate
 	@Override
-	public void remove(Location l) {
-		Marker marker = locationIdToMarker.remove(l.getId());
+	public void remove(Pair<Location, User> pair) {
+		Marker marker = userIdToMarker.remove(pair.second.getId());
 		if (marker != null) {
-			markerIdToLocation.remove(marker.getId());
-			markerCollection.remove(marker);
+			markerIdToPair.remove(marker.getId());
 			marker.remove();
 		}
 	}
-	
+
 	@Override
 	public void onInfoWindowClick(Marker marker) {
-		Location l = markerIdToLocation.get(marker.getId());
-
-		if (l == null) {
+		Pair<Location, User> pair =  markerIdToPair.get(marker.getId());
+		if (pair == null) {
 			return;
 		}
-		
+
 		Intent profileView = new Intent(context, ProfileActivity.class);
-		profileView.putExtra(ProfileFragment.USER_ID, l.getUser().getRemoteId());
+		profileView.putExtra(ProfileFragment.USER_ID, pair.second.getRemoteId());
 		context.startActivity(profileView);
 	}
 
 	@Override
 	public boolean onMarkerClick(Marker marker) {
-		Location l = markerIdToLocation.get(marker.getId());
-
-		if (l == null) {
+		Pair<Location, User> pair = markerIdToPair.get(marker.getId());
+		if (pair == null) {
 			return false;
 		}
 
-		final Geometry g = l.getGeometry();
+		Location location = pair.first;
+		User user = pair.second;
+
+		final Geometry g = location.getGeometry();
 		if (g != null) {
 			Point point = GeometryUtils.getCentroid(g);
 			LatLng latLng = new LatLng(point.getY(), point.getX());
-			LocationProperty accuracyProperty = l.getPropertiesMap().get("accuracy");
+			LocationProperty accuracyProperty = location.getPropertiesMap().get("accuracy");
 			if (accuracyProperty != null && !accuracyProperty.getValue().toString().trim().isEmpty()) {
 				try {
 					Float accuracy = Float.valueOf(accuracyProperty.getValue().toString());
@@ -171,7 +144,7 @@ public class LocationMarkerCollection implements PointCollection<Location>, OnMa
 						clickedAccuracyCircle.remove();
 					}
 					clickedAccuracyCircle = map.addCircle(new CircleOptions().center(latLng).radius(accuracy).fillColor(0x1D43b0ff).strokeColor(0x620069cc).strokeWidth(1.0f));
-					clickedAccuracyCircleLocationId = l.getId();
+					clickedAccuracyCircleUserId = user.getId();
 				} catch (NumberFormatException nfe) {
 					Log.e(LOG_NAME, "Problem adding accuracy circle to the map.", nfe);
 				}
@@ -180,7 +153,7 @@ public class LocationMarkerCollection implements PointCollection<Location>, OnMa
 
 		map.setInfoWindowAdapter(infoWindowAdapter);
 		// make sure to set the Anchor after this call as well, because the size of the icon might have changed
-		marker.setIcon(LocationBitmapFactory.bitmapDescriptor(context, l, l.getUser()));
+		marker.setIcon(LocationBitmapFactory.bitmapDescriptor(context, location, user));
 		marker.setAnchor(0.5f, 1.0f);
 		marker.showInfoWindow();
 		return true;
@@ -196,21 +169,21 @@ public class LocationMarkerCollection implements PointCollection<Location>, OnMa
 
 	@Override
 	public void refreshMarkerIcons() {
-		for (Marker m : markerCollection.getMarkers()) {
-			Location tl = markerIdToLocation.get(m.getId());
-			if (tl != null) {
-				boolean showWindow = m.isInfoWindowShown();
-				try {
-					// make sure to set the Anchor after this call as well, because the size of the icon might have changed
-					m.setIcon(LocationBitmapFactory.bitmapDescriptor(context, tl, UserHelper.getInstance(context).read(tl.getUser().getId())));
-					m.setAnchor(0.5f, 1.0f);
-				} catch (UserException ue) {
-					Log.e(LOG_NAME, "Error refreshing the icon for user: " + tl.getUser().getId(), ue);
-				}
+		for (Marker m : userIdToMarker.values()) {
+			Pair<Location, User> pair = markerIdToPair.get(m.getId());
+			Location location = pair.first;
+			User user = pair.second;
+			boolean showWindow = m.isInfoWindowShown();
+			try {
+				// make sure to set the Anchor after this call as well, because the size of the icon might have changed
+				m.setIcon(LocationBitmapFactory.bitmapDescriptor(context, location, user));
+				m.setAnchor(0.5f, 1.0f);
+			} catch (Exception ue) {
+				Log.e(LOG_NAME, "Error refreshing the icon for user: " + user.getId(), ue);
+			}
 
-				if (showWindow) {
-					m.showInfoWindow();
-				}
+			if (showWindow) {
+				m.showInfoWindow();
 			}
 		}
 	}
@@ -221,10 +194,13 @@ public class LocationMarkerCollection implements PointCollection<Location>, OnMa
 
 	@Override
 	public void clear() {
+		for (Marker marker : userIdToMarker.values()) {
+			marker.remove();
+		}
+
 		clickedAccuracyCircle = null;
-		locationIdToMarker.clear();
-		markerIdToLocation.clear();
-		markerCollection.clear();
+		userIdToMarker.clear();
+		markerIdToPair.clear();
 		latestLocationDate = new Date(0);
 	}
 
@@ -239,7 +215,7 @@ public class LocationMarkerCollection implements PointCollection<Location>, OnMa
 			return;
 
 		this.visible = visible;
-		for (Marker m : locationIdToMarker.values()) {
+		for (Marker m : userIdToMarker.values()) {
 			m.setVisible(visible);
 		}
 		if (clickedAccuracyCircle != null) {
@@ -257,42 +233,17 @@ public class LocationMarkerCollection implements PointCollection<Location>, OnMa
 		return latestLocationDate;
 	}
 
-	/**
-	 * Used to remove markers for locations that have been removed from the local datastore.
-	 */
-	public void removeOldMarkers() {
-		LocationHelper lh = LocationHelper.getInstance(context.getApplicationContext());
-		Set<Long> locationIds = locationIdToMarker.keySet();
-		for (Long locationId : locationIds) {
-			Location locationExists = new Location();
-			locationExists.setId(locationId);
-			if (!lh.exists(locationExists)) {
-				Marker marker = locationIdToMarker.remove(locationId);
-				if (marker != null) {
-					markerIdToLocation.remove(marker.getId());
-					marker.remove();
-				}
-
-				if (clickedAccuracyCircleLocationId != null && clickedAccuracyCircleLocationId.equals(locationId)) {
-					if (clickedAccuracyCircle != null) {
-						clickedAccuracyCircle.remove();
-						clickedAccuracyCircle = null;
-					}
-				}
-			}
-		}
-	}
-
 	private class LocationInfoWindowAdapter implements InfoWindowAdapter {
 		private final Map<Marker, Drawable> avatars = new HashMap<>();
 
 		@Override
 		public View getInfoContents(final Marker marker) {
-			final Location location = markerIdToLocation.get(marker.getId());
-			if (location == null) {
+			Pair<Location, User> pair = markerIdToPair.get(marker.getId());
+			final Location location = pair.first;
+			final User user = pair.second;
+			if (user == null || location == null) {
 				return null;
 			}
-			User user = location.getUser();
 
 			LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 			View v = inflater.inflate(R.layout.people_info_window, null);
