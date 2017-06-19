@@ -12,6 +12,7 @@ import com.squareup.okhttp.Response;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.TimeUnit;
 
 import mil.nga.giat.mage.sdk.R;
 import mil.nga.giat.mage.sdk.event.IEventDispatcher;
@@ -60,6 +61,8 @@ public class HttpClientManager implements IEventDispatcher<IUserEventListener> {
 
     public OkHttpClient httpClient() {
         OkHttpClient client = new OkHttpClient();
+        client.setConnectTimeout(30, TimeUnit.SECONDS);
+        client.setReadTimeout(30, TimeUnit.SECONDS);
 
         client.interceptors().add(new Interceptor() {
             @Override
