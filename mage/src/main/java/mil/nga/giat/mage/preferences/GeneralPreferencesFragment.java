@@ -18,7 +18,7 @@ public class GeneralPreferencesFragment extends PreferenceFragmentCompat {
 	public void onCreate(final Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 
-		setHasOptionsMenu(false);
+		setHasOptionsMenu(true);
 	}
 
 	@Override

@@ -5,7 +5,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
-import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
@@ -57,13 +56,14 @@ import mil.nga.giat.mage.sdk.event.ILocationEventListener;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
 import mil.nga.giat.mage.sdk.fetch.LocationRefreshIntent;
 
-public class PeopleFeedFragment extends Fragment implements OnSharedPreferenceChangeListener, OnItemClickListener, ILocationEventListener {
+public class PeopleFeedFragment extends Fragment implements OnItemClickListener, ILocationEventListener {
 	
 	private static final String LOG_NAME = PeopleFeedFragment.class.getName();
 	
     private PeopleCursorAdapter adapter;
     private PreparedQuery<Location> query;
     private ViewGroup footer;
+    private ListView lv;
     private SharedPreferences sp;
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
     private ScheduledFuture<?> queryUpdateHandle;
@@ -94,25 +94,12 @@ public class PeopleFeedFragment extends Fragment implements OnSharedPreferenceCh
             }
         });
 
-        ListView lv = (ListView) rootView.findViewById(R.id.people_feed_list);
+        lv = (ListView) rootView.findViewById(R.id.people_feed_list);
         footer = (ViewGroup) inflater.inflate(R.layout.feed_footer, lv, false);
         lv.addFooterView(footer, null, false);
         
         sp = PreferenceManager.getDefaultSharedPreferences(getActivity().getApplicationContext());
 
-        try {
-        	Dao<Location, Long> locationDao = DaoStore.getInstance(getActivity().getApplicationContext()).getLocationDao();
-            query = buildQuery(locationDao, getTimeFilterId());
-            Cursor c = obtainCursor(query, locationDao);
-            adapter = new PeopleCursorAdapter(getActivity().getApplicationContext(), c, query);
-            footer = (ViewGroup) inflater.inflate(R.layout.feed_footer, lv, false);
-            footer.setVisibility(View.GONE);
-            lv.setAdapter(adapter);
-            lv.setOnItemClickListener(this);
-            
-        } catch (Exception e) {
-        	Log.e(LOG_NAME, "Problem getting cursor or setting adapter.", e);
-        }
         return rootView;
     }
 
@@ -120,16 +107,27 @@ public class PeopleFeedFragment extends Fragment implements OnSharedPreferenceCh
     public void onResume() {
     	super.onResume();
 
-        sp.registerOnSharedPreferenceChangeListener(this);
         LocationHelper.getInstance(getActivity()).addListener(this);
         locationRefreshReceiver.register();
+
+        try {
+            Dao<Location, Long> locationDao = DaoStore.getInstance(getActivity().getApplicationContext()).getLocationDao();
+            query = buildQuery(locationDao, getTimeFilterId());
+            Cursor c = obtainCursor(query, locationDao);
+            adapter = new PeopleCursorAdapter(getActivity().getApplicationContext(), c, query);
+            footer.setVisibility(View.GONE);
+            lv.setAdapter(adapter);
+            lv.setOnItemClickListener(this);
+
+        } catch (Exception e) {
+            Log.e(LOG_NAME, "Problem getting cursor or setting adapter.", e);
+        }
     }
 
     @Override
     public void onPause() {
     	super.onPause();
 
-        sp.unregisterOnSharedPreferenceChangeListener(this);
         LocationHelper.getInstance(getActivity()).removeListener(this);
         locationRefreshReceiver.unregister();
     }
@@ -157,13 +155,6 @@ public class PeopleFeedFragment extends Fragment implements OnSharedPreferenceCh
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
-        }
-    }
-
-    @Override
-    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-        if (getResources().getString(R.string.activeTimeFilterKey).equalsIgnoreCase(key)) {
-            updateTimeFilter(sharedPreferences.getInt(key, 0));
         }
     }
 
