@@ -60,6 +60,8 @@ import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.map.marker.LocationBitmapFactory;
 import mil.nga.giat.mage.sdk.datastore.location.Location;
 import mil.nga.giat.mage.sdk.datastore.location.LocationHelper;
+import mil.nga.giat.mage.sdk.datastore.user.Event;
+import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.datastore.user.UserLocal;
@@ -135,7 +137,8 @@ public class ProfileFragment extends Fragment implements OnMapReadyCallback, Vie
 				user = UserHelper.getInstance(context).readCurrentUser();
 			}
 
-			List<Location> lastLocation = LocationHelper.getInstance(context).getUserLocations(user.getId(), getActivity(), 1, true);
+			Event event = EventHelper.getInstance(context).getCurrentEvent();
+			List<Location> lastLocation = LocationHelper.getInstance(context).getUserLocations(user.getId(), event.getId(), 1, true);
 			if (!lastLocation.isEmpty()) {
 				Geometry geo = lastLocation.get(0).getGeometry();
 				if (geo instanceof Point) {

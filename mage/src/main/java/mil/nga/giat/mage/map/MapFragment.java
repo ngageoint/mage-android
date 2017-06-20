@@ -500,7 +500,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 
 		// if there is not a location from the location service, then try to pull one from the database.
 		if (l == null) {
-			List<mil.nga.giat.mage.sdk.datastore.location.Location> tLocations = LocationHelper.getInstance(getActivity().getApplicationContext()).getCurrentUserLocations(getActivity().getApplicationContext(), 1, true);
+			List<mil.nga.giat.mage.sdk.datastore.location.Location> tLocations = LocationHelper.getInstance(getActivity().getApplicationContext()).getCurrentUserLocations(1, true);
 			if (!tLocations.isEmpty()) {
 				mil.nga.giat.mage.sdk.datastore.location.Location tLocation = tLocations.get(0);
 				Geometry geo = tLocation.getGeometry();
