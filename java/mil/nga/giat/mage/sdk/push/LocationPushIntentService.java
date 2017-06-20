@@ -67,13 +67,13 @@ public class LocationPushIntentService extends ConnectivityAwareIntentService im
 					e.printStackTrace();
 				}
 
-				List<Location> locations = locationHelper.getCurrentUserLocations(getApplicationContext(), batchSize, false);
+				List<Location> locations = locationHelper.getCurrentUserLocations(batchSize, false);
 				while (!locations.isEmpty() && failedAttemptCount < 3) {
 
 					// post locations by event
 					Event event = locations.get(0).getEvent();
 
-					List<Location> eventLocations = new ArrayList<Location>();
+					List<Location> eventLocations = new ArrayList<>();
 					for(Location l : locations) {
 						if(event.equals(l.getEvent())) {
 							eventLocations.add(l);
@@ -116,7 +116,7 @@ public class LocationPushIntentService extends ConnectivityAwareIntentService im
 						Log.e(LOG_NAME, "Failed to push locations.");
 						failedAttemptCount++;
 					}
-					locations = locationHelper.getCurrentUserLocations(getApplicationContext(), batchSize, false);
+					locations = locationHelper.getCurrentUserLocations(batchSize, false);
 				}
 			} else {
 				Log.d(LOG_NAME, "The device is currently disconnected. Can't push locations.");

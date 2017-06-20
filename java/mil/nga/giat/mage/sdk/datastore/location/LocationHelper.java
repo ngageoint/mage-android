@@ -220,8 +220,8 @@ public class LocationHelper extends DaoHelper<Location> implements IEventDispatc
 		return exists;
 	}
 
-	public List<Location> getCurrentUserLocations(Context context, long limit, boolean includeRemote) {
-		List<Location> locations = new ArrayList<Location>();
+	public List<Location> getCurrentUserLocations(long limit, boolean includeRemote) {
+		List<Location> locations = new ArrayList<>();
 		User currentUser = null;
 		try {
 			currentUser = UserHelper.getInstance(context.getApplicationContext()).readCurrentUser();
@@ -229,13 +229,13 @@ public class LocationHelper extends DaoHelper<Location> implements IEventDispatc
 			e.printStackTrace();
 		}
 		if (currentUser != null) {
-			locations = getUserLocations(currentUser.getId(), context, limit, includeRemote);
+			locations = getUserLocations(currentUser.getId(), null, limit, includeRemote);
 		}
 		return locations;
 	}
 	
-	public List<Location> getUserLocations(Long userId, Context context, long limit, boolean includeRemote) {
-		List<Location> locations = new ArrayList<Location>();
+	public List<Location> getUserLocations(Long userId, Long eventId, long limit, boolean includeRemote) {
+		List<Location> locations = new ArrayList<>();
 		QueryBuilder<Location, Long> queryBuilder = locationDao.queryBuilder();
 		try {
 			if (limit > 0) {
@@ -244,9 +244,15 @@ public class LocationHelper extends DaoHelper<Location> implements IEventDispatc
 				queryBuilder.orderBy("timestamp", false);
 			}
 			Where<Location, Long> where = queryBuilder.where().eq("user_id", userId);
-			if(!includeRemote) {
+
+			if (eventId != null) {
+				where.and().eq("event_id", eventId);
+			}
+
+			if (!includeRemote) {
 				where.and().isNull("remote_id");
 			}
+
 			locations = locationDao.query(queryBuilder.prepare());
 		} catch (SQLException e) {
 			Log.e(LOG_NAME, "Could not get current users Locations.");
