@@ -8,7 +8,6 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
-import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.location.Location;
@@ -81,7 +80,7 @@ import mil.nga.wkb.geom.Geometry;
 import mil.nga.wkb.geom.GeometryType;
 import mil.nga.wkb.geom.Point;
 
-public class ObservationFeedFragment extends Fragment implements IObservationEventListener, OnItemClickListener, OnSharedPreferenceChangeListener, ObservationFeedCursorAdapter.ObservationActionListener {
+public class ObservationFeedFragment extends Fragment implements IObservationEventListener, OnItemClickListener, ObservationFeedCursorAdapter.ObservationActionListener {
 
 	private static final String LOG_NAME = ObservationFeedFragment.class.getName();
 
@@ -159,20 +158,6 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 		
 		sp = PreferenceManager.getDefaultSharedPreferences(getActivity().getApplicationContext());
 
-		try {
-			oDao = DaoStore.getInstance(getActivity().getApplicationContext()).getObservationDao();
-			query = buildQuery(oDao, getTimeFilterId());
-			Cursor c = obtainCursor(query, oDao);
-			adapter = new ObservationFeedCursorAdapter(getActivity(), c, query, attachmentGallery);
-			adapter.setObservationShareListener(this);
-			lv.setAdapter(adapter);
-			lv.setOnItemClickListener(this);
-
-			ObservationHelper.getInstance(getActivity().getApplicationContext()).addListener(this);
-		} catch (Exception e) {
-        	Log.e(LOG_NAME, "Problem getting cursor or setting adapter.", e);
-        }
-
 		return rootView;
 	}
 
@@ -193,7 +178,19 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 
 		observationRefreshReceiver.register();
 
-		sp.registerOnSharedPreferenceChangeListener(this);
+		try {
+			oDao = DaoStore.getInstance(getActivity().getApplicationContext()).getObservationDao();
+			query = buildQuery(oDao, getTimeFilterId());
+			Cursor c = obtainCursor(query, oDao);
+			adapter = new ObservationFeedCursorAdapter(getActivity(), c, query, attachmentGallery);
+			adapter.setObservationShareListener(this);
+			lv.setAdapter(adapter);
+			lv.setOnItemClickListener(this);
+
+			ObservationHelper.getInstance(getActivity().getApplicationContext()).addListener(this);
+		} catch (Exception e) {
+			Log.e(LOG_NAME, "Problem getting cursor or setting adapter.", e);
+		}
 	}
 
 	@Override
@@ -201,8 +198,6 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 		super.onPause();
 
 		observationRefreshReceiver.unregister();
-
-		sp.unregisterOnSharedPreferenceChangeListener(this);
 	}
 
 	@Override
@@ -399,8 +394,8 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 		c = results.getRawCursor();
 		if (c.moveToLast()) {
 			long oldestTime = c.getLong(c.getColumnIndex("last_modified"));
-			Log.i("test", "last modified is: " + c.getLong(c.getColumnIndex("last_modified")));
-			Log.i("test", "querying again in: " + (oldestTime - requeryTime)/60000 + " minutes");
+			Log.i(LOG_NAME, "last modified is: " + c.getLong(c.getColumnIndex("last_modified")));
+			Log.i(LOG_NAME, "querying again in: " + (oldestTime - requeryTime)/60000 + " minutes");
 			if (queryUpdateHandle != null) {
 				queryUpdateHandle.cancel(true);
 			}
@@ -466,16 +461,6 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 				}
 			}
 		});
-	}
-
-	@Override
-	public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-		if (getResources().getString(R.string.activeTimeFilterKey).equalsIgnoreCase(key)) {
-			updateFilter();
-		} else if (getResources().getString(R.string.activeFavoritesFilterKey).equalsIgnoreCase(key) ||
-				   getResources().getString(R.string.activeImportantFilterKey).equalsIgnoreCase(key)) {
-			updateFilter();
-		}
 	}
 
 	private void updateFilter() {

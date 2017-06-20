@@ -612,9 +612,8 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 		try {
 			File file = MediaUtility.createImageFile();
 			currentMediaPath = file.getAbsolutePath();
-			Uri uri = FileProvider.getUriForFile(this, BuildConfig.APPLICATION_ID + ".fileprovider", file);
 			Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-			intent.putExtra(MediaStore.EXTRA_OUTPUT, uri);
+			intent.putExtra(MediaStore.EXTRA_OUTPUT, getUriForFile(file));
 			intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
 			startActivityForResult(intent, CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE);
 		} catch (IOException e) {
@@ -626,9 +625,8 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 		try {
 			File file = MediaUtility.createVideoFile();
 			currentMediaPath = file.getAbsolutePath();
-			Uri uri = FileProvider.getUriForFile(this, BuildConfig.APPLICATION_ID + ".fileprovider", file);
 			Intent intent = new Intent(MediaStore.ACTION_VIDEO_CAPTURE);
-			intent.putExtra(MediaStore.EXTRA_OUTPUT, uri);
+			intent.putExtra(MediaStore.EXTRA_OUTPUT, getUriForFile(file));
 			intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
 			startActivityForResult(intent, CAPTURE_VIDEO_ACTIVITY_REQUEST_CODE);
 		} catch (IOException e) {
@@ -655,6 +653,14 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 			startActivityForResult(intent, CAPTURE_VOICE_ACTIVITY_REQUEST_CODE);
 		} else {
 			Toast.makeText(getApplicationContext(), "Device has no voice recorder application.", Toast.LENGTH_SHORT).show();
+		}
+	}
+
+	private Uri getUriForFile(File file) {
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+			return FileProvider.getUriForFile(this, BuildConfig.APPLICATION_ID + ".fileprovider", file);
+		} else {
+			return Uri.fromFile(file);
 		}
 	}
 

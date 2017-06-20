@@ -130,13 +130,13 @@ public class MAGE extends MultiDexApplication implements IUserEventListener, App
 						Log.e(LOG_NAME, "Unable to logout from server.");
 					}
 
-					UserUtility.getInstance(getApplicationContext()).clearTokenInformation();
-
 					if (logoutListener != null) {
 						logoutListener.onLogout();
 					}
 				}
 			};
+
+			UserUtility.getInstance(getApplicationContext()).clearTokenInformation();
 
 			new Thread(runnable).start();
 		} else {
@@ -212,8 +212,8 @@ public class MAGE extends MultiDexApplication implements IUserEventListener, App
 	private PendingIntent getLogoutPendingIntent() {
 		Intent intent = new Intent(getApplicationContext(), LoginActivity.class);
 		intent.putExtra("LOGOUT", true);
-		intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-		return PendingIntent.getActivity(getApplicationContext(), 1, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+		intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+		return PendingIntent.getActivity(getApplicationContext(), 1, intent, 0);
 	}
 
 	/**
