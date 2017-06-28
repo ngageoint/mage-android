@@ -325,14 +325,9 @@ public class ObservationResource {
             }
 
             if (response.isSuccess()) {
-                Observation returnedObservation = response.body();
-                ObservationFavorite returnedFavorite = returnedObservation.getFavoritesMap().get(favorite.getUserId());
-                if (returnedFavorite != null) {
-                    returnedFavorite.setDirty(Boolean.FALSE);
-
-                }
-                returnedObservation.setId(observation.getId());
-                savedObservation = observationHelper.update(returnedObservation);
+                Observation updatedObservation = response.body();
+                observation.setLastModified(updatedObservation.getLastModified());
+                observationHelper.updateFavorite(favorite);
             } else {
                 Log.e(LOG_NAME, "Bad request.");
                 if (response.errorBody() != null) {
@@ -346,7 +341,7 @@ public class ObservationResource {
         return savedObservation;
     }
 
-    public Observation toogleImporant(Observation observation) {
+    public Observation toogleImportant(Observation observation) {
         ObservationHelper observationHelper = ObservationHelper.getInstance(context);
         ObservationImportant important = observation.getImportant();
         Observation savedObservation = null;
@@ -373,9 +368,8 @@ public class ObservationResource {
 
             if (response.isSuccess()) {
                 Observation returnedObservation = response.body();
-                important.setDirty(Boolean.FALSE);
                 returnedObservation.setId(observation.getId());
-                savedObservation = observationHelper.update(returnedObservation);
+                observationHelper.updateImportant(important, returnedObservation);
             } else {
                 Log.e(LOG_NAME, "Bad request.");
                 if (response.errorBody() != null) {

@@ -152,7 +152,7 @@ public class ObservationPushIntentService extends ConnectivityAwareIntentService
 		ObservationHelper observationHelper = ObservationHelper.getInstance(getApplicationContext());
 		try {
 			for (Observation observation : observationHelper.getDirtyImportant()) {
-				observationResource.toogleImporant(observation);
+				observationResource.toogleImportant(observation);
 				if (observation != null) {
 					Log.d(LOG_NAME, "Pushed observation important with remote_id: " + observation.getRemoteId());
 				}

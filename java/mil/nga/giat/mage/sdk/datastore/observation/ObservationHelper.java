@@ -223,15 +223,16 @@ public class ObservationHelper extends DaoHelper<Observation> implements IEventD
 
 					ObservationImportant important = observation.getImportant();
 					ObservationImportant oldImportant = oldObservation.getImportant();
-					if (important != null) {
-						if (oldImportant != null) {
-							important.setId(oldImportant.getId());
-						}
-
-						observationImportantDao.createOrUpdate(important);
+					if (oldImportant != null && oldImportant.isDirty()) {
+						observation.setImportant(oldImportant);
 					} else {
-						if (oldImportant != null) {
-							observationImportantDao.deleteById(oldImportant.getId());
+						if (important != null) {
+							important.setId(oldImportant.getId());
+							observationImportantDao.createOrUpdate(important);
+						} else {
+							if (oldImportant != null) {
+								observationImportantDao.deleteById(oldImportant.getId());
+							}
 						}
 					}
 
@@ -267,14 +268,21 @@ public class ObservationHelper extends DaoHelper<Observation> implements IEventD
 					}
 
 					for (ObservationFavorite favorite : favorites.values()) {
-						favorite.setObservation(observation);
-						observationFavoriteDao.createOrUpdate(favorite);
+						ObservationFavorite oldFavorite = oldFavorites.get(favorite.getUserId());
+						// only update favorite if local is not dirty
+						if (oldFavorite == null || !oldFavorite.isDirty()) {
+							favorite.setObservation(observation);
+							observationFavoriteDao.createOrUpdate(favorite);
+						}
 					}
 
 					// Remove any favorites that existed in the old observation but do not exist
 					// in the new observation.
 					for (String favorite : Sets.difference(oldFavorites.keySet(), favorites.keySet())) {
-						observationFavoriteDao.deleteById(oldFavorites.get(favorite).getId());
+						// Only delete favorites that are not dirty
+						if (!oldFavorites.get(favorite).isDirty()) {
+							observationFavoriteDao.deleteById(oldFavorites.get(favorite).getId());
+						}
 					}
 
 					Log.i(LOG_NAME, "Observation attachments " + observation.getAttachments().size());
@@ -320,7 +328,7 @@ public class ObservationHelper extends DaoHelper<Observation> implements IEventD
 		for (IObservationEventListener listener : listeners) {
 			listener.onObservationUpdated(updatedObservation);
 		}
-		
+
 		return updatedObservation;
 	}
 
@@ -338,7 +346,7 @@ public class ObservationHelper extends DaoHelper<Observation> implements IEventD
 
 	/**
 	 * Gets the latest last modified date.  Used when fetching.
-	 * 
+	 *
 	 * @return
 	 */
 	public Date getLatestCleanLastModified(Context context, Event currentEvent) {
@@ -525,6 +533,29 @@ public class ObservationHelper extends DaoHelper<Observation> implements IEventD
 		}
 	}
 
+	public void updateImportant(ObservationImportant important, Observation observation) throws ObservationException {
+		try {
+			if (important.isImportant()) {
+				important.setDirty(Boolean.FALSE);
+				observation.setImportant(important);
+				observationImportantDao.update(important);
+			} else {
+				observationImportantDao.delete(important);
+			}
+
+			// Update the observation so that the lastModified time is updated
+			observationDao.update(observation);
+			observationDao.refresh(observation);
+
+			for (IObservationEventListener listener : listeners) {
+				listener.onObservationUpdated(observation);
+			}
+		} catch (SQLException e) {
+			Log.e(LOG_NAME, "Unable to update observation favorite", e);
+			throw new ObservationException("Unable to update observation favorite", e);
+		}
+	}
+
 	/**
 	 * This will favorite and observation for the user.
 	 *
@@ -583,6 +614,30 @@ public class ObservationHelper extends DaoHelper<Observation> implements IEventD
 				Log.e(LOG_NAME, "Unable to unfavorite observation", e);
 				throw new ObservationException("Unable to unfavorite observation", e);
 			}
+		}
+	}
+
+	public void updateFavorite(ObservationFavorite favorite) throws ObservationException {
+		try {
+			Observation observation = favorite.getObservation();
+
+			if (favorite.isFavorite()) {
+				favorite.setDirty(Boolean.FALSE);
+				observationFavoriteDao.update(favorite);
+			} else {
+				observationFavoriteDao.delete(favorite);
+			}
+
+			// Update the observation so that the lastModified time is updated
+			observationDao.update(observation);
+			observationDao.refresh(observation);
+
+			for (IObservationEventListener listener : listeners) {
+				listener.onObservationUpdated(observation);
+			}
+		} catch (SQLException e) {
+			Log.e(LOG_NAME, "Unable to update observation favorite", e);
+			throw new ObservationException("Unable to update observation favorite", e);
 		}
 	}
 
