@@ -280,6 +280,8 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 		// Close all open GeoPackages
 		geoPackageCache.closeAll();
 
+		cacheOverlays.clear();
+
 		staticGeometryCollection = null;
 		currentUser = null;
 		map = null;
