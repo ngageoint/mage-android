@@ -482,6 +482,14 @@ public class MediaUtility {
 			}
 		}
 
+		if (name == null) {
+			name = uri.getPath();
+			int index = name.lastIndexOf('/');
+			if (index != -1) {
+				name = name.substring(index + 1);
+			}
+		}
+
 		return name;
 	}
 
