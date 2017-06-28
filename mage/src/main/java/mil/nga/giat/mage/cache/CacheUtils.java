@@ -6,6 +6,8 @@ import android.os.Environment;
 
 import java.io.File;
 
+import mil.nga.geopackage.GeoPackageConstants;
+import mil.nga.geopackage.io.GeoPackageIOUtils;
 import mil.nga.geopackage.validate.GeoPackageValidate;
 import mil.nga.giat.mage.map.cache.CacheProvider;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
@@ -26,12 +28,17 @@ public class CacheUtils {
      */
     public static void copyToCache(Context context, Uri uri, String path) {
 
-        // Get the Uri display name, which should be the file name with extension
-        String name = MediaUtility.getDisplayName(context, uri, path);
-
         // Get a cache directory to write to
         File cacheDirectory = CacheUtils.getApplicationCacheDirectory(context);
         if (cacheDirectory != null) {
+
+            // Get the Uri display name, which should be the file name with extension
+            String name = MediaUtility.getDisplayName(context, uri, path);
+
+            // If no extension, add a GeoPackage extension
+            if(GeoPackageIOUtils.getFileExtension(new File(name)) == null){
+                name += "." + GeoPackageConstants.GEOPACKAGE_EXTENSION;
+            }
 
             // Verify that the file is a cache file by its extension
             File cacheFile = new File(cacheDirectory, name);

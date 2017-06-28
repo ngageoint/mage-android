@@ -2,6 +2,7 @@ package mil.nga.giat.mage.cache;
 
 
 import android.content.Context;
+import android.util.Log;
 
 import java.io.File;
 
@@ -43,8 +44,22 @@ public class GeoPackageCacheUtils {
             String cacheName = getCacheName(manager, cacheFile);
 
             // Import the GeoPackage as a linked file
-            if (manager.importGeoPackageAsExternalLink(cacheFile, cacheName)) {
-                importedCacheName = cacheName;
+            try{
+                if (manager.importGeoPackageAsExternalLink(cacheFile, cacheName)) {
+                    importedCacheName = cacheName;
+                }
+            }catch(Exception e){
+                Log.e(GeoPackageCacheUtils.class.getSimpleName(), "Failed to import file as GeoPackage. path: " + cacheFile.getAbsolutePath() + ", name: " + cacheName + ", error: " +e.getMessage());
+
+                // Delete the cache file
+                if(cacheFile.canWrite()){
+                    try {
+                        cacheFile.delete();
+                    }catch(Exception error){
+                        Log.e(GeoPackageCacheUtils.class.getSimpleName(), "Failed to delete file: " + cacheFile.getAbsolutePath() + ", error: " + error.getMessage());
+                    }
+                }
+
             }
         }
 
