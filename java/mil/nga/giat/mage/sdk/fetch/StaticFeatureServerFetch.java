@@ -28,6 +28,10 @@ import mil.nga.giat.mage.sdk.login.LoginTaskFactory;
 
 public class StaticFeatureServerFetch extends AbstractServerFetch {
 
+	public interface OnStaticLayersListener {
+		void onStaticLayersLoaded(Collection<Layer> layers);
+	}
+
 	private LayerResource layerResource;
 
 	public StaticFeatureServerFetch(Context context) {
@@ -41,7 +45,7 @@ public class StaticFeatureServerFetch extends AbstractServerFetch {
 
 
 	// TODO test that icons are pulled correctly
-	public void fetch(boolean deleteLocal) {
+	public void fetch(boolean deleteLocal, OnStaticLayersListener listener) {
 
 		StaticFeatureHelper staticFeatureHelper = StaticFeatureHelper.getInstance(mContext);
 		LayerHelper layerHelper = LayerHelper.getInstance(mContext);
@@ -66,11 +70,17 @@ public class StaticFeatureServerFetch extends AbstractServerFetch {
 
 			layers.removeAll(localLayers);
 
-			for(Layer layer : layers) {
+			for (Layer layer : layers) {
 				layerHelper.create(layer);
 			}
 
-			for (Layer layer : layerHelper.readAll()) {
+			Collection<Layer> newLayers = layerHelper.readAll();
+
+			if (listener != null) {
+				listener.onStaticLayersLoaded(newLayers);
+			}
+
+			for (Layer layer : newLayers) {
 				if (isCanceled) {
 					break;
 				}
