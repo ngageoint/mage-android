@@ -134,8 +134,26 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
 			return;
 		}
 
-		double latitude = Double.parseDouble(latitudeEdit.getText().toString());
-		double longitude = Double.parseDouble(longitudeEdit.getText().toString());
+		String latitudeString = latitudeEdit.getText().toString();
+		String longitudeString = longitudeEdit.getText().toString();
+
+		double latitude = 0;
+		if (!latitudeString.isEmpty()) {
+			try {
+				latitude = Double.parseDouble(latitudeEdit.getText().toString());
+			} catch (NumberFormatException ignore) {
+			}
+		}
+
+		double longitude = 0;
+		if (!longitudeString.isEmpty()) {
+			try {
+				longitude = Double.parseDouble(longitudeEdit.getText().toString());
+			} catch (NumberFormatException ignore) {
+
+			}
+		}
+
 		LatLng latLng = new LatLng(latitude, longitude);
 
 		map.moveCamera(CameraUpdateFactory.newLatLng(latLng));
