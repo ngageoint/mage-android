@@ -7,6 +7,7 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
 import android.support.design.widget.CoordinatorLayout;
@@ -64,6 +65,7 @@ public class PeopleFeedFragment extends Fragment implements OnItemClickListener,
     private PreparedQuery<Location> query;
     private ViewGroup footer;
     private ListView lv;
+    private Parcelable listState;
     private SharedPreferences sp;
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
     private ScheduledFuture<?> queryUpdateHandle;
@@ -119,6 +121,10 @@ public class PeopleFeedFragment extends Fragment implements OnItemClickListener,
             lv.setAdapter(adapter);
             lv.setOnItemClickListener(this);
 
+            if (listState != null) {
+                lv.onRestoreInstanceState(listState);
+            }
+
         } catch (Exception e) {
             Log.e(LOG_NAME, "Problem getting cursor or setting adapter.", e);
         }
@@ -130,6 +136,8 @@ public class PeopleFeedFragment extends Fragment implements OnItemClickListener,
 
         LocationHelper.getInstance(getActivity()).removeListener(this);
         locationRefreshReceiver.unregister();
+
+        listState = lv.onSaveInstanceState();
     }
     
     @Override

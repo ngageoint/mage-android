@@ -12,6 +12,7 @@ import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.location.Location;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.preference.PreferenceManager;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.Snackbar;
@@ -93,6 +94,7 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 	private long requeryTime;
 	private ViewGroup footer;
 	private ListView lv;
+	Parcelable listState;
 	private Long currentEventId;
 	private User currentUser;
 	private LocationService locationService;
@@ -185,6 +187,10 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 			lv.setAdapter(adapter);
 			lv.setOnItemClickListener(this);
 
+			if (listState != null) {
+				lv.onRestoreInstanceState(listState);
+			}
+
 			ObservationHelper.getInstance(getActivity().getApplicationContext()).addListener(this);
 		} catch (Exception e) {
 			Log.e(LOG_NAME, "Problem getting cursor or setting adapter.", e);
@@ -196,6 +202,8 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 		super.onPause();
 
 		observationRefreshReceiver.unregister();
+
+		listState = lv.onSaveInstanceState();
 	}
 
 	@Override
