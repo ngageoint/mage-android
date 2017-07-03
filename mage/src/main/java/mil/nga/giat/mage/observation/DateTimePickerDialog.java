@@ -44,9 +44,7 @@ public class DateTimePickerDialog extends DialogFragment {
     private Calendar calendar = Calendar.getInstance();
 
     private DateFormat dateFormat;
-    //new SimpleDateFormat("MMM dd, yyyy", java.util.Locale.getDefault());
     private DateFormat timeFormat;
-    //new SimpleDateFormat("HH:mm",java.util.Locale.getDefault());
 
     private OnDateTimeChangedListener onDateTimeChangedListener;
 
