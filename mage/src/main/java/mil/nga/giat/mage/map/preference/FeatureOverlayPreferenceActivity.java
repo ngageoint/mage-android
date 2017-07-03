@@ -36,6 +36,7 @@ import mil.nga.giat.mage.sdk.datastore.staticfeature.StaticFeatureHelper;
 import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
 import mil.nga.giat.mage.sdk.event.ILayerEventListener;
 import mil.nga.giat.mage.sdk.event.IStaticFeatureEventListener;
+import mil.nga.giat.mage.sdk.fetch.StaticFeatureServerFetch;
 
 public class FeatureOverlayPreferenceActivity extends AppCompatActivity {
 
@@ -225,7 +226,7 @@ public class FeatureOverlayPreferenceActivity extends AppCompatActivity {
             new AlertDialog.Builder(getActivity())
                     .setTitle("Refresh Feature Overlays")
                     .setMessage(R.string.feature_overlay_refresh)
-                    .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+                    .setPositiveButton("Refresh", new DialogInterface.OnClickListener() {
                         public void onClick(DialogInterface dialog, int which) {
                             refreshButton.setEnabled(false);
                             getListView().setEnabled(false);
@@ -237,7 +238,12 @@ public class FeatureOverlayPreferenceActivity extends AppCompatActivity {
 
                             overlayAdapter.clear();
                             overlayAdapter.notifyDataSetChanged();
-                            ((MAGE) getActivity().getApplication()).loadStaticFeatures(true);
+                            ((MAGE) getActivity().getApplication()).loadStaticFeatures(true, new StaticFeatureServerFetch.OnStaticLayersListener() {
+                                @Override
+                                public void onStaticLayersLoaded(Collection<Layer> layers) {
+                                    onLayerCreated(null);
+                                }
+                            });
                         }
                     }).setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
                 public void onClick(DialogInterface dialog, int which) {
