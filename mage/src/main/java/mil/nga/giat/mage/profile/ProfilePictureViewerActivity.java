@@ -49,7 +49,7 @@ public class ProfilePictureViewerActivity extends AppCompatActivity {
 
 		attempts = 0;
 
-		if(userID >= 0) {
+		if (userID >= 0) {
 			try {
 				final User user = UserHelper.getInstance(getApplicationContext()).read(userID);
 				final UserLocal userLocal = user.getUserLocal();
@@ -59,8 +59,11 @@ public class ProfilePictureViewerActivity extends AppCompatActivity {
 
 				if (StringUtils.isNotBlank(localAvatarPath)) {
 					setProfilePicture(user);
-				} else {
+				} else if (user.getAvatarUrl() != null) {
 					downloadProfilePicture(user);
+				} else {
+					progress.setVisibility(View.GONE);
+					findViewById(R.id.no_content).setVisibility(View.VISIBLE);
 				}
 			} catch(Exception e) {
 				Log.e(LOG_NAME, "Could not set title.", e);
