@@ -16,14 +16,14 @@
             android:entries="@array/userReportingFrequencies"
             android:entryValues="@array/userReportingFrequencyValues"
             android:key="@string/userReportingFrequencyKey"
-            android:summary="Minimum time interval between location updates. Smaller intervals will report your location more often regardless of distance moved."
+            android:summary="%s \n\nMinimum time interval between location updates. Smaller intervals will report your location more often regardless of distance moved."
             android:title="Time Interval"/>
         <mil.nga.giat.mage.sdk.preferences.IntegerListPreference
             android:defaultValue="@integer/gpsSensitivityDefaultValue"
             android:entries="@array/gpsSensitivities"
             android:entryValues="@array/gpsSensitivityValues"
             android:key="@string/gpsSensitivityKey"
-            android:summary="Minimum distance between location updates. Smaller distances will give a more precise location at the cost of battery drain."
+            android:summary="%s \n\nMinimum distance between location updates. Smaller distances will give a more precise location at the cost of battery drain."
             android:title="GPS Distance Sensitivity"/>
     </PreferenceCategory>
 
@@ -36,7 +36,7 @@
             android:entries="@array/locationPushFrequencies"
             android:entryValues="@array/locationPushFrequencyValues"
             android:key="@string/locationPushFrequencyKey"
-            android:summary="How often your location gets reported to the server."
+            android:summary="%s \n\nHow often your location gets reported to the server."
             android:title="Time Interval"/>
     </PreferenceCategory>
 
