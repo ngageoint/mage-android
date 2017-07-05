@@ -10,7 +10,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -48,7 +48,6 @@ import com.vividsolutions.jts.geom.Point;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -226,6 +225,7 @@ public class ProfileFragment extends Fragment implements OnMapReadyCallback, Vie
 			Glide.with(context)
 					.load(localAvatarPath)
 					.asBitmap()
+					.placeholder(R.drawable.ic_person_gray_48dp)
 					.centerCrop()
 					.into(new BitmapImageViewTarget(imageView) {
 						@Override
@@ -234,37 +234,17 @@ public class ProfileFragment extends Fragment implements OnMapReadyCallback, Vie
 							circularBitmapDrawable.setCircular(true);
 							imageView.setImageDrawable(circularBitmapDrawable);
 						}
+
+						@Override
+						public void onLoadFailed(Exception e, Drawable errorDrawable) {
+							downloadAvatar(context, imageView);
+						}
 					});
 		} else {
 			if (avatarUrl != null) {
-				new DownloadImageTask(context, Collections.singletonList(user), DownloadImageTask.ImageType.AVATAR, false, new DownloadImageTask.OnImageDownloadListener() {
-					@Override
-					public void complete() {
-						try {
-							user = UserHelper.getInstance(context).read(user.getId());
-							UserLocal userLocal = user.getUserLocal();
-							if (userLocal.getLocalAvatarPath() != null) {
-								Glide.with(context)
-										.load(userLocal.getLocalAvatarPath())
-										.asBitmap()
-										.centerCrop()
-										.into(new BitmapImageViewTarget(imageView) {
-											@Override
-											protected void setResource(Bitmap resource) {
-												RoundedBitmapDrawable circularBitmapDrawable = RoundedBitmapDrawableFactory.create(context.getResources(), resource);
-												circularBitmapDrawable.setCircular(true);
-												imageView.setImageDrawable(circularBitmapDrawable);
-											}
-										});
-							}
-						} catch (UserException e) {
-						}
-					}
-				}).execute();
+				downloadAvatar(context, imageView);
 			}
 		}
-
-
 
 		return rootView;
 	}
@@ -276,6 +256,34 @@ public class ProfileFragment extends Fragment implements OnMapReadyCallback, Vie
 				onAvatarClick();
 				break;
 		}
+	}
+
+	private void downloadAvatar(final Context context, final ImageView imageView) {
+		new DownloadImageTask(context, Collections.singletonList(user), DownloadImageTask.ImageType.AVATAR, false, new DownloadImageTask.OnImageDownloadListener() {
+			@Override
+			public void complete() {
+				try {
+					user = UserHelper.getInstance(context).read(user.getId());
+					UserLocal userLocal = user.getUserLocal();
+					if (userLocal.getLocalAvatarPath() != null) {
+						Glide.with(context)
+								.load(userLocal.getLocalAvatarPath())
+								.asBitmap()
+								.fallback(R.drawable.ic_person_gray_48dp)
+								.centerCrop()
+								.into(new BitmapImageViewTarget(imageView) {
+									@Override
+									protected void setResource(Bitmap resource) {
+										RoundedBitmapDrawable circularBitmapDrawable = RoundedBitmapDrawableFactory.create(context.getResources(), resource);
+										circularBitmapDrawable.setCircular(true);
+										imageView.setImageDrawable(circularBitmapDrawable);
+									}
+								});
+					}
+				} catch (UserException e) {
+				}
+			}
+		}).execute();
 	}
 
 	private void onAvatarClick() {
@@ -421,16 +429,6 @@ public class ProfileFragment extends Fragment implements OnMapReadyCallback, Vie
 					.icon(icon));
 
 			map.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15));
-		}
-	}
-
-	private void setProfilePicture(File file, ImageView imageView) {
-		if (file.exists() && file.canRead()) {
-			try {
-				imageView.setImageBitmap(MediaUtility.resizeAndRoundCorners(BitmapFactory.decodeStream(new FileInputStream(file)), 150));
-			} catch(Exception e) {
-				Log.e(LOG_NAME, "Problem setting profile picture.");
-			}
 		}
 	}
 	
