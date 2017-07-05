@@ -4,6 +4,7 @@ import android.os.Bundle;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
 
@@ -39,6 +40,7 @@ public class ProfilePictureViewerActivity extends AppCompatActivity {
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.attachment_viewer);
+		getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
 		Long userID = getIntent().getLongExtra(USER_ID, -1);
 
@@ -64,8 +66,16 @@ public class ProfilePictureViewerActivity extends AppCompatActivity {
 				Log.e(LOG_NAME, "Could not set title.", e);
 			}
 		}
+	}
 
-//		findViewById(R.id.remove_btn).setVisibility(View.GONE);
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		switch (item.getItemId()) {
+			case android.R.id.home:
+				this.finish();
+				return true;
+		}
+		return true;
 	}
 
 	private void downloadProfilePicture(final User user) {
