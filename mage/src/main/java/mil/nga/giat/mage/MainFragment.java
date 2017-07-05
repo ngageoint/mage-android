@@ -98,6 +98,15 @@ public class MainFragment extends Fragment {
     }
 
     @Override
+    public void onResume() {
+        super.onResume();
+
+        if (navigationItem != null) {
+            selectNavigationItem(navigationItem);
+        }
+    }
+
+    @Override
     public void onSaveInstanceState(Bundle outState) {
         outState.putInt(SELECTED_NAVIGATION_ITEM, selectedNavigationItem);
 
