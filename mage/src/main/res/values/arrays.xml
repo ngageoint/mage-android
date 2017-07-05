@@ -28,7 +28,7 @@
 
     <string-array name="timeZones">
         <item>Local</item>
-        <item>GMT</item>
+        <item>UTC</item>
     </string-array>
 
     <string-array name="timeZoneValues">
