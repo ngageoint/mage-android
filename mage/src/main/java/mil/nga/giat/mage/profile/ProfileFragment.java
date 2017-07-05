@@ -18,6 +18,7 @@ import android.provider.MediaStore;
 import android.provider.Settings;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.content.FileProvider;
 import android.support.v4.graphics.drawable.RoundedBitmapDrawable;
 import android.support.v4.graphics.drawable.RoundedBitmapDrawableFactory;
 import android.support.v7.app.ActionBar;
@@ -55,6 +56,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import mil.nga.giat.mage.BuildConfig;
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.map.marker.LocationBitmapFactory;
 import mil.nga.giat.mage.sdk.datastore.location.Location;
@@ -87,7 +89,6 @@ public class ProfileFragment extends Fragment implements OnMapReadyCallback, Vie
 	
 	private MapView mapView;
 	private LatLng latLng = new LatLng(0, 0);
-	private float zoom = 0f;
 	private BitmapDescriptor icon;
 	
 	@Override
@@ -336,13 +337,21 @@ public class ProfileFragment extends Fragment implements OnMapReadyCallback, Vie
 		try {
 			File file = MediaUtility.createImageFile();
 			currentMediaPath = file.getAbsolutePath();
-			Uri uri = Uri.fromFile(file);
+			Uri uri = getUriForFile(file);
 			Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
 			intent.putExtra(MediaStore.EXTRA_OUTPUT, uri);
 			intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
 			startActivityForResult(intent, CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE);
 		} catch (IOException e) {
 			Log.e(LOG_NAME, "Error creating video media file", e);
+		}
+	}
+
+	private Uri getUriForFile(File file) {
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+			return FileProvider.getUriForFile(getActivity(), BuildConfig.APPLICATION_ID + ".fileprovider", file);
+		} else {
+			return Uri.fromFile(file);
 		}
 	}
 
@@ -361,7 +370,7 @@ public class ProfileFragment extends Fragment implements OnMapReadyCallback, Vie
 	public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
 		switch (requestCode) {
 			case PERMISSIONS_REQUEST_CAMERA: {
-				Map<String, Integer> grants = new HashMap<String, Integer>();
+				Map<String, Integer> grants = new HashMap<>();
 				grants.put(Manifest.permission.CAMERA, PackageManager.PERMISSION_GRANTED);
 				grants.put(Manifest.permission.WRITE_EXTERNAL_STORAGE, PackageManager.PERMISSION_GRANTED);
 

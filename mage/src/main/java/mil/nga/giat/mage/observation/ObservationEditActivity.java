@@ -659,6 +659,8 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 
 	@Override
 	public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
+		super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
 		switch (requestCode) {
 			case PERMISSIONS_REQUEST_CAMERA:
 			case PERMISSIONS_REQUEST_VIDEO: {
