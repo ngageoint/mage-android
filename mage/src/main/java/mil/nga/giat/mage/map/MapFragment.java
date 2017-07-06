@@ -406,9 +406,9 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 	public void onSaveInstanceState(Bundle outState) {
 		super.onSaveInstanceState(outState);
 
-		Bundle mapState = new Bundle();
-		mapView.onSaveInstanceState(mapState);
-		outState.putBundle(MAP_VIEW_STATE, mapState);
+//		Bundle mapState = new Bundle();
+//		mapView.onSaveInstanceState(mapState);
+//		outState.putBundle(MAP_VIEW_STATE, mapState);
 	}
 
 	@Override

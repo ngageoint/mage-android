@@ -25,12 +25,16 @@ import mil.nga.giat.mage.newsfeed.PeopleFeedFragment;
 
 public class MainFragment extends Fragment {
 
-    private String SELETED_NAVIGATION_ITEM = "SELETED_NAVIGATION_ITEM";
-
     public enum NavigationItem {
-        MAP,
-        OBSERVATIONS,
-        PEOPLE;
+        MAP(0),
+        OBSERVATIONS(1),
+        PEOPLE(2);
+
+        private int index;
+
+        NavigationItem(int index) {
+            this.index = index;
+        }
     }
 
     public interface OnNavigationItemSelectedListener {
@@ -62,7 +66,6 @@ public class MainFragment extends Fragment {
         navigationView.setOnNavigationItemSelectedListener(new BottomNavigationView.OnNavigationItemSelectedListener() {
             @Override
             public boolean onNavigationItemSelected(@NonNull MenuItem item) {
-                NavigationItem navigationItem = NavigationItem.MAP;
                 switch (item.getItemId()) {
                     case R.id.map_tab:
                         navigationItem = NavigationItem.MAP;
@@ -89,7 +92,7 @@ public class MainFragment extends Fragment {
                 selectedNavigationItem = savedInstanceState.getInt(SELECTED_NAVIGATION_ITEM, R.id.map_tab);
                 selectedItem = navigationView.getMenu().findItem(selectedNavigationItem);
             } else {
-                selectedItem = navigationView.getMenu().getItem(0);
+                selectedItem = navigationView.getMenu().getItem(NavigationItem.MAP.index);
             }
 
             switchFragment(selectedItem);
@@ -103,7 +106,9 @@ public class MainFragment extends Fragment {
         super.onResume();
 
         MenuItem selectedItem = navigationView.getMenu().findItem(selectedNavigationItem);
-        switchFragment(selectedItem);
+        if (selectedItem != null) {
+            switchFragment(selectedItem);
+        }
     }
 
     @Override
@@ -155,19 +160,21 @@ public class MainFragment extends Fragment {
                 navigationView.findViewById(R.id.people_tab).performClick();
                 break;
         }
+
+        selectedNavigationItem = item.index;
     }
 
     private void switchFragment(MenuItem item) {
         Fragment fragment = null;
         switch (item.getItemId()) {
             case R.id.map_tab:
-                fragment = navigationFragments.get(0);
+                fragment = navigationFragments.get(NavigationItem.MAP.index);
                 break;
             case R.id.observations_tab:
-                fragment = navigationFragments.get(1);
+                fragment = navigationFragments.get(NavigationItem.OBSERVATIONS.index);
                 break;
             case R.id.people_tab:
-                fragment = navigationFragments.get(2);
+                fragment = navigationFragments.get(NavigationItem.PEOPLE.index);
                 break;
         }
 

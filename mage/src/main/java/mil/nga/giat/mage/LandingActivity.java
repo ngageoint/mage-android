@@ -66,6 +66,9 @@ public class LandingActivity extends AppCompatActivity implements NavigationView
      */
     public static final String EXTRA_OPEN_FILE_PATH = "extra_open_file_path";
 
+    private static final String BACK_STACK_MAIN_TAG = "BACK_STACK_MAIN_TAG";
+    private static final String VISIBLE_FRAGMENT_TAG = "VISIBLE_FRAGMENT_TAG";
+
     private static final int PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 100;
     private static final int PERMISSIONS_REQUEST_ACCESS_STORAGE= 200;
     private static final int PERMISSIONS_REQUEST_OPEN_FILE = 300;
@@ -179,12 +182,9 @@ public class LandingActivity extends AppCompatActivity implements NavigationView
         headerView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                drawerLayout.closeDrawer(GravityCompat.START);
-
-                FragmentManager fragmentManager = getSupportFragmentManager();
-                fragmentManager.beginTransaction().replace(R.id.content_frame, profileFragment).commit();
-
-                navigationView.getMenu().findItem(R.id.profile_navigation).setChecked(true);
+                MenuItem profileNavigationItem = navigationView.getMenu().findItem(R.id.profile_navigation);
+                onNavigationItemSelected(profileNavigationItem);
+                profileNavigationItem.setChecked(true);
             }
         });
 
@@ -215,6 +215,16 @@ public class LandingActivity extends AppCompatActivity implements NavigationView
         if (savedInstanceState == null) {
             goToMain();
         }
+
+        getSupportFragmentManager().addOnBackStackChangedListener(new FragmentManager.OnBackStackChangedListener() {
+            public void onBackStackChanged() {
+                Fragment currentBackStackFragment = getSupportFragmentManager().findFragmentByTag(VISIBLE_FRAGMENT_TAG);
+                if (currentBackStackFragment instanceof MainFragment) {
+                    setTitle();
+                }
+            }
+        });
+
     }
 
     @Override
@@ -299,7 +309,7 @@ public class LandingActivity extends AppCompatActivity implements NavigationView
         setTitle();
         mainFragment.setNavigationItem(MainFragment.NavigationItem.MAP);
         FragmentManager fragmentManager = getSupportFragmentManager();
-        fragmentManager.beginTransaction().replace(R.id.content_frame, mainFragment).commit();
+        fragmentManager.beginTransaction().replace(R.id.content_frame, mainFragment, VISIBLE_FRAGMENT_TAG).commit();
     }
 
     @Override
@@ -312,49 +322,45 @@ public class LandingActivity extends AppCompatActivity implements NavigationView
     public boolean onNavigationItemSelected(MenuItem menuItem) {
         drawerLayout.closeDrawers();
 
+        FragmentManager fragmentManager = getSupportFragmentManager();
+        fragmentManager.popBackStack(BACK_STACK_MAIN_TAG, FragmentManager.POP_BACK_STACK_INCLUSIVE);
+
         switch (menuItem.getItemId()) {
             case R.id.map_navigation: {
-                FragmentManager fragmentManager = getSupportFragmentManager();
-                fragmentManager.beginTransaction().replace(R.id.content_frame, mainFragment).commit();
+                fragmentManager.beginTransaction().replace(R.id.content_frame, mainFragment, VISIBLE_FRAGMENT_TAG).commit();
                 mainFragment.setNavigationItem(MainFragment.NavigationItem.MAP);
 
                 setTitle();
                 break;
             }
             case R.id.observations_navigation: {
-                FragmentManager fragmentManager = getSupportFragmentManager();
-                fragmentManager.beginTransaction().replace(R.id.content_frame, mainFragment).commit();
+                fragmentManager.beginTransaction().replace(R.id.content_frame, mainFragment, VISIBLE_FRAGMENT_TAG).commit();
                 mainFragment.setNavigationItem(MainFragment.NavigationItem.OBSERVATIONS);
 
                 setTitle();
                 break;
             }
             case R.id.people_navigation: {
-                FragmentManager fragmentManager = getSupportFragmentManager();
-                fragmentManager.beginTransaction().replace(R.id.content_frame, mainFragment).commit();
+                fragmentManager.beginTransaction().replace(R.id.content_frame, mainFragment, VISIBLE_FRAGMENT_TAG).commit();
                 mainFragment.setNavigationItem(MainFragment.NavigationItem.PEOPLE);
 
                 setTitle();
                 break;
             }
             case R.id.events_navigation: {
-                FragmentManager fragmentManager = getSupportFragmentManager();
-                fragmentManager.beginTransaction().replace(R.id.content_frame, eventsFragment).commit();
+                fragmentManager.beginTransaction().replace(R.id.content_frame, eventsFragment, VISIBLE_FRAGMENT_TAG).addToBackStack(BACK_STACK_MAIN_TAG).commit();
                 break;
             }
             case R.id.profile_navigation: {
-                FragmentManager fragmentManager = getSupportFragmentManager();
-                fragmentManager.beginTransaction().replace(R.id.content_frame, profileFragment).commit();
+                fragmentManager.beginTransaction().replace(R.id.content_frame, profileFragment, VISIBLE_FRAGMENT_TAG).addToBackStack(BACK_STACK_MAIN_TAG).commit();
                 break;
             }
             case R.id.settings_navigation: {
-                FragmentManager fragmentManager = getSupportFragmentManager();
-                fragmentManager.beginTransaction().replace(R.id.content_frame, settingsFragment).commit();
+                fragmentManager.beginTransaction().replace(R.id.content_frame, settingsFragment, VISIBLE_FRAGMENT_TAG).addToBackStack(BACK_STACK_MAIN_TAG).commit();
                 break;
             }
             case R.id.help_navigation: {
-                FragmentManager fragmentManager = getSupportFragmentManager();
-                fragmentManager.beginTransaction().replace(R.id.content_frame, aboutFragment).commit();
+                fragmentManager.beginTransaction().replace(R.id.content_frame, aboutFragment, VISIBLE_FRAGMENT_TAG).addToBackStack(BACK_STACK_MAIN_TAG).commit();
                 break;
             }
             case R.id.logout_navigation: {
@@ -399,15 +405,13 @@ public class LandingActivity extends AppCompatActivity implements NavigationView
         return super.onOptionsItemSelected(item);
     }
 
-    /**
-     * Takes you to the home screen
-     */
     @Override
     public void onBackPressed() {
-        Intent startMain = new Intent(Intent.ACTION_MAIN);
-        startMain.addCategory(Intent.CATEGORY_HOME);
-        startMain.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        startActivity(startMain);
+        if (drawerLayout.isDrawerOpen(GravityCompat.START)) {
+            drawerLayout.closeDrawer(GravityCompat.START);
+        } else {
+            super.onBackPressed();
+        }
     }
 
     /**
