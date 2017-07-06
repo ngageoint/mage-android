@@ -132,17 +132,12 @@ public class PeopleFeedFragment extends Fragment implements OnItemClickListener,
 
     @Override
     public void onPause() {
-    	super.onPause();
+        super.onPause();
 
         LocationHelper.getInstance(getActivity()).removeListener(this);
         locationRefreshReceiver.unregister();
 
         listState = lv.onSaveInstanceState();
-    }
-    
-    @Override
-    public void onDestroyView() {
-        super.onDestroyView();
 
         if (queryUpdateHandle != null) {
             queryUpdateHandle.cancel(true);

@@ -162,17 +162,6 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 	}
 
 	@Override
-	public void onDestroyView() {
-		super.onDestroyView();
-
-		ObservationHelper.getInstance(getActivity().getApplicationContext()).removeListener(this);
-
-		if (queryUpdateHandle != null) {
-			queryUpdateHandle.cancel(true);
-		}
-	}
-
-	@Override
 	public void onResume() {
 		super.onResume();
 
@@ -204,6 +193,12 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 		observationRefreshReceiver.unregister();
 
 		listState = lv.onSaveInstanceState();
+
+		ObservationHelper.getInstance(getActivity().getApplicationContext()).removeListener(this);
+
+		if (queryUpdateHandle != null) {
+			queryUpdateHandle.cancel(true);
+		}
 	}
 
 	@Override

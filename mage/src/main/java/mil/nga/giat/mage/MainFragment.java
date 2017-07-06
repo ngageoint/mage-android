@@ -3,6 +3,7 @@ package mil.nga.giat.mage;
 import android.content.Context;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.design.widget.BottomNavigationView;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
@@ -101,9 +102,8 @@ public class MainFragment extends Fragment {
     public void onResume() {
         super.onResume();
 
-        if (navigationItem != null) {
-            selectNavigationItem(navigationItem);
-        }
+        MenuItem selectedItem = navigationView.getMenu().findItem(selectedNavigationItem);
+        switchFragment(selectedItem);
     }
 
     @Override
@@ -111,6 +111,17 @@ public class MainFragment extends Fragment {
         outState.putInt(SELECTED_NAVIGATION_ITEM, selectedNavigationItem);
 
         super.onSaveInstanceState(outState);
+    }
+
+    @Override
+    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+
+        if (savedInstanceState != null) {
+            selectedNavigationItem = savedInstanceState.getInt(SELECTED_NAVIGATION_ITEM);
+            MenuItem selectedItem = navigationView.getMenu().findItem(selectedNavigationItem);
+            switchFragment(selectedItem);
+        }
     }
 
     @Override
