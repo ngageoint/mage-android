@@ -297,6 +297,7 @@ public class LandingActivity extends AppCompatActivity implements NavigationView
 
     private void goToMain() {
         setTitle();
+        mainFragment.setNavigationItem(MainFragment.NavigationItem.MAP);
         FragmentManager fragmentManager = getSupportFragmentManager();
         fragmentManager.beginTransaction().replace(R.id.content_frame, mainFragment).commit();
     }
