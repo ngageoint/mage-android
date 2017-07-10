@@ -123,8 +123,18 @@
             android:theme="@style/AppTheme.Toolbar"
             android:launchMode="singleTop" />
         <activity
+            android:name=".event.ChangeEventActivity"
+            android:parentActivityName=".LandingActivity" />
+        <activity
+            android:name=".help.HelpActivity"
+            android:theme="@style/AppTheme.NoActionBar"
+            android:parentActivityName=".LandingActivity" />
+        <activity
             android:name=".preferences.LocationPreferencesActivity"
             android:label="@string/location_settings"
+            android:parentActivityName=".LandingActivity" />
+        <activity
+            android:name=".preferences.GeneralPreferencesActivity"
             android:parentActivityName=".LandingActivity" />
         <activity
             android:name=".preferences.FetchPreferencesActivity"

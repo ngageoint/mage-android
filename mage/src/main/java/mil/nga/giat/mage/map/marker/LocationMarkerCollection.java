@@ -36,7 +36,6 @@ import java.util.Map;
 
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.profile.ProfileActivity;
-import mil.nga.giat.mage.profile.ProfileFragment;
 import mil.nga.giat.mage.sdk.datastore.location.Location;
 import mil.nga.giat.mage.sdk.datastore.location.LocationProperty;
 import mil.nga.giat.mage.sdk.datastore.user.User;
@@ -117,7 +116,7 @@ public class LocationMarkerCollection implements PointCollection<Pair<Location, 
 		}
 		
 		Intent profileView = new Intent(context, ProfileActivity.class);
-		profileView.putExtra(ProfileFragment.USER_ID, pair.second.getRemoteId());
+		profileView.putExtra(ProfileActivity.USER_ID, pair.second.getRemoteId());
 		context.startActivity(profileView);
 	}
 

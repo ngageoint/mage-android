@@ -8,6 +8,6 @@
         android:id="@+id/disclaimer_text"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textColor="#D8000000"/>
+        style="@style/ListTextSecondaryDark"/>
 
 </LinearLayout>

@@ -9,8 +9,8 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
-import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -20,37 +20,42 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import mil.nga.giat.mage.BuildConfig;
 import mil.nga.giat.mage.R;
 
-public class HelpFragment extends Fragment {
+public class HelpActivity extends AppCompatActivity {
 
 	@Override
-	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-		View view = inflater.inflate(R.layout.fragment_help, container, false);
+	public void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
 
-		setHasOptionsMenu(true);
-		ActionBar actionBar = ((AppCompatActivity) getActivity()).getSupportActionBar();
-		actionBar.setTitle("Help");
-		actionBar.setSubtitle(null);
+		setContentView(R.layout.fragment_help);
 
-		TabLayout tabLayout = (TabLayout) view.findViewById(R.id.tab_layout);
-		tabLayout.addTab(tabLayout.newTab().setText("About MAGE"));
+		Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+		toolbar.setTitle("MAGE");
+		setSupportActionBar(toolbar);
+
+		getSupportActionBar().setHomeAsUpIndicator(R.drawable.ic_arrow_back_white_24dp);
+		getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+
+		TabLayout tabLayout = (TabLayout) findViewById(R.id.tab_layout);
+		tabLayout.addTab(tabLayout.newTab().setText("About"));
 		tabLayout.addTab(tabLayout.newTab().setText("Acknowledgements"));
 		tabLayout.setTabGravity(TabLayout.GRAVITY_FILL);
 		tabLayout.setTabMode(TabLayout.MODE_SCROLLABLE);
 
 		List<Fragment> fragments = new ArrayList<>(Arrays.asList(new AboutFragment(), new AcknowledgementsFragment()));
 
-		SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
+		SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
 		boolean showDisclaimer = sharedPreferences.getBoolean(getString(R.string.serverDisclaimerShow), false);
 		if (showDisclaimer) {
 			fragments.add(1, new DisclaimerFragment());
 			tabLayout.addTab(tabLayout.newTab().setText("Disclaimer"), 1);
 		}
 
-		final ViewPager viewPager = (ViewPager) view.findViewById(R.id.pager);
+		final ViewPager viewPager = (ViewPager) findViewById(R.id.pager);
 
-		PagerAdapter adapter = new HelpPagerAdapter(getChildFragmentManager(), fragments);
+		PagerAdapter adapter = new HelpPagerAdapter(getSupportFragmentManager(), fragments);
 		viewPager.setAdapter(adapter);
 		viewPager.addOnPageChangeListener(new TabLayout.TabLayoutOnPageChangeListener(tabLayout));
 
@@ -70,15 +75,35 @@ public class HelpFragment extends Fragment {
 
 			}
 		});
-
-
-		return view;
 	}
 
-	public static class AboutFragment extends Fragment {
+	public static class AboutFragment extends Fragment implements View.OnClickListener {
+		private int clicks = 0;
+		private TextView version;
+
 		@Override
 		public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-			return inflater.inflate(R.layout.fragment_help_about, container, false);
+			View view = inflater.inflate(R.layout.fragment_help_about, container, false);
+
+			SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
+
+			TextView serverUrl  = (TextView) view.findViewById(R.id.server_url);
+			serverUrl.setText(sharedPreferences.getString(getString(R.string.serverURLKey), ""));
+
+			version  = (TextView) view.findViewById(R.id.version);
+			version.setText(BuildConfig.VERSION_NAME);
+
+			view.findViewById(R.id.version_layout).setOnClickListener(this);
+
+			return view;
+		}
+
+		@Override
+		public void onClick(View v) {
+			clicks++;
+			if (clicks == 5) {
+				version.setText(String.format("%s (%s)", BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE));
+			}
 		}
 	}
 

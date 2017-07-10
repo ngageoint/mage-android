@@ -3,7 +3,6 @@
 
     <string name="app_name">MAGE</string>
     <string name="aboutText">The Mobile Awareness GEOINT Environment, or MAGE, provides mobile situational awareness capabilities. The MAGE app on your mobile device allows you to create geotagged field reports that contain media such as photos, videos, and voice recordings and share them instantly with who you want. Using the GPS in your mobile device, MAGE can also track users locations in real time. Your locations can be automatically shared with the other members of your team.\n\nThe app remains functional if your mobile device loses its network connection, and will upload its local content when a connection is re-established. When disconnected from the network, MAGE will use local data layers to continue to provide relevant GEOINT. Data layers, including map tiles and vector data, can be stored on your mobile device and are available at all times.</string>
-    <string name="menu_settings">Settings</string>
     <string name="map_settings">Map Settings</string>
     <string name="location_settings">Location Services</string>
     <string name="fetch_settings">Data Fetching</string>

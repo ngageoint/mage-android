@@ -47,7 +47,6 @@ import java.util.concurrent.TimeUnit;
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.filter.FilterActivity;
 import mil.nga.giat.mage.profile.ProfileActivity;
-import mil.nga.giat.mage.profile.ProfileFragment;
 import mil.nga.giat.mage.sdk.datastore.DaoStore;
 import mil.nga.giat.mage.sdk.datastore.location.Location;
 import mil.nga.giat.mage.sdk.datastore.location.LocationHelper;
@@ -269,7 +268,7 @@ public class PeopleFeedFragment extends Fragment implements OnItemClickListener,
 		try {
 			Location l = query.mapRow(new AndroidDatabaseResults(c, null));
 			Intent profileView = new Intent(getActivity().getApplicationContext(), ProfileActivity.class);
-			profileView.putExtra(ProfileFragment.USER_ID, l.getUser().getRemoteId());
+			profileView.putExtra(ProfileActivity.USER_ID, l.getUser().getRemoteId());
 			getActivity().startActivityForResult(profileView, 2);
 		} catch (Exception e) {
 			Log.e(LOG_NAME, "Problem.", e);

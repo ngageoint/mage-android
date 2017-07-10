@@ -56,26 +56,6 @@
         </Preference>
     </PreferenceCategory>
     <PreferenceCategory
-        android:title="ABOUT">
-        <mil.nga.giat.mage.sdk.preferences.EditTextSummaryPreference
-            android:defaultValue="@string/serverURLDefaultValue"
-            android:key="@string/serverURLKey"
-            android:selectable="false"
-            android:title="Server URL"
-            android:summary="%s"/>
-        <mil.nga.giat.mage.sdk.preferences.EditTextSummaryPreference
-            android:defaultValue="@string/usernameDefaultValue"
-            android:key="@string/displayNameKey"
-            android:selectable="false"
-            android:title="Name"
-            android:summary="%s"/>
-        <mil.nga.giat.mage.sdk.preferences.EditTextSummaryPreference
-            android:key="@string/buildVersionKey"
-            android:selectable="false"
-            android:title="MAGE App Version"
-            android:summary="%s"/>
-    </PreferenceCategory>
-    <PreferenceCategory
         android:title="ADMIN">
         <Preference
             android:key="@string/clearDataKey"
