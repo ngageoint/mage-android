@@ -227,7 +227,9 @@ public class ObservationHelper extends DaoHelper<Observation> implements IEventD
 						observation.setImportant(oldImportant);
 					} else {
 						if (important != null) {
-							important.setId(oldImportant.getId());
+							if (oldImportant != null) {
+								important.setId(oldImportant.getId());
+							}
 							observationImportantDao.createOrUpdate(important);
 						} else {
 							if (oldImportant != null) {
