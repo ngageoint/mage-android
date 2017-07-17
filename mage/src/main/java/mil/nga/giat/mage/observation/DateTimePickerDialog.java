@@ -1,6 +1,5 @@
 package mil.nga.giat.mage.observation;
 
-import android.content.Context;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
@@ -11,7 +10,6 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
-import android.support.v7.view.ContextThemeWrapper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -19,12 +17,10 @@ import android.widget.DatePicker;
 import android.widget.TimePicker;
 
 import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
-import java.util.TimeZone;
 
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.utils.DateFormatFactory;
@@ -39,12 +35,16 @@ public class DateTimePickerDialog extends DialogFragment {
         void onDateTimeChanged(Date date);
     }
 
+    private static final String CALENDAR_INSTANCE = "CALENDAR";
     private static final String DATE_TIME_EXTRA ="DATE_TIME_EXTRA";
 
     private Calendar calendar = Calendar.getInstance();
 
     private DateFormat dateFormat;
     private DateFormat timeFormat;
+
+    DatePickerFragment datePickerFragment;
+    TimePickerFragment timePickerFragment;
 
     private OnDateTimeChangedListener onDateTimeChangedListener;
 
@@ -74,10 +74,28 @@ public class DateTimePickerDialog extends DialogFragment {
     }
 
     @Override
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+
+        outState.putSerializable(CALENDAR_INSTANCE, calendar);
+
+        FragmentManager manager = getChildFragmentManager();
+        manager.putFragment(outState, DatePickerFragment.class.getName(), datePickerFragment);
+        manager.putFragment(outState, TimePickerFragment.class.getName(), timePickerFragment);
+    }
+
+    @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        final Context contextThemeWrapper = new ContextThemeWrapper(getActivity(), R.style.AppTheme_PrimaryAccent);
         LayoutInflater localInflater = inflater.cloneInContext(getContext());
         View view = localInflater.inflate(R.layout.date_time_dialog, container, false);
+
+        if (savedInstanceState != null) {
+            calendar = (Calendar) savedInstanceState.getSerializable(CALENDAR_INSTANCE);
+
+            FragmentManager manager = getChildFragmentManager();
+            datePickerFragment = (DatePickerFragment) manager.getFragment(savedInstanceState, DatePickerFragment.class.getName());
+            timePickerFragment = (TimePickerFragment) manager.getFragment(savedInstanceState, TimePickerFragment.class.getName());
+        }
 
         final TabLayout tabLayout = (TabLayout) view.findViewById(R.id.tab_layout);
         tabLayout.setTabGravity(TabLayout.GRAVITY_FILL);
@@ -91,9 +109,9 @@ public class DateTimePickerDialog extends DialogFragment {
 
         final ViewPager viewPager = (ViewPager) view.findViewById(R.id.pager);
 
-        List<Fragment> fragments = new ArrayList<>();
-        DatePickerFragment datePickerFragment = DatePickerFragment.newInstance(calendar.getTime());
-        fragments.add(datePickerFragment);
+        if (datePickerFragment == null) {
+            datePickerFragment = DatePickerFragment.newInstance(calendar.getTime());
+        }
         datePickerFragment.setOnDateChangedListener(new DatePicker.OnDateChangedListener() {
             @Override
             public void onDateChanged(DatePicker view, int year, int monthOfYear, int dayOfMonth) {
@@ -105,8 +123,9 @@ public class DateTimePickerDialog extends DialogFragment {
             }
         });
 
-        TimePickerFragment timePickerFragment = TimePickerFragment.newInstance(calendar.getTime());
-        fragments.add(timePickerFragment);
+        if (timePickerFragment == null) {
+            timePickerFragment = TimePickerFragment.newInstance(calendar.getTime());
+        }
         timePickerFragment.setOnTimeChangedListener(new TimePicker.OnTimeChangedListener() {
             @Override
             public void onTimeChanged(TimePicker view, int hourOfDay, int minute) {
@@ -117,7 +136,8 @@ public class DateTimePickerDialog extends DialogFragment {
             }
         });
 
-        PagerAdapter adapter = new DateTimePagerAdapter(getChildFragmentManager(), fragments);
+
+        PagerAdapter adapter = new DateTimePagerAdapter(getChildFragmentManager(), Arrays.asList(new Fragment[] {datePickerFragment, timePickerFragment}));
         viewPager.setAdapter(adapter);
         viewPager.addOnPageChangeListener(new TabLayout.TabLayoutOnPageChangeListener(tabLayout));
 
@@ -186,7 +206,6 @@ public class DateTimePickerDialog extends DialogFragment {
             }
 
             calendar.setTimeZone(DateFormatFactory.getTimeZone(getContext()));
-
             calendar.setTime(date);
         }
 

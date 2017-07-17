@@ -90,7 +90,8 @@ import mil.nga.giat.mage.sdk.exceptions.UserException;
 import mil.nga.giat.mage.sdk.utils.ISO8601DateFormatFactory;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
 
-public class ObservationEditActivity extends AppCompatActivity implements OnMapReadyCallback {
+public class ObservationEditActivity extends AppCompatActivity implements OnMapReadyCallback, DateTimePickerDialog.OnDateTimeChangedListener {
+
 
 	private static final String LOG_NAME = ObservationEditActivity.class.getName();
 
@@ -123,15 +124,15 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 	private final DecimalFormat latLngFormat = new DecimalFormat("###.#####");
 	private ArrayList<Attachment> attachmentsToCreate = new ArrayList<>();
 
-    private Location l;
+	private Location l;
 	private Observation observation;
 	private GoogleMap map;
 	private Marker observationMarker;
 	private Circle accuracyCircle;
 	private long locationElapsedTimeMilliseconds = 0;
 
-    private LinearLayout attachmentLayout;
-    private AttachmentGallery attachmentGallery;
+	private LinearLayout attachmentLayout;
+	private AttachmentGallery attachmentGallery;
 
 	private String currentMediaPath;
 
@@ -154,12 +155,12 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 		getSupportActionBar().setHomeAsUpIndicator(R.drawable.ic_close_white_24dp);
 		getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
-        attachmentLayout = (LinearLayout) findViewById(R.id.image_gallery);
-        attachmentGallery = new AttachmentGallery(getApplicationContext(), 100, 100);
-        attachmentGallery.addOnAttachmentClickListener(new AttachmentGallery.OnAttachmentClickListener() {
-            @Override
-            public void onAttachmentClick(Attachment attachment) {
-                Intent intent = new Intent(getApplicationContext(), AttachmentViewerActivity.class);
+		attachmentLayout = (LinearLayout) findViewById(R.id.image_gallery);
+		attachmentGallery = new AttachmentGallery(getApplicationContext(), 100, 100);
+		attachmentGallery.addOnAttachmentClickListener(new AttachmentGallery.OnAttachmentClickListener() {
+			@Override
+			public void onAttachmentClick(Attachment attachment) {
+				Intent intent = new Intent(getApplicationContext(), AttachmentViewerActivity.class);
 
 				if (attachment.getId() != null) {
 					intent.putExtra(AttachmentViewerActivity.ATTACHMENT_ID, attachment.getId());
@@ -167,10 +168,10 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 					intent.putExtra(AttachmentViewerActivity.ATTACHMENT_PATH, attachment.getLocalPath());
 				}
 
-                intent.putExtra(AttachmentViewerActivity.EDITABLE, false);
-                startActivity(intent);
-            }
-        });
+				intent.putExtra(AttachmentViewerActivity.EDITABLE, false);
+				startActivity(intent);
+			}
+		});
 
 		final long observationId = getIntent().getLongExtra(OBSERVATION_ID, NEW_OBSERVATION);
 		JsonObject dynamicFormJson;
@@ -199,7 +200,7 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 						selectClick(selectView);
 					}
 				});
-			} else if( view instanceof  LinearLayout) {
+			} else if (view instanceof LinearLayout) {
 				LinearLayout currentView = (LinearLayout) view;
 				for (int index = 0; index < currentView.getChildCount(); index++) {
 					View childView = currentView.getChildAt(index);
@@ -229,7 +230,7 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 			getSupportActionBar().setTitle("New Observation");
 			l = getIntent().getParcelableExtra(LOCATION);
 
-            observation.setEvent(EventHelper.getInstance(getApplicationContext()).getCurrentEvent());
+			observation.setEvent(EventHelper.getInstance(getApplicationContext()).getCurrentEvent());
 			observation.setTimestamp(new Date());
 			Serializable timestamp = iso8601Format.format(observation.getTimestamp());
 			ObservationProperty timestampProperty = new ObservationProperty("timestamp", timestamp);
@@ -250,7 +251,7 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 		} else {
 			getSupportActionBar().setTitle("Edit Observation");
 			// this is an edit of an existing observation
-            attachmentGallery.addAttachments(attachmentLayout, observation.getAttachments());
+			attachmentGallery.addAttachments(attachmentLayout, observation.getAttachments());
 
 			Map<String, ObservationProperty> propertiesMap = observation.getPropertiesMap();
 			Geometry geo = observation.getGeometry();
@@ -270,6 +271,13 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 			LayoutBaker.populateLayoutFromMap((LinearLayout) findViewById(R.id.form), ControlGenerationType.EDIT, propertiesMap);
 		}
 
+		final DateTimePickerDialog.OnDateTimeChangedListener dateTimeChangedListener = new DateTimePickerDialog.OnDateTimeChangedListener() {
+			@Override
+			public void onDateTimeChanged(Date date) {
+				((MageTextView) findViewById(R.id.date)).setPropertyValue(date);
+			}
+		};
+
 		findViewById(R.id.date_edit).setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
@@ -282,12 +290,7 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 				}
 
 				DateTimePickerDialog dialog = DateTimePickerDialog.newInstance(date);
-				dialog.setOnDateTimeChangedListener(new DateTimePickerDialog.OnDateTimeChangedListener() {
-					@Override
-					public void onDateTimeChanged(Date date) {
-						((MageTextView) findViewById(R.id.date)).setPropertyValue(date);
-					}
-				});
+				dialog.setOnDateTimeChangedListener(dateTimeChangedListener);
 
 				FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
 				dialog.show(ft, "DATE_TIME_PICKER_DIALOG");
@@ -304,6 +307,18 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 				startActivityForResult(intent, LOCATION_EDIT_ACTIVITY_REQUEST_CODE);
 			}
 		});
+
+		if (savedInstanceState != null) {
+			DateTimePickerDialog dialog = (DateTimePickerDialog) getSupportFragmentManager().findFragmentByTag("DATE_TIME_PICKER_DIALOG");
+			if (dialog != null) {
+				dialog.setOnDateTimeChangedListener(dateTimeChangedListener);
+			}
+		}
+	}
+
+	@Override
+	public void onDateTimeChanged(Date date) {
+		((MageTextView) findViewById(R.id.date)).setPropertyValue(date);
 	}
 
 	/**
@@ -350,12 +365,12 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 
 		((TextView) findViewById(R.id.location)).setText(latLngFormat.format(l.getLatitude()) + ", " + latLngFormat.format(l.getLongitude()));
 		if (l.getProvider() != null) {
-			((TextView)findViewById(R.id.location_provider)).setText("("+l.getProvider()+")");
+			((TextView) findViewById(R.id.location_provider)).setText("(" + l.getProvider() + ")");
 		} else {
 			findViewById(R.id.location_provider).setVisibility(View.GONE);
 		}
 		if (l.getAccuracy() != 0) {
-			((TextView)findViewById(R.id.location_accuracy)).setText("\u00B1" + l.getAccuracy() + "m");
+			((TextView) findViewById(R.id.location_accuracy)).setText("\u00B1" + l.getAccuracy() + "m");
 		} else {
 			findViewById(R.id.location_accuracy).setVisibility(View.GONE);
 		}
@@ -364,14 +379,14 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 		if (locationElapsedTimeMilliseconds != 0 && !("manual".equalsIgnoreCase(l.getProvider()))) {
 			//String dateText = DateUtils.getRelativeTimeSpanString(System.currentTimeMillis() - locationElapsedTimeMilliseconds, System.currentTimeMillis(), 0).toString();
 			String dateText = elapsedTime(locationElapsedTimeMilliseconds);
-			((TextView)findViewById(R.id.location_elapsed_time)).setText(dateText);
+			((TextView) findViewById(R.id.location_elapsed_time)).setText(dateText);
 		} else {
 			findViewById(R.id.location_elapsed_time).setVisibility(View.GONE);
 		}
 
 		LatLng latLng = getIntent().getParcelableExtra(INITIAL_LOCATION);
 		if (latLng == null) {
-			latLng = new LatLng(0,0);
+			latLng = new LatLng(0, 0);
 		}
 
 		float zoom = getIntent().getFloatExtra(INITIAL_ZOOM, 0);
@@ -447,10 +462,10 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 
 		l = savedInstanceState.getParcelable("location");
 
-        attachmentsToCreate = savedInstanceState.getParcelableArrayList("attachmentsToCreate");
-        for (Attachment a : attachmentsToCreate) {
-            attachmentGallery.addAttachment(attachmentLayout, a);
-        }
+		attachmentsToCreate = savedInstanceState.getParcelableArrayList("attachmentsToCreate");
+		for (Attachment a : attachmentsToCreate) {
+			attachmentGallery.addAttachment(attachmentLayout, a);
+		}
 
 		LinearLayout form = (LinearLayout) findViewById(R.id.form);
 		LayoutBaker.populateLayoutFromBundle(form, ControlGenerationType.EDIT, savedInstanceState);
@@ -495,72 +510,72 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 	public boolean onOptionsItemSelected(MenuItem item) {
 		switch (item.getItemId()) {
 
-		case android.R.id.home:
-			new AlertDialog.Builder(this)
-					.setTitle("Discard Changes")
-					.setMessage(R.string.cancel_edit)
-					.setPositiveButton(R.string.discard_changes, new DialogInterface.OnClickListener() {
-						public void onClick(DialogInterface dialog, int which) {
-							finish();
-						}
-					}).setNegativeButton(R.string.no, null)
-					.show();
+			case android.R.id.home:
+				new AlertDialog.Builder(this)
+						.setTitle("Discard Changes")
+						.setMessage(R.string.cancel_edit)
+						.setPositiveButton(R.string.discard_changes, new DialogInterface.OnClickListener() {
+							public void onClick(DialogInterface dialog, int which) {
+								finish();
+							}
+						}).setNegativeButton(R.string.no, null)
+						.show();
 
-			break;
-
-		case R.id.observation_save:
-			List<View> invalid = LayoutBaker.validateControls(controls);
-			if (!invalid.isEmpty()) {
-				// scroll to first invalid control
-				View firstInvalid = invalid.get(0);
-				findViewById(R.id.properties).scrollTo(0, firstInvalid.getBottom());
-				firstInvalid.clearFocus();
-				firstInvalid.requestFocus();
-				firstInvalid.requestFocusFromTouch();
 				break;
-			}
 
-			observation.setState(State.ACTIVE);
-			observation.setDirty(true);
-			observation.setGeometry(new GeometryFactory().createPoint(new Coordinate(l.getLongitude(), l.getLatitude())));
-
-			Map<String, ObservationProperty> propertyMap = LayoutBaker.populateMapFromLayout((LinearLayout) findViewById(R.id.form));
-
-			try {
-				observation.setTimestamp(iso8601Format.parse(propertyMap.get("timestamp").getValue().toString()));
-			} catch (ParseException pe) {
-				Log.e(LOG_NAME, "Could not parse timestamp", pe);
-			}
-			// Add properties that weren't part of the layout
-			propertyMap.put("accuracy", new ObservationProperty("accuracy", l.getAccuracy()));
-			String provider = l.getProvider();
-			if (provider == null || provider.trim().isEmpty()) {
-				provider = "manual";
-			}
-
-			propertyMap.put("provider", new ObservationProperty("provider", provider));
-			if (!"manual".equalsIgnoreCase(provider)) {
-				propertyMap.put("delta", new ObservationProperty("delta", Long.toString(locationElapsedTimeMilliseconds)));
-			}
-
-			observation.addProperties(propertyMap.values());
-            observation.getAttachments().addAll(attachmentsToCreate);
-
-			ObservationHelper oh = ObservationHelper.getInstance(getApplicationContext());
-			try {
-				if (observation.getId() == null) {
-					Observation newObs = oh.create(observation);
-					Log.i(LOG_NAME, "Created new observation with id: " + newObs.getId());
-				} else {
-					oh.update(observation);
-					Log.i(LOG_NAME, "Updated observation with remote id: " + observation.getRemoteId());
+			case R.id.observation_save:
+				List<View> invalid = LayoutBaker.validateControls(controls);
+				if (!invalid.isEmpty()) {
+					// scroll to first invalid control
+					View firstInvalid = invalid.get(0);
+					findViewById(R.id.properties).scrollTo(0, firstInvalid.getBottom());
+					firstInvalid.clearFocus();
+					firstInvalid.requestFocus();
+					firstInvalid.requestFocusFromTouch();
+					break;
 				}
-				finish();
-			} catch (Exception e) {
-				Log.e(LOG_NAME, e.getMessage(), e);
-			}
 
-			break;
+				observation.setState(State.ACTIVE);
+				observation.setDirty(true);
+				observation.setGeometry(new GeometryFactory().createPoint(new Coordinate(l.getLongitude(), l.getLatitude())));
+
+				Map<String, ObservationProperty> propertyMap = LayoutBaker.populateMapFromLayout((LinearLayout) findViewById(R.id.form));
+
+				try {
+					observation.setTimestamp(iso8601Format.parse(propertyMap.get("timestamp").getValue().toString()));
+				} catch (ParseException pe) {
+					Log.e(LOG_NAME, "Could not parse timestamp", pe);
+				}
+				// Add properties that weren't part of the layout
+				propertyMap.put("accuracy", new ObservationProperty("accuracy", l.getAccuracy()));
+				String provider = l.getProvider();
+				if (provider == null || provider.trim().isEmpty()) {
+					provider = "manual";
+				}
+
+				propertyMap.put("provider", new ObservationProperty("provider", provider));
+				if (!"manual".equalsIgnoreCase(provider)) {
+					propertyMap.put("delta", new ObservationProperty("delta", Long.toString(locationElapsedTimeMilliseconds)));
+				}
+
+				observation.addProperties(propertyMap.values());
+				observation.getAttachments().addAll(attachmentsToCreate);
+
+				ObservationHelper oh = ObservationHelper.getInstance(getApplicationContext());
+				try {
+					if (observation.getId() == null) {
+						Observation newObs = oh.create(observation);
+						Log.i(LOG_NAME, "Created new observation with id: " + newObs.getId());
+					} else {
+						oh.update(observation);
+						Log.i(LOG_NAME, "Updated observation with remote id: " + observation.getRemoteId());
+					}
+					finish();
+				} catch (Exception e) {
+					Log.e(LOG_NAME, e.getMessage(), e);
+				}
+
+				break;
 		}
 
 		return super.onOptionsItemSelected(item);
@@ -568,7 +583,7 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 
 	public void onCameraClick(View v) {
 		if (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED ||
-			ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+				ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
 			ActivityCompat.requestPermissions(ObservationEditActivity.this, new String[]{Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE}, PERMISSIONS_REQUEST_CAMERA);
 		} else {
 			launchCameraIntent();
@@ -577,7 +592,7 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 
 	public void onVideoClick(View v) {
 		if (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED ||
-		ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+				ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
 			ActivityCompat.requestPermissions(ObservationEditActivity.this, new String[]{Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE}, PERMISSIONS_REQUEST_VIDEO);
 		} else {
 			launchVideoIntent();
@@ -586,8 +601,8 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 
 	public void onAudioClick(View v) {
 		if (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED ||
-			ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-			ActivityCompat.requestPermissions(ObservationEditActivity.this, new String[]{Manifest.permission.RECORD_AUDIO,  Manifest.permission.WRITE_EXTERNAL_STORAGE}, PERMISSIONS_REQUEST_AUDIO);
+				ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+			ActivityCompat.requestPermissions(ObservationEditActivity.this, new String[]{Manifest.permission.RECORD_AUDIO, Manifest.permission.WRITE_EXTERNAL_STORAGE}, PERMISSIONS_REQUEST_AUDIO);
 		} else {
 			launchAudioIntent();
 		}
@@ -631,9 +646,9 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 		Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
 		intent.setType("image/*, video/*");
 		intent.addCategory(Intent.CATEGORY_OPENABLE);
-		intent.putExtra(Intent.EXTRA_MIME_TYPES, new String[] {"image/*", "video/*"});
+		intent.putExtra(Intent.EXTRA_MIME_TYPES, new String[]{"image/*", "video/*"});
 
-		if (Build.VERSION.SDK_INT >=  Build.VERSION_CODES.JELLY_BEAN_MR2) {
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
 			intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
 		}
 		startActivityForResult(intent, GALLERY_ACTIVITY_REQUEST_CODE);
@@ -673,7 +688,7 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 				}
 
 				if (grants.get(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED &&
-					grants.get(Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
+						grants.get(Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
 					if (requestCode == PERMISSIONS_REQUEST_CAMERA) {
 						launchCameraIntent();
 					} else {
@@ -699,7 +714,7 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 				grants.put(Manifest.permission.WRITE_EXTERNAL_STORAGE, PackageManager.PERMISSION_GRANTED);
 
 				if (grants.get(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED &&
-					grants.get(Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
+						grants.get(Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
 					launchAudioIntent();
 				} else if ((!ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.RECORD_AUDIO) && grants.get(Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) ||
 						(!ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) && grants.get(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) ||
