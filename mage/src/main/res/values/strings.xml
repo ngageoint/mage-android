@@ -23,6 +23,34 @@
     <string name="no">No</string>
     <string name="force_submit"><u>Force Submit</u></string>
 
+    <string name="advanced_time_filter_options">Advanced Time Filter Options</string>
+    <string name="observation_filter">Observations</string>
+    <string name="locations_filter">Locations</string>
+    <string name="favorites">Favorites</string>
+    <string name="show_favorite_observations">Show my favorite observations.</string>
+    <string name="important">Important</string>
+    <string name="show_important_observations">Show observations flagged as important.</string>
+    <string name="time_filter">TIME FILTER</string>
+    <string name="time_filter_observations">TIME FILTER (Observations Only)</string>
+
+    <string name="all">All</string>
+    <string name="today">Today</string>
+    <string name="twenty_four_hours">24 Hours</string>
+    <string name="last_week">Last Week</string>
+    <string name="last_month">Last Month</string>
+
+    <string name="all_observation_description">Do not filter observations on time.</string>
+    <string name="today_observation_description">Show todays observations.</string>
+    <string name="twenty_four_hours_observation_description">Show observations for last 24 hours.</string>
+    <string name="last_week_observation_description">Show observations for last week.</string>
+    <string name="last_month_observation_description">Show observations for last month.</string>
+
+    <string name="all_location_description">Do not filter locations on time.</string>
+    <string name="today_location_description">Show todays locations.</string>
+    <string name="twenty_four_hours_location_description">Show locations for last 24 hours.</string>
+    <string name="last_week_location_description">Show locations for last week.</string>
+    <string name="last_month_location_description">Show locations for last month.</string>
+
     <string name="reauthentication_message"><b>You</b> were logged in as &lt;b>%s&lt;/b>, and your MAGE session has expired. Please login to resume using MAGE.</string>
 
     <string name="location_services_enabled_summary">Click to configure GPS sensitivy and tracking options</string>

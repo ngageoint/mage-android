@@ -38,6 +38,7 @@
     <bool name="disclaimerAcceptedDefaultValue">false</bool>
 
     <string name="activeTimeFilterKey">activeTimeFilter</string>
+    <string name="activeLocationTimeFilterKey">activeLocationTimeFilter</string>
     <string name="activeFavoritesFilterKey">activeFavoritesFilter</string>
     <string name="activeImportantFilterKey">activeImportantFilter</string>
 

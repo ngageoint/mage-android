@@ -45,7 +45,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 import mil.nga.giat.mage.R;
-import mil.nga.giat.mage.filter.FilterActivity;
+import mil.nga.giat.mage.filter.LocationFilterActivity;
 import mil.nga.giat.mage.profile.ProfileActivity;
 import mil.nga.giat.mage.sdk.datastore.DaoStore;
 import mil.nga.giat.mage.sdk.datastore.location.Location;
@@ -152,7 +152,7 @@ public class PeopleFeedFragment extends Fragment implements OnItemClickListener,
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.filter_button:
-                Intent intent = new Intent(getActivity(), FilterActivity.class);
+                Intent intent = new Intent(getActivity(), LocationFilterActivity.class);
                 startActivity(intent);
                 return true;
             default:
@@ -166,7 +166,7 @@ public class PeopleFeedFragment extends Fragment implements OnItemClickListener,
     }
 
     private int getTimeFilterId() {
-        return sp.getInt(getResources().getString(R.string.activeTimeFilterKey), getResources().getInteger(R.integer.time_filter_none));
+        return sp.getInt(getResources().getString(R.string.activeLocationTimeFilterKey), getResources().getInteger(R.integer.time_filter_none));
     }
 
     private Cursor obtainCursor(PreparedQuery<Location> query, Dao<Location, Long> lDao) throws SQLException {

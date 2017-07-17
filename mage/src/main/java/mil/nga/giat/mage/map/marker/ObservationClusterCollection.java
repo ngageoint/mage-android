@@ -63,7 +63,12 @@ public class ObservationClusterCollection implements PointCollection<Observation
     	// TODO : figure this out?
     	Log.d(LOG_NAME, "TODO: refreshme");
     }
-    
+
+    @Override
+    public int count() {
+        return observations.size();
+    }
+
     @Override
     public void setVisibility(boolean visible) {
         // TODO not even sure what to do here with ClusterItem

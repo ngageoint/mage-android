@@ -187,6 +187,11 @@ public class LocationMarkerCollection implements PointCollection<Pair<Location, 
 	}
 
 	@Override
+	public int count() {
+		return userIdToMarker.size();
+	}
+
+	@Override
 	public void clear() {
 		for (Marker marker : userIdToMarker.values()) {
 			marker.remove();

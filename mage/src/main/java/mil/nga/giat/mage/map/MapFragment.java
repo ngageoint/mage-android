@@ -157,6 +157,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 	private boolean mapInitialized = false;
 	private View searchLayout;
 	private SearchView searchView;
+	private Menu menu;
 	private Location location;
 	private boolean followMe = false;
 	private GoogleMapWrapper mapWrapper;
@@ -291,6 +292,8 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 	@Override
 	public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
 		inflater.inflate(R.menu.filter, menu);
+		this.menu = menu;
+		getFilterTitle();
 	}
 
 	@Override
@@ -350,7 +353,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 		}
 		observations = new ObservationMarkerCollection(getActivity(), map);
 		ObservationLoadTask observationLoad = new ObservationLoadTask(getActivity(), observations);
-		observationLoad.addFilter(getTemporalFilter("timestamp"));
+		observationLoad.addFilter(getTemporalFilter("timestamp", getTimeFilterId()));
 		observationLoad.executeOnExecutor(executor);
 
 		if (locations != null) {
@@ -358,7 +361,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 		}
 		locations = new LocationMarkerCollection(getActivity(), map);
 		LocationLoadTask locationLoad = new LocationLoadTask(getActivity(), locations);
-		locationLoad.setFilter(getTemporalFilter("timestamp"));
+		locationLoad.setFilter(getTemporalFilter("timestamp", getLocationTimeFilterId()));
 		locationLoad.executeOnExecutor(executor);
 
 		updateMapView();
@@ -394,6 +397,8 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 			map.setMyLocationEnabled(false);
 			map.setLocationSource(null);
 		}
+
+		((AppCompatActivity) getActivity()).getSupportActionBar().setSubtitle(getFilterTitle());
 	}
 
 	@Override
@@ -424,7 +429,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 		mapView.onResume();
 		initializeMap();
 
-		((AppCompatActivity) getActivity()).getSupportActionBar().setSubtitle(getFilterTitle());
+		//((AppCompatActivity) getActivity()).getSupportActionBar().setSubtitle(getFilterTitle());
 
 		searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
 			@Override
@@ -576,7 +581,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 	public void onObservationCreated(Collection<Observation> o, Boolean sendUserNotifcations) {
 		if (observations != null) {
 			ObservationTask task = new ObservationTask(getActivity(), ObservationTask.Type.ADD, observations);
-			task.addFilter(getTemporalFilter("last_modified"));
+			task.addFilter(getTemporalFilter("last_modified", getTimeFilterId()));
 			task.executeOnExecutor(executor, o.toArray(new Observation[o.size()]));
 		}
 	}
@@ -585,7 +590,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 	public void onObservationUpdated(Observation o) {
 		if (observations != null) {
 			ObservationTask task = new ObservationTask(getActivity(), ObservationTask.Type.UPDATE, observations);
-			task.addFilter(getTemporalFilter("last_modified"));
+			task.addFilter(getTemporalFilter("last_modified", getTimeFilterId()));
 			task.executeOnExecutor(executor, o);
 		}
 	}
@@ -603,7 +608,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 			if (currentUser != null && !currentUser.getRemoteId().equals(l.getUser().getRemoteId())) {
 				if (locations != null) {
 					LocationTask task = new LocationTask(getActivity(), LocationTask.Type.ADD, locations);
-					task.setFilter(getTemporalFilter("timestamp"));
+					task.setFilter(getTemporalFilter("timestamp", getLocationTimeFilterId()));
 					task.executeOnExecutor(executor, l);
 				}
 			} else {
@@ -619,7 +624,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 		if (currentUser != null && !currentUser.getRemoteId().equals(l.getUser().getRemoteId())) {
 			if (locations != null) {
 				LocationTask task = new LocationTask(getActivity(), LocationTask.Type.UPDATE, locations);
-				task.setFilter(getTemporalFilter("timestamp"));
+				task.setFilter(getTemporalFilter("timestamp", getLocationTimeFilterId()));
 				task.executeOnExecutor(executor, l);
 			}
 		} else {
@@ -1259,9 +1264,12 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 		return preferences.getInt(getResources().getString(R.string.activeTimeFilterKey), getResources().getInteger(R.integer.time_filter_none));
 	}
 
-	private Filter<Temporal> getTemporalFilter(String columnName) {
+	private int getLocationTimeFilterId() {
+		return preferences.getInt(getResources().getString(R.string.activeLocationTimeFilterKey), getResources().getInteger(R.integer.time_filter_none));
+	}
+
+	private Filter<Temporal> getTemporalFilter(String columnName, int filterId) {
 		Filter<Temporal> filter = null;
-		int filterId = getTimeFilterId();
 		Calendar c = Calendar.getInstance();
 
 		if (filterId == getResources().getInteger(R.integer.time_filter_last_month)) {
@@ -1288,33 +1296,15 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 	}
 
 	private String getFilterTitle() {
-		List<String> filters = new ArrayList<>();
 
-		int filterId = getTimeFilterId();
-		if (filterId == getResources().getInteger(R.integer.time_filter_last_month)) {
-			filters.add("Last Month");
-		} else if (filterId == getResources().getInteger(R.integer.time_filter_last_week)) {
-			filters.add("Last Week");
-		} else if (filterId == getResources().getInteger(R.integer.time_filter_last_24_hours)) {
-			filters.add("Last 24 Hours");
-		} else if (filterId == getResources().getInteger(R.integer.time_filter_today)) {
-			filters.add("Since Midnight");
+		if (getTimeFilterId() != getResources().getInteger(R.integer.time_filter_none)
+				|| getLocationTimeFilterId() != getResources().getInteger(R.integer.time_filter_none)
+				|| preferences.getBoolean(getResources().getString(R.string.activeImportantFilterKey), false)
+				|| preferences.getBoolean(getResources().getString(R.string.activeFavoritesFilterKey), false)) {
+			return "Showing filtered results.";
+		} else {
+			return "";
 		}
-
-		List<String> actionFilters = new ArrayList<>();
-		if (preferences.getBoolean(getResources().getString(R.string.activeFavoritesFilterKey), false)) {
-			actionFilters.add("Favorites");
-		}
-
-		if (preferences.getBoolean(getResources().getString(R.string.activeImportantFilterKey), false)) {
-			actionFilters.add("Important");
-		}
-
-		if (!actionFilters.isEmpty()) {
-			filters.add(StringUtils.join(actionFilters, " & "));
-		}
-
-		return StringUtils.join(filters, ", ");
 	}
 
 	private void hideKeyboard() {

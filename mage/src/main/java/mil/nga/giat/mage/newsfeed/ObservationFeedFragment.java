@@ -58,7 +58,7 @@ import java.util.concurrent.TimeUnit;
 
 import mil.nga.giat.mage.MAGE;
 import mil.nga.giat.mage.R;
-import mil.nga.giat.mage.filter.FilterActivity;
+import mil.nga.giat.mage.filter.ObservationFilterActivity;
 import mil.nga.giat.mage.observation.AttachmentGallery;
 import mil.nga.giat.mage.observation.AttachmentViewerActivity;
 import mil.nga.giat.mage.observation.ObservationEditActivity;
@@ -210,7 +210,7 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 	public boolean onOptionsItemSelected(MenuItem item) {
 		switch (item.getItemId()) {
 			case R.id.filter_button:
-				Intent intent = new Intent(getActivity(), FilterActivity.class);
+				Intent intent = new Intent(getActivity(), ObservationFilterActivity.class);
 				startActivity(intent);
 				return true;
 			default:

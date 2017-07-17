@@ -118,6 +118,14 @@
             android:label="@string/app_name"
             android:theme="@style/AppTheme.PrimaryAccent"/>
         <activity
+            android:name=".filter.ObservationFilterActivity"
+            android:label="@string/observation_filter"
+            android:theme="@style/AppTheme.PrimaryAccent"/>
+        <activity
+            android:name=".filter.LocationFilterActivity"
+            android:label="@string/locations_filter"
+            android:theme="@style/AppTheme.PrimaryAccent"/>
+        <activity
             android:name=".LandingActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
             android:theme="@style/AppTheme.Toolbar"

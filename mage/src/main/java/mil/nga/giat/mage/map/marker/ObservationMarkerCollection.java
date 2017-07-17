@@ -114,7 +114,12 @@ public class ObservationMarkerCollection implements PointCollection<Observation>
 		}
 	}
 
-    @Override
+	@Override
+	public int count() {
+		return observationIdToMarker.size();
+	}
+
+	@Override
     public void clear() {
         for (Marker marker : observationIdToMarker.values()) {
             marker.remove();

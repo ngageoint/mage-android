@@ -17,7 +17,8 @@
             android:layout_width="match_parent"
             app:titleTextColor="@color/md_white_1000"
             app:subtitleTextColor="@color/md_white_1000"
-            android:background="?attr/colorPrimary"/>
+            android:background="?attr/colorPrimary">
+        </android.support.v7.widget.Toolbar>
 
         <FrameLayout
             android:id="@+id/navigation_content"

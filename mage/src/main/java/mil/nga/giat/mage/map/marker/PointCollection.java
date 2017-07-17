@@ -13,6 +13,8 @@ public interface PointCollection<T> extends OnMarkerClickListener, OnInfoWindowC
 
 	public void refreshMarkerIcons();
 
+	public int count();
+
 	public boolean isVisible();
 
 	public void setVisibility(boolean visible);
