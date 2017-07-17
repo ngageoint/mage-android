@@ -95,7 +95,6 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 	private ViewGroup footer;
 	private ListView lv;
 	Parcelable listState;
-	private Long currentEventId;
 	private User currentUser;
 	private LocationService locationService;
 	private SwipeRefreshLayout swipeContainer;
@@ -106,7 +105,6 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		currentEventId = EventHelper.getInstance(getActivity().getApplicationContext()).getCurrentEvent().getId();
 
 		try {
 			currentUser= UserHelper.getInstance(getActivity().getApplicationContext()).readCurrentUser();
@@ -350,7 +348,7 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 		footerTextView.setText(footerText);
 		qb.where().ge("timestamp", c.getTime())
 			.and()
-			.eq("event_id", currentEventId);
+			.eq("event_id", EventHelper.getInstance(getActivity().getApplicationContext()).getCurrentEvent().getId());
 
 		List<String> actionFilters = new ArrayList<>();
 
