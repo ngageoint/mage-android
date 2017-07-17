@@ -948,15 +948,19 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 				enabledGeoPackages.add(geoPackage.getName());
 
 				// Handle tile and feature tables
-				switch(tableCacheOverlay.getType()){
-					case GEOPACKAGE_TILE_TABLE:
-						addGeoPackageTileCacheOverlay(enabledCacheOverlays, (GeoPackageTileTableCacheOverlay)tableCacheOverlay, geoPackage, false);
-						break;
-					case GEOPACKAGE_FEATURE_TABLE:
-						addGeoPackageFeatureCacheOverlay(enabledCacheOverlays, (GeoPackageFeatureTableCacheOverlay)tableCacheOverlay, geoPackage);
-						break;
-					default:
-						throw new UnsupportedOperationException("Unsupported GeoPackage type: " + tableCacheOverlay.getType());
+				try {
+					switch (tableCacheOverlay.getType()) {
+						case GEOPACKAGE_TILE_TABLE:
+							addGeoPackageTileCacheOverlay(enabledCacheOverlays, (GeoPackageTileTableCacheOverlay) tableCacheOverlay, geoPackage, false);
+							break;
+						case GEOPACKAGE_FEATURE_TABLE:
+							addGeoPackageFeatureCacheOverlay(enabledCacheOverlays, (GeoPackageFeatureTableCacheOverlay) tableCacheOverlay, geoPackage);
+							break;
+						default:
+							throw new UnsupportedOperationException("Unsupported GeoPackage type: " + tableCacheOverlay.getType());
+					}
+				}catch(Exception e){
+					Log.e(LOG_NAME, "Failed to add GeoPackage overlay. GeoPackage: " + geoPackage.getName() + ", Name: " + tableCacheOverlay.getName(), e);
 				}
 
 				// If a newly added cache, update the bounding box for zooming
@@ -1111,23 +1115,28 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 					final int totalCount = featureCursor.getCount();
 					int count = 0;
 					while (featureCursor.moveToNext()) {
-						FeatureRow featureRow = featureCursor.getRow();
-						GeoPackageGeometryData geometryData = featureRow.getGeometry();
-						if (geometryData != null && !geometryData.isEmpty()) {
-							mil.nga.wkb.geom.Geometry geometry = geometryData.getGeometry();
-							if (geometry != null) {
-								GoogleMapShape shape = shapeConverter.toShape(geometry);
-								// Set the Shape Marker, PolylineOptions, and PolygonOptions here if needed to change color and style
-								featureTableCacheOverlay.addShapeToMap(featureRow.getId(), shape, map);
+						try {
+							FeatureRow featureRow = featureCursor.getRow();
+							GeoPackageGeometryData geometryData = featureRow.getGeometry();
+							if (geometryData != null && !geometryData.isEmpty()) {
+								mil.nga.wkb.geom.Geometry geometry = geometryData.getGeometry();
+								if (geometry != null) {
+									GoogleMapShape shape = shapeConverter.toShape(geometry);
+									// Set the Shape Marker, PolylineOptions, and PolygonOptions here if needed to change color and style
+									featureTableCacheOverlay.addShapeToMap(featureRow.getId(), shape, map);
 
-								if(++count >= maxFeaturesPerTable){
-									if(count < totalCount){
-										Toast.makeText(getActivity().getApplicationContext(), featureTableCacheOverlay.getCacheName()
-												+ "- added " + count + " of " + totalCount, Toast.LENGTH_LONG).show();
+									if (++count >= maxFeaturesPerTable) {
+										if (count < totalCount) {
+											Toast.makeText(getActivity().getApplicationContext(), featureTableCacheOverlay.getCacheName()
+													+ "- added " + count + " of " + totalCount, Toast.LENGTH_LONG).show();
+										}
+										break;
 									}
-									break;
 								}
 							}
+						}catch(Exception e){
+							Log.e(LOG_NAME, "Failed to display feature. GeoPackage: " + geoPackage.getName()
+									+ ", Table: " + featureDao.getTableName() + ", Row: " + featureCursor.getPosition(), e);
 						}
 					}
 				} finally {
