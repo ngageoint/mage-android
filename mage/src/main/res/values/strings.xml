@@ -38,18 +38,21 @@
     <string name="twenty_four_hours">24 Hours</string>
     <string name="last_week">Last Week</string>
     <string name="last_month">Last Month</string>
+    <string name="custom">Custom</string>
 
     <string name="all_observation_description">Do not filter observations on time.</string>
     <string name="today_observation_description">Show todays observations.</string>
     <string name="twenty_four_hours_observation_description">Show observations for last 24 hours.</string>
     <string name="last_week_observation_description">Show observations for last week.</string>
     <string name="last_month_observation_description">Show observations for last month.</string>
+    <string name="custom_observation_description">Define a custom rolling window.</string>
 
     <string name="all_location_description">Do not filter locations on time.</string>
     <string name="today_location_description">Show todays locations.</string>
     <string name="twenty_four_hours_location_description">Show locations for last 24 hours.</string>
     <string name="last_week_location_description">Show locations for last week.</string>
     <string name="last_month_location_description">Show locations for last month.</string>
+    <string name="custom_location_description">Define a custom rolling window.</string>
 
     <string name="reauthentication_message"><b>You</b> were logged in as &lt;b>%s&lt;/b>, and your MAGE session has expired. Please login to resume using MAGE.</string>
 

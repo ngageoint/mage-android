@@ -149,6 +149,9 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 
 	private static final String MAP_VIEW_STATE = "MAP_VIEW_STATE";
 
+	private static final String OBSERVATION_FILTER_TYPE = "Observation";
+	private static final String LOCATION_FILTER_TYPE = "Location";
+
 	private static final int PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 1;
 
 	private MAGE mage;
@@ -353,7 +356,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 		}
 		observations = new ObservationMarkerCollection(getActivity(), map);
 		ObservationLoadTask observationLoad = new ObservationLoadTask(getActivity(), observations);
-		observationLoad.addFilter(getTemporalFilter("timestamp", getTimeFilterId()));
+		observationLoad.addFilter(getTemporalFilter("timestamp", getTimeFilterId(), OBSERVATION_FILTER_TYPE));
 		observationLoad.executeOnExecutor(executor);
 
 		if (locations != null) {
@@ -361,7 +364,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 		}
 		locations = new LocationMarkerCollection(getActivity(), map);
 		LocationLoadTask locationLoad = new LocationLoadTask(getActivity(), locations);
-		locationLoad.setFilter(getTemporalFilter("timestamp", getLocationTimeFilterId()));
+		locationLoad.setFilter(getTemporalFilter("timestamp", getLocationTimeFilterId(), LOCATION_FILTER_TYPE));
 		locationLoad.executeOnExecutor(executor);
 
 		updateMapView();
@@ -581,7 +584,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 	public void onObservationCreated(Collection<Observation> o, Boolean sendUserNotifcations) {
 		if (observations != null) {
 			ObservationTask task = new ObservationTask(getActivity(), ObservationTask.Type.ADD, observations);
-			task.addFilter(getTemporalFilter("last_modified", getTimeFilterId()));
+			task.addFilter(getTemporalFilter("last_modified", getTimeFilterId(), OBSERVATION_FILTER_TYPE));
 			task.executeOnExecutor(executor, o.toArray(new Observation[o.size()]));
 		}
 	}
@@ -590,7 +593,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 	public void onObservationUpdated(Observation o) {
 		if (observations != null) {
 			ObservationTask task = new ObservationTask(getActivity(), ObservationTask.Type.UPDATE, observations);
-			task.addFilter(getTemporalFilter("last_modified", getTimeFilterId()));
+			task.addFilter(getTemporalFilter("last_modified", getTimeFilterId(), OBSERVATION_FILTER_TYPE));
 			task.executeOnExecutor(executor, o);
 		}
 	}
@@ -608,7 +611,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 			if (currentUser != null && !currentUser.getRemoteId().equals(l.getUser().getRemoteId())) {
 				if (locations != null) {
 					LocationTask task = new LocationTask(getActivity(), LocationTask.Type.ADD, locations);
-					task.setFilter(getTemporalFilter("timestamp", getLocationTimeFilterId()));
+					task.setFilter(getTemporalFilter("timestamp", getLocationTimeFilterId(), LOCATION_FILTER_TYPE));
 					task.executeOnExecutor(executor, l);
 				}
 			} else {
@@ -624,7 +627,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 		if (currentUser != null && !currentUser.getRemoteId().equals(l.getUser().getRemoteId())) {
 			if (locations != null) {
 				LocationTask task = new LocationTask(getActivity(), LocationTask.Type.UPDATE, locations);
-				task.setFilter(getTemporalFilter("timestamp", getLocationTimeFilterId()));
+				task.setFilter(getTemporalFilter("timestamp", getLocationTimeFilterId(), LOCATION_FILTER_TYPE));
 				task.executeOnExecutor(executor, l);
 			}
 		} else {
@@ -1268,7 +1271,23 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 		return preferences.getInt(getResources().getString(R.string.activeLocationTimeFilterKey), getResources().getInteger(R.integer.time_filter_none));
 	}
 
-	private Filter<Temporal> getTemporalFilter(String columnName, int filterId) {
+	private int getCustomTimeNumber(String filterType) {
+		if (filterType.equalsIgnoreCase("Observation")) {
+			return preferences.getInt(getResources().getString(R.string.customObservationTimeNumberFilterKey), 0);
+		} else {
+			return preferences.getInt(getResources().getString(R.string.customLocationTimeNumberFilterKey), 0);
+		}
+	}
+
+	private String getCustomTimeUnit(String filterType) {
+		if (filterType.equalsIgnoreCase("Observation")) {
+			return preferences.getString(getResources().getString(R.string.customObservationTimeUnitFilterKey), getResources().getStringArray(R.array.timeUnitEntries)[0]);
+		} else {
+			return preferences.getString(getResources().getString(R.string.customLocationTimeUnitFilterKey), getResources().getStringArray(R.array.timeUnitEntries)[0]);
+		}
+	}
+
+	private Filter<Temporal> getTemporalFilter(String columnName, int filterId, String filterType) {
 		Filter<Temporal> filter = null;
 		Calendar c = Calendar.getInstance();
 
@@ -1283,6 +1302,24 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 			c.set(Calendar.MINUTE, 0);
 			c.set(Calendar.SECOND, 0);
 			c.set(Calendar.MILLISECOND, 0);
+		} else if (filterId == getResources().getInteger(R.integer.time_filter_custom)) {
+			String customFilterTimeUnit = getCustomTimeUnit(filterType);
+			int customTimeNumber = getCustomTimeNumber(filterType);
+			switch (customFilterTimeUnit) {
+				case "Hours":
+					c.add(Calendar.HOUR, -1 * customTimeNumber);
+					break;
+				case "Days":
+					c.add(Calendar.DAY_OF_MONTH, -1 * customTimeNumber);
+					break;
+				case "Months":
+					c.add(Calendar.MONTH, -1 * customTimeNumber);
+					break;
+				default:
+					c.add(Calendar.MINUTE, -1 * customTimeNumber);
+					break;
+			}
+
 		} else {
 			// no filter
 			c = null;

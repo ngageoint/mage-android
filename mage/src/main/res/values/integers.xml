@@ -12,5 +12,6 @@
     <integer name="time_filter_last_24_hours">2</integer>
     <integer name="time_filter_last_week">3</integer>
     <integer name="time_filter_last_month">4</integer>
+    <integer name="time_filter_custom">5</integer>
 
 </resources>

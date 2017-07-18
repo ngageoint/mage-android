@@ -68,6 +68,10 @@ public class FilterActivity extends AppCompatActivity {
 			filters.add("Last 24 Hours");
 		} else if (filterId == getResources().getInteger(R.integer.time_filter_today)) {
 			filters.add("Since Midnight");
+		} else if (filterId == getResources().getInteger(R.integer.time_filter_custom)) {
+			int timeNumber = preferences.getInt(getResources().getString(R.string.customObservationTimeNumberFilterKey), 0);
+			String timeUnit = preferences.getString(getResources().getString(R.string.customObservationTimeUnitFilterKey), getResources().getStringArray(R.array.timeUnitEntries)[0]);
+			filters.add("Last " + timeNumber + " " + timeUnit);
 		}
 
 		List<String> actionFilters = new ArrayList<>();
