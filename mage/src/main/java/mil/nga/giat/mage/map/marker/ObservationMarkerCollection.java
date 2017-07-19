@@ -15,10 +15,13 @@ import org.ocpsoft.prettytime.PrettyTime;
 
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 
 import mil.nga.giat.mage.R;
+import mil.nga.giat.mage.filter.Filter;
 import mil.nga.giat.mage.observation.ObservationViewActivity;
+import mil.nga.giat.mage.sdk.Temporal;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationProperty;
 
@@ -39,6 +42,11 @@ public class ObservationMarkerCollection implements PointCollection<Observation>
         this.map = map;
         this.context = context;
     }
+
+    @Override
+    public Iterator<Observation> iterator() {
+		return markerIdToObservation.values().iterator();
+	}
 
     @Override
     public void add(MarkerOptions options, Observation observation) {
@@ -99,16 +107,20 @@ public class ObservationMarkerCollection implements PointCollection<Observation>
     }
     
 	@Override
-	public void refreshMarkerIcons() {
+	public void refreshMarkerIcons(Filter<Temporal> filter) {
 		for (Marker m : observationIdToMarker.values()) {
 			Observation to = markerIdToObservation.get(m.getId());
 			if (to != null) {
-				boolean showWindow = m.isInfoWindowShown();
-                // make sure to set the Anchor after this call as well, because the size of the icon might have changed
-				m.setIcon(ObservationBitmapFactory.bitmapDescriptor(context, markerIdToObservation.get(m.getId())));
-                m.setAnchor(0.5f, 1.0f);
-				if(showWindow) {
-					m.showInfoWindow();
+				if (filter != null && !filter.passesFilter(to)) {
+					this.remove(to);
+				} else {
+					boolean showWindow = m.isInfoWindowShown();
+					// make sure to set the Anchor after this call as well, because the size of the icon might have changed
+					m.setIcon(ObservationBitmapFactory.bitmapDescriptor(context, markerIdToObservation.get(m.getId())));
+					m.setAnchor(0.5f, 1.0f);
+					if (showWindow) {
+						m.showInfoWindow();
+					}
 				}
 			}
 		}

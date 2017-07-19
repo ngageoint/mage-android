@@ -86,14 +86,12 @@
     </integer-array>
 
     <string-array name="timeUnitEntries">
-        <item>Minutes</item>
         <item>Hours</item>
         <item>Days</item>
         <item>Months</item>
     </string-array>
 
     <integer-array name="timeUnitValues">
-        <item>12</item>
         <item>11</item>
         <item>5</item>
         <item>2</item>

@@ -69,8 +69,14 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
@@ -168,11 +174,15 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 	private OnLocationChangedListener locationChangedListener;
 
 	private static final int REFRESHMARKERINTERVALINSECONDS = 300;
-	private RefreshMarkersTask refreshLocationsMarkersTask;
-	private RefreshMarkersTask refreshMyHistoricLocationsMarkersTask;
+	private static final int REFRESHOBSERVATIONMARKERINTERVALINSECONDS = 60;
+	private ScheduledFuture refreshLocationsMarkersTask;
+	private ScheduledFuture refreshMyHistoricLocationsMarkersTask;
+	private ScheduledFuture refreshObservationMarkersTask;
 
 	private final BlockingQueue<Runnable> queue = new ArrayBlockingQueue<>(64);
 	private final ThreadPoolExecutor executor = new ThreadPoolExecutor(8, 8, 10, TimeUnit.SECONDS, queue);
+
+	private ScheduledExecutorService scheduledExecutorService;
 
 	private PointCollection<Observation> observations;
 	private PointCollection<Pair<mil.nga.giat.mage.sdk.datastore.location.Location, User>> locations;
@@ -374,17 +384,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 		locations.setVisibility(preferences.getBoolean(getResources().getString(R.string.showLocationsKey), true));
 		historicLocations.setVisibility(preferences.getBoolean(getResources().getString(R.string.showMyLocationHistoryKey), false));
 
-		// task to refresh location markers every x seconds
-		refreshLocationsMarkersTask = new RefreshMarkersTask(locations);
-		if (!refreshLocationsMarkersTask.isCancelled()) {
-			refreshLocationsMarkersTask.executeOnExecutor(executor, REFRESHMARKERINTERVALINSECONDS);
-		}
-
-		// task to refresh my historic location markers every x seconds
-		refreshMyHistoricLocationsMarkersTask = new RefreshMarkersTask(historicLocations);
-		if (!refreshMyHistoricLocationsMarkersTask.isCancelled()) {
-			refreshMyHistoricLocationsMarkersTask.executeOnExecutor(executor, REFRESHMARKERINTERVALINSECONDS);
-		}
+		initializePeriodicTasks();
 
 		updateStaticFeatureLayers();
 
@@ -402,6 +402,51 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 		}
 
 		((AppCompatActivity) getActivity()).getSupportActionBar().setSubtitle(getFilterTitle());
+	}
+
+	private void initializePeriodicTasks() {
+		scheduledExecutorService = Executors.newScheduledThreadPool(4);
+
+		// task to refresh location markers ever x seconds
+		refreshLocationsMarkersTask = scheduledExecutorService.scheduleAtFixedRate(new Runnable() {
+			@Override
+			public void run() {
+				new RefreshMarkersTask(locations, getTemporalFilter("timestamp", getLocationTimeFilterId(), LOCATION_FILTER_TYPE)).executeOnExecutor(executor);
+			}
+		}, 0, REFRESHMARKERINTERVALINSECONDS, TimeUnit.SECONDS);
+
+		// task to refresh my historic location markers every x seconds
+		refreshMyHistoricLocationsMarkersTask = scheduledExecutorService.scheduleAtFixedRate(new Runnable() {
+			@Override
+			public void run() {
+				new RefreshMarkersTask(historicLocations, getTemporalFilter("timestamp", getLocationTimeFilterId(), LOCATION_FILTER_TYPE)).executeOnExecutor(executor);
+			}
+		}, 0, REFRESHMARKERINTERVALINSECONDS, TimeUnit.SECONDS);
+
+		// task to refresh observation markers every x seconds
+		refreshObservationMarkersTask = scheduledExecutorService.scheduleAtFixedRate(new Runnable() {
+			@Override
+			public void run() {
+				new RefreshMarkersTask(observations, getTemporalFilter("timestamp", getTimeFilterId(), OBSERVATION_FILTER_TYPE)).executeOnExecutor(executor);
+			}
+		}, 0, REFRESHOBSERVATIONMARKERINTERVALINSECONDS, TimeUnit.SECONDS);
+	}
+
+	private void stopPeriodicTasks() {
+		if (refreshLocationsMarkersTask != null) {
+			refreshLocationsMarkersTask.cancel(true);
+			refreshLocationsMarkersTask = null;
+		}
+
+		if (refreshMyHistoricLocationsMarkersTask != null) {
+			refreshMyHistoricLocationsMarkersTask.cancel(true);
+			refreshMyHistoricLocationsMarkersTask = null;
+		}
+
+		if (scheduledExecutorService != null) {
+			scheduledExecutorService.shutdown();
+			scheduledExecutorService = null;
+		}
 	}
 
 	@Override
@@ -431,8 +476,6 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 
 		mapView.onResume();
 		initializeMap();
-
-		//((AppCompatActivity) getActivity()).getSupportActionBar().setSubtitle(getFilterTitle());
 
 		searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
 			@Override
@@ -465,15 +508,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 	public void onPause() {
 		super.onPause();
 
-		if (refreshLocationsMarkersTask != null) {
-			refreshLocationsMarkersTask.cancel(true);
-			refreshLocationsMarkersTask = null;
-		}
-
-		if (refreshMyHistoricLocationsMarkersTask != null) {
-			refreshMyHistoricLocationsMarkersTask.cancel(true);
-			refreshMyHistoricLocationsMarkersTask = null;
-		}
+		stopPeriodicTasks();
 		
 		mapView.onPause();
 
@@ -1281,7 +1316,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 	}
 
 	private int getCustomTimeNumber(String filterType) {
-		if (filterType.equalsIgnoreCase("Observation")) {
+		if (filterType.equalsIgnoreCase(OBSERVATION_FILTER_TYPE)) {
 			return preferences.getInt(getResources().getString(R.string.customObservationTimeNumberFilterKey), 0);
 		} else {
 			return preferences.getInt(getResources().getString(R.string.customLocationTimeNumberFilterKey), 0);
@@ -1289,7 +1324,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 	}
 
 	private String getCustomTimeUnit(String filterType) {
-		if (filterType.equalsIgnoreCase("Observation")) {
+		if (filterType.equalsIgnoreCase(OBSERVATION_FILTER_TYPE)) {
 			return preferences.getString(getResources().getString(R.string.customObservationTimeUnitFilterKey), getResources().getStringArray(R.array.timeUnitEntries)[0]);
 		} else {
 			return preferences.getString(getResources().getString(R.string.customLocationTimeUnitFilterKey), getResources().getStringArray(R.array.timeUnitEntries)[0]);

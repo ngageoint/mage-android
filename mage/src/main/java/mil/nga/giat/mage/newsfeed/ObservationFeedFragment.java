@@ -313,6 +313,14 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 		}
 	}
 
+	private int getCustomTimeNumber() {
+		return sp.getInt(getResources().getString(R.string.customObservationTimeNumberFilterKey), 0);
+	}
+
+	private String getCustomTimeUnit() {
+		return sp.getString(getResources().getString(R.string.customObservationTimeUnitFilterKey), getResources().getStringArray(R.array.timeUnitEntries)[0]);
+	}
+
 	private PreparedQuery<Observation> buildQuery(Dao<Observation, Long> oDao, int filterId) throws SQLException {
 		QueryBuilder<Observation, Long> qb = oDao.queryBuilder();
 		Calendar c = Calendar.getInstance();
@@ -338,6 +346,27 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 			c.set(Calendar.MINUTE, 0);
 			c.set(Calendar.SECOND, 0);
 			c.set(Calendar.MILLISECOND, 0);
+		}  else if (filterId == getResources().getInteger(R.integer.time_filter_custom)) {
+			String customFilterTimeUnit = getCustomTimeUnit();
+			int customTimeNumber = getCustomTimeNumber();
+
+			filters.add("Last " + customTimeNumber + " " + customFilterTimeUnit);
+			footerText = "End of results for custom filter";
+			switch (customFilterTimeUnit) {
+				case "Hours":
+					c.add(Calendar.HOUR, -1 * customTimeNumber);
+					break;
+				case "Days":
+					c.add(Calendar.DAY_OF_MONTH, -1 * customTimeNumber);
+					break;
+				case "Months":
+					c.add(Calendar.MONTH, -1 * customTimeNumber);
+					break;
+				default:
+					c.add(Calendar.MINUTE, -1 * customTimeNumber);
+					break;
+			}
+
 		} else {
 			// no filter
 			c.setTime(new Date(0));

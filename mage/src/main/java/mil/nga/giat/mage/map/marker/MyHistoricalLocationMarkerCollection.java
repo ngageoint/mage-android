@@ -12,6 +12,8 @@ import com.vividsolutions.jts.geom.Geometry;
 import java.util.Comparator;
 import java.util.Date;
 
+import mil.nga.giat.mage.filter.Filter;
+import mil.nga.giat.mage.sdk.Temporal;
 import mil.nga.giat.mage.sdk.datastore.location.Location;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.push.LocationPushIntentService;
@@ -76,7 +78,7 @@ public class MyHistoricalLocationMarkerCollection extends LocationMarkerCollecti
 	}
 
 	@Override
-	public void refreshMarkerIcons() {
+	public void refreshMarkerIcons(Filter<Temporal> filter) {
 		for (Marker m : userIdToMarker.values()) {
 			Pair<Location, User> pair = markerIdToPair.get(m.getId());
 			Location location = pair.first;

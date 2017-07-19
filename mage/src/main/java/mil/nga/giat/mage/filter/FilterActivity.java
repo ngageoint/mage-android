@@ -106,6 +106,10 @@ public class FilterActivity extends AppCompatActivity {
 			filter = "Last 24 Hours";
 		} else if (filterId == getResources().getInteger(R.integer.time_filter_today)) {
 			filter = "Since Midnight";
+		} else if (filterId == getResources().getInteger(R.integer.time_filter_custom)) {
+			int timeNumber = preferences.getInt(getResources().getString(R.string.customLocationTimeNumberFilterKey), 0);
+			String timeUnit = preferences.getString(getResources().getString(R.string.customLocationTimeUnitFilterKey), getResources().getStringArray(R.array.timeUnitEntries)[0]);
+			filter = "Last " + timeNumber + " " + timeUnit;
 		}
 		((TextView) findViewById(R.id.location_filter_description)).setText(filter);
 	}

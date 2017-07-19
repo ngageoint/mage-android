@@ -204,6 +204,14 @@ public class PeopleFeedFragment extends Fragment implements OnItemClickListener,
             }
         });
     }
+
+	private int getCustomTimeNumber() {
+		return sp.getInt(getResources().getString(R.string.customLocationTimeNumberFilterKey), 0);
+	}
+
+	private String getCustomTimeUnit() {
+		return sp.getString(getResources().getString(R.string.customLocationTimeUnitFilterKey), getResources().getStringArray(R.array.timeUnitEntries)[0]);
+	}
     
     private PreparedQuery<Location> buildQuery(Dao<Location, Long> lDao, int filterId) throws SQLException {
         QueryBuilder<Location, Long> qb = lDao.queryBuilder();
@@ -230,7 +238,28 @@ public class PeopleFeedFragment extends Fragment implements OnItemClickListener,
             c.set(Calendar.MINUTE, 0);
             c.set(Calendar.SECOND, 0);
             c.set(Calendar.MILLISECOND, 0);
-        } else {
+        }  else if (filterId == getResources().getInteger(R.integer.time_filter_custom)) {
+			String customFilterTimeUnit = getCustomTimeUnit();
+			int customTimeNumber = getCustomTimeNumber();
+
+			subtitle = "Last " + customTimeNumber + " " + customFilterTimeUnit;
+			footerText = "End of results for custom filter";
+			switch (customFilterTimeUnit) {
+				case "Hours":
+					c.add(Calendar.HOUR, -1 * customTimeNumber);
+					break;
+				case "Days":
+					c.add(Calendar.DAY_OF_MONTH, -1 * customTimeNumber);
+					break;
+				case "Months":
+					c.add(Calendar.MONTH, -1 * customTimeNumber);
+					break;
+				default:
+					c.add(Calendar.MINUTE, -1 * customTimeNumber);
+					break;
+			}
+
+		} else {
             // no filter
             c.setTime(new Date(0));
         }

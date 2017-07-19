@@ -15,7 +15,9 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:orientation="vertical"
+            android:focusable="true"
+            android:focusableInTouchMode="true">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -358,7 +360,7 @@
                     android:orientation="horizontal">
 
                     <TextView
-                        style="@style/ListTextSecondary"
+                        style="@style/ListTextPrimary"
                         android:layout_width="wrap_content"
                         android:layout_height="match_parent"
                         android:gravity="center_vertical"
@@ -373,13 +375,13 @@
                         android:hint="X"
                         android:inputType="number"
                         android:maxLines="1"
-                        style="@style/ListTextSecondary" />
+                        style="@style/ListTextPrimary" />
 
                     <Spinner
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:id="@+id/custom_input_time_unit"
-                        style="@style/ListTextSecondary"
+                        style="@style/ListTextPrimary"
                         android:entries="@array/timeUnitEntries"/>
 
                 </LinearLayout>
