@@ -125,7 +125,7 @@ public class MageSelectView extends TextInputLayout implements MageControl, Text
         Serializable value = getPropertyValue();
 
         String error = null;
-        if (isRequired && (isMultiSelect && selectedChoices.isEmpty()) || StringUtils.isBlank(value.toString())) {
+        if (isRequired && ((isMultiSelect && selectedChoices.isEmpty()) || StringUtils.isBlank(value.toString()))) {
             error = "Required, cannot be blank";
         }
 

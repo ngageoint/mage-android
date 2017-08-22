@@ -3,13 +3,20 @@ All notable changes to this project will be documented in this file.
 Adheres to [Semantic Versioning](http://semver.org/).
 
 ---
-## 5.3.2 (TBD)
+## 5.3.3 (TBD)
 
 * TBD
 
 ##### Features
 
 ##### Bug Fixes
+
+## [5.3.2](https://github.com/ngageoint/mage-android/releases/tag/5.3.2) (08-22-2017)
+
+##### Features
+
+##### Bug Fixes
+* Fixed bug causing non-required select fields to show as required 
 
 ## [5.3.1](https://github.com/ngageoint/mage-android/releases/tag/5.3.1) (07-20-2017)
 
