@@ -15,7 +15,6 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-import com.google.gson.JsonElement;
 import com.j256.ormlite.android.AndroidDatabaseResults;
 import com.j256.ormlite.stmt.PreparedQuery;
 
@@ -24,7 +23,6 @@ import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Locale;
-import java.util.Map;
 
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.map.marker.ObservationBitmapFactory;
@@ -102,21 +100,21 @@ public class ObservationFeedCursorAdapter extends CursorAdapter {
 				markerView.setImageBitmap(marker);
 			}
 
-			Map<String, ObservationProperty> properties = observation.getPropertiesMap();
-			ObservationProperty type = properties.get(TYPE_PROPERTY_KEY);
-			((TextView) v.findViewById(R.id.type)).setText(type.getValue().toString());
+			ObservationProperty primary = observation.getPrimaryField();
+			if (primary != null) {
+				TextView variantTextView = ((TextView) v.findViewById(R.id.type));
+				variantTextView.setVisibility(View.VISIBLE);
+				variantTextView.setText(primary.getValue().toString());
 
-			JsonElement variantField = observation.getEvent().getForm().get("variantField");
-			if (variantField != null && !variantField.isJsonNull()) {
+			} else {
+				v.findViewById(R.id.variant).setVisibility(View.GONE);
+			}
+
+			ObservationProperty secondary = observation.getSecondaryField();
+			if (secondary != null) {
 				TextView variantTextView = ((TextView) v.findViewById(R.id.variant));
-				ObservationProperty variant = properties.get(variantField.getAsString());
-
-				if (variant != null && variant.getValue() != null) {
-					variantTextView.setVisibility(View.VISIBLE);
-					variantTextView.setText(variant.getValue().toString());
-				} else {
-					v.findViewById(R.id.variant).setVisibility(View.GONE);
-				}
+				variantTextView.setVisibility(View.VISIBLE);
+				variantTextView.setText(secondary.getValue().toString());
 			} else {
 				v.findViewById(R.id.variant).setVisibility(View.GONE);
 			}

@@ -54,6 +54,8 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.TileOverlay;
 import com.google.android.gms.maps.model.TileOverlayOptions;
 import com.google.android.gms.maps.model.TileProvider;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.Point;
 
@@ -69,14 +71,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
@@ -129,6 +128,7 @@ import mil.nga.giat.mage.map.marker.PointCollection;
 import mil.nga.giat.mage.map.marker.StaticGeometryCollection;
 import mil.nga.giat.mage.map.preference.MapPreferencesActivity;
 import mil.nga.giat.mage.observation.ObservationEditActivity;
+import mil.nga.giat.mage.observation.ObservationFormPickerActivity;
 import mil.nga.giat.mage.sdk.Temporal;
 import mil.nga.giat.mage.sdk.datastore.layer.Layer;
 import mil.nga.giat.mage.sdk.datastore.layer.LayerHelper;
@@ -456,15 +456,6 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 	}
 
 	@Override
-	public void onSaveInstanceState(Bundle outState) {
-		super.onSaveInstanceState(outState);
-
-//		Bundle mapState = new Bundle();
-//		mapView.onSaveInstanceState(mapState);
-//		outState.putBundle(MAP_VIEW_STATE, mapState);
-	}
-
-	@Override
 	public void onResume() {
 		super.onResume();
 
@@ -540,7 +531,6 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 	}
 
 	private void onNewObservation() {
-		Intent intent = new Intent(getActivity().getApplicationContext(), ObservationEditActivity.class);
 		Location l = locationService.getLocation();
 
 		// if there is not a location from the location service, then try to pull one from the database.
@@ -576,6 +566,21 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 				.setPositiveButton(android.R.string.ok, null)
 				.show();
 		} else if (l != null) {
+			Intent intent = null;
+
+			// show form picker or go to
+			JsonArray formDefinitions = EventHelper.getInstance(getActivity()).getCurrentEvent().getForms();
+			if (formDefinitions.size() == 0) {
+				intent = new Intent(getActivity(), ObservationEditActivity.class);
+			} else if (formDefinitions.size() == 1) {
+				JsonObject form = (JsonObject) formDefinitions.iterator().next();
+				intent = new Intent(getActivity(), ObservationEditActivity.class);
+				intent.putExtra(ObservationEditActivity.OBSERVATION_FORM_ID, form.get("id").getAsLong());
+			} else {
+				intent = new Intent(getActivity(), ObservationFormPickerActivity.class);
+			}
+
+
 			intent.putExtra(ObservationEditActivity.LOCATION, l);
 			intent.putExtra(ObservationEditActivity.INITIAL_LOCATION, map.getCameraPosition().target);
 			intent.putExtra(ObservationEditActivity.INITIAL_ZOOM, map.getCameraPosition().zoom);

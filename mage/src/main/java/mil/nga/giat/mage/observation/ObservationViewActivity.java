@@ -27,6 +27,7 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.common.base.Function;
 import com.google.common.collect.Collections2;
+import com.google.gson.JsonObject;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.Point;
 
@@ -38,17 +39,18 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.form.LayoutBaker;
-import mil.nga.giat.mage.form.LayoutBaker.ControlGenerationType;
 import mil.nga.giat.mage.map.marker.ObservationBitmapFactory;
 import mil.nga.giat.mage.people.PeopleActivity;
 import mil.nga.giat.mage.sdk.datastore.observation.Attachment;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationFavorite;
+import mil.nga.giat.mage.sdk.datastore.observation.ObservationForm;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationImportant;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationProperty;
@@ -80,6 +82,8 @@ public class ObservationViewActivity extends AppCompatActivity implements OnMapR
 	private Marker marker;
 	private DecimalFormat latLngFormat = new DecimalFormat("###.#####");
 
+	private Map<Long, Collection<View>> controls = new HashMap<>();
+
 	SharedPreferences preferences;
 
 	@Override
@@ -98,7 +102,19 @@ public class ObservationViewActivity extends AppCompatActivity implements OnMapR
 		}
 
 		try {
-			LayoutBaker.populateLayoutWithControls((LinearLayout) findViewById(R.id.propertyContainer), LayoutBaker.createControlsFromJson(this, ControlGenerationType.VIEW, ObservationHelper.getInstance(getApplicationContext()).read(getIntent().getLongExtra(OBSERVATION_ID, 0L)).getEvent().getForm()));
+			o = ObservationHelper.getInstance(getApplicationContext()).read(getIntent().getLongExtra(OBSERVATION_ID, 0L));
+
+			Collection<ObservationForm> forms = o.getForms();
+			if (forms.size() > 0) {
+				ObservationForm observationForm = forms.iterator().next();
+
+				// Grab form definition
+				Map<Long, JsonObject> formMap = EventHelper.getInstance(getApplicationContext()).getCurrentEvent().getFormMap();
+				JsonObject formDefinition = formMap.get(observationForm.getFormId());
+				controls = LayoutBaker.createControls(this, LayoutBaker.ControlGenerationType.VIEW, formDefinition);
+			}
+
+			LayoutBaker.populateLayoutWithControls((LinearLayout) findViewById(R.id.propertyContainer), controls);
 		} catch(Exception e) {
 			Log.e(LOG_NAME, "Problem getting observation.", e);
 		}
@@ -212,24 +228,26 @@ public class ObservationViewActivity extends AppCompatActivity implements OnMapR
 
 			o = ObservationHelper.getInstance(getApplicationContext()).read(getIntent().getLongExtra(OBSERVATION_ID, 0L));
 
-			Map<String, ObservationProperty> propertiesMap = o.getPropertiesMap();
-
-			ObservationProperty observationProperty = propertiesMap.get("type");
-			if (observationProperty != null) {
-				this.setTitle(observationProperty.getValue().toString());
+			ObservationProperty primary = o.getPrimaryField();
+			if (primary != null) {
+				setTitle(primary.getValue().toString());
 			}
 
 			Geometry geo = o.getGeometry();
 			if (geo instanceof Point) {
 				Point pointGeo = (Point) geo;
 				((TextView) findViewById(R.id.location)).setText(latLngFormat.format(pointGeo.getY()) + ", " + latLngFormat.format(pointGeo.getX()));
-				if (propertiesMap.containsKey("provider")) {
-					((TextView) findViewById(R.id.location_provider)).setText("(" + propertiesMap.get("provider").getValue() + ")");
+
+				String provider = o.getProvider();
+				if (provider != null) {
+					((TextView) findViewById(R.id.location_provider)).setText("(" + provider + ")");
 				} else {
 					findViewById(R.id.location_provider).setVisibility(View.GONE);
 				}
-				if (propertiesMap.containsKey("accuracy") && Float.parseFloat(propertiesMap.get("accuracy").getValue().toString()) > 0f) {
-					((TextView) findViewById(R.id.location_accuracy)).setText("\u00B1" + propertiesMap.get("accuracy").getValue().toString() + "m");
+
+				Float accuracy = o.getAccuracy();
+				if (accuracy != null && accuracy > 0) {
+					((TextView) findViewById(R.id.location_accuracy)).setText("\u00B1" + accuracy + "m");
 				} else {
 					findViewById(R.id.location_accuracy).setVisibility(View.GONE);
 				}
@@ -255,12 +273,14 @@ public class ObservationViewActivity extends AppCompatActivity implements OnMapR
 				}
 			}
 
+			TextView timestamp = (TextView) findViewById(R.id.timestamp);
+			timestamp.setText(dateFormat.format(o.getTimestamp()));
+
 			setupImportant(o.getImportant());
 			setFavorites(o.getFavorites());
 			setFavoriteImage(favoriteIcon, isFavorite(o));
 
-			LayoutBaker.populateLayoutFromMap((LinearLayout) findViewById(R.id.propertyContainer), ControlGenerationType.VIEW, o.getPropertiesMap());
-			LayoutBaker.populateLayoutFromMap((LinearLayout) findViewById(R.id.topPropertyContainer), ControlGenerationType.VIEW, o.getPropertiesMap());
+			LayoutBaker.populateLayout((LinearLayout) findViewById(R.id.propertyContainer), LayoutBaker.ControlGenerationType.VIEW, o);
 
             LinearLayout galleryLayout = (LinearLayout) findViewById(R.id.image_gallery);
             galleryLayout.removeAllViews();
@@ -310,23 +330,27 @@ public class ObservationViewActivity extends AppCompatActivity implements OnMapR
 	}
 
 	private void editObservation() {
-		if(!UserHelper.getInstance(getApplicationContext()).isCurrentUserPartOfCurrentEvent()) {
-			new AlertDialog.Builder(this).setTitle("Not a member of this event").setMessage("You are an administrator and not a member of the current event.  You can not edit this observation.").setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
-				public void onClick(DialogInterface dialog, int which) {
-				}
+		if (!UserHelper.getInstance(getApplicationContext()).isCurrentUserPartOfCurrentEvent()) {
+			new AlertDialog.Builder(this)
+					.setTitle("Not a member of this event")
+					.setMessage("You are an administrator and not a member of the current event.  You can not edit this observation.")
+					.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+						public void onClick(DialogInterface dialog, int which) {
+					}
 			}).show();
-		} else {
-			Intent intent = new Intent(this, ObservationEditActivity.class);
-			intent.putExtra(ObservationEditActivity.OBSERVATION_ID, o.getId());
 
-			if (map != null) {
-				intent.putExtra(ObservationViewActivity.INITIAL_LOCATION, map.getCameraPosition().target);
-				intent.putExtra(ObservationViewActivity.INITIAL_ZOOM, map.getCameraPosition().zoom);
-			}
-
-			startActivityForResult(intent, 2);
+			return;
 		}
 
+		Intent intent = new Intent(this, ObservationEditActivity.class);
+		intent.putExtra(ObservationEditActivity.OBSERVATION_ID, o.getId());
+
+		if (map != null) {
+			intent.putExtra(ObservationViewActivity.INITIAL_LOCATION, map.getCameraPosition().target);
+			intent.putExtra(ObservationViewActivity.INITIAL_ZOOM, map.getCameraPosition().zoom);
+		}
+
+		startActivity(intent);
 	}
 
 	private void setupImportant(ObservationImportant important) {

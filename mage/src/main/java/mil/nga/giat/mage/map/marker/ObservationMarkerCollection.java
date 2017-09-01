@@ -174,9 +174,9 @@ public class ObservationMarkerCollection implements PointCollection<Observation>
 			LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 			View v = inflater.inflate(R.layout.observation_infowindow, null);
 
-			ObservationProperty observationPropertyType = observation.getPropertiesMap().get("type");
+			ObservationProperty observationPropertyType = observation.getPrimaryField();
 
-			String type = observationPropertyType!=null?observationPropertyType.getValue().toString():"";
+			String type = observationPropertyType != null ? observationPropertyType.getValue().toString() : "";
 
 			TextView observation_infowindow_type = (TextView)v.findViewById(R.id.observation_infowindow_type);
 			observation_infowindow_type.setText(type);

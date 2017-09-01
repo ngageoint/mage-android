@@ -13,31 +13,19 @@ import android.widget.Toast;
 
 import com.google.common.io.Closeables;
 import com.google.common.io.Files;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.squareup.okhttp.ResponseBody;
-import com.vividsolutions.jts.geom.Point;
-
-import org.apache.commons.lang3.StringUtils;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Map;
-import java.util.TreeMap;
 
 import mil.nga.giat.mage.sdk.datastore.observation.Attachment;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationProperty;
-import mil.nga.giat.mage.sdk.datastore.user.User;
-import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
-import mil.nga.giat.mage.sdk.exceptions.UserException;
 import mil.nga.giat.mage.sdk.http.resource.ObservationResource;
 
 /**
@@ -174,67 +162,68 @@ public class ObservationShareTask extends AsyncTask<Void, Integer, ArrayList<Uri
 
 
     private Spanned observationText(Observation observation) {
-        JsonObject formJson = observation.getEvent().getForm();
-        Map<String, JsonObject> nameToField = new TreeMap<>();
-        JsonArray dynamicFormFields = formJson.get("fields").getAsJsonArray();
-        for (int i = 0; i < dynamicFormFields.size(); i++) {
-            JsonObject field = dynamicFormFields.get(i).getAsJsonObject();
-            String name = field.get("name").getAsString();
-            nameToField.put(name, field);
-        }
+        // TODO update to handle mulitple forms
+//        JsonObject formJson = observation.getEvent().getForm();
+//        Map<String, JsonObject> nameToField = new TreeMap<>();
+//        JsonArray dynamicFormFields = formJson.get("fields").getAsJsonArray();
+//        for (int i = 0; i < dynamicFormFields.size(); i++) {
+//            JsonObject field = dynamicFormFields.get(i).getAsJsonObject();
+//            String name = field.get("name").getAsString();
+//            nameToField.put(name, field);
+//        }
 
         StringBuilder builder = new StringBuilder();
 
-        try {
-            User user = UserHelper.getInstance(activity).read(observation.getUserId());
-            builder.append("<strong>Created by:</strong><br>")
-                    .append(user.getDisplayName())
-                    .append("<br><br>");
-        } catch (UserException e) {
-            Log.e(LOG_NAME, "Error reading user with id: " + observation.getUserId(), e);
-        }
-
-        builder.append("<strong>Date:</strong><br>")
-                .append(observation.getTimestamp())
-                .append("<br><br>");
-
-        Point point = (Point) observation.getGeometry();
-        builder.append("<strong>Latitude, Longitude:</strong><br>")
-                .append(point.getY()).append(", ").append(point.getX())
-                .append("<br><br>");
-
-        ObservationProperty type = observation.getPropertiesMap().get("type");
-        builder.append(propertyText(type, nameToField.get(type.getKey())));
-
-        JsonElement variantJson = formJson.get("variantField");
-        String variantField = null;
-        if (variantJson != null) {
-            variantField = variantJson.getAsString();
-            ObservationProperty variantProperty = observation.getPropertiesMap().get(variantField);
-            if (variantProperty != null) {
-                JsonObject field = nameToField.get(variantProperty.getKey());
-                builder.append(propertyText(variantProperty, field));
-            }
-        }
-
-        for (ObservationProperty property : observation.getProperties()) {
-            JsonObject field = nameToField.get(property.getKey());
-            if (field == null || "type".equals(property.getKey()) || "timestamp".equals(property.getKey()) || property.getKey().equals(variantField)) {
-                continue;
-            }
-
-            Serializable value = property.getValue();
-            if (value == null || (value instanceof String && (StringUtils.isEmpty((String) value))) ||(value instanceof Collection && ((Collection) value).isEmpty())) {
-                continue;
-            }
-
-            JsonElement archivedJson = field.get("archived");
-            if (archivedJson != null && archivedJson.getAsBoolean()) {
-                continue;
-            }
-
-            builder.append(propertyText(property, field));
-        }
+//        try {
+//            User user = UserHelper.getInstance(activity).read(observation.getUserId());
+//            builder.append("<strong>Created by:</strong><br>")
+//                    .append(user.getDisplayName())
+//                    .append("<br><br>");
+//        } catch (UserException e) {
+//            Log.e(LOG_NAME, "Error reading user with id: " + observation.getUserId(), e);
+//        }
+//
+//        builder.append("<strong>Date:</strong><br>")
+//                .append(observation.getTimestamp())
+//                .append("<br><br>");
+//
+//        Point point = (Point) observation.getGeometry();
+//        builder.append("<strong>Latitude, Longitude:</strong><br>")
+//                .append(point.getY()).append(", ").append(point.getX())
+//                .append("<br><br>");
+//
+//        ObservationProperty type = observation.getPropertiesMap().get("type");
+//        builder.append(propertyText(type, nameToField.get(type.getKey())));
+//
+//        JsonElement variantJson = formJson.get("variantField");
+//        String variantField = null;
+//        if (variantJson != null) {
+//            variantField = variantJson.getAsString();
+//            ObservationProperty variantProperty = observation.getPropertiesMap().get(variantField);
+//            if (variantProperty != null) {
+//                JsonObject field = nameToField.get(variantProperty.getKey());
+//                builder.append(propertyText(variantProperty, field));
+//            }
+//        }
+//
+//        for (ObservationProperty property : observation.getProperties()) {
+//            JsonObject field = nameToField.get(property.getKey());
+//            if (field == null || "type".equals(property.getKey()) || "timestamp".equals(property.getKey()) || property.getKey().equals(variantField)) {
+//                continue;
+//            }
+//
+//            Serializable value = property.getValue();
+//            if (value == null || (value instanceof String && (StringUtils.isEmpty((String) value))) ||(value instanceof Collection && ((Collection) value).isEmpty())) {
+//                continue;
+//            }
+//
+//            JsonElement archivedJson = field.get("archived");
+//            if (archivedJson != null && archivedJson.getAsBoolean()) {
+//                continue;
+//            }
+//
+//            builder.append(propertyText(property, field));
+//        }
 
         return Html.fromHtml(builder.toString());
     }
