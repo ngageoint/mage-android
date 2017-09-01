@@ -129,6 +129,7 @@ public class ChangeEventActivity extends AppCompatActivity {
 			}
 		}, context).execute(userRecentEventInfo.toArray(new String[userRecentEventInfo.size()]));
 
+		setResult(RESULT_OK);
 		finish();
 	}
 }

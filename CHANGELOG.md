@@ -11,6 +11,13 @@ Adheres to [Semantic Versioning](http://semver.org/).
 
 ##### Bug Fixes
 
+## [5.3.3](https://github.com/ngageoint/mage-android/releases/tag/5.3.3) (09-01-2017)
+
+##### Features
+
+##### Bug Fixes
+* Update event name in title when switching events.
+
 ## [5.3.2](https://github.com/ngageoint/mage-android/releases/tag/5.3.2) (08-22-2017)
 
 ##### Features
