@@ -115,7 +115,7 @@ public class Observation implements Comparable<Observation>, Temporal {
         this.lastModified = lastModified;
         this.geometryBytes = GeometryUtility.toGeometryBytes(geometry);
         this.forms = forms;
-        this.attachments = pAttachments;
+        this.attachments = attachments;
         this.dirty = false;
         this.timestamp = timestamp;
         this.event = event;
@@ -183,6 +183,30 @@ public class Observation implements Comparable<Observation>, Temporal {
 
     public void setGeometry(Geometry geometry) {
         this.geometryBytes = GeometryUtility.toGeometryBytes(geometry);
+    }
+
+    public String getProvider() {
+        return provider;
+    }
+
+    public void setProvider(String provider) {
+        this.provider = provider;
+    }
+
+    public Float getAccuracy() {
+        return accuracy;
+    }
+
+    public void setAccuracy(Float accuracy) {
+        this.accuracy = accuracy;
+    }
+
+    public String getLocationDelta() {
+        return locationDelta;
+    }
+
+    public void setLocationDelta(String locationDelta) {
+        this.locationDelta = locationDelta;
     }
 
     public String getProvider() {
