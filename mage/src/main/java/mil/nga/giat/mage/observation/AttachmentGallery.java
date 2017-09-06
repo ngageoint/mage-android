@@ -67,7 +67,7 @@ public class AttachmentGallery {
         final ImageView iv = new ImageView(context);
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(width, height);
         iv.setLayoutParams(lp);
-        lp.setMargins(0, 0, 25, 0);
+        lp.setMargins(0, 16, 25, 16);
         iv.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {

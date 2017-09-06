@@ -1,14 +1,32 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="150dp"
-    android:layout_height="50dp"
-    android:background="@color/md_orange_800"
-    android:gravity="center">
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:gravity="center"
+    android:orientation="vertical"
+    android:layout_marginTop="10dp"
+    android:layout_marginBottom="16dp"
+    android:layout_marginLeft="12dp"
+    android:layout_marginRight="12dp"
+    android:clickable="true">
 
-    <TextView
+    <ImageView
+        android:id="@+id/icon"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:src="@drawable/observation_form_icon"
+        android:background="?attr/selectableItemBackgroundBorderless"/>
+
+    <TextView
+        android:id="@+id/name"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
         android:gravity="center"
-        android:text="Form Text"/>
+        android:textColor="?attr/colorPrimaryDark"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:fontFamily="sans-serif"
+        android:text="Form Text" />
 
 </LinearLayout>

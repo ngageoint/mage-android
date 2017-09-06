@@ -30,6 +30,10 @@ public class MageEditText extends TextInputLayout implements MageControl, TextWa
 	private DateFormat dateFormat;
 
 	public MageEditText(Context context, AttributeSet attrs) {
+		this(context, attrs, 0);
+	}
+
+	public MageEditText(Context context, AttributeSet attrs, int defStyleAttr) {
 		super(context, attrs);
 
 		dateFormat = DateFormatFactory.format("yyyy-MM-dd HH:mm zz", Locale.getDefault(), context);

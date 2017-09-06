@@ -114,7 +114,9 @@ public class ObservationViewActivity extends AppCompatActivity implements OnMapR
 				controls = LayoutBaker.createControls(this, LayoutBaker.ControlGenerationType.VIEW, formDefinition);
 			}
 
-			LayoutBaker.populateLayoutWithControls((LinearLayout) findViewById(R.id.propertyContainer), controls);
+			for (Map.Entry<Long, Collection<View>> entry :controls.entrySet()) {
+				LayoutBaker.populateLayoutWithControls((LinearLayout) findViewById(R.id.propertyContainer), entry.getValue());
+			}
 		} catch(Exception e) {
 			Log.e(LOG_NAME, "Problem getting observation.", e);
 		}

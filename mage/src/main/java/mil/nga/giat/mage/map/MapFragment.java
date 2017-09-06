@@ -225,7 +225,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 		view.findViewById(R.id.new_observation_button).setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				onNewObservation();
+				newObservation();
 			}
 		});
 
@@ -530,7 +530,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 		}
 	}
 
-	private void onNewObservation() {
+	private void newObservation() {
 		Location l = locationService.getLocation();
 
 		// if there is not a location from the location service, then try to pull one from the database.
@@ -566,25 +566,25 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 				.setPositiveButton(android.R.string.ok, null)
 				.show();
 		} else if (l != null) {
-			Intent intent = null;
-
-			// show form picker or go to
-			JsonArray formDefinitions = EventHelper.getInstance(getActivity()).getCurrentEvent().getForms();
-			if (formDefinitions.size() == 0) {
-				intent = new Intent(getActivity(), ObservationEditActivity.class);
-			} else if (formDefinitions.size() == 1) {
-				JsonObject form = (JsonObject) formDefinitions.iterator().next();
-				intent = new Intent(getActivity(), ObservationEditActivity.class);
-				intent.putExtra(ObservationEditActivity.OBSERVATION_FORM_ID, form.get("id").getAsLong());
-			} else {
-				intent = new Intent(getActivity(), ObservationFormPickerActivity.class);
-			}
-
-
-			intent.putExtra(ObservationEditActivity.LOCATION, l);
-			intent.putExtra(ObservationEditActivity.INITIAL_LOCATION, map.getCameraPosition().target);
-			intent.putExtra(ObservationEditActivity.INITIAL_ZOOM, map.getCameraPosition().zoom);
-			startActivity(intent);
+			newObservation(l);
+//			Intent intent;
+//
+//			// show form picker or go to
+//			JsonArray formDefinitions = EventHelper.getInstance(getActivity()).getCurrentEvent().getForms();
+//			if (formDefinitions.size() == 0) {
+//				intent = new Intent(getActivity(), ObservationEditActivity.class);
+//			} else if (formDefinitions.size() == 1) {
+//				JsonObject form = (JsonObject) formDefinitions.iterator().next();
+//				intent = new Intent(getActivity(), ObservationEditActivity.class);
+//				intent.putExtra(ObservationEditActivity.OBSERVATION_FORM_ID, form.get("id").getAsLong());
+//			} else {
+//				intent = new Intent(getActivity(), ObservationFormPickerActivity.class);
+//			}
+//
+//			intent.putExtra(ObservationEditActivity.LOCATION, l);
+//			intent.putExtra(ObservationEditActivity.INITIAL_LOCATION, map.getCameraPosition().target);
+//			intent.putExtra(ObservationEditActivity.INITIAL_ZOOM, map.getCameraPosition().zoom);
+//			startActivity(intent);
 		} else {
 			if (ContextCompat.checkSelfPermission(getActivity().getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
 				new AlertDialog.Builder(getActivity())
@@ -613,7 +613,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 			case PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION: {
 				// If request is cancelled, the result arrays are empty.
 				if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-					onNewObservation();
+					newObservation();
 				}
 				break;
 			}
@@ -779,15 +779,35 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 				.setPositiveButton(android.R.string.ok, null)
 				.show();
 		} else {
-			Intent intent = new Intent(getActivity().getApplicationContext(), ObservationEditActivity.class);
-			Location l = new Location("manual");
-			l.setAccuracy(0.0f);
-			l.setLatitude(point.latitude);
-			l.setLongitude(point.longitude);
-			l.setTime(new Date().getTime());
-			intent.putExtra(ObservationEditActivity.LOCATION, l);
-			startActivity(intent);
+			Location location = new Location("manual");
+			location.setAccuracy(0.0f);
+			location.setLatitude(point.latitude);
+			location.setLongitude(point.longitude);
+			location.setTime(new Date().getTime());
+
+			newObservation(location);
 		}
+	}
+
+	private void newObservation(Location location) {
+		Intent intent;
+
+		// show form picker or go to
+		JsonArray formDefinitions = EventHelper.getInstance(getActivity()).getCurrentEvent().getForms();
+		if (formDefinitions.size() == 0) {
+			intent = new Intent(getActivity(), ObservationEditActivity.class);
+		} else if (formDefinitions.size() == 1) {
+			JsonObject form = (JsonObject) formDefinitions.iterator().next();
+			intent = new Intent(getActivity(), ObservationEditActivity.class);
+			intent.putExtra(ObservationEditActivity.OBSERVATION_FORM_ID, form.get("id").getAsLong());
+		} else {
+			intent = new Intent(getActivity(), ObservationFormPickerActivity.class);
+		}
+
+		intent.putExtra(ObservationEditActivity.LOCATION, location);
+		intent.putExtra(ObservationEditActivity.INITIAL_LOCATION, map.getCameraPosition().target);
+		intent.putExtra(ObservationEditActivity.INITIAL_ZOOM, map.getCameraPosition().zoom);
+		startActivity(intent);
 	}
 
 	@Override
