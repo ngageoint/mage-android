@@ -1,19 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-    android:id="@+id/observation_edit"
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<android.support.design.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
     android:background="#F0F0F0">
 
-    <android.support.v7.widget.Toolbar
-        android:id="@+id/observation_actions"
+    <LinearLayout
+        android:id="@+id/observation_edit"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="16dp"
-        android:background="@color/md_white_1000">
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <android.support.v7.widget.Toolbar
+            android:id="@+id/observation_actions"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:background="@color/md_white_1000">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -67,152 +70,154 @@
 
     </android.support.v7.widget.Toolbar>
 
-    <RelativeLayout
-        android:layout_below="@id/observation_actions"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        <ScrollView
+            android:id="@+id/properties"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1">
 
-        <LinearLayout
-            android:layout_width="fill_parent"
-            android:layout_height="fill_parent"
-            android:orientation="vertical">
+            <LinearLayout
+                android:id="@+id/form"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingBottom="16dp"
+                android:focusable="true"
+                android:focusableInTouchMode="true"
+                android:orientation="vertical">
 
-            <ScrollView
-                android:id="@+id/properties"
-                android:layout_width="fill_parent"
-                android:layout_height="0dip"
-                android:layout_weight="1"
-                android:layout_marginBottom="16dp"
-                android:fillViewport="true">
-
-                <LinearLayout
-                    android:id="@+id/form"
+                <HorizontalScrollView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:focusable="true"
-                    android:focusableInTouchMode="true"
-                    android:orientation="vertical">
-
-                    <HorizontalScrollView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:paddingStart="8dp"
-                        android:paddingEnd="8dp"
-                        android:layout_marginBottom="16dp"
-                        android:background="@color/md_white_1000">
-
-                        <LinearLayout
-                            android:id="@+id/image_gallery"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:orientation="horizontal">
-                        </LinearLayout>
-
-                    </HorizontalScrollView>
+                    android:paddingStart="8dp"
+                    android:paddingEnd="8dp"
+                    android:layout_marginBottom="16dp"
+                    android:background="@color/md_white_1000">
 
                     <LinearLayout
+                        android:id="@+id/image_gallery"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+                    </LinearLayout>
+
+                </HorizontalScrollView>
+
+                <LinearLayout
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:paddingStart="8dp"
+                    android:paddingEnd="8dp"
+                    android:background="@color/md_white_1000">
+
+                    <mil.nga.giat.mage.form.MageEditText
+                        android:id="@+id/date"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:layout_marginBottom="5dp"
+                        app:propertyKey="timestamp"
+                        app:propertyType="date" />
+
+                    <LinearLayout
+                        android:id="@+id/location_edit"
                         android:layout_width="fill_parent"
                         android:layout_height="wrap_content"
                         android:orientation="vertical"
-                        android:paddingStart="8dp"
-                        android:paddingEnd="8dp"
+                        android:paddingTop="5dp"
+                        android:paddingBottom="5dp"
+                        android:layout_marginStart="4dp"
                         android:background="@color/md_white_1000">
 
-                        <mil.nga.giat.mage.form.MageEditText
-                            android:id="@+id/date"
-                            android:layout_width="match_parent"
+                        <TextView
+                            android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="8dp"
-                            android:layout_marginBottom="5dp"
-                            app:propertyKey="timestamp"
-                            app:propertyType="date" />
+                            android:layout_marginBottom="8dp"
+                            android:textColor="#999999"
+                            android:textSize="12sp"
+                            android:text="Location"/>
 
                         <LinearLayout
-                            android:id="@+id/location_edit"
-                            android:layout_width="fill_parent"
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:orientation="vertical"
-                            android:paddingTop="5dp"
-                            android:paddingBottom="5dp"
-                            android:layout_marginStart="4dp"
-                            android:background="@color/md_white_1000">
+                            android:layout_marginBottom="8dp"
+                            android:paddingTop="4dp"
+                            android:orientation="horizontal"
+                            android:background="?android:attr/selectableItemBackground">
 
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:textColor="#999999"
-                                android:textSize="12sp"
-                                android:text="Location"/>
+                            <fragment
+                                android:id="@+id/map"
+                                android:name="com.google.android.gms.maps.MapFragment"
+                                android:layout_width="200dp"
+                                android:layout_height="100dp"
+                                app:liteMode="true" />
 
                             <LinearLayout
-                                android:layout_width="match_parent"
+                                android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:paddingTop="8dp"
-                                android:paddingBottom="8dp"
-                                android:orientation="horizontal"
-                                android:background="?android:attr/selectableItemBackground">
+                                android:layout_marginLeft="16dp"
+                                android:orientation="vertical"
+                                android:layout_weight="1">
 
-                                <fragment
-                                    android:id="@+id/map"
-                                    android:name="com.google.android.gms.maps.MapFragment"
-                                    android:layout_width="200dp"
-                                    android:layout_height="100dp"
-                                    app:liteMode="true" />
-
-                                <LinearLayout
+                                <TextView
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:layout_marginLeft="16dp"
-                                    android:orientation="vertical"
-                                    android:layout_weight="1">
+                                    android:textColor="#D8000000"
+                                    android:textSize="12sp"
+                                    android:text="Latitude"/>
 
-                                    <TextView
-                                        android:layout_width="wrap_content"
-                                        android:layout_height="wrap_content"
-                                        android:textColor="#D8000000"
-                                        android:textSize="12sp"
-                                        android:text="Latitude"/>
+                                <TextView
+                                    android:id="@+id/latitude"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginBottom="4dp"
+                                    android:textColor="#777777"
+                                    android:textSize="16sp" />
 
-                                    <TextView
-                                        android:id="@+id/latitude"
-                                        android:layout_width="wrap_content"
-                                        android:layout_height="wrap_content"
-                                        android:layout_marginBottom="4dp"
-                                        android:textColor="#777777"
-                                        android:textSize="16sp" />
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:textColor="#D8000000"
+                                    android:textSize="12sp"
+                                    android:text="Longitude"/>
 
-                                    <TextView
-                                        android:layout_width="wrap_content"
-                                        android:layout_height="wrap_content"
-                                        android:textColor="#D8000000"
-                                        android:textSize="12sp"
-                                        android:text="Longitude"/>
-
-                                    <TextView
-                                        android:id="@+id/longitude"
-                                        android:layout_width="wrap_content"
-                                        android:layout_height="wrap_content"
-                                        android:textColor="#777777"
-                                        android:textSize="16sp" />
-
-                                </LinearLayout>
+                                <TextView
+                                    android:id="@+id/longitude"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:textColor="#777777"
+                                    android:textSize="16sp" />
 
                             </LinearLayout>
 
                         </LinearLayout>
-                    </LinearLayout>
-
-                    <LinearLayout
-                        android:id="@+id/forms"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical">
-
-                        <!-- This will get populated programmatically -->
 
                     </LinearLayout>
                 </LinearLayout>
-            </ScrollView>
-        </LinearLayout>
-    </RelativeLayout>
-</LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/forms"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <!-- This will get populated programmatically -->
+
+                </LinearLayout>
+             </LinearLayout>
+
+        </ScrollView>
+
+    </LinearLayout>
+
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/save_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="end|bottom"
+        android:layout_marginBottom="16dp"
+        android:layout_marginEnd="16dp"
+        android:theme="@style/AppTheme.PrimaryFAB"
+        android:src="@drawable/ic_save_white_24dp" />
+
+</android.support.design.widget.CoordinatorLayout>

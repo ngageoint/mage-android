@@ -24,7 +24,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
-import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
@@ -222,7 +221,7 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 				startActivity(intent);
 			}
 		});
-		
+
 		controls = LayoutBaker.createControls(this, ControlGenerationType.EDIT, formDefinitions);
 		for (Map.Entry<Long, Collection<View>> entry : controls.entrySet()) {
 			for (View view : entry.getValue()) {
@@ -369,6 +368,13 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 				dialog.setOnDateTimeChangedListener(dateTimeChangedListener);
 			}
 		}
+
+		findViewById(R.id.save_button).setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				saveObservation();
+			}
+		});
 	}
 
 	@Override
@@ -487,14 +493,6 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 	}
 
 	@Override
-	public boolean onCreateOptionsMenu(Menu menu) {
-		// Inflate the menu; this adds items to the action bar if it is present.
-		getMenuInflater().inflate(R.menu.observation_edit_menu, menu);
-
-		return true;
-	}
-
-	@Override
 	public boolean onKeyDown(int keyCode, KeyEvent event) {
 		if ((keyCode == KeyEvent.KEYCODE_BACK)) {
 			new AlertDialog.Builder(this)
@@ -527,74 +525,74 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 						.show();
 
 				break;
-
-			case R.id.observation_save:
-				List<View> invalid = LayoutBaker.validateControls(controls);
-				if (!invalid.isEmpty()) {
-					// scroll to first invalid control
-					View firstInvalid = invalid.get(0);
-					findViewById(R.id.properties).scrollTo(0, firstInvalid.getBottom());
-					firstInvalid.clearFocus();
-					firstInvalid.requestFocus();
-					firstInvalid.requestFocusFromTouch();
-					break;
-				}
-
-				observation.setState(State.ACTIVE);
-				observation.setDirty(true);
-				observation.setGeometry(new GeometryFactory().createPoint(new Coordinate(l.getLongitude(), l.getLatitude())));
-
-				Map<Long, Map<String, ObservationProperty>> forms = LayoutBaker.populateMapFromForms(controls);
-
-				// Add properties that weren't part of the form
-				try {
-					observation.setTimestamp(iso8601Format.parse(timestamp.getPropertyValue().toString()));
-				} catch (ParseException pe) {
-					Log.e(LOG_NAME, "Could not parse timestamp", pe);
-				}
-
-				observation.setAccuracy(l.getAccuracy());
-
-				String provider = l.getProvider();
-				if (provider == null || provider.trim().isEmpty()) {
-					provider = "manual";
-				}
-				observation.setProvider(provider);
-
-				if (!"manual".equalsIgnoreCase(provider)) {
-					observation.setLocationDelta(Long.toString(locationElapsedTimeMilliseconds));
-				}
-
-				Collection<ObservationForm> observationForms = new ArrayList<>();
-				for (Map.Entry<Long, Map<String, ObservationProperty>> entry : forms.entrySet()) {
-					ObservationForm form = new ObservationForm();
-					form.setFormId(entry.getKey());
-					form.addProperties(entry.getValue().values());
-
-					observationForms.add(form);
-				}
-				observation.addForms(observationForms);
-
-				observation.getAttachments().addAll(attachmentsToCreate);
-
-				ObservationHelper oh = ObservationHelper.getInstance(getApplicationContext());
-				try {
-					if (observation.getId() == null) {
-						Observation newObs = oh.create(observation);
-						Log.i(LOG_NAME, "Created new observation with id: " + newObs.getId());
-					} else {
-						oh.update(observation);
-						Log.i(LOG_NAME, "Updated observation with remote id: " + observation.getRemoteId());
-					}
-					finish();
-				} catch (Exception e) {
-					Log.e(LOG_NAME, e.getMessage(), e);
-				}
-
-				break;
 		}
 
 		return super.onOptionsItemSelected(item);
+	}
+
+	private void saveObservation() {
+		List<View> invalid = LayoutBaker.validateControls(controls);
+		if (!invalid.isEmpty()) {
+			// scroll to first invalid control
+			View firstInvalid = invalid.get(0);
+			findViewById(R.id.properties).scrollTo(0, firstInvalid.getBottom());
+			firstInvalid.clearFocus();
+			firstInvalid.requestFocus();
+			firstInvalid.requestFocusFromTouch();
+
+			return;
+		}
+
+		observation.setState(State.ACTIVE);
+		observation.setDirty(true);
+		observation.setGeometry(new GeometryFactory().createPoint(new Coordinate(l.getLongitude(), l.getLatitude())));
+
+		Map<Long, Map<String, ObservationProperty>> forms = LayoutBaker.populateMapFromForms(controls);
+
+		// Add properties that weren't part of the form
+		try {
+			observation.setTimestamp(iso8601Format.parse(timestamp.getPropertyValue().toString()));
+		} catch (ParseException pe) {
+			Log.e(LOG_NAME, "Could not parse timestamp", pe);
+		}
+
+		observation.setAccuracy(l.getAccuracy());
+
+		String provider = l.getProvider();
+		if (provider == null || provider.trim().isEmpty()) {
+			provider = "manual";
+		}
+		observation.setProvider(provider);
+
+		if (!"manual".equalsIgnoreCase(provider)) {
+			observation.setLocationDelta(Long.toString(locationElapsedTimeMilliseconds));
+		}
+
+		Collection<ObservationForm> observationForms = new ArrayList<>();
+		for (Map.Entry<Long, Map<String, ObservationProperty>> entry : forms.entrySet()) {
+			ObservationForm form = new ObservationForm();
+			form.setFormId(entry.getKey());
+			form.addProperties(entry.getValue().values());
+
+			observationForms.add(form);
+		}
+		observation.addForms(observationForms);
+
+		observation.getAttachments().addAll(attachmentsToCreate);
+
+		ObservationHelper oh = ObservationHelper.getInstance(getApplicationContext());
+		try {
+			if (observation.getId() == null) {
+				Observation newObs = oh.create(observation);
+				Log.i(LOG_NAME, "Created new observation with id: " + newObs.getId());
+			} else {
+				oh.update(observation);
+				Log.i(LOG_NAME, "Updated observation with remote id: " + observation.getRemoteId());
+			}
+			finish();
+		} catch (Exception e) {
+			Log.e(LOG_NAME, e.getMessage(), e);
+		}
 	}
 
 	public void onCameraClick(View v) {
