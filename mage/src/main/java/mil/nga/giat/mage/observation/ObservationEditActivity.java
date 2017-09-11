@@ -1,7 +1,6 @@
 package mil.nga.giat.mage.observation;
 
 import android.Manifest;
-import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.Dialog;
@@ -14,7 +13,6 @@ import android.location.Location;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.SystemClock;
 import android.provider.MediaStore;
 import android.provider.Settings;
 import android.support.v4.app.ActivityCompat;
@@ -126,7 +124,8 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 	private static final long NEW_OBSERVATION = -1L;
 	private static final long NO_FORM = -1L;
 
-	private static Integer FIELD_ID_SELECT = 7;
+	private static final int FIELD_ID_SELECT = 7;
+	private static final int FORM_ID_PREFIX = 100;
 
 	private Map<String, View> fieldIdMap = new HashMap<>(); //FieldId + " " + UnqiueId / View
 
@@ -182,23 +181,23 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 			formDefinitions.put(form.get("id").getAsLong(), form);
 		}
 
-		JsonObject formDefinition = null;
+		Map<Long, JsonObject> formMap = EventHelper.getInstance(getApplicationContext()).getCurrentEvent().getFormMap();
+
+		Collection<JsonObject> formDefinitions = new ArrayList<>();
 		if (observationId == NEW_OBSERVATION) {
 			observation = new Observation();
 
 			final long formId = getIntent().getLongExtra(OBSERVATION_FORM_ID, NO_FORM);
 			if (formId != NO_FORM) {
-				formDefinition = formDefinitions.get(formId);
+				formDefinitions.add(formMap.get(formId));
 			}
 		} else {
 			try {
 				observation = ObservationHelper.getInstance(getApplicationContext()).read(getIntent().getLongExtra(OBSERVATION_ID, 0L));
 
-				// TODO grab first form in observation, need to check if there is one
-				Collection<ObservationForm> observationForms = observation.getForms();
-				if (observationForms.size() > 0) {
-					ObservationForm observationForm = observationForms.iterator().next();
-					formDefinition = formDefinitions.get(observationForm.getFormId());
+				for (ObservationForm observationForm : observation.getForms()) {
+					JsonObject formDefinition = formMap.get(observationForm.getFormId());
+					formDefinitions.add((formDefinition));
 				}
 			} catch (ObservationException oe) {
 				Log.e(LOG_NAME, "Problem reading observation.", oe);
@@ -223,12 +222,8 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 				startActivity(intent);
 			}
 		});
-
-		// TODO make sure size works for current and new attachments
-		// need to check attachments to create and also show this if a new attachemnt is added
-//		findViewById(R.id.image_view).setVisibility(observation.getAttachments().size() > 0 ? View.VISIBLE : View.GONE);
-
-		controls = LayoutBaker.createControls(this, ControlGenerationType.EDIT, formDefinition);
+		
+		controls = LayoutBaker.createControls(this, ControlGenerationType.EDIT, formDefinitions);
 		for (Map.Entry<Long, Collection<View>> entry : controls.entrySet()) {
 			for (View view : entry.getValue()) {
 				if (view instanceof MageSelectView) {
@@ -265,13 +260,11 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 		LayoutInflater inflater = getLayoutInflater();
 		LinearLayout forms = (LinearLayout) findViewById(R.id.forms);
 
-		// TODO only one form for
 		for (Map.Entry<Long, Collection<View>> entry : controls.entrySet()) {
 			LinearLayout form = (LinearLayout) inflater.inflate(R.layout.observation_editor_form, null);
-			form.setId(entry.getKey().intValue());
+			form.setId(FORM_ID_PREFIX + entry.getKey().intValue());
 
-			// BLEH find form by id I guess, not optimal
-			JsonObject definition = formDefinitions.get(entry.getKey());
+			JsonObject definition = formMap.get(entry.getKey());
 			TextView formName = (TextView) form.findViewById(R.id.form_name);
 			formName.setText(definition.get("name").getAsString());
 
@@ -279,7 +272,6 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 
 			forms.addView(form);
 		}
-
 
 		((MapFragment) getFragmentManager().findFragmentById(R.id.map)).getMapAsync(this);
 
@@ -301,7 +293,10 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 			} catch (UserException ue) {
 				ue.printStackTrace();
 			}
-			LayoutBaker.populateLayout((LinearLayout) findViewById(R.id.form), ControlGenerationType.EDIT, observation);
+
+			for (ObservationForm observationForm : observation.getForms()) {
+				LayoutBaker.populateLayout((LinearLayout) findViewById(R.id.form), ControlGenerationType.EDIT, observationForm.getPropertiesMap());
+			}
 		} else {
 			getSupportActionBar().setTitle("Edit Observation");
 			// this is an edit of an existing observation
@@ -324,7 +319,11 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 
 			timestamp.setPropertyValue(observation.getTimestamp());
 
-			LayoutBaker.populateLayout((LinearLayout) findViewById(R.id.form), ControlGenerationType.EDIT, observation);
+			LinearLayout formsLayout = (LinearLayout) findViewById(R.id.forms);
+			for (ObservationForm observationForm : observation.getForms()) {
+				LinearLayout formLayout = (LinearLayout) formsLayout.findViewById(FORM_ID_PREFIX + observationForm.getFormId().intValue());
+				LayoutBaker.populateLayout(formLayout, ControlGenerationType.EDIT, observationForm.getPropertiesMap());
+			}
 		}
 
 		final DateTimePickerDialog.OnDateTimeChangedListener dateTimeChangedListener = new DateTimePickerDialog.OnDateTimeChangedListener() {
@@ -452,42 +451,6 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 		} else {
 			observationMarker = map.addMarker(new MarkerOptions().position(location).icon(ObservationBitmapFactory.bitmapDescriptor(this, observation)));
 		}
-	}
-
-	@SuppressLint("NewApi")
-	private long getElapsedTimeInMilliseconds() {
-		long elapsedTimeInMilliseconds = 0;
-
-		if (Build.VERSION.SDK_INT >= 17 && l.getElapsedRealtimeNanos() != 0) {
-			elapsedTimeInMilliseconds = ((SystemClock.elapsedRealtimeNanos() - l.getElapsedRealtimeNanos()) / (1000000l));
-		} else {
-			elapsedTimeInMilliseconds = System.currentTimeMillis() - l.getTime();
-		}
-		return Math.max(0l, elapsedTimeInMilliseconds);
-	}
-
-	private String elapsedTime(long ms) {
-		String s = "";
-
-		long sec = ms / 1000;
-		long min = sec / 60;
-
-		if (observation.getRemoteId() == null) {
-			if (ms < 1000) {
-				return "now";
-			}
-			if (min == 0) {
-				s = sec + ((sec == 1) ? " sec ago" : " secs ago");
-			} else if (min < 60) {
-				s = min + ((min == 1) ? " min ago" : " mins ago");
-			} else {
-				long hour = Math.round(Math.floor(min / 60));
-				s = hour + ((hour == 1) ? " hour ago" : " hours ago");
-			}
-		} else {
-			return "";
-		}
-		return s;
 	}
 
 	@Override

@@ -3,13 +3,13 @@ package mil.nga.giat.mage.observation;
 import android.app.FragmentManager;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.FrameLayout;
@@ -26,6 +26,7 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.common.base.Function;
+import com.google.common.base.Predicate;
 import com.google.common.collect.Collections2;
 import com.google.gson.JsonObject;
 import com.vividsolutions.jts.geom.Geometry;
@@ -72,6 +73,8 @@ public class ObservationViewActivity extends AppCompatActivity implements OnMapR
 	public static String INITIAL_LOCATION = "INITIAL_LOCATION";
 	public static String INITIAL_ZOOM = "INITIAL_ZOOM";
 
+	private static int FORM_ID_PREFIX = 100;
+
 	private DateFormat dateFormat;
 	private GoogleMap map;
     private AttachmentGallery attachmentGallery;
@@ -82,9 +85,9 @@ public class ObservationViewActivity extends AppCompatActivity implements OnMapR
 	private Marker marker;
 	private DecimalFormat latLngFormat = new DecimalFormat("###.#####");
 
-	private Map<Long, Collection<View>> controls = new HashMap<>();
+	ImageView favoriteIcon;
 
-	SharedPreferences preferences;
+	private Map<Long, Collection<View>> controls = new HashMap<>();
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -103,20 +106,6 @@ public class ObservationViewActivity extends AppCompatActivity implements OnMapR
 
 		try {
 			o = ObservationHelper.getInstance(getApplicationContext()).read(getIntent().getLongExtra(OBSERVATION_ID, 0L));
-
-			Collection<ObservationForm> forms = o.getForms();
-			if (forms.size() > 0) {
-				ObservationForm observationForm = forms.iterator().next();
-
-				// Grab form definition
-				Map<Long, JsonObject> formMap = EventHelper.getInstance(getApplicationContext()).getCurrentEvent().getFormMap();
-				JsonObject formDefinition = formMap.get(observationForm.getFormId());
-				controls = LayoutBaker.createControls(this, LayoutBaker.ControlGenerationType.VIEW, formDefinition);
-			}
-
-			for (Map.Entry<Long, Collection<View>> entry :controls.entrySet()) {
-				LayoutBaker.populateLayoutWithControls((LinearLayout) findViewById(R.id.propertyContainer), entry.getValue());
-			}
 		} catch(Exception e) {
 			Log.e(LOG_NAME, "Problem getting observation.", e);
 		}
@@ -128,6 +117,27 @@ public class ObservationViewActivity extends AppCompatActivity implements OnMapR
 		} catch (UserException e) {
 			Log.e(LOG_NAME, "Cannot read current user", e);
 		}
+
+		favoriteIcon = (ImageView) findViewById(R.id.favoriteIcon);
+		favoriteIcon.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				toggleFavorite(o);
+			}
+		});
+		findViewById(R.id.directions).setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				getDirections();
+			}
+		});
+
+		findViewById(R.id.favorites).setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				onFavoritesClick(o.getFavorites());
+			}
+		});
 
 		final FloatingActionButton editButton = (FloatingActionButton) findViewById(R.id.edit_button);
 		editButton.setVisibility(canEditObservation ? View.VISIBLE : View.GONE);
@@ -152,11 +162,12 @@ public class ObservationViewActivity extends AppCompatActivity implements OnMapR
 			private void updateObservation(Collection<Observation> observations) {
 				if (map == null) return;
 
-				for (Observation observation : observations) {
+				for (final Observation observation : observations) {
 					if (o == null || (observation.getId().equals(o.getId()) && !observation.getLastModified().equals(o.getLastModified()))) {
 						ObservationViewActivity.this.runOnUiThread(new Runnable() {
 							@Override
 							public void run() {
+								o = observation;
 								setupObservation();
 							}
 						});
@@ -176,7 +187,7 @@ public class ObservationViewActivity extends AppCompatActivity implements OnMapR
 		ObservationHelper.getInstance(getApplicationContext()).addListener(observationEventListener);
 
 		((MapFragment) getFragmentManager().findFragmentById(R.id.mini_map)).getMapAsync(this);
-  	}
+	}
 
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
@@ -205,35 +216,55 @@ public class ObservationViewActivity extends AppCompatActivity implements OnMapR
 
 	private void setupObservation() {
 		try {
-			final ImageView favoriteIcon = (ImageView) findViewById(R.id.favoriteIcon);
-			if (o == null) {
-				favoriteIcon.setOnClickListener(new View.OnClickListener() {
-					@Override
-					public void onClick(View v) {
-						toggleFavorite(o, favoriteIcon);
-					}
-				});
-				findViewById(R.id.directions).setOnClickListener(new View.OnClickListener() {
-					@Override
-					public void onClick(View v) {
-						getDirections();
-					}
-				});
-
-				findViewById(R.id.favorites).setOnClickListener(new View.OnClickListener() {
-					@Override
-					public void onClick(View v) {
-						onFavoritesClick(o.getFavorites());
-					}
-				});
+			// Grab form definitions
+			Map<Long, JsonObject> formMap = EventHelper.getInstance(getApplicationContext()).getCurrentEvent().getFormMap();
+			Collection<JsonObject> formDefinitions = new ArrayList<>();
+			for (ObservationForm observationForm : o.getForms()) {
+				formDefinitions.add(formMap.get(observationForm.getFormId()));
 			}
 
-			o = ObservationHelper.getInstance(getApplicationContext()).read(getIntent().getLongExtra(OBSERVATION_ID, 0L));
+			controls = LayoutBaker.createControls(this, LayoutBaker.ControlGenerationType.VIEW, formDefinitions);
+
+			LayoutInflater inflater = getLayoutInflater();
+			LinearLayout forms = (LinearLayout) findViewById(R.id.forms);
+			forms.removeAllViews();
+			for (Map.Entry<Long, Collection<View>> entry : controls.entrySet()) {
+				LinearLayout form = (LinearLayout) inflater.inflate(R.layout.observation_editor_form, null);
+				form.setId(FORM_ID_PREFIX + entry.getKey().intValue());
+
+				JsonObject definition = formMap.get(entry.getKey());
+				TextView formName = (TextView) form.findViewById(R.id.form_name);
+				formName.setText(definition.get("name").getAsString());
+
+				LayoutBaker.populateLayoutWithControls((LinearLayout) form.findViewById(R.id.form_content), entry.getValue());
+
+				forms.addView(form);
+			}
 
 			ObservationProperty primary = o.getPrimaryField();
+			TextView primaryView = (TextView) findViewById(R.id.primary_field);
 			if (primary != null) {
 				setTitle(primary.getValue().toString());
+
+				primaryView.setVisibility(View.VISIBLE);
+				primaryView.setText(primary.getValue().toString());
+			} else {
+				primaryView.setVisibility(View.GONE);
 			}
+
+			ObservationProperty secondary = o.getSecondaryField();
+			TextView secondaryView = (TextView) findViewById(R.id.secondary_field);
+			if (secondary != null) {
+				setTitle(secondary.getValue().toString());
+
+				secondaryView.setVisibility(View.VISIBLE);
+				secondaryView.setText(secondary.getValue().toString());
+			} else {
+				secondaryView.setVisibility(View.GONE);
+			}
+
+			TextView timestamp = (TextView) findViewById(R.id.timestamp);
+			timestamp.setText(dateFormat.format(o.getTimestamp()));
 
 			Geometry geo = o.getGeometry();
 			if (geo instanceof Point) {
@@ -275,14 +306,15 @@ public class ObservationViewActivity extends AppCompatActivity implements OnMapR
 				}
 			}
 
-			TextView timestamp = (TextView) findViewById(R.id.timestamp);
-			timestamp.setText(dateFormat.format(o.getTimestamp()));
-
 			setupImportant(o.getImportant());
-			setFavorites(o.getFavorites());
-			setFavoriteImage(favoriteIcon, isFavorite(o));
+			setFavorites();
+			setFavoriteImage(isFavorite(o));
 
-			LayoutBaker.populateLayout((LinearLayout) findViewById(R.id.propertyContainer), LayoutBaker.ControlGenerationType.VIEW, o);
+			LinearLayout formsLayout = (LinearLayout) findViewById(R.id.forms);
+			for (ObservationForm observationForm : o.getForms()) {
+				LinearLayout formLayout = (LinearLayout) formsLayout.findViewById(FORM_ID_PREFIX + observationForm.getFormId().intValue());
+				LayoutBaker.populateLayout(formLayout, LayoutBaker.ControlGenerationType.VIEW, observationForm.getPropertiesMap());
+			}
 
             LinearLayout galleryLayout = (LinearLayout) findViewById(R.id.image_gallery);
             galleryLayout.removeAllViews();
@@ -464,7 +496,7 @@ public class ObservationViewActivity extends AppCompatActivity implements OnMapR
 		startActivity(intent);
 	}
 
-	private void toggleFavorite(Observation observation, ImageView imageView) {
+	private void toggleFavorite(Observation observation) {
 		ObservationHelper observationHelper = ObservationHelper.getInstance(getApplicationContext());
 		boolean isFavorite = isFavorite(observation);
 		try {
@@ -474,7 +506,7 @@ public class ObservationViewActivity extends AppCompatActivity implements OnMapR
 				observationHelper.favoriteObservation(observation, currentUser);
 			}
 
-			setFavoriteImage(imageView, !isFavorite);
+			setFavoriteImage(!isFavorite);
 		} catch (ObservationException e) {
 			String text = isFavorite ? "Problem unfavoriting observation" : "Problem favoriting observation";
 			Toast.makeText(getApplicationContext(), text, Toast.LENGTH_LONG).show();
@@ -497,8 +529,15 @@ public class ObservationViewActivity extends AppCompatActivity implements OnMapR
 		return isFavorite;
 	}
 
-	private void setFavorites(Collection<ObservationFavorite> favorites) {
-		Integer favoritesCount = favorites.size();
+	private void setFavorites() {
+		Integer favoritesCount = Collections2.filter(o.getFavorites(), new Predicate<ObservationFavorite>() {
+			@Override
+			public boolean apply(ObservationFavorite favorite) {
+				return favorite.isFavorite();
+			}
+		}).size();
+
+
 		findViewById(R.id.favorites).setVisibility(favoritesCount > 0 ? View.VISIBLE : View.GONE) ;
 		if (favoritesCount > 0) {
 			TextView favoriteCountView = (TextView) findViewById(R.id.favoritesCount);
@@ -509,11 +548,11 @@ public class ObservationViewActivity extends AppCompatActivity implements OnMapR
 		}
 	}
 
-	private void setFavoriteImage(ImageView imageView, boolean isFavorite) {
+	private void setFavoriteImage(boolean isFavorite) {
 		if (isFavorite) {
-			imageView.setColorFilter(ContextCompat.getColor(this, R.color.observation_favorite_active));
+			favoriteIcon.setColorFilter(ContextCompat.getColor(this, R.color.observation_favorite_active));
 		} else {
-			imageView.setColorFilter(ContextCompat.getColor(this, R.color.observation_favorite_inactive));
+			favoriteIcon.setColorFilter(ContextCompat.getColor(this, R.color.observation_favorite_inactive));
 		}
 	}
 

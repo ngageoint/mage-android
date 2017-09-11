@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -32,8 +33,6 @@ import java.util.TreeMap;
 
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.observation.DateTimePickerDialog;
-import mil.nga.giat.mage.sdk.datastore.observation.Observation;
-import mil.nga.giat.mage.sdk.datastore.observation.ObservationForm;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationProperty;
 import mil.nga.giat.mage.sdk.utils.ISO8601DateFormatFactory;
 
@@ -51,19 +50,18 @@ public class LayoutBaker {
 		VIEW, EDIT
 	}
 
-	public static Map<Long, Collection<View>> createControls(final AppCompatActivity activity, ControlGenerationType controlGenerationType, JsonObject formDefinition) {
-		Map<Long, Collection<View>> controls = new HashMap<>();
+	public static Map<Long, Collection<View>> createControls(final AppCompatActivity activity, ControlGenerationType controlGenerationType, Collection<JsonObject> formDefinitions) {
+		Map<Long, Collection<View>> controls = new LinkedHashMap<>();
 
-		if (formDefinition == null) {
-			return controls;
+		for (JsonObject formDefinition : formDefinitions) {
+			Long formId = formDefinition.get("id").getAsLong();
+			controls.put(formId, createFormControlsFromJson(activity, formId.intValue(), controlGenerationType, formDefinition));
 		}
-
-		controls.put(formDefinition.get("id").getAsLong(), createFormControlsFromJson(activity, controlGenerationType, formDefinition));
 
 		return controls;
 	}
 
-	private static List<View> createFormControlsFromJson(final AppCompatActivity activity, ControlGenerationType controlGenerationType, JsonObject dynamicFormJson) {
+	private static List<View> createFormControlsFromJson(final AppCompatActivity activity, int formId, ControlGenerationType controlGenerationType, JsonObject dynamicFormJson) {
 		// add the theme to the context
 		final ContextThemeWrapper context = new ContextThemeWrapper(activity, R.style.AppTheme_PrimaryAccent);
 
@@ -73,9 +71,10 @@ public class LayoutBaker {
 
 		Map<Integer, JsonObject> dynamicFormFieldsCollection = new TreeMap<>();
 
+		int fieldPrefix = formId * 10;
 		for (int i = 0; i < dynamicFormFields.size(); i++) {
 			JsonObject field = dynamicFormFields.get(i).getAsJsonObject();
-			Integer id = field.get("id").getAsInt();
+			Integer id = fieldPrefix + field.get("id").getAsInt();
 			dynamicFormFieldsCollection.put(id, field);
 		}
 
@@ -442,11 +441,8 @@ public class LayoutBaker {
 		return invalid;
 	}
 
-	public static void populateLayout(final LinearLayout linearLayout, ControlGenerationType controlGenerationType, Observation observation) {
-
-		for (ObservationForm observationForm : observation.getForms()) {
-			populateLayoutFromMap(linearLayout, controlGenerationType, observationForm.getPropertiesMap());
-		}
+	public static void populateLayout(final LinearLayout linearLayout, ControlGenerationType controlGenerationType, Map<String, ObservationProperty> properties) {
+		populateLayoutFromMap(linearLayout, controlGenerationType, properties);
 	}
 
 	/**

@@ -3,7 +3,7 @@
     android:layout_width="fill_parent"
     android:layout_height="wrap_content"
     android:gravity="center"
-    android:background="@color/md_green_500"
+    android:background="@color/md_white_1000"
     android:orientation="vertical">
 
     <LinearLayout
@@ -23,7 +23,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="#FFFFFF"
+            android:textColor="@color/md_green_400"
             android:text="Pushed on "
             style="@style/ListTextSecondary"
             android:alpha="1"/>
@@ -32,7 +32,7 @@
             android:id="@+id/observation_sync_date"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:textColor="#FFFFFF"
+            android:textColor="@color/md_green_400"
             style="@style/ListTextSecondary"
             android:alpha="1"/>
 
