@@ -14,7 +14,6 @@ import java.util.List;
 
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.profile.ProfileActivity;
-import mil.nga.giat.mage.profile.ProfileFragment;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
@@ -55,7 +54,7 @@ public class PeopleActivity extends AppCompatActivity implements PeopleRecyclerA
     @Override
     public void onPersonClick(User person) {
         Intent intent = new Intent(this, ProfileActivity.class);
-        intent.putExtra(ProfileFragment.USER_ID, person.getRemoteId());
+        intent.putExtra(ProfileActivity.USER_ID, person.getRemoteId());
         startActivity(intent);
     }
 }

@@ -3,12 +3,33 @@ All notable changes to this project will be documented in this file.
 Adheres to [Semantic Versioning](http://semver.org/).
 
 ---
-## 5.3.1 (TBD)
+## 5.3.3 (TBD)
 
 * TBD
 
 ##### Features
 * Observation geometry support for lines and polygons
+
+##### Bug Fixes
+
+## [5.3.3](https://github.com/ngageoint/mage-android/releases/tag/5.3.3) (09-01-2017)
+
+##### Features
+
+##### Bug Fixes
+* Update event name in title when switching events.
+
+## [5.3.2](https://github.com/ngageoint/mage-android/releases/tag/5.3.2) (08-22-2017)
+
+##### Features
+
+##### Bug Fixes
+* Fixed bug causing non-required select fields to show as required 
+
+## [5.3.1](https://github.com/ngageoint/mage-android/releases/tag/5.3.1) (07-20-2017)
+
+##### Features
+* Add network config
 
 ##### Bug Fixes
 

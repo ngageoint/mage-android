@@ -304,7 +304,7 @@ public class LayoutBaker {
 				case DROPDOWN:
 					MageSelectView selectView = new MageSelectView(context, null, field, false);
 					selectView.setId(id);
-					selectView.getEditText().setHint(title);
+					selectView.setHint(title);
 					selectView.setLayoutParams(controlParams);
 					selectView.setRequired(required);
 					selectView.setPropertyKey(name);
@@ -316,7 +316,7 @@ public class LayoutBaker {
 				case MULTISELECTDROPDOWN:
 					MageSelectView multiSelectView = new MageSelectView(context, null, field, true);
 					multiSelectView.setId(id);
-					multiSelectView.getEditText().setHint(title);
+					multiSelectView.setHint(title);
 					multiSelectView.setLayoutParams(controlParams);
 					multiSelectView.setRequired(required);
 					multiSelectView.setPropertyKey(name);

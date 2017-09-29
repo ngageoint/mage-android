@@ -30,13 +30,16 @@ import org.ocpsoft.prettytime.PrettyTime;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 
 import mil.nga.giat.mage.R;
+import mil.nga.giat.mage.filter.Filter;
 import mil.nga.giat.mage.profile.ProfileActivity;
-import mil.nga.giat.mage.profile.ProfileFragment;
+import mil.nga.giat.mage.sdk.Temporal;
 import mil.nga.giat.mage.sdk.datastore.location.Location;
 import mil.nga.giat.mage.sdk.datastore.location.LocationProperty;
+import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserLocal;
 import mil.nga.giat.mage.sdk.fetch.DownloadImageTask;
@@ -64,6 +67,11 @@ public class LocationMarkerCollection implements PointCollection<Pair<Location, 
 	public LocationMarkerCollection(Context context, GoogleMap map) {
 		this.context = context;
 		this.map = map;
+	}
+
+	@Override
+	public Iterator<Pair<Location, User>> iterator() {
+		return markerIdToPair.values().iterator();
 	}
 
 	@Override
@@ -118,7 +126,7 @@ public class LocationMarkerCollection implements PointCollection<Pair<Location, 
 		}
 
 		Intent profileView = new Intent(context, ProfileActivity.class);
-		profileView.putExtra(ProfileFragment.USER_ID, pair.second.getRemoteId());
+		profileView.putExtra(ProfileActivity.USER_ID, pair.second.getRemoteId());
 		context.startActivity(profileView);
 	}
 
@@ -168,28 +176,39 @@ public class LocationMarkerCollection implements PointCollection<Pair<Location, 
 	}
 
 	@Override
-	public void refreshMarkerIcons() {
+	public void refreshMarkerIcons(Filter<Temporal> filter) {
 		for (Marker m : userIdToMarker.values()) {
 			Pair<Location, User> pair = markerIdToPair.get(m.getId());
 			Location location = pair.first;
 			User user = pair.second;
-			boolean showWindow = m.isInfoWindowShown();
-			try {
-				// make sure to set the Anchor after this call as well, because the size of the icon might have changed
-				m.setIcon(LocationBitmapFactory.bitmapDescriptor(context, location, user));
-				m.setAnchor(0.5f, 1.0f);
-			} catch (Exception ue) {
-				Log.e(LOG_NAME, "Error refreshing the icon for user: " + user.getId(), ue);
-			}
+			if (location != null) {
+				if (filter != null && !filter.passesFilter(location)) {
+					remove(pair);
+				} else {
+					boolean showWindow = m.isInfoWindowShown();
+					try {
+						// make sure to set the Anchor after this call as well, because the size of the icon might have changed
+						m.setIcon(LocationBitmapFactory.bitmapDescriptor(context, location, user));
+						m.setAnchor(0.5f, 1.0f);
+					} catch (Exception ue) {
+						Log.e(LOG_NAME, "Error refreshing the icon for user: " + user.getId(), ue);
+					}
 
-			if (showWindow) {
-				m.showInfoWindow();
+					if (showWindow) {
+						m.showInfoWindow();
+					}
+				}
 			}
 		}
 	}
 
 	@Override
 	public void onMapClick(LatLng latLng) {
+	}
+
+	@Override
+	public int count() {
+		return userIdToMarker.size();
 	}
 
 	@Override

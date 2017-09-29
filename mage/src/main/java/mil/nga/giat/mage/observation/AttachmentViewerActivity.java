@@ -13,6 +13,7 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
+import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.content.ContextCompat;
@@ -158,6 +159,9 @@ public class AttachmentViewerActivity extends AppCompatActivity implements Remov
 						.listener(new RequestListener<Attachment, GlideDrawable>() {
 							@Override
 							public boolean onException(Exception e, Attachment model, Target<GlideDrawable> target, boolean isFirstResource) {
+                                findViewById(R.id.progress).setVisibility(View.INVISIBLE);
+								Snackbar snackbar = Snackbar.make(findViewById(R.id.coordinator_layout), "Cannot download image, check connection.", Snackbar.LENGTH_LONG);
+								snackbar.show();
 								return false;
 							}
 
@@ -169,6 +173,9 @@ public class AttachmentViewerActivity extends AppCompatActivity implements Remov
 						})
 						.into(iv);
 			} else if (contentType.startsWith("video")) {
+				findViewById(R.id.progress).setVisibility(View.VISIBLE);
+				findViewById(R.id.video).setVisibility(View.VISIBLE);
+
 				// TODO pass token in header
 				String token = PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).getString(getApplicationContext().getString(mil.nga.giat.mage.sdk.R.string.tokenKey), null);
 				Uri uri = Uri.parse(url + "?access_token=" + token);
@@ -178,18 +185,29 @@ public class AttachmentViewerActivity extends AppCompatActivity implements Remov
 				mediaController.setAnchorView(videoView);
 				videoView.setMediaController(mediaController);
 
-				videoView.setVideoURI(uri);
 
-				findViewById(R.id.video).setVisibility(View.VISIBLE);
+				videoView.setOnErrorListener(new MediaPlayer.OnErrorListener() {
+					@Override
+					public boolean onError(MediaPlayer mp, int what, int extra) {
+						findViewById(R.id.video).setVisibility(View.INVISIBLE);
+						findViewById(R.id.progress).setVisibility(View.INVISIBLE);
+						Snackbar snackbar = Snackbar.make(findViewById(R.id.coordinator_layout), "Cannot play video, check connection.", Snackbar.LENGTH_LONG);
+						snackbar.show();
+						return true;
+					}
+				});
 
 				videoView.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
 					@Override
 					public void onPrepared(MediaPlayer mp) {
+						findViewById(R.id.progress).setVisibility(View.INVISIBLE);
 						videoView.start();
 					}
 				});
+
+				videoView.setVideoURI(uri);
 			} else if (contentType.startsWith("audio")) {
-				findViewById(R.id.audio_image).setVisibility(View.VISIBLE);
+				findViewById(R.id.progress).setVisibility(View.VISIBLE);
 
 				String token = PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).getString(getApplicationContext().getString(mil.nga.giat.mage.sdk.R.string.tokenKey), null);
 				Uri uri = Uri.parse(url + "?access_token=" + token);
@@ -206,16 +224,30 @@ public class AttachmentViewerActivity extends AppCompatActivity implements Remov
 
 				mediaController.setAnchorView(videoView);
 				videoView.setMediaController(mediaController);
-				videoView.setVideoURI(uri);
 				findViewById(R.id.video).setVisibility(View.VISIBLE);
 
 				videoView.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
 					@Override
 					public void onPrepared(MediaPlayer mp) {
+						findViewById(R.id.progress).setVisibility(View.INVISIBLE);
+						findViewById(R.id.audio_image).setVisibility(View.VISIBLE);
 						videoView.start();
 						mediaController.show();
 					}
 				});
+
+				videoView.setOnErrorListener(new MediaPlayer.OnErrorListener() {
+					@Override
+					public boolean onError(MediaPlayer mp, int what, int extra) {
+						findViewById(R.id.progress).setVisibility(View.INVISIBLE);
+						findViewById(R.id.video).setVisibility(View.INVISIBLE);
+						Snackbar snackbar = Snackbar.make(findViewById(R.id.coordinator_layout), "Cannot play audio, check connection.", Snackbar.LENGTH_LONG);
+						snackbar.show();
+						return true;
+					}
+				});
+
+				videoView.setVideoURI(uri);
 			}
 		}
 	}
@@ -246,6 +278,8 @@ public class AttachmentViewerActivity extends AppCompatActivity implements Remov
 
 	@Override
 	public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
+		super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
 		switch (requestCode) {
 			case PERMISSIONS_REQUEST_STORAGE: {
 				if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {

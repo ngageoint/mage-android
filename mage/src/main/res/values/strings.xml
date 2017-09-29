@@ -3,7 +3,6 @@
 
     <string name="app_name">MAGE</string>
     <string name="aboutText">The Mobile Awareness GEOINT Environment, or MAGE, provides mobile situational awareness capabilities. The MAGE app on your mobile device allows you to create geotagged field reports that contain media such as photos, videos, and voice recordings and share them instantly with who you want. Using the GPS in your mobile device, MAGE can also track users locations in real time. Your locations can be automatically shared with the other members of your team.\n\nThe app remains functional if your mobile device loses its network connection, and will upload its local content when a connection is re-established. When disconnected from the network, MAGE will use local data layers to continue to provide relevant GEOINT. Data layers, including map tiles and vector data, can be stored on your mobile device and are available at all times.</string>
-    <string name="menu_settings">Settings</string>
     <string name="map_settings">Map Settings</string>
     <string name="location_settings">Location Services</string>
     <string name="fetch_settings">Data Fetching</string>
@@ -25,6 +24,37 @@
     <string name="delete">Delete</string>
     <string name="change">Change</string>
     <string name="force_submit"><u>Force Submit</u></string>
+
+    <string name="advanced_time_filter_options">Advanced Time Filter Options</string>
+    <string name="observation_filter">Observations</string>
+    <string name="locations_filter">Locations</string>
+    <string name="favorites">Favorites</string>
+    <string name="show_favorite_observations">Show my favorite observations.</string>
+    <string name="important">Important</string>
+    <string name="show_important_observations">Show observations flagged as important.</string>
+    <string name="time_filter">TIME FILTER</string>
+    <string name="time_filter_observations">TIME FILTER (Observations Only)</string>
+
+    <string name="all">All</string>
+    <string name="today">Today</string>
+    <string name="twenty_four_hours">24 Hours</string>
+    <string name="last_week">Last Week</string>
+    <string name="last_month">Last Month</string>
+    <string name="custom">Custom</string>
+
+    <string name="all_observation_description">Do not filter observations on time.</string>
+    <string name="today_observation_description">Show todays observations.</string>
+    <string name="twenty_four_hours_observation_description">Show observations for last 24 hours.</string>
+    <string name="last_week_observation_description">Show observations for last week.</string>
+    <string name="last_month_observation_description">Show observations for last month.</string>
+    <string name="custom_observation_description">Define a custom rolling window.</string>
+
+    <string name="all_location_description">Do not filter locations on time.</string>
+    <string name="today_location_description">Show todays locations.</string>
+    <string name="twenty_four_hours_location_description">Show locations for last 24 hours.</string>
+    <string name="last_week_location_description">Show locations for last week.</string>
+    <string name="last_month_location_description">Show locations for last month.</string>
+    <string name="custom_location_description">Define a custom rolling window.</string>
 
     <string name="reauthentication_message"><b>You</b> were logged in as &lt;b>%s&lt;/b>, and your MAGE session has expired. Please login to resume using MAGE.</string>
 
@@ -75,8 +105,8 @@
     <string name="feature_overlay_refresh_disabled">DOWNLOADING FEATURE OVERLAYS&#8230;</string>
     <string name="feature_overlay_no_content_title">No Feature Overlays</string>
     <string name="feature_overlay_no_content_loading">Loading Feature Overlays&#8230;</string>
-    <string name="feature_overlay_no_content_text">Click the refresh button below to pull all feature overlays from the server.</string>
-    <string name="feature_overlay_refresh">You are about to refresh all feature overlays, this could take a while.\n\n Refresh all feature overlays?</string>
+    <string name="feature_overlay_no_content_text">No feature overlays, click the refresh button above to pull all feature overlays from the server.</string>
+    <string name="feature_overlay_refresh">You are about to refresh all feature overlays, this could take a while.</string>
     <string name="clear_data_message">You are about to delete the selected data and logout.\n\n Are you sure you want to do this?</string>
 
     <string name="overlay_cache_directory">MapCache</string>

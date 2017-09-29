@@ -28,7 +28,7 @@
 
     <string-array name="timeZones">
         <item>Local</item>
-        <item>GMT</item>
+        <item>UTC</item>
     </string-array>
 
     <string-array name="timeZoneValues">
@@ -82,6 +82,19 @@
         <item>@integer/time_filter_last_24_hours</item>
         <item>@integer/time_filter_last_week</item>
         <item>@integer/time_filter_last_month</item>
+        <item>@integer/time_filter_custom</item>
+    </integer-array>
+
+    <string-array name="timeUnitEntries">
+        <item>Hours</item>
+        <item>Days</item>
+        <item>Months</item>
+    </string-array>
+
+    <integer-array name="timeUnitValues">
+        <item>11</item>
+        <item>5</item>
+        <item>2</item>
     </integer-array>
 
 </resources>

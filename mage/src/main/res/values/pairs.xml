@@ -38,8 +38,13 @@
     <bool name="disclaimerAcceptedDefaultValue">false</bool>
 
     <string name="activeTimeFilterKey">activeTimeFilter</string>
+    <string name="activeLocationTimeFilterKey">activeLocationTimeFilter</string>
     <string name="activeFavoritesFilterKey">activeFavoritesFilter</string>
     <string name="activeImportantFilterKey">activeImportantFilter</string>
+    <string name="customObservationTimeNumberFilterKey">customObservationTimeNumberFilter</string>
+    <string name="customObservationTimeUnitFilterKey">customObservationTimeUnitFilter</string>
+    <string name="customLocationTimeNumberFilterKey">customLocationTimeNumberFilter</string>
+    <string name="customLocationTimeUnitFilterKey">customLocationTimeUnitFilter</string>
 
     <!-- TIME DISPLAY -->
     <string name="timeZoneKey">timeZones</string>

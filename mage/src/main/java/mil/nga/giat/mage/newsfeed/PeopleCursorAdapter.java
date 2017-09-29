@@ -64,6 +64,7 @@ public class PeopleCursorAdapter extends CursorAdapter {
 					.load(userLocal.getLocalAvatarPath())
 					.asBitmap()
 					.fallback(R.drawable.ic_person_gray_48dp)
+					.error(R.drawable.ic_person_gray_48dp)
 					.centerCrop()
 					.into(new BitmapImageViewTarget(avatarView) {
 						@Override

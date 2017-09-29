@@ -541,6 +541,7 @@ public class LoginActivity extends AppCompatActivity implements AccountDelegate 
 	public void signup(View view) {
 		Intent intent = new Intent(getApplicationContext(), SignupActivity.class);
 		startActivity(intent);
+		finish();
 	}
 
 	@Override

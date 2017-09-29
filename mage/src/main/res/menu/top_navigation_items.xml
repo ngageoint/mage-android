@@ -5,26 +5,6 @@
     <group android:checkableBehavior="single">
 
         <item
-            android:id="@+id/map_navigation"
-            android:enabled="true"
-            android:icon="@drawable/ic_map_white_24dp"
-            android:title="Map"
-            app:showAsAction="always" />
-
-        <item
-            android:id="@+id/observations_navigation"
-            android:enabled="true"
-            android:icon="@drawable/ic_place_white_24dp"
-            android:title="Observations"
-            app:showAsAction="always" />
-
-        <item
-            android:id="@+id/people_navigation"
-            android:enabled="true"
-            android:icon="@drawable/ic_people_white_24dp"
-            android:title="People"/>
-
-        <item
             android:id="@+id/events_navigation"
             android:enabled="true"
             android:icon="@drawable/ic_event_white_24dp"
@@ -53,8 +33,8 @@
         <item
             android:id="@+id/help_navigation"
             android:enabled="true"
-            android:icon="@drawable/ic_help_outline_white_24dp"
-            android:title="Help"
+            android:icon="@drawable/ic_info_outline_black_24dp"
+            android:title="About"
             app:showAsAction="always" />
 
         <item

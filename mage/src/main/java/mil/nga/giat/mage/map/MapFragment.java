@@ -67,8 +67,14 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
@@ -149,6 +155,9 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 
 	private static final String MAP_VIEW_STATE = "MAP_VIEW_STATE";
 
+	private static final String OBSERVATION_FILTER_TYPE = "Observation";
+	private static final String LOCATION_FILTER_TYPE = "Location";
+
 	private static final int PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 1;
 
 	private MAGE mage;
@@ -157,6 +166,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 	private boolean mapInitialized = false;
 	private View searchLayout;
 	private SearchView searchView;
+	private Menu menu;
 	private Location location;
 	private boolean followMe = false;
 	private GoogleMapWrapper mapWrapper;
@@ -164,11 +174,15 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 	private OnLocationChangedListener locationChangedListener;
 
 	private static final int REFRESHMARKERINTERVALINSECONDS = 300;
-	private RefreshMarkersTask refreshLocationsMarkersTask;
-	private RefreshMarkersTask refreshMyHistoricLocationsMarkersTask;
+	private static final int REFRESHOBSERVATIONMARKERINTERVALINSECONDS = 60;
+	private ScheduledFuture refreshLocationsMarkersTask;
+	private ScheduledFuture refreshMyHistoricLocationsMarkersTask;
+	private ScheduledFuture refreshObservationMarkersTask;
 
 	private final BlockingQueue<Runnable> queue = new ArrayBlockingQueue<>(64);
 	private final ThreadPoolExecutor executor = new ThreadPoolExecutor(8, 8, 10, TimeUnit.SECONDS, queue);
+
+	private ScheduledExecutorService scheduledExecutorService;
 
 	private PointCollection<Observation> observations;
 	private PointCollection<Pair<mil.nga.giat.mage.sdk.datastore.location.Location, User>> locations;
@@ -280,6 +294,8 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 		// Close all open GeoPackages
 		geoPackageCache.closeAll();
 
+		cacheOverlays.clear();
+
 		staticGeometryCollection = null;
 		currentUser = null;
 		map = null;
@@ -289,6 +305,8 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 	@Override
 	public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
 		inflater.inflate(R.menu.filter, menu);
+		this.menu = menu;
+		getFilterTitle();
 	}
 
 	@Override
@@ -348,7 +366,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 		}
 		observations = new ObservationMarkerCollection(getActivity(), map);
 		ObservationLoadTask observationLoad = new ObservationLoadTask(getActivity(), observations);
-		observationLoad.addFilter(getTemporalFilter("timestamp"));
+		observationLoad.addFilter(getTemporalFilter("timestamp", getTimeFilterId(), OBSERVATION_FILTER_TYPE));
 		observationLoad.executeOnExecutor(executor);
 
 		if (locations != null) {
@@ -356,7 +374,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 		}
 		locations = new LocationMarkerCollection(getActivity(), map);
 		LocationLoadTask locationLoad = new LocationLoadTask(getActivity(), locations);
-		locationLoad.setFilter(getTemporalFilter("timestamp"));
+		locationLoad.setFilter(getTemporalFilter("timestamp", getLocationTimeFilterId(), LOCATION_FILTER_TYPE));
 		locationLoad.executeOnExecutor(executor);
 
 		updateMapView();
@@ -366,17 +384,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 		locations.setVisibility(preferences.getBoolean(getResources().getString(R.string.showLocationsKey), true));
 		historicLocations.setVisibility(preferences.getBoolean(getResources().getString(R.string.showMyLocationHistoryKey), false));
 
-		// task to refresh location markers every x seconds
-		refreshLocationsMarkersTask = new RefreshMarkersTask(locations);
-		if (!refreshLocationsMarkersTask.isCancelled()) {
-			refreshLocationsMarkersTask.executeOnExecutor(executor, REFRESHMARKERINTERVALINSECONDS);
-		}
-
-		// task to refresh my historic location markers every x seconds
-		refreshMyHistoricLocationsMarkersTask = new RefreshMarkersTask(historicLocations);
-		if (!refreshMyHistoricLocationsMarkersTask.isCancelled()) {
-			refreshMyHistoricLocationsMarkersTask.executeOnExecutor(executor, REFRESHMARKERINTERVALINSECONDS);
-		}
+		initializePeriodicTasks();
 
 		updateStaticFeatureLayers();
 
@@ -392,6 +400,53 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 			map.setMyLocationEnabled(false);
 			map.setLocationSource(null);
 		}
+
+		((AppCompatActivity) getActivity()).getSupportActionBar().setSubtitle(getFilterTitle());
+	}
+
+	private void initializePeriodicTasks() {
+		scheduledExecutorService = Executors.newScheduledThreadPool(4);
+
+		// task to refresh location markers ever x seconds
+		refreshLocationsMarkersTask = scheduledExecutorService.scheduleAtFixedRate(new Runnable() {
+			@Override
+			public void run() {
+				new RefreshMarkersTask(locations, getTemporalFilter("timestamp", getLocationTimeFilterId(), LOCATION_FILTER_TYPE)).executeOnExecutor(executor);
+			}
+		}, 0, REFRESHMARKERINTERVALINSECONDS, TimeUnit.SECONDS);
+
+		// task to refresh my historic location markers every x seconds
+		refreshMyHistoricLocationsMarkersTask = scheduledExecutorService.scheduleAtFixedRate(new Runnable() {
+			@Override
+			public void run() {
+				new RefreshMarkersTask(historicLocations, getTemporalFilter("timestamp", getLocationTimeFilterId(), LOCATION_FILTER_TYPE)).executeOnExecutor(executor);
+			}
+		}, 0, REFRESHMARKERINTERVALINSECONDS, TimeUnit.SECONDS);
+
+		// task to refresh observation markers every x seconds
+		refreshObservationMarkersTask = scheduledExecutorService.scheduleAtFixedRate(new Runnable() {
+			@Override
+			public void run() {
+				new RefreshMarkersTask(observations, getTemporalFilter("timestamp", getTimeFilterId(), OBSERVATION_FILTER_TYPE)).executeOnExecutor(executor);
+			}
+		}, 0, REFRESHOBSERVATIONMARKERINTERVALINSECONDS, TimeUnit.SECONDS);
+	}
+
+	private void stopPeriodicTasks() {
+		if (refreshLocationsMarkersTask != null) {
+			refreshLocationsMarkersTask.cancel(true);
+			refreshLocationsMarkersTask = null;
+		}
+
+		if (refreshMyHistoricLocationsMarkersTask != null) {
+			refreshMyHistoricLocationsMarkersTask.cancel(true);
+			refreshMyHistoricLocationsMarkersTask = null;
+		}
+
+		if (scheduledExecutorService != null) {
+			scheduledExecutorService.shutdown();
+			scheduledExecutorService = null;
+		}
 	}
 
 	@Override
@@ -404,9 +459,9 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 	public void onSaveInstanceState(Bundle outState) {
 		super.onSaveInstanceState(outState);
 
-		Bundle mapState = new Bundle();
-		mapView.onSaveInstanceState(mapState);
-		outState.putBundle(MAP_VIEW_STATE, mapState);
+//		Bundle mapState = new Bundle();
+//		mapView.onSaveInstanceState(mapState);
+//		outState.putBundle(MAP_VIEW_STATE, mapState);
 	}
 
 	@Override
@@ -421,8 +476,6 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 
 		mapView.onResume();
 		initializeMap();
-
-		((AppCompatActivity) getActivity()).getSupportActionBar().setSubtitle(getFilterTitle());
 
 		searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
 			@Override
@@ -455,16 +508,8 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 	public void onPause() {
 		super.onPause();
 
-		if (refreshLocationsMarkersTask != null) {
-			refreshLocationsMarkersTask.cancel(true);
-			refreshLocationsMarkersTask = null;
-		}
-
-		if (refreshMyHistoricLocationsMarkersTask != null) {
-			refreshMyHistoricLocationsMarkersTask.cancel(true);
-			refreshMyHistoricLocationsMarkersTask = null;
-		}
-
+		stopPeriodicTasks();
+		
 		mapView.onPause();
 
 		CacheProvider.getInstance(getActivity().getApplicationContext()).unregisterCacheOverlayListener(this);
@@ -500,7 +545,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 
 		// if there is not a location from the location service, then try to pull one from the database.
 		if (location == null) {
-			List<mil.nga.giat.mage.sdk.datastore.location.Location> tLocations = LocationHelper.getInstance(getActivity().getApplicationContext()).getCurrentUserLocations(getActivity().getApplicationContext(), 1, true);
+			List<mil.nga.giat.mage.sdk.datastore.location.Location> tLocations = LocationHelper.getInstance(getActivity().getApplicationContext()).getCurrentUserLocations(1, true);
 			if (!tLocations.isEmpty()) {
 				mil.nga.giat.mage.sdk.datastore.location.Location tLocation = tLocations.get(0);
 				Geometry geo = tLocation.getGeometry();
@@ -569,7 +614,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 	public void onObservationCreated(Collection<Observation> o, Boolean sendUserNotifcations) {
 		if (observations != null) {
 			ObservationTask task = new ObservationTask(getActivity(), ObservationTask.Type.ADD, observations);
-			task.addFilter(getTemporalFilter("last_modified"));
+			task.addFilter(getTemporalFilter("last_modified", getTimeFilterId(), OBSERVATION_FILTER_TYPE));
 			task.executeOnExecutor(executor, o.toArray(new Observation[o.size()]));
 		}
 	}
@@ -578,7 +623,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 	public void onObservationUpdated(Observation o) {
 		if (observations != null) {
 			ObservationTask task = new ObservationTask(getActivity(), ObservationTask.Type.UPDATE, observations);
-			task.addFilter(getTemporalFilter("last_modified"));
+			task.addFilter(getTemporalFilter("last_modified", getTimeFilterId(), OBSERVATION_FILTER_TYPE));
 			task.executeOnExecutor(executor, o);
 		}
 	}
@@ -596,7 +641,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 			if (currentUser != null && !currentUser.getRemoteId().equals(l.getUser().getRemoteId())) {
 				if (locations != null) {
 					LocationTask task = new LocationTask(getActivity(), LocationTask.Type.ADD, locations);
-					task.setFilter(getTemporalFilter("timestamp"));
+					task.setFilter(getTemporalFilter("timestamp", getLocationTimeFilterId(), LOCATION_FILTER_TYPE));
 					task.executeOnExecutor(executor, l);
 				}
 			} else {
@@ -612,7 +657,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 		if (currentUser != null && !currentUser.getRemoteId().equals(l.getUser().getRemoteId())) {
 			if (locations != null) {
 				LocationTask task = new LocationTask(getActivity(), LocationTask.Type.UPDATE, locations);
-				task.setFilter(getTemporalFilter("timestamp"));
+				task.setFilter(getTemporalFilter("timestamp", getLocationTimeFilterId(), LOCATION_FILTER_TYPE));
 				task.executeOnExecutor(executor, l);
 			}
 		} else {
@@ -940,15 +985,19 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 				enabledGeoPackages.add(geoPackage.getName());
 
 				// Handle tile and feature tables
-				switch(tableCacheOverlay.getType()){
-					case GEOPACKAGE_TILE_TABLE:
-						addGeoPackageTileCacheOverlay(enabledCacheOverlays, (GeoPackageTileTableCacheOverlay)tableCacheOverlay, geoPackage, false);
-						break;
-					case GEOPACKAGE_FEATURE_TABLE:
-						addGeoPackageFeatureCacheOverlay(enabledCacheOverlays, (GeoPackageFeatureTableCacheOverlay)tableCacheOverlay, geoPackage);
-						break;
-					default:
-						throw new UnsupportedOperationException("Unsupported GeoPackage type: " + tableCacheOverlay.getType());
+				try {
+					switch (tableCacheOverlay.getType()) {
+						case GEOPACKAGE_TILE_TABLE:
+							addGeoPackageTileCacheOverlay(enabledCacheOverlays, (GeoPackageTileTableCacheOverlay) tableCacheOverlay, geoPackage, false);
+							break;
+						case GEOPACKAGE_FEATURE_TABLE:
+							addGeoPackageFeatureCacheOverlay(enabledCacheOverlays, (GeoPackageFeatureTableCacheOverlay) tableCacheOverlay, geoPackage);
+							break;
+						default:
+							throw new UnsupportedOperationException("Unsupported GeoPackage type: " + tableCacheOverlay.getType());
+					}
+				}catch(Exception e){
+					Log.e(LOG_NAME, "Failed to add GeoPackage overlay. GeoPackage: " + geoPackage.getName() + ", Name: " + tableCacheOverlay.getName(), e);
 				}
 
 				// If a newly added cache, update the bounding box for zooming
@@ -1103,23 +1152,28 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 					final int totalCount = featureCursor.getCount();
 					int count = 0;
 					while (featureCursor.moveToNext()) {
-						FeatureRow featureRow = featureCursor.getRow();
-						GeoPackageGeometryData geometryData = featureRow.getGeometry();
-						if (geometryData != null && !geometryData.isEmpty()) {
-							mil.nga.wkb.geom.Geometry geometry = geometryData.getGeometry();
-							if (geometry != null) {
-								GoogleMapShape shape = shapeConverter.toShape(geometry);
-								// Set the Shape Marker, PolylineOptions, and PolygonOptions here if needed to change color and style
-								featureTableCacheOverlay.addShapeToMap(featureRow.getId(), shape, map);
+						try {
+							FeatureRow featureRow = featureCursor.getRow();
+							GeoPackageGeometryData geometryData = featureRow.getGeometry();
+							if (geometryData != null && !geometryData.isEmpty()) {
+								mil.nga.wkb.geom.Geometry geometry = geometryData.getGeometry();
+								if (geometry != null) {
+									GoogleMapShape shape = shapeConverter.toShape(geometry);
+									// Set the Shape Marker, PolylineOptions, and PolygonOptions here if needed to change color and style
+									featureTableCacheOverlay.addShapeToMap(featureRow.getId(), shape, map);
 
-								if(++count >= maxFeaturesPerTable){
-									if(count < totalCount){
-										Toast.makeText(getActivity().getApplicationContext(), featureTableCacheOverlay.getCacheName()
-												+ "- added " + count + " of " + totalCount, Toast.LENGTH_LONG).show();
+									if (++count >= maxFeaturesPerTable) {
+										if (count < totalCount) {
+											Toast.makeText(getActivity().getApplicationContext(), featureTableCacheOverlay.getCacheName()
+													+ "- added " + count + " of " + totalCount, Toast.LENGTH_LONG).show();
+										}
+										break;
 									}
-									break;
 								}
 							}
+						}catch(Exception e){
+							Log.e(LOG_NAME, "Failed to display feature. GeoPackage: " + geoPackage.getName()
+									+ ", Table: " + featureDao.getTableName() + ", Row: " + featureCursor.getPosition(), e);
 						}
 					}
 				} finally {
@@ -1256,9 +1310,28 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 		return preferences.getInt(getResources().getString(R.string.activeTimeFilterKey), getResources().getInteger(R.integer.time_filter_none));
 	}
 
-	private Filter<Temporal> getTemporalFilter(String columnName) {
+	private int getLocationTimeFilterId() {
+		return preferences.getInt(getResources().getString(R.string.activeLocationTimeFilterKey), getResources().getInteger(R.integer.time_filter_none));
+	}
+
+	private int getCustomTimeNumber(String filterType) {
+		if (filterType.equalsIgnoreCase(OBSERVATION_FILTER_TYPE)) {
+			return preferences.getInt(getResources().getString(R.string.customObservationTimeNumberFilterKey), 0);
+		} else {
+			return preferences.getInt(getResources().getString(R.string.customLocationTimeNumberFilterKey), 0);
+		}
+	}
+
+	private String getCustomTimeUnit(String filterType) {
+		if (filterType.equalsIgnoreCase(OBSERVATION_FILTER_TYPE)) {
+			return preferences.getString(getResources().getString(R.string.customObservationTimeUnitFilterKey), getResources().getStringArray(R.array.timeUnitEntries)[0]);
+		} else {
+			return preferences.getString(getResources().getString(R.string.customLocationTimeUnitFilterKey), getResources().getStringArray(R.array.timeUnitEntries)[0]);
+		}
+	}
+
+	private Filter<Temporal> getTemporalFilter(String columnName, int filterId, String filterType) {
 		Filter<Temporal> filter = null;
-		int filterId = getTimeFilterId();
 		Calendar c = Calendar.getInstance();
 
 		if (filterId == getResources().getInteger(R.integer.time_filter_last_month)) {
@@ -1272,6 +1345,24 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 			c.set(Calendar.MINUTE, 0);
 			c.set(Calendar.SECOND, 0);
 			c.set(Calendar.MILLISECOND, 0);
+		} else if (filterId == getResources().getInteger(R.integer.time_filter_custom)) {
+			String customFilterTimeUnit = getCustomTimeUnit(filterType);
+			int customTimeNumber = getCustomTimeNumber(filterType);
+			switch (customFilterTimeUnit) {
+				case "Hours":
+					c.add(Calendar.HOUR, -1 * customTimeNumber);
+					break;
+				case "Days":
+					c.add(Calendar.DAY_OF_MONTH, -1 * customTimeNumber);
+					break;
+				case "Months":
+					c.add(Calendar.MONTH, -1 * customTimeNumber);
+					break;
+				default:
+					c.add(Calendar.MINUTE, -1 * customTimeNumber);
+					break;
+			}
+
 		} else {
 			// no filter
 			c = null;
@@ -1285,33 +1376,15 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 	}
 
 	private String getFilterTitle() {
-		List<String> filters = new ArrayList<>();
 
-		int filterId = getTimeFilterId();
-		if (filterId == getResources().getInteger(R.integer.time_filter_last_month)) {
-			filters.add("Last Month");
-		} else if (filterId == getResources().getInteger(R.integer.time_filter_last_week)) {
-			filters.add("Last Week");
-		} else if (filterId == getResources().getInteger(R.integer.time_filter_last_24_hours)) {
-			filters.add("Last 24 Hours");
-		} else if (filterId == getResources().getInteger(R.integer.time_filter_today)) {
-			filters.add("Since Midnight");
+		if (getTimeFilterId() != getResources().getInteger(R.integer.time_filter_none)
+				|| getLocationTimeFilterId() != getResources().getInteger(R.integer.time_filter_none)
+				|| preferences.getBoolean(getResources().getString(R.string.activeImportantFilterKey), false)
+				|| preferences.getBoolean(getResources().getString(R.string.activeFavoritesFilterKey), false)) {
+			return "Showing filtered results.";
+		} else {
+			return "";
 		}
-
-		List<String> actionFilters = new ArrayList<>();
-		if (preferences.getBoolean(getResources().getString(R.string.activeFavoritesFilterKey), false)) {
-			actionFilters.add("Favorites");
-		}
-
-		if (preferences.getBoolean(getResources().getString(R.string.activeImportantFilterKey), false)) {
-			actionFilters.add("Important");
-		}
-
-		if (!actionFilters.isEmpty()) {
-			filters.add(StringUtils.join(actionFilters, " & "));
-		}
-
-		return StringUtils.join(filters, ", ");
 	}
 
 	private void hideKeyboard() {

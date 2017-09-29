@@ -7,6 +7,7 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
 import android.support.design.widget.CoordinatorLayout;
@@ -44,9 +45,8 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 import mil.nga.giat.mage.R;
-import mil.nga.giat.mage.filter.FilterActivity;
+import mil.nga.giat.mage.filter.LocationFilterActivity;
 import mil.nga.giat.mage.profile.ProfileActivity;
-import mil.nga.giat.mage.profile.ProfileFragment;
 import mil.nga.giat.mage.sdk.datastore.DaoStore;
 import mil.nga.giat.mage.sdk.datastore.location.Location;
 import mil.nga.giat.mage.sdk.datastore.location.LocationHelper;
@@ -64,6 +64,7 @@ public class PeopleFeedFragment extends Fragment implements OnItemClickListener,
     private PreparedQuery<Location> query;
     private ViewGroup footer;
     private ListView lv;
+    private Parcelable listState;
     private SharedPreferences sp;
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
     private ScheduledFuture<?> queryUpdateHandle;
@@ -119,6 +120,10 @@ public class PeopleFeedFragment extends Fragment implements OnItemClickListener,
             lv.setAdapter(adapter);
             lv.setOnItemClickListener(this);
 
+            if (listState != null) {
+                lv.onRestoreInstanceState(listState);
+            }
+
         } catch (Exception e) {
             Log.e(LOG_NAME, "Problem getting cursor or setting adapter.", e);
         }
@@ -126,15 +131,12 @@ public class PeopleFeedFragment extends Fragment implements OnItemClickListener,
 
     @Override
     public void onPause() {
-    	super.onPause();
+        super.onPause();
 
         LocationHelper.getInstance(getActivity()).removeListener(this);
         locationRefreshReceiver.unregister();
-    }
-    
-    @Override
-    public void onDestroyView() {
-        super.onDestroyView();
+
+        listState = lv.onSaveInstanceState();
 
         if (queryUpdateHandle != null) {
             queryUpdateHandle.cancel(true);
@@ -150,7 +152,7 @@ public class PeopleFeedFragment extends Fragment implements OnItemClickListener,
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.filter_button:
-                Intent intent = new Intent(getActivity(), FilterActivity.class);
+                Intent intent = new Intent(getActivity(), LocationFilterActivity.class);
                 startActivity(intent);
                 return true;
             default:
@@ -164,7 +166,7 @@ public class PeopleFeedFragment extends Fragment implements OnItemClickListener,
     }
 
     private int getTimeFilterId() {
-        return sp.getInt(getResources().getString(R.string.activeTimeFilterKey), getResources().getInteger(R.integer.time_filter_none));
+        return sp.getInt(getResources().getString(R.string.activeLocationTimeFilterKey), getResources().getInteger(R.integer.time_filter_none));
     }
 
     private Cursor obtainCursor(PreparedQuery<Location> query, Dao<Location, Long> lDao) throws SQLException {
@@ -202,6 +204,14 @@ public class PeopleFeedFragment extends Fragment implements OnItemClickListener,
             }
         });
     }
+
+	private int getCustomTimeNumber() {
+		return sp.getInt(getResources().getString(R.string.customLocationTimeNumberFilterKey), 0);
+	}
+
+	private String getCustomTimeUnit() {
+		return sp.getString(getResources().getString(R.string.customLocationTimeUnitFilterKey), getResources().getStringArray(R.array.timeUnitEntries)[0]);
+	}
     
     private PreparedQuery<Location> buildQuery(Dao<Location, Long> lDao, int filterId) throws SQLException {
         QueryBuilder<Location, Long> qb = lDao.queryBuilder();
@@ -228,7 +238,28 @@ public class PeopleFeedFragment extends Fragment implements OnItemClickListener,
             c.set(Calendar.MINUTE, 0);
             c.set(Calendar.SECOND, 0);
             c.set(Calendar.MILLISECOND, 0);
-        } else {
+        }  else if (filterId == getResources().getInteger(R.integer.time_filter_custom)) {
+			String customFilterTimeUnit = getCustomTimeUnit();
+			int customTimeNumber = getCustomTimeNumber();
+
+			subtitle = "Last " + customTimeNumber + " " + customFilterTimeUnit;
+			footerText = "End of results for custom filter";
+			switch (customFilterTimeUnit) {
+				case "Hours":
+					c.add(Calendar.HOUR, -1 * customTimeNumber);
+					break;
+				case "Days":
+					c.add(Calendar.DAY_OF_MONTH, -1 * customTimeNumber);
+					break;
+				case "Months":
+					c.add(Calendar.MONTH, -1 * customTimeNumber);
+					break;
+				default:
+					c.add(Calendar.MINUTE, -1 * customTimeNumber);
+					break;
+			}
+
+		} else {
             // no filter
             c.setTime(new Date(0));
         }
@@ -266,7 +297,7 @@ public class PeopleFeedFragment extends Fragment implements OnItemClickListener,
 		try {
 			Location l = query.mapRow(new AndroidDatabaseResults(c, null, false));
 			Intent profileView = new Intent(getActivity().getApplicationContext(), ProfileActivity.class);
-			profileView.putExtra(ProfileFragment.USER_ID, l.getUser().getRemoteId());
+			profileView.putExtra(ProfileActivity.USER_ID, l.getUser().getRemoteId());
 			getActivity().startActivityForResult(profileView, 2);
 		} catch (Exception e) {
 			Log.e(LOG_NAME, "Problem.", e);

@@ -12,6 +12,7 @@ import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.location.Location;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.preference.PreferenceManager;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.Snackbar;
@@ -55,7 +56,7 @@ import java.util.concurrent.TimeUnit;
 
 import mil.nga.giat.mage.MAGE;
 import mil.nga.giat.mage.R;
-import mil.nga.giat.mage.filter.FilterActivity;
+import mil.nga.giat.mage.filter.ObservationFilterActivity;
 import mil.nga.giat.mage.observation.AttachmentGallery;
 import mil.nga.giat.mage.observation.AttachmentViewerActivity;
 import mil.nga.giat.mage.observation.ObservationEditActivity;
@@ -95,7 +96,7 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 	private long requeryTime;
 	private ViewGroup footer;
 	private ListView lv;
-	private Long currentEventId;
+	Parcelable listState;
 	private User currentUser;
 	private LocationService locationService;
 	private SwipeRefreshLayout swipeContainer;
@@ -106,7 +107,6 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		currentEventId = EventHelper.getInstance(getActivity().getApplicationContext()).getCurrentEvent().getId();
 
 		try {
 			currentUser= UserHelper.getInstance(getActivity().getApplicationContext()).readCurrentUser();
@@ -162,17 +162,6 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 	}
 
 	@Override
-	public void onDestroyView() {
-		super.onDestroyView();
-
-		ObservationHelper.getInstance(getActivity().getApplicationContext()).removeListener(this);
-
-		if (queryUpdateHandle != null) {
-			queryUpdateHandle.cancel(true);
-		}
-	}
-
-	@Override
 	public void onResume() {
 		super.onResume();
 
@@ -187,6 +176,10 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 			lv.setAdapter(adapter);
 			lv.setOnItemClickListener(this);
 
+			if (listState != null) {
+				lv.onRestoreInstanceState(listState);
+			}
+
 			ObservationHelper.getInstance(getActivity().getApplicationContext()).addListener(this);
 		} catch (Exception e) {
 			Log.e(LOG_NAME, "Problem getting cursor or setting adapter.", e);
@@ -198,6 +191,14 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 		super.onPause();
 
 		observationRefreshReceiver.unregister();
+
+		listState = lv.onSaveInstanceState();
+
+		ObservationHelper.getInstance(getActivity().getApplicationContext()).removeListener(this);
+
+		if (queryUpdateHandle != null) {
+			queryUpdateHandle.cancel(true);
+		}
 	}
 
 	@Override
@@ -209,7 +210,7 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 	public boolean onOptionsItemSelected(MenuItem item) {
 		switch (item.getItemId()) {
 			case R.id.filter_button:
-				Intent intent = new Intent(getActivity(), FilterActivity.class);
+				Intent intent = new Intent(getActivity(), ObservationFilterActivity.class);
 				startActivity(intent);
 				return true;
 			default:
@@ -261,7 +262,7 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 
 		// if there is not a location from the location service, then try to pull one from the database.
 		if (location == null) {
-			List<mil.nga.giat.mage.sdk.datastore.location.Location> tLocations = LocationHelper.getInstance(getActivity().getApplicationContext()).getCurrentUserLocations(getActivity().getApplicationContext(), 1, true);
+			List<mil.nga.giat.mage.sdk.datastore.location.Location> tLocations = LocationHelper.getInstance(getActivity().getApplicationContext()).getCurrentUserLocations(1, true);
 			if (!tLocations.isEmpty()) {
 				mil.nga.giat.mage.sdk.datastore.location.Location tLocation = tLocations.get(0);
 				Geometry geo = tLocation.getGeometry();
@@ -310,6 +311,14 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 		}
 	}
 
+	private int getCustomTimeNumber() {
+		return sp.getInt(getResources().getString(R.string.customObservationTimeNumberFilterKey), 0);
+	}
+
+	private String getCustomTimeUnit() {
+		return sp.getString(getResources().getString(R.string.customObservationTimeUnitFilterKey), getResources().getStringArray(R.array.timeUnitEntries)[0]);
+	}
+
 	private PreparedQuery<Observation> buildQuery(Dao<Observation, Long> oDao, int filterId) throws SQLException {
 		QueryBuilder<Observation, Long> qb = oDao.queryBuilder();
 		Calendar c = Calendar.getInstance();
@@ -335,6 +344,27 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 			c.set(Calendar.MINUTE, 0);
 			c.set(Calendar.SECOND, 0);
 			c.set(Calendar.MILLISECOND, 0);
+		}  else if (filterId == getResources().getInteger(R.integer.time_filter_custom)) {
+			String customFilterTimeUnit = getCustomTimeUnit();
+			int customTimeNumber = getCustomTimeNumber();
+
+			filters.add("Last " + customTimeNumber + " " + customFilterTimeUnit);
+			footerText = "End of results for custom filter";
+			switch (customFilterTimeUnit) {
+				case "Hours":
+					c.add(Calendar.HOUR, -1 * customTimeNumber);
+					break;
+				case "Days":
+					c.add(Calendar.DAY_OF_MONTH, -1 * customTimeNumber);
+					break;
+				case "Months":
+					c.add(Calendar.MONTH, -1 * customTimeNumber);
+					break;
+				default:
+					c.add(Calendar.MINUTE, -1 * customTimeNumber);
+					break;
+			}
+
 		} else {
 			// no filter
 			c.setTime(new Date(0));
@@ -345,7 +375,7 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 		footerTextView.setText(footerText);
 		qb.where().ge("timestamp", c.getTime())
 			.and()
-			.eq("event_id", currentEventId);
+			.eq("event_id", EventHelper.getInstance(getActivity().getApplicationContext()).getCurrentEvent().getId());
 
 		List<String> actionFilters = new ArrayList<>();
 

@@ -5,7 +5,6 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
@@ -38,7 +37,6 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.Locale;
 import java.util.Map;
-import java.util.TimeZone;
 
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.form.LayoutBaker;
@@ -273,10 +271,12 @@ public class ObservationViewActivity extends AppCompatActivity implements OnMapR
 
             LinearLayout galleryLayout = (LinearLayout) findViewById(R.id.image_gallery);
             galleryLayout.removeAllViews();
+
 			if (o.getAttachments().size() == 0) {
 				findViewById(R.id.gallery_container).setVisibility(View.GONE);
 			} else {
-                attachmentGallery = new AttachmentGallery(getApplicationContext(), 150, 150);
+				findViewById(R.id.gallery_container).setVisibility(View.VISIBLE);
+				attachmentGallery = new AttachmentGallery(getApplicationContext(), 150, 150);
                 attachmentGallery.addOnAttachmentClickListener(new AttachmentGallery.OnAttachmentClickListener() {
                     @Override
                     public void onAttachmentClick(Attachment attachment) {

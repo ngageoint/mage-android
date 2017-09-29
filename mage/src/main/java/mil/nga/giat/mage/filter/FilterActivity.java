@@ -1,16 +1,22 @@
 package mil.nga.giat.mage.filter;
 
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
-import android.view.Menu;
+
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.CheckBox;
-import android.widget.CompoundButton;
-import android.widget.RadioButton;
+import android.widget.TextView;
+
+import org.apache.commons.lang3.StringUtils;
+
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
 
 import mil.nga.giat.mage.R;
 
@@ -18,16 +24,9 @@ import mil.nga.giat.mage.R;
  * Created by wnewman on 1/25/17.
  */
 
-public class FilterActivity extends AppCompatActivity implements CompoundButton.OnCheckedChangeListener {
+public class FilterActivity extends AppCompatActivity {
 
-    private Integer timeFilter = 0;
-    private Integer activeTimeFilter = 0;
-
-    private CheckBox favoriteCheckBox;
-    private boolean activeFavoriteFilter = false;
-
-    private CheckBox importantCheckBox;
-    private boolean activeImportantFilter = false;
+    SharedPreferences preferences;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,80 +36,92 @@ public class FilterActivity extends AppCompatActivity implements CompoundButton.
         ActionBar actionBar = getSupportActionBar();
         actionBar.setTitle("Filter");
         actionBar.setDisplayHomeAsUpEnabled(true);
-        actionBar.setHomeButtonEnabled(true);
-        actionBar.setHomeAsUpIndicator(R.drawable.ic_close_white_24dp);
 
-        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-
-        timeFilter = activeTimeFilter = preferences.getInt(getResources().getString(R.string.activeTimeFilterKey), getResources().getInteger(R.integer.time_filter_none));
-        activeFavoriteFilter = preferences.getBoolean(getResources().getString(R.string.activeFavoritesFilterKey), false);
-        activeImportantFilter = preferences.getBoolean(getResources().getString(R.string.activeImportantFilterKey), false);
-
-        final RadioButton noneRadioButton = ((RadioButton) findViewById(R.id.none_radio));
-        findViewById(R.id.none_time_filter).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                onCheckedChanged(noneRadioButton, false);
-            }
-        });
-
-        final RadioButton todayRadioButton = ((RadioButton) findViewById(R.id.since_midnight_radio));
-        findViewById(R.id.today_time_filter).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                onCheckedChanged(todayRadioButton, false);
-            }
-        });
-
-        final RadioButton last24HoursRadioButton = ((RadioButton) findViewById(R.id.last_24_hours_radio));
-        findViewById(R.id.last_24_hours_time_filter).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                onCheckedChanged(last24HoursRadioButton, false);
-            }
-        });
-
-        final RadioButton lastWeekRadioButton = ((RadioButton) findViewById(R.id.last_week_radio));
-        findViewById(R.id.last_week_time_filter).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                onCheckedChanged(lastWeekRadioButton, false);
-            }
-        });
-
-        final RadioButton lastMonthRadioButton = ((RadioButton) findViewById(R.id.last_month_radio));
-        findViewById(R.id.last_month_time_filter).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                onCheckedChanged(lastMonthRadioButton, false);
-            }
-        });
-
-        importantCheckBox = (CheckBox) findViewById(R.id.status_important);
-        favoriteCheckBox = (CheckBox) findViewById(R.id.status_favorite);
-
-        View view = findViewById(android.R.id.content).findViewWithTag(timeFilter.toString());
-        if (view == null) {
-            view = findViewById(android.R.id.content).findViewWithTag("0");
-            timeFilter = activeTimeFilter = getResources().getInteger(R.integer.time_filter_none);
-        }
-
-        ((RadioButton) view).setChecked(true);
-
-        boolean favorite = preferences.getBoolean(getResources().getString(R.string.activeFavoritesFilterKey), false);
-        favoriteCheckBox.setChecked(favorite);
-
-        boolean important = preferences.getBoolean(getResources().getString(R.string.activeImportantFilterKey), false);
-        importantCheckBox.setChecked(important);
+        preferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
     }
 
-
     @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu items for use in the action bar
-        getMenuInflater().inflate(R.menu.filter_menu, menu);
+	public void onResume() {
+		super.onResume();
+		updateObservationFilterDescription();
+		updateLocationFilterDescription();
+	}
 
-        return super.onCreateOptionsMenu(menu);
+    private int getTimeFilterId() {
+        return preferences.getInt(getResources().getString(R.string.activeTimeFilterKey), getResources().getInteger(R.integer.time_filter_none));
+    }
+
+    private int getLocationTimeFilterId() {
+        return preferences.getInt(getResources().getString(R.string.activeLocationTimeFilterKey), getResources().getInteger(R.integer.time_filter_none));
+    }
+
+    private void updateObservationFilterDescription() {
+        List<String> filters = new ArrayList<>();
+
+		int filterId = getTimeFilterId();
+
+		if (filterId == getResources().getInteger(R.integer.time_filter_last_month)) {
+			filters.add("Last Month");
+		} else if (filterId == getResources().getInteger(R.integer.time_filter_last_week)) {
+			filters.add("Last Week");
+		} else if (filterId == getResources().getInteger(R.integer.time_filter_last_24_hours)) {
+			filters.add("Last 24 Hours");
+		} else if (filterId == getResources().getInteger(R.integer.time_filter_today)) {
+			filters.add("Since Midnight");
+		} else if (filterId == getResources().getInteger(R.integer.time_filter_custom)) {
+			int timeNumber = preferences.getInt(getResources().getString(R.string.customObservationTimeNumberFilterKey), 0);
+			String timeUnit = preferences.getString(getResources().getString(R.string.customObservationTimeUnitFilterKey), getResources().getStringArray(R.array.timeUnitEntries)[0]);
+			filters.add("Last " + timeNumber + " " + timeUnit);
+		}
+
+		List<String> actionFilters = new ArrayList<>();
+		if (preferences.getBoolean(getResources().getString(R.string.activeFavoritesFilterKey), false)) {
+			actionFilters.add("Favorites");
+		}
+
+		if (preferences.getBoolean(getResources().getString(R.string.activeImportantFilterKey), false)) {
+			actionFilters.add("Important");
+		}
+
+		if (!actionFilters.isEmpty()) {
+			filters.add(StringUtils.join(actionFilters, " & "));
+		}
+
+		String filter = StringUtils.join(filters, ", ");
+        if (filter.equalsIgnoreCase("")) {
+            filter = "All";
+        }
+        ((TextView) findViewById(R.id.observation_filter_description)).setText(filter);
+    }
+
+    private void updateLocationFilterDescription() {
+		String filter = "All";
+		int filterId = getLocationTimeFilterId();
+
+		if (filterId == getResources().getInteger(R.integer.time_filter_last_month)) {
+			filter = "Last Month";
+		} else if (filterId == getResources().getInteger(R.integer.time_filter_last_week)) {
+			filter = "Last Week";
+		} else if (filterId == getResources().getInteger(R.integer.time_filter_last_24_hours)) {
+			filter = "Last 24 Hours";
+		} else if (filterId == getResources().getInteger(R.integer.time_filter_today)) {
+			filter = "Since Midnight";
+		} else if (filterId == getResources().getInteger(R.integer.time_filter_custom)) {
+			int timeNumber = preferences.getInt(getResources().getString(R.string.customLocationTimeNumberFilterKey), 0);
+			String timeUnit = preferences.getString(getResources().getString(R.string.customLocationTimeUnitFilterKey), getResources().getStringArray(R.array.timeUnitEntries)[0]);
+			filter = "Last " + timeNumber + " " + timeUnit;
+		}
+		((TextView) findViewById(R.id.location_filter_description)).setText(filter);
+	}
+
+    public void onObservationFilterClick(View view) {
+        Intent intent = new Intent(this, ObservationFilterActivity.class);
+        startActivity(intent);
+    }
+
+    public void onLocationFilterClick(View view) {
+        Intent intent = new Intent(this, LocationFilterActivity.class);
+        startActivity(intent);
     }
 
     @Override
@@ -119,49 +130,9 @@ public class FilterActivity extends AppCompatActivity implements CompoundButton.
             case android.R.id.home:
                 finish();
                 break;
-            case R.id.filter_button:
-                setFilter();
-                break;
         }
 
         return super.onOptionsItemSelected(item);
     }
 
-    public void onFavoriteFilter(View view) {
-        favoriteCheckBox.setChecked(!favoriteCheckBox.isChecked());
-    }
-
-    public void onImportantFilter(View view) {
-        importantCheckBox.setChecked(!importantCheckBox.isChecked());
-    }
-
-    public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-        int filter = Integer.parseInt(buttonView.getTag().toString());
-        ((RadioButton) findViewById(android.R.id.content).findViewWithTag(timeFilter.toString())).setChecked(false);
-        timeFilter = filter;
-        buttonView.setChecked(true);
-    }
-
-    private void setFilter() {
-        SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).edit();
-
-        if (activeTimeFilter != timeFilter) {
-            activeTimeFilter = timeFilter;
-            editor.putInt(getResources().getString(R.string.activeTimeFilterKey), activeTimeFilter);
-        }
-
-        if (activeFavoriteFilter != favoriteCheckBox.isChecked()) {
-            activeFavoriteFilter = favoriteCheckBox.isChecked();
-            editor.putBoolean(getResources().getString(R.string.activeFavoritesFilterKey), activeFavoriteFilter);
-        }
-
-        if (activeImportantFilter != importantCheckBox.isChecked()) {
-            activeImportantFilter = importantCheckBox.isChecked();
-            editor.putBoolean(getResources().getString(R.string.activeImportantFilterKey), activeImportantFilter);
-        }
-
-        editor.commit();
-
-        finish();
-    }
 }

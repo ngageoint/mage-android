@@ -11,6 +11,8 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
+import android.support.annotation.NonNull;
+import android.support.design.widget.BottomNavigationView;
 import android.support.design.widget.NavigationView;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
@@ -35,15 +37,20 @@ import com.bumptech.glide.request.target.BitmapImageViewTarget;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 import mil.nga.geopackage.validate.GeoPackageValidate;
 import mil.nga.giat.mage.cache.GeoPackageCacheUtils;
-import mil.nga.giat.mage.event.ChangeEventFragment;
-import mil.nga.giat.mage.help.HelpFragment;
+import mil.nga.giat.mage.event.ChangeEventActivity;
+import mil.nga.giat.mage.help.HelpActivity;
 import mil.nga.giat.mage.login.LoginActivity;
+import mil.nga.giat.mage.map.MapFragment;
 import mil.nga.giat.mage.map.cache.CacheProvider;
-import mil.nga.giat.mage.preferences.GeneralPreferencesFragment;
-import mil.nga.giat.mage.profile.ProfileFragment;
+import mil.nga.giat.mage.newsfeed.ObservationFeedFragment;
+import mil.nga.giat.mage.newsfeed.PeopleFeedFragment;
+import mil.nga.giat.mage.preferences.GeneralPreferencesActivity;
+import mil.nga.giat.mage.profile.ProfileActivity;
 import mil.nga.giat.mage.sdk.datastore.DaoStore;
 import mil.nga.giat.mage.sdk.datastore.user.Event;
 import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
@@ -59,28 +66,28 @@ import mil.nga.giat.mage.sdk.utils.MediaUtility;
  * starts and stops much of the application. It also contains menus .
  *
  */
-public class LandingActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener, MainFragment.OnNavigationItemSelectedListener, ChangeEventFragment.OnEventChangedListener {
+public class LandingActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
 
     /**
      * Extra key for storing the local file path used to launch MAGE
      */
     public static final String EXTRA_OPEN_FILE_PATH = "extra_open_file_path";
 
+    private static final String BOTTOM_NAVIGATION_ITEM = "BOTTOM_NAVIGATION_ITEM";
+
     private static final int PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 100;
     private static final int PERMISSIONS_REQUEST_ACCESS_STORAGE= 200;
     private static final int PERMISSIONS_REQUEST_OPEN_FILE = 300;
     private static final int AUTHENTICATE_REQUEST = 400;
+    private static final int CHANGE_EVENT_REQUEST = 500;
 
     private static final String LOG_NAME = LandingActivity.class.getName();
 
     private NavigationView navigationView;
 
     private DrawerLayout drawerLayout;
-    private MainFragment mainFragment = new MainFragment();
-    private Fragment eventsFragment = new ChangeEventFragment();
-    private Fragment profileFragment = new ProfileFragment();
-    private Fragment settingsFragment = new GeneralPreferencesFragment();
-    private Fragment aboutFragment = new HelpFragment();
+    private BottomNavigationView bottomNavigationView;
+    private List<Fragment> bottomNavigationFragments = new ArrayList<>();
 
     private boolean locationPermissionGranted = false;
     private Uri openUri;
@@ -90,6 +97,10 @@ public class LandingActivity extends AppCompatActivity implements NavigationView
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_landing);
+
+        bottomNavigationFragments.add(new MapFragment());
+        bottomNavigationFragments.add(new ObservationFeedFragment());
+        bottomNavigationFragments.add(new PeopleFeedFragment());
 
         // TODO investigate moving this call
         // its here because this is the first activity started after login and it ensures
@@ -131,7 +142,6 @@ public class LandingActivity extends AppCompatActivity implements NavigationView
         drawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
         navigationView = (NavigationView) findViewById(R.id.navigation);
         navigationView.setNavigationItemSelectedListener(this);
-        navigationView.getMenu().findItem(R.id.map_navigation).setChecked(true);
 
         int numberOfEvents = EventHelper.getInstance(getApplicationContext()).getEventsForCurrentUser().size();
         try {
@@ -179,12 +189,7 @@ public class LandingActivity extends AppCompatActivity implements NavigationView
         headerView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                drawerLayout.closeDrawer(GravityCompat.START);
-
-                FragmentManager fragmentManager = getSupportFragmentManager();
-                fragmentManager.beginTransaction().replace(R.id.content_frame, profileFragment).commit();
-
-                navigationView.getMenu().findItem(R.id.profile_navigation).setChecked(true);
+                onNavigationItemSelected(navigationView.getMenu().findItem(R.id.profile_navigation));
             }
         });
 
@@ -212,9 +217,21 @@ public class LandingActivity extends AppCompatActivity implements NavigationView
             }
         }
 
-        if (savedInstanceState == null) {
-            goToMain();
+        bottomNavigationView = (BottomNavigationView) findViewById(R.id.bottom_navigation);
+        bottomNavigationView.setOnNavigationItemSelectedListener(new BottomNavigationView.OnNavigationItemSelectedListener() {
+            @Override
+            public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+                switchBottomNavigationFragment(item);
+                return true;
+            }
+        });
+
+        MenuItem menuItem = bottomNavigationView.getMenu().findItem(R.id.map_tab);
+        if (savedInstanceState != null) {
+            int item = savedInstanceState.getInt(BOTTOM_NAVIGATION_ITEM);
+            menuItem = bottomNavigationView.getMenu().findItem(item);
         }
+        switchBottomNavigationFragment(menuItem);
     }
 
     @Override
@@ -230,12 +247,16 @@ public class LandingActivity extends AppCompatActivity implements NavigationView
     }
 
     @Override
-    protected void onPause() {
-        super.onPause();
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+
+        outState.putInt(BOTTOM_NAVIGATION_ITEM, bottomNavigationView.getSelectedItemId());
     }
 
     @Override
     public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
         switch (requestCode) {
             case PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION: {
                 locationPermissionGranted = grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED;
@@ -293,65 +314,29 @@ public class LandingActivity extends AppCompatActivity implements NavigationView
                 .show();
     }
 
-    private void goToMain() {
-        setTitle();
-        FragmentManager fragmentManager = getSupportFragmentManager();
-        fragmentManager.beginTransaction().replace(R.id.content_frame, mainFragment).commit();
-    }
-
-    @Override
-    public void onEventChanged() {
-        goToMain();
-        navigationView.getMenu().findItem(R.id.map_navigation).setChecked(true);
-    }
-
     @Override
     public boolean onNavigationItemSelected(MenuItem menuItem) {
-        drawerLayout.closeDrawers();
+        drawerLayout.closeDrawer(GravityCompat.START);
 
         switch (menuItem.getItemId()) {
-            case R.id.map_navigation: {
-                FragmentManager fragmentManager = getSupportFragmentManager();
-                fragmentManager.beginTransaction().replace(R.id.content_frame, mainFragment).commit();
-                mainFragment.setNavigationItem(MainFragment.NavigationItem.MAP);
-
-                setTitle();
-                break;
-            }
-            case R.id.observations_navigation: {
-                FragmentManager fragmentManager = getSupportFragmentManager();
-                fragmentManager.beginTransaction().replace(R.id.content_frame, mainFragment).commit();
-                mainFragment.setNavigationItem(MainFragment.NavigationItem.OBSERVATIONS);
-
-                setTitle();
-                break;
-            }
-            case R.id.people_navigation: {
-                FragmentManager fragmentManager = getSupportFragmentManager();
-                fragmentManager.beginTransaction().replace(R.id.content_frame, mainFragment).commit();
-                mainFragment.setNavigationItem(MainFragment.NavigationItem.PEOPLE);
-
-                setTitle();
-                break;
-            }
             case R.id.events_navigation: {
-                FragmentManager fragmentManager = getSupportFragmentManager();
-                fragmentManager.beginTransaction().replace(R.id.content_frame, eventsFragment).commit();
+                Intent intent = new Intent(this, ChangeEventActivity.class);
+                startActivityForResult(intent, CHANGE_EVENT_REQUEST);
                 break;
             }
             case R.id.profile_navigation: {
-                FragmentManager fragmentManager = getSupportFragmentManager();
-                fragmentManager.beginTransaction().replace(R.id.content_frame, profileFragment).commit();
+                Intent intent = new Intent(this, ProfileActivity.class);
+                startActivity(intent);
                 break;
             }
             case R.id.settings_navigation: {
-                FragmentManager fragmentManager = getSupportFragmentManager();
-                fragmentManager.beginTransaction().replace(R.id.content_frame, settingsFragment).commit();
+                Intent intent = new Intent(this, GeneralPreferencesActivity.class);
+                startActivity(intent);
                 break;
             }
             case R.id.help_navigation: {
-                FragmentManager fragmentManager = getSupportFragmentManager();
-                fragmentManager.beginTransaction().replace(R.id.content_frame, aboutFragment).commit();
+                Intent intent = new Intent(this, HelpActivity.class);
+                startActivity(intent);
                 break;
             }
             case R.id.logout_navigation: {
@@ -367,22 +352,7 @@ public class LandingActivity extends AppCompatActivity implements NavigationView
             }
         }
 
-        return true;
-    }
-
-    @Override
-    public void onNavigationItemSelected(MainFragment.NavigationItem navigationItem) {
-        switch (navigationItem) {
-            case MAP:
-                navigationView.getMenu().findItem(R.id.map_navigation).setChecked(true);
-                break;
-            case OBSERVATIONS:
-                navigationView.getMenu().findItem(R.id.observations_navigation).setChecked(true);
-                break;
-            case PEOPLE:
-                navigationView.getMenu().findItem(R.id.people_navigation).setChecked(true);
-                break;
-        }
+        return false;
     }
 
     @Override
@@ -396,15 +366,41 @@ public class LandingActivity extends AppCompatActivity implements NavigationView
         return super.onOptionsItemSelected(item);
     }
 
-    /**
-     * Takes you to the home screen
-     */
     @Override
     public void onBackPressed() {
-        Intent startMain = new Intent(Intent.ACTION_MAIN);
-        startMain.addCategory(Intent.CATEGORY_HOME);
-        startMain.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        startActivity(startMain);
+        if (drawerLayout.isDrawerOpen(GravityCompat.START)) {
+            drawerLayout.closeDrawer(GravityCompat.START);
+        } else {
+            super.onBackPressed();
+        }
+    }
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == CHANGE_EVENT_REQUEST) {
+            if (resultCode == RESULT_OK) {
+                setTitle();
+            }
+        }
+    }
+
+    private void switchBottomNavigationFragment(MenuItem item) {
+        Fragment fragment = null;
+        switch (item.getItemId()) {
+            case R.id.map_tab:
+                fragment = bottomNavigationFragments.get(0);
+                break;
+            case R.id.observations_tab:
+                fragment = bottomNavigationFragments.get(1);
+                break;
+            case R.id.people_tab:
+                fragment = bottomNavigationFragments.get(2);
+                break;
+        }
+
+        if (fragment != null) {
+            FragmentManager fragmentManager = getSupportFragmentManager();
+            fragmentManager.beginTransaction().replace(R.id.navigation_content, fragment).commit();
+        }
     }
 
     /**

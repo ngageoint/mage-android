@@ -4,15 +4,11 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
-import android.support.v4.app.Fragment;
-import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.view.ContextThemeWrapper;
 import android.support.v7.widget.AppCompatRadioButton;
 import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.RadioGroup;
 
 import java.util.ArrayList;
@@ -35,51 +31,42 @@ import mil.nga.giat.mage.sdk.login.RecentEventTask;
  * @author wiedemanns
  */
 
-public class ChangeEventFragment extends Fragment {
+public class ChangeEventActivity extends AppCompatActivity {
 
-	public interface OnEventChangedListener {
-		void onEventChanged();
-	}
-
-	private static final String LOG_NAME = ChangeEventFragment.class.getName();
+	private static final String LOG_NAME = ChangeEventActivity.class.getName();
 
 	private static final int uniqueChildStartingIdIndex = 10000;
 	private int uniqueChildIdIndex = uniqueChildStartingIdIndex;
 	private List<Event> events = new ArrayList<>();
 	private RadioGroup radioGroup;
 	private int checkedID;
-	private OnEventChangedListener onEventChangedListener;
 
 	@Override
-	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-		View view = inflater.inflate(R.layout.fragment_events, container, false);
+	public void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
 
-		setHasOptionsMenu(true);
+		setContentView(R.layout.fragment_events);
 
-		ActionBar actionBar = ((AppCompatActivity) getActivity()).getSupportActionBar();
-		actionBar.setTitle("Events");
-		actionBar.setSubtitle(null);
+		getSupportActionBar().setTitle("Events");
 
 		uniqueChildIdIndex = uniqueChildStartingIdIndex;
 
-		final Context context = getActivity().getApplicationContext();
-
 		try {
-			final User currentUser = UserHelper.getInstance(context).readCurrentUser();
-			if(currentUser.getRole().equals(RoleHelper.getInstance(context).readAdmin())) {
+			final User currentUser = UserHelper.getInstance(this).readCurrentUser();
+			if(currentUser.getRole().equals(RoleHelper.getInstance(this).readAdmin())) {
 				// now that ADMINS can be part of any event, make sure they don't push data to events they are not part of!!
-				events = EventHelper.getInstance(context).readAll();
+				events = EventHelper.getInstance(this).readAll();
 			} else {
-				events = EventHelper.getInstance(context).getEventsForCurrentUser();
+				events = EventHelper.getInstance(this).getEventsForCurrentUser();
 			}
 
 			Event currentEvent = currentUser.getUserLocal().getCurrentEvent();
 
-			radioGroup = ((RadioGroup) view.findViewById(R.id.event_fragment_radiogroup));
+			radioGroup = ((RadioGroup) findViewById(R.id.event_fragment_radiogroup));
 			radioGroup.removeAllViews();
-			List<Event> tempEventsForCurrentUser = EventHelper.getInstance(context).getEventsForCurrentUser();
+			List<Event> tempEventsForCurrentUser = EventHelper.getInstance(this).getEventsForCurrentUser();
 			for (Event e : events) {
-				ContextThemeWrapper wrapper = new ContextThemeWrapper(getActivity(), R.style.AppTheme_Radio);
+				ContextThemeWrapper wrapper = new ContextThemeWrapper(this, R.style.AppTheme_Radio);
 				AppCompatRadioButton radioButton = new AppCompatRadioButton(wrapper);
 				radioButton.setId(uniqueChildIdIndex++);
 				String text = e.getName();
@@ -98,27 +85,12 @@ public class ChangeEventFragment extends Fragment {
 			Log.e(LOG_NAME, "Could not get current events!");
 		}
 
-		view.findViewById(R.id.event_fragment_continue_button).setOnClickListener(new View.OnClickListener() {
+		findViewById(R.id.event_fragment_continue_button).setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
 				done();
 			}
 		});
-
-		return view;
-	}
-
-	@Override
-	public void onAttach(Context context) {
-		super.onAttach(context);
-
-		// This makes sure that the container activity has implemented
-		// the callback interface. If not, it throws an exception
-		try {
-			onEventChangedListener = (OnEventChangedListener) context;
-		} catch (ClassCastException e) {
-			throw new ClassCastException(context.toString() + " must implement OnEventChangedListener");
-		}
 	}
 
 	@Override
@@ -128,7 +100,7 @@ public class ChangeEventFragment extends Fragment {
 	}
 
 	private void done() {
-		final Context context = getActivity().getApplicationContext();
+		final Context context = getApplicationContext();
 
 		int eventIndex = radioGroup.getCheckedRadioButtonId() - uniqueChildStartingIdIndex;
 		Event chosenEvent = events.get(eventIndex);
@@ -157,6 +129,7 @@ public class ChangeEventFragment extends Fragment {
 			}
 		}, context).execute(userRecentEventInfo.toArray(new String[userRecentEventInfo.size()]));
 
-		onEventChangedListener.onEventChanged();
+		setResult(RESULT_OK);
+		finish();
 	}
 }

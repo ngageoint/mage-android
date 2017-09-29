@@ -88,18 +88,18 @@ public class MAGE extends MultiDexApplication implements IUserEventListener, App
 		startPushing();
 
 		// Pull static layers and features just once
-		loadStaticFeatures(false);
+		loadStaticFeatures(false, null);
 
 		InitializeMAGEWearBridge.startBridgeIfWearBuild(getApplicationContext());
 	}
 
-	public void loadStaticFeatures(final boolean force) {
+	public void loadStaticFeatures(final boolean force, final StaticFeatureServerFetch.OnStaticLayersListener listener) {
 		Runnable runnable = new Runnable() {
 			@Override
 			public void run() {
 				staticFeatureServerFetch = new StaticFeatureServerFetch(getApplicationContext());
 				try {
-					staticFeatureServerFetch.fetch(force);
+					staticFeatureServerFetch.fetch(force, listener);
 				} catch (Exception e) {
 					e.printStackTrace();
 				}

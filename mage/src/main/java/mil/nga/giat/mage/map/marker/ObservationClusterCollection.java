@@ -15,11 +15,14 @@ import com.google.maps.android.clustering.algo.GridBasedAlgorithm;
 import com.google.maps.android.clustering.algo.PreCachingAlgorithmDecorator;
 
 import java.util.Date;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import mil.nga.giat.mage.filter.Filter;
 import mil.nga.giat.mage.map.marker.ObservationClusterCollection.ObservationClusterItem;
 import mil.nga.giat.mage.observation.ObservationViewActivity;
+import mil.nga.giat.mage.sdk.Temporal;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.wkb.geom.Point;
 import mil.nga.wkb.util.GeometryUtils;
@@ -47,6 +50,11 @@ public class ObservationClusterCollection implements PointCollection<Observation
     }
 
     @Override
+    public Iterator<Observation> iterator() {
+        return observations.values().iterator();
+    }
+
+    @Override
     public void add(MarkerOptions options, Observation o) {
         ObservationClusterItem item = new ObservationClusterItem(o);
         items.put(o.getId(), item);
@@ -60,7 +68,7 @@ public class ObservationClusterCollection implements PointCollection<Observation
     }
 
     @Override
-    public void refreshMarkerIcons() {
+    public void refreshMarkerIcons(Filter<Temporal> filter) {
     	// TODO : figure this out?
     	Log.d(LOG_NAME, "TODO: refreshme");
     }
@@ -71,6 +79,11 @@ public class ObservationClusterCollection implements PointCollection<Observation
 
     @Override
     public void offMarkerClick(){
+    }
+
+    @Override
+    public int count() {
+        return observations.size();
     }
 
     @Override
