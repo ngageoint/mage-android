@@ -39,8 +39,6 @@ import com.j256.ormlite.dao.CloseableIterator;
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.stmt.PreparedQuery;
 import com.j256.ormlite.stmt.QueryBuilder;
-import com.vividsolutions.jts.geom.Geometry;
-import com.vividsolutions.jts.geom.Point;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -62,6 +60,7 @@ import mil.nga.giat.mage.filter.ObservationFilterActivity;
 import mil.nga.giat.mage.observation.AttachmentGallery;
 import mil.nga.giat.mage.observation.AttachmentViewerActivity;
 import mil.nga.giat.mage.observation.ObservationEditActivity;
+import mil.nga.giat.mage.observation.ObservationLocation;
 import mil.nga.giat.mage.observation.ObservationViewActivity;
 import mil.nga.giat.mage.sdk.datastore.DaoStore;
 import mil.nga.giat.mage.sdk.datastore.location.LocationHelper;
@@ -78,6 +77,9 @@ import mil.nga.giat.mage.sdk.event.IObservationEventListener;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
 import mil.nga.giat.mage.sdk.fetch.ObservationRefreshIntent;
 import mil.nga.giat.mage.sdk.location.LocationService;
+import mil.nga.wkb.geom.Geometry;
+import mil.nga.wkb.geom.GeometryType;
+import mil.nga.wkb.geom.Point;
 
 public class ObservationFeedFragment extends Fragment implements IObservationEventListener, OnItemClickListener, ObservationFeedCursorAdapter.ObservationActionListener {
 
@@ -222,7 +224,7 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 		Cursor c = ((ObservationFeedCursorAdapter) headerAdapter.getWrappedAdapter()).getCursor();
 		c.moveToPosition(position);
 		try {
-			Observation o = query.mapRow(new AndroidDatabaseResults(c, null));
+			Observation o = query.mapRow(new AndroidDatabaseResults(c, null, false));
 			Intent observationView = new Intent(getActivity().getApplicationContext(), ObservationViewActivity.class);
 			observationView.putExtra(ObservationViewActivity.OBSERVATION_ID, o.getId());
 			getActivity().startActivityForResult(observationView, 2);
@@ -252,35 +254,31 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 	private void onNewObservation() {
 		Intent intent = new Intent(getActivity(), ObservationEditActivity.class);
 
-		Location l = null;
+		ObservationLocation location = null;
 		if (locationService != null) {
-			l = locationService.getLocation();
+			Location l = locationService.getLocation();
+			location = new ObservationLocation(l);
 		}
 
 		// if there is not a location from the location service, then try to pull one from the database.
-		if (l == null) {
+		if (location == null) {
 			List<mil.nga.giat.mage.sdk.datastore.location.Location> tLocations = LocationHelper.getInstance(getActivity().getApplicationContext()).getCurrentUserLocations(1, true);
 			if (!tLocations.isEmpty()) {
 				mil.nga.giat.mage.sdk.datastore.location.Location tLocation = tLocations.get(0);
 				Geometry geo = tLocation.getGeometry();
 				Map<String, LocationProperty> propertiesMap = tLocation.getPropertiesMap();
-				if (geo instanceof Point) {
-					Point point = (Point) geo;
-					String provider = "manual";
-					if (propertiesMap.get("provider").getValue() != null) {
-						provider = propertiesMap.get("provider").getValue().toString();
-					}
-					l = new Location(provider);
-					l.setTime(tLocation.getTimestamp().getTime());
-					if (propertiesMap.get("accuracy").getValue() != null) {
-						l.setAccuracy(Float.valueOf(propertiesMap.get("accuracy").getValue().toString()));
-					}
-					l.setLatitude(point.getY());
-					l.setLongitude(point.getX());
+				String provider = ObservationLocation.MANUAL_PROVIDER;
+				if (propertiesMap.get("provider").getValue() != null) {
+					provider = propertiesMap.get("provider").getValue().toString();
+				}
+				location = new ObservationLocation(provider, geo);
+				location.setTime(tLocation.getTimestamp().getTime());
+				if (propertiesMap.get("accuracy").getValue() != null) {
+					location.setAccuracy(Float.valueOf(propertiesMap.get("accuracy").getValue().toString()));
 				}
 			}
 		} else {
-			l = new Location(l);
+			location = new ObservationLocation(location);
 		}
 		if(!UserHelper.getInstance(getActivity().getApplicationContext()).isCurrentUserPartOfCurrentEvent()) {
 			new AlertDialog.Builder(getActivity(), R.style.AppCompatAlertDialogStyle)
@@ -288,8 +286,8 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 					.setMessage(getActivity().getResources().getString(R.string.location_no_event_message))
 					.setPositiveButton(android.R.string.ok, null)
 					.show();
-		} else if(l != null) {
-			intent.putExtra(ObservationEditActivity.LOCATION, l);
+		} else if(location != null) {
+			intent.putExtra(ObservationEditActivity.LOCATION, location);
 			startActivity(intent);
 		} else {
 			if (ContextCompat.checkSelfPermission(getActivity().getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {

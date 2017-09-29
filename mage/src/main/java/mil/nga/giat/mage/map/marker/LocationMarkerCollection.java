@@ -24,8 +24,6 @@ import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
-import com.vividsolutions.jts.geom.Geometry;
-import com.vividsolutions.jts.geom.Point;
 
 import org.ocpsoft.prettytime.PrettyTime;
 
@@ -45,6 +43,9 @@ import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserLocal;
 import mil.nga.giat.mage.sdk.fetch.DownloadImageTask;
+import mil.nga.wkb.geom.Geometry;
+import mil.nga.wkb.geom.Point;
+import mil.nga.wkb.util.GeometryUtils;
 
 public class LocationMarkerCollection implements PointCollection<Pair<Location, User>>, OnMarkerClickListener, OnInfoWindowClickListener {
 
@@ -116,14 +117,14 @@ public class LocationMarkerCollection implements PointCollection<Pair<Location, 
 			marker.remove();
 		}
 	}
-	
+
 	@Override
 	public void onInfoWindowClick(Marker marker) {
 		Pair<Location, User> pair =  markerIdToPair.get(marker.getId());
 		if (pair == null) {
 			return;
 		}
-		
+
 		Intent profileView = new Intent(context, ProfileActivity.class);
 		profileView.putExtra(ProfileActivity.USER_ID, pair.second.getRemoteId());
 		context.startActivity(profileView);
@@ -141,7 +142,7 @@ public class LocationMarkerCollection implements PointCollection<Pair<Location, 
 
 		final Geometry g = location.getGeometry();
 		if (g != null) {
-			Point point = g.getCentroid();
+			Point point = GeometryUtils.getCentroid(g);
 			LatLng latLng = new LatLng(point.getY(), point.getX());
 			LocationProperty accuracyProperty = location.getPropertiesMap().get("accuracy");
 			if (accuracyProperty != null && !accuracyProperty.getValue().toString().trim().isEmpty()) {
@@ -166,12 +167,12 @@ public class LocationMarkerCollection implements PointCollection<Pair<Location, 
 		return true;
 	}
 
-	public boolean offMarkerClick() {
+	@Override
+	public void offMarkerClick() {
 		if (clickedAccuracyCircle != null) {
 			clickedAccuracyCircle.remove();
 			clickedAccuracyCircle = null;
 		}
-		return true;
 	}
 
 	@Override
@@ -202,6 +203,10 @@ public class LocationMarkerCollection implements PointCollection<Pair<Location, 
 	}
 
 	@Override
+	public void onMapClick(LatLng latLng) {
+	}
+
+	@Override
 	public int count() {
 		return userIdToMarker.size();
 	}
@@ -216,6 +221,11 @@ public class LocationMarkerCollection implements PointCollection<Pair<Location, 
 		userIdToMarker.clear();
 		markerIdToPair.clear();
 		latestLocationDate = new Date(0);
+	}
+
+	@Override
+	public void onCameraIdle() {
+		// Don't care about this, I am not clustered
 	}
 
 	@Override

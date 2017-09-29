@@ -13,7 +13,6 @@ import com.google.maps.android.clustering.ClusterManager;
 import com.google.maps.android.clustering.ClusterManager.OnClusterItemClickListener;
 import com.google.maps.android.clustering.algo.GridBasedAlgorithm;
 import com.google.maps.android.clustering.algo.PreCachingAlgorithmDecorator;
-import com.vividsolutions.jts.geom.Point;
 
 import java.util.Date;
 import java.util.Iterator;
@@ -25,26 +24,28 @@ import mil.nga.giat.mage.map.marker.ObservationClusterCollection.ObservationClus
 import mil.nga.giat.mage.observation.ObservationViewActivity;
 import mil.nga.giat.mage.sdk.Temporal;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
+import mil.nga.wkb.geom.Point;
+import mil.nga.wkb.util.GeometryUtils;
 
 public class ObservationClusterCollection implements PointCollection<Observation>, OnClusterItemClickListener<ObservationClusterItem> {
 
     private Context context;
-    
+
     private static final String LOG_NAME = ObservationClusterCollection.class.getName();
-    
+
     private Map<Long, Observation> observations = new ConcurrentHashMap<Long, Observation>();
     private Map<Long, ObservationClusterItem> items = new ConcurrentHashMap<Long, ObservationClusterItem>();
 
     private ClusterManager<ObservationClusterItem> clusterManager;
-    
+
     private Date latestObservationDate = new Date(0);
 
     public ObservationClusterCollection(Context context, GoogleMap map) {
         this.context = context;
-        
+
         clusterManager = new ClusterManager<ObservationClusterItem>(context, map);
         clusterManager.setAlgorithm(new PreCachingAlgorithmDecorator<ObservationClusterItem>(new GridBasedAlgorithm<ObservationClusterItem>()));
-        
+
         clusterManager.setOnClusterItemClickListener(this);
     }
 
@@ -73,6 +74,14 @@ public class ObservationClusterCollection implements PointCollection<Observation
     }
 
     @Override
+    public void onMapClick(LatLng latLng) {
+    }
+
+    @Override
+    public void offMarkerClick(){
+    }
+
+    @Override
     public int count() {
         return observations.size();
     }
@@ -82,14 +91,14 @@ public class ObservationClusterCollection implements PointCollection<Observation
         // TODO not even sure what to do here with ClusterItem
         // its not a GoogleMap marker so you cannot hide it
     }
-    
+
     @Override
     public boolean isVisible() {
     	// TODO not even sure what to do here with ClusterItem
         // its not a GoogleMap marker so you cannot hide it
     	return true;
     }
-    
+
     @Override
     public void remove(Observation o) {
         observations.remove(o.getId());
@@ -107,7 +116,7 @@ public class ObservationClusterCollection implements PointCollection<Observation
 
         @Override
         public LatLng getPosition() {
-            Point point = (Point) observation.getGeometry();
+            Point point = GeometryUtils.getCentroid(observation.getGeometry());
             return new LatLng(point.getY(), point.getX());
         }
 
@@ -149,6 +158,11 @@ public class ObservationClusterCollection implements PointCollection<Observation
     }
 
     @Override
+    public void onCameraIdle() {
+        clusterManager.onCameraIdle();
+    }
+
+    @Override
     public Date getLatestDate() {
         return latestObservationDate;
     }
@@ -156,6 +170,6 @@ public class ObservationClusterCollection implements PointCollection<Observation
 	@Override
 	public void onInfoWindowClick(Marker arg0) {
 		// TODO Auto-generated method stub
-		
+
 	}
 }

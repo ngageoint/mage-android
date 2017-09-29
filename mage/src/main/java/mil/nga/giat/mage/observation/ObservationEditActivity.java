@@ -10,7 +10,6 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
-import android.location.Location;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -40,19 +39,14 @@ import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.GoogleMap.OnCameraIdleListener;
 import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.model.Circle;
 import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.Marker;
-import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
-import com.vividsolutions.jts.geom.Coordinate;
-import com.vividsolutions.jts.geom.Geometry;
-import com.vividsolutions.jts.geom.GeometryFactory;
-import com.vividsolutions.jts.geom.Point;
 
 import java.io.File;
 import java.io.IOException;
@@ -89,8 +83,10 @@ import mil.nga.giat.mage.sdk.exceptions.ObservationException;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
 import mil.nga.giat.mage.sdk.utils.ISO8601DateFormatFactory;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
+import mil.nga.wkb.geom.Geometry;
+import mil.nga.wkb.geom.GeometryType;
 
-public class ObservationEditActivity extends AppCompatActivity implements OnMapReadyCallback, DateTimePickerDialog.OnDateTimeChangedListener {
+public class ObservationEditActivity extends AppCompatActivity implements OnMapReadyCallback, OnCameraIdleListener, DateTimePickerDialog.OnDateTimeChangedListener {
 
 
 	private static final String LOG_NAME = ObservationEditActivity.class.getName();
@@ -124,12 +120,14 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 	private final DecimalFormat latLngFormat = new DecimalFormat("###.#####");
 	private ArrayList<Attachment> attachmentsToCreate = new ArrayList<>();
 
-	private Location l;
+    private ObservationLocation location;
 	private Observation observation;
 	private GoogleMap map;
-	private Marker observationMarker;
+	private MapObservation mapObservation;
 	private Circle accuracyCircle;
 	private long locationElapsedTimeMilliseconds = 0;
+	private MapFragment mapFragment;
+	private MapObservationManager mapObservationManager;
 
 	private LinearLayout attachmentLayout;
 	private AttachmentGallery attachmentGallery;
@@ -174,8 +172,9 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 		});
 
 		final long observationId = getIntent().getLongExtra(OBSERVATION_ID, NEW_OBSERVATION);
+		final boolean newObservation = observationId == NEW_OBSERVATION;
 		JsonObject dynamicFormJson;
-		if (observationId == NEW_OBSERVATION) {
+		if (newObservation) {
 			observation = new Observation();
 			dynamicFormJson = EventHelper.getInstance(getApplicationContext()).getCurrentEvent().getForm();
 		} else {
@@ -222,15 +221,17 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 		// add dynamic controls to view
 		LayoutBaker.populateLayoutWithControls((LinearLayout) findViewById(R.id.location_dynamic_form), controls);
 
-		((MapFragment) getFragmentManager().findFragmentById(R.id.background_map)).getMapAsync(this);
+		mapFragment = (MapFragment) getFragmentManager().findFragmentById(R.id.background_map);
+		mapFragment.getMapAsync(this);
 
 		hideKeyboardOnClick(findViewById(R.id.observation_edit));
 
-		if (observationId == NEW_OBSERVATION) {
+		if (newObservation) {
 			getSupportActionBar().setTitle("New Observation");
-			l = getIntent().getParcelableExtra(LOCATION);
+			location = getIntent().getParcelableExtra(LOCATION);
 
-			observation.setEvent(EventHelper.getInstance(getApplicationContext()).getCurrentEvent());
+			observation.setGeometry(location.getGeometry());
+            observation.setEvent(EventHelper.getInstance(getApplicationContext()).getCurrentEvent());
 			observation.setTimestamp(new Date());
 			Serializable timestamp = iso8601Format.format(observation.getTimestamp());
 			ObservationProperty timestampProperty = new ObservationProperty("timestamp", timestamp);
@@ -254,20 +255,17 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 			attachmentGallery.addAttachments(attachmentLayout, observation.getAttachments());
 
 			Map<String, ObservationProperty> propertiesMap = observation.getPropertiesMap();
-			Geometry geo = observation.getGeometry();
-			if (geo instanceof Point) {
-				Point point = (Point) geo;
-				String provider = "manual";
-				if (propertiesMap.get("provider") != null) {
-					provider = propertiesMap.get("provider").getValue().toString();
-				}
-				l = new Location(provider);
-				if (propertiesMap.containsKey("accuracy")) {
-					l.setAccuracy(Float.parseFloat(propertiesMap.get("accuracy").getValue().toString()));
-				}
-				l.setLatitude(point.getY());
-				l.setLongitude(point.getX());
+			Geometry geometry = observation.getGeometry();
+
+			String provider = ObservationLocation.MANUAL_PROVIDER;
+			if (propertiesMap.get("provider") != null) {
+				provider = propertiesMap.get("provider").getValue().toString();
 			}
+			location = new ObservationLocation(provider, geometry);
+			if (propertiesMap.containsKey("accuracy")) {
+				location.setAccuracy(Float.parseFloat(propertiesMap.get("accuracy").getValue().toString()));
+			}
+
 			LayoutBaker.populateLayoutFromMap((LinearLayout) findViewById(R.id.form), ControlGenerationType.EDIT, propertiesMap);
 		}
 
@@ -302,8 +300,9 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 			@Override
 			public void onClick(View v) {
 				Intent intent = new Intent(ObservationEditActivity.this, LocationEditActivity.class);
-				intent.putExtra(LocationEditActivity.LOCATION, l);
+				intent.putExtra(LocationEditActivity.LOCATION, location);
 				intent.putExtra(LocationEditActivity.MARKER_BITMAP, ObservationBitmapFactory.bitmap(ObservationEditActivity.this, observation));
+				intent.putExtra(LocationEditActivity.NEW_OBSERVATION, newObservation);
 				startActivityForResult(intent, LOCATION_EDIT_ACTIVITY_REQUEST_CODE);
 			}
 		});
@@ -354,29 +353,39 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 	public void onMapReady(GoogleMap map) {
 		this.map = map;
 		map.getUiSettings().setZoomControlsEnabled(false);
+		mapObservationManager = new MapObservationManager(this, map);
+		map.setOnCameraIdleListener(this);
+	}
 
+	@Override
+	public void onCameraIdle() {
+		map.setOnCameraIdleListener(null);
 		setupMap();
 	}
 
 	private void setupMap() {
 		if (map == null) return;
 
-		LatLng location = new LatLng(l.getLatitude(), l.getLongitude());
+		LatLng pointLatLng = location.getCentroidLatLng();
 
-		((TextView) findViewById(R.id.location)).setText(latLngFormat.format(l.getLatitude()) + ", " + latLngFormat.format(l.getLongitude()));
-		if (l.getProvider() != null) {
-			((TextView) findViewById(R.id.location_provider)).setText("(" + l.getProvider() + ")");
+		Geometry geometry = location.getGeometry();
+		TextView locationTextView = (TextView) findViewById(R.id.location);
+		locationTextView.setText(latLngFormat.format(pointLatLng.latitude) + ", " + latLngFormat.format(pointLatLng.longitude));
+		TextView providerTextView = (TextView) findViewById(R.id.location_provider);
+		if (location.getProvider() != null) {
+			providerTextView.setText("("+location.getProvider()+")");
 		} else {
-			findViewById(R.id.location_provider).setVisibility(View.GONE);
+			providerTextView.setVisibility(View.GONE);
 		}
-		if (l.getAccuracy() != 0) {
-			((TextView) findViewById(R.id.location_accuracy)).setText("\u00B1" + l.getAccuracy() + "m");
+		TextView accuracyTextView = (TextView) findViewById(R.id.location_accuracy);
+		if (location.getAccuracy() != 0) {
+			accuracyTextView.setText("\u00B1" + location.getAccuracy() + "m");
 		} else {
-			findViewById(R.id.location_accuracy).setVisibility(View.GONE);
+			accuracyTextView.setVisibility(View.GONE);
 		}
 
 		locationElapsedTimeMilliseconds = getElapsedTimeInMilliseconds();
-		if (locationElapsedTimeMilliseconds != 0 && !("manual".equalsIgnoreCase(l.getProvider()))) {
+		if (locationElapsedTimeMilliseconds != 0 && !(ObservationLocation.MANUAL_PROVIDER.equalsIgnoreCase(location.getProvider()))) {
 			//String dateText = DateUtils.getRelativeTimeSpanString(System.currentTimeMillis() - locationElapsedTimeMilliseconds, System.currentTimeMillis(), 0).toString();
 			String dateText = elapsedTime(locationElapsedTimeMilliseconds);
 			((TextView) findViewById(R.id.location_elapsed_time)).setText(dateText);
@@ -384,37 +393,35 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 			findViewById(R.id.location_elapsed_time).setVisibility(View.GONE);
 		}
 
-		LatLng latLng = getIntent().getParcelableExtra(INITIAL_LOCATION);
-		if (latLng == null) {
-			latLng = new LatLng(0, 0);
+		LatLng initialLatLng = getIntent().getParcelableExtra(INITIAL_LOCATION);
+		if (initialLatLng == null) {
+			initialLatLng = new LatLng(0,0);
 		}
 
 		float zoom = getIntent().getFloatExtra(INITIAL_ZOOM, 0);
 
-		map.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, zoom));
+		map.moveCamera(CameraUpdateFactory.newLatLngZoom(initialLatLng, zoom));
 
-		map.animateCamera(CameraUpdateFactory.newLatLngZoom(location, 18));
+		map.animateCamera(location.getCameraUpdate(mapFragment.getView()));
 
 		if (accuracyCircle != null) {
 			accuracyCircle.remove();
 		}
 
-		CircleOptions circleOptions = new CircleOptions()
-				.fillColor(getResources().getColor(R.color.accuracy_circle_fill))
-				.strokeColor(getResources().getColor(R.color.accuracy_circle_stroke))
-				.strokeWidth(5)
-				.center(location)
-				.radius(l.getAccuracy());
-		accuracyCircle = map.addCircle(circleOptions);
-
-		if (observationMarker != null) {
-			observationMarker.setPosition(location);
-			// make sure to set the Anchor after this call as well, because the size of the icon might have changed
-			observationMarker.setIcon(ObservationBitmapFactory.bitmapDescriptor(this, observation));
-			observationMarker.setAnchor(0.5f, 1.0f);
-		} else {
-			observationMarker = map.addMarker(new MarkerOptions().position(location).icon(ObservationBitmapFactory.bitmapDescriptor(this, observation)));
+		if(location.getAccuracy() > 0) {
+			CircleOptions circleOptions = new CircleOptions()
+					.fillColor(getResources().getColor(R.color.accuracy_circle_fill))
+					.strokeColor(getResources().getColor(R.color.accuracy_circle_stroke))
+					.strokeWidth(5)
+					.center(pointLatLng)
+					.radius(location.getAccuracy());
+			accuracyCircle = map.addCircle(circleOptions);
 		}
+
+		if (mapObservation != null) {
+			mapObservation.remove();
+		}
+		mapObservation = mapObservationManager.addToMap(observation);
 	}
 
 	@SuppressLint("NewApi")
@@ -423,10 +430,10 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 		if (observation.getPropertiesMap().containsKey("delta")) {
 			elapsedTimeInMilliseconds = Long.parseLong(observation.getPropertiesMap().get("delta").getValue().toString());
 		}
-		if (Build.VERSION.SDK_INT >= 17 && l.getElapsedRealtimeNanos() != 0) {
-			elapsedTimeInMilliseconds = ((SystemClock.elapsedRealtimeNanos() - l.getElapsedRealtimeNanos()) / (1000000l));
+		if (Build.VERSION.SDK_INT >= 17 && location.getElapsedRealtimeNanos() != 0) {
+			elapsedTimeInMilliseconds = ((SystemClock.elapsedRealtimeNanos() - location.getElapsedRealtimeNanos()) / (1000000l));
 		} else {
-			elapsedTimeInMilliseconds = System.currentTimeMillis() - l.getTime();
+			elapsedTimeInMilliseconds = System.currentTimeMillis() - location.getTime();
 		}
 		return Math.max(0l, elapsedTimeInMilliseconds);
 	}
@@ -460,7 +467,7 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 		// Always call the superclass so it can restore the view hierarchy
 		super.onRestoreInstanceState(savedInstanceState);
 
-		l = savedInstanceState.getParcelable("location");
+		location = savedInstanceState.getParcelable("location");
 
 		attachmentsToCreate = savedInstanceState.getParcelableArrayList("attachmentsToCreate");
 		for (Attachment a : attachmentsToCreate) {
@@ -475,7 +482,7 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 	@Override
 	protected void onSaveInstanceState(Bundle outState) {
 		LayoutBaker.populateBundleFromLayout((LinearLayout) findViewById(R.id.form), outState);
-		outState.putParcelable("location", l);
+		outState.putParcelable("location", location);
 		outState.putParcelableArrayList("attachmentsToCreate", attachmentsToCreate);
 		outState.putString(CURRENT_MEDIA_PATH, currentMediaPath);
 		super.onSaveInstanceState(outState);
@@ -537,7 +544,7 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 
 				observation.setState(State.ACTIVE);
 				observation.setDirty(true);
-				observation.setGeometry(new GeometryFactory().createPoint(new Coordinate(l.getLongitude(), l.getLatitude())));
+                observation.setGeometry(location.getGeometry());
 
 				Map<String, ObservationProperty> propertyMap = LayoutBaker.populateMapFromLayout((LinearLayout) findViewById(R.id.form));
 
@@ -796,7 +803,8 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 				}
 				break;
 			case LOCATION_EDIT_ACTIVITY_REQUEST_CODE:
-				l = data.getParcelableExtra(LocationEditActivity.LOCATION);
+				location = data.getParcelableExtra(LocationEditActivity.LOCATION);
+				observation.setGeometry(location.getGeometry());
 				setupMap();
 				break;
 			case SELECT_ACTIVITY_REQUEST_CODE:
@@ -839,15 +847,6 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 			}
 		}
 		return uris;
-	}
-
-	private void updateMapIcon() {
-		if (map == null) return;
-
-		if (observationMarker != null) {
-			observationMarker.remove();
-		}
-		observationMarker = map.addMarker(new MarkerOptions().position(new LatLng(l.getLatitude(), l.getLongitude())).icon(ObservationBitmapFactory.bitmapDescriptor(this, observation)));
 	}
 
 	private String getSelectId(Integer fieldId) {

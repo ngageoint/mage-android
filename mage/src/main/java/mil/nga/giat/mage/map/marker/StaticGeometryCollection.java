@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.Set;
 
 import mil.nga.giat.mage.R;
+import mil.nga.giat.mage.map.MapUtils;
 
 public class StaticGeometryCollection {
 
@@ -134,11 +135,9 @@ public class StaticGeometryCollection {
 	}
 
 	public void onMapClick(GoogleMap map, LatLng latLng, Activity activity) {
+
 		// how many meters away form the click can the geometry be?
-		Double circumferenceOfEarthInMeters = 2 * Math.PI * 6371000;
-		// Double tileWidthAtZoomLevelAtEquatorInDegrees = 360.0/Math.pow(2.0, map.getCameraPosition().zoom);
-		Double pixelSizeInMetersAtLatitude = (circumferenceOfEarthInMeters * Math.cos(map.getCameraPosition().target.latitude * (Math.PI / 180.0))) / Math.pow(2.0, map.getCameraPosition().zoom + 8.0);
-		Double tolerance = pixelSizeInMetersAtLatitude * Math.sqrt(2.0) * 10.0;
+		double tolerance = MapUtils.lineTolerance(map);
 
 		// find the 'closest' line or polygon to the click.
 		for (Polyline p : getPolylines()) {

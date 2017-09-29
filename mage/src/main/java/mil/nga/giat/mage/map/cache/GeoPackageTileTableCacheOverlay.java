@@ -8,7 +8,7 @@ import com.google.android.gms.maps.model.TileOverlay;
 import java.util.ArrayList;
 import java.util.List;
 
-import mil.nga.geopackage.tiles.overlay.FeatureOverlayQuery;
+import mil.nga.geopackage.map.tiles.overlay.FeatureOverlayQuery;
 import mil.nga.giat.mage.R;
 
 /**

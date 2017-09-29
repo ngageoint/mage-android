@@ -8,7 +8,6 @@ import android.util.Pair;
 
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
-import com.vividsolutions.jts.geom.Point;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -20,6 +19,9 @@ import mil.nga.giat.mage.filter.ImportantFilter;
 import mil.nga.giat.mage.map.marker.ObservationBitmapFactory;
 import mil.nga.giat.mage.map.marker.PointCollection;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
+import mil.nga.wkb.geom.Geometry;
+import mil.nga.wkb.geom.Point;
+import mil.nga.wkb.util.GeometryUtils;
 
 public class ObservationTask extends AsyncTask<Observation, Pair<MarkerOptions, Observation>, Void> {
     public enum Type {
@@ -66,8 +68,9 @@ public class ObservationTask extends AsyncTask<Observation, Pair<MarkerOptions, 
             }
 
             if (passesFilter) {
-                Point point = (Point) o.getGeometry();
-                MarkerOptions options = new MarkerOptions().position(new LatLng(point.getY(), point.getX())).icon(ObservationBitmapFactory.bitmapDescriptor(context, o));
+                Geometry geometry = o.getGeometry();
+                Point centroid = GeometryUtils.getCentroid(geometry);
+                MarkerOptions options = new MarkerOptions().position(new LatLng(centroid.getY(), centroid.getX())).icon(ObservationBitmapFactory.bitmapDescriptor(context, o));
                 publishProgress(new Pair<>(options, o));
             }
         }

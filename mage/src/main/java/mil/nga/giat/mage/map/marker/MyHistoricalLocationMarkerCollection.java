@@ -7,7 +7,6 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.common.collect.MinMaxPriorityQueue;
-import com.vividsolutions.jts.geom.Geometry;
 
 import java.util.Comparator;
 import java.util.Date;
@@ -17,13 +16,14 @@ import mil.nga.giat.mage.sdk.Temporal;
 import mil.nga.giat.mage.sdk.datastore.location.Location;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.push.LocationPushIntentService;
+import mil.nga.wkb.geom.Geometry;
 
 /**
- * Class uses a queue like structure to limit the Collection size. Size determined 
+ * Class uses a queue like structure to limit the Collection size. Size determined
  * by LocationPushIntentService.minNumberOfLocationsToKeep
- * 
+ *
  * @author wiedemanns
- * 
+ *
  */
 public class MyHistoricalLocationMarkerCollection extends LocationMarkerCollection {
 
@@ -71,7 +71,7 @@ public class MyHistoricalLocationMarkerCollection extends LocationMarkerCollecti
 			}
 		}
 	}
-	
+
 	@Override
 	public Date getLatestDate() {
 		return locationQueue.peekLast().first.getTimestamp();

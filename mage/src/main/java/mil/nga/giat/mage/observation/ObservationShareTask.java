@@ -17,7 +17,6 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.squareup.okhttp.ResponseBody;
-import com.vividsolutions.jts.geom.Point;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -39,6 +38,8 @@ import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
 import mil.nga.giat.mage.sdk.http.resource.ObservationResource;
+import mil.nga.wkb.geom.Point;
+import mil.nga.wkb.util.GeometryUtils;
 
 /**
  * Created by wnewman on 8/27/16.
@@ -198,7 +199,7 @@ public class ObservationShareTask extends AsyncTask<Void, Integer, ArrayList<Uri
                 .append(observation.getTimestamp())
                 .append("<br><br>");
 
-        Point point = (Point) observation.getGeometry();
+        Point point = GeometryUtils.getCentroid(observation.getGeometry());
         builder.append("<strong>Latitude, Longitude:</strong><br>")
                 .append(point.getY()).append(", ").append(point.getX())
                 .append("<br><br>");
