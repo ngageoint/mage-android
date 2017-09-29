@@ -8,17 +8,19 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
-import com.vividsolutions.jts.geom.Coordinate;
-import com.vividsolutions.jts.geom.Geometry;
-import com.vividsolutions.jts.geom.GeometryCollection;
-import com.vividsolutions.jts.geom.LineString;
-import com.vividsolutions.jts.geom.MultiLineString;
-import com.vividsolutions.jts.geom.MultiPoint;
-import com.vividsolutions.jts.geom.MultiPolygon;
-import com.vividsolutions.jts.geom.Point;
-import com.vividsolutions.jts.geom.Polygon;
 
 import java.lang.reflect.Type;
+import java.util.List;
+
+import mil.nga.wkb.geom.Geometry;
+import mil.nga.wkb.geom.GeometryCollection;
+import mil.nga.wkb.geom.GeometryType;
+import mil.nga.wkb.geom.LineString;
+import mil.nga.wkb.geom.MultiLineString;
+import mil.nga.wkb.geom.MultiPoint;
+import mil.nga.wkb.geom.MultiPolygon;
+import mil.nga.wkb.geom.Point;
+import mil.nga.wkb.geom.Polygon;
 
 public class GeometrySerializer implements JsonSerializer<Geometry> {
 
@@ -39,83 +41,116 @@ public class GeometrySerializer implements JsonSerializer<Geometry> {
 	@Override
 	public JsonElement serialize(Geometry geometry, Type type, JsonSerializationContext jsonSerializationContext) {
 		JsonObject json = new JsonObject();
-		json.addProperty("type", geometry.getGeometryType());
-		String geometryType = geometry.getGeometryType();
-		if (geometryType.equals("Point")) {
-			JsonArray coordinates = pointCoordinates((Point) geometry);
-			json.add("coordinates", coordinates);
-		} else if (geometryType.equals("MultiPoint")) {
-			JsonArray coordinates = new JsonArray();
-			for (int i = 0; i < geometry.getNumGeometries(); i++) {
-				Point child = (Point) geometry.getGeometryN(i);
-				coordinates.add(pointCoordinates(child));
-			}
-			json.add("coordinates", coordinates);
-		} else if (geometryType.equals("LineString")) {
-			JsonArray coordinates = lineStringCoordinates((LineString) geometry);
-			json.add("coordinates", coordinates);
-		} else if (geometryType.equals("MultiLineString")) {
-			JsonArray coordinates = new JsonArray();
-			for (int i = 0; i < geometry.getNumGeometries(); i++) {
-				LineString child = (LineString) geometry.getGeometryN(i);
-				coordinates.add(lineStringCoordinates(child));
-			}
-			json.add("coordinates", coordinates);
-		} else if (geometryType.equals("Polygon")) {
-			JsonArray coordinates = polygonCoordinates((Polygon) geometry);
-			json.add("coordinates", coordinates);
-		} else if (geometryType.equals("MultiPolygon")) {
-			JsonArray coordinates = new JsonArray();
-			for (int i = 0; i < geometry.getNumGeometries(); i++) {
-				Polygon child = (Polygon) geometry.getGeometryN(i);
-				coordinates.add(polygonCoordinates(child));
-			}
-			json.add("coordinates", coordinates);
-		} else if (geometryType.equals("GeometryCollection")) {
-			JsonArray geometries = new JsonArray();
-			for (int i = 0; i < geometry.getNumGeometries(); i++) {
-				Geometry child = geometry.getGeometryN(i);
-				geometries.add(jsonSerializationContext.serialize(child));
-			}
-			json.add("geometries", geometries);
-		} else {
-			throw new IllegalArgumentException("Unknown geometry type " + geometry.getGeometryType());
+
+		GeometryType geometryType = geometry.getGeometryType();
+		switch(geometryType){
+			case POINT:
+				json.addProperty("type", "Point");
+				json.add("coordinates", toJson((Point) geometry));
+				break;
+			case MULTIPOINT:
+				json.addProperty("type", "MultiPoint");
+				json.add("coordinates", toJson((MultiPoint) geometry));
+				break;
+			case LINESTRING:
+				json.addProperty("type", "LineString");
+				json.add("coordinates", toJson((LineString) geometry));
+				break;
+			case MULTILINESTRING:
+				json.addProperty("type", "MultiLineString");
+				json.add("coordinates", toJson((MultiLineString) geometry));
+				break;
+			case POLYGON:
+				json.addProperty("type", "Polygon");
+				json.add("coordinates", toJson((Polygon) geometry));
+				break;
+			case MULTIPOLYGON:
+				json.addProperty("type", "MultiPolygon");
+				json.add("coordinates", toJson((MultiPolygon) geometry));
+				break;
+			case GEOMETRYCOLLECTION:
+				json.addProperty("type", "GeometryCollection");
+				json.add("geometries", toJson(jsonSerializationContext, (GeometryCollection<Geometry>) geometry));
+				break;
+			default:
+				throw new IllegalArgumentException("Unsupported geometry type: " + geometryType);
 		}
+
 		return json;
 	}
 
-	private JsonArray pointCoordinates(Point geometry) {
-		return toJson(geometry.getCoordinate());
+	private JsonArray toJson(LineString geometry) {
+		return toJson(geometry.getPoints(), false);
 	}
 
-	private JsonArray lineStringCoordinates(LineString geometry) {
-		return toJson(geometry.getCoordinates());
+	private JsonArray toJson(LineString geometry, boolean close) {
+		return toJson(geometry.getPoints(), close);
 	}
 
-	private JsonArray polygonCoordinates(Polygon polygon) {
+	private JsonArray toJson(Polygon polygon) {
 		JsonArray result = new JsonArray();
-		result.add(toJson(polygon.getExteriorRing().getCoordinates()));
-		for (int i = 0; i < polygon.getNumInteriorRing(); i++) {
-			result.add(toJson(polygon.getInteriorRingN(i).getCoordinates()));
+		result.add(toJson(polygon.getRings().get(0), true));
+		for (int i = 1; i < polygon.numRings(); i++) {
+			result.add(toJson(polygon.getRings().get(i), true));
 		}
 		return result;
 	}
 
-	private JsonArray toJson(Coordinate[] coordinates) {
+	private JsonArray toJson(List<Point> points, boolean close) {
 		JsonArray result = new JsonArray();
-		for (Coordinate coordinate : coordinates) {
-			result.add(toJson(coordinate));
+		for (Point point : points) {
+			result.add(toJson(point));
+		}
+		if(close) {
+			Point firstPoint = points.get(0);
+			Point lastPoint = points.get(points.size() - 1);
+			if (firstPoint.getX() != lastPoint.getX() || firstPoint.getY() != lastPoint.getY()) {
+				result.add(toJson(firstPoint));
+			}
 		}
 		return result;
 	}
 
-	private JsonArray toJson(Coordinate coordinate) {
-		JsonArray result = new JsonArray();
-		result.add(new JsonPrimitive(coordinate.x));
-		result.add(new JsonPrimitive(coordinate.y));
-		if (!Double.isNaN(coordinate.z)) {
-			result.add(new JsonPrimitive(coordinate.z));
+	private JsonArray toJson(Point point) {
+		JsonArray coordinate = new JsonArray();
+		coordinate.add(new JsonPrimitive(point.getX()));
+		coordinate.add(new JsonPrimitive(point.getY()));
+		if (point.hasZ()) {
+			coordinate.add(new JsonPrimitive(point.getZ()));
 		}
-		return result;
+		return coordinate;
 	}
+
+	private JsonArray toJson(MultiPoint multiPoint){
+		JsonArray coordinates = new JsonArray();
+		for(Point point: multiPoint.getPoints()){
+			coordinates.add(toJson(point));
+		}
+		return coordinates;
+	}
+
+	private JsonArray toJson(MultiLineString multiLineString){
+		JsonArray coordinates = new JsonArray();
+		for (LineString lineString: multiLineString.getLineStrings()) {
+			coordinates.add(toJson(lineString));
+		}
+		return coordinates;
+	}
+
+	private JsonArray toJson(MultiPolygon multiPolygon){
+		JsonArray coordinates = new JsonArray();
+		for (Polygon polygon: multiPolygon.getPolygons()) {
+			coordinates.add(toJson(polygon));
+		}
+		return coordinates;
+	}
+
+	private JsonArray toJson(JsonSerializationContext jsonSerializationContext, GeometryCollection<Geometry> geometryCollection){
+		JsonArray geometries = new JsonArray();
+		for (Geometry geometry: geometryCollection.getGeometries()) {
+			geometries.add(jsonSerializationContext.serialize(geometry));
+		}
+		return geometries;
+	}
+
 }

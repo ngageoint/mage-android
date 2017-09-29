@@ -7,8 +7,6 @@ import com.j256.ormlite.field.DataType;
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.field.ForeignCollectionField;
 import com.j256.ormlite.table.DatabaseTable;
-import com.vividsolutions.jts.geom.Geometry;
-import com.vividsolutions.jts.geom.Point;
 
 import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.apache.commons.lang3.builder.EqualsBuilder;
@@ -23,10 +21,15 @@ import java.util.Map;
 
 import mil.nga.giat.mage.sdk.Temporal;
 import mil.nga.giat.mage.sdk.datastore.user.Event;
+import mil.nga.giat.mage.sdk.utils.GeometryUtility;
+import mil.nga.wkb.geom.Geometry;
+import mil.nga.wkb.geom.GeometryType;
+import mil.nga.wkb.geom.Point;
+import mil.nga.wkb.util.GeometryUtils;
 
 @DatabaseTable(tableName = "observations")
 public class Observation implements Comparable<Observation>, Temporal {
-    
+
     // name _id needed for cursor adapters
     @DatabaseField(generatedId = true)
     private Long _id;
@@ -45,13 +48,13 @@ public class Observation implements Comparable<Observation>, Temporal {
 
     @DatabaseField(columnName = "device_id")
     private String deviceId;
-    
+
     /**
      * This is the time the server created or updated the observation.  It can also be a local time, if no time from the server is given.
      */
     @DatabaseField(canBeNull = false, columnName = "last_modified", dataType = DataType.DATE_LONG)
     private Date lastModified = null;
-    
+
     /**
      * This is the time the observation was made/reported at.
      */
@@ -64,8 +67,8 @@ public class Observation implements Comparable<Observation>, Temporal {
     @DatabaseField(canBeNull = false)
     private State state = State.ACTIVE;
 
-	@DatabaseField(canBeNull = false, dataType = DataType.SERIALIZABLE)
-    private Geometry geometry;
+	@DatabaseField(columnName = "geometry", canBeNull = false, dataType = DataType.BYTE_ARRAY)
+    private byte[] geometryBytes;
 
     @DatabaseField(canBeNull = false, foreign = true, foreignAutoRefresh = true)
     private Event event;
@@ -98,7 +101,7 @@ public class Observation implements Comparable<Observation>, Temporal {
         super();
         this.remoteId = remoteId;
         this.lastModified = lastModified;
-        this.geometry = geometry;
+        this.geometryBytes = GeometryUtility.toGeometryBytes(geometry);
         this.properties = pProperties;
         this.attachments = pAttachments;
         this.dirty = false;
@@ -154,13 +157,21 @@ public class Observation implements Comparable<Observation>, Temporal {
         this.state = state;
     }
 
-	public Geometry getGeometry() {
-		return geometry;
+	public byte[] getGeometryBytes() {
+		return geometryBytes;
 	}
 
-	public void setGeometry(Geometry geometry) {
-		this.geometry = geometry;
+	public void setGeometryBytes(byte[] geometryBytes) {
+		this.geometryBytes = geometryBytes;
 	}
+
+    public Geometry getGeometry() {
+        return GeometryUtility.toGeometry(getGeometryBytes());
+    }
+
+    public void setGeometry(Geometry geometry) {
+        this.geometryBytes = GeometryUtility.toGeometryBytes(geometry);
+    }
 
     public Event getEvent() {
         return event;
@@ -181,7 +192,7 @@ public class Observation implements Comparable<Observation>, Temporal {
     public Date getLastModified() {
         return lastModified;
     }
-    
+
     public void setLastModified(Date lastModified) {
         this.lastModified = lastModified;
     }
@@ -189,7 +200,7 @@ public class Observation implements Comparable<Observation>, Temporal {
     public boolean isDirty() {
         return dirty;
     }
-    
+
     public void setDirty(boolean dirty) {
         this.dirty = dirty;
     }
@@ -243,7 +254,7 @@ public class Observation implements Comparable<Observation>, Temporal {
     /**
      * A convenience method used for returning an Observation's properties in a
      * more useful data-structure.
-     * 
+     *
      * @return
      */
     public final Map<String, ObservationProperty> getPropertiesMap() {
@@ -277,10 +288,8 @@ public class Observation implements Comparable<Observation>, Temporal {
         String uriString = "http://maps.google.com/maps";
 
         Geometry geometry = getGeometry();
-        if (geometry instanceof Point) {
-            Point point = (Point) geometry;
-            uriString += String.format("?daddr=%1$s,%2$s",  latLngFormat.format(point.getY()), latLngFormat.format(point.getX()));
-        }
+        Point point = GeometryUtils.getCentroid(geometry);
+        uriString += String.format("?daddr=%1$s,%2$s",  latLngFormat.format(point.getY()), latLngFormat.format(point.getX()));
 
         return Uri.parse(uriString);
     }
@@ -324,4 +333,5 @@ public class Observation implements Comparable<Observation>, Temporal {
 	public void setTimestamp(Date timestamp) {
 		this.timestamp = timestamp;
 	}
+
 }

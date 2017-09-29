@@ -6,7 +6,6 @@ import com.j256.ormlite.field.DataType;
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.field.ForeignCollectionField;
 import com.j256.ormlite.table.DatabaseTable;
-import com.vividsolutions.jts.geom.Geometry;
 
 import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.apache.commons.lang3.builder.EqualsBuilder;
@@ -21,6 +20,8 @@ import java.util.Map;
 import mil.nga.giat.mage.sdk.Temporal;
 import mil.nga.giat.mage.sdk.datastore.user.Event;
 import mil.nga.giat.mage.sdk.datastore.user.User;
+import mil.nga.giat.mage.sdk.utils.GeometryUtility;
+import mil.nga.wkb.geom.Geometry;
 
 @DatabaseTable(tableName = "locations")
 public class Location implements Comparable<Location>, Temporal {
@@ -53,8 +54,8 @@ public class Location implements Comparable<Location>, Temporal {
 	@ForeignCollectionField(eager = true)
 	private Collection<LocationProperty> properties  = new ArrayList<LocationProperty>();
 
-	@DatabaseField(canBeNull = false, dataType = DataType.SERIALIZABLE)
-	private Geometry geometry;
+	@DatabaseField(columnName = "geometry", canBeNull = false, dataType = DataType.BYTE_ARRAY)
+	private byte[] geometryBytes;
 
 	@DatabaseField(canBeNull = false, foreign = true, foreignAutoRefresh = true)
 	private Event event;
@@ -74,7 +75,7 @@ public class Location implements Comparable<Location>, Temporal {
 		this.lastModified = lastModified;
 		this.type = type;
 		this.properties = properties;
-		this.geometry = geometry;
+		this.geometryBytes = GeometryUtility.toGeometryBytes(geometry);
 		this.timestamp = timestamp;
 		this.event = event;
 	}
@@ -136,12 +137,20 @@ public class Location implements Comparable<Location>, Temporal {
 		this.properties = properties;
 	}
 
+	public byte[] getGeometryBytes() {
+		return geometryBytes;
+	}
+
+	public void setGeometryBytes(byte[] geometryBytes) {
+		this.geometryBytes = geometryBytes;
+	}
+
 	public Geometry getGeometry() {
-		return geometry;
+		return GeometryUtility.toGeometry(getGeometryBytes());
 	}
 
 	public void setGeometry(Geometry geometry) {
-		this.geometry = geometry;
+		this.geometryBytes = GeometryUtility.toGeometryBytes(geometry);
 	}
 	
 	/**

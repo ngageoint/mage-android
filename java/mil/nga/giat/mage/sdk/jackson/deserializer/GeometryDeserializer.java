@@ -4,22 +4,23 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.vividsolutions.jts.geom.Coordinate;
-import com.vividsolutions.jts.geom.Geometry;
-import com.vividsolutions.jts.geom.GeometryFactory;
-import com.vividsolutions.jts.geom.LineString;
-import com.vividsolutions.jts.geom.LinearRing;
-import com.vividsolutions.jts.geom.Polygon;
 
 import java.io.IOException;
 
+import mil.nga.wkb.geom.Geometry;
+import mil.nga.wkb.geom.GeometryCollection;
+import mil.nga.wkb.geom.LineString;
+import mil.nga.wkb.geom.MultiLineString;
+import mil.nga.wkb.geom.MultiPoint;
+import mil.nga.wkb.geom.MultiPolygon;
+import mil.nga.wkb.geom.Point;
+import mil.nga.wkb.geom.Polygon;
+
 public class GeometryDeserializer extends Deserializer {
-    
-    private final GeometryFactory geometryFactory = new GeometryFactory();
 
     public Geometry parseGeometry(JsonParser parser) throws IOException {
         if (parser.getCurrentToken() != JsonToken.START_OBJECT) return null;
-        
+
         String typeName = null;
         ArrayNode coordinates = null;
         while (parser.nextToken() != JsonToken.END_OBJECT) {
@@ -36,79 +37,169 @@ public class GeometryDeserializer extends Deserializer {
             }
         }
 
-		if(typeName == null) {
-			throw new IOException("'type' not present");
-		}
+        if (typeName == null) {
+            throw new IOException("'type' not present");
+        }
 
         Geometry geometry = null;
-        if (typeName.equals("Point")) {
-            geometry = geometryFactory.createPoint(new Coordinate(coordinates.get(0).asDouble(), coordinates.get(1).asDouble()));
-        } else if (typeName.equals("MultiPoint")) {
-            geometry = geometryFactory.createMultiPoint(parseLineString(coordinates));
-        } else if (typeName.equals("LineString")) {
-            geometry = geometryFactory.createLineString(parseLineString(coordinates));
-        } else if (typeName.equals("MultiLineString")) {
-            geometry = geometryFactory.createMultiLineString(parseLineStrings(coordinates));
-        } else if (typeName.equals("Polygon")) {
-            geometry = parsePolygonCoordinates(coordinates);
-        } else if (typeName.equals("MultiPolygon")) {
-            geometry = geometryFactory.createMultiPolygon(parsePolygons(coordinates));
-        } else if (typeName.equals("GeometryCollection")) {
-            geometry = geometryFactory.createGeometryCollection(parseGeometries(coordinates));
+        switch (typeName) {
+            case "Point":
+                geometry = toPoint(coordinates);
+                break;
+            case "MultiPoint":
+                geometry = toMultiPoint(coordinates);
+                break;
+            case "LineString":
+                geometry = toLineString(coordinates);
+                break;
+            case "MultiLineString":
+                geometry = toMultiLineString(coordinates);
+                break;
+            case "Polygon":
+                geometry = toPolygon(coordinates);
+                break;
+            case "MultiPolygon":
+                geometry = toMultiPolygon(coordinates);
+                break;
+            case "GeometryCollection":
+                geometry = toGeometryCollection(coordinates);
+                break;
+            default:
+                throw new IOException("'type' not supported: " + typeName);
         }
-        
+
         return geometry;
     }
-    
-    private Coordinate parseCoordinate(JsonNode coordinate) throws IOException {
-        return new Coordinate(coordinate.get(0).asDouble(), coordinate.get(1).asDouble());
-    }
-    
-    private Coordinate[] parseLineString(JsonNode array) throws IOException {
-        Coordinate[] points = new Coordinate[array.size()];
-        for (int i = 0; i < array.size(); ++i) {
-            points[i] = parseCoordinate(array.get(i));
-        }
-        return points;
-    }
-    
-    private LineString[] parseLineStrings(JsonNode array) throws IOException {
-        LineString[] strings = new LineString[array.size()];
-        for (int i = 0; i != array.size(); ++i) {
-            strings[i] = geometryFactory.createLineString(parseLineString(array.get(i)));
-        }
-        return strings;
-    }
-    
-    private Polygon parsePolygonCoordinates(JsonNode arrayOfRings) throws IOException {
-        return geometryFactory.createPolygon(parseExteriorRing(arrayOfRings), parseInteriorRings(arrayOfRings));
+
+    /**
+     * Convert a node to a Point
+     *
+     * @param node Point node
+     * @return Point
+     * @throws IOException
+     */
+    public Point toPoint(JsonNode node) throws IOException {
+        double x = node.get(0).asDouble();
+        double y = node.get(1).asDouble();
+        Point point = new Point(x, y);
+        return point;
     }
 
-    private Geometry[] parseGeometries(JsonNode arrayOfGeoms) throws IOException {
-        Geometry[] items = new Geometry[arrayOfGeoms.size()];
-        for (int i = 0; i != arrayOfGeoms.size(); ++i) {
-            items[i] = parseGeometry(arrayOfGeoms.get(i).traverse());
+    /**
+     * Convert a node to a MultiPoint
+     *
+     * @param node MultiPoint node
+     * @return MultiPoint
+     * @throws IOException
+     */
+    public MultiPoint toMultiPoint(JsonNode node) throws IOException {
+
+        MultiPoint multiPoint = new MultiPoint();
+
+        for (int i = 0; i < node.size(); ++i) {
+            Point point = toPoint(node.get(i));
+            multiPoint.addPoint(point);
         }
-        return items;
+
+        return multiPoint;
     }
 
-    private Polygon[] parsePolygons(JsonNode arrayOfPolygons) throws IOException {
-        Polygon[] polygons = new Polygon[arrayOfPolygons.size()];
-        for (int i = 0; i != arrayOfPolygons.size(); i++) {
-            polygons[i] = parsePolygonCoordinates(arrayOfPolygons.get(i));
+    /**
+     * Convert a node to a LineString
+     *
+     * @param node LineString node
+     * @return LineString
+     * @throws IOException
+     */
+    public LineString toLineString(JsonNode node) throws IOException {
+
+        LineString lineString = new LineString();
+
+        for (int i = 0; i < node.size(); ++i) {
+            Point point = toPoint(node.get(i));
+            lineString.addPoint(point);
         }
-        return polygons;
+
+        return lineString;
     }
 
-    private LinearRing parseExteriorRing(JsonNode arrayOfRings) throws IOException {
-        return geometryFactory.createLinearRing(parseLineString(arrayOfRings.get(0)));
+    /**
+     * Convert a node to a MultiLineString
+     *
+     * @param node MultiLineString node
+     * @return MultiLineString
+     * @throws IOException
+     */
+    public MultiLineString toMultiLineString(JsonNode node) throws IOException {
+
+        MultiLineString multiLineString = new MultiLineString();
+
+        for (int i = 0; i < node.size(); ++i) {
+            LineString lineString = toLineString(node.get(i));
+            multiLineString.addLineString(lineString);
+        }
+
+        return multiLineString;
     }
 
-    private LinearRing[] parseInteriorRings(JsonNode arrayOfRings) throws IOException {
-        LinearRing rings[] = new LinearRing[arrayOfRings.size() - 1];
-        for (int i = 1; i < arrayOfRings.size(); i++) {
-            rings[i - 1] = geometryFactory.createLinearRing(parseLineString(arrayOfRings.get(i)));
+    /**
+     * Convert a node to a Polygon
+     *
+     * @param node Polygon node
+     * @return Polygon
+     * @throws IOException
+     */
+    public Polygon toPolygon(JsonNode node) throws IOException {
+
+        Polygon polygon = new Polygon();
+
+        LineString polygonLineString = toLineString(node.get(0));
+        polygon.addRing(polygonLineString);
+
+        for (int i = 1; i < node.size(); i++) {
+            LineString holeLineString = toLineString(node.get(i));
+            polygon.addRing(holeLineString);
         }
-        return rings;
+
+        return polygon;
     }
+
+    /**
+     * Convert a node to a MultiPolygon
+     *
+     * @param node MultiPolygon node
+     * @return MultiPolygon
+     * @throws IOException
+     */
+    public MultiPolygon toMultiPolygon(JsonNode node) throws IOException {
+
+        MultiPolygon multiPolygon = new MultiPolygon();
+
+        for (int i = 0; i < node.size(); i++) {
+            Polygon polygon = toPolygon(node.get(i));
+            multiPolygon.addPolygon(polygon);
+        }
+
+        return multiPolygon;
+    }
+
+    /**
+     * Convert a node to a GeometryCollection
+     *
+     * @param node GeometryCollection node
+     * @return GeometryCollection
+     * @throws IOException
+     */
+    public GeometryCollection<Geometry> toGeometryCollection(JsonNode node) throws IOException {
+
+        GeometryCollection<Geometry> geometryCollection = new GeometryCollection();
+
+        for (int i = 0; i < node.size(); i++) {
+            Geometry geometry = parseGeometry(node.get(i).traverse());
+            geometryCollection.addGeometry(geometry);
+        }
+
+        return geometryCollection;
+    }
+
 }

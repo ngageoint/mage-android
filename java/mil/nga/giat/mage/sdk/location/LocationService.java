@@ -25,9 +25,6 @@ import android.provider.Settings;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
 
-import com.vividsolutions.jts.geom.Coordinate;
-import com.vividsolutions.jts.geom.GeometryFactory;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -42,6 +39,7 @@ import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.exceptions.LocationException;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
+import mil.nga.wkb.geom.Point;
 
 /**
  * Query the device for the device's location. If userReportingFrequency is set
@@ -85,8 +83,6 @@ public class LocationService extends Service implements LocationListener, OnShar
 	protected synchronized void setLastLocationPullTime(long lastLocationPullTime) {
 		this.lastLocationPullTime = lastLocationPullTime;
 	}
-	
-	private final GeometryFactory geometryFactory = new GeometryFactory();
 	
 	/**
 	 * GPS Sensitivity Setting
@@ -421,7 +417,7 @@ public class LocationService extends Service implements LocationListener, OnShar
 					"Feature",
 					currentUser,
 					locationProperties,
-					geometryFactory.createPoint(new Coordinate(location.getLongitude(), location.getLatitude())),
+					new Point(location.getLongitude(), location.getLatitude()),
 					new Date(location.getTime()),
 					currentUser.getCurrentEvent());
 
