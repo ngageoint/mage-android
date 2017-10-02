@@ -10,9 +10,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import mil.nga.geopackage.geom.map.GoogleMapShape;
-import mil.nga.geopackage.geom.map.GoogleMapShapeConverter;
-import mil.nga.geopackage.tiles.overlay.FeatureOverlayQuery;
+import mil.nga.geopackage.map.geom.GoogleMapShape;
+import mil.nga.geopackage.map.geom.GoogleMapShapeConverter;
+import mil.nga.geopackage.map.tiles.overlay.FeatureOverlayQuery;
 import mil.nga.giat.mage.R;
 import mil.nga.wkb.geom.GeometryType;
 

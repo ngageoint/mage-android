@@ -9,7 +9,6 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.stmt.QueryBuilder;
 import com.j256.ormlite.stmt.Where;
-import com.vividsolutions.jts.geom.Point;
 
 import java.sql.SQLException;
 
@@ -22,6 +21,8 @@ import mil.nga.giat.mage.sdk.datastore.location.Location;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
+import mil.nga.wkb.geom.Point;
+import mil.nga.wkb.util.GeometryUtils;
 
 public class HistoricLocationLoadTask extends AsyncTask<Void, Pair<MarkerOptions, Pair<Location, User>>, Void> {
 
@@ -49,7 +50,7 @@ public class HistoricLocationLoadTask extends AsyncTask<Void, Pair<MarkerOptions
 			}
 
 			for (Location location : getQuery(currentUser).query()) {
-				Point point = location.getGeometry().getCentroid();
+				Point point = GeometryUtils.getCentroid(location.getGeometry());
 				LatLng latLng = new LatLng(point.getY(), point.getX());
 				MarkerOptions options = new MarkerOptions().position(latLng).icon(LocationBitmapFactory.dotBitmapDescriptor(context, location, currentUser));
 

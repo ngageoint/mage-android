@@ -3,11 +3,33 @@ All notable changes to this project will be documented in this file.
 Adheres to [Semantic Versioning](http://semver.org/).
 
 ---
-## 5.3.1 (TBD)
+## 5.3.3 (TBD)
 
 * TBD
 
 ##### Features
+* Observation geometry support for lines and polygons
+
+##### Bug Fixes
+
+## [5.3.3](https://github.com/ngageoint/mage-android/releases/tag/5.3.3) (09-01-2017)
+
+##### Features
+
+##### Bug Fixes
+* Update event name in title when switching events.
+
+## [5.3.2](https://github.com/ngageoint/mage-android/releases/tag/5.3.2) (08-22-2017)
+
+##### Features
+
+##### Bug Fixes
+* Fixed bug causing non-required select fields to show as required 
+
+## [5.3.1](https://github.com/ngageoint/mage-android/releases/tag/5.3.1) (07-20-2017)
+
+##### Features
+* Add network config
 
 ##### Bug Fixes
 
@@ -16,11 +38,11 @@ Adheres to [Semantic Versioning](http://semver.org/).
 ##### Features
 * Added pull to refresh on observation and people lists.
 * Pulled in appcompat and support libraries to support material design.  
-* Updated all views to be consistient with material design spec.
+* Updated all views to be consistent with material design spec.
 * Added new BottomNavigationView to allow users to quickly cycle through observations,
   people and the map.  
 * Take users to login screen on token expiration.  Upon successful authentication the user will be taken
-  back to where they left off before thier token expired.
+  back to where they left off before their token expired.
 * Choose between Local time and GMT for display and editing
 
 ##### Bug Fixes
@@ -63,7 +85,7 @@ Adheres to [Semantic Versioning](http://semver.org/).
 
 ##### Features
 * Updated time filter intervals.
-* Multi select support. 
+* Multi select support.
 * Filter select and multi select options.
 
 ##### Bug Fixes

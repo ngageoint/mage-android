@@ -15,18 +15,22 @@ import com.google.android.gms.maps.model.Polygon;
 import com.google.android.gms.maps.model.PolygonOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
-import com.vividsolutions.jts.geom.Coordinate;
-import com.vividsolutions.jts.geom.Geometry;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import mil.nga.giat.mage.map.marker.StaticGeometryCollection;
 import mil.nga.giat.mage.sdk.datastore.layer.Layer;
 import mil.nga.giat.mage.sdk.datastore.staticfeature.StaticFeature;
 import mil.nga.giat.mage.sdk.datastore.staticfeature.StaticFeatureProperty;
+import mil.nga.wkb.geom.Geometry;
+import mil.nga.wkb.geom.GeometryType;
+import mil.nga.wkb.geom.LineString;
+import mil.nga.wkb.geom.Point;
 
 public class StaticFeatureLoadTask extends AsyncTask<Layer, Object, Void> {
 
@@ -60,9 +64,10 @@ public class StaticFeatureLoadTask extends AsyncTask<Layer, Object, Void> {
 			if (properties.get("description") != null) {
 				content.append("<div>").append(properties.get("description").getValue()).append("</div>");
 			}
-			String type = geometry.getGeometryType();
-			if (type.equals("Point")) {
-				MarkerOptions options = new MarkerOptions().position(new LatLng(geometry.getCoordinate().y, geometry.getCoordinate().x)).snippet(content.toString());
+			GeometryType type = geometry.getGeometryType();
+			if (type == GeometryType.POINT) {
+				Point point = (Point) geometry;
+				MarkerOptions options = new MarkerOptions().position(new LatLng(point.getY(), point.getX())).snippet(content.toString());
 
 				// check to see if there's an icon
 				String iconPath = feature.getLocalPath();
@@ -81,7 +86,7 @@ public class StaticFeatureLoadTask extends AsyncTask<Layer, Object, Void> {
 				}
 
 				publishProgress(new Object[] { options, layerId, content.toString() });
-			} else if (type.equals("LineString")) {
+			} else if (type == GeometryType.LINESTRING) {
 				PolylineOptions options = new PolylineOptions();
 
 				StaticFeatureProperty property = properties.get("stylelinestylecolorrgb");
@@ -89,11 +94,12 @@ public class StaticFeatureLoadTask extends AsyncTask<Layer, Object, Void> {
 					String color = property.getValue();
 					options.color(Color.parseColor(color));
 				}
-				for (Coordinate coordinate : geometry.getCoordinates()) {
-					options.add(new LatLng(coordinate.y, coordinate.x));
+				LineString lineString = (LineString) geometry;
+				for(Point point: lineString.getPoints()){
+					options.add(new LatLng(point.getY(), point.getX()));
 				}
 				publishProgress(new Object[] { options, layerId, content.toString() });
-			} else if (type.equals("Polygon")) {
+			} else if (type == GeometryType.POLYGON) {
 				PolygonOptions options = new PolygonOptions();
 
 				Integer color = null;
@@ -119,9 +125,23 @@ public class StaticFeatureLoadTask extends AsyncTask<Layer, Object, Void> {
                     }
                 }
 
-				for (Coordinate coordinate : geometry.getCoordinates()) {
-					options.add(new LatLng(coordinate.y, coordinate.x));
+				mil.nga.wkb.geom.Polygon polygon = (mil.nga.wkb.geom.Polygon) geometry;
+				List<LineString> rings = polygon.getRings();
+				LineString polygonLineString = rings.get(0);
+				for (Point point : polygonLineString.getPoints()) {
+					LatLng latLng = new LatLng(point.getY(), point.getX());
+					options.add(latLng);
 				}
+				for (int i = 1; i < rings.size(); i++) {
+					LineString hole = rings.get(i);
+					List<LatLng> holeLatLngs = new ArrayList<>();
+					for (Point point : hole.getPoints()) {
+						LatLng latLng = new LatLng(point.getY(), point.getX());
+						holeLatLngs.add(latLng);
+					}
+					options.addHole(holeLatLngs);
+				}
+
 				publishProgress(new Object[] { options, layerId, content.toString() });
 			}
 		}

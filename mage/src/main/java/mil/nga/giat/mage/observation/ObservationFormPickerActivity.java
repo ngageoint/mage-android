@@ -4,7 +4,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
-import android.location.Location;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.RecyclerView;
@@ -27,6 +26,7 @@ import com.google.gson.JsonObject;
 
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
+import mil.nga.wkb.geom.Point;
 
 public class ObservationFormPickerActivity extends AppCompatActivity implements OnMapReadyCallback {
 
@@ -63,8 +63,9 @@ public class ObservationFormPickerActivity extends AppCompatActivity implements 
 
     @Override
     public void onMapReady(final GoogleMap map) {
-        Location location = getIntent().getParcelableExtra(ObservationEditActivity.LOCATION);
-        LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
+        ObservationLocation location = getIntent().getParcelableExtra(ObservationEditActivity.LOCATION);
+        Point centroid = location.getCentroid();
+        LatLng latLng = new LatLng(centroid.getY(), centroid.getX());
 
         float zoom = getIntent().getFloatExtra(ObservationEditActivity.INITIAL_ZOOM, 0);
 

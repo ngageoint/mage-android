@@ -12,7 +12,6 @@ import com.j256.ormlite.dao.CloseableIterator;
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.stmt.QueryBuilder;
 import com.j256.ormlite.stmt.Where;
-import com.vividsolutions.jts.geom.Point;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -28,6 +27,10 @@ import mil.nga.giat.mage.sdk.Temporal;
 import mil.nga.giat.mage.sdk.datastore.DaoStore;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
+import mil.nga.giat.mage.sdk.utils.GeometryUtility;
+import mil.nga.wkb.geom.Geometry;
+import mil.nga.wkb.geom.Point;
+import mil.nga.wkb.util.GeometryUtils;
 
 public class ObservationLoadTask extends AsyncTask<Void, Pair<MarkerOptions, Observation>, Void> {
     
@@ -68,8 +71,9 @@ public class ObservationLoadTask extends AsyncTask<Void, Pair<MarkerOptions, Obs
             iterator = iterator();
             while (iterator.hasNext()) {
                 Observation o = iterator.current();
-                Point point = (Point) o.getGeometry();
-                MarkerOptions options = new MarkerOptions().position(new LatLng(point.getY(), point.getX())).icon(ObservationBitmapFactory.bitmapDescriptor(context, o));
+                Geometry geometry = o.getGeometry();
+                Point centroid = GeometryUtils.getCentroid(geometry);
+                MarkerOptions options = new MarkerOptions().position(new LatLng(centroid.getY(), centroid.getX())).icon(ObservationBitmapFactory.bitmapDescriptor(context, o));
 
                 publishProgress(new Pair<>(options, o));
             }

@@ -56,8 +56,6 @@ import com.google.android.gms.maps.model.TileOverlayOptions;
 import com.google.android.gms.maps.model.TileProvider;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
-import com.vividsolutions.jts.geom.Geometry;
-import com.vividsolutions.jts.geom.Point;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -92,20 +90,20 @@ import mil.nga.geopackage.features.user.FeatureCursor;
 import mil.nga.geopackage.features.user.FeatureDao;
 import mil.nga.geopackage.features.user.FeatureRow;
 import mil.nga.geopackage.geom.GeoPackageGeometryData;
-import mil.nga.geopackage.geom.map.GoogleMapShape;
-import mil.nga.geopackage.geom.map.GoogleMapShapeConverter;
+import mil.nga.geopackage.map.geom.GoogleMapShape;
+import mil.nga.geopackage.map.geom.GoogleMapShapeConverter;
+import mil.nga.geopackage.map.tiles.overlay.BoundedOverlay;
+import mil.nga.geopackage.map.tiles.overlay.FeatureOverlay;
+import mil.nga.geopackage.map.tiles.overlay.FeatureOverlayQuery;
+import mil.nga.geopackage.map.tiles.overlay.GeoPackageOverlayFactory;
 import mil.nga.geopackage.projection.Projection;
 import mil.nga.geopackage.projection.ProjectionConstants;
 import mil.nga.geopackage.projection.ProjectionFactory;
 import mil.nga.geopackage.projection.ProjectionTransform;
 import mil.nga.geopackage.tiles.TileBoundingBoxUtils;
+import mil.nga.geopackage.tiles.features.DefaultFeatureTiles;
 import mil.nga.geopackage.tiles.features.FeatureTiles;
-import mil.nga.geopackage.tiles.features.MapFeatureTiles;
 import mil.nga.geopackage.tiles.features.custom.NumberFeaturesTile;
-import mil.nga.geopackage.tiles.overlay.BoundedOverlay;
-import mil.nga.geopackage.tiles.overlay.FeatureOverlay;
-import mil.nga.geopackage.tiles.overlay.FeatureOverlayQuery;
-import mil.nga.geopackage.tiles.overlay.GeoPackageOverlayFactory;
 import mil.nga.geopackage.tiles.user.TileDao;
 import mil.nga.giat.mage.MAGE;
 import mil.nga.giat.mage.R;
@@ -129,6 +127,7 @@ import mil.nga.giat.mage.map.marker.StaticGeometryCollection;
 import mil.nga.giat.mage.map.preference.MapPreferencesActivity;
 import mil.nga.giat.mage.observation.ObservationEditActivity;
 import mil.nga.giat.mage.observation.ObservationFormPickerActivity;
+import mil.nga.giat.mage.observation.ObservationLocation;
 import mil.nga.giat.mage.sdk.Temporal;
 import mil.nga.giat.mage.sdk.datastore.layer.Layer;
 import mil.nga.giat.mage.sdk.datastore.layer.LayerHelper;
@@ -146,6 +145,7 @@ import mil.nga.giat.mage.sdk.event.IStaticFeatureEventListener;
 import mil.nga.giat.mage.sdk.exceptions.LayerException;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
 import mil.nga.giat.mage.sdk.location.LocationService;
+import mil.nga.wkb.geom.Geometry;
 import mil.nga.wkb.geom.GeometryType;
 
 public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapClickListener, OnMapLongClickListener, OnMarkerClickListener, OnInfoWindowClickListener, OnMapPanListener, OnMyLocationButtonClickListener, OnClickListener, LocationSource, LocationListener, OnCacheOverlayListener,
@@ -213,7 +213,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 		searchButton = (FloatingActionButton) view.findViewById(R.id.map_search_button);
 		Drawable drawable = DrawableCompat.wrap(searchButton.getDrawable());
 		searchButton.setImageDrawable(drawable);
-		DrawableCompat.setTintList(drawable, AppCompatResources.getColorStateList(getContext(), R.color.map_search_icon));
+		DrawableCompat.setTintList(drawable, AppCompatResources.getColorStateList(getContext(), R.color.toggle_button_selected));
 
 		searchButton.setOnClickListener(new OnClickListener() {
 			@Override
@@ -225,7 +225,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 		view.findViewById(R.id.new_observation_button).setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				newObservation();
+				onNewObservation();
 			}
 		});
 
@@ -530,33 +530,28 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 		}
 	}
 
-	private void newObservation() {
-		Location l = locationService.getLocation();
+	private void onNewObservation() {
+		ObservationLocation location = null;
 
 		// if there is not a location from the location service, then try to pull one from the database.
-		if (l == null) {
+		if (locationService.getLocation() == null) {
 			List<mil.nga.giat.mage.sdk.datastore.location.Location> tLocations = LocationHelper.getInstance(getActivity().getApplicationContext()).getCurrentUserLocations(1, true);
 			if (!tLocations.isEmpty()) {
 				mil.nga.giat.mage.sdk.datastore.location.Location tLocation = tLocations.get(0);
 				Geometry geo = tLocation.getGeometry();
 				Map<String, LocationProperty> propertiesMap = tLocation.getPropertiesMap();
-				if (geo instanceof Point) {
-					Point point = (Point) geo;
-					String provider = "manual";
-					if (propertiesMap.get("provider").getValue() != null) {
-						provider = propertiesMap.get("provider").getValue().toString();
-					}
-					l = new Location(provider);
-					l.setTime(tLocation.getTimestamp().getTime());
-					if (propertiesMap.get("accuracy").getValue() != null) {
-						l.setAccuracy(Float.valueOf(propertiesMap.get("accuracy").getValue().toString()));
-					}
-					l.setLatitude(point.getY());
-					l.setLongitude(point.getX());
+				String provider = ObservationLocation.MANUAL_PROVIDER;
+				if (propertiesMap.get("provider").getValue() != null) {
+					provider = propertiesMap.get("provider").getValue().toString();
+				}
+				location = new ObservationLocation(provider, geo);
+				location.setTime(tLocation.getTimestamp().getTime());
+				if (propertiesMap.get("accuracy").getValue() != null) {
+					location.setAccuracy(Float.valueOf(propertiesMap.get("accuracy").getValue().toString()));
 				}
 			}
 		} else {
-			l = new Location(l);
+			location = new ObservationLocation(locationService.getLocation());
 		}
 
 		if (!UserHelper.getInstance(getActivity().getApplicationContext()).isCurrentUserPartOfCurrentEvent()) {
@@ -565,26 +560,8 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 				.setMessage(getActivity().getResources().getString(R.string.location_no_event_message))
 				.setPositiveButton(android.R.string.ok, null)
 				.show();
-		} else if (l != null) {
-			newObservation(l);
-//			Intent intent;
-//
-//			// show form picker or go to
-//			JsonArray formDefinitions = EventHelper.getInstance(getActivity()).getCurrentEvent().getForms();
-//			if (formDefinitions.size() == 0) {
-//				intent = new Intent(getActivity(), ObservationEditActivity.class);
-//			} else if (formDefinitions.size() == 1) {
-//				JsonObject form = (JsonObject) formDefinitions.iterator().next();
-//				intent = new Intent(getActivity(), ObservationEditActivity.class);
-//				intent.putExtra(ObservationEditActivity.OBSERVATION_FORM_ID, form.get("id").getAsLong());
-//			} else {
-//				intent = new Intent(getActivity(), ObservationFormPickerActivity.class);
-//			}
-//
-//			intent.putExtra(ObservationEditActivity.LOCATION, l);
-//			intent.putExtra(ObservationEditActivity.INITIAL_LOCATION, map.getCameraPosition().target);
-//			intent.putExtra(ObservationEditActivity.INITIAL_ZOOM, map.getCameraPosition().zoom);
-//			startActivity(intent);
+		} else if (location != null) {
+			newObservation(location);
 		} else {
 			if (ContextCompat.checkSelfPermission(getActivity().getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
 				new AlertDialog.Builder(getActivity())
@@ -613,7 +590,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 			case PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION: {
 				// If request is cancelled, the result arrays are empty.
 				if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-					newObservation();
+					onNewObservation();
 				}
 				break;
 			}
@@ -692,7 +669,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 		}
 		*/
 	}
-	
+
 	@Override
 	public void onInfoWindowClick(Marker marker) {
 		observations.onInfoWindowClick(marker);
@@ -702,16 +679,19 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 	@Override
 	public boolean onMarkerClick(Marker marker) {
 		hideKeyboard();
+
+		observations.offMarkerClick();
+
 		// search marker
 		if(searchMarkers != null) {
 			for(Marker m :searchMarkers) {
 				 if(marker.getId().equals(m.getId())) {
 						m.showInfoWindow();
-						return true;		 
+						return true;
 				 }
 			}
 		}
-		
+
 		// You can only have one marker click listener per map.
 		// Lets listen here and shell out the click event to all
 		// my marker collections. Each one need to handle
@@ -746,6 +726,9 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 		hideKeyboard();
 		// remove old accuracy circle
 		((LocationMarkerCollection) locations).offMarkerClick();
+		observations.offMarkerClick();
+
+		observations.onMapClick(latLng);
 
 		staticGeometryCollection.onMapClick(map, latLng, getActivity());
 
@@ -779,17 +762,14 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 				.setPositiveButton(android.R.string.ok, null)
 				.show();
 		} else {
-			Location location = new Location("manual");
+			ObservationLocation location = new ObservationLocation(ObservationLocation.MANUAL_PROVIDER, point);
 			location.setAccuracy(0.0f);
-			location.setLatitude(point.latitude);
-			location.setLongitude(point.longitude);
 			location.setTime(new Date().getTime());
-
 			newObservation(location);
 		}
 	}
 
-	private void newObservation(Location location) {
+	private void newObservation(ObservationLocation location) {
 		Intent intent;
 
 		// show form picker or go to
@@ -1090,7 +1070,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 			for(FeatureDao featureDao: featureDaos){
 
 				// Create the feature tiles
-				FeatureTiles featureTiles = new MapFeatureTiles(getActivity(), featureDao);
+				FeatureTiles featureTiles = new DefaultFeatureTiles(getActivity(), featureDao);
 
 				// Create an index manager
 				FeatureIndexManager indexer = new FeatureIndexManager(getActivity(), geoPackage, featureDao);
@@ -1135,7 +1115,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 
 			// If indexed, add as a tile overlay
 			if(featureTableCacheOverlay.isIndexed()){
-				FeatureTiles featureTiles = new MapFeatureTiles(getActivity(), featureDao);
+				FeatureTiles featureTiles = new DefaultFeatureTiles(getActivity(), featureDao);
 				Integer maxFeaturesPerTile = null;
 				if(featureDao.getGeometryType() == GeometryType.POINT){
 					maxFeaturesPerTile = getResources().getInteger(R.integer.geopackage_feature_tiles_max_points_per_tile);

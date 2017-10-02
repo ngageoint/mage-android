@@ -6,7 +6,6 @@ import android.util.Pair;
 
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
-import com.vividsolutions.jts.geom.Point;
 
 import mil.nga.giat.mage.filter.Filter;
 import mil.nga.giat.mage.map.marker.LocationBitmapFactory;
@@ -14,6 +13,8 @@ import mil.nga.giat.mage.map.marker.PointCollection;
 import mil.nga.giat.mage.sdk.Temporal;
 import mil.nga.giat.mage.sdk.datastore.location.Location;
 import mil.nga.giat.mage.sdk.datastore.user.User;
+import mil.nga.wkb.geom.Point;
+import mil.nga.wkb.util.GeometryUtils;
 
 public class LocationTask extends AsyncTask<Location, Pair<MarkerOptions, Pair<Location, User>>, Void> {
     public enum Type {
@@ -49,7 +50,7 @@ public class LocationTask extends AsyncTask<Location, Pair<MarkerOptions, Pair<L
             	continue;
             }
 
-            Point point = location.getGeometry().getCentroid();
+            Point point = GeometryUtils.getCentroid(location.getGeometry());
             LatLng latLng = new LatLng(point.getY(), point.getX());
             MarkerOptions options = new MarkerOptions().position(latLng).icon(LocationBitmapFactory.bitmapDescriptor(context, location, user));
 

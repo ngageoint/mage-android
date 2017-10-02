@@ -9,7 +9,6 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
-import android.location.Location;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -38,20 +37,15 @@ import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.GoogleMap.OnCameraIdleListener;
 import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.model.Circle;
 import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.Marker;
-import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.vividsolutions.jts.geom.Coordinate;
-import com.vividsolutions.jts.geom.Geometry;
-import com.vividsolutions.jts.geom.GeometryFactory;
-import com.vividsolutions.jts.geom.Point;
 
 import java.io.File;
 import java.io.IOException;
@@ -92,8 +86,9 @@ import mil.nga.giat.mage.sdk.exceptions.ObservationException;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
 import mil.nga.giat.mage.sdk.utils.ISO8601DateFormatFactory;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
+import mil.nga.wkb.geom.Geometry;
 
-public class ObservationEditActivity extends AppCompatActivity implements OnMapReadyCallback, DateTimePickerDialog.OnDateTimeChangedListener {
+public class ObservationEditActivity extends AppCompatActivity implements OnMapReadyCallback, OnCameraIdleListener, DateTimePickerDialog.OnDateTimeChangedListener {
 
 
 	private static final String LOG_NAME = ObservationEditActivity.class.getName();
@@ -131,12 +126,14 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 	private final DecimalFormat latLngFormat = new DecimalFormat("###.#####");
 	private ArrayList<Attachment> attachmentsToCreate = new ArrayList<>();
 
-	private Location l;
+    private ObservationLocation location;
 	private Observation observation;
 	private GoogleMap map;
-	private Marker observationMarker;
+	private MapObservation mapObservation;
 	private Circle accuracyCircle;
 	private long locationElapsedTimeMilliseconds = 0;
+	private MapFragment mapFragment;
+	private MapObservationManager mapObservationManager;
 
 	MageEditText timestamp;
 	private LinearLayout attachmentLayout;
@@ -173,6 +170,7 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 		timestamp.setPropertyType(MagePropertyType.DATE);
 
 		final long observationId = getIntent().getLongExtra(OBSERVATION_ID, NEW_OBSERVATION);
+		final boolean newObservation = observationId == NEW_OBSERVATION;
 
 		Iterator<JsonElement> iterator = EventHelper.getInstance(getApplicationContext()).getCurrentEvent().getForms().iterator();
 		while (iterator.hasNext()) {
@@ -183,7 +181,7 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 		Map<Long, JsonObject> formMap = EventHelper.getInstance(getApplicationContext()).getCurrentEvent().getFormMap();
 
 		Collection<JsonObject> formDefinitions = new ArrayList<>();
-		if (observationId == NEW_OBSERVATION) {
+		if (newObservation) {
 			observation = new Observation();
 
 			final long formId = getIntent().getLongExtra(OBSERVATION_FORM_ID, NO_FORM);
@@ -272,15 +270,17 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 			forms.addView(form);
 		}
 
-		((MapFragment) getFragmentManager().findFragmentById(R.id.map)).getMapAsync(this);
+		mapFragment = (MapFragment) getFragmentManager().findFragmentById(R.id.map);
+		mapFragment.getMapAsync(this);
 
 		hideKeyboardOnClick(findViewById(R.id.observation_edit));
 
-		if (observationId == NEW_OBSERVATION) {
+		if (newObservation) {
 			getSupportActionBar().setTitle("New Observation");
-			l = getIntent().getParcelableExtra(LOCATION);
+			location = getIntent().getParcelableExtra(LOCATION);
 
-			observation.setEvent(EventHelper.getInstance(getApplicationContext()).getCurrentEvent());
+			observation.setGeometry(location.getGeometry());
+            observation.setEvent(EventHelper.getInstance(getApplicationContext()).getCurrentEvent());
 			observation.setTimestamp(new Date());
 			timestamp.setPropertyValue(observation.getTimestamp());
 
@@ -301,19 +301,13 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 			// this is an edit of an existing observation
 			attachmentGallery.addAttachments(attachmentLayout, observation.getAttachments());
 
-			Geometry geo = observation.getGeometry();
-			if (geo instanceof Point) {
-				Point point = (Point) geo;
-				String provider = observation.getProvider() != null ? observation.getProvider() : "manual";
+			Geometry geometry = observation.getGeometry();
+			String provider = observation.getProvider() != null ? observation.getProvider() : ObservationLocation.MANUAL_PROVIDER;
+			location = new ObservationLocation(provider, geometry);
 
-				l = new Location(provider);
-
-				Float accuracy = observation.getAccuracy();
-				if (accuracy != null) {
-					l.setAccuracy(Float.parseFloat(accuracy.toString()));
-				}
-				l.setLatitude(point.getY());
-				l.setLongitude(point.getX());
+			Float accuracy = observation.getAccuracy();
+			if (accuracy != null) {
+				location.setAccuracy(accuracy);
 			}
 
 			timestamp.setPropertyValue(observation.getTimestamp());
@@ -356,8 +350,9 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 			@Override
 			public void onClick(View v) {
 				Intent intent = new Intent(ObservationEditActivity.this, LocationEditActivity.class);
-				intent.putExtra(LocationEditActivity.LOCATION, l);
+				intent.putExtra(LocationEditActivity.LOCATION, location);
 				intent.putExtra(LocationEditActivity.MARKER_BITMAP, ObservationBitmapFactory.bitmap(ObservationEditActivity.this, observation));
+				intent.putExtra(LocationEditActivity.NEW_OBSERVATION, newObservation);
 				startActivityForResult(intent, LOCATION_EDIT_ACTIVITY_REQUEST_CODE);
 			}
 		});
@@ -416,47 +411,54 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 		this.map = map;
 		map.getUiSettings().setZoomControlsEnabled(false);
 
+		mapObservationManager = new MapObservationManager(this, map);
+		map.setOnCameraIdleListener(this);
+	}
+
+	@Override
+	public void onCameraIdle() {
+		map.setOnCameraIdleListener(null);
 		setupMap();
 	}
 
 	private void setupMap() {
 		if (map == null) return;
 
-		LatLng location = new LatLng(l.getLatitude(), l.getLongitude());
+		LatLng centroid = location.getCentroidLatLng();
 
-		((TextView) findViewById(R.id.latitude)).setText(latLngFormat.format(l.getLatitude()));
-		((TextView) findViewById(R.id.longitude)).setText(latLngFormat.format(l.getLongitude()));
+		((TextView) findViewById(R.id.latitude)).setText(latLngFormat.format(centroid.latitude));
+		((TextView) findViewById(R.id.longitude)).setText(latLngFormat.format(centroid.longitude));
 
-		LatLng latLng = getIntent().getParcelableExtra(INITIAL_LOCATION);
-		if (latLng == null) {
-			latLng = new LatLng(0, 0);
+		LatLng initialLatLng = getIntent().getParcelableExtra(INITIAL_LOCATION);
+		if (initialLatLng == null) {
+			initialLatLng = new LatLng(0,0);
 		}
 
 		float zoom = getIntent().getFloatExtra(INITIAL_ZOOM, 0);
-		map.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, zoom));
-		map.animateCamera(CameraUpdateFactory.newLatLngZoom(location, 17));
+		map.moveCamera(CameraUpdateFactory.newLatLngZoom(initialLatLng, zoom));
+		map.animateCamera(location.getCameraUpdate(mapFragment.getView()));
 		map.getUiSettings().setMapToolbarEnabled(false);
+
+		map.animateCamera(location.getCameraUpdate(mapFragment.getView()));
 
 		if (accuracyCircle != null) {
 			accuracyCircle.remove();
 		}
 
-		CircleOptions circleOptions = new CircleOptions()
-				.fillColor(getResources().getColor(R.color.accuracy_circle_fill))
-				.strokeColor(getResources().getColor(R.color.accuracy_circle_stroke))
-				.strokeWidth(5)
-				.center(location)
-				.radius(l.getAccuracy());
-		accuracyCircle = map.addCircle(circleOptions);
-
-		if (observationMarker != null) {
-			observationMarker.setPosition(location);
-			// make sure to set the Anchor after this call as well, because the size of the icon might have changed
-			observationMarker.setIcon(ObservationBitmapFactory.bitmapDescriptor(this, observation));
-			observationMarker.setAnchor(0.5f, 1.0f);
-		} else {
-			observationMarker = map.addMarker(new MarkerOptions().position(location).icon(ObservationBitmapFactory.bitmapDescriptor(this, observation)));
+		if (location.getAccuracy() > 0) {
+			CircleOptions circleOptions = new CircleOptions()
+					.fillColor(getResources().getColor(R.color.accuracy_circle_fill))
+					.strokeColor(getResources().getColor(R.color.accuracy_circle_stroke))
+					.strokeWidth(5)
+					.center(centroid)
+					.radius(location.getAccuracy());
+			accuracyCircle = map.addCircle(circleOptions);
 		}
+
+		if (mapObservation != null) {
+			mapObservation.remove();
+		}
+		mapObservation = mapObservationManager.addToMap(observation);
 	}
 
 	@Override
@@ -464,7 +466,7 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 		// Always call the superclass so it can restore the view hierarchy
 		super.onRestoreInstanceState(savedInstanceState);
 
-		l = savedInstanceState.getParcelable("location");
+		location = savedInstanceState.getParcelable("location");
 
 		attachmentsToCreate = savedInstanceState.getParcelableArrayList("attachmentsToCreate");
 		for (Attachment a : attachmentsToCreate) {
@@ -487,7 +489,7 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 		HashMap<Long, Map<String, Serializable>> formMap = LayoutBaker.getBundleFromForms(controls, outState);
 		outState.putSerializable(EXTRA_PROPERTY_MAP, formMap);
 
-		outState.putParcelable("location", l);
+		outState.putParcelable("location", location);
 		outState.putParcelableArrayList("attachmentsToCreate", attachmentsToCreate);
 		outState.putString(CURRENT_MEDIA_PATH, currentMediaPath);
 	}
@@ -545,7 +547,7 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 
 		observation.setState(State.ACTIVE);
 		observation.setDirty(true);
-		observation.setGeometry(new GeometryFactory().createPoint(new Coordinate(l.getLongitude(), l.getLatitude())));
+		observation.setGeometry(location.getGeometry());
 
 		Map<Long, Map<String, ObservationProperty>> forms = LayoutBaker.populateMapFromForms(controls);
 
@@ -556,9 +558,9 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 			Log.e(LOG_NAME, "Could not parse timestamp", pe);
 		}
 
-		observation.setAccuracy(l.getAccuracy());
+		observation.setAccuracy(location.getAccuracy());
 
-		String provider = l.getProvider();
+		String provider = location.getProvider();
 		if (provider == null || provider.trim().isEmpty()) {
 			provider = "manual";
 		}
@@ -813,7 +815,8 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 				}
 				break;
 			case LOCATION_EDIT_ACTIVITY_REQUEST_CODE:
-				l = data.getParcelableExtra(LocationEditActivity.LOCATION);
+				location = data.getParcelableExtra(LocationEditActivity.LOCATION);
+				observation.setGeometry(location.getGeometry());
 				setupMap();
 				break;
 			case SELECT_ACTIVITY_REQUEST_CODE:
@@ -856,15 +859,6 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 			}
 		}
 		return uris;
-	}
-
-	private void updateMapIcon() {
-		if (map == null) return;
-
-		if (observationMarker != null) {
-			observationMarker.remove();
-		}
-		observationMarker = map.addMarker(new MarkerOptions().position(new LatLng(l.getLatitude(), l.getLongitude())).icon(ObservationBitmapFactory.bitmapDescriptor(this, observation)));
 	}
 
 	private String getSelectId(Integer fieldId) {

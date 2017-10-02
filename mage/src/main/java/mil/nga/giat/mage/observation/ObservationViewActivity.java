@@ -20,17 +20,14 @@ import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.GoogleMap.OnCameraIdleListener;
 import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.Marker;
-import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Collections2;
 import com.google.gson.JsonObject;
-import com.vividsolutions.jts.geom.Geometry;
-import com.vividsolutions.jts.geom.Point;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -46,7 +43,6 @@ import java.util.Map;
 
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.form.LayoutBaker;
-import mil.nga.giat.mage.map.marker.ObservationBitmapFactory;
 import mil.nga.giat.mage.people.PeopleActivity;
 import mil.nga.giat.mage.sdk.datastore.observation.Attachment;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
@@ -64,8 +60,9 @@ import mil.nga.giat.mage.sdk.event.IObservationEventListener;
 import mil.nga.giat.mage.sdk.exceptions.ObservationException;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
 import mil.nga.giat.mage.utils.DateFormatFactory;
+import mil.nga.wkb.geom.Geometry;
 
-public class ObservationViewActivity extends AppCompatActivity implements OnMapReadyCallback {
+public class ObservationViewActivity extends AppCompatActivity implements OnMapReadyCallback, OnCameraIdleListener {
 
 	private static final String LOG_NAME = ObservationViewActivity.class.getName();
 
@@ -82,8 +79,10 @@ public class ObservationViewActivity extends AppCompatActivity implements OnMapR
 	private Observation o;
 	private User currentUser;
 	private boolean canEditObservation = false;
-	private Marker marker;
+	private MapObservation mapObservation;
 	private DecimalFormat latLngFormat = new DecimalFormat("###.#####");
+	private MapFragment mapFragment;
+	private MapObservationManager mapObservationManager;
 
 	ImageView favoriteIcon;
 
@@ -186,8 +185,9 @@ public class ObservationViewActivity extends AppCompatActivity implements OnMapR
 
 		ObservationHelper.getInstance(getApplicationContext()).addListener(observationEventListener);
 
-		((MapFragment) getFragmentManager().findFragmentById(R.id.mini_map)).getMapAsync(this);
-	}
+		mapFragment = (MapFragment) getFragmentManager().findFragmentById(R.id.mini_map);
+		mapFragment.getMapAsync(this);
+  	}
 
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
@@ -211,6 +211,13 @@ public class ObservationViewActivity extends AppCompatActivity implements OnMapR
 	@Override
 	public void onMapReady(GoogleMap map) {
 		this.map = map;
+		mapObservationManager = new MapObservationManager(this, map);
+		map.setOnCameraIdleListener(this);
+	}
+
+	@Override
+	public void onCameraIdle() {
+		map.setOnCameraIdleListener(null);
 		setupObservation();
 	}
 
@@ -262,49 +269,46 @@ public class ObservationViewActivity extends AppCompatActivity implements OnMapR
 			} else {
 				secondaryView.setVisibility(View.GONE);
 			}
+            
+            TextView timestamp = (TextView) findViewById(R.id.timestamp);
+            timestamp.setText(dateFormat.format(o.getTimestamp()));
 
-			TextView timestamp = (TextView) findViewById(R.id.timestamp);
-			timestamp.setText(dateFormat.format(o.getTimestamp()));
+			Geometry geometry = o.getGeometry();
+			ObservationLocation location = new ObservationLocation(geometry);
+			TextView locationTextView = (TextView) findViewById(R.id.location);
+			LatLng latLng = location.getCentroidLatLng();
+			locationTextView.setText(latLngFormat.format(latLng.latitude) + ", " + latLngFormat.format(latLng.longitude));
+            
+            String provider = o.getProvider();
+            if (provider != null) {
+                ((TextView) findViewById(R.id.location_provider)).setText("(" + provider + ")");
+            } else {
+                findViewById(R.id.location_provider).setVisibility(View.GONE);
+            }
+            
+            Float accuracy = o.getAccuracy();
+            if (accuracy != null && accuracy > 0) {
+                ((TextView) findViewById(R.id.location_accuracy)).setText("\u00B1" + accuracy + "m");
+            } else {
+                findViewById(R.id.location_accuracy).setVisibility(View.GONE);
+            }
 
-			Geometry geo = o.getGeometry();
-			if (geo instanceof Point) {
-				Point pointGeo = (Point) geo;
-				((TextView) findViewById(R.id.location)).setText(latLngFormat.format(pointGeo.getY()) + ", " + latLngFormat.format(pointGeo.getX()));
+			map.getUiSettings().setZoomControlsEnabled(false);
 
-				String provider = o.getProvider();
-				if (provider != null) {
-					((TextView) findViewById(R.id.location_provider)).setText("(" + provider + ")");
-				} else {
-					findViewById(R.id.location_provider).setVisibility(View.GONE);
+			if (mapObservation == null) {
+				LatLng initialLatLng = getIntent().getParcelableExtra(INITIAL_LOCATION);
+				if (initialLatLng == null) {
+					initialLatLng = new LatLng(0, 0);
 				}
+				float zoom = getIntent().getFloatExtra(INITIAL_ZOOM, 0);
+				map.moveCamera(CameraUpdateFactory.newLatLngZoom(initialLatLng, zoom));
 
-				Float accuracy = o.getAccuracy();
-				if (accuracy != null && accuracy > 0) {
-					((TextView) findViewById(R.id.location_accuracy)).setText("\u00B1" + accuracy + "m");
-				} else {
-					findViewById(R.id.location_accuracy).setVisibility(View.GONE);
-				}
-
-				map.getUiSettings().setZoomControlsEnabled(false);
-
-				if (marker == null) {
-					LatLng latLng = getIntent().getParcelableExtra(INITIAL_LOCATION);
-					if (latLng == null) {
-						latLng = new LatLng(0, 0);
-					}
-					float zoom = getIntent().getFloatExtra(INITIAL_ZOOM, 0);
-					map.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, zoom));
-
-					LatLng location = new LatLng(pointGeo.getY(), pointGeo.getX());
-					map.animateCamera(CameraUpdateFactory.newLatLngZoom(location, 15));
-					marker = map.addMarker(new MarkerOptions().position(location).icon(ObservationBitmapFactory.bitmapDescriptor(this, o)));
-				} else {
-					LatLng location = new LatLng(pointGeo.getY(), pointGeo.getX());
-					map.moveCamera(CameraUpdateFactory.newLatLngZoom(location, map.getCameraPosition().zoom));
-					marker.setPosition(location);
-					marker.setIcon(ObservationBitmapFactory.bitmapDescriptor(this, o));
-				}
+				map.animateCamera(location.getCameraUpdate(mapFragment.getView(), 15));
+			} else {
+				mapObservation.remove();
+				map.moveCamera(location.getCameraUpdate(mapFragment.getView(), (int)map.getCameraPosition().zoom));
 			}
+			mapObservation = mapObservationManager.addToMap(o);
 
 			setupImportant(o.getImportant());
 			setFavorites();

@@ -162,7 +162,8 @@ public class ObservationShareTask extends AsyncTask<Void, Integer, ArrayList<Uri
 
 
     private Spanned observationText(Observation observation) {
-        // TODO update to handle mulitple forms
+        // TODO when we turn this back on, make it work for multiple forms
+
 //        JsonObject formJson = observation.getEvent().getForm();
 //        Map<String, JsonObject> nameToField = new TreeMap<>();
 //        JsonArray dynamicFormFields = formJson.get("fields").getAsJsonArray();
@@ -187,7 +188,7 @@ public class ObservationShareTask extends AsyncTask<Void, Integer, ArrayList<Uri
 //                .append(observation.getTimestamp())
 //                .append("<br><br>");
 //
-//        Point point = (Point) observation.getGeometry();
+//        Point point = GeometryUtils.getCentroid(observation.getGeometry());
 //        builder.append("<strong>Latitude, Longitude:</strong><br>")
 //                .append(point.getY()).append(", ").append(point.getX())
 //                .append("<br><br>");
