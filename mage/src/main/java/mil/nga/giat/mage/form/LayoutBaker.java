@@ -3,11 +3,10 @@ package mil.nga.giat.mage.form;
 import android.os.Bundle;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.view.ContextThemeWrapper;
-import android.support.v7.widget.AppCompatEditText;
 import android.support.v7.widget.AppCompatRadioButton;
 import android.text.InputType;
 import android.util.Log;
+import android.view.ContextThemeWrapper;
 import android.view.View;
 import android.view.ViewGroup.LayoutParams;
 import android.widget.LinearLayout;
@@ -26,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -46,13 +46,22 @@ public class LayoutBaker {
 
 	private static final String LOG_NAME = LayoutBaker.class.getName();
 
-	private static final String EXTRA_PROPERTY_MAP = "EXTRA_PROPERTY_MAP";
-
 	public enum ControlGenerationType {
 		VIEW, EDIT
 	}
 
-	public static List<View> createControlsFromJson(final AppCompatActivity activity, ControlGenerationType controlGenerationType, JsonObject dynamicFormJson) {
+	public static Map<Long, Collection<View>> createControls(final AppCompatActivity activity, ControlGenerationType controlGenerationType, Collection<JsonObject> formDefinitions) {
+		Map<Long, Collection<View>> controls = new LinkedHashMap<>();
+
+		for (JsonObject formDefinition : formDefinitions) {
+			Long formId = formDefinition.get("id").getAsLong();
+			controls.put(formId, createFormControlsFromJson(activity, formId.intValue(), controlGenerationType, formDefinition));
+		}
+
+		return controls;
+	}
+
+	private static List<View> createFormControlsFromJson(final AppCompatActivity activity, int formId, ControlGenerationType controlGenerationType, JsonObject dynamicFormJson) {
 		// add the theme to the context
 		final ContextThemeWrapper context = new ContextThemeWrapper(activity, R.style.AppTheme_PrimaryAccent);
 
@@ -62,9 +71,10 @@ public class LayoutBaker {
 
 		Map<Integer, JsonObject> dynamicFormFieldsCollection = new TreeMap<>();
 
+		int fieldPrefix = formId * 10;
 		for (int i = 0; i < dynamicFormFields.size(); i++) {
 			JsonObject field = dynamicFormFields.get(i).getAsJsonObject();
-			Integer id = field.get("id").getAsInt();
+			Integer id = fieldPrefix + field.get("id").getAsInt();
 			dynamicFormFieldsCollection.put(id, field);
 		}
 
@@ -406,41 +416,48 @@ public class LayoutBaker {
 	}
 
 	public static void populateLayoutWithControls(final LinearLayout linearLayout, Collection<View> controls) {
-		for (View control : controls) {
-			linearLayout.addView(control);
+		for (View view : controls) {
+			linearLayout.addView(view);
 		}
 	}
 
-	public static List<View> validateControls(Collection<View> views) {
+	public static List<View> validateControls(Map<Long, Collection<View>> controls) {
 		List<View> invalid = new ArrayList<>();
 
-		for (View view : views) {
-			if (view instanceof MageControl) {
-				MageControl control = (MageControl) view;
-				boolean valid = control.validate();
+		for (Map.Entry<Long, Collection<View>> entry : controls.entrySet()) {
+			for (View view : entry.getValue()) {
+				if (view instanceof MageControl) {
+					MageControl control = (MageControl) view;
+					boolean valid = control.validate();
 
-				if (!valid) {
-					invalid.add(view);
+					if (!valid) {
+						invalid.add(view);
+					}
 				}
 			}
 		}
 
+
 		return invalid;
+	}
+
+	public static void populateLayout(final LinearLayout linearLayout, ControlGenerationType controlGenerationType, Map<String, ObservationProperty> properties) {
+		populateLayoutFromMap(linearLayout, controlGenerationType, properties);
 	}
 
 	/**
 	 * Populates the linearLayout from the key, value pairs in the propertiesMap
 	 *
 	 * @param linearLayout
-	 * @param propertiesMap
+	 * @param properties
 	 */
-	public static void populateLayoutFromMap(final LinearLayout linearLayout, ControlGenerationType controlGenerationType, final Map<String, ObservationProperty> propertiesMap) {
+	private static void populateLayoutFromMap(final LinearLayout linearLayout, ControlGenerationType controlGenerationType, Map<String, ObservationProperty> properties) {
 		for (int i = 0; i < linearLayout.getChildCount(); i++) {
 			View v = linearLayout.getChildAt(i);
 			if (v instanceof MageControl) {
 				MageControl mageControl = (MageControl) v;
 				String propertyKey = mageControl.getPropertyKey();
-				ObservationProperty property = propertiesMap.get(propertyKey);
+				ObservationProperty property = properties.get(propertyKey);
 
 				Serializable propertyValue = null;
 				if (property != null && property.getValue() != null) {
@@ -468,56 +485,66 @@ public class LayoutBaker {
 				}
 
 			} else if (v instanceof LinearLayout) {
-				populateLayoutFromMap((LinearLayout) v, controlGenerationType, propertiesMap);
+				populateLayoutFromMap((LinearLayout) v, controlGenerationType, properties);
 			}
 		}
 	}
 
-	public static void populateLayoutFromBundle(final LinearLayout linearLayout, ControlGenerationType controlGenerationType, Bundle savedInstanceState) {
+	/**
+	 * Returns a map of key value pairs form the layout
+	 *
+	 * @param forms
+	 * @return
+	 */
+	public static Map<Long, Map<String, ObservationProperty>> populateMapFromForms(Map<Long, Collection<View>> forms) {
+		Map<Long, Map<String, ObservationProperty>> properties = new HashMap<>();
+
+		for (Map.Entry<Long, Collection<View>> entry : forms.entrySet()) {
+			properties.put(entry.getKey(), populateMapFromLayout(entry.getValue()));
+		}
+
+		return properties;
+	}
+
+	private static Map<String, ObservationProperty> populateMapFromLayout(Collection<View> views) {
+		Map<String, ObservationProperty> properties = new HashMap<>();
+
+		for (View v : views) {
+			if (v instanceof MageControl) {
+				MageControl mageControl = (MageControl) v;
+				String key = mageControl.getPropertyKey();
+				Serializable value = mageControl.getPropertyValue();
+				if (key != null && value != null) {
+					properties.put(key, new ObservationProperty(key, value));
+				}
+			}
+		}
+
+		return properties;
+	}
+
+	public static void populateLayoutFromBundle(final LinearLayout linearLayout, ControlGenerationType controlGenerationType, Map<String, Serializable> properties) {
 		Map<String, ObservationProperty> propertiesMap = new HashMap<>();
-		for (Map.Entry<String, Serializable> entry : ((Map<String, Serializable>) savedInstanceState.getSerializable(EXTRA_PROPERTY_MAP)).entrySet()) {
+		for (Map.Entry<String, Serializable> entry : properties.entrySet()) {
 			propertiesMap.put(entry.getKey(), new ObservationProperty(entry.getKey(), entry.getValue()));
 		}
 
 		populateLayoutFromMap(linearLayout, controlGenerationType, propertiesMap);
 	}
 
-	/**
-	 * Returns a map of key value pairs form the layout
-	 *
-	 * @param linearLayout
-	 * @return
-	 */
-	public static Map<String, ObservationProperty> populateMapFromLayout(LinearLayout linearLayout) {
-		Map<String, ObservationProperty> properties = new HashMap<>();
-		return populateMapFromLayout(linearLayout, properties);
-	}
+	public static HashMap<Long, Map<String, Serializable>> getBundleFromForms(Map<Long, Collection<View>> forms, Bundle outState) {
+		HashMap<Long, Map<String, Serializable>> formMap = new HashMap<>();
 
-	private static Map<String, ObservationProperty> populateMapFromLayout(LinearLayout linearLayout, Map<String, ObservationProperty> fields) {
-		for (int i = 0; i < linearLayout.getChildCount(); i++) {
-			View v = linearLayout.getChildAt(i);
-
-			if (v instanceof MageControl) {
-				MageControl mageControl = (MageControl) v;
-				String key = mageControl.getPropertyKey();
-				Serializable value = mageControl.getPropertyValue();
-				if (key != null && value != null) {
-					fields.put(key, new ObservationProperty(key, value));
-				}
-			} else if (v instanceof LinearLayout) {
-				fields.putAll(populateMapFromLayout((LinearLayout) v, fields));
+		for (Map.Entry<Long, Collection<View>> formEntry : forms.entrySet()) {
+			Map<String, Serializable> properties = new HashMap<>();
+			for (Map.Entry<String, ObservationProperty> entry : populateMapFromLayout(formEntry.getValue()).entrySet()) {
+				properties.put(entry.getKey(), entry.getValue().getValue());
 			}
-		}
-		return fields;
-	}
 
-	public static void populateBundleFromLayout(LinearLayout linearLayout, Bundle outState) {
-		HashMap<String, Serializable> properties = new HashMap<>();
-		for (Map.Entry<String, ObservationProperty> entry : populateMapFromLayout(linearLayout).entrySet()) {
-			properties.put(entry.getKey(), entry.getValue().getValue());
+			formMap.put(formEntry.getKey(), properties);
 		}
 
-		outState.putSerializable(EXTRA_PROPERTY_MAP, properties);
+		return formMap;
 	}
 
 }

@@ -4,7 +4,10 @@ import android.app.Activity;
 import android.content.Context;
 import android.database.Cursor;
 import android.graphics.Bitmap;
+import android.graphics.drawable.Drawable;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.content.res.ResourcesCompat;
+import android.support.v4.graphics.drawable.DrawableCompat;
 import android.support.v4.widget.CursorAdapter;
 import android.text.format.DateUtils;
 import android.util.Log;
@@ -15,7 +18,6 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-import com.google.gson.JsonElement;
 import com.j256.ormlite.android.AndroidDatabaseResults;
 import com.j256.ormlite.stmt.PreparedQuery;
 
@@ -24,11 +26,11 @@ import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Locale;
-import java.util.Map;
 
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.map.marker.ObservationBitmapFactory;
 import mil.nga.giat.mage.observation.AttachmentGallery;
+import mil.nga.giat.mage.observation.ObservationShapeStyleParser;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationError;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationFavorite;
@@ -38,6 +40,7 @@ import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.exceptions.ObservationException;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
+import mil.nga.wkb.geom.GeometryType;
 
 public class ObservationFeedCursorAdapter extends CursorAdapter {
 
@@ -97,26 +100,45 @@ public class ObservationFeedCursorAdapter extends CursorAdapter {
 			}
 
 			ImageView markerView = (ImageView) v.findViewById(R.id.observation_marker);
-			Bitmap marker = ObservationBitmapFactory.bitmap(context, observation);
-			if (marker != null) {
-				markerView.setImageBitmap(marker);
+			ImageView shapeView = (ImageView) v.findViewById(R.id.observation_shape);
+			if (observation.getGeometry().getGeometryType() == GeometryType.POINT) {
+				markerView.setVisibility(View.VISIBLE);
+				shapeView.setVisibility(View.GONE);
+
+				Bitmap marker = ObservationBitmapFactory.bitmap(context, observation);
+				if (marker != null) {
+					markerView.setImageBitmap(marker);
+				}
+			} else {
+				markerView.setVisibility(View.GONE);
+				shapeView.setVisibility(View.VISIBLE);
+
+				Drawable drawable = observation.getGeometry().getGeometryType() == GeometryType.LINESTRING ?
+						ResourcesCompat.getDrawable(context.getResources(), R.drawable.ic_ray_start_end_black_24dp, null) :
+						ResourcesCompat.getDrawable(context.getResources(), R.drawable.ic_pentagon_outline_black_24dp, null);
+
+				drawable = DrawableCompat.wrap(drawable);
+				shapeView.setImageDrawable(drawable);
+
+				int strokeColor = ObservationShapeStyleParser.getStyle(context, observation).getStrokeColor();
+				DrawableCompat.setTint(drawable, strokeColor);
 			}
 
-			Map<String, ObservationProperty> properties = observation.getPropertiesMap();
-			ObservationProperty type = properties.get(TYPE_PROPERTY_KEY);
-			((TextView) v.findViewById(R.id.type)).setText(type.getValue().toString());
+			ObservationProperty primary = observation.getPrimaryField();
+			if (primary != null) {
+				TextView variantTextView = ((TextView) v.findViewById(R.id.type));
+				variantTextView.setVisibility(View.VISIBLE);
+				variantTextView.setText(primary.getValue().toString());
 
-			JsonElement variantField = observation.getEvent().getForm().get("variantField");
-			if (variantField != null && !variantField.isJsonNull()) {
+			} else {
+				v.findViewById(R.id.variant).setVisibility(View.GONE);
+			}
+
+			ObservationProperty secondary = observation.getSecondaryField();
+			if (secondary != null) {
 				TextView variantTextView = ((TextView) v.findViewById(R.id.variant));
-				ObservationProperty variant = properties.get(variantField.getAsString());
-
-				if (variant != null && variant.getValue() != null) {
-					variantTextView.setVisibility(View.VISIBLE);
-					variantTextView.setText(variant.getValue().toString());
-				} else {
-					v.findViewById(R.id.variant).setVisibility(View.GONE);
-				}
+				variantTextView.setVisibility(View.VISIBLE);
+				variantTextView.setText(secondary.getValue().toString());
 			} else {
 				v.findViewById(R.id.variant).setVisibility(View.GONE);
 			}

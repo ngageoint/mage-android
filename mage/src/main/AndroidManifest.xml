@@ -178,6 +178,10 @@
             android:launchMode="singleTop"
             android:label="@string/observation_view" />
         <activity
+            android:name=".observation.ObservationFormPickerActivity"
+            android:theme="@style/AppTheme.NoActionBar"
+            android:uiOptions="splitActionBarWhenNarrow" />
+        <activity
             android:name=".observation.ObservationEditActivity"
             android:uiOptions="splitActionBarWhenNarrow" />
         <activity android:name=".observation.AttachmentViewerActivity" />

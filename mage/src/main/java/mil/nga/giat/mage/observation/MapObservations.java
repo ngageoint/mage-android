@@ -212,6 +212,15 @@ public class MapObservations {
     }
 
     /**
+     * Get all observations count
+     *
+     * @return number of observations
+     */
+    public int size() {
+        return observationIds.size();
+    }
+
+    /**
      * Get all shapes as an iterable
      *
      * @return iterable shapes

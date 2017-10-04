@@ -45,7 +45,7 @@ public class ObservationLocation implements Parcelable {
     /**
      * Default camera single point zoom level
      */
-    public static final int DEFAULT_POINT_ZOOM = 18;
+    public static final int DEFAULT_POINT_ZOOM = 17;
 
     /**
      * Default camera padding percentage when building a camera update for geometry zoom

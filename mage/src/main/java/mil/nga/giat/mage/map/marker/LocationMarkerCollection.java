@@ -30,7 +30,6 @@ import org.ocpsoft.prettytime.PrettyTime;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 
 import mil.nga.giat.mage.R;
@@ -39,7 +38,6 @@ import mil.nga.giat.mage.profile.ProfileActivity;
 import mil.nga.giat.mage.sdk.Temporal;
 import mil.nga.giat.mage.sdk.datastore.location.Location;
 import mil.nga.giat.mage.sdk.datastore.location.LocationProperty;
-import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserLocal;
 import mil.nga.giat.mage.sdk.fetch.DownloadImageTask;
@@ -69,10 +67,10 @@ public class LocationMarkerCollection implements PointCollection<Pair<Location, 
 		this.map = map;
 	}
 
-	@Override
-	public Iterator<Pair<Location, User>> iterator() {
-		return markerIdToPair.values().iterator();
-	}
+//	@Override
+//	public Iterator<Pair<Location, User>> iterator() {
+//		return markerIdToPair.values().iterator();
+//	}
 
 	@Override
 	public void add(MarkerOptions options, Pair<Location, User> pair) {

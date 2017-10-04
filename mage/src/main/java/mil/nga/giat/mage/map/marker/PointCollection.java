@@ -7,7 +7,6 @@ import com.google.android.gms.maps.GoogleMap.OnMarkerClickListener;
 import com.google.android.gms.maps.model.MarkerOptions;
 
 import java.util.Date;
-import java.util.Iterator;
 
 import mil.nga.giat.mage.filter.Filter;
 import mil.nga.giat.mage.sdk.Temporal;
@@ -21,7 +20,7 @@ public interface PointCollection<T> extends OnCameraIdleListener, OnMarkerClickL
 
 	public int count();
 
-	public Iterator<T> iterator();
+//	public Iterator<T> iterator();
 
 	public boolean isVisible();
 

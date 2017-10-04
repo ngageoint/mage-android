@@ -7,8 +7,6 @@ import android.support.v4.graphics.ColorUtils;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
-import java.util.Map;
-
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationProperty;
 
@@ -75,39 +73,35 @@ public class ObservationShapeStyleParser {
 
         ObservationShapeStyle style = new ObservationShapeStyle(context);
 
-        JsonObject formJson = observation.getEvent().getForm();
-
         // Check for a style
-        JsonElement styleField = formJson.get(STYLE_ELEMENT);
+        JsonElement styleField = observation.getStyle();
         if (styleField != null && !styleField.isJsonNull()) {
 
             // Found the top level style
             JsonObject styleObject = styleField.getAsJsonObject();
 
-            Map<String, ObservationProperty> properties = observation.getPropertiesMap();
-            ObservationProperty typeProperty = properties.get(OBSERVATION_TYPE_PROPERTY);
-            String type = typeProperty.getValue().toString();
+            ObservationProperty primaryProperty = observation.getPrimaryField();
+            if (primaryProperty != null) {
+                String primary = primaryProperty.getValue().toString();
 
-            // Check for a type within the style
-            JsonElement typeField = styleObject.get(type);
-            if (typeField != null && !typeField.isJsonNull()) {
+                // Check for a type within the style
+                JsonElement primaryField = styleObject.get(primary);
+                if (primaryField != null && !primaryField.isJsonNull()) {
 
-                // Found the type level style
-                styleObject = typeField.getAsJsonObject();
+                    // Found the type level style
+                    styleObject = primaryField.getAsJsonObject();
 
-                // Check for a variant
-                JsonElement variantField = formJson.get(VARIANT_FIELD_ELEMENT);
-                if (variantField != null && !variantField.isJsonNull()) {
+                    ObservationProperty variantProperty = observation.getSecondaryField();
+                    if (variantProperty != null) {
+                        String variant = variantProperty.getValue().toString();
 
-                    ObservationProperty variantProperty = properties.get(variantField.getAsString());
-                    String variant = variantProperty.getValue().toString();
+                        // Check for a variant within the style type
+                        JsonElement typeVariantField = styleObject.get(variant);
+                        if (typeVariantField != null && !typeVariantField.isJsonNull()) {
 
-                    // Check for a variant within the style type
-                    JsonElement typeVariantField = styleObject.get(variant);
-                    if (typeVariantField != null && !typeVariantField.isJsonNull()) {
-
-                        // Found the variant level style
-                        styleObject = typeVariantField.getAsJsonObject();
+                            // Found the variant level style
+                            styleObject = typeVariantField.getAsJsonObject();
+                        }
                     }
                 }
             }

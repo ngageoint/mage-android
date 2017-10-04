@@ -167,7 +167,8 @@ dependencies {
     }
 
 //    compile project(':sdk') // uncomment me to build locally, and see top-level build.gradle
-    compile 'mil.nga.giat.mage:mage-android-sdk:5.3.1' // comment me to build locally
+    compile 'mil.nga.giat.mage:mage-android-sdk:6.0.0' // comment me to build locally
+    compile 'mil.nga.geopackage:geopackage-android:1.3.0'
     compile 'com.android.support:multidex:1.0.1'
     compile 'com.android.support:support-v13:25.3.1'
     compile 'com.android.support:recyclerview-v7:25.3.1'
@@ -177,6 +178,7 @@ dependencies {
     compile 'com.android.support:preference-v7:25.3.1'
     compile 'com.android.support:preference-v14:25.3.1'
     compile 'com.google.android.gms:play-services:10.2.1'
+    compile 'com.google.android:flexbox:0.3.0'
     compile 'com.google.maps.android:android-maps-utils:0.5'
     compile 'mil.nga.geopackage.map:geopackage-android-map:1.4.1'
     compile 'org.ocpsoft.prettytime:prettytime:3.2.5.Final'

@@ -15,7 +15,6 @@ import com.google.maps.android.clustering.algo.GridBasedAlgorithm;
 import com.google.maps.android.clustering.algo.PreCachingAlgorithmDecorator;
 
 import java.util.Date;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -49,10 +48,10 @@ public class ObservationClusterCollection implements PointCollection<Observation
         clusterManager.setOnClusterItemClickListener(this);
     }
 
-    @Override
-    public Iterator<Observation> iterator() {
-        return observations.values().iterator();
-    }
+//    @Override
+//    public Iterator<Observation> iterator() {
+//        return observations.values().iterator();
+//    }
 
     @Override
     public void add(MarkerOptions options, Observation o) {

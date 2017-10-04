@@ -34,6 +34,8 @@ import android.widget.HeaderViewListAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 import com.j256.ormlite.android.AndroidDatabaseResults;
 import com.j256.ormlite.dao.CloseableIterator;
 import com.j256.ormlite.dao.Dao;
@@ -60,6 +62,7 @@ import mil.nga.giat.mage.filter.ObservationFilterActivity;
 import mil.nga.giat.mage.observation.AttachmentGallery;
 import mil.nga.giat.mage.observation.AttachmentViewerActivity;
 import mil.nga.giat.mage.observation.ObservationEditActivity;
+import mil.nga.giat.mage.observation.ObservationFormPickerActivity;
 import mil.nga.giat.mage.observation.ObservationLocation;
 import mil.nga.giat.mage.observation.ObservationViewActivity;
 import mil.nga.giat.mage.sdk.datastore.DaoStore;
@@ -78,8 +81,6 @@ import mil.nga.giat.mage.sdk.exceptions.UserException;
 import mil.nga.giat.mage.sdk.fetch.ObservationRefreshIntent;
 import mil.nga.giat.mage.sdk.location.LocationService;
 import mil.nga.wkb.geom.Geometry;
-import mil.nga.wkb.geom.GeometryType;
-import mil.nga.wkb.geom.Point;
 
 public class ObservationFeedFragment extends Fragment implements IObservationEventListener, OnItemClickListener, ObservationFeedCursorAdapter.ObservationActionListener {
 
@@ -252,8 +253,6 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 	}
 
 	private void onNewObservation() {
-		Intent intent = new Intent(getActivity(), ObservationEditActivity.class);
-
 		ObservationLocation location = null;
 		if (locationService != null) {
 			Location l = locationService.getLocation();
@@ -280,6 +279,7 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 		} else {
 			location = new ObservationLocation(location);
 		}
+
 		if(!UserHelper.getInstance(getActivity().getApplicationContext()).isCurrentUserPartOfCurrentEvent()) {
 			new AlertDialog.Builder(getActivity(), R.style.AppCompatAlertDialogStyle)
 					.setTitle(getActivity().getResources().getString(R.string.location_no_event_title))
@@ -287,8 +287,23 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 					.setPositiveButton(android.R.string.ok, null)
 					.show();
 		} else if(location != null) {
+			Intent intent;
+
+			// show form picker or go to
+			JsonArray formDefinitions = EventHelper.getInstance(getActivity()).getCurrentEvent().getForms();
+			if (formDefinitions.size() == 0) {
+				intent = new Intent(getActivity(), ObservationEditActivity.class);
+			} else if (formDefinitions.size() == 1) {
+				JsonObject form = (JsonObject) formDefinitions.iterator().next();
+				intent = new Intent(getActivity(), ObservationEditActivity.class);
+				intent.putExtra(ObservationEditActivity.OBSERVATION_FORM_ID, form.get("id").getAsLong());
+			} else {
+				intent = new Intent(getActivity(), ObservationFormPickerActivity.class);
+			}
+
 			intent.putExtra(ObservationEditActivity.LOCATION, location);
 			startActivity(intent);
+
 		} else {
 			if (ContextCompat.checkSelfPermission(getActivity().getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
 				new AlertDialog.Builder(getActivity(), R.style.AppCompatAlertDialogStyle)

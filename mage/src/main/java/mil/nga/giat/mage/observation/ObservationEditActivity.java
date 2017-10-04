@@ -1,7 +1,6 @@
 package mil.nga.giat.mage.observation;
 
 import android.Manifest;
-import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.Dialog;
@@ -13,7 +12,6 @@ import android.content.pm.ResolveInfo;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.SystemClock;
 import android.provider.MediaStore;
 import android.provider.Settings;
 import android.support.v4.app.ActivityCompat;
@@ -24,7 +22,7 @@ import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.KeyEvent;
-import android.view.Menu;
+import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
@@ -46,6 +44,7 @@ import com.google.android.gms.maps.model.Circle;
 import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
 import java.io.File;
@@ -59,6 +58,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -67,11 +67,14 @@ import mil.nga.giat.mage.BuildConfig;
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.form.LayoutBaker;
 import mil.nga.giat.mage.form.LayoutBaker.ControlGenerationType;
+import mil.nga.giat.mage.form.MageEditText;
+import mil.nga.giat.mage.form.MagePropertyType;
 import mil.nga.giat.mage.form.MageSelectView;
 import mil.nga.giat.mage.form.MageTextView;
 import mil.nga.giat.mage.map.marker.ObservationBitmapFactory;
 import mil.nga.giat.mage.sdk.datastore.observation.Attachment;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
+import mil.nga.giat.mage.sdk.datastore.observation.ObservationForm;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationProperty;
 import mil.nga.giat.mage.sdk.datastore.observation.State;
@@ -84,7 +87,6 @@ import mil.nga.giat.mage.sdk.exceptions.UserException;
 import mil.nga.giat.mage.sdk.utils.ISO8601DateFormatFactory;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
 import mil.nga.wkb.geom.Geometry;
-import mil.nga.wkb.geom.GeometryType;
 
 public class ObservationEditActivity extends AppCompatActivity implements OnMapReadyCallback, OnCameraIdleListener, DateTimePickerDialog.OnDateTimeChangedListener {
 
@@ -99,10 +101,12 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 	private final DateFormat iso8601Format = ISO8601DateFormatFactory.ISO8601();
 
 	public static final String OBSERVATION_ID = "OBSERVATION_ID";
+	public static final String OBSERVATION_FORM_ID = "OBSERVATION_FORM_ID";
 	public static final String LOCATION = "LOCATION";
 	public static final String INITIAL_LOCATION = "INITIAL_LOCATION";
 	public static final String INITIAL_ZOOM = "INITIAL_ZOOM";
 	private static final String CURRENT_MEDIA_PATH = "CURRENT_MEDIA_PATH";
+	private static final String EXTRA_PROPERTY_MAP = "EXTRA_PROPERTY_MAP";
 
 	private static final int CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE = 100;
 	private static final int CAPTURE_VIDEO_ACTIVITY_REQUEST_CODE = 200;
@@ -112,8 +116,10 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 	private static final int SELECT_ACTIVITY_REQUEST_CODE = 700;
 
 	private static final long NEW_OBSERVATION = -1L;
+	private static final long NO_FORM = -1L;
 
-	private static Integer FIELD_ID_SELECT = 7;
+	private static final int FIELD_ID_SELECT = 7;
+	private static final int FORM_ID_PREFIX = 100;
 
 	private Map<String, View> fieldIdMap = new HashMap<>(); //FieldId + " " + UnqiueId / View
 
@@ -129,15 +135,14 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 	private MapFragment mapFragment;
 	private MapObservationManager mapObservationManager;
 
+	MageEditText timestamp;
 	private LinearLayout attachmentLayout;
 	private AttachmentGallery attachmentGallery;
 
 	private String currentMediaPath;
 
-	// control key to default position
-	private static Map<String, Integer> spinnersLastPositions = new HashMap<>();
-
-	private List<View> controls = new ArrayList<>();
+	private Map<Long, Collection<View>> controls = new HashMap<>();
+	private Map<Long, JsonObject> formDefinitions = new HashMap<>();
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -152,6 +157,50 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 
 		getSupportActionBar().setHomeAsUpIndicator(R.drawable.ic_close_white_24dp);
 		getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+
+		timestamp = (MageEditText) findViewById(R.id.date);
+		timestamp.getEditText().setFocusableInTouchMode(false);
+		timestamp.getEditText().setFocusable(true);
+		timestamp.getEditText().setTextIsSelectable(false);
+		timestamp.getEditText().setCursorVisible(false);
+		timestamp.getEditText().setClickable(false);
+		timestamp.setHint("Date");
+		timestamp.setRequired(true);
+		timestamp.setPropertyKey("timestamp");
+		timestamp.setPropertyType(MagePropertyType.DATE);
+
+		final long observationId = getIntent().getLongExtra(OBSERVATION_ID, NEW_OBSERVATION);
+		final boolean newObservation = observationId == NEW_OBSERVATION;
+
+		Iterator<JsonElement> iterator = EventHelper.getInstance(getApplicationContext()).getCurrentEvent().getForms().iterator();
+		while (iterator.hasNext()) {
+			JsonObject form = (JsonObject) iterator.next();
+			formDefinitions.put(form.get("id").getAsLong(), form);
+		}
+
+		Map<Long, JsonObject> formMap = EventHelper.getInstance(getApplicationContext()).getCurrentEvent().getFormMap();
+
+		Collection<JsonObject> formDefinitions = new ArrayList<>();
+		if (newObservation) {
+			observation = new Observation();
+
+			final long formId = getIntent().getLongExtra(OBSERVATION_FORM_ID, NO_FORM);
+			if (formId != NO_FORM) {
+				formDefinitions.add(formMap.get(formId));
+			}
+		} else {
+			try {
+				observation = ObservationHelper.getInstance(getApplicationContext()).read(getIntent().getLongExtra(OBSERVATION_ID, 0L));
+
+				for (ObservationForm observationForm : observation.getForms()) {
+					JsonObject formDefinition = formMap.get(observationForm.getFormId());
+					formDefinitions.add((formDefinition));
+				}
+			} catch (ObservationException oe) {
+				Log.e(LOG_NAME, "Problem reading observation.", oe);
+				return;
+			}
+		}
 
 		attachmentLayout = (LinearLayout) findViewById(R.id.image_gallery);
 		attachmentGallery = new AttachmentGallery(getApplicationContext(), 100, 100);
@@ -171,57 +220,57 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 			}
 		});
 
-		final long observationId = getIntent().getLongExtra(OBSERVATION_ID, NEW_OBSERVATION);
-		final boolean newObservation = observationId == NEW_OBSERVATION;
-		JsonObject dynamicFormJson;
-		if (newObservation) {
-			observation = new Observation();
-			dynamicFormJson = EventHelper.getInstance(getApplicationContext()).getCurrentEvent().getForm();
-		} else {
-			try {
-				observation = ObservationHelper.getInstance(getApplicationContext()).read(getIntent().getLongExtra(OBSERVATION_ID, 0L));
-				dynamicFormJson = observation.getEvent().getForm();
-			} catch (ObservationException oe) {
-				Log.e(LOG_NAME, "Problem reading observation.", oe);
-				return;
-			}
-		}
+		controls = LayoutBaker.createControls(this, ControlGenerationType.EDIT, formDefinitions);
+		for (Map.Entry<Long, Collection<View>> entry : controls.entrySet()) {
+			for (View view : entry.getValue()) {
+				if (view instanceof MageSelectView) {
+					final MageSelectView selectView = (MageSelectView) view;
+					fieldIdMap.put(getSelectId(selectView.getId()), selectView);
 
-		controls = LayoutBaker.createControlsFromJson(this, ControlGenerationType.EDIT, dynamicFormJson);
-		for (View view : controls) {
-			if (view instanceof MageSelectView) {
-				final MageSelectView selectView = (MageSelectView) view;
-				fieldIdMap.put(getSelectId(selectView.getId()), selectView);
+					selectView.getEditText().setOnClickListener(new View.OnClickListener() {
+						@Override
+						public void onClick(View v) {
+							selectClick(selectView);
+						}
+					});
+				} else if (view instanceof LinearLayout) {
+					LinearLayout currentView = (LinearLayout) view;
+					for (int index = 0; index < currentView.getChildCount(); index++) {
+						View childView = currentView.getChildAt(index);
+						if (childView instanceof MageSelectView) {
+							final MageSelectView childSelectView = (MageSelectView) childView;
+							fieldIdMap.put(getSelectId(childSelectView.getId()), childSelectView);
 
-				selectView.getEditText().setOnClickListener(new View.OnClickListener() {
-					@Override
-					public void onClick(View v) {
-						selectClick(selectView);
-					}
-				});
-			} else if (view instanceof LinearLayout) {
-				LinearLayout currentView = (LinearLayout) view;
-				for (int index = 0; index < currentView.getChildCount(); index++) {
-					View childView = currentView.getChildAt(index);
-					if (childView instanceof MageSelectView) {
-						final MageSelectView childSelectView = (MageSelectView) childView;
-						fieldIdMap.put(getSelectId(childSelectView.getId()), childSelectView);
-
-						childSelectView.setOnClickListener(new View.OnClickListener() {
-							@Override
-							public void onClick(View v) {
-								selectClick(childSelectView);
-							}
-						});
+							childSelectView.setOnClickListener(new View.OnClickListener() {
+								@Override
+								public void onClick(View v) {
+									selectClick(childSelectView);
+								}
+							});
+						}
 					}
 				}
 			}
 		}
 
 		// add dynamic controls to view
-		LayoutBaker.populateLayoutWithControls((LinearLayout) findViewById(R.id.location_dynamic_form), controls);
+		LayoutInflater inflater = getLayoutInflater();
+		LinearLayout forms = (LinearLayout) findViewById(R.id.forms);
 
-		mapFragment = (MapFragment) getFragmentManager().findFragmentById(R.id.background_map);
+		for (Map.Entry<Long, Collection<View>> entry : controls.entrySet()) {
+			LinearLayout form = (LinearLayout) inflater.inflate(R.layout.observation_editor_form, null);
+			form.setId(FORM_ID_PREFIX + entry.getKey().intValue());
+
+			JsonObject definition = formMap.get(entry.getKey());
+			TextView formName = (TextView) form.findViewById(R.id.form_name);
+			formName.setText(definition.get("name").getAsString());
+
+			LayoutBaker.populateLayoutWithControls((LinearLayout) form.findViewById(R.id.form_content), entry.getValue());
+
+			forms.addView(form);
+		}
+
+		mapFragment = (MapFragment) getFragmentManager().findFragmentById(R.id.map);
 		mapFragment.getMapAsync(this);
 
 		hideKeyboardOnClick(findViewById(R.id.observation_edit));
@@ -233,13 +282,8 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 			observation.setGeometry(location.getGeometry());
             observation.setEvent(EventHelper.getInstance(getApplicationContext()).getCurrentEvent());
 			observation.setTimestamp(new Date());
-			Serializable timestamp = iso8601Format.format(observation.getTimestamp());
-			ObservationProperty timestampProperty = new ObservationProperty("timestamp", timestamp);
+			timestamp.setPropertyValue(observation.getTimestamp());
 
-			Map<String, ObservationProperty> propertyMap = LayoutBaker.populateMapFromLayout((LinearLayout) findViewById(R.id.form));
-			propertyMap.put("timestamp", timestampProperty);
-
-			observation.addProperties(propertyMap.values());
 			try {
 				User u = UserHelper.getInstance(getApplicationContext()).readCurrentUser();
 				if (u != null) {
@@ -248,38 +292,44 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 			} catch (UserException ue) {
 				ue.printStackTrace();
 			}
-			LayoutBaker.populateLayoutFromMap((LinearLayout) findViewById(R.id.form), ControlGenerationType.EDIT, observation.getPropertiesMap());
+
+			for (ObservationForm observationForm : observation.getForms()) {
+				LayoutBaker.populateLayout((LinearLayout) findViewById(R.id.form), ControlGenerationType.EDIT, observationForm.getPropertiesMap());
+			}
 		} else {
 			getSupportActionBar().setTitle("Edit Observation");
 			// this is an edit of an existing observation
 			attachmentGallery.addAttachments(attachmentLayout, observation.getAttachments());
 
-			Map<String, ObservationProperty> propertiesMap = observation.getPropertiesMap();
 			Geometry geometry = observation.getGeometry();
-
-			String provider = ObservationLocation.MANUAL_PROVIDER;
-			if (propertiesMap.get("provider") != null) {
-				provider = propertiesMap.get("provider").getValue().toString();
-			}
+			String provider = observation.getProvider() != null ? observation.getProvider() : ObservationLocation.MANUAL_PROVIDER;
 			location = new ObservationLocation(provider, geometry);
-			if (propertiesMap.containsKey("accuracy")) {
-				location.setAccuracy(Float.parseFloat(propertiesMap.get("accuracy").getValue().toString()));
+
+			Float accuracy = observation.getAccuracy();
+			if (accuracy != null) {
+				location.setAccuracy(accuracy);
 			}
 
-			LayoutBaker.populateLayoutFromMap((LinearLayout) findViewById(R.id.form), ControlGenerationType.EDIT, propertiesMap);
+			timestamp.setPropertyValue(observation.getTimestamp());
+
+			LinearLayout formsLayout = (LinearLayout) findViewById(R.id.forms);
+			for (ObservationForm observationForm : observation.getForms()) {
+				LinearLayout formLayout = (LinearLayout) formsLayout.findViewById(FORM_ID_PREFIX + observationForm.getFormId().intValue());
+				LayoutBaker.populateLayout(formLayout, ControlGenerationType.EDIT, observationForm.getPropertiesMap());
+			}
 		}
 
 		final DateTimePickerDialog.OnDateTimeChangedListener dateTimeChangedListener = new DateTimePickerDialog.OnDateTimeChangedListener() {
 			@Override
 			public void onDateTimeChanged(Date date) {
-				((MageTextView) findViewById(R.id.date)).setPropertyValue(date);
+				((MageEditText) findViewById(R.id.date)).setPropertyValue(date);
 			}
 		};
 
-		findViewById(R.id.date_edit).setOnClickListener(new View.OnClickListener() {
+		timestamp.getEditText().setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				Serializable value = ((MageTextView) findViewById(R.id.date)).getPropertyValue();
+				Serializable value = ((MageEditText) findViewById(R.id.date)).getPropertyValue();
 				Date date = null;
 				try {
 					date = ISO8601DateFormatFactory.ISO8601().parse(value.toString());
@@ -313,6 +363,13 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 				dialog.setOnDateTimeChangedListener(dateTimeChangedListener);
 			}
 		}
+
+		findViewById(R.id.save_button).setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				saveObservation();
+			}
+		});
 	}
 
 	@Override
@@ -353,6 +410,7 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 	public void onMapReady(GoogleMap map) {
 		this.map = map;
 		map.getUiSettings().setZoomControlsEnabled(false);
+
 		mapObservationManager = new MapObservationManager(this, map);
 		map.setOnCameraIdleListener(this);
 	}
@@ -366,32 +424,10 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 	private void setupMap() {
 		if (map == null) return;
 
-		LatLng pointLatLng = location.getCentroidLatLng();
+		LatLng centroid = location.getCentroidLatLng();
 
-		Geometry geometry = location.getGeometry();
-		TextView locationTextView = (TextView) findViewById(R.id.location);
-		locationTextView.setText(latLngFormat.format(pointLatLng.latitude) + ", " + latLngFormat.format(pointLatLng.longitude));
-		TextView providerTextView = (TextView) findViewById(R.id.location_provider);
-		if (location.getProvider() != null) {
-			providerTextView.setText("("+location.getProvider()+")");
-		} else {
-			providerTextView.setVisibility(View.GONE);
-		}
-		TextView accuracyTextView = (TextView) findViewById(R.id.location_accuracy);
-		if (location.getAccuracy() != 0) {
-			accuracyTextView.setText("\u00B1" + location.getAccuracy() + "m");
-		} else {
-			accuracyTextView.setVisibility(View.GONE);
-		}
-
-		locationElapsedTimeMilliseconds = getElapsedTimeInMilliseconds();
-		if (locationElapsedTimeMilliseconds != 0 && !(ObservationLocation.MANUAL_PROVIDER.equalsIgnoreCase(location.getProvider()))) {
-			//String dateText = DateUtils.getRelativeTimeSpanString(System.currentTimeMillis() - locationElapsedTimeMilliseconds, System.currentTimeMillis(), 0).toString();
-			String dateText = elapsedTime(locationElapsedTimeMilliseconds);
-			((TextView) findViewById(R.id.location_elapsed_time)).setText(dateText);
-		} else {
-			findViewById(R.id.location_elapsed_time).setVisibility(View.GONE);
-		}
+		((TextView) findViewById(R.id.latitude)).setText(latLngFormat.format(centroid.latitude));
+		((TextView) findViewById(R.id.longitude)).setText(latLngFormat.format(centroid.longitude));
 
 		LatLng initialLatLng = getIntent().getParcelableExtra(INITIAL_LOCATION);
 		if (initialLatLng == null) {
@@ -399,8 +435,9 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 		}
 
 		float zoom = getIntent().getFloatExtra(INITIAL_ZOOM, 0);
-
 		map.moveCamera(CameraUpdateFactory.newLatLngZoom(initialLatLng, zoom));
+		map.animateCamera(location.getCameraUpdate(mapFragment.getView()));
+		map.getUiSettings().setMapToolbarEnabled(false);
 
 		map.animateCamera(location.getCameraUpdate(mapFragment.getView()));
 
@@ -408,12 +445,12 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 			accuracyCircle.remove();
 		}
 
-		if(location.getAccuracy() > 0) {
+		if (location.getAccuracy() > 0) {
 			CircleOptions circleOptions = new CircleOptions()
 					.fillColor(getResources().getColor(R.color.accuracy_circle_fill))
 					.strokeColor(getResources().getColor(R.color.accuracy_circle_stroke))
 					.strokeWidth(5)
-					.center(pointLatLng)
+					.center(centroid)
 					.radius(location.getAccuracy());
 			accuracyCircle = map.addCircle(circleOptions);
 		}
@@ -422,44 +459,6 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 			mapObservation.remove();
 		}
 		mapObservation = mapObservationManager.addToMap(observation);
-	}
-
-	@SuppressLint("NewApi")
-	private long getElapsedTimeInMilliseconds() {
-		long elapsedTimeInMilliseconds = 0;
-		if (observation.getPropertiesMap().containsKey("delta")) {
-			elapsedTimeInMilliseconds = Long.parseLong(observation.getPropertiesMap().get("delta").getValue().toString());
-		}
-		if (Build.VERSION.SDK_INT >= 17 && location.getElapsedRealtimeNanos() != 0) {
-			elapsedTimeInMilliseconds = ((SystemClock.elapsedRealtimeNanos() - location.getElapsedRealtimeNanos()) / (1000000l));
-		} else {
-			elapsedTimeInMilliseconds = System.currentTimeMillis() - location.getTime();
-		}
-		return Math.max(0l, elapsedTimeInMilliseconds);
-	}
-
-	private String elapsedTime(long ms) {
-		String s = "";
-
-		long sec = ms / 1000;
-		long min = sec / 60;
-
-		if (observation.getRemoteId() == null) {
-			if (ms < 1000) {
-				return "now";
-			}
-			if (min == 0) {
-				s = sec + ((sec == 1) ? " sec ago" : " secs ago");
-			} else if (min < 60) {
-				s = min + ((min == 1) ? " min ago" : " mins ago");
-			} else {
-				long hour = Math.round(Math.floor(min / 60));
-				s = hour + ((hour == 1) ? " hour ago" : " hours ago");
-			}
-		} else {
-			return "";
-		}
-		return s;
 	}
 
 	@Override
@@ -474,26 +473,25 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 			attachmentGallery.addAttachment(attachmentLayout, a);
 		}
 
-		LinearLayout form = (LinearLayout) findViewById(R.id.form);
-		LayoutBaker.populateLayoutFromBundle(form, ControlGenerationType.EDIT, savedInstanceState);
+		HashMap<Long, Map<String, Serializable>> formMap = (HashMap<Long, Map<String, Serializable>>) savedInstanceState.getSerializable(EXTRA_PROPERTY_MAP);
+		for (Map.Entry<Long, Map<String, Serializable>> formEntry : formMap.entrySet()) {
+			LinearLayout formLayout = (LinearLayout) findViewById(formEntry.getKey().intValue());
+			LayoutBaker.populateLayoutFromBundle(formLayout, ControlGenerationType.EDIT, formEntry.getValue());
+		}
+
 		currentMediaPath = savedInstanceState.getString(CURRENT_MEDIA_PATH);
 	}
 
 	@Override
 	protected void onSaveInstanceState(Bundle outState) {
-		LayoutBaker.populateBundleFromLayout((LinearLayout) findViewById(R.id.form), outState);
+		super.onSaveInstanceState(outState);
+
+		HashMap<Long, Map<String, Serializable>> formMap = LayoutBaker.getBundleFromForms(controls, outState);
+		outState.putSerializable(EXTRA_PROPERTY_MAP, formMap);
+
 		outState.putParcelable("location", location);
 		outState.putParcelableArrayList("attachmentsToCreate", attachmentsToCreate);
 		outState.putString(CURRENT_MEDIA_PATH, currentMediaPath);
-		super.onSaveInstanceState(outState);
-	}
-
-	@Override
-	public boolean onCreateOptionsMenu(Menu menu) {
-		// Inflate the menu; this adds items to the action bar if it is present.
-		getMenuInflater().inflate(R.menu.observation_edit_menu, menu);
-
-		return true;
 	}
 
 	@Override
@@ -529,63 +527,74 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 						.show();
 
 				break;
-
-			case R.id.observation_save:
-				List<View> invalid = LayoutBaker.validateControls(controls);
-				if (!invalid.isEmpty()) {
-					// scroll to first invalid control
-					View firstInvalid = invalid.get(0);
-					findViewById(R.id.properties).scrollTo(0, firstInvalid.getBottom());
-					firstInvalid.clearFocus();
-					firstInvalid.requestFocus();
-					firstInvalid.requestFocusFromTouch();
-					break;
-				}
-
-				observation.setState(State.ACTIVE);
-				observation.setDirty(true);
-                observation.setGeometry(location.getGeometry());
-
-				Map<String, ObservationProperty> propertyMap = LayoutBaker.populateMapFromLayout((LinearLayout) findViewById(R.id.form));
-
-				try {
-					observation.setTimestamp(iso8601Format.parse(propertyMap.get("timestamp").getValue().toString()));
-				} catch (ParseException pe) {
-					Log.e(LOG_NAME, "Could not parse timestamp", pe);
-				}
-				// Add properties that weren't part of the layout
-				propertyMap.put("accuracy", new ObservationProperty("accuracy", l.getAccuracy()));
-				String provider = l.getProvider();
-				if (provider == null || provider.trim().isEmpty()) {
-					provider = "manual";
-				}
-
-				propertyMap.put("provider", new ObservationProperty("provider", provider));
-				if (!"manual".equalsIgnoreCase(provider)) {
-					propertyMap.put("delta", new ObservationProperty("delta", Long.toString(locationElapsedTimeMilliseconds)));
-				}
-
-				observation.addProperties(propertyMap.values());
-				observation.getAttachments().addAll(attachmentsToCreate);
-
-				ObservationHelper oh = ObservationHelper.getInstance(getApplicationContext());
-				try {
-					if (observation.getId() == null) {
-						Observation newObs = oh.create(observation);
-						Log.i(LOG_NAME, "Created new observation with id: " + newObs.getId());
-					} else {
-						oh.update(observation);
-						Log.i(LOG_NAME, "Updated observation with remote id: " + observation.getRemoteId());
-					}
-					finish();
-				} catch (Exception e) {
-					Log.e(LOG_NAME, e.getMessage(), e);
-				}
-
-				break;
 		}
 
 		return super.onOptionsItemSelected(item);
+	}
+
+	private void saveObservation() {
+		List<View> invalid = LayoutBaker.validateControls(controls);
+		if (!invalid.isEmpty()) {
+			// scroll to first invalid control
+			View firstInvalid = invalid.get(0);
+			findViewById(R.id.properties).scrollTo(0, firstInvalid.getBottom());
+			firstInvalid.clearFocus();
+			firstInvalid.requestFocus();
+			firstInvalid.requestFocusFromTouch();
+
+			return;
+		}
+
+		observation.setState(State.ACTIVE);
+		observation.setDirty(true);
+		observation.setGeometry(location.getGeometry());
+
+		Map<Long, Map<String, ObservationProperty>> forms = LayoutBaker.populateMapFromForms(controls);
+
+		// Add properties that weren't part of the form
+		try {
+			observation.setTimestamp(iso8601Format.parse(timestamp.getPropertyValue().toString()));
+		} catch (ParseException pe) {
+			Log.e(LOG_NAME, "Could not parse timestamp", pe);
+		}
+
+		observation.setAccuracy(location.getAccuracy());
+
+		String provider = location.getProvider();
+		if (provider == null || provider.trim().isEmpty()) {
+			provider = "manual";
+		}
+		observation.setProvider(provider);
+
+		if (!"manual".equalsIgnoreCase(provider)) {
+			observation.setLocationDelta(Long.toString(locationElapsedTimeMilliseconds));
+		}
+
+		Collection<ObservationForm> observationForms = new ArrayList<>();
+		for (Map.Entry<Long, Map<String, ObservationProperty>> entry : forms.entrySet()) {
+			ObservationForm form = new ObservationForm();
+			form.setFormId(entry.getKey());
+			form.addProperties(entry.getValue().values());
+
+			observationForms.add(form);
+		}
+		observation.addForms(observationForms);
+
+		observation.getAttachments().addAll(attachmentsToCreate);
+
+		ObservationHelper oh = ObservationHelper.getInstance(getApplicationContext());
+		try {
+			if (observation.getId() == null) {
+				Observation newObs = oh.create(observation);
+				Log.i(LOG_NAME, "Created new observation with id: " + newObs.getId());
+			} else {
+				oh.update(observation);
+				Log.i(LOG_NAME, "Updated observation with remote id: " + observation.getRemoteId());
+			}
+			finish();
+		} catch (Exception e) {
+			Log.e(LOG_NAME, e.getMessage(), e);
+		}
 	}
 
 	public void onCameraClick(View v) {
@@ -785,6 +794,9 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 				attachmentsToCreate.add(capture);
 				attachmentGallery.addAttachment(attachmentLayout, capture);
 				MediaUtility.addImageToGallery(getApplicationContext(), Uri.fromFile(new File(currentMediaPath)));
+
+
+
 				break;
 			case GALLERY_ACTIVITY_REQUEST_CODE:
 			case CAPTURE_VOICE_ACTIVITY_REQUEST_CODE:
@@ -870,7 +882,7 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 				selectedValues = (ArrayList<String>) serializableValue;
 			} else {
 				String selectedValue = (String) serializableValue;
-				selectedValues = new ArrayList<String>();
+				selectedValues = new ArrayList<>();
 				selectedValues.add(selectedValue);
 			}
 		}
