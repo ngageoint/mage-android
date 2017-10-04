@@ -1,5 +1,7 @@
 package mil.nga.giat.mage.sdk.datastore.user;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.j256.ormlite.field.DatabaseField;
@@ -7,6 +9,10 @@ import com.j256.ormlite.table.DatabaseTable;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
+
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 
 @DatabaseTable(tableName = "events")
 public class Event {
@@ -26,18 +32,18 @@ public class Event {
     private String description;
 
     @DatabaseField
-    private String form;
+    private String forms;
 	
 	public Event() {
 		// ORMLite needs a no-arg constructor
 	}
 
-	public Event(String remoteId, String name, String description, String form) {
+	public Event(String remoteId, String name, String description, String forms) {
 		super();
 		this.remoteId = remoteId;
 		this.name = name;
 		this.description = description;
-		this.form = form;
+		this.forms = forms;
 	}
 
 	public Long getId() {
@@ -64,8 +70,19 @@ public class Event {
 		return description;
 	}
 
-	public JsonObject getForm() {
-        return new JsonParser().parse(form).getAsJsonObject();
+	public JsonArray getForms() {
+        return new JsonParser().parse(forms).getAsJsonArray();
+	}
+
+	public Map<Long, JsonObject> getFormMap() {
+		Map<Long, JsonObject> formMap = new HashMap<>();
+		Iterator<JsonElement> iterator = new JsonParser().parse(forms).getAsJsonArray().iterator();
+		while (iterator.hasNext()) {
+			JsonObject form = (JsonObject) iterator.next();
+			formMap.put(form.get("id").getAsLong(), form);
+		}
+
+		return formMap;
 	}
 
 	@Override

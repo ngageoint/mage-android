@@ -40,6 +40,7 @@ public class ObservationHelper extends DaoHelper<Observation> implements IEventD
 	private static final String LOG_NAME = ObservationHelper.class.getName();
 
 	private final Dao<Observation, Long> observationDao;
+	private final Dao<ObservationForm, Long> observationFormDao;
 	private final Dao<ObservationProperty, Long> observationPropertyDao;
 	private final Dao<ObservationImportant, Long> observationImportantDao;
 	private final Dao<ObservationFavorite, Long> observationFavoriteDao;
@@ -76,6 +77,7 @@ public class ObservationHelper extends DaoHelper<Observation> implements IEventD
 		try {
 			// Set up DAOs
 			observationDao = daoStore.getObservationDao();
+			observationFormDao = daoStore.getObservationFormDao();
 			observationPropertyDao = daoStore.getObservationPropertyDao();
 			observationImportantDao = daoStore.getObservationImportantDao();
 			observationFavoriteDao = daoStore.getObservationFavoriteDao();
@@ -110,12 +112,20 @@ public class ObservationHelper extends DaoHelper<Observation> implements IEventD
 						// create the Observation.
 						observationDao.create(observation);
 
-						// create Observation properties.
-						Collection<ObservationProperty> properties = observation.getProperties();
-						if (properties != null) {
-							for (ObservationProperty property : properties) {
-								property.setObservation(observation);
-								observationPropertyDao.create(property);
+						Collection<ObservationForm> forms = observation.getForms();
+						if (forms != null) {
+							for (ObservationForm form : forms) {
+								form.setObservation(observation);
+								observationFormDao.create(form);
+
+								// create Observation properties.
+								Collection<ObservationProperty> properties = form.getProperties();
+								if (properties != null) {
+									for (ObservationProperty property : properties) {
+										property.setObservationForm(form);
+										observationPropertyDao.create(property);
+									}
+								}
 							}
 						}
 
@@ -240,24 +250,47 @@ public class ObservationHelper extends DaoHelper<Observation> implements IEventD
 
 					observationDao.update(observation);
 
-					Map<String, ObservationProperty> properties = observation.getPropertiesMap();
-					Map<String, ObservationProperty> oldProperties = oldObservation.getPropertiesMap();
-					Collection<String> commonProperties = Sets.intersection(properties.keySet(), oldProperties.keySet());
+					Map<Long, ObservationForm> forms = observation.getFormsMap();
+					Map<Long, ObservationForm> oldForms = oldObservation.getFormsMap();
+					Collection<Long> commonForms = Sets.intersection(forms.keySet(), oldForms.keySet());
 
-					// Map database ids from old properties to new properties
-					for (String propertyKey : commonProperties) {
-						properties.get(propertyKey).setId(oldProperties.get(propertyKey).getId());
+					// Map database ids from old forms to new forms
+					for (Long formId : commonForms) {
+						forms.get(formId).setId(oldForms.get(formId).getId());
 					}
 
-					for (ObservationProperty property : properties.values()) {
-						property.setObservation(observation);
-						observationPropertyDao.createOrUpdate(property);
+					for (ObservationForm form : forms.values()) {
+						form.setObservation(observation);
+						observationFormDao.createOrUpdate(form);
+
+						Map<String, ObservationProperty> properties = form.getPropertiesMap();
+						ObservationForm oldForm = oldForms.get(form.getFormId());
+						if (oldForm != null) {
+							Map<String, ObservationProperty> oldProperties = oldForm.getPropertiesMap();
+							Collection<String> commonProperties = Sets.intersection(properties.keySet(), oldProperties.keySet());
+
+							// Map database ids from old properties to new properties
+							for (String propertyKey : commonProperties) {
+								properties.get(propertyKey).setId(oldProperties.get(propertyKey).getId());
+							}
+
+							// Remove any properties that existed in the old form but do not exist
+							// in the new form.
+							for (String property : Sets.difference(oldProperties.keySet(), properties.keySet())) {
+								observationPropertyDao.deleteById(oldProperties.get(property).getId());
+							}
+						}
+
+						for (ObservationProperty property : properties.values()) {
+							property.setObservationForm(form);
+							observationPropertyDao.createOrUpdate(property);
+						}
 					}
 
-					// Remove any properties that existed in the old observation but do not exist
+					// Remove any forms that existed in the old observation but do not exist
 					// in the new observation.
-					for (String property : Sets.difference(oldProperties.keySet(), properties.keySet())) {
-						observationPropertyDao.deleteById(oldProperties.get(property).getId());
+					for (Long formId : Sets.difference(oldForms.keySet(), forms.keySet())) {
+						observationFormDao.deleteById(oldForms.get(formId).getId());
 					}
 
 					Map<String, ObservationFavorite> favorites = observation.getFavoritesMap();
@@ -407,11 +440,19 @@ public class ObservationHelper extends DaoHelper<Observation> implements IEventD
 			observationDao.callBatchTasks(new Callable<Void>() {
 				@Override
 				public Void call() throws Exception {
-					// delete Observation properties.
-					Collection<ObservationProperty> properties = observation.getProperties();
-					if (properties != null) {
-						for (ObservationProperty property : properties) {
-							observationPropertyDao.deleteById(property.getId());
+					// delete Observation forms.
+					Collection<ObservationForm> forms = observation.getForms();
+					if (forms != null) {
+						for (ObservationForm form : forms) {
+							// delete Observation properties.
+							Collection<ObservationProperty> properties = form.getProperties();
+							if (properties != null) {
+								for (ObservationProperty property : properties) {
+									observationPropertyDao.deleteById(property.getId());
+								}
+							}
+
+							observationFormDao.deleteById(form.getId());
 						}
 					}
 

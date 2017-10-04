@@ -12,13 +12,19 @@ import com.google.gson.JsonSerializer;
 
 import java.io.Serializable;
 import java.lang.reflect.Type;
+import java.text.DateFormat;
 import java.util.ArrayList;
 
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
+import mil.nga.giat.mage.sdk.datastore.observation.ObservationForm;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationProperty;
+import mil.nga.giat.mage.sdk.utils.ISO8601DateFormatFactory;
 
 
 public class ObservationSerializer implements JsonSerializer<Observation> {
+
+	private DateFormat iso8601Format = ISO8601DateFormatFactory.ISO8601();
+
 
 	public ObservationSerializer() {
 		super();
@@ -38,28 +44,49 @@ public class ObservationSerializer implements JsonSerializer<Observation> {
 	}
 
 	@Override
-	public JsonElement serialize(Observation pObs, Type pType, JsonSerializationContext pContext) {
+	public JsonElement serialize(Observation observation, Type type, JsonSerializationContext context) {
 
 		JsonObject feature = new JsonObject();
-        feature.add("eventId", new JsonPrimitive(pObs.getEvent().getRemoteId()));
+        feature.add("eventId", new JsonPrimitive(observation.getEvent().getRemoteId()));
 		feature.add("type", new JsonPrimitive("Feature"));
-		conditionalAdd("id", pObs.getRemoteId(), feature);
-		feature.add("geometry", new JsonParser().parse(GeometrySerializer.getGsonBuilder().toJson(pObs.getGeometry())));
+		conditionalAdd("id", observation.getRemoteId(), feature);
+		feature.add("geometry", new JsonParser().parse(GeometrySerializer.getGsonBuilder().toJson(observation.getGeometry())));
 
-		// serialize the observation's properties.
 		JsonObject properties = new JsonObject();
-		for (ObservationProperty property : pObs.getProperties()) {
+		properties.addProperty("timestamp", iso8601Format.format(observation.getTimestamp()));
 
-			String key = property.getKey();
-			Serializable value = property.getValue();
-
-			conditionalAdd(key, value, properties);
+		if (observation.getAccuracy() != null) {
+			properties.addProperty("accuracy", observation.getAccuracy());
 		}
+
+		if (observation.getProvider() != null) {
+			properties.addProperty("provider", observation.getProvider());
+		}
+
+		if (observation.getLocationDelta() != null) {
+			properties.addProperty("delta", observation.getLocationDelta());
+		}
+
+		// serialize the observation's forms
+		JsonArray forms = new JsonArray();
+		for (ObservationForm form : observation.getForms()) {
+			JsonObject jsonForm = new JsonObject();
+			jsonForm.addProperty("formId", form.getFormId());
+
+			for (ObservationProperty property : form.getProperties()) {
+				conditionalAdd(property.getKey(), property.getValue(), jsonForm);
+			}
+
+			forms.add(jsonForm);
+		}
+
+		properties.add("forms", forms);
+
 		feature.add("properties", properties);
 
 		// serialize the observation's state
 		JsonObject jsonState = new JsonObject();
-		jsonState.add("name", new JsonPrimitive(pObs.getState().toString()));
+		jsonState.add("name", new JsonPrimitive(observation.getState().toString()));
 		feature.add("state", jsonState);
 
 		return feature;

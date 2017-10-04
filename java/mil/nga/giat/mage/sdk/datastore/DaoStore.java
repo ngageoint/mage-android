@@ -19,6 +19,7 @@ import mil.nga.giat.mage.sdk.datastore.observation.Attachment;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationErrorClassPersister;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationFavorite;
+import mil.nga.giat.mage.sdk.datastore.observation.ObservationForm;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationImportant;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationProperty;
 import mil.nga.giat.mage.sdk.datastore.staticfeature.StaticFeature;
@@ -46,10 +47,11 @@ public class DaoStore extends OrmLiteSqliteOpenHelper {
 	private static final String DATABASE_NAME = "mage.db";
 	private static final String LOG_NAME = DaoStore.class.getName();
 	// Making this public so we can check if it has been upgraded and log the user out
-	public static final int DATABASE_VERSION = 12;
+	public static final int DATABASE_VERSION = 13;
 
 	// Observation DAOS
 	private Dao<Observation, Long> observationDao;
+	private Dao<ObservationForm, Long> observationFormDao;
 	private Dao<ObservationProperty, Long> observationPropertyDao;
 	private Dao<ObservationImportant, Long> observationImportantDao;
 	private Dao<ObservationFavorite, Long> observationFavoriteDao;
@@ -96,6 +98,7 @@ public class DaoStore extends OrmLiteSqliteOpenHelper {
 		// initialize DAOs
 		try {
 			getObservationDao();
+			getObservationFormDao();
 			getObservationPropertyDao();
 			getObservationImportantDao();
 			getObservationFavoriteDao();
@@ -123,6 +126,7 @@ public class DaoStore extends OrmLiteSqliteOpenHelper {
 		long countOfAllRecords = 0l;
 		try {
 			countOfAllRecords += getObservationDao().countOf();
+			countOfAllRecords += getObservationFormDao().countOf();
 			countOfAllRecords += getObservationPropertyDao().countOf();
 			countOfAllRecords += getObservationImportantDao().countOf();
 			countOfAllRecords += getObservationFavoriteDao().countOf();
@@ -148,6 +152,7 @@ public class DaoStore extends OrmLiteSqliteOpenHelper {
 
 	private void createTables() throws SQLException {
 		TableUtils.createTable(connectionSource, Observation.class);
+		TableUtils.createTable(connectionSource, ObservationForm.class);
 		TableUtils.createTable(connectionSource, ObservationProperty.class);
 		TableUtils.createTable(connectionSource, ObservationImportant.class);
 		TableUtils.createTable(connectionSource, ObservationFavorite.class);
@@ -182,6 +187,7 @@ public class DaoStore extends OrmLiteSqliteOpenHelper {
 	private void dropTables() throws SQLException {
 		TableUtils.dropTable(connectionSource, Observation.class, Boolean.TRUE);
 
+		TableUtils.dropTable(connectionSource, ObservationForm.class, Boolean.TRUE);
 		TableUtils.dropTable(connectionSource, ObservationProperty.class, Boolean.TRUE);
 		TableUtils.dropTable(connectionSource, ObservationImportant.class, Boolean.TRUE);
 		TableUtils.dropTable(connectionSource, ObservationFavorite.class, Boolean.TRUE);
@@ -239,6 +245,19 @@ public class DaoStore extends OrmLiteSqliteOpenHelper {
 			observationDao = getDao(Observation.class);
 		}
 		return observationDao;
+	}
+
+	/**
+	 * Getter for the FormDao
+	 *
+	 * @return This instance's PropertyDao
+	 * @throws SQLException
+	 */
+	public Dao<ObservationForm, Long> getObservationFormDao() throws SQLException {
+		if (observationFormDao == null) {
+			observationFormDao = getDao(ObservationForm.class);
+		}
+		return observationFormDao;
 	}
 
 	/**

@@ -11,7 +11,7 @@ import mil.nga.giat.mage.sdk.datastore.Property;
 public class ObservationProperty extends Property {
 
 	@DatabaseField(foreign = true, uniqueCombo = true)
-	private Observation observation;
+	private ObservationForm observationForm;
 
 	public ObservationProperty() {
 		// ORMLite needs a no-arg constructor
@@ -21,12 +21,12 @@ public class ObservationProperty extends Property {
 		super(pKey, pValue);
 	}
 
-	public Observation getObservation() {
-		return observation;
+	public ObservationForm getObservation() {
+		return observationForm;
 	}
 
-	public void setObservation(Observation observation) {
-		this.observation = observation;
+	public void setObservationForm(ObservationForm observationForm) {
+		this.observationForm = observationForm;
 	}
 
 }

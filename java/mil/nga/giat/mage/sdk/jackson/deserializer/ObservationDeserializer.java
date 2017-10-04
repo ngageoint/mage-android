@@ -15,11 +15,11 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
 
 import mil.nga.giat.mage.sdk.datastore.observation.Attachment;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationFavorite;
+import mil.nga.giat.mage.sdk.datastore.observation.ObservationForm;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationImportant;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationProperty;
 import mil.nga.giat.mage.sdk.datastore.observation.State;
@@ -105,7 +105,7 @@ public class ObservationDeserializer extends Deserializer {
 				observation.setGeometry(geometryDeserializer.parseGeometry(parser));
 			} else if ("properties".equals(name)) {
 				parser.nextToken();
-				observation.setProperties(parseProperties(parser));
+				parseProperties(parser, observation);
 			} else if ("attachments".equals(name)) {
 				parser.nextToken();
 				observation.setAttachments(parseAttachments(parser));
@@ -118,20 +118,6 @@ public class ObservationDeserializer extends Deserializer {
 			} else {
 				parser.nextToken();
 				parser.skipChildren();
-			}
-		}
-
-		Map<String, ObservationProperty> properties = observation.getPropertiesMap();
-
-		// timestamp is special pull it out of properties and set it at the top
-		// level
-		ObservationProperty timestamp = properties.get("timestamp");
-		if (timestamp != null) {
-			try {
-				Date d = iso8601Format.parse(timestamp.getValue().toString());
-				observation.setTimestamp(d);
-			} catch (ParseException pe) {
-				Log.w(LOG_NAME, "Unable to parse date: " + timestamp + " for location: " + observation.getRemoteId(), pe);
 			}
 		}
 
@@ -165,52 +151,110 @@ public class ObservationDeserializer extends Deserializer {
 		return state;
 	}
 
-	private Collection<ObservationProperty> parseProperties(JsonParser parser) throws JsonParseException, IOException {
+	private Collection<ObservationProperty> parseProperties(JsonParser parser, Observation observation) throws JsonParseException, IOException {
 		Collection<ObservationProperty> properties = new ArrayList<>();
+
+		if (parser.getCurrentToken() != JsonToken.START_OBJECT)
+			return properties;
+
 		while (parser.nextToken() != JsonToken.END_OBJECT) {
-			String key = parser.getCurrentName();
-			JsonToken token = parser.nextToken();
-			if (token == JsonToken.START_OBJECT) {
+			String name = parser.getCurrentName();
+			if ("timestamp".equals(name)) {
+				parser.nextToken();
+				Serializable timestamp = parser.getText();
+				try {
+					Date date = iso8601Format.parse(timestamp.toString());
+					observation.setTimestamp(date);
+				} catch (ParseException e) {
+					Log.w(LOG_NAME, "Unable to parse date: " + timestamp + " for observation: " + observation.getRemoteId(), e);
+				}
+			} else if ("provider".equals(name)) {
+				parser.nextToken();
+				observation.setProvider(parser.getText());
+			} else if ("accuracy".equals(name)) {
+				parser.nextToken();
+				observation.setAccuracy(parser.getFloatValue());
+			} else if ("forms".equals(name)) {
+				parser.nextToken();
+				Collection<ObservationForm> forms = parseForms(parser);
+				observation.setForms(forms);
+			} else {
+				parser.nextToken();
 				parser.skipChildren();
-			} else if (token == JsonToken.START_ARRAY) {
-				ArrayList<String> stringArrayList = new ArrayList<>();
-				while (parser.nextToken() != JsonToken.END_ARRAY) {
-					String arrayValue = parser.getValueAsString();
-					stringArrayList.add(arrayValue);
-				}
-				Serializable value = stringArrayList;
-				properties.add(new ObservationProperty(key, value));
-			} else if (token != JsonToken.VALUE_NULL) {
-				Serializable value = parser.getText();
-				if (token.isNumeric()) {
-					switch (parser.getNumberType()) {
-					case BIG_DECIMAL:
-						break;
-					case BIG_INTEGER:
-						break;
-					case DOUBLE:
-						value = parser.getDoubleValue();
-						break;
-					case FLOAT:
-						value = parser.getFloatValue();
-						break;
-					case INT:
-						value = parser.getIntValue();
-						break;
-					case LONG:
-						value = parser.getLongValue();
-						break;
-					default:
-						break;
-					}
-				} else if (token.isBoolean()) {
-					value = parser.getBooleanValue();
-				}
-				properties.add(new ObservationProperty(key, value));
 			}
 		}
 
 		return properties;
+	}
+
+	private Collection<ObservationForm> parseForms(JsonParser parser) throws JsonParseException, IOException {
+		Collection<ObservationForm> forms = new ArrayList<>();
+
+		if (parser.getCurrentToken() != JsonToken.START_ARRAY)
+			return forms;
+
+		while (parser.nextToken() != JsonToken.END_ARRAY) {
+			ObservationForm form = parseForm(parser);
+			forms.add(form);
+		}
+
+		return forms;
+	}
+
+	private ObservationForm parseForm(JsonParser parser) throws JsonParseException, IOException {
+		ObservationForm form = new ObservationForm();
+		Collection<ObservationProperty> properties = new ArrayList<>();
+
+		while (parser.nextToken() != JsonToken.END_OBJECT) {
+			String key = parser.getCurrentName();
+			JsonToken token = parser.nextToken();
+
+			if ("formId".equals(key)) {
+				form.setFormId(parser.getLongValue());
+			} else {
+				if (token == JsonToken.START_OBJECT) {
+					parser.skipChildren();
+				} else if (token == JsonToken.START_ARRAY) {
+					ArrayList<String> stringArrayList = new ArrayList<>();
+					while (parser.nextToken() != JsonToken.END_ARRAY) {
+						String arrayValue = parser.getValueAsString();
+						stringArrayList.add(arrayValue);
+					}
+					Serializable value = stringArrayList;
+					properties.add(new ObservationProperty(key, value));
+				} else if (token != JsonToken.VALUE_NULL) {
+					Serializable value = parser.getText();
+					if (token.isNumeric()) {
+						switch (parser.getNumberType()) {
+							case BIG_DECIMAL:
+								break;
+							case BIG_INTEGER:
+								break;
+							case DOUBLE:
+								value = parser.getDoubleValue();
+								break;
+							case FLOAT:
+								value = parser.getFloatValue();
+								break;
+							case INT:
+								value = parser.getIntValue();
+								break;
+							case LONG:
+								value = parser.getLongValue();
+								break;
+							default:
+								break;
+						}
+					} else if (token.isBoolean()) {
+						value = parser.getBooleanValue();
+					}
+					properties.add(new ObservationProperty(key, value));
+				}
+			}
+		}
+
+		form.setProperties(properties);
+		return form;
 	}
 
 	private Collection<Attachment> parseAttachments(JsonParser parser) throws IOException {
