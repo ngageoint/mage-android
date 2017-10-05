@@ -86,7 +86,7 @@ public class ObservationSerializer implements JsonSerializer<Observation> {
 				pJsonObject.add(property, new JsonPrimitive((Boolean) toAdd));
 			} else if (toAdd instanceof ArrayList){
 				JsonParser jsonParser = new JsonParser();
-				JsonArray choicesArray = jsonParser.parse(toAdd.toString()).getAsJsonArray();
+				JsonArray choicesArray = jsonParser.parse(new Gson().toJson(toAdd)).getAsJsonArray();
 				pJsonObject.add(property, choicesArray);
 			} else {
 				pJsonObject.add(property, new JsonPrimitive(toAdd.toString()));
