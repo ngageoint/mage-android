@@ -26,7 +26,6 @@ import mil.nga.giat.mage.sdk.Temporal;
 import mil.nga.giat.mage.sdk.datastore.user.Event;
 import mil.nga.giat.mage.sdk.utils.GeometryUtility;
 import mil.nga.wkb.geom.Geometry;
-import mil.nga.wkb.geom.GeometryType;
 import mil.nga.wkb.geom.Point;
 import mil.nga.wkb.util.GeometryUtils;
 
@@ -418,6 +417,20 @@ public class Observation implements Comparable<Observation>, Temporal {
         }
 
         return field;
+    }
+
+    public JsonElement getStyle() {
+        JsonElement style = null;
+        Collection<ObservationForm> forms = getForms();
+        if (forms != null && forms.size() > 0) {
+            ObservationForm form = forms.iterator().next();
+            JsonObject eventForm = getEventForm(form.getFormId());
+            if (eventForm != null) {
+                style = eventForm.get("style");
+            }
+        }
+
+        return style;
     }
 
     private JsonObject getEventForm(Long formId) {
