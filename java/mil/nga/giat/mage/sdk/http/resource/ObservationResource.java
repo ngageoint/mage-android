@@ -63,8 +63,8 @@ public class ObservationResource {
         @GET("/api/events/{eventId}/observations")
         Call<Collection<Observation>> getObservations(@Path("eventId") String eventId, @Query("startDate") String startDate);
 
-        @POST("/api/events/{eventId}/observations")
-        Call<Observation> createObservation(@Path("eventId") String eventId , @Body Observation observation);
+        @POST("/api/events/{eventId}/observations/id")
+        Call<Observation> createObservationId(@Path("eventId") String eventId);
 
         @PUT("/api/events/{eventId}/observations/{observationId}")
         Call<Observation> updateObservation(@Path("eventId") String eventId, @Path("observationId") String observationId, @Body Observation observation);
@@ -139,8 +139,78 @@ public class ObservationResource {
         return observations;
     }
 
-
     public Observation saveObservation(Observation observation) {
+        if (StringUtils.isEmpty(observation.getRemoteId())) {
+            return createObservation(observation);
+        } else {
+            return updateObservation(observation);
+        }
+    }
+
+    private Observation createObservation(Observation observation) {
+        ObservationHelper observationHelper = ObservationHelper.getInstance(context);
+
+        try {
+            String baseUrl = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.serverURLKey), context.getString(R.string.serverURLDefaultValue));
+            Retrofit retrofit = new Retrofit.Builder()
+                    .baseUrl(baseUrl)
+                    .addConverterFactory(ObservationConverterFactory.create(observation.getEvent()))
+                    .client(HttpClientManager.getInstance(context).httpClient())
+                    .build();
+
+            ObservationService service = retrofit.create(ObservationService.class);
+            Response<Observation> response = service.createObservationId(observation.getEvent().getRemoteId()).execute();
+
+            if (response.isSuccess()) {
+                Observation returnedObservation = response.body();
+                observation.setRemoteId(returnedObservation.getRemoteId());
+                observation.setUrl(returnedObservation.getUrl());
+
+                try {
+                    observation = observationHelper.update(observation);
+
+                    // Got the observation id from the server, lets send the observation
+                    observation = updateObservation(observation);
+                } catch (ObservationException oe) {
+                    Log.e(LOG_NAME, "Problem updating observation after server response", oe);
+                }
+            } else {
+                Log.e(LOG_NAME, "Bad request.");
+
+                ObservationError observationError = new ObservationError();
+                observationError.setStatusCode(response.code());
+                observationError.setDescription(response.message());
+
+                if (response.errorBody() != null) {
+                    String errorBody = response.errorBody().string();
+                    Log.e(LOG_NAME, errorBody);
+
+                    observationError.setMessage(errorBody);
+                }
+
+                try {
+                    observationHelper.update(observation);
+                } catch (ObservationException oe) {
+                    Log.e(LOG_NAME, "Problem updating observation error", oe);
+                }
+            }
+        } catch (IOException e) {
+            Log.e(LOG_NAME, "Failure getting observation id from server.", e);
+
+            ObservationError observationError = new ObservationError();
+            observationError.setMessage("The Internet connection appears to be offline.");
+            observation.setError(observationError);
+            try {
+                observationHelper.update(observation);
+            } catch (ObservationException oe) {
+                Log.e(LOG_NAME, "Problem updating observation error", oe);
+            }
+        }
+
+        return observation;
+    }
+
+    private Observation updateObservation(Observation observation) {
         ObservationHelper observationHelper = ObservationHelper.getInstance(context);
         Observation savedObservation = null;
 
@@ -153,13 +223,7 @@ public class ObservationResource {
                     .build();
 
             ObservationService service = retrofit.create(ObservationService.class);
-
-            Response<Observation> response;
-            if (StringUtils.isEmpty(observation.getRemoteId())) {
-                response = service.createObservation(observation.getEvent().getRemoteId(), observation).execute();
-            } else {
-                response = service.updateObservation(observation.getEvent().getRemoteId(), observation.getRemoteId(), observation).execute();
-            }
+            Response<Observation> response = service.updateObservation(observation.getEvent().getRemoteId(), observation.getRemoteId(), observation).execute();
 
             if (response.isSuccess()) {
                 Observation returnedObservation = response.body();

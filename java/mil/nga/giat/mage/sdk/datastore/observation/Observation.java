@@ -208,30 +208,6 @@ public class Observation implements Comparable<Observation>, Temporal {
         this.locationDelta = locationDelta;
     }
 
-    public String getProvider() {
-        return provider;
-    }
-
-    public void setProvider(String provider) {
-        this.provider = provider;
-    }
-
-    public Float getAccuracy() {
-        return accuracy;
-    }
-
-    public void setAccuracy(Float accuracy) {
-        this.accuracy = accuracy;
-    }
-
-    public String getLocationDelta() {
-        return locationDelta;
-    }
-
-    public void setLocationDelta(String locationDelta) {
-        this.locationDelta = locationDelta;
-    }
-
     public Event getEvent() {
         return event;
     }
