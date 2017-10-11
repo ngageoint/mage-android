@@ -3,13 +3,20 @@ All notable changes to this project will be documented in this file.
 Adheres to [Semantic Versioning](http://semver.org/).
 
 ---
-## 5.3.5 (TBD)
+## 5.3.6 (TBD)
 
 * TBD
 
 ##### Features
 
 ##### Bug Fixes
+
+## [5.3.5](https://github.com/ngageoint/mage-android/releases/tag/5.3.5) (10-10-2017)
+
+##### Features
+
+##### Bug Fixes
+* Fix static feature map click
 
 ## [5.3.4](https://github.com/ngageoint/mage-android/releases/tag/5.3.4) (10-05-2017)
 
