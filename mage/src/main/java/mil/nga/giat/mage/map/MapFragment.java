@@ -343,6 +343,11 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 
 			ObservationHelper.getInstance(getActivity().getApplicationContext()).addListener(this);
 			LocationHelper.getInstance(getActivity().getApplicationContext()).addListener(this);
+
+			updateStaticFeatureLayers();
+
+			CacheProvider.getInstance(getActivity().getApplicationContext()).registerCacheOverlayListener(this);
+			StaticFeatureHelper.getInstance(getActivity().getApplicationContext()).addListener(this);
 		}
 
 		if (observations != null) {
@@ -380,11 +385,6 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 			refreshMyHistoricLocationsMarkersTask.executeOnExecutor(executor, REFRESHMARKERINTERVALINSECONDS);
 		}
 
-		updateStaticFeatureLayers();
-
-		CacheProvider.getInstance(getActivity().getApplicationContext()).registerCacheOverlayListener(this);
-		StaticFeatureHelper.getInstance(getActivity().getApplicationContext()).addListener(this);
-
 		// Check if any map preferences changed that I care about
 		if (locationService != null && ContextCompat.checkSelfPermission(getActivity().getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
 			map.setMyLocationEnabled(true);
@@ -400,15 +400,6 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 	public void onLowMemory() {
 		super.onLowMemory();
 		mapView.onLowMemory();
-	}
-
-	@Override
-	public void onSaveInstanceState(Bundle outState) {
-		super.onSaveInstanceState(outState);
-
-//		Bundle mapState = new Bundle();
-//		mapView.onSaveInstanceState(mapState);
-//		outState.putBundle(MAP_VIEW_STATE, mapState);
 	}
 
 	@Override
