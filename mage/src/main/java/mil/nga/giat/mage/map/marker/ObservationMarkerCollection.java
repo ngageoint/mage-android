@@ -55,18 +55,13 @@ public class ObservationMarkerCollection implements PointCollection<Observation>
         mapObservationManager = new MapObservationManager(context, map);
     }
 
-    // TODO what do we really need to iterate here?
-//    @Override
-//    public Iterator<Observation> iterator() {
-//		return mapObservations.getMarkers();
-//	}
-
     @Override
     public void add(MarkerOptions options, Observation observation) {
         // If I got an observation that I already have remove it
         mapObservations.remove(observation.getId());
 
         // Add the new observation to the map and maintain it
+        options.visible(visible);
         MapObservation mapObservation = mapObservationManager.addToMap(observation, options, visible);
         mapObservations.add(mapObservation);
 

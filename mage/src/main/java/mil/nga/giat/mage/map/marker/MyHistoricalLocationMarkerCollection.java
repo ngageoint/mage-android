@@ -4,12 +4,15 @@ import android.content.Context;
 import android.util.Pair;
 
 import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.common.collect.MinMaxPriorityQueue;
 
 import java.util.Comparator;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 import mil.nga.giat.mage.filter.Filter;
 import mil.nga.giat.mage.sdk.Temporal;
@@ -25,66 +28,71 @@ import mil.nga.wkb.geom.Geometry;
  * @author wiedemanns
  *
  */
-public class MyHistoricalLocationMarkerCollection extends LocationMarkerCollection {
+public class MyHistoricalLocationMarkerCollection implements PointCollection<Pair<Location, User>> {
 
-	// use a queue like structure to limit the Collection size
-	protected MinMaxPriorityQueue<Pair<Location, User>> locationQueue = MinMaxPriorityQueue.orderedBy(new Comparator<Pair<Location, User>>() {
+	private Context context;
+	private GoogleMap map;
+	boolean visible = false;
+	protected Map<Long, Marker> locationIdToMarker = new HashMap<>();
+	protected Map<String, Pair<Location, User>> markerIdToLocation = new HashMap<>();
+
+	// Use a queue like structure to limit the Collection size
+	protected MinMaxPriorityQueue<Location> locationQueue = MinMaxPriorityQueue.orderedBy(new Comparator<Location>() {
 		@Override
-		public int compare(Pair<Location, User> lhs, Pair<Location, User> rhs) {
-			return lhs.first.getTimestamp().compareTo(rhs.first.getTimestamp());
+		public int compare(Location lhs, Location rhs) {
+			return lhs.getTimestamp().compareTo(rhs.getTimestamp());
 		}
 	}).expectedSize(LocationPushIntentService.minNumberOfLocationsToKeep).create();
 
 	public MyHistoricalLocationMarkerCollection(Context context, GoogleMap map) {
-		super(context, map);
+		this.context = context;
+		this.map = map;
 	}
 
 	@Override
 	public boolean onMarkerClick(Marker marker) {
-		Location l = markerIdToPair.get(marker.getId()).first;
-        return (l != null);
+		return markerIdToLocation.containsKey(marker.getId());
 	}
 
 	@Override
 	public void add(MarkerOptions options, Pair<Location, User> pair) {
 		Location location = pair.first;
-		User user = pair.second;
+		final Geometry gometry = location.getGeometry();
 
-		final Geometry g = location.getGeometry();
-		if (g != null) {
-			// If I got an observation that I already have in my list
-			// remove it from the map and clean-up my collections
-			Marker marker = userIdToMarker.remove(user.getId());
-			if (marker != null) {
-				markerIdToPair.remove(marker.getId());
-				marker.remove();
-			}
-
-			marker = map.addMarker(options);
-
-			userIdToMarker.put(user.getId(), marker);
-			markerIdToPair.put(marker.getId(), pair);
-			locationQueue.add(pair);
+		if (gometry != null) {
+			options.visible(visible);
+			Marker marker = map.addMarker(options);
+			markerIdToLocation.put(marker.getId(), pair);
+			locationIdToMarker.put(location.getId(), marker);
+			locationQueue.add(location);
 
 			while (locationQueue.size() > LocationPushIntentService.minNumberOfLocationsToKeep) {
-				remove(locationQueue.poll());
+				Location locationToRemove = locationQueue.poll();
+
+				Marker markerToRemove = locationIdToMarker.remove(locationToRemove.getId());
+				markerIdToLocation.remove(markerToRemove.getId());
 			}
 		}
 	}
 
 	@Override
+	public void remove(Pair<Location, User> pair) {
+		// no-op rolling window based on number of points, remove happens in add if overflow
+	}
+
+	@Override
 	public Date getLatestDate() {
-		return locationQueue.peekLast().first.getTimestamp();
+		return locationQueue.peekLast().getTimestamp();
 	}
 
 	@Override
 	public void refreshMarkerIcons(Filter<Temporal> filter) {
-		for (Marker m : userIdToMarker.values()) {
-			Pair<Location, User> pair = markerIdToPair.get(m.getId());
+		for (Marker m : locationIdToMarker.values()) {
+			Pair<Location, User> pair = markerIdToLocation.get(m.getId());
 			Location location = pair.first;
 			User user = pair.second;
 
-			if (user != null && location != null) {
+			if (location != null) {
 				boolean showWindow = m.isInfoWindowShown();
 				// make sure to set the Anchor after this call as well, because the size of the icon might have changed
 				m.setIcon(LocationBitmapFactory.dotBitmapDescriptor(context, location, user));
@@ -97,8 +105,54 @@ public class MyHistoricalLocationMarkerCollection extends LocationMarkerCollecti
 	}
 
 	@Override
+	public int count() {
+		return locationQueue.size();
+	}
+
+	@Override
+	public boolean isVisible() {
+		return false;
+	}
+
+	@Override
+	public void setVisibility(boolean visible) {
+		if (this.visible == visible)
+			return;
+
+		this.visible = visible;
+		for (Marker m : locationIdToMarker.values()) {
+			m.setVisible(visible);
+		}
+	}
+
+	@Override
 	public void clear() {
-		super.clear();
+		for (Marker marker : locationIdToMarker.values()) {
+			marker.remove();
+		}
+
 		locationQueue.clear();
+		locationIdToMarker.clear();
+		markerIdToLocation.clear();
+	}
+
+	@Override
+	public void offMarkerClick() {
+		// no-op, nothing extra shown on marker click that we need to hide
+	}
+
+	@Override
+	public void onCameraIdle() {
+
+	}
+
+	@Override
+	public void onInfoWindowClick(Marker marker) {
+
+	}
+
+	@Override
+	public void onMapClick(LatLng latLng) {
+
 	}
 }

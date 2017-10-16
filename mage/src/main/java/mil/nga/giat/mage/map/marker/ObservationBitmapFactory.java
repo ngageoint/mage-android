@@ -9,6 +9,7 @@ import android.util.Log;
 
 import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
+import com.google.common.io.Closeables;
 
 import java.io.File;
 import java.io.FileFilter;
@@ -41,6 +42,8 @@ public class ObservationBitmapFactory {
 		int outWidth = Double.valueOf(scale*Integer.valueOf(bitmap.getWidth()).doubleValue()).intValue();
 		int outHeight = Double.valueOf(scale*Integer.valueOf(bitmap.getHeight()).doubleValue()).intValue();
 		bitmap = Bitmap.createScaledBitmap(bitmap, outWidth, outHeight, true);
+
+		Closeables.closeQuietly(iconStream);
 
 		return bitmap;
 	}

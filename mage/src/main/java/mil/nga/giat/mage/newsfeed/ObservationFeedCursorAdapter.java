@@ -125,13 +125,14 @@ public class ObservationFeedCursorAdapter extends CursorAdapter {
 			}
 
 			ObservationProperty primary = observation.getPrimaryField();
+			View primaryLayout = v.findViewById(R.id.primary_layout);
 			if (primary != null) {
-				TextView variantTextView = ((TextView) v.findViewById(R.id.type));
-				variantTextView.setVisibility(View.VISIBLE);
+				TextView variantTextView = ((TextView) v.findViewById(R.id.primary));
 				variantTextView.setText(primary.getValue().toString());
 
+				primaryLayout.setVisibility(View.VISIBLE);
 			} else {
-				v.findViewById(R.id.variant).setVisibility(View.GONE);
+				primaryLayout.setVisibility(View.GONE);
 			}
 
 			ObservationProperty secondary = observation.getSecondaryField();

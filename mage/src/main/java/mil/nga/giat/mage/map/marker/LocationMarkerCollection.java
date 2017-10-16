@@ -67,11 +67,6 @@ public class LocationMarkerCollection implements PointCollection<Pair<Location, 
 		this.map = map;
 	}
 
-//	@Override
-//	public Iterator<Pair<Location, User>> iterator() {
-//		return markerIdToPair.values().iterator();
-//	}
-
 	@Override
 	public void add(MarkerOptions options, Pair<Location, User> pair) {
 		Location location = pair.first;

@@ -353,18 +353,20 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 
 			staticGeometryCollection = new StaticGeometryCollection();
 
-			historicLocations = new MyHistoricalLocationMarkerCollection(getActivity(), map);
-			HistoricLocationLoadTask myHistoricLocationLoad = new HistoricLocationLoadTask(getActivity(), historicLocations);
-			myHistoricLocationLoad.executeOnExecutor(executor);
-
 			ObservationHelper.getInstance(getActivity().getApplicationContext()).addListener(this);
 			LocationHelper.getInstance(getActivity().getApplicationContext()).addListener(this);
+			CacheProvider.getInstance(getActivity().getApplicationContext()).registerCacheOverlayListener(this);
+			StaticFeatureHelper.getInstance(getActivity().getApplicationContext()).addListener(this);
 		}
 
+		updateMapView();
+
+		// Set visibility on map markers as preferences may have changed
 		if (observations != null) {
 			observations.clear();
 		}
 		observations = new ObservationMarkerCollection(getActivity(), map);
+		observations.setVisibility(preferences.getBoolean(getResources().getString(R.string.showObservationsKey), true));
 		ObservationLoadTask observationLoad = new ObservationLoadTask(getActivity(), observations);
 		observationLoad.addFilter(getTemporalFilter("timestamp", getTimeFilterId(), OBSERVATION_FILTER_TYPE));
 		observationLoad.executeOnExecutor(executor);
@@ -373,23 +375,23 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 			locations.clear();
 		}
 		locations = new LocationMarkerCollection(getActivity(), map);
+		locations.setVisibility(preferences.getBoolean(getResources().getString(R.string.showLocationsKey), true));
 		LocationLoadTask locationLoad = new LocationLoadTask(getActivity(), locations);
 		locationLoad.setFilter(getTemporalFilter("timestamp", getLocationTimeFilterId(), LOCATION_FILTER_TYPE));
 		locationLoad.executeOnExecutor(executor);
 
-		updateMapView();
 
-		// Set visibility on map markers as preferences may have changed
-		observations.setVisibility(preferences.getBoolean(getResources().getString(R.string.showObservationsKey), true));
-		locations.setVisibility(preferences.getBoolean(getResources().getString(R.string.showLocationsKey), true));
+		if (historicLocations != null) {
+			historicLocations.clear();
+		}
+		historicLocations = new MyHistoricalLocationMarkerCollection(getActivity(), map);
 		historicLocations.setVisibility(preferences.getBoolean(getResources().getString(R.string.showMyLocationHistoryKey), false));
+		HistoricLocationLoadTask myHistoricLocationLoad = new HistoricLocationLoadTask(getActivity(), historicLocations);
+		myHistoricLocationLoad.executeOnExecutor(executor);
 
 		initializePeriodicTasks();
 
 		updateStaticFeatureLayers();
-
-		CacheProvider.getInstance(getActivity().getApplicationContext()).registerCacheOverlayListener(this);
-		StaticFeatureHelper.getInstance(getActivity().getApplicationContext()).addListener(this);
 
 		// Check if any map preferences changed that I care about
 		if (locationService != null && ContextCompat.checkSelfPermission(getActivity().getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
@@ -411,7 +413,12 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 		refreshLocationsMarkersTask = scheduledExecutorService.scheduleAtFixedRate(new Runnable() {
 			@Override
 			public void run() {
-				new RefreshMarkersTask(locations, getTemporalFilter("timestamp", getLocationTimeFilterId(), LOCATION_FILTER_TYPE)).executeOnExecutor(executor);
+				getActivity().runOnUiThread(new Runnable() {
+					@Override
+					public void run() {
+						locations.refreshMarkerIcons(getTemporalFilter("timestamp", getLocationTimeFilterId(), LOCATION_FILTER_TYPE));
+					}
+				});
 			}
 		}, 0, REFRESHMARKERINTERVALINSECONDS, TimeUnit.SECONDS);
 
@@ -419,7 +426,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 		refreshMyHistoricLocationsMarkersTask = scheduledExecutorService.scheduleAtFixedRate(new Runnable() {
 			@Override
 			public void run() {
-				new RefreshMarkersTask(historicLocations, getTemporalFilter("timestamp", getLocationTimeFilterId(), LOCATION_FILTER_TYPE)).executeOnExecutor(executor);
+				historicLocations.refreshMarkerIcons(getTemporalFilter("timestamp", getLocationTimeFilterId(), LOCATION_FILTER_TYPE));
 			}
 		}, 0, REFRESHMARKERINTERVALINSECONDS, TimeUnit.SECONDS);
 
@@ -427,7 +434,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 		refreshObservationMarkersTask = scheduledExecutorService.scheduleAtFixedRate(new Runnable() {
 			@Override
 			public void run() {
-				new RefreshMarkersTask(observations, getTemporalFilter("timestamp", getTimeFilterId(), OBSERVATION_FILTER_TYPE)).executeOnExecutor(executor);
+				observations.refreshMarkerIcons(getTemporalFilter("timestamp", getTimeFilterId(), OBSERVATION_FILTER_TYPE));
 			}
 		}, 0, REFRESHOBSERVATIONMARKERINTERVALINSECONDS, TimeUnit.SECONDS);
 	}

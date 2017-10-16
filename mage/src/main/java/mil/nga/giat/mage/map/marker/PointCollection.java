@@ -20,8 +20,6 @@ public interface PointCollection<T> extends OnCameraIdleListener, OnMarkerClickL
 
 	public int count();
 
-//	public Iterator<T> iterator();
-
 	public boolean isVisible();
 
 	public void setVisibility(boolean visible);
