@@ -32,9 +32,9 @@ public class MyHistoricalLocationMarkerCollection implements PointCollection<Pai
 
 	private Context context;
 	private GoogleMap map;
-	boolean visible = false;
-	protected Map<Long, Marker> locationIdToMarker = new HashMap<>();
-	protected Map<String, Pair<Location, User>> markerIdToLocation = new HashMap<>();
+	private boolean visible = false;
+	private Map<Long, Marker> locationIdToMarker = new HashMap<>();
+	private Map<String, Pair<Location, User>> markerIdToLocation = new HashMap<>();
 
 	// Use a queue like structure to limit the Collection size
 	protected MinMaxPriorityQueue<Location> locationQueue = MinMaxPriorityQueue.orderedBy(new Comparator<Location>() {
@@ -51,7 +51,15 @@ public class MyHistoricalLocationMarkerCollection implements PointCollection<Pai
 
 	@Override
 	public boolean onMarkerClick(Marker marker) {
-		return markerIdToLocation.containsKey(marker.getId());
+		Pair<Location, User> pair = markerIdToLocation.get(marker.getId());
+
+		if (pair == null) {
+			return false;
+		}
+
+		marker.showInfoWindow();
+
+		return true;
 	}
 
 	@Override
