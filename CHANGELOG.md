@@ -3,7 +3,7 @@ All notable changes to this project will be documented in this file.
 Adheres to [Semantic Versioning](http://semver.org/).
 
 ---
-## 5.3.3 (TBD)
+## 5.3.6 (TBD)
 
 * TBD
 
@@ -11,6 +11,21 @@ Adheres to [Semantic Versioning](http://semver.org/).
 * Observation geometry support for lines and polygons
 
 ##### Bug Fixes
+
+## [5.3.5](https://github.com/ngageoint/mage-android/releases/tag/5.3.5) (10-10-2017)
+
+##### Features
+
+##### Bug Fixes
+* Fix static feature map click
+* Fix static feature preference loading
+
+## [5.3.4](https://github.com/ngageoint/mage-android/releases/tag/5.3.4) (10-05-2017)
+
+##### Features
+
+##### Bug Fixes
+* Pull new version of mage-android-sdk, fixes bug parsing multiple choice values that contained spaces.
 
 ## [5.3.3](https://github.com/ngageoint/mage-android/releases/tag/5.3.3) (09-01-2017)
 
