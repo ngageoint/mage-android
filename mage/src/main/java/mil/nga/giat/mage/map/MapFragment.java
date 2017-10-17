@@ -54,6 +54,7 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.TileOverlay;
 import com.google.android.gms.maps.model.TileOverlayOptions;
 import com.google.android.gms.maps.model.TileProvider;
+import com.google.common.collect.Sets;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 
@@ -208,6 +209,8 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 
 		setHasOptionsMenu(true);
 
+		staticGeometryCollection = new StaticGeometryCollection();
+
 		zoomToLocationButton = (FloatingActionButton) view.findViewById(R.id.zoom_button);
 
 		searchButton = (FloatingActionButton) view.findViewById(R.id.map_search_button);
@@ -351,7 +354,6 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 				}
 			});
 
-			staticGeometryCollection = new StaticGeometryCollection();
 
 			ObservationHelper.getInstance(getActivity().getApplicationContext()).addListener(this);
 			LocationHelper.getInstance(getActivity().getApplicationContext()).addListener(this);
@@ -520,6 +522,8 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 			if (locationService != null) {
 				locationService.unregisterOnLocationListener(this);
 			}
+
+			mapInitialized = false;
 		}
 	}
 
@@ -1252,9 +1256,19 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 	private void removeStaticFeatureLayers() {
 		Set<String> selectedLayerIds = preferences.getStringSet(getResources().getString(R.string.staticFeatureLayersKey), Collections.<String> emptySet());
 
-		for (String currentLayerId : staticGeometryCollection.getLayers()) {
-			if (!selectedLayerIds.contains(currentLayerId)) {
-				staticGeometryCollection.removeLayer(currentLayerId);
+		Set<String> eventLayerIds = new HashSet<>();
+		try {
+			for (Layer layer : LayerHelper.getInstance(getActivity()).readByEvent(EventHelper.getInstance(getActivity().getApplicationContext()).getCurrentEvent())) {
+				eventLayerIds.add(layer.getRemoteId());
+            }
+		} catch (LayerException e) {
+			Log.e(LOG_NAME, "Problem reading static layers", e);
+		}
+		Set<String> layersNotInEvent = Sets.difference(selectedLayerIds, eventLayerIds);
+
+		for (String layerId : staticGeometryCollection.getLayers()) {
+			if (!selectedLayerIds.contains(layerId) || layersNotInEvent.contains(layerId)) {
+				staticGeometryCollection.removeLayer(layerId);
 			}
 		}
 	}
@@ -1271,7 +1285,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 	}
 
 	private void onStaticFeatureLayer(Layer layer) {
-		Set<String> layers = PreferenceManager.getDefaultSharedPreferences(getActivity().getApplicationContext()).getStringSet(getString(R.string.staticFeatureLayersKey), Collections.<String> emptySet());
+		Set<String> layers = preferences.getStringSet(getString(R.string.staticFeatureLayersKey), Collections.<String> emptySet());
 
 		// The user has asked for this feature layer
 		String layerId = layer.getId().toString();
