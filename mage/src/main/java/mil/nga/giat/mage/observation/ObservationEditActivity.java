@@ -23,6 +23,8 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
@@ -64,6 +66,7 @@ import java.util.Map;
 import java.util.Set;
 
 import mil.nga.giat.mage.BuildConfig;
+import mil.nga.giat.mage.LandingActivity;
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.form.LayoutBaker;
 import mil.nga.giat.mage.form.LayoutBaker.ControlGenerationType;
@@ -80,6 +83,7 @@ import mil.nga.giat.mage.sdk.datastore.observation.ObservationProperty;
 import mil.nga.giat.mage.sdk.datastore.observation.State;
 import mil.nga.giat.mage.sdk.datastore.user.Event;
 import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
+import mil.nga.giat.mage.sdk.datastore.user.Permission;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.exceptions.ObservationException;
@@ -128,6 +132,8 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 
     private ObservationLocation location;
 	private Observation observation;
+	private User currentUser;
+	private boolean hasObservationDeletePermission;
 	private GoogleMap map;
 	private MapObservation mapObservation;
 	private Circle accuracyCircle;
@@ -149,6 +155,13 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 		super.onCreate(savedInstanceState);
 
 		setContentView(R.layout.observation_editor);
+
+		try {
+			currentUser = UserHelper.getInstance(this).readCurrentUser();
+			hasObservationDeletePermission = currentUser.getRole().getPermissions().getPermissions().contains(Permission.DELETE_OBSERVATION);
+		} catch (UserException e) {
+			Log.e(LOG_NAME, "Cannot read current user");
+		}
 
 		Event event = EventHelper.getInstance(getApplicationContext()).getCurrentEvent();
 		if (event != null) {
@@ -373,6 +386,17 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 	}
 
 	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+		MenuInflater inflater = getMenuInflater();
+
+		if (canDeleteObservation()) {
+			inflater.inflate(R.menu.observation_delete_menu, menu);
+		}
+
+		return true;
+	}
+
+	@Override
 	public void onDateTimeChanged(Date date) {
 		((MageTextView) findViewById(R.id.date)).setPropertyValue(date);
 	}
@@ -527,9 +551,67 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 						.show();
 
 				break;
+			case R.id.observation_archive:
+				onArchiveObservation();
+				return true;
 		}
 
 		return super.onOptionsItemSelected(item);
+	}
+
+	private void onArchiveObservation() {
+		new AlertDialog.Builder(this, R.style.AppTheme_PrimaryDialog)
+				.setTitle("Delete Observation")
+				.setMessage("Are you sure you want to remove this observation?")
+				.setPositiveButton("Delete", new Dialog.OnClickListener() {
+					@Override
+					public void onClick(DialogInterface dialog, int which) {
+						archiveObservation();
+					}
+				})
+				.setNegativeButton(android.R.string.cancel, null)
+				.show();
+	}
+
+	private void archiveObservation() {
+		try {
+			ObservationHelper.getInstance(this).archive(observation);
+			Intent intent = new Intent(this, LandingActivity.class);
+			intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+			startActivity(intent);
+		} catch (ObservationException e) {
+			Log.e(LOG_NAME, "Error archiving observation");
+		}
+	}
+
+	private boolean canDeleteObservation() {
+		return hasObservationDeletePermission || isCurrentUsersObservation() || hasUpdatePermissionsInEventAcl();
+	}
+
+	private boolean isCurrentUsersObservation() {
+		boolean isCurrentUsersObservation = false;
+
+		if (currentUser != null) {
+			isCurrentUsersObservation = currentUser.getRemoteId().equals(observation.getUserId());
+		}
+
+		return isCurrentUsersObservation;
+	}
+
+	private boolean hasUpdatePermissionsInEventAcl() {
+
+		boolean hasEventUpdatePermissionsInAcl = false;
+
+		if (currentUser != null) {
+			JsonObject acl = EventHelper.getInstance(getApplicationContext()).getCurrentEvent().getAcl();
+			JsonElement userAccess = acl.get(currentUser.getRemoteId());
+			if (userAccess != null) {
+				JsonArray permissions = userAccess.getAsJsonObject().get("permissions").getAsJsonArray();
+				hasEventUpdatePermissionsInAcl = permissions.toString().contains("update");
+			}
+		}
+
+		return hasEventUpdatePermissionsInAcl;
 	}
 
 	private void saveObservation() {

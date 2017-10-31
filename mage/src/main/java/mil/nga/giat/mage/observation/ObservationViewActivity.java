@@ -27,6 +27,8 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Collections2;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
 import org.apache.commons.lang3.StringUtils;
@@ -78,7 +80,8 @@ public class ObservationViewActivity extends AppCompatActivity implements OnMapR
 	private IObservationEventListener observationEventListener;
 	private Observation o;
 	private User currentUser;
-	private boolean canEditObservation = false;
+	private boolean hasEventUpdatePermission;
+	private boolean canEditObservation;
 	private MapObservation mapObservation;
 	private DecimalFormat latLngFormat = new DecimalFormat("###.#####");
 	private MapFragment mapFragment;
@@ -93,6 +96,12 @@ public class ObservationViewActivity extends AppCompatActivity implements OnMapR
 		super.onCreate(savedInstanceState);
 
 		dateFormat = DateFormatFactory.format("yyyy-MM-dd HH:mm zz", Locale.getDefault(), getApplicationContext());
+		try {
+			currentUser = UserHelper.getInstance(this).readCurrentUser();
+			hasEventUpdatePermission = currentUser.getRole().getPermissions().getPermissions().contains(Permission.UPDATE_EVENT);
+		} catch (UserException e) {
+			Log.e(LOG_NAME, "Cannot read current user");
+		}
 
 		setContentView(R.layout.observation_viewer);
 
@@ -193,7 +202,7 @@ public class ObservationViewActivity extends AppCompatActivity implements OnMapR
 	public boolean onOptionsItemSelected(MenuItem item) {
 		switch (item.getItemId()) {
 			case android.R.id.home:
-				this.finish();
+				finish();
 				return true;
 			default:
 				return super.onOptionsItemSelected(item);
@@ -395,13 +404,6 @@ public class ObservationViewActivity extends AppCompatActivity implements OnMapR
 		UserHelper userHelper = UserHelper.getInstance(getApplicationContext());
 
 		boolean isImportant = important != null && important.isImportant();
-		boolean canEdit = false;
-		try {
-			currentUser = userHelper.readCurrentUser();
-			canEdit = currentUser.getRole().getPermissions().getPermissions().contains(Permission.UPDATE_EVENT);
-		} catch (UserException e) {
-			Log.e(LOG_NAME, "Could not read current user", e);
-		}
 
 		View imporantView = findViewById(R.id.important);
 		if (isImportant) {
@@ -425,11 +427,11 @@ public class ObservationViewActivity extends AppCompatActivity implements OnMapR
 			descriptionView.setText(description);
 
 			findViewById(R.id.addImportant).setVisibility(View.GONE);
-			findViewById(R.id.importantActions).setVisibility(canEdit ? View.VISIBLE : View.GONE);
+			findViewById(R.id.importantActions).setVisibility(canFlagObservation() ? View.VISIBLE : View.GONE);
 		} else {
 			imporantView.setVisibility(View.GONE);
 			findViewById(R.id.importantActions).setVisibility(View.GONE);
-			findViewById(R.id.addImportant).setVisibility(canEdit ? View.VISIBLE : View.GONE);
+			findViewById(R.id.addImportant).setVisibility(canFlagObservation() ? View.VISIBLE : View.GONE);
 		}
 	}
 
@@ -487,6 +489,26 @@ public class ObservationViewActivity extends AppCompatActivity implements OnMapR
 		dialog.show(fm, "remove_important");
 	}
 
+	private boolean canFlagObservation() {
+		return hasEventUpdatePermission || hasUpdatePermissionsInEventAcl();
+	}
+
+	private boolean hasUpdatePermissionsInEventAcl() {
+
+		boolean hasEventUpdatePermissionsInAcl = false;
+
+		if (currentUser != null) {
+			JsonObject acl = EventHelper.getInstance(getApplicationContext()).getCurrentEvent().getAcl();
+			JsonElement userAccess = acl.get(currentUser.getRemoteId());
+			if (userAccess != null) {
+				JsonArray permissions = userAccess.getAsJsonObject().get("permissions").getAsJsonArray();
+				hasEventUpdatePermissionsInAcl = permissions.toString().contains("update");
+			}
+		}
+
+		return hasEventUpdatePermissionsInAcl;
+	}
+
 	private void onFavoritesClick(Collection<ObservationFavorite> favorites) {
 		Collection<String> userIds = Collections2.transform(favorites, new Function<ObservationFavorite, String>() {
 			@Override
@@ -520,14 +542,9 @@ public class ObservationViewActivity extends AppCompatActivity implements OnMapR
 
 	private boolean isFavorite(Observation observation) {
 		boolean isFavorite = false;
-		try {
-			currentUser = UserHelper.getInstance(getApplicationContext()).readCurrentUser();
-			if (currentUser != null) {
-				ObservationFavorite favorite = observation.getFavoritesMap().get(currentUser.getRemoteId());
-				isFavorite = favorite != null && favorite.isFavorite();
-			}
-		} catch (UserException e) {
-			Log.e(LOG_NAME, "Could not get user", e);
+		if (currentUser != null) {
+			ObservationFavorite favorite = observation.getFavoritesMap().get(currentUser.getRemoteId());
+			isFavorite = favorite != null && favorite.isFavorite();
 		}
 
 		return isFavorite;

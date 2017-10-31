@@ -1,6 +1,7 @@
 package mil.nga.giat.mage.newsfeed;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.Dialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -10,6 +11,9 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.graphics.Canvas;
+import android.graphics.Rect;
+import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.os.Bundle;
 import android.os.Parcelable;
@@ -18,9 +22,13 @@ import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.view.ViewCompat;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.DefaultItemAnimator;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -28,11 +36,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
-import android.widget.AdapterView.OnItemClickListener;
-import android.widget.HeaderViewListAdapter;
 import android.widget.ListView;
-import android.widget.TextView;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -73,6 +77,7 @@ import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationFavorite;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationImportant;
+import mil.nga.giat.mage.sdk.datastore.observation.State;
 import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
@@ -82,13 +87,13 @@ import mil.nga.giat.mage.sdk.fetch.ObservationRefreshIntent;
 import mil.nga.giat.mage.sdk.location.LocationService;
 import mil.nga.wkb.geom.Geometry;
 
-public class ObservationFeedFragment extends Fragment implements IObservationEventListener, OnItemClickListener, ObservationFeedCursorAdapter.ObservationActionListener {
+public class ObservationFeedFragment extends Fragment implements IObservationEventListener, ObservationListAdapter.ObservationActionListener {
 
 	private static final String LOG_NAME = ObservationFeedFragment.class.getName();
 
 	private static final int PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 1;
+	private static final String BUNDLE_RECYCLER_LAYOUT = "BUNDLE_RECYCLER_LAYOUT";
 
-	private ObservationFeedCursorAdapter adapter;
 	private PreparedQuery<Observation> query;
 	private Dao<Observation, Long> oDao;
 	private SharedPreferences sp;
@@ -97,6 +102,9 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 	private long requeryTime;
 	private ViewGroup footer;
 	private ListView lv;
+	private RecyclerView recyclerView;
+	private ObservationListAdapter adapter;
+
 	Parcelable listState;
 	private User currentUser;
 	private LocationService locationService;
@@ -117,6 +125,7 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 
 		locationService = ((MAGE) getActivity().getApplication()).getLocationService();
 		observationRefreshReceiver = new ObservationRefreshReceiver();
+
 	}
 
 	@Override
@@ -153,10 +162,15 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
             }
         });
 
-		lv = (ListView) rootView.findViewById(R.id.news_feed_list);
-		footer = (ViewGroup) inflater.inflate(R.layout.feed_footer, lv, false);
-        lv.addFooterView(footer, null, false);
-		
+		recyclerView = (RecyclerView) rootView.findViewById(R.id.recycler_view);
+
+		RecyclerView.LayoutManager mLayoutManager = new LinearLayoutManager(getActivity());
+		recyclerView.setLayoutManager(mLayoutManager);
+		recyclerView.setItemAnimator(new DefaultItemAnimator());
+		recyclerView.addItemDecoration(new ObservationItemDecorator());
+
+		adapter = new ObservationListAdapter(getActivity(), attachmentGallery, this);
+
 		sp = PreferenceManager.getDefaultSharedPreferences(getActivity().getApplicationContext());
 
 		return rootView;
@@ -171,14 +185,13 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 		try {
 			oDao = DaoStore.getInstance(getActivity().getApplicationContext()).getObservationDao();
 			query = buildQuery(oDao, getTimeFilterId());
-			Cursor c = obtainCursor(query, oDao);
-			adapter = new ObservationFeedCursorAdapter(getActivity(), c, query, attachmentGallery);
-			adapter.setObservationShareListener(this);
-			lv.setAdapter(adapter);
-			lv.setOnItemClickListener(this);
+			Cursor cusor = obtainCursor(query, oDao);
+			adapter.setCursor(cusor, query);
+
+			recyclerView.setAdapter(adapter);
 
 			if (listState != null) {
-				lv.onRestoreInstanceState(listState);
+				recyclerView.getLayoutManager().onRestoreInstanceState(listState);
 			}
 
 			ObservationHelper.getInstance(getActivity().getApplicationContext()).addListener(this);
@@ -193,7 +206,7 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 
 		observationRefreshReceiver.unregister();
 
-		listState = lv.onSaveInstanceState();
+		listState = recyclerView.getLayoutManager().onSaveInstanceState();
 
 		ObservationHelper.getInstance(getActivity().getApplicationContext()).removeListener(this);
 
@@ -201,6 +214,7 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 			queryUpdateHandle.cancel(true);
 		}
 	}
+
 
 	@Override
 	public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
@@ -216,21 +230,6 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 				return true;
 			default:
 				return super.onOptionsItemSelected(item);
-		}
-	}
-
-	@Override
-	public void onItemClick(AdapterView<?> adapter, View arg1, int position, long id) {
-		HeaderViewListAdapter headerAdapter = (HeaderViewListAdapter)adapter.getAdapter();
-		Cursor c = ((ObservationFeedCursorAdapter) headerAdapter.getWrappedAdapter()).getCursor();
-		c.moveToPosition(position);
-		try {
-			Observation o = query.mapRow(new AndroidDatabaseResults(c, null, false));
-			Intent observationView = new Intent(getActivity().getApplicationContext(), ObservationViewActivity.class);
-			observationView.putExtra(ObservationViewActivity.OBSERVATION_ID, o.getId());
-			getActivity().startActivityForResult(observationView, 2);
-		} catch (Exception e) {
-			Log.e(LOG_NAME, "Problem.", e);
 		}
 	}
 
@@ -386,9 +385,11 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 		}
 
 		requeryTime = c.getTimeInMillis();
-		TextView footerTextView = (TextView) footer.findViewById(R.id.footer_text);
-		footerTextView.setText(footerText);
-		qb.where().ge("timestamp", c.getTime())
+		adapter.setFooterText(footerText);
+		qb.where()
+			.ne("state", State.ARCHIVE)
+			.and()
+			.ge("timestamp", c.getTime())
 			.and()
 			.eq("event_id", EventHelper.getInstance(getActivity().getApplicationContext()).getCurrentEvent().getId());
 
@@ -469,7 +470,7 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 			public void run() {
 				try {
 					query = buildQuery(oDao, getTimeFilterId());
-					adapter.changeCursor(obtainCursor(query, oDao));
+					adapter.setCursor(obtainCursor(query, oDao), query);
 				} catch (Exception e) {
 					Log.e(LOG_NAME, "Unable to change cursor", e);
 				}
@@ -485,7 +486,7 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 			public void run() {
 				try {
 					query = buildQuery(oDao, getTimeFilterId());
-					adapter.changeCursor(obtainCursor(query, oDao));
+					adapter.setCursor(obtainCursor(query, oDao), query);
 				} catch (Exception e) {
 					Log.e(LOG_NAME, "Unable to change cursor", e);
 				}
@@ -500,7 +501,7 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 			public void run() {
 				try {
 					query = buildQuery(oDao, getTimeFilterId());
-					adapter.changeCursor(obtainCursor(query, oDao));
+					adapter.setCursor(obtainCursor(query, oDao), query);
 				} catch (Exception e) {
 					Log.e(LOG_NAME, "Unable to change cursor", e);
 				}
@@ -514,7 +515,7 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 			public void run() {
 				try {
 					query = buildQuery(oDao, getTimeFilterId());
-					adapter.changeCursor(obtainCursor(query, oDao));
+					adapter.setCursor(obtainCursor(query, oDao), query);
 				} catch (Exception e) {
 					Log.e(LOG_NAME, "Unable to change cursor", e);
 				}
@@ -526,6 +527,13 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 	public void onObservationDirections(Observation observation) {
 		Intent intent = new Intent(android.content.Intent.ACTION_VIEW, observation.getGoogleMapsUri());
 		startActivity(intent);
+	}
+
+	@Override
+	public void onObservationClick(Observation observation) {
+		Intent observationView = new Intent(getActivity().getApplicationContext(), ObservationViewActivity.class);
+		observationView.putExtra(ObservationViewActivity.OBSERVATION_ID, observation.getId());
+		getActivity().startActivity(observationView);
 	}
 
 	public class ObservationRefreshReceiver extends BroadcastReceiver {
@@ -556,6 +564,44 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 
 				snackbar.show();
 			}
+		}
+	}
+
+	private class ObservationItemDecorator extends RecyclerView.ItemDecoration {
+		private Drawable divider;
+
+		public ObservationItemDecorator() {
+			divider = ContextCompat.getDrawable(getActivity(), R.drawable.people_feed_divider);
+		}
+
+		@Override
+		@SuppressLint("NewApi")
+		public void onDraw(Canvas c, RecyclerView parent, RecyclerView.State state) {
+			c.save();
+			final int left;
+			final int right;
+			if (parent.getClipToPadding()) {
+				left = parent.getPaddingLeft();
+				right = parent.getWidth() - parent.getPaddingRight();
+				c.clipRect(left, parent.getPaddingTop(), right, parent.getHeight() - parent.getPaddingBottom());
+			} else {
+				left = 0;
+				right = parent.getWidth();
+			}
+
+			final int childCount = parent.getChildCount();
+			Rect outBounds = new Rect();
+
+			// Go to childCount - 1 to skip drawing a divider after the last view
+			for (int i = 0; i < childCount - 1; i++) {
+				final View child = parent.getChildAt(i);
+				parent.getDecoratedBoundsWithMargins(child, outBounds);
+				final int bottom = outBounds.bottom + Math.round(ViewCompat.getTranslationY(child));
+				final int top = bottom - divider.getIntrinsicHeight();
+				divider.setBounds(left, top, right, bottom);
+				divider.draw(c);
+			}
+			c.restore();
 		}
 	}
 }

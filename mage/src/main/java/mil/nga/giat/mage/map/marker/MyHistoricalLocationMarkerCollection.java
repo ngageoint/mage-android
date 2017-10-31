@@ -78,7 +78,9 @@ public class MyHistoricalLocationMarkerCollection implements PointCollection<Pai
 				Location locationToRemove = locationQueue.poll();
 
 				Marker markerToRemove = locationIdToMarker.remove(locationToRemove.getId());
-				markerIdToLocation.remove(markerToRemove.getId());
+				if (markerToRemove != null) {
+					markerIdToLocation.remove(markerToRemove.getId());
+				}
 			}
 		}
 	}
