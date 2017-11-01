@@ -81,6 +81,8 @@ public class ZipUtility {
 				out.close();
 			}
 		}
+
+		archive.close();
 	}
 
 	public static void deleteDirectoryOrFile(File file) {

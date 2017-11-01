@@ -15,6 +15,7 @@ import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationFavorite;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationImportant;
+import mil.nga.giat.mage.sdk.datastore.observation.State;
 import mil.nga.giat.mage.sdk.event.IObservationEventListener;
 import mil.nga.giat.mage.sdk.exceptions.ObservationException;
 import mil.nga.giat.mage.sdk.http.resource.ObservationResource;
@@ -140,10 +141,16 @@ public class ObservationPushIntentService extends ConnectivityAwareIntentService
 			if (isCanceled) {
 				break;
 			}
-			Log.d(LOG_NAME, "Pushing observation with id: " + observation.getId());
-			observation = observationResource.saveObservation(observation);
-			if (observation != null) {
-				Log.d(LOG_NAME, "Pushed observation with remote_id: " + observation.getRemoteId());
+
+			if (observation.getState() == State.ARCHIVE) {
+				Log.d(LOG_NAME, "Archiving observation with id: " + observation.getId());
+				observationResource.archiveObservation(observation);
+			} else {
+				Log.d(LOG_NAME, "Pushing observation with id: " + observation.getId());
+				observation = observationResource.saveObservation(observation);
+				if (observation != null) {
+					Log.d(LOG_NAME, "Pushed observation with remote_id: " + observation.getRemoteId());
+				}
 			}
 		}
 	}

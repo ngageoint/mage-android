@@ -32,18 +32,22 @@ public class Event {
     private String description;
 
     @DatabaseField
-    private String forms;
+	private String forms;
+
+	@DatabaseField
+	private String acl;
 	
 	public Event() {
 		// ORMLite needs a no-arg constructor
 	}
 
-	public Event(String remoteId, String name, String description, String forms) {
+	public Event(String remoteId, String name, String description, String forms, String acl) {
 		super();
 		this.remoteId = remoteId;
 		this.name = name;
 		this.description = description;
 		this.forms = forms;
+		this.acl = acl;
 	}
 
 	public Long getId() {
@@ -83,6 +87,10 @@ public class Event {
 		}
 
 		return formMap;
+	}
+
+	public JsonObject getAcl() {
+		return new JsonParser().parse(acl).getAsJsonObject();
 	}
 
 	@Override

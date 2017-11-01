@@ -39,6 +39,7 @@ import mil.nga.giat.mage.sdk.http.converter.ObservationsConverterFactory;
 import mil.nga.giat.mage.sdk.utils.ISO8601DateFormatFactory;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
 import retrofit.Call;
+import retrofit.GsonConverterFactory;
 import retrofit.Response;
 import retrofit.Retrofit;
 import retrofit.http.Body;
@@ -68,6 +69,9 @@ public class ObservationResource {
 
         @PUT("/api/events/{eventId}/observations/{observationId}")
         Call<Observation> updateObservation(@Path("eventId") String eventId, @Path("observationId") String observationId, @Body Observation observation);
+
+        @POST("/api/events/{eventId}/observations/{observationId}/states")
+        Call<JsonObject> archiveObservation(@Path("eventId") String eventId, @Path("observationId") String observationId, @Body JsonObject state);
 
         @GET("/api/events/{eventId}/form/icons.zip")
         Call<ResponseBody> getObservationIcons(@Path("eventId") String eventId);
@@ -269,6 +273,63 @@ public class ObservationResource {
         }
 
         return savedObservation;
+    }
+
+    public void archiveObservation(Observation observation) {
+        ObservationHelper observationHelper = ObservationHelper.getInstance(context);
+
+        try {
+            String baseUrl = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.serverURLKey), context.getString(R.string.serverURLDefaultValue));
+            Retrofit retrofit = new Retrofit.Builder()
+                    .baseUrl(baseUrl)
+                    .addConverterFactory(GsonConverterFactory.create())
+                    .client(HttpClientManager.getInstance(context).httpClient())
+                    .build();
+
+            JsonObject state = new JsonObject();
+            state.addProperty("name", "archive");
+
+            ObservationService service = retrofit.create(ObservationService.class);
+            Response<JsonObject> response = service.archiveObservation(observation.getEvent().getRemoteId(), observation.getRemoteId(), state).execute();
+
+            if (response.isSuccess()) {
+                try {
+                    observationHelper.delete(observation);
+                } catch (ObservationException oe) {
+                    Log.e(LOG_NAME, "Problem deleting observation after server archive response", oe);
+                }
+            } else {
+                Log.e(LOG_NAME, "Bad request.");
+
+                ObservationError observationError = new ObservationError();
+                observationError.setStatusCode(response.code());
+                observationError.setDescription(response.message());
+
+                if (response.errorBody() != null) {
+                    String errorBody = response.errorBody().string();
+                    Log.e(LOG_NAME, errorBody);
+
+                    observationError.setMessage(errorBody);
+                }
+
+                try {
+                    observationHelper.update(observation);
+                } catch (ObservationException oe) {
+                    Log.e(LOG_NAME, "Problem updating observation error", oe);
+                }
+            }
+        } catch (IOException e) {
+            Log.e(LOG_NAME, "Failure archiving observation.", e);
+
+            ObservationError observationError = new ObservationError();
+            observationError.setMessage("The Internet connection appears to be offline.");
+            observation.setError(observationError);
+            try {
+                observationHelper.update(observation);
+            } catch (ObservationException oe) {
+                Log.e(LOG_NAME, "Problem archiving observation error", oe);
+            }
+        }
     }
 
     public InputStream getObservationIcons(Event event) throws IOException {

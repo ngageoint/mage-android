@@ -37,17 +37,21 @@ public class EventDeserializer implements JsonDeserializer<Event> {
     @Override
     public Event deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
 
-        JsonObject feature = json.getAsJsonObject();
+        JsonObject event = json.getAsJsonObject();
 
-        String remoteId = feature.get("id").getAsString();
-        String name = feature.get("name").getAsString();
+        String remoteId = event.get("id").getAsString();
+
+        String name = event.get("name").getAsString();
+
         String description = "";
-        if(feature.has("description")) {
-            description = feature.get("description").getAsString();
+        if(event.has("description")) {
+            description = event.get("description").getAsString();
         }
-        String form = feature.get("forms").toString();
 
-        Event event = new Event(remoteId, name, description, form);
-        return event;
+        String form = event.get("forms").toString();
+
+        String acl = event.get("acl").toString();
+
+        return new Event(remoteId, name, description, form, acl);
     }
 }

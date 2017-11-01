@@ -48,7 +48,10 @@ public class ObservationBitmapFetch extends AbstractServerFetch {
 			}
 
 			// copy stream to file
-			ByteStreams.copy(inputStream, new FileOutputStream(zipFile));
+			FileOutputStream outputStream = new FileOutputStream(zipFile);
+			ByteStreams.copy(inputStream, outputStream);
+			inputStream.close();
+			outputStream.close();
 
 			Log.d(LOG_NAME, "Unzipping " + zipFile.getAbsolutePath() + " to " + zipDirectory.getAbsolutePath() + ".");
 

@@ -93,7 +93,7 @@ public class LocalAuthLoginTask extends AbstractAccountTask {
             final String DEFAULT_DYNAMIC_FORM = "dynamic-form/default-dynamic-form.json";
 
             String dynamicForm = CharStreams.toString(new InputStreamReader(mApplicationContext.getAssets().open(DEFAULT_DYNAMIC_FORM), "UTF-8"));
-            Event defaultEvent = new Event("NA", "LOCAL", "Local Auth", dynamicForm);
+            Event defaultEvent = new Event("NA", "LOCAL", "Local Auth", dynamicForm, "{}");
             defaultEvent = eventHelper.create(defaultEvent);
 
 			// create new active user.

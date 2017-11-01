@@ -427,6 +427,27 @@ public class ObservationHelper extends DaoHelper<Observation> implements IEventD
 		}
 		return observations;
 	}
+
+	/**
+	 * Archive an Observation. This will remove the observation from the server
+	 *
+	 * @param observation
+	 * @throws ObservationException
+	 */
+	public void archive(final Observation observation) throws ObservationException {
+		observation.setState(State.ARCHIVE);
+		observation.setDirty(true);
+		try {
+			observationDao.update(observation);
+		} catch (SQLException e) {
+			throw new ObservationException("Unable to archive Observation: " + observation.getId(), e);
+		}
+
+		// fire the event
+		for (IObservationEventListener listener : listeners) {
+			listener.onObservationUpdated(observation);
+		}
+	}
 	
 	/**
 	 * Deletes an Observation. This will also delete an Observation's child
