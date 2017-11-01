@@ -4,6 +4,8 @@ import android.app.FragmentManager;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
+import android.support.design.widget.BottomSheetBehavior;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
@@ -86,6 +88,7 @@ public class ObservationViewActivity extends AppCompatActivity implements OnMapR
 	private DecimalFormat latLngFormat = new DecimalFormat("###.#####");
 	private MapFragment mapFragment;
 	private MapObservationManager mapObservationManager;
+	private BottomSheetBehavior bottomSheetBehavior;
 
 	ImageView favoriteIcon;
 
@@ -153,6 +156,33 @@ public class ObservationViewActivity extends AppCompatActivity implements OnMapR
 			@Override
 			public void onClick(View v) {
 				editObservation();
+			}
+		});
+
+		View bottomSheet = findViewById(R.id.bottom_sheet);
+		bottomSheetBehavior = BottomSheetBehavior.from(bottomSheet);
+		bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
+		bottomSheetBehavior.setBottomSheetCallback(new BottomSheetBehavior.BottomSheetCallback() {
+			@Override
+			public void onStateChanged(@NonNull View bottomSheet, int newState) {
+			}
+
+			@Override
+			public void onSlide(@NonNull View bottomSheet, float slideOffset) {
+				float scale = slideOffset < 0 ? Math.abs(slideOffset) : 1 - slideOffset;
+				if (!Float.isNaN(scale)) {
+					editButton.animate().scaleX(scale).scaleY(scale).setDuration(0).start();
+				}
+			}
+		});
+		findViewById(R.id.important_actions_button).setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				if(bottomSheetBehavior.getState() != BottomSheetBehavior.STATE_EXPANDED) {
+					bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+				} else {
+					bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
+				}
 			}
 		});
 
@@ -427,15 +457,17 @@ public class ObservationViewActivity extends AppCompatActivity implements OnMapR
 			descriptionView.setText(description);
 
 			findViewById(R.id.addImportant).setVisibility(View.GONE);
-			findViewById(R.id.importantActions).setVisibility(canFlagObservation() ? View.VISIBLE : View.GONE);
+			findViewById(R.id.important_actions_button).setVisibility(canFlagObservation() ? View.VISIBLE : View.GONE);
 		} else {
 			imporantView.setVisibility(View.GONE);
-			findViewById(R.id.importantActions).setVisibility(View.GONE);
+			findViewById(R.id.important_actions_button).setVisibility(View.GONE);
 			findViewById(R.id.addImportant).setVisibility(canFlagObservation() ? View.VISIBLE : View.GONE);
 		}
 	}
 
 	public void onUpdateImportantClick(View v) {
+		bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
+
 		final ObservationImportant important = o.getImportant();
 		String description = important != null ? important.getDescription() : null;
 		ImportantDialog dialog = ImportantDialog.newInstance(description);
@@ -471,6 +503,8 @@ public class ObservationViewActivity extends AppCompatActivity implements OnMapR
 
 
 	public void onRemoveImportantClick(View v) {
+		bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
+
 		ImportantRemoveDialog dialog = new ImportantRemoveDialog();
 		dialog.setOnRemoveImportantListener(new ImportantRemoveDialog.OnRemoveImportantListener() {
 			@Override
@@ -580,4 +614,5 @@ public class ObservationViewActivity extends AppCompatActivity implements OnMapR
 	private void share(final Observation observation) {
 		new ObservationShareTask(this, observation).execute();
 	}
+
 }
