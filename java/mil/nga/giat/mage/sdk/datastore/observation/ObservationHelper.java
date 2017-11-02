@@ -393,7 +393,6 @@ public class ObservationHelper extends DaoHelper<Observation> implements IEventD
 			if (currentUser != null) {
 				queryBuilder.where().eq("dirty", Boolean.FALSE).and().ne("user_id", String.valueOf(currentUser.getRemoteId())).and().eq("event_id", currentEvent.getId());
 				queryBuilder.orderBy("last_modified", false);
-				queryBuilder.limit(1L);
 				Observation o = observationDao.queryForFirst(queryBuilder.prepare());
 				if (o != null) {
 					lastModifiedDate = o.getLastModified();
