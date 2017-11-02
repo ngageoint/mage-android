@@ -173,7 +173,11 @@ public class ObservationDeserializer extends Deserializer {
 				observation.setProvider(parser.getText());
 			} else if ("accuracy".equals(name)) {
 				parser.nextToken();
-				observation.setAccuracy(parser.getFloatValue());
+				try {
+					observation.setAccuracy(Float.parseFloat(parser.getText()));
+				} catch (NumberFormatException e) {
+					Log.e(LOG_NAME, "Could not parse observation accuracy into a float value", e);
+				}
 			} else if ("forms".equals(name)) {
 				parser.nextToken();
 				Collection<ObservationForm> forms = parseForms(parser);
