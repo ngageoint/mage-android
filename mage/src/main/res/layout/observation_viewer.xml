@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <android.support.design.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#F0F0F0">
@@ -245,8 +246,9 @@
                                 android:src="@drawable/ic_flag_white_24dp"/>
 
                             <LinearLayout
-                                android:layout_width="match_parent"
+                                android:layout_width="0dp"
                                 android:layout_height="wrap_content"
+                                android:layout_weight="1"
                                 android:orientation="vertical">
 
                                 <TextView
@@ -260,12 +262,23 @@
                                 <TextView
                                     android:id="@+id/importantDate"
                                     style="@style/ListTextSecondary"
-                                    android:layout_width="match_parent"
+                                    android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:layout_gravity="center_vertical"
                                     android:textSize="14sp"/>
 
                             </LinearLayout>
+
+                            <ImageButton
+                                android:id="@+id/important_actions_button"
+                                android:layout_width="24dip"
+                                android:layout_height="24dip"
+                                android:layout_marginEnd="8dip"
+                                android:layout_gravity="end"
+                                style="?android:attr/borderlessButtonStyle"
+                                android:tint="#8A000000"
+                                android:background="@android:color/transparent"
+                                android:src="@drawable/ic_more_horiz_white_24dp"/>
 
                         </LinearLayout>
 
@@ -290,7 +303,8 @@
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_marginEnd="12dip"
+                            android:layout_marginStart="8dp"
+                            android:layout_marginEnd="12dp"
                             android:orientation="horizontal">
 
                             <ImageView
@@ -315,45 +329,6 @@
 
                         </LinearLayout>
                     </LinearLayout>
-
-                    <LinearLayout
-                        android:id="@+id/importantActions"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginEnd="12dip"
-                        android:orientation="vertical"
-                        android:visibility="gone">
-
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:orientation="horizontal"
-                            android:gravity="end">
-
-                            <Button
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginEnd="24dip"
-                                style="?android:attr/buttonStyleSmall"
-                                android:background="?android:attr/selectableItemBackground"
-                                android:gravity="center"
-                                android:text="UPDATE"
-                                android:textColor="#1B4069"
-                                android:onClick="onUpdateImportantClick"/>
-
-                            <Button
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                style="?android:attr/buttonStyleSmall"
-                                android:background="?android:attr/selectableItemBackground"
-                                android:gravity="center"
-                                android:text="REMOVE"
-                                android:textColor="#F44336"
-                                android:onClick="onRemoveImportantClick"/>
-                        </LinearLayout>
-
-                    </LinearLayout>
-
                 </LinearLayout>
 
 
@@ -384,11 +359,120 @@
         android:id="@+id/edit_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="end|bottom"
         android:layout_marginBottom="16dp"
         android:layout_marginEnd="16dp"
+        app:layout_anchor="@+id/bottom_sheet"
+        app:layout_anchorGravity="top|end"
         android:visibility="gone"
         android:theme="@style/AppTheme.PrimaryFAB"
         android:src="@drawable/ic_mode_edit_white_24dp" />
+
+    <LinearLayout
+        android:id="@+id/bottom_sheet"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:elevation="5dp"
+        android:clipToPadding="true"
+        app:behavior_hideable="true"
+        android:background="@color/md_white_1000"
+        app:layout_behavior="android.support.design.widget.BottomSheetBehavior">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="8dp"
+                android:paddingBottom="8dp"
+                android:paddingTop="8dp"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:clickable="true"
+                android:onClick="onUpdateImportantClick"
+                android:background="?android:attr/selectableItemBackground">
+
+                <ImageView
+                    android:layout_width="24dip"
+                    android:layout_height="24dip"
+                    android:layout_marginEnd="3dip"
+                    android:alpha=".54"
+                    android:layout_gravity="center_vertical"
+                    android:src="@drawable/ic_mode_edit_black_24dp"/>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:layout_marginStart="16dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Update Important Flag"
+                        style="@style/ListTextPrimary"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Change important description for this observation"
+                        style="@style/ListTextSecondary"/>
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginBottom="8dp"
+                android:paddingBottom="16dp"
+                android:paddingTop="8dp"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:clickable="true"
+                android:onClick="onRemoveImportantClick"
+                android:background="?android:attr/selectableItemBackground">
+
+                <ImageView
+                    android:layout_width="24dip"
+                    android:layout_height="24dip"
+                    android:layout_marginEnd="3dip"
+                    android:alpha=".54"
+                    android:layout_gravity="center_vertical"
+                    android:src="@drawable/ic_delete_black_24dp"/>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:layout_marginStart="16dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Remove Important Flag"
+                        style="@style/ListTextPrimary"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Remove important flag for this observation"
+                        style="@style/ListTextSecondary"/>
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+
 
 </android.support.design.widget.CoordinatorLayout>

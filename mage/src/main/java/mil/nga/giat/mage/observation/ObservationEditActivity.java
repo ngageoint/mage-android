@@ -130,6 +130,7 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 	private final DecimalFormat latLngFormat = new DecimalFormat("###.#####");
 	private ArrayList<Attachment> attachmentsToCreate = new ArrayList<>();
 
+	private boolean isNewObservation;
     private ObservationLocation location;
 	private Observation observation;
 	private User currentUser;
@@ -183,7 +184,7 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 		timestamp.setPropertyType(MagePropertyType.DATE);
 
 		final long observationId = getIntent().getLongExtra(OBSERVATION_ID, NEW_OBSERVATION);
-		final boolean newObservation = observationId == NEW_OBSERVATION;
+		isNewObservation = observationId == NEW_OBSERVATION;
 
 		Iterator<JsonElement> iterator = EventHelper.getInstance(getApplicationContext()).getCurrentEvent().getForms().iterator();
 		while (iterator.hasNext()) {
@@ -194,7 +195,7 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 		Map<Long, JsonObject> formMap = EventHelper.getInstance(getApplicationContext()).getCurrentEvent().getFormMap();
 
 		Collection<JsonObject> formDefinitions = new ArrayList<>();
-		if (newObservation) {
+		if (isNewObservation) {
 			observation = new Observation();
 
 			final long formId = getIntent().getLongExtra(OBSERVATION_FORM_ID, NO_FORM);
@@ -288,7 +289,7 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 
 		hideKeyboardOnClick(findViewById(R.id.observation_edit));
 
-		if (newObservation) {
+		if (isNewObservation) {
 			getSupportActionBar().setTitle("New Observation");
 			location = getIntent().getParcelableExtra(LOCATION);
 
@@ -365,7 +366,7 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 				Intent intent = new Intent(ObservationEditActivity.this, LocationEditActivity.class);
 				intent.putExtra(LocationEditActivity.LOCATION, location);
 				intent.putExtra(LocationEditActivity.MARKER_BITMAP, ObservationBitmapFactory.bitmap(ObservationEditActivity.this, observation));
-				intent.putExtra(LocationEditActivity.NEW_OBSERVATION, newObservation);
+				intent.putExtra(LocationEditActivity.NEW_OBSERVATION, isNewObservation);
 				startActivityForResult(intent, LOCATION_EDIT_ACTIVITY_REQUEST_CODE);
 			}
 		});
@@ -389,7 +390,7 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 	public boolean onCreateOptionsMenu(Menu menu) {
 		MenuInflater inflater = getMenuInflater();
 
-		if (canDeleteObservation()) {
+		if (!isNewObservation && canDeleteObservation()) {
 			inflater.inflate(R.menu.observation_delete_menu, menu);
 		}
 
