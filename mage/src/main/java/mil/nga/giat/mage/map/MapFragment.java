@@ -54,6 +54,7 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.TileOverlay;
 import com.google.android.gms.maps.model.TileOverlayOptions;
 import com.google.android.gms.maps.model.TileProvider;
+import com.google.common.collect.Sets;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.Point;
 
@@ -193,6 +194,8 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 		View view = inflater.inflate(R.layout.fragment_map, container, false);
 
 		setHasOptionsMenu(true);
+
+		staticGeometryCollection = new StaticGeometryCollection();
 
 		zoomToLocationButton = (FloatingActionButton) view.findViewById(R.id.zoom_button);
 
@@ -335,7 +338,6 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 				}
 			});
 
-			staticGeometryCollection = new StaticGeometryCollection();
 
 			historicLocations = new MyHistoricalLocationMarkerCollection(getActivity(), map);
 			HistoricLocationLoadTask myHistoricLocationLoad = new HistoricLocationLoadTask(getActivity(), historicLocations);
@@ -343,9 +345,6 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 
 			ObservationHelper.getInstance(getActivity().getApplicationContext()).addListener(this);
 			LocationHelper.getInstance(getActivity().getApplicationContext()).addListener(this);
-
-			updateStaticFeatureLayers();
-
 			CacheProvider.getInstance(getActivity().getApplicationContext()).registerCacheOverlayListener(this);
 			StaticFeatureHelper.getInstance(getActivity().getApplicationContext()).addListener(this);
 		}
@@ -367,6 +366,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 		locationLoad.executeOnExecutor(executor);
 
 		updateMapView();
+		updateStaticFeatureLayers();
 
 		// Set visibility on map markers as preferences may have changed
 		observations.setVisibility(preferences.getBoolean(getResources().getString(R.string.showObservationsKey), true));
@@ -470,6 +470,8 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 			if (locationService != null) {
 				locationService.unregisterOnLocationListener(this);
 			}
+
+			mapInitialized = false;
 		}
 	}
 
@@ -1179,9 +1181,19 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 	private void removeStaticFeatureLayers() {
 		Set<String> selectedLayerIds = preferences.getStringSet(getResources().getString(R.string.staticFeatureLayersKey), Collections.<String> emptySet());
 
-		for (String currentLayerId : staticGeometryCollection.getLayers()) {
-			if (!selectedLayerIds.contains(currentLayerId)) {
-				staticGeometryCollection.removeLayer(currentLayerId);
+		Set<String> eventLayerIds = new HashSet<>();
+		try {
+			for (Layer layer : LayerHelper.getInstance(getActivity()).readByEvent(EventHelper.getInstance(getActivity().getApplicationContext()).getCurrentEvent())) {
+				eventLayerIds.add(layer.getRemoteId());
+			}
+		} catch (LayerException e) {
+			Log.e(LOG_NAME, "Problem reading static layers", e);
+		}
+		Set<String> layersNotInEvent = Sets.difference(selectedLayerIds, eventLayerIds);
+
+		for (String layerId : staticGeometryCollection.getLayers()) {
+			if (!selectedLayerIds.contains(layerId) || layersNotInEvent.contains(layerId)) {
+				staticGeometryCollection.removeLayer(layerId);
 			}
 		}
 	}
