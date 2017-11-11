@@ -59,6 +59,11 @@ public class LocationPreferencesActivity extends AppCompatActivity {
         setContentView(R.layout.activity_location_preferences);
 
         toolbar = (Toolbar) findViewById(R.id.toolbar);
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
 
         boolean locationServicesEnabled = false;
         if (android.os.Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
@@ -87,6 +92,7 @@ public class LocationPreferencesActivity extends AppCompatActivity {
 
         getSupportFragmentManager().beginTransaction().replace(R.id.content_frame, preference).commit();
     }
+
 
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
