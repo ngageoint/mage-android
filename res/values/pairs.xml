@@ -22,7 +22,7 @@
     <integer name="observationPushFrequencyDefaultValue">60000</integer>
 
     <string name="locationPushFrequencyKey">locationPushFrequency</string>
-    <integer name="locationPushFrequencyDefaultValue">40000</integer>
+    <integer name="locationPushFrequencyDefaultValue">30000</integer>
 
     <string name="deleteAllDataOnLogoutKey">deleteAllDataOnLogout</string>
     <bool name="deleteAllDataOnLogoutDefaultValue">false</bool>
@@ -77,7 +77,7 @@
     <!-- **************** set in fetchpreferences.xml **************** -->
 
     <string name="userFetchFrequencyKey">userFetchFrequency</string>
-    <integer name="userFetchFrequencyDefaultValue">120000</integer>
+    <integer name="userFetchFrequencyDefaultValue">300000</integer>
 
     <string name="observationFetchFrequencyKey">observationFetchFrequency</string>
     <integer name="observationFetchFrequencyDefaultValue">300000</integer>

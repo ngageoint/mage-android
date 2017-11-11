@@ -36,7 +36,6 @@ public class EventDeserializer implements JsonDeserializer<Event> {
 
     @Override
     public Event deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
-
         JsonObject event = json.getAsJsonObject();
 
         String remoteId = event.get("id").getAsString();
