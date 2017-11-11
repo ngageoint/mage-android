@@ -178,6 +178,8 @@ public class InitialFetchIntentService extends ConnectivityAwareIntentService {
                 Collection<User> users = userResource.getUsers();
                 Log.d(LOG_NAME, "Fetched " + users.size() + " users");
 
+                userHelper.reconcileUsers(users);
+
                 final ArrayList<User> avatarUsers = new ArrayList<>();
                 final ArrayList<User> iconUsers = new ArrayList<>();
                 for (User user : users) {

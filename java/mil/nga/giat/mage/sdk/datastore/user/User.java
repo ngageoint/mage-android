@@ -11,12 +11,14 @@ import java.util.Date;
 @DatabaseTable(tableName = "users")
 public class User {
 
+	public static final String COLUMN_NAME_REMOTE_ID = "remote_id";
+	public static final String COLUMN_NAME_USERNAME = "username";
 	public static final String COLUMN_NAME_USER_LOCAL_ID = "user_local_id";
 
 	@DatabaseField(generatedId = true)
 	private Long _id;
 
-	@DatabaseField(unique = true, columnName = "remote_id")
+	@DatabaseField(unique = true, columnName = COLUMN_NAME_REMOTE_ID)
 	private String remoteId;
 
 	@DatabaseField
@@ -25,7 +27,7 @@ public class User {
 	@DatabaseField
 	private String displayName;
 
-	@DatabaseField(canBeNull = false, unique = true)
+	@DatabaseField(canBeNull = false, unique = true, columnName = COLUMN_NAME_USERNAME)
 	private String username;
 
 	@DatabaseField(canBeNull = false, columnName = "fetched_date")

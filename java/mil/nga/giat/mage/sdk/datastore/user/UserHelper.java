@@ -3,6 +3,8 @@ package mil.nga.giat.mage.sdk.datastore.user;
 import android.content.Context;
 import android.util.Log;
 
+import com.google.common.base.Function;
+import com.google.common.collect.Collections2;
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.stmt.DeleteBuilder;
 import com.j256.ormlite.stmt.PreparedQuery;
@@ -188,7 +190,12 @@ public class UserHelper extends DaoHelper<User> implements IEventDispatcher<IEve
 
 	public User createOrUpdate(User user) {
 		try {
-			User oldUser = read(user.getRemoteId());
+			List<User> allUsers = userDao.queryForAll();
+
+			QueryBuilder<User, Long> db = userDao.queryBuilder();
+			db.where().eq(User.COLUMN_NAME_USERNAME, user.getUsername());
+			User oldUser = db.queryForFirst();
+
 			if (oldUser == null) {
 				user = create(user);
 				Log.d(LOG_NAME, "Created user with remote_id " + user.getRemoteId());
@@ -203,6 +210,34 @@ public class UserHelper extends DaoHelper<User> implements IEventDispatcher<IEve
 			Log.e(LOG_NAME, "There was a problem reading user: " + user, ue);
 		}
 		return user;
+	}
+
+	/**
+	 * Remove any users from the database that are not in this user list.
+	 *
+	 * @param users list of users that should remain in the database, all others will be removed
+	 */
+	public void reconcileUsers(Collection<User> users) throws UserException {
+		Collection<String> userIds = Collections2.transform(users, new Function<User, String>() {
+			@Override
+			public String apply(User user) {
+				return user.getRemoteId();
+			}
+		});
+
+		try {
+			DeleteBuilder<User, Long> userDeleteBuilder = userDao.deleteBuilder();
+			userDeleteBuilder.where().notIn(User.COLUMN_NAME_REMOTE_ID, userIds);
+			int deleted = userDeleteBuilder.delete();
+			Log.i(LOG_NAME, "Deleted " + deleted + " users from database that did not exist on the MAGE server");
+
+			DeleteBuilder<UserLocal, Long> userLocalDeleteBuilder = userLocalDao.deleteBuilder();
+			userLocalDeleteBuilder.where().notIn(UserLocal.COLUMN_NAME_ID, userDao.queryBuilder().selectColumns(User.COLUMN_NAME_USER_LOCAL_ID));
+			userLocalDeleteBuilder.delete();
+		} catch (SQLException sqle) {
+			Log.e(LOG_NAME, "Unable to reconcile users '" + users.toString(), sqle);
+			throw new UserException("Unable to update UserLocal table", sqle);
+		}
 	}
 
 	public User setCurrentUser(User user) throws UserException {
