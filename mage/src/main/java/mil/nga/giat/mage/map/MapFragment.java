@@ -361,9 +361,6 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 			StaticFeatureHelper.getInstance(getActivity().getApplicationContext()).addListener(this);
 		}
 
-		updateMapView();
-
-		// Set visibility on map markers as preferences may have changed
 		if (observations != null) {
 			observations.clear();
 		}
@@ -382,6 +379,8 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 		locationLoad.setFilter(getTemporalFilter("timestamp", getLocationTimeFilterId(), LOCATION_FILTER_TYPE));
 		locationLoad.executeOnExecutor(executor);
 
+		updateMapView();
+		updateStaticFeatureLayers();
 
 		if (historicLocations != null) {
 			historicLocations.clear();
@@ -1260,7 +1259,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 		try {
 			for (Layer layer : LayerHelper.getInstance(getActivity()).readByEvent(EventHelper.getInstance(getActivity().getApplicationContext()).getCurrentEvent())) {
 				eventLayerIds.add(layer.getRemoteId());
-            }
+			}
 		} catch (LayerException e) {
 			Log.e(LOG_NAME, "Problem reading static layers", e);
 		}

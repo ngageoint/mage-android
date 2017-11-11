@@ -40,11 +40,11 @@ public class HelpActivity extends AppCompatActivity {
 
 		TabLayout tabLayout = (TabLayout) findViewById(R.id.tab_layout);
 		tabLayout.addTab(tabLayout.newTab().setText("About"));
-		tabLayout.addTab(tabLayout.newTab().setText("Acknowledgements"));
+		tabLayout.addTab(tabLayout.newTab().setText("Attributions"));
 		tabLayout.setTabGravity(TabLayout.GRAVITY_FILL);
 		tabLayout.setTabMode(TabLayout.MODE_SCROLLABLE);
 
-		List<Fragment> fragments = new ArrayList<>(Arrays.asList(new AboutFragment(), new AcknowledgementsFragment()));
+		List<Fragment> fragments = new ArrayList<>(Arrays.asList(new AboutFragment(), new AttributionsFragment()));
 
 		SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
 		boolean showDisclaimer = sharedPreferences.getBoolean(getString(R.string.serverDisclaimerShow), false);
@@ -113,6 +113,10 @@ public class HelpActivity extends AppCompatActivity {
 			View view = inflater.inflate(R.layout.fragment_help_disclaimer, container, false);
 
 			SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getActivity().getApplicationContext());
+
+			String disclaimerTitle = sharedPreferences.getString(getString(R.string.serverDisclaimerTitle), null);
+			((TextView) view.findViewById(R.id.disclaimer_title)).setText(disclaimerTitle);
+
 			String disclaimerText = sharedPreferences.getString(getString(R.string.serverDisclaimerText), null);
 			((TextView) view.findViewById(R.id.disclaimer_text)).setText(disclaimerText);
 
@@ -120,7 +124,7 @@ public class HelpActivity extends AppCompatActivity {
 		}
 	}
 
-	public static class AcknowledgementsFragment extends Fragment {
+	public static class AttributionsFragment extends Fragment {
 		@Override
 		public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 			return inflater.inflate(R.layout.fragment_help_acknowledgement, container, false);

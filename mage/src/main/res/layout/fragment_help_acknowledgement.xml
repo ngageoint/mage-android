@@ -19,6 +19,12 @@
         <mil.nga.giat.mage.help.OpensourceItemFragment
             android:layout_width="match_parent"
             android:layout_height="match_parent"
+            mage:license="This product includes software licensed under the Apache License version 2.0 http://www.apache.org/licenses/LICENSE-2.0"
+            mage:name="Android Map Utils" />
+
+        <mil.nga.giat.mage.help.OpensourceItemFragment
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
             mage:license="This product includes software licensed under the MIT License http://opensource.org/licenses/mit-license.php"
             mage:name="Android Sanselan"/>
 
@@ -39,9 +45,8 @@
         <mil.nga.giat.mage.help.OpensourceItemFragment
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            mage:copyright="Dave Gandy - http://fontawesome.io"
-            mage:license="This product includes software licensed under the SIL OFL 1.1 http://scripts.sil.org/OFL the MIT License http://opensource.org/licenses/mit-license.php and the Creative Commons BY 3.0 License http://creativecommons.org/licenses/by/3.0/"
-            mage:name="Font Awesome"/>
+            mage:license="This product includes software licensed under the Apache License version 2.0 http://www.apache.org/licenses/LICENSE-2.0"
+            mage:name="Flexbox Layout"/>
 
         <mil.nga.giat.mage.help.OpensourceItemFragment
             android:layout_width="match_parent"
@@ -87,13 +92,6 @@
         <mil.nga.giat.mage.help.OpensourceItemFragment
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            mage:copyright="Copyright © 2014 Vivid Solutions Inc."
-            mage:license="This product includes software licensed under the GNU Lesser General Public License v3 https://www.gnu.org/licenses/lgpl.html"
-            mage:name="JTS Topolgy Suite"/>
-
-        <mil.nga.giat.mage.help.OpensourceItemFragment
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
             mage:copyright="http://ormlite.com/"
             mage:license="This product includes software licensed under the ISC License http://opensource.org/licenses/ISC"
             mage:name="ORMLite"/>
@@ -104,5 +102,12 @@
             mage:copyright="© 2015 OCPsoft All Rights Reserved"
             mage:license="This product includes software licensed under the Apache License version 2.0 http://www.apache.org/licenses/LICENSE-2.0"
             mage:name="Pretty Time"/>
+
+        <mil.nga.giat.mage.help.OpensourceItemFragment
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            mage:copyright="© Copyright 2013 Square, Inc."
+            mage:license="This product includes software licensed under the Apache License version 2.0 http://www.apache.org/licenses/LICENSE-2.0"
+            mage:name="Retrofit"/>
     </LinearLayout>
 </ScrollView>

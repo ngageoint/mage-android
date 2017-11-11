@@ -9,9 +9,9 @@ apply plugin: 'maven-publish'
 
 group 'mil.nga.giat.mage'
 archivesBaseName = 'mage-android'
-version '5.3.5'
+version '6.0.0'
 ext {
-    versionCode = 41
+    versionCode = 42
     sourceRefspec = Grgit.open().head().id
 }
 
