@@ -57,6 +57,9 @@ public class PeopleCursorAdapter extends CursorAdapter {
 		try {
 			Location location = query.mapRow(new AndroidDatabaseResults(cursor, null, false));
 			User user = location.getUser();
+			if (user == null) {
+				return;
+			}
 
 			final ImageView avatarView = (ImageView) v.findViewById(R.id.avatarImageView);
 			UserLocal userLocal = user.getUserLocal();
