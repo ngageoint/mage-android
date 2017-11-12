@@ -43,7 +43,7 @@ public class LocationHelper extends DaoHelper<Location> implements IEventDispatc
 	private final Dao<Location, Long> locationDao;
 	private final Dao<LocationProperty, Long> locationPropertyDao;
 	
-	private Collection<ILocationEventListener> listeners = new CopyOnWriteArrayList<ILocationEventListener>();
+	private Collection<ILocationEventListener> listeners = new CopyOnWriteArrayList<>();
 
 	private Context context;
 	
@@ -259,7 +259,7 @@ public class LocationHelper extends DaoHelper<Location> implements IEventDispatc
 		}
 		return locations;
 	}
-	
+
 	/**
 	 * This will delete the user's location(s) that have remote_ids. Locations
 	 * that do NOT have remote_ids have not been sync'ed w/ the server.
@@ -274,17 +274,20 @@ public class LocationHelper extends DaoHelper<Location> implements IEventDispatc
 
 		try {
 			// newest first
-			QueryBuilder<Location, Long> qb = locationDao.queryBuilder().orderBy("timestamp", false);
-			qb.where().eq("user_id", userLocalId).and().eq("event_id", event.getId());
+			QueryBuilder<Location, Long> qb = locationDao.queryBuilder().orderBy(Location.COLUMN_NAME_TIMESTAMP, false);
+			qb.where()
+				.eq(Location.COLUMN_NAME_USER_ID, userLocalId)
+				.and()
+				.eq(Location.COLUMN_NAME_EVENT_ID, event.getId());
 
 			List<Location> locations = qb.query();
 
 			// if we should keep the most recent record, then skip one record.
-			if(keepMostRecent) {
+			if (keepMostRecent) {
 				locations.remove(0);
 			}
 
-			delete(locations);
+			numberLocationsDeleted = delete(locations);
 		} catch (SQLException sqle) {
 			Log.e(LOG_NAME, "Unable to delete user's locations", sqle);
 			throw new LocationException("Unable to delete user's locations", sqle);
@@ -320,14 +323,14 @@ public class LocationHelper extends DaoHelper<Location> implements IEventDispatc
 	 * @param locations
 	 * @throws LocationException
 	 */
-	public void delete(final Collection<Location> locations) throws LocationException {
-		List<Location> deletedLocations = new ArrayList<Location>();
+	public int delete(final Collection<Location> locations) throws LocationException {
+		List<Location> deletedLocations = new ArrayList<>();
 		try {
 			deletedLocations = TransactionManager.callInTransaction(DaoStore.getInstance(context).getConnectionSource(), new Callable<List<Location>>() {
 				@Override
 				public List<Location> call() throws Exception {
 					// read the full Location in
-					List<Location> deletedLocations = new ArrayList<Location>();
+					List<Location> deletedLocations = new ArrayList<>();
 					for(Location location : locations) {
 						// delete Location properties.
 						Collection<LocationProperty> properties = location.getProperties();
@@ -352,6 +355,8 @@ public class LocationHelper extends DaoHelper<Location> implements IEventDispatc
 				listener.onLocationDeleted(deletedLocations);
 			}
 		}
+
+		return deletedLocations.size();
 	}
 	
 	public void deleteAll() throws UserException {

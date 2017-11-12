@@ -26,6 +26,10 @@ import mil.nga.wkb.geom.Geometry;
 @DatabaseTable(tableName = "locations")
 public class Location implements Comparable<Location>, Temporal {
 
+	public static final String COLUMN_NAME_USER_ID = "user_id";
+	public static final String COLUMN_NAME_EVENT_ID = "event_id";
+	public static final String COLUMN_NAME_TIMESTAMP = "timestamp";
+
 	// name _id needed for cursor adapters
 	@DatabaseField(generatedId = true)
 	private Long _id;
@@ -33,13 +37,13 @@ public class Location implements Comparable<Location>, Temporal {
 	@DatabaseField(unique = true, columnName = "remote_id")
 	private String remoteId;
 
-	@DatabaseField(canBeNull = false, foreign = true, foreignAutoRefresh = true)
+	@DatabaseField(canBeNull = false, foreign = true, foreignAutoRefresh = true, columnName = COLUMN_NAME_USER_ID)
 	private User user;
 
     /**
      * This is the time the location was reported at.  Time the GPS picked up.
      */
-    @DatabaseField(canBeNull = false, dataType = DataType.DATE_LONG)
+    @DatabaseField(canBeNull = false, dataType = DataType.DATE_LONG, columnName = COLUMN_NAME_TIMESTAMP)
     private Date timestamp = new Date(0);
     
     /**
@@ -57,7 +61,7 @@ public class Location implements Comparable<Location>, Temporal {
 	@DatabaseField(columnName = "geometry", canBeNull = false, dataType = DataType.BYTE_ARRAY)
 	private byte[] geometryBytes;
 
-	@DatabaseField(canBeNull = false, foreign = true, foreignAutoRefresh = true)
+	@DatabaseField(canBeNull = false, foreign = true, foreignAutoRefresh = true, columnName = COLUMN_NAME_EVENT_ID)
 	private Event event;
 
 	public Location() {

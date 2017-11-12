@@ -19,6 +19,8 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import mil.nga.giat.mage.sdk.datastore.DaoHelper;
+import mil.nga.giat.mage.sdk.datastore.location.Location;
+import mil.nga.giat.mage.sdk.datastore.location.LocationHelper;
 import mil.nga.giat.mage.sdk.event.IEventDispatcher;
 import mil.nga.giat.mage.sdk.event.IEventEventListener;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
@@ -38,6 +40,7 @@ public class UserHelper extends DaoHelper<User> implements IEventDispatcher<IEve
 	private final Dao<User, Long> userDao;
 	private final Dao<UserLocal, Long> userLocalDao;
 	private final Dao<UserTeam, Long> userTeamDao;
+	private final Dao<Location, Long> locationDao;
 
 	private static Collection<IEventEventListener> listeners = new CopyOnWriteArrayList<>();
 	
@@ -73,6 +76,7 @@ public class UserHelper extends DaoHelper<User> implements IEventDispatcher<IEve
 			userDao = daoStore.getUserDao();
 			userLocalDao = daoStore.getUserLocalDao();
             userTeamDao = daoStore.getUserTeamDao();
+			locationDao = daoStore.getLocationDao();
 		} catch (SQLException sqle) {
 			Log.e(LOG_NAME, "Unable to communicate with User database.", sqle);
 
@@ -229,14 +233,22 @@ public class UserHelper extends DaoHelper<User> implements IEventDispatcher<IEve
 			DeleteBuilder<User, Long> userDeleteBuilder = userDao.deleteBuilder();
 			userDeleteBuilder.where().notIn(User.COLUMN_NAME_REMOTE_ID, userIds);
 			int deleted = userDeleteBuilder.delete();
-			Log.i(LOG_NAME, "Deleted " + deleted + " users from database that did not exist on the MAGE server");
+			Log.i(LOG_NAME, "Deleted " + deleted + " users from database that no longer exist on the MAGE server");
 
 			DeleteBuilder<UserLocal, Long> userLocalDeleteBuilder = userLocalDao.deleteBuilder();
 			userLocalDeleteBuilder.where().notIn(UserLocal.COLUMN_NAME_ID, userDao.queryBuilder().selectColumns(User.COLUMN_NAME_USER_LOCAL_ID));
 			userLocalDeleteBuilder.delete();
-		} catch (SQLException sqle) {
-			Log.e(LOG_NAME, "Unable to reconcile users '" + users.toString(), sqle);
-			throw new UserException("Unable to update UserLocal table", sqle);
+
+			QueryBuilder<Location, Long> qb = locationDao.queryBuilder();
+			QueryBuilder<User, Long> userQb = userDao.queryBuilder().selectColumns(User.COLUMN_NAME_USER_LOCAL_ID);
+			userQb.where().in(User.COLUMN_NAME_REMOTE_ID, userIds);
+
+			qb.where().notIn(Location.COLUMN_NAME_USER_ID, userQb);
+			deleted = LocationHelper.getInstance(mApplicationContext).delete(qb.query());
+			Log.i(LOG_NAME, "Deleted " + deleted + " locations from " + userIds.size() + " users.");
+		} catch (Exception e) {
+			Log.e(LOG_NAME, "Unable to reconcile users '" + users.toString(), e);
+			throw new UserException("Unable to update UserLocal table", e);
 		}
 	}
 
