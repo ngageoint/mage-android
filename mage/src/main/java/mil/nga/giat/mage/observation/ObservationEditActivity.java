@@ -607,8 +607,10 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 			JsonObject acl = EventHelper.getInstance(getApplicationContext()).getCurrentEvent().getAcl();
 			JsonElement userAccess = acl.get(currentUser.getRemoteId());
 			if (userAccess != null) {
-				JsonArray permissions = userAccess.getAsJsonObject().get("permissions").getAsJsonArray();
-				hasEventUpdatePermissionsInAcl = permissions.toString().contains("update");
+				JsonElement permissions = userAccess.getAsJsonObject().get("permissions");
+				if (permissions != null) {
+					hasEventUpdatePermissionsInAcl = permissions.getAsJsonArray().toString().contains("update");
+				}
 			}
 		}
 
