@@ -500,7 +500,7 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 
 		HashMap<Long, Map<String, Serializable>> formMap = (HashMap<Long, Map<String, Serializable>>) savedInstanceState.getSerializable(EXTRA_PROPERTY_MAP);
 		for (Map.Entry<Long, Map<String, Serializable>> formEntry : formMap.entrySet()) {
-			LinearLayout formLayout = (LinearLayout) findViewById(formEntry.getKey().intValue());
+			LinearLayout formLayout = (LinearLayout) findViewById(formEntry.getKey().intValue() + FORM_ID_PREFIX);
 			LayoutBaker.populateLayoutFromBundle(formLayout, ControlGenerationType.EDIT, formEntry.getValue());
 		}
 
