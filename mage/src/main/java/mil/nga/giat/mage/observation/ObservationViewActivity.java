@@ -288,24 +288,21 @@ public class ObservationViewActivity extends AppCompatActivity implements OnMapR
 
 			ObservationProperty primary = o.getPrimaryField();
 			TextView primaryView = (TextView) findViewById(R.id.primary_field);
-			if (primary != null) {
+			if (primary == null || primary.isEmpty()) {
+				primaryView.setVisibility(View.GONE);
+			} else {
 				setTitle(primary.getValue().toString());
-
 				primaryView.setVisibility(View.VISIBLE);
 				primaryView.setText(primary.getValue().toString());
-			} else {
-				primaryView.setVisibility(View.GONE);
 			}
 
 			ObservationProperty secondary = o.getSecondaryField();
 			TextView secondaryView = (TextView) findViewById(R.id.secondary_field);
-			if (secondary != null) {
-				setTitle(secondary.getValue().toString());
-
+			if (secondary == null || secondary.isEmpty()) {
+				secondaryView.setVisibility(View.GONE);
+			} else {
 				secondaryView.setVisibility(View.VISIBLE);
 				secondaryView.setText(secondary.getValue().toString());
-			} else {
-				secondaryView.setVisibility(View.GONE);
 			}
             
             TextView timestamp = (TextView) findViewById(R.id.timestamp);

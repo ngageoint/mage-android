@@ -205,21 +205,20 @@ public class ObservationListAdapter extends RecyclerView.Adapter<RecyclerView.Vi
             }
 
             ObservationProperty primary = observation.getPrimaryField();
-            if (primary != null) {
-                vh.primaryView.setText(primary.getValue().toString());
-
-                vh.primaryView.setVisibility(View.VISIBLE);
-            } else {
+            if (primary == null || primary.isEmpty()) {
                 vh.primaryView.setVisibility(View.GONE);
+            } else {
+                vh.primaryView.setText(primary.getValue().toString());
+                vh.primaryView.setVisibility(View.VISIBLE);
             }
             vh.primaryView.requestLayout();
 
             ObservationProperty secondary = observation.getSecondaryField();
-            if (secondary != null) {
+            if (secondary == null || secondary.isEmpty()) {
+                vh.secondaryView.setVisibility(View.GONE);
+            } else {
                 vh.secondaryView.setVisibility(View.VISIBLE);
                 vh.secondaryView.setText(secondary.getValue().toString());
-            } else {
-                vh.secondaryView.setVisibility(View.GONE);
             }
 
             Date timestamp = observation.getTimestamp();
@@ -274,6 +273,8 @@ public class ObservationListAdapter extends RecyclerView.Adapter<RecyclerView.Vi
                     getDirections(observation);
                 }
             });
+
+
         } catch (SQLException e) {
             e.printStackTrace();
         }
