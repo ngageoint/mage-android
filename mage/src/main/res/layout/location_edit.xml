@@ -123,7 +123,7 @@
                 android:layout_marginLeft="16dp"
                 android:layout_marginRight="16dp"
                 android:layout_marginTop="16dp"
-                android:src="@drawable/ic_ray_start_end_black_24dp"
+                android:src="@drawable/line_string_marker"
                 app:backgroundTint="@color/toggle_button"
                 app:fabSize="mini"
                 app:theme="@style/AppTheme.AlternateFAB" />
@@ -135,7 +135,7 @@
                 android:layout_marginLeft="16dp"
                 android:layout_marginRight="16dp"
                 android:layout_marginTop="16dp"
-                android:src="@drawable/ic_square_outline_black_24dp"
+                android:src="@drawable/rectangle"
                 app:backgroundTint="@color/toggle_button"
                 app:fabSize="mini"
                 app:theme="@style/AppTheme.AlternateFAB" />
@@ -148,7 +148,7 @@
                 android:layout_marginLeft="16dp"
                 android:layout_marginRight="16dp"
                 android:layout_marginTop="16dp"
-                android:src="@drawable/ic_pentagon_outline_black_24dp"
+                android:src="@drawable/polygon_marker"
                 app:backgroundTint="@color/toggle_button"
                 app:fabSize="mini"
                 app:theme="@style/AppTheme.AlternateFAB" />

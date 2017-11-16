@@ -3,6 +3,7 @@ package mil.nga.giat.mage.newsfeed;
 import android.content.Context;
 import android.database.Cursor;
 import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.res.ResourcesCompat;
@@ -73,7 +74,6 @@ public class ObservationListAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         private ImageView markerView;
         private ImageView shapeView;
         private TextView primaryView;
-        private View separatorView;
         private TextView timeView;
         private TextView secondaryView;
         private TextView userView;
@@ -90,7 +90,6 @@ public class ObservationListAdapter extends RecyclerView.Adapter<RecyclerView.Vi
             markerView = (ImageView) view.findViewById(R.id.observation_marker);
             shapeView = (ImageView) view.findViewById(R.id.observation_shape);
             primaryView = (TextView) view.findViewById(R.id.primary);
-            separatorView = view.findViewById(R.id.separator);
             timeView = (TextView) view.findViewById(R.id.time);
             secondaryView = (TextView) view.findViewById(R.id.secondary);
             userView = (TextView) view.findViewById(R.id.user);
@@ -182,25 +181,25 @@ public class ObservationListAdapter extends RecyclerView.Adapter<RecyclerView.Vi
             final Observation observation = query.mapRow(new AndroidDatabaseResults(cursor, null, false));
             vh.bind(observation, observationActionListener);
 
+            Bitmap marker = ObservationBitmapFactory.bitmap(context, observation);
+            if (marker != null) {
+                vh.markerView.setImageBitmap(marker);
+            }
+
+            Drawable drawable;
             if (observation.getGeometry().getGeometryType() == GeometryType.POINT) {
-                vh.markerView.setVisibility(View.VISIBLE);
-                vh.shapeView.setVisibility(View.GONE);
+                drawable = ResourcesCompat.getDrawable(context.getResources(), R.drawable.ic_place_black_24dp, null);
 
-                Bitmap marker = ObservationBitmapFactory.bitmap(context, observation);
-                if (marker != null) {
-                    vh.markerView.setImageBitmap(marker);
-                }
-            } else {
-                vh.markerView.setVisibility(View.GONE);
-                vh.shapeView.setVisibility(View.VISIBLE);
-
-                Drawable drawable = observation.getGeometry().getGeometryType() == GeometryType.LINESTRING ?
-                        ResourcesCompat.getDrawable(context.getResources(), R.drawable.ic_ray_start_end_black_24dp, null) :
-                        ResourcesCompat.getDrawable(context.getResources(), R.drawable.ic_pentagon_outline_black_24dp, null);
-
-                drawable = DrawableCompat.wrap(drawable);
                 vh.shapeView.setImageDrawable(drawable);
+                vh.shapeView.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
+                DrawableCompat.setTint(drawable, Color.argb(138, 256, 256, 256));
+            } else {
+                drawable = observation.getGeometry().getGeometryType() == GeometryType.LINESTRING ?
+                        ResourcesCompat.getDrawable(context.getResources(), R.drawable.line_string_marker, null) :
+                        ResourcesCompat.getDrawable(context.getResources(), R.drawable.polygon_marker, null);
 
+                vh.shapeView.setImageDrawable(drawable);
+                vh.shapeView.setScaleType(ImageView.ScaleType.CENTER_CROP);
                 int strokeColor = ObservationShapeStyleParser.getStyle(context, observation).getStrokeColor();
                 DrawableCompat.setTint(drawable, strokeColor);
             }
@@ -210,10 +209,8 @@ public class ObservationListAdapter extends RecyclerView.Adapter<RecyclerView.Vi
                 vh.primaryView.setText(primary.getValue().toString());
 
                 vh.primaryView.setVisibility(View.VISIBLE);
-                vh.separatorView.setVisibility(View.VISIBLE);
             } else {
                 vh.primaryView.setVisibility(View.GONE);
-                vh.separatorView.setVisibility(View.GONE);
             }
             vh.primaryView.requestLayout();
 
