@@ -40,9 +40,11 @@ public class TeamDeserializer implements JsonDeserializer<Team> {
 
         String remoteId = jsonTeam.get("id").getAsString();
         String name = jsonTeam.get("name").getAsString();
+
         String description = "";
-        if(jsonTeam.has("description")) {
-            description = jsonTeam.get("description").getAsString();
+        JsonElement descriptionElement = jsonTeam.get("description");
+        if (descriptionElement != null && !descriptionElement.isJsonNull()) {
+            description = descriptionElement.getAsString();
         }
 
         return new Team(remoteId, name, description);

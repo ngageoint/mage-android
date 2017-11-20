@@ -43,8 +43,9 @@ public class EventDeserializer implements JsonDeserializer<Event> {
         String name = event.get("name").getAsString();
 
         String description = "";
-        if(event.has("description")) {
-            description = event.get("description").getAsString();
+        JsonElement descriptionElement = event.get("description");
+        if (descriptionElement != null && !descriptionElement.isJsonNull()) {
+            description = descriptionElement.getAsString();
         }
 
         String form = event.get("forms").toString();
