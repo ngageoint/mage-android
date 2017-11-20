@@ -190,6 +190,7 @@
         <activity android:name=".observation.LocationEditActivity"
             android:label="Edit Location"
             android:windowSoftInputMode="adjustResize"
+            android:configChanges="orientation|screenSize"
             android:theme="@style/AppTheme.NoActionBar"/>
         <activity
             android:name=".observation.SelectEditActivity"

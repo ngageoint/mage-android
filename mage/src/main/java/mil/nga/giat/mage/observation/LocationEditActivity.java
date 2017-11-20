@@ -3,6 +3,7 @@ package mil.nga.giat.mage.observation;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
@@ -26,6 +27,7 @@ import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -149,6 +151,8 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
 
         mapFragment = (MapFragment) getFragmentManager().findFragmentById(R.id.location_edit_map);
         mapFragment.getMapAsync(this);
+
+        setupEditButtons();
     }
 
     /**
@@ -167,6 +171,24 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
     public void onCameraIdle() {
         map.setOnCameraIdleListener(null);
         setupMap();
+    }
+
+    @Override
+    public void onConfigurationChanged(Configuration configuration) {
+        super.onConfigurationChanged(configuration);
+
+        setupEditButtons();
+    }
+
+    private void setupEditButtons() {
+        int orientation = getResources().getConfiguration().orientation;
+
+        LinearLayout editButtonLayout = (LinearLayout) findViewById(R.id.location_edit_button_layout);
+        if (Configuration.ORIENTATION_LANDSCAPE == orientation) {
+            editButtonLayout.setOrientation(LinearLayout.HORIZONTAL);
+        } else {
+            editButtonLayout.setOrientation(LinearLayout.VERTICAL);
+        }
     }
 
     /**

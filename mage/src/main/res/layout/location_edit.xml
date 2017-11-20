@@ -104,6 +104,7 @@
                 android:layout_height="match_parent" />
 
             <LinearLayout
+                android:id="@+id/location_edit_button_layout"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="top|start"
