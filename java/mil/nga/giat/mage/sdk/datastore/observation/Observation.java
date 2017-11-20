@@ -422,5 +422,19 @@ public class Observation implements Comparable<Observation>, Temporal {
         return null;
     }
 
+    public boolean hasValidationError() {
+        ObservationError observationError = getError();
+        return observationError != null && observationError.getStatusCode() != null;
+    }
+
+    public String errorMessage() {
+        String message = "";
+        ObservationError observationError = getError();
+        if (observationError != null) {
+            message = observationError.getMessage() != null ? observationError.getMessage() : observationError.getDescription();
+        }
+
+        return message;
+    }
 
 }

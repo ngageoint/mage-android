@@ -254,6 +254,7 @@ public class ObservationResource {
                 }
 
                 try {
+                    observation.setError(observationError);
                     observationHelper.update(observation);
                 } catch (ObservationException oe) {
                     Log.e(LOG_NAME, "Problem updating observation error", oe);
@@ -493,8 +494,8 @@ public class ObservationResource {
 
             if (response.isSuccess()) {
                 Observation returnedObservation = response.body();
-                returnedObservation.setId(observation.getId());
-                observationHelper.updateImportant(important, returnedObservation);
+                observation.setLastModified(returnedObservation.getLastModified());
+                observationHelper.updateImportant(observation);
             } else {
                 Log.e(LOG_NAME, "Bad request.");
                 if (response.errorBody() != null) {
