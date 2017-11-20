@@ -605,7 +605,9 @@ public class ObservationHelper extends DaoHelper<Observation> implements IEventD
 		}
 	}
 
-	public void updateImportant(ObservationImportant important, Observation observation) throws ObservationException {
+	public void updateImportant(Observation observation) throws ObservationException {
+		ObservationImportant important = observation.getImportant();
+
 		try {
 			if (important.isImportant()) {
 				important.setDirty(Boolean.FALSE);
