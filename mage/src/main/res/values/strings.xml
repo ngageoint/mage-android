@@ -131,5 +131,11 @@
     <string name="location_edit_hint_shape_new">Long click map to add next point</string>
     <string name="location_edit_hint_shape_drag">Drag and release to adjust location</string>
     <string name="location_edit_hint_shape_edit">Manually modify point coordinates</string>
+    <string name="location_edit_error_shape">Shape is invalid</string>
+    <string name="location_edit_error_linestring_min_points">Line must have at least two points</string>
+    <string name="location_edit_error_polygon_min_points">Polygon must have at least three points</string>
+    <string name="location_edit_error_rectangle_min_points">Rectangle must have four points</string>
+    <string name="location_edit_error_polygon_kinks">Polygon cannot intersect itself</string>
+
 
 </resources>

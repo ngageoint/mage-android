@@ -8,6 +8,7 @@ import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Vibrator;
 import android.support.design.widget.FloatingActionButton;
+import android.support.design.widget.Snackbar;
 import android.support.v4.graphics.drawable.DrawableCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -58,6 +59,7 @@ import mil.nga.geopackage.map.geom.PolylineMarkers;
 import mil.nga.geopackage.map.geom.ShapeMarkers;
 import mil.nga.geopackage.projection.ProjectionConstants;
 import mil.nga.giat.mage.R;
+import mil.nga.giat.mage.map.MapUtils;
 import mil.nga.wkb.geom.Geometry;
 import mil.nga.wkb.geom.GeometryEnvelope;
 import mil.nga.wkb.geom.GeometryType;
@@ -93,7 +95,6 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
     private PolylineOptions editPolylineOptions;
     private PolygonOptions editPolygonOptions;
     private Vibrator vibrator;
-    private MenuItem acceptMenuItem;
     private boolean newDrawing;
     private GeometryType shapeType = GeometryType.POINT;
     private boolean isRectangle = false;
@@ -560,7 +561,6 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
         shapeType = selectedType;
         addMapShape(geometry);
         setShapeTypeSelection();
-        updateAcceptState();
     }
 
     /**
@@ -730,7 +730,6 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
         if (getCurrentFocus() != longitudeEdit && getCurrentFocus() != latitudeEdit) {
             if (!validLocation) {
                 validLocation = true;
-                updateAcceptState();
             }
             return;
         }
@@ -769,10 +768,7 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
         if (selectedMarker != null) {
             selectedMarker.setPosition(latLng);
             updateShape(selectedMarker);
-        } else {
-            updateAcceptState();
         }
-
     }
 
     /**
@@ -796,7 +792,6 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
     public boolean onCreateOptionsMenu(Menu menu) {
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.location_edit_menu, menu);
-        acceptMenuItem = menu.findItem(R.id.apply);
         return true;
     }
 
@@ -820,13 +815,9 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
      * Update the location into the response
      */
     private void updateLocation() {
-
-        Geometry geometry = null;
-        if (shapeType == GeometryType.POINT) {
-            LatLng center = map.getCameraPosition().target;
-            geometry = new Point(center.longitude, center.latitude);
-        } else {
-            geometry = shapeConverter.toGeometry(shapeMarkers.getShape());
+        Geometry geometry = convertToGeometry();
+        if (geometry == null) {
+            return;
         }
 
         location.setGeometry(geometry);
@@ -840,6 +831,41 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
         setResult(RESULT_OK, data);
 
         finish();
+    }
+
+    private Geometry convertToGeometry() {
+
+        // validate shape has minimum number of points
+        if (shapeType == GeometryType.POLYGON && (!multipleShapeMarkerPositions() || getShapeMarkers().size() < 3)) {
+            String errorMessage = isRectangle ? getString(R.string.location_edit_error_rectangle_min_points) : getString(R.string.location_edit_error_polygon_min_points);
+            Snackbar.make(findViewById(R.id.coordinator_layout), errorMessage, Snackbar.LENGTH_SHORT).show();
+            return null;
+        } else if (shapeType == GeometryType.LINESTRING && !multipleShapeMarkerPositions()) {
+            Snackbar.make(findViewById(R.id.coordinator_layout), getString(R.string.location_edit_error_linestring_min_points), Snackbar.LENGTH_SHORT).show();
+            return null;
+        }
+
+        // general shape validity test
+        if (!shapeMarkers.isValid()) {
+            Snackbar.make(findViewById(R.id.coordinator_layout), getString(R.string.location_edit_error_shape), Snackbar.LENGTH_SHORT).show();
+            return null;
+        }
+
+        Geometry geometry;
+        if (shapeType == GeometryType.POINT) {
+            LatLng center = map.getCameraPosition().target;
+            geometry = new Point(center.longitude, center.latitude);
+        } else {
+            geometry = shapeConverter.toGeometry(shapeMarkers.getShape());
+
+            // validate polygon does not intersect itself
+            if (shapeType == GeometryType.POLYGON && MapUtils.polygonHasKinks((Polygon) geometry)) {
+                Snackbar.make(findViewById(R.id.coordinator_layout), getString(R.string.location_edit_error_polygon_kinks), Snackbar.LENGTH_SHORT).show();
+                return null;
+            }
+        }
+
+        return geometry;
     }
 
     /**
@@ -1136,23 +1162,6 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
             if (shapeMarkers.isEmpty()) {
                 shapeMarkers = null;
             }
-        }
-        updateAcceptState();
-    }
-
-    /**
-     * Update the accept button state
-     */
-    private void updateAcceptState() {
-        boolean acceptEnabled = false;
-        if (shapeType == GeometryType.POINT) {
-            acceptEnabled = true;
-        } else if (shapeMarkers != null) {
-            acceptEnabled = shapeMarkersValid();
-        }
-        acceptEnabled = acceptEnabled && validLocation;
-        if (acceptMenuItem != null) {
-            acceptMenuItem.setEnabled(acceptEnabled);
         }
     }
 
