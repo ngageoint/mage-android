@@ -206,6 +206,7 @@ public class ObservationViewActivity extends AppCompatActivity implements OnMapR
 							public void run() {
 								o = observation;
 								setupObservation();
+								setupMap();
 							}
 						});
 					}
@@ -225,7 +226,8 @@ public class ObservationViewActivity extends AppCompatActivity implements OnMapR
 
 		mapFragment = (MapFragment) getFragmentManager().findFragmentById(R.id.mini_map);
 		mapFragment.getMapAsync(this);
-  	}
+		setupObservation();
+	}
 
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
@@ -256,7 +258,7 @@ public class ObservationViewActivity extends AppCompatActivity implements OnMapR
 	@Override
 	public void onCameraIdle() {
 		map.setOnCameraIdleListener(null);
-		setupObservation();
+		setupMap();
 	}
 
 	private void setupObservation() {
@@ -328,23 +330,6 @@ public class ObservationViewActivity extends AppCompatActivity implements OnMapR
                 findViewById(R.id.location_accuracy).setVisibility(View.GONE);
             }
 
-			map.getUiSettings().setZoomControlsEnabled(false);
-
-			if (mapObservation == null) {
-				LatLng initialLatLng = getIntent().getParcelableExtra(INITIAL_LOCATION);
-				if (initialLatLng == null) {
-					initialLatLng = new LatLng(0, 0);
-				}
-				float zoom = getIntent().getFloatExtra(INITIAL_ZOOM, 0);
-				map.moveCamera(CameraUpdateFactory.newLatLngZoom(initialLatLng, zoom));
-
-				map.animateCamera(location.getCameraUpdate(mapFragment.getView(), 15));
-			} else {
-				mapObservation.remove();
-				map.moveCamera(location.getCameraUpdate(mapFragment.getView(), (int)map.getCameraPosition().zoom));
-			}
-			mapObservation = mapObservationManager.addToMap(o);
-
 			setupImportant(o.getImportant());
 			setFavorites();
 			setFavoriteImage(isFavorite(o));
@@ -395,6 +380,33 @@ public class ObservationViewActivity extends AppCompatActivity implements OnMapR
 		} catch (Exception e) {
 			Log.e(LOG_NAME, e.getMessage(), e);
 		}
+	}
+
+	private void setupMap() {
+		if (map == null) {
+			return;
+		}
+
+		Geometry geometry = o.getGeometry();
+		ObservationLocation location = new ObservationLocation(geometry);
+
+		map.getUiSettings().setZoomControlsEnabled(false);
+
+		if (mapObservation == null) {
+			LatLng initialLatLng = getIntent().getParcelableExtra(INITIAL_LOCATION);
+			if (initialLatLng == null) {
+				initialLatLng = new LatLng(0, 0);
+			}
+			float zoom = getIntent().getFloatExtra(INITIAL_ZOOM, 0);
+			map.moveCamera(CameraUpdateFactory.newLatLngZoom(initialLatLng, zoom));
+
+			map.animateCamera(location.getCameraUpdate(mapFragment.getView(), 15));
+		} else {
+			mapObservation.remove();
+			map.moveCamera(location.getCameraUpdate(mapFragment.getView(), (int)map.getCameraPosition().zoom));
+		}
+
+		mapObservation = mapObservationManager.addToMap(o);
 	}
 
 	private void getDirections() {
