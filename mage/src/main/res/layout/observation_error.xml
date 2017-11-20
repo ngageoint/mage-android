@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:paddingStart="16dp"
+    android:paddingEnd="16dp"
+    android:paddingTop="4dp"
+    android:paddingBottom="8dp"
+    android:background="@color/md_white_1000"
+    android:orientation="vertical">
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="4dp"
+        android:layout_gravity="center"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <ImageView
+            android:layout_width="16dp"
+            android:layout_height="16dp"
+            android:layout_marginTop="1dp"
+            android:layout_marginEnd="8dp"
+            android:tint="@color/md_red_500"
+            android:src="@drawable/ic_error_outline_white_24dp"/>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="@color/md_red_500"
+            android:text="Observation changes not pushed."
+            style="@style/ListTextPrimary" />
+
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/error_text"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textColor="@color/md_red_400"
+        android:gravity="center_horizontal"
+        style="@style/ListTextSecondaryDark" />
+
+</LinearLayout>

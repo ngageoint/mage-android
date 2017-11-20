@@ -371,7 +371,13 @@ public class ObservationViewActivity extends AppCompatActivity implements OnMapR
 			FrameLayout fl = (FrameLayout) findViewById(R.id.sync_status);
 			fl.removeAllViews();
 			if (o.isDirty()) {
-				View.inflate(getApplicationContext(), R.layout.saved_locally, fl);
+				if (o.hasValidationError()) {
+					View errorView = View.inflate(getApplicationContext(), R.layout.observation_error, fl);
+					TextView errorText = (TextView) errorView.findViewById(R.id.error_text);
+					errorText.setText(o.errorMessage());
+				} else {
+					View.inflate(getApplicationContext(), R.layout.saved_locally, fl);
+				}
 			} else {
 				View status = View.inflate(getApplicationContext(), R.layout.submitted_on, fl);
 				TextView syncDate = (TextView) status.findViewById(R.id.observation_sync_date);
