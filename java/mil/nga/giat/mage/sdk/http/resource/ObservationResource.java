@@ -14,6 +14,7 @@ import org.apache.commons.lang3.StringUtils;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.HttpURLConnection;
 import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -215,6 +216,7 @@ public class ObservationResource {
     }
 
     private Observation updateObservation(Observation observation) {
+
         ObservationHelper observationHelper = ObservationHelper.getInstance(context);
         Observation savedObservation = null;
 
@@ -298,6 +300,13 @@ public class ObservationResource {
                     observationHelper.delete(observation);
                 } catch (ObservationException oe) {
                     Log.e(LOG_NAME, "Problem deleting observation after server archive response", oe);
+                }
+            } else if (response.code() == HttpURLConnection.HTTP_NOT_FOUND) {
+                try {
+                    // Observation does not exist on the server, delete it
+                    observationHelper.delete(observation);
+                } catch (ObservationException e) {
+                    Log.e(LOG_NAME, "Problem deleting local observation", e);
                 }
             } else {
                 Log.e(LOG_NAME, "Bad request.");
