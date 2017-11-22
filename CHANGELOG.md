@@ -3,12 +3,20 @@ All notable changes to this project will be documented in this file.
 Adheres to [Semantic Versioning](http://semver.org/).
 
 ---
-## 5.3.6 (TBD)
+## 6.0.1 (TBD)
 
 * TBD
 
 ##### Features
+
+##### Bug Fixes
+
+## [6.0.0](https://github.com/ngageoint/mage-android/releases/tag/6.0.0) (11-22-2017)
+
+##### Features
 * Observation geometry support for lines and polygons
+* Support for multiple forms per event
+* Allow users to delete observations
 
 ##### Bug Fixes
 
