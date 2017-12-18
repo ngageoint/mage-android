@@ -16,6 +16,7 @@ import android.util.Log;
 import android.view.View;
 import android.view.Window;
 import android.widget.RadioGroup;
+import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -124,9 +125,9 @@ public class EventActivity extends AppCompatActivity implements AccountDelegate 
 							List<Event> tempEventsForCurrentUser = EventHelper.getInstance(getApplicationContext()).getEventsForCurrentUser();
 							((RadioGroup)findViewById(R.id.event_radiogroup)).removeAllViews();
 							for (Event e : events) {
-								ContextThemeWrapper wrapper = new ContextThemeWrapper(EventActivity.this, R.style.AppTheme_Radio_Light);
+								ContextThemeWrapper wrapper = new ContextThemeWrapper(EventActivity.this, R.style.AppTheme_Radio);
 								AppCompatRadioButton radioButton = new AppCompatRadioButton(wrapper);
-								TextViewCompat.setTextAppearance(radioButton, R.style.AppTheme_Radio_Light);
+								TextViewCompat.setTextAppearance(radioButton, R.style.AppTheme_Radio);
 								radioButton.setId(uniqueChildIdIndex++);
 								String text = e.getName();
 								if(!tempEventsForCurrentUser.contains(e)) {
@@ -189,6 +190,9 @@ public class EventActivity extends AppCompatActivity implements AccountDelegate 
 
         List<String> userRecentEventInfo = new ArrayList<>();
         userRecentEventInfo.add(chosenEvent.getRemoteId());
+
+		TextView message = (TextView) findViewById(R.id.event_message);
+		message.setText("Loading event " + chosenEvent.getName());
 
         new RecentEventTask(this, this.getApplicationContext()).execute(userRecentEventInfo.toArray(new String[userRecentEventInfo.size()]));
     }

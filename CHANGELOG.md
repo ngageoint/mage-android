@@ -17,6 +17,7 @@ Adheres to [Semantic Versioning](http://semver.org/).
 * Observation geometry support for lines and polygons
 * Support for multiple forms per event
 * Allow users to delete observations
+* Allow users to change password from profile view
 
 ##### Bug Fixes
 

@@ -16,6 +16,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.provider.Settings;
+import android.support.design.widget.BottomSheetDialog;
 import android.support.v13.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.FileProvider;
@@ -53,7 +54,9 @@ import java.util.List;
 import java.util.Map;
 
 import mil.nga.giat.mage.BuildConfig;
+import mil.nga.giat.mage.MAGE;
 import mil.nga.giat.mage.R;
+import mil.nga.giat.mage.login.LoginActivity;
 import mil.nga.giat.mage.map.marker.LocationBitmapFactory;
 import mil.nga.giat.mage.sdk.datastore.location.Location;
 import mil.nga.giat.mage.sdk.datastore.location.LocationHelper;
@@ -70,7 +73,7 @@ import mil.nga.wkb.geom.Geometry;
 import mil.nga.wkb.geom.Point;
 import mil.nga.wkb.util.GeometryUtils;
 
-public class ProfileActivity extends AppCompatActivity implements OnMapReadyCallback, View.OnClickListener {
+public class ProfileActivity extends AppCompatActivity implements OnMapReadyCallback {
 
 	private static final String LOG_NAME = ProfileActivity.class.getName();
 
@@ -89,7 +92,9 @@ public class ProfileActivity extends AppCompatActivity implements OnMapReadyCall
 	private MapView mapView;
 	private LatLng latLng = new LatLng(0, 0);
 	private BitmapDescriptor icon;
-	
+	BottomSheetDialog profileActionDialog;
+	BottomSheetDialog avatarActionsDialog;
+
 	@Override
 	public void onDestroy() {
 		mapView.onDestroy();
@@ -160,8 +165,6 @@ public class ProfileActivity extends AppCompatActivity implements OnMapReadyCall
 		final TextView realNameTextView = (TextView) findViewById(R.id.realName);
 		realNameTextView.setText(displayName);
 		final TextView phoneTextView = (TextView) findViewById(R.id.phone);
-
-		findViewById(R.id.profile_picture).setOnClickListener(this);
 
 		View phoneLayout = findViewById(R.id.phone_layout);
 		if (StringUtils.isNotBlank(user.getPrimaryPhone())) {
@@ -238,6 +241,61 @@ public class ProfileActivity extends AppCompatActivity implements OnMapReadyCall
 				downloadAvatar(context, imageView);
 			}
 		}
+
+		avatarActionsDialog = new BottomSheetDialog(ProfileActivity.this);
+		final View avatarBottomSheetView = getLayoutInflater().inflate(R.layout.dialog_avatar_actions, null);
+		avatarActionsDialog.setContentView(avatarBottomSheetView);
+		findViewById(R.id.profile_picture).setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				onAvatarClick();
+			}
+		});
+
+		avatarBottomSheetView.findViewById(R.id.view_avatar_layout).setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				viewAvatar();
+			}
+		});
+
+		avatarBottomSheetView.findViewById(R.id.gallery_avatar_layout).setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				updateAvatarFromGallery();
+			}
+		});
+
+		avatarBottomSheetView.findViewById(R.id.camera_avatar_layout).setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				updateAvatarFromCamera();
+			}
+		});
+
+		profileActionDialog = new BottomSheetDialog(ProfileActivity.this);
+		View sheetView = getLayoutInflater().inflate(R.layout.fragment_profile_actions, null);
+		profileActionDialog.setContentView(sheetView);
+		findViewById(R.id.profile_actions_button).setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				profileActionDialog.show();
+			}
+		});
+
+		sheetView.findViewById(R.id.change_password_layout).setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				changePassword();
+			}
+		});
+
+		sheetView.findViewById(R.id.logout_layout).setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				logout();
+			}
+		});
 	}
 
 	@Override
@@ -250,13 +308,44 @@ public class ProfileActivity extends AppCompatActivity implements OnMapReadyCall
 		return true;
 	}
 
-	@Override
-	public void onClick(View v) {
-		switch (v.getId()) {
-			case R.id.profile_picture:
-				onAvatarClick();
-				break;
+	private void changePassword() {
+		Intent intent = new Intent(this, ChangePasswordActivity.class);
+		startActivity(intent);
+		profileActionDialog.cancel();
+	}
+
+	private void viewAvatar() {
+		Intent intent = new Intent(getApplicationContext(), ProfilePictureViewerActivity.class);
+		intent.putExtra(ProfilePictureViewerActivity.USER_ID, user.getId());
+		startActivity(intent);
+		avatarActionsDialog.cancel();
+	}
+
+	private void updateAvatarFromGallery() {
+		if (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+			ActivityCompat.requestPermissions(ProfileActivity.this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, PERMISSIONS_REQUEST_STORAGE);
+		} else {
+			launchGalleryIntent();
 		}
+		avatarActionsDialog.cancel();
+	}
+
+	private void updateAvatarFromCamera() {
+		if (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED ||
+			ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+			ActivityCompat.requestPermissions(ProfileActivity.this, new String[]{Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE}, PERMISSIONS_REQUEST_CAMERA);
+		} else {
+			launchCameraIntent();
+		}
+		avatarActionsDialog.cancel();
+	}
+
+	private void logout() {
+		((MAGE) getApplication()).onLogout(true, null);
+		Intent intent = new Intent(ProfileActivity.this, LoginActivity.class);
+		intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+		startActivity(intent);
+		finish();
 	}
 
 	private void downloadAvatar(final Context context, final ImageView imageView) {
@@ -291,38 +380,7 @@ public class ProfileActivity extends AppCompatActivity implements OnMapReadyCall
 		final Context context = getApplicationContext();
 		try {
 			if (user.getId().equals(UserHelper.getInstance(context).readCurrentUser().getId())) {
-				AlertDialog.Builder builder = new AlertDialog.Builder(this);
-				builder.setItems(R.array.profileImageChoices, new DialogInterface.OnClickListener() {
-					public void onClick(DialogInterface dialog, int which) {
-						switch (which) {
-							case 0: {
-								Intent intent = new Intent(context, ProfilePictureViewerActivity.class);
-								intent.putExtra(ProfilePictureViewerActivity.USER_ID, user.getId());
-								startActivity(intent);
-								break;
-							}
-							case 1: {
-								if (ContextCompat.checkSelfPermission(context, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-									ActivityCompat.requestPermissions(ProfileActivity.this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, PERMISSIONS_REQUEST_STORAGE);
-								} else {
-									launchGalleryIntent();
-								}
-								break;
-							}
-							case 2: {
-								if (ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED ||
-									ContextCompat.checkSelfPermission(context, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-									ActivityCompat.requestPermissions(ProfileActivity.this, new String[]{Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE}, PERMISSIONS_REQUEST_CAMERA);
-								} else {
-									launchCameraIntent();
-								}
-								break;
-							}
-						}
-					}
-				});
-
-				builder.create().show();
+				avatarActionsDialog.show();
 			} else {
 				final Intent intent = new Intent(context, ProfilePictureViewerActivity.class);
 				intent.putExtra(ProfilePictureViewerActivity.USER_ID, user.getId());
@@ -340,6 +398,7 @@ public class ProfileActivity extends AppCompatActivity implements OnMapReadyCall
 			Uri uri = getUriForFile(file);
 			Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
 			intent.putExtra(MediaStore.EXTRA_OUTPUT, uri);
+			intent.putExtra("android.intent.extra.USE_FRONT_CAMERA", true);
 			intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
 			startActivityForResult(intent, CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE);
 		} catch (IOException e) {

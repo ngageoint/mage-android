@@ -187,6 +187,8 @@
         <activity android:name=".observation.AttachmentViewerActivity" />
         <activity android:name=".profile.ProfilePictureViewerActivity" />
         <activity android:name=".profile.ProfileActivity" />
+        <activity android:name=".profile.ChangePasswordActivity"
+            android:label="Change Password"/>
         <activity android:name=".observation.LocationEditActivity"
             android:label="Edit Location"
             android:windowSoftInputMode="adjustResize"

@@ -4,9 +4,7 @@
     android:layout_height="fill_parent"
     android:fillViewport="true"
     android:orientation="vertical"
-    android:paddingLeft="24dip"
-    android:paddingRight="24dip"
-    android:background="?attr/colorPrimary">
+    android:background="@color/md_white_1000">
 
     <RelativeLayout
         android:id="@+id/event_status"
@@ -14,32 +12,41 @@
         android:layout_height="fill_parent"
         android:orientation="vertical">
 
-        <include
-            android:id="@+id/login_header"
-            layout="@layout/mage_header"/>
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="?attr/colorPrimaryDark"
+            android:elevation="8dp">
+
+            <include layout="@layout/mage_header" />
+
+        </RelativeLayout>
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="fill_parent"
+            android:layout_marginTop="16dp"
             android:layout_gravity="center_horizontal|center_vertical"
             android:gravity="center_horizontal|center_vertical"
             android:orientation="vertical">
 
             <LinearLayout
-                android:layout_width="150dip"
+                android:layout_width="175dp"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal">
 
                 <ImageView
                     android:layout_width="wrap_content"
-                    android:layout_height="50dip"
-                    android:src="@drawable/ic_wand"/>
+                    android:layout_height="50dp"
+                    android:tint="?attr/colorPrimary"
+                    android:src="@drawable/ic_wand_white_50dp"/>
 
                 <ProgressBar
-                    style="?android:attr/progressBarStyleLarge"
-                    android:layout_width="fill_parent"
-                    android:layout_height="50dip"
-                    android:indeterminateDrawable="@drawable/mage_progress_bar"/>
+                    style="@style/LoginProgressBar"
+                    android:layout_width="match_parent"
+                    android:layout_height="50dp"
+                    android:layout_marginStart="-5dp"/>
+
             </LinearLayout>
 
             <TextView
@@ -47,8 +54,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:fontFamily="sans-serif-light"
-                android:text="Loading..."
-                android:textColor="#EEEEEE"
+                android:text="Loading Events..."
+                android:textColor="?attr/colorPrimary"
                 android:textSize="26sp"/>
         </LinearLayout>
     </RelativeLayout>
@@ -57,6 +64,8 @@
         android:id="@+id/event_content"
         android:layout_width="match_parent"
         android:layout_height="fill_parent"
+        android:paddingLeft="24dip"
+        android:paddingRight="24dip"
         android:orientation="vertical"
         android:visibility="gone">
 
@@ -68,7 +77,7 @@
             android:paddingBottom="20dip"
             android:paddingTop="20dip"
             android:text="Welcome to MAGE"
-            android:textColor="#EEEEEE"
+            android:textColor="?attr/colorPrimary"
             android:textSize="26sp"/>
 
         <RelativeLayout
@@ -85,7 +94,7 @@
                 android:paddingBottom="20dip"
                 android:paddingTop="20dip"
                 android:text="You are part of multiple events.  The observations you create and your reported location will be part of the selected event.  You can change your event at anytime within MAGE."
-                android:textColor="#EEEEEE"/>
+                android:textColor="?attr/colorPrimary" />
 
             <TextView
                 android:id="@+id/event_info_select"
@@ -94,7 +103,7 @@
                 android:layout_below="@id/event_info"
                 android:paddingBottom="20dip"
                 android:text="Please select an event:"
-                android:textColor="#EEEEEE"/>
+                android:textColor="?attr/colorPrimary" />
 
             <ScrollView
                 android:layout_width="match_parent"
@@ -119,7 +128,7 @@
             android:paddingBottom="20dip"
             android:paddingTop="20dip"
             android:text="You are not in any events.  You must be part of an event to use MAGE.  Contact your administrator to be added to an event."
-            android:textColor="#EEEEEE"
+            android:textColor="?attr/colorPrimary"
             android:visibility="gone"/>
 
         <TextView
@@ -130,7 +139,7 @@
             android:paddingBottom="20dip"
             android:paddingTop="20dip"
             android:text="There was a problem getting your information from the server.  Check your connection and try again later."
-            android:textColor="#EEEEEE"
+            android:textColor="?attr/colorPrimary"
             android:visibility="gone"/>
 
         <Button
@@ -142,7 +151,7 @@
             android:layout_marginTop="10dip"
             android:onClick="chooseEvent"
             android:text="Go"
-            android:theme="@style/AppTheme.PrimaryDarkButton"/>
+            android:theme="@style/AppTheme.PrimaryButton.NoShadow"/>
 
         <Button
             android:id="@+id/event_back_button"
@@ -154,7 +163,7 @@
             android:onClick="bummerEvent"
             android:text="Bummer"
             android:visibility="gone"
-            android:theme="@style/AppTheme.PrimaryDarkButton"/>
+            android:theme="@style/AppTheme.PrimaryButton.NoShadow"/>
 
     </LinearLayout>
 </LinearLayout>

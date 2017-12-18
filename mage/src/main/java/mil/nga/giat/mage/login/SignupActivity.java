@@ -11,7 +11,9 @@ import android.preference.PreferenceManager;
 import android.support.design.widget.TextInputLayout;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.text.Editable;
 import android.text.TextUtils;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.util.Patterns;
 import android.view.KeyEvent;
@@ -23,6 +25,7 @@ import android.widget.EditText;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import mil.nga.giat.mage.R;
@@ -55,7 +58,6 @@ public class SignupActivity extends AppCompatActivity implements AccountDelegate
 	private TextInputLayout mEmailLayout;
 
 	private EditText mPhoneEditText;
-	private TextInputLayout mPhoneLayout;
 
 	private EditText mPasswordEditText;
 	private TextInputLayout mPasswordLayout;
@@ -95,6 +97,8 @@ public class SignupActivity extends AppCompatActivity implements AccountDelegate
 
 		setContentView(R.layout.activity_signup);
 
+		final PasswordStrengthFragment passwordStrengthFragment = (PasswordStrengthFragment) getSupportFragmentManager().findFragmentById(R.id.password_strength_fragment);
+
 		mDisplayNameEditText = (EditText) findViewById(R.id.signup_displayname);
 		mDisplayNameLayout = (TextInputLayout) findViewById(R.id.displayname_layout);
 
@@ -105,11 +109,33 @@ public class SignupActivity extends AppCompatActivity implements AccountDelegate
 		mEmailLayout = (TextInputLayout) findViewById(R.id.email_layout);
 
 		mPhoneEditText = (EditText) findViewById(R.id.signup_phone);
-		mPhoneLayout = (TextInputLayout) findViewById(R.id.phone_layout);
 
 		mPasswordEditText = (EditText) findViewById(R.id.signup_password);
 		mPasswordEditText.setTypeface(Typeface.DEFAULT);
 		mPasswordLayout = (TextInputLayout) findViewById(R.id.password_layout);
+		mPasswordEditText.addTextChangedListener(new TextWatcher() {
+			@Override
+			public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+			}
+
+			@Override
+			public void onTextChanged(CharSequence s, int start, int before, int count) {
+
+			}
+
+			@Override
+			public void afterTextChanged(Editable s) {
+				List<String> sanitizedPasswordInputs = new ArrayList<>();
+				sanitizedPasswordInputs.add(mDisplayNameEditText.getText().toString());
+				sanitizedPasswordInputs.add(mUsernameEditText.getText().toString());
+				sanitizedPasswordInputs.add(mEmailEditText.getText().toString());
+				sanitizedPasswordInputs.removeAll(Collections.singleton(null));
+				passwordStrengthFragment.setSanitizedList(sanitizedPasswordInputs);
+
+				passwordStrengthFragment.onPasswordChanged(s.toString());
+			}
+		});
 
 		mConfirmPasswordEditText = (EditText) findViewById(R.id.signup_confirmpassword);
 		mConfirmPasswordEditText.setTypeface(Typeface.DEFAULT);

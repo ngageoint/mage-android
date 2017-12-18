@@ -26,7 +26,7 @@
     </style>
 
     <style name="AppTheme.PrimaryAccent">
-        <item name="colorAccent">@color/md_blue_600</item>
+        <item name="colorAccent">?attr/colorPrimary</item>
     </style>
 
     <style name="AppTheme.White">
@@ -51,10 +51,10 @@
         <item name="searchHintIcon">@null</item>
     </style>
 
-    <style name="AppTheme.Radio.Light" parent="Theme.AppCompat.Light">
-        <item name="android:textColor">#FFFFFF</item>
-        <item name="colorControlNormal">#8AFFFFFF</item>
-        <item name="colorControlActivated">@color/md_white_1000</item>
+    <style name="AppTheme.Radio.Dark" parent="Base.ThemeOverlay.AppCompat.Dark">
+        <item name="android:textColor">?attr/colorPrimary</item>
+        <item name="colorControlNormal">?attr/colorPrimary</item>
+        <item name="colorControlActivated">?attr/colorPrimary</item>
     </style>
 
     <style name="AppTheme.AlternateFAB" parent="Widget.AppCompat.Button">
@@ -70,13 +70,20 @@
     </style>
 
     <style name="AppTheme.PrimaryButton">
-        <item name="colorButtonNormal">@color/md_blue_600</item>
+        <item name="colorButtonNormal">?attr/colorPrimary</item>
         <item name="android:textColor">@color/md_white_1000</item>
     </style>
 
     <style name="AppTheme.PrimaryDarkButton">
-        <item name="backgroundTint">?attr/colorPrimaryDark</item>
-        <item name="buttonStyle">@style/Widget.AppCompat.Button.Colored</item>
+        <item name="colorButtonNormal">?attr/colorPrimaryDark</item>
+        <item name="android:textColor">@color/md_white_1000</item>
+    </style>
+
+    <style name="LoginProgressBar" parent="Widget.AppCompat.ProgressBar.Horizontal">
+        <item name="android:indeterminateOnly">true</item>
+        <item name="android:indeterminateDrawable">@drawable/mage_progress_bar</item>
+        <item name="android:minHeight">50dip</item>
+        <item name="android:maxHeight">300dip</item>
     </style>
 
     <style name="ListSubheader">
@@ -159,7 +166,7 @@
     </style>
 
     <style name="AppTheme.PrimaryDialog" parent="Theme.AppCompat.Light.Dialog.Alert">
-        <item name="colorAccent">@color/md_blue_800</item>
+        <item name="colorAccent">?attr/colorPrimaryDark</item>
     </style>
 
     <style name="customCheckBoxStyle" parent="@android:style/Widget.CompoundButton.CheckBox">

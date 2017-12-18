@@ -1,108 +1,132 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:map="http://schemas.android.com/apk/res-auto"
+<android.support.design.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical" >
-    
-    <com.google.android.gms.maps.MapView
-        android:id="@+id/mapView"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        map:uiCompass="false"
-        map:uiRotateGestures="false"
-        map:uiTiltGestures="false" />
+    android:layout_height="match_parent">
 
-    <LinearLayout
-        android:orientation="horizontal"
-        android:layout_width="fill_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:paddingTop="8dp"
-        android:paddingBottom="8dp">
+	<LinearLayout
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:orientation="vertical">
 
-        <LinearLayout
-            android:orientation="vertical"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:paddingRight="16dp"
-            android:paddingLeft="16dp">
+		<com.google.android.gms.maps.MapView
+			android:id="@+id/mapView"
+			android:layout_width="match_parent"
+			android:layout_height="0dp"
+			android:layout_weight="1"
+			app:uiCompass="false"
+			app:uiRotateGestures="false"
+			app:uiTiltGestures="false" />
 
-            <ImageView
-                android:id="@+id/profile_picture"
-                android:src="@drawable/ic_person_gray_48dp"
-	            android:layout_width="73dp"
-	            android:layout_height="73dp" />
-
-        </LinearLayout>
-
-        <LinearLayout
-            android:orientation="vertical"
-            android:layout_width="wrap_content"
-            android:layout_height="73dp">
-
-        	<TextView
-	            android:id="@+id/realName"
-	            android:layout_width="wrap_content"
-	            android:layout_height="wrap_content"
-				android:layout_marginBottom="4dp"
-				style="@style/ListTextPrimary"
-				android:textColor="?attr/colorPrimaryDark"
-                android:alpha=".87" />
+		<LinearLayout
+			android:orientation="horizontal"
+			android:layout_width="fill_parent"
+			android:layout_height="0dp"
+			android:layout_weight="1"
+			android:paddingTop="8dp"
+			android:paddingBottom="8dp">
 
 			<LinearLayout
-				android:id="@+id/phone_layout"
+				android:orientation="vertical"
 				android:layout_width="wrap_content"
 				android:layout_height="wrap_content"
-				android:layout_marginBottom="6dp"
-				android:orientation="horizontal">
+				android:paddingRight="16dp"
+				android:paddingLeft="16dp">
 
 				<ImageView
-					android:layout_width="12dp"
-					android:layout_height="12dp"
-					android:layout_gravity="center_vertical"
-					android:layout_marginEnd="4dp"
-					android:src="@drawable/ic_phone_white_24dp"
-					android:tint="?attr/colorPrimary"/>
-
-				<TextView
-					android:id="@+id/phone"
-					android:layout_width="wrap_content"
-					android:layout_height="wrap_content"
-					android:layout_gravity="center_vertical"
-					style="@style/ListTextSecondary"
-					android:textColor="?attr/colorPrimary"
-					android:alpha=".87" />
+					android:id="@+id/profile_picture"
+					android:src="@drawable/ic_person_gray_48dp"
+					android:layout_width="73dp"
+					android:layout_height="73dp" />
 
 			</LinearLayout>
 
 			<LinearLayout
-				android:id="@+id/email_layout"
-				android:layout_width="wrap_content"
-				android:layout_height="wrap_content"
-				android:orientation="horizontal">
+				android:orientation="vertical"
+				android:layout_width="match_parent"
+				android:layout_height="73dp">
 
-				<ImageView
-					android:layout_width="12dp"
-					android:layout_height="12dp"
-					android:layout_gravity="center_vertical"
-					android:layout_marginEnd="4dp"
-					android:src="@drawable/ic_email_white_24dp"
-					android:tint="?attr/colorPrimary"/>
-
-				<TextView
-					android:id="@+id/email"
-					android:layout_width="wrap_content"
-					android:layout_gravity="center_vertical"
+				<LinearLayout
+					android:layout_width="match_parent"
 					android:layout_height="wrap_content"
-					style="@style/ListTextSecondary"
-					android:textColor="?attr/colorPrimary"
-					android:alpha=".87"/>
+					android:orientation="horizontal">
+
+					<TextView
+						android:id="@+id/realName"
+						android:layout_width="0dp"
+						android:layout_height="wrap_content"
+						android:layout_weight="1"
+						android:layout_marginBottom="4dp"
+						style="@style/ListTextPrimary"
+						android:textColor="?attr/colorPrimaryDark"
+						android:alpha=".87" />
+
+					<ImageButton
+						android:id="@+id/profile_actions_button"
+						android:layout_width="wrap_content"
+						android:layout_height="wrap_content"
+						android:layout_marginEnd="16dp"
+						android:background="?attr/selectableItemBackgroundBorderless"
+						android:src="@drawable/ic_more_horiz_white_24dp"
+						android:tint="#8A000000"/>
+
+				</LinearLayout>
+
+
+				<LinearLayout
+					android:id="@+id/phone_layout"
+					android:layout_width="wrap_content"
+					android:layout_height="wrap_content"
+					android:layout_marginBottom="6dp"
+					android:orientation="horizontal">
+
+					<ImageView
+						android:layout_width="12dp"
+						android:layout_height="12dp"
+						android:layout_gravity="center_vertical"
+						android:layout_marginEnd="4dp"
+						android:src="@drawable/ic_phone_white_24dp"
+						android:tint="?attr/colorPrimary"/>
+
+					<TextView
+						android:id="@+id/phone"
+						android:layout_width="wrap_content"
+						android:layout_height="wrap_content"
+						android:layout_gravity="center_vertical"
+						style="@style/ListTextSecondary"
+						android:textColor="?attr/colorPrimary"
+						android:alpha=".87" />
+
+				</LinearLayout>
+
+				<LinearLayout
+					android:id="@+id/email_layout"
+					android:layout_width="wrap_content"
+					android:layout_height="wrap_content"
+					android:orientation="horizontal">
+
+					<ImageView
+						android:layout_width="12dp"
+						android:layout_height="12dp"
+						android:layout_gravity="center_vertical"
+						android:layout_marginEnd="4dp"
+						android:src="@drawable/ic_email_white_24dp"
+						android:tint="?attr/colorPrimary"/>
+
+					<TextView
+						android:id="@+id/email"
+						android:layout_width="wrap_content"
+						android:layout_gravity="center_vertical"
+						android:layout_height="wrap_content"
+						style="@style/ListTextSecondary"
+						android:textColor="?attr/colorPrimary"
+						android:alpha=".87"/>
+
+				</LinearLayout>
 
 			</LinearLayout>
+		</LinearLayout>
 
-        </LinearLayout>
-    </LinearLayout>
+	</LinearLayout>
 
-</LinearLayout>
+</android.support.design.widget.CoordinatorLayout>

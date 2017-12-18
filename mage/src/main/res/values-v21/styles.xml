@@ -10,4 +10,18 @@
         <item name="android:actionOverflowButtonStyle">@style/AppTheme.Toolbar.Overflow</item>
     </style>
 
+    <style name="AppTheme.NoShadowButton" parent="Widget.AppCompat.Button.Colored">
+        <item name="android:stateListAnimator">@null</item>
+    </style>
+
+    <style name="AppTheme.PrimaryButton.NoShadow">
+        <item name="colorAccent">?attr/colorPrimary</item>
+        <item name="android:buttonStyle">@style/AppTheme.NoShadowButton</item>
+    </style>
+
+    <style name="AppTheme.PrimaryDarkButton.NoShadow">
+        <item name="colorAccent">?attr/colorPrimaryDark</item>
+        <item name="android:buttonStyle">@style/AppTheme.NoShadowButton</item>
+    </style>
+
 </resources>
