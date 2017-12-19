@@ -6,6 +6,7 @@ import android.util.Log;
 
 import com.google.gson.JsonObject;
 import com.squareup.okhttp.MediaType;
+import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.RequestBody;
 import com.squareup.okhttp.ResponseBody;
 
@@ -28,6 +29,7 @@ import mil.nga.giat.mage.sdk.http.converter.UserConverterFactory;
 import mil.nga.giat.mage.sdk.http.converter.UsersConverterFactory;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
 import retrofit.Call;
+import retrofit.Callback;
 import retrofit.GsonConverterFactory;
 import retrofit.Response;
 import retrofit.Retrofit;
@@ -75,6 +77,9 @@ public class UserResource {
         @Multipart
         @PUT("/api/users/myself")
         Call<User> createAvatar(@PartMap Map<String, RequestBody> parts);
+
+        @PUT("/api/users/myself/password")
+        Call<JsonObject> changePassword(@Body JsonObject body);
     }
 
     private static final String LOG_NAME = UserResource.class.getName();
@@ -339,7 +344,7 @@ public class UserResource {
                 currentUser.setAvatarUrl(user.getAvatarUrl());
                 UserHelper.getInstance(context).update(currentUser);
 
-                userHelper.setAvatarPath(user, avatarPath);
+                userHelper.setAvatarPath(currentUser, avatarPath);
 
                 Log.d(LOG_NAME, "Updated user with remote_id " + user.getRemoteId());
 
@@ -355,5 +360,28 @@ public class UserResource {
         }
 
         return null;
+    }
+
+    public void changePassword(String username, String password, String newPassword, String newPasswordConfirm, Callback<JsonObject> callback) {
+        String baseUrl = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.serverURLKey), context.getString(R.string.serverURLDefaultValue));
+
+        OkHttpClient httpClient = HttpClientManager.getInstance(context).httpClient().clone();
+        httpClient.interceptors().clear();
+
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl(baseUrl)
+                .addConverterFactory(GsonConverterFactory.create())
+                .client(httpClient)
+                .build();
+
+        UserService service = retrofit.create(UserService.class);
+
+        JsonObject json = new JsonObject();
+        json.addProperty("username", username);
+        json.addProperty("password", password);
+        json.addProperty("newPassword", newPassword);
+        json.addProperty("newPasswordConfirm", newPasswordConfirm);
+
+        service.changePassword(json).enqueue(callback);
     }
 }
