@@ -175,31 +175,25 @@ public class PreferenceHelper implements SharedPreferences.OnSharedPreferenceCha
 								} else {
 									// check versions
 									SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(mContext);
-									Integer compatibleMajorVersion = sharedPreferences.getInt(mContext.getString(R.string.compatibleVersionMajorKey), mContext.getResources().getInteger(R.integer.compatibleVersionMajorDefaultValue));
-									Integer compatibleMinorVersion = sharedPreferences.getInt(mContext.getString(R.string.compatibleVersionMinorKey), mContext.getResources().getInteger(R.integer.compatibleVersionMinorDefaultValue));
 
-									boolean hasServerMajorVersion = sharedPreferences.contains(mContext.getString(R.string.serverVersionMajorKey));
-									boolean hasServerMinorVersion = sharedPreferences.contains(mContext.getString(R.string.serverVersionMinorKey));
+									Integer serverMajorVersion = null;
+									if (sharedPreferences.contains(mContext.getString(R.string.serverVersionMajorKey))) {
+										serverMajorVersion = sharedPreferences.getInt(mContext.getString(R.string.serverVersionMajorKey), 0);
+									}
 
-									if (!hasServerMajorVersion || !hasServerMinorVersion) {
+									Integer serverMinorVersion = null;
+									if (sharedPreferences.contains(mContext.getString(R.string.serverVersionMinorKey))) {
+										serverMinorVersion = sharedPreferences.getInt(mContext.getString(R.string.serverVersionMinorKey), 0);
+									}
+
+									if (serverMajorVersion == null || serverMinorVersion == null) {
 										return callback.apply(new Exception("No server version"));
+									}
+
+									if (validateServerVersion(serverMajorVersion, serverMinorVersion)) {
+										return callback.apply(null);
 									} else {
-										int serverMajorVersion = sharedPreferences.getInt(mContext.getString(R.string.serverVersionMajorKey), 0);
-										int serverMinorVersion = sharedPreferences.getInt(mContext.getString(R.string.serverVersionMinorKey), 0);
-
-										Log.d(LOG_NAME, "server major version: " + serverMajorVersion);
-										Log.d(LOG_NAME, "server minor version: " + serverMinorVersion);
-
-										Log.d(LOG_NAME, "compatibleMajorVersion: " + compatibleMajorVersion);
-										Log.d(LOG_NAME, "compatibleMinorVersion: " + compatibleMinorVersion);
-
-										if (!compatibleMajorVersion.equals(serverMajorVersion)) {
-											return callback.apply(new Exception("This app is not compatible with this server"));
-										} else if (compatibleMinorVersion > serverMinorVersion) {
-											return callback.apply(new Exception("This app is not compatible with this server"));
-										} else {
-											return callback.apply(null);
-										}
+										return callback.apply(new Exception("This app is not compatible with this server"));
 									}
 								}
 							}
@@ -215,6 +209,33 @@ public class PreferenceHelper implements SharedPreferences.OnSharedPreferenceCha
 			callback.apply(new Exception("Bad URL"));
 		}
 	}
+
+	public boolean validateServerVersion(Integer majorVersion, Integer minorVersion) {
+
+		// check versions
+		SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(mContext);
+		Integer compatibleMajorVersion = sharedPreferences.getInt(mContext.getString(R.string.compatibleVersionMajorKey), mContext.getResources().getInteger(R.integer.compatibleVersionMajorDefaultValue));
+		Integer compatibleMinorVersion = sharedPreferences.getInt(mContext.getString(R.string.compatibleVersionMinorKey), mContext.getResources().getInteger(R.integer.compatibleVersionMinorDefaultValue));
+
+		if (majorVersion == null || minorVersion == null) {
+			return false;
+		} else {
+			Log.d(LOG_NAME, "server major version: " + majorVersion);
+			Log.d(LOG_NAME, "server minor version: " + minorVersion);
+
+			Log.d(LOG_NAME, "compatibleMajorVersion: " + compatibleMajorVersion);
+			Log.d(LOG_NAME, "compatibleMinorVersion: " + compatibleMinorVersion);
+
+			if (!compatibleMajorVersion.equals(majorVersion)) {
+				return false;
+			} else if (compatibleMinorVersion > minorVersion) {
+				return false;
+			} else {
+				return true;
+			}
+		}
+	}
+
 
 	@Override
 	public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {

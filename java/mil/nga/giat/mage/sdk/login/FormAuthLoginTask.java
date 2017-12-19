@@ -23,6 +23,7 @@ import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.http.resource.DeviceResource;
 import mil.nga.giat.mage.sdk.http.resource.UserResource;
 import mil.nga.giat.mage.sdk.jackson.deserializer.UserDeserializer;
+import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
 import mil.nga.giat.mage.sdk.utils.ISO8601DateFormatFactory;
 import mil.nga.giat.mage.sdk.utils.DeviceUuidFactory;
 import mil.nga.giat.mage.sdk.utils.PasswordUtility;
@@ -165,6 +166,13 @@ public class FormAuthLoginTask extends AbstractAccountTask {
 				JsonObject loginJson = userResource.login(username, uuid, password, buildVersion);
 
 				if (loginJson != null) {
+					// check server api version to ensure compatibility before continuing
+					JsonObject serverVersion = loginJson.get("api").getAsJsonObject().get("version").getAsJsonObject();
+					if (!PreferenceHelper.getInstance(mApplicationContext).validateServerVersion(serverVersion.get("major").getAsInt(), serverVersion.get("minor").getAsInt())) {
+						Log.e(LOG_NAME, "Server version not compatible");
+						return new AccountStatus(AccountStatus.Status.INVALID_SERVER);
+					}
+
 					// put the token information in the shared preferences
 					Editor editor = sharedPreferences.edit();
 
