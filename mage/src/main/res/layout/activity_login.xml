@@ -144,7 +144,7 @@
                     <View
                         android:layout_width="0dip"
                         android:layout_height="1dp"
-                        android:background="#A8FFFFFF"
+                        android:background="?attr/colorPrimary"
                         android:layout_weight=".5"
                         android:layout_marginTop="10dip"/>
 
@@ -153,13 +153,13 @@
                         android:layout_height="wrap_content"
                         android:gravity="center"
                         android:text="or"
-                        android:textColor="#A8FFFFFF"
+                        android:textColor="?attr/colorPrimary"
                         android:layout_weight=".15" />
 
                     <View
                         android:layout_width="0dip"
                         android:layout_height="1dp"
-                        android:background="#A8FFFFFF"
+                        android:background="?attr/colorPrimary"
                         android:layout_weight=".5"
                         android:layout_marginTop="10dip"/>
 
@@ -264,8 +264,9 @@
             android:id="@+id/server_url"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
             android:gravity="center"
-            android:textColor="#8AFFFFFF"
+            android:textColor="?attr/colorPrimary"
             android:textSize="13sp"
             android:clickable="true"
             android:onClick="changeServerURL"/>

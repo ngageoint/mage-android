@@ -581,7 +581,17 @@ public class LoginActivity extends AppCompatActivity implements AccountDelegate 
 			sp.putString(getApplicationContext().getString(R.string.usernameKey), getUsernameEditText().getText().toString()).commit();
 			showUnregisteredDeviceDialog();
 		} else {
-			if (accountStatus.getErrorIndices().isEmpty()) {
+			if (accountStatus.getStatus().equals(AccountStatus.Status.INVALID_SERVER)) {
+				new AlertDialog.Builder(this)
+						.setTitle("Application Compatibility Error")
+						.setMessage("This app is not compatible with this server. Please update your application or talk to your MAGE administrator.")
+						.setPositiveButton(android.R.string.ok, new OnClickListener() {
+							@Override
+							public void onClick(DialogInterface dialog, int which) {
+								dialog.dismiss();
+							}
+						}).show();
+			} else if (accountStatus.getErrorIndices().isEmpty()) {
 				getUsernameEditText().setError(null);
 				getPasswordEditText().setError(null);
 				new AlertDialog.Builder(this)
