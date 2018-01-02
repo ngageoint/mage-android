@@ -660,17 +660,25 @@ public class LoginActivity extends AppCompatActivity implements AccountDelegate 
 	}
 
 	public void skipLogin() {
-		Event event = null;
-		try {
-			User user = UserHelper.getInstance(getApplicationContext()).readCurrentUser();
-			event = user.getCurrentEvent();
-		} catch (UserException e) {
-			e.printStackTrace();
-		}
+		Intent intent;
 
-		Intent intent = event == null ?
+		SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+		boolean disclaimerAccepted = sharedPreferences.getBoolean(getString(R.string.disclaimerAcceptedKey), false);
+		if (disclaimerAccepted) {
+			Event event = null;
+			try {
+				User user = UserHelper.getInstance(getApplicationContext()).readCurrentUser();
+				event = user.getCurrentEvent();
+			} catch (UserException e) {
+				e.printStackTrace();
+			}
+
+			intent = event == null ?
 				new Intent(getApplicationContext(), EventActivity.class) :
 				new Intent(getApplicationContext(), LandingActivity.class);
+		} else {
+			intent = new Intent(getApplicationContext(), DisclaimerActivity.class);
+		}
 
 		// If launched with a local file path, save as an extra
 		if (mOpenFilePath != null) {
