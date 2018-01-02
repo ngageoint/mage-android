@@ -11,9 +11,17 @@
             android:title="Base Layer"
             android:summary="%s"/>
 
+        <android.support.v7.preference.SwitchPreferenceCompat
+            android:defaultValue="@bool/showMGRSDefaultValue"
+            android:key="@string/showMGRSKey"
+            android:summary="Show Military Grid Reference System overlay"
+            android:title="Show MGRS">
+        </android.support.v7.preference.SwitchPreferenceCompat>
+
         <mil.nga.giat.mage.map.preference.OverlayPreference
             android:key="@string/tileOverlaysKey"
             android:title="Overlay Maps"/>
+
     </android.support.v7.preference.PreferenceCategory>
 
     <android.support.v7.preference.PreferenceCategory android:title="OBSERVATIONS">

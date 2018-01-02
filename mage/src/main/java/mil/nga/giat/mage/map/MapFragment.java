@@ -12,6 +12,8 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.support.annotation.NonNull;
+import android.support.design.widget.BottomSheetBehavior;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
@@ -32,6 +34,7 @@ import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
 import android.webkit.WebView;
 import android.widget.ImageButton;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdate;
@@ -68,6 +71,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -146,10 +150,12 @@ import mil.nga.giat.mage.sdk.event.IStaticFeatureEventListener;
 import mil.nga.giat.mage.sdk.exceptions.LayerException;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
 import mil.nga.giat.mage.sdk.location.LocationService;
+import mil.nga.mgrs.MGRS;
+import mil.nga.mgrs.gzd.MGRSTileProvider;
 import mil.nga.wkb.geom.Geometry;
 import mil.nga.wkb.geom.GeometryType;
 
-public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapClickListener, OnMapLongClickListener, OnMarkerClickListener, OnInfoWindowClickListener, OnMapPanListener, OnMyLocationButtonClickListener, OnClickListener, LocationSource, LocationListener, OnCacheOverlayListener,
+public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapClickListener, OnMapLongClickListener, OnMarkerClickListener, OnInfoWindowClickListener, OnMapPanListener, GoogleMap.OnCameraIdleListener, OnMyLocationButtonClickListener, OnClickListener, LocationSource, LocationListener, OnCacheOverlayListener,
 		IObservationEventListener, ILocationEventListener, IStaticFeatureEventListener {
 
 	private static final String LOG_NAME = MapFragment.class.getName();
@@ -167,7 +173,6 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 	private boolean mapInitialized = false;
 	private View searchLayout;
 	private SearchView searchView;
-	private Menu menu;
 	private Location location;
 	private boolean followMe = false;
 	private GoogleMapWrapper mapWrapper;
@@ -200,6 +205,16 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 	private FloatingActionButton searchButton;
 	private FloatingActionButton zoomToLocationButton;
 	private LocationService locationService;
+
+	private TileOverlay mgrsTileOverlay;
+	private BottomSheetBehavior mgrsBottomSheetBehavior;
+	private View mgrsBottomSheet;
+	private View mgrsCursor;
+	private TextView mgrsTextView;
+	private TextView mgrsGzdTextView;
+	private TextView mgrs100dKmTextView;
+	private TextView mgrsEastingTextView;
+	private TextView mgrsNorthingTextView;
 
 	SharedPreferences preferences;
 
@@ -256,6 +271,40 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 		mapView.onCreate(mapState);
 		mapView.getMapAsync(this);
 
+		mgrsBottomSheet = view.findViewById(R.id.mgrs_bottom_sheet);
+		mgrsCursor = view.findViewById(R.id.mgrs_grid_cursor);
+		mgrsTextView = (TextView) mgrsBottomSheet.findViewById(R.id.mgrs_code);
+		mgrsGzdTextView = (TextView) mgrsBottomSheet.findViewById(R.id.mgrs_gzd_zone);
+		mgrs100dKmTextView = (TextView) mgrsBottomSheet.findViewById(R.id.mgrs_grid_zone);
+		mgrsEastingTextView = (TextView) mgrsBottomSheet.findViewById(R.id.mgrs_easting);
+		mgrsNorthingTextView = (TextView) mgrsBottomSheet.findViewById(R.id.mgrs_northing);
+
+		mgrsBottomSheetBehavior = BottomSheetBehavior.from(mgrsBottomSheet);
+		mgrsBottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
+		mgrsBottomSheetBehavior.setBottomSheetCallback(new BottomSheetBehavior.BottomSheetCallback() {
+			@Override
+			public void onStateChanged(@NonNull View bottomSheet, int newState) {
+				switch (newState) {
+					case BottomSheetBehavior.STATE_COLLAPSED:
+					case BottomSheetBehavior.STATE_EXPANDED:
+						setMgrsCode();
+				}
+			}
+
+			@Override
+			public void onSlide(@NonNull View bottomSheet, float slideOffset) {
+				float adjust;
+				if (slideOffset == 0) {
+					adjust = mgrsBottomSheetBehavior.getPeekHeight();
+				} else {
+					adjust = ((mgrsBottomSheet.getHeight() - mgrsBottomSheetBehavior.getPeekHeight()) * slideOffset) + mgrsBottomSheetBehavior.getPeekHeight();
+				}
+
+				mgrsCursor.setTranslationY((adjust / 2) * -1);
+				map.setPadding(0, 0, 0, (int) adjust);
+			}
+		});
+
 		// Initialize the GeoPackage cache with a GeoPackage manager
 		GeoPackageManager geoPackageManager = GeoPackageFactory.getManager(getActivity().getApplicationContext());
 		geoPackageCache = new GeoPackageCache(geoPackageManager);
@@ -294,6 +343,11 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 			searchMarkers.clear();
 		}
 
+		if (mgrsTileOverlay != null) {
+			mgrsTileOverlay.remove();
+			mgrsTileOverlay = null;
+		}
+
 		// Close all open GeoPackages
 		geoPackageCache.closeAll();
 
@@ -308,7 +362,6 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 	@Override
 	public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
 		inflater.inflate(R.menu.filter, menu);
-		this.menu = menu;
 		getFilterTitle();
 	}
 
@@ -343,6 +396,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 			map.setOnMapLongClickListener(this);
 			map.setOnMyLocationButtonClickListener(this);
 			map.setOnInfoWindowClickListener(this);
+			map.setOnCameraIdleListener(this);
 
 			zoomToLocationButton.setOnClickListener(new OnClickListener() {
 				@Override
@@ -402,6 +456,18 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 		} else {
 			map.setMyLocationEnabled(false);
 			map.setLocationSource(null);
+		}
+
+		boolean showMgrs = preferences.getBoolean(getResources().getString(R.string.showMGRSKey), false);
+		mgrsBottomSheet.setVisibility(showMgrs ? View.VISIBLE : View.GONE);
+		mgrsCursor.setVisibility(showMgrs ? View.VISIBLE : View.GONE);
+		if (showMgrs) {
+			mgrsTileOverlay = map.addTileOverlay(new TileOverlayOptions().tileProvider(new MGRSTileProvider(getContext())));
+			mgrsBottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+
+			int adjust = mgrsBottomSheetBehavior.getPeekHeight();
+			mgrsCursor.setTranslationY(adjust / 2 * -1);
+			map.setPadding(0, 0, 0, adjust);
 		}
 
 		((AppCompatActivity) getActivity()).getSupportActionBar().setSubtitle(getFilterTitle());
@@ -523,6 +589,10 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 			}
 
 			mapInitialized = false;
+
+			if (mgrsTileOverlay != null) {
+				mgrsTileOverlay.remove();
+			}
 		}
 	}
 
@@ -856,6 +926,24 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 	public void onMapPan() {
 		mapWrapper.setOnMapPanListener(null);
 		followMe = false;
+	}
+
+	@Override
+	public void onCameraIdle() {
+		setMgrsCode();
+	}
+
+	private void setMgrsCode() {
+		if (mgrsTileOverlay != null) {
+			LatLng center = map.getCameraPosition().target;
+
+			MGRS mgrs = MGRS.from(new mil.nga.mgrs.wgs84.LatLng(center.latitude, center.longitude));
+			mgrsTextView.setText(mgrs.format(5));
+			mgrsGzdTextView.setText(String.format(Locale.getDefault(),"%s%c", mgrs.getZone(), mgrs.getBand()));
+			mgrs100dKmTextView.setText(String.format(Locale.getDefault(),"%c%c", mgrs.getE100k(), mgrs.getN100k()));
+			mgrsEastingTextView.setText(String.format(Locale.getDefault(),"%05d", mgrs.getEasting()));
+			mgrsNorthingTextView.setText(String.format(Locale.getDefault(),"%05d", mgrs.getNorthing()));
+		}
 	}
 
 	@Override

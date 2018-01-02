@@ -9,6 +9,9 @@
     <string name="baseLayerKey">baseLayer</string>
     <integer name="baseLayerDefaultValue">1</integer>
 
+    <string name="showMGRSKey">showMGRS</string>
+    <bool name="showMGRSDefaultValue">false</bool>
+
     <string name="showObservationsKey">showObservations</string>
     <bool name="showObservationsDefaultValue">true</bool>
 

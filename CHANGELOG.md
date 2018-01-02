@@ -18,6 +18,7 @@ Adheres to [Semantic Versioning](http://semver.org/).
 * Support for multiple forms per event
 * Allow users to delete observations
 * Allow users to change password from profile view
+* New MGRS grid overlay.  You can also search for an MGRS string from the map.
 
 ##### Bug Fixes
 
