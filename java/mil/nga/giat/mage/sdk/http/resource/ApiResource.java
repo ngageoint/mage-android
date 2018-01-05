@@ -1,15 +1,12 @@
 package mil.nga.giat.mage.sdk.http.resource;
 
 import android.content.Context;
-import android.util.Log;
 
 import com.squareup.okhttp.ResponseBody;
 
-import java.io.IOException;
-
 import mil.nga.giat.mage.sdk.http.HttpClientManager;
 import retrofit.Call;
-import retrofit.Response;
+import retrofit.Callback;
 import retrofit.Retrofit;
 import retrofit.http.GET;
 
@@ -35,24 +32,13 @@ public class ApiResource {
         this.context = context;
     }
 
-    public String getApi(String url) throws IOException {
+    public void getApi(String url, Callback<ResponseBody> callback) {
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl(url)
                 .client(HttpClientManager.getInstance(context).httpClient())
                 .build();
 
         ApiService service = retrofit.create(ApiService.class);
-        Response<ResponseBody> response = service.getApi().execute();
-
-        if (response.isSuccess()) {
-            return response.body().string();
-        } else {
-            Log.e(LOG_NAME, "Bad request.");
-            if (response.errorBody() != null) {
-                Log.e(LOG_NAME, response.errorBody().string());
-            }
-        }
-
-        return null;
+        service.getApi().enqueue(callback);
     }
 }

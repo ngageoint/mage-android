@@ -6,11 +6,8 @@ import android.content.SharedPreferences.Editor;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
-import com.google.common.base.Predicate;
 import com.google.gson.JsonObject;
 
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -24,8 +21,8 @@ import mil.nga.giat.mage.sdk.http.resource.DeviceResource;
 import mil.nga.giat.mage.sdk.http.resource.UserResource;
 import mil.nga.giat.mage.sdk.jackson.deserializer.UserDeserializer;
 import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
-import mil.nga.giat.mage.sdk.utils.ISO8601DateFormatFactory;
 import mil.nga.giat.mage.sdk.utils.DeviceUuidFactory;
+import mil.nga.giat.mage.sdk.utils.ISO8601DateFormatFactory;
 import mil.nga.giat.mage.sdk.utils.PasswordUtility;
 
 /**
@@ -108,134 +105,87 @@ public class FormAuthLoginTask extends AbstractAccountTask {
 			return new AccountStatus(AccountStatus.Status.FAILED_LOGIN, errorIndices, errorMessages);
 		}
 
-		// is server a valid URL? (already checked username and password)
 		try {
-			final URL sURL = new URL(serverURL);
+			String buildVersion = sharedPreferences.getString(mApplicationContext.getString(R.string.buildVersionKey), null);
 
-			ConnectivityUtility.isResolvable(sURL.getHost(), new Predicate<Exception>() {
-				@Override
-				public boolean apply(Exception e) {
-					if (e == null) {
-						callbackStatus = new AccountStatus(AccountStatus.Status.SUCCESSFUL_LOGIN);
-						return true;
-					} else {
-						List<Integer> errorIndices = new ArrayList<>();
-						errorIndices.add(2);
-						List<String> errorMessages = new ArrayList<>();
-						errorMessages.add("Bad hostname");
-						callbackStatus = new AccountStatus(AccountStatus.Status.FAILED_LOGIN, errorIndices, errorMessages);
-						return false;
-					}
+			// Does the device need to be registered?
+			if (needToRegisterDevice) {
+				AccountStatus.Status regStatus = registerDevice(username, uuid, password);
+
+				if (regStatus.equals(AccountStatus.Status.SUCCESSFUL_REGISTRATION)) {
+					return new AccountStatus(regStatus);
+				} else if (regStatus == AccountStatus.Status.FAILED_LOGIN) {
+					return new AccountStatus(regStatus);
 				}
-			});
+			}
 
-			int sleepcount = 0;
-			while (callbackStatus == null && sleepcount < 60) {
+			UserResource userResource = new UserResource(mApplicationContext);
+			JsonObject loginJson = userResource.login(username, uuid, password, buildVersion);
+
+			if (loginJson != null) {
+				// check server api version to ensure compatibility before continuing
+				JsonObject serverVersion = loginJson.get("api").getAsJsonObject().get("version").getAsJsonObject();
+				if (!PreferenceHelper.getInstance(mApplicationContext).validateServerVersion(serverVersion.get("major").getAsInt(), serverVersion.get("minor").getAsInt())) {
+					Log.e(LOG_NAME, "Server version not compatible");
+					return new AccountStatus(AccountStatus.Status.INVALID_SERVER);
+				}
+
+				// put the token information in the shared preferences
+				Editor editor = sharedPreferences.edit();
+
+				editor.putString(mApplicationContext.getString(R.string.tokenKey), loginJson.get("token").getAsString().trim());
+				Log.d(LOG_NAME, "Storing token: " + String.valueOf(sharedPreferences.getString(mApplicationContext.getString(R.string.tokenKey), null)));
 				try {
-					Thread.sleep(500);
-				} catch (Exception e) {
-					Log.e(LOG_NAME, "Problem sleeping.");
-				} finally {
-					sleepcount++;
-				}
-			}
-
-			if (callbackStatus == null) {
-				return new AccountStatus(AccountStatus.Status.FAILED_LOGIN);
-			} else if (!callbackStatus.getStatus().equals(AccountStatus.Status.SUCCESSFUL_LOGIN)) {
-				return callbackStatus;
-			}
-
-			// else the callback was a success
-
-			try {
-				String buildVersion = sharedPreferences.getString(mApplicationContext.getString(R.string.buildVersionKey), null);
-
-				// Does the device need to be registered?
-				if (needToRegisterDevice) {
-					AccountStatus.Status regStatus = registerDevice(username, uuid, password);
-
-					if (regStatus.equals(AccountStatus.Status.SUCCESSFUL_REGISTRATION)) {
-						return new AccountStatus(regStatus);
-					} else if (regStatus == AccountStatus.Status.FAILED_LOGIN) {
-						return new AccountStatus(regStatus);
-					}
+					Date tokenExpiration = iso8601Format.parse(loginJson.get("expirationDate").getAsString().trim());
+					long tokenExpirationLength = tokenExpiration.getTime() - (new Date()).getTime();
+					editor.putString(mApplicationContext.getString(R.string.tokenExpirationDateKey), iso8601Format.format(tokenExpiration));
+					editor.putLong(mApplicationContext.getString(R.string.tokenExpirationLengthKey), tokenExpirationLength);
+				} catch (java.text.ParseException e) {
+					Log.e(LOG_NAME, "Problem parsing token expiration date.", e);
 				}
 
-				UserResource userResource = new UserResource(mApplicationContext);
-				JsonObject loginJson = userResource.login(username, uuid, password, buildVersion);
+				// initialize the current user
+				JsonObject userJson = loginJson.getAsJsonObject("user");
 
-				if (loginJson != null) {
-					// check server api version to ensure compatibility before continuing
-					JsonObject serverVersion = loginJson.get("api").getAsJsonObject().get("version").getAsJsonObject();
-					if (!PreferenceHelper.getInstance(mApplicationContext).validateServerVersion(serverVersion.get("major").getAsInt(), serverVersion.get("minor").getAsInt())) {
-						Log.e(LOG_NAME, "Server version not compatible");
-						return new AccountStatus(AccountStatus.Status.INVALID_SERVER);
-					}
+				// if username is different, then clear the db
+				String oldUsername = sharedPreferences.getString(mApplicationContext.getString(R.string.usernameKey), mApplicationContext.getString(R.string.usernameDefaultValue));
+				String newUsername = userJson.get("username").getAsString();
+				if (oldUsername == null || !oldUsername.equals(newUsername)) {
+					DaoStore.getInstance(mApplicationContext).resetDatabase();
+				}
 
-					// put the token information in the shared preferences
-					Editor editor = sharedPreferences.edit();
+				User user = userDeserializer.parseUser(userJson.toString());
+				if (user != null) {
+					user.setFetchedDate(new Date());
+					user = userHelper.createOrUpdate(user);
 
-					editor.putString(mApplicationContext.getString(R.string.tokenKey), loginJson.get("token").getAsString().trim());
-					Log.d(LOG_NAME, "Storing token: " + String.valueOf(sharedPreferences.getString(mApplicationContext.getString(R.string.tokenKey), null)));
-					try {
-						Date tokenExpiration = iso8601Format.parse(loginJson.get("expirationDate").getAsString().trim());
-						long tokenExpirationLength = tokenExpiration.getTime() - (new Date()).getTime();
-						editor.putString(mApplicationContext.getString(R.string.tokenExpirationDateKey), iso8601Format.format(tokenExpiration));
-						editor.putLong(mApplicationContext.getString(R.string.tokenExpirationLengthKey), tokenExpirationLength);
-					} catch (java.text.ParseException e) {
-						Log.e(LOG_NAME, "Problem parsing token expiration date.", e);
-					}
+					userHelper.setCurrentUser(user);
 
-					// initialize the current user
-					JsonObject userJson = loginJson.getAsJsonObject("user");
-
-					// if username is different, then clear the db
-					String oldUsername = sharedPreferences.getString(mApplicationContext.getString(R.string.usernameKey), mApplicationContext.getString(R.string.usernameDefaultValue));
-					String newUsername = userJson.get("username").getAsString();
-					if (oldUsername == null || !oldUsername.equals(newUsername)) {
-						DaoStore.getInstance(mApplicationContext).resetDatabase();
-					}
-
-					User user = userDeserializer.parseUser(userJson.toString());
-					if (user != null) {
-						user.setFetchedDate(new Date());
-						user = userHelper.createOrUpdate(user);
-
-						userHelper.setCurrentUser(user);
-
-						editor.putString(mApplicationContext.getString(R.string.displayNameKey), user.getDisplayName());
-					} else {
-						Log.e(LOG_NAME, "Unable to Deserializer user.");
-						List<Integer> errorIndices = new ArrayList<>();
-						errorIndices.add(2);
-						List<String> errorMessages = new ArrayList<>();
-						errorMessages.add("Problem retrieving your user.");
-						return new AccountStatus(AccountStatus.Status.FAILED_LOGIN, errorIndices, errorMessages);
-					}
-
-					editor.commit();
-
-					return new AccountStatus(AccountStatus.Status.SUCCESSFUL_LOGIN, new ArrayList<Integer>(), new ArrayList<String>(), loginJson);
+					editor.putString(mApplicationContext.getString(R.string.displayNameKey), user.getDisplayName());
 				} else {
-					// Could be that the device is not registered.
-					if (!needToRegisterDevice) {
-						// Try to register it
-						params[3] = Boolean.TRUE.toString();
-						return login(params);
-					}
+					Log.e(LOG_NAME, "Unable to Deserializer user.");
+					List<Integer> errorIndices = new ArrayList<>();
+					errorIndices.add(2);
+					List<String> errorMessages = new ArrayList<>();
+					errorMessages.add("Problem retrieving your user.");
+					return new AccountStatus(AccountStatus.Status.FAILED_LOGIN, errorIndices, errorMessages);
 				}
-			} catch (Exception e) {
-				Log.e(LOG_NAME, "Problem logging in.", e);
-			}
 
-		} catch (MalformedURLException e) {
-			List<Integer> errorIndices = new ArrayList<>();
-			errorIndices.add(2);
-			List<String> errorMessages = new ArrayList<>();
-			errorMessages.add("Bad URL");
-			return new AccountStatus(AccountStatus.Status.FAILED_LOGIN, errorIndices, errorMessages);
+				editor.commit();
+
+				return new AccountStatus(AccountStatus.Status.SUCCESSFUL_LOGIN, new ArrayList<Integer>(), new ArrayList<String>(), loginJson);
+			} else {
+				// Could be that the device is not registered.
+				if (!needToRegisterDevice) {
+					// Try to register it
+					params[3] = Boolean.TRUE.toString();
+					return login(params);
+				}
+			}
+		} catch (Exception e) {
+			Log.e(LOG_NAME, "Problem logging in.", e);
 		}
+
 
 		return new AccountStatus(AccountStatus.Status.FAILED_LOGIN);
 	}
