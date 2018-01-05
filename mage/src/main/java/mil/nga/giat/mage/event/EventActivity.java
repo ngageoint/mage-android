@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.graphics.Typeface;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v4.content.LocalBroadcastManager;
@@ -192,7 +193,7 @@ public class EventActivity extends AppCompatActivity implements AccountDelegate 
         userRecentEventInfo.add(chosenEvent.getRemoteId());
 
 		TextView message = (TextView) findViewById(R.id.event_message);
-		message.setText("Loading event " + chosenEvent.getName());
+		message.setText("Loading " + chosenEvent.getName());
 
         new RecentEventTask(this, this.getApplicationContext()).execute(userRecentEventInfo.toArray(new String[userRecentEventInfo.size()]));
     }

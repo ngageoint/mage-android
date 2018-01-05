@@ -16,6 +16,7 @@ import android.support.v4.app.TaskStackBuilder;
 import android.util.Log;
 
 import mil.nga.giat.mage.login.LoginActivity;
+import mil.nga.giat.mage.login.ServerUrlActivity;
 import mil.nga.giat.mage.login.SignupActivity;
 import mil.nga.giat.mage.observation.ObservationNotificationListener;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
@@ -179,7 +180,7 @@ public class MAGE extends MultiDexApplication implements IUserEventListener, App
 
 		String notificationMsg = tokenExpired ? "Your token has expired, please tap to login." : "You are logged in. Slide down to logout.";
 		NotificationCompat.Builder builder = new NotificationCompat.Builder(this)
-				.setSmallIcon(R.drawable.ic_wand)
+				.setSmallIcon(R.drawable.ic_wand_white_50dp)
 				.setContentTitle("MAGE")
 				.setOngoing(true)
 				.setPriority(NotificationCompat.PRIORITY_MAX)
@@ -319,7 +320,10 @@ public class MAGE extends MultiDexApplication implements IUserEventListener, App
 
 		PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).edit().putBoolean(getString(R.string.disclaimerAcceptedKey), false).commit();
 
-		if (runningActivity != null && !(runningActivity instanceof LoginActivity) && !(runningActivity instanceof SignupActivity)) {
+		if (runningActivity != null &&
+				!(runningActivity instanceof LoginActivity) &&
+				!(runningActivity instanceof SignupActivity) &&
+				!(runningActivity instanceof ServerUrlActivity)) {
 			forceLogin(true);
 		}
 	}
@@ -337,7 +341,10 @@ public class MAGE extends MultiDexApplication implements IUserEventListener, App
 	@Override
 	public void onActivityResumed(Activity activity) {
 
-		if (UserUtility.getInstance(getApplicationContext()).isTokenExpired() && !(activity instanceof LoginActivity) && !(activity instanceof SignupActivity)) {
+		if (UserUtility.getInstance(getApplicationContext()).isTokenExpired() &&
+				!(activity instanceof LoginActivity) &&
+				!(activity instanceof SignupActivity) &&
+				!(activity instanceof ServerUrlActivity)) {
 			forceLogin(false);
 		}
 

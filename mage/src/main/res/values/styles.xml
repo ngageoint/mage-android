@@ -79,13 +79,6 @@
         <item name="android:textColor">@color/md_white_1000</item>
     </style>
 
-    <style name="LoginProgressBar" parent="Widget.AppCompat.ProgressBar.Horizontal">
-        <item name="android:indeterminateOnly">true</item>
-        <item name="android:indeterminateDrawable">@drawable/mage_progress_bar</item>
-        <item name="android:minHeight">50dip</item>
-        <item name="android:maxHeight">300dip</item>
-    </style>
-
     <style name="ListSubheader">
         <item name="android:textStyle">normal</item>
         <item name="android:fontFamily">sans-serif-medium</item>

@@ -8,56 +8,27 @@
 
     <RelativeLayout
         android:id="@+id/event_status"
-        android:layout_width="fill_parent"
-        android:layout_height="fill_parent"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
         android:orientation="vertical">
 
-        <RelativeLayout
-            android:layout_width="match_parent"
+        <TextView
+            android:id="@+id/event_message"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:background="?attr/colorPrimaryDark"
-            android:elevation="8dp">
+            android:layout_centerInParent="true"
+            android:fontFamily="sans-serif-light"
+            android:text="Loading Events..."
+            android:textColor="?attr/colorPrimary"
+            android:textSize="26sp"/>
 
-            <include layout="@layout/mage_header" />
-
-        </RelativeLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="fill_parent"
-            android:layout_marginTop="16dp"
-            android:layout_gravity="center_horizontal|center_vertical"
-            android:gravity="center_horizontal|center_vertical"
-            android:orientation="vertical">
-
-            <LinearLayout
-                android:layout_width="175dp"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal">
-
-                <ImageView
-                    android:layout_width="wrap_content"
-                    android:layout_height="50dp"
-                    android:tint="?attr/colorPrimary"
-                    android:src="@drawable/ic_wand_white_50dp"/>
-
-                <ProgressBar
-                    style="@style/LoginProgressBar"
-                    android:layout_width="match_parent"
-                    android:layout_height="50dp"
-                    android:layout_marginStart="-5dp"/>
-
-            </LinearLayout>
-
-            <TextView
-                android:id="@+id/event_message"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:fontFamily="sans-serif-light"
-                android:text="Loading Events..."
-                android:textColor="?attr/colorPrimary"
-                android:textSize="26sp"/>
-        </LinearLayout>
+        <ProgressBar
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_above="@id/event_message"
+            android:layout_centerHorizontal="true"
+            android:theme="@style/AppTheme.PrimaryAccent"
+            style="?android:attr/progressBarStyleLarge"/>
     </RelativeLayout>
 
     <LinearLayout
@@ -74,8 +45,8 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center"
-            android:paddingBottom="20dip"
-            android:paddingTop="20dip"
+            android:paddingBottom="16dp"
+            android:paddingTop="20dp"
             android:text="Welcome to MAGE"
             android:textColor="?attr/colorPrimary"
             android:textSize="26sp"/>
@@ -83,7 +54,7 @@
         <RelativeLayout
             android:id="@+id/event_select_content"
             android:layout_width="wrap_content"
-            android:layout_height="0dip"
+            android:layout_height="0dp"
             android:layout_weight="1"
             android:layout_below="@id/event_welcome_label">
 
@@ -91,8 +62,7 @@
                 android:id="@+id/event_info"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:paddingBottom="20dip"
-                android:paddingTop="20dip"
+                android:paddingBottom="16dp"
                 android:text="You are part of multiple events.  The observations you create and your reported location will be part of the selected event.  You can change your event at anytime within MAGE."
                 android:textColor="?attr/colorPrimary" />
 
@@ -101,7 +71,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_below="@id/event_info"
-                android:paddingBottom="20dip"
+                android:paddingBottom="16dp"
                 android:text="Please select an event:"
                 android:textColor="?attr/colorPrimary" />
 
@@ -109,7 +79,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_below="@id/event_info_select"
-                android:layout_gravity="left"
+                android:layout_gravity="start"
                 android:paddingBottom="20dip">
 
                 <RadioGroup

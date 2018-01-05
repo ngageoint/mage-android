@@ -8,13 +8,9 @@
 
     <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="?attr/colorPrimaryDark"
-        android:elevation="8dp">
+        android:layout_height="wrap_content">
 
-        <include
-            android:id="@+id/signup_header"
-            layout="@layout/mage_header" />
+        <include layout="@layout/mage_header" />
 
     </RelativeLayout>
 

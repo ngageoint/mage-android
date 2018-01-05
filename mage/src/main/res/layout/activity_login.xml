@@ -1,76 +1,86 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:layout_width="fill_parent"
-    android:layout_height="fill_parent"
-    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
     android:background="@color/md_white_1000">
 
-    <RelativeLayout
+    <!-- Loading spinner -->
+    <LinearLayout
+        android:id="@+id/login_status"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="?attr/colorPrimaryDark"
-        android:elevation="8dp">
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:visibility="gone">
 
-        <include
-            android:id="@+id/signup_header"
-            layout="@layout/mage_header" />
+        <ProgressBar
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:theme="@style/AppTheme.PrimaryAccent"
+            style="?android:attr/progressBarStyleLarge"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="sans-serif-light"
+            android:text="Logging in..."
+            android:textColor="?attr/colorPrimary"
+            android:textSize="26sp" />
+
+    </LinearLayout>
+
+    <RelativeLayout
+        android:id="@+id/header"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <include layout="@layout/mage_header" />
 
     </RelativeLayout>
 
+    <LinearLayout
+        android:id="@+id/footer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp"
+        android:layout_marginTop="16dp"
+        android:layout_alignParentBottom="true"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/server_url"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:gravity="center"
+            android:textColor="?attr/colorPrimary"
+            android:textSize="13sp"
+            android:clickable="true" />
+
+        <TextView
+            android:id="@+id/login_version"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:clickable="false"
+            android:gravity="center"
+            android:textColor="?attr/colorPrimary"
+            android:textSize="11sp"
+            android:text="App Version: 5.0.1"/>
+
+    </LinearLayout>
+
     <ScrollView
         android:id="@+id/login"
-        android:layout_width="fill_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:layout_marginTop="16dp"
-        android:fillViewport="true"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/header"
+        android:layout_above="@id/footer"
         android:windowSoftInputMode="stateVisible" >
 
         <RelativeLayout
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical">
-
-            <!-- Loading spinner -->
-            <LinearLayout
-                android:id="@+id/login_status"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_gravity="center_horizontal|center_vertical"
-                android:gravity="center_horizontal|center_vertical"
-                android:orientation="vertical"
-                android:visibility="gone">
-
-                <LinearLayout
-                    android:layout_width="175dp"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal">
-
-                    <ImageView
-                        android:layout_width="wrap_content"
-                        android:layout_height="50dp"
-                        android:tint="?attr/colorPrimary"
-                        android:src="@drawable/ic_wand_white_50dp"/>
-
-                    <ProgressBar
-                        style="@style/LoginProgressBar"
-                        android:layout_width="match_parent"
-                        android:layout_height="50dp"
-                        android:layout_marginStart="-5dp"/>
-
-                </LinearLayout>
-
-                <TextView
-                    android:id="@+id/login_message"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:fontFamily="sans-serif-light"
-                    android:text="Logging in..."
-                    android:textColor="?attr/colorPrimary"
-                    android:textSize="26sp" />
-
-            </LinearLayout>
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
 
             <LinearLayout
                 android:visibility="gone"
@@ -106,14 +116,14 @@
 
             <!-- Login Form -->
             <LinearLayout
-                android:visibility="visible"
                 android:id="@+id/login_form"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:paddingBottom="24dip"
-                android:paddingLeft="24dip"
-                android:paddingRight="24dip">
+                android:visibility="visible"
+                android:paddingBottom="24dp"
+                android:paddingLeft="24dp"
+                android:paddingRight="24dp">
 
                 <LinearLayout
                     android:visibility="visible"
@@ -133,8 +143,8 @@
                 </LinearLayout>
 
                 <LinearLayout
-                    android:visibility="visible"
                     android:id="@+id/or"
+                    android:visibility="visible"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
@@ -231,7 +241,7 @@
                     android:id="@+id/sign_up"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:layout_marginTop="40dip"
+                    android:layout_marginTop="24dp"
                     android:orientation="horizontal" >
 
                     <!-- Link to Signup Screen? -->
@@ -244,7 +254,7 @@
                         android:onClick="signup"
                         android:text="New to MAGE? Signup here"
                         android:textColor="?attr/colorPrimary"
-                        android:textSize="20sp" />
+                        android:textSize="16sp" />
                 </LinearLayout>
                 
             </LinearLayout>
@@ -253,36 +263,7 @@
 
     </ScrollView>
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="16dip"
-        android:layout_marginTop="16dip"
-        android:orientation="vertical">
-
-        <TextView
-            android:id="@+id/server_url"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp"
-            android:gravity="center"
-            android:textColor="?attr/colorPrimary"
-            android:textSize="13sp"
-            android:clickable="true"
-            android:onClick="changeServerURL"/>
-
-        <TextView
-            android:id="@+id/login_version"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:clickable="false"
-            android:gravity="center"
-            android:textColor="?attr/colorPrimary"
-            android:textSize="11dp"
-            android:text="App Version: 5.0.1"/>
-
-    </LinearLayout>
 
 
-</LinearLayout>
+</RelativeLayout>
 

@@ -21,6 +21,7 @@ import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.TextView;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -96,6 +97,9 @@ public class SignupActivity extends AppCompatActivity implements AccountDelegate
 		super.onCreate(savedInstanceState);
 
 		setContentView(R.layout.activity_signup);
+
+		TextView appName = (TextView) findViewById(R.id.mage);
+		appName.setTypeface(Typeface.createFromAsset(getAssets(),"fonts/GondolaMage-Regular.otf"));
 
 		final PasswordStrengthFragment passwordStrengthFragment = (PasswordStrengthFragment) getSupportFragmentManager().findFragmentById(R.id.password_strength_fragment);
 

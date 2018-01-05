@@ -170,10 +170,10 @@ dependencies {
         }
     }
 
-//    compile project(':sdk') // uncomment me to build locally, and see top-level build.gradle
-    compile 'mil.nga.giat.mage:mage-android-sdk:6.0.1' // comment me to build locally
     compile 'com.android.support:multidex:1.0.1'
     compile "com.android.support:support-v13:$support_library_version"
+    compile "com.android.support:animated-vector-drawable:$support_library_version"
+    compile "com.android.support:mediarouter-v7:$support_library_version"
     compile "com.android.support:recyclerview-v7:$support_library_version"
     compile "com.android.support:appcompat-v7:$support_library_version"
     compile "com.android.support:design:$support_library_version"
@@ -181,6 +181,9 @@ dependencies {
     compile "com.android.support:preference-v7:$support_library_version"
     compile "com.android.support:preference-v14:$support_library_version"
     compile "com.google.android.gms:play-services-maps:$google_play_services_version"
+
+    //    compile project(':sdk') // uncomment me to build locally, and see top-level build.gradle
+    compile 'mil.nga.giat.mage:mage-android-sdk:6.0.0' // comment me to build locally
     compile 'com.google.maps.android:android-maps-utils:0.5'
     compile 'mil.nga.geopackage.map:geopackage-android-map:1.4.1'
     compile 'org.ocpsoft.prettytime:prettytime:3.2.5.Final'

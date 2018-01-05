@@ -5,28 +5,16 @@
     android:background="@color/md_white_1000"
     android:fillViewport="true"
     android:orientation="vertical"
-    android:windowSoftInputMode="stateVisible" >
-
-    <RelativeLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="?attr/colorPrimaryDark"
-        android:elevation="8dp">
-
-        <include
-            android:id="@+id/signup_header"
-            layout="@layout/mage_header" />
-
-    </RelativeLayout>
+    android:windowSoftInputMode="stateVisible">
 
     <LinearLayout
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
         android:gravity="center_vertical"
         android:orientation="vertical"
-        android:layout_marginTop="16dp"
-        android:paddingLeft="24dip"
-        android:paddingRight="24dip">
+        android:paddingLeft="24dp"
+        android:paddingRight="24dp"
+        android:layout_marginTop="16dp">
 
         <TextView
             android:id="@+id/disclaimer_title"

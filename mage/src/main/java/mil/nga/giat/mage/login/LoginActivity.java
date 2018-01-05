@@ -12,6 +12,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.design.widget.TextInputLayout;
+import android.support.v4.app.FragmentManager;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.text.Editable;
@@ -23,7 +24,6 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnTouchListener;
 import android.view.ViewGroup;
-import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
@@ -31,7 +31,6 @@ import android.widget.TextView;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
-import com.google.common.base.Predicate;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -44,16 +43,12 @@ import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.cache.CacheUtils;
 import mil.nga.giat.mage.disclaimer.DisclaimerActivity;
 import mil.nga.giat.mage.event.EventActivity;
-import mil.nga.giat.mage.sdk.connectivity.ConnectivityUtility;
 import mil.nga.giat.mage.sdk.datastore.DaoStore;
 import mil.nga.giat.mage.sdk.datastore.user.Event;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
-import mil.nga.giat.mage.sdk.login.AbstractAccountTask;
-import mil.nga.giat.mage.sdk.login.AccountDelegate;
 import mil.nga.giat.mage.sdk.login.AccountStatus;
-import mil.nga.giat.mage.sdk.login.LoginTaskFactory;
 import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
 import mil.nga.giat.mage.sdk.utils.PasswordUtility;
@@ -64,7 +59,7 @@ import mil.nga.giat.mage.sdk.utils.UserUtility;
  *
  * @author wiedemanns
  */
-public class LoginActivity extends AppCompatActivity implements AccountDelegate {
+public class LoginActivity extends AppCompatActivity implements LoginFragment.LoginListener {
 
 	public static final int EXTRA_OAUTH_RESULT = 1;
 
@@ -88,6 +83,9 @@ public class LoginActivity extends AppCompatActivity implements AccountDelegate 
 
 	private String currentUsername;
 	private boolean mContinueSession;
+
+	private static final String LOGIN_FRAGMENT_TAG = "LOGIN_FRAGMENT";
+	private LoginFragment loginFragment;
 
 	public final EditText getUsernameEditText() {
 		return mUsernameEditText;
@@ -180,6 +178,9 @@ public class LoginActivity extends AppCompatActivity implements AccountDelegate 
 		setContentView(R.layout.activity_login);
 		hideKeyboardOnClick(findViewById(R.id.login));
 
+		TextView appName = (TextView) findViewById(R.id.mage);
+		appName.setTypeface(Typeface.createFromAsset(getAssets(),"fonts/GondolaMage-Regular.otf"));
+
 		((TextView) findViewById(R.id.login_version)).setText("App Version: " + sharedPreferences.getString(getString(R.string.buildVersionKey), "NA"));
 
 		mUsernameEditText = (EditText) findViewById(R.id.login_username);
@@ -190,6 +191,19 @@ public class LoginActivity extends AppCompatActivity implements AccountDelegate 
 
 		mPasswordEditText.setTypeface(Typeface.DEFAULT);
 		mServerURL = (TextView) findViewById(R.id.server_url);
+
+		String serverURL = sharedPreferences.getString(getString(R.string.serverURLKey), getString(R.string.serverURLDefaultValue));
+		if (StringUtils.isEmpty(serverURL)) {
+			changeServerURL();
+			return;
+		}
+
+		findViewById(R.id.server_url).setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				changeServerURL();
+			}
+		});
 
 		// set the default values
 		getUsernameEditText().setText(sharedPreferences.getString(getString(R.string.usernameKey), getString(R.string.usernameDefaultValue)));
@@ -245,18 +259,22 @@ public class LoginActivity extends AppCompatActivity implements AccountDelegate 
 			}
 		});
 
-		final String serverURL = sharedPreferences.getString(getString(R.string.serverURLKey), getString(R.string.serverURLDefaultValue));
-		if (StringUtils.isNotEmpty(serverURL)) {
-			mServerURL.setText(serverURL);
+		FragmentManager fragmentManager = getSupportFragmentManager();
+		loginFragment = (LoginFragment) fragmentManager.findFragmentByTag(LOGIN_FRAGMENT_TAG);
 
-			PreferenceHelper.getInstance(getApplicationContext()).validateServerApi(serverURL, new Predicate<Exception>() {
-				@Override
-				public boolean apply(Exception e) {
-					configureLogin();
-					return e == null;
-				}
-			});
+		// If the Fragment is non-null, then it is being retained over a configuration change.
+		if (loginFragment == null) {
+			loginFragment = new LoginFragment();
+			fragmentManager.beginTransaction().add(loginFragment, LOGIN_FRAGMENT_TAG).commit();
 		}
+
+		mServerURL.setText(serverURL);
+
+		// Setup login based on last api pull
+		configureLogin();
+
+		findViewById(R.id.login_status).setVisibility(loginFragment.isAuthenticating() ? View.VISIBLE : View.GONE);
+		findViewById(R.id.login_form).setVisibility(loginFragment.isAuthenticating() ? View.GONE : View.VISIBLE);
 	}
 
 	@Override
@@ -277,12 +295,9 @@ public class LoginActivity extends AppCompatActivity implements AccountDelegate 
 	private void configureLogin() {
 		PreferenceHelper preferenceHelper = PreferenceHelper.getInstance(getApplicationContext());
 
-		boolean noServer = StringUtils.isEmpty(mServerURL.getText());
 		boolean localAuthentication = preferenceHelper.containsLocalAuthentication();
 		boolean googleAuthentication = preferenceHelper.containsGoogleAuthentication();
 
-		findViewById(R.id.login_form).setVisibility(noServer ? View.GONE : View.VISIBLE);
-		findViewById(R.id.server_configuration).setVisibility(noServer ? View.VISIBLE : View.GONE);
 		findViewById(R.id.or).setVisibility(localAuthentication && googleAuthentication ? View.VISIBLE : View.GONE);
 		findViewById(R.id.sign_up).setVisibility(localAuthentication || googleAuthentication ? View.VISIBLE : View.GONE);
 
@@ -343,94 +358,10 @@ public class LoginActivity extends AppCompatActivity implements AccountDelegate 
 		}
 	}
 
-	public void changeServerURL(View view) {
-		if (ConnectivityUtility.isOnline(getApplicationContext())) {
-			View dialogView = getLayoutInflater().inflate(R.layout.dialog_server, null);
-			final EditText serverEditText = (EditText) dialogView.findViewById(R.id.server_url);
-			final TextInputLayout serverEditLayout = (TextInputLayout) dialogView.findViewById(R.id.server_url_layout);
-
-			final View progress = dialogView.findViewById(R.id.progress);
-
-			final SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-			final String serverURLPreference = sharedPreferences.getString(getString(R.string.serverURLKey), getString(R.string.serverURLDefaultValue));
-			serverEditText.setText(serverURLPreference);
-
-			AlertDialog.Builder builder = new AlertDialog.Builder(this)
-					.setView(dialogView)
-					.setTitle("MAGE Server URL")
-					.setPositiveButton(android.R.string.ok, null)
-					.setNegativeButton(android.R.string.cancel, null);
-
-			if (StringUtils.isNotEmpty(serverURLPreference)) {
-				builder.setMessage("Changing the server URL will delete all previous data.  Do you want to continue?");
-			}
-
-			final AlertDialog alertDialog = builder.create();
-
-			alertDialog.setOnShowListener(new DialogInterface.OnShowListener() {
-				@Override
-				public void onShow(DialogInterface dialog) {
-
-					final Button button = alertDialog.getButton(AlertDialog.BUTTON_POSITIVE);
-					button.setOnClickListener(new View.OnClickListener() {
-
-						@Override
-						public void onClick(View view) {
-							progress.setVisibility(View.VISIBLE);
-							button.setEnabled(false);
-
-							String url = serverEditText.getText().toString().trim().replaceAll("(\\w)/*$", "$1");
-							if (StringUtils.isNotEmpty(url) && !url.matches("^(H|h)(T|t)(T|t)(P|p)(S|s)?://.*")) {
-								url = "https://" + url;
-							}
-
-							if (url.equals(serverURLPreference) && getServerUrlText().getError() == null) {
-								alertDialog.dismiss();
-								return;
-							}
-
-							final String serverURL = url;
-							PreferenceHelper.getInstance(getApplicationContext()).validateServerApi(serverURL, new Predicate<Exception>() {
-								@Override
-								public boolean apply(Exception e) {
-									if (e == null) {
-										mServerURL.setText(serverURL);
-										serverEditLayout.setError(null);
-										alertDialog.dismiss();
-
-										final DaoStore daoStore = DaoStore.getInstance(getApplicationContext());
-										if (!daoStore.isDatabaseEmpty()) {
-											daoStore.resetDatabase();
-										}
-
-										Editor editor = sharedPreferences.edit();
-										editor.putString(getString(R.string.serverURLKey), serverURL).commit();
-										configureLogin();
-
-										return true;
-									} else {
-										progress.setVisibility(View.INVISIBLE);
-										button.setEnabled(true);
-										serverEditLayout.setError(e.getMessage());
-
-										return false;
-									}
-								}
-							});
-
-						}
-					});
-				}
-			});
-
-			alertDialog.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE);
-			alertDialog.show();
-		} else {
-			new AlertDialog.Builder(this)
-					.setTitle("No Connectivity")
-					.setMessage("Sorry, you cannot change the server URL with no network connectivity.")
-					.setPositiveButton(android.R.string.ok, null).show();
-		}
+	public void changeServerURL() {
+		Intent intent = new Intent(this, ServerUrlActivity.class);
+		startActivity(intent);
+		finish();
 	}
 
 	/**
@@ -509,9 +440,7 @@ public class LoginActivity extends AppCompatActivity implements AccountDelegate 
 			UserUtility.getInstance(getApplicationContext()).clearTokenInformation();
 		}
 
-		// if the serverURL is different that before, clear out the database
-		AbstractAccountTask loginTask = LoginTaskFactory.getInstance(getApplicationContext()).getLoginTask(this, this.getApplicationContext());
-		loginTask.execute(credentialsArray);
+		loginFragment.authenticate(credentialsArray);
 	}
 
 	private void googleLogin() {
@@ -545,7 +474,14 @@ public class LoginActivity extends AppCompatActivity implements AccountDelegate 
 	}
 
 	@Override
-	public void finishAccount(AccountStatus accountStatus) {
+	public void onApi(boolean valid) {
+		if (!loginFragment.isAuthenticating()) {
+			configureLogin();
+		}
+	}
+
+	@Override
+	public void onAuthentication(AccountStatus accountStatus) {
 		if (accountStatus.getStatus().equals(AccountStatus.Status.SUCCESSFUL_LOGIN) || accountStatus.getStatus().equals(AccountStatus.Status.DISCONNECTED_LOGIN)) {
 			SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
 			Editor editor = sharedPreferences.edit();
@@ -696,11 +632,6 @@ public class LoginActivity extends AppCompatActivity implements AccountDelegate 
 		if (getIntent().getBooleanExtra("LOGOUT", false)) {
 			((MAGE) getApplication()).onLogout(true, null);
 		}
-
-		configureLogin();
-
-		// show form, and hide spinner
-		findViewById(R.id.login_status).setVisibility(View.GONE);
 	}
 
 	private void showUnregisteredDeviceDialog() {
