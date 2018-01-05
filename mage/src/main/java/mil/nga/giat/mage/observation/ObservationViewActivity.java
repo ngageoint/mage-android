@@ -403,8 +403,7 @@ public class ObservationViewActivity extends AppCompatActivity implements OnMapR
 			if (initialLatLng == null) {
 				initialLatLng = new LatLng(0, 0);
 			}
-			float zoom = getIntent().getFloatExtra(INITIAL_ZOOM, 0);
-			map.moveCamera(CameraUpdateFactory.newLatLngZoom(initialLatLng, zoom));
+			map.moveCamera(CameraUpdateFactory.newLatLngZoom(initialLatLng, 15));
 
 			map.animateCamera(location.getCameraUpdate(mapFragment.getView(), 15));
 		} else {
