@@ -12,7 +12,6 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
-import android.support.annotation.NonNull;
 import android.support.design.widget.BottomSheetBehavior;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
@@ -281,29 +280,6 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 
 		mgrsBottomSheetBehavior = BottomSheetBehavior.from(mgrsBottomSheet);
 		mgrsBottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
-		mgrsBottomSheetBehavior.setBottomSheetCallback(new BottomSheetBehavior.BottomSheetCallback() {
-			@Override
-			public void onStateChanged(@NonNull View bottomSheet, int newState) {
-				switch (newState) {
-					case BottomSheetBehavior.STATE_COLLAPSED:
-					case BottomSheetBehavior.STATE_EXPANDED:
-						setMgrsCode();
-				}
-			}
-
-			@Override
-			public void onSlide(@NonNull View bottomSheet, float slideOffset) {
-				float adjust;
-				if (slideOffset == 0) {
-					adjust = mgrsBottomSheetBehavior.getPeekHeight();
-				} else {
-					adjust = ((mgrsBottomSheet.getHeight() - mgrsBottomSheetBehavior.getPeekHeight()) * slideOffset) + mgrsBottomSheetBehavior.getPeekHeight();
-				}
-
-				mgrsCursor.setTranslationY((adjust / 2) * -1);
-				map.setPadding(0, 0, 0, (int) adjust);
-			}
-		});
 
 		// Initialize the GeoPackage cache with a GeoPackage manager
 		GeoPackageManager geoPackageManager = GeoPackageFactory.getManager(getActivity().getApplicationContext());
