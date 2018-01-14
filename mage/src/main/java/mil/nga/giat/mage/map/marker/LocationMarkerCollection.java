@@ -169,6 +169,22 @@ public class LocationMarkerCollection implements PointCollection<Pair<Location, 
 	}
 
 	@Override
+	public void refresh(Pair<Location, User> pair) {
+		// TODO Maybe a different generic for this case
+		// TODO implementing room might help solve this problem
+		// In this case I know just the user is coming in
+		// grab the location based on that
+		User user = pair.second;
+		Marker marker = userIdToMarker.get(pair.second.getId());
+
+		if (marker != null) {
+			Location location = markerIdToPair.get(marker.getId()).first;
+			markerIdToPair.put(marker.getId(), new Pair(location, user));
+			marker.setIcon(LocationBitmapFactory.bitmapDescriptor(context, location, user));
+		}
+	}
+
+	@Override
 	public void refreshMarkerIcons(Filter<Temporal> filter) {
 		for (Marker m : userIdToMarker.values()) {
 			Pair<Location, User> pair = markerIdToPair.get(m.getId());

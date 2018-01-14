@@ -146,6 +146,7 @@ import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.event.ILocationEventListener;
 import mil.nga.giat.mage.sdk.event.IObservationEventListener;
 import mil.nga.giat.mage.sdk.event.IStaticFeatureEventListener;
+import mil.nga.giat.mage.sdk.event.IUserEventListener;
 import mil.nga.giat.mage.sdk.exceptions.LayerException;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
 import mil.nga.giat.mage.sdk.location.LocationService;
@@ -155,7 +156,7 @@ import mil.nga.wkb.geom.Geometry;
 import mil.nga.wkb.geom.GeometryType;
 
 public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapClickListener, OnMapLongClickListener, OnMarkerClickListener, OnInfoWindowClickListener, OnMapPanListener, GoogleMap.OnCameraIdleListener, OnMyLocationButtonClickListener, OnClickListener, LocationSource, LocationListener, OnCacheOverlayListener,
-		IObservationEventListener, ILocationEventListener, IStaticFeatureEventListener {
+		IObservationEventListener, ILocationEventListener, IUserEventListener, IStaticFeatureEventListener {
 
 	private static final String LOG_NAME = MapFragment.class.getName();
 
@@ -296,6 +297,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 
 		ObservationHelper.getInstance(getActivity().getApplicationContext()).removeListener(this);
 		LocationHelper.getInstance(getActivity().getApplicationContext()).removeListener(this);
+		UserHelper.getInstance(getActivity().getApplicationContext()).removeListener(this);
 
 		if (observations != null) {
 			observations.clear();
@@ -387,6 +389,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 
 			ObservationHelper.getInstance(getActivity().getApplicationContext()).addListener(this);
 			LocationHelper.getInstance(getActivity().getApplicationContext()).addListener(this);
+			UserHelper.getInstance(getActivity().getApplicationContext()).addListener(this);
 			CacheProvider.getInstance(getActivity().getApplicationContext()).registerCacheOverlayListener(this);
 			StaticFeatureHelper.getInstance(getActivity().getApplicationContext()).addListener(this);
 		}
@@ -724,6 +727,26 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 			}
 		}
 		*/
+	}
+
+	@Override
+	public void onUserCreated(User user) {}
+
+	@Override
+	public void onUserUpdated(User user) {}
+
+	@Override
+	public void onUserIconUpdated(final User user) {
+		getActivity().runOnUiThread(new Runnable() {
+			@Override
+			public void run() {
+				locations.refresh(new Pair(new mil.nga.giat.mage.sdk.datastore.location.Location(), user));
+			}
+		});
+	}
+
+	@Override
+	public void onUserAvatarUpdated(User user) {
 	}
 
 	@Override

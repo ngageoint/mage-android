@@ -3,6 +3,7 @@ package mil.nga.giat.mage.map.marker;
 import android.content.Context;
 import android.content.Intent;
 import android.util.Log;
+import android.util.Pair;
 
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.LatLng;
@@ -48,11 +49,6 @@ public class ObservationClusterCollection implements PointCollection<Observation
         clusterManager.setOnClusterItemClickListener(this);
     }
 
-//    @Override
-//    public Iterator<Observation> iterator() {
-//        return observations.values().iterator();
-//    }
-
     @Override
     public void add(MarkerOptions options, Observation o) {
         ObservationClusterItem item = new ObservationClusterItem(o);
@@ -64,6 +60,11 @@ public class ObservationClusterCollection implements PointCollection<Observation
         if (o.getLastModified().after(latestObservationDate)) {
             latestObservationDate = o.getLastModified();
         }
+    }
+
+    @Override
+    public void refresh(Observation observation) {
+
     }
 
     @Override

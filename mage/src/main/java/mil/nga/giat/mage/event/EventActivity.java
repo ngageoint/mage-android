@@ -5,7 +5,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
-import android.graphics.Typeface;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v4.content.LocalBroadcastManager;
@@ -32,6 +31,7 @@ import mil.nga.giat.mage.sdk.datastore.user.RoleHelper;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.exceptions.EventException;
+import mil.nga.giat.mage.sdk.fetch.EventFetchIntentService;
 import mil.nga.giat.mage.sdk.fetch.InitialFetchIntentService;
 import mil.nga.giat.mage.sdk.login.AccountDelegate;
 import mil.nga.giat.mage.sdk.login.AccountStatus;
@@ -74,7 +74,7 @@ public class EventActivity extends AppCompatActivity implements AccountDelegate 
 			}
 		}
 
-		BroadcastReceiver initialFetchReceiver = new BroadcastReceiver() {
+		BroadcastReceiver receiver = new BroadcastReceiver() {
 			@Override
 			public void onReceive(Context context, Intent intent) {
 				LocalBroadcastManager.getInstance(getApplicationContext()).unregisterReceiver(this);
@@ -161,11 +161,11 @@ public class EventActivity extends AppCompatActivity implements AccountDelegate 
 			}
 		};
 
-		// receive response from initial fetch
-		IntentFilter statusIntentFilter = new IntentFilter(InitialFetchIntentService.InitialFetchIntentServiceAction);
+		// receive response from event fetch
+		IntentFilter statusIntentFilter = new IntentFilter(EventFetchIntentService.EventFetchIntentServiceAction);
 		statusIntentFilter.addCategory(Intent.CATEGORY_DEFAULT);
-		LocalBroadcastManager.getInstance(getApplicationContext()).registerReceiver(initialFetchReceiver, statusIntentFilter);
-		getApplicationContext().startService(new Intent(getApplicationContext(), InitialFetchIntentService.class));
+		LocalBroadcastManager.getInstance(getApplicationContext()).registerReceiver(receiver, statusIntentFilter);
+		getApplicationContext().startService(new Intent(getApplicationContext(), EventFetchIntentService.class));
 	}
 
 	public void onSaveInstanceState(Bundle savedInstanceState) {
@@ -207,6 +207,7 @@ public class EventActivity extends AppCompatActivity implements AccountDelegate 
         if (!accountStatus.getStatus().equals(AccountStatus.Status.SUCCESSFUL_LOGIN)) {
             Log.e(LOG_NAME, "Unable to post your recent event!");
         }
+
 		// regardless of the return status, set the user's currentevent
 		try {
 			UserHelper userHelper = UserHelper.getInstance(getApplicationContext());
@@ -221,6 +222,9 @@ public class EventActivity extends AppCompatActivity implements AccountDelegate 
 			SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).edit();
 			editor.putBoolean(getString(R.string.reportLocationKey), false).apply();
 		}
+
+		// fetch the rest of the data
+		getApplicationContext().startService(new Intent(getApplicationContext(), InitialFetchIntentService.class));
 
         // start up the landing activity!
 		Intent intent = new Intent(getApplicationContext(), LandingActivity.class);

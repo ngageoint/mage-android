@@ -22,7 +22,7 @@ import mil.nga.giat.mage.observation.ObservationNotificationListener;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
-import mil.nga.giat.mage.sdk.event.IUserEventListener;
+import mil.nga.giat.mage.sdk.event.ISessionEventListener;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
 import mil.nga.giat.mage.sdk.fetch.LocationFetchIntentService;
 import mil.nga.giat.mage.sdk.fetch.ObservationFetchIntentService;
@@ -37,7 +37,7 @@ import mil.nga.giat.mage.sdk.screen.ScreenChangeReceiver;
 import mil.nga.giat.mage.sdk.utils.UserUtility;
 import mil.nga.giat.mage.wearable.InitializeMAGEWearBridge;
 
-public class MAGE extends MultiDexApplication implements IUserEventListener, Application.ActivityLifecycleCallbacks {
+public class MAGE extends MultiDexApplication implements ISessionEventListener, Application.ActivityLifecycleCallbacks {
 
 	private static final String LOG_NAME = MAGE.class.getName();
 

@@ -16,6 +16,8 @@ public interface PointCollection<T> extends OnCameraIdleListener, OnMarkerClickL
 
 	public void remove(T point);
 
+	public void refresh(T point);
+
 	public void refreshMarkerIcons(Filter<Temporal> filter);
 
 	public int count();

@@ -96,6 +96,11 @@ public class MyHistoricalLocationMarkerCollection implements PointCollection<Pai
 	}
 
 	@Override
+	public void refresh(Pair<Location, User> point) {
+
+	}
+
+	@Override
 	public void refreshMarkerIcons(Filter<Temporal> filter) {
 		for (Marker m : locationIdToMarker.values()) {
 			Pair<Location, User> pair = markerIdToLocation.get(m.getId());

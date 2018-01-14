@@ -105,6 +105,11 @@ public class ObservationMarkerCollection implements PointCollection<Observation>
     }
 
     @Override
+    public void refresh(Observation observation) {
+
+    }
+
+    @Override
     public void refreshMarkerIcons(Filter<Temporal> filter) {
         for (MapMarkerObservation mapMarkerObservation : mapObservations.getMarkers()) {
             Marker marker = mapMarkerObservation.getMarker();
