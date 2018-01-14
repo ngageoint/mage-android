@@ -7,7 +7,6 @@ import java.util.Date;
 
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
-import mil.nga.giat.mage.sdk.exceptions.UserException;
 import mil.nga.giat.mage.sdk.http.resource.UserResource;
 
 public class UserServerFetch extends AbstractServerFetch {
@@ -30,14 +29,7 @@ public class UserServerFetch extends AbstractServerFetch {
 					continue;
 				}
 
-				try {
-					User u = userHelper.readCurrentUser();
-				} catch (UserException e) {
-					Log.e(LOG_NAME, "Could not get current users.");
-				}
-
 				User user = userResource.getUser(userId);
-
 				if (user != null) {
 					user.setFetchedDate(new Date());
 					userHelper.createOrUpdate(user);

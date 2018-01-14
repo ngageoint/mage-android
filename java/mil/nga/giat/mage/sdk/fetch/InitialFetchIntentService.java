@@ -20,17 +20,13 @@ import java.util.concurrent.TimeUnit;
 
 import mil.nga.giat.mage.sdk.ConnectivityAwareIntentService;
 import mil.nga.giat.mage.sdk.R;
-import mil.nga.giat.mage.sdk.datastore.user.Event;
-import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
 import mil.nga.giat.mage.sdk.datastore.user.Role;
 import mil.nga.giat.mage.sdk.datastore.user.RoleHelper;
 import mil.nga.giat.mage.sdk.datastore.user.Team;
-import mil.nga.giat.mage.sdk.datastore.user.TeamEvent;
 import mil.nga.giat.mage.sdk.datastore.user.TeamHelper;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.datastore.user.UserTeam;
-import mil.nga.giat.mage.sdk.http.resource.EventResource;
 import mil.nga.giat.mage.sdk.http.resource.RoleResource;
 import mil.nga.giat.mage.sdk.http.resource.TeamResource;
 import mil.nga.giat.mage.sdk.http.resource.UserResource;
@@ -83,11 +79,6 @@ public class InitialFetchIntentService extends ConnectivityAwareIntentService {
             fetchAndSaveTeams();
             end = System.currentTimeMillis();
             Log.d(LOG_NAME, "Pulled and saved teams in " + (end - start) / 1000 + " seconds");
-
-            start = System.currentTimeMillis();
-            fetchAndSaveEvents();
-            end = System.currentTimeMillis();
-            Log.d(LOG_NAME, "Pulled and saved events in " + (end - start) / 1000 + " seconds");
 
             Handler handler = new Handler(Looper.getMainLooper());
 			// users are updated, finish getting image content
@@ -266,64 +257,6 @@ public class InitialFetchIntentService extends ConnectivityAwareIntentService {
             } catch (Exception e) {
                 Log.e(LOG_NAME, "Problem fetching teams.  Will try again soon.");
                 didFetchTeams = Boolean.FALSE;
-                try {
-                    Thread.sleep(retryTime);
-                } catch (InterruptedException ie) {
-                    e.printStackTrace();
-                }
-            }
-
-            attemptCount++;
-        }
-    }
-
-
-    /**
-     * Create events
-     * TODO make sure events get deleted
-     */
-    private void fetchAndSaveEvents() {
-        Boolean didFetchEvents = Boolean.FALSE;
-        int attemptCount = 0;
-        EventResource eventResource = new EventResource(getApplicationContext());
-        while(!didFetchEvents && !isCanceled && attemptCount < retryCount) {
-            TeamHelper teamHelper = TeamHelper.getInstance(getApplicationContext());
-            teamHelper.deleteTeamEvents();
-
-            Log.d(LOG_NAME, "Attempting to fetch events...");
-
-            try {
-                Map<Event, Collection<Team>> events = eventResource.getEvents();
-                Log.d(LOG_NAME, "Fetched " + events.size() + " events");
-
-                EventHelper eventHelper = EventHelper.getInstance(getApplicationContext());
-                for (Event event : events.keySet()) {
-                    if (isCanceled) {
-                        break;
-                    }
-                    try {
-                        if (event != null) {
-                            event = eventHelper.createOrUpdate(event);
-
-                            for (Team team : events.get(event)) {
-                                if(teamHelper.read(team.getRemoteId()) == null) {
-                                    team = teamHelper.createOrUpdate(team);
-                                }
-                                // populate the join table
-                                teamHelper.create(new TeamEvent(team, event));
-                            }
-                        }
-                    } catch (Exception e) {
-                        Log.e(LOG_NAME, "There was a failure while performing an event fetch operation.", e);
-                    }
-                }
-
-                EventHelper.getInstance(getApplicationContext()).syncEvents(events.keySet());
-
-                didFetchEvents = Boolean.TRUE;
-            } catch (Exception e) {
-                Log.e(LOG_NAME, "Problem fetching events.  Will try again soon.");
-                didFetchEvents = Boolean.FALSE;
                 try {
                     Thread.sleep(retryTime);
                 } catch (InterruptedException ie) {

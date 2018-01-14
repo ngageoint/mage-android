@@ -46,6 +46,7 @@ public class ObservationServerFetch extends AbstractServerFetch {
 					final long sixHoursInMilliseconds = 6 * 60 * 60 * 1000;
 					if (user == null || (new Date()).after(new Date(user.getFetchedDate().getTime() + sixHoursInMilliseconds))) {
 						// get any users that were not recognized or expired
+						Log.d(LOG_NAME, "User for observation is null or stale, re-pulling");
 						new UserServerFetch(mContext).fetch(userId);
 					}
 				}

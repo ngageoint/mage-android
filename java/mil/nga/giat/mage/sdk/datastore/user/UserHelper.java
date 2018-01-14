@@ -23,6 +23,8 @@ import mil.nga.giat.mage.sdk.datastore.location.Location;
 import mil.nga.giat.mage.sdk.datastore.location.LocationHelper;
 import mil.nga.giat.mage.sdk.event.IEventDispatcher;
 import mil.nga.giat.mage.sdk.event.IEventEventListener;
+import mil.nga.giat.mage.sdk.event.IUserDispatcher;
+import mil.nga.giat.mage.sdk.event.IUserEventListener;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
 
 /**
@@ -33,7 +35,7 @@ import mil.nga.giat.mage.sdk.exceptions.UserException;
  * @author wiedemanns
  * 
  */
-public class UserHelper extends DaoHelper<User> implements IEventDispatcher<IEventEventListener> {
+public class UserHelper extends DaoHelper<User> implements IEventDispatcher<IEventEventListener>, IUserDispatcher {
 
 	private static final String LOG_NAME = UserHelper.class.getName();
 
@@ -42,7 +44,8 @@ public class UserHelper extends DaoHelper<User> implements IEventDispatcher<IEve
 	private final Dao<UserTeam, Long> userTeamDao;
 	private final Dao<Location, Long> locationDao;
 
-	private static Collection<IEventEventListener> listeners = new CopyOnWriteArrayList<>();
+	private static Collection<IUserEventListener> userListeners = new CopyOnWriteArrayList<>();
+	private static Collection<IEventEventListener> eventListeners = new CopyOnWriteArrayList<>();
 	
 	/**
 	 * Singleton.
@@ -95,6 +98,10 @@ public class UserHelper extends DaoHelper<User> implements IEventDispatcher<IEve
 		} catch (SQLException sqle) {
 			Log.e(LOG_NAME, "There was a problem creating user: " + user, sqle);
 			throw new UserException("There was a problem creating user: " + user, sqle);
+		}
+
+		for (IUserEventListener listener : userListeners) {
+			listener.onUserCreated(createdUser);
 		}
 
 		return createdUser;
@@ -189,6 +196,10 @@ public class UserHelper extends DaoHelper<User> implements IEventDispatcher<IEve
 			throw new UserException("There was a problem creating user: " + user, sqle);
 		}
 
+		for (IUserEventListener listener : userListeners) {
+			listener.onUserUpdated(user);
+		}
+
 		return user;
 	}
 
@@ -209,6 +220,10 @@ public class UserHelper extends DaoHelper<User> implements IEventDispatcher<IEve
 				user.setUserLocal(oldUser.getUserLocal());
 				userDao.update(user);
 				Log.d(LOG_NAME, "Updated user with remote_id " + user.getRemoteId());
+
+				for (IUserEventListener listener : userListeners) {
+					listener.onUserUpdated(user);
+				}
 			}
 		} catch (Exception ue) {
 			Log.e(LOG_NAME, "There was a problem reading user: " + user, ue);
@@ -290,12 +305,12 @@ public class UserHelper extends DaoHelper<User> implements IEventDispatcher<IEve
 				builder.update();
 
 				if (oldEventRemoteId == null ^ newEventRemoteId == null) {
-					for (IEventEventListener listener : listeners) {
+					for (IEventEventListener listener : eventListeners) {
 						listener.onEventChanged();
 					}
 				} else if (oldEventRemoteId != null && newEventRemoteId != null) {
 					if (!oldEventRemoteId.equals(newEventRemoteId)) {
-						for (IEventEventListener listener : listeners) {
+						for (IEventEventListener listener : eventListeners) {
 							listener.onEventChanged();
 						}
 					}
@@ -338,10 +353,14 @@ public class UserHelper extends DaoHelper<User> implements IEventDispatcher<IEve
 			builder.updateColumnValue(UserLocal.COLUMN_NAME_AVATAR_PATH, path);
 			builder.update();
 
-			userDao.refresh(user);
+			userLocalDao.refresh(user.getUserLocal());
 		} catch (SQLException sqle) {
 			Log.e(LOG_NAME, "Unable to update users '" + user.getDisplayName() + "' avatar path" , sqle);
 			throw new UserException("Unable to update UserLocal table", sqle);
+		}
+
+		for (IUserEventListener listener : userListeners) {
+			listener.onUserAvatarUpdated(user);
 		}
 
 		return user;
@@ -354,10 +373,14 @@ public class UserHelper extends DaoHelper<User> implements IEventDispatcher<IEve
 			builder.updateColumnValue(UserLocal.COLUMN_NAME_ICON_PATH, path);
 			builder.update();
 
-			userDao.refresh(user);
+			userLocalDao.refresh(user.getUserLocal());
 		} catch (SQLException sqle) {
 			Log.e(LOG_NAME, "Unable to update users '" + user.getDisplayName() + "' icon path" , sqle);
 			throw new UserException("Unable to update UserLocal table", sqle);
+		}
+
+		for (IUserEventListener listener : userListeners) {
+			listener.onUserIconUpdated(user);
 		}
 
 		return user;
@@ -434,11 +457,21 @@ public class UserHelper extends DaoHelper<User> implements IEventDispatcher<IEve
 
 	@Override
 	public boolean addListener(IEventEventListener listener) {
-		return listeners.add(listener);
+		return eventListeners.add(listener);
 	}
 
 	@Override
 	public boolean removeListener(IEventEventListener listener) {
-		return listeners.remove(listener);
+		return eventListeners.remove(listener);
+	}
+
+	@Override
+	public boolean addListener(IUserEventListener listener) {
+		return userListeners.add(listener);
+	}
+
+	@Override
+	public boolean removeListener(IUserEventListener listener) {
+		return userListeners.add(listener);
 	}
 }

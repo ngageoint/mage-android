@@ -1,7 +1,11 @@
 package mil.nga.giat.mage.sdk.event;
 
 
-public interface IUserEventListener extends IEventListener {
+import mil.nga.giat.mage.sdk.datastore.user.User;
 
-	public void onTokenExpired();
+public interface IUserEventListener extends IEventListener {
+	public void onUserCreated(User user);
+	public void onUserUpdated(User user);
+	public void onUserIconUpdated(User user);
+	public void onUserAvatarUpdated(User user);
 }

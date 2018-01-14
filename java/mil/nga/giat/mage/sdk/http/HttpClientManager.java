@@ -16,7 +16,7 @@ import java.util.concurrent.TimeUnit;
 
 import mil.nga.giat.mage.sdk.R;
 import mil.nga.giat.mage.sdk.event.IEventDispatcher;
-import mil.nga.giat.mage.sdk.event.IUserEventListener;
+import mil.nga.giat.mage.sdk.event.ISessionEventListener;
 import mil.nga.giat.mage.sdk.utils.UserUtility;
 
 import static java.net.HttpURLConnection.HTTP_NOT_FOUND;
@@ -29,7 +29,7 @@ import static java.net.HttpURLConnection.HTTP_UNAUTHORIZED;
  *
  * @author newmanw
  */
-public class HttpClientManager implements IEventDispatcher<IUserEventListener> {
+public class HttpClientManager implements IEventDispatcher<ISessionEventListener> {
 
     private static final String LOG_NAME = HttpClientManager.class.getName();
 
@@ -37,7 +37,7 @@ public class HttpClientManager implements IEventDispatcher<IUserEventListener> {
     private String userAgent;
 
     private Context context;
-    private Collection<IUserEventListener> listeners = new CopyOnWriteArrayList<>();
+    private Collection<ISessionEventListener> listeners = new CopyOnWriteArrayList<>();
 
     public static HttpClientManager getInstance(final Context context) {
         if (context == null) {
@@ -89,7 +89,7 @@ public class HttpClientManager implements IEventDispatcher<IUserEventListener> {
                     if (!userUtility.isTokenExpired()) {
                         UserUtility.getInstance(context).clearTokenInformation();
 
-                        for (IUserEventListener listener : listeners) {
+                        for (ISessionEventListener listener : listeners) {
                             listener.onTokenExpired();
                         }
                     }
@@ -107,12 +107,12 @@ public class HttpClientManager implements IEventDispatcher<IUserEventListener> {
     }
 
     @Override
-    public boolean addListener(IUserEventListener listener) {
+    public boolean addListener(ISessionEventListener listener) {
         return listeners.add(listener);
     }
 
     @Override
-    public boolean removeListener(IUserEventListener listener) {
+    public boolean removeListener(ISessionEventListener listener) {
         return listeners.remove(listener);
     }
 }

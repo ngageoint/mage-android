@@ -39,7 +39,7 @@ public class LocationServerFetch extends AbstractServerFetch {
 		try {
 			currentUser = userHelper.readCurrentUser();
 		} catch (UserException e) {
-			Log.e(LOG_NAME, "Error rading current user.", e);
+			Log.e(LOG_NAME, "Error reading current user.", e);
 		}
 
 		Event event = EventHelper.getInstance(mContext).getCurrentEvent();
@@ -59,6 +59,7 @@ public class LocationServerFetch extends AbstractServerFetch {
 					final long sixHoursInMilliseconds = 6 * 60 * 60 * 1000;
 					if (user == null || (new Date()).after(new Date(user.getFetchedDate().getTime() + sixHoursInMilliseconds))) {
 						// get any users that were not recognized or expired
+						Log.d(LOG_NAME, "User for location is null or stale, re-pulling");
 						userFetch.fetch(userId);
 						user = userHelper.read(userId);
 					}
