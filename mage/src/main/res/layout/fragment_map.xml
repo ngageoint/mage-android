@@ -17,6 +17,7 @@
 
         <ImageView
             android:id="@+id/mgrs_grid_cursor"
+            android:visibility="gone"
             android:layout_width="48dip"
             android:layout_height="48dip"
             android:src="@drawable/ic_add_black_24dp"
@@ -108,7 +109,6 @@
         android:layout_height="wrap_content"
         android:orientation="vertical"
         app:behavior_peekHeight="50dp"
-        app:behavior_hideable="false"
         android:background="@color/md_grey_600"
         app:layout_behavior="android.support.design.widget.BottomSheetBehavior">
 

@@ -438,15 +438,14 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 		}
 
 		boolean showMgrs = preferences.getBoolean(getResources().getString(R.string.showMGRSKey), false);
-		mgrsBottomSheet.setVisibility(showMgrs ? View.VISIBLE : View.GONE);
 		mgrsCursor.setVisibility(showMgrs ? View.VISIBLE : View.GONE);
 		if (showMgrs) {
 			mgrsTileOverlay = map.addTileOverlay(new TileOverlayOptions().tileProvider(new MGRSTileProvider(getContext())));
 			mgrsBottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
-
-			int adjust = mgrsBottomSheetBehavior.getPeekHeight();
-			mgrsCursor.setTranslationY(adjust / 2 * -1);
-			map.setPadding(0, 0, 0, adjust);
+			mgrsBottomSheetBehavior.setHideable(false);
+		} else {
+			mgrsBottomSheetBehavior.setHideable(true);
+			mgrsBottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
 		}
 
 		((AppCompatActivity) getActivity()).getSupportActionBar().setSubtitle(getFilterTitle());
