@@ -189,7 +189,7 @@
                         app:errorTextAppearance="@style/AppTheme.ErrorTextAppearance"
                         android:theme="@style/AppTheme.PrimaryAccent">
 
-                        <EditText
+                        <android.support.design.widget.TextInputEditText
                             android:id="@+id/login_username"
                             android:layout_width="fill_parent"
                             android:layout_height="wrap_content"
@@ -212,7 +212,7 @@
                         app:errorTextAppearance="@style/AppTheme.ErrorTextAppearance"
                         android:theme="@style/AppTheme.PrimaryAccent">
 
-                        <EditText
+                        <android.support.design.widget.TextInputEditText
                             android:id="@+id/login_password"
                             android:layout_width="fill_parent"
                             android:layout_height="wrap_content"

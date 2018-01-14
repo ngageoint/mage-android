@@ -20,7 +20,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 app:popupTheme="@style/ThemeOverlay.AppCompat.Light"
-                app:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar">
+                android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar">
 
             </android.support.v7.widget.Toolbar>
 
@@ -120,7 +120,7 @@
                     android:src="@drawable/ic_place_black_24dp"
                     app:backgroundTint="@color/toggle_button"
                     app:fabSize="mini"
-                    app:theme="@style/AppTheme.AlternateFAB" />
+                    android:theme="@style/AppTheme.AlternateFAB" />
 
                 <android.support.design.widget.FloatingActionButton
                     android:id="@+id/location_edit_line_button"
@@ -132,7 +132,7 @@
                     android:src="@drawable/line_string_marker"
                     app:backgroundTint="@color/toggle_button"
                     app:fabSize="mini"
-                    app:theme="@style/AppTheme.AlternateFAB" />
+                    android:theme="@style/AppTheme.AlternateFAB" />
 
                 <android.support.design.widget.FloatingActionButton
                     android:id="@+id/location_edit_rectangle_button"
@@ -144,7 +144,7 @@
                     android:src="@drawable/rectangle"
                     app:backgroundTint="@color/toggle_button"
                     app:fabSize="mini"
-                    app:theme="@style/AppTheme.AlternateFAB" />
+                    android:theme="@style/AppTheme.AlternateFAB" />
 
                 <android.support.design.widget.FloatingActionButton
                     android:id="@+id/location_edit_polygon_button"
@@ -157,7 +157,7 @@
                     android:src="@drawable/polygon_marker"
                     app:backgroundTint="@color/toggle_button"
                     app:fabSize="mini"
-                    app:theme="@style/AppTheme.AlternateFAB" />
+                    android:theme="@style/AppTheme.AlternateFAB" />
 
             </LinearLayout>
 

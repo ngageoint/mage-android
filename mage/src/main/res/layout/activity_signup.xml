@@ -27,8 +27,7 @@
         <RelativeLayout
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:background="@color/md_white_1000"
-            android:elevation="30dp">
+            android:background="@color/md_white_1000">
 
             <!-- Loading spinner -->
 
@@ -125,7 +124,7 @@
                     app:errorTextAppearance="@style/AppTheme.ErrorTextAppearance"
                     android:theme="@style/AppTheme.PrimaryAccent">
 
-                    <EditText
+                    <android.support.design.widget.TextInputEditText
                         android:id="@+id/signup_username"
                         android:layout_width="fill_parent"
                         android:layout_height="wrap_content"
@@ -143,7 +142,7 @@
                     app:errorTextAppearance="@style/AppTheme.ErrorTextAppearance"
                     android:theme="@style/AppTheme.PrimaryAccent">
 
-                    <EditText
+                    <android.support.design.widget.TextInputEditText
                         android:id="@+id/signup_displayname"
                         android:layout_width="fill_parent"
                         android:layout_height="wrap_content"
@@ -161,7 +160,7 @@
                     app:errorTextAppearance="@style/AppTheme.ErrorTextAppearance"
                     android:theme="@style/AppTheme.PrimaryAccent">
 
-                    <EditText
+                    <android.support.design.widget.TextInputEditText
                         android:id="@+id/signup_email"
                         android:layout_width="fill_parent"
                         android:layout_height="wrap_content"
@@ -179,7 +178,7 @@
                     app:errorTextAppearance="@style/AppTheme.ErrorTextAppearance"
                     android:theme="@style/AppTheme.PrimaryAccent">
 
-                    <EditText
+                    <android.support.design.widget.TextInputEditText
                         android:id="@+id/signup_phone"
                         android:layout_width="fill_parent"
                         android:layout_height="wrap_content"
@@ -199,7 +198,7 @@
                     app:passwordToggleTint="?attr/colorPrimary"
                     android:theme="@style/AppTheme.PrimaryAccent">
 
-                    <EditText
+                    <android.support.design.widget.TextInputEditText
                         android:id="@+id/signup_password"
                         android:layout_width="fill_parent"
                         android:layout_height="wrap_content"
@@ -219,7 +218,7 @@
                     app:passwordToggleTint="?attr/colorPrimary"
                     android:theme="@style/AppTheme.PrimaryAccent">
 
-                    <EditText
+                    <android.support.design.widget.TextInputEditText
                         android:id="@+id/signup_confirmpassword"
                         android:layout_width="fill_parent"
                         android:layout_height="wrap_content"

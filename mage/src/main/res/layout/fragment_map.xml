@@ -67,7 +67,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="top|start"
         android:layout_margin="16dp"
-        app:theme="@style/AppTheme.AlternateFAB"
+        android:theme="@style/AppTheme.AlternateFAB"
         android:src="@drawable/ic_layers_black_24dp" />
 
     <android.support.design.widget.FloatingActionButton
@@ -77,7 +77,7 @@
         android:layout_gravity="top|start"
         android:layout_marginTop="88dp"
         android:layout_marginStart="16dp"
-        app:theme="@style/AppTheme.AlternateFAB"
+        android:theme="@style/AppTheme.AlternateFAB"
         android:src="@drawable/ic_my_location_black_24dp" />
 
     <android.support.design.widget.FloatingActionButton
@@ -89,7 +89,7 @@
         android:layout_marginBottom="16dp"
         android:layout_marginEnd="16dp"
         app:backgroundTint="@color/toggle_button"
-        app:theme="@style/AppTheme.AlternateFAB"
+        android:theme="@style/AppTheme.AlternateFAB"
         android:src="@drawable/ic_search_black_24dp" />
 
     <android.support.design.widget.FloatingActionButton
@@ -98,7 +98,7 @@
         android:layout_height="wrap_content"
         android:layout_marginBottom="16dp"
         android:layout_marginEnd="16dp"
-        app:theme="@style/AppTheme.PrimaryFAB"
+        android:theme="@style/AppTheme.PrimaryFAB"
         app:layout_anchor="@+id/mgrs_bottom_sheet"
         app:layout_anchorGravity="top|end"
         android:src="@drawable/ic_add_black_24dp" />
