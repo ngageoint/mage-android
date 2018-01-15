@@ -26,17 +26,19 @@ public class ObservationFetchIntentService extends ConnectivityAwareIntentServic
 
 	private boolean firstTimeToRun = true;
 	private ObservationServerFetch observationServerFetch;
-	
+
 	public ObservationFetchIntentService() {
 		super(LOG_NAME);
 	}
 
 	protected final AtomicBoolean fetchSemaphore = new AtomicBoolean(false);
 
-	protected final AtomicBoolean needToFetchIcons = new AtomicBoolean(true);
-
 	protected final synchronized long getObservationFetchFrequency() {
 		return PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).getInt(getString(R.string.observationFetchFrequencyKey), getResources().getInteger(R.integer.observationFetchFrequencyDefaultValue));
+	}
+
+	protected final synchronized Event getCurrentEvent() {
+		return EventHelper.getInstance(getApplicationContext()).getCurrentEvent();
 	}
 
 	@Override
@@ -50,24 +52,16 @@ public class ObservationFetchIntentService extends ConnectivityAwareIntentServic
 
 		SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
 
-		needToFetchIcons.set(true);
-
 		observationServerFetch = new ObservationServerFetch(getApplicationContext());
 
 		while (!isCanceled) {
 			Boolean isDataFetchEnabled = sharedPreferences.getBoolean(getString(R.string.dataFetchEnabledKey), getResources().getBoolean(R.bool.dataFetchEnabledDefaultValue));
+			Event event = getCurrentEvent();
 
 			if (isConnected && isDataFetchEnabled && !LoginTaskFactory.getInstance(getApplicationContext()).isLocalLogin()) {
-
-				Event event = EventHelper.getInstance(getApplicationContext()).getCurrentEvent();
-
-				// Pull the icons here
-				if (needToFetchIcons.get()) {
-					new ObservationBitmapFetch(getApplicationContext()).fetch(event);
-					needToFetchIcons.set(false);
-				}
-
-				observationServerFetch.fetch(!firstTimeToRun);
+				boolean sendNotifications = !firstTimeToRun;
+				firstTimeToRun = false;
+				observationServerFetch.fetch(sendNotifications);
 			} else {
 				Log.d(LOG_NAME, "The device is currently disconnected, or data fetch is disabled. Not performing fetch.");
 			}
@@ -76,7 +70,7 @@ public class ObservationFetchIntentService extends ConnectivityAwareIntentServic
 			long lastFetchTime = new Date().getTime();
 			long currentTime;
 			try {
-				while (lastFetchTime + (frequency = getObservationFetchFrequency()) > (currentTime = new Date().getTime())) {
+				while (event.getId().equals(getCurrentEvent().getId()) && lastFetchTime + (frequency = getObservationFetchFrequency()) > (currentTime = new Date().getTime())) {
 					synchronized (fetchSemaphore) {
 						Log.d(LOG_NAME, "Observation fetch sleeping for " + (lastFetchTime + frequency - currentTime) + "ms.");
 						fetchSemaphore.wait(lastFetchTime + frequency - currentTime);
@@ -93,8 +87,6 @@ public class ObservationFetchIntentService extends ConnectivityAwareIntentServic
 			} finally {
 				isConnected = ConnectivityUtility.isOnline(getApplicationContext());
 			}
-
-			firstTimeToRun = false;
 		}
 	}
 
@@ -130,7 +122,7 @@ public class ObservationFetchIntentService extends ConnectivityAwareIntentServic
 	@Override
 	public void onEventChanged() {
 		synchronized (fetchSemaphore) {
-			needToFetchIcons.set(true);
+			firstTimeToRun = true;
 			fetchSemaphore.set(true);
 			fetchSemaphore.notifyAll();
 		}

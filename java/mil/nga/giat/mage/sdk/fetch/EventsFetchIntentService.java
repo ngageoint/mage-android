@@ -23,16 +23,16 @@ import mil.nga.giat.mage.sdk.login.LoginTaskFactory;
  * This class will fetch events, roles, users and teams just once.
  *
  */
-public class EventFetchIntentService extends ConnectivityAwareIntentService {
+public class EventsFetchIntentService extends ConnectivityAwareIntentService {
 
-	private static final String LOG_NAME = EventFetchIntentService.class.getName();
+	private static final String LOG_NAME = EventsFetchIntentService.class.getName();
 
-    public static final String EventFetchIntentServiceAction = EventFetchIntentService.class.getCanonicalName();
+    public static final String EventFetchIntentServiceAction = EventsFetchIntentService.class.getCanonicalName();
 
     private static final long retryTime = 5000;
     private static final long retryCount = 3;
 
-	public EventFetchIntentService() {
+	public EventsFetchIntentService() {
 		super(LOG_NAME);
 	}
 
@@ -55,7 +55,7 @@ public class EventFetchIntentService extends ConnectivityAwareIntentService {
 			Log.d(LOG_NAME, "The device is currently disconnected, or data fetch is disabled, or this is a local login. Not performing fetch.");
 		}
 
-        Intent localIntent = new Intent(EventFetchIntentService.EventFetchIntentServiceAction);
+        Intent localIntent = new Intent(EventsFetchIntentService.EventFetchIntentServiceAction);
         localIntent.putExtra("status", true);
         localIntent.addCategory(Intent.CATEGORY_DEFAULT);
 
@@ -64,7 +64,6 @@ public class EventFetchIntentService extends ConnectivityAwareIntentService {
 
         stopSelf();
 	}
-
 
     /**
      * Create events

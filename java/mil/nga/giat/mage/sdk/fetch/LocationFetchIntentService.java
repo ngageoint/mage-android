@@ -12,6 +12,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import mil.nga.giat.mage.sdk.ConnectivityAwareIntentService;
 import mil.nga.giat.mage.sdk.R;
 import mil.nga.giat.mage.sdk.connectivity.ConnectivityUtility;
+import mil.nga.giat.mage.sdk.datastore.user.Event;
+import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.event.IEventEventListener;
 import mil.nga.giat.mage.sdk.event.IScreenEventListener;
@@ -24,11 +26,16 @@ public class LocationFetchIntentService extends ConnectivityAwareIntentService i
 
 	protected final AtomicBoolean fetchSemaphore = new AtomicBoolean(false);
 
+	public LocationFetchIntentService() {
+		super(LOG_NAME);
+	}
+
 	protected final synchronized long getLocationFetchFrequency() {
 		return PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).getInt(getString(R.string.userFetchFrequencyKey), getResources().getInteger(R.integer.userFetchFrequencyDefaultValue));
 	}
-	public LocationFetchIntentService() {
-		super(LOG_NAME);
+
+	protected final synchronized Event getCurrentEvent() {
+		return EventHelper.getInstance(getApplicationContext()).getCurrentEvent();
 	}
 
 	@Override
@@ -44,6 +51,7 @@ public class LocationFetchIntentService extends ConnectivityAwareIntentService i
 
 		while (!isCanceled) {
 			Boolean isDataFetchEnabled = sharedPreferences.getBoolean(getString(R.string.dataFetchEnabledKey), getResources().getBoolean(R.bool.dataFetchEnabledDefaultValue));
+			Event event = getCurrentEvent();
 
 			if (isConnected && isDataFetchEnabled && !LoginTaskFactory.getInstance(getApplicationContext()).isLocalLogin()) {
 				new LocationServerFetch(getApplicationContext()).fetch();
@@ -55,7 +63,7 @@ public class LocationFetchIntentService extends ConnectivityAwareIntentService i
 			long lastFetchTime = new Date().getTime();
 			long currentTime;
 			try {
-				while (lastFetchTime + (frequency = getLocationFetchFrequency()) > (currentTime = new Date().getTime())) {
+				while (event.getId().equals(getCurrentEvent().getId()) && lastFetchTime + (frequency = getLocationFetchFrequency()) > (currentTime = new Date().getTime())) {
 					synchronized (fetchSemaphore) {
 						Log.d(LOG_NAME, "Location fetch sleeping for " + (lastFetchTime + frequency - currentTime) + "ms.");
 						fetchSemaphore.wait(lastFetchTime + frequency - currentTime);
