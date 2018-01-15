@@ -206,6 +206,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 	private FloatingActionButton zoomToLocationButton;
 	private LocationService locationService;
 
+	private boolean showMgrs;
 	private TileOverlay mgrsTileOverlay;
 	private BottomSheetBehavior mgrsBottomSheetBehavior;
 	private View mgrsBottomSheet;
@@ -272,15 +273,13 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 		mapView.getMapAsync(this);
 
 		mgrsBottomSheet = view.findViewById(R.id.mgrs_bottom_sheet);
+		mgrsBottomSheetBehavior = BottomSheetBehavior.from(mgrsBottomSheet);
 		mgrsCursor = view.findViewById(R.id.mgrs_grid_cursor);
 		mgrsTextView = (TextView) mgrsBottomSheet.findViewById(R.id.mgrs_code);
 		mgrsGzdTextView = (TextView) mgrsBottomSheet.findViewById(R.id.mgrs_gzd_zone);
 		mgrs100dKmTextView = (TextView) mgrsBottomSheet.findViewById(R.id.mgrs_grid_zone);
 		mgrsEastingTextView = (TextView) mgrsBottomSheet.findViewById(R.id.mgrs_easting);
 		mgrsNorthingTextView = (TextView) mgrsBottomSheet.findViewById(R.id.mgrs_northing);
-
-		mgrsBottomSheetBehavior = BottomSheetBehavior.from(mgrsBottomSheet);
-		mgrsBottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
 
 		// Initialize the GeoPackage cache with a GeoPackage manager
 		GeoPackageManager geoPackageManager = GeoPackageFactory.getManager(getActivity().getApplicationContext());
@@ -437,15 +436,9 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 			map.setLocationSource(null);
 		}
 
-		boolean showMgrs = preferences.getBoolean(getResources().getString(R.string.showMGRSKey), false);
 		mgrsCursor.setVisibility(showMgrs ? View.VISIBLE : View.GONE);
 		if (showMgrs) {
 			mgrsTileOverlay = map.addTileOverlay(new TileOverlayOptions().tileProvider(new MGRSTileProvider(getContext())));
-			mgrsBottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
-			mgrsBottomSheetBehavior.setHideable(false);
-		} else {
-			mgrsBottomSheetBehavior.setHideable(true);
-			mgrsBottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
 		}
 
 		((AppCompatActivity) getActivity()).getSupportActionBar().setSubtitle(getFilterTitle());
@@ -518,6 +511,12 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 		}
 
 		mapView.onResume();
+
+		// Don't wait for map to show up to init these values, otherwise bottomsheet will jitter
+		showMgrs = preferences.getBoolean(getResources().getString(R.string.showMGRSKey), false);
+		mgrsBottomSheetBehavior.setHideable(showMgrs ? false : true);
+		mgrsBottomSheetBehavior.setState(showMgrs ? BottomSheetBehavior.STATE_COLLAPSED : BottomSheetBehavior.STATE_HIDDEN);
+
 		initializeMap();
 
 		searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
