@@ -7,11 +7,17 @@ import android.util.Pair;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 
+import java.util.ArrayList;
+import java.util.Collection;
+
 import mil.nga.giat.mage.filter.Filter;
+import mil.nga.giat.mage.filter.LocationEventFilter;
 import mil.nga.giat.mage.map.marker.LocationBitmapFactory;
 import mil.nga.giat.mage.map.marker.PointCollection;
 import mil.nga.giat.mage.sdk.Temporal;
 import mil.nga.giat.mage.sdk.datastore.location.Location;
+import mil.nga.giat.mage.sdk.datastore.user.Event;
+import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.wkb.geom.Point;
 import mil.nga.wkb.util.GeometryUtils;
@@ -26,16 +32,21 @@ public class LocationTask extends AsyncTask<Location, Pair<MarkerOptions, Pair<L
     private Context context;
     private Type type;
     private final PointCollection<Pair<Location, User>> locationCollection;
-    private Filter<Temporal> filter;
+    private Collection<Filter<?>> filters = new ArrayList<>();
 
     public LocationTask(Context context, Type type, PointCollection<Pair<Location, User>> locationCollection) {
         this.context = context;
         this.type = type;
         this.locationCollection = locationCollection;
+
+        Event currentEvent = EventHelper.getInstance(context).getCurrentEvent();
+        filters.add(new LocationEventFilter(currentEvent));
     }
 
-    public void setFilter(Filter<Temporal> filter) {
-        this.filter = filter;
+    public void addFilter(Filter<Temporal> filter) {
+        if (filter == null) return;
+
+        filters.add(filter);
     }
     
     @Override
@@ -46,15 +57,21 @@ public class LocationTask extends AsyncTask<Location, Pair<MarkerOptions, Pair<L
                 continue;
             }
 
-            if (filter != null && !filter.passesFilter(location)) {
-            	continue;
+            boolean passesFilter = true;
+            for (Filter filter : filters) {
+                passesFilter = filter.passesFilter(location);
+                if (!passesFilter) {
+                    break;
+                }
             }
 
-            Point point = GeometryUtils.getCentroid(location.getGeometry());
-            LatLng latLng = new LatLng(point.getY(), point.getX());
-            MarkerOptions options = new MarkerOptions().position(latLng).icon(LocationBitmapFactory.bitmapDescriptor(context, location, user));
+            if (passesFilter) {
+                Point point = GeometryUtils.getCentroid(location.getGeometry());
+                LatLng latLng = new LatLng(point.getY(), point.getX());
+                MarkerOptions options = new MarkerOptions().position(latLng).icon(LocationBitmapFactory.bitmapDescriptor(context, location, user));
 
-            publishProgress(new Pair<>(options, new Pair<>(location, user)));
+                publishProgress(new Pair<>(options, new Pair<>(location, user)));
+            }
         }
         
         return null;

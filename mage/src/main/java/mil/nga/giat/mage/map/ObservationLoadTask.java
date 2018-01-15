@@ -27,7 +27,6 @@ import mil.nga.giat.mage.sdk.Temporal;
 import mil.nga.giat.mage.sdk.datastore.DaoStore;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
-import mil.nga.giat.mage.sdk.utils.GeometryUtility;
 import mil.nga.wkb.geom.Geometry;
 import mil.nga.wkb.geom.Point;
 import mil.nga.wkb.util.GeometryUtils;
@@ -69,7 +68,7 @@ public class ObservationLoadTask extends AsyncTask<Void, Pair<MarkerOptions, Obs
         CloseableIterator<Observation> iterator = null;
         try {
             iterator = iterator();
-            while (iterator.hasNext()) {
+            while (iterator.hasNext() && !isCancelled()) {
                 Observation o = iterator.current();
                 Geometry geometry = o.getGeometry();
                 Point centroid = GeometryUtils.getCentroid(geometry);

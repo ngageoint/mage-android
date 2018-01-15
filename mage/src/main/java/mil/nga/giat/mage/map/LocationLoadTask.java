@@ -45,7 +45,7 @@ public class LocationLoadTask extends AsyncTask<Void, Pair<MarkerOptions, Pair<L
 		CloseableIterator<Location> iterator = null;
 		try {
 			iterator = iterator();
-			while (iterator.hasNext()) {
+			while (iterator.hasNext() && !isCancelled()) {
 				Location location = iterator.current();
 				User user = location.getUser();
 				if (user == null) {

@@ -13,12 +13,15 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 import mil.nga.giat.mage.R;
+import mil.nga.giat.mage.filter.ObservationEventFilter;
 import mil.nga.giat.mage.filter.FavoriteFilter;
 import mil.nga.giat.mage.filter.Filter;
 import mil.nga.giat.mage.filter.ImportantFilter;
 import mil.nga.giat.mage.map.marker.ObservationBitmapFactory;
 import mil.nga.giat.mage.map.marker.PointCollection;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
+import mil.nga.giat.mage.sdk.datastore.user.Event;
+import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
 import mil.nga.wkb.geom.Geometry;
 import mil.nga.wkb.geom.Point;
 import mil.nga.wkb.util.GeometryUtils;
@@ -37,6 +40,9 @@ public class ObservationTask extends AsyncTask<Observation, Pair<MarkerOptions, 
         this.context = context;
         this.type = type;
         this.observationCollection = observationCollection;
+
+        Event currentEvent = EventHelper.getInstance(context).getCurrentEvent();
+        filters.add(new ObservationEventFilter(currentEvent));
 
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
         boolean important = preferences.getBoolean(context.getResources().getString(R.string.activeImportantFilterKey), false);

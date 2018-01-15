@@ -119,7 +119,7 @@
             android:layout_below="@id/event_select_content"
             android:layout_marginBottom="10dip"
             android:layout_marginTop="10dip"
-            android:onClick="chooseEvent"
+            android:onClick="onChooseEvent"
             android:text="Go"
             android:theme="@style/AppTheme.PrimaryButton.NoShadow"/>
 

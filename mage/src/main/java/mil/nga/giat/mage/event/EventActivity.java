@@ -10,13 +10,15 @@ import android.preference.PreferenceManager;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.widget.TextViewCompat;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.view.ContextThemeWrapper;
 import android.support.v7.widget.AppCompatRadioButton;
 import android.util.Log;
+import android.view.ContextThemeWrapper;
 import android.view.View;
 import android.view.Window;
 import android.widget.RadioGroup;
 import android.widget.TextView;
+
+import org.apache.commons.lang3.ArrayUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,13 +33,14 @@ import mil.nga.giat.mage.sdk.datastore.user.RoleHelper;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.exceptions.EventException;
-import mil.nga.giat.mage.sdk.fetch.EventFetchIntentService;
+import mil.nga.giat.mage.sdk.fetch.EventIconFetchIntentService;
+import mil.nga.giat.mage.sdk.fetch.EventsFetchIntentService;
 import mil.nga.giat.mage.sdk.fetch.InitialFetchIntentService;
 import mil.nga.giat.mage.sdk.login.AccountDelegate;
 import mil.nga.giat.mage.sdk.login.AccountStatus;
 import mil.nga.giat.mage.sdk.login.RecentEventTask;
 
-public class EventActivity extends AppCompatActivity implements AccountDelegate {
+public class EventActivity extends AppCompatActivity {
 
 	private static final String STATE_EVENT = "stateEvent";
 
@@ -50,6 +53,7 @@ public class EventActivity extends AppCompatActivity implements AccountDelegate 
     private List<Event> events = new ArrayList<>();
 
     private Event chosenEvent = null;
+	EventIconsBroadcastReceiver iconsBroadcastReceiver = new EventIconsBroadcastReceiver();
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -120,8 +124,7 @@ public class EventActivity extends AppCompatActivity implements AccountDelegate 
 						}
 
 						if (events.size() == 1 && events.get(0).equals(recentEvent)) {
-							chosenEvent = recentEvent;
-							finishAccount(new AccountStatus(AccountStatus.Status.SUCCESSFUL_LOGIN));
+							chooseEvent(recentEvent);
 						} else {
 							List<Event> tempEventsForCurrentUser = EventHelper.getInstance(getApplicationContext()).getEventsForCurrentUser();
 							((RadioGroup)findViewById(R.id.event_radiogroup)).removeAllViews();
@@ -162,10 +165,10 @@ public class EventActivity extends AppCompatActivity implements AccountDelegate 
 		};
 
 		// receive response from event fetch
-		IntentFilter statusIntentFilter = new IntentFilter(EventFetchIntentService.EventFetchIntentServiceAction);
+		IntentFilter statusIntentFilter = new IntentFilter(EventsFetchIntentService.EventFetchIntentServiceAction);
 		statusIntentFilter.addCategory(Intent.CATEGORY_DEFAULT);
 		LocalBroadcastManager.getInstance(getApplicationContext()).registerReceiver(receiver, statusIntentFilter);
-		getApplicationContext().startService(new Intent(getApplicationContext(), EventFetchIntentService.class));
+		getApplicationContext().startService(new Intent(getApplicationContext(), EventsFetchIntentService.class));
 	}
 
 	public void onSaveInstanceState(Bundle savedInstanceState) {
@@ -181,13 +184,16 @@ public class EventActivity extends AppCompatActivity implements AccountDelegate 
 		super.onSaveInstanceState(savedInstanceState);
 	}
 
-	public void chooseEvent(View view) {
+	public void onChooseEvent(View view) {
+		int eventIndex = (((RadioGroup)findViewById(R.id.event_radiogroup)).getCheckedRadioButtonId() - uniqueChildStartingIdIndex);
+		chooseEvent(events.get(eventIndex));
+	}
+
+	public void chooseEvent(Event event) {
+		chosenEvent = event;
 
 		findViewById(R.id.event_content).setVisibility(View.GONE);
 		findViewById(R.id.event_status).setVisibility(View.VISIBLE);
-
-        int eventIndex = (((RadioGroup)findViewById(R.id.event_radiogroup)).getCheckedRadioButtonId() - uniqueChildStartingIdIndex);
-        chosenEvent = events.get(eventIndex);
 
         List<String> userRecentEventInfo = new ArrayList<>();
         userRecentEventInfo.add(chosenEvent.getRemoteId());
@@ -195,7 +201,23 @@ public class EventActivity extends AppCompatActivity implements AccountDelegate 
 		TextView message = (TextView) findViewById(R.id.event_message);
 		message.setText("Loading " + chosenEvent.getName());
 
-        new RecentEventTask(this, this.getApplicationContext()).execute(userRecentEventInfo.toArray(new String[userRecentEventInfo.size()]));
+		// Send chosen event to the server
+		new RecentEventTask(new AccountDelegate() {
+			@Override
+			public void finishAccount(AccountStatus accountStatus) {
+				// No need to check if this failed
+			}
+		}, getApplicationContext()).execute(userRecentEventInfo.toArray(new String[userRecentEventInfo.size()]));
+
+		// Listen for event observation icons completion
+		IntentFilter iconsBroadcastFilter = new IntentFilter(EventIconFetchIntentService.BROADCAST_EVENT_ICONS_ACTION);
+		iconsBroadcastFilter.addCategory(Intent.CATEGORY_DEFAULT);
+		LocalBroadcastManager.getInstance(getApplicationContext()).registerReceiver(iconsBroadcastReceiver, iconsBroadcastFilter);
+
+		// Get event observation icons
+		Intent iconServiceIntent = new Intent(getApplicationContext(), EventIconFetchIntentService.class);
+		iconServiceIntent.putExtra(EventIconFetchIntentService.EXTRA_EVENT_ID, chosenEvent.getId());
+		startService(iconServiceIntent);
     }
 
     public void bummerEvent(View view) {
@@ -203,36 +225,50 @@ public class EventActivity extends AppCompatActivity implements AccountDelegate 
         finish();
     }
 
-    public void finishAccount(AccountStatus accountStatus) {
-        if (!accountStatus.getStatus().equals(AccountStatus.Status.SUCCESSFUL_LOGIN)) {
-            Log.e(LOG_NAME, "Unable to post your recent event!");
-        }
+    private class EventIconsBroadcastReceiver extends BroadcastReceiver {
 
-		// regardless of the return status, set the user's currentevent
-		try {
-			UserHelper userHelper = UserHelper.getInstance(getApplicationContext());
-			User user = userHelper.readCurrentUser();
-			userHelper.setCurrentEvent(user, chosenEvent);
-		} catch(Exception e) {
-			Log.e(LOG_NAME, "Could not set current event.");
+		@Override
+		public void onReceive(Context context, Intent intent) {
+			LocalBroadcastManager.getInstance(getApplicationContext()).unregisterReceiver(this);
+
+			try {
+				UserHelper userHelper = UserHelper.getInstance(getApplicationContext());
+				User user = userHelper.readCurrentUser();
+				userHelper.setCurrentEvent(user, chosenEvent);
+			} catch(Exception e) {
+				Log.e(LOG_NAME, "Could not set current event.");
+			}
+
+			// disable pushing locations
+			if (!UserHelper.getInstance(getApplicationContext()).isCurrentUserPartOfCurrentEvent()) {
+				SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).edit();
+				editor.putBoolean(getString(R.string.reportLocationKey), false).apply();
+			}
+
+			// fetch the rest of the data
+			getApplicationContext().startService(new Intent(getApplicationContext(), InitialFetchIntentService.class));
+
+			// fetch all other events icons
+			List<Long> eventIds = new ArrayList<>();
+			for (Event event : events) {
+				// Already loaded chosen event icons
+				if (!event.getId().equals(chosenEvent.getId())) {
+					eventIds.add(event.getId());
+				}
+			}
+			Intent iconServiceIntent = new Intent(getApplicationContext(), EventIconFetchIntentService.class);
+			iconServiceIntent.putExtra(EventIconFetchIntentService.EXTRA_EVENT_IDS, ArrayUtils.toPrimitive(eventIds.toArray(new Long[eventIds.size()])));
+			startService(iconServiceIntent);
+
+			// start up the landing activity!
+			Intent launchIntent = new Intent(getApplicationContext(), LandingActivity.class);
+			Bundle extras = getIntent().getExtras();
+			if (extras != null) {
+				launchIntent.putExtras(extras);
+			}
+
+			startActivity(launchIntent);
+			finish();
 		}
-
-		// disable pushing locations
-		if(!UserHelper.getInstance(getApplicationContext()).isCurrentUserPartOfCurrentEvent()) {
-			SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).edit();
-			editor.putBoolean(getString(R.string.reportLocationKey), false).apply();
-		}
-
-		// fetch the rest of the data
-		getApplicationContext().startService(new Intent(getApplicationContext(), InitialFetchIntentService.class));
-
-        // start up the landing activity!
-		Intent intent = new Intent(getApplicationContext(), LandingActivity.class);
-		Bundle extras = getIntent().getExtras();
-		if (extras != null) {
-			intent.putExtras(extras);
-		}
-		startActivity(intent);
-        finish();
-    }
+	}
 }

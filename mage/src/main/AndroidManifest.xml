@@ -225,7 +225,10 @@
             android:name=".sdk.fetch.ObservationRefreshIntent"
             android:exported="false" />
         <service
-            android:name=".sdk.fetch.EventFetchIntentService"
+            android:name=".sdk.fetch.EventsFetchIntentService"
+            android:exported="false" />
+        <service
+            android:name=".sdk.fetch.EventIconFetchIntentService"
             android:exported="false" />
         <service
             android:name=".sdk.fetch.InitialFetchIntentService"
