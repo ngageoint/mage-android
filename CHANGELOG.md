@@ -3,13 +3,21 @@ All notable changes to this project will be documented in this file.
 Adheres to [Semantic Versioning](http://semver.org/).
 
 ---
-## 6.0.1 (TBD)
+## 6.0.2 (TBD)
 
 * TBD
 
 ##### Features
 
 ##### Bug Fixes
+
+## [6.0.1](https://github.com/ngageoint/mage-android/releases/tag/6.0.1) (01-23-2017)
+
+##### Features
+
+##### Bug Fixes
+* Fix layout for event title in event loading activity
+* Pull in all events when getting events for the current user
 
 ## [6.0.0](https://github.com/ngageoint/mage-android/releases/tag/6.0.0) (01-15-2017)
 

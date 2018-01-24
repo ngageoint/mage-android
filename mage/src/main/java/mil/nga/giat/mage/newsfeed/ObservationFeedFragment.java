@@ -14,7 +14,6 @@ import android.database.Cursor;
 import android.graphics.Canvas;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
-import android.location.Location;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.preference.PreferenceManager;
@@ -253,13 +252,9 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 
 	private void onNewObservation() {
 		ObservationLocation location = null;
-		if (locationService != null) {
-			Location l = locationService.getLocation();
-			location = new ObservationLocation(l);
-		}
 
 		// if there is not a location from the location service, then try to pull one from the database.
-		if (location == null) {
+		if (locationService.getLocation() == null) {
 			List<mil.nga.giat.mage.sdk.datastore.location.Location> tLocations = LocationHelper.getInstance(getActivity().getApplicationContext()).getCurrentUserLocations(1, true);
 			if (!tLocations.isEmpty()) {
 				mil.nga.giat.mage.sdk.datastore.location.Location tLocation = tLocations.get(0);
@@ -276,7 +271,7 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 				}
 			}
 		} else {
-			location = new ObservationLocation(location);
+			location = new ObservationLocation(locationService.getLocation());
 		}
 
 		if(!UserHelper.getInstance(getActivity().getApplicationContext()).isCurrentUserPartOfCurrentEvent()) {
