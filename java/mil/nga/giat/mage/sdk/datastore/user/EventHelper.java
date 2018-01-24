@@ -176,12 +176,9 @@ public class EventHelper extends DaoHelper<Event> {
 	public List<Event> getEventsForCurrentUser() {
 		List<Event> events = new ArrayList<>();
 		try {
-			User user = UserHelper.getInstance(mApplicationContext).readCurrentUser();
-			if (user != null) {
-				events = getEventsByUser(user);
-			}
-		} catch(UserException ue) {
-			Log.e(LOG_NAME, "There is no current user. ", ue);
+            events = eventDao.queryForAll();
+		} catch(SQLException e) {
+			Log.e(LOG_NAME, "Could not read events", e);
 		}
 		return events;
 	}
