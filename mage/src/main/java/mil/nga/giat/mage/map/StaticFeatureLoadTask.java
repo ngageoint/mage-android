@@ -1,6 +1,7 @@
 package mil.nga.giat.mage.map;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.os.AsyncTask;
@@ -78,7 +79,10 @@ public class StaticFeatureLoadTask extends AsyncTask<Layer, Object, Void> {
 						o.inDensity = 480;
 						o.inTargetDensity = context.getResources().getDisplayMetrics().densityDpi;
 						try {
-							options.icon(BitmapDescriptorFactory.fromBitmap(BitmapFactory.decodeStream(new FileInputStream(iconFile), null, o)));
+							Bitmap bitmap = BitmapFactory.decodeStream(new FileInputStream(iconFile), null, o);
+							if (bitmap != null) {
+								options.icon(BitmapDescriptorFactory.fromBitmap(bitmap));
+							}
 						} catch (FileNotFoundException fnfe) {
 							Log.e(LOG_NAME, "Could not set icon.", fnfe);
 						}
