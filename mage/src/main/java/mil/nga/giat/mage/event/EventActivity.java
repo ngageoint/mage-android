@@ -34,7 +34,6 @@ import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.exceptions.EventException;
 import mil.nga.giat.mage.sdk.fetch.EventIconFetchIntentService;
-import mil.nga.giat.mage.sdk.fetch.EventsFetchIntentService;
 import mil.nga.giat.mage.sdk.fetch.InitialFetchIntentService;
 import mil.nga.giat.mage.sdk.login.AccountDelegate;
 import mil.nga.giat.mage.sdk.login.AccountStatus;
@@ -165,10 +164,10 @@ public class EventActivity extends AppCompatActivity {
 		};
 
 		// receive response from event fetch
-		IntentFilter statusIntentFilter = new IntentFilter(EventsFetchIntentService.EventFetchIntentServiceAction);
+		IntentFilter statusIntentFilter = new IntentFilter(InitialFetchIntentService.InitialFetchIntentServiceAction);
 		statusIntentFilter.addCategory(Intent.CATEGORY_DEFAULT);
 		LocalBroadcastManager.getInstance(getApplicationContext()).registerReceiver(receiver, statusIntentFilter);
-		getApplicationContext().startService(new Intent(getApplicationContext(), EventsFetchIntentService.class));
+		getApplicationContext().startService(new Intent(getApplicationContext(), InitialFetchIntentService.class));
 	}
 
 	public void onSaveInstanceState(Bundle savedInstanceState) {
@@ -244,9 +243,6 @@ public class EventActivity extends AppCompatActivity {
 				SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).edit();
 				editor.putBoolean(getString(R.string.reportLocationKey), false).apply();
 			}
-
-			// fetch the rest of the data
-			getApplicationContext().startService(new Intent(getApplicationContext(), InitialFetchIntentService.class));
 
 			// fetch all other events icons
 			List<Long> eventIds = new ArrayList<>();
