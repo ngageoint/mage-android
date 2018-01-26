@@ -1365,8 +1365,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 
 	@Override
 	public void onStaticFeaturesCreated(final Layer layer) {
-		getActivity().runOnUiThread(new Runnable() {
-
+		new Handler(Looper.getMainLooper()).post(new Runnable() {
 			@Override
 			public void run() {
 				onStaticFeatureLayer(layer);
