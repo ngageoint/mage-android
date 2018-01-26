@@ -5,6 +5,7 @@ import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
+import android.os.AsyncTask;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.res.ResourcesCompat;
 import android.support.v4.graphics.drawable.DrawableCompat;
@@ -21,6 +22,7 @@ import android.widget.TextView;
 import com.j256.ormlite.android.AndroidDatabaseResults;
 import com.j256.ormlite.stmt.PreparedQuery;
 
+import java.lang.ref.WeakReference;
 import java.sql.SQLException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -83,6 +85,10 @@ public class ObservationListAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         private LinearLayout attachmentLayout;
         private View favoriteView;
         private View directionsView;
+        private IconTask iconTask;
+        private UserTask userTask;
+        private PropertyTask primaryPropertyTask;
+        private PropertyTask secondaryPropertyTask;
 
         ObservationViewHolder(View view) {
             super(view);
@@ -172,6 +178,29 @@ public class ObservationListAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         return cursor.getCount() + 1;
     }
 
+    @Override
+    public void onViewRecycled(RecyclerView.ViewHolder holder) {
+        if (holder instanceof ObservationViewHolder) {
+            ObservationViewHolder vh = (ObservationViewHolder) holder;
+
+            if (vh.iconTask != null) {
+                vh.iconTask.cancel(false);
+            }
+
+            if (vh.userTask != null) {
+                vh.userTask.cancel(false);
+            }
+
+            if (vh.primaryPropertyTask != null) {
+                vh.primaryPropertyTask.cancel(false);
+            }
+
+            if (vh.secondaryPropertyTask != null) {
+                vh.secondaryPropertyTask.cancel(false);
+            }
+        }
+    }
+
     private void bindObservationViewHolder(RecyclerView.ViewHolder holder, int position) {
         cursor.moveToPosition(position);
         ObservationViewHolder vh = (ObservationViewHolder) holder;
@@ -181,10 +210,10 @@ public class ObservationListAdapter extends RecyclerView.Adapter<RecyclerView.Vi
             final Observation observation = query.mapRow(new AndroidDatabaseResults(cursor, null, false));
             vh.bind(observation, observationActionListener);
 
-            Bitmap marker = ObservationBitmapFactory.bitmap(context, observation);
-            if (marker != null) {
-                vh.markerView.setImageBitmap(marker);
-            }
+            Drawable markerPlaceholder = ResourcesCompat.getDrawable(context.getResources(), R.drawable.ic_place_black_24dp, null);
+            vh.markerView.setImageDrawable(markerPlaceholder);
+            vh.iconTask = new IconTask(vh.markerView);
+            vh.iconTask.execute(observation);
 
             Drawable drawable;
             if (observation.getGeometry().getGeometryType() == GeometryType.POINT) {
@@ -192,7 +221,7 @@ public class ObservationListAdapter extends RecyclerView.Adapter<RecyclerView.Vi
 
                 vh.shapeView.setImageDrawable(drawable);
                 vh.shapeView.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
-                DrawableCompat.setTint(drawable, Color.argb(138, 256, 256, 256));
+                DrawableCompat.setTint(drawable, Color.argb(138, 0, 0, 0));
             } else {
                 drawable = observation.getGeometry().getGeometryType() == GeometryType.LINESTRING ?
                         ResourcesCompat.getDrawable(context.getResources(), R.drawable.line_string_marker, null) :
@@ -204,39 +233,22 @@ public class ObservationListAdapter extends RecyclerView.Adapter<RecyclerView.Vi
                 DrawableCompat.setTint(drawable, strokeColor);
             }
 
-            ObservationProperty primary = observation.getPrimaryField();
-            if (primary == null || primary.isEmpty()) {
-                vh.primaryView.setVisibility(View.GONE);
-            } else {
-                vh.primaryView.setText(primary.getValue().toString());
-                vh.primaryView.setVisibility(View.VISIBLE);
-            }
-            vh.primaryView.requestLayout();
+            vh.primaryView.setText("");
+            vh.primaryPropertyTask = new PropertyTask(PropertyTask.Type.PRIMARY, vh.primaryView);
+            vh.primaryPropertyTask.execute(observation);
 
-            ObservationProperty secondary = observation.getSecondaryField();
-            if (secondary == null || secondary.isEmpty()) {
-                vh.secondaryView.setVisibility(View.GONE);
-            } else {
-                vh.secondaryView.setVisibility(View.VISIBLE);
-                vh.secondaryView.setText(secondary.getValue().toString());
-            }
+            vh.secondaryView.setText("");
+            vh.secondaryPropertyTask = new PropertyTask(PropertyTask.Type.SECONDARY, vh.secondaryView);
+            vh.secondaryPropertyTask.execute(observation);
 
             Date timestamp = observation.getTimestamp();
             String pattern = DateUtils.isToday(timestamp.getTime()) ? SHORT_TIME_PATTERN : SHORT_DATE_PATTERN;
             DateFormat dateFormat = new SimpleDateFormat(pattern, Locale.getDefault());
             vh.timeView.setText(dateFormat.format(timestamp));
 
-            String userDisplayName = "Unknown User";
-            try {
-                User user = UserHelper.getInstance(context).read(observation.getUserId());
-                if (user != null) {
-                    userDisplayName = user.getDisplayName();
-                }
-            } catch (UserException e) {
-                Log.e(LOG_NAME, "Could not get user", e);
-            }
-
-            vh.userView.setText(userDisplayName);
+            vh.userView.setText("");
+            vh.userTask = new UserTask(vh.userView);
+            vh.userTask.execute(observation);
 
             boolean isFlagged = observation.getImportant() != null && observation.getImportant().isImportant();
             vh.flaggedBadge.setVisibility(isFlagged ? View.VISIBLE : View.GONE);
@@ -333,6 +345,106 @@ public class ObservationListAdapter extends RecyclerView.Adapter<RecyclerView.Vi
     private void getDirections(Observation observation) {
         if (observationActionListener != null) {
             observationActionListener.onObservationDirections(observation);
+        }
+    }
+
+    class IconTask extends AsyncTask<Observation, Void, Bitmap> {
+        private final WeakReference<ImageView> reference;
+
+        public IconTask(ImageView imageView) {
+            this.reference = new WeakReference<>(imageView);
+        }
+
+        @Override
+        protected Bitmap doInBackground(Observation... observations) {
+            return ObservationBitmapFactory.bitmap(context, observations[0]);
+        }
+
+        @Override
+        protected void onPostExecute(Bitmap bitmap) {
+            if (isCancelled()) {
+                bitmap = null;
+            }
+
+            ImageView imageView = reference.get();
+            if (imageView != null && bitmap != null) {
+                imageView.setImageBitmap(bitmap);
+            }
+        }
+    }
+
+    class UserTask extends AsyncTask<Observation, Void, User> {
+        private final WeakReference<TextView> reference;
+
+        public UserTask(TextView textView) {
+            this.reference = new WeakReference<>(textView);
+        }
+
+        @Override
+        protected User doInBackground(Observation... observations) {
+            User user = null;
+            try {
+                user = UserHelper.getInstance(context).read(observations[0].getUserId());
+            } catch (UserException e) {
+                Log.e(LOG_NAME, "Could not get user", e);
+            }
+
+            return user;
+        }
+
+        @Override
+        protected void onPostExecute(User user) {
+            if (isCancelled()) {
+                user = null;
+            }
+
+            TextView textView = reference.get();
+            if (textView != null) {
+                if (user != null) {
+                    textView.setText(user.getDisplayName());
+                } else {
+                    textView.setText("Unkown User");
+                }
+            }
+        }
+    }
+
+    private static class PropertyTask extends AsyncTask<Observation, Void, ObservationProperty> {
+        enum Type {
+            PRIMARY,
+            SECONDARY
+        }
+
+        private Type type;
+        private final WeakReference<TextView> reference;
+
+        public PropertyTask(Type type, TextView textView) {
+            this.type = type;
+            this.reference = new WeakReference<>(textView);
+        }
+
+        @Override
+        protected ObservationProperty doInBackground(Observation... observations) {
+            return type == Type.PRIMARY ? observations[0].getPrimaryField() : observations[0].getSecondaryField();
+        }
+
+        @Override
+        protected void onPostExecute(ObservationProperty property) {
+            if (isCancelled()) {
+                property = null;
+            }
+
+            TextView textView = reference.get();
+            if (textView != null) {
+                if (property == null || property.isEmpty()) {
+                    textView.setVisibility(View.GONE);
+                } else {
+                    textView.setText(property.getValue().toString());
+                    textView.setVisibility(View.VISIBLE);
+                }
+
+                textView.requestLayout();
+            }
         }
     }
 }
