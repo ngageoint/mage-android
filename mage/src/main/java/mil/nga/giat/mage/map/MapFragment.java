@@ -11,6 +11,8 @@ import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.location.LocationListener;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.preference.PreferenceManager;
 import android.support.design.widget.BottomSheetBehavior;
 import android.support.design.widget.FloatingActionButton;
@@ -735,9 +737,13 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 
 	@Override
 	public void onUserIconUpdated(final User user) {
-		getActivity().runOnUiThread(new Runnable() {
+		new Handler(Looper.getMainLooper()).post(new Runnable() {
 			@Override
 			public void run() {
+				if (locations == null) {
+					return;
+				}
+
 				locations.refresh(new Pair(new mil.nga.giat.mage.sdk.datastore.location.Location(), user));
 			}
 		});

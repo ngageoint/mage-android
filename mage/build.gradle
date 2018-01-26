@@ -11,7 +11,7 @@ group 'mil.nga.giat.mage'
 archivesBaseName = 'mage-android'
 version '6.0.2'
 ext {
-    versionCode = 47
+    versionCode = 48
     sourceRefspec = Grgit.open().head().id
 }
 

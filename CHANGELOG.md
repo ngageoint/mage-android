@@ -3,13 +3,20 @@ All notable changes to this project will be documented in this file.
 Adheres to [Semantic Versioning](http://semver.org/).
 
 ---
-## 6.0.2 (TBD)
+## 6.0.3 (TBD)
 
 * TBD
 
 ##### Features
 
 ##### Bug Fixes
+
+## [6.0.2](https://github.com/ngageoint/mage-android/releases/tag/6.0.2) (01-25-2017)
+
+##### Features
+
+##### Bug Fixes
+* Perform initial fetch before events screen.  This will ensure all data is available before we hit the landing activity
 
 ## [6.0.1](https://github.com/ngageoint/mage-android/releases/tag/6.0.1) (01-23-2017)
 
