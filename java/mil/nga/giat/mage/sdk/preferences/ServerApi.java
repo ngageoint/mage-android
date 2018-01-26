@@ -43,20 +43,23 @@ public class ServerApi {
             @Override
             public void onResponse(Response<ResponseBody> response, Retrofit retrofit) {
                 try {
-                    JSONObject apiJson = new JSONObject(response.body().string());
-                    removeValues(SERVER_API_PREFERENCE_PREFIX);
-                    populateValues(SERVER_API_PREFERENCE_PREFIX, apiJson);
+                    if (response.isSuccess()) {
+                        JSONObject apiJson = new JSONObject(response.body().string());
+                        removeValues(SERVER_API_PREFERENCE_PREFIX);
+                        populateValues(SERVER_API_PREFERENCE_PREFIX, apiJson);
 
-                    String message = null;
-                    boolean isValid = isApiValid();
-                    if (!isValid) {
-                        message = "Application is not compatible with server. Please upgrade your application or talk to your MAGE administrator";
+                        String message = null;
+                        boolean isValid = isApiValid();
+                        if (!isValid) {
+                            message = "Application is not compatible with server. Please upgrade your application or talk to your MAGE administrator";
+                        }
+                        apiListener.onApi(isValid, null);
+                    } else {
+                        apiListener.onApi(false, null);
                     }
-                    apiListener.onApi(isValid, null);
                 } catch (Exception e) {
                     Log.e(LOG_NAME, "Problem reading server api settings: " + url, e);
                     apiListener.onApi(false, e);
-                    throw new RuntimeException(e);
                 }
             }
 
