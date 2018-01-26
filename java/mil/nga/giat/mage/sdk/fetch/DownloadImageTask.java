@@ -136,7 +136,7 @@ public class DownloadImageTask extends AsyncTask<Void, Void, Void> {
 				}
 
 			} catch (Exception e) {
-				Log.e(LOG_NAME, "Problem downloading image.");
+				Log.e(LOG_NAME, "Problem downloading image.", e);
 
 				// TODO should probably create a service for this task and cancel/stop
 				// the service when the user logs out.
