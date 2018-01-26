@@ -205,8 +205,6 @@ public class UserHelper extends DaoHelper<User> implements IEventDispatcher<IEve
 
 	public User createOrUpdate(User user) {
 		try {
-			List<User> allUsers = userDao.queryForAll();
-
 			QueryBuilder<User, Long> db = userDao.queryBuilder();
 			db.where().eq(User.COLUMN_NAME_USERNAME, user.getUsername());
 			User oldUser = db.queryForFirst();
