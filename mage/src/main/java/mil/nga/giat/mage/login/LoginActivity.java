@@ -503,12 +503,14 @@ public class LoginActivity extends AppCompatActivity implements LoginFragment.Lo
 						.setTitle("Disconnected Login")
 						.setMessage("You are logging into MAGE in disconnected mode.  You must re-establish a connection in order to push and pull information to and from your server.")
 						.setPositiveButton(android.R.string.ok, new OnClickListener() {
-					@Override
-					public void onClick(DialogInterface dialog, int which) {
-						dialog.dismiss();
-						startNextActivityAndFinish(preserveActivityStack);
-					}
-				}).show();
+							@Override
+							public void onClick(DialogInterface dialog, int which) {
+								dialog.dismiss();
+								startNextActivityAndFinish(preserveActivityStack);
+							}
+						})
+						.setCancelable(false)
+						.show();
 			} else {
 				startNextActivityAndFinish(preserveActivityStack);
 			}
@@ -635,15 +637,14 @@ public class LoginActivity extends AppCompatActivity implements LoginFragment.Lo
 	}
 
 	private void showUnregisteredDeviceDialog() {
+		findViewById(R.id.login_status).setVisibility(View.GONE);
+		findViewById(R.id.login_form).setVisibility(View.VISIBLE);
+
 		new AlertDialog.Builder(this)
 				.setTitle("Registration Sent")
 				.setMessage(R.string.device_registered_text)
-				.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
-					public void onClick(DialogInterface dialog, int which) {
-						findViewById(R.id.login_status).setVisibility(View.GONE);
-						findViewById(R.id.login_form).setVisibility(View.VISIBLE);
-					}
-				}).show();
+				.setPositiveButton(android.R.string.ok, null)
+				.show();
 	}
 
 	private void showOAuthErrorDialog() {
