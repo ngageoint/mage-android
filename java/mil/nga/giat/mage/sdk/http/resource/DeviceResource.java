@@ -1,6 +1,8 @@
 package mil.nga.giat.mage.sdk.http.resource;
 
 import android.content.Context;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
@@ -55,6 +57,13 @@ public class DeviceResource {
         json.addProperty("username", username);
         json.addProperty("uid", uid);
         json.addProperty("password", password);
+
+        try {
+            PackageInfo packageInfo = context.getPackageManager().getPackageInfo(context.getPackageName(), 0);
+            json.addProperty("appVersion", String.format("%s-%s", packageInfo.versionName, packageInfo.versionCode));
+        } catch (PackageManager.NameNotFoundException e) {
+            Log.e(LOG_NAME , "Problem retrieving package info.", e);
+        }
 
         Response<JsonObject> response = service.createDevice(json).execute();
 

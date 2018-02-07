@@ -106,8 +106,6 @@ public class FormAuthLoginTask extends AbstractAccountTask {
 		}
 
 		try {
-			String buildVersion = sharedPreferences.getString(mApplicationContext.getString(R.string.buildVersionKey), null);
-
 			// Does the device need to be registered?
 			if (needToRegisterDevice) {
 				AccountStatus.Status regStatus = registerDevice(username, uuid, password);
@@ -120,7 +118,7 @@ public class FormAuthLoginTask extends AbstractAccountTask {
 			}
 
 			UserResource userResource = new UserResource(mApplicationContext);
-			JsonObject loginJson = userResource.login(username, uuid, password, buildVersion);
+			JsonObject loginJson = userResource.login(username, uuid, password);
 
 			if (loginJson != null) {
 				// check server api version to ensure compatibility before continuing

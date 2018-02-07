@@ -1,6 +1,8 @@
 package mil.nga.giat.mage.sdk.http.resource;
 
 import android.content.Context;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
@@ -9,8 +11,6 @@ import com.squareup.okhttp.MediaType;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.RequestBody;
 import com.squareup.okhttp.ResponseBody;
-
-import org.apache.commons.lang3.StringUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -90,7 +90,7 @@ public class UserResource {
         this.context = context;
     }
 
-    public JsonObject login(String username, String uid, String password, String appVersion) {
+    public JsonObject login(String username, String uid, String password) {
         JsonObject loginJson = null;
 
         String baseUrl = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.serverURLKey), context.getString(R.string.serverURLDefaultValue));
@@ -109,8 +109,11 @@ public class UserResource {
             json.addProperty("uid", uid);
             json.addProperty("password", password);
 
-            if (StringUtils.isNotEmpty(appVersion)) {
-                json.addProperty("appVersion", appVersion);
+            try {
+                PackageInfo packageInfo = context.getPackageManager().getPackageInfo(context.getPackageName(), 0);
+                json.addProperty("appVersion", String.format("%s-%s", packageInfo.versionName, packageInfo.versionCode));
+            } catch (PackageManager.NameNotFoundException e) {
+                Log.e(LOG_NAME , "Problem retrieving package info.", e);
             }
 
             Response<JsonObject> response = service.login(json).execute();
