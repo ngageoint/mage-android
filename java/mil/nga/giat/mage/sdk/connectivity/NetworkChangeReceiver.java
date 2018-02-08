@@ -66,23 +66,31 @@ public class NetworkChangeReceiver extends BroadcastReceiver implements IEventDi
 	@Override
 	public void onReceive(final Context context, final Intent intent) {
 		final ConnectivityManager connMgr = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+
+		boolean newWifiAvailabilityState = false;
 		final NetworkInfo wifi = connMgr.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
+		if (wifi != null) {
+			newWifiAvailabilityState = wifi.isConnected();
+		}
+
+		boolean newMobileDataAvailabilityState = false;
 		final NetworkInfo mobile = connMgr.getNetworkInfo(ConnectivityManager.TYPE_MOBILE);
-		
-		final boolean newWifiAvailabilityState = wifi.isConnected();
-		final boolean newMobileDataAvailabilityState = mobile.isConnected();
+		if (mobile != null) {
+			newMobileDataAvailabilityState = mobile.isConnected();
+		}
+
 		final boolean newConnectionAvailabilityState = newWifiAvailabilityState || newMobileDataAvailabilityState;
 		
 		// set the old state if it's the first time through!
-		if(oldWifiAvailabilityState == null) {
+		if (oldWifiAvailabilityState == null) {
 			oldWifiAvailabilityState = !newWifiAvailabilityState;
 		}
 		
-		if(oldMobileDataAvailabilityState == null) {
+		if (oldMobileDataAvailabilityState == null) {
 			oldMobileDataAvailabilityState = !newMobileDataAvailabilityState;
 		}
 		
-		if(oldConnectionAvailabilityState == null) {
+		if (oldConnectionAvailabilityState == null) {
 			oldConnectionAvailabilityState = !newConnectionAvailabilityState;
 		}
 		
