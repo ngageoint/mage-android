@@ -183,7 +183,7 @@ public class ServerUrlActivity extends AppCompatActivity implements ServerApi.Se
 						.create()
 						.show();
 			} else {
-				message = error.getMessage();
+				message = error.getCause().getMessage();
 			}
 
 			serverUrlLayout.setError(message);
