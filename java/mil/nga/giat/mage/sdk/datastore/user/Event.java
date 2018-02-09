@@ -78,6 +78,20 @@ public class Event {
         return new JsonParser().parse(forms).getAsJsonArray();
 	}
 
+	public JsonArray getNonArchivedForms() {
+		JsonArray jsonForms = getForms();
+		Iterator<JsonElement> iterator = jsonForms.iterator();
+
+		while (iterator.hasNext()) {
+			JsonObject jsonForm = iterator.next().getAsJsonObject();
+			if (jsonForm.has("archived") && jsonForm.get("archived").getAsBoolean()) {
+				iterator.remove();
+			}
+		}
+
+		return jsonForms;
+	}
+
 	public Map<Long, JsonObject> getFormMap() {
 		Map<Long, JsonObject> formMap = new HashMap<>();
 		Iterator<JsonElement> iterator = new JsonParser().parse(forms).getAsJsonArray().iterator();
