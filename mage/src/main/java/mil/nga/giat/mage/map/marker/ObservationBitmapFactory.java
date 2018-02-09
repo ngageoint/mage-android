@@ -135,6 +135,11 @@ public class ObservationBitmapFactory {
 		if (path == null || !path.exists()) return null;
 
 		File[] files = path.listFiles(fileFilter);
-		return files.length == 0 ? null : files[0];
+		if (files == null || files.length == 0) {
+			return null;
+		}
+
+		return files[0];
+
 	}
 }
