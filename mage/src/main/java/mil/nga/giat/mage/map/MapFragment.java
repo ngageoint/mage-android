@@ -381,9 +381,11 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 				@Override
 				public void onClick(View v) {
 					Location location = locationService.getLocation();
-					LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
-					CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(latLng, 18);
-					map.animateCamera(cameraUpdate);
+					if (location != null) {
+						LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
+						CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(latLng, 18);
+						map.animateCamera(cameraUpdate);
+					}
 				}
 			});
 

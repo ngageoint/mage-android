@@ -11,6 +11,7 @@ Adheres to [Semantic Versioning](http://semver.org/).
 
 ##### Bug Fixes
 * Don't show archived forms in form selection activity
+* Prevent crash if no location when clicking zoom to location
 
 ## [6.0.2](https://github.com/ngageoint/mage-android/releases/tag/6.0.2) (01-25-2017)
 
