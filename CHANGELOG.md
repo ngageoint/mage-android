@@ -10,6 +10,7 @@ Adheres to [Semantic Versioning](http://semver.org/).
 ##### Features
 
 ##### Bug Fixes
+* Don't show archived forms in form selection activity
 
 ## [6.0.2](https://github.com/ngageoint/mage-android/releases/tag/6.0.2) (01-25-2017)
 

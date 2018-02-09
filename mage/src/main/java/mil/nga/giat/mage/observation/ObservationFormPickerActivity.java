@@ -42,7 +42,7 @@ public class ObservationFormPickerActivity extends AppCompatActivity implements 
         layoutManager.setJustifyContent(JustifyContent.CENTER);
         recyclerView.setLayoutManager(layoutManager);
 
-        JsonArray formDefinitions = EventHelper.getInstance(getApplicationContext()).getCurrentEvent().getForms();
+        JsonArray formDefinitions = EventHelper.getInstance(getApplicationContext()).getCurrentEvent().getNonArchivedForms();
         Adapter adapter = new Adapter(this, formDefinitions);
         recyclerView.setAdapter(adapter);
 

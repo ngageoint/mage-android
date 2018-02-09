@@ -856,7 +856,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 		Intent intent;
 
 		// show form picker or go to
-		JsonArray formDefinitions = EventHelper.getInstance(getActivity()).getCurrentEvent().getForms();
+		JsonArray formDefinitions = EventHelper.getInstance(getActivity()).getCurrentEvent().getNonArchivedForms();
 		if (formDefinitions.size() == 0) {
 			intent = new Intent(getActivity(), ObservationEditActivity.class);
 		} else if (formDefinitions.size() == 1) {
