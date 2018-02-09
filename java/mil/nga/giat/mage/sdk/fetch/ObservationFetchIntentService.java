@@ -56,7 +56,7 @@ public class ObservationFetchIntentService extends ConnectivityAwareIntentServic
 
 		while (!isCanceled) {
 			Boolean isDataFetchEnabled = sharedPreferences.getBoolean(getString(R.string.dataFetchEnabledKey), getResources().getBoolean(R.bool.dataFetchEnabledDefaultValue));
-			Event event = getCurrentEvent();
+			Long eventId = getCurrentEvent().getId();
 
 			if (isConnected && isDataFetchEnabled && !LoginTaskFactory.getInstance(getApplicationContext()).isLocalLogin()) {
 				boolean sendNotifications = !firstTimeToRun;
@@ -69,8 +69,11 @@ public class ObservationFetchIntentService extends ConnectivityAwareIntentServic
 			long frequency = getObservationFetchFrequency();
 			long lastFetchTime = new Date().getTime();
 			long currentTime;
+			Event currentEvent;
 			try {
-				while (event.getId().equals(getCurrentEvent().getId()) && lastFetchTime + (frequency = getObservationFetchFrequency()) > (currentTime = new Date().getTime())) {
+				while ((currentEvent = getCurrentEvent()) != null &&
+						eventId.equals(currentEvent.getId()) &&
+						lastFetchTime + (frequency = getObservationFetchFrequency()) > (currentTime = new Date().getTime())) {
 					synchronized (fetchSemaphore) {
 						Log.d(LOG_NAME, "Observation fetch sleeping for " + (lastFetchTime + frequency - currentTime) + "ms.");
 						fetchSemaphore.wait(lastFetchTime + frequency - currentTime);

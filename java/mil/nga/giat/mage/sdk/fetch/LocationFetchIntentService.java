@@ -51,7 +51,7 @@ public class LocationFetchIntentService extends ConnectivityAwareIntentService i
 
 		while (!isCanceled) {
 			Boolean isDataFetchEnabled = sharedPreferences.getBoolean(getString(R.string.dataFetchEnabledKey), getResources().getBoolean(R.bool.dataFetchEnabledDefaultValue));
-			Event event = getCurrentEvent();
+			Long eventId = getCurrentEvent().getId();
 
 			if (isConnected && isDataFetchEnabled && !LoginTaskFactory.getInstance(getApplicationContext()).isLocalLogin()) {
 				new LocationServerFetch(getApplicationContext()).fetch();
@@ -62,8 +62,11 @@ public class LocationFetchIntentService extends ConnectivityAwareIntentService i
 			long frequency = getLocationFetchFrequency();
 			long lastFetchTime = new Date().getTime();
 			long currentTime;
+			Event currentEvent;
 			try {
-				while (event.getId().equals(getCurrentEvent().getId()) && lastFetchTime + (frequency = getLocationFetchFrequency()) > (currentTime = new Date().getTime())) {
+				while ((currentEvent = getCurrentEvent()) != null &&
+						eventId.equals(currentEvent.getId()) &&
+						lastFetchTime + (frequency = getLocationFetchFrequency()) > (currentTime = new Date().getTime())) {
 					synchronized (fetchSemaphore) {
 						Log.d(LOG_NAME, "Location fetch sleeping for " + (lastFetchTime + frequency - currentTime) + "ms.");
 						fetchSemaphore.wait(lastFetchTime + frequency - currentTime);
