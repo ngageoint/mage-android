@@ -10,6 +10,7 @@ import com.bricolsoftconsulting.geocoderplus.Geocoder;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
@@ -20,7 +21,7 @@ import java.util.List;
 import mil.nga.giat.mage.sdk.connectivity.ConnectivityUtility;
 import mil.nga.mgrs.MGRS;
 
-public class GeocoderTask extends AsyncTask<String, Void, MarkerOptions> {
+public class GeocoderTask extends AsyncTask<String, Void, GeocoderTask.SearchResults> {
 
 	private static final String LOG_NAME = GeocoderTask.class.getName();
 
@@ -39,17 +40,20 @@ public class GeocoderTask extends AsyncTask<String, Void, MarkerOptions> {
 	}
 
 	@Override
-	protected MarkerOptions doInBackground(String... params) {
+	protected SearchResults doInBackground(String... params) {
 		String searchString = params[0];
-		MarkerOptions markerOptions = null;
+		SearchResults results = new SearchResults();
 
 		if (MGRS.isMGRS(searchString)) {
 			try {
 				mil.nga.mgrs.wgs84.LatLng latLng = mil.nga.mgrs.wgs84.LatLng.parse(searchString);
-				markerOptions = new MarkerOptions()
-						.position(new LatLng(latLng.latitude, latLng.longitude))
+				LatLng position = new LatLng(latLng.latitude, latLng.longitude);
+				results.markerOptions = new MarkerOptions()
+						.position(position)
 						.title("MGRS")
 						.snippet(searchString);
+
+				results.bounds = new LatLngBounds(position, position);
 			} catch (ParseException e) {
 				Log.e(LOG_NAME, "Problem parsing mgrs string", e);
 			}
@@ -61,7 +65,12 @@ public class GeocoderTask extends AsyncTask<String, Void, MarkerOptions> {
 				List<Address> addresses = geocoder.getFromLocationName(searchString, 1);
 				if (addresses != null && addresses.size() > 0) {
 					Address address = addresses.get(0);
-					markerOptions = new MarkerOptions()
+
+					LatLng southWestlatLng = new LatLng(address.getViewPort().getSouthWest().getLatitude(), address.getViewPort().getSouthWest().getLongitude());
+					LatLng northEastlatLng = new LatLng(address.getViewPort().getNorthEast().getLatitude(), address.getViewPort().getNorthEast().getLongitude());
+					results.bounds = new LatLngBounds(southWestlatLng, northEastlatLng);
+
+					results.markerOptions = new MarkerOptions()
 						.position(new LatLng(address.getLatitude(), address.getLongitude()))
 						.title(searchString)
 						.snippet(address.getFormattedAddress());
@@ -71,11 +80,11 @@ public class GeocoderTask extends AsyncTask<String, Void, MarkerOptions> {
 			}
 		}
 
-		return markerOptions;
+		return results;
 	}
 
 	@Override
-	protected void onPostExecute(MarkerOptions markerOptions) {
+	protected void onPostExecute(SearchResults results) {
 		if (markers != null) {
 			for (Marker m : markers) {
 				m.remove();
@@ -83,19 +92,24 @@ public class GeocoderTask extends AsyncTask<String, Void, MarkerOptions> {
 			markers.clear();
 		}
 
-		if (markerOptions == null) {
+		if (results.markerOptions == null) {
 			if(ConnectivityUtility.isOnline(context)) {
 				Toast.makeText(context, "Unknown location", Toast.LENGTH_LONG).show();
 			} else {
 				Toast.makeText(context, "No connectivity, try again later.", Toast.LENGTH_LONG).show();
 			}
 		} else {
-			markers.add(map.addMarker(markerOptions));
+			markers.add(map.addMarker(results.markerOptions));
 			for (Marker m : markers) {
 				m.showInfoWindow();
 			}
 
-			map.animateCamera(CameraUpdateFactory.newLatLngZoom(markerOptions.getPosition(), 10));
+			map.animateCamera(CameraUpdateFactory.newLatLngBounds(results.bounds, 10));
 		}
+	}
+
+	public class SearchResults {
+		public MarkerOptions markerOptions;
+		public LatLngBounds bounds;
 	}
 }
