@@ -13,7 +13,9 @@ public class ObservationEventFilter implements Filter<Observation> {
 	private Long eventId;
 
 	public ObservationEventFilter(Event event) {
-		this.eventId = event.getId();
+		if (event != null) {
+			this.eventId = event.getId();
+		}
 	}
 
 	@Override
@@ -28,6 +30,13 @@ public class ObservationEventFilter implements Filter<Observation> {
 
 	@Override
 	public boolean passesFilter(Observation observation) {
-		return eventId.equals(observation.getEvent().getId());
+		boolean passes = false;
+
+		Event observationEvent = observation.getEvent();
+		if (observationEvent != null) {
+			passes = observationEvent.getId().equals(eventId);
+		}
+
+		return passes;
 	}
 }

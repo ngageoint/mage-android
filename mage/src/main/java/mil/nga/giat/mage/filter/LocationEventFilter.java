@@ -13,7 +13,9 @@ public class LocationEventFilter implements Filter<Location> {
 	private Long eventId;
 
 	public LocationEventFilter(Event event) {
-		this.eventId = event.getId();
+		if (event != null) {
+			this.eventId = event.getId();
+		}
 	}
 
 	@Override
@@ -28,6 +30,12 @@ public class LocationEventFilter implements Filter<Location> {
 
 	@Override
 	public boolean passesFilter(Location location) {
-		return eventId.equals(location.getEvent().getId());
+		boolean passes = false;
+		Event locationEvent = location.getEvent();
+		if (locationEvent != null) {
+			passes = locationEvent.getId().equals(eventId);
+		}
+
+		return passes;
 	}
 }
