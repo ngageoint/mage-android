@@ -172,7 +172,7 @@ public class ServerUrlActivity extends AppCompatActivity implements ServerApi.Se
 			serverUrlForm.setVisibility(View.VISIBLE);
 			serverUrlButton.setEnabled(true);
 
-			String message;
+			String message = "Cannot connect to server.";
 			if (error == null) {
 				message = "Application is not compatible with server.";
 
@@ -183,7 +183,9 @@ public class ServerUrlActivity extends AppCompatActivity implements ServerApi.Se
 						.create()
 						.show();
 			} else {
-				message = error.getCause().getMessage();
+				if (error.getCause() != null) {
+					message = error.getCause().getMessage();
+				}
 			}
 
 			serverUrlLayout.setError(message);
