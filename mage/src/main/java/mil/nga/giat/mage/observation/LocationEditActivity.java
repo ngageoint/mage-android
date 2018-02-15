@@ -867,17 +867,17 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
             return null;
         }
 
-        // general shape validity test
-        if (!shapeMarkers.isValid()) {
-            Snackbar.make(findViewById(R.id.coordinator_layout), getString(R.string.location_edit_error_shape), Snackbar.LENGTH_SHORT).show();
-            return null;
-        }
-
         Geometry geometry;
         if (shapeType == GeometryType.POINT) {
             LatLng center = map.getCameraPosition().target;
             geometry = new Point(center.longitude, center.latitude);
         } else {
+            // general shape validity test
+            if (!shapeMarkers.isValid()) {
+                Snackbar.make(findViewById(R.id.coordinator_layout), getString(R.string.location_edit_error_shape), Snackbar.LENGTH_SHORT).show();
+                return null;
+            }
+
             geometry = shapeConverter.toGeometry(shapeMarkers.getShape());
 
             // validate polygon does not intersect itself
