@@ -392,14 +392,14 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 		});
 
 		ObservationLoadTask observationLoad = new ObservationLoadTask(mage, observations);
-		observationLoad.addFilter(getTemporalFilter("timestamp", R.string.activeTimeFilterKey, OBSERVATION_FILTER_TYPE));
+		observationLoad.addFilter(getTemporalFilter("timestamp", getTimeFilterId(), OBSERVATION_FILTER_TYPE));
 		observationLoad.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
 
 		HistoricLocationLoadTask myHistoricLocationLoad = new HistoricLocationLoadTask(mage, historicLocations);
 		myHistoricLocationLoad.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
 
 		LocationLoadTask locationLoad = new LocationLoadTask(mage, locations);
-		locationLoad.setFilter(getTemporalFilter("timestamp", R.string.activeLocationTimeFilterKey, LOCATION_FILTER_TYPE));
+		locationLoad.setFilter(getTemporalFilter("timestamp", getLocationTimeFilterId(), LOCATION_FILTER_TYPE));
 		locationLoad.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
 
 		updateMapView();
