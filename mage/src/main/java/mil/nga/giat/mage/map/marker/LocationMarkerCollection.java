@@ -1,7 +1,6 @@
 package mil.nga.giat.mage.map.marker;
 
 import android.content.Context;
-import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.support.v4.graphics.drawable.RoundedBitmapDrawable;
@@ -17,7 +16,6 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.target.BitmapImageViewTarget;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.GoogleMap.InfoWindowAdapter;
-import com.google.android.gms.maps.GoogleMap.OnInfoWindowClickListener;
 import com.google.android.gms.maps.GoogleMap.OnMarkerClickListener;
 import com.google.android.gms.maps.model.Circle;
 import com.google.android.gms.maps.model.CircleOptions;
@@ -34,7 +32,6 @@ import java.util.Map;
 
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.filter.Filter;
-import mil.nga.giat.mage.profile.ProfileActivity;
 import mil.nga.giat.mage.sdk.Temporal;
 import mil.nga.giat.mage.sdk.datastore.location.Location;
 import mil.nga.giat.mage.sdk.datastore.location.LocationProperty;
@@ -45,7 +42,7 @@ import mil.nga.wkb.geom.Geometry;
 import mil.nga.wkb.geom.Point;
 import mil.nga.wkb.util.GeometryUtils;
 
-public class LocationMarkerCollection implements PointCollection<Pair<Location, User>>, OnMarkerClickListener, OnInfoWindowClickListener {
+public class LocationMarkerCollection implements PointCollection<Pair<Location, User>>, OnMarkerClickListener {
 
 	private static final String LOG_NAME = LocationMarkerCollection.class.getName();
 
@@ -112,16 +109,9 @@ public class LocationMarkerCollection implements PointCollection<Pair<Location, 
 	}
 
 	@Override
-	public void onInfoWindowClick(Marker marker) {
-		Pair<Location, User> pair =  markerIdToPair.get(marker.getId());
-		if (pair == null) {
-			return;
-		}
-
-		Intent profileView = new Intent(context, ProfileActivity.class);
-		profileView.putExtra(ProfileActivity.USER_ID, pair.second.getRemoteId());
-		context.startActivity(profileView);
-	}
+	public Pair<Location, User> pointForMarker(Marker marker) {
+		return markerIdToPair.get(marker.getId());
+ 	}
 
 	@Override
 	public boolean onMarkerClick(Marker marker) {

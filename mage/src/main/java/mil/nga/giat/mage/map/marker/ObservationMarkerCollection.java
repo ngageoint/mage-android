@@ -1,7 +1,6 @@
 package mil.nga.giat.mage.map.marker;
 
 import android.content.Context;
-import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.TextView;
@@ -23,7 +22,6 @@ import mil.nga.giat.mage.observation.MapObservation;
 import mil.nga.giat.mage.observation.MapObservationManager;
 import mil.nga.giat.mage.observation.MapObservations;
 import mil.nga.giat.mage.observation.MapShapeObservation;
-import mil.nga.giat.mage.observation.ObservationViewActivity;
 import mil.nga.giat.mage.sdk.Temporal;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationProperty;
@@ -169,16 +167,8 @@ public class ObservationMarkerCollection implements PointCollection<Observation>
     }
 
     @Override
-    public void onInfoWindowClick(Marker marker) {
-        Observation observation = mapObservations.getMarkerObservation(marker.getId());
-
-        if (observation != null) {
-            Intent intent = new Intent(context, ObservationViewActivity.class);
-            intent.putExtra(ObservationViewActivity.OBSERVATION_ID, observation.getId());
-            intent.putExtra(ObservationViewActivity.INITIAL_LOCATION, map.getCameraPosition().target);
-            intent.putExtra(ObservationViewActivity.INITIAL_ZOOM, map.getCameraPosition().zoom);
-            context.startActivity(intent);
-        }
+    public Observation pointForMarker(Marker marker) {
+        return mapObservations.getMarkerObservation(marker.getId());
     }
 
     private class ObservationInfoWindowAdapter implements GoogleMap.InfoWindowAdapter {

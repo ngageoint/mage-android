@@ -129,6 +129,8 @@ import mil.nga.giat.mage.map.preference.MapPreferencesActivity;
 import mil.nga.giat.mage.observation.ObservationEditActivity;
 import mil.nga.giat.mage.observation.ObservationFormPickerActivity;
 import mil.nga.giat.mage.observation.ObservationLocation;
+import mil.nga.giat.mage.observation.ObservationViewActivity;
+import mil.nga.giat.mage.profile.ProfileActivity;
 import mil.nga.giat.mage.sdk.Temporal;
 import mil.nga.giat.mage.sdk.datastore.layer.Layer;
 import mil.nga.giat.mage.sdk.datastore.layer.LayerHelper;
@@ -729,8 +731,23 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 
 	@Override
 	public void onInfoWindowClick(Marker marker) {
-		observations.onInfoWindowClick(marker);
-		locations.onInfoWindowClick(marker);
+		Observation observation = observations.pointForMarker(marker);
+		if (observation != null) {
+			Intent intent = new Intent(mage, ObservationViewActivity.class);
+			intent.putExtra(ObservationViewActivity.OBSERVATION_ID, observation.getId());
+			intent.putExtra(ObservationViewActivity.INITIAL_LOCATION, map.getCameraPosition().target);
+			intent.putExtra(ObservationViewActivity.INITIAL_ZOOM, map.getCameraPosition().zoom);
+			startActivity(intent);
+			return;
+		}
+
+		Pair<mil.nga.giat.mage.sdk.datastore.location.Location, User> pair = locations.pointForMarker(marker);
+		if (pair != null) {
+			Intent profileView = new Intent(mage, ProfileActivity.class);
+			profileView.putExtra(ProfileActivity.USER_ID, pair.second.getRemoteId());
+			startActivity(profileView);
+			return;
+		}
 	}
 
 	@Override

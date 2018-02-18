@@ -10,8 +10,9 @@ Adheres to [Semantic Versioning](http://semver.org/).
 ##### Features
 
 ##### Bug Fixes
-* Fix crash when trying to save observation point
-* Fixed observation and location time filtering
+* Fix crash when trying to edit observation location 
+* Fix observation and location time filtering
+* Fix observation and location info window click crash
 
 ## [6.0.3](https://github.com/ngageoint/mage-android/releases/tag/6.0.3) (02-14-2018)
 

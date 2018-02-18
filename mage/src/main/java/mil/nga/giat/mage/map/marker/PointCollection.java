@@ -1,9 +1,9 @@
 package mil.nga.giat.mage.map.marker;
 
 import com.google.android.gms.maps.GoogleMap.OnCameraIdleListener;
-import com.google.android.gms.maps.GoogleMap.OnInfoWindowClickListener;
 import com.google.android.gms.maps.GoogleMap.OnMapClickListener;
 import com.google.android.gms.maps.GoogleMap.OnMarkerClickListener;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
 import java.util.Date;
@@ -11,7 +11,7 @@ import java.util.Date;
 import mil.nga.giat.mage.filter.Filter;
 import mil.nga.giat.mage.sdk.Temporal;
 
-public interface PointCollection<T> extends OnCameraIdleListener, OnMarkerClickListener, OnMapClickListener, OnInfoWindowClickListener {
+public interface PointCollection<T> extends OnCameraIdleListener, OnMarkerClickListener, OnMapClickListener {
 	public void add(MarkerOptions options, T point);
 
 	public void remove(T point);
@@ -30,6 +30,7 @@ public interface PointCollection<T> extends OnCameraIdleListener, OnMarkerClickL
 
 	public void clear();
 
+	public T pointForMarker(Marker marker);
 	public void offMarkerClick();
 
 }

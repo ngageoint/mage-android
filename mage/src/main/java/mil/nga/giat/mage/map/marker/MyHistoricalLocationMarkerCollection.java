@@ -162,8 +162,8 @@ public class MyHistoricalLocationMarkerCollection implements PointCollection<Pai
 	}
 
 	@Override
-	public void onInfoWindowClick(Marker marker) {
-
+	public Pair<Location, User> pointForMarker(Marker marker) {
+		return null;
 	}
 
 	@Override

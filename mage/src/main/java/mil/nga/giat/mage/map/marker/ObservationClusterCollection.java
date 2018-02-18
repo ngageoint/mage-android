@@ -3,7 +3,6 @@ package mil.nga.giat.mage.map.marker;
 import android.content.Context;
 import android.content.Intent;
 import android.util.Log;
-import android.util.Pair;
 
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.LatLng;
@@ -168,8 +167,7 @@ public class ObservationClusterCollection implements PointCollection<Observation
     }
 
 	@Override
-	public void onInfoWindowClick(Marker arg0) {
-		// TODO Auto-generated method stub
-
+	public Observation pointForMarker(Marker arg0) {
+        return null;
 	}
 }
