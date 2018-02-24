@@ -35,7 +35,7 @@
     <LinearLayout
         android:id="@+id/event_content"
         android:layout_width="match_parent"
-        android:layout_height="fill_parent"
+        android:layout_height="match_parent"
         android:paddingLeft="24dip"
         android:paddingRight="24dip"
         android:orientation="vertical"
@@ -52,11 +52,12 @@
             android:textColor="?attr/colorPrimary"
             android:textSize="26sp"/>
 
-        <RelativeLayout
+        <LinearLayout
             android:id="@+id/event_select_content"
             android:layout_width="wrap_content"
             android:layout_height="0dp"
             android:layout_weight="1"
+            android:orientation="vertical"
             android:layout_below="@id/event_welcome_label">
 
             <TextView
@@ -67,29 +68,12 @@
                 android:text="You are part of multiple events.  The observations you create and your reported location will be part of the selected event.  You can change your event at anytime within MAGE."
                 android:textColor="?attr/colorPrimary" />
 
-            <TextView
-                android:id="@+id/event_info_select"
+            <android.support.v7.widget.RecyclerView
+                android:id="@+id/recycler_view"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_below="@id/event_info"
-                android:paddingBottom="16dp"
-                android:text="Please select an event:"
-                android:textColor="?attr/colorPrimary" />
-
-            <ScrollView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_below="@id/event_info_select"
-                android:layout_gravity="start"
-                android:paddingBottom="20dip">
-
-                <RadioGroup
-                    android:id="@+id/event_radiogroup"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content">
-                </RadioGroup>
-            </ScrollView>
-        </RelativeLayout>
+                android:scrollbars="vertical" />
+        </LinearLayout>
 
         <TextView
             android:id="@+id/event_bummer_info"
@@ -112,17 +96,6 @@
             android:text="There was a problem getting your information from the server.  Check your connection and try again later."
             android:textColor="?attr/colorPrimary"
             android:visibility="gone"/>
-
-        <Button
-            android:id="@+id/event_continue_button"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:layout_below="@id/event_select_content"
-            android:layout_marginBottom="10dip"
-            android:layout_marginTop="10dip"
-            android:onClick="onChooseEvent"
-            android:text="Go"
-            android:theme="@style/AppTheme.PrimaryButton.NoShadow"/>
 
         <Button
             android:id="@+id/event_back_button"

@@ -2,41 +2,57 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:paddingLeft="24dip"
-    android:paddingRight="24dip"
     android:orientation="vertical">
 
-    <TextView
-        android:id="@+id/event_info"
+    <RelativeLayout
+        android:id="@+id/event_status"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:paddingBottom="20dip"
-        android:paddingTop="20dip"
-        android:text="You are part of multiple events.  The observations you create and your reported location will be part of the selected event."
-        android:textColor="?attr/colorPrimaryDark"/>
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:visibility="gone">
 
-    <ScrollView
-        android:id="@+id/event_fragment_scrollview"
-        android:layout_width="match_parent"
-        android:layout_height="0dip"
-        android:layout_gravity="start"
-        android:layout_weight="1"
-        android:paddingBottom="20dip">
-
-        <RadioGroup
-            android:id="@+id/event_fragment_radiogroup"
+        <TextView
+            android:id="@+id/event_message"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content">
-        </RadioGroup>
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:layout_centerInParent="true"
+            android:fontFamily="sans-serif-light"
+            android:text="Loading Events..."
+            android:textColor="?attr/colorPrimary"
+            android:textSize="26sp"/>
 
-    </ScrollView>
+        <ProgressBar
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_above="@id/event_message"
+            android:layout_centerHorizontal="true"
+            android:theme="@style/AppTheme.PrimaryAccent"
+            style="?android:attr/progressBarStyleLarge"/>
+    </RelativeLayout>
 
-    <Button
-        android:id="@+id/event_fragment_continue_button"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="20dp"
-        android:text="Choose Event"
-        android:theme="@style/AppTheme.PrimaryButton.NoShadow"/>
+    <LinearLayout
+        android:id="@+id/event_content"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:paddingLeft="16dp"
+        android:paddingRight="16dp"
+        android:orientation="vertical">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingBottom="20dip"
+            android:paddingTop="20dip"
+            android:text="You are part of multiple events.  The observations you create and your reported location will be part of the selected event."
+            android:textColor="?attr/colorPrimaryDark"/>
+
+        <android.support.v7.widget.RecyclerView
+            android:id="@+id/recycler_view"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:scrollbars="vertical" />
+
+    </LinearLayout>
 
 </LinearLayout>

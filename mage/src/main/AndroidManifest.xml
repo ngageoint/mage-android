@@ -225,12 +225,6 @@
             android:name=".sdk.fetch.ObservationRefreshIntent"
             android:exported="false" />
         <service
-            android:name=".sdk.fetch.EventIconFetchIntentService"
-            android:exported="false" />
-        <service
-            android:name=".sdk.fetch.InitialFetchIntentService"
-            android:exported="false" />
-        <service
             android:name=".sdk.push.LocationPushIntentService"
             android:exported="false" />
         <service
