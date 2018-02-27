@@ -1,15 +1,15 @@
 package mil.nga.giat.mage.event;
 
 import android.content.Context;
-import android.content.res.TypedArray;
 import android.graphics.Canvas;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
-import android.support.annotation.NonNull;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.view.ViewCompat;
-import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
+
+import mil.nga.giat.mage.R;
 
 /**
  * Created by wnewman on 2/23/18.
@@ -17,34 +17,11 @@ import android.view.View;
 
 public class EventItemDecorator extends RecyclerView.ItemDecoration  {
 
-    private static final int[] ATTRS = new int[]{ android.R.attr.listDivider };
     private Drawable divider;
-    private final Rect mBounds = new Rect();
-    private final int recentEventCount;
+    private final Rect bounds = new Rect();
 
-    /**
-     * Creates a divider {@link RecyclerView.ItemDecoration} that can be used with a
-     * {@link LinearLayoutManager}.
-     *
-     * @param context Current context, it will be used to access resources.
-     */
-    public EventItemDecorator(Context context, int recentEventCount) {
-        final TypedArray a = context.obtainStyledAttributes(ATTRS);
-        this.divider = a.getDrawable(0);
-        this.recentEventCount = recentEventCount;
-        a.recycle();
-    }
-
-    /**
-     * Sets the {@link Drawable} for this divider.
-     *
-     * @param drawable Drawable that should be used as a divider.
-     */
-    public void setDrawable(@NonNull Drawable drawable) {
-        if (drawable == null) {
-            throw new IllegalArgumentException("Drawable cannot be null.");
-        }
-        this.divider = drawable;
+    public EventItemDecorator(Context context) {
+        this.divider = ContextCompat.getDrawable(context, R.drawable.event_divider);
     }
 
     @Override
@@ -68,14 +45,16 @@ public class EventItemDecorator extends RecyclerView.ItemDecoration  {
         final int childCount = parent.getChildCount();
         for (int i = 0; i < childCount; i++) {
             final View child = parent.getChildAt(i);
-            parent.getDecoratedBoundsWithMargins(child, mBounds);
+            parent.getDecoratedBoundsWithMargins(child, bounds);
 
             int position = parent.getChildAdapterPosition(child);
-            if (position == 0 || position == recentEventCount || position == recentEventCount + 1) {
+            if (parent.getAdapter().getItemViewType(position) == EventListAdapter.ITEM_TYPE_HEADER ||
+                parent.getAdapter().getItemViewType(position + 1) == EventListAdapter.ITEM_TYPE_HEADER ||
+                position == state.getItemCount() - 1) {
                 continue;
             }
 
-            final int bottom = mBounds.bottom + Math.round(ViewCompat.getTranslationY(child));
+            final int bottom = bounds.bottom + Math.round(ViewCompat.getTranslationY(child));
             final int top = bottom - divider.getIntrinsicHeight();
             divider.setBounds(left, top, right, bottom);
             divider.draw(c);

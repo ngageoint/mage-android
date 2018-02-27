@@ -4,13 +4,15 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.support.v4.app.FragmentManager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.SearchView;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.View;
-import android.view.Window;
 import android.widget.TextView;
 
 import java.util.ArrayList;
@@ -26,68 +28,70 @@ import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.fetch.EventServerFetch;
-import mil.nga.giat.mage.sdk.fetch.EventsServerFetch;
 import mil.nga.giat.mage.sdk.login.AccountDelegate;
 import mil.nga.giat.mage.sdk.login.AccountStatus;
 import mil.nga.giat.mage.sdk.login.RecentEventTask;
 
-public class EventActivity extends AppCompatActivity {
-
-	private static final String STATE_EVENT = "stateEvent";
+public class EventActivity extends AppCompatActivity implements EventsFetchFragment.EventsFetchListener {
 
 	private static final String LOG_NAME = EventActivity.class.getName();
 
-    private List<Event> events = Collections.EMPTY_LIST;
-	private RecyclerView recyclerView;
-	private EventListAdapter eventListAdapter;
+	private static final String EVENTS_FETCH_FRAGMENT_TAG = "EVENTS_FETCH_FRAGMENT_TAG";
+	EventsFetchFragment eventsFetchFragment;
 
-    private Event chosenEvent = null;
+    private List<Event> events = Collections.emptyList();
+	private RecyclerView recyclerView;
+	private SearchView searchView;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		requestWindowFeature(Window.FEATURE_NO_TITLE);
-
-
 
 		setContentView(R.layout.activity_event);
 
-		findViewById(R.id.event_content).setVisibility(View.GONE);
-		findViewById(R.id.event_status).setVisibility(View.VISIBLE);
+		Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+		toolbar.setTitle("Welcome to MAGE");
+		setSupportActionBar(toolbar);
 
-		if (savedInstanceState == null) {
-			events = new ArrayList<>();
-		} else {
-			long[] eventIds = savedInstanceState.getLongArray(STATE_EVENT);
-			try {
-				for (long eventId : eventIds) {
-					events.add(EventHelper.getInstance(getApplicationContext()).read(eventId));
-				}
-			} catch(Exception e) {
-				Log.e(LOG_NAME, "Could not hydrate events!");
-			}
-		}
+		findViewById(R.id.event_status).setVisibility(View.VISIBLE);
 
 		recyclerView = (RecyclerView) findViewById(R.id.recycler_view);
 
-		EventsServerFetch eventsServerFetch = new EventsServerFetch(getApplicationContext());
-		eventsServerFetch.setEventFetchListener(new EventsServerFetch.EventsFetchListener() {
-			@Override
-			public void onEventsFetched(boolean status, Exception error) {
-				if (status) {
-					eventsFetched();
-				} else {
-					onEventsFetchError();
-				}
-			}
-		});
-		eventsServerFetch.execute();
+		searchView = (SearchView) findViewById(R.id.search_view);
+		searchView.setIconified(false);
+		searchView.setIconifiedByDefault(false);
+		searchView.clearFocus();
+
+		FragmentManager fragmentManager = getSupportFragmentManager();
+		eventsFetchFragment = (EventsFetchFragment) fragmentManager.findFragmentByTag(EVENTS_FETCH_FRAGMENT_TAG);
+
+		// If the Fragment is non-null, then it is being retained over a configuration change.
+		if (eventsFetchFragment == null) {
+			eventsFetchFragment = new EventsFetchFragment();
+			fragmentManager.beginTransaction().add(eventsFetchFragment, EVENTS_FETCH_FRAGMENT_TAG).commit();
+		}
+	}
+
+	@Override
+	protected void onResume() {
+		super.onResume();
+
+		eventsFetchFragment.loadEvents();
+	}
+
+	@Override
+	public void onEventsFetched(boolean status, Exception error) {
+		if (status) {
+			eventsFetched();
+		} else {
+			onEventsFetchError();
+		}
 	}
 
 	private void eventsFetched() {
 		EventHelper eventHelper = EventHelper.getInstance(getApplicationContext());
 
-		List<Event> recentEvents = Collections.EMPTY_LIST;
+		List<Event> recentEvents = Collections.emptyList();
 		try {
 			events = eventHelper.readAll();
 			recentEvents = eventHelper.getRecentEvents();
@@ -100,30 +104,40 @@ public class EventActivity extends AppCompatActivity {
 
 			((MAGE) getApplication()).onLogout(true, null);
 			findViewById(R.id.event_status).setVisibility(View.GONE);
-			findViewById(R.id.event_select_content).setVisibility(View.GONE);
 			findViewById(R.id.event_serverproblem_info).setVisibility(View.GONE);
 
-			findViewById(R.id.event_content).setVisibility(View.VISIBLE);
 			findViewById(R.id.event_back_button).setVisibility(View.VISIBLE);
 			findViewById(R.id.event_bummer_info).setVisibility(View.VISIBLE);
 		} else if (events.size() == 1) {
 			chooseEvent(events.get(0));
 		} else {
-			eventListAdapter = new EventListAdapter(events, recentEvents, new EventListAdapter.OnEventClickListener() {
+			final EventListAdapter eventListAdapter = new EventListAdapter(events, recentEvents, new EventListAdapter.OnEventClickListener() {
 				@Override
 				public void onEventClick(Event event) {
 					chooseEvent(event);
 				}
 			});
 
+			searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+				@Override
+				public boolean onQueryTextSubmit(String query) {
+					return false;
+				}
+
+				@Override
+				public boolean onQueryTextChange(String text) {
+					eventListAdapter.filter(text);
+					return true;
+				}
+			});
+
 			recyclerView.setLayoutManager(new LinearLayoutManager(getApplicationContext()));
 			recyclerView.setItemAnimator(new DefaultItemAnimator());
-			recyclerView.addItemDecoration(new EventItemDecorator(getApplicationContext(), recentEvents.size()));
+			recyclerView.addItemDecoration(new EventItemDecorator(getApplicationContext()));
 			recyclerView.setAdapter(eventListAdapter);
 
-
+			findViewById(R.id.app_bar).setVisibility(View.VISIBLE);
 			findViewById(R.id.event_status).setVisibility(View.GONE);
-			findViewById(R.id.event_content).setVisibility(View.VISIBLE);
 		}
 	}
 
@@ -132,24 +146,9 @@ public class EventActivity extends AppCompatActivity {
 
 		((MAGE) getApplication()).onLogout(true, null);
 		findViewById(R.id.event_status).setVisibility(View.GONE);
-		findViewById(R.id.event_content).setVisibility(View.VISIBLE);
-		findViewById(R.id.event_select_content).setVisibility(View.GONE);
 		findViewById(R.id.event_back_button).setVisibility(View.VISIBLE);
 		findViewById(R.id.event_bummer_info).setVisibility(View.GONE);
 		findViewById(R.id.event_serverproblem_info).setVisibility(View.VISIBLE);
-	}
-
-	public void onSaveInstanceState(Bundle savedInstanceState) {
-
-		long[] eventIds = new long[events.size()];
-
-		for (int i = 0; i < events.size(); i++) {
-			Event e = events.get(i);
-			eventIds[i] = e.getId();
-		}
-
-		savedInstanceState.putLongArray(STATE_EVENT, eventIds);
-		super.onSaveInstanceState(savedInstanceState);
 	}
 
 	public void bummerEvent(View view) {
@@ -157,19 +156,27 @@ public class EventActivity extends AppCompatActivity {
 		finish();
 	}
 
-	private void chooseEvent(Event event) {
-		chosenEvent = event;
-
-		findViewById(R.id.event_content).setVisibility(View.GONE);
+	private void chooseEvent(final Event event) {
+		findViewById(R.id.app_bar).setVisibility(View.GONE);
 		findViewById(R.id.event_status).setVisibility(View.VISIBLE);
 
-        List<String> userRecentEventInfo = new ArrayList<>();
-        userRecentEventInfo.add(chosenEvent.getRemoteId());
-
 		TextView message = (TextView) findViewById(R.id.event_message);
-		message.setText("Loading " + chosenEvent.getName());
+		message.setText("Loading " + event.getName());
 
+		EventServerFetch eventFetch = new EventServerFetch(getApplicationContext(), event.getRemoteId());
+		eventFetch.setEventFetchListener(new EventServerFetch.EventFetchListener() {
+			@Override
+			public void onEventFetched(boolean status, Exception e) {
+				finishEvent(event);
+			}
+		});
+		eventFetch.execute();
+    }
+
+    private void finishEvent(Event event) {
 		// Send chosen event to the server
+		List<String> userRecentEventInfo = new ArrayList<>();
+		userRecentEventInfo.add(event.getRemoteId());
 		new RecentEventTask(new AccountDelegate() {
 			@Override
 			public void finishAccount(AccountStatus accountStatus) {
@@ -177,21 +184,10 @@ public class EventActivity extends AppCompatActivity {
 			}
 		}, getApplicationContext()).execute(userRecentEventInfo.toArray(new String[userRecentEventInfo.size()]));
 
-		EventServerFetch eventFetch = new EventServerFetch(getApplicationContext(), chosenEvent.getRemoteId());
-		eventFetch.setEventFetchListener(new EventServerFetch.EventFetchListener() {
-			@Override
-			public void onEventFetched(boolean status, Exception e) {
-				finishEvent();
-			}
-		});
-		eventFetch.execute();
-    }
-
-    private void finishEvent() {
 		try {
 			UserHelper userHelper = UserHelper.getInstance(getApplicationContext());
 			User user = userHelper.readCurrentUser();
-			userHelper.setCurrentEvent(user, chosenEvent);
+			userHelper.setCurrentEvent(user, event);
 		} catch(Exception e) {
 			Log.e(LOG_NAME, "Could not set current event.");
 		}

@@ -6,10 +6,14 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import com.google.common.base.Predicate;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Ordering;
 
 import org.apache.commons.lang3.StringUtils;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -26,14 +30,27 @@ public class EventListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
         void onEventClick(Event event);
     }
 
-    private static final int ITEM_TYPE_HEADER = 1;
-    private static final int ITEM_TYPE_EVENT = 2;
+    static final int ITEM_TYPE_HEADER = 1;
+    static final int ITEM_TYPE_EVENT = 2;
 
     private List<Event> events;
+    private List<Event> filteredEvents = new ArrayList<>();
     private List<Event> recentEvents;
+    private List<Event> filteredRecentEvents = new ArrayList<>();
     private OnEventClickListener listener;
 
-    public EventListAdapter(List<Event> events, List<Event> recentEvents, OnEventClickListener listener) {
+    private static Predicate<Event> eventFilterPredicate(String text){
+        final String lowerCaseText = text.toLowerCase();
+        return new Predicate<Event>() {
+            @Override
+            public boolean apply(Event event) {
+                return event.getName().toLowerCase().contains(lowerCaseText) ||
+                        event.getDescription().toLowerCase().contains(lowerCaseText);
+            }
+        };
+    }
+
+    EventListAdapter(List<Event> events, List<Event> recentEvents, OnEventClickListener listener) {
         Collections.sort(events, new Ordering<Event>() {
             @Override
             public int compare(Event e1, Event e2) {
@@ -42,25 +59,42 @@ public class EventListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
         });
 
         this.events = events;
+        this.filteredEvents.addAll(events);
         this.recentEvents = recentEvents;
+        this.filteredRecentEvents.addAll(recentEvents);
         this.listener = listener;
     }
 
-    public class SectionViewHolder extends RecyclerView.ViewHolder {
+    public void filter(String text) {
+        filteredEvents.clear();
+        filteredRecentEvents.clear();
+
+        if (text.isEmpty()){
+            filteredEvents.addAll(events);
+            filteredRecentEvents.addAll(recentEvents);
+        } else {
+            filteredEvents = Lists.newArrayList(Iterables.filter(events, eventFilterPredicate(text)));
+            filteredRecentEvents = Lists.newArrayList(Iterables.filter(recentEvents, eventFilterPredicate(text)));
+        }
+
+        notifyDataSetChanged();
+    }
+
+    private class SectionViewHolder extends RecyclerView.ViewHolder {
         private TextView sectionName;
 
-        SectionViewHolder(View view) {
+        private SectionViewHolder(View view) {
             super(view);
 
             sectionName = (TextView) view.findViewById(R.id.section_name);
         }
     }
 
-    public class EventViewHolder extends RecyclerView.ViewHolder {
-        public TextView name;
-        public TextView description;
+    private class EventViewHolder extends RecyclerView.ViewHolder {
+        private TextView name;
+        private TextView description;
 
-        public EventViewHolder(View view) {
+        private EventViewHolder(View view) {
             super(view);
 
             name = (TextView) view.findViewById(R.id.event_name);
@@ -92,12 +126,12 @@ public class EventListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
 
     @Override
     public int getItemCount() {
-        return events.size() + recentEvents.size() + 2;
+        return filteredEvents.size() + filteredRecentEvents.size() + 2;
     }
 
     @Override
     public int getItemViewType(int position) {
-        if (position == 0 || position == recentEvents.size() + 1) {
+        if (position == 0 || position == filteredRecentEvents.size() + 1) {
             return ITEM_TYPE_HEADER;
         } else {
             return ITEM_TYPE_EVENT;
@@ -106,10 +140,10 @@ public class EventListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
 
     private void bindEventViewHolder(EventViewHolder holder, int position) {
         final Event event;
-        if (position <= recentEvents.size()) {
-            event = recentEvents.get(position - 1);
+        if (position <= filteredRecentEvents.size()) {
+            event = filteredRecentEvents.get(position - 1);
         } else {
-            event = events.get(position - recentEvents.size() - 2);
+            event = filteredEvents.get(position - filteredRecentEvents.size() - 2);
         }
 
         holder.name.setText(event.getName());

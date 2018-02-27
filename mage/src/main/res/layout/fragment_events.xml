@@ -1,8 +1,33 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical">
+
+    <android.support.design.widget.AppBarLayout
+        android:id="@+id/app_bar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <android.support.v7.widget.Toolbar
+            android:id="@+id/toolbar"
+            android:layout_height="wrap_content"
+            android:layout_width="match_parent"
+            app:titleTextColor="@color/md_white_1000"
+            app:subtitleTextColor="@color/md_white_1000"
+            android:background="?attr/colorPrimary"/>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingBottom="16dp"
+            android:paddingLeft="16dp"
+            android:paddingRight="16dp"
+            android:text="You are part of multiple events.  The observations you create and your reported location will be part of the selected event."
+            android:textColor="@android:color/white"/>
+
+    </android.support.design.widget.AppBarLayout>
 
     <RelativeLayout
         android:id="@+id/event_status"
@@ -15,10 +40,9 @@
             android:id="@+id/event_message"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:gravity="center"
             android:layout_centerInParent="true"
+            android:gravity="center"
             android:fontFamily="sans-serif-light"
-            android:text="Loading Events..."
             android:textColor="?attr/colorPrimary"
             android:textSize="26sp"/>
 
@@ -35,17 +59,23 @@
         android:id="@+id/event_content"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:paddingLeft="16dp"
-        android:paddingRight="16dp"
         android:orientation="vertical">
 
-        <TextView
+        <android.support.v7.widget.SearchView
+            android:id="@+id/search_view"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:paddingBottom="20dip"
-            android:paddingTop="20dip"
-            android:text="You are part of multiple events.  The observations you create and your reported location will be part of the selected event."
-            android:textColor="?attr/colorPrimaryDark"/>
+            android:paddingTop="8dp"
+            android:paddingBottom="8dp"
+            app:queryBackground="@android:color/transparent"
+            app:defaultQueryHint="Search Events">
+
+        </android.support.v7.widget.SearchView>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#1E000000"/>
 
         <android.support.v7.widget.RecyclerView
             android:id="@+id/recycler_view"
