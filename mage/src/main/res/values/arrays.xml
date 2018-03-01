@@ -26,6 +26,18 @@
         <item>1024</item>
     </string-array>
 
+    <string-array name="dayNightThemes">
+        <item>Light</item>
+        <item>Dark</item>
+        <item>Auto</item>
+    </string-array>
+
+    <string-array name="dayNightThemeValues">
+        <item>1</item>
+        <item>2</item>
+        <item>0</item>
+    </string-array>
+
     <string-array name="timeZones">
         <item>Local</item>
         <item>UTC</item>

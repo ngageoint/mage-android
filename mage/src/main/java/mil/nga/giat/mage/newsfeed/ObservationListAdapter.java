@@ -221,7 +221,7 @@ public class ObservationListAdapter extends RecyclerView.Adapter<RecyclerView.Vi
 
                 vh.shapeView.setImageDrawable(drawable);
                 vh.shapeView.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
-                DrawableCompat.setTint(drawable, Color.argb(138, 0, 0, 0));
+                DrawableCompat.setTint(drawable, Color.parseColor("#737373"));
             } else {
                 drawable = observation.getGeometry().getGeometryType() == GeometryType.LINESTRING ?
                         ResourcesCompat.getDrawable(context.getResources(), R.drawable.line_string_marker, null) :

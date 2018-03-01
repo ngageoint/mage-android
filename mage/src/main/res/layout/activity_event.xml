@@ -67,7 +67,6 @@
             android:paddingBottom="20dip"
             android:paddingTop="20dip"
             android:text="You are not in any events.  You must be part of an event to use MAGE.  Contact your administrator to be added to an event."
-            android:textColor="?attr/colorPrimary"
             android:visibility="gone"/>
 
         <TextView
@@ -77,7 +76,6 @@
             android:paddingBottom="20dip"
             android:paddingTop="20dip"
             android:text="There was a problem getting your information from the server.  Check your connection and try again later."
-            android:textColor="?attr/colorPrimary"
             android:visibility="gone"/>
 
         <Button
