@@ -87,6 +87,13 @@
         <item name="android:alpha">.54</item>
     </style>
 
+    <style name="ListSubheaderPrimary">
+        <item name="android:textStyle">normal</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:textColor">?attr/colorPrimary</item>
+    </style>
+
     <style name="ListTextPrimary">
         <item name="android:textStyle">normal</item>
         <item name="android:fontFamily">sans-serif</item>
