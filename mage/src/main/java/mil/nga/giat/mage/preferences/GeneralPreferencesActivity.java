@@ -60,6 +60,7 @@ public class GeneralPreferencesActivity extends AppCompatActivity {
 		@Override
 		public boolean onPreferenceChange(Preference preference, Object newValue) {
 			AppCompatDelegate.setDefaultNightMode(Integer.parseInt(newValue.toString()));
+			getActivity().recreate();
 			return true;
 		}
 	}
