@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="background">@android:color/white</color>
+    <color name="bottom_navigation_background">@android:color/white</color>
 
     <color name="accuracy_circle_fill">#33007AFF</color>
     <color name="accuracy_circle_stroke">#FF007AFF</color>
