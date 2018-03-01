@@ -26,7 +26,7 @@
             android:layout_height="wrap_content"
             android:layout_above="@id/event_message"
             android:layout_centerHorizontal="true"
-            android:theme="@style/AppTheme.PrimaryAccent"
+            android:theme="@style/AppTheme.ProgressBar"
             style="?android:attr/progressBarStyleLarge"/>
     </RelativeLayout>
 

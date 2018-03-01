@@ -17,6 +17,14 @@
         <item name="colorAccent">?attr/colorPrimaryDark</item>
     </style>
 
+    <style name="AppTheme.PrimaryDialog" parent="Theme.AppCompat.Light.Dialog.Alert">
+        <item name="colorAccent">@android:color/white</item>
+    </style>
+
+    <style name="AppTheme.ProgressBar" parent="Widget.AppCompat.ProgressBar">
+        <item name="colorControlActivated">@android:color/white</item>
+    </style>
+
     <style name="AppTheme.PrimaryFAB" parent="Widget.AppCompat.Button">
         <item name="android:tint">@color/md_white_1000</item>
         <item name="colorAccent">@color/md_amber_A700</item>

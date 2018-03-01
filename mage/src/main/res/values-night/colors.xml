@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="background">#303030</color>
+    <color name="bottom_navigation_background">?attr/colorPrimary</color>
 </resources>
