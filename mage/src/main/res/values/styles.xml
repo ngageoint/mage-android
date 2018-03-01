@@ -1,12 +1,15 @@
 <resources xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
+    <style name="AppTheme" parent="Theme.AppCompat.DayNight">
         <item name="colorPrimary">@color/md_blue_600</item>
         <item name="colorPrimaryDark">@color/md_blue_800</item>
         <item name="colorAccent">@color/md_orange_A200</item>
 
-        <item name="preferenceTheme">@style/PreferenceThemeOverlay.v14.Material</item>
+        <item name="android:textColor">?attr/colorPrimary</item>
 
+        <item name="android:windowBackground">@color/background</item>
+
+        <item name="preferenceTheme">@style/PreferenceThemeOverlay.v14.Material</item>
     </style>
 
     <style name="AppTheme.NoActionBar">
@@ -33,6 +36,13 @@
         <item name="colorControlNormal">#8AFFFFFF</item>
         <item name="colorControlActivated">@color/md_white_1000</item>
         <item name="editTextStyle">@style/AppTheme.EditTextStyle.White</item>
+    </style>
+
+    <style name="AppTheme.TextInputLayout" parent="Widget.Design.TextInputLayout">
+        <item name="colorControlNormal">?attr/colorPrimary</item>
+        <item name="colorControlActivated">?attr/colorPrimary</item>
+        <item name="colorControlHighlight">?attr/colorPrimary</item>
+        <item name="passwordToggleTint">?attr/colorPrimary</item>
     </style>
 
     <style name="AppTheme.EditTextStyle.White" parent="@style/Widget.AppCompat.EditText">

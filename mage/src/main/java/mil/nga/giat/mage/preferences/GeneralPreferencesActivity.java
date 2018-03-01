@@ -2,11 +2,11 @@ package mil.nga.giat.mage.preferences;
 
 import android.content.Context;
 import android.os.Bundle;
-import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.app.AppCompatDelegate;
+import android.support.v7.preference.Preference;
 import android.support.v7.preference.PreferenceFragmentCompat;
-import android.support.v7.view.ContextThemeWrapper;
-import android.support.v7.widget.Toolbar;
+import android.view.ContextThemeWrapper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -26,11 +26,14 @@ public class GeneralPreferencesActivity extends AppCompatActivity {
 		getSupportFragmentManager().beginTransaction().replace(R.id.content_frame, new GeneralPreferencesFragment()).commit();
 	}
 
-	public static class GeneralPreferencesFragment extends PreferenceFragmentCompat {
+	public static class GeneralPreferencesFragment extends PreferenceFragmentCompat implements Preference.OnPreferenceChangeListener {
+		private Preference dayNightThemePreference;
 
 		@Override
 		public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
 			addPreferencesFromResource(R.xml.generalpreferences);
+
+			dayNightThemePreference = findPreference(getResources().getString(R.string.dayNightThemeKey));
 		}
 
 		@Override
@@ -38,6 +41,26 @@ public class GeneralPreferencesActivity extends AppCompatActivity {
 			final Context contextThemeWrapper = new ContextThemeWrapper(getActivity(), R.style.AppTheme_PrimaryAccent);
 			LayoutInflater localInflater = inflater.cloneInContext(contextThemeWrapper);
 			return super.onCreateView(localInflater, container, savedInstanceState);
+		}
+
+		@Override
+		public void onResume() {
+			super.onResume();
+
+			dayNightThemePreference.setOnPreferenceChangeListener(this);
+		}
+
+		@Override
+		public void onPause() {
+			super.onPause();
+
+			dayNightThemePreference.setOnPreferenceChangeListener(null);
+		}
+
+		@Override
+		public boolean onPreferenceChange(Preference preference, Object newValue) {
+			AppCompatDelegate.setDefaultNightMode(Integer.parseInt(newValue.toString()));
+			return true;
 		}
 	}
 }

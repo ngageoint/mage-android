@@ -7,6 +7,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.content.res.Configuration;
 import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.location.LocationListener;
@@ -55,6 +56,7 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
+import com.google.android.gms.maps.model.MapStyleOptions;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.TileOverlay;
 import com.google.android.gms.maps.model.TileOverlayOptions;
@@ -76,7 +78,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ScheduledExecutorService;
 
 import mil.nga.geopackage.BoundingBox;
 import mil.nga.geopackage.GeoPackage;
@@ -185,8 +186,6 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 	private RefreshMarkersRunnable refreshObservationsTask;
 	private RefreshMarkersRunnable refreshLocationsTask;
 	private RefreshMarkersRunnable refreshHistoricLocationsTask;
-
-	private ScheduledExecutorService scheduledExecutorService;
 
 	private PointCollection<Observation> observations;
 	private PointCollection<Pair<mil.nga.giat.mage.sdk.datastore.location.Location, User>> locations;
@@ -363,6 +362,13 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 			locations = new LocationMarkerCollection(mage, map);
 		}
 
+		int dayNightMode = getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK;
+		if (dayNightMode == Configuration.UI_MODE_NIGHT_NO) {
+			googleMap.setMapStyle(null);
+		} else {
+			googleMap.setMapStyle(MapStyleOptions.loadRawResourceStyle(getContext(), R.raw.map_theme_night));
+		}
+
 		Event currentEvent = EventHelper.getInstance(getActivity()).getCurrentEvent();
 		long currentEventId = this.currentEventId;
 		if (currentEvent != null) {
@@ -473,12 +479,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 		if (map == null) {
 			mapView.getMapAsync(this);
 		} else {
-			getView().post(new Runnable() {
-				@Override
-				public void run() {
-					onMapReady(map);
-				}
-			});
+			onMapReady(map);
 		}
 
 		// Don't wait for map to show up to init these values, otherwise bottomsheet will jitter

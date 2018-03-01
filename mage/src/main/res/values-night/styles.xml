@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="AppTheme" parent="Theme.AppCompat.DayNight">
+        <item name="colorPrimary">@color/md_blue_grey_700</item>
+        <item name="colorPrimaryDark">@color/md_blue_grey_900</item>
+        <item name="colorAccent">@color/md_deep_orange_700</item>
+
+        <item name="android:textColor">@android:color/white</item>
+
+        <item name="android:windowBackground">@color/background</item>
+
+        <item name="preferenceTheme">@style/PreferenceThemeOverlay.v14.Material</item>
+    </style>
+
+    <style name="AppTheme.PrimaryAccent">
+        <item name="colorAccent">?attr/colorPrimaryDark</item>
+    </style>
+
+    <style name="AppTheme.PrimaryFAB" parent="Widget.AppCompat.Button">
+        <item name="android:tint">@color/md_white_1000</item>
+        <item name="colorAccent">@color/md_amber_A700</item>
+    </style>
+
+    <style name="AppTheme.AlternateFAB" parent="Widget.AppCompat.Button">
+        <item name="android:tint">@android:color/white</item>
+        <item name="colorAccent">?attr/colorPrimary</item>
+
+        <item name="colorButtonNormal">@android:color/white</item>
+    </style>
+
+    <style name="AppTheme.BottomNavigationView" parent="Widget.Design.BottomNavigationView">
+        <item name="itemBackground">?attr/colorPrimary</item>
+        <item name="itemIconTint">@color/bottom_navigation_view</item>
+        <item name="itemTextColor">@color/bottom_navigation_view
+        </item>
+    </style>
+
+    <style name="AppTheme.TextInputLayout" parent="Widget.Design.TextInputLayout">
+        <item name="colorControlNormal">@android:color/white</item>
+        <item name="colorControlActivated">@android:color/white</item>
+        <item name="colorControlHighlight">@android:color/white</item>
+        <item name="passwordToggleTint">@android:color/white</item>
+    </style>
+
+    <style name="AppTheme.EditText" parent="Widget.AppCompat.EditText">
+        <item name="android:textColor">@android:color/white</item>
+    </style>
+
+    <style name="ListTextPrimary">
+        <item name="android:textStyle">normal</item>
+        <item name="android:fontFamily">sans-serif</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:textColor">@color/md_white_1000</item>
+    </style>
+
+    <style name="ListTextSecondaryDark">
+        <item name="android:textStyle">normal</item>
+        <item name="android:fontFamily">sans-serif</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:textColor">@color/md_white_1000</item>
+        <item name="android:alpha">.87</item>
+    </style>
+
+    <style name="ListTextSecondary">
+        <item name="android:textStyle">normal</item>
+        <item name="android:fontFamily">sans-serif</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:textColor">@color/md_white_1000</item>
+        <item name="android:alpha">.54</item>
+    </style>
+
+</resources>

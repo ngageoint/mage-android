@@ -2,8 +2,7 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="@color/md_white_1000">
+    android:layout_height="match_parent">
 
     <!-- Loading spinner -->
     <LinearLayout
@@ -54,7 +53,6 @@
             android:layout_height="wrap_content"
             android:layout_marginBottom="8dp"
             android:gravity="center"
-            android:textColor="?attr/colorPrimary"
             android:textSize="13sp"
             android:clickable="true" />
 
@@ -64,7 +62,6 @@
             android:layout_height="wrap_content"
             android:clickable="false"
             android:gravity="center"
-            android:textColor="?attr/colorPrimary"
             android:textSize="11sp"
             android:text="App Version: 5.0.1"/>
 
@@ -107,7 +104,6 @@
                         android:layout_height="wrap_content"
                         android:gravity="center"
                         android:text="MAGE server URL not set, click here to change."
-                        android:textColor="?attr/colorPrimary"
                         android:textSize="20sp" />
 
                 </LinearLayout>
@@ -154,7 +150,7 @@
                     <View
                         android:layout_width="0dip"
                         android:layout_height="1dp"
-                        android:background="?attr/colorPrimary"
+                        android:background="?android:attr/textColor"
                         android:layout_weight=".5"
                         android:layout_marginTop="10dip"/>
 
@@ -163,13 +159,12 @@
                         android:layout_height="wrap_content"
                         android:gravity="center"
                         android:text="or"
-                        android:textColor="?attr/colorPrimary"
                         android:layout_weight=".15" />
 
                     <View
                         android:layout_width="0dip"
                         android:layout_height="1dp"
-                        android:background="?attr/colorPrimary"
+                        android:background="?android:attr/textColor"
                         android:layout_weight=".5"
                         android:layout_marginTop="10dip"/>
 
@@ -187,7 +182,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         app:errorTextAppearance="@style/AppTheme.ErrorTextAppearance"
-                        android:theme="@style/AppTheme.PrimaryAccent">
+                        android:theme="@style/AppTheme.TextInputLayout">
 
                         <android.support.design.widget.TextInputEditText
                             android:id="@+id/login_username"
@@ -199,7 +194,7 @@
                             android:imeOptions="actionNext"
                             android:inputType="textVisiblePassword|textNoSuggestions"
                             android:maxLines="1"
-                            android:theme="@style/AppTheme.PrimaryAccent"/>
+                            style="@style/AppTheme.EditText" />
 
                     </android.support.design.widget.TextInputLayout>
 
@@ -208,9 +203,9 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         app:passwordToggleEnabled="true"
-                        app:passwordToggleTint="?attr/colorPrimary"
                         app:errorTextAppearance="@style/AppTheme.ErrorTextAppearance"
-                        android:theme="@style/AppTheme.PrimaryAccent">
+                        style="@style/AppTheme.TextInputLayout"
+                        android:theme="@style/AppTheme.TextInputLayout">
 
                         <android.support.design.widget.TextInputEditText
                             android:id="@+id/login_password"
@@ -221,8 +216,7 @@
                             android:hint="Password"
                             android:inputType="textPassword"
                             android:imeActionLabel="Log In"
-                            android:maxLines="1"
-                            android:theme="@style/AppTheme.PrimaryAccent" />
+                            android:maxLines="1" />
 
                     </android.support.design.widget.TextInputLayout>
 
@@ -253,7 +247,6 @@
                         android:gravity="center"
                         android:onClick="signup"
                         android:text="New to MAGE? Signup here"
-                        android:textColor="?attr/colorPrimary"
                         android:textSize="16sp" />
                 </LinearLayout>
                 
