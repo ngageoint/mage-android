@@ -3,8 +3,7 @@
               android:orientation="vertical"
               android:layout_width="match_parent"
               android:layout_height="match_parent"
-              android:layout_gravity="end"
-              android:background="@color/md_white_1000">
+              android:layout_gravity="end">
 
     <ScrollView
         android:layout_width="match_parent"
@@ -25,7 +24,6 @@
                 android:layout_marginStart="16dip"
                 android:gravity="center_vertical"
                 android:layout_marginTop="3dip"
-                android:textColor="?attr/colorPrimary"
                 android:text="@string/time_filter"
                 android:textSize="14sp"
                 android:fontFamily="sans-serif-medium" />

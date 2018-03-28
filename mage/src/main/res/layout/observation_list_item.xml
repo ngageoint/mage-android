@@ -24,7 +24,7 @@
             android:layout_height="40dip"
             android:layout_marginLeft="16dp"
             android:layout_marginRight="16dp"
-            android:src="@drawable/ic_place_black_24dp"/>
+            android:src="@drawable/ic_place_white_24dp"/>
 
         <LinearLayout
             android:layout_width="0dp"

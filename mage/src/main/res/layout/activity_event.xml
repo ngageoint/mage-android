@@ -2,8 +2,7 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="@color/md_white_1000">
+    android:layout_height="match_parent">
 
     <android.support.design.widget.AppBarLayout
         android:id="@+id/app_bar"
@@ -96,7 +95,7 @@
         android:id="@+id/event_status"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@color/md_white_1000">
+        android:background="@color/background">
 
         <TextView
             android:id="@+id/event_message"
@@ -106,7 +105,6 @@
             android:layout_centerInParent="true"
             android:fontFamily="sans-serif-light"
             android:text="Loading Events..."
-            android:textColor="?attr/colorPrimary"
             android:textSize="26sp"/>
 
         <ProgressBar
@@ -114,7 +112,7 @@
             android:layout_height="wrap_content"
             android:layout_above="@id/event_message"
             android:layout_centerHorizontal="true"
-            android:theme="@style/AppTheme.PrimaryAccent"
+            android:theme="@style/AppTheme.ProgressBar"
             style="?android:attr/progressBarStyleLarge"/>
     </RelativeLayout>
 

@@ -6,7 +6,6 @@
     android:paddingEnd="16dp"
     android:paddingTop="4dp"
     android:paddingBottom="8dp"
-    android:background="@color/md_white_1000"
     android:orientation="vertical">
 
     <LinearLayout

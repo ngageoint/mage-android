@@ -13,7 +13,7 @@
         android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
         app:popupTheme="@style/ThemeOverlay.AppCompat.Light"
         app:contentInsetStart="72dp"
-        android:background="@color/md_blue_200"/>
+        android:background="@color/setting_sub_toolbar"/>
 
     <FrameLayout
         android:id="@+id/no_content_frame"

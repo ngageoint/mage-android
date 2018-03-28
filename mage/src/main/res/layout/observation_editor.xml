@@ -3,20 +3,20 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F0F0F0">
+    android:background="@color/background_card">
 
     <LinearLayout
         android:id="@+id/observation_edit"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical">
-
+\
         <android.support.v7.widget.Toolbar
             android:id="@+id/observation_actions"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="16dp"
-            android:background="@color/md_white_1000">
+            android:background="@color/background_dialog">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -91,7 +91,7 @@
                     android:paddingStart="8dp"
                     android:paddingEnd="8dp"
                     android:layout_marginBottom="16dp"
-                    android:background="@color/md_white_1000">
+                    android:background="@color/background_dialog">
 
                     <LinearLayout
                         android:id="@+id/image_gallery"
@@ -103,10 +103,10 @@
                 </HorizontalScrollView>
 
                 <LinearLayout
-                    android:layout_width="fill_parent"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:background="@color/md_white_1000">
+                    android:background="@color/background_dialog">
 
                     <mil.nga.giat.mage.form.MageEditText
                         android:id="@+id/date"
@@ -160,7 +160,6 @@
                                     <TextView
                                         android:layout_width="wrap_content"
                                         android:layout_height="wrap_content"
-                                        android:textColor="#D8000000"
                                         android:textSize="12sp"
                                         android:text="Latitude"/>
 
@@ -175,7 +174,6 @@
                                     <TextView
                                         android:layout_width="wrap_content"
                                         android:layout_height="wrap_content"
-                                        android:textColor="#D8000000"
                                         android:textSize="12sp"
                                         android:text="Longitude"/>
 

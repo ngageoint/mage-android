@@ -20,7 +20,7 @@
 
 		<LinearLayout
 			android:orientation="horizontal"
-			android:layout_width="fill_parent"
+			android:layout_width="match_parent"
 			android:layout_height="0dp"
 			android:layout_weight="1"
 			android:paddingTop="8dp"
@@ -35,7 +35,7 @@
 
 				<ImageView
 					android:id="@+id/profile_picture"
-					android:src="@drawable/ic_person_gray_48dp"
+					android:src="@drawable/ic_person_black_48dp"
 					android:layout_width="73dp"
 					android:layout_height="73dp" />
 
@@ -58,7 +58,6 @@
 						android:layout_weight="1"
 						android:layout_marginBottom="4dp"
 						style="@style/ListTextPrimary"
-						android:textColor="?attr/colorPrimaryDark"
 						android:alpha=".87" />
 
 					<ImageButton
@@ -68,7 +67,7 @@
 						android:layout_marginEnd="16dp"
 						android:background="?attr/selectableItemBackgroundBorderless"
 						android:src="@drawable/ic_more_horiz_white_24dp"
-						android:tint="#8A000000"/>
+						android:tint="@color/divider"/>
 
 				</LinearLayout>
 
@@ -86,7 +85,7 @@
 						android:layout_gravity="center_vertical"
 						android:layout_marginEnd="4dp"
 						android:src="@drawable/ic_phone_white_24dp"
-						android:tint="?attr/colorPrimary"/>
+						android:tint="?attr/colorAccent"/>
 
 					<TextView
 						android:id="@+id/phone"
@@ -94,13 +93,13 @@
 						android:layout_height="wrap_content"
 						android:layout_gravity="center_vertical"
 						style="@style/ListTextSecondary"
-						android:textColor="?attr/colorPrimary"
 						android:alpha=".87" />
 
 				</LinearLayout>
 
 				<LinearLayout
 					android:id="@+id/email_layout"
+
 					android:layout_width="wrap_content"
 					android:layout_height="wrap_content"
 					android:orientation="horizontal">
@@ -111,7 +110,7 @@
 						android:layout_gravity="center_vertical"
 						android:layout_marginEnd="4dp"
 						android:src="@drawable/ic_email_white_24dp"
-						android:tint="?attr/colorPrimary"/>
+						android:tint="?attr/colorAccent"/>
 
 					<TextView
 						android:id="@+id/email"
@@ -119,7 +118,6 @@
 						android:layout_gravity="center_vertical"
 						android:layout_height="wrap_content"
 						style="@style/ListTextSecondary"
-						android:textColor="?attr/colorPrimary"
 						android:alpha=".87"/>
 
 				</LinearLayout>

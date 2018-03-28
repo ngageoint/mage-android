@@ -24,7 +24,6 @@
             android:layout_height="wrap_content"
             android:fontFamily="sans-serif-light"
             android:text="Logging in..."
-            android:textColor="?attr/colorPrimary"
             android:textSize="26sp" />
 
     </LinearLayout>
@@ -150,7 +149,7 @@
                     <View
                         android:layout_width="0dip"
                         android:layout_height="1dp"
-                        android:background="?android:attr/textColor"
+                        android:background="@color/divider"
                         android:layout_weight=".5"
                         android:layout_marginTop="10dip"/>
 
@@ -164,7 +163,7 @@
                     <View
                         android:layout_width="0dip"
                         android:layout_height="1dp"
-                        android:background="?android:attr/textColor"
+                        android:background="@color/divider"
                         android:layout_weight=".5"
                         android:layout_marginTop="10dip"/>
 
@@ -193,8 +192,7 @@
                             android:hint="Username"
                             android:imeOptions="actionNext"
                             android:inputType="textVisiblePassword|textNoSuggestions"
-                            android:maxLines="1"
-                            style="@style/AppTheme.EditText" />
+                            android:maxLines="1" />
 
                     </android.support.design.widget.TextInputLayout>
 
@@ -249,7 +247,7 @@
                         android:text="New to MAGE? Signup here"
                         android:textSize="16sp" />
                 </LinearLayout>
-                
+
             </LinearLayout>
 
         </RelativeLayout>

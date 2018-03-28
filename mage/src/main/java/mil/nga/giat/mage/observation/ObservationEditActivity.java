@@ -7,11 +7,14 @@ import android.app.Dialog;
 import android.content.ClipData;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
+import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.provider.MediaStore;
 import android.provider.Settings;
 import android.support.v4.app.ActivityCompat;
@@ -45,6 +48,7 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.model.Circle;
 import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.MapStyleOptions;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -449,6 +453,16 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 	private void setupMap() {
 		if (map == null) return;
 
+		SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+		map.setMapType(preferences.getInt(getString(R.string.baseLayerKey), getResources().getInteger(R.integer.baseLayerDefaultValue)));
+
+		int dayNightMode = getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK;
+		if (dayNightMode == Configuration.UI_MODE_NIGHT_NO) {
+			map.setMapStyle(null);
+		} else {
+			map.setMapStyle(MapStyleOptions.loadRawResourceStyle(getApplicationContext(), R.raw.map_theme_night));
+		}
+
 		LatLng centroid = location.getCentroidLatLng();
 
 		((TextView) findViewById(R.id.latitude)).setText(latLngFormat.format(centroid.latitude));
@@ -561,7 +575,7 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 	}
 
 	private void onArchiveObservation() {
-		new AlertDialog.Builder(this, R.style.AppTheme_PrimaryDialog)
+		new AlertDialog.Builder(this)
 				.setTitle("Delete Observation")
 				.setMessage("Are you sure you want to remove this observation?")
 				.setPositiveButton("Delete", new Dialog.OnClickListener() {
@@ -851,7 +865,7 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 	}
 
 	private void showDisabledPermissionsDialog(String title, String message) {
-		new AlertDialog.Builder(this, R.style.AppCompatAlertDialogStyle)
+		new AlertDialog.Builder(this)
 				.setTitle(title)
 				.setMessage(message)
 				.setPositiveButton(R.string.settings, new Dialog.OnClickListener() {

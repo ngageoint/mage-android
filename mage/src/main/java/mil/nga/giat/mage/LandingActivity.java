@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
@@ -81,6 +82,8 @@ public class LandingActivity extends AppCompatActivity implements NavigationView
     private static final int AUTHENTICATE_REQUEST = 400;
     private static final int CHANGE_EVENT_REQUEST = 500;
 
+    private int currentNightMode;
+
     private static final String LOG_NAME = LandingActivity.class.getName();
 
     private NavigationView navigationView;
@@ -97,6 +100,8 @@ public class LandingActivity extends AppCompatActivity implements NavigationView
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_landing);
+
+        currentNightMode = getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK;
 
         bottomNavigationFragments.add(new MapFragment());
         bottomNavigationFragments.add(new ObservationFeedFragment());
@@ -237,6 +242,13 @@ public class LandingActivity extends AppCompatActivity implements NavigationView
     @Override
     protected void onResume() {
         super.onResume();
+
+        // This activity is 'singleTop' and as such will not recreate itself based on a uiMode configuration change.
+        // Force this by check if the uiMode has changed.
+        int nightMode = getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK;
+        if (nightMode != currentNightMode) {
+            recreate();
+        }
 
         if (locationPermissionGranted != (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED)) {
             locationPermissionGranted = ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;

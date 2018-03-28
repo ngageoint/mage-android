@@ -13,9 +13,9 @@ import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.preference.Preference;
 import android.support.v7.preference.PreferenceFragmentCompat;
-import android.support.v7.view.ContextThemeWrapper;
 import android.support.v7.widget.SwitchCompat;
 import android.support.v7.widget.Toolbar;
+import android.view.ContextThemeWrapper;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
@@ -46,7 +46,7 @@ public class LocationPreferencesActivity extends AppCompatActivity {
 
         @Override
         public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-            final Context contextThemeWrapper = new ContextThemeWrapper(getActivity(), R.style.AppTheme_PrimaryAccent);
+            final Context contextThemeWrapper = new ContextThemeWrapper(getActivity(), R.style.AppTheme);
             LayoutInflater localInflater = inflater.cloneInContext(contextThemeWrapper);
             return super.onCreateView(localInflater, container, savedInstanceState);
         }

@@ -23,10 +23,8 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
         android:gravity="center"
-        android:textColor="?attr/colorPrimaryDark"
         android:textSize="18sp"
-        android:textStyle="bold"
-        android:fontFamily="sans-serif"
+        android:fontFamily="sans-serif-medium"
         android:text="Form Text" />
 
 </LinearLayout>

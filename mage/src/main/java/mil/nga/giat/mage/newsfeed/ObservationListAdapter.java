@@ -4,6 +4,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.support.v4.content.ContextCompat;
@@ -210,14 +211,17 @@ public class ObservationListAdapter extends RecyclerView.Adapter<RecyclerView.Vi
             final Observation observation = query.mapRow(new AndroidDatabaseResults(cursor, null, false));
             vh.bind(observation, observationActionListener);
 
-            Drawable markerPlaceholder = ResourcesCompat.getDrawable(context.getResources(), R.drawable.ic_place_black_24dp, null);
+            Drawable markerPlaceholder = DrawableCompat.wrap(ContextCompat.getDrawable(context, R.drawable.ic_place_white_24dp));
+            DrawableCompat.setTint(markerPlaceholder, ContextCompat.getColor(context, R.color.icon));
+            DrawableCompat.setTintMode(markerPlaceholder, PorterDuff.Mode.SRC_ATOP);
+
             vh.markerView.setImageDrawable(markerPlaceholder);
             vh.iconTask = new IconTask(vh.markerView);
             vh.iconTask.execute(observation);
 
             Drawable drawable;
             if (observation.getGeometry().getGeometryType() == GeometryType.POINT) {
-                drawable = ResourcesCompat.getDrawable(context.getResources(), R.drawable.ic_place_black_24dp, null);
+                drawable = ResourcesCompat.getDrawable(context.getResources(), R.drawable.ic_place_white_24dp, null);
 
                 vh.shapeView.setImageDrawable(drawable);
                 vh.shapeView.setScaleType(ImageView.ScaleType.CENTER_INSIDE);

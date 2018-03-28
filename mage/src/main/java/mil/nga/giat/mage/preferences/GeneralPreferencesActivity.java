@@ -38,7 +38,7 @@ public class GeneralPreferencesActivity extends AppCompatActivity {
 
 		@Override
 		public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-			final Context contextThemeWrapper = new ContextThemeWrapper(getActivity(), R.style.AppTheme_PrimaryAccent);
+			final Context contextThemeWrapper = new ContextThemeWrapper(getActivity(), R.style.AppTheme);
 			LayoutInflater localInflater = inflater.cloneInContext(contextThemeWrapper);
 			return super.onCreateView(localInflater, container, savedInstanceState);
 		}
