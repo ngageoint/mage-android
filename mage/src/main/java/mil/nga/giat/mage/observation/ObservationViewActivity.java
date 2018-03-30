@@ -271,7 +271,12 @@ public class ObservationViewActivity extends AppCompatActivity implements OnMapR
 			Map<Long, JsonObject> formMap = EventHelper.getInstance(getApplicationContext()).getCurrentEvent().getFormMap();
 			Collection<JsonObject> formDefinitions = new ArrayList<>();
 			for (ObservationForm observationForm : o.getForms()) {
-				formDefinitions.add(formMap.get(observationForm.getFormId()));
+				JsonObject form = formMap.get(observationForm.getFormId());
+
+				if (form != null) {
+					// TODO pull the form if we don't have it
+					formDefinitions.add(formMap.get(observationForm.getFormId()));
+				}
 			}
 
 			controls = LayoutBaker.createControls(this, LayoutBaker.ControlGenerationType.VIEW, formDefinitions);
