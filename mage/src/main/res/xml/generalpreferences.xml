@@ -26,6 +26,13 @@
         android:key="@string/timeZoneKey"
         android:summary="%s"
         android:title="Time zone for display and editing"/>
+    <mil.nga.giat.mage.sdk.preferences.IntegerListPreference
+        android:defaultValue="@integer/dayNightThemeDefaultValue"
+        android:entries="@array/dayNightThemes"
+        android:entryValues="@array/dayNightThemeValues"
+        android:key="@string/dayNightThemeKey"
+        android:summary="%s"
+        android:title="Theme"/>
     <android.support.v7.preference.SwitchPreferenceCompat
         android:defaultValue="@bool/notificationsEnabledDefaultValue"
         android:key="@string/notificationsEnabledKey"
@@ -52,7 +59,7 @@
             <intent
                 android:action="android.intent.action.VIEW"
                 android:targetClass="mil.nga.giat.mage.wearable.bridge.preferences.ListGesturePreferencesActivity"
-                android:targetPackage="mil.nga.giat.mage"/>
+                android:targetPackage="@string/applicationId"/>
         </Preference>
     </PreferenceCategory>
     <PreferenceCategory
@@ -63,8 +70,9 @@
             <intent
                 android:action="android.intent.action.VIEW"
                 android:targetClass="mil.nga.giat.mage.preferences.ClearDataPreferenceActivity"
-                android:targetPackage="mil.nga.giat.mage"/>
+                android:targetPackage="@string/applicationId"/>
         </Preference>
+
     </PreferenceCategory>
 
 </PreferenceScreen>

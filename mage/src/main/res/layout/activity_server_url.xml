@@ -4,8 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:paddingStart="16dp"
-    android:paddingEnd="16dp"
-    android:background="@color/md_white_1000">
+    android:paddingEnd="16dp">
 
     <include android:id="@+id/header"
         layout="@layout/mage_header" />
@@ -24,7 +23,6 @@
             android:gravity="center"
             android:fontFamily="sans-serif"
             android:textSize="24sp"
-            android:textColor="?attr/colorPrimary"
             android:text="Set MAGE Server URL"/>
 
         <android.support.design.widget.TextInputLayout
@@ -34,7 +32,7 @@
             app:passwordToggleEnabled="true"
             app:passwordToggleTint="?attr/colorPrimary"
             app:errorTextAppearance="@style/AppTheme.ErrorTextAppearance"
-            android:theme="@style/AppTheme.PrimaryAccent">
+            android:theme="@style/AppTheme.TextInputLayout">
 
             <EditText
                 android:id="@+id/server_url"
@@ -43,8 +41,7 @@
                 android:hint="Server URL"
                 android:text="https://"
                 android:inputType="textUri"
-                android:imeActionLabel="Go"
-                android:theme="@style/AppTheme.PrimaryAccent" />
+                android:imeActionLabel="Go" />
 
         </android.support.design.widget.TextInputLayout>
 
@@ -87,7 +84,7 @@
         <ProgressBar
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:theme="@style/AppTheme.PrimaryAccent"
+            android:theme="@style/AppTheme.ProgressBar"
             style="?android:attr/progressBarStyleLarge"/>
 
         <TextView
@@ -95,7 +92,6 @@
             android:layout_height="wrap_content"
             android:fontFamily="sans-serif-light"
             android:text="Connecting..."
-            android:textColor="?attr/colorPrimary"
             android:textSize="26sp" />
 
     </LinearLayout>

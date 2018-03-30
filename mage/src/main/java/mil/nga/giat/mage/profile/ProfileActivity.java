@@ -8,18 +8,23 @@ import android.content.ClipData;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.content.res.Configuration;
 import android.graphics.Bitmap;
+import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.provider.MediaStore;
 import android.provider.Settings;
 import android.support.design.widget.BottomSheetDialog;
 import android.support.v13.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.FileProvider;
+import android.support.v4.graphics.drawable.DrawableCompat;
 import android.support.v4.graphics.drawable.RoundedBitmapDrawable;
 import android.support.v4.graphics.drawable.RoundedBitmapDrawableFactory;
 import android.support.v7.app.AlertDialog;
@@ -41,6 +46,7 @@ import com.google.android.gms.maps.MapsInitializer;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.MapStyleOptions;
 import com.google.android.gms.maps.model.MarkerOptions;
 
 import org.apache.commons.lang3.StringUtils;
@@ -88,6 +94,7 @@ public class ProfileActivity extends AppCompatActivity implements OnMapReadyCall
 	
 	private String currentMediaPath;
 	private User user;
+	private boolean isCurrentUser;
 	
 	private MapView mapView;
 	private LatLng latLng = new LatLng(0, 0);
@@ -129,15 +136,14 @@ public class ProfileActivity extends AppCompatActivity implements OnMapReadyCall
 		final Context context = getApplicationContext();
 
 		String userToLoad = getIntent().getStringExtra(USER_ID);
-		User currentUser = null;
 		try {
-			currentUser = UserHelper.getInstance(context).readCurrentUser();
+			user = UserHelper.getInstance(context).readCurrentUser();
 
 			if (userToLoad != null) {
 				user = UserHelper.getInstance(context).read(userToLoad);
-
+				isCurrentUser = false;
 			} else {
-				user = UserHelper.getInstance(context).readCurrentUser();
+				isCurrentUser = true;
 			}
 
 			Event event = EventHelper.getInstance(context).getCurrentEvent();
@@ -160,7 +166,7 @@ public class ProfileActivity extends AppCompatActivity implements OnMapReadyCall
 
 		final String displayName = user.getDisplayName();
 
-		getSupportActionBar().setTitle(user.equals(currentUser) ? "My Profile" : displayName);
+		getSupportActionBar().setTitle(isCurrentUser ? "My Profile" : displayName);
 
 		final TextView realNameTextView = (TextView) findViewById(R.id.realName);
 		realNameTextView.setText(displayName);
@@ -217,11 +223,15 @@ public class ProfileActivity extends AppCompatActivity implements OnMapReadyCall
 		String avatarUrl = user.getAvatarUrl();
 		String localAvatarPath = user.getUserLocal().getLocalAvatarPath();
 
-		if(StringUtils.isNotBlank(localAvatarPath)) {
+		Drawable defaultPersonIcon = DrawableCompat.wrap(ContextCompat.getDrawable(context, R.drawable.ic_person_white_48dp));
+		DrawableCompat.setTint(defaultPersonIcon, ContextCompat.getColor(context, R.color.icon));
+		DrawableCompat.setTintMode(defaultPersonIcon, PorterDuff.Mode.SRC_ATOP);
+		imageView.setImageDrawable(defaultPersonIcon);
+
+		if (StringUtils.isNotBlank(localAvatarPath)) {
 			Glide.with(context)
 					.load(localAvatarPath)
 					.asBitmap()
-					.placeholder(R.drawable.ic_person_gray_48dp)
 					.centerCrop()
 					.into(new BitmapImageViewTarget(imageView) {
 						@Override
@@ -273,29 +283,33 @@ public class ProfileActivity extends AppCompatActivity implements OnMapReadyCall
 			}
 		});
 
-		profileActionDialog = new BottomSheetDialog(ProfileActivity.this);
-		View sheetView = getLayoutInflater().inflate(R.layout.fragment_profile_actions, null);
-		profileActionDialog.setContentView(sheetView);
-		findViewById(R.id.profile_actions_button).setOnClickListener(new View.OnClickListener() {
-			@Override
-			public void onClick(View v) {
-				profileActionDialog.show();
-			}
-		});
+		View profileActions = findViewById(R.id.profile_actions_button);
+		profileActions.setVisibility(isCurrentUser ? View.VISIBLE : View.GONE);
+		if (isCurrentUser) {
+			profileActionDialog = new BottomSheetDialog(ProfileActivity.this);
+			View sheetView = getLayoutInflater().inflate(R.layout.fragment_profile_actions, null);
+			profileActionDialog.setContentView(sheetView);
+			profileActions.setOnClickListener(new View.OnClickListener() {
+				@Override
+				public void onClick(View v) {
+					profileActionDialog.show();
+				}
+			});
 
-		sheetView.findViewById(R.id.change_password_layout).setOnClickListener(new View.OnClickListener() {
-			@Override
-			public void onClick(View v) {
-				changePassword();
-			}
-		});
+			sheetView.findViewById(R.id.change_password_layout).setOnClickListener(new View.OnClickListener() {
+				@Override
+				public void onClick(View v) {
+					changePassword();
+				}
+			});
 
-		sheetView.findViewById(R.id.logout_layout).setOnClickListener(new View.OnClickListener() {
-			@Override
-			public void onClick(View v) {
-				logout();
-			}
-		});
+			sheetView.findViewById(R.id.logout_layout).setOnClickListener(new View.OnClickListener() {
+				@Override
+				public void onClick(View v) {
+					logout();
+				}
+			});
+		}
 	}
 
 	@Override
@@ -379,7 +393,7 @@ public class ProfileActivity extends AppCompatActivity implements OnMapReadyCall
 	private void onAvatarClick() {
 		final Context context = getApplicationContext();
 		try {
-			if (user.getId().equals(UserHelper.getInstance(context).readCurrentUser().getId())) {
+			if (isCurrentUser) {
 				avatarActionsDialog.show();
 			} else {
 				final Intent intent = new Intent(context, ProfilePictureViewerActivity.class);
@@ -491,6 +505,17 @@ public class ProfileActivity extends AppCompatActivity implements OnMapReadyCall
 
 	@Override
 	public void onMapReady(GoogleMap map) {
+		SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+		map.setMapType(preferences.getInt(getString(R.string.baseLayerKey), getResources().getInteger(R.integer.baseLayerDefaultValue)));
+
+		int dayNightMode = getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK;
+		if (dayNightMode == Configuration.UI_MODE_NIGHT_NO) {
+			map.setMapStyle(null);
+		} else {
+			map.setMapStyle(MapStyleOptions.loadRawResourceStyle(getApplicationContext(), R.raw.map_theme_night));
+		}
+
+
 		if (latLng != null && icon != null) {
 			map.addMarker(new MarkerOptions()
 					.position(latLng)

@@ -19,7 +19,7 @@
             android:layout_marginTop="16dp"
             android:layout_marginLeft="16dp"
             android:layout_marginRight="16dp"
-            android:src="@drawable/ic_person_gray_48dp"/>
+            android:src="@drawable/ic_person_white_24dp"/>
 
         <LinearLayout
             android:layout_width="0dp"

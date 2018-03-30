@@ -3,7 +3,10 @@ package mil.nga.giat.mage.observation;
 import android.app.FragmentManager;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.res.Configuration;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.design.widget.BottomSheetBehavior;
 import android.support.design.widget.FloatingActionButton;
@@ -26,6 +29,7 @@ import com.google.android.gms.maps.GoogleMap.OnCameraIdleListener;
 import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.MapStyleOptions;
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Collections2;
@@ -267,7 +271,12 @@ public class ObservationViewActivity extends AppCompatActivity implements OnMapR
 			Map<Long, JsonObject> formMap = EventHelper.getInstance(getApplicationContext()).getCurrentEvent().getFormMap();
 			Collection<JsonObject> formDefinitions = new ArrayList<>();
 			for (ObservationForm observationForm : o.getForms()) {
-				formDefinitions.add(formMap.get(observationForm.getFormId()));
+				JsonObject form = formMap.get(observationForm.getFormId());
+
+				if (form != null) {
+					// TODO pull the form if we don't have it
+					formDefinitions.add(formMap.get(observationForm.getFormId()));
+				}
 			}
 
 			controls = LayoutBaker.createControls(this, LayoutBaker.ControlGenerationType.VIEW, formDefinitions);
@@ -396,7 +405,16 @@ public class ObservationViewActivity extends AppCompatActivity implements OnMapR
 		Geometry geometry = o.getGeometry();
 		ObservationLocation location = new ObservationLocation(geometry);
 
+		SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
 		map.getUiSettings().setZoomControlsEnabled(false);
+		map.setMapType(preferences.getInt(getString(R.string.baseLayerKey), getResources().getInteger(R.integer.baseLayerDefaultValue)));
+
+		int dayNightMode = getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK;
+		if (dayNightMode == Configuration.UI_MODE_NIGHT_NO) {
+			map.setMapStyle(null);
+		} else {
+			map.setMapStyle(MapStyleOptions.loadRawResourceStyle(getApplicationContext(), R.raw.map_theme_night));
+		}
 
 		if (mapObservation == null) {
 			LatLng initialLatLng = getIntent().getParcelableExtra(INITIAL_LOCATION);

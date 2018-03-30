@@ -1,9 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="fill_parent"
+    android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:gravity="center"
-    android:background="@color/md_white_1000"
     android:orientation="vertical">
 
     <LinearLayout
@@ -18,6 +17,7 @@
             android:layout_width="16dp"
             android:layout_height="16dp"
             android:layout_marginRight="8dp"
+            android:tint="#DF66BB6A"
             android:src="@drawable/ic_check_white_24dp"/>
 
         <TextView
@@ -26,7 +26,7 @@
             android:textColor="@color/md_green_400"
             android:text="Pushed on "
             style="@style/ListTextSecondary"
-            android:alpha="1"/>
+            android:alpha=".87"/>
 
         <TextView
             android:id="@+id/observation_sync_date"

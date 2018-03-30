@@ -43,7 +43,6 @@
             android:layout_centerInParent="true"
             android:gravity="center"
             android:fontFamily="sans-serif-light"
-            android:textColor="?attr/colorPrimary"
             android:textSize="26sp"/>
 
         <ProgressBar
@@ -51,8 +50,8 @@
             android:layout_height="wrap_content"
             android:layout_above="@id/event_message"
             android:layout_centerHorizontal="true"
-            android:theme="@style/AppTheme.PrimaryAccent"
             style="?android:attr/progressBarStyleLarge"/>
+
     </RelativeLayout>
 
     <LinearLayout

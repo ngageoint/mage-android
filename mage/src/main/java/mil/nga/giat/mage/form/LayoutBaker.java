@@ -168,7 +168,7 @@ public class LayoutBaker {
 				int textMarginLeft = (int) (0 * density);
 				int textMarginRight = (int) (0 * density);
 				textParams.setMargins(textMarginLeft, textMarginTop, textMarginRight, textMarginBottom);
-				textView.setTextAppearance(context, mil.nga.giat.mage.R.style.EditTextView);
+				textView.setTextAppearance(context, R.style.ListTextPrimary);
 				break;
 			default:
 			case VIEW:
@@ -183,7 +183,7 @@ public class LayoutBaker {
 				textMarginLeft = (int) (0 * density);
 				textMarginRight = (int) (5 * density);
 				textParams.setMargins(textMarginLeft, textMarginTop, textMarginRight, textMarginBottom);
-				textView.setTextAppearance(context, mil.nga.giat.mage.R.style.ObservationPropertyLabel);
+				textView.setTextAppearance(context, R.style.ListTextSecondary);
 				break;
 			}
 			textView.setLayoutParams(textParams);
@@ -349,7 +349,7 @@ public class LayoutBaker {
 				mageTextView.setClickable(false);
 				mageTextView.setPropertyKey(name);
 				mageTextView.setPropertyType(MagePropertyType.STRING);
-				mageTextView.setTextAppearance(context, mil.nga.giat.mage.R.style.ObservationPropertyValue);
+				mageTextView.setTextAppearance(context, R.style.ListTextPrimary);
 				mageTextView.setPadding((int) (5 * density), (int) (5 * density), (int) (5 * density), (int) (5 * density));
 
 				LinearLayout linearLayout = new LinearLayout(context);

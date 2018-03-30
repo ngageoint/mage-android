@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="background">#303030</color>
+    <color name="background_card">#303030</color>
+    <color name="background_dialog">@color/md_grey_800</color>
+    <color name="background_transparent">#E7111111</color>
+
+    <color name="bottom_navigation_background">@color/md_blue_grey_700</color>
+
+    <color name="setting_sub_toolbar">@color/md_blue_grey_800</color>
+
+    <color name="divider">#19FFFFFF</color>
+
+    <color name="icon">#8A000000</color>
+
+</resources>

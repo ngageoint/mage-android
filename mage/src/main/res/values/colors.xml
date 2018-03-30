@@ -1,12 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <color name="background">@android:color/white</color>
+    <color name="background_card">#19000000</color>
+    <color name="background_dialog">@android:color/white</color>
+    <color name="background_transparent">#E7EEEEEE</color>
+
+    <color name="bottom_navigation_background">@android:color/white</color>
+
+    <color name="setting_sub_toolbar">@color/md_blue_200</color>
+
+    <color name="icon">#8A000000</color>
+
+    <color name="divider">#19000000</color>
+
     <color name="accuracy_circle_fill">#33007AFF</color>
     <color name="accuracy_circle_stroke">#FF007AFF</color>
 
     <color name="observation_favorite_active">#7ED31F</color>
-    <color name="observation_favorite_inactive">#8A000000</color>
+    <color name="observation_favorite_inactive">#737373</color>
 
-    <color name="observation_flag_active">#9C27B0</color>
+    <color name="observation_flag_active">#AB47BC</color>
+
+    <color name="observation_marker">#737373</color>
 
     <color name="line_default_color">#DE000000</color>
     <color name="fill_default_color">#20000000</color>

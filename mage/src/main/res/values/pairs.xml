@@ -53,5 +53,8 @@
     <string name="timeZoneKey">timeZones</string>
     <integer name="timeZoneDefaultValue">0</integer>
 
+    <!-- THEME -->
+    <string name="dayNightThemeKey">theme</string>
+    <integer name="dayNightThemeDefaultValue">1</integer>
 
 </resources>

@@ -43,6 +43,7 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.MapStyleOptions;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PolygonOptions;
@@ -162,6 +163,13 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
     public void onMapReady(GoogleMap map) {
         this.map = map;
         map.setOnCameraIdleListener(this);
+
+        int dayNightMode = getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK;
+        if (dayNightMode == Configuration.UI_MODE_NIGHT_NO) {
+            map.setMapStyle(null);
+        } else {
+            map.setMapStyle(MapStyleOptions.loadRawResourceStyle(getApplicationContext(), R.raw.map_theme_night));
+        }
     }
 
     /**

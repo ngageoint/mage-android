@@ -13,6 +13,7 @@ import android.preference.PreferenceManager;
 import android.support.multidex.MultiDexApplication;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.TaskStackBuilder;
+import android.support.v7.app.AppCompatDelegate;
 import android.util.Log;
 
 import mil.nga.giat.mage.login.LoginActivity;
@@ -68,6 +69,10 @@ public class MAGE extends MultiDexApplication implements ISessionEventListener, 
 		HttpClientManager.getInstance(getApplicationContext()).addListener(this);
 
 		registerActivityLifecycleCallbacks(this);
+
+		SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+		int dayNightTheme = preferences.getInt(getResources().getString(R.string.dayNightThemeKey), getResources().getInteger(R.integer.dayNightThemeDefaultValue));
+		AppCompatDelegate.setDefaultNightMode(dayNightTheme);
 
 		super.onCreate();
 	}

@@ -13,7 +13,7 @@
         android:paddingStart="8dp"
         android:fontFamily="sans-serif-medium"
         android:textSize="16sp"
-        android:text="Form Name"/>
+        android:theme="@style/ListSubheader"/>
 
 
     <LinearLayout
@@ -25,7 +25,7 @@
         android:focusable="true"
         android:focusableInTouchMode="true"
         android:orientation="vertical"
-        android:background="@color/md_white_1000">
+        android:background="@color/background_dialog">
 
         <!-- This will get populated programmatically -->
 

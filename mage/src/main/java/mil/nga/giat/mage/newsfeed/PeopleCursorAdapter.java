@@ -3,6 +3,10 @@ package mil.nga.giat.mage.newsfeed;
 import android.content.Context;
 import android.database.Cursor;
 import android.graphics.Bitmap;
+import android.graphics.PorterDuff;
+import android.graphics.drawable.Drawable;
+import android.support.v4.content.ContextCompat;
+import android.support.v4.graphics.drawable.DrawableCompat;
 import android.support.v4.graphics.drawable.RoundedBitmapDrawable;
 import android.support.v4.graphics.drawable.RoundedBitmapDrawableFactory;
 import android.util.Log;
@@ -61,13 +65,19 @@ public class PeopleCursorAdapter extends CursorAdapter {
 				return;
 			}
 
+			ImageView personImageView = (ImageView) v.findViewById(R.id.avatarImageView);
+			Drawable defaultPersonIcon = DrawableCompat.wrap(ContextCompat.getDrawable(context, R.drawable.ic_person_white_24dp));
+			DrawableCompat.setTint(defaultPersonIcon, ContextCompat.getColor(context, R.color.icon));
+			DrawableCompat.setTintMode(defaultPersonIcon, PorterDuff.Mode.SRC_ATOP);
+			personImageView.setImageDrawable(defaultPersonIcon);
+
 			final ImageView avatarView = (ImageView) v.findViewById(R.id.avatarImageView);
 			UserLocal userLocal = user.getUserLocal();
 			Glide.with(context)
 					.load(userLocal.getLocalAvatarPath())
 					.asBitmap()
-					.fallback(R.drawable.ic_person_gray_48dp)
-					.error(R.drawable.ic_person_gray_48dp)
+					.fallback(defaultPersonIcon)
+					.error(defaultPersonIcon)
 					.centerCrop()
 					.into(new BitmapImageViewTarget(avatarView) {
 						@Override
@@ -110,6 +120,6 @@ public class PeopleCursorAdapter extends CursorAdapter {
 
 	@Override
 	public View newView(Context context, Cursor cursor, ViewGroup parentView) {
-		return inflater.inflate(R.layout.people_list_item, parentView, false);
+		return LayoutInflater.from(parentView.getContext()).inflate(R.layout.people_list_item, parentView, false);
 	}
 }

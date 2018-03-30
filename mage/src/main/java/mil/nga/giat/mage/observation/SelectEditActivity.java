@@ -3,9 +3,9 @@ package mil.nga.giat.mage.observation;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.view.ContextThemeWrapper;
 import android.support.v7.widget.SearchView;
 import android.support.v7.widget.Toolbar;
+import android.view.ContextThemeWrapper;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -70,7 +70,7 @@ public class SelectEditActivity extends AppCompatActivity {
         filteredChoicesList.addAll(choicesList);
 
         choicesListView = (ListView) findViewById(R.id.select_choices);
-        ContextThemeWrapper wrapper = new ContextThemeWrapper(this, R.style.AppTheme_PrimaryAccent);
+        ContextThemeWrapper wrapper = new ContextThemeWrapper(this, R.style.AppTheme);
         if (isMultiSelect) {
             adapter = new ArrayAdapter<>(wrapper, android.R.layout.simple_list_item_multiple_choice, filteredChoicesList);
             choicesListView.setAdapter(adapter);
@@ -173,7 +173,7 @@ public class SelectEditActivity extends AppCompatActivity {
             }
         }
 
-        ContextThemeWrapper wrapper = new ContextThemeWrapper(this, R.style.AppTheme_PrimaryAccent);
+        ContextThemeWrapper wrapper = new ContextThemeWrapper(this, R.style.AppTheme);
         if (isMultiSelect) {
             adapter = new ArrayAdapter<>(wrapper, android.R.layout.simple_list_item_multiple_choice, filteredChoicesList);
             choicesListView.setAdapter(adapter);

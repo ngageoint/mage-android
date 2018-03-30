@@ -35,7 +35,6 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ListView;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -91,7 +90,6 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 	private static final String LOG_NAME = ObservationFeedFragment.class.getName();
 
 	private static final int PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 1;
-	private static final String BUNDLE_RECYCLER_LAYOUT = "BUNDLE_RECYCLER_LAYOUT";
 
 	private PreparedQuery<Observation> query;
 	private Dao<Observation, Long> oDao;
@@ -99,8 +97,6 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 	private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 	private ScheduledFuture<?> queryUpdateHandle;
 	private long requeryTime;
-	private ViewGroup footer;
-	private ListView lv;
 	private RecyclerView recyclerView;
 	private ObservationListAdapter adapter;
 

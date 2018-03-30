@@ -1,17 +1,24 @@
 <resources xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
+    <style name="AppTheme" parent="Theme.AppCompat.DayNight.DarkActionBar">
         <item name="colorPrimary">@color/md_blue_600</item>
         <item name="colorPrimaryDark">@color/md_blue_800</item>
-        <item name="colorAccent">@color/md_orange_A200</item>
+        <item name="colorAccent">@color/md_blue_600</item>
+
+        <item name="android:windowBackground">@color/background</item>
 
         <item name="preferenceTheme">@style/PreferenceThemeOverlay.v14.Material</item>
-
     </style>
 
     <style name="AppTheme.NoActionBar">
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
+    </style>
+
+    <style name="AppTheme.NoActionBar.White">
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+        <item name="colorAccent">@color/md_white_1000</item>
     </style>
 
     <style name="AppTheme.Toolbar">
@@ -26,7 +33,6 @@
     </style>
 
     <style name="AppTheme.PrimaryAccent">
-        <item name="colorAccent">?attr/colorPrimary</item>
     </style>
 
     <style name="AppTheme.White">
@@ -35,12 +41,19 @@
         <item name="editTextStyle">@style/AppTheme.EditTextStyle.White</item>
     </style>
 
+    <style name="AppTheme.TextInputLayout" parent="Widget.Design.TextInputLayout">
+        <item name="colorControlNormal">?attr/colorPrimary</item>
+        <item name="colorControlActivated">?attr/colorPrimary</item>
+        <item name="colorControlHighlight">?attr/colorPrimary</item>
+        <item name="passwordToggleTint">?attr/colorPrimary</item>
+    </style>
+
     <style name="AppTheme.EditTextStyle.White" parent="@style/Widget.AppCompat.EditText">
         <item name="android:textColor">@color/md_white_1000</item>
     </style>
 
     <style name="AppTheme.ErrorTextAppearance" parent="@style/TextAppearance.AppCompat">
-        <item name="android:textColor">#A8DD2C00</item>
+        <item name="android:textColor">#A8F44336</item>
     </style>
 
     <style name="AppTheme.Radio">

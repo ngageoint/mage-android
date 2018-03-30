@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="AppTheme.PrimaryButton.NoShadow">
+        <item name="colorAccent">?attr/colorPrimary</item>
+        <item name="android:buttonStyle">@style/AppTheme.NoShadowButton</item>
+    </style>
+
+    <style name="AppTheme.PrimaryDarkButton.NoShadow">
+        <item name="colorAccent">?attr/colorPrimaryDark</item>
+        <item name="android:buttonStyle">@style/AppTheme.NoShadowButton</item>
+    </style>
+
+</resources>

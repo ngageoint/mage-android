@@ -51,7 +51,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:visibility="gone"
-                android:background="@android:color/white">
+                android:background="@color/background">
 
                 <ProgressBar
                     style="?android:attr/progressBarStyleLarge"
@@ -78,8 +78,9 @@
                     <ImageView
                         android:layout_width="300dp"
                         android:layout_height="300dp"
-                        android:src="@drawable/ic_person_black_24dp"
-                        android:alpha=".54"/>
+                        android:src="@drawable/ic_person_white_48dp"
+                        android:alpha=".54"
+                        android:tint="#FFFFFF"/>
 
                     <TextView
                         android:layout_width="wrap_content"
