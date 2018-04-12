@@ -6,7 +6,9 @@ import com.j256.ormlite.table.DatabaseTable;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
+import java.util.Arrays;
 import java.util.Date;
+import java.util.List;
 
 @DatabaseTable(tableName = "users")
 public class User {
@@ -46,7 +48,7 @@ public class User {
 	private String iconUrl;
 
 	@DatabaseField
-	private String recentEventId;
+	private String recentEventIds;
 
 	@DatabaseField(canBeNull = false, foreign = true, foreignAutoRefresh = true, columnName = COLUMN_NAME_USER_LOCAL_ID)
 	private UserLocal userLocal;
@@ -55,7 +57,7 @@ public class User {
 		// ORMLite needs a no-arg constructor
 	}
 
-	public User(String remoteId, String username, String displayName, String email, String primaryPhone, String avatarUrl, String iconUrl, String recentEventId, Role role) {
+	public User(String remoteId, String username, String displayName, String email, String primaryPhone, String avatarUrl, String iconUrl, String recentEventIds, Role role) {
 		super();
 		this.remoteId = remoteId;
 		this.email = email;
@@ -64,7 +66,7 @@ public class User {
 		this.primaryPhone = primaryPhone;
 		this.avatarUrl = avatarUrl;
 		this.iconUrl = iconUrl;
-		this.recentEventId = recentEventId;
+		this.recentEventIds = recentEventIds;
 		this.role = role;
 	}
 
@@ -140,12 +142,12 @@ public class User {
 		this.iconUrl = iconUrl;
 	}
 
-	public String getRecentEventId() {
-		return recentEventId;
+	public List<String> getRecentEventIds() {
+ 		return Arrays.asList(recentEventIds.split(","));
 	}
 
-	public void setRecentEventId(String recentEventId) {
-		this.recentEventId = recentEventId;
+	public void setRecentEventIds(String recentEventIds) {
+		this.recentEventIds = recentEventIds;
 	}
 
 	public Role getRole() {

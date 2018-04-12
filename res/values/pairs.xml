@@ -94,7 +94,7 @@
     <integer name="compatibleVersionMajorDefaultValue">5</integer>
 
     <string name="compatibleVersionMinorKey">compatibleVersionMinor</string>
-    <integer name="compatibleVersionMinorDefaultValue">0</integer>
+    <integer name="compatibleVersionMinorDefaultValue">1</integer>
 
     <!-- from the server /api call -->
     <string name="serverVersionMajorKey">gVersionMajor</string>

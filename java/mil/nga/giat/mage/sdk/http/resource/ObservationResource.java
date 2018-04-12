@@ -342,7 +342,7 @@ public class ObservationResource {
         }
     }
 
-    public InputStream getObservationIcons(Event event) throws IOException {
+    public InputStream getObservationIcons(String eventId) throws IOException {
         String baseUrl = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.serverURLKey), context.getString(R.string.serverURLDefaultValue));
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl(baseUrl)
@@ -350,7 +350,7 @@ public class ObservationResource {
                 .build();
 
         ObservationService service = retrofit.create(ObservationService.class);
-        Response<ResponseBody> response = service.getObservationIcons(event.getRemoteId()).execute();
+        Response<ResponseBody> response = service.getObservationIcons(eventId).execute();
 
         InputStream inputStream = null;
         if (response.isSuccess()) {

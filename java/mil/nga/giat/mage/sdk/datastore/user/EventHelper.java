@@ -8,6 +8,8 @@ import com.j256.ormlite.stmt.DeleteBuilder;
 import com.j256.ormlite.stmt.QueryBuilder;
 import com.j256.ormlite.stmt.Where;
 
+import org.apache.commons.lang3.StringUtils;
+
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -221,13 +223,23 @@ public class EventHelper extends DaoHelper<Event> {
         return event;
     }
 
-    public Event getRecentEvent() throws EventException {
-        Event event = null;
+    public List<Event> getRecentEvents() throws EventException {
+        List<Event> events = new ArrayList<>();
         try {
             User user = UserHelper.getInstance(mApplicationContext).readCurrentUser();
             if (user != null) {
-                List<Event> events = eventDao.queryBuilder().limit(1l).where().eq(Event.COLUMN_NAME_REMOTE_ID, user.getRecentEventId()).query();
-                event = events.isEmpty() ? null : events.get(0);
+                List<String> recentEventIds = user.getRecentEventIds();
+                List<String> cases = new ArrayList<>(recentEventIds.size());
+                for (int i = 0; i < recentEventIds.size(); i++) {
+                    cases.add("WHEN " + recentEventIds.get(i) + " THEN " + i);
+                }
+
+                events = eventDao
+                    .queryBuilder()
+                    .orderByRaw(String.format("CASE %s %s END", Event.COLUMN_NAME_REMOTE_ID, StringUtils.join(cases, " ")))
+                    .where()
+                    .in(Event.COLUMN_NAME_REMOTE_ID, user.getRecentEventIds())
+                    .query();
             } else {
                 Log.d(LOG_NAME, "Current user is null.  Why?");
             }
@@ -235,7 +247,7 @@ public class EventHelper extends DaoHelper<Event> {
             throw new EventException("There was a problem reading users current event");
         }
 
-        return event;
+        return events;
     }
 
 

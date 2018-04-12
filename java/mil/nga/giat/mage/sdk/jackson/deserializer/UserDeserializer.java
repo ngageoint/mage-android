@@ -8,6 +8,8 @@ import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 
+import org.apache.commons.lang3.StringUtils;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -98,7 +100,7 @@ public class UserDeserializer extends Deserializer {
 			} else if ("iconUrl".equals(name)) {
 				user.setIconUrl(parser.getText());
 			}  else if ("recentEventIds".equals(name)) {
-				user.setRecentEventId(parseRecentEventId(parser));
+				user.setRecentEventIds(parseRecentEventIds(parser));
 			} else {
 				parser.skipChildren();
 			}
@@ -192,18 +194,16 @@ public class UserDeserializer extends Deserializer {
 		return phone;
 	}
 
-	private String parseRecentEventId(JsonParser parser) throws IOException {
+	private String parseRecentEventIds(JsonParser parser) throws IOException {
+		List<String> recentEventIds = new ArrayList<>();
+
 		if (parser.getCurrentToken() != JsonToken.START_ARRAY) return null;
 
-		String recentEventId = null;
 		while (parser.nextToken() != JsonToken.END_ARRAY) {
-			String eventId = parser.getText();
-			if (recentEventId == null) {
-				recentEventId = eventId;
-			}
+			recentEventIds.add(parser.getText());
 		}
 
-		return recentEventId;
+		return StringUtils.join(recentEventIds, ",");
 	}
 
 	private void getRoles() {
