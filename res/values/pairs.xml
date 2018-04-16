@@ -87,6 +87,8 @@
 
     <!-- ************** set in setdefaultpreferences.xml ************* -->
 
+    <string name="authenticationStrategiesKey">authenticationStrategies</string>
+
     <string name="passwordMinLengthKey">gAuthenticationStrategiesLocalPasswordMinLength</string>
     <integer name="passwordMinLengthDefaultValue">5</integer>
 

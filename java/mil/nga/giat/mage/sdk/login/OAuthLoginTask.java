@@ -17,6 +17,8 @@ import mil.nga.giat.mage.sdk.R;
 import mil.nga.giat.mage.sdk.datastore.DaoStore;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
+import mil.nga.giat.mage.sdk.http.resource.DeviceResource;
+import mil.nga.giat.mage.sdk.http.resource.UserResource;
 import mil.nga.giat.mage.sdk.jackson.deserializer.UserDeserializer;
 import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
 import mil.nga.giat.mage.sdk.utils.ISO8601DateFormatFactory;
@@ -48,21 +50,43 @@ public class OAuthLoginTask extends AbstractAccountTask {
 	 */
 	@Override
 	protected AccountStatus doInBackground(String... params) {
-		String json = params[0];
+		String strategy = params[0];
+		String uid = params[1];
+		String json = params[2];
 
 		SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(mApplicationContext);
-		SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(mApplicationContext).edit();
+		final SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(mApplicationContext).edit();
 
 		try {
-			JsonObject jsonObject = new JsonParser().parse(json).getAsJsonObject();
+			JsonObject authenticationJson = new JsonParser().parse(json).getAsJsonObject();
 
-			if (jsonObject.has("token") && jsonObject.has("user")) {
-				// put the token information in the shared preferences
-				String token = jsonObject.get("token").getAsString();
+			// Check if user is active
+			JsonObject userJson = authenticationJson.get("user").getAsJsonObject();
+			if (!userJson.has("active") || !userJson.get("active").getAsBoolean()) {
+				return new AccountStatus(AccountStatus.Status.SUCCESSFUL_SIGNUP);
+			}
+
+			if (authenticationJson.has("oauth")) {
+				String accessToken = authenticationJson.getAsJsonObject("oauth").get("access_token").getAsString();
+
+				UserResource userResource = new UserResource(mApplicationContext);
+				JsonObject authorizeResponse = userResource.authorize(strategy, uid, accessToken);
+				if (authorizeResponse == null) {
+					DeviceResource deviceResource = new DeviceResource(mApplicationContext);
+					JsonObject deviceJson = deviceResource.createOAuthDevice(strategy, accessToken, uid);
+					if (deviceJson.get("registered").getAsBoolean()) {
+						return new AccountStatus(AccountStatus.Status.ALREADY_REGISTERED);
+					} else {
+						return new AccountStatus(AccountStatus.Status.SUCCESSFUL_REGISTRATION);
+					}
+				}
+
+				// Successful login, put the token information in the shared preferences
+				String token = authorizeResponse.get("token").getAsString();
 				Log.d(LOG_NAME, "Storing token: " + token);
 				editor.putString(mApplicationContext.getString(mil.nga.giat.mage.sdk.R.string.tokenKey), token.trim());
 				try {
-					Date tokenExpiration = iso8601Format.parse(jsonObject.get("expirationDate").getAsString().trim());
+					Date tokenExpiration = iso8601Format.parse(authorizeResponse.get("expirationDate").getAsString().trim());
 					long tokenExpirationLength = tokenExpiration.getTime() - (new Date()).getTime();
 					editor.putString(mApplicationContext.getString(mil.nga.giat.mage.sdk.R.string.tokenExpirationDateKey), iso8601Format.format(tokenExpiration));
 					editor.putLong(mApplicationContext.getString(mil.nga.giat.mage.sdk.R.string.tokenExpirationLengthKey), tokenExpirationLength);
@@ -70,7 +94,7 @@ public class OAuthLoginTask extends AbstractAccountTask {
 					Log.e(LOG_NAME, "Problem parsing token expiration date.", e);
 				}
 
-				JsonObject userJson = jsonObject.getAsJsonObject("user");
+				userJson = authorizeResponse.getAsJsonObject("user");
 
 				// if user id is different, then clear the db
 				String oldUserId = sharedPreferences.getString(mApplicationContext.getString(R.string.usernameKey), null);
@@ -101,20 +125,9 @@ public class OAuthLoginTask extends AbstractAccountTask {
 				PreferenceHelper.getInstance(mApplicationContext).logKeyValuePairs();
 
 				editor.commit();
-				return new AccountStatus(AccountStatus.Status.SUCCESSFUL_LOGIN, new ArrayList<Integer>(), new ArrayList<String>(), jsonObject);
+
+				return new AccountStatus(AccountStatus.Status.SUCCESSFUL_LOGIN, new ArrayList<Integer>(), new ArrayList<String>(), authorizeResponse);
 			} else {
-				if (jsonObject.has("device")) {
-					JsonObject device = jsonObject.getAsJsonObject("device");
-					if (device != null && !device.get("registered").getAsBoolean()) {
-						JsonObject userJson = jsonObject.getAsJsonObject("user");
-						String userId = userJson.get("id").getAsString();
-
-						editor.putString(mApplicationContext.getString(R.string.usernameKey), userId);
-
-						return new AccountStatus(AccountStatus.Status.SUCCESSFUL_REGISTRATION);
-					}
-				}
-
 				return new AccountStatus(AccountStatus.Status.FAILED_LOGIN);
 			}
 		} catch (Exception e) {

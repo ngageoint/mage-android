@@ -8,6 +8,8 @@ import android.preference.PreferenceManager;
 import android.util.Log;
 
 import org.apache.commons.lang3.StringUtils;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.lang.reflect.Field;
 import java.util.LinkedHashSet;
@@ -115,6 +117,22 @@ public class PreferenceHelper implements SharedPreferences.OnSharedPreferenceCha
 			String valueType = (value == null) ? null : value.getClass().getName();
 			Log.d(LOG_NAME, "SharedPreferences contains (key, value, type): (" + String.valueOf(key) + ", " + String.valueOf(value) + ", " + String.valueOf(valueType) + ")");
 		}
+	}
+
+	public JSONObject getAuthenticationStrategies() {
+		JSONObject strategies = new JSONObject();
+
+		SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(mContext);
+		String strategiesJson = preferences.getString(mContext.getResources().getString(R.string.authenticationStrategiesKey), null);
+		if (strategiesJson != null) {
+			try {
+				strategies = new JSONObject(strategiesJson);
+			} catch (JSONException e) {
+				Log.e(LOG_NAME, "Error parsing authentication strategies", e);
+			}
+		}
+
+		return  strategies;
 	}
 
 	public boolean containsLocalAuthentication() {

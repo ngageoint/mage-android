@@ -29,6 +29,7 @@ public class ServerApi {
 
     private static final String LOG_NAME = ServerApi.class.getName();
     private static final String SERVER_API_PREFERENCE_PREFIX = "g";
+    private static final String SERVER_API_AUTHENTICATION_STRATEGIES_KEY = "authenticationStrategies";
 
     private Context context;
 
@@ -47,6 +48,7 @@ public class ServerApi {
                         JSONObject apiJson = new JSONObject(response.body().string());
                         removeValues(SERVER_API_PREFERENCE_PREFIX);
                         populateValues(SERVER_API_PREFERENCE_PREFIX, apiJson);
+                        parseAuthenticationStrategies(apiJson);
 
                         String message = null;
                         boolean isValid = isApiValid();
@@ -86,6 +88,20 @@ public class ServerApi {
         }
 
         return PreferenceHelper.getInstance(context).validateServerVersion(serverMajorVersion, serverMinorVersion);
+    }
+
+    private void parseAuthenticationStrategies(JSONObject json) {
+        try {
+            Object value = json.get(SERVER_API_AUTHENTICATION_STRATEGIES_KEY);
+            if (value instanceof  JSONObject) {
+                SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
+                SharedPreferences.Editor editor = sharedPreferences.edit();
+                editor.putString(context.getResources().getString(R.string.authenticationStrategiesKey), value.toString());
+                editor.apply();
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
     }
 
     /**

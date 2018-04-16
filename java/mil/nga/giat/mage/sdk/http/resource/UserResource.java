@@ -53,6 +53,9 @@ public class UserResource {
         @POST("/api/login")
         Call<JsonObject> login(@Body JsonObject body);
 
+        @POST("/auth/{strategy}/authorize")
+        Call<JsonObject> authorize(@Path("strategy") String strategy, @Body JsonObject body);
+
         @POST("/api/logout")
         Call<ResponseBody> logout();
 
@@ -130,6 +133,47 @@ public class UserResource {
         }
 
         return loginJson;
+    }
+
+    public JsonObject authorize(String strategy, String uid, String accessToken) {
+        JsonObject body = null;
+
+        String baseUrl = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.serverURLKey), context.getString(R.string.serverURLDefaultValue));
+
+        try {
+            Retrofit retrofit = new Retrofit.Builder()
+                    .baseUrl(baseUrl)
+                    .addConverterFactory(GsonConverterFactory.create())
+                    .client(HttpClientManager.getInstance(context).httpClient())
+                    .build();
+
+            UserService service = retrofit.create(UserService.class);
+
+            JsonObject json = new JsonObject();
+            json.addProperty("uid", uid);
+            json.addProperty("access_token", accessToken);
+
+            try {
+                PackageInfo packageInfo = context.getPackageManager().getPackageInfo(context.getPackageName(), 0);
+                json.addProperty("appVersion", String.format("%s-%s", packageInfo.versionName, packageInfo.versionCode));
+            } catch (PackageManager.NameNotFoundException e) {
+                Log.e(LOG_NAME , "Problem retrieving package info.", e);
+            }
+
+            Response<JsonObject> response = service.authorize(strategy, json).execute();
+            if (response.isSuccess()) {
+                body = response.body();
+            } else {
+                Log.e(LOG_NAME, "Bad request.");
+                if (response.errorBody() != null) {
+                    Log.e(LOG_NAME, response.errorBody().string());
+                }
+            }
+        } catch (Exception e) {
+            Log.e(LOG_NAME, "Bad request.", e);
+        }
+
+        return body;
     }
 
     public boolean logout() {
