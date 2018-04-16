@@ -7,19 +7,37 @@ import android.content.DialogInterface.OnClickListener;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
+import android.content.res.ColorStateList;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffColorFilter;
 import android.graphics.Typeface;
+import android.graphics.drawable.LayerDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.design.widget.TextInputLayout;
+import android.support.v13.view.ViewCompat;
 import android.support.v4.app.FragmentManager;
+import android.support.v4.content.ContextCompat;
+import android.support.v4.graphics.drawable.RoundedBitmapDrawable;
+import android.support.v4.graphics.drawable.RoundedBitmapDrawableFactory;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
+import android.util.Base64;
+import android.util.DisplayMetrics;
 import android.util.Log;
+import android.util.TypedValue;
+import android.view.Gravity;
 import android.view.KeyEvent;
+import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnTouchListener;
@@ -27,15 +45,21 @@ import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 
 import org.apache.commons.lang3.StringUtils;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import mil.nga.giat.mage.LandingActivity;
 import mil.nga.giat.mage.MAGE;
@@ -295,11 +319,30 @@ public class LoginActivity extends AppCompatActivity implements LoginFragment.Lo
 	private void configureLogin() {
 		PreferenceHelper preferenceHelper = PreferenceHelper.getInstance(getApplicationContext());
 
-		boolean localAuthentication = preferenceHelper.containsLocalAuthentication();
-		boolean googleAuthentication = preferenceHelper.containsGoogleAuthentication();
+		boolean localAuthentication = false;
+		Map<String, JSONObject> oauthStratigies = new HashMap<>();
 
-		findViewById(R.id.or).setVisibility(localAuthentication && googleAuthentication ? View.VISIBLE : View.GONE);
-		findViewById(R.id.sign_up).setVisibility(localAuthentication || googleAuthentication ? View.VISIBLE : View.GONE);
+		// TODO marshal this to POJOs with Jackson
+		JSONObject authenticationStrategies = preferenceHelper.getAuthenticationStrategies();
+		Iterator<String> iterator = authenticationStrategies.keys();
+		while (iterator.hasNext()) {
+			String strategyKey = iterator.next();
+
+			if ("local".equals(strategyKey)) {
+				localAuthentication = true;
+				continue;
+			}
+
+			try {
+				JSONObject strategy = (JSONObject) authenticationStrategies.get(strategyKey);
+				oauthStratigies.put(strategyKey, strategy);
+			} catch (JSONException e) {
+				e.printStackTrace();
+			}
+		}
+
+		findViewById(R.id.or).setVisibility(localAuthentication && oauthStratigies.size() > 0 ? View.VISIBLE : View.GONE);
+		findViewById(R.id.sign_up).setVisibility(localAuthentication || oauthStratigies.size() > 0 ? View.VISIBLE : View.GONE);
 
 		if (localAuthentication) {
 			Button localButton = (Button) findViewById(R.id.local_login_button);
@@ -314,18 +357,93 @@ public class LoginActivity extends AppCompatActivity implements LoginFragment.Lo
 			findViewById(R.id.local_auth).setVisibility(View.GONE);
 		}
 
-		if (googleAuthentication) {
-			Button googleButton = (Button) findViewById(R.id.google_login_button);
-			googleButton.setOnClickListener(new View.OnClickListener() {
+		LinearLayout oauthLayout = (LinearLayout) findViewById(R.id.third_party_auth);
+		if (oauthStratigies.size() > 0) {
+			oauthLayout.removeAllViews();
+			oauthLayout.setVisibility(View.VISIBLE);
+		}
+
+		LayoutInflater inflater = getLayoutInflater();
+		for (final Map.Entry<String, JSONObject> entry : oauthStratigies.entrySet()) {
+			Button oauthButton = null;
+
+			// TODO Google is special in that it has its own button style
+			// Investigate making this generic like the rest of the strategies
+			if ("google".equals(entry.getKey())) {
+				oauthButton = (Button) findViewById(R.id.google_login_button);
+				findViewById(R.id.google_login_button).setVisibility(View.VISIBLE);
+			} else  {
+				findViewById(R.id.google_login_button).setVisibility(View.GONE);
+
+				try {
+					JSONObject strategy = entry.getValue();
+
+					if (!strategy.has("type") || "!oauth2".equals(strategy.getString("type"))) {
+						continue;
+					}
+
+					View oauthView = inflater.inflate(R.layout.view_oauth, null);
+					oauthButton = (Button) oauthView.findViewById(R.id.oauth_button);
+
+					if (strategy.has("title")) {
+						oauthButton.setText(String.format("Sign In With %s", strategy.getString("title")));
+					}
+
+					if (strategy.has("textColor")) {
+						oauthButton.setTextColor(Color.parseColor(strategy.getString("textColor")));
+					}
+
+					if (strategy.has("buttonColor")) {
+                        ColorStateList csl = new ColorStateList(new int[][]{{}}, new int[]{Color.parseColor(strategy.getString("buttonColor"))});
+                        ViewCompat.setBackgroundTintList(oauthButton, csl);
+					}
+
+					if (strategy.has("icon")) {
+						byte[] decodedString = Base64.decode(strategy.getString("icon"), Base64.DEFAULT);
+						Bitmap bitmap = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
+						int size = (18 * getApplicationContext().getResources().getDisplayMetrics().densityDpi) / DisplayMetrics.DENSITY_DEFAULT;
+						RoundedBitmapDrawable icon = RoundedBitmapDrawableFactory.create(getResources(), Bitmap.createScaledBitmap(bitmap, size, size, true));
+						icon.setGravity(Gravity.CENTER);
+
+						LayerDrawable ld = (LayerDrawable) ContextCompat.getDrawable(getApplicationContext(), R.drawable.oauth_icon).mutate();
+						ld.setDrawableByLayerId(R.id.icon, icon);
+
+						ld.setLayerInset(1,
+								(int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, -7, getResources().getDisplayMetrics()),
+								0,
+								0,
+								0);
+
+						oauthButton.setCompoundDrawablesWithIntrinsicBounds(ld, null, null, null);
+					} else if (strategy.has("buttonColor")) {
+						// No icon from server, color the default icon the same color as the button color
+						Bitmap defaultIcon = BitmapFactory.decodeResource(getResources(), R.drawable.ic_security_white_18dp);
+						Paint paint = new Paint();
+						paint.setColorFilter(new PorterDuffColorFilter(Color.parseColor(strategy.getString("buttonColor")), PorterDuff.Mode.SRC_IN));
+						Bitmap coloredIcon = Bitmap.createBitmap(defaultIcon.getWidth(), defaultIcon.getHeight(), Bitmap.Config.ARGB_8888);
+						Canvas canvas = new Canvas(coloredIcon);
+						canvas.drawBitmap(defaultIcon, 0, 0, paint);
+
+						RoundedBitmapDrawable drawable = RoundedBitmapDrawableFactory.create(getResources(), coloredIcon);
+						drawable.setGravity(Gravity.CENTER);
+
+						LayerDrawable ld = (LayerDrawable) ContextCompat.getDrawable(getApplicationContext(), R.drawable.oauth_icon).mutate();
+						ld.setDrawableByLayerId(R.id.icon, drawable);
+						oauthButton.setCompoundDrawablesWithIntrinsicBounds(ld, null, null, null);
+					}
+
+					oauthLayout.addView(oauthView);
+				} catch (JSONException e) {
+					e.printStackTrace();
+				}
+			}
+
+			oauthButton.setOnClickListener(new View.OnClickListener() {
 				@Override
 				public void onClick(View v) {
-					googleLogin();
+					oauthLogin(entry.getKey());
 				}
 			});
-			findViewById(R.id.third_party_auth).setVisibility(View.VISIBLE);
-
-		} else {
-			findViewById(R.id.third_party_auth).setVisibility(View.GONE);
 		}
 	}
 
@@ -443,11 +561,11 @@ public class LoginActivity extends AppCompatActivity implements LoginFragment.Lo
 		loginFragment.authenticate(credentialsArray);
 	}
 
-	private void googleLogin() {
+	private void oauthLogin(String strategy) {
 		Intent intent = new Intent(getApplicationContext(), OAuthActivity.class);
 		intent.putExtra(OAuthActivity.EXTRA_SERVER_URL, mServerURL.getText());
-		intent.putExtra(OAuthActivity.EXTRA_OAUTH_URL, mServerURL.getText() + "/auth/google/signin");
 		intent.putExtra(OAuthActivity.EXTRA_OAUTH_TYPE, OAuthActivity.OAuthType.SIGNIN);
+		intent.putExtra(OAuthActivity.EXTRA_OAUTH_STRATEGY, strategy);
 		startActivityForResult(intent, EXTRA_OAUTH_RESULT);
 	}
 
@@ -649,8 +767,8 @@ public class LoginActivity extends AppCompatActivity implements LoginFragment.Lo
 
 	private void showOAuthErrorDialog() {
 		new AlertDialog.Builder(this)
-				.setTitle("Login failed")
-				.setMessage("Could not login w/ account. Either your account does not exist or it has not been approved.")
+				.setTitle("Inactive MAGE Account")
+				.setMessage("Please contact a MAGE administrator to activate your account.")
 				.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
 					public void onClick(DialogInterface dialog, int which) {
 						findViewById(R.id.login_status).setVisibility(View.GONE);

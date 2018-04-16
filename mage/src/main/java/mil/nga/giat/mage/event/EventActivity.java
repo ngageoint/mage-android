@@ -103,6 +103,7 @@ public class EventActivity extends AppCompatActivity implements EventsFetchFragm
 			Log.e(LOG_NAME, "User is part of no events!");
 
 			((MAGE) getApplication()).onLogout(true, null);
+			searchView.setVisibility(View.GONE);
 			findViewById(R.id.event_status).setVisibility(View.GONE);
 			findViewById(R.id.event_serverproblem_info).setVisibility(View.GONE);
 
