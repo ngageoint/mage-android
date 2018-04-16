@@ -17,6 +17,7 @@ import android.support.v7.app.AppCompatDelegate;
 import android.util.Log;
 
 import mil.nga.giat.mage.login.LoginActivity;
+import mil.nga.giat.mage.login.OAuthActivity;
 import mil.nga.giat.mage.login.ServerUrlActivity;
 import mil.nga.giat.mage.login.SignupActivity;
 import mil.nga.giat.mage.observation.ObservationNotificationListener;
@@ -327,6 +328,7 @@ public class MAGE extends MultiDexApplication implements ISessionEventListener, 
 
 		if (runningActivity != null &&
 				!(runningActivity instanceof LoginActivity) &&
+				!(runningActivity instanceof OAuthActivity) &&
 				!(runningActivity instanceof SignupActivity) &&
 				!(runningActivity instanceof ServerUrlActivity)) {
 			forceLogin(true);
@@ -348,6 +350,7 @@ public class MAGE extends MultiDexApplication implements ISessionEventListener, 
 
 		if (UserUtility.getInstance(getApplicationContext()).isTokenExpired() &&
 				!(activity instanceof LoginActivity) &&
+				!(activity instanceof OAuthActivity) &&
 				!(activity instanceof SignupActivity) &&
 				!(activity instanceof ServerUrlActivity)) {
 			forceLogin(false);

@@ -36,12 +36,13 @@ public class OAuthActivity extends FragmentActivity implements AccountDelegate {
     private static final String LOG_NAME = OAuthActivity.class.getName();
 
     public static final String EXTRA_SERVER_URL = "EXTRA_SERVER_URL";
-    public static final String EXTRA_OAUTH_URL = "EXTRA_OAUTH_URL";
     public static final String EXTRA_OAUTH_TYPE = "EXTRA_OAUTH_TYPE";
+    public static final String EXTRA_OAUTH_STRATEGY = "EXTRA_OAUTH_STRATEGY";
 
     private String serverURL;
     private String oauthURL;
     private OAuthType oauthType;
+    private String oauthStrategy;
 
     private WebView webView;
     private View progress;
@@ -53,8 +54,9 @@ public class OAuthActivity extends FragmentActivity implements AccountDelegate {
         setContentView(R.layout.activity_oauth);
 
         serverURL = getIntent().getStringExtra(EXTRA_SERVER_URL);
-        oauthURL = getIntent().getStringExtra(EXTRA_OAUTH_URL);
         oauthType = (OAuthType) getIntent().getSerializableExtra(EXTRA_OAUTH_TYPE);
+        oauthStrategy = getIntent().getStringExtra(EXTRA_OAUTH_STRATEGY);
+        oauthURL = String.format("%s/auth/%s/signin", serverURL, oauthStrategy);
 
         uuid = new DeviceUuidFactory(this).getDeviceUuid().toString();
 
@@ -69,14 +71,14 @@ public class OAuthActivity extends FragmentActivity implements AccountDelegate {
             public void onPageFinished(WebView view, String url) {
                 progress.setVisibility(View.INVISIBLE);
 
-                if (url.startsWith(serverURL + "/auth/google/callback")) {
+                 if (url.contains("/callback")) {
                     webView.setVisibility(View.INVISIBLE);
                     webView.loadUrl("javascript:Android.getLogin(JSON.stringify(login));");
                 }
             }
         });
 
-        webView.loadUrl(oauthURL + "?uid=" + uuid);
+        webView.loadUrl(oauthURL);
     }
 
     @JavascriptInterface
@@ -85,7 +87,7 @@ public class OAuthActivity extends FragmentActivity implements AccountDelegate {
                 new OAuthLoginTask(this, getApplicationContext()) :
                 new OAuthSignupTask(this, getApplicationContext());
 
-        loginTask.execute(new String[]{ login });
+        loginTask.execute(new String[]{ oauthStrategy, uuid, login });
     }
 
     @Override

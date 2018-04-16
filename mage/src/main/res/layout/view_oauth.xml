@@ -1,0 +1,18 @@
+ <RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+     <Button
+         android:id="@+id/oauth_button"
+         android:layout_width="match_parent"
+         android:layout_height="wrap_content"
+         android:layout_marginTop="4dp"
+         android:layout_marginBottom="4dp"
+         android:drawablePadding="0dp"
+         android:backgroundTint="?attr/colorPrimary"
+         android:drawableLeft="@drawable/oauth_icon"
+         android:textColor="@color/md_white_1000"
+         android:text="Sign In" />
+
+</RelativeLayout>

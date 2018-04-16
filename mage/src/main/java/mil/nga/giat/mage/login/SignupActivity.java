@@ -204,7 +204,6 @@ public class SignupActivity extends AppCompatActivity implements AccountDelegate
 	private void googleSignup() {
 		Intent intent = new Intent(getApplicationContext(), OAuthActivity.class);
 		intent.putExtra(OAuthActivity.EXTRA_SERVER_URL, serverURL);
-		intent.putExtra(OAuthActivity.EXTRA_OAUTH_URL, serverURL + "/auth/google/signup");
 		intent.putExtra(OAuthActivity.EXTRA_OAUTH_TYPE, OAuthActivity.OAuthType.SIGINUP);
 		startActivityForResult(intent, EXTRA_OAUTH_RESULT);
 	}
