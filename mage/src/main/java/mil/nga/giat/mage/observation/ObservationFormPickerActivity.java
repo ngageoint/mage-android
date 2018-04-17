@@ -3,8 +3,10 @@ package mil.nga.giat.mage.observation;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
-import android.graphics.PorterDuff;
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.LayerDrawable;
 import android.os.Bundle;
+import android.support.v4.graphics.drawable.DrawableCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -129,7 +131,10 @@ public class ObservationFormPickerActivity extends AppCompatActivity implements 
             String color = formDefinition.get("color").getAsString();
             // Lets add a tiny bit of transparency to soften things up.
             color = "#D7" + color.substring(1, color.length());
-            holder.icon.getDrawable().mutate().setColorFilter(Color.parseColor(color), PorterDuff.Mode.SRC_IN);
+
+            LayerDrawable pickerIcon = (LayerDrawable) holder.icon.getDrawable();
+            Drawable background = pickerIcon.findDrawableByLayerId(R.id.background);
+            DrawableCompat.setTint(background, Color.parseColor(color));
         }
 
         private void onFormClicked(JsonObject formDefinition) {

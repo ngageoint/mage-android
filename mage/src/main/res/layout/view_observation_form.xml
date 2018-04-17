@@ -14,17 +14,18 @@
         android:id="@+id/icon"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:src="@drawable/observation_form_icon"
+        android:src="@drawable/form_picker_icon"
         android:background="?attr/selectableItemBackgroundBorderless"/>
 
     <TextView
         android:id="@+id/name"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
         android:layout_marginTop="8dp"
         android:gravity="center"
         android:textSize="18sp"
         android:fontFamily="sans-serif-medium"
-        android:text="Form Text" />
+        android:maxLines="100"
+        android:singleLine="false" />
 
 </LinearLayout>

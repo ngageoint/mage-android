@@ -3,9 +3,25 @@ All notable changes to this project will be documented in this file.
 Adheres to [Semantic Versioning](http://semver.org/).
 
 ---
-## 6.0.4 (TBD)
+## 6.1.1 (TBD)
 
 * TBD
+
+##### Features
+
+##### Bug Fixes
+
+## [6.1.0](https://github.com/ngageoint/mage-android/releases/tag/6.1.0) (04-16-2018)
+
+##### Features
+* Pull users, teams and icons based on event picked.  We no longer pull all users, teams and icons for all events when logging in, this will vastly
+  improve performance on login.
+* Added Night theme. Users can now maunally switch betweem light (current) an dark themes, or automatically switch based on Androids day/night configuration.
+* Support generic oauth configuration coming from server authentication strategies.
+
+##### Bug Fixes
+
+## [6.0.4](https://github.com/ngageoint/mage-android/releases/tag/6.0.4) (02-19-2018)
 
 ##### Features
 
