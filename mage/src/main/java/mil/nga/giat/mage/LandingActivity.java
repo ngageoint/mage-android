@@ -148,18 +148,18 @@ public class LandingActivity extends AppCompatActivity implements NavigationView
         navigationView = (NavigationView) findViewById(R.id.navigation);
         navigationView.setNavigationItemSelectedListener(this);
 
-        int numberOfEvents = EventHelper.getInstance(getApplicationContext()).getEventsForCurrentUser().size();
         try {
+            int numberOfEvents = EventHelper.getInstance(getApplicationContext()).readAll().size();
             if (UserHelper.getInstance(getApplicationContext()).readCurrentUser().getRole().equals(RoleHelper.getInstance(getApplicationContext()).readAdmin())) {
                 // now that ADMINS can be part of any event
                 numberOfEvents = EventHelper.getInstance(getApplicationContext()).readAll().size();
             }
+
+            if (numberOfEvents <= 1) {
+                navigationView.getMenu().removeItem(R.id.events_navigation);
+            }
         } catch(Exception e) {
             Log.e(LOG_NAME, "Problem pulling events for this admin.");
-        }
-
-        if (numberOfEvents <= 1) {
-            navigationView.getMenu().removeItem(R.id.events_navigation);
         }
 
         View headerView = navigationView.getHeaderView(0);
