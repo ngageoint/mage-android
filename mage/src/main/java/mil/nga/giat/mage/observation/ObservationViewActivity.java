@@ -105,7 +105,7 @@ public class ObservationViewActivity extends AppCompatActivity implements OnMapR
 		try {
 			currentUser = UserHelper.getInstance(this).readCurrentUser();
 			hasEventUpdatePermission = currentUser.getRole().getPermissions().getPermissions().contains(Permission.UPDATE_EVENT);
-		} catch (UserException e) {
+		} catch (Exception e) {
 			Log.e(LOG_NAME, "Cannot read current user");
 		}
 
@@ -125,10 +125,9 @@ public class ObservationViewActivity extends AppCompatActivity implements OnMapR
 		}
 
 		try {
-			User user = UserHelper.getInstance(getApplicationContext()).readCurrentUser();
-			Collection<Permission> permissions = user.getRole().getPermissions().getPermissions();
+			Collection<Permission> permissions = currentUser.getRole().getPermissions().getPermissions();
 			canEditObservation = permissions.contains(Permission.UPDATE_OBSERVATION_ALL) || permissions.contains(Permission.UPDATE_OBSERVATION_EVENT);
-		} catch (UserException e) {
+		} catch (Exception e) {
 			Log.e(LOG_NAME, "Cannot read current user", e);
 		}
 

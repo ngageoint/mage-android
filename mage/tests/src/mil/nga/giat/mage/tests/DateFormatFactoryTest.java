@@ -8,11 +8,11 @@ import junit.framework.TestCase;
 import java.text.ParseException;
 import java.util.Date;
 
-import mil.nga.giat.mage.sdk.utils.DateFormatFactory;
+import mil.nga.giat.mage.sdk.utils.ISO8601DateFormatFactory;
 
 /**
  *
- * Unit test that tests the {@link mil.nga.giat.mage.sdk.utils.DateFormatFactory}
+ * Unit test that tests the {@link mil.nga.giat.mage.sdk.utils.ISO8601DateFormatFactory}
  *
  * @author wiedemanns
  */
@@ -25,7 +25,7 @@ public class DateFormatFactoryTest extends TestCase {
 		Date nowBefore = new Date();
 		Date nowAfter = null;
 		try {
-			nowAfter = DateFormatFactory.ISO8601().parse(DateFormatFactory.ISO8601().format(nowBefore));
+			nowAfter = ISO8601DateFormatFactory.ISO8601().parse(ISO8601DateFormatFactory.ISO8601().format(nowBefore));
 		} catch(ParseException pe) {
 			Log.e(LOG_NAME, "Could not parse date.");
 		}

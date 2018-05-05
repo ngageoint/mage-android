@@ -2,6 +2,7 @@ package mil.nga.giat.mage.tests;
 
 import android.test.ActivityInstrumentationTestCase2;
 import android.test.suitebuilder.annotation.MediumTest;
+import android.util.Log;
 import android.view.View;
 import android.widget.LinearLayout;
 
@@ -11,15 +12,16 @@ import com.google.gson.JsonParser;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
 import mil.nga.giat.mage.form.LayoutBaker;
 import mil.nga.giat.mage.observation.ObservationViewActivity;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
+import mil.nga.giat.mage.sdk.datastore.observation.ObservationForm;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationProperty;
-import mil.nga.giat.mage.sdk.utils.DateFormatFactory;
+import mil.nga.wkb.geom.Geometry;
+import mil.nga.wkb.geom.Point;
 
 /**
  *
@@ -46,25 +48,9 @@ public class LayoutBakerTest extends ActivityInstrumentationTestCase2<Observatio
 	@MediumTest
 	public void testDynamicLayoutMapping() {
 
-		String form = "{\n" +
-				"    \"variantField\": null,\n" +
+		String jsonForm = "{\n" +
+				"    \"id\": 1,\n" +
 				"    \"fields\": [\n" +
-				"      {\n" +
-				"        \"id\": 1,\n" +
-				"        \"title\": \"Date\",\n" +
-				"        \"type\": \"date\",\n" +
-				"        \"required\": true,\n" +
-				"        \"name\": \"timestamp\",\n" +
-				"        \"choices\": []\n" +
-				"      },\n" +
-				"      {\n" +
-				"        \"id\": 2,\n" +
-				"        \"title\": \"Location\",\n" +
-				"        \"type\": \"geometry\",\n" +
-				"        \"required\": true,\n" +
-				"        \"name\": \"geometry\",\n" +
-				"        \"choices\": []\n" +
-				"      },\n" +
 				"      {\n" +
 				"        \"id\": 3,\n" +
 				"        \"title\": \"Type\",\n" +
@@ -82,31 +68,40 @@ public class LayoutBakerTest extends ActivityInstrumentationTestCase2<Observatio
 				"    ]\n" +
 				"  }";
 
-		JsonObject dynamicFormJson = new JsonParser().parse(form).getAsJsonObject();
+		final JsonObject dynamicFormJson = new JsonParser().parse(jsonForm).getAsJsonObject();
+		List<JsonObject> formDefinitions = new ArrayList<JsonObject>() {{ add(dynamicFormJson); }};
 
-		List<View> controls = LayoutBaker.createControlsFromJson(activity, LayoutBaker.ControlGenerationType.VIEW, dynamicFormJson);
+		Map<Long, Collection<View>> controls = LayoutBaker.createControls(activity, LayoutBaker.ControlGenerationType.VIEW, formDefinitions);
 
-		Collection<ObservationProperty> properties = new ArrayList<ObservationProperty>();
+		Collection<ObservationProperty> properties = new ArrayList<>();
 		properties.add(new ObservationProperty("type", "awesome"));
-		properties.add(new ObservationProperty("timestamp", DateFormatFactory.ISO8601().format(new Date())));
 
-		Observation o = new Observation(null, properties, null, null, null);
+		final ObservationForm form = new ObservationForm();
+		form.addProperties(properties);
+		Collection<ObservationForm> forms = new ArrayList() {{ add(form); }};
 
-		final Map<String, ObservationProperty> propertiesMapBefore = o.getPropertiesMap();
+		Geometry geometry = new Point();
+		Observation o = new Observation(geometry, forms, null, null, null);
+
+		final Map<String, ObservationProperty> propertiesMapBefore = form.getPropertiesMap();
 
 		LinearLayout ll = new LinearLayout(activity);
 
 		// add dynamic controls to view
-		LayoutBaker.populateLayoutWithControls(ll, controls);
+		LayoutBaker.populateLayoutWithControls(ll, controls.entrySet().iterator().next().getValue());
 
 		// check two way mapping
-		LayoutBaker.populateLayoutFromMap(ll, LayoutBaker.ControlGenerationType.VIEW, propertiesMapBefore);
+		LayoutBaker.populateLayout(ll, LayoutBaker.ControlGenerationType.VIEW, propertiesMapBefore);
 
-		final Map<String, ObservationProperty> propertiesMapAfter = LayoutBaker.populateMapFromLayout(ll);
+		final Map<Long, Map<String, ObservationProperty>> formsMapAfter = LayoutBaker.populateMapFromForms(controls);
 
+		Map<String, ObservationProperty>  propertiesMapAfter = formsMapAfter.entrySet().iterator().next().getValue();
 		for(String key : propertiesMapBefore.keySet()) {
 			Serializable before = propertiesMapBefore.get(key).getValue();
 			Serializable after = propertiesMapAfter.get(key).getValue();
+
+			Log.i(LOG_NAME, "Before property" + before);
+			Log.i(LOG_NAME, "After property" + after);
 
 			assertEquals(before, after);
 		}
