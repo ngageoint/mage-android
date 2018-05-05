@@ -206,7 +206,7 @@ This product includes software licensed under the Apache License version 2.0 htt
 - **Jackson JSON Processor**  
 This product includes software licensed under the Apache License version 2.0 http://www.apache.org/licenses/LICENSE-2.0
 
-- **JTS Topolgy Suite**  
+- **JTS Topology Suite**  
 *Copyright © 2014 Vivid Solutions Inc.*  
 This product includes software licensed under the GNU Lesser General Public License v3 https://www.gnu.org/licenses/lgpl.html
 
