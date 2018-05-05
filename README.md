@@ -116,21 +116,21 @@ To link the MAGE application with this api key you have just made, you must edit
 
 The MAGE Android application (apk) is built using [gradle](http://gradle.org/).  These instructions build a debug version of the application that is **not for release**.
 
-Before you build the MAGE Android application, make sure to download and build the MAGE [sdk](https://github.com/ngageoint/mage-android-sdk) dependency first.
+Before you build the MAGE Android application, make sure to download, build and deploy the [MAGE SDK](https://github.com/ngageoint/mage-android-sdk#how-to-build) dependency to your local maven repository first.
 
 This command will create the Android package that you will install on the phone:
 
 ```bash
 ./gradlew clean
-./gradlew assembleLocalDebug
-file ./mage/build/outputs/apk/mage-local-debug.apk
+./gradlew assembleDebug
+file ./mage/build/outputs/apk/mage-android-defaults-debug.apk
 ```
 
 ### Install
 
 With a device connected to your machine, you can install the MAGE app with the following command:
 ```bash
-./gradlew installLocalDebug
+./gradlew installDefaultsDebug
 ```
 
 ### Test
