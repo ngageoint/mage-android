@@ -137,7 +137,7 @@ With a device connected to your machine, you can install the MAGE app with the f
 
 Run the tests on your device:
 ```bash
-./gradlew connectedAndroidTestLocalDebug
+./gradlew connectedDefaultsDebugAndroidTest
 ```
 
 ## Pull Requests
