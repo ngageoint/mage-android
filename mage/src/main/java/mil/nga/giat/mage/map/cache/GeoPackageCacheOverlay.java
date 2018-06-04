@@ -19,14 +19,18 @@ public class GeoPackageCacheOverlay extends CacheOverlay {
      */
     private Map<String, CacheOverlay> tables = new LinkedHashMap<String, CacheOverlay>();
 
+    private String filePath;
+
     /**
      * Constructor
      *
      * @param name   GeoPackage name
      * @param tables tables
      */
-    public GeoPackageCacheOverlay(String name, List<GeoPackageTableCacheOverlay> tables) {
+    public GeoPackageCacheOverlay(String name, String filePath, List<GeoPackageTableCacheOverlay> tables) {
         super(name, CacheOverlayType.GEOPACKAGE, true);
+
+        this.filePath = filePath;
 
         for (GeoPackageTableCacheOverlay table : tables) {
             table.setParent(this);
@@ -38,6 +42,10 @@ public class GeoPackageCacheOverlay extends CacheOverlay {
             }
             this.tables.put(table.getCacheName(), table);
         }
+    }
+
+    public String getFilePath() {
+        return filePath;
     }
 
     @Override

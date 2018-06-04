@@ -5,6 +5,8 @@
     <color name="background_dialog">@android:color/white</color>
     <color name="background_transparent">#E7EEEEEE</color>
 
+    <color name="download_icon">@color/md_blue_600</color>
+
     <color name="bottom_navigation_background">@android:color/white</color>
 
     <color name="setting_sub_toolbar">@color/md_blue_200</color>

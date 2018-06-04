@@ -149,7 +149,7 @@ public class FeatureOverlayPreferenceActivity extends AppCompatActivity {
                     Collection<Layer> layers = new ArrayList<>();
 
                     try {
-                        layers = LayerHelper.getInstance(getActivity()).readByEvent(EventHelper.getInstance(getActivity()).getCurrentEvent());
+                        layers = LayerHelper.getInstance(getActivity()).readByEvent(EventHelper.getInstance(getActivity()).getCurrentEvent(), "Feature");
                     } catch(Exception e) {
                         Log.e(LOG_NAME, "Problem getting layers.", e);
                     }
@@ -184,6 +184,11 @@ public class FeatureOverlayPreferenceActivity extends AppCompatActivity {
                     getListView().setEnabled(true);
                 }
             });
+        }
+
+        @Override
+        public void onLayerUpdated(Layer layer) {
+
         }
 
         @Override
