@@ -8,9 +8,13 @@ Adheres to [Semantic Versioning](http://semver.org/).
 * TBD
 
 ##### Features
+* Beta Geopackage download feature.  Server administrators can now upload geopackages as layers
+  and assign to specific events.  App users can choose to download available geopackages
+  from the layer manager.
 
 ##### Bug Fixes
 * Show change event in nav drawer if user has more than one event.
+* Fix mgrs bug in which grid would not show on map on initial load.
 
 ## [6.1.0](https://github.com/ngageoint/mage-android/releases/tag/6.1.0) (04-16-2018)
 

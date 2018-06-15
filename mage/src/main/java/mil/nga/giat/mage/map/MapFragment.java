@@ -477,16 +477,16 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 
 		mapView.onResume();
 
+        // Don't wait for map to show up to init these values, otherwise bottomsheet will jitter
+        showMgrs = preferences.getBoolean(getResources().getString(R.string.showMGRSKey), false);
+        mgrsBottomSheetBehavior.setHideable(showMgrs ? false : true);
+        mgrsBottomSheetBehavior.setState(showMgrs ? BottomSheetBehavior.STATE_COLLAPSED : BottomSheetBehavior.STATE_HIDDEN);
+
 		if (map == null) {
 			mapView.getMapAsync(this);
 		} else {
 			onMapReady(map);
 		}
-
-		// Don't wait for map to show up to init these values, otherwise bottomsheet will jitter
-		showMgrs = preferences.getBoolean(getResources().getString(R.string.showMGRSKey), false);
-		mgrsBottomSheetBehavior.setHideable(showMgrs ? false : true);
-		mgrsBottomSheetBehavior.setState(showMgrs ? BottomSheetBehavior.STATE_COLLAPSED : BottomSheetBehavior.STATE_HIDDEN);
 
 		searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
 			@Override
