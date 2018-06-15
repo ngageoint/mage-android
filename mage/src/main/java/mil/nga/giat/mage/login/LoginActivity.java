@@ -28,6 +28,7 @@ import android.support.v4.graphics.drawable.RoundedBitmapDrawable;
 import android.support.v4.graphics.drawable.RoundedBitmapDrawableFactory;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.app.AppCompatDelegate;
 import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
@@ -556,6 +557,10 @@ public class LoginActivity extends AppCompatActivity implements LoginFragment.Lo
 			PreferenceHelper preferenceHelper = PreferenceHelper.getInstance(getApplicationContext());
 			preferenceHelper.initialize(true, new Class<?>[]{mil.nga.giat.mage.sdk.R.xml.class, R.xml.class});
 			UserUtility.getInstance(getApplicationContext()).clearTokenInformation();
+
+			SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+			int dayNightTheme = preferences.getInt(getResources().getString(R.string.dayNightThemeKey), getResources().getInteger(R.integer.dayNightThemeDefaultValue));
+			AppCompatDelegate.setDefaultNightMode(dayNightTheme);
 		}
 
 		loginFragment.authenticate(credentialsArray);
