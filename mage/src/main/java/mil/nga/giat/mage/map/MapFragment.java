@@ -114,6 +114,7 @@ import mil.nga.giat.mage.filter.Filter;
 import mil.nga.giat.mage.filter.FilterActivity;
 import mil.nga.giat.mage.map.GoogleMapWrapper.OnMapPanListener;
 import mil.nga.giat.mage.map.cache.CacheOverlay;
+import mil.nga.giat.mage.map.cache.CacheOverlayFilter;
 import mil.nga.giat.mage.map.cache.CacheOverlayType;
 import mil.nga.giat.mage.map.cache.CacheProvider;
 import mil.nga.giat.mage.map.cache.CacheProvider.OnCacheOverlayListener;
@@ -973,8 +974,9 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 
 	@Override
 	public void onCacheOverlay(List<CacheOverlay> cacheOverlays) {
-
 		// Add all overlays that are in the preferences
+		Event currentEvent = EventHelper.getInstance(getActivity()).getCurrentEvent();
+		cacheOverlays = new CacheOverlayFilter(getContext(), currentEvent).filter(cacheOverlays);
 
 		// Track enabled cache overlays
 		Map<String, CacheOverlay> enabledCacheOverlays = new HashMap<>();
@@ -1327,7 +1329,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 		removeStaticFeatureLayers();
 
 		try {
-			for (Layer l : LayerHelper.getInstance(getActivity().getApplicationContext()).readByEvent(EventHelper.getInstance(getActivity().getApplicationContext()).getCurrentEvent())) {
+			for (Layer l : LayerHelper.getInstance(getActivity().getApplicationContext()).readByEvent(EventHelper.getInstance(getActivity().getApplicationContext()).getCurrentEvent(), "Feature")) {
 				onStaticFeatureLayer(l);
 			}
 		} catch (LayerException e) {
@@ -1340,7 +1342,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 
 		Set<String> eventLayerIds = new HashSet<>();
 		try {
-			for (Layer layer : LayerHelper.getInstance(getActivity()).readByEvent(EventHelper.getInstance(getActivity().getApplicationContext()).getCurrentEvent())) {
+			for (Layer layer : LayerHelper.getInstance(getActivity()).readByEvent(EventHelper.getInstance(getActivity().getApplicationContext()).getCurrentEvent(), "Feature")) {
 				eventLayerIds.add(layer.getRemoteId());
 			}
 		} catch (LayerException e) {

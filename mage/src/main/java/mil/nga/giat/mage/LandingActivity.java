@@ -34,11 +34,14 @@ import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.target.BitmapImageViewTarget;
+import com.google.common.base.Predicate;
+import com.google.common.collect.Collections2;
 
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import mil.nga.geopackage.validate.GeoPackageValidate;
@@ -53,12 +56,15 @@ import mil.nga.giat.mage.newsfeed.PeopleFeedFragment;
 import mil.nga.giat.mage.preferences.GeneralPreferencesActivity;
 import mil.nga.giat.mage.profile.ProfileActivity;
 import mil.nga.giat.mage.sdk.datastore.DaoStore;
+import mil.nga.giat.mage.sdk.datastore.layer.Layer;
+import mil.nga.giat.mage.sdk.datastore.layer.LayerHelper;
 import mil.nga.giat.mage.sdk.datastore.user.Event;
 import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
 import mil.nga.giat.mage.sdk.datastore.user.RoleHelper;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.datastore.user.UserLocal;
+import mil.nga.giat.mage.sdk.exceptions.LayerException;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
 
@@ -256,6 +262,13 @@ public class LandingActivity extends AppCompatActivity implements NavigationView
             // notify location services that the permissions have changed.
             ((MAGE) getApplication()).getLocationService().onLocationPermissionsChanged();
         }
+
+        try {
+            Event event = EventHelper.getInstance(getApplicationContext()).getCurrentEvent();
+            setAvailableLayersIcons(LayerHelper.getInstance(getApplicationContext()).readByEvent(event, "GeoPackage"));
+        } catch (LayerException e) {
+            Log.e(LOG_NAME, "Error reading layers", e);
+        }
     }
 
     @Override
@@ -308,6 +321,17 @@ public class LandingActivity extends AppCompatActivity implements NavigationView
     private void setTitle() {
         Event event = EventHelper.getInstance(getApplicationContext()).getCurrentEvent();
         getSupportActionBar().setTitle(event.getName());
+    }
+
+    private void setAvailableLayersIcons(Collection<Layer> layers) {
+        Collection<Layer> available = Collections2.filter(layers, new Predicate<Layer>() {
+            @Override
+            public boolean apply(Layer layer) {
+                return !layer.isLoaded();
+            }
+        });
+
+        LandingActivity.this.findViewById(R.id.available_layer_downloads).setVisibility(available.isEmpty() ? View.GONE : View.VISIBLE);
     }
 
     private void showDisabledPermissionsDialog(String title, String message) {
@@ -473,5 +497,4 @@ public class LandingActivity extends AppCompatActivity implements NavigationView
 
         return dir.delete();
     }
-
 }

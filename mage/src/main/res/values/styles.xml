@@ -82,6 +82,13 @@
         <item name="colorAccent">@color/md_orange_A200</item>
     </style>
 
+    <style name="AppTheme.AvailableDownloadsFAB" parent="Widget.AppCompat.Button">
+        <item name="android:tint">@color/md_white_1000</item>
+        <item name="colorAccent">@color/md_blue_600</item>
+
+        <item name="colorButtonNormal">@color/md_white_1000</item>
+    </style>
+
     <style name="AppTheme.PrimaryButton">
         <item name="colorButtonNormal">?attr/colorPrimary</item>
         <item name="android:textColor">@color/md_white_1000</item>

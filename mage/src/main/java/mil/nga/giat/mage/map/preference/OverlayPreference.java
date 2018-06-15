@@ -2,10 +2,13 @@ package mil.nga.giat.mage.map.preference;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.graphics.drawable.Drawable;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.support.v7.preference.Preference;
+import android.support.v7.preference.PreferenceViewHolder;
 import android.util.AttributeSet;
+import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -14,6 +17,8 @@ import java.util.Set;
 
 public class OverlayPreference extends Preference {
 
+    private Drawable downloadIcon;
+    private TextView titleView;
     private Set<String> overlays = new HashSet<>();
 
     public OverlayPreference(Context context) {
@@ -26,7 +31,7 @@ public class OverlayPreference extends Preference {
 
     /**
      * Sets the value of the key.
-     * 
+     *
      * @param values
      *            The values to set for the key.
      */
@@ -45,10 +50,24 @@ public class OverlayPreference extends Preference {
     }
 
     @Override
+    public void onBindViewHolder(PreferenceViewHolder holder) {
+        super.onBindViewHolder(holder);
+
+        titleView = (TextView) holder.findViewById(android.R.id.title);
+        titleView.setCompoundDrawablePadding(20);
+        titleView.setCompoundDrawablesWithIntrinsicBounds(null, null, downloadIcon, null);
+    }
+
+    @Override
     protected void onSetInitialValue(boolean restoreValue, Object defaultValue) {
         setValues(restoreValue ? getPersistedStringSet(overlays) : (Set<String>) defaultValue);
     }
-    
+
+    public void setDownloadIcon(Drawable downloadIcon) {
+        this.downloadIcon = downloadIcon;
+        notifyChanged();
+    }
+
     private Set<String> getPersistedStringSet(Set<String> defaultReturnValue) {
         if (!shouldPersist()) {
             return defaultReturnValue;

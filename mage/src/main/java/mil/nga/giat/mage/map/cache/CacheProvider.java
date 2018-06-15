@@ -3,6 +3,7 @@ package mil.nga.giat.mage.map.cache;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
+import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
@@ -28,6 +29,9 @@ import mil.nga.geopackage.validate.GeoPackageValidate;
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.cache.CacheUtils;
 import mil.nga.giat.mage.cache.GeoPackageCacheUtils;
+import mil.nga.giat.mage.sdk.datastore.layer.Layer;
+import mil.nga.giat.mage.sdk.datastore.layer.LayerHelper;
+import mil.nga.giat.mage.sdk.exceptions.LayerException;
 import mil.nga.giat.mage.sdk.utils.StorageUtility;
 import mil.nga.wkb.geom.GeometryType;
 
@@ -58,8 +62,12 @@ public class CacheProvider {
         void onCacheOverlay(List<CacheOverlay> cacheOverlays);
     }
 
-    private List<CacheOverlay> cacheOverlays = null;
+    private List<CacheOverlay> cacheOverlays = new ArrayList<>();
     private Collection<OnCacheOverlayListener> cacheOverlayListeners = new ArrayList<>();
+
+    public List<CacheOverlay> getCacheOverlays() {
+        return cacheOverlays;
+    }
 
     public void registerCacheOverlayListener(OnCacheOverlayListener listener) {
         cacheOverlayListeners.add(listener);
@@ -67,7 +75,11 @@ public class CacheProvider {
             listener.onCacheOverlay(cacheOverlays);
     }
 
-    public boolean removeCacheOverlay(String name){
+    public void addCacheOverlay(CacheOverlay cacheOverlay) {
+        cacheOverlays.add(cacheOverlay);
+    }
+
+    public boolean removeCacheOverlay(String name) {
         boolean removed = false;
         if(cacheOverlays != null){
             Iterator<CacheOverlay> iterator = cacheOverlays.iterator();
@@ -240,6 +252,27 @@ public class CacheProvider {
         // Delete any GeoPackages where the file is no longer accessible
         geoPackageManager.deleteAllMissingExternal();
 
+        try {
+            LayerHelper layerHelper = LayerHelper.getInstance(context);
+            List<Layer> layers = layerHelper.readAll("GeoPackage");
+            for (Layer layer : layers) {
+                if (!layer.isLoaded()) {
+                    continue;
+                }
+
+                String relativePath = layer.getRelativePath();
+                if (relativePath != null) {
+                    File file = new File(context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), relativePath);
+                    if (!file.exists()) {
+                        layer.setLoaded(true);
+                        layerHelper.update(layer);
+                    }
+                }
+            }
+        } catch (LayerException e) {
+            Log.i(LOG_NAME, "Error reconciling downloaded layers", e);
+        }
+
         // Add each existing database as a cache
         List<String> externalDatabases = geoPackageManager.externalDatabases();
         for (String database : externalDatabases) {
@@ -258,7 +291,7 @@ public class CacheProvider {
      * @param geoPackageManager
      * @return cache overlay
      */
-    private GeoPackageCacheOverlay getGeoPackageCacheOverlay(Context context, File cache, GeoPackageManager geoPackageManager) {
+    public GeoPackageCacheOverlay getGeoPackageCacheOverlay(Context context, File cache, GeoPackageManager geoPackageManager) {
 
         GeoPackageCacheOverlay cacheOverlay = null;
 
@@ -356,7 +389,7 @@ public class CacheProvider {
             }
 
             // Create the GeoPackage overlay with child tables
-            cacheOverlay = new GeoPackageCacheOverlay(database, tables);
+            cacheOverlay = new GeoPackageCacheOverlay(database, geoPackage.getPath(), tables);
         } catch (Exception e) {
             Log.e(LOG_NAME, "Could not get geopackage cache", e);
         } finally {
