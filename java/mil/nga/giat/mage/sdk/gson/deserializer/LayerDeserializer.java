@@ -41,13 +41,26 @@ public class LayerDeserializer implements JsonDeserializer<Layer> {
 
 	@Override
 	public Layer deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
+		Layer layer = new Layer();
 
 		JsonObject feature = json.getAsJsonObject();
-		String remoteId = feature.get("id").getAsString();
-		String type = feature.get("type").getAsString();
-		String name = feature.get("name").getAsString();
 
-		Layer layer = new Layer(remoteId, type, name, event);
+		layer.setEvent(event);
+		layer.setRemoteId(feature.get("id").getAsString());
+		layer.setType(feature.get("type").getAsString());
+		layer.setName(feature.get("name").getAsString());
+
+		JsonObject file = feature.getAsJsonObject("file");
+		if (file != null) {
+			if (file.has("name")) {
+				layer.setFileName(file.get("name").getAsString());
+			}
+
+			if (file.has("size")) {
+				layer.setFileSize(file.get("size").getAsLong());
+			}
+		}
+
 		return layer;
 	}
 }

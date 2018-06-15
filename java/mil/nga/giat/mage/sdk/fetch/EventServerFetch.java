@@ -2,18 +2,25 @@ package mil.nga.giat.mage.sdk.fetch;
 
 import android.content.Context;
 import android.os.AsyncTask;
+import android.os.Environment;
+import android.preference.PreferenceManager;
 import android.util.Log;
 
 import com.google.common.io.ByteStreams;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Map;
 
+import mil.nga.geopackage.GeoPackageManager;
+import mil.nga.geopackage.factory.GeoPackageFactory;
+import mil.nga.giat.mage.sdk.datastore.layer.Layer;
+import mil.nga.giat.mage.sdk.datastore.layer.LayerHelper;
 import mil.nga.giat.mage.sdk.datastore.user.Event;
 import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
 import mil.nga.giat.mage.sdk.datastore.user.Team;
@@ -22,9 +29,17 @@ import mil.nga.giat.mage.sdk.datastore.user.TeamHelper;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.datastore.user.UserTeam;
+import mil.nga.giat.mage.sdk.exceptions.EventException;
+import mil.nga.giat.mage.sdk.exceptions.LayerException;
+import mil.nga.giat.mage.sdk.gson.deserializer.LayerDeserializer;
+import mil.nga.giat.mage.sdk.http.HttpClientManager;
 import mil.nga.giat.mage.sdk.http.resource.EventResource;
+import mil.nga.giat.mage.sdk.http.resource.LayerResource;
 import mil.nga.giat.mage.sdk.http.resource.ObservationResource;
 import mil.nga.giat.mage.sdk.utils.ZipUtility;
+import retrofit.GsonConverterFactory;
+import retrofit.Response;
+import retrofit.Retrofit;
 
 /**
  * Created by wnewman on 2/21/18.
@@ -63,6 +78,11 @@ public class EventServerFetch extends AsyncTask<Void, Void, Exception> {
         }
 
         e = fetchEventIcons();
+        if (e != null) {
+            return e;
+        }
+
+        e = fetchEventLayers();
         if (e != null) {
             return e;
         }
@@ -195,6 +215,61 @@ public class EventServerFetch extends AsyncTask<Void, Void, Exception> {
             zipFile.delete();
         } catch (Exception e) {
             Log.e(LOG_NAME, "There was a failure while retrieving the observation icons.", e);
+            return e;
+        }
+
+        return null;
+    }
+
+    private Exception fetchEventLayers() {
+        Collection<Layer> layers = new ArrayList<>();
+
+        Event event;
+        try {
+            event = EventHelper.getInstance(context).read(eventId);
+        } catch (EventException e) {
+            Log.e(LOG_NAME,"Error reading event", e);
+            return e;
+        }
+
+        String baseUrl = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(mil.nga.giat.mage.sdk.R.string.serverURLKey), context.getString(mil.nga.giat.mage.sdk.R.string.serverURLDefaultValue));
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl(baseUrl)
+                .addConverterFactory(GsonConverterFactory.create(LayerDeserializer.getGsonBuilder(event)))
+                .client(HttpClientManager.getInstance(context).httpClient())
+                .build();
+
+        LayerResource.LayerService service = retrofit.create(LayerResource.LayerService.class);
+        try {
+            Response<Collection<Layer>> response = service.getLayers(event.getRemoteId(), "GeoPackage").execute();
+            if (response.isSuccess()) {
+                layers = response.body();
+            } else {
+                Log.e(LOG_NAME, "Bad request.");
+                if (response.errorBody() != null) {
+                    Log.e(LOG_NAME, response.errorBody().string());
+                }
+            }
+        } catch (IOException e) {
+            Log.e(LOG_NAME, "Error fetching event geopackage layers", e);
+            return e;
+        }
+
+        LayerHelper layerHelper = LayerHelper.getInstance(context);
+        try {
+            layerHelper.deleteAll("GeoPackage");
+
+            GeoPackageManager manager = GeoPackageFactory.getManager(context);
+            for (Layer layer : layers) {
+                // Check if geopackage has been downloaded as part of another event
+                File file = new File(context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), String.format("MAGE/geopackages/%s/%s", layer.getRemoteId(), layer.getFileName()));
+                if (file.exists() && manager.existsAtExternalFile(file)) {
+                    layer.setLoaded(true);
+                }
+                layerHelper.create(layer);
+            }
+        } catch (LayerException e) {
+            Log.e(LOG_NAME, "Error saving geopackage layers", e);
             return e;
         }
 

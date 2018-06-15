@@ -29,18 +29,26 @@ public class Layer implements Comparable<Layer> {
 	@DatabaseField
 	private String name;
 
+	@DatabaseField(columnName = "download_id")
+	private Long downloadId;
+
+	@DatabaseField(canBeNull = false)
+	private boolean loaded = Boolean.FALSE;
+
+	@DatabaseField(columnName = "relative_path")
+	private String relativePath;
+
 	@DatabaseField
-	private boolean loaded = false;
+	private String fileName;
+
+	@DatabaseField
+	private Long fileSize;
 
 	@DatabaseField(canBeNull = false, foreign = true, foreignAutoRefresh = true)
 	private Event event;
 
-	/**
-	 * Do NOT eager load the features!
-	 * 
-	 */
 	@ForeignCollectionField(eager = false)
-	private Collection<StaticFeature> staticFeatures = new ArrayList<StaticFeature>();
+	private Collection<StaticFeature> staticFeatures = new ArrayList<>();
 
 	public Layer() {
 		// ORMLite needs a no-arg constructor
@@ -90,12 +98,44 @@ public class Layer implements Comparable<Layer> {
 		this.event = event;
 	}
 
+	public Long getDownloadId() {
+		return downloadId;
+	}
+
+	public void setDownloadId(Long downloadId) {
+		this.downloadId = downloadId;
+	}
+
 	public boolean isLoaded() {
 		return loaded;
 	}
 
 	public void setLoaded(boolean loaded) {
 		this.loaded = loaded;
+	}
+
+	public String getRelativePath() {
+		return relativePath;
+	}
+
+	public void setRelativePath(String relativePath) {
+		this.relativePath = relativePath;
+	}
+
+	public String getFileName() {
+		return fileName;
+	}
+
+	public void setFileName(String fileName) {
+		this.fileName = fileName;
+	}
+
+	public Long getFileSize() {
+		return fileSize;
+	}
+
+	public void setFileSize(Long fileSize) {
+		this.fileSize = fileSize;
 	}
 
 	public Collection<StaticFeature> getStaticFeatures() {

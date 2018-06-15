@@ -4,6 +4,7 @@ import android.content.Context;
 import android.util.Log;
 
 import com.j256.ormlite.dao.Dao;
+import com.j256.ormlite.stmt.Where;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -75,24 +76,30 @@ public class LayerHelper extends DaoHelper<Layer> implements IEventDispatcher<IL
 
     }
 
-    public Collection<Layer> readAll() throws LayerException {
-        List<Layer> layers = new ArrayList<Layer>();
+    public List<Layer> readAll(String type) throws LayerException {
+        List<Layer> layers = new ArrayList<>();
         try {
-            layers = layerDao.queryForAll();
-        } catch (SQLException sqle) {
+			layers = layerDao.queryBuilder().where().eq("type", type).query();
+		} catch (SQLException sqle) {
             Log.e(LOG_NAME, "Unable to read Layers", sqle);
             throw new LayerException("Unable to read Layers.", sqle);
         }
         return layers;
     }
 
-	public Collection<Layer> readByEvent(Event pEvent) throws LayerException {
-		List<Layer> layers = new ArrayList<Layer>();
-		if(pEvent == null) {
+	public List<Layer> readByEvent(Event event, String type) throws LayerException {
+		List<Layer> layers = new ArrayList<>();
+		if (event == null) {
 			return layers;
 		}
 		try {
-			layers = layerDao.queryBuilder().where().eq("event_id", pEvent.getId()).query();
+			Where<Layer, Long> where = layerDao.queryBuilder().where().eq("event_id", event.getId());
+
+			if (type != null) {
+				where.and().eq("type", type);
+			}
+
+			layers = where.query();
 		} catch (SQLException sqle) {
 			Log.e(LOG_NAME, "Unable to read Layers", sqle);
 			throw new LayerException("Unable to read Layers.", sqle);
@@ -145,15 +152,49 @@ public class LayerHelper extends DaoHelper<Layer> implements IEventDispatcher<IL
     }
 
 	@Override
-	public Layer update(Layer pLayer) throws LayerException {
+	public Layer update(Layer layer) throws LayerException {
 		try {
-			layerDao.update(pLayer);
+			layerDao.update(layer);
 		} catch (SQLException sqle) {
-			Log.e(LOG_NAME, "There was a problem updating layer: " + pLayer);
-			throw new LayerException("There was a problem updating layer: " + pLayer, sqle);
+			Log.e(LOG_NAME, "There was a problem updating layer: " + layer);
+			throw new LayerException("There was a problem updating layer: " + layer, sqle);
 		}
-		return pLayer;
+
+		for (ILayerEventListener listener : listeners) {
+			listener.onLayerUpdated(layer);
+		}
+
+		return layer;
 	}
+
+	public Layer getByRelativePath(String relativePath) throws LayerException {
+		Layer layer = null;
+		try {
+			List<Layer> results = layerDao.queryBuilder().where().eq("relative_path", relativePath).query();
+			if (results != null && results.size() > 0) {
+				layer = results.get(0);
+			}
+		} catch (SQLException sqle) {
+			Log.e(LOG_NAME, "Unable to query for existence for relativePath = '" + relativePath + "'", sqle);
+			throw new LayerException("Unable to query for existence for relativePath = '" + relativePath + "'", sqle);
+		}
+
+		return layer;
+	}
+
+    public Layer getByDownloadId(long downloadId) throws LayerException {
+        Layer layer = null;
+        try {
+            List<Layer> results = layerDao.queryBuilder().where().eq("download_id", downloadId).query();
+            if (results != null && results.size() > 0) {
+                layer = results.get(0);
+            }
+        } catch (SQLException sqle) {
+            throw new LayerException("Unable to query Layer by download id = '" + downloadId + "'", sqle);
+        }
+
+        return layer;
+    }
 
 	public void delete(Long pPrimaryKey) throws LayerException {
 		try {
@@ -172,10 +213,28 @@ public class LayerHelper extends DaoHelper<Layer> implements IEventDispatcher<IL
 	}
 
     public void deleteAll() throws LayerException {
-		for(Layer layer : readAll()) {
-			delete(layer.getId());
+		try {
+			Collection<Layer> layers = layerDao.queryForAll();
+			for (Layer layer : layers) {
+				delete(layer.getId());
+			}
+		} catch (SQLException e) {
+			Log.e(LOG_NAME, "Error deleting layers");
 		}
-    }
+	}
+
+	public void deleteAll(String type) throws LayerException {
+		try {
+			Collection<Layer> layers = layerDao.queryForAll();
+			for (Layer layer : layers) {
+				if (type.equals(layer.getType())) {
+					delete(layer.getId());
+				}
+			}
+		} catch (SQLException e) {
+			Log.e(LOG_NAME, "Error deleting layers");
+		}
+	}
 
     @Override
     public boolean addListener(ILayerEventListener listener) {

@@ -40,6 +40,7 @@ public class StaticFeatureServerFetch extends AbstractServerFetch {
 	}
 
 	private static final String LOG_NAME = StaticFeatureServerFetch.class.getName();
+	private static final String FEATURE_TYPE = "Feature";
 
 	private Boolean isCanceled = Boolean.FALSE;
 
@@ -66,7 +67,7 @@ public class StaticFeatureServerFetch extends AbstractServerFetch {
 			}
 
 			// get local layers
-			Collection<Layer> localLayers = layerHelper.readAll();
+			Collection<Layer> localLayers = layerHelper.readAll(FEATURE_TYPE);
 
 			layers.removeAll(localLayers);
 
@@ -74,7 +75,7 @@ public class StaticFeatureServerFetch extends AbstractServerFetch {
 				layerHelper.create(layer);
 			}
 
-			Collection<Layer> newLayers = layerHelper.readAll();
+			Collection<Layer> newLayers = layerHelper.readAll(FEATURE_TYPE);
 
 			if (listener != null) {
 				listener.onStaticLayersLoaded(newLayers);

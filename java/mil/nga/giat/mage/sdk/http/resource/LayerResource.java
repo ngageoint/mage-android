@@ -23,8 +23,10 @@ import retrofit.GsonConverterFactory;
 import retrofit.Response;
 import retrofit.Retrofit;
 import retrofit.http.GET;
+import retrofit.http.Headers;
 import retrofit.http.Path;
 import retrofit.http.Query;
+import retrofit.http.Streaming;
 import retrofit.http.Url;
 
 /***
@@ -45,6 +47,11 @@ public class LayerResource {
 
         @GET
         Call<ResponseBody> getFeatureIcon(@Url String url);
+
+        @GET("/api/layers/{layerId}")
+        @Headers("Accept: application/octet-stream")
+        @Streaming
+        Call<ResponseBody> getGeopackage(@Path("layerId") String layerId);
     }
 
     private static final String LOG_NAME = LayerResource.class.getName();
@@ -117,6 +124,29 @@ public class LayerResource {
         LayerService service = retrofit.create(LayerService.class);
         Response<ResponseBody> response = service.getFeatureIcon(url).execute();
 
+        if (response.isSuccess()) {
+            inputStream = response.body().byteStream();
+        } else {
+            Log.e(LOG_NAME, "Bad request.");
+            if (response.errorBody() != null) {
+                Log.e(LOG_NAME, response.errorBody().string());
+            }
+        }
+
+        return inputStream;
+    }
+
+    public InputStream getGeopackage(String layerId) throws IOException {
+        String baseUrl = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.serverURLKey), context.getString(R.string.serverURLDefaultValue));
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl(baseUrl)
+                .client(HttpClientManager.getInstance(context).httpClient())
+                .build();
+
+        LayerService service = retrofit.create(LayerService.class);
+        Response<ResponseBody> response = service.getGeopackage(layerId).execute();
+
+        InputStream inputStream = null;
         if (response.isSuccess()) {
             inputStream = response.body().byteStream();
         } else {

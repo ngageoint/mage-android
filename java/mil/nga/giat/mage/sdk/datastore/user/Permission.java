@@ -41,6 +41,7 @@ public enum Permission implements Serializable {
 	UPDATE_ROLE,
 	UPDATE_TEAM,
 	UPDATE_USER,
+	UPDATE_USER_ROLE,
 	READ_SETTINGS,
 	UPDATE_SETTINGS
 }
