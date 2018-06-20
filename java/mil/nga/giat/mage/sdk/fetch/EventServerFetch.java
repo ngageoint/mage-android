@@ -262,9 +262,11 @@ public class EventServerFetch extends AsyncTask<Void, Void, Exception> {
             GeoPackageManager manager = GeoPackageFactory.getManager(context);
             for (Layer layer : layers) {
                 // Check if geopackage has been downloaded as part of another event
-                File file = new File(context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), String.format("MAGE/geopackages/%s/%s", layer.getRemoteId(), layer.getFileName()));
+                String relativePath = String.format("MAGE/geopackages/%s/%s", layer.getRemoteId(), layer.getFileName());
+                File file = new File(context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), relativePath);
                 if (file.exists() && manager.existsAtExternalFile(file)) {
                     layer.setLoaded(true);
+                    layer.setRelativePath(relativePath);
                 }
                 layerHelper.create(layer);
             }
