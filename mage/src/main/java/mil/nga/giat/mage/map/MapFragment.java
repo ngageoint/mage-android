@@ -61,6 +61,8 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.TileOverlay;
 import com.google.android.gms.maps.model.TileOverlayOptions;
 import com.google.android.gms.maps.model.TileProvider;
+import com.google.common.base.Predicate;
+import com.google.common.collect.Collections2;
 import com.google.common.collect.Sets;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -207,6 +209,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 	private boolean showMgrs;
 	private TileOverlay mgrsTileOverlay;
 	private BottomSheetBehavior mgrsBottomSheetBehavior;
+	private View availableLayerDownloadsIcon;
 	private View mgrsBottomSheet;
 	private View mgrsCursor;
 	private TextView mgrsTextView;
@@ -225,6 +228,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 
 		staticGeometryCollection = new StaticGeometryCollection();
 
+		availableLayerDownloadsIcon = view.findViewById(R.id.available_layer_downloads);
 		zoomToLocationButton = (FloatingActionButton) view.findViewById(R.id.zoom_button);
 
 		searchButton = (FloatingActionButton) view.findViewById(R.id.map_search_button);
@@ -486,6 +490,20 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 			mapView.getMapAsync(this);
 		} else {
 			onMapReady(map);
+		}
+
+		try {
+			Event event = EventHelper.getInstance(getContext()).getCurrentEvent();
+			Collection<Layer> available = Collections2.filter(LayerHelper.getInstance(getContext()).readByEvent(event, "GeoPackage"), new Predicate<Layer>() {
+				@Override
+				public boolean apply(Layer layer) {
+					return !layer.isLoaded();
+				}
+			});
+
+			availableLayerDownloadsIcon.setVisibility(available.isEmpty() ? View.GONE : View.VISIBLE);
+		} catch (LayerException e) {
+			Log.e(LOG_NAME, "Error reading layers", e);
 		}
 
 		searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
