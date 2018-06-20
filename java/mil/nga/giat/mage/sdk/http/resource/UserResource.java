@@ -256,12 +256,13 @@ public class UserResource {
         if (response.isSuccess()) {
             user = response.body();
         } else {
-            Log.e(LOG_NAME, "Bad request.");
+            String errorMessage = "Unable to create user account, please contact MAGE administrator.";
             if (response.errorBody() != null) {
-                Log.e(LOG_NAME, response.errorBody().string());
+                errorMessage = response.errorBody().string();
             }
 
-            throw new RuntimeException(response.errorBody().string());
+            Log.e(LOG_NAME, errorMessage);
+            throw new RuntimeException(errorMessage);
         }
 
         return user;
