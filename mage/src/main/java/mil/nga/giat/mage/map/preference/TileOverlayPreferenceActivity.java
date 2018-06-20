@@ -6,7 +6,6 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
 import android.preference.PreferenceManager;
@@ -33,7 +32,6 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -524,7 +522,7 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
                 }
 
                 if (!path.delete()) {
-                    Log.e(LOG_NAME, "Error deleting geopackge file from filesystem for path " + path);
+                    Log.e(LOG_NAME, "Error deleting geopackage file from filesystem for path " + path);
                 }
             }
         }
