@@ -5,6 +5,8 @@
     <color name="background_dialog">@color/md_grey_800</color>
     <color name="background_transparent">#E7111111</color>
 
+    <color name="header_color">@color/md_white_1000</color>
+
     <color name="bottom_navigation_background">@color/md_blue_grey_700</color>
 
     <color name="setting_sub_toolbar">@color/md_blue_grey_800</color>

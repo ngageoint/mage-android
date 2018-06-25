@@ -16,6 +16,7 @@ Adheres to [Semantic Versioning](http://semver.org/).
 * Show change event in nav drawer if user has more than one event.
 * Fix mgrs bug in which grid would not show on map on initial load.
 * Use map type from user preferences in observation location edit activity.
+* Fix brand icon color on older devices.
 
 ## [6.1.0](https://github.com/ngageoint/mage-android/releases/tag/6.1.0) (04-16-2018)
 
