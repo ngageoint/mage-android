@@ -3,7 +3,7 @@ All notable changes to this project will be documented in this file.
 Adheres to [Semantic Versioning](http://semver.org/).
 
 ---
-## 6.1.1 (TBD)
+## 6.1.2 (TBD)
 
 * TBD
 
@@ -17,6 +17,13 @@ Adheres to [Semantic Versioning](http://semver.org/).
 * Fix mgrs bug in which grid would not show on map on initial load.
 * Use map type from user preferences in observation location edit activity.
 * Fix brand icon color on older devices.
+
+## [6.1.1](https://github.com/ngageoint/mage-android/releases/tag/6.1.1) (05-24-2018)
+
+##### Features
+
+##### Bug Fixes
+* Show change event in nav drawer if user has more than one event.
 
 ## [6.1.0](https://github.com/ngageoint/mage-android/releases/tag/6.1.0) (04-16-2018)
 
