@@ -3,9 +3,15 @@ All notable changes to this project will be documented in this file.
 Adheres to [Semantic Versioning](http://semver.org/).
 
 ---
-## 6.1.2 (TBD)
+## 6.1.3 (TBD)
 
 * TBD
+
+##### Features
+
+##### Bug Fixes
+
+## [6.1.2](https://github.com/ngageoint/mage-android/releases/tag/6.1.2) (06-25-2018)
 
 ##### Features
 * Beta Geopackage download feature.  Server administrators can now upload geopackages as layers
