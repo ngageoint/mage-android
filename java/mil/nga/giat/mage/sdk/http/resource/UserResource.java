@@ -35,6 +35,7 @@ import retrofit.Response;
 import retrofit.Retrofit;
 import retrofit.http.Body;
 import retrofit.http.GET;
+import retrofit.http.Header;
 import retrofit.http.Multipart;
 import retrofit.http.POST;
 import retrofit.http.PUT;
@@ -57,7 +58,7 @@ public class UserResource {
         Call<JsonObject> authorize(@Path("strategy") String strategy, @Body JsonObject body);
 
         @POST("/api/logout")
-        Call<ResponseBody> logout();
+        Call<ResponseBody> logout(@Header("Authorization") String authorization);
 
         @GET("/api/users")
         Call<Collection<User>> getUsers();
@@ -93,8 +94,8 @@ public class UserResource {
         this.context = context;
     }
 
-    public JsonObject login(String username, String uid, String password) {
-        JsonObject loginJson = null;
+    public Response<JsonObject> login(String username, String uid, String password) {
+        Response<JsonObject> response = null;
 
         String baseUrl = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.serverURLKey), context.getString(R.string.serverURLDefaultValue));
 
@@ -119,20 +120,12 @@ public class UserResource {
                 Log.e(LOG_NAME , "Problem retrieving package info.", e);
             }
 
-            Response<JsonObject> response = service.login(json).execute();
-            if (response.isSuccess()) {
-                loginJson = response.body();
-            } else {
-                Log.e(LOG_NAME, "Bad request.");
-                if (response.errorBody() != null) {
-                    Log.e(LOG_NAME, response.errorBody().string());
-                }
-            }
+            response = service.login(json).execute();
         } catch (Exception e) {
             Log.e(LOG_NAME, "Bad request.", e);
         }
 
-        return loginJson;
+        return response;
     }
 
     public JsonObject authorize(String strategy, String uid, String accessToken) {
@@ -176,34 +169,19 @@ public class UserResource {
         return body;
     }
 
-    public boolean logout() {
-        boolean status = false;
-
+    public void logout(Callback<ResponseBody> callback) {
         String baseUrl = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.serverURLKey), context.getString(R.string.serverURLDefaultValue));
 
-        try {
-            Retrofit retrofit = new Retrofit.Builder()
-                    .baseUrl(baseUrl)
-                    .addConverterFactory(GsonConverterFactory.create())
-                    .client(HttpClientManager.getInstance(context).httpClient())
-                    .build();
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl(baseUrl)
+                .addConverterFactory(GsonConverterFactory.create())
+                .client(HttpClientManager.getInstance(context).httpClient())
+                .build();
 
-            UserService service = retrofit.create(UserService.class);
+        UserService service = retrofit.create(UserService.class);
 
-            Response<ResponseBody> response = service.logout().execute();
-            if (response.isSuccess()) {
-                status = true;
-            } else {
-                Log.e(LOG_NAME, "Bad request.");
-                if (response.errorBody() != null) {
-                    Log.e(LOG_NAME, response.errorBody().string());
-                }
-            }
-        } catch (Exception e) {
-            Log.e(LOG_NAME, "Bad request.", e);
-        }
-
-        return status;
+        String token = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.tokenKey), null);
+        service.logout(String.format("Bearer %s", token)).enqueue(callback);
     }
 
     public Collection<User> getUsers() throws IOException {

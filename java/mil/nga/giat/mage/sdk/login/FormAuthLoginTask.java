@@ -24,6 +24,7 @@ import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
 import mil.nga.giat.mage.sdk.utils.DeviceUuidFactory;
 import mil.nga.giat.mage.sdk.utils.ISO8601DateFormatFactory;
 import mil.nga.giat.mage.sdk.utils.PasswordUtility;
+import retrofit.Response;
 
 /**
  * Performs login to specified server with username and password.
@@ -118,9 +119,11 @@ public class FormAuthLoginTask extends AbstractAccountTask {
 			}
 
 			UserResource userResource = new UserResource(mApplicationContext);
-			JsonObject loginJson = userResource.login(username, uuid, password);
+			Response<JsonObject> response = userResource.login(username, uuid, password);
 
-			if (loginJson != null) {
+			if (response.isSuccess()) {
+				JsonObject loginJson = response.body();
+
 				// check server api version to ensure compatibility before continuing
 				JsonObject serverVersion = loginJson.get("api").getAsJsonObject().get("version").getAsJsonObject();
 				if (!PreferenceHelper.getInstance(mApplicationContext).validateServerVersion(serverVersion.get("major").getAsInt(), serverVersion.get("minor").getAsInt())) {
@@ -176,8 +179,22 @@ public class FormAuthLoginTask extends AbstractAccountTask {
 				// Could be that the device is not registered.
 				if (!needToRegisterDevice) {
 					// Try to register it
-					params[3] = Boolean.TRUE.toString();
-					return login(params);
+					AccountStatus.Status regStatus = registerDevice(username, uuid, password);
+
+					if (regStatus.equals(AccountStatus.Status.SUCCESSFUL_REGISTRATION)) {
+						return new AccountStatus(regStatus);
+					} else if (regStatus == AccountStatus.Status.FAILED_LOGIN) {
+						String errorMessage = "Please check your username and password and try again.";
+						if (response.errorBody() != null) {
+							errorMessage = response.errorBody().string();
+						}
+
+						List<Integer> errorIndices = new ArrayList<>();
+						errorIndices.add(2);
+						List<String> errorMessages = new ArrayList<>();
+						errorMessages.add(errorMessage);
+						return new AccountStatus(regStatus, errorIndices, errorMessages);
+					}
 				}
 			}
 		} catch (Exception e) {

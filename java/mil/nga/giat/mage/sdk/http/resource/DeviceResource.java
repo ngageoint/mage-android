@@ -73,11 +73,6 @@ public class DeviceResource {
 
         if (response.isSuccess()) {
             device = response.body();
-        } else {
-            Log.e(LOG_NAME, "Bad request.");
-            if (response.errorBody() != null) {
-                Log.e(LOG_NAME, response.errorBody().string());
-            }
         }
 
         return device;
