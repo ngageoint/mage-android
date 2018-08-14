@@ -112,14 +112,6 @@ public class LoginActivity extends AppCompatActivity implements LoginFragment.Lo
 	private static final String LOGIN_FRAGMENT_TAG = "LOGIN_FRAGMENT";
 	private LoginFragment loginFragment;
 
-	public final EditText getUsernameEditText() {
-		return mUsernameEditText;
-	}
-
-	public final EditText getPasswordEditText() {
-		return mPasswordEditText;
-	}
-
 	public final TextView getServerUrlText() {
 		return mServerURL;
 	}
@@ -231,8 +223,8 @@ public class LoginActivity extends AppCompatActivity implements LoginFragment.Lo
 		});
 
 		// set the default values
-		getUsernameEditText().setText(sharedPreferences.getString(getString(R.string.usernameKey), getString(R.string.usernameDefaultValue)));
-		getUsernameEditText().setSelection(getUsernameEditText().getText().length());
+		mUsernameEditText.setText(sharedPreferences.getString(getString(R.string.usernameKey), getString(R.string.usernameDefaultValue)));
+		mUsernameEditText.setSelection(mUsernameEditText.getText().length());
 
 		mUsernameEditText.addTextChangedListener(new TextWatcher() {
 			@Override
@@ -523,8 +515,8 @@ public class LoginActivity extends AppCompatActivity implements LoginFragment.Lo
 		mPasswordLayout.setError(null);
 		mServerURL.setError(null);
 
-		String username = getUsernameEditText().getText().toString();
-		String password = getPasswordEditText().getText().toString();
+		String username = mUsernameEditText.getText().toString();
+		String password = mPasswordEditText.getText().toString();
 		String server = mServerURL.getText().toString();
 
 		// are the inputs valid?
@@ -608,9 +600,9 @@ public class LoginActivity extends AppCompatActivity implements LoginFragment.Lo
 		if (accountStatus.getStatus().equals(AccountStatus.Status.SUCCESSFUL_LOGIN) || accountStatus.getStatus().equals(AccountStatus.Status.DISCONNECTED_LOGIN)) {
 			SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
 			Editor editor = sharedPreferences.edit();
-			editor.putString(getApplicationContext().getString(R.string.usernameKey), getUsernameEditText().getText().toString()).commit();
+			editor.putString(getApplicationContext().getString(R.string.usernameKey), mUsernameEditText.getText().toString()).commit();
 			try {
-				String hashedPassword = PasswordUtility.getSaltedHash(getPasswordEditText().getText().toString());
+				String hashedPassword = PasswordUtility.getSaltedHash(mPasswordEditText.getText().toString());
 				editor.putString(getApplicationContext().getString(R.string.passwordHashKey), hashedPassword).commit();
 			} catch (Exception e) {
 				Log.e(LOG_NAME, "Could not hash password", e);
@@ -639,7 +631,7 @@ public class LoginActivity extends AppCompatActivity implements LoginFragment.Lo
 			}
 		} else if (accountStatus.getStatus().equals(AccountStatus.Status.SUCCESSFUL_REGISTRATION)) {
 			Editor sp = PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).edit();
-			sp.putString(getApplicationContext().getString(R.string.usernameKey), getUsernameEditText().getText().toString()).commit();
+			sp.putString(getApplicationContext().getString(R.string.usernameKey), mUsernameEditText.getText().toString()).commit();
 			showUnregisteredDeviceDialog();
 		} else {
 			if (accountStatus.getStatus().equals(AccountStatus.Status.INVALID_SERVER)) {
@@ -653,8 +645,8 @@ public class LoginActivity extends AppCompatActivity implements LoginFragment.Lo
 							}
 						}).show();
 			} else if (accountStatus.getErrorIndices().isEmpty()) {
-				getUsernameEditText().setError(null);
-				getPasswordEditText().setError(null);
+				mUsernameLayout.setError(null);
+				mPasswordLayout.setError(null);
 				new AlertDialog.Builder(this)
 						.setTitle("Incorrect Credentials")
 						.setMessage("The username or password you entered was incorrect.")
@@ -664,7 +656,7 @@ public class LoginActivity extends AppCompatActivity implements LoginFragment.Lo
 						dialog.dismiss();
 					}
 				}).show();
-				getPasswordEditText().requestFocus();
+				mPasswordLayout.requestFocus();
 			} else {
 				int errorMessageIndex = 0;
 				for (Integer errorIndex : accountStatus.getErrorIndices()) {
@@ -673,11 +665,11 @@ public class LoginActivity extends AppCompatActivity implements LoginFragment.Lo
 						message = accountStatus.getErrorMessages().get(errorMessageIndex++);
 					}
 					if (errorIndex == 0) {
-						getUsernameEditText().setError(message);
-						getUsernameEditText().requestFocus();
+						mUsernameLayout.setError(message);
+						mUsernameLayout.requestFocus();
 					} else if (errorIndex == 1) {
-						getPasswordEditText().setError(message);
-						getPasswordEditText().requestFocus();
+						mPasswordLayout.setError(message);
+						mPasswordLayout.requestFocus();
 					} else if (errorIndex == 2) {
 						new AlertDialog.Builder(this)
 							.setTitle("Login Failed")

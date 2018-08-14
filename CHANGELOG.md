@@ -8,8 +8,10 @@ Adheres to [Semantic Versioning](http://semver.org/).
 * TBD
 
 ##### Features
+* Show error message from server on invalid login attempt.
 
 ##### Bug Fixes
+* Don't remove token before logout request.
 
 ## [6.1.2](https://github.com/ngageoint/mage-android/releases/tag/6.1.2) (06-25-2018)
 

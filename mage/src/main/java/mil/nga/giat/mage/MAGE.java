@@ -16,6 +16,8 @@ import android.support.v4.app.TaskStackBuilder;
 import android.support.v7.app.AppCompatDelegate;
 import android.util.Log;
 
+import com.squareup.okhttp.ResponseBody;
+
 import mil.nga.giat.mage.login.LoginActivity;
 import mil.nga.giat.mage.login.OAuthActivity;
 import mil.nga.giat.mage.login.ServerUrlActivity;
@@ -38,6 +40,9 @@ import mil.nga.giat.mage.sdk.push.ObservationPushIntentService;
 import mil.nga.giat.mage.sdk.screen.ScreenChangeReceiver;
 import mil.nga.giat.mage.sdk.utils.UserUtility;
 import mil.nga.giat.mage.wearable.InitializeMAGEWearBridge;
+import retrofit.Callback;
+import retrofit.Response;
+import retrofit.Retrofit;
 
 public class MAGE extends MultiDexApplication implements ISessionEventListener, Application.ActivityLifecycleCallbacks {
 
@@ -129,23 +134,24 @@ public class MAGE extends MultiDexApplication implements ISessionEventListener, 
 		destroyNotification();
 
 		if (clearTokenInformationAndSendLogoutRequest) {
-			Runnable runnable = new Runnable() {
+			UserResource userResource = new UserResource(getApplicationContext());
+			userResource.logout(new Callback<ResponseBody>() {
 				@Override
-				public void run() {
-					UserResource userResource = new UserResource(getApplicationContext());
-					if (!userResource.logout()) {
-						Log.e(LOG_NAME, "Unable to logout from server.");
-					}
-
+				public void onResponse(Response<ResponseBody> response, Retrofit retrofit) {
 					if (logoutListener != null) {
 						logoutListener.onLogout();
 					}
 				}
-			};
 
+				@Override
+				public void onFailure(Throwable t) {
+					Log.e(LOG_NAME, "Unable to logout from server.");
+					if (logoutListener != null) {
+						logoutListener.onLogout();
+					}
+				}
+			});
 			UserUtility.getInstance(getApplicationContext()).clearTokenInformation();
-
-			new Thread(runnable).start();
 		} else {
 			if (logoutListener != null) {
 				logoutListener.onLogout();
