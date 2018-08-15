@@ -37,8 +37,6 @@ public class FormAuthLoginTask extends AbstractAccountTask {
 	private DateFormat iso8601Format = ISO8601DateFormatFactory.ISO8601();
 	private UserDeserializer userDeserializer;
 
-	private volatile AccountStatus callbackStatus = null;
-
 	public FormAuthLoginTask(AccountDelegate delegate, Context context) {
 		super(delegate, context);
 
@@ -109,7 +107,7 @@ public class FormAuthLoginTask extends AbstractAccountTask {
 		try {
 			// Does the device need to be registered?
 			if (needToRegisterDevice) {
-				AccountStatus.Status regStatus = registerDevice(username, uuid, password);
+				AccountStatus.Status regStatus = registerDevice(uuid);
 
 				if (regStatus.equals(AccountStatus.Status.SUCCESSFUL_REGISTRATION)) {
 					return new AccountStatus(regStatus);
@@ -119,13 +117,22 @@ public class FormAuthLoginTask extends AbstractAccountTask {
 			}
 
 			UserResource userResource = new UserResource(mApplicationContext);
-			Response<JsonObject> response = userResource.login(username, uuid, password);
+			Response<JsonObject> response = userResource.signin(username, uuid, password);
 
 			if (response.isSuccess()) {
-				JsonObject loginJson = response.body();
+				JsonObject authorizeResponse = userResource.authorize("local", uuid);
+				if (authorizeResponse == null) {
+					DeviceResource deviceResource = new DeviceResource(mApplicationContext);
+					JsonObject deviceJson = deviceResource.createDevice("local", uuid);
+					if (deviceJson.get("registered").getAsBoolean()) {
+						return new AccountStatus(AccountStatus.Status.ALREADY_REGISTERED);
+					} else {
+						return new AccountStatus(AccountStatus.Status.SUCCESSFUL_REGISTRATION);
+					}
+				}
 
 				// check server api version to ensure compatibility before continuing
-				JsonObject serverVersion = loginJson.get("api").getAsJsonObject().get("version").getAsJsonObject();
+				JsonObject serverVersion = authorizeResponse.get("api").getAsJsonObject().get("version").getAsJsonObject();
 				if (!PreferenceHelper.getInstance(mApplicationContext).validateServerVersion(serverVersion.get("major").getAsInt(), serverVersion.get("minor").getAsInt())) {
 					Log.e(LOG_NAME, "Server version not compatible");
 					return new AccountStatus(AccountStatus.Status.INVALID_SERVER);
@@ -134,10 +141,10 @@ public class FormAuthLoginTask extends AbstractAccountTask {
 				// put the token information in the shared preferences
 				Editor editor = sharedPreferences.edit();
 
-				editor.putString(mApplicationContext.getString(R.string.tokenKey), loginJson.get("token").getAsString().trim());
+				editor.putString(mApplicationContext.getString(R.string.tokenKey), authorizeResponse.get("token").getAsString().trim());
 				Log.d(LOG_NAME, "Storing token: " + String.valueOf(sharedPreferences.getString(mApplicationContext.getString(R.string.tokenKey), null)));
 				try {
-					Date tokenExpiration = iso8601Format.parse(loginJson.get("expirationDate").getAsString().trim());
+					Date tokenExpiration = iso8601Format.parse(authorizeResponse.get("expirationDate").getAsString().trim());
 					long tokenExpirationLength = tokenExpiration.getTime() - (new Date()).getTime();
 					editor.putString(mApplicationContext.getString(R.string.tokenExpirationDateKey), iso8601Format.format(tokenExpiration));
 					editor.putLong(mApplicationContext.getString(R.string.tokenExpirationLengthKey), tokenExpirationLength);
@@ -146,7 +153,7 @@ public class FormAuthLoginTask extends AbstractAccountTask {
 				}
 
 				// initialize the current user
-				JsonObject userJson = loginJson.getAsJsonObject("user");
+				JsonObject userJson = authorizeResponse.getAsJsonObject("user");
 
 				// if username is different, then clear the db
 				String oldUsername = sharedPreferences.getString(mApplicationContext.getString(R.string.usernameKey), mApplicationContext.getString(R.string.usernameDefaultValue));
@@ -174,12 +181,12 @@ public class FormAuthLoginTask extends AbstractAccountTask {
 
 				editor.commit();
 
-				return new AccountStatus(AccountStatus.Status.SUCCESSFUL_LOGIN, new ArrayList<Integer>(), new ArrayList<String>(), loginJson);
+				return new AccountStatus(AccountStatus.Status.SUCCESSFUL_LOGIN, new ArrayList<Integer>(), new ArrayList<String>(), authorizeResponse);
 			} else {
 				// Could be that the device is not registered.
 				if (!needToRegisterDevice) {
 					// Try to register it
-					AccountStatus.Status regStatus = registerDevice(username, uuid, password);
+					AccountStatus.Status regStatus = registerDevice(uuid);
 
 					if (regStatus.equals(AccountStatus.Status.SUCCESSFUL_REGISTRATION)) {
 						return new AccountStatus(regStatus);
@@ -205,10 +212,10 @@ public class FormAuthLoginTask extends AbstractAccountTask {
 		return new AccountStatus(AccountStatus.Status.FAILED_LOGIN);
 	}
 
-	private AccountStatus.Status registerDevice(String username, String uid, String password) {
+	private AccountStatus.Status registerDevice(String uid) {
 		try {
 			DeviceResource deviceResource = new DeviceResource(mApplicationContext);
-			JsonObject deviceJson = deviceResource.createDevice(username, uid, password);
+			JsonObject deviceJson = deviceResource.createDevice("local", uid);
 			if (deviceJson != null) {
 				if (deviceJson.get("registered").getAsBoolean()) {
 					return AccountStatus.Status.ALREADY_REGISTERED;

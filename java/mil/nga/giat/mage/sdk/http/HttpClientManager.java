@@ -10,6 +10,8 @@ import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
 
 import java.io.IOException;
+import java.net.CookieManager;
+import java.net.CookiePolicy;
 import java.util.Collection;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
@@ -38,6 +40,7 @@ public class HttpClientManager implements IEventDispatcher<ISessionEventListener
 
     private Context context;
     private Collection<ISessionEventListener> listeners = new CopyOnWriteArrayList<>();
+    CookieManager cookieManager;
 
     public static HttpClientManager getInstance(final Context context) {
         if (context == null) {
@@ -48,21 +51,26 @@ public class HttpClientManager implements IEventDispatcher<ISessionEventListener
             String userAgent = System.getProperty("http.agent");
             userAgent = (userAgent == null) ? "" : userAgent;
 
-            httpClientManager = new HttpClientManager(context, userAgent);
+            CookieManager cookieManager = new CookieManager();
+            cookieManager.setCookiePolicy(CookiePolicy.ACCEPT_ORIGINAL_SERVER);
+
+            httpClientManager = new HttpClientManager(context, userAgent, cookieManager);
         }
 
         return httpClientManager;
     }
 
-    private HttpClientManager(Context context, String userAgent) {
+    private HttpClientManager(Context context, String userAgent, CookieManager cookieManager) {
         this.context = context;
         this.userAgent = userAgent;
+        this.cookieManager = cookieManager;
     }
 
     public OkHttpClient httpClient() {
         OkHttpClient client = new OkHttpClient();
         client.setConnectTimeout(30, TimeUnit.SECONDS);
         client.setReadTimeout(30, TimeUnit.SECONDS);
+        client.setCookieHandler(cookieManager);
 
         client.interceptors().add(new Interceptor() {
             @Override

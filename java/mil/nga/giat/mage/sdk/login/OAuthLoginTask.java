@@ -67,13 +67,11 @@ public class OAuthLoginTask extends AbstractAccountTask {
 			}
 
 			if (authenticationJson.has("oauth")) {
-				String accessToken = authenticationJson.getAsJsonObject("oauth").get("access_token").getAsString();
-
 				UserResource userResource = new UserResource(mApplicationContext);
-				JsonObject authorizeResponse = userResource.authorize(strategy, uid, accessToken);
+				JsonObject authorizeResponse = userResource.authorize(strategy, uid);
 				if (authorizeResponse == null) {
 					DeviceResource deviceResource = new DeviceResource(mApplicationContext);
-					JsonObject deviceJson = deviceResource.createOAuthDevice(strategy, accessToken, uid);
+					JsonObject deviceJson = deviceResource.createDevice(strategy, uid);
 					if (deviceJson.get("registered").getAsBoolean()) {
 						return new AccountStatus(AccountStatus.Status.ALREADY_REGISTERED);
 					} else {

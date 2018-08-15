@@ -29,12 +29,8 @@ import retrofit.http.Path;
 public class DeviceResource {
 
     public interface DeviceService {
-
-        @POST("/api/devices")
-        Call<JsonObject> createDevice(@Body JsonObject device);
-
         @POST("/auth/{strategy}/devices")
-        Call<JsonObject> createOAuthDevice(@Path("strategy") String strategy, @Body JsonObject device);
+        Call<JsonObject> createDevice(@Path("strategy") String strategy, @Body JsonObject device);
     }
 
     private static final String LOG_NAME = DeviceResource.class.getName();
@@ -45,7 +41,7 @@ public class DeviceResource {
         this.context = context;
     }
 
-    public JsonObject createDevice(String username, String uid, String password) throws IOException {
+    public JsonObject createDevice(String strategy, String uid) throws IOException {
         JsonObject device = null;
 
         String baseUrl = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.serverURLKey), context.getString(R.string.serverURLDefaultValue));
@@ -58,40 +54,6 @@ public class DeviceResource {
         DeviceService service = retrofit.create(DeviceService.class);
 
         JsonObject json = new JsonObject();
-        json.addProperty("username", username);
-        json.addProperty("uid", uid);
-        json.addProperty("password", password);
-
-        try {
-            PackageInfo packageInfo = context.getPackageManager().getPackageInfo(context.getPackageName(), 0);
-            json.addProperty("appVersion", String.format("%s-%s", packageInfo.versionName, packageInfo.versionCode));
-        } catch (PackageManager.NameNotFoundException e) {
-            Log.e(LOG_NAME , "Problem retrieving package info.", e);
-        }
-
-        Response<JsonObject> response = service.createDevice(json).execute();
-
-        if (response.isSuccess()) {
-            device = response.body();
-        }
-
-        return device;
-    }
-
-    public JsonObject createOAuthDevice(String strategy, String accessToken, String uid) throws IOException {
-        JsonObject device = null;
-
-        String baseUrl = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.serverURLKey), context.getString(R.string.serverURLDefaultValue));
-        Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl(baseUrl)
-                .addConverterFactory(GsonConverterFactory.create())
-                .client(HttpClientManager.getInstance(context).httpClient())
-                .build();
-
-        DeviceService service = retrofit.create(DeviceService.class);
-
-        JsonObject json = new JsonObject();
-        json.addProperty("access_token", accessToken);
         json.addProperty("uid", uid);
 
         try {
@@ -101,7 +63,7 @@ public class DeviceResource {
             Log.e(LOG_NAME , "Problem retrieving package info.", e);
         }
 
-        Response<JsonObject> response = service.createOAuthDevice(strategy, json).execute();
+        Response<JsonObject> response = service.createDevice(strategy, json).execute();
 
         if (response.isSuccess()) {
             device = response.body();
