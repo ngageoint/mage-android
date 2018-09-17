@@ -6,6 +6,7 @@
     <color name="background_transparent">#E7EEEEEE</color>
 
     <color name="header_color">@color/md_blue_800</color>
+    <color name="alert_title_color">@color/md_blue_600</color>
 
     <color name="download_icon">@color/md_blue_600</color>
 

@@ -6,6 +6,7 @@
     <color name="background_transparent">#E7111111</color>
 
     <color name="header_color">@color/md_white_1000</color>
+    <color name="alert_title_color">@color/md_white_1000</color>
 
     <color name="bottom_navigation_background">@color/md_blue_grey_700</color>
 

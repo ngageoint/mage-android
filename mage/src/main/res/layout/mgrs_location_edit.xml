@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
+
+    <android.support.design.widget.TextInputLayout
+        android:id="@+id/mgrs_layout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        style="@style/AppTheme.TextInputLayout"
+        android:theme="@style/AppTheme.White"
+        app:hintAnimationEnabled="false"
+        app:errorTextAppearance="@style/AppTheme.ErrorTextAppearance">
+
+        <EditText
+            android:id="@+id/mgrs"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="MGRS"
+            android:imeOptions="actionDone"
+            android:privateImeOptions="nm"
+            android:inputType="textNoSuggestions|textVisiblePassword"
+            android:theme="@style/AppTheme.White" />
+
+    </android.support.design.widget.TextInputLayout>
+
+</LinearLayout>
+
+
+

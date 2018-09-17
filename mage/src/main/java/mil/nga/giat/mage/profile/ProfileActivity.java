@@ -5,6 +5,7 @@ import android.annotation.TargetApi;
 import android.app.Dialog;
 import android.content.ActivityNotFoundException;
 import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -31,6 +32,8 @@ import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.text.SpannableString;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
@@ -62,6 +65,7 @@ import java.util.Map;
 import mil.nga.giat.mage.BuildConfig;
 import mil.nga.giat.mage.MAGE;
 import mil.nga.giat.mage.R;
+import mil.nga.giat.mage.coordinate.CoordinateFormatter;
 import mil.nga.giat.mage.login.LoginActivity;
 import mil.nga.giat.mage.map.marker.LocationBitmapFactory;
 import mil.nga.giat.mage.sdk.datastore.location.Location;
@@ -75,7 +79,6 @@ import mil.nga.giat.mage.sdk.exceptions.UserException;
 import mil.nga.giat.mage.sdk.fetch.DownloadImageTask;
 import mil.nga.giat.mage.sdk.profile.UpdateProfileTask;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
-import mil.nga.wkb.geom.Geometry;
 import mil.nga.wkb.geom.Point;
 import mil.nga.wkb.util.GeometryUtils;
 
@@ -91,16 +94,21 @@ public class ProfileActivity extends AppCompatActivity implements OnMapReadyCall
 	private static final int PERMISSIONS_REQUEST_STORAGE = 400;
 
 	public static String USER_ID = "USER_ID";
-	
+
 	private String currentMediaPath;
 	private User user;
+	private Location location;
 	private boolean isCurrentUser;
 	
 	private MapView mapView;
 	private LatLng latLng = new LatLng(0, 0);
+	private String coordinate;
 	private BitmapDescriptor icon;
 	BottomSheetDialog profileActionDialog;
 	BottomSheetDialog avatarActionsDialog;
+
+	private TextView phone;
+	private TextView email;
 
 	@Override
 	public void onDestroy() {
@@ -147,12 +155,12 @@ public class ProfileActivity extends AppCompatActivity implements OnMapReadyCall
 			}
 
 			Event event = EventHelper.getInstance(context).getCurrentEvent();
-			List<Location> lastLocation = LocationHelper.getInstance(context).getUserLocations(user.getId(), event.getId(), 1, true);
-			if (!lastLocation.isEmpty()) {
-				Geometry geo = lastLocation.get(0).getGeometry();
-				Point point = GeometryUtils.getCentroid(geo);
+			List<Location> locations = LocationHelper.getInstance(context).getUserLocations(user.getId(), event.getId(), 1, true);
+			if (!locations.isEmpty()) {
+				location = locations.get(0);
+				Point point = GeometryUtils.getCentroid(location.getGeometry());
 				latLng = new LatLng(point.getY(), point.getX());
-				icon = LocationBitmapFactory.bitmapDescriptor(context, lastLocation.get(0), user);
+				icon = LocationBitmapFactory.bitmapDescriptor(context, location, user);
 			}
 		} catch (UserException ue) {
 			Log.e(LOG_NAME, "Problem finding user.", ue);
@@ -168,58 +176,65 @@ public class ProfileActivity extends AppCompatActivity implements OnMapReadyCall
 
 		getSupportActionBar().setTitle(isCurrentUser ? "My Profile" : displayName);
 
-		final TextView realNameTextView = (TextView) findViewById(R.id.realName);
-		realNameTextView.setText(displayName);
-		final TextView phoneTextView = (TextView) findViewById(R.id.phone);
+		final TextView name = (TextView) findViewById(R.id.display_name);
+		name.setText(displayName);
 
+		phone = (TextView) findViewById(R.id.phone);
 		View phoneLayout = findViewById(R.id.phone_layout);
+		phoneLayout.setOnLongClickListener(new View.OnLongClickListener() {
+			@Override
+			public boolean onLongClick(View v) {
+				onPhoneLongCLick(v);
+				return true;
+			}
+		});
+
 		if (StringUtils.isNotBlank(user.getPrimaryPhone())) {
 			SpannableString primaryPhone = new SpannableString(user.getPrimaryPhone());
-			phoneTextView.setText(primaryPhone);
-			phoneTextView.setOnClickListener(new View.OnClickListener() {
-				@Override
-				public void onClick(View v) {
-					try {
-						Intent callIntent = new Intent(Intent.ACTION_DIAL);
-						callIntent.setData(Uri.parse("tel:" + phoneTextView.getText().toString()));
-						startActivity(callIntent);
-					} catch (ActivityNotFoundException ae) {
-						Toast.makeText(ProfileActivity.this, "Could not call user.", Toast.LENGTH_SHORT).show();
-						Log.e(LOG_NAME, "Could not call user.", ae);
-					}
-				}
-			});
+			phone.setText(primaryPhone);
 			phoneLayout.setVisibility(View.VISIBLE);
 		} else {
 			phoneLayout.setVisibility(View.GONE);
 		}
 
-		final TextView emailTextView = (TextView) findViewById(R.id.email);
+		email = (TextView) findViewById(R.id.email);
 		View emailLayout = findViewById(R.id.email_layout);
+		emailLayout.setOnLongClickListener(new View.OnLongClickListener() {
+			@Override
+			public boolean onLongClick(View v) {
+				onEmailLongCLick(v);
+				return true;
+			}
+		});
+
 		if (StringUtils.isNotBlank(user.getEmail())) {
 			SpannableString emailAddress = new SpannableString(user.getEmail());
-			emailTextView.setText(emailAddress);
-			emailTextView.setOnClickListener(new View.OnClickListener() {
-				 @Override
-				 public void onClick(View v) {
-					 Intent emailIntent = new Intent(Intent.ACTION_SEND);
-					 emailIntent.setType("message/rfc822");
-					 emailIntent.putExtra(Intent.EXTRA_EMAIL, new String[]{emailTextView.getText().toString()});
-					 emailIntent.putExtra(Intent.EXTRA_SUBJECT, "MAGE");
-					 try {
-						 startActivity(Intent.createChooser(emailIntent, "Send mail..."));
-					 } catch (ActivityNotFoundException ae) {
-						 Toast.makeText(ProfileActivity.this, "There are no email clients installed.", Toast.LENGTH_SHORT).show();
-						 Log.e(LOG_NAME, "Could not email user.", ae);
-					 }
-				 }
-			 });
+			email.setText(emailAddress);
 			emailLayout.setVisibility(View.VISIBLE);
 		} else {
 			emailLayout.setVisibility(View.GONE);
 		}
 
-		final ImageView imageView = (ImageView) findViewById(R.id.profile_picture);
+		View locationLayout = findViewById(R.id.location_layout);
+		locationLayout.setOnLongClickListener(new View.OnLongClickListener() {
+			@Override
+			public boolean onLongClick(View v) {
+				onLocationLongCLick(v);
+				return true;
+			}
+		});
+		if (location != null) {
+			CoordinateFormatter formatter = new CoordinateFormatter(getApplicationContext());
+			Point point = GeometryUtils.getCentroid(location.getGeometry());
+			coordinate = formatter.format(new LatLng(point.getY(), point.getX()));
+			final TextView coordinateView = (TextView) findViewById(R.id.location);
+			coordinateView.setText(coordinate);
+			locationLayout.setVisibility(View.VISIBLE);
+		} else {
+			locationLayout.setVisibility(View.GONE);
+		}
+
+		final ImageView imageView = (ImageView) findViewById(R.id.avatar);
 		String avatarUrl = user.getAvatarUrl();
 		String localAvatarPath = user.getUserLocal().getLocalAvatarPath();
 
@@ -255,7 +270,7 @@ public class ProfileActivity extends AppCompatActivity implements OnMapReadyCall
 		avatarActionsDialog = new BottomSheetDialog(ProfileActivity.this);
 		final View avatarBottomSheetView = getLayoutInflater().inflate(R.layout.dialog_avatar_actions, null);
 		avatarActionsDialog.setContentView(avatarBottomSheetView);
-		findViewById(R.id.profile_picture).setOnClickListener(new View.OnClickListener() {
+		findViewById(R.id.avatar).setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
 				onAvatarClick();
@@ -283,18 +298,10 @@ public class ProfileActivity extends AppCompatActivity implements OnMapReadyCall
 			}
 		});
 
-		View profileActions = findViewById(R.id.profile_actions_button);
-		profileActions.setVisibility(isCurrentUser ? View.VISIBLE : View.GONE);
 		if (isCurrentUser) {
 			profileActionDialog = new BottomSheetDialog(ProfileActivity.this);
 			View sheetView = getLayoutInflater().inflate(R.layout.fragment_profile_actions, null);
 			profileActionDialog.setContentView(sheetView);
-			profileActions.setOnClickListener(new View.OnClickListener() {
-				@Override
-				public void onClick(View v) {
-					profileActionDialog.show();
-				}
-			});
 
 			sheetView.findViewById(R.id.change_password_layout).setOnClickListener(new View.OnClickListener() {
 				@Override
@@ -313,13 +320,27 @@ public class ProfileActivity extends AppCompatActivity implements OnMapReadyCall
 	}
 
 	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+		if (isCurrentUser) {
+			MenuInflater inflater = getMenuInflater();
+			inflater.inflate(R.menu.profile_menu, menu);
+		}
+
+		return true;
+	}
+
+	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
 		switch (item.getItemId()) {
 			case android.R.id.home:
 				this.finish();
 				return true;
+			case R.id.profile_actions:
+				profileActionDialog.show();
+				return true;
 		}
-		return true;
+
+		return super.onOptionsItemSelected(item);
 	}
 
 	private void changePassword() {
@@ -554,12 +575,12 @@ public class ProfileActivity extends AppCompatActivity implements OnMapReadyCall
 
 		if (filePath != null) {
 			final Context context = getApplicationContext();
-			final ImageView iv = (ImageView) findViewById(R.id.profile_picture);
+			final ImageView iv = (ImageView) findViewById(R.id.avatar);
 			Glide.with(context).load(filePath).centerCrop().into(iv);
 			Glide.with(context)
 					.load(filePath)
 					.asBitmap()
-					.fallback(R.id.profile_picture)
+					.fallback(R.id.avatar)
 					.centerCrop()
 					.into(new BitmapImageViewTarget(iv) {
 						@Override
@@ -592,6 +613,113 @@ public class ProfileActivity extends AppCompatActivity implements OnMapReadyCall
 		super.onRestoreInstanceState(savedInstanceState);
 
 		currentMediaPath  = savedInstanceState.getString(CURRENT_MEDIA_PATH);
+	}
+
+	public void onLocationClick(View view) {
+		Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("geo:37.7749,-122.4194"));
+		startActivity(Intent.createChooser(intent, "Map"));
+	}
+
+	private void onLocationLongCLick(final View view) {
+		String[] items = {"Go to location", "Copy to clipboard"};
+		View titleView = getLayoutInflater().inflate(R.layout.alert_primary_title, null);
+		TextView title = (TextView) titleView.findViewById(R.id.alertTitle);
+		title.setText(coordinate);
+		ImageView icon = (ImageView) titleView.findViewById(R.id.icon);
+		icon.setImageResource(R.drawable.ic_place_white_24dp);
+
+		AlertDialog dialog = new AlertDialog.Builder(this)
+				.setCustomTitle(titleView)
+				.setItems(items, new DialogInterface.OnClickListener() {
+					@Override
+					public void onClick(DialogInterface dialog, int item) {
+						if (item == 0) {
+							onLocationClick(view);
+						} else {
+							ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+							ClipData clip = ClipData.newPlainText("Location", coordinate);
+							clipboard.setPrimaryClip(clip);
+						}
+					}
+				})
+				.create();
+
+		dialog.show();
+	}
+
+	public void onPhoneClick(View view) {
+		try {
+			Intent callIntent = new Intent(Intent.ACTION_DIAL);
+			callIntent.setData(Uri.parse("tel:" + phone.getText().toString()));
+			startActivity(callIntent);
+		} catch (ActivityNotFoundException ae) {
+			Toast.makeText(ProfileActivity.this, "Could not call user.", Toast.LENGTH_SHORT).show();
+			Log.e(LOG_NAME, "Could not call user.", ae);
+		}
+	}
+
+	private void onPhoneLongCLick(final View view) {
+		String[] items = {"Call", "Send a message", "Copy to clipboard", };
+		View titleView = getLayoutInflater().inflate(R.layout.alert_primary_title, null);
+		TextView title = (TextView) titleView.findViewById(R.id.alertTitle);
+		title.setText(user.getPrimaryPhone());
+		ImageView icon = (ImageView) titleView.findViewById(R.id.icon);
+		icon.setImageResource(R.drawable.ic_phone_white_24dp);
+
+		AlertDialog dialog = new AlertDialog.Builder(this)
+				.setCustomTitle(titleView)
+				.setItems(items, new DialogInterface.OnClickListener() {
+					@Override
+					public void onClick(DialogInterface dialog, int item) {
+						if (item == 0) {
+							onPhoneClick(view);
+						} else if (item == 1) {
+							Intent intent = new Intent(Intent.ACTION_VIEW);
+							intent.setData(Uri.parse("sms:" + user.getPrimaryPhone()));
+							startActivity(intent);
+						} else {
+							ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+							ClipData clip = ClipData.newPlainText("Phone", user.getPrimaryPhone());
+							clipboard.setPrimaryClip(clip);
+						}
+					}
+				})
+				.create();
+
+		dialog.show();
+	}
+
+	public void onEmailClick(View view) {
+		Intent intent = new Intent(Intent.ACTION_VIEW);
+		intent.setData(Uri.parse("mailto:" + user.getEmail()));
+		startActivity(intent);
+	}
+
+	private void onEmailLongCLick(final View view) {
+		String[] items = {"Email", "Copy to clipboard"};
+		View titleView = getLayoutInflater().inflate(R.layout.alert_primary_title, null);
+		TextView title = (TextView) titleView.findViewById(R.id.alertTitle);
+		title.setText(user.getEmail());
+		ImageView icon = (ImageView) titleView.findViewById(R.id.icon);
+		icon.setImageResource(R.drawable.ic_email_white_24dp);
+
+		AlertDialog dialog = new AlertDialog.Builder(this)
+				.setCustomTitle(titleView)
+				.setItems(items, new DialogInterface.OnClickListener() {
+					@Override
+					public void onClick(DialogInterface dialog, int item) {
+						if (item == 0) {
+							onEmailClick(view);
+						} else {
+							ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+							ClipData clip = ClipData.newPlainText("Email", user.getEmail());
+							clipboard.setPrimaryClip(clip);
+						}
+					}
+				})
+				.create();
+
+		dialog.show();
 	}
 
 	private List<Uri> getUris(Intent intent) {

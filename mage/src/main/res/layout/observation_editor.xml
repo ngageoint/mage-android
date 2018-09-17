@@ -10,7 +10,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical">
-\
+
         <android.support.v7.widget.Toolbar
             android:id="@+id/observation_actions"
             android:layout_width="match_parent"
@@ -132,59 +132,30 @@
                             android:layout_marginBottom="8dp"
                             android:layout_marginStart="4dp">
 
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginBottom="8dp"
-                                android:textColor="#999999"
-                                android:textSize="12sp"
-                                android:text="Location"/>
-
                             <LinearLayout
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:orientation="horizontal">
+                                android:orientation="vertical">
+
+                                <android.support.design.widget.TextInputLayout
+                                    android:id="@+id/location_layout"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    app:hintAnimationEnabled="false">
+
+                                    <EditText
+                                        android:id="@+id/location"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content" />
+
+                                </android.support.design.widget.TextInputLayout>
 
                                 <fragment
                                     android:id="@+id/map"
                                     android:name="com.google.android.gms.maps.MapFragment"
-                                    android:layout_width="200dp"
+                                    android:layout_width="match_parent"
                                     android:layout_height="100dp" />
 
-                                <LinearLayout
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="match_parent"
-                                    android:layout_marginStart="16dp"
-                                    android:orientation="vertical">
-
-                                    <TextView
-                                        android:layout_width="wrap_content"
-                                        android:layout_height="wrap_content"
-                                        android:textSize="12sp"
-                                        android:text="Latitude"/>
-
-                                    <TextView
-                                        android:id="@+id/latitude"
-                                        android:layout_width="wrap_content"
-                                        android:layout_height="wrap_content"
-                                        android:layout_marginBottom="4dp"
-                                        android:textColor="#777777"
-                                        android:textSize="16sp" />
-
-                                    <TextView
-                                        android:layout_width="wrap_content"
-                                        android:layout_height="wrap_content"
-                                        android:textSize="12sp"
-                                        android:text="Longitude"/>
-
-                                    <TextView
-                                        android:id="@+id/longitude"
-                                        android:layout_width="wrap_content"
-                                        android:layout_height="wrap_content"
-                                        android:textColor="#777777"
-                                        android:textSize="16sp" />
-
-                                </LinearLayout>
                             </LinearLayout>
                         </LinearLayout>
 

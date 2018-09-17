@@ -27,6 +27,13 @@
         android:summary="%s"
         android:title="Time zone for display and editing"/>
     <mil.nga.giat.mage.sdk.preferences.IntegerListPreference
+        android:defaultValue="@integer/coordinateSystemViewDefaultValue"
+        android:entries="@array/coordinateSystems"
+        android:entryValues="@array/coordinateSystemValues"
+        android:key="@string/coordinateSystemViewKey"
+        android:summary="%s"
+        android:title="Coordinate System"/>
+    <mil.nga.giat.mage.sdk.preferences.IntegerListPreference
         android:defaultValue="@integer/dayNightThemeDefaultValue"
         android:entries="@array/dayNightThemes"
         android:entryValues="@array/dayNightThemeValues"

@@ -53,6 +53,13 @@
     <string name="timeZoneKey">timeZones</string>
     <integer name="timeZoneDefaultValue">0</integer>
 
+    <!-- Coordinate System Display -->
+    <string name="coordinateSystemViewKey">coordinateSystemView</string>
+    <integer name="coordinateSystemViewDefaultValue">0</integer>
+
+    <!-- Coordinate System Edit -->
+    <string name="coordinateSystemEditKey">coordinateSystemEdit</string>
+
     <!-- THEME -->
     <string name="dayNightThemeKey">theme</string>
     <integer name="dayNightThemeDefaultValue">1</integer>

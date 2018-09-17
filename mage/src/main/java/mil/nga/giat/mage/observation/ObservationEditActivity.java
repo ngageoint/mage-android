@@ -17,6 +17,7 @@ import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.provider.MediaStore;
 import android.provider.Settings;
+import android.support.design.widget.TextInputLayout;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.content.ContextCompat;
@@ -72,6 +73,7 @@ import java.util.Set;
 import mil.nga.giat.mage.BuildConfig;
 import mil.nga.giat.mage.LandingActivity;
 import mil.nga.giat.mage.R;
+import mil.nga.giat.mage.coordinate.CoordinateFormatter;
 import mil.nga.giat.mage.form.LayoutBaker;
 import mil.nga.giat.mage.form.LayoutBaker.ControlGenerationType;
 import mil.nga.giat.mage.form.MageEditText;
@@ -465,8 +467,7 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 
 		LatLng centroid = location.getCentroidLatLng();
 
-		((TextView) findViewById(R.id.latitude)).setText(latLngFormat.format(centroid.latitude));
-		((TextView) findViewById(R.id.longitude)).setText(latLngFormat.format(centroid.longitude));
+		setupLocation(centroid);
 
 		LatLng initialLatLng = getIntent().getParcelableExtra(INITIAL_LOCATION);
 		if (initialLatLng == null) {
@@ -572,6 +573,20 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 		}
 
 		return super.onOptionsItemSelected(item);
+	}
+
+	private void setupLocation(LatLng latLng) {
+		EditText location = (EditText) findViewById(R.id.location);
+		CoordinateFormatter formatter = new CoordinateFormatter(getApplicationContext());
+		location.setText(formatter.format(latLng));
+
+		switch (formatter.getCoordinateSystem()) {
+			case MGRS:
+				((TextInputLayout) findViewById(R.id.location_layout)).setHint("MGRS");
+				break;
+			default:
+				((TextInputLayout) findViewById(R.id.location_layout)).setHint("Location (Lat/Lng)");
+		}
 	}
 
 	private void onArchiveObservation() {
