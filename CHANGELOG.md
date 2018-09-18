@@ -3,13 +3,19 @@ All notable changes to this project will be documented in this file.
 Adheres to [Semantic Versioning](http://semver.org/).
 
 ---
-## 6.1.3 (TBD)
+## 6.2.1 (TBD)
 
 * TBD
 
 ##### Features
-* Show error message from server on invalid login attempt.
+
+##### Bug Fixes
+
+## [6.2.0](https://github.com/ngageoint/mage-android/releases/tag/6.2.0) (09-18-2018)
+
+##### Features
 * Add mgrs edit/view feature.
+* Show error message from server on invalid login attempt.
 
 ##### Bug Fixes
 * Don't remove token before logout request.
