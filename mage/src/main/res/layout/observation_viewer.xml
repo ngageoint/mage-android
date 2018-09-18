@@ -70,13 +70,15 @@
                             android:id="@+id/timestamp"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
                             android:fontFamily="sans-serif"
                             android:theme="@style/ListTextSecondary"/>
 
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:orientation="horizontal">
+                            android:orientation="horizontal"
+                            android:layout_marginTop="2dp">
 
                             <mil.nga.giat.mage.widget.CoordinateView
                                 android:id="@+id/location"
@@ -84,6 +86,7 @@
                                 android:layout_height="wrap_content"
                                 android:layout_marginEnd="4dp"
                                 android:fontFamily="sans-serif"
+                                android:textIsSelectable="true"
                                 android:theme="@style/ListTextSecondary"/>
 
                             <TextView
