@@ -159,6 +159,7 @@ public class EventActivity extends AppCompatActivity implements EventsFetchFragm
 
 	private void chooseEvent(final Event event) {
 		findViewById(R.id.app_bar).setVisibility(View.GONE);
+		findViewById(R.id.event_content).setVisibility(View.GONE);
 		findViewById(R.id.event_status).setVisibility(View.VISIBLE);
 
 		TextView message = (TextView) findViewById(R.id.event_message);
