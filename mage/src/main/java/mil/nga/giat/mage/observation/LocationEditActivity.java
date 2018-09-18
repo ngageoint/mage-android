@@ -1,5 +1,7 @@
 package mil.nga.giat.mage.observation;
 
+import android.app.Activity;
+import android.app.Fragment;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -10,8 +12,11 @@ import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Vibrator;
 import android.preference.PreferenceManager;
+import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
+import android.support.design.widget.TabLayout;
+import android.support.design.widget.TextInputLayout;
 import android.support.v4.graphics.drawable.DrawableCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -21,21 +26,21 @@ import android.text.Editable;
 import android.text.InputFilter;
 import android.text.TextWatcher;
 import android.view.KeyEvent;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.GoogleMap.OnCameraIdleListener;
-import com.google.android.gms.maps.GoogleMap.OnCameraMoveListener;
 import com.google.android.gms.maps.GoogleMap.OnMapClickListener;
 import com.google.android.gms.maps.GoogleMap.OnMapLongClickListener;
 import com.google.android.gms.maps.GoogleMap.OnMarkerClickListener;
@@ -50,8 +55,11 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PolygonOptions;
 import com.google.android.gms.maps.model.PolylineOptions;
+import com.google.android.gms.maps.model.TileOverlay;
+import com.google.android.gms.maps.model.TileOverlayOptions;
 
 import java.text.DecimalFormat;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -64,7 +72,10 @@ import mil.nga.geopackage.map.geom.PolylineMarkers;
 import mil.nga.geopackage.map.geom.ShapeMarkers;
 import mil.nga.geopackage.projection.ProjectionConstants;
 import mil.nga.giat.mage.R;
+import mil.nga.giat.mage.coordinate.CoordinateSystem;
 import mil.nga.giat.mage.map.MapUtils;
+import mil.nga.mgrs.MGRS;
+import mil.nga.mgrs.gzd.MGRSTileProvider;
 import mil.nga.wkb.geom.Geometry;
 import mil.nga.wkb.geom.GeometryEnvelope;
 import mil.nga.wkb.geom.GeometryType;
@@ -74,9 +85,9 @@ import mil.nga.wkb.geom.Polygon;
 import mil.nga.wkb.util.GeometryEnvelopeBuilder;
 import mil.nga.wkb.util.GeometryUtils;
 
-public class LocationEditActivity extends AppCompatActivity implements TextWatcher, View.OnFocusChangeListener,
-        OnMapClickListener, OnMapReadyCallback, OnCameraMoveListener, OnCameraIdleListener,
-        OnMarkerDragListener, OnMapLongClickListener, OnMarkerClickListener, View.OnClickListener {
+public class LocationEditActivity extends AppCompatActivity implements OnMapClickListener, OnMapReadyCallback,
+        GoogleMap.OnCameraMoveStartedListener, GoogleMap.OnCameraMoveListener, OnCameraIdleListener, OnMarkerDragListener,
+        OnMapLongClickListener, OnMarkerClickListener, View.OnClickListener, CoordinateChangeListener, TabLayout.OnTabSelectedListener {
 
     public static String LOCATION = "LOCATION";
     public static String MARKER_BITMAP = "MARKER_BITMAP";
@@ -84,12 +95,17 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
 
     private static final String LOCATION_PRECISION = "%.6f";
     private final DecimalFormat locationFormatter = new DecimalFormat("0.000000");
-    private final int LOCATION_MAX_PRECISION = 6;
+
+    private static final int WGS84_COORDINATE_TAB_POSITION = 0;
+    private static final int MGRS_COORDINATE_TAB_POSITION = 1;
 
     private ObservationLocation location;
     private GoogleMap map;
-    private EditText longitudeEdit;
-    private EditText latitudeEdit;
+    private int onCameraMoveReason;
+    private TileOverlay mgrsTileOverlay;
+    private TabLayout tabLayout;
+    private WGS84CoordinateFragment wgs84CoordinateFragment;
+    private MGRSCoordinateFragment mgrsCoordinateFragment;
     private TextView hintText;
     private MapFragment mapFragment;
     private GoogleMapShapeMarkers shapeMarkers;
@@ -111,7 +127,6 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
     private FloatingActionButton lineButton;
     private FloatingActionButton rectangleButton;
     private FloatingActionButton polygonButton;
-    private boolean validLocation = true;
 
     /**
      * {@inheritDoc}
@@ -127,21 +142,40 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
         getSupportActionBar().setHomeAsUpIndicator(R.drawable.ic_close_white_24dp);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
+        wgs84CoordinateFragment = (WGS84CoordinateFragment) getFragmentManager().findFragmentById(R.id.wgs84CoordinateFragment);
+        mgrsCoordinateFragment = (MGRSCoordinateFragment) getFragmentManager().findFragmentById(R.id.mgrsCoordinateFragment);
+
+        tabLayout = (TabLayout) findViewById(R.id.tabs);
+        tabLayout.addTab(tabLayout.newTab().setText("Lat/Lng"), WGS84_COORDINATE_TAB_POSITION);
+        tabLayout.addTab(tabLayout.newTab().setText("MGRS"), MGRS_COORDINATE_TAB_POSITION);
+
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+        int defaultCoordinateSystem = preferences.getInt(getResources().getString(R.string.coordinateSystemViewKey), CoordinateSystem.WGS84.getPreferenceValue());
+        CoordinateSystem coordinateSystem = CoordinateSystem.get(preferences.getInt(getResources().getString(R.string.coordinateSystemEditKey), defaultCoordinateSystem));
+        switch (coordinateSystem) {
+            case MGRS:
+                getFragmentManager().beginTransaction()
+                        .show(mgrsCoordinateFragment)
+                        .hide(wgs84CoordinateFragment)
+                        .commit();
+
+                tabLayout.getTabAt(MGRS_COORDINATE_TAB_POSITION).select();
+                break;
+            default:
+                getFragmentManager().beginTransaction()
+                        .show(wgs84CoordinateFragment)
+                        .hide(mgrsCoordinateFragment)
+                        .commit();
+
+                tabLayout.getTabAt(WGS84_COORDINATE_TAB_POSITION).select();
+        }
+
+        tabLayout.addOnTabSelectedListener(this);
+
         Intent intent = getIntent();
         location = intent.getParcelableExtra(LOCATION);
         markerBitmap = intent.getParcelableExtra(MARKER_BITMAP);
         newDrawing = intent.getBooleanExtra(NEW_OBSERVATION, false);
-
-        longitudeEdit = (EditText) findViewById(R.id.location_edit_longitude);
-        latitudeEdit = (EditText) findViewById(R.id.location_edit_latitude);
-        longitudeEdit
-                .setFilters(new InputFilter[]{new InputFilterDecimal(
-                        -180.0, 180.0, LOCATION_MAX_PRECISION)});
-        latitudeEdit
-                .setFilters(new InputFilter[]{new InputFilterDecimal(
-                        -90.0, 90.0, LOCATION_MAX_PRECISION)});
-
-        clearLatitudeAndLongitudeFocus();
 
         hintText = (TextView) findViewById(R.id.location_edit_hint);
 
@@ -154,8 +188,6 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
 
         mapFragment = (MapFragment) getFragmentManager().findFragmentById(R.id.location_edit_map);
         mapFragment.getMapAsync(this);
-
-        setupEditButtons();
     }
 
     /**
@@ -177,6 +209,69 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
         }
     }
 
+    @Override
+    public void onTabSelected(TabLayout.Tab tab) {
+        int position = tab.getPosition();
+
+        if (position == WGS84_COORDINATE_TAB_POSITION) {
+            getFragmentManager().beginTransaction()
+                    .show(wgs84CoordinateFragment)
+                    .hide(mgrsCoordinateFragment)
+                    .commit();
+
+            if (!wgs84CoordinateFragment.setLatLng(mgrsCoordinateFragment.getLatLng())) {
+                map.moveCamera(CameraUpdateFactory.newLatLng(wgs84CoordinateFragment.getLatLng()));
+            }
+
+            mgrsTileOverlay.remove();
+        } else if (position == MGRS_COORDINATE_TAB_POSITION) {
+            getFragmentManager().beginTransaction()
+                    .show(mgrsCoordinateFragment)
+                    .hide(wgs84CoordinateFragment)
+                    .commit();
+
+            if (!mgrsCoordinateFragment.setLatLng(wgs84CoordinateFragment.getLatLng())) {
+                map.moveCamera(CameraUpdateFactory.newLatLng(mgrsCoordinateFragment.getLatLng()));
+            }
+
+            mgrsTileOverlay = map.addTileOverlay(new TileOverlayOptions().tileProvider(new MGRSTileProvider(getApplicationContext())));
+        }
+    }
+
+    @Override
+    public void onTabUnselected(TabLayout.Tab tab) {
+
+    }
+
+    @Override
+    public void onTabReselected(TabLayout.Tab tab) {
+
+    }
+
+    @Override
+    public void onCoordinateChanged(LatLng coordinate) {
+        map.moveCamera(CameraUpdateFactory.newLatLng(coordinate));
+        if (selectedMarker != null) {
+            selectedMarker.setPosition(coordinate);
+            updateShape(selectedMarker);
+        }
+    }
+
+    @Override
+    public void onCoordinateChangeStart(LatLng coordinate) {
+        // Move the camera to a selected line or polygon marker
+        if (shapeType != GeometryType.POINT && selectedMarker != null) {
+            map.moveCamera(CameraUpdateFactory.newLatLng(selectedMarker.getPosition()));
+        }
+
+        updateHint();
+    }
+
+    @Override
+    public void onCoordinateChangeEnd(LatLng coordinate) {
+        updateHint();
+    }
+
     /**
      * {@inheritDoc}
      */
@@ -186,21 +281,23 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
         setupMap();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
-    public void onConfigurationChanged(Configuration configuration) {
-        super.onConfigurationChanged(configuration);
-
-        setupEditButtons();
+    public void onCameraMoveStarted(int reason) {
+        onCameraMoveReason = reason;
     }
 
-    private void setupEditButtons() {
-        int orientation = getResources().getConfiguration().orientation;
-
-        LinearLayout editButtonLayout = (LinearLayout) findViewById(R.id.location_edit_button_layout);
-        if (Configuration.ORIENTATION_LANDSCAPE == orientation) {
-            editButtonLayout.setOrientation(LinearLayout.HORIZONTAL);
-        } else {
-            editButtonLayout.setOrientation(LinearLayout.VERTICAL);
+    @Override
+    public void onCameraMove() {
+        if (onCameraMoveReason != REASON_DEVELOPER_ANIMATION) {
+            // Points are represented by the camera position
+            if (shapeType == GeometryType.POINT) {
+                clearCoordinateFocus();
+                CameraPosition position = map.getCameraPosition();
+                updateLatitudeLongitudeText(position.target);
+            }
         }
     }
 
@@ -211,11 +308,16 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
 
         map.moveCamera(location.getCameraUpdate(mapFragment.getView()));
 
+        if (tabLayout.getSelectedTabPosition() == MGRS_COORDINATE_TAB_POSITION) {
+            mgrsTileOverlay = map.addTileOverlay(new TileOverlayOptions().tileProvider(new MGRSTileProvider(getApplicationContext())));
+        }
+
         imageView = (ImageView) findViewById(R.id.location_edit_marker);
 
         map.getUiSettings().setCompassEnabled(false);
         map.getUiSettings().setRotateGesturesEnabled(false);
         map.setOnCameraMoveListener(this);
+        map.setOnCameraMoveStartedListener(this);
         map.setOnMapClickListener(this);
         map.setOnMapLongClickListener(this);
         map.setOnMarkerClickListener(this);
@@ -233,35 +335,6 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
         Geometry geometry = location.getGeometry();
         setShapeType(geometry);
         addMapShape(geometry);
-
-        longitudeEdit.addTextChangedListener(this);
-        longitudeEdit.setOnFocusChangeListener(this);
-
-        latitudeEdit.addTextChangedListener(this);
-        latitudeEdit.setOnFocusChangeListener(this);
-
-        latitudeEdit.setOnEditorActionListener(new TextView.OnEditorActionListener() {
-            @Override
-            public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
-                if (actionId == EditorInfo.IME_ACTION_DONE) {
-                    latitudeEdit.clearFocus();
-                    return true;
-                }
-                return false;
-            }
-        });
-
-        longitudeEdit.setOnEditorActionListener(new TextView.OnEditorActionListener() {
-            @Override
-            public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
-                if (actionId == EditorInfo.IME_ACTION_DONE) {
-                    longitudeEdit.clearFocus();
-                    return true;
-                }
-                return false;
-            }
-        });
-
     }
 
     /**
@@ -277,11 +350,15 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
     }
 
     /**
-     * Clear the focus from the latitude and longitude text entries
+     * Clear the focus from the coordinate text entries
      */
-    private void clearLatitudeAndLongitudeFocus() {
-        longitudeEdit.clearFocus();
-        latitudeEdit.clearFocus();
+    private void clearCoordinateFocus() {
+        int tabPosition = tabLayout.getSelectedTabPosition();
+        if (tabPosition == WGS84_COORDINATE_TAB_POSITION) {
+            wgs84CoordinateFragment.clearFocus();
+        } else if (tabPosition == MGRS_COORDINATE_TAB_POSITION) {
+            mgrsCoordinateFragment.clearFocus();
+        }
     }
 
     /**
@@ -393,7 +470,7 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
         // Only care if not the current shape type
         if (selectedType != shapeType || selectedRectangle != isRectangle) {
 
-            clearLatitudeAndLongitudeFocus();
+            clearCoordinateFocus();
 
             String title = null;
             String message = null;
@@ -606,23 +683,26 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
      */
     private LatLng getShapeToPointLocation() {
         LatLng newPointPosition = null;
+
         if (selectedMarker != null) {
             newPointPosition = selectedMarker.getPosition();
         } else {
-            String latitudeString = latitudeEdit.getText().toString();
-            String longitudeString = longitudeEdit.getText().toString();
-            double latitude = 0;
-            double longitude = 0;
-            if (!latitudeString.isEmpty() && !longitudeString.isEmpty()) {
-                latitude = Double.parseDouble(latitudeString);
-                longitude = Double.parseDouble(longitudeString);
-            } else {
-                CameraPosition position = map.getCameraPosition();
-                latitude = position.target.latitude;
-                longitude = position.target.longitude;
+            LatLng latLng = null;
+            int tabPosition = tabLayout.getSelectedTabPosition();
+            if (tabPosition == WGS84_COORDINATE_TAB_POSITION) {
+                wgs84CoordinateFragment.clearFocus();
+                newPointPosition = wgs84CoordinateFragment.getLatLng();
+            } else if (tabPosition == MGRS_COORDINATE_TAB_POSITION) {
+                mgrsCoordinateFragment.clearFocus();
+                newPointPosition = mgrsCoordinateFragment.getLatLng();
             }
-            newPointPosition = new LatLng(latitude, longitude);
+
+            if (newPointPosition == null) {
+                CameraPosition position = map.getCameraPosition();
+                newPointPosition = new LatLng(position.target.latitude, position.target.longitude);
+            }
         }
+
         return newPointPosition;
     }
 
@@ -646,7 +726,7 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
         if (geometry.getGeometryType() == GeometryType.POINT) {
             imageView.setImageBitmap(markerBitmap);
             Point point = (Point) geometry;
-            updateLatitudeLongitudeText(point.getY(), point.getX());
+            updateLatitudeLongitudeText(new LatLng(point.getY(), point.getX()));
         } else {
             imageView.setImageBitmap(null);
             GoogleMapShape shape = shapeConverter.toShape(geometry);
@@ -682,13 +762,19 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
      */
     private void updateHint(boolean dragging) {
 
-        boolean locationEdit = getCurrentFocus() == longitudeEdit || getCurrentFocus() == latitudeEdit;
+        boolean locationEditHasFocus = false;
+        int tabPosition = tabLayout.getSelectedTabPosition();
+        if (tabPosition == WGS84_COORDINATE_TAB_POSITION) {
+            locationEditHasFocus = wgs84CoordinateFragment.hasFocus();
+        } else if (tabPosition == MGRS_COORDINATE_TAB_POSITION) {
+            locationEditHasFocus = mgrsCoordinateFragment.hasFocus();
+        }
 
         String hint = "";
 
         switch (shapeType) {
             case POINT:
-                if (locationEdit) {
+                if (locationEditHasFocus) {
                     hint = getString(R.string.location_edit_hint_point_edit);
                 } else {
                     hint = getString(R.string.location_edit_hint_point);
@@ -696,7 +782,7 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
                 break;
             case POLYGON:
                 if (isRectangle) {
-                    if (locationEdit) {
+                    if (locationEditHasFocus) {
                         hint = getString(R.string.location_edit_hint_rectangle_edit);
                     } else if (dragging) {
                         hint = getString(R.string.location_edit_hint_rectangle_drag);
@@ -708,7 +794,7 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
                     break;
                 }
             case LINESTRING:
-                if (locationEdit) {
+                if (locationEditHasFocus) {
                     hint = getString(R.string.location_edit_hint_shape_edit);
                 } else if (dragging) {
                     hint = getString(R.string.location_edit_hint_shape_drag);
@@ -724,100 +810,13 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
     }
 
     /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void onCameraMove() {
-        // Points are represented by the camera position
-        if (shapeType == GeometryType.POINT) {
-            clearLatitudeAndLongitudeFocus();
-            CameraPosition position = map.getCameraPosition();
-            updateLatitudeLongitudeText(position.target.latitude, position.target.longitude);
-        }
-    }
-
-    /**
      * Update the latitude and longitude text entries
      *
      * @param latLng lat lng point
      */
     private void updateLatitudeLongitudeText(LatLng latLng) {
-        updateLatitudeLongitudeText(latLng.latitude, latLng.longitude);
-    }
-
-    /**
-     * Update the latitude and longitude text entries
-     *
-     * @param latitude  latitude
-     * @param longitude longitude
-     */
-    private void updateLatitudeLongitudeText(double latitude, double longitude) {
-        latitudeEdit.setText(String.format(Locale.getDefault(), LOCATION_PRECISION, latitude));
-        longitudeEdit.setText(String.format(Locale.getDefault(), LOCATION_PRECISION, longitude));
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void afterTextChanged(Editable s) {
-        // Only handle when the longitude or latitude entries have focus
-        if (getCurrentFocus() != longitudeEdit && getCurrentFocus() != latitudeEdit) {
-            if (!validLocation) {
-                validLocation = true;
-            }
-            return;
-        }
-
-        // Move the camera and update selected markers & shape
-        String latitudeString = latitudeEdit.getText().toString();
-        String longitudeString = longitudeEdit.getText().toString();
-
-        Double latitude = null;
-        if (!latitudeString.isEmpty()) {
-            try {
-                latitude = Double.parseDouble(latitudeString);
-            } catch (NumberFormatException e) {
-            }
-        }
-        Double longitude = null;
-        if (!longitudeString.isEmpty()) {
-            try {
-                longitude = Double.parseDouble(longitudeString);
-            } catch (NumberFormatException e) {
-            }
-        }
-
-        validLocation = latitude != null && longitude != null;
-
-        if (latitude == null) {
-            latitude = 0.0;
-        }
-        if (longitude == null) {
-            longitude = 0.0;
-        }
-
-        LatLng latLng = new LatLng(latitude, longitude);
-
-        map.moveCamera(CameraUpdateFactory.newLatLng(latLng));
-        if (selectedMarker != null) {
-            selectedMarker.setPosition(latLng);
-            updateShape(selectedMarker);
-        }
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void onTextChanged(CharSequence s, int start, int before, int count) {
+        wgs84CoordinateFragment.setLatLng(latLng);
+        mgrsCoordinateFragment.setLatLng(latLng);
     }
 
     /**
@@ -865,6 +864,11 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
         data.putExtra(LOCATION, location);
         setResult(RESULT_OK, data);
 
+        // Save coordinate system used for edit
+        CoordinateSystem coordinateSystem = tabLayout.getSelectedTabPosition() == 0 ? CoordinateSystem.WGS84 : CoordinateSystem.MGRS;
+        SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).edit();
+        editor.putInt(getResources().getString(R.string.coordinateSystemEditKey), coordinateSystem.getPreferenceValue()).commit();
+
         finish();
     }
 
@@ -908,26 +912,7 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
      */
     @Override
     public void onMapClick(LatLng latLng) {
-        clearLatitudeAndLongitudeFocus();
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void onFocusChange(View v, boolean hasFocus) {
-        if (v == longitudeEdit || v == latitudeEdit) {
-            if (hasFocus) {
-                // Move the camera to a selected line or polygon marker
-                if (shapeType != GeometryType.POINT && selectedMarker != null) {
-                    map.moveCamera(CameraUpdateFactory.newLatLng(selectedMarker.getPosition()));
-                }
-            } else {
-                InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-                imm.hideSoftInputFromWindow(v.getApplicationWindowToken(), 0);
-            }
-            updateHint();
-        }
+        clearCoordinateFocus();
     }
 
     /**
@@ -957,7 +942,7 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
      */
     @Override
     public void onMarkerDragStart(Marker marker) {
-        clearLatitudeAndLongitudeFocus();
+        clearCoordinateFocus();
         updateHint(true);
         vibrator.vibrate(getResources().getInteger(
                 R.integer.shape_edit_drag_long_click_vibrate));
@@ -1291,6 +1276,278 @@ public class LocationEditActivity extends AppCompatActivity implements TextWatch
         polygonOptions.fillColor(style.getFillColor());
         polygonOptions.geodesic(MapShapeObservation.GEODESIC);
         return polygonOptions;
+    }
+
+    public static class WGS84CoordinateFragment extends Fragment implements TextWatcher, View.OnFocusChangeListener {
+        private CoordinateChangeListener coordinateChangeListener;
+
+        private EditText latitudeEdit;
+        private EditText longitudeEdit;
+
+        private final int LOCATION_MAX_PRECISION = 6;
+
+        @Override
+        public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+            return inflater.inflate(R.layout.wgs84_location_edit, container, false);
+        }
+
+        @Override
+        public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
+            latitudeEdit = (EditText) view.findViewById(R.id.location_edit_latitude);
+            latitudeEdit.setFilters(new InputFilter[]{new InputFilterDecimal(-90.0, 90.0, LOCATION_MAX_PRECISION)});
+
+            longitudeEdit = (EditText) view.findViewById(R.id.location_edit_longitude);
+            longitudeEdit.setFilters(new InputFilter[]{new InputFilterDecimal(-180.0, 180.0, LOCATION_MAX_PRECISION)});
+
+            longitudeEdit.addTextChangedListener(this);
+            longitudeEdit.setOnFocusChangeListener(this);
+
+            latitudeEdit.addTextChangedListener(this);
+            latitudeEdit.setOnFocusChangeListener(this);
+
+            latitudeEdit.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+                @Override
+                public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+                    if (actionId == EditorInfo.IME_ACTION_DONE) {
+                        latitudeEdit.clearFocus();
+                        return true;
+                    }
+                    return false;
+                }
+            });
+
+            longitudeEdit.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+                @Override
+                public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+                    if (actionId == EditorInfo.IME_ACTION_DONE) {
+                        longitudeEdit.clearFocus();
+                        return true;
+                    }
+                    return false;
+                }
+            });
+
+            clearFocus();
+        }
+
+        @Override
+        public void onAttach(Activity activity) {
+            super.onAttach(activity);
+
+            try {
+                coordinateChangeListener = (CoordinateChangeListener) activity;
+            } catch (ClassCastException e) {
+                throw new ClassCastException(activity.toString() + " must implement CoordinateChangeListener");
+            }
+        }
+
+        @Override
+        public void onFocusChange(View v, boolean hasFocus) {
+            if (v == longitudeEdit || v == latitudeEdit) {
+                LatLng latLng = getLatLng();
+
+                if (longitudeEdit.hasFocus() || latitudeEdit.hasFocus()) {
+                    coordinateChangeListener.onCoordinateChangeStart(latLng);
+                } else {
+                    InputMethodManager imm = (InputMethodManager) getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
+                    imm.hideSoftInputFromWindow(v.getApplicationWindowToken(), 0);
+                    coordinateChangeListener.onCoordinateChangeEnd(latLng);
+                }
+            }
+
+        }
+
+        @Override
+        public void afterTextChanged(Editable s) {
+            // Only handle when the longitude or latitude entries have focus
+            if (!longitudeEdit.hasFocus() && !latitudeEdit.hasFocus()) {
+                return;
+            }
+
+            LatLng latLng = getLatLng();
+
+            if (latLng == null) {
+                // TODO might want to show error here...
+                latLng = new LatLng(0, 0);
+            }
+
+            coordinateChangeListener.onCoordinateChanged(latLng);
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public void onTextChanged(CharSequence s, int start, int before, int count) {
+        }
+
+        public boolean setLatLng(LatLng latLng) {
+            if (latLng == null) {
+                return false;
+            }
+
+            latitudeEdit.setText(String.format(Locale.getDefault(), LOCATION_PRECISION, latLng.latitude));
+            longitudeEdit.setText(String.format(Locale.getDefault(), LOCATION_PRECISION, latLng.longitude));
+
+            return true;
+        }
+
+        private LatLng getLatLng() {
+            String latitudeString = latitudeEdit.getText().toString();
+            String longitudeString = longitudeEdit.getText().toString();
+
+            Double latitude = null;
+            if (!latitudeString.isEmpty()) {
+                try {
+                    latitude = Double.parseDouble(latitudeString);
+                } catch (NumberFormatException e) {
+                }
+            }
+
+            Double longitude = null;
+            if (!longitudeString.isEmpty()) {
+                try {
+                    longitude = Double.parseDouble(longitudeString);
+                } catch (NumberFormatException e) {
+                }
+            }
+
+            if (latitude == null || longitude == null) {
+                return null;
+            }
+
+            return new LatLng(latitude, longitude);
+        }
+
+        public boolean hasFocus() {
+            return longitudeEdit.hasFocus() || latitudeEdit.hasFocus();
+        }
+
+        public void clearFocus() {
+            longitudeEdit.clearFocus();
+            latitudeEdit.clearFocus();
+        }
+    }
+
+    public static class MGRSCoordinateFragment extends Fragment implements TextWatcher, View.OnFocusChangeListener {
+        private  CoordinateChangeListener coordinateChangeListener;
+        private EditText mgrsEdit;
+        private TextInputLayout mgrsLayout;
+
+        @Override
+        public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+            return inflater.inflate(R.layout.mgrs_location_edit, container, false);
+        }
+
+        @Override
+        public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
+            mgrsEdit = (EditText) view.findViewById(R.id.mgrs);
+            mgrsLayout = (TextInputLayout) view.findViewById(R.id.mgrs_layout);
+
+            mgrsEdit.addTextChangedListener(this);
+            mgrsEdit.setOnFocusChangeListener(this);
+            mgrsEdit.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+                @Override
+                public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+                    if (actionId == EditorInfo.IME_ACTION_DONE) {
+                        mgrsEdit.clearFocus();
+                        return true;
+                    }
+                    return false;
+                }
+            });
+        }
+
+        @Override
+        public void onAttach(Activity activity) {
+            super.onAttach(activity);
+
+            try {
+                coordinateChangeListener = (CoordinateChangeListener) activity;
+            } catch (ClassCastException e) {
+                throw new ClassCastException(activity.toString() + " must implement CoordinateChangeListener");
+            }
+        }
+
+        @Override
+        public void afterTextChanged(Editable s) {
+            // Only handle when the mgrs has focus
+            if (!mgrsEdit.hasFocus()) {
+                return;
+            }
+
+            LatLng latLng = getLatLng();
+
+            if (latLng == null) {
+                mgrsLayout.setError("Invaild MGRS Code");
+            } else {
+                mgrsLayout.setError(null);
+                mgrsLayout.setErrorEnabled(false);
+                coordinateChangeListener.onCoordinateChanged(latLng);
+            }
+        }
+
+        @Override
+        public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+        }
+
+        @Override
+        public void onTextChanged(CharSequence s, int start, int before, int count) {
+
+        }
+
+        @Override
+        public void onFocusChange(View v, boolean hasFocus) {
+            LatLng latLng = getLatLng();
+
+            if (mgrsEdit.hasFocus()) {
+                coordinateChangeListener.onCoordinateChangeStart(latLng);
+            } else {
+                InputMethodManager imm = (InputMethodManager) getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
+                imm.hideSoftInputFromWindow(v.getApplicationWindowToken(), 0);
+                coordinateChangeListener.onCoordinateChangeEnd(latLng);
+            }
+        }
+
+        public boolean setLatLng(LatLng latLng) {
+            if (latLng == null) {
+                return false;
+            }
+
+            MGRS mgrs = MGRS.from(new mil.nga.mgrs.wgs84.LatLng(latLng.latitude, latLng.longitude));
+            mgrsEdit.setText(mgrs.format(5));
+            mgrsLayout.setError(null);
+            mgrsLayout.setErrorEnabled(false);
+
+            return true;
+        }
+
+        public LatLng getLatLng() {
+            try {
+                mil.nga.mgrs.wgs84.LatLng latLng = mil.nga.mgrs.wgs84.LatLng.parse(mgrsEdit.getText().toString());
+                return  new LatLng(latLng.latitude, latLng.longitude);
+            } catch (ParseException e) {
+
+            }
+
+            return null;
+        }
+
+        public boolean hasFocus() {
+            return mgrsEdit.hasFocus();
+        }
+
+        public void clearFocus() {
+            mgrsEdit.clearFocus();
+        }
     }
 
 }

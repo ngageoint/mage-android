@@ -39,7 +39,6 @@ import com.google.gson.JsonObject;
 import org.apache.commons.lang3.StringUtils;
 
 import java.text.DateFormat;
-import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -67,6 +66,7 @@ import mil.nga.giat.mage.sdk.event.IObservationEventListener;
 import mil.nga.giat.mage.sdk.exceptions.ObservationException;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
 import mil.nga.giat.mage.utils.DateFormatFactory;
+import mil.nga.giat.mage.widget.CoordinateView;
 import mil.nga.wkb.geom.Geometry;
 
 public class ObservationViewActivity extends AppCompatActivity implements OnMapReadyCallback, OnCameraIdleListener {
@@ -88,7 +88,6 @@ public class ObservationViewActivity extends AppCompatActivity implements OnMapR
 	private boolean hasEventUpdatePermission;
 	private boolean canEditObservation;
 	private MapObservation mapObservation;
-	private DecimalFormat latLngFormat = new DecimalFormat("###.#####");
 	private MapFragment mapFragment;
 	private MapObservationManager mapObservationManager;
 	private BottomSheetBehavior bottomSheetBehavior;
@@ -320,10 +319,10 @@ public class ObservationViewActivity extends AppCompatActivity implements OnMapR
 
 			Geometry geometry = o.getGeometry();
 			ObservationLocation location = new ObservationLocation(geometry);
-			TextView locationTextView = (TextView) findViewById(R.id.location);
+			CoordinateView locationTextView = (CoordinateView) findViewById(R.id.location);
 			LatLng latLng = location.getCentroidLatLng();
-			locationTextView.setText(latLngFormat.format(latLng.latitude) + ", " + latLngFormat.format(latLng.longitude));
-            
+			locationTextView.setLatLng(latLng);
+
             String provider = o.getProvider();
             if (provider != null) {
                 ((TextView) findViewById(R.id.location_provider)).setText("(" + provider + ")");

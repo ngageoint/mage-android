@@ -69,6 +69,8 @@ public class MAGE extends MultiDexApplication implements ISessionEventListener, 
 
 	@Override
 	public void onCreate() {
+		super.onCreate();
+
 		// setup the screen unlock stuff
 		registerReceiver(ScreenChangeReceiver.getInstance(), new IntentFilter(Intent.ACTION_SCREEN_ON));
 
@@ -79,8 +81,6 @@ public class MAGE extends MultiDexApplication implements ISessionEventListener, 
 		SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
 		int dayNightTheme = preferences.getInt(getResources().getString(R.string.dayNightThemeKey), getResources().getInteger(R.integer.dayNightThemeDefaultValue));
 		AppCompatDelegate.setDefaultNightMode(dayNightTheme);
-
-		super.onCreate();
 	}
 
 	public void onLogin() {

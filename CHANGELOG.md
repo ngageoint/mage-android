@@ -9,6 +9,7 @@ Adheres to [Semantic Versioning](http://semver.org/).
 
 ##### Features
 * Show error message from server on invalid login attempt.
+* Add mgrs edit/view feature.
 
 ##### Bug Fixes
 * Don't remove token before logout request.

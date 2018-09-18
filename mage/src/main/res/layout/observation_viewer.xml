@@ -78,7 +78,7 @@
                             android:layout_height="wrap_content"
                             android:orientation="horizontal">
 
-                            <TextView
+                            <mil.nga.giat.mage.widget.CoordinateView
                                 android:id="@+id/location"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
