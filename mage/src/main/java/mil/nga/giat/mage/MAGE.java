@@ -2,22 +2,31 @@ package mil.nga.giat.mage;
 
 import android.app.Activity;
 import android.app.Application;
+import android.app.Notification;
+import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.arch.lifecycle.LiveData;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.location.Location;
+import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.multidex.MultiDexApplication;
 import android.support.v4.app.NotificationCompat;
+import android.support.v4.app.NotificationManagerCompat;
 import android.support.v4.app.TaskStackBuilder;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatDelegate;
 import android.util.Log;
 
 import com.squareup.okhttp.ResponseBody;
 
+import mil.nga.giat.mage.location.LocationLiveData;
+import mil.nga.giat.mage.location.LocationReportingService;
 import mil.nga.giat.mage.login.LoginActivity;
 import mil.nga.giat.mage.login.OAuthActivity;
 import mil.nga.giat.mage.login.ServerUrlActivity;
@@ -33,7 +42,6 @@ import mil.nga.giat.mage.sdk.fetch.ObservationFetchIntentService;
 import mil.nga.giat.mage.sdk.fetch.StaticFeatureServerFetch;
 import mil.nga.giat.mage.sdk.http.HttpClientManager;
 import mil.nga.giat.mage.sdk.http.resource.UserResource;
-import mil.nga.giat.mage.sdk.location.LocationService;
 import mil.nga.giat.mage.sdk.push.AttachmentPushService;
 import mil.nga.giat.mage.sdk.push.LocationPushIntentService;
 import mil.nga.giat.mage.sdk.push.ObservationPushIntentService;
@@ -44,21 +52,26 @@ import retrofit.Callback;
 import retrofit.Response;
 import retrofit.Retrofit;
 
-public class MAGE extends MultiDexApplication implements ISessionEventListener, Application.ActivityLifecycleCallbacks {
+public class MAGE extends MultiDexApplication implements SharedPreferences.OnSharedPreferenceChangeListener, ISessionEventListener, Application.ActivityLifecycleCallbacks {
 
 	private static final String LOG_NAME = MAGE.class.getName();
 
-	public static final int MAGE_NOTIFICATION_ID = 1414;
+	public static final int MAGE_SUMMARY_NOTIFICATION_ID = 100;
+	public static final int MAGE_ACCOUNT_NOTIFICATION_ID = 101;
+
+	public static final String MAGE_NOTIFICATION_GROUP = "mil.nga.mage.MAGE_NOTIFICATION_GROUP";
+	public static final String MAGE_NOTIFICATION_CHANNEL_ID = "mil.nga.mage.MAGE_NOTIFICATION_CHANNEL";
 
 	public interface OnLogoutListener {
 		void onLogout();
 	}
 
-	private LocationService locationService;
+	private Intent locationReportingServiceIntent;
 	private Intent locationFetchIntent;
 	private Intent observationFetchIntent;
 	private Intent locationPushIntent;
 	private Intent observationPushIntent;
+	private LiveData<Location> locationLiveData;
 
 	private ObservationNotificationListener observationNotificationListener = null;
 	private AttachmentPushService attachmentPushService = null;
@@ -81,13 +94,21 @@ public class MAGE extends MultiDexApplication implements ISessionEventListener, 
 		SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
 		int dayNightTheme = preferences.getInt(getResources().getString(R.string.dayNightThemeKey), getResources().getInteger(R.integer.dayNightThemeDefaultValue));
 		AppCompatDelegate.setDefaultNightMode(dayNightTheme);
+
+		preferences.registerOnSharedPreferenceChangeListener(this);
+
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+			NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+			NotificationChannel channel = new NotificationChannel(MAGE_NOTIFICATION_CHANNEL_ID,"MAGE", NotificationManager.IMPORTANCE_LOW);
+			channel.setShowBadge(true);
+			notificationManager.createNotificationChannel(channel);
+		}
+
+		locationLiveData = new LocationLiveData(this);
 	}
 
 	public void onLogin() {
 		createNotification();
-
-		// Start location services
-		initLocationService();
 
 		//set up Observation notifications
 		if (observationNotificationListener == null) {
@@ -130,8 +151,8 @@ public class MAGE extends MultiDexApplication implements ISessionEventListener, 
 
 		destroyFetching();
 		destroyPushing();
-		destroyLocationService();
 		destroyNotification();
+		stopLocationService();
 
 		if (clearTokenInformationAndSendLogoutRequest) {
 			UserResource userResource = new UserResource(getApplicationContext());
@@ -179,34 +200,22 @@ public class MAGE extends MultiDexApplication implements ISessionEventListener, 
 		}
 	}
 
+	public LiveData<Location> getLocationLiveData() {
+		return locationLiveData;
+	}
+
 	private void destroyNotification() {
 		NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-		notificationManager.cancel(MAGE_NOTIFICATION_ID);
+		notificationManager.cancel(MAGE_SUMMARY_NOTIFICATION_ID);
+		notificationManager.cancel(MAGE_ACCOUNT_NOTIFICATION_ID);
 		notificationManager.cancel(ObservationNotificationListener.OBSERVATION_NOTIFICATION_ID);
 	}
 
-	private void createNotification() {
-		// this line is some magic for kitkat
-		getLogoutPendingIntent().cancel();
+	public void createNotification() {
 		boolean tokenExpired = UserUtility.getInstance(getApplicationContext()).isTokenExpired();
 
-		String notificationMsg = tokenExpired ? "Your token has expired, please tap to login." : "You are logged in. Slide down to logout.";
-		NotificationCompat.Builder builder = new NotificationCompat.Builder(this)
-				.setSmallIcon(R.drawable.ic_wand_white_50dp)
-				.setContentTitle("MAGE")
-				.setOngoing(true)
-				.setPriority(NotificationCompat.PRIORITY_MAX)
-				.setContentText(notificationMsg)
-				.addAction(R.drawable.ic_power_settings_new_white_24dp, "Logout", getLogoutPendingIntent());
-
-		NotificationCompat.BigTextStyle bigTextStyle = new NotificationCompat.BigTextStyle();
-		bigTextStyle.setBigContentTitle("MAGE").bigText(notificationMsg);
-
-		builder.setStyle(bigTextStyle);
-
-		// Creates an explicit intent for an Activity in your app
+	    // Creates an explicit intent for an Activity in your app
 		Intent resultIntent = new Intent(this, LoginActivity.class);
-
 		// The stack builder object will contain an artificial back stack for the
 		// started Activity.
 		// This ensures that navigating backward from the Activity leads out of
@@ -217,9 +226,47 @@ public class MAGE extends MultiDexApplication implements ISessionEventListener, 
 		// Adds the Intent that starts the Activity to the top of the stack
 		stackBuilder.addNextIntent(resultIntent);
 		PendingIntent resultPendingIntent = stackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
-		builder.setContentIntent(resultPendingIntent);
-		NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-		notificationManager.notify(MAGE_NOTIFICATION_ID, builder.build());
+
+		String noticationMsg = tokenExpired ? "Your token has expired, please tap to login." : "You are currently logged into MAGE.";
+
+		Notification accountNotification = new NotificationCompat.Builder(this, MAGE_NOTIFICATION_CHANNEL_ID)
+				.setOngoing(true)
+				.setSortKey("1")
+				.setContentTitle("MAGE")
+				.setContentText(noticationMsg)
+				.setGroup(MAGE_NOTIFICATION_GROUP)
+				.setContentIntent(resultPendingIntent)
+				.setSmallIcon(R.drawable.ic_wand_white_50dp)
+				.addAction(R.drawable.ic_power_settings_new_white_24dp, "Logout", getLogoutPendingIntent())
+				.build();
+
+		NotificationCompat.InboxStyle style = new NotificationCompat.InboxStyle()
+				.addLine(noticationMsg)
+				.setBigContentTitle("MAGE");
+
+		if (isReportingLocation()) {
+			style.addLine("MAGE is currently reporting your location.");
+		}
+
+		// This summary notification supports "grouping" on versions older that Android.N
+		Notification summaryNotification = new NotificationCompat.Builder(this, MAGE_NOTIFICATION_CHANNEL_ID)
+				.setGroupSummary(true)
+				.setGroup(MAGE_NOTIFICATION_GROUP)
+				.setContentTitle("MAGE")
+				.setContentText(noticationMsg)
+				.setSmallIcon(R.drawable.ic_wand_white_50dp)
+				.setStyle(style)
+				.setContentIntent(resultPendingIntent)
+				.addAction(R.drawable.ic_power_settings_new_white_24dp, "Logout", getLogoutPendingIntent())
+				.build();
+
+		NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
+		notificationManager.notify(MAGE_ACCOUNT_NOTIFICATION_ID, accountNotification);
+		notificationManager.notify(MAGE_SUMMARY_NOTIFICATION_ID, summaryNotification);
+	}
+
+	private boolean isReportingLocation() {
+		return PreferenceManager.getDefaultSharedPreferences(this).getBoolean(getResources().getString(R.string.reportLocationKey), getResources().getBoolean(R.bool.reportLocationDefaultValue));
 	}
 
 	private PendingIntent getLogoutPendingIntent() {
@@ -252,10 +299,12 @@ public class MAGE extends MultiDexApplication implements ISessionEventListener, 
 			staticFeatureServerFetch.destroy();
 			staticFeatureServerFetch = null;
 		}
+
 		if(locationFetchIntent != null) {
 			stopService(locationFetchIntent);
 			locationFetchIntent = null;
 		}
+
 		if(observationFetchIntent != null) {
 			stopService(observationFetchIntent);
 			observationFetchIntent = null;
@@ -301,22 +350,37 @@ public class MAGE extends MultiDexApplication implements ISessionEventListener, 
 		}
 	}
 
-	private void initLocationService() {
-		if (locationService == null) {
-			locationService = new LocationService(getApplicationContext());
-			locationService.init();
+	public void startLocationService() {
+		if (locationReportingServiceIntent == null) {
+			locationReportingServiceIntent = new Intent(getApplicationContext(), LocationReportingService.class);
+			ContextCompat.startForegroundService(getApplicationContext(), locationReportingServiceIntent);
+
+			// NOTE this can go away when we remove support for < Android.N
+			// This will recreate the summary notification.
+			createNotification();
 		}
 	}
 
-	private void destroyLocationService() {
-		if (locationService != null) {
-			locationService.destroy();
-			locationService = null;
+	public void stopLocationService() {
+		if (locationReportingServiceIntent != null) {
+			stopService(locationReportingServiceIntent);
+			locationReportingServiceIntent = null;
+
+			// NOTE this can go away when we remove support for < Android.N
+			// This will recreate the summary notification
+			createNotification();
 		}
 	}
-
-	public LocationService getLocationService() {
-		return locationService;
+	@Override
+	public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+		if (key.equalsIgnoreCase(getString(R.string.reportLocationKey))) {
+			boolean reportLocation = sharedPreferences.getBoolean(getString(R.string.reportLocationKey), getResources().getBoolean(R.bool.reportLocationDefaultValue));
+			if (reportLocation) {
+				startLocationService();
+			} else {
+				stopLocationService();
+			}
+		}
 	}
 
 	@Override

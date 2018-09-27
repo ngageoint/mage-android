@@ -210,6 +210,9 @@
         </receiver>
 
         <service
+            android:name=".location.LocationReportingService"
+            android:exported="false" />
+        <service
             android:name=".sdk.fetch.LocationFetchIntentService"
             android:exported="false" />
         <service

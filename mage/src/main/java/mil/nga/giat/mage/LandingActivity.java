@@ -5,6 +5,7 @@ import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
@@ -34,14 +35,11 @@ import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.target.BitmapImageViewTarget;
-import com.google.common.base.Predicate;
-import com.google.common.collect.Collections2;
 
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 import mil.nga.geopackage.validate.GeoPackageValidate;
@@ -56,15 +54,12 @@ import mil.nga.giat.mage.newsfeed.PeopleFeedFragment;
 import mil.nga.giat.mage.preferences.GeneralPreferencesActivity;
 import mil.nga.giat.mage.profile.ProfileActivity;
 import mil.nga.giat.mage.sdk.datastore.DaoStore;
-import mil.nga.giat.mage.sdk.datastore.layer.Layer;
-import mil.nga.giat.mage.sdk.datastore.layer.LayerHelper;
 import mil.nga.giat.mage.sdk.datastore.user.Event;
 import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
 import mil.nga.giat.mage.sdk.datastore.user.RoleHelper;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.datastore.user.UserLocal;
-import mil.nga.giat.mage.sdk.exceptions.LayerException;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
 
@@ -122,13 +117,17 @@ public class LandingActivity extends AppCompatActivity implements NavigationView
 
         CacheProvider.getInstance(getApplicationContext()).refreshTileOverlays();
 
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         setTitle();
 
         // Ask for permissions
         locationPermissionGranted = ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
-        if (!locationPermissionGranted) {
+        if (locationPermissionGranted) {
+            if (shouldReportLocation()) {
+                ((MAGE) getApplication()).startLocationService();
+            }
+        } else {
             if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.ACCESS_FINE_LOCATION)) {
                 new AlertDialog.Builder(LandingActivity.this, R.style.AppCompatAlertDialogStyle)
                         .setTitle(R.string.location_access_rational_title)
@@ -150,8 +149,8 @@ public class LandingActivity extends AppCompatActivity implements NavigationView
         getSupportActionBar().setHomeAsUpIndicator(R.drawable.ic_menu_white_24dp);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
-        drawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
-        navigationView = (NavigationView) findViewById(R.id.navigation);
+        drawerLayout = findViewById(R.id.drawer_layout);
+        navigationView = findViewById(R.id.navigation);
         navigationView.setNavigationItemSelectedListener(this);
 
         try {
@@ -170,7 +169,7 @@ public class LandingActivity extends AppCompatActivity implements NavigationView
 
         View headerView = navigationView.getHeaderView(0);
         try {
-            final ImageView avatarImageView = (ImageView) headerView.findViewById(R.id.avatar_image_view);
+            final ImageView avatarImageView = headerView.findViewById(R.id.avatar_image_view);
             User user = UserHelper.getInstance(getApplicationContext()).readCurrentUser();
             UserLocal userLocal = user.getUserLocal();
             Glide.with(this)
@@ -187,10 +186,10 @@ public class LandingActivity extends AppCompatActivity implements NavigationView
                         }
                     });
 
-            TextView displayName = (TextView) headerView.findViewById(R.id.display_name);
+            TextView displayName = headerView.findViewById(R.id.display_name);
             displayName.setText(user.getDisplayName());
 
-            TextView email = (TextView) headerView.findViewById(R.id.email);
+            TextView email = headerView.findViewById(R.id.email);
             email.setText(user.getEmail());
             email.setVisibility(StringUtils.isNoneBlank(user.getEmail()) ? View.VISIBLE : View.GONE);
         } catch (UserException e) {
@@ -228,7 +227,7 @@ public class LandingActivity extends AppCompatActivity implements NavigationView
             }
         }
 
-        bottomNavigationView = (BottomNavigationView) findViewById(R.id.bottom_navigation);
+        bottomNavigationView = findViewById(R.id.bottom_navigation);
         bottomNavigationView.setOnNavigationItemSelectedListener(new BottomNavigationView.OnNavigationItemSelectedListener() {
             @Override
             public boolean onNavigationItemSelected(@NonNull MenuItem item) {
@@ -256,11 +255,11 @@ public class LandingActivity extends AppCompatActivity implements NavigationView
             recreate();
         }
 
-        if (locationPermissionGranted != (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED)) {
+        if (shouldReportLocation() && locationPermissionGranted != (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED)) {
             locationPermissionGranted = ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
 
-            // notify location services that the permissions have changed.
-            ((MAGE) getApplication()).getLocationService().onLocationPermissionsChanged();
+            // User allowed location service permission in settings, start location services.
+            ((MAGE) getApplication()).startLocationService();
         }
     }
 
@@ -278,8 +277,9 @@ public class LandingActivity extends AppCompatActivity implements NavigationView
         switch (requestCode) {
             case PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION: {
                 locationPermissionGranted = grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED;
-                if (locationPermissionGranted) {
-                    ((MAGE) getApplication()).getLocationService().onLocationPermissionsChanged();
+
+                if (shouldReportLocation()) {
+                    ((MAGE) getApplication()).startLocationService();
                 }
 
                 break;
@@ -330,6 +330,11 @@ public class LandingActivity extends AppCompatActivity implements NavigationView
                 })
                 .setNegativeButton(android.R.string.cancel, null)
                 .show();
+    }
+
+    private boolean shouldReportLocation() {
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+        return preferences.getBoolean(getString(R.string.reportLocationKey), getResources().getBoolean(R.bool.reportLocationDefaultValue));
     }
 
     @Override

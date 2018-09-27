@@ -68,7 +68,7 @@ public class OverlayPreference extends Preference {
         notifyChanged();
     }
 
-    private Set<String> getPersistedStringSet(Set<String> defaultReturnValue) {
+    public Set<String> getPersistedStringSet(Set<String> defaultReturnValue) {
         if (!shouldPersist()) {
             return defaultReturnValue;
         }
@@ -76,7 +76,7 @@ public class OverlayPreference extends Preference {
         return getPreferenceManager().getSharedPreferences().getStringSet(getKey(), defaultReturnValue);
     }
     
-    private boolean persistStringSet(Set<String> values) {
+    public boolean persistStringSet(Set<String> values) {
         if (shouldPersist()) {
             // Shouldn't store null
             if (values.equals(getPersistedStringSet(null))) {

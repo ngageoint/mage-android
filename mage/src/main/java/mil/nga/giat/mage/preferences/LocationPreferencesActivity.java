@@ -22,10 +22,11 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CompoundButton;
 
+import mil.nga.giat.mage.MAGE;
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 
-public class LocationPreferencesActivity extends AppCompatActivity {
+public class LocationPreferencesActivity extends AppCompatActivity  {
 
 	private final LocationPreferenceFragment preference = new LocationPreferenceFragment();
 
@@ -58,7 +59,7 @@ public class LocationPreferencesActivity extends AppCompatActivity {
 
         setContentView(R.layout.activity_location_preferences);
 
-        toolbar = (Toolbar) findViewById(R.id.toolbar);
+        toolbar = findViewById(R.id.toolbar);
     }
 
     @Override
@@ -72,13 +73,22 @@ public class LocationPreferencesActivity extends AppCompatActivity {
 
             locationServicesEnabled = PreferenceManager.getDefaultSharedPreferences(this).getBoolean(getResources().getString(R.string.locationServiceEnabledKey), getResources().getBoolean(R.bool.locationServiceEnabledDefaultValue));
 
-            SwitchCompat locationServicesEnabledSwitch = (SwitchCompat) toolbar.findViewById(R.id.toolbar_switch);
+            SwitchCompat locationServicesEnabledSwitch = toolbar.findViewById(R.id.toolbar_switch);
             locationServicesEnabledSwitch.setChecked(locationServicesEnabled);
             locationServicesEnabledSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
                 @Override
-                public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                    PreferenceManager.getDefaultSharedPreferences(LocationPreferencesActivity.this).edit().putBoolean(getResources().getString(R.string.locationServiceEnabledKey), isChecked).commit();
-                    updateView(isChecked);
+                public void onCheckedChanged(CompoundButton buttonView, boolean locationServicesEnabled) {
+                    PreferenceManager.getDefaultSharedPreferences(LocationPreferencesActivity.this).edit().putBoolean(getResources().getString(R.string.locationServiceEnabledKey), locationServicesEnabled).commit();
+                    updateView(locationServicesEnabled);
+
+                    MAGE application = (MAGE) getApplication();
+                    if (locationServicesEnabled) {
+                        application.startLocationService();
+                    } else {
+                        application.stopLocationService();
+                    }
+
+                    application.createNotification();
                 }
             });
 
