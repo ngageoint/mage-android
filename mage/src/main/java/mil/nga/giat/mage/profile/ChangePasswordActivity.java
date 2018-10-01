@@ -6,7 +6,6 @@ import android.os.Bundle;
 import android.support.design.widget.TextInputEditText;
 import android.support.design.widget.TextInputLayout;
 import android.support.v7.app.AlertDialog;
-import android.support.v7.app.AppCompatActivity;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
@@ -22,7 +21,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import mil.nga.giat.mage.MAGE;
+import javax.inject.Inject;
+
+import dagger.android.support.DaggerAppCompatActivity;
+import mil.nga.giat.mage.MageApplication;
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.login.LoginActivity;
 import mil.nga.giat.mage.login.PasswordStrengthFragment;
@@ -38,10 +40,12 @@ import retrofit.Retrofit;
  * Created by wnewman on 12/14/17.
  */
 
-public class ChangePasswordActivity extends AppCompatActivity {
+public class ChangePasswordActivity extends DaggerAppCompatActivity {
 
     private static final String LOG_NAME = ChangePasswordActivity.class.getName();
 
+    @Inject
+    MageApplication application;
 
     private String username;
 
@@ -150,7 +154,7 @@ public class ChangePasswordActivity extends AppCompatActivity {
             .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
-                    ((MAGE) getApplication()).onLogout(true, null);
+                    application.onLogout(true, null);
                     Intent intent = new Intent(ChangePasswordActivity.this, LoginActivity.class);
                     intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                     startActivity(intent);

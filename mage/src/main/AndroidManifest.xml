@@ -30,7 +30,7 @@
         android:required="true" />
 
     <application
-        android:name=".MAGE"
+        android:name=".MageApplication"
         tools:replace="android:allowBackup"
         android:allowBackup="false"
         android:icon="@drawable/ic_launcher"

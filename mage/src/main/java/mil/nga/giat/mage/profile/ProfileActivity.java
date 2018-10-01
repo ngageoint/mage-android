@@ -62,8 +62,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.inject.Inject;
+
+import dagger.android.support.DaggerAppCompatActivity;
 import mil.nga.giat.mage.BuildConfig;
-import mil.nga.giat.mage.MAGE;
+import mil.nga.giat.mage.MageApplication;
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.coordinate.CoordinateFormatter;
 import mil.nga.giat.mage.login.LoginActivity;
@@ -82,7 +85,7 @@ import mil.nga.giat.mage.sdk.utils.MediaUtility;
 import mil.nga.wkb.geom.Point;
 import mil.nga.wkb.util.GeometryUtils;
 
-public class ProfileActivity extends AppCompatActivity implements OnMapReadyCallback {
+public class ProfileActivity extends DaggerAppCompatActivity implements OnMapReadyCallback {
 
 	private static final String LOG_NAME = ProfileActivity.class.getName();
 
@@ -94,6 +97,12 @@ public class ProfileActivity extends AppCompatActivity implements OnMapReadyCall
 	private static final int PERMISSIONS_REQUEST_STORAGE = 400;
 
 	public static String USER_ID = "USER_ID";
+
+	@Inject
+	MageApplication application;
+
+	@Inject
+	SharedPreferences preferences;
 
 	private String currentMediaPath;
 	private User user;
@@ -376,7 +385,7 @@ public class ProfileActivity extends AppCompatActivity implements OnMapReadyCall
 	}
 
 	private void logout() {
-		((MAGE) getApplication()).onLogout(true, null);
+		application.onLogout(true, null);
 		Intent intent = new Intent(ProfileActivity.this, LoginActivity.class);
 		intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
 		startActivity(intent);

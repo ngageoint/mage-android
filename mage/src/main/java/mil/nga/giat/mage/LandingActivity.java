@@ -25,7 +25,6 @@ import android.support.v4.graphics.drawable.RoundedBitmapDrawableFactory;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.AlertDialog;
-import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.MenuItem;
@@ -42,6 +41,9 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.inject.Inject;
+
+import dagger.android.support.DaggerAppCompatActivity;
 import mil.nga.geopackage.validate.GeoPackageValidate;
 import mil.nga.giat.mage.cache.GeoPackageCacheUtils;
 import mil.nga.giat.mage.event.ChangeEventActivity;
@@ -65,10 +67,10 @@ import mil.nga.giat.mage.sdk.utils.MediaUtility;
 
 /**
  * This is the Activity that holds other fragments. Map, feeds, etc. It
- * starts and stops much of the application. It also contains menus .
+ * starts and stops much of the context. It also contains menus .
  *
  */
-public class LandingActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
+public class LandingActivity extends DaggerAppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
 
     /**
      * Extra key for storing the local file path used to launch MAGE
@@ -82,6 +84,9 @@ public class LandingActivity extends AppCompatActivity implements NavigationView
     private static final int PERMISSIONS_REQUEST_OPEN_FILE = 300;
     private static final int AUTHENTICATE_REQUEST = 400;
     private static final int CHANGE_EVENT_REQUEST = 500;
+
+    @Inject
+    protected MageApplication application;
 
     private int currentNightMode;
 
@@ -113,7 +118,7 @@ public class LandingActivity extends AppCompatActivity implements NavigationView
         // the user has selected an event.  However there are other instances that could
         // bring the user back to this activity in which this has already been called,
         // i.e. after TokenExpiredActivity.
-        ((MAGE) getApplication()).onLogin();
+        application.onLogin();
 
         CacheProvider.getInstance(getApplicationContext()).refreshTileOverlays();
 
@@ -125,7 +130,7 @@ public class LandingActivity extends AppCompatActivity implements NavigationView
         locationPermissionGranted = ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
         if (locationPermissionGranted) {
             if (shouldReportLocation()) {
-                ((MAGE) getApplication()).startLocationService();
+                application.startLocationService();
             }
         } else {
             if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.ACCESS_FINE_LOCATION)) {
@@ -259,7 +264,7 @@ public class LandingActivity extends AppCompatActivity implements NavigationView
             locationPermissionGranted = ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
 
             // User allowed location service permission in settings, start location services.
-            ((MAGE) getApplication()).startLocationService();
+            application.startLocationService();
         }
     }
 
@@ -279,7 +284,7 @@ public class LandingActivity extends AppCompatActivity implements NavigationView
                 locationPermissionGranted = grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED;
 
                 if (shouldReportLocation()) {
-                    ((MAGE) getApplication()).startLocationService();
+                    application.startLocationService();
                 }
 
                 break;
@@ -363,7 +368,7 @@ public class LandingActivity extends AppCompatActivity implements NavigationView
                 break;
             }
             case R.id.logout_navigation: {
-                ((MAGE)getApplication()).onLogout(true, new MAGE.OnLogoutListener() {
+                application.onLogout(true, new MageApplication.OnLogoutListener() {
                     @Override
                     public void onLogout() {
                         Intent intent = new Intent(getApplicationContext(), LoginActivity.class);

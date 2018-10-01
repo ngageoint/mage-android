@@ -28,7 +28,10 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-import mil.nga.giat.mage.MAGE;
+import javax.inject.Inject;
+
+import dagger.android.support.AndroidSupportInjection;
+import mil.nga.giat.mage.MageApplication;
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.sdk.datastore.layer.Layer;
 import mil.nga.giat.mage.sdk.datastore.layer.LayerHelper;
@@ -72,10 +75,20 @@ public class FeatureOverlayPreferenceActivity extends AppCompatActivity {
 
     public static class FeatureListFragment extends ListFragment implements ILayerEventListener, IStaticFeatureEventListener {
 
+        @Inject
+        MageApplication application;
+
         private OverlayAdapter overlayAdapter;
         private MenuItem refreshButton;
         private View contentView;
         private View noContentView;
+
+        @Override
+        public void onCreate(Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+
+            AndroidSupportInjection.inject(this);
+        }
 
         @Override
         public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -109,6 +122,7 @@ public class FeatureOverlayPreferenceActivity extends AppCompatActivity {
             LayerHelper.getInstance(getActivity()).removeListener(this);
             StaticFeatureHelper.getInstance(getActivity()).removeListener(this);
         }
+
         @Override
         public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
             inflater.inflate(R.menu.feature_overlay_menu, menu);
@@ -243,7 +257,7 @@ public class FeatureOverlayPreferenceActivity extends AppCompatActivity {
 
                             overlayAdapter.clear();
                             overlayAdapter.notifyDataSetChanged();
-                            ((MAGE) getActivity().getApplication()).loadStaticFeatures(true, new StaticFeatureServerFetch.OnStaticLayersListener() {
+                            application.loadStaticFeatures(true, new StaticFeatureServerFetch.OnStaticLayersListener() {
                                 @Override
                                 public void onStaticLayersLoaded(Collection<Layer> layers) {
                                     onLayerCreated(null);

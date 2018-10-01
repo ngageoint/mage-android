@@ -6,16 +6,13 @@ import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
-import android.arch.lifecycle.LiveData;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
-import android.location.Location;
 import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
-import android.support.multidex.MultiDexApplication;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.NotificationManagerCompat;
 import android.support.v4.app.TaskStackBuilder;
@@ -25,7 +22,9 @@ import android.util.Log;
 
 import com.squareup.okhttp.ResponseBody;
 
-import mil.nga.giat.mage.location.LocationLiveData;
+import dagger.android.AndroidInjector;
+import dagger.android.support.DaggerApplication;
+import mil.nga.giat.mage.dagger.DaggerMageComponent;
 import mil.nga.giat.mage.location.LocationReportingService;
 import mil.nga.giat.mage.login.LoginActivity;
 import mil.nga.giat.mage.login.OAuthActivity;
@@ -52,9 +51,9 @@ import retrofit.Callback;
 import retrofit.Response;
 import retrofit.Retrofit;
 
-public class MAGE extends MultiDexApplication implements SharedPreferences.OnSharedPreferenceChangeListener, ISessionEventListener, Application.ActivityLifecycleCallbacks {
+public class MageApplication extends DaggerApplication implements SharedPreferences.OnSharedPreferenceChangeListener, ISessionEventListener, Application.ActivityLifecycleCallbacks {
 
-	private static final String LOG_NAME = MAGE.class.getName();
+	private static final String LOG_NAME = MageApplication.class.getName();
 
 	public static final int MAGE_SUMMARY_NOTIFICATION_ID = 100;
 	public static final int MAGE_ACCOUNT_NOTIFICATION_ID = 101;
@@ -71,7 +70,6 @@ public class MAGE extends MultiDexApplication implements SharedPreferences.OnSha
 	private Intent observationFetchIntent;
 	private Intent locationPushIntent;
 	private Intent observationPushIntent;
-	private LiveData<Location> locationLiveData;
 
 	private ObservationNotificationListener observationNotificationListener = null;
 	private AttachmentPushService attachmentPushService = null;
@@ -79,6 +77,11 @@ public class MAGE extends MultiDexApplication implements SharedPreferences.OnSha
 	private StaticFeatureServerFetch staticFeatureServerFetch = null;
 
 	private Activity runningActivity;
+
+    @Override
+    protected AndroidInjector<? extends DaggerApplication> applicationInjector() {
+    	return DaggerMageComponent.builder().application(this).build();
+    }
 
 	@Override
 	public void onCreate() {
@@ -103,8 +106,6 @@ public class MAGE extends MultiDexApplication implements SharedPreferences.OnSha
 			channel.setShowBadge(true);
 			notificationManager.createNotificationChannel(channel);
 		}
-
-		locationLiveData = new LocationLiveData(this);
 	}
 
 	public void onLogin() {
@@ -198,10 +199,6 @@ public class MAGE extends MultiDexApplication implements SharedPreferences.OnSha
 		if (deleteAllDataOnLogout) {
 			LandingActivity.deleteAllData(getApplicationContext());
 		}
-	}
-
-	public LiveData<Location> getLocationLiveData() {
-		return locationLiveData;
 	}
 
 	private void destroyNotification() {

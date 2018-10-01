@@ -5,7 +5,6 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v4.app.FragmentManager;
-import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -19,8 +18,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import javax.inject.Inject;
+
+import dagger.android.support.DaggerAppCompatActivity;
 import mil.nga.giat.mage.LandingActivity;
-import mil.nga.giat.mage.MAGE;
+import mil.nga.giat.mage.MageApplication;
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.login.LoginActivity;
 import mil.nga.giat.mage.sdk.datastore.user.Event;
@@ -32,13 +34,16 @@ import mil.nga.giat.mage.sdk.login.AccountDelegate;
 import mil.nga.giat.mage.sdk.login.AccountStatus;
 import mil.nga.giat.mage.sdk.login.RecentEventTask;
 
-public class EventActivity extends AppCompatActivity implements EventsFetchFragment.EventsFetchListener {
+public class EventActivity extends DaggerAppCompatActivity implements EventsFetchFragment.EventsFetchListener {
 
 	private static final String LOG_NAME = EventActivity.class.getName();
 
 	private static final String EVENTS_FETCH_FRAGMENT_TAG = "EVENTS_FETCH_FRAGMENT_TAG";
-	EventsFetchFragment eventsFetchFragment;
 
+	@Inject
+	MageApplication application;
+
+	private EventsFetchFragment eventsFetchFragment;
     private List<Event> events = Collections.emptyList();
 	private RecyclerView recyclerView;
 	private SearchView searchView;
@@ -102,7 +107,7 @@ public class EventActivity extends AppCompatActivity implements EventsFetchFragm
 		if (events.isEmpty()) {
 			Log.e(LOG_NAME, "User is part of no events!");
 
-			((MAGE) getApplication()).onLogout(true, null);
+			application.onLogout(true, null);
 			searchView.setVisibility(View.GONE);
 			findViewById(R.id.event_status).setVisibility(View.GONE);
 			findViewById(R.id.event_serverproblem_info).setVisibility(View.GONE);
@@ -145,7 +150,7 @@ public class EventActivity extends AppCompatActivity implements EventsFetchFragm
 	private void onEventsFetchError() {
 		Log.e(LOG_NAME, "User is part of no event!");
 
-		((MAGE) getApplication()).onLogout(true, null);
+		application.onLogout(true, null);
 		findViewById(R.id.event_status).setVisibility(View.GONE);
 		findViewById(R.id.event_back_button).setVisibility(View.VISIBLE);
 		findViewById(R.id.event_bummer_info).setVisibility(View.GONE);

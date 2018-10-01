@@ -5,6 +5,8 @@ plugins {
     id 'org.ajoberstar.grgit' version '1.6.0'
 }
 apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+apply plugin: 'kotlin-kapt'
 apply plugin: 'maven-publish'
 
 group 'mil.nga.giat.mage'
@@ -23,7 +25,7 @@ def signedDebugApkPath = hasProperty('SIGNED_DEBUG_APK_PATH') ? SIGNED_DEBUG_APK
 
 android {
     compileSdkVersion 27
-    buildToolsVersion "27.0.3"
+    buildToolsVersion '28.0.2'
     flavorDimensions "default"
 
     dexOptions {
@@ -153,6 +155,7 @@ repositories {
         }
         publishing.repositories.add sharedRepo
     }
+    mavenCentral()
 }
 
 dependencies {
@@ -160,6 +163,7 @@ dependencies {
         support_library_version = '27.1.1'
         google_play_services_version = '10.2.6'
         lifecycle_version= '1.1.1'
+        dagger_version = '2.15'
     }
 
     // this block allows the mage-android-wear-bridge to be pulled in dynamically when that flavor is built
@@ -184,7 +188,14 @@ dependencies {
     api "com.android.support:preference-v7:$support_library_version"
     api "com.android.support:preference-v14:$support_library_version"
     implementation "android.arch.lifecycle:extensions:$lifecycle_version"
-    api "com.google.android.gms:play-services-maps:$google_play_services_version"
+    implementation "com.google.android.gms:play-services-maps:$google_play_services_version"
+
+    implementation "com.google.dagger:dagger:$dagger_version"
+    implementation "com.google.dagger:dagger-android-support:$dagger_version"
+    kapt "com.google.dagger:dagger-compiler:$dagger_version"
+    kapt "com.google.dagger:dagger-android-processor:$dagger_version"
+
+//    annotationProcessor "com.google.dagger:dagger-android-processor:$dagger_version"
 
 //        api project(':sdk') // uncomment me to build locally, and see top-level build.gradle
     api 'mil.nga.giat.mage:mage-android-sdk:6.2.1' // comment me to build locally
@@ -196,11 +207,12 @@ dependencies {
     api 'com.google.android:flexbox:0.3.2'
     api 'com.nulab-inc:zxcvbn:1.2.3'
     api (name:'mgrs-0.0.2-release', ext:'aar')
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
 }
 
 task androidArtifactVersion {
     group = 'android'
-    description = 'Print the application ID, version code, and version name this build will produce in AndroidManifest.xml'
+    description = 'Print the context ID, version code, and version name this build will produce in AndroidManifest.xml'
     doLast {
         com.android.build.gradle.AppExtension appExt = project.extensions.android;
         println "applicationId: ${appExt.defaultConfig.applicationId}"

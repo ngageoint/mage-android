@@ -3,7 +3,6 @@ package mil.nga.giat.mage.newsfeed;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Dialog;
-import android.arch.lifecycle.LiveData;
 import android.arch.lifecycle.Observer;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -24,7 +23,6 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.Snackbar;
-import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.view.ViewCompat;
 import android.support.v4.widget.SwipeRefreshLayout;
@@ -63,9 +61,12 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
-import mil.nga.giat.mage.MAGE;
+import javax.inject.Inject;
+
+import dagger.android.support.DaggerFragment;
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.filter.ObservationFilterActivity;
+import mil.nga.giat.mage.location.LocationProvider;
 import mil.nga.giat.mage.observation.AttachmentGallery;
 import mil.nga.giat.mage.observation.AttachmentViewerActivity;
 import mil.nga.giat.mage.observation.ObservationEditActivity;
@@ -89,7 +90,7 @@ import mil.nga.giat.mage.sdk.exceptions.UserException;
 import mil.nga.giat.mage.sdk.fetch.ObservationRefreshIntent;
 import mil.nga.wkb.geom.Geometry;
 
-public class ObservationFeedFragment extends Fragment implements IObservationEventListener, ObservationListAdapter.ObservationActionListener, Observer<Location> {
+public class ObservationFeedFragment extends DaggerFragment implements IObservationEventListener, ObservationListAdapter.ObservationActionListener, Observer<Location> {
 
 	private static final String LOG_NAME = ObservationFeedFragment.class.getName();
 
@@ -111,21 +112,20 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 	private CoordinatorLayout coordinatorLayout;
 	private ObservationRefreshReceiver observationRefreshReceiver;
 
-	private LiveData<Location> locationLiveData;
+	@Inject
+	protected LocationProvider locationProvider;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 
 		try {
-			currentUser= UserHelper.getInstance(getActivity().getApplicationContext()).readCurrentUser();
+			currentUser = UserHelper.getInstance(getActivity().getApplicationContext()).readCurrentUser();
 		} catch (UserException e) {
 			Log.e(LOG_NAME, "Error reading current user", e);
 		}
 
 		observationRefreshReceiver = new ObservationRefreshReceiver();
-
-		locationLiveData = ((MAGE) getActivity().getApplication()).getLocationLiveData();
 	}
 
 	@Override
@@ -180,14 +180,14 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 	public void onStart() {
 		super.onStart();
 
-		locationLiveData.observe(this, this);
+		locationProvider.observe(this, this);
 	}
 
 	@Override
 	public void onStop() {
 		super.onStop();
 
-		locationLiveData.removeObserver(this);
+		locationProvider.removeObserver(this);
 	}
 
 	@Override
@@ -318,7 +318,7 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 		ObservationLocation location = null;
 
 		// if there is not a location from the location service, then try to pull one from the database.
-		if (locationLiveData.getValue() == null) {
+		if (locationProvider.getValue() == null) {
 			List<mil.nga.giat.mage.sdk.datastore.location.Location> tLocations = LocationHelper.getInstance(getActivity().getApplicationContext()).getCurrentUserLocations(1, true);
 			if (!tLocations.isEmpty()) {
 				mil.nga.giat.mage.sdk.datastore.location.Location tLocation = tLocations.get(0);
@@ -335,7 +335,7 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 				}
 			}
 		} else {
-			location = new ObservationLocation(locationLiveData.getValue());
+			location = new ObservationLocation(locationProvider.getValue());
 		}
 
 		return location;

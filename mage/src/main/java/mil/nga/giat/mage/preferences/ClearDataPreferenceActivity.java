@@ -6,6 +6,8 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.util.SparseBooleanArray;
@@ -22,8 +24,11 @@ import android.widget.ListView;
 import java.util.Arrays;
 import java.util.List;
 
+import javax.inject.Inject;
+
+import dagger.android.AndroidInjection;
 import mil.nga.giat.mage.LandingActivity;
-import mil.nga.giat.mage.MAGE;
+import mil.nga.giat.mage.MageApplication;
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.login.LoginActivity;
 import mil.nga.giat.mage.sdk.datastore.DaoStore;
@@ -49,13 +54,13 @@ public class ClearDataPreferenceActivity extends AppCompatActivity {
 
 		List<String> values;
 
-		public ClearDataAdapter(Context context, List<String> values) {
+		private ClearDataAdapter(Context context, List<String> values) {
 			super(context, R.layout.cleardata_list_item, R.id.checkedTextView, values);
 			this.values = values;
 		}
 
 		@Override
-		public View getView(int position, View convertView, ViewGroup parent) {
+		public @NonNull View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
 			View view = super.getView(position, convertView, parent);
 
 			String name = values.get(position);
@@ -73,8 +78,17 @@ public class ClearDataPreferenceActivity extends AppCompatActivity {
 
 
 	public static class ClearDataFragment extends ListFragment {
+		@Inject
+		MageApplication application;
 
 		private MenuItem clearDataButton;
+
+		@Override
+		public void onCreate(@Nullable Bundle savedInstanceState) {
+			super.onCreate(savedInstanceState);
+
+			AndroidInjection.inject(this);
+		}
 
 		@Override
 		public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -151,7 +165,7 @@ public class ClearDataPreferenceActivity extends AppCompatActivity {
 					.setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
 						public void onClick(DialogInterface dialog, int which) {
 							// stop doing stuff
-							((MAGE) getActivity().getApplication()).onLogout(false, null);
+							application.onLogout(false, null);
 
 							SparseBooleanArray checkedItems = getListView().getCheckedItemPositions();
 
@@ -162,7 +176,7 @@ public class ClearDataPreferenceActivity extends AppCompatActivity {
 
 							if (checkedItems.indexOfKey(1) >= 0 && checkedItems.valueAt(checkedItems.indexOfKey(1))) {
 								// clear preferences
-								PreferenceManager.getDefaultSharedPreferences(view.getContext()).edit().clear().commit();
+								PreferenceManager.getDefaultSharedPreferences(view.getContext()).edit().clear().apply();
 							}
 
 							if (checkedItems.indexOfKey(2) >= 0 && checkedItems.valueAt(checkedItems.indexOfKey(2))) {

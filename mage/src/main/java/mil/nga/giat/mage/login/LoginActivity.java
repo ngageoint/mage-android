@@ -27,7 +27,6 @@ import android.support.v4.content.ContextCompat;
 import android.support.v4.graphics.drawable.RoundedBitmapDrawable;
 import android.support.v4.graphics.drawable.RoundedBitmapDrawableFactory;
 import android.support.v7.app.AlertDialog;
-import android.support.v7.app.AppCompatActivity;
 import android.support.v7.app.AppCompatDelegate;
 import android.text.Editable;
 import android.text.TextUtils;
@@ -62,8 +61,11 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import javax.inject.Inject;
+
+import dagger.android.support.DaggerAppCompatActivity;
 import mil.nga.giat.mage.LandingActivity;
-import mil.nga.giat.mage.MAGE;
+import mil.nga.giat.mage.MageApplication;
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.cache.CacheUtils;
 import mil.nga.giat.mage.disclaimer.DisclaimerActivity;
@@ -84,7 +86,7 @@ import mil.nga.giat.mage.sdk.utils.UserUtility;
  *
  * @author wiedemanns
  */
-public class LoginActivity extends AppCompatActivity implements LoginFragment.LoginListener {
+public class LoginActivity extends DaggerAppCompatActivity implements LoginFragment.LoginListener {
 
 	public static final int EXTRA_OAUTH_RESULT = 1;
 
@@ -95,6 +97,9 @@ public class LoginActivity extends AppCompatActivity implements LoginFragment.Lo
 	public static final String EXTRA_CONTINUE_SESSION_WHILE_USING = "CONTINUE_SESSION_WHILE_USING";
 
 	private static final String LOG_NAME = LoginActivity.class.getName();
+
+	@Inject
+	protected MageApplication application;
 
 	private EditText mUsernameEditText;
 	private TextInputLayout mUsernameLayout;
@@ -131,7 +136,7 @@ public class LoginActivity extends AppCompatActivity implements LoginFragment.Lo
 		}
 
 		if (intent.getBooleanExtra("LOGOUT", false)) {
-			((MAGE) getApplication()).onLogout(true, null);
+			application.onLogout(true, null);
 		}
 
 		// IMPORTANT: load the configuration from preferences files and server
@@ -142,7 +147,7 @@ public class LoginActivity extends AppCompatActivity implements LoginFragment.Lo
 
 		// check if the database needs to be upgraded, and if so log them out
 		if (DaoStore.DATABASE_VERSION != sharedPreferences.getInt(getResources().getString(R.string.databaseVersionKey), 0)) {
-			((MAGE) getApplication()).onLogout(true, null);
+			application.onLogout(true, null);
 		}
 
 		sharedPreferences.edit().putInt(getString(R.string.databaseVersionKey), DaoStore.DATABASE_VERSION).commit();
@@ -635,7 +640,7 @@ public class LoginActivity extends AppCompatActivity implements LoginFragment.Lo
 			if (accountStatus.getStatus().equals(AccountStatus.Status.INVALID_SERVER)) {
 				new AlertDialog.Builder(this)
 						.setTitle("Application Compatibility Error")
-						.setMessage("This app is not compatible with this server. Please update your application or talk to your MAGE administrator.")
+						.setMessage("This app is not compatible with this server. Please update your context or talk to your MAGE administrator.")
 						.setPositiveButton(android.R.string.ok, new OnClickListener() {
 							@Override
 							public void onClick(DialogInterface dialog, int which) {
@@ -688,7 +693,7 @@ public class LoginActivity extends AppCompatActivity implements LoginFragment.Lo
 		if (preserveActivityStack) {
 			// We are going to return user to the app where they last left off,
 			// make sure to start up MAGE services
-			((MAGE) getApplication()).onLogin();
+			application.onLogin();
 
 			// TODO look at refreshing the event here...
 		} else {
@@ -745,7 +750,7 @@ public class LoginActivity extends AppCompatActivity implements LoginFragment.Lo
 		super.onResume();
 
 		if (getIntent().getBooleanExtra("LOGOUT", false)) {
-			((MAGE) getApplication()).onLogout(true, null);
+			application.onLogout(true, null);
 		}
 	}
 

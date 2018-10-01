@@ -5,8 +5,8 @@ import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.app.Activity;
 import android.app.Dialog;
-import android.arch.lifecycle.LiveData;
 import android.arch.lifecycle.Observer;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -24,7 +24,6 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.BottomSheetBehavior;
 import android.support.design.widget.FloatingActionButton;
-import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -82,6 +81,9 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
+import javax.inject.Inject;
+
+import dagger.android.support.DaggerFragment;
 import mil.nga.geopackage.BoundingBox;
 import mil.nga.geopackage.GeoPackage;
 import mil.nga.geopackage.GeoPackageCache;
@@ -110,11 +112,11 @@ import mil.nga.geopackage.tiles.features.DefaultFeatureTiles;
 import mil.nga.geopackage.tiles.features.FeatureTiles;
 import mil.nga.geopackage.tiles.features.custom.NumberFeaturesTile;
 import mil.nga.geopackage.tiles.user.TileDao;
-import mil.nga.giat.mage.MAGE;
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.filter.DateTimeFilter;
 import mil.nga.giat.mage.filter.Filter;
 import mil.nga.giat.mage.filter.FilterActivity;
+import mil.nga.giat.mage.location.LocationProvider;
 import mil.nga.giat.mage.map.cache.CacheOverlay;
 import mil.nga.giat.mage.map.cache.CacheOverlayFilter;
 import mil.nga.giat.mage.map.cache.CacheOverlayType;
@@ -158,7 +160,7 @@ import mil.nga.mgrs.gzd.MGRSTileProvider;
 import mil.nga.wkb.geom.Geometry;
 import mil.nga.wkb.geom.GeometryType;
 
-public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapClickListener, OnMapLongClickListener, OnMarkerClickListener, OnInfoWindowClickListener, GoogleMap.OnCameraMoveListener, GoogleMap.OnCameraIdleListener, GoogleMap.OnCameraMoveStartedListener, OnClickListener, LocationSource, OnCacheOverlayListener,
+public class MapFragment extends DaggerFragment implements OnMapReadyCallback, OnMapClickListener, OnMapLongClickListener, OnMarkerClickListener, OnInfoWindowClickListener, GoogleMap.OnCameraMoveListener, GoogleMap.OnCameraIdleListener, GoogleMap.OnCameraMoveStartedListener, OnClickListener, LocationSource, OnCacheOverlayListener,
 		IObservationEventListener, ILocationEventListener, IUserEventListener, IStaticFeatureEventListener, Observer<Location> {
 
 	private static final String LOG_NAME = MapFragment.class.getName();
@@ -185,7 +187,9 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 		}
 	}
 
-	private MAGE mage;
+	@Inject
+	protected Context context;
+
 	private MapView mapView;
 	private GoogleMap map;
 	private View searchLayout;
@@ -194,8 +198,10 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 	private LocateState locateState = LocateState.OFF;
 	protected User currentUser = null;
 	private long currentEventId = -1;
-	private LiveData<Location> locationLiveData;
 	private OnLocationChangedListener locationChangedListener;
+
+	@Inject
+	protected LocationProvider locationProvider;
 
 	private RefreshMarkersRunnable refreshObservationsTask;
 	private RefreshMarkersRunnable refreshLocationsTask;
@@ -273,8 +279,6 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 			}
 		});
 
-		mage = (MAGE) getActivity().getApplication();
-
 		preferences = PreferenceManager.getDefaultSharedPreferences(getActivity().getApplicationContext());
 
 		searchLayout = view.findViewById(R.id.search_layout);
@@ -304,8 +308,6 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 		// Initialize the GeoPackage cache with a GeoPackage manager
 		GeoPackageManager geoPackageManager = GeoPackageFactory.getManager(getActivity().getApplicationContext());
 		geoPackageCache = new GeoPackageCache(geoPackageManager);
-
-		locationLiveData = mage.getLocationLiveData();
 
 		return view;
 	}
@@ -407,9 +409,9 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 			map.setOnCameraMoveStartedListener(this);
 			map.setOnCameraMoveListener(this);
 
-			observations = new ObservationMarkerCollection(mage, map);
-			historicLocations = new MyHistoricalLocationMarkerCollection(mage, map);
-			locations = new LocationMarkerCollection(mage, map);
+			observations = new ObservationMarkerCollection(context, map);
+			historicLocations = new MyHistoricalLocationMarkerCollection(context, map);
+			locations = new LocationMarkerCollection(context, map);
 		}
 
 		int dayNightMode = getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK;
@@ -431,11 +433,11 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 			historicLocations.clear();
 		}
 
-		ObservationHelper.getInstance(mage).addListener(this);
-		LocationHelper.getInstance(mage).addListener(this);
-		StaticFeatureHelper.getInstance(mage).addListener(this);
-		UserHelper.getInstance(mage).addListener(this);
-		CacheProvider.getInstance(mage).registerCacheOverlayListener(this);
+		ObservationHelper.getInstance(context).addListener(this);
+		LocationHelper.getInstance(context).addListener(this);
+		StaticFeatureHelper.getInstance(context).addListener(this);
+		UserHelper.getInstance(context).addListener(this);
+		CacheProvider.getInstance(context).registerCacheOverlayListener(this);
 
 		zoomToLocationButton.setOnClickListener(new OnClickListener() {
 			@Override
@@ -450,7 +452,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 					case FOLLOW:
 						zoomToLocationButton.setSelected(true);
 
-                        Location location = locationLiveData.getValue();
+                        Location location = locationProvider.getValue();
 						if (location != null) {
 							CameraPosition cameraPosition = new CameraPosition.Builder()
 									.target(new LatLng(location.getLatitude(), location.getLongitude()))
@@ -466,14 +468,14 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 			}
 		});
 
-		ObservationLoadTask observationLoad = new ObservationLoadTask(mage, observations);
+		ObservationLoadTask observationLoad = new ObservationLoadTask(context, observations);
 		observationLoad.addFilter(getTemporalFilter("timestamp", getTimeFilterId(), OBSERVATION_FILTER_TYPE));
 		observationLoad.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
 
-		HistoricLocationLoadTask myHistoricLocationLoad = new HistoricLocationLoadTask(mage, historicLocations);
+		HistoricLocationLoadTask myHistoricLocationLoad = new HistoricLocationLoadTask(context, historicLocations);
 		myHistoricLocationLoad.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
 
-		LocationLoadTask locationLoad = new LocationLoadTask(mage, locations);
+		LocationLoadTask locationLoad = new LocationLoadTask(context, locations);
 		locationLoad.setFilter(getTemporalFilter("timestamp", getLocationTimeFilterId(), LOCATION_FILTER_TYPE));
 		locationLoad.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
 
@@ -486,7 +488,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 		historicLocations.setVisibility(preferences.getBoolean(getResources().getString(R.string.showMyLocationHistoryKey), false));
 
 		// Check if any map preferences changed that I care about
-		if (ContextCompat.checkSelfPermission(mage, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+		if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
 			map.setMyLocationEnabled(true);
 			map.setLocationSource(this);
 		} else {
@@ -659,10 +661,10 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 		
 		mapView.onPause();
 
-		ObservationHelper.getInstance(mage).removeListener(this);
-		LocationHelper.getInstance(mage).removeListener(this);
-		StaticFeatureHelper.getInstance(mage).removeListener(this);
-		UserHelper.getInstance(mage).removeListener(this);
+		ObservationHelper.getInstance(context).removeListener(this);
+		LocationHelper.getInstance(context).removeListener(this);
+		StaticFeatureHelper.getInstance(context).removeListener(this);
+		UserHelper.getInstance(context).removeListener(this);
 
 		if (observations != null) {
 			observations.clear();
@@ -704,7 +706,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 		ObservationLocation location = null;
 
 		// if there is not a location from the location service, then try to pull one from the database.
-		if (locationLiveData.getValue() == null) {
+		if (locationProvider.getValue() == null) {
 			List<mil.nga.giat.mage.sdk.datastore.location.Location> tLocations = LocationHelper.getInstance(getActivity().getApplicationContext()).getCurrentUserLocations(1, true);
 			if (!tLocations.isEmpty()) {
 				mil.nga.giat.mage.sdk.datastore.location.Location tLocation = tLocations.get(0);
@@ -721,7 +723,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 				}
 			}
 		} else {
-			location = new ObservationLocation(locationLiveData.getValue());
+			location = new ObservationLocation(locationProvider.getValue());
 		}
 
 		if (!UserHelper.getInstance(getActivity().getApplicationContext()).isCurrentUserPartOfCurrentEvent()) {
@@ -788,7 +790,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 	@Override
 	public void onObservationDeleted(Observation o) {
 		if (observations != null) {
-			new ObservationTask(mage, ObservationTask.Type.DELETE, observations).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, o);
+			new ObservationTask(context, ObservationTask.Type.DELETE, observations).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, o);
 		}
 	}
 
@@ -803,7 +805,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 				}
 			} else {
 				if (historicLocations != null) {
-					new LocationTask(mage, LocationTask.Type.ADD, historicLocations).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, l);
+					new LocationTask(context, LocationTask.Type.ADD, historicLocations).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, l);
 				}
 			}
 		}
@@ -819,7 +821,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 			}
 		} else {
 			if (historicLocations != null) {
-				new LocationTask(mage, LocationTask.Type.UPDATE, historicLocations).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, l);
+				new LocationTask(context, LocationTask.Type.UPDATE, historicLocations).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, l);
 			}
 		}
 	}
@@ -868,7 +870,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 	public void onInfoWindowClick(Marker marker) {
 		Observation observation = observations.pointForMarker(marker);
 		if (observation != null) {
-			Intent intent = new Intent(mage, ObservationViewActivity.class);
+			Intent intent = new Intent(context, ObservationViewActivity.class);
 			intent.putExtra(ObservationViewActivity.OBSERVATION_ID, observation.getId());
 			intent.putExtra(ObservationViewActivity.INITIAL_LOCATION, map.getCameraPosition().target);
 			intent.putExtra(ObservationViewActivity.INITIAL_ZOOM, map.getCameraPosition().zoom);
@@ -878,7 +880,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 
 		Pair<mil.nga.giat.mage.sdk.datastore.location.Location, User> pair = locations.pointForMarker(marker);
 		if (pair != null) {
-			Intent profileView = new Intent(mage, ProfileActivity.class);
+			Intent profileView = new Intent(context, ProfileActivity.class);
 			profileView.putExtra(ProfileActivity.USER_ID, pair.second.getRemoteId());
 			startActivity(profileView);
 			return;
@@ -1022,14 +1024,14 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 			locationChangedListener.onLocationChanged(location);
 		}
 
-		locationLiveData.observe(this, this);
+		locationProvider.observe(this, this);
 	}
 
 	@Override
 	public void deactivate() {
 		Log.i(LOG_NAME, "map location, deactivate");
 
-		locationLiveData.removeObserver(this);
+		locationProvider.removeObserver(this);
 		locationChangedListener = null;
 	}
 
