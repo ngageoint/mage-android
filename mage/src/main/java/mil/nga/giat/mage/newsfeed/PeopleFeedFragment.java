@@ -1,18 +1,12 @@
 package mil.nga.giat.mage.newsfeed;
 
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.database.Cursor;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Parcelable;
-import android.preference.PreferenceManager;
-import android.support.annotation.Nullable;
-import android.support.design.widget.CoordinatorLayout;
-import android.support.design.widget.Snackbar;
-import android.support.v4.app.Fragment;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -44,8 +38,12 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
+import javax.inject.Inject;
+
+import dagger.android.support.DaggerFragment;
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.filter.LocationFilterActivity;
+import mil.nga.giat.mage.location.LocationServerFetch;
 import mil.nga.giat.mage.profile.ProfileActivity;
 import mil.nga.giat.mage.sdk.datastore.DaoStore;
 import mil.nga.giat.mage.sdk.datastore.location.Location;
@@ -54,52 +52,43 @@ import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.event.ILocationEventListener;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
-import mil.nga.giat.mage.sdk.fetch.LocationRefreshIntent;
 
-public class PeopleFeedFragment extends Fragment implements OnItemClickListener, ILocationEventListener {
+public class PeopleFeedFragment extends DaggerFragment implements OnItemClickListener, ILocationEventListener {
 	
 	private static final String LOG_NAME = PeopleFeedFragment.class.getName();
-	
+
+	@Inject
+    Context context;
+
+	@Inject
+    SharedPreferences preferences;
+
     private PeopleCursorAdapter adapter;
     private PreparedQuery<Location> query;
     private ViewGroup footer;
     private ListView lv;
     private Parcelable listState;
-    private SharedPreferences sp;
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
     private ScheduledFuture<?> queryUpdateHandle;
     private SwipeRefreshLayout swipeContainer;
-    private CoordinatorLayout coordinatorLayout;
-    private LocationRefreshReceiver locationRefreshReceiver;
-
-    @Override
-    public void onCreate(@Nullable Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-
-        locationRefreshReceiver = new LocationRefreshReceiver();
-    }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_feed_people, container, false);
         setHasOptionsMenu(true);
 
-        coordinatorLayout = (CoordinatorLayout) rootView.findViewById(R.id.coordinator_layout);
-
-        swipeContainer = (SwipeRefreshLayout) rootView.findViewById(R.id.swipeContainer);
+        swipeContainer = rootView.findViewById(R.id.swipeContainer);
         swipeContainer.setColorSchemeResources(R.color.md_blue_600, R.color.md_orange_A200);
         swipeContainer.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
-                refreshLocations();
+                new LocationRefreshTask().execute();
             }
         });
 
-        lv = (ListView) rootView.findViewById(R.id.people_feed_list);
+        lv = rootView.findViewById(R.id.people_feed_list);
         footer = (ViewGroup) inflater.inflate(R.layout.feed_footer, lv, false);
         lv.addFooterView(footer, null, false);
-        
-        sp = PreferenceManager.getDefaultSharedPreferences(getActivity().getApplicationContext());
 
         return rootView;
     }
@@ -108,14 +97,13 @@ public class PeopleFeedFragment extends Fragment implements OnItemClickListener,
     public void onResume() {
     	super.onResume();
 
-        LocationHelper.getInstance(getActivity()).addListener(this);
-        locationRefreshReceiver.register();
+        LocationHelper.getInstance(context).addListener(this);
 
         try {
-            Dao<Location, Long> locationDao = DaoStore.getInstance(getActivity().getApplicationContext()).getLocationDao();
+            Dao<Location, Long> locationDao = DaoStore.getInstance(context).getLocationDao();
             query = buildQuery(locationDao, getTimeFilterId());
             Cursor c = obtainCursor(query, locationDao);
-            adapter = new PeopleCursorAdapter(getActivity().getApplicationContext(), c, query);
+            adapter = new PeopleCursorAdapter(context, c, query);
             footer.setVisibility(View.GONE);
             lv.setAdapter(adapter);
             lv.setOnItemClickListener(this);
@@ -133,8 +121,7 @@ public class PeopleFeedFragment extends Fragment implements OnItemClickListener,
     public void onPause() {
         super.onPause();
 
-        LocationHelper.getInstance(getActivity()).removeListener(this);
-        locationRefreshReceiver.unregister();
+        LocationHelper.getInstance(context).removeListener(this);
 
         listState = lv.onSaveInstanceState();
 
@@ -152,7 +139,7 @@ public class PeopleFeedFragment extends Fragment implements OnItemClickListener,
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.filter_button:
-                Intent intent = new Intent(getActivity(), LocationFilterActivity.class);
+                Intent intent = new Intent(context, LocationFilterActivity.class);
                 startActivity(intent);
                 return true;
             default:
@@ -160,13 +147,8 @@ public class PeopleFeedFragment extends Fragment implements OnItemClickListener,
         }
     }
 
-    private void refreshLocations() {
-        Intent intent = new Intent(getContext(), LocationRefreshIntent.class);
-        getActivity().startService(intent);
-    }
-
     private int getTimeFilterId() {
-        return sp.getInt(getResources().getString(R.string.activeLocationTimeFilterKey), getResources().getInteger(R.integer.time_filter_none));
+        return preferences.getInt(getResources().getString(R.string.activeLocationTimeFilterKey), getResources().getInteger(R.integer.time_filter_none));
     }
 
     private Cursor obtainCursor(PreparedQuery<Location> query, Dao<Location, Long> lDao) throws SQLException {
@@ -195,7 +177,7 @@ public class PeopleFeedFragment extends Fragment implements OnItemClickListener,
             @Override
             public void run() {
                 try {
-                	Dao<Location, Long> locationDao = DaoStore.getInstance(getActivity().getApplicationContext()).getLocationDao();
+                	Dao<Location, Long> locationDao = DaoStore.getInstance(context).getLocationDao();
                     query = buildQuery(locationDao, filterId);
                     adapter.changeCursor(obtainCursor(query, locationDao));
                 } catch (Exception e) {
@@ -206,11 +188,11 @@ public class PeopleFeedFragment extends Fragment implements OnItemClickListener,
     }
 
 	private int getCustomTimeNumber() {
-		return sp.getInt(getResources().getString(R.string.customLocationTimeNumberFilterKey), 0);
+		return preferences.getInt(getResources().getString(R.string.customLocationTimeNumberFilterKey), 0);
 	}
 
 	private String getCustomTimeUnit() {
-		return sp.getString(getResources().getString(R.string.customLocationTimeUnitFilterKey), getResources().getStringArray(R.array.timeUnitEntries)[0]);
+		return preferences.getString(getResources().getString(R.string.customLocationTimeUnitFilterKey), getResources().getStringArray(R.array.timeUnitEntries)[0]);
 	}
     
     private PreparedQuery<Location> buildQuery(Dao<Location, Long> lDao, int filterId) throws SQLException {
@@ -268,7 +250,7 @@ public class PeopleFeedFragment extends Fragment implements OnItemClickListener,
         footerTextView.setText(footerText);
 		User currentUser = null;
 		try {
-			currentUser = UserHelper.getInstance(getActivity().getApplicationContext()).readCurrentUser();
+			currentUser = UserHelper.getInstance(context).readCurrentUser();
 		} catch (UserException e) {
 			e.printStackTrace();
 		}
@@ -296,7 +278,7 @@ public class PeopleFeedFragment extends Fragment implements OnItemClickListener,
 		c.moveToPosition(position);
 		try {
 			Location l = query.mapRow(new AndroidDatabaseResults(c, null, false));
-			Intent profileView = new Intent(getActivity().getApplicationContext(), ProfileActivity.class);
+			Intent profileView = new Intent(context, ProfileActivity.class);
 			profileView.putExtra(ProfileActivity.USER_ID, l.getUser().getRemoteId());
 			getActivity().startActivityForResult(profileView, 2);
 		} catch (Exception e) {
@@ -324,34 +306,17 @@ public class PeopleFeedFragment extends Fragment implements OnItemClickListener,
 		updateTimeFilter(getTimeFilterId());
 	}
 
-    public class LocationRefreshReceiver extends BroadcastReceiver {
-        public void register() {
-            IntentFilter filter = new IntentFilter(LocationRefreshIntent.ACTION_LOCATIONS_REFRESHED);
-            filter.addCategory(Intent.CATEGORY_DEFAULT);
-            getContext().registerReceiver(locationRefreshReceiver, filter);
-        }
+    private class LocationRefreshTask extends AsyncTask<Void, Void, Void> {
 
-        public void unregister() {
-            getContext().unregisterReceiver(locationRefreshReceiver);
+        @Override
+        protected Void doInBackground(Void... voids) {
+            new LocationServerFetch(context).fetch();
+            return null;
         }
 
         @Override
-        public void onReceive(Context context, Intent intent) {
+        protected void onPostExecute(Void aVoid) {
             swipeContainer.setRefreshing(false);
-
-            String status = intent.getExtras().getString(LocationRefreshIntent.EXTRA_LOCATIONS_REFRESH_STATUS, null);
-            if (status != null) {
-                final Snackbar snackbar = Snackbar
-                        .make(coordinatorLayout, status, Snackbar.LENGTH_LONG)
-                        .setAction("RETRY", new View.OnClickListener() {
-                            @Override
-                            public void onClick(View view) {
-                                refreshLocations();
-                            }
-                        });
-
-                snackbar.show();
-            }
         }
     }
 }

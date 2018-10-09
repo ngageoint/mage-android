@@ -15,9 +15,8 @@ import mil.nga.giat.mage.sdk.exceptions.LocationException
 import mil.nga.giat.mage.sdk.exceptions.UserException
 import mil.nga.wkb.geom.Point
 import java.util.*
-import javax.inject.Inject
 
-class LocationSaveTask internal constructor(private val listener: LocationDatabaseListener) : AsyncTask<Location, Void, Location>() {
+class LocationSaveTask(val context: Context, private val listener: LocationDatabaseListener) : AsyncTask<Location, Void, Location>() {
 
     companion object {
         private val LOG_NAME = LocationSaveTask::class.java.name
@@ -26,9 +25,6 @@ class LocationSaveTask internal constructor(private val listener: LocationDataba
     interface LocationDatabaseListener {
         fun onSaveComplete(location: Location?)
     }
-
-    @Inject
-    protected lateinit var context: Context
 
     private var batteryStatus: Intent
 

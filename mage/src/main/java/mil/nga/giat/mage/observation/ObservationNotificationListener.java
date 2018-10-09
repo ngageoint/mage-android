@@ -11,6 +11,7 @@ import android.support.v4.app.NotificationManagerCompat;
 import java.util.Collection;
 
 import mil.nga.giat.mage.LandingActivity;
+import mil.nga.giat.mage.MageApplication;
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.event.IObservationEventListener;
@@ -37,9 +38,9 @@ public class ObservationNotificationListener implements IObservationEventListene
 	}
 
 	@Override
-	public void onObservationCreated(Collection<Observation> observations, Boolean sendUserNotifcations) {
+	public void onObservationCreated(Collection<Observation> observations, Boolean sendNotifications) {
 
-		if(sendUserNotifcations != null && sendUserNotifcations) {
+		if(sendNotifications != null && sendNotifications) {
 			// are we configured to fire notifications?
 			Boolean notificationsEnabled = mPreferences.getBoolean(mContext.getString(R.string.notificationsEnabledKey), mContext.getResources().getBoolean(R.bool.notificationsEnabledDefaultValue));
 
@@ -65,7 +66,7 @@ public class ObservationNotificationListener implements IObservationEventListene
 						PendingIntent.getActivity(mContext, 0, viewIntent, 0);
 
 				NotificationCompat.Builder notificationBuilder =
-						new NotificationCompat.Builder(mContext)
+						new NotificationCompat.Builder(mContext, MageApplication.MAGE_NOTIFICATION_CHANNEL_ID)
 								.setSmallIcon(R.drawable.ic_new_obs)
 								.setContentTitle("New MAGE Observation(s)")
 								.setContentText("Touch for details")

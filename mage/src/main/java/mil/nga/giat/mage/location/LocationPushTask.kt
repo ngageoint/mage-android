@@ -12,8 +12,7 @@ import mil.nga.giat.mage.sdk.exceptions.UserException
 import mil.nga.giat.mage.sdk.http.resource.LocationResource
 import java.sql.SQLException
 import java.util.*
-import javax.inject.Inject
-class LocationPushTask(private val listener: LocationSyncListener) : AsyncTask<Void, Void, Boolean>() {
+class LocationPushTask(val context: Context, private val listener: LocationSyncListener) : AsyncTask<Void, Void, Boolean>() {
 
     interface LocationSyncListener {
         fun onSyncComplete(status: Boolean)
@@ -22,13 +21,11 @@ class LocationPushTask(private val listener: LocationSyncListener) : AsyncTask<V
         private val LOG_NAME = LocationPushTask::class.java.name
 
         private val LOCATION_PUSH_BATCH_SIZE: Long = 100
-        private val minNumberOfLocationsToKeep = 40
+
+        val minNumberOfLocationsToKeep = 40
     }
 
-    @Inject lateinit var context: Context;
-
     override fun doInBackground(vararg voids: Void): Boolean {
-        var status = true
 
         val locationResource = LocationResource(context)
         val locationHelper = LocationHelper.getInstance(context)
@@ -87,13 +84,13 @@ class LocationPushTask(private val listener: LocationSyncListener) : AsyncTask<V
 
             } else {
                 Log.e(LOG_NAME, "Failed to push locations.")
-                status = false
+                return false;
             }
 
             locations = locationHelper.getCurrentUserLocations(LOCATION_PUSH_BATCH_SIZE, false)
         }
 
-        return status
+        return true;
     }
 
     override fun onPostExecute(status: Boolean) {

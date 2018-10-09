@@ -212,31 +212,21 @@
         <service
             android:name=".location.LocationReportingService"
             android:exported="false" />
-        <service
-            android:name=".sdk.fetch.LocationFetchIntentService"
-            android:exported="false" />
-        <service
-            android:name=".sdk.fetch.LocationRefreshIntent"
-            android:exported="false" />
-        <service
-            android:name=".sdk.fetch.ObservationFetchIntentService"
-            android:exported="false" />
-        <service
-            android:name=".sdk.fetch.ObservationRefreshIntent"
-            android:exported="false" />
-        <service
-            android:name=".sdk.push.LocationPushIntentService"
-            android:exported="false" />
-        <service
-            android:name=".sdk.push.ObservationPushIntentService"
-            android:exported="false" />
 
-        <receiver
-            android:name=".sdk.push.AttachmentPushAlarmReceiver"
+        <service
+            android:name=".location.LocationFetchService"
             android:exported="false" />
 
         <service
-            android:name=".sdk.push.AttachmentPushIntentService"
+            android:name=".observation.sync.ObservationFetchService"
+            android:exported="false" />
+
+        <service
+            android:name=".observation.sync.ObservationPushService"
+            android:exported="false" />
+
+        <service
+            android:name=".observation.sync.AttachmentPushService"
             android:exported="false" />
 
         <meta-data
@@ -245,6 +235,7 @@
         <meta-data
             android:name="com.google.android.gms.version"
             android:value="@integer/google_play_services_version" />
+
         <meta-data
             android:name="mil.nga.giat.mage.glide.MageGlideModule"
             android:value="GlideModule" />

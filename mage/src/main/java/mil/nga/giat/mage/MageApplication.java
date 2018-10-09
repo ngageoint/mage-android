@@ -6,6 +6,10 @@ import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.arch.lifecycle.Lifecycle;
+import android.arch.lifecycle.LifecycleObserver;
+import android.arch.lifecycle.OnLifecycleEvent;
+import android.arch.lifecycle.ProcessLifecycleOwner;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -25,25 +29,25 @@ import com.squareup.okhttp.ResponseBody;
 import dagger.android.AndroidInjector;
 import dagger.android.support.DaggerApplication;
 import mil.nga.giat.mage.dagger.DaggerMageComponent;
+import mil.nga.giat.mage.location.LocationFetchService;
 import mil.nga.giat.mage.location.LocationReportingService;
 import mil.nga.giat.mage.login.LoginActivity;
 import mil.nga.giat.mage.login.OAuthActivity;
 import mil.nga.giat.mage.login.ServerUrlActivity;
 import mil.nga.giat.mage.login.SignupActivity;
 import mil.nga.giat.mage.observation.ObservationNotificationListener;
+import mil.nga.giat.mage.observation.sync.AttachmentPushService;
+import mil.nga.giat.mage.observation.sync.ObservationFetchService;
+import mil.nga.giat.mage.observation.sync.ObservationFetchWorker;
+import mil.nga.giat.mage.observation.sync.ObservationPushService;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.event.ISessionEventListener;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
-import mil.nga.giat.mage.sdk.fetch.LocationFetchIntentService;
-import mil.nga.giat.mage.sdk.fetch.ObservationFetchIntentService;
 import mil.nga.giat.mage.sdk.fetch.StaticFeatureServerFetch;
 import mil.nga.giat.mage.sdk.http.HttpClientManager;
 import mil.nga.giat.mage.sdk.http.resource.UserResource;
-import mil.nga.giat.mage.sdk.push.AttachmentPushService;
-import mil.nga.giat.mage.sdk.push.LocationPushIntentService;
-import mil.nga.giat.mage.sdk.push.ObservationPushIntentService;
 import mil.nga.giat.mage.sdk.screen.ScreenChangeReceiver;
 import mil.nga.giat.mage.sdk.utils.UserUtility;
 import mil.nga.giat.mage.wearable.InitializeMAGEWearBridge;
@@ -51,28 +55,30 @@ import retrofit.Callback;
 import retrofit.Response;
 import retrofit.Retrofit;
 
-public class MageApplication extends DaggerApplication implements SharedPreferences.OnSharedPreferenceChangeListener, ISessionEventListener, Application.ActivityLifecycleCallbacks {
+public class MageApplication extends DaggerApplication implements LifecycleObserver, SharedPreferences.OnSharedPreferenceChangeListener, ISessionEventListener, Application.ActivityLifecycleCallbacks {
 
 	private static final String LOG_NAME = MageApplication.class.getName();
 
 	public static final int MAGE_SUMMARY_NOTIFICATION_ID = 100;
 	public static final int MAGE_ACCOUNT_NOTIFICATION_ID = 101;
+	public static final int MAGE_OBSERVATION_NOTIFICATION_PREFIX = 10000;
+
 
 	public static final String MAGE_NOTIFICATION_GROUP = "mil.nga.mage.MAGE_NOTIFICATION_GROUP";
+	public static final String MAGE_OBSERVATION_NOTIFICATION_GROUP = "mil.nga.mage.MAGE_OBSERVATION_NOTIFICATION_GROUP";
 	public static final String MAGE_NOTIFICATION_CHANNEL_ID = "mil.nga.mage.MAGE_NOTIFICATION_CHANNEL";
+	public static final String MAGE_OBSERVATION_NOTIFICATION_CHANNEL_ID = "mil.nga.mage.MAGE_OBSERVATION_NOTIFICATION_CHANNEL";
 
 	public interface OnLogoutListener {
 		void onLogout();
 	}
 
+	private Intent observationPushServiceIntent;
+	private Intent attachmentPushServiceIntent;
+
 	private Intent locationReportingServiceIntent;
-	private Intent locationFetchIntent;
-	private Intent observationFetchIntent;
-	private Intent locationPushIntent;
-	private Intent observationPushIntent;
 
 	private ObservationNotificationListener observationNotificationListener = null;
-	private AttachmentPushService attachmentPushService = null;
 
 	private StaticFeatureServerFetch staticFeatureServerFetch = null;
 
@@ -87,10 +93,10 @@ public class MageApplication extends DaggerApplication implements SharedPreferen
 	public void onCreate() {
 		super.onCreate();
 
+		ProcessLifecycleOwner.get().getLifecycle().addObserver(this);
+
 		// setup the screen unlock stuff
 		registerReceiver(ScreenChangeReceiver.getInstance(), new IntentFilter(Intent.ACTION_SCREEN_ON));
-
-		HttpClientManager.getInstance(getApplicationContext()).addListener(this);
 
 		registerActivityLifecycleCallbacks(this);
 
@@ -98,28 +104,57 @@ public class MageApplication extends DaggerApplication implements SharedPreferen
 		int dayNightTheme = preferences.getInt(getResources().getString(R.string.dayNightThemeKey), getResources().getInteger(R.integer.dayNightThemeDefaultValue));
 		AppCompatDelegate.setDefaultNightMode(dayNightTheme);
 
-		preferences.registerOnSharedPreferenceChangeListener(this);
-
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
 			NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
 			NotificationChannel channel = new NotificationChannel(MAGE_NOTIFICATION_CHANNEL_ID,"MAGE", NotificationManager.IMPORTANCE_LOW);
 			channel.setShowBadge(true);
 			notificationManager.createNotificationChannel(channel);
+
+			NotificationChannel observationChannel = new NotificationChannel(MAGE_OBSERVATION_NOTIFICATION_CHANNEL_ID,"MAGE Observations", NotificationManager.IMPORTANCE_HIGH);
+			observationChannel.setShowBadge(true);
+			notificationManager.createNotificationChannel(observationChannel);
 		}
+	}
+
+	@OnLifecycleEvent(Lifecycle.Event.ON_START)
+	protected void onApplicationStart() {
+		SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+		preferences.registerOnSharedPreferenceChangeListener(this);
+
+		HttpClientManager.getInstance(getApplicationContext()).addListener(this);
+
+		// Start fetching and pushing observations and locations
+		if (!UserUtility.getInstance(getApplicationContext()).isTokenExpired()) {
+			startPushing();
+			startFetching();
+		}
+	}
+
+	@OnLifecycleEvent(Lifecycle.Event.ON_STOP)
+	protected void onApplicationStop() {
+		SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+		preferences.registerOnSharedPreferenceChangeListener(this);
+
+		HttpClientManager.getInstance(getApplicationContext()).removeListener(this);
+
+		destroyFetching();
+		destroyPushing();
 	}
 
 	public void onLogin() {
 		createNotification();
 
-		//set up Observation notifications
+		//set up observation notifications
 		if (observationNotificationListener == null) {
 			observationNotificationListener = new ObservationNotificationListener(getApplicationContext());
 			ObservationHelper.getInstance(getApplicationContext()).addListener(observationNotificationListener);
 		}
 
 		// Start fetching and pushing observations and locations
-		startFetching();
 		startPushing();
+		startFetching();
+
+		ObservationFetchWorker.Companion.beginWork();
 
 		// Pull static layers and features just once
 		loadStaticFeatures(false, null);
@@ -151,9 +186,10 @@ public class MageApplication extends DaggerApplication implements SharedPreferen
 		}
 
 		destroyFetching();
-		destroyPushing();
 		destroyNotification();
 		stopLocationService();
+
+		ObservationFetchWorker.Companion.stopWork();
 
 		if (clearTokenInformationAndSendLogoutRequest) {
 			UserResource userResource = new UserResource(getApplicationContext());
@@ -184,7 +220,7 @@ public class MageApplication extends DaggerApplication implements SharedPreferen
 
 		SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
 		SharedPreferences.Editor editor = sharedPreferences.edit();
-		editor.putBoolean(getString(R.string.disclaimerAcceptedKey), false).commit();
+		editor.putBoolean(getString(R.string.disclaimerAcceptedKey), false).apply();
 
 		try {
 			UserHelper userHelper = UserHelper.getInstance(getApplicationContext());
@@ -273,77 +309,52 @@ public class MageApplication extends DaggerApplication implements SharedPreferen
 		return PendingIntent.getActivity(getApplicationContext(), 1, intent, 0);
 	}
 
-	/**
-	 * Start Tasks responsible for fetching Observations and Locations from the server.
-	 */
 	private void startFetching() {
-        if(locationFetchIntent == null) {
-            locationFetchIntent = new Intent(getApplicationContext(), LocationFetchIntentService.class);
-            startService(locationFetchIntent);
-        }
-
-        if(observationFetchIntent == null) {
-            observationFetchIntent = new Intent(getApplicationContext(), ObservationFetchIntentService.class);
-            startService(observationFetchIntent);
-        }
+		startService(new Intent(getApplicationContext(), LocationFetchService.class));
+		startService(new Intent(getApplicationContext(), ObservationFetchService.class));
 	}
 
-    /**
+	/**
 	 * Stop Tasks responsible for fetching Observations and Locations from the server.
 	 */
 	private void destroyFetching() {
+		stopService(new Intent(getApplicationContext(), LocationFetchService.class));
+		stopService(new Intent(getApplicationContext(), ObservationFetchService.class));
+
 		if (staticFeatureServerFetch != null) {
 			staticFeatureServerFetch.destroy();
 			staticFeatureServerFetch = null;
 		}
-
-		if(locationFetchIntent != null) {
-			stopService(locationFetchIntent);
-			locationFetchIntent = null;
-		}
-
-		if(observationFetchIntent != null) {
-			stopService(observationFetchIntent);
-			observationFetchIntent = null;
-		}
 	}
 
 	/**
-	 * Start Tasks responsible for pushing Observations, Attachments and Locations to the server.
+	 * Start Tasks responsible for pushing Observations and Attachments to the server.
 	 */
 	private void startPushing() {
-		if (locationPushIntent == null) {
-			locationPushIntent = new Intent(getApplicationContext(), LocationPushIntentService.class);
-			startService(locationPushIntent);
-		}
-		if (observationPushIntent == null) {
-			observationPushIntent = new Intent(getApplicationContext(), ObservationPushIntentService.class);
-			startService(observationPushIntent);
+		if (observationPushServiceIntent == null) {
+			observationPushServiceIntent = new Intent(getApplicationContext(), ObservationPushService.class);
+			startService(observationPushServiceIntent);
 		}
 
-		attachmentPushService = new AttachmentPushService(getApplicationContext());
-		attachmentPushService.start();
 
-		attachmentPushService = new AttachmentPushService(getApplicationContext());
-		attachmentPushService.start();
+		if (attachmentPushServiceIntent == null) {
+			attachmentPushServiceIntent = new Intent(getApplicationContext(), AttachmentPushService.class);
+			startService(attachmentPushServiceIntent);
+		}
 	}
 
 	/**
-	 * Stop Tasks responsible for pushing Observations and Locations to the server.
+	 * Stop Tasks responsible for pushing Observations and Attachments to the server.
 	 */
 	private void destroyPushing() {
-		if (locationPushIntent != null) {
-			stopService(locationPushIntent);
-			locationPushIntent = null;
-		}
-		if (observationPushIntent != null) {
-			stopService(observationPushIntent);
-			observationPushIntent = null;
+		if (observationPushServiceIntent != null) {
+			stopService(observationPushServiceIntent);
+			observationPushServiceIntent = null;
 		}
 
-		if (attachmentPushService != null) {
-			attachmentPushService.stop();
-			attachmentPushService = null;
+		if (attachmentPushServiceIntent != null) {
+			stopService(attachmentPushServiceIntent);
+			attachmentPushServiceIntent = null;
 		}
 	}
 
@@ -391,7 +402,9 @@ public class MageApplication extends DaggerApplication implements SharedPreferen
 		destroyPushing();
 		createNotification();
 
-		PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).edit().putBoolean(getString(R.string.disclaimerAcceptedKey), false).commit();
+		ObservationFetchWorker.Companion.stopWork();
+
+		PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).edit().putBoolean(getString(R.string.disclaimerAcceptedKey), false).apply();
 
 		if (runningActivity != null &&
 				!(runningActivity instanceof LoginActivity) &&

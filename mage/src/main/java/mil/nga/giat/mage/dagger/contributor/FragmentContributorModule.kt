@@ -5,6 +5,7 @@ import dagger.android.ContributesAndroidInjector
 import mil.nga.giat.mage.map.MapFragment
 import mil.nga.giat.mage.map.preference.FeatureOverlayPreferenceActivity
 import mil.nga.giat.mage.newsfeed.ObservationFeedFragment
+import mil.nga.giat.mage.newsfeed.PeopleFeedFragment
 import mil.nga.giat.mage.preferences.ClearDataPreferenceActivity
 import mil.nga.giat.mage.preferences.LocationPreferencesActivity
 
@@ -16,6 +17,9 @@ abstract class FragmentContributorModule {
 
     @ContributesAndroidInjector
     internal abstract fun contributeObservationFeedFragment(): ObservationFeedFragment
+
+    @ContributesAndroidInjector
+    internal abstract fun contributePeopleFeedFragment(): PeopleFeedFragment
 
     @ContributesAndroidInjector
     internal abstract fun contributeFeatureListFragment(): FeatureOverlayPreferenceActivity.FeatureListFragment

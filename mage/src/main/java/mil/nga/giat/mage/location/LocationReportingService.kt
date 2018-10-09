@@ -92,17 +92,19 @@ open class LocationReportingService : LifecycleService(), Observer<Location>, Lo
     override fun onChanged(location: Location?) {
         if (shouldReportLocation && location!!.provider == LocationManager.GPS_PROVIDER) {
             Log.v(LOG_NAME, "GPS location changed")
-            LocationSaveTask(applicationContext, this@LocationReportingService).executeOnExecutor(SAVE_EXECUTOR, location)
+            LocationSaveTask(applicationContext, this).executeOnExecutor(SAVE_EXECUTOR, location)
         }
     }
 
-    override fun onSaveComplete(location: Location) {
-        if (location.time - oldestLocationTime > locationPushFrequency) {
-            LocationPushTask(this).executeOnExecutor(PUSH_EXECUTOR)
-        }
+    override fun onSaveComplete(location: Location?) {
+        location?.let {
+            if (it.time - oldestLocationTime > locationPushFrequency) {
+                LocationPushTask(applicationContext, this).executeOnExecutor(PUSH_EXECUTOR)
+            }
 
-        if (oldestLocationTime == 0L) {
-            oldestLocationTime = location.time
+            if (oldestLocationTime == 0L) {
+                oldestLocationTime = it.time
+            }
         }
     }
 

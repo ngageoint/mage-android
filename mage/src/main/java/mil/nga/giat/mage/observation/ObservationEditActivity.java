@@ -705,6 +705,7 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 				oh.update(observation);
 				Log.i(LOG_NAME, "Updated observation with remote id: " + observation.getRemoteId());
 			}
+
 			finish();
 		} catch (Exception e) {
 			Log.e(LOG_NAME, e.getMessage(), e);
