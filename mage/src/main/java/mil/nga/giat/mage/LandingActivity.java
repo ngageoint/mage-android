@@ -32,7 +32,6 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.target.BitmapImageViewTarget;
 
 import org.apache.commons.lang3.StringUtils;
@@ -47,6 +46,7 @@ import dagger.android.support.DaggerAppCompatActivity;
 import mil.nga.geopackage.validate.GeoPackageValidate;
 import mil.nga.giat.mage.cache.GeoPackageCacheUtils;
 import mil.nga.giat.mage.event.ChangeEventActivity;
+import mil.nga.giat.mage.glide.GlideApp;
 import mil.nga.giat.mage.help.HelpActivity;
 import mil.nga.giat.mage.login.LoginActivity;
 import mil.nga.giat.mage.map.MapFragment;
@@ -82,8 +82,9 @@ public class LandingActivity extends DaggerAppCompatActivity implements Navigati
     private static final int PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 100;
     private static final int PERMISSIONS_REQUEST_ACCESS_STORAGE= 200;
     private static final int PERMISSIONS_REQUEST_OPEN_FILE = 300;
-    private static final int AUTHENTICATE_REQUEST = 400;
-    private static final int CHANGE_EVENT_REQUEST = 500;
+    private static final int PERMISSIONS_REQUEST_FOREGROUND_SERVICE = 400;
+    private static final int AUTHENTICATE_REQUEST = 500;
+    private static final int CHANGE_EVENT_REQUEST = 600;
 
     @Inject
     protected MageApplication application;
@@ -125,6 +126,8 @@ public class LandingActivity extends DaggerAppCompatActivity implements Navigati
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         setTitle();
+
+        ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.FOREGROUND_SERVICE}, PERMISSIONS_REQUEST_FOREGROUND_SERVICE);
 
         // Ask for permissions
         locationPermissionGranted = ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
@@ -177,9 +180,9 @@ public class LandingActivity extends DaggerAppCompatActivity implements Navigati
             final ImageView avatarImageView = headerView.findViewById(R.id.avatar_image_view);
             User user = UserHelper.getInstance(getApplicationContext()).readCurrentUser();
             UserLocal userLocal = user.getUserLocal();
-            Glide.with(this)
-                    .load(userLocal.getLocalAvatarPath())
+            GlideApp.with(this)
                     .asBitmap()
+                    .load(userLocal.getLocalAvatarPath())
                     .fallback(R.drawable.ic_account_circle_white_48dp)
                     .centerCrop()
                     .into(new BitmapImageViewTarget(avatarImageView) {

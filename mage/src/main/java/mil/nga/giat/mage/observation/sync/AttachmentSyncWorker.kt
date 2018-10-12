@@ -7,8 +7,6 @@ import android.preference.PreferenceManager
 import android.util.Log
 import androidx.work.Worker
 import androidx.work.WorkerParameters
-import com.squareup.okhttp.MediaType
-import com.squareup.okhttp.RequestBody
 import mil.nga.giat.mage.sdk.R
 import mil.nga.giat.mage.sdk.datastore.observation.Attachment
 import mil.nga.giat.mage.sdk.datastore.observation.AttachmentHelper
@@ -16,7 +14,9 @@ import mil.nga.giat.mage.sdk.http.HttpClientManager
 import mil.nga.giat.mage.sdk.http.converter.AttachmentConverterFactory
 import mil.nga.giat.mage.sdk.http.resource.ObservationResource
 import mil.nga.giat.mage.sdk.utils.MediaUtility
-import retrofit.Retrofit
+import okhttp3.MediaType
+import okhttp3.RequestBody
+import retrofit2.Retrofit
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
@@ -100,7 +100,7 @@ class AttachmentSyncWorker(var context: Context, params: WorkerParameters) : Wor
 
             val response = service.createAttachment(eventId, observationId, parts).execute()
 
-            if (response.isSuccess) {
+            if (response.isSuccessful) {
                 val returnedAttachment = response.body()
 
                 Log.d(LOG_NAME, "Pushed attachment with remote_id: ${returnedAttachment?.remoteId}")

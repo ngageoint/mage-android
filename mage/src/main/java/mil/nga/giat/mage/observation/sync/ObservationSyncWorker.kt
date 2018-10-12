@@ -13,9 +13,9 @@ import mil.nga.giat.mage.sdk.http.HttpClientManager
 import mil.nga.giat.mage.sdk.http.converter.ObservationConverterFactory
 import mil.nga.giat.mage.sdk.http.converter.ObservationImportantConverterFactory
 import mil.nga.giat.mage.sdk.http.resource.ObservationResource
-import retrofit.GsonConverterFactory
-import retrofit.Response
-import retrofit.Retrofit
+import retrofit2.Response
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
 import java.io.IOException
 import java.net.HttpURLConnection
 
@@ -115,7 +115,7 @@ class ObservationSyncWorker(var context: Context, params: WorkerParameters) : Wo
         val service = retrofit.create<ObservationResource.ObservationService>(ObservationResource.ObservationService::class.java)
         val response = service.createObservationId(observation.event.remoteId).execute()
 
-        if (response.isSuccess) {
+        if (response.isSuccessful) {
             val returnedObservation = response.body()
             observation.remoteId = returnedObservation?.remoteId
             observation.url = returnedObservation?.url
@@ -158,7 +158,7 @@ class ObservationSyncWorker(var context: Context, params: WorkerParameters) : Wo
         val service = retrofit.create<ObservationResource.ObservationService>(ObservationResource.ObservationService::class.java)
         val response = service.updateObservation(observation.event.remoteId, observation.remoteId, observation).execute()
 
-        if (response.isSuccess) {
+        if (response.isSuccessful) {
             val returnedObservation = response.body()
             returnedObservation?.isDirty = false
             returnedObservation?.id = observation.id
@@ -205,7 +205,7 @@ class ObservationSyncWorker(var context: Context, params: WorkerParameters) : Wo
         try {
             val response = service.archiveObservation(observation.event.remoteId, observation.remoteId, state).execute()
 
-            if (response.isSuccess) {
+            if (response.isSuccessful) {
                 observationHelper.delete(observation)
                 return Result.SUCCESS
             } else if(response.code() == HttpURLConnection.HTTP_NOT_FOUND) {
@@ -268,7 +268,7 @@ class ObservationSyncWorker(var context: Context, params: WorkerParameters) : Wo
                 response = service.removeImportant(observation.event.remoteId, observation.remoteId).execute()
             }
 
-            if (response.isSuccess) {
+            if (response.isSuccessful) {
                 val returnedObservation = response.body()
                 observation.lastModified = returnedObservation?.lastModified
                 observationHelper.updateImportant(observation)
@@ -309,7 +309,7 @@ class ObservationSyncWorker(var context: Context, params: WorkerParameters) : Wo
                 response = service.unfavoriteObservation(observation.event.remoteId, observation.remoteId).execute()
             }
 
-            if (response.isSuccess) {
+            if (response.isSuccessful) {
                 val updatedObservation = response.body()
                 observation.setLastModified(updatedObservation?.lastModified)
                 observationHelper.updateFavorite(favorite)

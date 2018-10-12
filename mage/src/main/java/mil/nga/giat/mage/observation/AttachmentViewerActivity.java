@@ -6,6 +6,7 @@ import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.drawable.Drawable;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -13,6 +14,7 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
+import android.support.annotation.Nullable;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.DialogFragment;
@@ -29,11 +31,10 @@ import android.widget.MediaController;
 import android.widget.Toast;
 import android.widget.VideoView;
 
-import com.bumptech.glide.Glide;
-import com.bumptech.glide.load.resource.drawable.GlideDrawable;
+import com.bumptech.glide.load.DataSource;
+import com.bumptech.glide.load.engine.GlideException;
 import com.bumptech.glide.request.RequestListener;
 import com.bumptech.glide.request.target.Target;
-import com.squareup.okhttp.ResponseBody;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -44,11 +45,13 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 import mil.nga.giat.mage.R;
+import mil.nga.giat.mage.glide.GlideApp;
 import mil.nga.giat.mage.observation.RemoveAttachmentDialogFragment.RemoveAttachmentDialogListener;
 import mil.nga.giat.mage.sdk.datastore.observation.Attachment;
 import mil.nga.giat.mage.sdk.datastore.observation.AttachmentHelper;
 import mil.nga.giat.mage.sdk.http.resource.ObservationResource;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
+import okhttp3.ResponseBody;
 
 public class AttachmentViewerActivity extends AppCompatActivity implements RemoveAttachmentDialogListener {
 
@@ -110,7 +113,7 @@ public class AttachmentViewerActivity extends AppCompatActivity implements Remov
 		if (path != null && new File(path).exists()) {
 			Uri uri = Uri.fromFile(new File(path));
 			if (contentType.startsWith("image")) {
-				Glide.with(getApplicationContext()).load(uri).centerCrop().into(iv);
+				GlideApp.with(getApplicationContext()).load(uri).centerCrop().into(iv);
 			} else if (contentType.startsWith("video")) {
 				final VideoView videoView = (VideoView) findViewById(R.id.video);
 				MediaController mediaController = new MediaController(this);
@@ -154,19 +157,19 @@ public class AttachmentViewerActivity extends AppCompatActivity implements Remov
 			if (contentType.startsWith("image")) {
 				Uri uri = Uri.parse(url);
 				findViewById(R.id.progress).setVisibility(View.VISIBLE);
-				Glide.with(getApplicationContext())
+				GlideApp.with(getApplicationContext())
 						.load(attachment)
-						.listener(new RequestListener<Attachment, GlideDrawable>() {
+						.listener(new RequestListener<Drawable>() {
 							@Override
-							public boolean onException(Exception e, Attachment model, Target<GlideDrawable> target, boolean isFirstResource) {
-                                findViewById(R.id.progress).setVisibility(View.INVISIBLE);
+							public boolean onLoadFailed(@Nullable GlideException e, Object model, Target<Drawable> target, boolean isFirstResource) {
+								findViewById(R.id.progress).setVisibility(View.INVISIBLE);
 								Snackbar snackbar = Snackbar.make(findViewById(R.id.coordinator_layout), "Cannot download image, check connection.", Snackbar.LENGTH_LONG);
 								snackbar.show();
 								return false;
 							}
 
 							@Override
-							public boolean onResourceReady(GlideDrawable resource, Attachment model, Target<GlideDrawable> target, boolean isFromMemoryCache, boolean isFirstResource) {
+							public boolean onResourceReady(Drawable resource, Object model, Target<Drawable> target, DataSource dataSource, boolean isFirstResource) {
 								findViewById(R.id.progress).setVisibility(View.INVISIBLE);
 								return false;
 							}

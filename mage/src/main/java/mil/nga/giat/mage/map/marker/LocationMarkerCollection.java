@@ -12,7 +12,6 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.target.BitmapImageViewTarget;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.GoogleMap.InfoWindowAdapter;
@@ -32,6 +31,7 @@ import java.util.Map;
 
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.filter.Filter;
+import mil.nga.giat.mage.glide.GlideApp;
 import mil.nga.giat.mage.sdk.Temporal;
 import mil.nga.giat.mage.sdk.datastore.location.Location;
 import mil.nga.giat.mage.sdk.datastore.location.LocationProperty;
@@ -271,9 +271,9 @@ public class LocationMarkerCollection implements PointCollection<Pair<Location, 
 			if (userLocal.getLocalAvatarPath() != null) {
 				final Drawable avatar = avatars.get(marker);
 				if (avatar == null) {
-					Glide.with(context)
-							.load(userLocal.getLocalAvatarPath())
+					GlideApp.with(context)
 							.asBitmap()
+							.load(userLocal.getLocalAvatarPath())
 							.dontAnimate()
 							.centerCrop()
 							.into(new BitmapImageViewTarget(avatarView) {
@@ -287,6 +287,8 @@ public class LocationMarkerCollection implements PointCollection<Pair<Location, 
 								}
 
 								@Override public void onLoadCleared(Drawable placeholder) {
+									super.onLoadCleared(placeholder);
+									
 									avatars.remove(marker);
 								}
 							});

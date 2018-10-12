@@ -11,7 +11,6 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.target.BitmapImageViewTarget;
 import com.google.common.base.Function;
 import com.google.common.collect.Collections2;
@@ -23,6 +22,7 @@ import java.util.Collection;
 import java.util.List;
 
 import mil.nga.giat.mage.R;
+import mil.nga.giat.mage.glide.GlideApp;
 import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
 import mil.nga.giat.mage.sdk.datastore.user.Team;
 import mil.nga.giat.mage.sdk.datastore.user.TeamHelper;
@@ -75,9 +75,9 @@ public class PeopleRecyclerAdapter extends RecyclerView.Adapter<PeopleRecyclerAd
         });
 
         UserLocal userLocal = user.getUserLocal();
-        Glide.with(context)
-                .load(userLocal.getLocalAvatarPath())
+        GlideApp.with(context)
                 .asBitmap()
+                .load(userLocal.getLocalAvatarPath())
                 .fallback(R.drawable.ic_person_gray_48dp)
                 .centerCrop()
                 .into(new BitmapImageViewTarget(viewHolder.avatar) {
@@ -89,7 +89,7 @@ public class PeopleRecyclerAdapter extends RecyclerView.Adapter<PeopleRecyclerAd
                     }
                 });
 
-        Glide.with(context)
+        GlideApp.with(context)
                 .load(userLocal.getLocalIconPath())
                 .centerCrop()
                 .into(viewHolder.icon);

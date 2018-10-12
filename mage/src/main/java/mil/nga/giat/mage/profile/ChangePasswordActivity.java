@@ -32,9 +32,9 @@ import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
 import mil.nga.giat.mage.sdk.http.resource.UserResource;
-import retrofit.Callback;
-import retrofit.Response;
-import retrofit.Retrofit;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 /**
  * Created by wnewman on 12/14/17.
@@ -131,8 +131,8 @@ public class ChangePasswordActivity extends DaggerAppCompatActivity {
         UserResource userResource = new UserResource(getApplicationContext());
         userResource.changePassword(username, password.getText().toString(), newPassword.getText().toString(), newPasswordConfirm.getText().toString(), new Callback<JsonObject>() {
             @Override
-            public void onResponse(Response<JsonObject> response, Retrofit retrofit) {
-                if (response.isSuccess()) {
+            public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
+                if (response.isSuccessful()) {
                     onSuccess();
                 } else {
                     onError(response);
@@ -140,7 +140,7 @@ public class ChangePasswordActivity extends DaggerAppCompatActivity {
             }
 
             @Override
-            public void onFailure(Throwable t) {
+            public void onFailure(Call<JsonObject> call, Throwable t) {
                 onError(null);
             }
         });

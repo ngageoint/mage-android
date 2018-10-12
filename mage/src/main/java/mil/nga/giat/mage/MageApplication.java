@@ -24,8 +24,6 @@ import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatDelegate;
 import android.util.Log;
 
-import com.squareup.okhttp.ResponseBody;
-
 import dagger.android.AndroidInjector;
 import dagger.android.support.DaggerApplication;
 import mil.nga.giat.mage.dagger.DaggerMageComponent;
@@ -51,9 +49,10 @@ import mil.nga.giat.mage.sdk.http.resource.UserResource;
 import mil.nga.giat.mage.sdk.screen.ScreenChangeReceiver;
 import mil.nga.giat.mage.sdk.utils.UserUtility;
 import mil.nga.giat.mage.wearable.InitializeMAGEWearBridge;
-import retrofit.Callback;
-import retrofit.Response;
-import retrofit.Retrofit;
+import okhttp3.ResponseBody;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class MageApplication extends DaggerApplication implements LifecycleObserver, SharedPreferences.OnSharedPreferenceChangeListener, ISessionEventListener, Application.ActivityLifecycleCallbacks {
 
@@ -195,14 +194,14 @@ public class MageApplication extends DaggerApplication implements LifecycleObser
 			UserResource userResource = new UserResource(getApplicationContext());
 			userResource.logout(new Callback<ResponseBody>() {
 				@Override
-				public void onResponse(Response<ResponseBody> response, Retrofit retrofit) {
+				public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
 					if (logoutListener != null) {
 						logoutListener.onLogout();
 					}
 				}
 
 				@Override
-				public void onFailure(Throwable t) {
+				public void onFailure(Call<ResponseBody> call, Throwable t) {
 					Log.e(LOG_NAME, "Unable to logout from server.");
 					if (logoutListener != null) {
 						logoutListener.onLogout();

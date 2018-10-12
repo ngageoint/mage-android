@@ -74,6 +74,9 @@ open class LocationReportingService : LifecycleService(), Observer<Location>, Lo
         super.onStartCommand(intent, flags, startId)
 
         Log.v(LOG_NAME, "onStartCommand received from service, this service has been restarted")
+        if (locationProvider == null) {
+            Log.e(LOG_NAME, "For some reason the location provider is null, is this a dagger problem?")
+        }
         locationProvider.observe(this, this)
 
         return Service.START_STICKY

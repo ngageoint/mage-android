@@ -22,5 +22,5 @@
 -dontwarn com.fasterxml.**
 -dontwarn org.apache.**
 
--keep class mil.nga.giat.mage.glide.MageGlideModule
--keep class com.bumptech.glide.integration.okhttp.OkHttpGlideModule
+-keep public class * extends com.bumptech.glide.module.AppGlideModule
+-keep class com.bumptech.glide.GeneratedAppGlideModuleImpl
