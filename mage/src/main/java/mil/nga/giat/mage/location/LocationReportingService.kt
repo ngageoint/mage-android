@@ -32,10 +32,10 @@ open class LocationReportingService : LifecycleService(), Observer<Location>, Lo
     private var oldestLocationTime: Long = 0
 
     companion object {
-        val LOG_NAME = LocationReportingService::class.java.name
+        private val LOG_NAME = LocationReportingService::class.java.name
 
-        val NOTIFICATION_ID = 500
-        val NOTIFICATION_CHANNEL_ID = "mil.nga.mage.LOCATION_NOTIFICATION_CHANNEL"
+        const val NOTIFICATION_ID = 500
+        const val NOTIFICATION_CHANNEL_ID = "mil.nga.mage.LOCATION_NOTIFICATION_CHANNEL"
 
         val SAVE_EXECUTOR: Executor = Executors.newSingleThreadExecutor()
         val PUSH_EXECUTOR: Executor = ThreadPoolExecutor(1, 1, 1L, TimeUnit.SECONDS, SynchronousQueue(), ThreadPoolExecutor.DiscardPolicy())
@@ -45,8 +45,6 @@ open class LocationReportingService : LifecycleService(), Observer<Location>, Lo
         super.onCreate()
 
         AndroidInjection.inject(this)
-
-        Log.v(LOG_NAME, "onCreate LocationService")
 
         preferences.registerOnSharedPreferenceChangeListener(this)
 
@@ -70,13 +68,9 @@ open class LocationReportingService : LifecycleService(), Observer<Location>, Lo
         startForeground(NOTIFICATION_ID, notification)
     }
 
-    override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         super.onStartCommand(intent, flags, startId)
 
-        Log.v(LOG_NAME, "onStartCommand received from service, this service has been restarted")
-        if (locationProvider == null) {
-            Log.e(LOG_NAME, "For some reason the location provider is null, is this a dagger problem?")
-        }
         locationProvider.observe(this, this)
 
         return Service.START_STICKY
@@ -84,8 +78,6 @@ open class LocationReportingService : LifecycleService(), Observer<Location>, Lo
 
     override fun onDestroy() {
         super.onDestroy()
-
-        Log.v(LOG_NAME, "onDestroy received from service, this service is being destroyed")
 
         locationProvider.removeObserver(this)
 

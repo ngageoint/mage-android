@@ -21,12 +21,12 @@ class LocationFetchService : Service(), SharedPreferences.OnSharedPreferenceChan
     @Inject
     lateinit var preferences: SharedPreferences
 
-    private var locationFetchFrequency: Long = 0;
+    private var locationFetchFrequency: Long = 0
     private var executor: ScheduledExecutorService
     private var future: ScheduledFuture<*>? = null
 
     init {
-        executor = Executors.newScheduledThreadPool(1);
+        executor = Executors.newScheduledThreadPool(1)
     }
 
     override fun onCreate() {
@@ -35,7 +35,7 @@ class LocationFetchService : Service(), SharedPreferences.OnSharedPreferenceChan
         AndroidInjection.inject(this)
 
         locationFetchFrequency = getLocationFetchFrequency()
-        preferences.registerOnSharedPreferenceChangeListener(this);
+        preferences.registerOnSharedPreferenceChangeListener(this)
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -49,7 +49,7 @@ class LocationFetchService : Service(), SharedPreferences.OnSharedPreferenceChan
     override fun onDestroy() {
         super.onDestroy()
 
-        preferences.unregisterOnSharedPreferenceChangeListener(this);
+        preferences.unregisterOnSharedPreferenceChangeListener(this)
         stopFetch()
     }
 
@@ -59,7 +59,7 @@ class LocationFetchService : Service(), SharedPreferences.OnSharedPreferenceChan
 
     override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences?, key: String?) {
         if (key.equals(getString(R.string.userFetchFrequencyKey), ignoreCase = true)) {
-            locationFetchFrequency = getLocationFetchFrequency();
+            locationFetchFrequency = getLocationFetchFrequency()
             stopFetch()
             scheduleFetch()
         }

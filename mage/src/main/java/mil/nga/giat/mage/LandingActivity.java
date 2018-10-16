@@ -127,8 +127,6 @@ public class LandingActivity extends DaggerAppCompatActivity implements Navigati
         setSupportActionBar(toolbar);
         setTitle();
 
-        ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.FOREGROUND_SERVICE}, PERMISSIONS_REQUEST_FOREGROUND_SERVICE);
-
         // Ask for permissions
         locationPermissionGranted = ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
         if (locationPermissionGranted) {

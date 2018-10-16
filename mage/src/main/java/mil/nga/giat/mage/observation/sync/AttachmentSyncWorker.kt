@@ -5,6 +5,7 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.preference.PreferenceManager
 import android.util.Log
+import androidx.work.ListenableWorker
 import androidx.work.Worker
 import androidx.work.WorkerParameters
 import mil.nga.giat.mage.sdk.R
@@ -26,11 +27,11 @@ import java.util.*
 
 class AttachmentSyncWorker(var context: Context, params: WorkerParameters) : Worker(context, params) {
 
-    private fun Worker.Result.withFlag(flag: Int): Int {
-        when(this) {
-            Worker.Result.FAILURE -> return AttachmentSyncWorker.RESULT_FAILURE_FLAG or flag;
-            Worker.Result.RETRY -> return AttachmentSyncWorker.RESULT_RETRY_FLAG or flag;
-            else -> return AttachmentSyncWorker.RESULT_SUCCESS_FLAG or flag;
+    private fun ListenableWorker.Result.withFlag(flag: Int): Int {
+        return when(this) {
+            ListenableWorker.Result.FAILURE -> AttachmentSyncWorker.RESULT_FAILURE_FLAG or flag
+            ListenableWorker.Result.RETRY -> AttachmentSyncWorker.RESULT_RETRY_FLAG or flag
+            else -> AttachmentSyncWorker.RESULT_SUCCESS_FLAG or flag
         }
     }
 
@@ -41,27 +42,25 @@ class AttachmentSyncWorker(var context: Context, params: WorkerParameters) : Wor
     companion object {
         private val LOG_NAME = AttachmentSyncWorker::class.java.simpleName
 
-        private val RESULT_SUCCESS_FLAG = 0
-        private val RESULT_FAILURE_FLAG = 1
-        private val RESULT_RETRY_FLAG = 2
+        private const val RESULT_SUCCESS_FLAG = 0
+        private const val RESULT_FAILURE_FLAG = 1
+        private const val RESULT_RETRY_FLAG = 2
     }
 
     override fun doWork(): Result {
-        var result = syncAttachments();
+        val result = syncAttachments()
 
-        if (result.containsFlag(AttachmentSyncWorker.RESULT_RETRY_FLAG)) {
-            return Result.RETRY
-        } else if (result.containsFlag(AttachmentSyncWorker.RESULT_FAILURE_FLAG)) {
-            return Result.FAILURE
+        return if (result.containsFlag(AttachmentSyncWorker.RESULT_RETRY_FLAG)) {
+            Result.RETRY
         } else {
-            return Result.SUCCESS
+            Result.SUCCESS
         }
     }
 
     private fun syncAttachments(): Int {
         var result = AttachmentSyncWorker.RESULT_SUCCESS_FLAG
 
-        val attachmentHelper = AttachmentHelper.getInstance(applicationContext);
+        val attachmentHelper = AttachmentHelper.getInstance(applicationContext)
         for (attachment in attachmentHelper.dirtyAttachments.filter { !it.observation.remoteId.isNullOrEmpty() }) {
             result = save(attachment).withFlag(result)
         }
@@ -82,7 +81,7 @@ class AttachmentSyncWorker(var context: Context, params: WorkerParameters) : Wor
         try {
             val baseUrl = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.serverURLKey), context.getString(R.string.serverURLDefaultValue))
             val retrofit = Retrofit.Builder()
-                    .baseUrl(baseUrl)
+                    .baseUrl(baseUrl!!)
                     .addConverterFactory(AttachmentConverterFactory.create())
                     .client(HttpClientManager.getInstance(context).httpClient())
                     .build()
@@ -96,7 +95,7 @@ class AttachmentSyncWorker(var context: Context, params: WorkerParameters) : Wor
             val attachmentFile = File(attachment.localPath)
             val mimeType = MediaUtility.getMimeType(attachment.localPath)
             val fileBody = RequestBody.create(MediaType.parse(mimeType), attachmentFile)
-            parts["attachment\"; filename=\"" + attachmentFile.getName() + "\""] = fileBody
+            parts["attachment\"; filename=\"" + attachmentFile.name + "\""] = fileBody
 
             val response = service.createAttachment(eventId, observationId, parts).execute()
 
@@ -133,13 +132,13 @@ class AttachmentSyncWorker(var context: Context, params: WorkerParameters) : Wor
     @Throws(Exception::class)
     fun stageForUpload(attachment: Attachment) {
         val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
-        val outImageSize = sharedPreferences.getInt(context.getString(R.string.imageUploadSizeKey), context.getResources().getInteger(R.integer.imageUploadSizeDefaultValue))
+        val outImageSize = sharedPreferences.getInt(context.getString(R.string.imageUploadSizeKey), context.resources.getInteger(R.integer.imageUploadSizeDefaultValue))
 
         val file = File(attachment.localPath)
         if (MediaUtility.isImage(file.absolutePath)) {
             // if not original image size
             if (outImageSize > 0) {
-                val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss").format(Date())
+                val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
                 val imageFileName = "MAGE_$timeStamp"
                 val directory = context.getExternalFilesDir("media")
                 val thumbnail = File.createTempFile(

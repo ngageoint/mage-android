@@ -190,6 +190,9 @@ public class MapFragment extends DaggerFragment implements OnMapReadyCallback, O
 	@Inject
 	protected Context context;
 
+	@Inject
+	protected SharedPreferences preferences;
+
 	private MapView mapView;
 	private GoogleMap map;
 	private View searchLayout;
@@ -235,8 +238,6 @@ public class MapFragment extends DaggerFragment implements OnMapReadyCallback, O
 	private TextView mgrsEastingTextView;
 	private TextView mgrsNorthingTextView;
 
-	SharedPreferences preferences;
-
 	@Override
 	public View onCreateView(@NonNull  LayoutInflater  inflater, ViewGroup container, Bundle savedInstanceState) {
 		View view = inflater.inflate(R.layout.fragment_map, container, false);
@@ -279,15 +280,13 @@ public class MapFragment extends DaggerFragment implements OnMapReadyCallback, O
 			}
 		});
 
-		preferences = PreferenceManager.getDefaultSharedPreferences(getActivity().getApplicationContext());
-
 		searchLayout = view.findViewById(R.id.search_layout);
 		searchView = view.findViewById(R.id.search_view);
 		searchView.setIconifiedByDefault(false);
 		searchView.setIconified(false);
 		searchView.clearFocus();
 
-		MapsInitializer.initialize(getActivity().getApplicationContext());
+		MapsInitializer.initialize(context);
 
 		ImageButton mapSettings = view.findViewById(R.id.map_settings);
 		mapSettings.setOnClickListener(this);
@@ -564,13 +563,20 @@ public class MapFragment extends DaggerFragment implements OnMapReadyCallback, O
 	}
 
 	private void initializePeriodicTasks() {
-		refreshObservationsTask = new RefreshMarkersRunnable(observations, "timestamp", OBSERVATION_FILTER_TYPE, R.string.activeTimeFilterKey, OBSERVATION_REFRESH_INTERVAL_SECONDS);
-		refreshLocationsTask = new RefreshMarkersRunnable(locations, "timestamp", LOCATION_FILTER_TYPE, R.string.activeLocationTimeFilterKey, MARKER_REFRESH_INTERVAL_SECONDS);
-		refreshHistoricLocationsTask = new RefreshMarkersRunnable(historicLocations, "timestamp", LOCATION_FILTER_TYPE, R.string.activeLocationTimeFilterKey, MARKER_REFRESH_INTERVAL_SECONDS);
+		if (refreshObservationsTask == null) {
+			refreshObservationsTask = new RefreshMarkersRunnable(observations, "timestamp", OBSERVATION_FILTER_TYPE, R.string.activeTimeFilterKey, OBSERVATION_REFRESH_INTERVAL_SECONDS);
+			scheduleMarkerRefresh(refreshObservationsTask);
+		}
 
-		scheduleMarkerRefresh(refreshObservationsTask);
-		scheduleMarkerRefresh(refreshLocationsTask);
-		scheduleMarkerRefresh(refreshHistoricLocationsTask);
+		if (refreshLocationsTask == null) {
+			refreshLocationsTask = new RefreshMarkersRunnable(locations, "timestamp", LOCATION_FILTER_TYPE, R.string.activeLocationTimeFilterKey, MARKER_REFRESH_INTERVAL_SECONDS);
+			scheduleMarkerRefresh(refreshLocationsTask);
+		}
+
+		if (refreshHistoricLocationsTask == null) {
+			refreshHistoricLocationsTask = new RefreshMarkersRunnable(historicLocations, "timestamp", LOCATION_FILTER_TYPE, R.string.activeLocationTimeFilterKey, MARKER_REFRESH_INTERVAL_SECONDS);
+			scheduleMarkerRefresh(refreshHistoricLocationsTask);
+		}
 	}
 
 	private void stopPeriodicTasks() {

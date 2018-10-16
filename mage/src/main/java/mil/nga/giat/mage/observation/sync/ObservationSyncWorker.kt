@@ -3,6 +3,7 @@ package mil.nga.giat.mage.observation.sync
 import android.content.Context
 import android.preference.PreferenceManager
 import android.util.Log
+import androidx.work.ListenableWorker
 import androidx.work.Worker
 import androidx.work.WorkerParameters
 import com.google.gson.JsonObject
@@ -21,11 +22,11 @@ import java.net.HttpURLConnection
 
 class ObservationSyncWorker(var context: Context, params: WorkerParameters) : Worker(context, params) {
 
-    private fun Worker.Result.withFlag(flag: Int): Int {
-        when(this) {
-            Worker.Result.FAILURE -> return ObservationSyncWorker.RESULT_FAILURE_FLAG or flag;
-            Worker.Result.RETRY -> return ObservationSyncWorker.RESULT_RETRY_FLAG or flag;
-            else -> return ObservationSyncWorker.RESULT_SUCCESS_FLAG or flag;
+    private fun ListenableWorker.Result.withFlag(flag: Int): Int {
+        return when(this) {
+            ListenableWorker.Result.FAILURE -> ObservationSyncWorker.RESULT_FAILURE_FLAG or flag
+            ListenableWorker.Result.RETRY -> ObservationSyncWorker.RESULT_RETRY_FLAG or flag
+            else -> ObservationSyncWorker.RESULT_SUCCESS_FLAG or flag
         }
     }
 
@@ -40,36 +41,30 @@ class ObservationSyncWorker(var context: Context, params: WorkerParameters) : Wo
     companion object {
         private val LOG_NAME = ObservationSyncWorker::class.java.simpleName
 
-        private val RESULT_SUCCESS_FLAG = 0
-        private val RESULT_FAILURE_FLAG = 1
-        private val RESULT_RETRY_FLAG = 2
+        private const val RESULT_SUCCESS_FLAG = 0
+        private const val RESULT_FAILURE_FLAG = 1
+        private const val RESULT_RETRY_FLAG = 2
     }
 
     override fun doWork(): Result {
-        var result = ObservationSyncWorker.RESULT_SUCCESS_FLAG;
+        var result = ObservationSyncWorker.RESULT_SUCCESS_FLAG
 
         result = syncObservations().withFlag(result)
         result = syncObservationImportant().withFlag(result)
         result = syncObservationFavorites().withFlag(result)
 
-        if (result.containsFlag(RESULT_RETRY_FLAG)) {
-            return Result.RETRY
-        } else if (result.containsFlag(RESULT_FAILURE_FLAG)) {
-            return Result.FAILURE
-        } else {
-            return Result.SUCCESS
-        }
+        return if (result.containsFlag(RESULT_RETRY_FLAG)) Result.RETRY else Result.SUCCESS
     }
 
     private fun syncObservations(): Int {
         var result = ObservationSyncWorker.RESULT_SUCCESS_FLAG
 
-        val observationHelper = ObservationHelper.getInstance(applicationContext);
+        val observationHelper = ObservationHelper.getInstance(applicationContext)
         for (observation in observationHelper.dirty) {
-            if (observation.state == State.ARCHIVE) {
-                result = archive(observation).withFlag(result)
+            result = if (observation.state == State.ARCHIVE) {
+                archive(observation).withFlag(result)
             } else {
-                result = save(observation).withFlag(result)
+                save(observation).withFlag(result)
             }
         }
 
@@ -97,17 +92,17 @@ class ObservationSyncWorker(var context: Context, params: WorkerParameters) : Wo
     }
 
     private fun save(observation: Observation): Result {
-        if (observation.remoteId.isNullOrEmpty()) {
-            return create(observation)
+        return if (observation.remoteId.isNullOrEmpty()) {
+            create(observation)
         } else {
-            return update(observation)
+            update(observation)
         }
     }
 
     private fun create(observation: Observation): Result {
         val baseUrl = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.serverURLKey), context.getString(R.string.serverURLDefaultValue))
         val retrofit = Retrofit.Builder()
-                .baseUrl(baseUrl)
+                .baseUrl(baseUrl!!)
                 .addConverterFactory(ObservationConverterFactory.create(observation.event))
                 .client(HttpClientManager.getInstance(context).httpClient())
                 .build()
@@ -150,7 +145,7 @@ class ObservationSyncWorker(var context: Context, params: WorkerParameters) : Wo
     private fun update(observation: Observation): Result {
         val baseUrl = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.serverURLKey), context.getString(R.string.serverURLDefaultValue))
         val retrofit = Retrofit.Builder()
-                .baseUrl(baseUrl)
+                .baseUrl(baseUrl!!)
                 .addConverterFactory(ObservationConverterFactory.create(observation.event))
                 .client(HttpClientManager.getInstance(context).httpClient())
                 .build()
@@ -192,7 +187,7 @@ class ObservationSyncWorker(var context: Context, params: WorkerParameters) : Wo
 
         val baseUrl = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.serverURLKey), context.getString(R.string.serverURLDefaultValue))
         val retrofit = Retrofit.Builder()
-                .baseUrl(baseUrl)
+                .baseUrl(baseUrl!!)
                 .addConverterFactory(GsonConverterFactory.create())
                 .client(HttpClientManager.getInstance(context).httpClient())
                 .build()
@@ -252,20 +247,19 @@ class ObservationSyncWorker(var context: Context, params: WorkerParameters) : Wo
         try {
             val baseUrl = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.serverURLKey), context.getString(R.string.serverURLDefaultValue))
             val retrofit = Retrofit.Builder()
-                    .baseUrl(baseUrl)
+                    .baseUrl(baseUrl!!)
                     .addConverterFactory(ObservationImportantConverterFactory.create(observation.event))
                     .client(HttpClientManager.getInstance(context).httpClient())
                     .build()
 
             val service = retrofit.create<ObservationResource.ObservationService>(ObservationResource.ObservationService::class.java)
 
-            val response: Response<Observation>
-            if (observation.important?.isImportant == true) {
+            val response = if (observation.important?.isImportant == true) {
                 val jsonImportant = JsonObject()
                 jsonImportant.addProperty("description", observation.important?.description)
-                response = service.addImportant(observation.event.remoteId, observation.remoteId, jsonImportant).execute()
+                service.addImportant(observation.event.remoteId, observation.remoteId, jsonImportant).execute()
             } else {
-                response = service.removeImportant(observation.event.remoteId, observation.remoteId).execute()
+                service.removeImportant(observation.event.remoteId, observation.remoteId).execute()
             }
 
             if (response.isSuccessful) {
@@ -290,13 +284,13 @@ class ObservationSyncWorker(var context: Context, params: WorkerParameters) : Wo
 
     private fun updateFavorite(favorite: ObservationFavorite): Result {
         val observationHelper = ObservationHelper.getInstance(context)
-        val observation = favorite.getObservation()
+        val observation = favorite.observation
 
         try {
             val baseUrl = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.serverURLKey), context.getString(R.string.serverURLDefaultValue))
             val retrofit = Retrofit.Builder()
                     .baseUrl(baseUrl!!)
-                    .addConverterFactory(ObservationConverterFactory.create(observation.getEvent()))
+                    .addConverterFactory(ObservationConverterFactory.create(observation.event))
                     .client(HttpClientManager.getInstance(context).httpClient())
                     .build()
 
@@ -311,7 +305,7 @@ class ObservationSyncWorker(var context: Context, params: WorkerParameters) : Wo
 
             if (response.isSuccessful) {
                 val updatedObservation = response.body()
-                observation.setLastModified(updatedObservation?.lastModified)
+                observation.lastModified = updatedObservation?.lastModified
                 observationHelper.updateFavorite(favorite)
 
                 return Result.SUCCESS
@@ -328,5 +322,4 @@ class ObservationSyncWorker(var context: Context, params: WorkerParameters) : Wo
             return Result.RETRY
         }
     }
-
 }

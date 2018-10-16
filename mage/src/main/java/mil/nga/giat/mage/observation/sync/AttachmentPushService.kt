@@ -4,7 +4,6 @@ import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.os.IBinder
-import android.util.Log
 import androidx.work.*
 import dagger.android.AndroidInjection
 import mil.nga.giat.mage.sdk.datastore.observation.Attachment
@@ -69,7 +68,6 @@ class AttachmentPushService : Service(), IAttachmentEventListener {
     }
 
     override fun onAttachmentUploadable(attachment: Attachment) {
-        Log.i("BILLY", "Schedule attachment work")
         beginWork()
     }
 

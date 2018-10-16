@@ -16,7 +16,7 @@ import javax.inject.Singleton
 class LocationProvider @Inject
 constructor(val context: Context, val preferences: SharedPreferences) : LiveData<Location>(), SharedPreferences.OnSharedPreferenceChangeListener {
     companion object {
-        private val LOG_NAME = LocationProvider::class.java.simpleName;
+        private val LOG_NAME = LocationProvider::class.java.simpleName
     }
 
     private var locationManager: LocationManager? = null
@@ -29,7 +29,7 @@ constructor(val context: Context, val preferences: SharedPreferences) : LiveData
 
         preferences.registerOnSharedPreferenceChangeListener(this)
         locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
-        minimumDistanceChangeForUpdates = getMinimumDistanceChangeForUpdates();
+        minimumDistanceChangeForUpdates = getMinimumDistanceChangeForUpdates()
 
         requestLocationUpdates()
 
@@ -58,7 +58,7 @@ constructor(val context: Context, val preferences: SharedPreferences) : LiveData
     override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences, key: String) {
         if (key.equals(context.getString(R.string.gpsSensitivityKey), ignoreCase = true)) {
             Log.d(LOG_NAME, "GPS sensitivity changed, distance in meters for change: $minimumDistanceChangeForUpdates")
-            minimumDistanceChangeForUpdates = getMinimumDistanceChangeForUpdates();
+            minimumDistanceChangeForUpdates = getMinimumDistanceChangeForUpdates()
 
             // bounce location updates so new distance sensitivity takes effect
             removeLocationUpdates()

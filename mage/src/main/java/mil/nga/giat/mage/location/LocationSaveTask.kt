@@ -26,7 +26,7 @@ class LocationSaveTask(val context: Context, private val listener: LocationDatab
         fun onSaveComplete(location: Location?)
     }
 
-    private var batteryStatus: Intent
+    private var batteryStatus: Intent?
 
     init {
         batteryStatus = context.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
@@ -35,7 +35,7 @@ class LocationSaveTask(val context: Context, private val listener: LocationDatab
     override fun doInBackground(vararg locations: Location): Location? {
         val location = locations.getOrNull(0)
         location?.let {
-            saveLocation(it);
+            saveLocation(it)
         }
 
         return location
@@ -56,9 +56,9 @@ class LocationSaveTask(val context: Context, private val listener: LocationDatab
             locationProperties.add(LocationProperty("provider", location.provider))
             locationProperties.add(LocationProperty("altitude", location.altitude))
 
-            val level = batteryStatus.getIntExtra(BatteryManager.EXTRA_LEVEL, -1)
-            if (level != -1) {
-                locationProperties.add(LocationProperty("battery_level", level))
+            val level = batteryStatus?.getIntExtra(BatteryManager.EXTRA_LEVEL, -1)
+            level?.let {
+                locationProperties.add(LocationProperty("battery_level", it))
             }
 
             var currentUser: User? = null

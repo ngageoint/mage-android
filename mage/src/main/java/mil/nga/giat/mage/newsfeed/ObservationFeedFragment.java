@@ -145,7 +145,7 @@ public class ObservationFeedFragment extends DaggerFragment implements IObservat
 			}
 		});
 
-		AttachmentGallery attachmentGallery = new AttachmentGallery(context, 200, 200);
+		AttachmentGallery attachmentGallery = new AttachmentGallery(getContext(), 200, 200);
         attachmentGallery.addOnAttachmentClickListener(new AttachmentGallery.OnAttachmentClickListener() {
             @Override
             public void onAttachmentClick(Attachment attachment) {
@@ -532,7 +532,7 @@ public class ObservationFeedFragment extends DaggerFragment implements IObservat
 	public void onObservationClick(Observation observation) {
 		Intent observationView = new Intent(context, ObservationViewActivity.class);
 		observationView.putExtra(ObservationViewActivity.OBSERVATION_ID, observation.getId());
-		context.startActivity(observationView);
+		startActivity(observationView);
 	}
 
 	@Override

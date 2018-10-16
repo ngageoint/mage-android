@@ -75,18 +75,18 @@
                     android:layout_height="wrap_content"
                     android:orientation="vertical">
 
-                    <ImageView
-                        android:layout_width="300dp"
-                        android:layout_height="300dp"
-                        android:src="@drawable/ic_person_white_48dp"
-                        android:alpha=".54"
-                        android:tint="#FFFFFF"/>
+                    <android.support.v7.widget.AppCompatImageView
+                        android:layout_width="150dp"
+                        android:layout_height="150dp"
+                        android:layout_gravity="center"
+                        android:tint="@color/icon"
+                        android:src="@drawable/ic_person_white_48dp" />
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="center"
-                        android:textSize="32dp"
+                        android:textSize="28sp"
                         android:alpha=".87"
                         android:text="Avatar Photo Not Set"/>
 

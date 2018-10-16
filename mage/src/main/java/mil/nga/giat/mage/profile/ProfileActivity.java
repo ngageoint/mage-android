@@ -12,7 +12,6 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
-import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Build;
@@ -25,7 +24,6 @@ import android.support.design.widget.BottomSheetDialog;
 import android.support.v13.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.FileProvider;
-import android.support.v4.graphics.drawable.DrawableCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.text.SpannableString;
@@ -247,11 +245,6 @@ public class ProfileActivity extends DaggerAppCompatActivity implements OnMapRea
 		final ImageView imageView = findViewById(R.id.avatar);
 		String avatarUrl = user.getAvatarUrl();
 		String localAvatarPath = user.getUserLocal().getLocalAvatarPath();
-
-		Drawable defaultPersonIcon = DrawableCompat.wrap(ContextCompat.getDrawable(context, R.drawable.ic_person_white_48dp));
-		DrawableCompat.setTint(defaultPersonIcon, ContextCompat.getColor(context, R.color.icon));
-		DrawableCompat.setTintMode(defaultPersonIcon, PorterDuff.Mode.SRC_ATOP);
-		imageView.setImageDrawable(defaultPersonIcon);
 
 		if (StringUtils.isNotBlank(localAvatarPath)) {
 			GlideApp.with(context)

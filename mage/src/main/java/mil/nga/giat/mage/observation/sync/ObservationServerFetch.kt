@@ -36,10 +36,10 @@ class ObservationServerFetch(var context: Context) {
         val event = EventHelper.getInstance(context).currentEvent
         Log.d(LOG_NAME, "The device is currently connected. Attempting to fetch Observations for event " + event.name)
 
-        val observations = observationResource.getObservations(event)
-        Log.d(LOG_NAME, "Fetched " + observations.size + " new observations")
-        for (observation in observations) {
-            try {
+        try {
+            val observations = observationResource.getObservations(event)
+            Log.d(LOG_NAME, "Fetched " + observations.size + " new observations")
+            for (observation in observations) {
                 val userId = observation.userId
                 if (userId != null) {
                     val user = userHelper.read(userId)
@@ -60,15 +60,16 @@ class ObservationServerFetch(var context: Context) {
                     val newObservation = observationHelper.create(observation, false)
                     fetched.add(newObservation)
                     Log.d(LOG_NAME, "Created observation with remote_id " + newObservation.remoteId)
-                } else if (observation.state != State.ARCHIVE && oldObservation != null && !oldObservation?.isDirty) { // TODO : conflict resolution
-                    observation.setId(oldObservation?.id)
-                    val updatedObservation = observationHelper.update(observation)
+                } else if (observation.state != State.ARCHIVE && oldObservation != null && !oldObservation.isDirty) { // TODO : conflict resolution
+                    observation.id = oldObservation.id
+                    observationHelper.update(observation)
                     Log.d(LOG_NAME, "Updated observation with remote_id " + observation.remoteId)
                 }
-            } catch (e: Exception) {
-                Log.e(LOG_NAME, "There was a failure while performing an Observation Fetch operation.", e)
             }
+        } catch(e: Exception) {
+            Log.e(LOG_NAME, "Failed to fetch observations from the server", e)
         }
+
 
         if (notify) {
             createNotifications(fetched)

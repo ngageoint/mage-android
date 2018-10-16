@@ -31,16 +31,15 @@ class LocationServerFetch(val context: Context) {
         }
 
         val event = EventHelper.getInstance(context).currentEvent
-        val locations = locationResource.getLocations(event)
-        for (location in locations) {
-
-            // make sure that the user exists and is persisted in the local data-store
-            var userId: String? = null
-            val userIdProperty = location.propertiesMap["userId"]
-            if (userIdProperty != null) {
-                userId = userIdProperty.value.toString()
-            }
-            try {
+        try {
+            val locations = locationResource.getLocations(event)
+            for (location in locations) {
+                // make sure that the user exists and is persisted in the local data-store
+                var userId: String? = null
+                val userIdProperty = location.propertiesMap["userId"]
+                if (userIdProperty != null) {
+                    userId = userIdProperty.value.toString()
+                }
                 if (userId != null) {
                     var user: User? = userHelper.read(userId)
                     // TODO : test the timer to make sure users are updated as needed!
@@ -69,9 +68,10 @@ class LocationServerFetch(val context: Context) {
                         }
                     }
                 }
-            } catch (e: Exception) {
-                Log.e(LOG_NAME, "There was a failure while performing an Location Fetch operation.", e)
             }
+        } catch(e: Exception) {
+            Log.e(LOG_NAME, "Failed to fetch user locations from server", e)
         }
+
     }
 }

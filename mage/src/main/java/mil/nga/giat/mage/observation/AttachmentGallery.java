@@ -1,11 +1,12 @@
 package mil.nga.giat.mage.observation;
 
 import android.content.Context;
+import android.support.v4.content.res.ResourcesCompat;
 import android.support.v4.widget.CircularProgressDrawable;
+import android.support.v7.widget.AppCompatImageView;
 import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.MimeTypeMap;
-import android.widget.ImageView;
 import android.widget.LinearLayout;
 
 import com.bumptech.glide.load.resource.bitmap.BitmapTransformation;
@@ -49,10 +50,10 @@ public class AttachmentGallery {
     }
 
     void addAttachment(ViewGroup gallery, final Attachment a) {
-        final ImageView iv = new ImageView(context);
+        final AppCompatImageView iv = new AppCompatImageView(context);
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(width, height);
         iv.setLayoutParams(lp);
-        iv.setBackgroundColor(context.getResources().getColor(R.color.md_grey_100));
+        iv.setBackgroundColor(ResourcesCompat.getColor(context.getResources(), R.color.background_attachment, context.getTheme()));
         lp.setMargins(0, 16, 25, 16);
         iv.setOnClickListener(new View.OnClickListener() {
             @Override
