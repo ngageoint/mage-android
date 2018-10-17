@@ -10,6 +10,7 @@ Adheres to [Semantic Versioning](http://semver.org/).
 ##### Features
 
 ##### Bug Fixes
+* Fix bug which didn't show previsouly loaded events after disconnected login
 
 ## [6.2.1](https://github.com/ngageoint/mage-android/releases/tag/6.2.1) (10-22-2018)
 
