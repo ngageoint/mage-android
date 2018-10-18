@@ -141,7 +141,7 @@ public class LoginActivity extends DaggerAppCompatActivity implements LoginFragm
 
 		// IMPORTANT: load the configuration from preferences files and server
 		PreferenceHelper preferenceHelper = PreferenceHelper.getInstance(getApplicationContext());
-		preferenceHelper.initialize(false, new Class<?>[]{mil.nga.giat.mage.sdk.R.xml.class, R.xml.class});
+		preferenceHelper.initialize(false, mil.nga.giat.mage.sdk.R.xml.class, R.xml.class);
 
 		final SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
 
@@ -502,8 +502,6 @@ public class LoginActivity extends DaggerAppCompatActivity implements LoginFragm
 
 	/**
 	 * Fired when user clicks login
-	 *
-	 * @param view
 	 */
 	public void login(View view) {
 
@@ -552,7 +550,7 @@ public class LoginActivity extends DaggerAppCompatActivity implements LoginFragm
 		String oldUsername = sharedPreferences.getString(getString(R.string.usernameKey), null);
 		if (StringUtils.isNotEmpty(oldUsername) && (!username.equals(oldUsername) || !server.equals(serverURLPref))) {
 			PreferenceHelper preferenceHelper = PreferenceHelper.getInstance(getApplicationContext());
-			preferenceHelper.initialize(true, new Class<?>[]{mil.nga.giat.mage.sdk.R.xml.class, R.xml.class});
+			preferenceHelper.initialize(true, mil.nga.giat.mage.sdk.R.xml.class, R.xml.class);
 			UserUtility.getInstance(getApplicationContext()).clearTokenInformation();
 
 			SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
@@ -584,9 +582,7 @@ public class LoginActivity extends DaggerAppCompatActivity implements LoginFragm
 
 	/**
 	 * Fired when user clicks signup
-	 *
-	 * @param view
-	 */
+     */
 	public void signup(View view) {
 		Intent intent = new Intent(getApplicationContext(), SignupActivity.class);
 		startActivity(intent);
