@@ -259,10 +259,6 @@ public class MapFragment extends DaggerFragment implements OnMapReadyCallback, O
 
 		searchButton = (FloatingActionButton) view.findViewById(R.id.map_search_button);
 		if (Geocoder.isPresent()) {
-			Drawable drawable = DrawableCompat.wrap(searchButton.getDrawable());
-			searchButton.setImageDrawable(drawable);
-			DrawableCompat.setTintList(drawable, AppCompatResources.getColorStateList(getContext(), R.color.toggle_button_selected));
-
 			searchButton.setOnClickListener(new OnClickListener() {
 				@Override
 				public void onClick(View v) {
@@ -1060,6 +1056,7 @@ public class MapFragment extends DaggerFragment implements OnMapReadyCallback, O
 		float bearing = map.getCameraPosition().bearing;
 		if (bearing != 0) {
 			compassButton.animate().alpha(1f).setDuration(0).setListener(null);
+			compassButton.hide();
 			compassButton.setVisibility(View.VISIBLE);
 			compassButton.setRotation(bearing);
 		} else {
