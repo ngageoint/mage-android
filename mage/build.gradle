@@ -9,9 +9,9 @@ apply plugin: 'maven-publish'
 
 group 'mil.nga.giat.mage'
 archivesBaseName = 'mage-android'
-version '6.2.0'
+version '6.2.1'
 ext {
-    versionCode = 56
+    versionCode = 57
     sourceRefspec = Grgit.open().head().id
 }
 
@@ -184,7 +184,7 @@ dependencies {
     compile "com.google.android.gms:play-services-maps:$google_play_services_version"
 
     //    compile project(':sdk') // uncomment me to build locally, and see top-level build.gradle
-    compile 'mil.nga.giat.mage:mage-android-sdk:6.2.0' // comment me to build locally
+    compile 'mil.nga.giat.mage:mage-android-sdk:6.2.1' // comment me to build locally
     compile 'com.google.maps.android:android-maps-utils:0.5'
     compile 'mil.nga.geopackage.map:geopackage-android-map:1.4.1'
     compile 'org.ocpsoft.prettytime:prettytime:3.2.5.Final'
@@ -193,7 +193,6 @@ dependencies {
     compile 'com.google.android:flexbox:0.3.2'
     compile 'com.nulab-inc:zxcvbn:1.2.3'
     compile (name:'mgrs-0.0.2-release', ext:'aar')
-    compile files('libs/GeocoderPlus.jar')
 }
 
 task androidArtifactVersion {

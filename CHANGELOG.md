@@ -3,11 +3,18 @@ All notable changes to this project will be documented in this file.
 Adheres to [Semantic Versioning](http://semver.org/).
 
 ---
-## 6.2.1 (TBD)
+## 6.2.2 (TBD)
 
 * TBD
 
 ##### Features
+
+##### Bug Fixes
+
+## [6.2.1](https://github.com/ngageoint/mage-android/releases/tag/6.2.1) (10-22-2018)
+
+##### Features
+* Move to Android provided geocoder.  The provided geocoder does not need an API key, at least for now.
 
 ##### Bug Fixes
 

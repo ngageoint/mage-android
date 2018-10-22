@@ -1,16 +1,16 @@
 package mil.nga.giat.mage.map;
 
 import android.content.Context;
+import android.location.Address;
+import android.location.Geocoder;
 import android.os.AsyncTask;
 import android.util.Log;
 import android.widget.Toast;
 
-import com.bricolsoftconsulting.geocoderplus.Address;
-import com.bricolsoftconsulting.geocoderplus.Geocoder;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
@@ -24,6 +24,9 @@ import mil.nga.mgrs.MGRS;
 public class GeocoderTask extends AsyncTask<String, Void, GeocoderTask.SearchResults> {
 
 	private static final String LOG_NAME = GeocoderTask.class.getName();
+
+	private static final int MAX_ADDRESS_LINES = 3;
+	private static final int MAX_ADDRESS_ZOOM = 18;
 
 	private Context context;
 
@@ -53,30 +56,30 @@ public class GeocoderTask extends AsyncTask<String, Void, GeocoderTask.SearchRes
 						.title("MGRS")
 						.snippet(searchString);
 
-				results.bounds = new LatLngBounds(position, position);
+				results.zoom = 18;
 			} catch (ParseException e) {
 				Log.e(LOG_NAME, "Problem parsing mgrs string", e);
 			}
 		} else {
 			// Creating an instance of Geocoder class
-			Geocoder geocoder = new Geocoder();
+			Geocoder geocoder = new Geocoder(context);
 
 			try {
 				List<Address> addresses = geocoder.getFromLocationName(searchString, 1);
 				if (addresses != null && addresses.size() > 0) {
 					Address address = addresses.get(0);
 
-					LatLng southWestlatLng = new LatLng(address.getViewPort().getSouthWest().getLatitude(), address.getViewPort().getSouthWest().getLongitude());
-					LatLng northEastlatLng = new LatLng(address.getViewPort().getNorthEast().getLatitude(), address.getViewPort().getNorthEast().getLongitude());
-					results.bounds = new LatLngBounds(southWestlatLng, northEastlatLng);
+					int addressLines = address.getMaxAddressLineIndex() + 1;
+					results.zoom = MAX_ADDRESS_ZOOM - ((MAX_ADDRESS_LINES - addressLines) * 2);
 
 					results.markerOptions = new MarkerOptions()
 						.position(new LatLng(address.getLatitude(), address.getLongitude()))
 						.title(searchString)
-						.snippet(address.getFormattedAddress());
+						.snippet(address.getAddressLine(0));
+
 				}
 			} catch (IOException e) {
-				Log.e(LOG_NAME, "Problem executing search.");
+				Log.e(LOG_NAME, "Problem executing search.", e);
 			}
 		}
 
@@ -94,7 +97,7 @@ public class GeocoderTask extends AsyncTask<String, Void, GeocoderTask.SearchRes
 
 		if (results.markerOptions == null) {
 			if(ConnectivityUtility.isOnline(context)) {
-				Toast.makeText(context, "Unknown location", Toast.LENGTH_LONG).show();
+				Toast.makeText(context, "Could not find address.", Toast.LENGTH_LONG).show();
 			} else {
 				Toast.makeText(context, "No connectivity, try again later.", Toast.LENGTH_LONG).show();
 			}
@@ -104,12 +107,16 @@ public class GeocoderTask extends AsyncTask<String, Void, GeocoderTask.SearchRes
 				m.showInfoWindow();
 			}
 
-			map.animateCamera(CameraUpdateFactory.newLatLngBounds(results.bounds, 10));
+			CameraPosition position = CameraPosition.builder()
+					.target(results.markerOptions.getPosition())
+					.zoom(results.zoom).build();
+
+			map.animateCamera(CameraUpdateFactory.newCameraPosition(position));
 		}
 	}
 
 	public class SearchResults {
 		public MarkerOptions markerOptions;
-		public LatLngBounds bounds;
+		public int zoom;
 	}
 }

@@ -9,6 +9,7 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.graphics.drawable.Drawable;
+import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationListener;
 import android.os.AsyncTask;
@@ -232,16 +233,20 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 		zoomToLocationButton = (FloatingActionButton) view.findViewById(R.id.zoom_button);
 
 		searchButton = (FloatingActionButton) view.findViewById(R.id.map_search_button);
-		Drawable drawable = DrawableCompat.wrap(searchButton.getDrawable());
-		searchButton.setImageDrawable(drawable);
-		DrawableCompat.setTintList(drawable, AppCompatResources.getColorStateList(getContext(), R.color.toggle_button_selected));
+		if (Geocoder.isPresent()) {
+			Drawable drawable = DrawableCompat.wrap(searchButton.getDrawable());
+			searchButton.setImageDrawable(drawable);
+			DrawableCompat.setTintList(drawable, AppCompatResources.getColorStateList(getContext(), R.color.toggle_button_selected));
 
-		searchButton.setOnClickListener(new OnClickListener() {
-			@Override
-			public void onClick(View v) {
-				search();
-			}
-		});
+			searchButton.setOnClickListener(new OnClickListener() {
+				@Override
+				public void onClick(View v) {
+					search();
+				}
+			});
+		} else {
+			searchButton.setVisibility(View.GONE);
+		}
 
 		view.findViewById(R.id.new_observation_button).setOnClickListener(new OnClickListener() {
 			@Override

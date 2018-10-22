@@ -608,8 +608,6 @@ public class LoginActivity extends AppCompatActivity implements LoginFragment.Lo
 				Log.e(LOG_NAME, "Could not hash password", e);
 			}
 
-			PreferenceHelper.getInstance(getApplicationContext()).logKeyValuePairs();
-
 			final boolean sameUser = sharedPreferences.getString(getApplicationContext().getString(mil.nga.giat.mage.sdk.R.string.usernameKey), "").equals(currentUsername);
 			final boolean preserveActivityStack = sameUser && mContinueSession;
 
