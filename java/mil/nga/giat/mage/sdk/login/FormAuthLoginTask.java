@@ -142,7 +142,6 @@ public class FormAuthLoginTask extends AbstractAccountTask {
 				Editor editor = sharedPreferences.edit();
 
 				editor.putString(mApplicationContext.getString(R.string.tokenKey), authorizeResponse.get("token").getAsString().trim());
-				Log.d(LOG_NAME, "Storing token: " + String.valueOf(sharedPreferences.getString(mApplicationContext.getString(R.string.tokenKey), null)));
 				try {
 					Date tokenExpiration = iso8601Format.parse(authorizeResponse.get("expirationDate").getAsString().trim());
 					long tokenExpirationLength = tokenExpiration.getTime() - (new Date()).getTime();

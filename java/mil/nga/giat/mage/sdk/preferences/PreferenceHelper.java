@@ -104,19 +104,7 @@ public class PreferenceHelper implements SharedPreferences.OnSharedPreferenceCha
 		// add back in the server url
 		editor.putString(mContext.getString(R.string.serverURLKey), oldServerURL).commit();
 
-		logKeyValuePairs();
 		sharedPreferences.registerOnSharedPreferenceChangeListener(this);
-	}
-
-	public void logKeyValuePairs() {
-		SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(mContext);
-		// log all preference values
-		for(Map.Entry<String, ?> e : sharedPreferences.getAll().entrySet()) {
-			String key = e.getKey();
-			Object value = e.getValue();
-			String valueType = (value == null) ? null : value.getClass().getName();
-			Log.d(LOG_NAME, "SharedPreferences contains (key, value, type): (" + String.valueOf(key) + ", " + String.valueOf(value) + ", " + String.valueOf(valueType) + ")");
-		}
 	}
 
 	public JSONObject getAuthenticationStrategies() {

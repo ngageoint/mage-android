@@ -20,7 +20,6 @@ import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.http.resource.DeviceResource;
 import mil.nga.giat.mage.sdk.http.resource.UserResource;
 import mil.nga.giat.mage.sdk.jackson.deserializer.UserDeserializer;
-import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
 import mil.nga.giat.mage.sdk.utils.ISO8601DateFormatFactory;
 
 /**
@@ -81,7 +80,6 @@ public class OAuthLoginTask extends AbstractAccountTask {
 
 				// Successful login, put the token information in the shared preferences
 				String token = authorizeResponse.get("token").getAsString();
-				Log.d(LOG_NAME, "Storing token: " + token);
 				editor.putString(mApplicationContext.getString(mil.nga.giat.mage.sdk.R.string.tokenKey), token.trim());
 				try {
 					Date tokenExpiration = iso8601Format.parse(authorizeResponse.get("expirationDate").getAsString().trim());
@@ -119,8 +117,6 @@ public class OAuthLoginTask extends AbstractAccountTask {
 
 				editor.putString(mApplicationContext.getString(R.string.usernameKey), newUserId);
 				editor.putString(mApplicationContext.getString(R.string.displayNameKey), user.getDisplayName());
-
-				PreferenceHelper.getInstance(mApplicationContext).logKeyValuePairs();
 
 				editor.commit();
 
