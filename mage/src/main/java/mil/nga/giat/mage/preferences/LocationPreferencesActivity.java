@@ -10,7 +10,6 @@ import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
 import android.support.v4.content.ContextCompat;
-import android.support.v7.app.AppCompatActivity;
 import android.support.v7.preference.Preference;
 import android.support.v7.preference.PreferenceFragmentCompat;
 import android.support.v7.widget.SwitchCompat;
@@ -22,32 +21,52 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CompoundButton;
 
+import javax.inject.Inject;
+
+import dagger.android.support.AndroidSupportInjection;
+import dagger.android.support.DaggerAppCompatActivity;
+import mil.nga.giat.mage.MageApplication;
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 
-public class LocationPreferencesActivity extends AppCompatActivity {
+public class LocationPreferencesActivity extends DaggerAppCompatActivity {
 
-	private final LocationPreferenceFragment preference = new LocationPreferenceFragment();
+    private final LocationPreferenceFragment preference = new LocationPreferenceFragment();
+
+    @Inject
+    protected MageApplication application;
+
+    @Inject
+    protected Context context;
 
     private Toolbar toolbar;
 
     public static class LocationPreferenceFragment extends PreferenceFragmentCompat {
+        @Inject
+        protected Context context;
+
+        @Override
+        public void onCreate(Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+            AndroidSupportInjection.inject(this);
+        }
 
         @Override
         public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
             addPreferencesFromResource(R.xml.locationpreferences);
-
-            if (!UserHelper.getInstance(getActivity().getApplicationContext()).isCurrentUserPartOfCurrentEvent()) {
-                Preference reportLocationPreference = findPreference(getString(R.string.reportLocationKey));
-                reportLocationPreference.setEnabled(false);
-                reportLocationPreference.setSummary("You are an administrator and not a member of the current event.  You can not report your location in this event.");
-            }
         }
 
         @Override
         public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
             final Context contextThemeWrapper = new ContextThemeWrapper(getActivity(), R.style.AppTheme);
             LayoutInflater localInflater = inflater.cloneInContext(contextThemeWrapper);
+
+            if (!UserHelper.getInstance(context).isCurrentUserPartOfCurrentEvent()) {
+                Preference reportLocationPreference = findPreference(getString(R.string.reportLocationKey));
+                reportLocationPreference.setEnabled(false);
+                reportLocationPreference.setSummary("You are an administrator and not a member of the current event.  You can not report your location in this event.");
+            }
+
             return super.onCreateView(localInflater, container, savedInstanceState);
         }
     }
@@ -58,7 +77,7 @@ public class LocationPreferencesActivity extends AppCompatActivity {
 
         setContentView(R.layout.activity_location_preferences);
 
-        toolbar = (Toolbar) findViewById(R.id.toolbar);
+        toolbar = findViewById(R.id.toolbar);
     }
 
     @Override
@@ -72,13 +91,21 @@ public class LocationPreferencesActivity extends AppCompatActivity {
 
             locationServicesEnabled = PreferenceManager.getDefaultSharedPreferences(this).getBoolean(getResources().getString(R.string.locationServiceEnabledKey), getResources().getBoolean(R.bool.locationServiceEnabledDefaultValue));
 
-            SwitchCompat locationServicesEnabledSwitch = (SwitchCompat) toolbar.findViewById(R.id.toolbar_switch);
+            SwitchCompat locationServicesEnabledSwitch = toolbar.findViewById(R.id.toolbar_switch);
             locationServicesEnabledSwitch.setChecked(locationServicesEnabled);
             locationServicesEnabledSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
                 @Override
-                public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                    PreferenceManager.getDefaultSharedPreferences(LocationPreferencesActivity.this).edit().putBoolean(getResources().getString(R.string.locationServiceEnabledKey), isChecked).commit();
-                    updateView(isChecked);
+                public void onCheckedChanged(CompoundButton buttonView, boolean locationServicesEnabled) {
+                    PreferenceManager.getDefaultSharedPreferences(LocationPreferencesActivity.this).edit().putBoolean(getResources().getString(R.string.locationServiceEnabledKey), locationServicesEnabled).commit();
+                    updateView(locationServicesEnabled);
+
+                    if (locationServicesEnabled) {
+                        application.startLocationService();
+                    } else {
+                        application.stopLocationService();
+                    }
+
+                    application.createNotification();
                 }
             });
 
@@ -86,7 +113,7 @@ public class LocationPreferencesActivity extends AppCompatActivity {
 
         } else {
             toolbar.setVisibility(View.GONE);
-            locationServicesEnabled = ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
+            locationServicesEnabled = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
             findViewById(R.id.no_content_frame_l).setVisibility(locationServicesEnabled ? View.GONE : View.VISIBLE);
         }
 

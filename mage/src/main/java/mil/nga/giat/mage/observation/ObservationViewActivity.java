@@ -354,7 +354,7 @@ public class ObservationViewActivity extends AppCompatActivity implements OnMapR
 				findViewById(R.id.gallery_container).setVisibility(View.GONE);
 			} else {
 				findViewById(R.id.gallery_container).setVisibility(View.VISIBLE);
-				attachmentGallery = new AttachmentGallery(getApplicationContext(), 150, 150);
+				attachmentGallery = new AttachmentGallery(getBaseContext(), 150, 150);
                 attachmentGallery.addOnAttachmentClickListener(new AttachmentGallery.OnAttachmentClickListener() {
                     @Override
                     public void onAttachmentClick(Attachment attachment) {

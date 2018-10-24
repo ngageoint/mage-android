@@ -27,7 +27,6 @@ import android.support.v4.content.ContextCompat;
 import android.support.v4.graphics.drawable.RoundedBitmapDrawable;
 import android.support.v4.graphics.drawable.RoundedBitmapDrawableFactory;
 import android.support.v7.app.AlertDialog;
-import android.support.v7.app.AppCompatActivity;
 import android.support.v7.app.AppCompatDelegate;
 import android.text.Editable;
 import android.text.TextUtils;
@@ -62,8 +61,11 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import javax.inject.Inject;
+
+import dagger.android.support.DaggerAppCompatActivity;
 import mil.nga.giat.mage.LandingActivity;
-import mil.nga.giat.mage.MAGE;
+import mil.nga.giat.mage.MageApplication;
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.cache.CacheUtils;
 import mil.nga.giat.mage.disclaimer.DisclaimerActivity;
@@ -84,7 +86,7 @@ import mil.nga.giat.mage.sdk.utils.UserUtility;
  *
  * @author wiedemanns
  */
-public class LoginActivity extends AppCompatActivity implements LoginFragment.LoginListener {
+public class LoginActivity extends DaggerAppCompatActivity implements LoginFragment.LoginListener {
 
 	public static final int EXTRA_OAUTH_RESULT = 1;
 
@@ -95,6 +97,9 @@ public class LoginActivity extends AppCompatActivity implements LoginFragment.Lo
 	public static final String EXTRA_CONTINUE_SESSION_WHILE_USING = "CONTINUE_SESSION_WHILE_USING";
 
 	private static final String LOG_NAME = LoginActivity.class.getName();
+
+	@Inject
+	protected MageApplication application;
 
 	private EditText mUsernameEditText;
 	private TextInputLayout mUsernameLayout;
@@ -131,18 +136,18 @@ public class LoginActivity extends AppCompatActivity implements LoginFragment.Lo
 		}
 
 		if (intent.getBooleanExtra("LOGOUT", false)) {
-			((MAGE) getApplication()).onLogout(true, null);
+			application.onLogout(true, null);
 		}
 
 		// IMPORTANT: load the configuration from preferences files and server
 		PreferenceHelper preferenceHelper = PreferenceHelper.getInstance(getApplicationContext());
-		preferenceHelper.initialize(false, new Class<?>[]{mil.nga.giat.mage.sdk.R.xml.class, R.xml.class});
+		preferenceHelper.initialize(false, mil.nga.giat.mage.sdk.R.xml.class, R.xml.class);
 
 		final SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
 
 		// check if the database needs to be upgraded, and if so log them out
 		if (DaoStore.DATABASE_VERSION != sharedPreferences.getInt(getResources().getString(R.string.databaseVersionKey), 0)) {
-			((MAGE) getApplication()).onLogout(true, null);
+			application.onLogout(true, null);
 		}
 
 		sharedPreferences.edit().putInt(getString(R.string.databaseVersionKey), DaoStore.DATABASE_VERSION).commit();
@@ -195,19 +200,19 @@ public class LoginActivity extends AppCompatActivity implements LoginFragment.Lo
 		setContentView(R.layout.activity_login);
 		hideKeyboardOnClick(findViewById(R.id.login));
 
-		TextView appName = (TextView) findViewById(R.id.mage);
+		TextView appName = findViewById(R.id.mage);
 		appName.setTypeface(Typeface.createFromAsset(getAssets(),"fonts/GondolaMage-Regular.otf"));
 
 		((TextView) findViewById(R.id.login_version)).setText("App Version: " + sharedPreferences.getString(getString(R.string.buildVersionKey), "NA"));
 
-		mUsernameEditText = (EditText) findViewById(R.id.login_username);
-		mUsernameLayout = (TextInputLayout) findViewById(R.id.username_layout);
+		mUsernameEditText = findViewById(R.id.login_username);
+		mUsernameLayout = findViewById(R.id.username_layout);
 
-		mPasswordEditText = (EditText) findViewById(R.id.login_password);
-		mPasswordLayout = (TextInputLayout) findViewById(R.id.password_layout);
+		mPasswordEditText = findViewById(R.id.login_password);
+		mPasswordLayout = findViewById(R.id.password_layout);
 
 		mPasswordEditText.setTypeface(Typeface.DEFAULT);
-		mServerURL = (TextView) findViewById(R.id.server_url);
+		mServerURL = findViewById(R.id.server_url);
 
 		String serverURL = sharedPreferences.getString(getString(R.string.serverURLKey), getString(R.string.serverURLDefaultValue));
 		if (StringUtils.isEmpty(serverURL)) {
@@ -338,7 +343,7 @@ public class LoginActivity extends AppCompatActivity implements LoginFragment.Lo
 		findViewById(R.id.sign_up).setVisibility(localAuthentication || oauthStratigies.size() > 0 ? View.VISIBLE : View.GONE);
 
 		if (localAuthentication) {
-			Button localButton = (Button) findViewById(R.id.local_login_button);
+			Button localButton = findViewById(R.id.local_login_button);
 			localButton.setOnClickListener(new View.OnClickListener() {
 				@Override
 				public void onClick(View v) {
@@ -350,7 +355,7 @@ public class LoginActivity extends AppCompatActivity implements LoginFragment.Lo
 			findViewById(R.id.local_auth).setVisibility(View.GONE);
 		}
 
-		LinearLayout oauthLayout = (LinearLayout) findViewById(R.id.third_party_auth);
+		LinearLayout oauthLayout = findViewById(R.id.third_party_auth);
 		if (oauthStratigies.size() > 0) {
 			oauthLayout.removeAllViews();
 			oauthLayout.setVisibility(View.VISIBLE);
@@ -363,7 +368,7 @@ public class LoginActivity extends AppCompatActivity implements LoginFragment.Lo
 			// TODO Google is special in that it has its own button style
 			// Investigate making this generic like the rest of the strategies
 			if ("google".equals(entry.getKey())) {
-				oauthButton = (Button) findViewById(R.id.google_login_button);
+				oauthButton = findViewById(R.id.google_login_button);
 				findViewById(R.id.google_login_button).setVisibility(View.VISIBLE);
 			} else  {
 				findViewById(R.id.google_login_button).setVisibility(View.GONE);
@@ -376,7 +381,7 @@ public class LoginActivity extends AppCompatActivity implements LoginFragment.Lo
 					}
 
 					View oauthView = inflater.inflate(R.layout.view_oauth, null);
-					oauthButton = (Button) oauthView.findViewById(R.id.oauth_button);
+					oauthButton = oauthView.findViewById(R.id.oauth_button);
 
 					if (strategy.has("title")) {
 						oauthButton.setText(String.format("Sign In With %s", strategy.getString("title")));
@@ -497,8 +502,6 @@ public class LoginActivity extends AppCompatActivity implements LoginFragment.Lo
 
 	/**
 	 * Fired when user clicks login
-	 *
-	 * @param view
 	 */
 	public void login(View view) {
 
@@ -547,7 +550,7 @@ public class LoginActivity extends AppCompatActivity implements LoginFragment.Lo
 		String oldUsername = sharedPreferences.getString(getString(R.string.usernameKey), null);
 		if (StringUtils.isNotEmpty(oldUsername) && (!username.equals(oldUsername) || !server.equals(serverURLPref))) {
 			PreferenceHelper preferenceHelper = PreferenceHelper.getInstance(getApplicationContext());
-			preferenceHelper.initialize(true, new Class<?>[]{mil.nga.giat.mage.sdk.R.xml.class, R.xml.class});
+			preferenceHelper.initialize(true, mil.nga.giat.mage.sdk.R.xml.class, R.xml.class);
 			UserUtility.getInstance(getApplicationContext()).clearTokenInformation();
 
 			SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
@@ -579,9 +582,7 @@ public class LoginActivity extends AppCompatActivity implements LoginFragment.Lo
 
 	/**
 	 * Fired when user clicks signup
-	 *
-	 * @param view
-	 */
+     */
 	public void signup(View view) {
 		Intent intent = new Intent(getApplicationContext(), SignupActivity.class);
 		startActivity(intent);
@@ -635,7 +636,7 @@ public class LoginActivity extends AppCompatActivity implements LoginFragment.Lo
 			if (accountStatus.getStatus().equals(AccountStatus.Status.INVALID_SERVER)) {
 				new AlertDialog.Builder(this)
 						.setTitle("Application Compatibility Error")
-						.setMessage("This app is not compatible with this server. Please update your application or talk to your MAGE administrator.")
+						.setMessage("This app is not compatible with this server. Please update your context or talk to your MAGE administrator.")
 						.setPositiveButton(android.R.string.ok, new OnClickListener() {
 							@Override
 							public void onClick(DialogInterface dialog, int which) {
@@ -688,7 +689,7 @@ public class LoginActivity extends AppCompatActivity implements LoginFragment.Lo
 		if (preserveActivityStack) {
 			// We are going to return user to the app where they last left off,
 			// make sure to start up MAGE services
-			((MAGE) getApplication()).onLogin();
+			application.onLogin();
 
 			// TODO look at refreshing the event here...
 		} else {
@@ -745,7 +746,7 @@ public class LoginActivity extends AppCompatActivity implements LoginFragment.Lo
 		super.onResume();
 
 		if (getIntent().getBooleanExtra("LOGOUT", false)) {
-			((MAGE) getApplication()).onLogout(true, null);
+			application.onLogout(true, null);
 		}
 	}
 

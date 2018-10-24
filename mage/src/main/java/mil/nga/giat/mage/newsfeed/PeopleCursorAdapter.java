@@ -17,7 +17,6 @@ import android.widget.CursorAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.target.BitmapImageViewTarget;
 import com.google.common.base.Function;
 import com.google.common.collect.Collections2;
@@ -31,6 +30,7 @@ import java.sql.SQLException;
 import java.util.Collection;
 
 import mil.nga.giat.mage.R;
+import mil.nga.giat.mage.glide.GlideApp;
 import mil.nga.giat.mage.sdk.datastore.location.Location;
 import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
 import mil.nga.giat.mage.sdk.datastore.user.Team;
@@ -73,9 +73,9 @@ public class PeopleCursorAdapter extends CursorAdapter {
 
 			final ImageView avatarView = (ImageView) v.findViewById(R.id.avatarImageView);
 			UserLocal userLocal = user.getUserLocal();
-			Glide.with(context)
-					.load(userLocal.getLocalAvatarPath())
+			GlideApp.with(context)
 					.asBitmap()
+					.load(userLocal.getLocalAvatarPath())
 					.fallback(defaultPersonIcon)
 					.error(defaultPersonIcon)
 					.centerCrop()
@@ -89,7 +89,7 @@ public class PeopleCursorAdapter extends CursorAdapter {
 					});
 
 			final ImageView iconView = (ImageView) v.findViewById(R.id.iconImageView);
-			Glide.with(context)
+			GlideApp.with(context)
 					.load(userLocal.getLocalIconPath())
 					.centerCrop()
 					.into(iconView);

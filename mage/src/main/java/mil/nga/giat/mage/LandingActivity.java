@@ -5,6 +5,7 @@ import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
@@ -24,7 +25,6 @@ import android.support.v4.graphics.drawable.RoundedBitmapDrawableFactory;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.AlertDialog;
-import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.MenuItem;
@@ -32,21 +32,21 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.target.BitmapImageViewTarget;
-import com.google.common.base.Predicate;
-import com.google.common.collect.Collections2;
 
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
+import javax.inject.Inject;
+
+import dagger.android.support.DaggerAppCompatActivity;
 import mil.nga.geopackage.validate.GeoPackageValidate;
 import mil.nga.giat.mage.cache.GeoPackageCacheUtils;
 import mil.nga.giat.mage.event.ChangeEventActivity;
+import mil.nga.giat.mage.glide.GlideApp;
 import mil.nga.giat.mage.help.HelpActivity;
 import mil.nga.giat.mage.login.LoginActivity;
 import mil.nga.giat.mage.map.MapFragment;
@@ -56,24 +56,21 @@ import mil.nga.giat.mage.newsfeed.PeopleFeedFragment;
 import mil.nga.giat.mage.preferences.GeneralPreferencesActivity;
 import mil.nga.giat.mage.profile.ProfileActivity;
 import mil.nga.giat.mage.sdk.datastore.DaoStore;
-import mil.nga.giat.mage.sdk.datastore.layer.Layer;
-import mil.nga.giat.mage.sdk.datastore.layer.LayerHelper;
 import mil.nga.giat.mage.sdk.datastore.user.Event;
 import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
 import mil.nga.giat.mage.sdk.datastore.user.RoleHelper;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.datastore.user.UserLocal;
-import mil.nga.giat.mage.sdk.exceptions.LayerException;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
 
 /**
  * This is the Activity that holds other fragments. Map, feeds, etc. It
- * starts and stops much of the application. It also contains menus .
+ * starts and stops much of the context. It also contains menus .
  *
  */
-public class LandingActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
+public class LandingActivity extends DaggerAppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
 
     /**
      * Extra key for storing the local file path used to launch MAGE
@@ -85,8 +82,12 @@ public class LandingActivity extends AppCompatActivity implements NavigationView
     private static final int PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 100;
     private static final int PERMISSIONS_REQUEST_ACCESS_STORAGE= 200;
     private static final int PERMISSIONS_REQUEST_OPEN_FILE = 300;
-    private static final int AUTHENTICATE_REQUEST = 400;
-    private static final int CHANGE_EVENT_REQUEST = 500;
+    private static final int PERMISSIONS_REQUEST_FOREGROUND_SERVICE = 400;
+    private static final int AUTHENTICATE_REQUEST = 500;
+    private static final int CHANGE_EVENT_REQUEST = 600;
+
+    @Inject
+    protected MageApplication application;
 
     private int currentNightMode;
 
@@ -118,17 +119,21 @@ public class LandingActivity extends AppCompatActivity implements NavigationView
         // the user has selected an event.  However there are other instances that could
         // bring the user back to this activity in which this has already been called,
         // i.e. after TokenExpiredActivity.
-        ((MAGE) getApplication()).onLogin();
+        application.onLogin();
 
         CacheProvider.getInstance(getApplicationContext()).refreshTileOverlays();
 
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         setTitle();
 
         // Ask for permissions
         locationPermissionGranted = ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
-        if (!locationPermissionGranted) {
+        if (locationPermissionGranted) {
+            if (shouldReportLocation()) {
+                application.startLocationService();
+            }
+        } else {
             if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.ACCESS_FINE_LOCATION)) {
                 new AlertDialog.Builder(LandingActivity.this, R.style.AppCompatAlertDialogStyle)
                         .setTitle(R.string.location_access_rational_title)
@@ -150,8 +155,8 @@ public class LandingActivity extends AppCompatActivity implements NavigationView
         getSupportActionBar().setHomeAsUpIndicator(R.drawable.ic_menu_white_24dp);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
-        drawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
-        navigationView = (NavigationView) findViewById(R.id.navigation);
+        drawerLayout = findViewById(R.id.drawer_layout);
+        navigationView = findViewById(R.id.navigation);
         navigationView.setNavigationItemSelectedListener(this);
 
         try {
@@ -170,12 +175,12 @@ public class LandingActivity extends AppCompatActivity implements NavigationView
 
         View headerView = navigationView.getHeaderView(0);
         try {
-            final ImageView avatarImageView = (ImageView) headerView.findViewById(R.id.avatar_image_view);
+            final ImageView avatarImageView = headerView.findViewById(R.id.avatar_image_view);
             User user = UserHelper.getInstance(getApplicationContext()).readCurrentUser();
             UserLocal userLocal = user.getUserLocal();
-            Glide.with(this)
-                    .load(userLocal.getLocalAvatarPath())
+            GlideApp.with(this)
                     .asBitmap()
+                    .load(userLocal.getLocalAvatarPath())
                     .fallback(R.drawable.ic_account_circle_white_48dp)
                     .centerCrop()
                     .into(new BitmapImageViewTarget(avatarImageView) {
@@ -187,10 +192,10 @@ public class LandingActivity extends AppCompatActivity implements NavigationView
                         }
                     });
 
-            TextView displayName = (TextView) headerView.findViewById(R.id.display_name);
+            TextView displayName = headerView.findViewById(R.id.display_name);
             displayName.setText(user.getDisplayName());
 
-            TextView email = (TextView) headerView.findViewById(R.id.email);
+            TextView email = headerView.findViewById(R.id.email);
             email.setText(user.getEmail());
             email.setVisibility(StringUtils.isNoneBlank(user.getEmail()) ? View.VISIBLE : View.GONE);
         } catch (UserException e) {
@@ -228,7 +233,7 @@ public class LandingActivity extends AppCompatActivity implements NavigationView
             }
         }
 
-        bottomNavigationView = (BottomNavigationView) findViewById(R.id.bottom_navigation);
+        bottomNavigationView = findViewById(R.id.bottom_navigation);
         bottomNavigationView.setOnNavigationItemSelectedListener(new BottomNavigationView.OnNavigationItemSelectedListener() {
             @Override
             public boolean onNavigationItemSelected(@NonNull MenuItem item) {
@@ -256,11 +261,11 @@ public class LandingActivity extends AppCompatActivity implements NavigationView
             recreate();
         }
 
-        if (locationPermissionGranted != (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED)) {
+        if (shouldReportLocation() && locationPermissionGranted != (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED)) {
             locationPermissionGranted = ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
 
-            // notify location services that the permissions have changed.
-            ((MAGE) getApplication()).getLocationService().onLocationPermissionsChanged();
+            // User allowed location service permission in settings, start location services.
+            application.startLocationService();
         }
     }
 
@@ -278,8 +283,9 @@ public class LandingActivity extends AppCompatActivity implements NavigationView
         switch (requestCode) {
             case PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION: {
                 locationPermissionGranted = grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED;
-                if (locationPermissionGranted) {
-                    ((MAGE) getApplication()).getLocationService().onLocationPermissionsChanged();
+
+                if (shouldReportLocation()) {
+                    application.startLocationService();
                 }
 
                 break;
@@ -332,6 +338,11 @@ public class LandingActivity extends AppCompatActivity implements NavigationView
                 .show();
     }
 
+    private boolean shouldReportLocation() {
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+        return preferences.getBoolean(getString(R.string.reportLocationKey), getResources().getBoolean(R.bool.reportLocationDefaultValue));
+    }
+
     @Override
     public boolean onNavigationItemSelected(MenuItem menuItem) {
         drawerLayout.closeDrawer(GravityCompat.START);
@@ -358,7 +369,7 @@ public class LandingActivity extends AppCompatActivity implements NavigationView
                 break;
             }
             case R.id.logout_navigation: {
-                ((MAGE)getApplication()).onLogout(true, new MAGE.OnLogoutListener() {
+                application.onLogout(true, new MageApplication.OnLogoutListener() {
                     @Override
                     public void onLogout() {
                         Intent intent = new Intent(getApplicationContext(), LoginActivity.class);

@@ -14,7 +14,6 @@ import android.widget.Toast;
 import com.google.common.io.Closeables;
 import com.google.common.io.Files;
 import com.google.gson.JsonObject;
-import com.squareup.okhttp.ResponseBody;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -27,6 +26,7 @@ import mil.nga.giat.mage.sdk.datastore.observation.Attachment;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationProperty;
 import mil.nga.giat.mage.sdk.http.resource.ObservationResource;
+import okhttp3.ResponseBody;
 
 /**
  * Created by wnewman on 8/27/16.

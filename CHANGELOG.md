@@ -8,8 +8,14 @@ Adheres to [Semantic Versioning](http://semver.org/).
 * TBD
 
 ##### Features
+* Update to Android SDK 28.
+* Location service nows runs as a proper foreground service.
+* Observations and attachments are being pulled and pushed via WorkManager.
+* Updated okhttp, retrofit and glide dependencies.
+* Using Dagger for dependency injection.
 
 ##### Bug Fixes
+* Fix bug which didn't show previsouly loaded events after disconnected login
 
 ## [6.2.1](https://github.com/ngageoint/mage-android/releases/tag/6.2.1) (10-22-2018)
 

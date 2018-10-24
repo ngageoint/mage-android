@@ -3,23 +3,22 @@ package mil.nga.giat.mage.newsfeed;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Dialog;
-import android.content.BroadcastReceiver;
+import android.arch.lifecycle.Observer;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Canvas;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
+import android.location.Location;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Parcelable;
-import android.preference.PreferenceManager;
-import android.support.design.widget.CoordinatorLayout;
-import android.support.design.widget.Snackbar;
-import android.support.v4.app.Fragment;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.view.ViewCompat;
 import android.support.v4.widget.SwipeRefreshLayout;
@@ -58,15 +57,19 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
-import mil.nga.giat.mage.MAGE;
+import javax.inject.Inject;
+
+import dagger.android.support.DaggerFragment;
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.filter.ObservationFilterActivity;
+import mil.nga.giat.mage.location.LocationProvider;
 import mil.nga.giat.mage.observation.AttachmentGallery;
 import mil.nga.giat.mage.observation.AttachmentViewerActivity;
 import mil.nga.giat.mage.observation.ObservationEditActivity;
 import mil.nga.giat.mage.observation.ObservationFormPickerActivity;
 import mil.nga.giat.mage.observation.ObservationLocation;
 import mil.nga.giat.mage.observation.ObservationViewActivity;
+import mil.nga.giat.mage.observation.sync.ObservationServerFetch;
 import mil.nga.giat.mage.sdk.datastore.DaoStore;
 import mil.nga.giat.mage.sdk.datastore.location.LocationHelper;
 import mil.nga.giat.mage.sdk.datastore.location.LocationProperty;
@@ -81,11 +84,9 @@ import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.event.IObservationEventListener;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
-import mil.nga.giat.mage.sdk.fetch.ObservationRefreshIntent;
-import mil.nga.giat.mage.sdk.location.LocationService;
 import mil.nga.wkb.geom.Geometry;
 
-public class ObservationFeedFragment extends Fragment implements IObservationEventListener, ObservationListAdapter.ObservationActionListener {
+public class ObservationFeedFragment extends DaggerFragment implements IObservationEventListener, ObservationListAdapter.ObservationActionListener, Observer<Location> {
 
 	private static final String LOG_NAME = ObservationFeedFragment.class.getName();
 
@@ -93,7 +94,6 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 
 	private PreparedQuery<Observation> query;
 	private Dao<Observation, Long> oDao;
-	private SharedPreferences sp;
 	private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 	private ScheduledFuture<?> queryUpdateHandle;
 	private long requeryTime;
@@ -102,40 +102,39 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 
 	Parcelable listState;
 	private User currentUser;
-	private LocationService locationService;
 	private SwipeRefreshLayout swipeContainer;
-	private AttachmentGallery attachmentGallery;
-	private CoordinatorLayout coordinatorLayout;
-	private ObservationRefreshReceiver observationRefreshReceiver;
+
+	@Inject
+	protected Context context;
+
+	@Inject
+	protected SharedPreferences preferences;
+
+	@Inject
+	protected LocationProvider locationProvider;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 
 		try {
-			currentUser= UserHelper.getInstance(getActivity().getApplicationContext()).readCurrentUser();
+			currentUser = UserHelper.getInstance(context).readCurrentUser();
 		} catch (UserException e) {
 			Log.e(LOG_NAME, "Error reading current user", e);
 		}
-
-		locationService = ((MAGE) getActivity().getApplication()).getLocationService();
-		observationRefreshReceiver = new ObservationRefreshReceiver();
-
 	}
 
 	@Override
-	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+	public View onCreateView(@NonNull  LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 		View rootView = inflater.inflate(R.layout.fragment_news_feed, container, false);
 		setHasOptionsMenu(true);
 
-		coordinatorLayout = (CoordinatorLayout) rootView.findViewById(R.id.coordinator_layout);
-
-		swipeContainer = (SwipeRefreshLayout) rootView.findViewById(R.id.swipeContainer);
+		swipeContainer = rootView.findViewById(R.id.swipeContainer);
 		swipeContainer.setColorSchemeResources(R.color.md_blue_600, R.color.md_orange_A200);
 		swipeContainer.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
 			@Override
 			public void onRefresh() {
-				refreshObservations();
+				new ObservationRefreshTask().execute();
 			}
 		});
 
@@ -146,18 +145,18 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 			}
 		});
 
-        attachmentGallery = new AttachmentGallery(getActivity().getApplicationContext(), 200, 200);
+		AttachmentGallery attachmentGallery = new AttachmentGallery(getContext(), 200, 200);
         attachmentGallery.addOnAttachmentClickListener(new AttachmentGallery.OnAttachmentClickListener() {
             @Override
             public void onAttachmentClick(Attachment attachment) {
-                Intent intent = new Intent(getActivity().getApplicationContext(), AttachmentViewerActivity.class);
+                Intent intent = new Intent(context, AttachmentViewerActivity.class);
                 intent.putExtra(AttachmentViewerActivity.ATTACHMENT_ID, attachment.getId());
                 intent.putExtra(AttachmentViewerActivity.EDITABLE, false);
                 startActivity(intent);
             }
         });
 
-		recyclerView = (RecyclerView) rootView.findViewById(R.id.recycler_view);
+		recyclerView = rootView.findViewById(R.id.recycler_view);
 
 		RecyclerView.LayoutManager mLayoutManager = new LinearLayoutManager(getActivity());
 		recyclerView.setLayoutManager(mLayoutManager);
@@ -166,19 +165,29 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 
 		adapter = new ObservationListAdapter(getActivity(), attachmentGallery, this);
 
-		sp = PreferenceManager.getDefaultSharedPreferences(getActivity().getApplicationContext());
-
 		return rootView;
+	}
+
+	@Override
+	public void onStart() {
+		super.onStart();
+
+		locationProvider.observe(this, this);
+	}
+
+	@Override
+	public void onStop() {
+		super.onStop();
+
+		locationProvider.removeObserver(this);
 	}
 
 	@Override
 	public void onResume() {
 		super.onResume();
 
-		observationRefreshReceiver.register();
-
 		try {
-			oDao = DaoStore.getInstance(getActivity().getApplicationContext()).getObservationDao();
+			oDao = DaoStore.getInstance(context).getObservationDao();
 			query = buildQuery(oDao, getTimeFilterId());
 			Cursor cusor = obtainCursor(query, oDao);
 			adapter.setCursor(cusor, query);
@@ -189,7 +198,7 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 				recyclerView.getLayoutManager().onRestoreInstanceState(listState);
 			}
 
-			ObservationHelper.getInstance(getActivity().getApplicationContext()).addListener(this);
+			ObservationHelper.getInstance(context).addListener(this);
 		} catch (Exception e) {
 			Log.e(LOG_NAME, "Problem getting cursor or setting adapter.", e);
 		}
@@ -199,11 +208,9 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 	public void onPause() {
 		super.onPause();
 
-		observationRefreshReceiver.unregister();
-
 		listState = recyclerView.getLayoutManager().onSaveInstanceState();
 
-		ObservationHelper.getInstance(getActivity().getApplicationContext()).removeListener(this);
+		ObservationHelper.getInstance(context).removeListener(this);
 
 		if (queryUpdateHandle != null) {
 			queryUpdateHandle.cancel(true);
@@ -229,7 +236,7 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 	}
 
 	@Override
-	public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
+	public void onRequestPermissionsResult(int requestCode, @NonNull String permissions[], @NonNull int[] grantResults) {
 		switch (requestCode) {
 			case PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION: {
 				// If request is cancelled, the result arrays are empty.
@@ -241,36 +248,10 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 		}
 	}
 
-	private void refreshObservations() {
-		Intent intent = new Intent(getContext(), ObservationRefreshIntent.class);
-		getActivity().startService(intent);
-	}
-
 	private void onNewObservation() {
-		ObservationLocation location = null;
+		ObservationLocation location = getLocation();
 
-		// if there is not a location from the location service, then try to pull one from the database.
-		if (locationService.getLocation() == null) {
-			List<mil.nga.giat.mage.sdk.datastore.location.Location> tLocations = LocationHelper.getInstance(getActivity().getApplicationContext()).getCurrentUserLocations(1, true);
-			if (!tLocations.isEmpty()) {
-				mil.nga.giat.mage.sdk.datastore.location.Location tLocation = tLocations.get(0);
-				Geometry geo = tLocation.getGeometry();
-				Map<String, LocationProperty> propertiesMap = tLocation.getPropertiesMap();
-				String provider = ObservationLocation.MANUAL_PROVIDER;
-				if (propertiesMap.get("provider").getValue() != null) {
-					provider = propertiesMap.get("provider").getValue().toString();
-				}
-				location = new ObservationLocation(provider, geo);
-				location.setTime(tLocation.getTimestamp().getTime());
-				if (propertiesMap.get("accuracy").getValue() != null) {
-					location.setAccuracy(Float.valueOf(propertiesMap.get("accuracy").getValue().toString()));
-				}
-			}
-		} else {
-			location = new ObservationLocation(locationService.getLocation());
-		}
-
-		if(!UserHelper.getInstance(getActivity().getApplicationContext()).isCurrentUserPartOfCurrentEvent()) {
+		if(!UserHelper.getInstance(context).isCurrentUserPartOfCurrentEvent()) {
 			new AlertDialog.Builder(getActivity(), R.style.AppCompatAlertDialogStyle)
 					.setTitle(getActivity().getResources().getString(R.string.location_no_event_title))
 					.setMessage(getActivity().getResources().getString(R.string.location_no_event_message))
@@ -295,7 +276,7 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 			startActivity(intent);
 
 		} else {
-			if (ContextCompat.checkSelfPermission(getActivity().getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+			if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
 				new AlertDialog.Builder(getActivity(), R.style.AppCompatAlertDialogStyle)
 						.setTitle(getActivity().getResources().getString(R.string.location_missing_title))
 						.setMessage(getActivity().getResources().getString(R.string.location_missing_message))
@@ -316,12 +297,39 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 		}
 	}
 
+	private ObservationLocation getLocation() {
+		ObservationLocation location = null;
+
+		// if there is not a location from the location service, then try to pull one from the database.
+		if (locationProvider.getValue() == null) {
+			List<mil.nga.giat.mage.sdk.datastore.location.Location> tLocations = LocationHelper.getInstance(context).getCurrentUserLocations(1, true);
+			if (!tLocations.isEmpty()) {
+				mil.nga.giat.mage.sdk.datastore.location.Location tLocation = tLocations.get(0);
+				Geometry geo = tLocation.getGeometry();
+				Map<String, LocationProperty> propertiesMap = tLocation.getPropertiesMap();
+				String provider = ObservationLocation.MANUAL_PROVIDER;
+				if (propertiesMap.get("provider").getValue() != null) {
+					provider = propertiesMap.get("provider").getValue().toString();
+				}
+				location = new ObservationLocation(provider, geo);
+				location.setTime(tLocation.getTimestamp().getTime());
+				if (propertiesMap.get("accuracy").getValue() != null) {
+					location.setAccuracy(Float.valueOf(propertiesMap.get("accuracy").getValue().toString()));
+				}
+			}
+		} else {
+			location = new ObservationLocation(locationProvider.getValue());
+		}
+
+		return location;
+	}
+
 	private int getCustomTimeNumber() {
-		return sp.getInt(getResources().getString(R.string.customObservationTimeNumberFilterKey), 0);
+		return preferences.getInt(getResources().getString(R.string.customObservationTimeNumberFilterKey), 0);
 	}
 
 	private String getCustomTimeUnit() {
-		return sp.getString(getResources().getString(R.string.customObservationTimeUnitFilterKey), getResources().getStringArray(R.array.timeUnitEntries)[0]);
+		return preferences.getString(getResources().getString(R.string.customObservationTimeUnitFilterKey), getResources().getStringArray(R.array.timeUnitEntries)[0]);
 	}
 
 	private PreparedQuery<Observation> buildQuery(Dao<Observation, Long> oDao, int filterId) throws SQLException {
@@ -382,13 +390,13 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 			.and()
 			.ge("timestamp", c.getTime())
 			.and()
-			.eq("event_id", EventHelper.getInstance(getActivity().getApplicationContext()).getCurrentEvent().getId());
+			.eq("event_id", EventHelper.getInstance(context).getCurrentEvent().getId());
 
 		List<String> actionFilters = new ArrayList<>();
 
-		boolean favorites = sp.getBoolean(getResources().getString(R.string.activeFavoritesFilterKey), false);
+		boolean favorites = preferences.getBoolean(getResources().getString(R.string.activeFavoritesFilterKey), false);
 		if (favorites && currentUser != null) {
-			Dao<ObservationFavorite, Long> observationFavoriteDao = DaoStore.getInstance(getActivity().getApplicationContext()).getObservationFavoriteDao();
+			Dao<ObservationFavorite, Long> observationFavoriteDao = DaoStore.getInstance(context).getObservationFavoriteDao();
 			QueryBuilder<ObservationFavorite, Long> favoriteQb = observationFavoriteDao.queryBuilder();
 			favoriteQb.where()
 				.eq("user_id", currentUser.getRemoteId())
@@ -400,9 +408,9 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 			actionFilters.add("Favorites");
 		}
 
-		boolean important = sp.getBoolean(getResources().getString(R.string.activeImportantFilterKey), false);
+		boolean important = preferences.getBoolean(getResources().getString(R.string.activeImportantFilterKey), false);
 		if (important) {
-			Dao<ObservationImportant, Long> observationImportantDao = DaoStore.getInstance(getActivity().getApplicationContext()).getObservationImportantDao();
+			Dao<ObservationImportant, Long> observationImportantDao = DaoStore.getInstance(context).getObservationImportantDao();
 			QueryBuilder<ObservationImportant, Long> importantQb = observationImportantDao.queryBuilder();
 			importantQb.where().eq("is_important", true);
 
@@ -447,7 +455,7 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 	}
 	
 	private int getTimeFilterId() {
-		return sp.getInt(getResources().getString(R.string.activeTimeFilterKey), getResources().getInteger(R.integer.time_filter_none));
+		return preferences.getInt(getResources().getString(R.string.activeTimeFilterKey), getResources().getInteger(R.integer.time_filter_none));
 	}
 
 	@Override
@@ -522,47 +530,21 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 
 	@Override
 	public void onObservationClick(Observation observation) {
-		Intent observationView = new Intent(getActivity().getApplicationContext(), ObservationViewActivity.class);
+		Intent observationView = new Intent(context, ObservationViewActivity.class);
 		observationView.putExtra(ObservationViewActivity.OBSERVATION_ID, observation.getId());
-		getActivity().startActivity(observationView);
+		startActivity(observationView);
 	}
 
-	public class ObservationRefreshReceiver extends BroadcastReceiver {
-		public void register() {
-			IntentFilter filter = new IntentFilter(ObservationRefreshIntent.ACTION_OBSERVATIONS_REFRESHED);
-			filter.addCategory(Intent.CATEGORY_DEFAULT);
-			getContext().registerReceiver(observationRefreshReceiver, filter);
-		}
+	@Override
+	public void onChanged(@Nullable Location location) {
 
-		public void unregister() {
-			getContext().unregisterReceiver(observationRefreshReceiver);
-		}
-
-		@Override
-		public void onReceive(Context context, Intent intent) {
-			swipeContainer.setRefreshing(false);
-
-			String status = intent.getExtras().getString(ObservationRefreshIntent.EXTRA_OBSERVATIONS_REFRESH_STATUS, null);
-			if (status != null) {
-				final Snackbar snackbar = Snackbar
-					.make(coordinatorLayout, status, Snackbar.LENGTH_LONG)
-					.setAction("RETRY", new View.OnClickListener() {
-						@Override
-						public void onClick(View view) {
-							refreshObservations();
-						}
-					});
-
-				snackbar.show();
-			}
-		}
 	}
 
 	private class ObservationItemDecorator extends RecyclerView.ItemDecoration {
 		private Drawable divider;
 
-		public ObservationItemDecorator() {
-			divider = ContextCompat.getDrawable(getActivity(), R.drawable.people_feed_divider);
+		ObservationItemDecorator() {
+			divider = ContextCompat.getDrawable(context, R.drawable.people_feed_divider);
 		}
 
 		@Override
@@ -593,6 +575,20 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 				divider.draw(c);
 			}
 			c.restore();
+		}
+	}
+
+	private class ObservationRefreshTask extends AsyncTask<Void, Void, Void> {
+
+		@Override
+		protected Void doInBackground(Void... voids) {
+			new ObservationServerFetch(context).fetch(false);
+			return null;
+		}
+
+		@Override
+		protected void onPostExecute(Void aVoid) {
+			swipeContainer.setRefreshing(false);
 		}
 	}
 }

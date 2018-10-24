@@ -1,8 +1,12 @@
 package mil.nga.giat.mage.map;
 
 import android.Manifest;
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
 import android.app.Activity;
 import android.app.Dialog;
+import android.arch.lifecycle.Observer;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -11,20 +15,18 @@ import android.content.res.Configuration;
 import android.graphics.drawable.Drawable;
 import android.location.Geocoder;
 import android.location.Location;
-import android.location.LocationListener;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.preference.PreferenceManager;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.design.widget.BottomSheetBehavior;
 import android.support.design.widget.FloatingActionButton;
-import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
-import android.support.v4.graphics.drawable.DrawableCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.content.res.AppCompatResources;
 import android.support.v7.widget.SearchView;
 import android.util.Log;
 import android.util.Pair;
@@ -41,15 +43,12 @@ import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.GoogleMap.CancelableCallback;
 import com.google.android.gms.maps.GoogleMap.OnInfoWindowClickListener;
 import com.google.android.gms.maps.GoogleMap.OnMapClickListener;
 import com.google.android.gms.maps.GoogleMap.OnMapLongClickListener;
 import com.google.android.gms.maps.GoogleMap.OnMarkerClickListener;
-import com.google.android.gms.maps.GoogleMap.OnMyLocationButtonClickListener;
 import com.google.android.gms.maps.LocationSource;
 import com.google.android.gms.maps.MapView;
 import com.google.android.gms.maps.MapsInitializer;
@@ -82,6 +81,9 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
+import javax.inject.Inject;
+
+import dagger.android.support.DaggerFragment;
 import mil.nga.geopackage.BoundingBox;
 import mil.nga.geopackage.GeoPackage;
 import mil.nga.geopackage.GeoPackageCache;
@@ -110,12 +112,11 @@ import mil.nga.geopackage.tiles.features.DefaultFeatureTiles;
 import mil.nga.geopackage.tiles.features.FeatureTiles;
 import mil.nga.geopackage.tiles.features.custom.NumberFeaturesTile;
 import mil.nga.geopackage.tiles.user.TileDao;
-import mil.nga.giat.mage.MAGE;
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.filter.DateTimeFilter;
 import mil.nga.giat.mage.filter.Filter;
 import mil.nga.giat.mage.filter.FilterActivity;
-import mil.nga.giat.mage.map.GoogleMapWrapper.OnMapPanListener;
+import mil.nga.giat.mage.location.LocationProvider;
 import mil.nga.giat.mage.map.cache.CacheOverlay;
 import mil.nga.giat.mage.map.cache.CacheOverlayFilter;
 import mil.nga.giat.mage.map.cache.CacheOverlayType;
@@ -154,14 +155,13 @@ import mil.nga.giat.mage.sdk.event.IStaticFeatureEventListener;
 import mil.nga.giat.mage.sdk.event.IUserEventListener;
 import mil.nga.giat.mage.sdk.exceptions.LayerException;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
-import mil.nga.giat.mage.sdk.location.LocationService;
 import mil.nga.mgrs.MGRS;
 import mil.nga.mgrs.gzd.MGRSTileProvider;
 import mil.nga.wkb.geom.Geometry;
 import mil.nga.wkb.geom.GeometryType;
 
-public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapClickListener, OnMapLongClickListener, OnMarkerClickListener, OnInfoWindowClickListener, OnMapPanListener, GoogleMap.OnCameraIdleListener, OnMyLocationButtonClickListener, OnClickListener, LocationSource, LocationListener, OnCacheOverlayListener,
-		IObservationEventListener, ILocationEventListener, IUserEventListener, IStaticFeatureEventListener {
+public class MapFragment extends DaggerFragment implements OnMapReadyCallback, OnMapClickListener, OnMapLongClickListener, OnMarkerClickListener, OnInfoWindowClickListener, GoogleMap.OnCameraMoveListener, GoogleMap.OnCameraIdleListener, GoogleMap.OnCameraMoveStartedListener, OnClickListener, LocationSource, OnCacheOverlayListener,
+		IObservationEventListener, ILocationEventListener, IUserEventListener, IStaticFeatureEventListener, Observer<Location> {
 
 	private static final String LOG_NAME = MapFragment.class.getName();
 
@@ -174,18 +174,37 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 
 	private static final int MARKER_REFRESH_INTERVAL_SECONDS = 300;
 	private static final int OBSERVATION_REFRESH_INTERVAL_SECONDS = 60;
+	private static final int LOCATION_STALE_INTERVAL = 1000 * 60 * 2;
 
-	private MAGE mage;
+	private enum LocateState {
+		OFF,
+		FOLLOW;
+
+		public LocateState next() {
+			return this.ordinal() < LocateState.values().length - 1 ?
+					LocateState.values()[this.ordinal() + 1] :
+					LocateState.OFF;
+		}
+	}
+
+	@Inject
+	protected Context context;
+
+	@Inject
+	protected SharedPreferences preferences;
+
 	private MapView mapView;
 	private GoogleMap map;
 	private View searchLayout;
 	private SearchView searchView;
 	private Location location;
-	private boolean followMe = false;
-	private GoogleMapWrapper mapWrapper;
+	private LocateState locateState = LocateState.OFF;
 	protected User currentUser = null;
 	private long currentEventId = -1;
 	private OnLocationChangedListener locationChangedListener;
+
+	@Inject
+	protected LocationProvider locationProvider;
 
 	private RefreshMarkersRunnable refreshObservationsTask;
 	private RefreshMarkersRunnable refreshLocationsTask;
@@ -203,9 +222,9 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 	private GeoPackageCache geoPackageCache;
 	private BoundingBox addedCacheBoundingBox;
 
+	private FloatingActionButton compassButton;
 	private FloatingActionButton searchButton;
 	private FloatingActionButton zoomToLocationButton;
-	private LocationService locationService;
 
 	private boolean showMgrs;
 	private TileOverlay mgrsTileOverlay;
@@ -219,10 +238,8 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 	private TextView mgrsEastingTextView;
 	private TextView mgrsNorthingTextView;
 
-	SharedPreferences preferences;
-
 	@Override
-	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+	public View onCreateView(@NonNull  LayoutInflater  inflater, ViewGroup container, Bundle savedInstanceState) {
 		View view = inflater.inflate(R.layout.fragment_map, container, false);
 
 		setHasOptionsMenu(true);
@@ -230,14 +247,18 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 		staticGeometryCollection = new StaticGeometryCollection();
 
 		availableLayerDownloadsIcon = view.findViewById(R.id.available_layer_downloads);
-		zoomToLocationButton = (FloatingActionButton) view.findViewById(R.id.zoom_button);
+		zoomToLocationButton = view.findViewById(R.id.zoom_button);
+
+		compassButton = view.findViewById(R.id.compass_button);
+		compassButton.setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				resetMapBearing();
+			}
+		});
 
 		searchButton = (FloatingActionButton) view.findViewById(R.id.map_search_button);
 		if (Geocoder.isPresent()) {
-			Drawable drawable = DrawableCompat.wrap(searchButton.getDrawable());
-			searchButton.setImageDrawable(drawable);
-			DrawableCompat.setTintList(drawable, AppCompatResources.getColorStateList(getContext(), R.color.toggle_button_selected));
-
 			searchButton.setOnClickListener(new OnClickListener() {
 				@Override
 				public void onClick(View v) {
@@ -255,43 +276,58 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 			}
 		});
 
-		mage = (MAGE) getActivity().getApplication();
-		locationService = mage.getLocationService();
-
-		preferences = PreferenceManager.getDefaultSharedPreferences(getActivity().getApplicationContext());
-
 		searchLayout = view.findViewById(R.id.search_layout);
-		searchView = (SearchView) view.findViewById(R.id.search_view);
+		searchView = view.findViewById(R.id.search_view);
 		searchView.setIconifiedByDefault(false);
 		searchView.setIconified(false);
 		searchView.clearFocus();
 
-		MapsInitializer.initialize(getActivity().getApplicationContext());
+		MapsInitializer.initialize(context);
 
-		ImageButton mapSettings = (ImageButton) view.findViewById(R.id.map_settings);
+		ImageButton mapSettings = view.findViewById(R.id.map_settings);
 		mapSettings.setOnClickListener(this);
 
-		mapWrapper = new GoogleMapWrapper(getActivity().getApplicationContext());
-		mapWrapper.addView(view);
-
-		mapView = (MapView) view.findViewById(R.id.mapView);
+		mapView = view.findViewById(R.id.mapView);
 		Bundle mapState = (savedInstanceState != null) ? savedInstanceState.getBundle(MAP_VIEW_STATE): null;
 		mapView.onCreate(mapState);
 
 		mgrsBottomSheet = view.findViewById(R.id.mgrs_bottom_sheet);
 		mgrsBottomSheetBehavior = BottomSheetBehavior.from(mgrsBottomSheet);
 		mgrsCursor = view.findViewById(R.id.mgrs_grid_cursor);
-		mgrsTextView = (TextView) mgrsBottomSheet.findViewById(R.id.mgrs_code);
-		mgrsGzdTextView = (TextView) mgrsBottomSheet.findViewById(R.id.mgrs_gzd_zone);
-		mgrs100dKmTextView = (TextView) mgrsBottomSheet.findViewById(R.id.mgrs_grid_zone);
-		mgrsEastingTextView = (TextView) mgrsBottomSheet.findViewById(R.id.mgrs_easting);
-		mgrsNorthingTextView = (TextView) mgrsBottomSheet.findViewById(R.id.mgrs_northing);
+		mgrsTextView = mgrsBottomSheet.findViewById(R.id.mgrs_code);
+		mgrsGzdTextView = mgrsBottomSheet.findViewById(R.id.mgrs_gzd_zone);
+		mgrs100dKmTextView = mgrsBottomSheet.findViewById(R.id.mgrs_grid_zone);
+		mgrsEastingTextView = mgrsBottomSheet.findViewById(R.id.mgrs_easting);
+		mgrsNorthingTextView = mgrsBottomSheet.findViewById(R.id.mgrs_northing);
 
 		// Initialize the GeoPackage cache with a GeoPackage manager
 		GeoPackageManager geoPackageManager = GeoPackageFactory.getManager(getActivity().getApplicationContext());
 		geoPackageCache = new GeoPackageCache(geoPackageManager);
 
-		return mapWrapper;
+		return view;
+	}
+
+	@Override
+	public void onChanged(@Nullable Location location) {
+		Log.i(LOG_NAME, "Got a location");
+
+		if (isBetterLocation(location, this.location)) {
+			this.location = location;
+
+			if (locationChangedListener != null) {
+				locationChangedListener.onLocationChanged(location);
+			}
+
+			if (locateState == LocateState.FOLLOW) {
+				CameraPosition cameraPosition = new CameraPosition.Builder()
+						.target(new LatLng(location.getLatitude(), location.getLongitude()))
+						.zoom(17)
+						.bearing(location.getBearing())
+						.build();
+
+				map.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
+			}
+		}
 	}
 
 	@Override
@@ -363,13 +399,14 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 			map.setOnMapClickListener(this);
 			map.setOnMarkerClickListener(this);
 			map.setOnMapLongClickListener(this);
-			map.setOnMyLocationButtonClickListener(this);
 			map.setOnInfoWindowClickListener(this);
 			map.setOnCameraIdleListener(this);
+			map.setOnCameraMoveStartedListener(this);
+			map.setOnCameraMoveListener(this);
 
-			observations = new ObservationMarkerCollection(mage, map);
-			historicLocations = new MyHistoricalLocationMarkerCollection(mage, map);
-			locations = new LocationMarkerCollection(mage, map);
+			observations = new ObservationMarkerCollection(context, map);
+			historicLocations = new MyHistoricalLocationMarkerCollection(context, map);
+			locations = new LocationMarkerCollection(context, map);
 		}
 
 		int dayNightMode = getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK;
@@ -391,32 +428,49 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 			historicLocations.clear();
 		}
 
-		ObservationHelper.getInstance(mage).addListener(this);
-		LocationHelper.getInstance(mage).addListener(this);
-		StaticFeatureHelper.getInstance(mage).addListener(this);
-		UserHelper.getInstance(mage).addListener(this);
-		CacheProvider.getInstance(mage).registerCacheOverlayListener(this);
+		ObservationHelper.getInstance(context).addListener(this);
+		LocationHelper.getInstance(context).addListener(this);
+		StaticFeatureHelper.getInstance(context).addListener(this);
+		UserHelper.getInstance(context).addListener(this);
+		CacheProvider.getInstance(context).registerCacheOverlayListener(this);
 
 		zoomToLocationButton.setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				Location location = locationService.getLocation();
-				if (location != null) {
-					LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
-					CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(latLng, 18);
-					map.animateCamera(cameraUpdate);
+				locateState = locateState.next();
+
+				switch (locateState) {
+					case OFF:
+						zoomToLocationButton.setSelected(false);
+						resetMapBearing();
+						break;
+					case FOLLOW:
+						zoomToLocationButton.setSelected(true);
+
+                        Location location = locationProvider.getValue();
+						if (location != null) {
+							CameraPosition cameraPosition = new CameraPosition.Builder()
+									.target(new LatLng(location.getLatitude(), location.getLongitude()))
+									.zoom(17)
+									.bearing(45)
+									.build();
+
+							map.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
+						}
+
+						break;
 				}
 			}
 		});
 
-		ObservationLoadTask observationLoad = new ObservationLoadTask(mage, observations);
+		ObservationLoadTask observationLoad = new ObservationLoadTask(context, observations);
 		observationLoad.addFilter(getTemporalFilter("timestamp", getTimeFilterId(), OBSERVATION_FILTER_TYPE));
 		observationLoad.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
 
-		HistoricLocationLoadTask myHistoricLocationLoad = new HistoricLocationLoadTask(mage, historicLocations);
+		HistoricLocationLoadTask myHistoricLocationLoad = new HistoricLocationLoadTask(context, historicLocations);
 		myHistoricLocationLoad.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
 
-		LocationLoadTask locationLoad = new LocationLoadTask(mage, locations);
+		LocationLoadTask locationLoad = new LocationLoadTask(context, locations);
 		locationLoad.setFilter(getTemporalFilter("timestamp", getLocationTimeFilterId(), LOCATION_FILTER_TYPE));
 		locationLoad.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
 
@@ -429,10 +483,9 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 		historicLocations.setVisibility(preferences.getBoolean(getResources().getString(R.string.showMyLocationHistoryKey), false));
 
 		// Check if any map preferences changed that I care about
-		if (ContextCompat.checkSelfPermission(mage, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+		if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
 			map.setMyLocationEnabled(true);
 			map.setLocationSource(this);
-			locationService.registerOnLocationListener(this);
 		} else {
 			map.setMyLocationEnabled(false);
 			map.setLocationSource(null);
@@ -448,14 +501,78 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 		((AppCompatActivity) getActivity()).getSupportActionBar().setSubtitle(getFilterTitle());
 	}
 
-	private void initializePeriodicTasks() {
-		refreshObservationsTask = new RefreshMarkersRunnable(observations, "timestamp", OBSERVATION_FILTER_TYPE, R.string.activeTimeFilterKey, OBSERVATION_REFRESH_INTERVAL_SECONDS);
-		refreshLocationsTask = new RefreshMarkersRunnable(locations, "timestamp", LOCATION_FILTER_TYPE, R.string.activeLocationTimeFilterKey, MARKER_REFRESH_INTERVAL_SECONDS);
-		refreshHistoricLocationsTask = new RefreshMarkersRunnable(historicLocations, "timestamp", LOCATION_FILTER_TYPE, R.string.activeLocationTimeFilterKey, MARKER_REFRESH_INTERVAL_SECONDS);
+	private void resetMapBearing() {
+		if (map == null) return;
 
-		scheduleMarkerRefresh(refreshObservationsTask);
-		scheduleMarkerRefresh(refreshLocationsTask);
-		scheduleMarkerRefresh(refreshHistoricLocationsTask);
+		CameraPosition cameraPosition = new CameraPosition.Builder(map.getCameraPosition())
+				.bearing(0)
+				.build();
+
+		map.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
+	}
+
+	private boolean isBetterLocation(Location location, Location currentBestLocation) {
+
+		if (currentBestLocation == null) {
+			// A new location is always better than no location
+			return true;
+		}
+
+		// Check whether the new location fix is newer or older
+		long timeDelta = location.getTime() - currentBestLocation.getTime();
+		boolean isSignificantlyNewer = timeDelta > LOCATION_STALE_INTERVAL;
+		boolean isSignificantlyOlder = timeDelta < - LOCATION_STALE_INTERVAL;
+		boolean isNewer = timeDelta > 0;
+
+		// If it's been more than two minutes since the current location, use the new location because the user has likely moved
+		if (isSignificantlyNewer) {
+			return true;
+			// If the new location is more than two minutes older, it must be worse
+		} else if (isSignificantlyOlder) {
+			return false;
+		}
+
+		// Check whether the new location fix is more or less accurate
+		int accuracyDelta = (int) (location.getAccuracy() - currentBestLocation.getAccuracy());
+		boolean isLessAccurate = accuracyDelta > 0;
+		boolean isMoreAccurate = accuracyDelta < 0;
+		boolean isSignificantlyLessAccurate = accuracyDelta > 200;
+
+		// Determine location quality using a combination of timeliness and accuracy
+		if (isMoreAccurate) {
+			return true;
+		} else if (isNewer && !isLessAccurate) {
+			return true;
+		} else if (isNewer && !isSignificantlyLessAccurate && isSameGPSProvider(location.getProvider(), currentBestLocation.getProvider())) {
+			return true;
+		}
+
+		return false;
+	}
+
+	private boolean isSameGPSProvider(String provider1, String provider2) {
+		if (provider1 == null) {
+			return provider2 == null;
+		}
+
+		return provider1.equals(provider2);
+	}
+
+	private void initializePeriodicTasks() {
+		if (refreshObservationsTask == null) {
+			refreshObservationsTask = new RefreshMarkersRunnable(observations, "timestamp", OBSERVATION_FILTER_TYPE, R.string.activeTimeFilterKey, OBSERVATION_REFRESH_INTERVAL_SECONDS);
+			scheduleMarkerRefresh(refreshObservationsTask);
+		}
+
+		if (refreshLocationsTask == null) {
+			refreshLocationsTask = new RefreshMarkersRunnable(locations, "timestamp", LOCATION_FILTER_TYPE, R.string.activeLocationTimeFilterKey, MARKER_REFRESH_INTERVAL_SECONDS);
+			scheduleMarkerRefresh(refreshLocationsTask);
+		}
+
+		if (refreshHistoricLocationsTask == null) {
+			refreshHistoricLocationsTask = new RefreshMarkersRunnable(historicLocations, "timestamp", LOCATION_FILTER_TYPE, R.string.activeLocationTimeFilterKey, MARKER_REFRESH_INTERVAL_SECONDS);
+			scheduleMarkerRefresh(refreshHistoricLocationsTask);
+		}
 	}
 
 	private void stopPeriodicTasks() {
@@ -488,7 +605,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 
         // Don't wait for map to show up to init these values, otherwise bottomsheet will jitter
         showMgrs = preferences.getBoolean(getResources().getString(R.string.showMGRSKey), false);
-        mgrsBottomSheetBehavior.setHideable(showMgrs ? false : true);
+        mgrsBottomSheetBehavior.setHideable(!showMgrs);
         mgrsBottomSheetBehavior.setState(showMgrs ? BottomSheetBehavior.STATE_COLLAPSED : BottomSheetBehavior.STATE_HIDDEN);
 
 		if (map == null) {
@@ -546,10 +663,10 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 		
 		mapView.onPause();
 
-		ObservationHelper.getInstance(mage).removeListener(this);
-		LocationHelper.getInstance(mage).removeListener(this);
-		StaticFeatureHelper.getInstance(mage).removeListener(this);
-		UserHelper.getInstance(mage).removeListener(this);
+		ObservationHelper.getInstance(context).removeListener(this);
+		LocationHelper.getInstance(context).removeListener(this);
+		StaticFeatureHelper.getInstance(context).removeListener(this);
+		UserHelper.getInstance(context).removeListener(this);
 
 		if (observations != null) {
 			observations.clear();
@@ -566,9 +683,6 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 			saveMapView();
 
 			map.setLocationSource(null);
-			if (locationService != null) {
-				locationService.unregisterOnLocationListener(this);
-			}
 
 			if (mgrsTileOverlay != null) {
 				mgrsTileOverlay.remove();
@@ -594,7 +708,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 		ObservationLocation location = null;
 
 		// if there is not a location from the location service, then try to pull one from the database.
-		if (locationService.getLocation() == null) {
+		if (locationProvider.getValue() == null) {
 			List<mil.nga.giat.mage.sdk.datastore.location.Location> tLocations = LocationHelper.getInstance(getActivity().getApplicationContext()).getCurrentUserLocations(1, true);
 			if (!tLocations.isEmpty()) {
 				mil.nga.giat.mage.sdk.datastore.location.Location tLocation = tLocations.get(0);
@@ -611,7 +725,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 				}
 			}
 		} else {
-			location = new ObservationLocation(locationService.getLocation());
+			location = new ObservationLocation(locationProvider.getValue());
 		}
 
 		if (!UserHelper.getInstance(getActivity().getApplicationContext()).isCurrentUserPartOfCurrentEvent()) {
@@ -645,7 +759,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 	}
 
 	@Override
-	public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
+	public void onRequestPermissionsResult(int requestCode, @NonNull String permissions[], @NonNull int[] grantResults) {
 		switch (requestCode) {
 			case PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION: {
 				// If request is cancelled, the result arrays are empty.
@@ -678,7 +792,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 	@Override
 	public void onObservationDeleted(Observation o) {
 		if (observations != null) {
-			new ObservationTask(mage, ObservationTask.Type.DELETE, observations).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, o);
+			new ObservationTask(context, ObservationTask.Type.DELETE, observations).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, o);
 		}
 	}
 
@@ -693,7 +807,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 				}
 			} else {
 				if (historicLocations != null) {
-					new LocationTask(mage, LocationTask.Type.ADD, historicLocations).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, l);
+					new LocationTask(context, LocationTask.Type.ADD, historicLocations).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, l);
 				}
 			}
 		}
@@ -709,7 +823,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 			}
 		} else {
 			if (historicLocations != null) {
-				new LocationTask(mage, LocationTask.Type.UPDATE, historicLocations).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, l);
+				new LocationTask(context, LocationTask.Type.UPDATE, historicLocations).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, l);
 			}
 		}
 	}
@@ -758,7 +872,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 	public void onInfoWindowClick(Marker marker) {
 		Observation observation = observations.pointForMarker(marker);
 		if (observation != null) {
-			Intent intent = new Intent(mage, ObservationViewActivity.class);
+			Intent intent = new Intent(context, ObservationViewActivity.class);
 			intent.putExtra(ObservationViewActivity.OBSERVATION_ID, observation.getId());
 			intent.putExtra(ObservationViewActivity.INITIAL_LOCATION, map.getCameraPosition().target);
 			intent.putExtra(ObservationViewActivity.INITIAL_ZOOM, map.getCameraPosition().zoom);
@@ -768,7 +882,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 
 		Pair<mil.nga.giat.mage.sdk.datastore.location.Location, User> pair = locations.pointForMarker(marker);
 		if (pair != null) {
-			Intent profileView = new Intent(mage, ProfileActivity.class);
+			Intent profileView = new Intent(context, ProfileActivity.class);
 			profileView.putExtra(ProfileActivity.USER_ID, pair.second.getRemoteId());
 			startActivity(profileView);
 			return;
@@ -903,53 +1017,60 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 	}
 
 	@Override
-	public boolean onMyLocationButtonClick() {
-		if (location != null) {
-			LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
-			float zoom = map.getCameraPosition().zoom < 15 ? 15 : map.getCameraPosition().zoom;
-			map.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, zoom), new CancelableCallback() {
-
-				@Override
-				public void onCancel() {
-					mapWrapper.setOnMapPanListener(MapFragment.this);
-					followMe = true;
-				}
-
-				@Override
-				public void onFinish() {
-					mapWrapper.setOnMapPanListener(MapFragment.this);
-					followMe = true;
-				}
-			});
-		}
-		return true;
-	}
-
-	@Override
 	public void activate(OnLocationChangedListener listener) {
 		Log.i(LOG_NAME, "map location, activate");
+
 		locationChangedListener = listener;
 		if (location != null) {
 			Log.i(LOG_NAME, "map location, activate we have a location, let our listener know");
 			locationChangedListener.onLocationChanged(location);
 		}
+
+		locationProvider.observe(this, this);
 	}
 
 	@Override
 	public void deactivate() {
 		Log.i(LOG_NAME, "map location, deactivate");
-		locationChangedListener = null;
-	}
 
-	@Override
-	public void onMapPan() {
-		mapWrapper.setOnMapPanListener(null);
-		followMe = false;
+		locationProvider.removeObserver(this);
+		locationChangedListener = null;
 	}
 
 	@Override
 	public void onCameraIdle() {
 		setMgrsCode();
+	}
+
+	@Override
+	public void onCameraMoveStarted(int reason) {
+		if (reason == REASON_GESTURE) {
+			locateState = LocateState.OFF;
+			zoomToLocationButton.setSelected(false);
+			resetMapBearing();
+		}
+	}
+
+	@Override
+	public void onCameraMove() {
+		float bearing = map.getCameraPosition().bearing;
+		if (bearing != 0) {
+			compassButton.animate().alpha(1f).setDuration(0).setListener(null);
+			compassButton.hide();
+			compassButton.setVisibility(View.VISIBLE);
+			compassButton.setRotation(bearing);
+		} else {
+			compassButton
+				.animate()
+				.alpha(0f)
+				.setDuration(500)
+				.setListener(new AnimatorListenerAdapter() {
+					@Override
+					public void onAnimationEnd(Animator animation) {
+						compassButton.setVisibility(View.INVISIBLE);
+					}
+			});
+		}
 	}
 
 	private void setMgrsCode() {
@@ -963,36 +1084,6 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 			mgrsEastingTextView.setText(String.format(Locale.getDefault(),"%05d", mgrs.getEasting()));
 			mgrsNorthingTextView.setText(String.format(Locale.getDefault(),"%05d", mgrs.getNorthing()));
 		}
-	}
-
-	@Override
-	public void onLocationChanged(Location location) {
-		this.location = location;
-		Log.d(LOG_NAME, "Map location updated.");
-		if (locationChangedListener != null) {
-			locationChangedListener.onLocationChanged(location);
-		}
-
-		if (followMe) {
-			LatLngBounds bounds = map.getProjection().getVisibleRegion().latLngBounds;
-			LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
-			if (!bounds.contains(latLng)) {
-				// Move the camera to the user's location once it's available!
-				map.animateCamera(CameraUpdateFactory.newLatLng(latLng));
-			}
-		}
-	}
-
-	@Override
-	public void onStatusChanged(String provider, int status, Bundle extras) {
-	}
-
-	@Override
-	public void onProviderEnabled(String provider) {
-	}
-
-	@Override
-	public void onProviderDisabled(String provider) {
 	}
 
 	@Override

@@ -12,8 +12,6 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
-import android.graphics.Bitmap;
-import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Build;
@@ -21,13 +19,11 @@ import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.provider.MediaStore;
 import android.provider.Settings;
+import android.support.annotation.Nullable;
 import android.support.design.widget.BottomSheetDialog;
 import android.support.v13.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.FileProvider;
-import android.support.v4.graphics.drawable.DrawableCompat;
-import android.support.v4.graphics.drawable.RoundedBitmapDrawable;
-import android.support.v4.graphics.drawable.RoundedBitmapDrawableFactory;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.text.SpannableString;
@@ -40,8 +36,10 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.bumptech.glide.Glide;
-import com.bumptech.glide.request.target.BitmapImageViewTarget;
+import com.bumptech.glide.load.DataSource;
+import com.bumptech.glide.load.engine.GlideException;
+import com.bumptech.glide.request.RequestListener;
+import com.bumptech.glide.request.target.Target;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapView;
@@ -62,10 +60,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.inject.Inject;
+
+import dagger.android.support.DaggerAppCompatActivity;
 import mil.nga.giat.mage.BuildConfig;
-import mil.nga.giat.mage.MAGE;
+import mil.nga.giat.mage.MageApplication;
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.coordinate.CoordinateFormatter;
+import mil.nga.giat.mage.glide.GlideApp;
 import mil.nga.giat.mage.login.LoginActivity;
 import mil.nga.giat.mage.map.marker.LocationBitmapFactory;
 import mil.nga.giat.mage.sdk.datastore.location.Location;
@@ -82,7 +84,7 @@ import mil.nga.giat.mage.sdk.utils.MediaUtility;
 import mil.nga.wkb.geom.Point;
 import mil.nga.wkb.util.GeometryUtils;
 
-public class ProfileActivity extends AppCompatActivity implements OnMapReadyCallback {
+public class ProfileActivity extends DaggerAppCompatActivity implements OnMapReadyCallback {
 
 	private static final String LOG_NAME = ProfileActivity.class.getName();
 
@@ -94,6 +96,12 @@ public class ProfileActivity extends AppCompatActivity implements OnMapReadyCall
 	private static final int PERMISSIONS_REQUEST_STORAGE = 400;
 
 	public static String USER_ID = "USER_ID";
+
+	@Inject
+	MageApplication application;
+
+	@Inject
+	SharedPreferences preferences;
 
 	private String currentMediaPath;
 	private User user;
@@ -168,7 +176,7 @@ public class ProfileActivity extends AppCompatActivity implements OnMapReadyCall
 
 		MapsInitializer.initialize(context);
 
-		mapView = (MapView) findViewById(R.id.mapView);
+		mapView = findViewById(R.id.mapView);
 		mapView.onCreate(savedInstanceState);
 		mapView.getMapAsync(this);
 
@@ -176,10 +184,10 @@ public class ProfileActivity extends AppCompatActivity implements OnMapReadyCall
 
 		getSupportActionBar().setTitle(isCurrentUser ? "My Profile" : displayName);
 
-		final TextView name = (TextView) findViewById(R.id.display_name);
+		final TextView name = findViewById(R.id.display_name);
 		name.setText(displayName);
 
-		phone = (TextView) findViewById(R.id.phone);
+		phone = findViewById(R.id.phone);
 		View phoneLayout = findViewById(R.id.phone_layout);
 		phoneLayout.setOnLongClickListener(new View.OnLongClickListener() {
 			@Override
@@ -197,7 +205,7 @@ public class ProfileActivity extends AppCompatActivity implements OnMapReadyCall
 			phoneLayout.setVisibility(View.GONE);
 		}
 
-		email = (TextView) findViewById(R.id.email);
+		email = findViewById(R.id.email);
 		View emailLayout = findViewById(R.id.email_layout);
 		emailLayout.setOnLongClickListener(new View.OnLongClickListener() {
 			@Override
@@ -234,33 +242,27 @@ public class ProfileActivity extends AppCompatActivity implements OnMapReadyCall
 			locationLayout.setVisibility(View.GONE);
 		}
 
-		final ImageView imageView = (ImageView) findViewById(R.id.avatar);
+		final ImageView imageView = findViewById(R.id.avatar);
 		String avatarUrl = user.getAvatarUrl();
 		String localAvatarPath = user.getUserLocal().getLocalAvatarPath();
 
-		Drawable defaultPersonIcon = DrawableCompat.wrap(ContextCompat.getDrawable(context, R.drawable.ic_person_white_48dp));
-		DrawableCompat.setTint(defaultPersonIcon, ContextCompat.getColor(context, R.color.icon));
-		DrawableCompat.setTintMode(defaultPersonIcon, PorterDuff.Mode.SRC_ATOP);
-		imageView.setImageDrawable(defaultPersonIcon);
-
 		if (StringUtils.isNotBlank(localAvatarPath)) {
-			Glide.with(context)
+			GlideApp.with(context)
 					.load(localAvatarPath)
-					.asBitmap()
-					.centerCrop()
-					.into(new BitmapImageViewTarget(imageView) {
+					.circleCrop()
+					.addListener(new RequestListener<Drawable>() {
 						@Override
-						protected void setResource(Bitmap resource) {
-							RoundedBitmapDrawable circularBitmapDrawable = RoundedBitmapDrawableFactory.create(context.getResources(), resource);
-							circularBitmapDrawable.setCircular(true);
-							imageView.setImageDrawable(circularBitmapDrawable);
+						public boolean onLoadFailed(@Nullable GlideException e, Object model, Target<Drawable> target, boolean isFirstResource) {
+							downloadAvatar(context, imageView);
+							return true;
 						}
 
 						@Override
-						public void onLoadFailed(Exception e, Drawable errorDrawable) {
-							downloadAvatar(context, imageView);
+						public boolean onResourceReady(Drawable resource, Object model, Target<Drawable> target, DataSource dataSource, boolean isFirstResource) {
+							return true;
 						}
-					});
+					})
+					.into(imageView);
 		} else {
 			if (avatarUrl != null) {
 				downloadAvatar(context, imageView);
@@ -376,7 +378,7 @@ public class ProfileActivity extends AppCompatActivity implements OnMapReadyCall
 	}
 
 	private void logout() {
-		((MAGE) getApplication()).onLogout(true, null);
+		application.onLogout(true, null);
 		Intent intent = new Intent(ProfileActivity.this, LoginActivity.class);
 		intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
 		startActivity(intent);
@@ -391,19 +393,12 @@ public class ProfileActivity extends AppCompatActivity implements OnMapReadyCall
 					user = UserHelper.getInstance(context).read(user.getId());
 					UserLocal userLocal = user.getUserLocal();
 					if (userLocal.getLocalAvatarPath() != null) {
-						Glide.with(context)
-								.load(userLocal.getLocalAvatarPath())
+						GlideApp.with(context)
 								.asBitmap()
+								.load(userLocal.getLocalAvatarPath())
 								.fallback(R.drawable.ic_person_gray_48dp)
-								.centerCrop()
-								.into(new BitmapImageViewTarget(imageView) {
-									@Override
-									protected void setResource(Bitmap resource) {
-										RoundedBitmapDrawable circularBitmapDrawable = RoundedBitmapDrawableFactory.create(context.getResources(), resource);
-										circularBitmapDrawable.setCircular(true);
-										imageView.setImageDrawable(circularBitmapDrawable);
-									}
-								});
+								.circleCrop()
+								.into(imageView);
 					}
 				} catch (UserException e) {
 				}
@@ -575,21 +570,14 @@ public class ProfileActivity extends AppCompatActivity implements OnMapReadyCall
 
 		if (filePath != null) {
 			final Context context = getApplicationContext();
-			final ImageView iv = (ImageView) findViewById(R.id.avatar);
-			Glide.with(context).load(filePath).centerCrop().into(iv);
-			Glide.with(context)
-					.load(filePath)
+			final ImageView iv = findViewById(R.id.avatar);
+			GlideApp.with(context).load(filePath).centerCrop().into(iv);
+			GlideApp.with(context)
 					.asBitmap()
+					.load(filePath)
 					.fallback(R.id.avatar)
-					.centerCrop()
-					.into(new BitmapImageViewTarget(iv) {
-						@Override
-						protected void setResource(Bitmap resource) {
-							RoundedBitmapDrawable circularBitmapDrawable = RoundedBitmapDrawableFactory.create(context.getResources(), resource);
-							circularBitmapDrawable.setCircular(true);
-							iv.setImageDrawable(circularBitmapDrawable);
-						}
-					});
+					.circleCrop()
+					.into(iv);
 
 			try {
 				UserHelper.getInstance(context).setAvatarPath(user, filePath);
@@ -623,9 +611,9 @@ public class ProfileActivity extends AppCompatActivity implements OnMapReadyCall
 	private void onLocationLongCLick(final View view) {
 		String[] items = {"Go to location", "Copy to clipboard"};
 		View titleView = getLayoutInflater().inflate(R.layout.alert_primary_title, null);
-		TextView title = (TextView) titleView.findViewById(R.id.alertTitle);
+		TextView title = titleView.findViewById(R.id.alertTitle);
 		title.setText(coordinate);
-		ImageView icon = (ImageView) titleView.findViewById(R.id.icon);
+		ImageView icon = titleView.findViewById(R.id.icon);
 		icon.setImageResource(R.drawable.ic_place_white_24dp);
 
 		AlertDialog dialog = new AlertDialog.Builder(this)
@@ -698,9 +686,9 @@ public class ProfileActivity extends AppCompatActivity implements OnMapReadyCall
 	private void onEmailLongCLick(final View view) {
 		String[] items = {"Email", "Copy to clipboard"};
 		View titleView = getLayoutInflater().inflate(R.layout.alert_primary_title, null);
-		TextView title = (TextView) titleView.findViewById(R.id.alertTitle);
+		TextView title = titleView.findViewById(R.id.alertTitle);
 		title.setText(user.getEmail());
-		ImageView icon = (ImageView) titleView.findViewById(R.id.icon);
+		ImageView icon = titleView.findViewById(R.id.icon);
 		icon.setImageResource(R.drawable.ic_email_white_24dp);
 
 		AlertDialog dialog = new AlertDialog.Builder(this)

@@ -12,12 +12,13 @@
         android:key="@string/gpsPreferencesCategoryKey">
 
         <mil.nga.giat.mage.sdk.preferences.IntegerListPreference
-            android:defaultValue="@integer/userReportingFrequencyDefaultValue"
-            android:entries="@array/userReportingFrequencies"
-            android:entryValues="@array/userReportingFrequencyValues"
-            android:key="@string/userReportingFrequencyKey"
-            android:summary="%s \n\nMinimum time interval between location updates. Smaller intervals will report your location more often regardless of distance moved."
-            android:title="GPS Time Interval"/>
+            android:defaultValue="@integer/locationPushFrequencyDefaultValue"
+            android:entries="@array/locationPushFrequencies"
+            android:entryValues="@array/locationPushFrequencyValues"
+            android:key="@string/locationPushFrequencyKey"
+            android:summary="%s \n\nMinimum time interval between location reports to the server. Smaller intervals will report your location to the server more often at the cost of battery drain."
+            android:title="Push Interval"/>
+
         <mil.nga.giat.mage.sdk.preferences.IntegerListPreference
             android:defaultValue="@integer/gpsSensitivityDefaultValue"
             android:entries="@array/gpsSensitivities"
@@ -25,19 +26,13 @@
             android:key="@string/gpsSensitivityKey"
             android:summary="%s \n\nMinimum distance between location updates. Smaller distances will give a more precise location at the cost of battery drain."
             android:title="GPS Distance Sensitivity"/>
+
     </PreferenceCategory>
 
     <PreferenceCategory android:title="SERVER PUSH INTERVAL"
         android:key="@string/locationsPushPreferencesCategoryKey">
 
-    <!-- How often to push locations? -->
-        <mil.nga.giat.mage.sdk.preferences.IntegerListPreference
-            android:defaultValue="@integer/locationPushFrequencyDefaultValue"
-            android:entries="@array/locationPushFrequencies"
-            android:entryValues="@array/locationPushFrequencyValues"
-            android:key="@string/locationPushFrequencyKey"
-            android:summary="%s \n\nHow often your locations get reported to the server."
-            android:title="Push Interval"/>
+
     </PreferenceCategory>
 
 </PreferenceScreen>

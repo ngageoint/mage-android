@@ -60,10 +60,11 @@ import mil.nga.giat.mage.sdk.gson.deserializer.LayerDeserializer;
 import mil.nga.giat.mage.sdk.http.HttpClientManager;
 import mil.nga.giat.mage.sdk.http.resource.LayerResource;
 import mil.nga.giat.mage.sdk.utils.StorageUtility;
-import retrofit.Callback;
-import retrofit.GsonConverterFactory;
-import retrofit.Response;
-import retrofit.Retrofit;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+import retrofit2.Retrofit;
+import retrofit2.converter.gson.GsonConverterFactory;
 
 public class TileOverlayPreferenceActivity extends AppCompatActivity {
 
@@ -205,15 +206,15 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
 
             fetchGeopackageLayers(new Callback<Collection<Layer>>() {
                 @Override
-                public void onResponse(Response<Collection<Layer>> response, Retrofit retrofit) {
-                    if (response.isSuccess()) {
+                public void onResponse(Call<Collection<Layer>> call, Response<Collection<Layer>> response) {
+                    if (response.isSuccessful()) {
                         saveGeopackageLayers(response.body());
                         CacheProvider.getInstance(getActivity()).refreshTileOverlays();
                     }
                 }
 
                 @Override
-                public void onFailure(Throwable t) {
+                public void onFailure(Call<Collection<Layer>> call, Throwable t) {
                     Log.e(LOG_NAME, "Error fetching event geopackage layers", t);
                 }
             });

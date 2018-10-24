@@ -4,7 +4,6 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
-import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
@@ -12,12 +11,18 @@ import android.widget.TextView;
 
 import org.apache.commons.lang3.StringUtils;
 
-import mil.nga.giat.mage.MAGE;
+import javax.inject.Inject;
+
+import dagger.android.support.DaggerAppCompatActivity;
+import mil.nga.giat.mage.MageApplication;
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.event.EventActivity;
 import mil.nga.giat.mage.login.LoginActivity;
 
-public class DisclaimerActivity extends AppCompatActivity {
+public class DisclaimerActivity extends DaggerAppCompatActivity {
+
+	@Inject
+	protected MageApplication application;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -37,7 +42,7 @@ public class DisclaimerActivity extends AppCompatActivity {
 		if(disclaimerText == null) {
 			disclaimerText = "";
 		}
-		sharedPreferences.edit().putString(getString(R.string.disclaimerText), disclaimerText).commit();
+		sharedPreferences.edit().putString(getString(R.string.disclaimerText), disclaimerText).apply();
 
 		if (StringUtils.isBlank(sharedPreferences.getString(getString(R.string.disclaimerText), null))) {
 			agree(null);
@@ -55,7 +60,7 @@ public class DisclaimerActivity extends AppCompatActivity {
 
 	public void agree(View view) {
 		SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-		sharedPreferences.edit().putBoolean(getString(R.string.disclaimerAcceptedKey), true).commit();
+		sharedPreferences.edit().putBoolean(getString(R.string.disclaimerAcceptedKey), true).apply();
 
 		Intent intent = new Intent(getApplicationContext(), EventActivity.class);
 		Bundle extras = getIntent().getExtras();
@@ -67,7 +72,7 @@ public class DisclaimerActivity extends AppCompatActivity {
 	}
 
 	public void exit(View view) {
-		((MAGE) getApplication()).onLogout(true, new MAGE.OnLogoutListener() {
+		application.onLogout(true, new MageApplication.OnLogoutListener() {
 			@Override
 			public void onLogout() {
 				startActivity(new Intent(getApplicationContext(), LoginActivity.class));
