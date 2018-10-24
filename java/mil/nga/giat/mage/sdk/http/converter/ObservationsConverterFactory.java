@@ -1,14 +1,14 @@
 package mil.nga.giat.mage.sdk.http.converter;
 
-import com.squareup.okhttp.ResponseBody;
-
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
 import java.util.Collection;
 
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.datastore.user.Event;
-import retrofit.Converter;
+import okhttp3.ResponseBody;
+import retrofit2.Converter;
+import retrofit2.Retrofit;
 
 /**
  * Retrofit converter factory for observations
@@ -29,7 +29,7 @@ public final class ObservationsConverterFactory extends Converter.Factory {
     }
 
     @Override
-    public Converter<ResponseBody, Collection<Observation>> fromResponseBody(Type type, Annotation[] annotations) {
+    public Converter<ResponseBody, Collection<Observation>> responseBodyConverter(Type type, Annotation[] annotations, Retrofit retrofit) {
         return new ObservationsResponseBodyConverter(event);
     }
 }

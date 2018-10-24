@@ -1,14 +1,13 @@
 package mil.nga.giat.mage.sdk.http.converter;
 
-import com.squareup.okhttp.ResponseBody;
-
 import java.io.IOException;
 import java.util.List;
 
 import mil.nga.giat.mage.sdk.datastore.location.Location;
 import mil.nga.giat.mage.sdk.datastore.user.Event;
 import mil.nga.giat.mage.sdk.jackson.deserializer.LocationDeserializer;
-import retrofit.Converter;
+import okhttp3.ResponseBody;
+import retrofit2.Converter;
 
 /**
  * Retrofit location response body converter

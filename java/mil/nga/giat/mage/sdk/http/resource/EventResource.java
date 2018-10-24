@@ -16,12 +16,12 @@ import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.gson.deserializer.EventsDeserializer;
 import mil.nga.giat.mage.sdk.gson.deserializer.TeamsDeserializer;
 import mil.nga.giat.mage.sdk.http.HttpClientManager;
-import retrofit.Call;
-import retrofit.GsonConverterFactory;
-import retrofit.Response;
-import retrofit.Retrofit;
-import retrofit.http.GET;
-import retrofit.http.Path;
+import retrofit2.Call;
+import retrofit2.Response;
+import retrofit2.Retrofit;
+import retrofit2.converter.gson.GsonConverterFactory;
+import retrofit2.http.GET;
+import retrofit2.http.Path;
 
 /***
  * RESTful communication for events
@@ -60,7 +60,7 @@ public class EventResource {
         EventService service = retrofit.create(EventService.class);
         Response<Map<Event, Collection<Team>>> response = service.getEvents().execute();
 
-        if (response.isSuccess()) {
+        if (response.isSuccessful()) {
             events = response.body();
         } else {
             Log.e(LOG_NAME, "Bad request.");
@@ -85,7 +85,7 @@ public class EventResource {
         EventService service = retrofit.create(EventService.class);
         Response<Map<Team, Collection<User>>> response = service.getTeams(eventId).execute();
 
-        if (response.isSuccess()) {
+        if (response.isSuccessful()) {
             teams = response.body();
         } else {
             Log.e(LOG_NAME, "Bad request.");

@@ -37,9 +37,9 @@ import mil.nga.giat.mage.sdk.http.resource.EventResource;
 import mil.nga.giat.mage.sdk.http.resource.LayerResource;
 import mil.nga.giat.mage.sdk.http.resource.ObservationResource;
 import mil.nga.giat.mage.sdk.utils.ZipUtility;
-import retrofit.GsonConverterFactory;
-import retrofit.Response;
-import retrofit.Retrofit;
+import retrofit2.Response;
+import retrofit2.Retrofit;
+import retrofit2.converter.gson.GsonConverterFactory;
 
 /**
  * Created by wnewman on 2/21/18.
@@ -242,7 +242,7 @@ public class EventServerFetch extends AsyncTask<Void, Void, Exception> {
         LayerResource.LayerService service = retrofit.create(LayerResource.LayerService.class);
         try {
             Response<Collection<Layer>> response = service.getLayers(event.getRemoteId(), "GeoPackage").execute();
-            if (response.isSuccess()) {
+            if (response.isSuccessful()) {
                 layers = response.body();
             } else {
                 Log.e(LOG_NAME, "Bad request.");

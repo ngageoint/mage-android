@@ -1,12 +1,11 @@
 package mil.nga.giat.mage.sdk.http.converter;
 
-import com.squareup.okhttp.ResponseBody;
-
 import java.io.IOException;
 
 import mil.nga.giat.mage.sdk.datastore.observation.Attachment;
 import mil.nga.giat.mage.sdk.jackson.deserializer.AttachmentDeserializer;
-import retrofit.Converter;
+import okhttp3.ResponseBody;
+import retrofit2.Converter;
 
 /**
  * Retrofit attachment response body converter

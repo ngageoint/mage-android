@@ -1,14 +1,13 @@
 package mil.nga.giat.mage.sdk.http.converter;
 
-import com.squareup.okhttp.ResponseBody;
-
 import java.io.IOException;
 import java.util.List;
 
 import mil.nga.giat.mage.sdk.datastore.layer.Layer;
 import mil.nga.giat.mage.sdk.datastore.staticfeature.StaticFeature;
 import mil.nga.giat.mage.sdk.jackson.deserializer.StaticFeatureDeserializer;
-import retrofit.Converter;
+import okhttp3.ResponseBody;
+import retrofit2.Converter;
 
 /**
  * Retrofit feature response body converter

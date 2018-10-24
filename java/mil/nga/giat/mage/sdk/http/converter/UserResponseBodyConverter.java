@@ -2,13 +2,12 @@ package mil.nga.giat.mage.sdk.http.converter;
 
 import android.content.Context;
 
-import com.squareup.okhttp.ResponseBody;
-
 import java.io.IOException;
 
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.jackson.deserializer.UserDeserializer;
-import retrofit.Converter;
+import okhttp3.ResponseBody;
+import retrofit2.Converter;
 
 /**
  * Retrofit location response body converter

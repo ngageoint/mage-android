@@ -7,10 +7,6 @@ import android.preference.PreferenceManager;
 import android.util.Log;
 
 import com.google.gson.JsonObject;
-import com.squareup.okhttp.MediaType;
-import com.squareup.okhttp.OkHttpClient;
-import com.squareup.okhttp.RequestBody;
-import com.squareup.okhttp.ResponseBody;
 
 import java.io.File;
 import java.io.IOException;
@@ -28,19 +24,23 @@ import mil.nga.giat.mage.sdk.http.HttpClientManager;
 import mil.nga.giat.mage.sdk.http.converter.UserConverterFactory;
 import mil.nga.giat.mage.sdk.http.converter.UsersConverterFactory;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
-import retrofit.Call;
-import retrofit.Callback;
-import retrofit.GsonConverterFactory;
-import retrofit.Response;
-import retrofit.Retrofit;
-import retrofit.http.Body;
-import retrofit.http.GET;
-import retrofit.http.Header;
-import retrofit.http.Multipart;
-import retrofit.http.POST;
-import retrofit.http.PUT;
-import retrofit.http.PartMap;
-import retrofit.http.Path;
+import okhttp3.MediaType;
+import okhttp3.OkHttpClient;
+import okhttp3.RequestBody;
+import okhttp3.ResponseBody;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+import retrofit2.Retrofit;
+import retrofit2.converter.gson.GsonConverterFactory;
+import retrofit2.http.Body;
+import retrofit2.http.GET;
+import retrofit2.http.Header;
+import retrofit2.http.Multipart;
+import retrofit2.http.POST;
+import retrofit2.http.PUT;
+import retrofit2.http.PartMap;
+import retrofit2.http.Path;
 
 /***
  * RESTful communication for users
@@ -153,7 +153,7 @@ public class UserResource {
             }
 
             Response<JsonObject> response = service.authorize(strategy, json).execute();
-            if (response.isSuccess()) {
+            if (response.isSuccessful()) {
                 body = response.body();
             } else {
                 Log.e(LOG_NAME, "Bad request.");
@@ -200,7 +200,7 @@ public class UserResource {
         UserService service = retrofit.create(UserService.class);
         Response<Collection<User>> response = service.getUsers().execute();
 
-        if (response.isSuccess()) {
+        if (response.isSuccessful()) {
             users = response.body();
         } else {
             Log.e(LOG_NAME, "Bad request.");
@@ -234,7 +234,7 @@ public class UserResource {
         UserService service = retrofit.create(UserService.class);
         Response<JsonObject> response = service.createUser(json).execute();
 
-        if (response.isSuccess()) {
+        if (response.isSuccessful()) {
             user = response.body();
         } else {
             String errorMessage = "Unable to create user account, please contact MAGE administrator.";
@@ -262,7 +262,7 @@ public class UserResource {
         UserService service = retrofit.create(UserService.class);
         Response<User> response = service.getUser(userId).execute();
 
-        if (response.isSuccess()) {
+        if (response.isSuccessful()) {
             user = response.body();
         } else {
             Log.e(LOG_NAME, "Bad request.");
@@ -286,7 +286,7 @@ public class UserResource {
         UserService service = retrofit.create(UserService.class);
         Response<ResponseBody> response = service.getIcon(user.getRemoteId()).execute();
 
-        if (response.isSuccess()) {
+        if (response.isSuccessful()) {
             inputStream = response.body().byteStream();
         } else {
             Log.e(LOG_NAME, "Bad request.");
@@ -310,7 +310,7 @@ public class UserResource {
         UserService service = retrofit.create(UserService.class);
         Response<ResponseBody> response = service.getAvatar(user.getRemoteId()).execute();
 
-        if (response.isSuccess()) {
+        if (response.isSuccessful()) {
             inputStream = response.body().byteStream();
         } else {
             Log.e(LOG_NAME, "Bad request.");
@@ -333,7 +333,7 @@ public class UserResource {
         UserService service = retrofit.create(UserService.class);
         Response<User> response = service.addRecentEvent(user.getRemoteId(), event.getRemoteId()).execute();
 
-        if (response.isSuccess()) {
+        if (response.isSuccessful()) {
             return response.body();
         } else {
             Log.e(LOG_NAME, "Bad request.");
@@ -365,7 +365,7 @@ public class UserResource {
 
             Response<User> response = service.createAvatar(parts).execute();
 
-            if (response.isSuccess()) {
+            if (response.isSuccessful()) {
                 User user = response.body();
 
                 UserHelper userHelper = UserHelper.getInstance(context);
@@ -394,7 +394,7 @@ public class UserResource {
     public void changePassword(String username, String password, String newPassword, String newPasswordConfirm, Callback<JsonObject> callback) {
         String baseUrl = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.serverURLKey), context.getString(R.string.serverURLDefaultValue));
 
-        OkHttpClient httpClient = HttpClientManager.getInstance(context).httpClient().clone();
+        OkHttpClient httpClient = HttpClientManager.getInstance(context).httpClient().newBuilder().build();
         httpClient.interceptors().clear();
 
         Retrofit retrofit = new Retrofit.Builder()

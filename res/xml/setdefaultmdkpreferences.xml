@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- This data is not fronted by a screen.  It is here to populate shared preferences by default -->
-<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" >
+<android.support.v7.preference.PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" >
 
     <!-- What type of auth to use FormAuthLoginTask or LocalAuthLoginTask? -->
     <EditTextPreference
@@ -22,4 +22,4 @@
         android:defaultValue="@bool/noServerCADefaultValue"
         android:key="@string/noServerCAKey" />
 
-</PreferenceScreen>
+</android.support.v7.preference.PreferenceScreen>

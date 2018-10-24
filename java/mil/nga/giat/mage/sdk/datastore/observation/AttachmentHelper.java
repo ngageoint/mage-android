@@ -1,34 +1,22 @@
 package mil.nga.giat.mage.sdk.datastore.observation;
 
 import android.content.Context;
-import android.content.SharedPreferences;
-import android.graphics.Bitmap;
-import android.graphics.Bitmap.CompressFormat;
-import android.graphics.BitmapFactory;
-import android.preference.PreferenceManager;
 import android.util.Log;
 
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.stmt.QueryBuilder;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.OutputStream;
 import java.security.SecureRandom;
 import java.sql.SQLException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Date;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-import mil.nga.giat.mage.sdk.R;
 import mil.nga.giat.mage.sdk.datastore.DaoHelper;
 import mil.nga.giat.mage.sdk.event.IAttachmentEventListener;
 import mil.nga.giat.mage.sdk.event.IEventDispatcher;
 import mil.nga.giat.mage.sdk.exceptions.ObservationException;
-import mil.nga.giat.mage.sdk.utils.MediaUtility;
 
 public class AttachmentHelper extends DaoHelper<Attachment> implements IEventDispatcher<IAttachmentEventListener> {
 
@@ -196,10 +184,15 @@ public class AttachmentHelper extends DaoHelper<Attachment> implements IEventDis
 	 * @return
 	 */
 	public List<Attachment> getDirtyAttachments() {
+		QueryBuilder<Attachment, Long> qb = attachmentDao.queryBuilder();
+
+
 		QueryBuilder<Attachment, Long> queryBuilder = attachmentDao.queryBuilder();
 		List<Attachment> attachments = new ArrayList<Attachment>();
 
 		try {
+			long count = qb.countOf();
+
 			queryBuilder.where().eq("dirty", true);
 			attachments = attachmentDao.query(queryBuilder.prepare());
 		} catch (SQLException e) {
@@ -207,66 +200,6 @@ public class AttachmentHelper extends DaoHelper<Attachment> implements IEventDis
 			Log.e(LOG_NAME, "Could not get dirty Attachments.");
 		}
 		return attachments;
-	}
-
-	/**
-	 * This method will attempt to correctly rotate and format an image in preparation for display or uploading.
-	 *
-	 * @param attachment
-	 */
-	public void stageForUpload(Attachment attachment) throws Exception {
-		SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(mApplicationContext);
-		Integer outImageSize = sharedPreferences.getInt(mApplicationContext.getString(R.string.imageUploadSizeKey), mApplicationContext.getResources().getInteger(R.integer.imageUploadSizeDefaultValue));
-
-		File file = new File(attachment.getLocalPath());
-		if (MediaUtility.isImage(file.getAbsolutePath())) {
-			// if not original image size
-			if (outImageSize > 0) {
-				File cacheDir = mApplicationContext.getCacheDir();
-
-				String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
-				String imageFileName = "MAGE_" + timeStamp;
-				File directory  = mApplicationContext.getExternalFilesDir("media");
-				File thumbnail =  File.createTempFile(
-						imageFileName,  /* prefix */
-						".jpg",         /* suffix */
-						directory      /* directory */
-				);
-
-				BitmapFactory.Options options = new BitmapFactory.Options();
-				options.inPreferredConfig = Bitmap.Config.RGB_565;
-				options.inSampleSize = 2;
-				Bitmap bitmap = BitmapFactory.decodeFile(file.getAbsolutePath(), options);
-
-				// Scale file
-				Integer inWidth = bitmap.getWidth();
-				Integer inHeight = bitmap.getHeight();
-
-				Integer outWidth = outImageSize;
-				Integer outHeight = outImageSize;
-
-				if (inWidth > inHeight) {
-					outWidth = outImageSize;
-					outHeight = ((Double) ((inHeight.doubleValue() / inWidth.doubleValue()) * outImageSize.doubleValue())).intValue();
-				} else if (inWidth < inHeight) {
-					outWidth = ((Double) ((inWidth.doubleValue() / inHeight.doubleValue()) * outImageSize.doubleValue())).intValue();
-					outHeight = outImageSize;
-				}
-				bitmap = Bitmap.createScaledBitmap(bitmap, outWidth, outHeight, true);
-
-				OutputStream out = new FileOutputStream(thumbnail);
-				bitmap.compress(CompressFormat.JPEG, 100, out);
-
-				out.flush();
-				out.close();
-				bitmap.recycle();
-				MediaUtility.copyExifData(file, thumbnail);
-
-				attachment.setLocalPath(thumbnail.getAbsolutePath());
-			}
-		}
-
-		AttachmentHelper.getInstance(mApplicationContext).uploadableAttachment(attachment);
 	}
 
 	@Override

@@ -50,11 +50,11 @@
 
     <!-- ABOUT -->
     <string name="serverURLKey">serverURL</string>
-    <string name="serverURLDefaultValue"></string>
+    <string name="serverURLDefaultValue"/>
 
     <string name="usernameKey">username</string>
     <string name="displayNameKey">displayName</string>
-    <string name="usernameDefaultValue"></string>
+    <string name="usernameDefaultValue"/>
 
     <!-- set programmatically-->
     <string name="buildVersionKey">buildVersion</string>
@@ -65,9 +65,6 @@
 
     <string name="reportLocationKey">reportLocation</string>
     <bool name="reportLocationDefaultValue">true</bool>
-
-    <string name="userReportingFrequencyKey">userReportingFrequency</string>
-    <integer name="userReportingFrequencyDefaultValue">300000</integer>
 
     <string name="gpsSensitivityKey">gpsSensitivity</string>
     <integer name="gpsSensitivityDefaultValue">10</integer>
@@ -104,8 +101,5 @@
     <string name="serverDisclaimerShow">gDisclaimerShow</string>
     <string name="serverDisclaimerTitle">gDisclaimerTitle</string>
     <string name="serverDisclaimerText">gDisclaimerText</string>
-
-    <string name="serverLocalAuthentication">gauthenticationStrategiesLocal</string>
-    <string name="serverGoogleAuthentication">gauthenticationStrategiesGoogle</string>
 
 </resources>

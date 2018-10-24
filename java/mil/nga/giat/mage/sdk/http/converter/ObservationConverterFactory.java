@@ -1,8 +1,6 @@
 package mil.nga.giat.mage.sdk.http.converter;
 
 import com.google.gson.Gson;
-import com.squareup.okhttp.RequestBody;
-import com.squareup.okhttp.ResponseBody;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
@@ -10,7 +8,10 @@ import java.lang.reflect.Type;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.datastore.user.Event;
 import mil.nga.giat.mage.sdk.gson.serializer.ObservationSerializer;
-import retrofit.Converter;
+import okhttp3.RequestBody;
+import okhttp3.ResponseBody;
+import retrofit2.Converter;
+import retrofit2.Retrofit;
 
 /**
  * Retrofit converter factory for an observation
@@ -33,12 +34,12 @@ public final class ObservationConverterFactory extends Converter.Factory {
     }
 
     @Override
-    public Converter<ResponseBody, Observation> fromResponseBody(Type type, Annotation[] annotations) {
+    public Converter<ResponseBody, Observation> responseBodyConverter(Type type, Annotation[] annotations, Retrofit retrofit) {
         return new ObservationResponseBodyConverter(event);
     }
 
     @Override
-    public Converter<Observation, RequestBody> toRequestBody(Type type, Annotation[] annotations) {
+    public Converter<Observation, RequestBody> requestBodyConverter(Type type, Annotation[] parameterAnnotations, Annotation[] methodAnnotations, Retrofit retrofit) {
         return new ObservationRequestBodyConverter(gson, type);
     }
 }

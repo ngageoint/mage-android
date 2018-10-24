@@ -5,9 +5,6 @@ import android.preference.PreferenceManager;
 import android.util.Log;
 
 import com.google.gson.JsonObject;
-import com.squareup.okhttp.MediaType;
-import com.squareup.okhttp.RequestBody;
-import com.squareup.okhttp.ResponseBody;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -39,20 +36,23 @@ import mil.nga.giat.mage.sdk.http.converter.ObservationImportantConverterFactory
 import mil.nga.giat.mage.sdk.http.converter.ObservationsConverterFactory;
 import mil.nga.giat.mage.sdk.utils.ISO8601DateFormatFactory;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
-import retrofit.Call;
-import retrofit.GsonConverterFactory;
-import retrofit.Response;
-import retrofit.Retrofit;
-import retrofit.http.Body;
-import retrofit.http.DELETE;
-import retrofit.http.GET;
-import retrofit.http.Multipart;
-import retrofit.http.POST;
-import retrofit.http.PUT;
-import retrofit.http.PartMap;
-import retrofit.http.Path;
-import retrofit.http.Query;
-import retrofit.http.Streaming;
+import okhttp3.MediaType;
+import okhttp3.RequestBody;
+import okhttp3.ResponseBody;
+import retrofit2.Call;
+import retrofit2.Response;
+import retrofit2.Retrofit;
+import retrofit2.converter.gson.GsonConverterFactory;
+import retrofit2.http.Body;
+import retrofit2.http.DELETE;
+import retrofit2.http.GET;
+import retrofit2.http.Multipart;
+import retrofit2.http.POST;
+import retrofit2.http.PUT;
+import retrofit2.http.PartMap;
+import retrofit2.http.Path;
+import retrofit2.http.Query;
+import retrofit2.http.Streaming;
 
 /***
  * RESTful communication for observations
@@ -129,7 +129,7 @@ public class ObservationResource {
         try {
             Response<Collection<Observation>> response = service.getObservations(event.getRemoteId(), iso8601Format.format(lastModifiedDate)).execute();
 
-            if (response.isSuccess()) {
+            if (response.isSuccessful()) {
                 observations = response.body();
             } else {
                 Log.e(LOG_NAME, "Bad request.");
@@ -166,7 +166,7 @@ public class ObservationResource {
             ObservationService service = retrofit.create(ObservationService.class);
             Response<Observation> response = service.createObservationId(observation.getEvent().getRemoteId()).execute();
 
-            if (response.isSuccess()) {
+            if (response.isSuccessful()) {
                 Observation returnedObservation = response.body();
                 observation.setRemoteId(returnedObservation.getRemoteId());
                 observation.setUrl(returnedObservation.getUrl());
@@ -231,7 +231,7 @@ public class ObservationResource {
             ObservationService service = retrofit.create(ObservationService.class);
             Response<Observation> response = service.updateObservation(observation.getEvent().getRemoteId(), observation.getRemoteId(), observation).execute();
 
-            if (response.isSuccess()) {
+            if (response.isSuccessful()) {
                 Observation returnedObservation = response.body();
                 returnedObservation.setDirty(Boolean.FALSE);
                 returnedObservation.setId(observation.getId());
@@ -295,7 +295,7 @@ public class ObservationResource {
             ObservationService service = retrofit.create(ObservationService.class);
             Response<JsonObject> response = service.archiveObservation(observation.getEvent().getRemoteId(), observation.getRemoteId(), state).execute();
 
-            if (response.isSuccess()) {
+            if (response.isSuccessful()) {
                 try {
                     observationHelper.delete(observation);
                 } catch (ObservationException oe) {
@@ -353,7 +353,7 @@ public class ObservationResource {
         Response<ResponseBody> response = service.getObservationIcons(eventId).execute();
 
         InputStream inputStream = null;
-        if (response.isSuccess()) {
+        if (response.isSuccessful()) {
             inputStream = response.body().byteStream();
         } else {
             Log.e(LOG_NAME, "Bad request.");
@@ -379,7 +379,7 @@ public class ObservationResource {
         String attachmentId = attachment.getRemoteId();
         Response<ResponseBody> response = service.getAttachment(eventId, observationId, attachmentId).execute();
 
-        if (response.isSuccess()) {
+        if (response.isSuccessful()) {
             return response.body();
         } else {
             Log.e(LOG_NAME, "Bad request.");
@@ -413,7 +413,7 @@ public class ObservationResource {
 
             Response<Attachment> response = service.createAttachment(eventId, observationId, parts).execute();
 
-            if (response.isSuccess()) {
+            if (response.isSuccessful()) {
                 Attachment returnedAttachment = response.body();
                 attachment.setContentType(returnedAttachment.getContentType());
                 attachment.setName(returnedAttachment.getName());
@@ -459,7 +459,7 @@ public class ObservationResource {
                 response = service.unfavoriteObservation(observation.getEvent().getRemoteId(), observation.getRemoteId()).execute();
             }
 
-            if (response.isSuccess()) {
+            if (response.isSuccessful()) {
                 Observation updatedObservation = response.body();
                 observation.setLastModified(updatedObservation.getLastModified());
                 observationHelper.updateFavorite(favorite);
@@ -501,7 +501,7 @@ public class ObservationResource {
                 response = service.removeImportant(observation.getEvent().getRemoteId(), observation.getRemoteId()).execute();
             }
 
-            if (response.isSuccess()) {
+            if (response.isSuccessful()) {
                 Observation returnedObservation = response.body();
                 observation.setLastModified(returnedObservation.getLastModified());
                 observationHelper.updateImportant(observation);

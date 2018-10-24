@@ -24,7 +24,7 @@ import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
 import mil.nga.giat.mage.sdk.utils.DeviceUuidFactory;
 import mil.nga.giat.mage.sdk.utils.ISO8601DateFormatFactory;
 import mil.nga.giat.mage.sdk.utils.PasswordUtility;
-import retrofit.Response;
+import retrofit2.Response;
 
 /**
  * Performs login to specified server with username and password.
@@ -119,7 +119,7 @@ public class FormAuthLoginTask extends AbstractAccountTask {
 			UserResource userResource = new UserResource(mApplicationContext);
 			Response<JsonObject> response = userResource.signin(username, uuid, password);
 
-			if (response.isSuccess()) {
+			if (response.isSuccessful()) {
 				JsonObject authorizeResponse = userResource.authorize("local", uuid);
 				if (authorizeResponse == null) {
 					DeviceResource deviceResource = new DeviceResource(mApplicationContext);

@@ -2,13 +2,12 @@ package mil.nga.giat.mage.sdk.http.converter;
 
 import android.content.Context;
 
-import com.squareup.okhttp.ResponseBody;
-
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
 
-import mil.nga.giat.mage.sdk.datastore.user.User;
-import retrofit.Converter;
+import okhttp3.ResponseBody;
+import retrofit2.Converter;
+import retrofit2.Retrofit;
 
 /**
  * Retrofit converter factory for locations
@@ -29,7 +28,7 @@ public final class UserConverterFactory extends Converter.Factory {
     }
 
     @Override
-    public Converter<ResponseBody, User> fromResponseBody(Type type, Annotation[] annotations) {
+    public Converter<ResponseBody, ?> responseBodyConverter(Type type, Annotation[] annotations, Retrofit retrofit) {
         return new UserResponseBodyConverter(context);
     }
 }

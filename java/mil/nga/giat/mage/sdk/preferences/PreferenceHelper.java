@@ -4,7 +4,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.content.pm.PackageManager.NameNotFoundException;
-import android.preference.PreferenceManager;
+import android.support.v7.preference.PreferenceManager;
 import android.util.Log;
 
 import org.apache.commons.lang3.StringUtils;
@@ -79,12 +79,11 @@ public class PreferenceHelper implements SharedPreferences.OnSharedPreferenceCha
 			sharedPreferences.edit().clear().commit();
 		}
 		Set<Integer> resourcesToLoad = new LinkedHashSet<>();
-
 		for (Class xmlClass : xmlClasses) {
 			for (Field field : xmlClass.getDeclaredFields()) {
-				if (field.getName().endsWith("preference")) {
+				if (field.getName().endsWith("preferences")) {
 					try {
-						resourcesToLoad.add(field.getInt(new R.xml()));
+						resourcesToLoad.add(field.getInt(new android.R.xml()));
 					} catch (Exception e) {
 						Log.e(LOG_NAME, "Error loading preference file", e);
 					}

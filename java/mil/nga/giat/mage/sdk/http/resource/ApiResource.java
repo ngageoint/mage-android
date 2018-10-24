@@ -2,13 +2,12 @@ package mil.nga.giat.mage.sdk.http.resource;
 
 import android.content.Context;
 
-import com.squareup.okhttp.ResponseBody;
-
 import mil.nga.giat.mage.sdk.http.HttpClientManager;
-import retrofit.Call;
-import retrofit.Callback;
-import retrofit.Retrofit;
-import retrofit.http.GET;
+import okhttp3.ResponseBody;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Retrofit;
+import retrofit2.http.GET;
 
 /***
  * RESTful communication for the API
@@ -42,7 +41,7 @@ public class ApiResource {
             ApiService service = retrofit.create(ApiService.class);
             service.getApi().enqueue(callback);
         } catch (IllegalArgumentException e) {
-            callback.onFailure(e);
+            callback.onFailure(null, e);
         }
     }
 }

@@ -1,8 +1,6 @@
 package mil.nga.giat.mage.sdk.http.converter;
 
 import com.google.gson.Gson;
-import com.squareup.okhttp.MediaType;
-import com.squareup.okhttp.RequestBody;
 
 import java.io.IOException;
 import java.io.OutputStreamWriter;
@@ -11,8 +9,10 @@ import java.lang.reflect.Type;
 import java.nio.charset.Charset;
 
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
+import okhttp3.MediaType;
+import okhttp3.RequestBody;
 import okio.Buffer;
-import retrofit.Converter;
+import retrofit2.Converter;
 
 /**
  * Retrofit observation request body converter

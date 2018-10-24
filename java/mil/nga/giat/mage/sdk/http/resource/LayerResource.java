@@ -4,8 +4,6 @@ import android.content.Context;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
-import com.squareup.okhttp.ResponseBody;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -18,16 +16,17 @@ import mil.nga.giat.mage.sdk.datastore.user.Event;
 import mil.nga.giat.mage.sdk.gson.deserializer.LayerDeserializer;
 import mil.nga.giat.mage.sdk.http.HttpClientManager;
 import mil.nga.giat.mage.sdk.http.converter.FeatureConverterFactory;
-import retrofit.Call;
-import retrofit.GsonConverterFactory;
-import retrofit.Response;
-import retrofit.Retrofit;
-import retrofit.http.GET;
-import retrofit.http.Headers;
-import retrofit.http.Path;
-import retrofit.http.Query;
-import retrofit.http.Streaming;
-import retrofit.http.Url;
+import okhttp3.ResponseBody;
+import retrofit2.Call;
+import retrofit2.Response;
+import retrofit2.Retrofit;
+import retrofit2.converter.gson.GsonConverterFactory;
+import retrofit2.http.GET;
+import retrofit2.http.Headers;
+import retrofit2.http.Path;
+import retrofit2.http.Query;
+import retrofit2.http.Streaming;
+import retrofit2.http.Url;
 
 /***
  * RESTful communication for events
@@ -75,7 +74,7 @@ public class LayerResource {
         LayerService service = retrofit.create(LayerService.class);
         Response<Collection<Layer>> response = service.getLayers(event.getRemoteId(), "Feature").execute();
 
-        if (response.isSuccess()) {
+        if (response.isSuccessful()) {
             layers = response.body();
         } else {
             Log.e(LOG_NAME, "Bad request.");
@@ -100,7 +99,7 @@ public class LayerResource {
         LayerService service = retrofit.create(LayerService.class);
         Response<Collection<StaticFeature>> response = service.getFeatures(layer.getEvent().getRemoteId(), layer.getRemoteId()).execute();
 
-        if (response.isSuccess()) {
+        if (response.isSuccessful()) {
             features = response.body();
         } else {
             Log.e(LOG_NAME, "Bad request.");
@@ -124,7 +123,7 @@ public class LayerResource {
         LayerService service = retrofit.create(LayerService.class);
         Response<ResponseBody> response = service.getFeatureIcon(url).execute();
 
-        if (response.isSuccess()) {
+        if (response.isSuccessful()) {
             inputStream = response.body().byteStream();
         } else {
             Log.e(LOG_NAME, "Bad request.");
@@ -147,7 +146,7 @@ public class LayerResource {
         Response<ResponseBody> response = service.getGeopackage(layerId).execute();
 
         InputStream inputStream = null;
-        if (response.isSuccess()) {
+        if (response.isSuccessful()) {
             inputStream = response.body().byteStream();
         } else {
             Log.e(LOG_NAME, "Bad request.");

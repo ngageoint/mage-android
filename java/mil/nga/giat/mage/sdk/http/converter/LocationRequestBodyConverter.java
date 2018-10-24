@@ -1,8 +1,6 @@
 package mil.nga.giat.mage.sdk.http.converter;
 
 import com.google.gson.Gson;
-import com.squareup.okhttp.MediaType;
-import com.squareup.okhttp.RequestBody;
 
 import java.io.IOException;
 import java.io.OutputStreamWriter;
@@ -12,8 +10,10 @@ import java.nio.charset.Charset;
 import java.util.List;
 
 import mil.nga.giat.mage.sdk.datastore.location.Location;
+import okhttp3.MediaType;
+import okhttp3.RequestBody;
 import okio.Buffer;
-import retrofit.Converter;
+import retrofit2.Converter;
 
 /**
  * Retrofit location request body converter

@@ -4,6 +4,7 @@ import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 
+import com.j256.ormlite.android.apptools.OpenHelperManager;
 import com.j256.ormlite.android.apptools.OrmLiteSqliteOpenHelper;
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.field.DataPersisterManager;
@@ -72,17 +73,19 @@ public class DaoStore extends OrmLiteSqliteOpenHelper {
 	private Dao<Layer, Long> layerDao;
 	private Dao<StaticFeature, Long> staticFeatureDao;
 	private Dao<StaticFeatureProperty, Long> staticFeaturePropertyDao;
-	
+
 	/**
 	 * Singleton implementation.
-	 * 
+	 *
 	 * @param context context
 	 * @return the dao store
 	 */
 	public static DaoStore getInstance(Context context) {
 		if (helperInstance == null) {
-			helperInstance = new DaoStore(context);
+			OpenHelperManager.setOpenHelperClass(DaoStore.class);
+			helperInstance = OpenHelperManager.getHelper(context, DaoStore.class);
 		}
+
 		return helperInstance;
 	}
 
@@ -92,34 +95,8 @@ public class DaoStore extends OrmLiteSqliteOpenHelper {
 	 * @param context context
 	 *
 	 */
-	private DaoStore(Context context) {
+	public DaoStore(Context context) {
 		super(context, DATABASE_NAME, null, DATABASE_VERSION);
-
-		// initialize DAOs
-		try {
-			getObservationDao();
-			getObservationFormDao();
-			getObservationPropertyDao();
-			getObservationImportantDao();
-			getObservationFavoriteDao();
-			getAttachmentDao();
-			getUserDao();
-			getUserLocalDao();
-			getRoleDao();
-            getEventDao();
-            getTeamDao();
-            getUserTeamDao();
-            getTeamEventDao();
-			getLocationDao();
-			getLocationPropertyDao();
-			getLayerDao();
-			getStaticFeatureDao();
-			getStaticFeaturePropertyDao();
-		} catch (SQLException sqle) {
-			// TODO: handle this...
-			sqle.printStackTrace();
-		}
-
 	}
 
 	public boolean isDatabaseEmpty() {
@@ -230,8 +207,30 @@ public class DaoStore extends OrmLiteSqliteOpenHelper {
 
 	@Override
 	public void close() {
-		helperInstance = null;
 		super.close();
+
+		helperInstance = null;
+
+		observationDao = null;
+		observationFormDao = null;
+		observationPropertyDao = null;
+		observationImportantDao = null;
+		observationFavoriteDao = null;
+		attachmentDao = null;
+
+		userDao = null;
+		roleDao = null;
+		eventDao = null;
+		teamDao = null;
+		userLocalDao = null;
+		userTeamDao = null;
+		teamEventDao = null;
+		locationDao = null;
+		locationPropertyDao = null;
+
+		layerDao = null;
+		staticFeatureDao = null;
+		staticFeaturePropertyDao = null;
 	}
 
 	/**

@@ -1,7 +1,7 @@
 package mil.nga.giat.mage.sdk.preferences;
 
 import android.content.Context;
-import android.preference.EditTextPreference;
+import android.support.v7.preference.EditTextPreference;
 import android.util.AttributeSet;
 
 public class IntegerEditTextPreference extends EditTextPreference {
@@ -20,7 +20,14 @@ public class IntegerEditTextPreference extends EditTextPreference {
 
 	@Override
 	protected String getPersistedString(String defaultReturnValue) {
-		return String.valueOf(getPersistedInt(-1));
+		int defaultValue = -1;
+		try {
+			defaultValue = Integer.valueOf(defaultReturnValue);
+		} catch(NumberFormatException e) {
+
+		}
+
+		return String.valueOf(getPersistedInt(defaultValue));
 	}
 
 	@Override

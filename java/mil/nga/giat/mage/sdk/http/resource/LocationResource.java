@@ -16,13 +16,13 @@ import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.http.HttpClientManager;
 import mil.nga.giat.mage.sdk.http.converter.LocationConverterFactory;
-import retrofit.Call;
-import retrofit.Response;
-import retrofit.Retrofit;
-import retrofit.http.Body;
-import retrofit.http.GET;
-import retrofit.http.POST;
-import retrofit.http.Path;
+import retrofit2.Call;
+import retrofit2.Response;
+import retrofit2.Retrofit;
+import retrofit2.http.Body;
+import retrofit2.http.GET;
+import retrofit2.http.POST;
+import retrofit2.http.Path;
 
 /***
  * RESTful communication for locations
@@ -63,7 +63,7 @@ public class LocationResource {
             Call<List<Location>> call = service.getLocations(event.getRemoteId());
             Response<List<Location>> response = call.execute();
 
-            if (response.isSuccess()) {
+            if (response.isSuccessful()) {
                 locations = response.body();
             } else {
                 Log.e(LOG_NAME, "Bad request.");
@@ -100,7 +100,7 @@ public class LocationResource {
             Call<List<Location>> call = service.createLocations(event.getRemoteId(), locations);
             Response<List<Location>> response = call.execute();
 
-            if (response.isSuccess()) {
+            if (response.isSuccessful()) {
                 // locations that are posted are only from the current user
                 User user = UserHelper.getInstance(context).readCurrentUser();
 

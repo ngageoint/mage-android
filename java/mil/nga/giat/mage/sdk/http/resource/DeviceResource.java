@@ -12,13 +12,13 @@ import java.io.IOException;
 
 import mil.nga.giat.mage.sdk.R;
 import mil.nga.giat.mage.sdk.http.HttpClientManager;
-import retrofit.Call;
-import retrofit.GsonConverterFactory;
-import retrofit.Response;
-import retrofit.Retrofit;
-import retrofit.http.Body;
-import retrofit.http.POST;
-import retrofit.http.Path;
+import retrofit2.Call;
+import retrofit2.Response;
+import retrofit2.Retrofit;
+import retrofit2.converter.gson.GsonConverterFactory;
+import retrofit2.http.Body;
+import retrofit2.http.POST;
+import retrofit2.http.Path;
 
 /***
  * RESTful communication for devices
@@ -65,7 +65,7 @@ public class DeviceResource {
 
         Response<JsonObject> response = service.createDevice(strategy, json).execute();
 
-        if (response.isSuccess()) {
+        if (response.isSuccessful()) {
             device = response.body();
         } else {
             Log.e(LOG_NAME, "Bad request.");
