@@ -21,8 +21,8 @@ ext {
 def serverURL = hasProperty('SERVER_URL') ? SERVER_URL : ''
 def googleMapsApiReleaseKey = hasProperty('RELEASE_MAPS_API_KEY') ? RELEASE_MAPS_API_KEY : ''
 def googleMapsApiDebugKey = hasProperty('DEBUG_MAPS_API_KEY') ? DEBUG_MAPS_API_KEY : ''
-def signedApkPath = hasProperty('SIGNED_APK_PATH') ? SIGNED_APK_PATH : "${project.buildDir}/outputs/apk/${archivesBaseName}-defaults-release.apk"
-def signedDebugApkPath = hasProperty('SIGNED_DEBUG_APK_PATH') ? SIGNED_DEBUG_APK_PATH : "${project.buildDir}/outputs/apk/${archivesBaseName}-defaults-debug.apk"
+def signedApkPath = hasProperty('SIGNED_APK_PATH') ? SIGNED_APK_PATH : "${project.buildDir}/outputs/apk/defaults/release/${archivesBaseName}-defaults-release.apk"
+def signedDebugApkPath = hasProperty('SIGNED_DEBUG_APK_PATH') ? SIGNED_DEBUG_APK_PATH : "${project.buildDir}/outputs/apk/defaults/debug/${archivesBaseName}-defaults-debug.apk"
 
 android {
     compileSdkVersion 28
@@ -122,7 +122,7 @@ publishing {
             artifactId archivesBaseName
             pom.packaging 'apk'
             configurePom(pom)
-            artifact "${project.buildDir}/outputs/apk/${archivesBaseName}-defaults-release-unsigned.apk", {
+            artifact "${project.buildDir}/outputs/apk/defaults/release/${archivesBaseName}-defaults-release-unsigned.apk", {
                 classifier 'unsigned'
             }
             if (file(signedApkPath).exists()) {
@@ -134,7 +134,7 @@ publishing {
                 }
             }
             if (project.hasProperty('SKIP_DEBUG_SIGNING')) {
-                artifact "${project.buildDir}/outputs/apk/${archivesBaseName}-defaults-debug-unsigned.apk", {
+                artifact "${project.buildDir}/outputs/apk/defaults/debug/${archivesBaseName}-defaults-debug-unsigned.apk", {
                     classifier 'debug-unsigned'
                 }
             }
@@ -229,6 +229,7 @@ task androidArtifactVersion {
 
 configure extensions.android, {
     if (project.hasProperty('RELEASE_STORE_FILE') && file(project.getProperty('RELEASE_STORE_FILE')).exists()) {
+        println 'found release key store for signing'
         signingConfigs {
             release {
                 storeFile file(RELEASE_STORE_FILE)
@@ -244,7 +245,7 @@ configure extensions.android, {
         }
     }
     else {
-        println 'no release keystore configured'
+        println 'no release key store configured - will skip signing'
     }
 
     if (project.hasProperty('SKIP_DEBUG_SIGNING')) {
