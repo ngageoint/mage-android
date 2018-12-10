@@ -15,7 +15,7 @@ import com.google.gson.JsonObject;
 
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.disclaimer.DisclaimerActivity;
-import mil.nga.giat.mage.event.EventActivity;
+import mil.nga.giat.mage.event.EventsActivity;
 import mil.nga.giat.mage.sdk.login.AbstractAccountTask;
 import mil.nga.giat.mage.sdk.login.AccountDelegate;
 import mil.nga.giat.mage.sdk.login.AccountStatus;
@@ -98,7 +98,7 @@ public class OAuthActivity extends FragmentActivity implements AccountDelegate {
 
             Intent intent = showDisclaimer ?
                     new Intent(getApplicationContext(), DisclaimerActivity.class) :
-                    new Intent(getApplicationContext(), EventActivity.class);
+                    new Intent(getApplicationContext(), EventsActivity.class);
 
             startActivity(intent);
             finish();

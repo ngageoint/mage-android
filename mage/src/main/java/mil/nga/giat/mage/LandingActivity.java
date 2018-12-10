@@ -27,12 +27,15 @@ import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.bumptech.glide.request.target.BitmapImageViewTarget;
+import com.google.common.base.Predicate;
+import com.google.common.collect.Iterables;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -46,6 +49,7 @@ import dagger.android.support.DaggerAppCompatActivity;
 import mil.nga.geopackage.validate.GeoPackageValidate;
 import mil.nga.giat.mage.cache.GeoPackageCacheUtils;
 import mil.nga.giat.mage.event.ChangeEventActivity;
+import mil.nga.giat.mage.event.EventActivity;
 import mil.nga.giat.mage.glide.GlideApp;
 import mil.nga.giat.mage.help.HelpActivity;
 import mil.nga.giat.mage.login.LoginActivity;
@@ -62,6 +66,7 @@ import mil.nga.giat.mage.sdk.datastore.user.RoleHelper;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.datastore.user.UserLocal;
+import mil.nga.giat.mage.sdk.exceptions.EventException;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
 
@@ -108,6 +113,10 @@ public class LandingActivity extends DaggerAppCompatActivity implements Navigati
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_landing);
 
+        drawerLayout = findViewById(R.id.drawer_layout);
+        navigationView = findViewById(R.id.navigation);
+        navigationView.setNavigationItemSelectedListener(this);
+
         currentNightMode = getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK;
 
         bottomNavigationFragments.add(new MapFragment());
@@ -125,7 +134,9 @@ public class LandingActivity extends DaggerAppCompatActivity implements Navigati
 
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+
         setTitle();
+        setRecentsEvents();
 
         // Ask for permissions
         locationPermissionGranted = ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
@@ -155,9 +166,6 @@ public class LandingActivity extends DaggerAppCompatActivity implements Navigati
         getSupportActionBar().setHomeAsUpIndicator(R.drawable.ic_menu_white_24dp);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
-        drawerLayout = findViewById(R.id.drawer_layout);
-        navigationView = findViewById(R.id.navigation);
-        navigationView.setNavigationItemSelectedListener(this);
 
         try {
             int numberOfEvents = EventHelper.getInstance(getApplicationContext()).readAll().size();
@@ -167,7 +175,7 @@ public class LandingActivity extends DaggerAppCompatActivity implements Navigati
             }
 
             if (numberOfEvents <= 1) {
-                navigationView.getMenu().removeItem(R.id.events_navigation);
+//                navigationView.getMenu().removeItem(R.id.events_navigation);
             }
         } catch(Exception e) {
             Log.e(LOG_NAME, "Problem pulling events for this admin.");
@@ -322,6 +330,47 @@ public class LandingActivity extends DaggerAppCompatActivity implements Navigati
         getSupportActionBar().setTitle(event.getName());
     }
 
+    private void setRecentsEvents() {
+        Menu menu = navigationView.getMenu();
+
+        menu.setGroupDividerEnabled(false);
+
+        Menu recentEventsMenu = menu.findItem(R.id.recents_events_item).getSubMenu();
+        recentEventsMenu.removeGroup(R.id.recents_events_group);
+
+        try {
+            final Event currentEvent = EventHelper.getInstance(getApplicationContext()).getCurrentEvent();
+            menu.findItem(R.id.event_navigation).setTitle(currentEvent.getName()).setActionView(R.layout.navigation_item_info);
+
+            Iterable<Event> events = Iterables.filter(EventHelper.getInstance(getApplicationContext()).getRecentEvents(), new Predicate<Event>() {
+                @Override
+                public boolean apply(Event event) {
+                    return !event.getRemoteId().equals(currentEvent.getRemoteId());
+                }
+            });
+
+            int i = 1;
+            for (final Event event : events) {
+                MenuItem item = recentEventsMenu
+                        .add(R.id.recents_events_group, Menu.NONE, i++, event.getName())
+                        .setIcon(R.drawable.ic_access_time_white_24dp);
+
+                item.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+                    @Override
+                    public boolean onMenuItemClick(MenuItem menuItem) {
+                        drawerLayout.closeDrawer(GravityCompat.START);
+                        Intent intent = new Intent(LandingActivity.this, ChangeEventActivity.class);
+                        intent.putExtra(ChangeEventActivity.EVENT_ID_EXTRA, event.getId());
+                        startActivityForResult(intent, CHANGE_EVENT_REQUEST);
+                        return true;
+                    }
+                });
+            }
+        } catch (EventException e) {
+            e.printStackTrace();
+        }
+    }
+
     private void showDisabledPermissionsDialog(String title, String message) {
         new AlertDialog.Builder(this, R.style.AppCompatAlertDialogStyle)
                 .setTitle(title)
@@ -348,6 +397,13 @@ public class LandingActivity extends DaggerAppCompatActivity implements Navigati
         drawerLayout.closeDrawer(GravityCompat.START);
 
         switch (menuItem.getItemId()) {
+            case R.id.event_navigation: {
+                Event event = EventHelper.getInstance(getApplicationContext()).getCurrentEvent();
+                Intent intent = new Intent(LandingActivity.this, EventActivity.class);
+                intent.putExtra(EventActivity.Companion.getEVENT_ID_EXTRA(), event.getId());
+                startActivityForResult(intent, CHANGE_EVENT_REQUEST);
+                break;
+            }
             case R.id.events_navigation: {
                 Intent intent = new Intent(this, ChangeEventActivity.class);
                 startActivityForResult(intent, CHANGE_EVENT_REQUEST);
@@ -408,6 +464,7 @@ public class LandingActivity extends DaggerAppCompatActivity implements Navigati
         if (requestCode == CHANGE_EVENT_REQUEST) {
             if (resultCode == RESULT_OK) {
                 setTitle();
+                setRecentsEvents();
             }
         }
     }

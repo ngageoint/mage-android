@@ -1,11 +1,13 @@
 package mil.nga.giat.mage.observation;
 
+import android.arch.lifecycle.ViewModelProviders;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.PagerAdapter;
@@ -17,12 +19,16 @@ import android.widget.DatePicker;
 import android.widget.TimePicker;
 
 import java.text.DateFormat;
+import java.text.ParseException;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
 import mil.nga.giat.mage.R;
+import mil.nga.giat.mage.form.FormField;
+import mil.nga.giat.mage.form.FormViewModel;
+import mil.nga.giat.mage.sdk.utils.ISO8601DateFormatFactory;
 import mil.nga.giat.mage.utils.DateFormatFactory;
 
 /**
@@ -37,8 +43,12 @@ public class DateTimePickerDialog extends DialogFragment {
 
     private static final String CALENDAR_INSTANCE = "CALENDAR";
     private static final String DATE_TIME_EXTRA ="DATE_TIME_EXTRA";
+    private static final String FORM_FIELD_KEY_EXTRA ="FORM_FIELD_KEY_EXTRA";
 
     private Calendar calendar = Calendar.getInstance();
+
+    private FormViewModel model;
+    private String fieldKey;
 
     private DateFormat dateFormat;
     private DateFormat timeFormat;
@@ -56,12 +66,31 @@ public class DateTimePickerDialog extends DialogFragment {
         fragment.setStyle(DialogFragment.STYLE_NO_TITLE, 0);
         fragment.setArguments(bundle);
 
-        return fragment ;
+        return fragment;
+    }
+
+    public static DateTimePickerDialog newInstance(long fieldId) {
+        DateTimePickerDialog fragment = new DateTimePickerDialog();
+        Bundle bundle = new Bundle();
+        bundle.putLong(FORM_FIELD_KEY_EXTRA, fieldId);
+
+        fragment.setStyle(DialogFragment.STYLE_NO_TITLE, 0);
+        fragment.setArguments(bundle);
+
+        return fragment;
     }
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        FragmentActivity activity = getActivity();
+        if (activity == null) {
+            throw new RuntimeException("Invalid Activity");
+        }
+
+        model = ViewModelProviders.of(activity).get(FormViewModel.class);
+
         dateFormat = DateFormatFactory.format("MMM dd, yyyy", java.util.Locale.getDefault(), getContext());
         timeFormat = DateFormatFactory.format("HH:mm zz", java.util.Locale.getDefault(), getContext());
         calendar.setTimeZone(dateFormat.getTimeZone());
@@ -70,7 +99,27 @@ public class DateTimePickerDialog extends DialogFragment {
             date = new Date();
         }
 
+        if (getArguments().containsKey(FORM_FIELD_KEY_EXTRA)) {
+            fieldKey = getArguments().getString(FORM_FIELD_KEY_EXTRA, null);
+            FormField<?> field = model.getField(fieldKey);
+
+            Object value = field.getValue();
+
+            if (value instanceof Date) {
+                date = (Date) value;
+            } else if (value instanceof String) {
+                try {
+                    date = ISO8601DateFormatFactory.ISO8601().parse((String) value);
+                } catch (ParseException e) {
+                    return;
+                }
+            }
+        }
+
         calendar.setTime(date);
+
+
+
     }
 
     @Override
@@ -168,6 +217,12 @@ public class DateTimePickerDialog extends DialogFragment {
         view.findViewById(R.id.ok).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                // TODO just update form view model here and dismiss the dialog
+                if (fieldKey != null) {
+                    FormField<?> field = model.getField(fieldKey);
+//                    field.setValue(calendar.getTime());
+                }
+
                 if (onDateTimeChangedListener != null) {
                     onDateTimeChangedListener.onDateTimeChanged(calendar.getTime());
                 }

@@ -5,6 +5,8 @@ import dagger.android.ContributesAndroidInjector
 import mil.nga.giat.mage.LandingActivity
 import mil.nga.giat.mage.disclaimer.DisclaimerActivity
 import mil.nga.giat.mage.event.EventActivity
+import mil.nga.giat.mage.event.EventsActivity
+import mil.nga.giat.mage.form.FormDefaultActivity
 import mil.nga.giat.mage.login.LoginActivity
 import mil.nga.giat.mage.preferences.LocationPreferencesActivity
 import mil.nga.giat.mage.profile.ChangePasswordActivity
@@ -24,6 +26,12 @@ abstract class ActivityContributorModule {
 
     @ContributesAndroidInjector
     internal abstract fun contributeEventActivity(): EventActivity
+
+    @ContributesAndroidInjector
+    internal abstract fun contributeFormDefaultActivity(): FormDefaultActivity
+
+    @ContributesAndroidInjector
+    internal abstract fun contributeEventsActivity(): EventsActivity
 
     @ContributesAndroidInjector
     internal abstract fun contributeChangePasswordActivity(): ChangePasswordActivity

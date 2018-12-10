@@ -1,6 +1,7 @@
 package mil.nga.giat.mage.observation;
 
 import android.app.FragmentManager;
+import android.arch.lifecycle.ViewModelProviders;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -10,13 +11,14 @@ import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.design.widget.BottomSheetBehavior;
 import android.support.design.widget.FloatingActionButton;
+import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -48,7 +50,10 @@ import java.util.Locale;
 import java.util.Map;
 
 import mil.nga.giat.mage.R;
-import mil.nga.giat.mage.form.LayoutBaker;
+import mil.nga.giat.mage.form.Form;
+import mil.nga.giat.mage.form.FormFragment;
+import mil.nga.giat.mage.form.FormMode;
+import mil.nga.giat.mage.form.FormViewModel;
 import mil.nga.giat.mage.people.PeopleActivity;
 import mil.nga.giat.mage.sdk.datastore.observation.Attachment;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
@@ -77,8 +82,7 @@ public class ObservationViewActivity extends AppCompatActivity implements OnMapR
 	public static String INITIAL_LOCATION = "INITIAL_LOCATION";
 	public static String INITIAL_ZOOM = "INITIAL_ZOOM";
 
-	private static int FORM_ID_PREFIX = 100;
-
+	private FormViewModel model;
 	private DateFormat dateFormat;
 	private GoogleMap map;
     private AttachmentGallery attachmentGallery;
@@ -94,11 +98,14 @@ public class ObservationViewActivity extends AppCompatActivity implements OnMapR
 
 	ImageView favoriteIcon;
 
-	private Map<Long, Collection<View>> controls = new HashMap<>();
-
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+
+		setContentView(R.layout.activity_observation_view);
+
+		model = ViewModelProviders.of(this).get(FormViewModel.class);
+		model.setFormMode(FormMode.VIEW);
 
 		dateFormat = DateFormatFactory.format("yyyy-MM-dd HH:mm zz", Locale.getDefault(), getApplicationContext());
 		try {
@@ -107,8 +114,6 @@ public class ObservationViewActivity extends AppCompatActivity implements OnMapR
 		} catch (Exception e) {
 			Log.e(LOG_NAME, "Cannot read current user");
 		}
-
-		setContentView(R.layout.observation_viewer);
 
 		getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
@@ -151,7 +156,7 @@ public class ObservationViewActivity extends AppCompatActivity implements OnMapR
 			}
 		});
 
-		final FloatingActionButton editButton = (FloatingActionButton) findViewById(R.id.edit_button);
+		final FloatingActionButton editButton = findViewById(R.id.edit_button);
 		editButton.setVisibility(canEditObservation ? View.VISIBLE : View.GONE);
 		editButton.setOnClickListener(new View.OnClickListener() {
 			@Override
@@ -224,11 +229,24 @@ public class ObservationViewActivity extends AppCompatActivity implements OnMapR
 			}
 		};
 
-		ObservationHelper.getInstance(getApplicationContext()).addListener(observationEventListener);
-
 		mapFragment = (MapFragment) getFragmentManager().findFragmentById(R.id.mini_map);
 		mapFragment.getMapAsync(this);
+	}
+
+	@Override
+	protected void onResume() {
+		super.onResume();
+
+		ObservationHelper.getInstance(getApplicationContext()).addListener(observationEventListener);
 		setupObservation();
+	}
+
+
+	@Override
+	protected void onPause() {
+		super.onPause();
+
+		ObservationHelper.getInstance(getApplicationContext()).removeListener(observationEventListener);
 	}
 
 	@Override
@@ -243,11 +261,17 @@ public class ObservationViewActivity extends AppCompatActivity implements OnMapR
 	}
 
 	@Override
+	protected void onSaveInstanceState(Bundle outState) {
+		super.onSaveInstanceState(outState);
+	}
+
+	@Override
 	protected void onDestroy() {
+		super.onDestroy();
+
 		if (observationEventListener != null) {
 			ObservationHelper.getInstance(getApplicationContext()).removeListener(observationEventListener);
 		}
-		super.onDestroy();
 	}
 
 	@Override
@@ -277,26 +301,37 @@ public class ObservationViewActivity extends AppCompatActivity implements OnMapR
 				}
 			}
 
-			controls = LayoutBaker.createControls(this, LayoutBaker.ControlGenerationType.VIEW, formDefinitions);
+			Form form = null;
+			if (!o.getForms().isEmpty()) {
+				ObservationForm observationForm = o.getForms().iterator().next();
+				JsonObject formJson = formMap.get(observationForm.getFormId());
+				form = Form.Companion.fromJson(formJson);
 
-			LayoutInflater inflater = getLayoutInflater();
-			LinearLayout forms = (LinearLayout) findViewById(R.id.forms);
-			forms.removeAllViews();
-			for (Map.Entry<Long, Collection<View>> entry : controls.entrySet()) {
-				LinearLayout form = (LinearLayout) inflater.inflate(R.layout.observation_editor_form, null);
-				form.setId(FORM_ID_PREFIX + entry.getKey().intValue());
+				Map<String, Object> values = new HashMap<>();
+				for (Map.Entry<String, ObservationProperty> entry : observationForm.getPropertiesMap().entrySet()) {
+					values.put(entry.getKey(), entry.getValue().getValue());
+				}
 
-				JsonObject definition = formMap.get(entry.getKey());
-				TextView formName = (TextView) form.findViewById(R.id.form_name);
-				formName.setText(definition.get("name").getAsString());
+				model.setForm(form, values);
+			}
 
-				LayoutBaker.populateLayoutWithControls((LinearLayout) form.findViewById(R.id.form_content), entry.getValue());
+			if (form != null) {
+				Fragment formFragment = getSupportFragmentManager().findFragmentByTag("VIEW_FORM_FRAGMENT");
+				if (formFragment == null) {
+                    LinearLayout formLayout = (LinearLayout) getLayoutInflater().inflate(R.layout.observation_editor_form, (ViewGroup) findViewById(R.id.forms), true);
+                    TextView name = formLayout.findViewById(R.id.form_name);
+                    name.setText(form.getName());
 
-				forms.addView(form);
+					formFragment = new FormFragment();
+					getSupportFragmentManager()
+							.beginTransaction()
+							.add(R.id.form_content, formFragment, "VIEW_FORM_FRAGMENT")
+							.commit();
+				}
 			}
 
 			ObservationProperty primary = o.getPrimaryField();
-			TextView primaryView = (TextView) findViewById(R.id.primary_field);
+			TextView primaryView = findViewById(R.id.primary_field);
 			if (primary == null || primary.isEmpty()) {
 				primaryView.setVisibility(View.GONE);
 			} else {
@@ -306,7 +341,7 @@ public class ObservationViewActivity extends AppCompatActivity implements OnMapR
 			}
 
 			ObservationProperty secondary = o.getSecondaryField();
-			TextView secondaryView = (TextView) findViewById(R.id.secondary_field);
+			TextView secondaryView = findViewById(R.id.secondary_field);
 			if (secondary == null || secondary.isEmpty()) {
 				secondaryView.setVisibility(View.GONE);
 			} else {
@@ -314,7 +349,7 @@ public class ObservationViewActivity extends AppCompatActivity implements OnMapR
 				secondaryView.setText(secondary.getValue().toString());
 			}
             
-            TextView timestamp = (TextView) findViewById(R.id.timestamp);
+            TextView timestamp = findViewById(R.id.timestamp);
             timestamp.setText(dateFormat.format(o.getTimestamp()));
 
 			Geometry geometry = o.getGeometry();
@@ -341,13 +376,7 @@ public class ObservationViewActivity extends AppCompatActivity implements OnMapR
 			setFavorites();
 			setFavoriteImage(isFavorite(o));
 
-			LinearLayout formsLayout = (LinearLayout) findViewById(R.id.forms);
-			for (ObservationForm observationForm : o.getForms()) {
-				LinearLayout formLayout = (LinearLayout) formsLayout.findViewById(FORM_ID_PREFIX + observationForm.getFormId().intValue());
-				LayoutBaker.populateLayout(formLayout, LayoutBaker.ControlGenerationType.VIEW, observationForm.getPropertiesMap());
-			}
-
-            LinearLayout galleryLayout = (LinearLayout) findViewById(R.id.image_gallery);
+            LinearLayout galleryLayout = findViewById(R.id.image_gallery);
             galleryLayout.removeAllViews();
 
 			if (o.getAttachments().size() == 0) {
@@ -367,7 +396,7 @@ public class ObservationViewActivity extends AppCompatActivity implements OnMapR
                 attachmentGallery.addAttachments(galleryLayout, o.getAttachments());
 			}
 
-			TextView user = (TextView) findViewById(R.id.username);
+			TextView user = findViewById(R.id.username);
 			String userText = "Unknown User";
 			User u = UserHelper.getInstance(this).read(o.getUserId());
 			if (u != null) {
@@ -375,7 +404,7 @@ public class ObservationViewActivity extends AppCompatActivity implements OnMapR
 			}
 			user.setText(userText);
 
-			FrameLayout fl = (FrameLayout) findViewById(R.id.sync_status);
+			FrameLayout fl = findViewById(R.id.sync_status);
 			fl.removeAllViews();
 			if (o.isDirty()) {
 				if (o.hasValidationError()) {
@@ -387,7 +416,7 @@ public class ObservationViewActivity extends AppCompatActivity implements OnMapR
 				}
 			} else {
 				View status = View.inflate(getApplicationContext(), R.layout.submitted_on, fl);
-				TextView syncDate = (TextView) status.findViewById(R.id.observation_sync_date);
+				TextView syncDate = status.findViewById(R.id.observation_sync_date);
 				syncDate.setText(dateFormat.format(o.getLastModified()));
 			}
 		} catch (Exception e) {

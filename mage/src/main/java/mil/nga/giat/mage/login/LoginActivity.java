@@ -69,7 +69,7 @@ import mil.nga.giat.mage.MageApplication;
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.cache.CacheUtils;
 import mil.nga.giat.mage.disclaimer.DisclaimerActivity;
-import mil.nga.giat.mage.event.EventActivity;
+import mil.nga.giat.mage.event.EventsActivity;
 import mil.nga.giat.mage.sdk.datastore.DaoStore;
 import mil.nga.giat.mage.sdk.datastore.user.Event;
 import mil.nga.giat.mage.sdk.datastore.user.User;
@@ -698,7 +698,7 @@ public class LoginActivity extends DaggerAppCompatActivity implements LoginFragm
 
 			Intent intent = showDisclaimer ?
 					new Intent(getApplicationContext(), DisclaimerActivity.class) :
-					new Intent(getApplicationContext(), EventActivity.class);
+					new Intent(getApplicationContext(), EventsActivity.class);
 
 			// If launched with a local file path, save as an extra
 			if (mOpenFilePath != null) {
@@ -726,7 +726,7 @@ public class LoginActivity extends DaggerAppCompatActivity implements LoginFragm
 			}
 
 			intent = event == null ?
-				new Intent(getApplicationContext(), EventActivity.class) :
+				new Intent(getApplicationContext(), EventsActivity.class) :
 				new Intent(getApplicationContext(), LandingActivity.class);
 		} else {
 			intent = new Intent(getApplicationContext(), DisclaimerActivity.class);

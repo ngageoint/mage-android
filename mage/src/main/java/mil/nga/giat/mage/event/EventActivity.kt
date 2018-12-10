@@ -1,172 +1,117 @@
 package mil.nga.giat.mage.event
 
-import android.content.Intent
+import android.content.Context
 import android.os.Bundle
-import android.preference.PreferenceManager
-import android.support.v7.widget.DefaultItemAnimator
+import android.support.v7.widget.DividerItemDecoration
+import android.support.v7.widget.DividerItemDecoration.VERTICAL
 import android.support.v7.widget.LinearLayoutManager
-import android.support.v7.widget.SearchView
+import android.support.v7.widget.RecyclerView
 import android.util.Log
+import android.view.LayoutInflater
+import android.view.MenuItem
 import android.view.View
+import android.view.ViewGroup
+import com.google.gson.JsonArray
+import com.google.gson.JsonElement
+import com.google.gson.JsonObject
 import dagger.android.support.DaggerAppCompatActivity
 import kotlinx.android.synthetic.main.activity_event.*
-import mil.nga.giat.mage.LandingActivity
+import kotlinx.android.synthetic.main.recycler_form_list_item.view.*
 import mil.nga.giat.mage.MageApplication
 import mil.nga.giat.mage.R
-import mil.nga.giat.mage.login.LoginActivity
+import mil.nga.giat.mage.form.FormDefaultActivity
 import mil.nga.giat.mage.sdk.datastore.user.Event
 import mil.nga.giat.mage.sdk.datastore.user.EventHelper
-import mil.nga.giat.mage.sdk.datastore.user.UserHelper
-import mil.nga.giat.mage.sdk.fetch.EventServerFetch
-import mil.nga.giat.mage.sdk.login.AccountDelegate
-import mil.nga.giat.mage.sdk.login.RecentEventTask
-import java.util.*
+import mil.nga.giat.mage.sdk.exceptions.EventException
 import javax.inject.Inject
 
-class EventActivity : DaggerAppCompatActivity(), EventsFetchFragment.EventsFetchListener {
+class EventActivity : DaggerAppCompatActivity() {
 
     companion object {
         private val LOG_NAME = EventActivity::class.java.name
-        private const val EVENTS_FETCH_FRAGMENT_TAG = "EVENTS_FETCH_FRAGMENT_TAG"
+
+        public val EVENT_ID_EXTRA = "EVENT_ID_EXTRA"
     }
+
+    @Inject
+    lateinit var context: Context
+
+    private lateinit var viewAdapter: RecyclerView.Adapter<*>
+    private lateinit var viewManager: RecyclerView.LayoutManager
+
+    var event: Event? = null
 
     @Inject
     lateinit var application: MageApplication
 
-    private var events = emptyList<Event>()
-
-    private lateinit var eventsFetchFragment: EventsFetchFragment
-
     public override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        require(intent.hasExtra(EVENT_ID_EXTRA), {"EVENT_ID_EXTRA is required to launch EventActivity"})
+
         setContentView(R.layout.activity_event)
 
-        toolbar.title = "Welcome to MAGE"
-        setSupportActionBar(toolbar)
+        setSupportActionBar(toolbar);
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
-        loadingStatus.visibility = View.VISIBLE
-
-        searchView.isIconified = false
-        searchView.setIconifiedByDefault(false)
-        searchView.clearFocus()
-
-        dismissButton.setOnClickListener {
-            dismiss()
-        }
-
-        var fragment = supportFragmentManager.findFragmentByTag(EVENTS_FETCH_FRAGMENT_TAG) as EventsFetchFragment?
-        // If the Fragment is non-null, then it is being retained over a configuration change.
-        if (fragment == null) {
-            fragment = EventsFetchFragment()
-            supportFragmentManager.beginTransaction().add(fragment, EVENTS_FETCH_FRAGMENT_TAG).commit()
-        }
-
-        eventsFetchFragment = fragment
-    }
-
-    override fun onResume() {
-        super.onResume()
-
-        eventsFetchFragment.loadEvents()
-    }
-
-    override fun onEventsFetched(status: Boolean, error: Exception?) {
+        val eventHelper: EventHelper = EventHelper.getInstance(context)
+        val eventId =  intent.extras.getLong(EVENT_ID_EXTRA)
         try {
-            events = EventHelper.getInstance(application).readAll()
-        } catch (e: Exception) {
-            Log.e(LOG_NAME, "Could not get events!")
+            event = eventHelper.read(eventId)
+        } catch(e: EventException) {
+            Log.e(LOG_NAME, "Error reading event", e)
         }
 
-        if (events.isEmpty()) {
-            Log.e(LOG_NAME, "User is part of no event!")
-            application.onLogout(true, null)
+        viewManager = LinearLayoutManager(this)
+        viewAdapter = FormAdapter(event?.forms ?: JsonArray(), { onFormClicked(it) })
 
-            searchView.visibility = View.GONE
-            loadingStatus.visibility = View.GONE
-            dismissButton.visibility = View.VISIBLE
-            noEventsText.visibility = if (status) View.VISIBLE else View.GONE
-            noConnectionText.visibility = if (status) View.GONE else View.VISIBLE
+        recyclerView.apply {
+            layoutManager = viewManager
+            adapter = viewAdapter
+            setHasFixedSize(true)
+            addItemDecoration(DividerItemDecoration(getContext(), VERTICAL))
+        }
+
+        eventName.text = event?.name
+        eventDescription.text = event?.description
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem?): Boolean {
+        return if (item?.itemId == android.R.id.home) {
+            finish()
+            true
         } else {
-            eventsFetched()
+            super.onOptionsItemSelected(item)
         }
     }
 
-    private fun eventsFetched() {
-        if (events.size == 1) {
-            chooseEvent(events[0])
-        } else {
-            val recentEvents = EventHelper.getInstance(application).recentEvents
-            val eventListAdapter = EventListAdapter(events, recentEvents, EventListAdapter.OnEventClickListener { event -> chooseEvent(event) })
-
-            searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
-                override fun onQueryTextSubmit(query: String): Boolean {
-                    return false
-                }
-
-                override fun onQueryTextChange(text: String): Boolean {
-                    eventListAdapter.filter(text)
-                    return true
-                }
-            })
-
-            recyclerView.layoutManager = LinearLayoutManager(applicationContext)
-            recyclerView.itemAnimator = DefaultItemAnimator()
-            recyclerView.addItemDecoration(EventItemDecorator(applicationContext))
-            recyclerView.adapter = eventListAdapter
-
-            eventsAppBar.visibility = View.VISIBLE
-            loadingStatus.visibility = View.GONE
-        }
+    private fun onFormClicked(formJson: JsonObject) {
+        startActivity(FormDefaultActivity.intent(context, event!!, formJson))
     }
 
-    private fun dismiss() {
-        startActivity(Intent(applicationContext, LoginActivity::class.java))
-        finish()
+    class FormViewHolder(val view: View, val onClickListener: (JsonObject) -> Unit) : RecyclerView.ViewHolder(view) {
+
+        fun bind(formJson: JsonElement) = with(itemView) {
+            formJson.asJsonObject?.let { form ->
+                nameView.text = form.get("name")?.asString
+
+                itemView.setOnClickListener{ onClickListener(form) }
+            }
+        }
+
     }
 
-    private fun chooseEvent(event: Event) {
-        eventsAppBar.visibility = View.GONE
-        eventsContent.visibility = View.GONE
-        loadingStatus.visibility = View.VISIBLE
+    inner class FormAdapter(private val forms: JsonArray, val onClickListener: (JsonObject) -> Unit) : RecyclerView.Adapter<FormViewHolder>() {
 
-        loadingText.text = "Loading ${event.name}"
-
-        val eventFetch = EventServerFetch(applicationContext, event.remoteId)
-        eventFetch.setEventFetchListener { _, _ -> finishEvent(event) }
-        eventFetch.execute()
-    }
-
-    private fun finishEvent(event: Event) {
-        // Send chosen event to the server
-        val userRecentEventInfo = ArrayList<String>()
-        userRecentEventInfo.add(event.remoteId)
-        RecentEventTask(AccountDelegate {
-            // No need to check if this failed
-        }, applicationContext).execute(*userRecentEventInfo.toTypedArray())
-
-        try {
-            val userHelper = UserHelper.getInstance(applicationContext)
-            val user = userHelper.readCurrentUser()
-            userHelper.setCurrentEvent(user, event)
-        } catch (e: Exception) {
-            Log.e(LOG_NAME, "Could not set current event.")
+        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): FormViewHolder {
+            val view = LayoutInflater.from(parent.context).inflate(R.layout.recycler_form_list_item, parent, false)
+            return FormViewHolder(view, onClickListener)
         }
 
-        // disable pushing locations
-        if (!UserHelper.getInstance(applicationContext).isCurrentUserPartOfCurrentEvent) {
-            val editor = PreferenceManager.getDefaultSharedPreferences(applicationContext).edit()
-            editor.putBoolean(getString(R.string.reportLocationKey), false).apply()
+        override fun onBindViewHolder(holder: FormViewHolder, position: Int) {
+            holder.bind(forms.get(position))
         }
 
-        // start up the landing activity!
-        val launchIntent = Intent(applicationContext, LandingActivity::class.java)
-        val extras = intent.extras
-        if (extras != null) {
-            launchIntent.putExtras(extras)
-        }
-
-        startActivity(launchIntent)
-        finish()
+        override fun getItemCount() = forms.size()
     }
 }

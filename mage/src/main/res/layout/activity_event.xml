@@ -1,127 +1,90 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<android.support.design.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:fitsSystemWindows="true">
 
     <android.support.design.widget.AppBarLayout
-        android:id="@+id/eventsAppBar"
+        android:id="@+id/app_bar_layout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:visibility="gone">
+        android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar">
 
         <android.support.v7.widget.Toolbar
             android:id="@+id/toolbar"
-            android:layout_height="wrap_content"
             android:layout_width="match_parent"
-            app:titleTextColor="@color/md_white_1000"
-            app:subtitleTextColor="@color/md_white_1000"
-            android:background="?attr/colorPrimary"/>
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:paddingBottom="16dp"
-            android:paddingLeft="16dp"
-            android:paddingRight="16dp"
-            android:text="You are part of multiple events.  The observations you create and your reported location will be part of the selected event."
-            android:textColor="@android:color/white"/>
+            android:layout_height="?attr/actionBarSize"
+            app:title="MAGE"
+            app:layout_scrollFlags="scroll|enterAlways" />
 
     </android.support.design.widget.AppBarLayout>
 
-    <LinearLayout
-        android:id="@+id/eventsContent"
+    <android.support.v4.widget.NestedScrollView
+        android:id="@+id/scroll"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_below="@id/eventsAppBar"
-        android:orientation="vertical"
-        android:focusable="true"
-        android:focusableInTouchMode="true">
-
-        <android.support.v7.widget.SearchView
-            android:id="@+id/searchView"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:paddingTop="8dp"
-            android:paddingBottom="8dp"
-            app:queryBackground="@android:color/transparent"
-            app:defaultQueryHint="Search Events">
-
-        </android.support.v7.widget.SearchView>
-
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:background="#1E000000"/>
-
-        <android.support.v7.widget.RecyclerView
-            android:id="@+id/recyclerView"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:scrollbars="vertical" />
+        android:clipToPadding="false"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:layout_marginTop="16dp"
-            android:layout_marginStart="16dp"
-            android:layout_marginEnd="16dp">
+            android:background="@color/background"
+            android:orientation="vertical">
 
-            <TextView
-                android:id="@+id/noEventsText"
+            <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:text="You are not in any events.  You must be part of an event to use MAGE.  Contact your administrator to be added to an event."
-                android:visibility="gone"/>
+                android:layout_height="match_parent"
+                android:orientation="vertical"
+                android:fitsSystemWindows="true">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:layout_marginStart="16dp"
+                    android:layout_marginEnd="16dp">
+
+                    <TextView
+                        android:id="@+id/eventName"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        style="@style/ListTextPrimary"
+                        android:textSize="28sp"/>
+
+                    <TextView
+                        android:id="@+id/eventDescription"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="16dp"
+                        style="@style/ListTextSecondary"
+                        android:textSize="16sp"/>
+
+                </LinearLayout>
+
+            </LinearLayout>
 
             <TextView
-                android:id="@+id/noConnectionText"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="24dp"
-                android:text="There was a problem getting your information from the server.  Check your connection and try again later."
-                android:visibility="gone"/>
+                android:layout_marginStart="16dp"
+                style="@style/ListSubheaderPrimary"
+                android:textSize="16dp"
+                android:text="Form Defaults" />
 
-            <Button
-                android:id="@+id/dismissButton"
+            <android.support.v7.widget.RecyclerView
+                android:id="@+id/recyclerView"
+                android:scrollbars="vertical"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_below="@id/noEventsText"
-                android:layout_marginTop="32dp"
-                android:text="OK"
-                android:visibility="gone"
-                android:theme="@style/AppTheme.PrimaryButton.NoShadow"/>
+                android:layout_height="match_parent"
+                android:layout_marginTop="8dp" />
 
         </LinearLayout>
 
+    </android.support.v4.widget.NestedScrollView>
 
-    </LinearLayout>
 
-    <RelativeLayout
-        android:id="@+id/loadingStatus"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="@color/background">
-
-        <TextView
-            android:id="@+id/loadingText"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            android:layout_centerInParent="true"
-            android:fontFamily="sans-serif-light"
-            android:text="Loading Events..."
-            android:textSize="26sp"/>
-
-        <ProgressBar
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_above="@id/loadingText"
-            android:layout_centerHorizontal="true"
-            android:theme="@style/AppTheme.ProgressBar"
-            style="?android:attr/progressBarStyleLarge"/>
-    </RelativeLayout>
-
-</RelativeLayout>
+</android.support.design.widget.CoordinatorLayout>

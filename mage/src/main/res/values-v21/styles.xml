@@ -24,4 +24,27 @@
         <item name="android:buttonStyle">@style/AppTheme.NoShadowButton</item>
     </style>
 
+    <style name="TextAppearance.Event.Title" parent="@android:style/TextAppearance">
+        <item name="android:textColor">#666666</item>
+        <item name="android:textSize">28sp</item>
+        <item name="android:fontFamily">sans-serif</item>
+    </style>
+
+
+    <style name="FullScreenDialogStyle" parent="AppTheme">
+        <item name="android:windowNoTitle">true</item>
+
+        <!-- Set this to true if you want Full Screen without status bar -->
+        <item name="android:windowFullscreen">false</item>
+
+        <item name="android:windowIsFloating">false</item>
+
+        <!-- This is important! Don't forget to set window background -->
+        <item name="android:windowBackground">@color/md_white_1000</item>
+
+        <!-- Additionally if you want animations when dialog opening -->
+        <!--<item name="android:windowEnterAnimation">@anim/slide_up</item>-->
+        <!--<item name="android:windowExitAnimation">@anim/slide_down</item>-->
+    </style>
+
 </resources>

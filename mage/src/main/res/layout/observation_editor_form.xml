@@ -15,16 +15,16 @@
         android:textSize="16sp"
         android:theme="@style/ListSubheader"/>
 
-
     <LinearLayout
         android:id="@+id/form_content"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:paddingStart="8dp"
-        android:paddingEnd="8dp"
+        android:orientation="vertical"
+        android:paddingBottom="16dp"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
         android:focusable="true"
         android:focusableInTouchMode="true"
-        android:orientation="vertical"
         android:background="@color/background_dialog">
 
         <!-- This will get populated programmatically -->

@@ -36,6 +36,8 @@ public class ChangeEventActivity extends AppCompatActivity {
 
 	private static final String LOG_NAME = ChangeEventActivity.class.getName();
 
+	public static String EVENT_ID_EXTRA = "EVENT_ID_EXTRA";
+
 	private List<Event> events = new ArrayList<>();
 	private EventListAdapter eventListAdapter;
 
@@ -45,22 +47,23 @@ public class ChangeEventActivity extends AppCompatActivity {
 
 		setContentView(R.layout.fragment_events);
 
-		Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+		Toolbar toolbar = findViewById(R.id.toolbar);
 		toolbar.setTitle("Events");
 		setSupportActionBar(toolbar);
 		getSupportActionBar().setHomeAsUpIndicator(R.drawable.ic_close_white_24dp);
 		getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
+		EventHelper eventHelper = EventHelper.getInstance(this);
+
 		List<Event> recentEvents = Collections.emptyList();
 		try {
-			EventHelper eventHelper = EventHelper.getInstance(this);
 			events = eventHelper.readAll();
 			recentEvents = eventHelper.getRecentEvents();
 		} catch (Exception e) {
 			Log.e(LOG_NAME, "Could not get current events!");
 		}
 
-		RecyclerView recyclerView = (RecyclerView) findViewById(R.id.recycler_view);
+		RecyclerView recyclerView = findViewById(R.id.recycler_view);
 
 		eventListAdapter = new EventListAdapter(events, recentEvents, new EventListAdapter.OnEventClickListener() {
 			@Override
@@ -75,7 +78,7 @@ public class ChangeEventActivity extends AppCompatActivity {
 		recyclerView.addItemDecoration(new EventItemDecorator(getApplicationContext()));
 		recyclerView.setAdapter(eventListAdapter);
 
-		SearchView searchView = (SearchView) findViewById(R.id.search_view);
+		SearchView searchView = findViewById(R.id.search_view);
 		searchView.setIconified(false);
 		searchView.setIconifiedByDefault(false);
 		searchView.clearFocus();
@@ -91,6 +94,17 @@ public class ChangeEventActivity extends AppCompatActivity {
 				return true;
 			}
 		});
+
+		try {
+			Long eventId = getIntent().getLongExtra(EVENT_ID_EXTRA, -1);
+			Event event = eventHelper.read(eventId);
+
+			if (event != null) {
+				chooseEvent(event);
+			}
+		} catch (Exception e) {
+			Log.e(LOG_NAME, "Could not read event", e);
+		}
 	}
 
 	private void onSearchTextChanged(String text) {
@@ -102,7 +116,7 @@ public class ChangeEventActivity extends AppCompatActivity {
 		findViewById(R.id.event_content).setVisibility(View.GONE);
 		findViewById(R.id.event_status).setVisibility(View.VISIBLE);
 
-		TextView message = (TextView) findViewById(R.id.event_message);
+		TextView message = findViewById(R.id.event_message);
 		message.setText("Loading " + event.getName());
 
 		EventServerFetch eventFetch = new EventServerFetch(getApplicationContext(), event.getRemoteId());

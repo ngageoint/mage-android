@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <android.support.design.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:id="@+id/coordinator_layout"
+    android:id="@+id/coordinatorLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:focusableInTouchMode="true">
@@ -20,7 +20,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 app:popupTheme="@style/ThemeOverlay.AppCompat.Light"
-                android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar">
+                android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
+                app:title="Edit Location">
             </android.support.v7.widget.Toolbar>
 
             <LinearLayout
@@ -41,20 +42,20 @@
                     app:tabGravity="fill"
                     app:tabMode="fixed"/>
 
-                <fragment android:name="mil.nga.giat.mage.observation.LocationEditActivity$WGS84CoordinateFragment"
+                <fragment android:name="mil.nga.giat.mage.form.field.dialog.GeometryFieldDialog$WGS84CoordinateFragment"
                     android:id="@+id/wgs84CoordinateFragment"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"/>
 
-                <fragment android:name="mil.nga.giat.mage.observation.LocationEditActivity$MGRSCoordinateFragment"
+                <fragment android:name="mil.nga.giat.mage.form.field.dialog.GeometryFieldDialog$MGRSCoordinateFragment"
                     android:id="@+id/mgrsCoordinateFragment"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"/>
 
                 <TextView
-                    android:id="@+id/location_edit_hint"
+                    android:id="@+id/hintText"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
@@ -72,8 +73,8 @@
             android:layout_weight="1">
 
             <fragment
-                android:id="@+id/location_edit_map"
-                android:name="com.google.android.gms.maps.MapFragment"
+                android:id="@+id/mapFragment"
+                android:name="com.google.android.gms.maps.SupportMapFragment"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent" />
 
@@ -84,7 +85,7 @@
                 android:orientation="horizontal">
 
                 <android.support.design.widget.FloatingActionButton
-                    android:id="@+id/location_edit_point_button"
+                    android:id="@+id/editPointButton"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginLeft="16dp"
@@ -95,7 +96,7 @@
                     android:theme="@style/AppTheme.AlternateFAB" />
 
                 <android.support.design.widget.FloatingActionButton
-                    android:id="@+id/location_edit_line_button"
+                    android:id="@+id/editLineButton"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginLeft="16dp"
@@ -106,7 +107,7 @@
                     android:theme="@style/AppTheme.AlternateFAB" />
 
                 <android.support.design.widget.FloatingActionButton
-                    android:id="@+id/location_edit_rectangle_button"
+                    android:id="@+id/editRectangleButton"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginLeft="16dp"
@@ -117,7 +118,7 @@
                     android:theme="@style/AppTheme.AlternateFAB" />
 
                 <android.support.design.widget.FloatingActionButton
-                    android:id="@+id/location_edit_polygon_button"
+                    android:id="@+id/editPolygonButton"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="16dp"
@@ -138,7 +139,7 @@
                 android:visibility="invisible" />
 
             <ImageView
-                android:id="@+id/location_edit_marker"
+                android:id="@+id/locationEditMarker"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_above="@id/location_edit_center_alignment_view"

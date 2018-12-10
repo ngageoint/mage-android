@@ -16,7 +16,7 @@ import javax.inject.Inject;
 import dagger.android.support.DaggerAppCompatActivity;
 import mil.nga.giat.mage.MageApplication;
 import mil.nga.giat.mage.R;
-import mil.nga.giat.mage.event.EventActivity;
+import mil.nga.giat.mage.event.EventsActivity;
 import mil.nga.giat.mage.login.LoginActivity;
 
 public class DisclaimerActivity extends DaggerAppCompatActivity {
@@ -62,7 +62,7 @@ public class DisclaimerActivity extends DaggerAppCompatActivity {
 		SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
 		sharedPreferences.edit().putBoolean(getString(R.string.disclaimerAcceptedKey), true).apply();
 
-		Intent intent = new Intent(getApplicationContext(), EventActivity.class);
+		Intent intent = new Intent(getApplicationContext(), EventsActivity.class);
 		Bundle extras = getIntent().getExtras();
 		if (extras != null) {
 			intent.putExtras(extras);

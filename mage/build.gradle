@@ -14,7 +14,7 @@ group 'mil.nga.giat.mage'
 archivesBaseName = 'mage-android'
 version '6.2.2'
 ext {
-    versionCode = 57
+    versionCode = 58
     sourceRefspec = Grgit.open().head().id
 }
 
@@ -28,6 +28,10 @@ android {
     compileSdkVersion 28
     buildToolsVersion '28.0.3'
     flavorDimensions "default"
+
+    dataBinding {
+        enabled = true
+    }
 
     dexOptions {
         javaMaxHeapSize "4g"

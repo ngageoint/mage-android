@@ -2,47 +2,60 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <group android:checkableBehavior="single">
+    <group android:id="@+id/group_one"
+        android:checkableBehavior="single">
 
         <item
-            android:id="@+id/events_navigation"
-            android:enabled="true"
-            android:icon="@drawable/ic_event_white_24dp"
-            android:title="Events"
-            app:showAsAction="always" />
-
-        <item
-            android:id="@+id/profile_navigation"
-            android:enabled="true"
-            android:icon="@drawable/ic_person_white_24dp"
-            android:title="Profile"
+            android:id="@+id/event_navigation"
+            android:icon="@drawable/ic_event_available_white_24dp"
+            android:title=""
             app:showAsAction="always" />
 
     </group>
 
-    <group android:id="@+id/group_two"
-        android:checkableBehavior="single">
+    <item android:id="@+id/recents_events_item"
+        android:title="Change Event">
+        <menu>
+            <group android:id="@+id/recents_events_group">
+
+                <item
+                    android:icon="@drawable/ic_event_available_white_24dp"
+                    android:title="Some Recent Event"
+                    app:showAsAction="always" />
+
+            </group>
+
+            <group android:id="@+id/more_events_group">
+
+                <item android:id="@+id/events_navigation"
+                    android:orderInCategory="300"
+                    android:icon="@drawable/ic_event_available_white_24dp"
+                    android:title="More Events" />
+            </group>
+        </menu>
+    </item>
+
+    <group android:id="@+id/group_three">
+
+        <item
+            android:id="@+id/profile_navigation"
+            android:icon="@drawable/ic_person_white_24dp"
+            android:title="Profile" />
 
         <item
             android:id="@+id/settings_navigation"
-            android:enabled="true"
             android:icon="@drawable/ic_settings_white_24dp"
-            android:title="Settings"
-            app:showAsAction="always" />
+            android:title="Settings" />
 
         <item
             android:id="@+id/help_navigation"
-            android:enabled="true"
             android:icon="@drawable/ic_info_outline_black_24dp"
-            android:title="About"
-            app:showAsAction="always" />
+            android:title="About" />
 
         <item
             android:id="@+id/logout_navigation"
-            android:enabled="true"
             android:icon="@drawable/ic_power_settings_new_white_24dp"
-            android:title="Logout"
-            app:showAsAction="always" />
+            android:title="Logout" />
     </group>
 
 </menu>
