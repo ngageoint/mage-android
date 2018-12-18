@@ -58,7 +58,6 @@ import mil.nga.giat.mage.profile.ProfileActivity;
 import mil.nga.giat.mage.sdk.datastore.DaoStore;
 import mil.nga.giat.mage.sdk.datastore.user.Event;
 import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
-import mil.nga.giat.mage.sdk.datastore.user.RoleHelper;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.exceptions.EventException;
@@ -160,21 +159,6 @@ public class LandingActivity extends DaggerAppCompatActivity implements Navigati
 
         getSupportActionBar().setHomeAsUpIndicator(R.drawable.ic_menu_white_24dp);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-
-
-        try {
-            int numberOfEvents = EventHelper.getInstance(getApplicationContext()).readAll().size();
-            if (UserHelper.getInstance(getApplicationContext()).readCurrentUser().getRole().equals(RoleHelper.getInstance(getApplicationContext()).readAdmin())) {
-                // now that ADMINS can be part of any event
-                numberOfEvents = EventHelper.getInstance(getApplicationContext()).readAll().size();
-            }
-
-            if (numberOfEvents <= 1) {
-//                navigationView.getMenu().removeItem(R.id.events_navigation);
-            }
-        } catch(Exception e) {
-            Log.e(LOG_NAME, "Problem pulling events for this admin.");
-        }
 
         View headerView = navigationView.getHeaderView(0);
         try {
@@ -353,6 +337,22 @@ public class LandingActivity extends DaggerAppCompatActivity implements Navigati
                     }
                 });
             }
+
+            if (i > 1) {
+                MenuItem item = recentEventsMenu
+                        .add(R.id.more_events_group, Menu.NONE, i, "More Events")
+                        .setIcon(R.drawable.ic_event_available_white_24dp);
+
+                item.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+                    @Override
+                    public boolean onMenuItemClick(MenuItem menuItem) {
+                        drawerLayout.closeDrawer(GravityCompat.START);
+                        Intent intent = new Intent(LandingActivity.this, ChangeEventActivity.class);
+                        startActivityForResult(intent, CHANGE_EVENT_REQUEST);
+                        return true;
+                    }
+                });
+            }
         } catch (EventException e) {
             e.printStackTrace();
         }
@@ -388,11 +388,6 @@ public class LandingActivity extends DaggerAppCompatActivity implements Navigati
                 Event event = EventHelper.getInstance(getApplicationContext()).getCurrentEvent();
                 Intent intent = new Intent(LandingActivity.this, EventActivity.class);
                 intent.putExtra(EventActivity.Companion.getEVENT_ID_EXTRA(), event.getId());
-                startActivityForResult(intent, CHANGE_EVENT_REQUEST);
-                break;
-            }
-            case R.id.events_navigation: {
-                Intent intent = new Intent(this, ChangeEventActivity.class);
                 startActivityForResult(intent, CHANGE_EVENT_REQUEST);
                 break;
             }

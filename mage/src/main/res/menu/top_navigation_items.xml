@@ -16,22 +16,8 @@
     <item android:id="@+id/recents_events_item"
         android:title="Change Event">
         <menu>
-            <group android:id="@+id/recents_events_group">
-
-                <item
-                    android:icon="@drawable/ic_event_available_white_24dp"
-                    android:title="Some Recent Event"
-                    app:showAsAction="always" />
-
-            </group>
-
-            <group android:id="@+id/more_events_group">
-
-                <item android:id="@+id/events_navigation"
-                    android:orderInCategory="300"
-                    android:icon="@drawable/ic_event_available_white_24dp"
-                    android:title="More Events" />
-            </group>
+            <group android:id="@+id/recents_events_group"/>
+            <group android:id="@+id/more_events_group"/>
         </menu>
     </item>
 
