@@ -10,6 +10,7 @@ import com.bumptech.glide.load.engine.cache.InternalCacheDiskCacheFactory
 import com.bumptech.glide.module.AppGlideModule
 import mil.nga.giat.mage.glide.loader.*
 import mil.nga.giat.mage.sdk.datastore.observation.Attachment
+import mil.nga.giat.mage.sdk.datastore.user.User
 import java.io.InputStream
 import java.nio.ByteBuffer
 
@@ -33,5 +34,7 @@ class MageGlideModule : AppGlideModule() {
         registry.append(Attachment::class.java, Bitmap::class.java, VideoFileLoader.Factory())
         registry.append(Attachment::class.java, InputStream::class.java, ImageUrlLoader.Factory(context))
         registry.append(Attachment::class.java, InputStream::class.java, ImageFileLoader.Factory())
+        registry.append(User::class.java, InputStream::class.java, AvatarFileLoader.Factory())
+        registry.append(User::class.java, InputStream::class.java, AvatarUrlLoader.Factory(context))
     }
 }

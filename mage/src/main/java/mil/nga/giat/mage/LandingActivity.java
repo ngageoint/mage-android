@@ -8,7 +8,6 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
-import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
@@ -20,8 +19,6 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.content.ContextCompat;
-import android.support.v4.graphics.drawable.RoundedBitmapDrawable;
-import android.support.v4.graphics.drawable.RoundedBitmapDrawableFactory;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.AlertDialog;
@@ -33,7 +30,6 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.bumptech.glide.request.target.BitmapImageViewTarget;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
 
@@ -65,7 +61,6 @@ import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
 import mil.nga.giat.mage.sdk.datastore.user.RoleHelper;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
-import mil.nga.giat.mage.sdk.datastore.user.UserLocal;
 import mil.nga.giat.mage.sdk.exceptions.EventException;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
@@ -185,20 +180,12 @@ public class LandingActivity extends DaggerAppCompatActivity implements Navigati
         try {
             final ImageView avatarImageView = headerView.findViewById(R.id.avatar_image_view);
             User user = UserHelper.getInstance(getApplicationContext()).readCurrentUser();
-            UserLocal userLocal = user.getUserLocal();
             GlideApp.with(this)
-                    .asBitmap()
-                    .load(userLocal.getLocalAvatarPath())
+                    .load(user)
+                    .circleCrop()
                     .fallback(R.drawable.ic_account_circle_white_48dp)
-                    .centerCrop()
-                    .into(new BitmapImageViewTarget(avatarImageView) {
-                        @Override
-                        protected void setResource(Bitmap resource) {
-                            RoundedBitmapDrawable circularBitmapDrawable = RoundedBitmapDrawableFactory.create(LandingActivity.this.getResources(), resource);
-                            circularBitmapDrawable.setCircular(true);
-                            avatarImageView.setImageDrawable(circularBitmapDrawable);
-                        }
-                    });
+                    .error(R.drawable.ic_account_circle_white_48dp)
+                    .into(avatarImageView);
 
             TextView displayName = headerView.findViewById(R.id.display_name);
             displayName.setText(user.getDisplayName());

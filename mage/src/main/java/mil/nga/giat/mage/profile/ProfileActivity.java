@@ -12,14 +12,12 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
-import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.provider.MediaStore;
 import android.provider.Settings;
-import android.support.annotation.Nullable;
 import android.support.design.widget.BottomSheetDialog;
 import android.support.v13.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -36,10 +34,6 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.bumptech.glide.load.DataSource;
-import com.bumptech.glide.load.engine.GlideException;
-import com.bumptech.glide.request.RequestListener;
-import com.bumptech.glide.request.target.Target;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapView;
@@ -55,7 +49,6 @@ import org.apache.commons.lang3.StringUtils;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -76,9 +69,7 @@ import mil.nga.giat.mage.sdk.datastore.user.Event;
 import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
-import mil.nga.giat.mage.sdk.datastore.user.UserLocal;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
-import mil.nga.giat.mage.sdk.fetch.DownloadImageTask;
 import mil.nga.giat.mage.sdk.profile.UpdateProfileTask;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
 import mil.nga.wkb.geom.Point;
@@ -243,31 +234,12 @@ public class ProfileActivity extends DaggerAppCompatActivity implements OnMapRea
 		}
 
 		final ImageView imageView = findViewById(R.id.avatar);
-		String avatarUrl = user.getAvatarUrl();
-		String localAvatarPath = user.getUserLocal().getLocalAvatarPath();
-
-		if (StringUtils.isNotBlank(localAvatarPath)) {
-			GlideApp.with(context)
-					.load(localAvatarPath)
-					.circleCrop()
-					.addListener(new RequestListener<Drawable>() {
-						@Override
-						public boolean onLoadFailed(@Nullable GlideException e, Object model, Target<Drawable> target, boolean isFirstResource) {
-							downloadAvatar(context, imageView);
-							return true;
-						}
-
-						@Override
-						public boolean onResourceReady(Drawable resource, Object model, Target<Drawable> target, DataSource dataSource, boolean isFirstResource) {
-							return true;
-						}
-					})
-					.into(imageView);
-		} else {
-			if (avatarUrl != null) {
-				downloadAvatar(context, imageView);
-			}
-		}
+		GlideApp.with(context)
+				.load(user)
+				.circleCrop()
+				.fallback(R.drawable.ic_person_gray_48dp)
+				.error(R.drawable.ic_person_gray_48dp)
+				.into(imageView);
 
 		avatarActionsDialog = new BottomSheetDialog(ProfileActivity.this);
 		final View avatarBottomSheetView = getLayoutInflater().inflate(R.layout.dialog_avatar_actions, null);
@@ -383,27 +355,6 @@ public class ProfileActivity extends DaggerAppCompatActivity implements OnMapRea
 		intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
 		startActivity(intent);
 		finish();
-	}
-
-	private void downloadAvatar(final Context context, final ImageView imageView) {
-		new DownloadImageTask(context, Collections.singletonList(user), DownloadImageTask.ImageType.AVATAR, false, new DownloadImageTask.OnImageDownloadListener() {
-			@Override
-			public void complete() {
-				try {
-					user = UserHelper.getInstance(context).read(user.getId());
-					UserLocal userLocal = user.getUserLocal();
-					if (userLocal.getLocalAvatarPath() != null) {
-						GlideApp.with(context)
-								.asBitmap()
-								.load(userLocal.getLocalAvatarPath())
-								.fallback(R.drawable.ic_person_gray_48dp)
-								.circleCrop()
-								.into(imageView);
-					}
-				} catch (UserException e) {
-				}
-			}
-		}).execute();
 	}
 
 	private void onAvatarClick() {

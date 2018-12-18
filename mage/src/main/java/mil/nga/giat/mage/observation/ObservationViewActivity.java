@@ -261,11 +261,6 @@ public class ObservationViewActivity extends AppCompatActivity implements OnMapR
 	}
 
 	@Override
-	protected void onSaveInstanceState(Bundle outState) {
-		super.onSaveInstanceState(outState);
-	}
-
-	@Override
 	protected void onDestroy() {
 		super.onDestroy();
 
