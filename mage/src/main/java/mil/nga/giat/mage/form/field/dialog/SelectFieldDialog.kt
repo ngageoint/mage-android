@@ -11,11 +11,7 @@ import android.widget.ArrayAdapter
 import android.widget.ListView
 import kotlinx.android.synthetic.main.dialog_select_field.*
 import mil.nga.giat.mage.R
-import mil.nga.giat.mage.form.FormViewModel
-import mil.nga.giat.mage.form.ChoiceFormField
-import mil.nga.giat.mage.form.FieldType
-import mil.nga.giat.mage.form.MultiChoiceFormField
-import mil.nga.giat.mage.form.SingleChoiceFormField
+import mil.nga.giat.mage.form.*
 import org.apache.commons.lang3.StringUtils
 import java.util.*
 
@@ -44,6 +40,7 @@ class SelectFieldDialog : DialogFragment() {
             bundle.putString(FORM_FIELD_KEY_EXTRA, fieldKey)
 
             fragment.setStyle(DialogFragment.STYLE_NO_TITLE, 0)
+            fragment.isCancelable = false
             fragment.arguments = bundle
 
             return fragment
@@ -162,7 +159,8 @@ class SelectFieldDialog : DialogFragment() {
     }
 
     private fun getSelectedChoicesString(choices: List<String>): String {
-        return choices.joinToString(" | ")
+        val template = "%d Selected - %s";
+        return template.format(choices.size, choices.joinToString(" | "))
     }
 
     private fun checkSelected() {

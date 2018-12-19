@@ -197,15 +197,6 @@
         <activity android:name=".profile.ProfileActivity" />
         <activity android:name=".profile.ChangePasswordActivity"
             android:label="Change Password"/>
-        <activity android:name=".observation.LocationEditActivity"
-            android:label="Edit Location"
-            android:windowSoftInputMode="adjustResize"
-            android:configChanges="orientation|screenSize"
-            android:theme="@style/AppTheme.NoActionBar"/>
-        <activity
-            android:name=".observation.SelectEditActivity"
-            android:windowSoftInputMode="stateAlwaysHidden"
-            android:theme="@style/AppTheme.NoActionBar"/>
         <activity
             android:name=".people.PeopleActivity"
             android:label="Favorited by"
