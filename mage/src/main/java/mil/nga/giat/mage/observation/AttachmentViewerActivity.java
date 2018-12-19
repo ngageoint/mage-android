@@ -17,7 +17,6 @@ import android.provider.Settings;
 import android.support.annotation.Nullable;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
-import android.support.v4.app.DialogFragment;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -46,14 +45,13 @@ import java.io.OutputStream;
 
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.glide.GlideApp;
-import mil.nga.giat.mage.observation.RemoveAttachmentDialogFragment.RemoveAttachmentDialogListener;
 import mil.nga.giat.mage.sdk.datastore.observation.Attachment;
 import mil.nga.giat.mage.sdk.datastore.observation.AttachmentHelper;
 import mil.nga.giat.mage.sdk.http.resource.ObservationResource;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
 import okhttp3.ResponseBody;
 
-public class AttachmentViewerActivity extends AppCompatActivity implements RemoveAttachmentDialogListener {
+public class AttachmentViewerActivity extends AppCompatActivity {
 
 	public final static String EDITABLE = "EDITABLE";
 	public final static String ATTACHMENT_ID = "ATTACHMENT_ID";
@@ -310,27 +308,8 @@ public class AttachmentViewerActivity extends AppCompatActivity implements Remov
 		}
 	}
 
-
-	public void removeImage(View v) {
-		DialogFragment dialog = new RemoveAttachmentDialogFragment();
-		dialog.show(getSupportFragmentManager(), "RemoveAttachmentDialogFragment");
-	}
-
 	public void goBack(View v) {
 		onBackPressed();
-	}
-
-	@Override
-	public void onDialogPositiveClick(DialogFragment dialog) {
-		Intent data = new Intent();
-		data.putExtra(SHOULD_REMOVE, true);
-		data.putExtra(ATTACHMENT_ID, attachment);
-		setResult(RESULT_OK, data);
-		finish();
-	}
-
-	@Override
-	public void onDialogNegativeClick(DialogFragment dialog) {
 	}
 
 	private void saveAttachment() {

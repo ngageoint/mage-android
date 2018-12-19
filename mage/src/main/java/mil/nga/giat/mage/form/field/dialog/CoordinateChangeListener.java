@@ -1,4 +1,4 @@
-package mil.nga.giat.mage.observation;
+package mil.nga.giat.mage.form.field.dialog;
 
 import com.google.android.gms.maps.model.LatLng;
 

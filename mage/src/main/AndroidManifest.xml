@@ -184,7 +184,8 @@
         <activity
             android:name=".observation.ObservationViewActivity"
             android:launchMode="singleTop"
-            android:label="@string/observation_view" />
+            android:label="@string/observation_view"
+            android:theme="@style/AppTheme.NoActionBar"/>
         <activity
             android:name=".observation.ObservationFormPickerActivity"
             android:theme="@style/AppTheme.NoActionBar"

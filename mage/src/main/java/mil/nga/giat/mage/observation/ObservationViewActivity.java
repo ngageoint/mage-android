@@ -11,10 +11,10 @@ import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.design.widget.BottomSheetBehavior;
 import android.support.design.widget.FloatingActionButton;
-import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
@@ -51,7 +51,6 @@ import java.util.Map;
 
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.form.Form;
-import mil.nga.giat.mage.form.FormFragment;
 import mil.nga.giat.mage.form.FormMode;
 import mil.nga.giat.mage.form.FormViewModel;
 import mil.nga.giat.mage.people.PeopleActivity;
@@ -115,6 +114,9 @@ public class ObservationViewActivity extends AppCompatActivity implements OnMapR
 			Log.e(LOG_NAME, "Cannot read current user");
 		}
 
+		Toolbar toolbar = findViewById(R.id.toolbar);
+		setSupportActionBar(toolbar);
+		getSupportActionBar().setHomeAsUpIndicator(R.drawable.ic_close_white_24dp);
 		getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
 		Event event = EventHelper.getInstance(getApplicationContext()).getCurrentEvent();
@@ -284,23 +286,11 @@ public class ObservationViewActivity extends AppCompatActivity implements OnMapR
 
 	private void setupObservation() {
 		try {
-			// Grab form definitions
-			Map<Long, JsonObject> formMap = EventHelper.getInstance(getApplicationContext()).getCurrentEvent().getFormMap();
-			Collection<JsonObject> formDefinitions = new ArrayList<>();
-			for (ObservationForm observationForm : o.getForms()) {
-				JsonObject form = formMap.get(observationForm.getFormId());
-
-				if (form != null) {
-					// TODO pull the form if we don't have it
-					formDefinitions.add(formMap.get(observationForm.getFormId()));
-				}
-			}
-
-			Form form = null;
 			if (!o.getForms().isEmpty()) {
 				ObservationForm observationForm = o.getForms().iterator().next();
+				Map<Long, JsonObject> formMap = EventHelper.getInstance(getApplicationContext()).getCurrentEvent().getFormMap();
 				JsonObject formJson = formMap.get(observationForm.getFormId());
-				form = Form.Companion.fromJson(formJson);
+				Form form = Form.Companion.fromJson(formJson);
 
 				Map<String, Object> values = new HashMap<>();
 				for (Map.Entry<String, ObservationProperty> entry : observationForm.getPropertiesMap().entrySet()) {
@@ -308,21 +298,13 @@ public class ObservationViewActivity extends AppCompatActivity implements OnMapR
 				}
 
 				model.setForm(form, values);
-			}
 
-			if (form != null) {
-				Fragment formFragment = getSupportFragmentManager().findFragmentByTag("VIEW_FORM_FRAGMENT");
-				if (formFragment == null) {
-                    LinearLayout formLayout = (LinearLayout) getLayoutInflater().inflate(R.layout.observation_editor_form, (ViewGroup) findViewById(R.id.forms), true);
-                    TextView name = formLayout.findViewById(R.id.form_name);
-                    name.setText(form.getName());
+				ViewGroup formsLayout = findViewById(R.id.forms);
+				formsLayout.removeAllViews();
 
-					formFragment = new FormFragment();
-					getSupportFragmentManager()
-							.beginTransaction()
-							.add(R.id.form_content, formFragment, "VIEW_FORM_FRAGMENT")
-							.commit();
-				}
+				LinearLayout formLayout = (LinearLayout) getLayoutInflater().inflate(R.layout.observation_editor_form, formsLayout, true);
+				TextView name = formLayout.findViewById(R.id.form_name);
+				name.setText(form.getName());
 			}
 
 			ObservationProperty primary = o.getPrimaryField();
