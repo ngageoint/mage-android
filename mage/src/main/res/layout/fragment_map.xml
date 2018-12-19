@@ -70,25 +70,18 @@
         android:theme="@style/AppTheme.AlternateFAB"
         android:src="@drawable/ic_layers_black_24dp" />
 
-    <FrameLayout
+    <android.support.design.widget.FloatingActionButton
         android:id="@+id/available_layer_downloads"
-        android:layout_width="24dp"
-        android:layout_height="24dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|start"
         android:layout_marginTop="12dp"
         android:layout_marginStart="54dp"
-        android:layout_gravity="top|start"
-        app:elevation="12dp"
-        android:elevation="12dp">
-
-        <android.support.design.widget.FloatingActionButton
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:scaleType="centerInside"
-            android:rotationX="180"
-            android:layout_margin="2dp"
-            android:src="@drawable/baseline_cloud_download_white_24" />
-
-    </FrameLayout>
+        app:fabCustomSize="24dp"
+        app:maxImageSize="14dp"
+        android:padding="32dp"
+        android:scaleType="fitXY"
+        android:src="@drawable/baseline_cloud_download_white_24" />
 
     <android.support.design.widget.FloatingActionButton
         android:id="@+id/zoom_button"
