@@ -307,7 +307,7 @@ public class LandingActivity extends DaggerAppCompatActivity implements Navigati
         menu.setGroupDividerEnabled(false);
 
         Menu recentEventsMenu = menu.findItem(R.id.recents_events_item).getSubMenu();
-        recentEventsMenu.removeGroup(R.id.recents_events_group);
+        recentEventsMenu.removeGroup(R.id.events_group);
 
         try {
             final Event currentEvent = EventHelper.getInstance(getApplicationContext()).getCurrentEvent();
@@ -323,7 +323,7 @@ public class LandingActivity extends DaggerAppCompatActivity implements Navigati
             int i = 1;
             for (final Event event : events) {
                 MenuItem item = recentEventsMenu
-                        .add(R.id.recents_events_group, Menu.NONE, i++, event.getName())
+                        .add(R.id.events_group, Menu.NONE, i++, event.getName())
                         .setIcon(R.drawable.ic_access_time_white_24dp);
 
                 item.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
@@ -340,8 +340,8 @@ public class LandingActivity extends DaggerAppCompatActivity implements Navigati
 
             if (i > 1) {
                 MenuItem item = recentEventsMenu
-                        .add(R.id.more_events_group, Menu.NONE, i, "More Events")
-                        .setIcon(R.drawable.ic_event_available_white_24dp);
+                        .add(R.id.events_group, Menu.NONE, i, "More Events")
+                        .setIcon(R.drawable.ic_event_note_white_24dp);
 
                 item.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
                     @Override
