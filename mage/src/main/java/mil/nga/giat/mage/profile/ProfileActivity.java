@@ -12,6 +12,8 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
+import android.graphics.PorterDuff;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -22,6 +24,7 @@ import android.support.design.widget.BottomSheetDialog;
 import android.support.v13.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.FileProvider;
+import android.support.v4.graphics.drawable.DrawableCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.text.SpannableString;
@@ -234,11 +237,16 @@ public class ProfileActivity extends DaggerAppCompatActivity implements OnMapRea
 		}
 
 		final ImageView imageView = findViewById(R.id.avatar);
-		GlideApp.with(context)
+		Drawable defaultPersonIcon = DrawableCompat.wrap(ContextCompat.getDrawable(context, R.drawable.ic_person_white_48dp));
+		DrawableCompat.setTint(defaultPersonIcon, ContextCompat.getColor(context, R.color.icon));
+		DrawableCompat.setTintMode(defaultPersonIcon, PorterDuff.Mode.SRC_ATOP);
+		imageView.setImageDrawable(defaultPersonIcon);
+
+		GlideApp.with(this)
 				.load(user)
 				.circleCrop()
-				.fallback(R.drawable.ic_person_gray_48dp)
-				.error(R.drawable.ic_person_gray_48dp)
+				.fallback(defaultPersonIcon)
+				.error(defaultPersonIcon)
 				.into(imageView);
 
 		avatarActionsDialog = new BottomSheetDialog(ProfileActivity.this);
@@ -324,8 +332,7 @@ public class ProfileActivity extends DaggerAppCompatActivity implements OnMapRea
 	}
 
 	private void viewAvatar() {
-		Intent intent = new Intent(getApplicationContext(), ProfilePictureViewerActivity.class);
-		intent.putExtra(ProfilePictureViewerActivity.USER_ID, user.getId());
+		Intent intent = ProfilePictureViewerActivity.Companion.intent(getApplicationContext(), user);
 		startActivity(intent);
 		avatarActionsDialog.cancel();
 	}
@@ -358,13 +365,11 @@ public class ProfileActivity extends DaggerAppCompatActivity implements OnMapRea
 	}
 
 	private void onAvatarClick() {
-		final Context context = getApplicationContext();
 		try {
 			if (isCurrentUser) {
 				avatarActionsDialog.show();
 			} else {
-				final Intent intent = new Intent(context, ProfilePictureViewerActivity.class);
-				intent.putExtra(ProfilePictureViewerActivity.USER_ID, user.getId());
+				Intent intent = ProfilePictureViewerActivity.Companion.intent(getApplicationContext(), user);
 				startActivityForResult(intent, 1);
 			}
 		} catch (Exception e) {

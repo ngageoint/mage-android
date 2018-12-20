@@ -8,21 +8,9 @@ import mil.nga.giat.mage.sdk.utils.GeometryUtility
 import mil.nga.giat.mage.sdk.utils.ISO8601DateFormatFactory
 import java.util.*
 
-enum class FormMode(val value: Int) {
-    VIEW(0),
-    EDIT(1);
-
-    companion object {
-        fun fromValue(value: Int): FormMode {
-            for (mode in values()) {
-                if (mode.value == value) {
-                    return mode
-                }
-            }
-
-            return VIEW
-        }
-    }
+enum class FormMode {
+    VIEW,
+    EDIT;
 }
 
 class FormViewModel : ViewModel() {

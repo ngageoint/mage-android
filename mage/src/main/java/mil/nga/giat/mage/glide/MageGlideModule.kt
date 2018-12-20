@@ -2,6 +2,7 @@ package mil.nga.giat.mage.glide
 
 import android.content.Context
 import android.graphics.Bitmap
+import android.util.Log
 import com.bumptech.glide.Glide
 import com.bumptech.glide.GlideBuilder
 import com.bumptech.glide.Registry
@@ -25,6 +26,7 @@ class MageGlideModule : AppGlideModule() {
     }
 
     override fun applyOptions(context: Context, builder: GlideBuilder) {
+        builder.setLogLevel(Log.ERROR)
         builder.setDiskCache(InternalCacheDiskCacheFactory(context, DEFAULT_DISK_CACHE_SIZE.toLong()))
     }
 
@@ -34,7 +36,6 @@ class MageGlideModule : AppGlideModule() {
         registry.append(Attachment::class.java, Bitmap::class.java, VideoFileLoader.Factory())
         registry.append(Attachment::class.java, InputStream::class.java, ImageUrlLoader.Factory(context))
         registry.append(Attachment::class.java, InputStream::class.java, ImageFileLoader.Factory())
-        registry.append(User::class.java, InputStream::class.java, AvatarFileLoader.Factory())
         registry.append(User::class.java, InputStream::class.java, AvatarUrlLoader.Factory(context))
     }
 }

@@ -17,7 +17,6 @@ import mil.nga.giat.mage.login.LoginActivity
 import mil.nga.giat.mage.sdk.datastore.user.Event
 import mil.nga.giat.mage.sdk.datastore.user.EventHelper
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper
-import mil.nga.giat.mage.sdk.fetch.EventServerFetch
 import mil.nga.giat.mage.sdk.login.AccountDelegate
 import mil.nga.giat.mage.sdk.login.RecentEventTask
 import java.util.*

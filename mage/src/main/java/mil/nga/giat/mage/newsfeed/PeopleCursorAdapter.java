@@ -2,13 +2,10 @@ package mil.nga.giat.mage.newsfeed;
 
 import android.content.Context;
 import android.database.Cursor;
-import android.graphics.Bitmap;
 import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.graphics.drawable.DrawableCompat;
-import android.support.v4.graphics.drawable.RoundedBitmapDrawable;
-import android.support.v4.graphics.drawable.RoundedBitmapDrawableFactory;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -17,7 +14,6 @@ import android.widget.CursorAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.bumptech.glide.request.target.BitmapImageViewTarget;
 import com.google.common.base.Function;
 import com.google.common.collect.Collections2;
 import com.j256.ormlite.android.AndroidDatabaseResults;
@@ -36,7 +32,6 @@ import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
 import mil.nga.giat.mage.sdk.datastore.user.Team;
 import mil.nga.giat.mage.sdk.datastore.user.TeamHelper;
 import mil.nga.giat.mage.sdk.datastore.user.User;
-import mil.nga.giat.mage.sdk.datastore.user.UserLocal;
 
 public class PeopleCursorAdapter extends CursorAdapter {
 	private static final String LOG_NAME = PeopleCursorAdapter.class.getName();
@@ -65,32 +60,22 @@ public class PeopleCursorAdapter extends CursorAdapter {
 				return;
 			}
 
-			ImageView personImageView = (ImageView) v.findViewById(R.id.avatarImageView);
+			ImageView avatarView = v.findViewById(R.id.avatarImageView);
 			Drawable defaultPersonIcon = DrawableCompat.wrap(ContextCompat.getDrawable(context, R.drawable.ic_person_white_24dp));
 			DrawableCompat.setTint(defaultPersonIcon, ContextCompat.getColor(context, R.color.icon));
 			DrawableCompat.setTintMode(defaultPersonIcon, PorterDuff.Mode.SRC_ATOP);
-			personImageView.setImageDrawable(defaultPersonIcon);
+			avatarView.setImageDrawable(defaultPersonIcon);
 
-			final ImageView avatarView = (ImageView) v.findViewById(R.id.avatarImageView);
-			UserLocal userLocal = user.getUserLocal();
 			GlideApp.with(context)
-					.asBitmap()
-					.load(userLocal.getLocalAvatarPath())
+					.load(user)
 					.fallback(defaultPersonIcon)
 					.error(defaultPersonIcon)
-					.centerCrop()
-					.into(new BitmapImageViewTarget(avatarView) {
-						@Override
-						protected void setResource(Bitmap resource) {
-							RoundedBitmapDrawable circularBitmapDrawable = RoundedBitmapDrawableFactory.create(context.getResources(), resource);
-							circularBitmapDrawable.setCircular(true);
-							avatarView.setImageDrawable(circularBitmapDrawable);
-						}
-					});
+					.circleCrop()
+					.into(avatarView);
 
-			final ImageView iconView = (ImageView) v.findViewById(R.id.iconImageView);
+			final ImageView iconView = v.findViewById(R.id.iconImageView);
 			GlideApp.with(context)
-					.load(userLocal.getLocalIconPath())
+					.load(user.getUserLocal().getLocalIconPath())
 					.centerCrop()
 					.into(iconView);
 
