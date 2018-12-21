@@ -29,10 +29,4 @@
 
     </PreferenceCategory>
 
-    <PreferenceCategory android:title="SERVER PUSH INTERVAL"
-        android:key="@string/locationsPushPreferencesCategoryKey">
-
-
-    </PreferenceCategory>
-
 </PreferenceScreen>

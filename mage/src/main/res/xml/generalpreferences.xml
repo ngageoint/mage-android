@@ -3,7 +3,8 @@
     <Preference
         android:summary="@string/location_services_enabled_summary"
         android:title="Location Services"
-        android:key="@string/locationServiceEnabledKey">
+        android:key="@string/locationServiceEnabledKey"
+        android:icon="@drawable/ic_my_location_preference_24dp">
         <intent
             android:action="android.intent.action.VIEW"
             android:targetClass="mil.nga.giat.mage.preferences.LocationPreferencesActivity"
@@ -13,7 +14,8 @@
         android:defaultValue="@bool/dataFetchEnabledDefaultValue"
         android:key="@string/dataFetchEnabledKey"
         android:summary="Click to configure user and observation fetching options"
-        android:title="Data Fetching">
+        android:title="Data Fetching"
+        android:icon="@drawable/ic_sync_preference_24dp">
         <intent
             android:action="android.intent.action.VIEW"
             android:targetClass="mil.nga.giat.mage.preferences.FetchPreferencesActivity"
@@ -25,26 +27,30 @@
         android:entryValues="@array/timeZoneValues"
         android:key="@string/timeZoneKey"
         android:summary="%s"
-        android:title="Time zone for display and editing"/>
+        android:title="Time zone for display and editing"
+        android:icon="@drawable/ic_access_time_preference_24dp" />
     <mil.nga.giat.mage.sdk.preferences.IntegerListPreference
         android:defaultValue="@integer/coordinateSystemViewDefaultValue"
         android:entries="@array/coordinateSystems"
         android:entryValues="@array/coordinateSystemValues"
         android:key="@string/coordinateSystemViewKey"
         android:summary="%s"
-        android:title="Coordinate System"/>
+        android:title="Coordinate System"
+        android:icon="@drawable/ic_place_preference_24dp" />
     <mil.nga.giat.mage.sdk.preferences.IntegerListPreference
         android:defaultValue="@integer/dayNightThemeDefaultValue"
         android:entries="@array/dayNightThemes"
         android:entryValues="@array/dayNightThemeValues"
         android:key="@string/dayNightThemeKey"
         android:summary="%s"
-        android:title="Theme"/>
+        android:title="Theme"
+        android:icon="@drawable/ic_brightness_medium_preference_24dp" />
     <android.support.v7.preference.SwitchPreferenceCompat
         android:defaultValue="@bool/notificationsEnabledDefaultValue"
         android:key="@string/notificationsEnabledKey"
         android:summary="Receive notifications for new observations"
-        android:title="Notifications">
+        android:title="Notifications"
+        android:icon="@drawable/ic_notifications_none_preference_24dp">
     </android.support.v7.preference.SwitchPreferenceCompat>
     <PreferenceCategory
         android:title="MEDIA">
@@ -54,14 +60,16 @@
             android:entryValues="@array/imageUploadSizeValues"
             android:key="@string/imageUploadSizeKey"
             android:summary="%s"
-            android:title="Image Attachment Upload Size"/>
+            android:title="Image Attachment Upload Size"
+            android:icon="@drawable/ic_image_preference_24dp"/>
     </PreferenceCategory>
     <PreferenceCategory
         android:title="WEARABLE">
         <Preference
             android:summary="Manage gestures for your wearable"
             android:enabled="@bool/isWearBuildDefaultValue"
-            android:title="Wearable">
+            android:title="Wearable"
+            android:icon="@drawable/ic_watch_preference_24dp">
             <!-- targetPackage is mil.nga.giat.mage, not mil.nga.giat.mage.wearable.bridge because of the resource merger that occurs -->
             <intent
                 android:action="android.intent.action.VIEW"
@@ -70,11 +78,12 @@
         </Preference>
     </PreferenceCategory>
     <PreferenceCategory
-        android:title="ADMIN">
+        android:title="Content">
         <Preference
             android:key="@string/clearDataKey"
-            android:title="Clear Data">
-            <intent
+            android:title="Erase All Data"
+            android:icon="@drawable/ic_delete_preference_24dp">
+        <intent
                 android:action="android.intent.action.VIEW"
                 android:targetClass="mil.nga.giat.mage.preferences.ClearDataPreferenceActivity"
                 android:targetPackage="@string/applicationId"/>

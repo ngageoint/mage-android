@@ -34,7 +34,7 @@
 
     </android.support.v7.preference.PreferenceCategory>
 
-    <android.support.v7.preference.PreferenceCategory android:title="LOCATIONS" android:summary="foo">
+    <android.support.v7.preference.PreferenceCategory android:title="LOCATIONS">
 
         <android.support.v7.preference.SwitchPreferenceCompat
             android:defaultValue="@bool/showLocationsDefaultValue"

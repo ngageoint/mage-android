@@ -12,14 +12,12 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
-import android.graphics.drawable.Drawable;
 import android.location.Geocoder;
 import android.location.Location;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.BottomSheetBehavior;
@@ -257,7 +255,7 @@ public class MapFragment extends DaggerFragment implements OnMapReadyCallback, O
 			}
 		});
 
-		searchButton = (FloatingActionButton) view.findViewById(R.id.map_search_button);
+		searchButton = view.findViewById(R.id.map_search_button);
 		if (Geocoder.isPresent()) {
 			searchButton.setOnClickListener(new OnClickListener() {
 				@Override
@@ -266,7 +264,7 @@ public class MapFragment extends DaggerFragment implements OnMapReadyCallback, O
 				}
 			});
 		} else {
-			searchButton.setVisibility(View.GONE);
+			searchButton.hide();
 		}
 
 		view.findViewById(R.id.new_observation_button).setOnClickListener(new OnClickListener() {
@@ -1056,8 +1054,7 @@ public class MapFragment extends DaggerFragment implements OnMapReadyCallback, O
 		float bearing = map.getCameraPosition().bearing;
 		if (bearing != 0) {
 			compassButton.animate().alpha(1f).setDuration(0).setListener(null);
-			compassButton.hide();
-			compassButton.setVisibility(View.VISIBLE);
+			compassButton.show();
 			compassButton.setRotation(bearing);
 		} else {
 			compassButton
@@ -1067,7 +1064,7 @@ public class MapFragment extends DaggerFragment implements OnMapReadyCallback, O
 				.setListener(new AnimatorListenerAdapter() {
 					@Override
 					public void onAnimationEnd(Animator animation) {
-						compassButton.setVisibility(View.INVISIBLE);
+						compassButton.hide();
 					}
 			});
 		}
