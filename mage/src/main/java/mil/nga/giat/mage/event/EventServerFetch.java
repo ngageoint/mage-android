@@ -6,7 +6,6 @@ import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
-import com.bumptech.glide.Glide;
 import com.google.common.io.ByteStreams;
 
 import java.io.File;
@@ -20,6 +19,8 @@ import java.util.Map;
 
 import mil.nga.geopackage.GeoPackageManager;
 import mil.nga.geopackage.factory.GeoPackageFactory;
+import mil.nga.giat.mage.glide.GlideApp;
+import mil.nga.giat.mage.glide.model.Avatar;
 import mil.nga.giat.mage.sdk.datastore.layer.Layer;
 import mil.nga.giat.mage.sdk.datastore.layer.LayerHelper;
 import mil.nga.giat.mage.sdk.datastore.user.Event;
@@ -134,8 +135,8 @@ public class EventServerFetch extends AsyncTask<Void, Void, Exception> {
                         user = userHelper.createOrUpdate(user);
 
                         if (user.getAvatarUrl() != null) {
-                            Glide.with(context)
-                                    .download(user)
+                            GlideApp.with(context)
+                                    .download(Avatar.Companion.forUser(user))
                                     .submit(MAX_AVATAR_DIMENSION, MAX_AVATAR_DIMENSION);
                         }
 

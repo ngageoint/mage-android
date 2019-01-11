@@ -9,6 +9,7 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
@@ -30,6 +31,7 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.bumptech.glide.Glide;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
 
@@ -47,6 +49,7 @@ import mil.nga.giat.mage.cache.GeoPackageCacheUtils;
 import mil.nga.giat.mage.event.ChangeEventActivity;
 import mil.nga.giat.mage.event.EventActivity;
 import mil.nga.giat.mage.glide.GlideApp;
+import mil.nga.giat.mage.glide.model.Avatar;
 import mil.nga.giat.mage.help.HelpActivity;
 import mil.nga.giat.mage.login.LoginActivity;
 import mil.nga.giat.mage.map.MapFragment;
@@ -107,6 +110,14 @@ public class LandingActivity extends DaggerAppCompatActivity implements Navigati
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_landing);
 
+        new AsyncTask<Void, Void, Void>() {
+            @Override
+            protected Void doInBackground(Void[] objects) {
+                Glide.get(getApplicationContext()).clearDiskCache();
+                return null;
+            }
+        }.execute();
+
         drawerLayout = findViewById(R.id.drawer_layout);
         navigationView = findViewById(R.id.navigation);
         navigationView.setNavigationItemSelectedListener(this);
@@ -161,26 +172,6 @@ public class LandingActivity extends DaggerAppCompatActivity implements Navigati
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
         View headerView = navigationView.getHeaderView(0);
-        try {
-            final ImageView avatarImageView = headerView.findViewById(R.id.avatar_image_view);
-            User user = UserHelper.getInstance(getApplicationContext()).readCurrentUser();
-            GlideApp.with(this)
-                    .load(user)
-                    .circleCrop()
-                    .fallback(R.drawable.ic_account_circle_white_48dp)
-                    .error(R.drawable.ic_account_circle_white_48dp)
-                    .into(avatarImageView);
-
-            TextView displayName = headerView.findViewById(R.id.display_name);
-            displayName.setText(user.getDisplayName());
-
-            TextView email = headerView.findViewById(R.id.email);
-            email.setText(user.getEmail());
-            email.setVisibility(StringUtils.isNoneBlank(user.getEmail()) ? View.VISIBLE : View.GONE);
-        } catch (UserException e) {
-            Log.e(LOG_NAME, "Error pulling current user from the database", e);
-        }
-
         headerView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -232,6 +223,28 @@ public class LandingActivity extends DaggerAppCompatActivity implements Navigati
     @Override
     protected void onResume() {
         super.onResume();
+
+        View headerView = navigationView.getHeaderView(0);
+        try {
+            final ImageView avatarImageView = headerView.findViewById(R.id.avatar_image_view);
+            User user = UserHelper.getInstance(getApplicationContext()).readCurrentUser();
+            GlideApp.with(this)
+                    .load(Avatar.Companion.forUser(user))
+                    .circleCrop()
+                    .fallback(R.drawable.ic_account_circle_white_48dp)
+                    .error(R.drawable.ic_account_circle_white_48dp)
+                    .into(avatarImageView);
+
+            TextView displayName = headerView.findViewById(R.id.display_name);
+            displayName.setText(user.getDisplayName());
+
+            TextView email = headerView.findViewById(R.id.email);
+            email.setText(user.getEmail());
+            email.setVisibility(StringUtils.isNoneBlank(user.getEmail()) ? View.VISIBLE : View.GONE);
+        } catch (UserException e) {
+            Log.e(LOG_NAME, "Error pulling current user from the database", e);
+        }
+
 
         // This activity is 'singleTop' and as such will not recreate itself based on a uiMode configuration change.
         // Force this by check if the uiMode has changed.

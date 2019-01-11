@@ -27,6 +27,7 @@ import java.util.Collection;
 
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.glide.GlideApp;
+import mil.nga.giat.mage.glide.model.Avatar;
 import mil.nga.giat.mage.sdk.datastore.location.Location;
 import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
 import mil.nga.giat.mage.sdk.datastore.user.Team;
@@ -67,7 +68,7 @@ public class PeopleCursorAdapter extends CursorAdapter {
 			avatarView.setImageDrawable(defaultPersonIcon);
 
 			GlideApp.with(context)
-					.load(user)
+					.load(Avatar.Companion.forUser(user))
 					.fallback(defaultPersonIcon)
 					.error(defaultPersonIcon)
 					.circleCrop()

@@ -64,6 +64,7 @@ import mil.nga.giat.mage.MageApplication;
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.coordinate.CoordinateFormatter;
 import mil.nga.giat.mage.glide.GlideApp;
+import mil.nga.giat.mage.glide.model.Avatar;
 import mil.nga.giat.mage.login.LoginActivity;
 import mil.nga.giat.mage.map.marker.LocationBitmapFactory;
 import mil.nga.giat.mage.sdk.datastore.location.Location;
@@ -111,30 +112,6 @@ public class ProfileActivity extends DaggerAppCompatActivity implements OnMapRea
 
 	private TextView phone;
 	private TextView email;
-
-	@Override
-	public void onDestroy() {
-		mapView.onDestroy();
-		super.onDestroy();
-	}
-
-	@Override
-	public void onLowMemory() {
-		super.onLowMemory();
-		mapView.onLowMemory();
-	}
-
-	@Override
-	public void onResume() {
-		super.onResume();
-		mapView.onResume();
-	}
-
-	@Override
-	public void onPause() {
-		super.onPause();
-		mapView.onPause();
-	}
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -243,7 +220,7 @@ public class ProfileActivity extends DaggerAppCompatActivity implements OnMapRea
 		imageView.setImageDrawable(defaultPersonIcon);
 
 		GlideApp.with(this)
-				.load(user)
+				.load(Avatar.Companion.forUser(user))
 				.circleCrop()
 				.fallback(defaultPersonIcon)
 				.error(defaultPersonIcon)
@@ -299,6 +276,30 @@ public class ProfileActivity extends DaggerAppCompatActivity implements OnMapRea
 				}
 			});
 		}
+	}
+
+	@Override
+	public void onResume() {
+		super.onResume();
+		mapView.onResume();
+	}
+
+	@Override
+	public void onPause() {
+		super.onPause();
+		mapView.onPause();
+	}
+
+	@Override
+	public void onDestroy() {
+		mapView.onDestroy();
+		super.onDestroy();
+	}
+
+	@Override
+	public void onLowMemory() {
+		super.onLowMemory();
+		mapView.onLowMemory();
 	}
 
 	@Override
@@ -526,20 +527,17 @@ public class ProfileActivity extends DaggerAppCompatActivity implements OnMapRea
 
 		if (filePath != null) {
 			final Context context = getApplicationContext();
-			final ImageView iv = findViewById(R.id.avatar);
-			GlideApp.with(context).load(filePath).centerCrop().into(iv);
-			GlideApp.with(context)
-					.asBitmap()
-					.load(filePath)
-					.fallback(R.id.avatar)
-					.circleCrop()
-					.into(iv);
-
 			try {
-				UserHelper.getInstance(context).setAvatarPath(user, filePath);
+				user = UserHelper.getInstance(context).setAvatarPath(user, filePath);
 			} catch (UserException e) {
 				Log.e(LOG_NAME, "Error setting local avatar path", e);
 			}
+
+			final ImageView iv = findViewById(R.id.avatar);
+			GlideApp.with(context)
+				.load(Avatar.Companion.forUser(user))
+				.circleCrop()
+				.into(iv);
 
 			UpdateProfileTask task = new UpdateProfileTask(user, this);
 			task.execute(filePath);

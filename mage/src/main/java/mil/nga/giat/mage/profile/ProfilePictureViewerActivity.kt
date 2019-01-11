@@ -18,6 +18,7 @@ import com.bumptech.glide.request.target.Target
 import kotlinx.android.synthetic.main.attachment_viewer.*
 import mil.nga.giat.mage.R
 import mil.nga.giat.mage.glide.GlideApp
+import mil.nga.giat.mage.glide.model.Avatar
 import mil.nga.giat.mage.sdk.datastore.user.User
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper
 
@@ -60,7 +61,7 @@ class ProfilePictureViewerActivity : AppCompatActivity() {
             image.setImageDrawable(defaultPersonIcon)
 
             GlideApp.with(this)
-                    .load(user)
+                    .load(Avatar.forUser(user))
                     .listener(object : RequestListener<Drawable> {
                         override fun onLoadFailed(e: GlideException?, model: Any, target: Target<Drawable>, isFirstResource: Boolean): Boolean {
                             progress.visibility = View.GONE
