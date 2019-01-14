@@ -42,5 +42,4 @@ public class ObservationProperty extends Property {
 			return value != null;
 		}
 	}
-
 }

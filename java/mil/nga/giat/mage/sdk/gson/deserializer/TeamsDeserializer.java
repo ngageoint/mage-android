@@ -1,7 +1,6 @@
 package mil.nga.giat.mage.sdk.gson.deserializer;
 
 import android.content.Context;
-import android.util.Log;
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.google.gson.Gson;
@@ -14,7 +13,6 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.reflect.TypeToken;
 
-import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -24,7 +22,6 @@ import java.util.Map;
 import mil.nga.giat.mage.sdk.datastore.user.Team;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
-import mil.nga.giat.mage.sdk.exceptions.UserException;
 import mil.nga.giat.mage.sdk.jackson.deserializer.UserDeserializer;
 
 /**
@@ -80,23 +77,15 @@ public class TeamsDeserializer implements JsonDeserializer<Map<Team, Collection<
         for (JsonElement userElement : jsonUsers) {
             JsonObject jsonUser = userElement.getAsJsonObject();
 
-            User user = null;
             try {
-                user = userHelper.read(jsonUser.get("id").getAsString());
-            } catch (UserException e) {
-                Log.e(LOG_NAME, "Error reading user from database", e);
-            }
-
-            if (user == null) {
-                try {
-                    user = userDeserializer.parseUser(jsonUser.toString());
-                } catch (IOException e) {
-                    Log.e(LOG_NAME, "Error parsing user", e);
+                User user = userDeserializer.parseUser(jsonUser.toString());
+                User existingUser = userHelper.read(user.getRemoteId());
+                if (existingUser != null) {
+                    user.setId(existingUser.getId());
                 }
-            }
-
-            if (user != null) {
                 users.add(user);
+            } catch (Exception e) {
+                e.printStackTrace();
             }
         }
 

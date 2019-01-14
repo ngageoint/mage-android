@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -371,9 +372,10 @@ public class UserResource {
                 UserHelper userHelper = UserHelper.getInstance(context);
                 User currentUser = userHelper.readCurrentUser();
                 currentUser.setAvatarUrl(user.getAvatarUrl());
+                currentUser.setLastModified(new Date(currentUser.getLastModified().getTime() + 1));
                 UserHelper.getInstance(context).update(currentUser);
 
-                userHelper.setAvatarPath(currentUser, avatarPath);
+                userHelper.setAvatarPath(currentUser, null);
 
                 Log.d(LOG_NAME, "Updated user with remote_id " + user.getRemoteId());
 

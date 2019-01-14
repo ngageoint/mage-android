@@ -24,7 +24,9 @@ import mil.nga.giat.mage.sdk.datastore.observation.ObservationImportant;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationProperty;
 import mil.nga.giat.mage.sdk.datastore.observation.State;
 import mil.nga.giat.mage.sdk.datastore.user.Event;
+import mil.nga.giat.mage.sdk.utils.GeometryUtility;
 import mil.nga.giat.mage.sdk.utils.ISO8601DateFormatFactory;
+import mil.nga.wkb.geom.Geometry;
 
 public class ObservationDeserializer extends Deserializer {
 
@@ -217,7 +219,9 @@ public class ObservationDeserializer extends Deserializer {
 				form.setFormId(parser.getLongValue());
 			} else {
 				if (token == JsonToken.START_OBJECT) {
-					parser.skipChildren();
+					Geometry geometry = geometryDeserializer.parseGeometry(parser);
+					byte[] geometryBytes = GeometryUtility.toGeometryBytes(geometry);
+					properties.add(new ObservationProperty(key, geometryBytes));
 				} else if (token == JsonToken.START_ARRAY) {
 					ArrayList<String> stringArrayList = new ArrayList<>();
 					while (parser.nextToken() != JsonToken.END_ARRAY) {

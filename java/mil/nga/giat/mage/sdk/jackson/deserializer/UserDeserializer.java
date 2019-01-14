@@ -12,6 +12,8 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.text.DateFormat;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -26,6 +28,7 @@ import mil.nga.giat.mage.sdk.datastore.user.Role;
 import mil.nga.giat.mage.sdk.datastore.user.RoleHelper;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.exceptions.RoleException;
+import mil.nga.giat.mage.sdk.utils.ISO8601DateFormatFactory;
 
 public class UserDeserializer extends Deserializer {
 
@@ -33,6 +36,7 @@ public class UserDeserializer extends Deserializer {
 
 	private RoleHelper roleHelper = null;
 	private Map<String, Role> roles = new HashMap<>();
+	private DateFormat iso8601Format = ISO8601DateFormatFactory.ISO8601();
 
 	public UserDeserializer(Context context) {
 		this.roleHelper = RoleHelper.getInstance(context);
@@ -99,8 +103,14 @@ public class UserDeserializer extends Deserializer {
 				user.setAvatarUrl(parser.getText());
 			} else if ("iconUrl".equals(name)) {
 				user.setIconUrl(parser.getText());
-			}  else if ("recentEventIds".equals(name)) {
+			} else if ("recentEventIds".equals(name)) {
 				user.setRecentEventIds(parseRecentEventIds(parser));
+			} else if ("lastUpdated".equals(name)) {
+				try {
+					user.setLastModified(iso8601Format.parse(parser.getText()));
+				} catch (ParseException e) {
+
+				}
 			} else {
 				parser.skipChildren();
 			}

@@ -3,6 +3,9 @@ package mil.nga.giat.mage.sdk.datastore.user;
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
 
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
+
 @DatabaseTable(tableName = "userlocal")
 public class UserLocal {
 
@@ -69,5 +72,33 @@ public class UserLocal {
 	
 	public void setLocalIconPath(String localIconPath) {
 		this.localIconPath = localIconPath;
+	}
+
+	@Override
+	public boolean equals(Object object) {
+		if (this == object)
+			return true;
+
+		if (object == null)
+			return false;
+
+		if (getClass() != object.getClass())
+			return false;
+
+		UserLocal other = (UserLocal) object;
+		return new EqualsBuilder()
+				.append(id, other.id)
+				.append(localAvatarPath, other.localAvatarPath)
+				.append(localIconPath, other.localIconPath)
+				.isEquals();
+	}
+
+	@Override
+	public int hashCode() {
+		return new HashCodeBuilder()
+				.append(id)
+				.append(localAvatarPath)
+				.append(localIconPath)
+				.toHashCode();
 	}
 }

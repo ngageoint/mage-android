@@ -6,6 +6,7 @@ import com.j256.ormlite.field.DatabaseField;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 
 /**
  * Common stuff across observations, locations, static features, etc.
@@ -58,6 +59,35 @@ public abstract class Property {
 	@Override
 	public String toString() {
 		return ToStringBuilder.reflectionToString(this);
+	}
+
+	@Override
+	public boolean equals(Object other) {
+		if (other == this) {
+			return true;
+		}
+
+		if (!(other instanceof Property)) {
+			return false;
+		}
+
+		Property property = (Property) other;
+
+		if (!key.equals(property.key)) {
+			return false;
+		}
+
+		if (!value.getClass().equals(property.value.getClass())) {
+			return false;
+		}
+
+		if (value instanceof ArrayList) {
+            ArrayList<?> lhs = (ArrayList<?>) value;
+            ArrayList<?> rhs = (ArrayList<?>) property.value;
+            return lhs.size() == rhs.size() && lhs.containsAll(rhs);
+		} else {
+			return value.equals(property.value);
+		}
 	}
 
 }

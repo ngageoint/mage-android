@@ -16,6 +16,7 @@ public class User {
 	public static final String COLUMN_NAME_REMOTE_ID = "remote_id";
 	public static final String COLUMN_NAME_USERNAME = "username";
 	public static final String COLUMN_NAME_USER_LOCAL_ID = "user_local_id";
+	public static final String COLUMN_NAME_LAST_MODIFIED = "last_modified";
 
 	@DatabaseField(generatedId = true)
 	private Long _id;
@@ -34,6 +35,9 @@ public class User {
 
 	@DatabaseField(canBeNull = false, columnName = "fetched_date")
 	private Date fetchedDate = new Date(0);
+
+	@DatabaseField(canBeNull = false, columnName = "last_modified")
+	private Date lastModified = new Date(0);
 
 	@DatabaseField(canBeNull = false, foreign = true, foreignAutoRefresh = true)
 	private Role role;
@@ -116,6 +120,14 @@ public class User {
 
 	public void setFetchedDate(Date fetchedDate) {
 		this.fetchedDate = fetchedDate;
+	}
+
+	public Date getLastModified() {
+		return lastModified;
+	}
+
+	public void setLastModified(Date lastModified) {
+		this.lastModified = lastModified;
 	}
 	
 	public String getPrimaryPhone() {
