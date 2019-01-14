@@ -10,6 +10,22 @@
         <item name="preferenceTheme">@style/PreferenceThemeOverlay.v14.Material</item>
     </style>
 
+    <style name="AppTheme.Dialog.Fullscreen" parent="AppTheme">
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowFullscreen">false</item>
+        <item name="android:windowIsFloating">false</item>
+        <item name="android:windowBackground">@color/md_white_1000</item>
+    </style>
+
+    <style name="AppTheme.NoShadowButton" parent="Widget.AppCompat.Button.Colored">
+        <item name="android:stateListAnimator">@null</item>
+    </style>
+
+    <style name="AppTheme.PrimaryButton.NoShadow">
+        <item name="colorAccent">?attr/colorPrimary</item>
+        <item name="android:buttonStyle">@style/AppTheme.NoShadowButton</item>
+    </style>
+
     <style name="AppTheme.NoActionBar">
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
@@ -25,6 +41,8 @@
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
 
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:actionOverflowButtonStyle">@style/AppTheme.Toolbar.Overflow</item>
     </style>
 
@@ -200,5 +218,5 @@
     <style name="customCheckBoxStyle" parent="@android:style/Widget.CompoundButton.CheckBox">
         <item name="android:textColor">@android:color/white</item>
     </style>
-
+    
 </resources>

@@ -63,9 +63,10 @@
         <item name="passwordToggleTint">@android:color/white</item>
     </style>
 
-    <!--<style name="AppTheme.EditText" parent="Widget.AppCompat.EditText">-->
-        <!--<item name="android:textColor">@android:color/white</item>-->
-    <!--</style>-->
+    <style name="AppTheme.PrimaryButton.NoShadow">
+        <item name="colorAccent">?attr/colorPrimary</item>
+        <item name="android:buttonStyle">@style/AppTheme.NoShadowButton</item>
+    </style>
 
     <style name="ListSubheader">
         <item name="android:textStyle">normal</item>

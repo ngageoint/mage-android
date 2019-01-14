@@ -39,10 +39,13 @@ import mil.nga.geopackage.map.geom.*
 import mil.nga.geopackage.projection.ProjectionConstants
 import mil.nga.giat.mage.R
 import mil.nga.giat.mage.coordinate.CoordinateSystem
-import mil.nga.giat.mage.form.FormViewModel
 import mil.nga.giat.mage.form.FormField
+import mil.nga.giat.mage.form.FormViewModel
 import mil.nga.giat.mage.map.MapUtils
-import mil.nga.giat.mage.observation.*
+import mil.nga.giat.mage.observation.InputFilterDecimal
+import mil.nga.giat.mage.observation.MapShapeObservation
+import mil.nga.giat.mage.observation.ObservationLocation
+import mil.nga.giat.mage.observation.ObservationShapeStyle
 import mil.nga.mgrs.MGRS
 import mil.nga.mgrs.gzd.MGRSTileProvider
 import mil.nga.wkb.geom.*
@@ -128,7 +131,7 @@ class GeometryFieldDialog : DialogFragment(),
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        setStyle(DialogFragment.STYLE_NORMAL, R.style.FullScreenDialogStyle)
+        setStyle(DialogFragment.STYLE_NORMAL, R.style.AppTheme_Dialog_Fullscreen)
 
         model = activity?.run {
             ViewModelProviders.of(this).get(FormViewModel::class.java)
