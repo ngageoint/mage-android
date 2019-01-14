@@ -130,8 +130,8 @@ class NumberFormField(
         title: String,
         required: Boolean,
         archived: Boolean,
-        @SerializedName("min") val min: Number,
-        @SerializedName("max") val max: Number
+        @SerializedName("min") val min: Number?,
+        @SerializedName("max") val max: Number?
 ): FormField<Number>(id, type, name, title, required, archived)
 
 class DateFormField(

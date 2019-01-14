@@ -92,8 +92,8 @@ class EditNumber @JvmOverloads constructor(
 
         val numberField = (formField as NumberFormField)
         required = numberField.required
-        minValue = numberField.min.toDouble()
-        maxValue = numberField.max.toDouble()
+        minValue = numberField.min?.toDouble()
+        maxValue = numberField.max?.toDouble()
     }
 
     override fun validate(enforceRequired: Boolean): Boolean {
