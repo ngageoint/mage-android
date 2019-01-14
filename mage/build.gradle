@@ -169,7 +169,7 @@ dependencies {
         google_play_services_version = '10.2.6'
         lifecycle_version= '1.1.1'
         dagger_version = '2.15'
-        work_version = '1.0.0-alpha10'
+        work_version = '1.0.0-beta01'
     }
 
     // this block allows the mage-android-wear-bridge to be pulled in dynamically when that flavor is built

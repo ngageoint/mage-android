@@ -24,8 +24,8 @@ class ObservationSyncWorker(var context: Context, params: WorkerParameters) : Wo
 
     private fun ListenableWorker.Result.withFlag(flag: Int): Int {
         return when(this) {
-            ListenableWorker.Result.FAILURE -> ObservationSyncWorker.RESULT_FAILURE_FLAG or flag
-            ListenableWorker.Result.RETRY -> ObservationSyncWorker.RESULT_RETRY_FLAG or flag
+            is ListenableWorker.Result.Failure -> ObservationSyncWorker.RESULT_FAILURE_FLAG or flag
+            is ListenableWorker.Result.Retry -> ObservationSyncWorker.RESULT_RETRY_FLAG or flag
             else -> ObservationSyncWorker.RESULT_SUCCESS_FLAG or flag
         }
     }
@@ -53,7 +53,7 @@ class ObservationSyncWorker(var context: Context, params: WorkerParameters) : Wo
         result = syncObservationImportant().withFlag(result)
         result = syncObservationFavorites().withFlag(result)
 
-        return if (result.containsFlag(RESULT_RETRY_FLAG)) Result.RETRY else Result.SUCCESS
+        return if (result.containsFlag(RESULT_RETRY_FLAG)) Result.retry() else Result.success()
     }
 
     private fun syncObservations(): Int {
@@ -117,8 +117,8 @@ class ObservationSyncWorker(var context: Context, params: WorkerParameters) : Wo
 
             // Got the observation id from the server, lets send the observation
             val result = update(observation)
-            if (result != Result.SUCCESS) {
-                return if (response.code() == HttpURLConnection.HTTP_UNAUTHORIZED) Result.FAILURE else Result.RETRY
+            if (result is Result.Success) {
+                return if (response.code() == HttpURLConnection.HTTP_UNAUTHORIZED) Result.failure() else Result.retry()
             }
 
             return result
@@ -138,7 +138,7 @@ class ObservationSyncWorker(var context: Context, params: WorkerParameters) : Wo
 
             ObservationHelper.getInstance(context).update(observation)
 
-            return if (response.code() == HttpURLConnection.HTTP_UNAUTHORIZED) Result.FAILURE else Result.RETRY
+            return if (response.code() == HttpURLConnection.HTTP_UNAUTHORIZED) Result.failure() else Result.retry()
         }
     }
 
@@ -160,7 +160,7 @@ class ObservationSyncWorker(var context: Context, params: WorkerParameters) : Wo
 
             ObservationHelper.getInstance(context).update(returnedObservation)
 
-            return Result.SUCCESS
+            return Result.success()
         } else {
             Log.e(LOG_NAME, "Bad request.")
 
@@ -178,7 +178,7 @@ class ObservationSyncWorker(var context: Context, params: WorkerParameters) : Wo
             observation.error = observationError
             ObservationHelper.getInstance(context).update(observation)
 
-            return if (response.code() == HttpURLConnection.HTTP_UNAUTHORIZED) Result.FAILURE else Result.RETRY
+            return if (response.code() == HttpURLConnection.HTTP_UNAUTHORIZED) Result.failure() else Result.retry()
         }
     }
 
@@ -202,12 +202,12 @@ class ObservationSyncWorker(var context: Context, params: WorkerParameters) : Wo
 
             if (response.isSuccessful) {
                 observationHelper.delete(observation)
-                return Result.SUCCESS
+                return Result.success()
             } else if(response.code() == HttpURLConnection.HTTP_NOT_FOUND) {
                 observationHelper.delete(observation)
-                return Result.SUCCESS
+                return Result.success()
             } else if (response.code() == HttpURLConnection.HTTP_UNAUTHORIZED) {
-                return Result.FAILURE
+                return Result.failure()
             } else {
                 Log.e(LOG_NAME, "Bad request.")
 
@@ -223,7 +223,7 @@ class ObservationSyncWorker(var context: Context, params: WorkerParameters) : Wo
                 }
 
                 observationHelper.update(observation)
-                return Result.RETRY
+                return Result.retry()
             }
         } catch (e: IOException) {
             Log.e(LOG_NAME, "Failure archiving observation.", e)
@@ -237,7 +237,7 @@ class ObservationSyncWorker(var context: Context, params: WorkerParameters) : Wo
                 Log.e(LOG_NAME, "Problem archiving observation error", oe)
             }
 
-            return Result.RETRY
+            return Result.retry()
         }
     }
 
@@ -267,18 +267,18 @@ class ObservationSyncWorker(var context: Context, params: WorkerParameters) : Wo
                 observation.lastModified = returnedObservation?.lastModified
                 observationHelper.updateImportant(observation)
 
-                return Result.SUCCESS
+                return Result.success()
             } else {
                 Log.e(LOG_NAME, "Bad request.")
                 if (response.errorBody() != null) {
                     Log.e(LOG_NAME, response.errorBody()?.string())
                 }
 
-                return if (response.code() == HttpURLConnection.HTTP_UNAUTHORIZED) Result.FAILURE else Result.RETRY
+                return if (response.code() == HttpURLConnection.HTTP_UNAUTHORIZED) Result.failure() else Result.retry()
             }
         } catch (e: IOException) {
             Log.e(LOG_NAME, "Failure toogling observation important.", e)
-            return Result.RETRY
+            return Result.retry()
         }
     }
 
@@ -308,18 +308,18 @@ class ObservationSyncWorker(var context: Context, params: WorkerParameters) : Wo
                 observation.lastModified = updatedObservation?.lastModified
                 observationHelper.updateFavorite(favorite)
 
-                return Result.SUCCESS
+                return Result.success()
             } else {
                 Log.e(LOG_NAME, "Bad request.")
                 if (response.errorBody() != null) {
                     Log.e(LOG_NAME, response.errorBody()?.string())
                 }
 
-                return if (response.code() == HttpURLConnection.HTTP_UNAUTHORIZED) Result.FAILURE else Result.RETRY
+                return if (response.code() == HttpURLConnection.HTTP_UNAUTHORIZED) Result.failure() else Result.retry()
             }
         } catch (e: IOException) {
             Log.e(LOG_NAME, "Failure toogling observation favorite.", e)
-            return Result.RETRY
+            return Result.retry()
         }
     }
 }

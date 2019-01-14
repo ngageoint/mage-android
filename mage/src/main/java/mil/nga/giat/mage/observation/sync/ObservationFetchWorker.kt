@@ -38,7 +38,7 @@ class ObservationFetchWorker(var context: Context, params: WorkerParameters) : W
         // Check token
         if (UserUtility.getInstance(context).isTokenExpired()) {
             Log.d(LOG_NAME, "Token expired, turn off observation fetch worker.")
-            return Result.FAILURE;
+            return Result.failure();
         }
 
         Log.d(LOG_NAME, "Fetching observations.")
@@ -47,6 +47,6 @@ class ObservationFetchWorker(var context: Context, params: WorkerParameters) : W
         // TODO would be nice to know if we got back a 401, in that case we should turn off
         ObservationServerFetch(context).fetch(notify = true)
 
-        return Result.SUCCESS
+        return Result.success()
     }
 }

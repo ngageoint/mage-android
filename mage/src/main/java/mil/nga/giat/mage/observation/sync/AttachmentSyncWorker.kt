@@ -29,8 +29,8 @@ class AttachmentSyncWorker(var context: Context, params: WorkerParameters) : Wor
 
     private fun ListenableWorker.Result.withFlag(flag: Int): Int {
         return when(this) {
-            ListenableWorker.Result.FAILURE -> AttachmentSyncWorker.RESULT_FAILURE_FLAG or flag
-            ListenableWorker.Result.RETRY -> AttachmentSyncWorker.RESULT_RETRY_FLAG or flag
+            is ListenableWorker.Result.Success -> AttachmentSyncWorker.RESULT_FAILURE_FLAG or flag
+            is ListenableWorker.Result.Retry -> AttachmentSyncWorker.RESULT_RETRY_FLAG or flag
             else -> AttachmentSyncWorker.RESULT_SUCCESS_FLAG or flag
         }
     }
@@ -51,9 +51,9 @@ class AttachmentSyncWorker(var context: Context, params: WorkerParameters) : Wor
         val result = syncAttachments()
 
         return if (result.containsFlag(AttachmentSyncWorker.RESULT_RETRY_FLAG)) {
-            Result.RETRY
+            Result.retry()
         } else {
-            Result.SUCCESS
+            Result.success()
         }
     }
 
@@ -71,7 +71,7 @@ class AttachmentSyncWorker(var context: Context, params: WorkerParameters) : Wor
     private fun save(attachment: Attachment): Result {
         if (!attachment.remoteId.isNullOrEmpty()) {
             Log.i(LOG_NAME, "Already pushed attachment ${attachment.id}, skipping.")
-            return Result.SUCCESS
+            return Result.success()
         }
 
         Log.d(LOG_NAME, "Staging attachment with id: ${attachment.id}")
@@ -114,18 +114,18 @@ class AttachmentSyncWorker(var context: Context, params: WorkerParameters) : Wor
 
                 AttachmentHelper.getInstance(context).update(attachment)
 
-                return Result.SUCCESS
+                return Result.success()
             } else {
                 Log.e(LOG_NAME, "Bad request.")
                 response.errorBody().let {
                     Log.e(LOG_NAME, it?.string())
                 }
 
-                return if (response.code() == HttpURLConnection.HTTP_UNAUTHORIZED) Result.FAILURE else Result.RETRY
+                return if (response.code() == HttpURLConnection.HTTP_UNAUTHORIZED) Result.failure() else Result.retry()
             }
         } catch (e: IOException) {
             Log.e(LOG_NAME, "Failure saving observation.", e)
-            return Result.RETRY
+            return Result.retry()
         }
     }
 
