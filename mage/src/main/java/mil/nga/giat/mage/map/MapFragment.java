@@ -26,6 +26,8 @@ import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.SearchView;
+import android.text.SpannableString;
+import android.text.util.Linkify;
 import android.util.Log;
 import android.util.Pair;
 import android.view.LayoutInflater;
@@ -936,27 +938,35 @@ public class MapFragment extends DaggerFragment implements OnMapReadyCallback, O
 	public void onMapClick(LatLng latLng) {
 		hideKeyboard();
 		// remove old accuracy circle
-		((LocationMarkerCollection) locations).offMarkerClick();
+		locations.offMarkerClick();
 		observations.offMarkerClick();
 
 		observations.onMapClick(latLng);
 
 		staticGeometryCollection.onMapClick(map, latLng, getActivity());
 
-		if(!cacheOverlays.isEmpty()) {
+		if (!cacheOverlays.isEmpty()) {
 			StringBuilder clickMessage = new StringBuilder();
 			for (CacheOverlay cacheOverlay : cacheOverlays.values()) {
 				String message = cacheOverlay.onMapClick(latLng, mapView, map);
-				if(message != null){
-					if(clickMessage.length() > 0){
+				if (message != null) {
+					if (clickMessage.length() > 0) {
 						clickMessage.append("\n\n");
 					}
 					clickMessage.append(message);
 				}
 			}
-			if(clickMessage.length() > 0) {
+
+			if (clickMessage.length() > 0) {
+				final SpannableString text = new SpannableString(clickMessage.toString());
+				Linkify.addLinks(text, Linkify.WEB_URLS);
+
+				View view = getLayoutInflater().inflate(R.layout.view_feature_details, null);
+				TextView textView = view.findViewById(R.id.text);
+				textView.setText(text);
+
 				new AlertDialog.Builder(getActivity())
-					.setMessage(clickMessage.toString())
+					.setView(view)
 					.setPositiveButton(android.R.string.yes, null)
 					.show();
 			}

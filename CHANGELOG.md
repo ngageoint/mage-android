@@ -13,6 +13,7 @@ Adheres to [Semantic Versioning](http://semver.org/).
 * Observations and attachments are being pulled and pushed via WorkManager.
 * Updated okhttp, retrofit and glide dependencies.
 * Using Dagger for dependency injection.
+* GeoPackage features that contain links are clickable.
 
 ##### Bug Fixes
 * Fix bug which didn't show previsouly loaded events after disconnected login
