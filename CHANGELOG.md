@@ -3,9 +3,13 @@ All notable changes to this project will be documented in this file.
 Adheres to [Semantic Versioning](http://semver.org/).
 
 ---
-## 6.2.2 (TBD)
+## 6.2.3 (TBD)
 
-* TBD
+##### Features
+
+##### Bug Fixes
+
+## [6.2.2](https://github.com/ngageoint/mage-android/releases/tag/6.2.2) (01-22-2019)
 
 ##### Features
 * Update to Android SDK 28.
@@ -14,6 +18,7 @@ Adheres to [Semantic Versioning](http://semver.org/).
 * Updated okhttp, retrofit and glide dependencies.
 * Using Dagger for dependency injection.
 * GeoPackage features that contain links are clickable.
+* Added 5 and 30 second user location fetch frequencies.
 
 ##### Bug Fixes
 * Fix bug which didn't show previsouly loaded events after disconnected login
