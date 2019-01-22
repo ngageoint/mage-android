@@ -316,9 +316,7 @@ public class LandingActivity extends DaggerAppCompatActivity implements Navigati
 
     private void setRecentsEvents() {
         Menu menu = navigationView.getMenu();
-
-        menu.setGroupDividerEnabled(false);
-
+        
         Menu recentEventsMenu = menu.findItem(R.id.recents_events_item).getSubMenu();
         recentEventsMenu.removeGroup(R.id.events_group);
 
