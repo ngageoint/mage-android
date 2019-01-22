@@ -404,9 +404,9 @@ public class MapFragment extends DaggerFragment implements OnMapReadyCallback, O
 			map.setOnCameraMoveStartedListener(this);
 			map.setOnCameraMoveListener(this);
 
-			observations = new ObservationMarkerCollection(context, map);
+			observations = new ObservationMarkerCollection(getActivity(), map);
 			historicLocations = new MyHistoricalLocationMarkerCollection(context, map);
-			locations = new LocationMarkerCollection(context, map);
+			locations = new LocationMarkerCollection(getActivity(), map);
 		}
 
 		int dayNightMode = getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK;

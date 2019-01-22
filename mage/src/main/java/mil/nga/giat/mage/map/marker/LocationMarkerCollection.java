@@ -255,7 +255,7 @@ public class LocationMarkerCollection implements PointCollection<Pair<Location, 
 		private final Map<Marker, Drawable> avatars = new HashMap<>();
 
 		@Override
-		public View getInfoContents(final Marker marker) {
+		public View getInfoWindow(final Marker marker) {
 			Pair<Location, User> pair = markerIdToPair.get(marker.getId());
 			final Location location = pair.first;
 			final User user = pair.second;
@@ -263,10 +263,10 @@ public class LocationMarkerCollection implements PointCollection<Pair<Location, 
 				return null;
 			}
 
-			LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+			LayoutInflater inflater = LayoutInflater.from(context);
 			View v = inflater.inflate(R.layout.people_info_window, null);
 
-			final ImageView avatarView = (ImageView) v.findViewById(R.id.avatarImageView);
+			final ImageView avatarView = v.findViewById(R.id.avatarImageView);
 			UserLocal userLocal = user.getUserLocal();
 			if (userLocal.getLocalAvatarPath() != null) {
 				final Drawable avatar = avatars.get(marker);
@@ -299,17 +299,17 @@ public class LocationMarkerCollection implements PointCollection<Pair<Location, 
 				new DownloadImageTask(context, Collections.singletonList(user), DownloadImageTask.ImageType.AVATAR, false).execute();
 			}
 
-			TextView name = (TextView) v.findViewById(R.id.name);
+			TextView name = v.findViewById(R.id.name);
 			name.setText(user.getDisplayName());
 
-			TextView date = (TextView) v.findViewById(R.id.date);
+			TextView date = v.findViewById(R.id.date);
 			date.setText(new PrettyTime().format(location.getTimestamp()));
 
 			return v;
 		}
 
 		@Override
-		public View getInfoWindow(Marker marker) {
+		public View getInfoContents(Marker marker) {
 			return null; // Use default info window
 		}
 	}

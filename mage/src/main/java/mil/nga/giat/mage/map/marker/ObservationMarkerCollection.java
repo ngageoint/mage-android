@@ -174,32 +174,31 @@ public class ObservationMarkerCollection implements PointCollection<Observation>
     private class ObservationInfoWindowAdapter implements GoogleMap.InfoWindowAdapter {
 
         @Override
-        public View getInfoContents(Marker marker) {
+        public View getInfoWindow(Marker marker) {
             final Observation observation = mapObservations.getMarkerObservation(marker.getId());
             if (observation == null) {
                 return null;
             }
 
-            LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+            LayoutInflater inflater = LayoutInflater.from(context);
             View v = inflater.inflate(R.layout.observation_infowindow, null);
 
 			ObservationProperty primaryField = observation.getPrimaryField();
 
 			String type = primaryField != null ? primaryField.getValue().toString() : "Observation";
 
-            TextView primary = (TextView) v.findViewById(R.id.observation_primary);
+            TextView primary = v.findViewById(R.id.observation_primary);
             primary.setText(type);
 
-            TextView date = (TextView) v.findViewById(R.id.observation_date);
+            TextView date = v.findViewById(R.id.observation_date);
             date.setText(new PrettyTime().format(observation.getTimestamp()));
 
             return v;
         }
 
         @Override
-        public View getInfoWindow(Marker marker) {
-            return null; // Use default info window
+        public View getInfoContents(Marker marker) {
+            return null;
         }
     }
-
 }
