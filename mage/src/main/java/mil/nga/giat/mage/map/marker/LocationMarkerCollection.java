@@ -3,8 +3,8 @@ package mil.nga.giat.mage.map.marker;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
-import android.support.v4.graphics.drawable.RoundedBitmapDrawable;
-import android.support.v4.graphics.drawable.RoundedBitmapDrawableFactory;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.util.Log;
 import android.util.Pair;
 import android.view.LayoutInflater;
@@ -12,7 +12,9 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.bumptech.glide.request.target.BitmapImageViewTarget;
+import com.bumptech.glide.request.target.CustomViewTarget;
+import com.bumptech.glide.request.target.Target;
+import com.bumptech.glide.request.transition.Transition;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.GoogleMap.InfoWindowAdapter;
 import com.google.android.gms.maps.GoogleMap.OnMarkerClickListener;
@@ -24,7 +26,6 @@ import com.google.android.gms.maps.model.MarkerOptions;
 
 import org.ocpsoft.prettytime.PrettyTime;
 
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -32,12 +33,11 @@ import java.util.Map;
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.filter.Filter;
 import mil.nga.giat.mage.glide.GlideApp;
+import mil.nga.giat.mage.glide.model.Avatar;
 import mil.nga.giat.mage.sdk.Temporal;
 import mil.nga.giat.mage.sdk.datastore.location.Location;
 import mil.nga.giat.mage.sdk.datastore.location.LocationProperty;
 import mil.nga.giat.mage.sdk.datastore.user.User;
-import mil.nga.giat.mage.sdk.datastore.user.UserLocal;
-import mil.nga.giat.mage.sdk.fetch.DownloadImageTask;
 import mil.nga.wkb.geom.Geometry;
 import mil.nga.wkb.geom.Point;
 import mil.nga.wkb.util.GeometryUtils;
@@ -216,7 +216,11 @@ public class LocationMarkerCollection implements PointCollection<Pair<Location, 
 			marker.remove();
 		}
 
-		clickedAccuracyCircle = null;
+		if (clickedAccuracyCircle != null) {
+			clickedAccuracyCircle.remove();
+			clickedAccuracyCircle = null;
+		}
+
 		userIdToMarker.clear();
 		markerIdToPair.clear();
 		latestLocationDate = new Date(0);
@@ -252,7 +256,8 @@ public class LocationMarkerCollection implements PointCollection<Pair<Location, 
 	}
 
 	private class LocationInfoWindowAdapter implements InfoWindowAdapter {
-		private final Map<Marker, Drawable> avatars = new HashMap<>();
+		private final Map<Long, Bitmap> avatars = new HashMap<>();
+		private final Map<Long, Target<Bitmap>> targets = new HashMap<>();
 
 		@Override
 		public View getInfoWindow(final Marker marker) {
@@ -264,40 +269,7 @@ public class LocationMarkerCollection implements PointCollection<Pair<Location, 
 			}
 
 			LayoutInflater inflater = LayoutInflater.from(context);
-			View v = inflater.inflate(R.layout.people_info_window, null);
-
-			final ImageView avatarView = v.findViewById(R.id.avatarImageView);
-			UserLocal userLocal = user.getUserLocal();
-			if (userLocal.getLocalAvatarPath() != null) {
-				final Drawable avatar = avatars.get(marker);
-				if (avatar == null) {
-					GlideApp.with(context)
-							.asBitmap()
-							.load(userLocal.getLocalAvatarPath())
-							.dontAnimate()
-							.centerCrop()
-							.into(new BitmapImageViewTarget(avatarView) {
-								@Override
-								protected void setResource(Bitmap resource) {
-									RoundedBitmapDrawable circularBitmapDrawable = RoundedBitmapDrawableFactory.create(context.getResources(), resource);
-									circularBitmapDrawable.setCircular(true);
-
-									avatars.put(marker, circularBitmapDrawable);
-									marker.showInfoWindow();
-								}
-
-								@Override public void onLoadCleared(Drawable placeholder) {
-									super.onLoadCleared(placeholder);
-									
-									avatars.remove(marker);
-								}
-							});
-				} else {
-					avatarView.setImageDrawable(avatar);
-				}
-			} else if (user.getAvatarUrl() != null) {
-				new DownloadImageTask(context, Collections.singletonList(user), DownloadImageTask.ImageType.AVATAR, false).execute();
-			}
+			final View v = inflater.inflate(R.layout.people_info_window, null);
 
 			TextView name = v.findViewById(R.id.name);
 			name.setText(user.getDisplayName());
@@ -305,12 +277,62 @@ public class LocationMarkerCollection implements PointCollection<Pair<Location, 
 			TextView date = v.findViewById(R.id.date);
 			date.setText(new PrettyTime().format(location.getTimestamp()));
 
+			final ImageView avatarView = v.findViewById(R.id.avatarImageView);
+			Bitmap avatar = avatars.get(user.getId());
+			if (avatar == null) {
+				GlideApp.with(context)
+						.asBitmap()
+						.load(Avatar.Companion.forUser(user))
+						.placeholder(R.drawable.ic_person_gray_24dp)
+						.circleCrop()
+						.into(getTarget(avatarView, marker, user));
+			} else {
+				avatarView.setImageBitmap(avatar);
+			}
+
 			return v;
 		}
 
 		@Override
 		public View getInfoContents(Marker marker) {
 			return null; // Use default info window
+		}
+
+		private Target<Bitmap> getTarget(ImageView view, Marker marker, User user) {
+			Target<Bitmap> target = targets.get(user.getId());
+			if (target == null) {
+				target = new AvatarTarget(view, marker, user);
+				targets.put(user.getId(), target);
+			}
+
+			return target;
+		}
+
+		private class AvatarTarget extends CustomViewTarget<ImageView, Bitmap> {
+			Marker marker;
+			User user;
+
+			AvatarTarget(ImageView view, Marker marker, User user) {
+				super(view);
+				this.marker = marker;
+				this.user = user;
+			}
+
+			@Override
+			protected void onResourceCleared(@Nullable Drawable placeholder) {
+				avatars.remove(user.getId());
+			}
+
+			@Override
+			public void onLoadFailed(@Nullable Drawable errorDrawable) {
+
+			}
+
+			@Override
+			public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
+				avatars.put(user.getId(), resource);
+				marker.showInfoWindow();
+			}
 		}
 	}
 }

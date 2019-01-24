@@ -80,7 +80,7 @@
                         android:layout_height="150dp"
                         android:layout_gravity="center"
                         android:tint="@color/icon"
-                        android:src="@drawable/ic_person_white_48dp" />
+                        android:src="@drawable/ic_person_gray_24dp" />
 
                     <TextView
                         android:layout_width="wrap_content"

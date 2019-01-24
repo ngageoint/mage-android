@@ -23,6 +23,7 @@ import java.util.List;
 
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.glide.GlideApp;
+import mil.nga.giat.mage.glide.model.Avatar;
 import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
 import mil.nga.giat.mage.sdk.datastore.user.Team;
 import mil.nga.giat.mage.sdk.datastore.user.TeamHelper;
@@ -77,8 +78,8 @@ public class PeopleRecyclerAdapter extends RecyclerView.Adapter<PeopleRecyclerAd
         UserLocal userLocal = user.getUserLocal();
         GlideApp.with(context)
                 .asBitmap()
-                .load(userLocal.getLocalAvatarPath())
-                .fallback(R.drawable.ic_person_gray_48dp)
+                .load(Avatar.Companion.forUser(user))
+                .fallback(R.drawable.ic_person_gray_24dp)
                 .centerCrop()
                 .into(new BitmapImageViewTarget(viewHolder.avatar) {
                     @Override

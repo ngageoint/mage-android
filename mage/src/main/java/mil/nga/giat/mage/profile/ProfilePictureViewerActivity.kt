@@ -2,11 +2,8 @@ package mil.nga.giat.mage.profile
 
 import android.content.Context
 import android.content.Intent
-import android.graphics.PorterDuff
 import android.graphics.drawable.Drawable
 import android.os.Bundle
-import android.support.v4.content.ContextCompat
-import android.support.v4.graphics.drawable.DrawableCompat
 import android.support.v7.app.AlertDialog
 import android.support.v7.app.AppCompatActivity
 import android.util.Log
@@ -54,11 +51,6 @@ class ProfilePictureViewerActivity : AppCompatActivity() {
             val userID = intent.getLongExtra(USER_ID_EXTRA, -1)
             val user = UserHelper.getInstance(applicationContext).read(userID)
             this.title = user.displayName
-
-            val defaultPersonIcon = DrawableCompat.wrap(ContextCompat.getDrawable(applicationContext, R.drawable.ic_person_white_24dp)!!)
-            DrawableCompat.setTint(defaultPersonIcon, ContextCompat.getColor(applicationContext, R.color.icon))
-            DrawableCompat.setTintMode(defaultPersonIcon, PorterDuff.Mode.SRC_ATOP)
-            image.setImageDrawable(defaultPersonIcon)
 
             GlideApp.with(this)
                     .load(Avatar.forUser(user))
