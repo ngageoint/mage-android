@@ -26,10 +26,10 @@ class FormDefaultActivity : DaggerAppCompatActivity() {
         private const val EVENT_ID_EXTRA = "EVENT_ID_EXTRA"
         private const val FORM_ID_EXTRA = "FORM_ID_EXTRA"
 
-        fun intent(context: Context, event: Event, form: JsonObject): Intent {
+        fun intent(context: Context, event: Event, form: Form): Intent {
             val intent = Intent(context, FormDefaultActivity::class.java)
             intent.putExtra(EVENT_ID_EXTRA, event.id)
-            intent.putExtra(FORM_ID_EXTRA, form.get("id")?.asLong)
+            intent.putExtra(FORM_ID_EXTRA, form.id)
             return intent
         }
     }

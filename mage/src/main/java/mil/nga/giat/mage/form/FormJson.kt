@@ -26,6 +26,7 @@ class Form(
         @SerializedName("id") val id: Long,
         @SerializedName("name") val name: String,
         @SerializedName("description") val description: String?,
+        @SerializedName("archived") val archived: Boolean,
         @SerializedName("fields") val fields: List<FormField<Any>>
 ) {
     companion object {

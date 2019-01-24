@@ -11,14 +11,12 @@ import android.view.LayoutInflater
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
-import com.google.gson.JsonArray
-import com.google.gson.JsonElement
-import com.google.gson.JsonObject
 import dagger.android.support.DaggerAppCompatActivity
 import kotlinx.android.synthetic.main.activity_event.*
 import kotlinx.android.synthetic.main.recycler_form_list_item.view.*
 import mil.nga.giat.mage.MageApplication
 import mil.nga.giat.mage.R
+import mil.nga.giat.mage.form.Form
 import mil.nga.giat.mage.form.FormDefaultActivity
 import mil.nga.giat.mage.sdk.datastore.user.Event
 import mil.nga.giat.mage.sdk.datastore.user.EventHelper
@@ -30,7 +28,7 @@ class EventActivity : DaggerAppCompatActivity() {
     companion object {
         private val LOG_NAME = EventActivity::class.java.name
 
-        public val EVENT_ID_EXTRA = "EVENT_ID_EXTRA"
+        val EVENT_ID_EXTRA = "EVENT_ID_EXTRA"
     }
 
     @Inject
@@ -63,7 +61,11 @@ class EventActivity : DaggerAppCompatActivity() {
         }
 
         viewManager = LinearLayoutManager(this)
-        viewAdapter = FormAdapter(event?.forms ?: JsonArray(), { onFormClicked(it) })
+        val forms = event?.forms?.map {
+            Form.fromJson(it?.asJsonObject)
+        } ?: emptyList()
+
+        viewAdapter = FormAdapter(forms, { onFormClicked(it) })
 
         recyclerView.apply {
             layoutManager = viewManager
@@ -85,23 +87,19 @@ class EventActivity : DaggerAppCompatActivity() {
         }
     }
 
-    private fun onFormClicked(formJson: JsonObject) {
-        startActivity(FormDefaultActivity.intent(context, event!!, formJson))
+    private fun onFormClicked(form: Form) {
+        startActivity(FormDefaultActivity.intent(context, event!!, form))
     }
 
-    class FormViewHolder(val view: View, val onClickListener: (JsonObject) -> Unit) : RecyclerView.ViewHolder(view) {
-
-        fun bind(formJson: JsonElement) = with(itemView) {
-            formJson.asJsonObject?.let { form ->
-                nameView.text = form.get("name")?.asString
-
-                itemView.setOnClickListener{ onClickListener(form) }
-            }
+    class FormViewHolder(val view: View, val onClickListener: (Form) -> Unit) : RecyclerView.ViewHolder(view) {
+        fun bind(form: Form) = with(itemView) {
+            nameView.text = form.name
+            itemView.setOnClickListener{ onClickListener(form) }
         }
-
     }
 
-    inner class FormAdapter(private val forms: JsonArray, val onClickListener: (JsonObject) -> Unit) : RecyclerView.Adapter<FormViewHolder>() {
+    inner class FormAdapter(forms: List<Form>, val onClickListener: (Form) -> Unit) : RecyclerView.Adapter<FormViewHolder>() {
+        private val forms = forms.filterNot { it.archived }
 
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): FormViewHolder {
             val view = LayoutInflater.from(parent.context).inflate(R.layout.recycler_form_list_item, parent, false)
@@ -109,9 +107,9 @@ class EventActivity : DaggerAppCompatActivity() {
         }
 
         override fun onBindViewHolder(holder: FormViewHolder, position: Int) {
-            holder.bind(forms.get(position))
+            holder.bind(forms[position])
         }
 
-        override fun getItemCount() = forms.size()
+        override fun getItemCount() = forms.count()
     }
 }
