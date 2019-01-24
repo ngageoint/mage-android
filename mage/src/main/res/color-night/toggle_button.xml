@@ -1,7 +1,7 @@
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
 
     <item android:state_selected="true"
-        android:color="@android:color/white" />
+        android:color="@color/md_blue_600" />
 
     <item android:color="?attr/colorPrimary"/>
 

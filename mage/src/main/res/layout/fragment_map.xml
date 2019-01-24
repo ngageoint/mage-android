@@ -28,7 +28,7 @@
 
         <RelativeLayout
             android:id="@+id/search_layout"
-            android:layout_width="fill_parent"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginLeft="80dp"
             android:layout_marginRight="80dp"
@@ -46,7 +46,7 @@
 
                     <android.support.v7.widget.SearchView
                         android:id="@+id/search_view"
-                        android:layout_width="fill_parent"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         app:queryHint="Search address"
                         app:searchIcon="@null"
