@@ -67,6 +67,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="top|start"
         android:layout_margin="16dp"
+        app:pressedTranslationZ="0dp"
         android:theme="@style/AppTheme.AlternateFAB"
         android:src="@drawable/ic_layers_black_24dp" />
 
