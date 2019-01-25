@@ -105,6 +105,11 @@ public class LocationMarkerCollection implements PointCollection<Pair<Location, 
 		if (marker != null) {
 			markerIdToPair.remove(marker.getId());
 			marker.remove();
+
+			if (clickedAccuracyCircle != null && pair.second.getId().equals(clickedAccuracyCircleUserId)) {
+				clickedAccuracyCircle.remove();
+				clickedAccuracyCircle = null;
+			}
 		}
 	}
 
