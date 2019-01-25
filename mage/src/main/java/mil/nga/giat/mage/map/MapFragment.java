@@ -560,17 +560,17 @@ public class MapFragment extends DaggerFragment implements OnMapReadyCallback, O
 
 	private void initializePeriodicTasks() {
 		if (refreshObservationsTask == null) {
-			refreshObservationsTask = new RefreshMarkersRunnable(observations, "timestamp", OBSERVATION_FILTER_TYPE, R.string.activeTimeFilterKey, OBSERVATION_REFRESH_INTERVAL_SECONDS);
-			scheduleMarkerRefresh(refreshObservationsTask);
+			refreshObservationsTask = new RefreshMarkersRunnable(observations, "timestamp", OBSERVATION_FILTER_TYPE, getTimeFilterId(), OBSERVATION_REFRESH_INTERVAL_SECONDS);
+            scheduleMarkerRefresh(refreshObservationsTask);
 		}
 
 		if (refreshLocationsTask == null) {
-			refreshLocationsTask = new RefreshMarkersRunnable(locations, "timestamp", LOCATION_FILTER_TYPE, R.string.activeLocationTimeFilterKey, MARKER_REFRESH_INTERVAL_SECONDS);
+			refreshLocationsTask = new RefreshMarkersRunnable(locations, "timestamp", LOCATION_FILTER_TYPE, getLocationTimeFilterId(), MARKER_REFRESH_INTERVAL_SECONDS);
 			scheduleMarkerRefresh(refreshLocationsTask);
 		}
 
 		if (refreshHistoricLocationsTask == null) {
-			refreshHistoricLocationsTask = new RefreshMarkersRunnable(historicLocations, "timestamp", LOCATION_FILTER_TYPE, R.string.activeLocationTimeFilterKey, MARKER_REFRESH_INTERVAL_SECONDS);
+			refreshHistoricLocationsTask = new RefreshMarkersRunnable(historicLocations, "timestamp", LOCATION_FILTER_TYPE, getLocationTimeFilterId(), MARKER_REFRESH_INTERVAL_SECONDS);
 			scheduleMarkerRefresh(refreshHistoricLocationsTask);
 		}
 	}
@@ -1581,7 +1581,7 @@ public class MapFragment extends DaggerFragment implements OnMapReadyCallback, O
 			int customTimeNumber = getCustomTimeNumber(filterType);
 			switch (customFilterTimeUnit) {
 				case "Hours":
-					c.add(Calendar.HOUR, -1 * customTimeNumber);
+					c.add(Calendar.HOUR_OF_DAY, -1 * customTimeNumber);
 					break;
 				case "Days":
 					c.add(Calendar.DAY_OF_MONTH, -1 * customTimeNumber);
@@ -1633,20 +1633,22 @@ public class MapFragment extends DaggerFragment implements OnMapReadyCallback, O
 		private final PointCollection<?> points;
 		private final String filterColumnName;
 		private final String filterType;
-		private final int timePeriodFilterPreferenceKeyResId;
+		private final int timePeriodFilterId;
 		private final int intervalSeconds;
 
-		private RefreshMarkersRunnable(PointCollection<?> points, String filterColumnName, String filterType, int timePeriodFilterPreferenceKeyResId, int intervalSeconds) {
+		private RefreshMarkersRunnable(PointCollection<?> points, String filterColumnName, String filterType, int timePeriodFilterId, int intervalSeconds) {
 			this.points = points;
 			this.filterColumnName = filterColumnName;
 			this.filterType = filterType;
-			this.timePeriodFilterPreferenceKeyResId = timePeriodFilterPreferenceKeyResId;
+			this.timePeriodFilterId = timePeriodFilterId;
 			this.intervalSeconds = intervalSeconds;
 		}
 
 		public void run() {
+			if (MapFragment.this.isDetached()) return;
+
 			if (points.isVisible()) {
-				points.refreshMarkerIcons(getTemporalFilter(filterColumnName, timePeriodFilterPreferenceKeyResId, filterType));
+				points.refreshMarkerIcons(getTemporalFilter(filterColumnName, timePeriodFilterId, filterType));
 			}
 			scheduleMarkerRefresh(this);
 		}
