@@ -98,7 +98,7 @@ constructor(val context: Context, val preferences: SharedPreferences) : LiveData
     }
 
     private fun getMinimumDistanceChangeForUpdates(): Long {
-        return preferences.getInt(context.getString(R.string.locationPushFrequencyKey), context.resources.getInteger(R.integer.locationPushFrequencyDefaultValue)).toLong()
+        return preferences.getInt(context.getString(R.string.gpsSensitivityKey), context.resources.getInteger(R.integer.gpsSensitivityDefaultValue)).toLong()
     }
 
     private inner class LiveDataLocationListener : LocationListener {
