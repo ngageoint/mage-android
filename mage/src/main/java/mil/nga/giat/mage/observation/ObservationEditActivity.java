@@ -201,7 +201,7 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 
 		Map<Long, JsonObject> formMap = EventHelper.getInstance(getApplicationContext()).getCurrentEvent().getFormMap();
 
-		Form form = null;
+		Form form;
 		if (isNewObservation) {
 			observation = new Observation();
 

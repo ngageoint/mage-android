@@ -42,8 +42,8 @@ class FormViewModel : ViewModel() {
         return form
     }
 
-    fun setForm(form: Form, values: Map<String, Any?> = emptyMap()) {
-        setValues(form, values)
+    fun setForm(form: Form, defaults: Map<String, Any?> = emptyMap()) {
+        setUserDefaults(form, defaults)
 
         form.fields.map { it.name to it }.toMap().let {
             fieldMap = it
@@ -56,29 +56,29 @@ class FormViewModel : ViewModel() {
         return fieldMap[key]
     }
 
-    private fun setValues(form: Form, values: Map<String, Any?>) {
+    private fun setUserDefaults(form: Form, defaults: Map<String, Any?>) {
+        if (defaults.isEmpty()) return
+
         form.fields?.let { fields ->
             for (field in fields) {
-                setValue(field, values.get(field.name))
+                setValue(field, defaults.get(field.name))
             }
         }
     }
 
     private fun setValue(field: FormField<Any>, value: Any?) {
-        value?.let {
-            when (field.type) {
-                FieldType.DATE ->
-                    if (it is String) {
-                        field.value = ISO8601DateFormatFactory.ISO8601().parse(it)
-                    } else if (value is Date) {
-                        field.value = it
-                    }
-                FieldType.GEOMETRY ->
-                    if (it is ByteArray) {
-                        field.value = ObservationLocation(ObservationLocation.MANUAL_PROVIDER, GeometryUtility.toGeometry(it))
-                    }
-                else -> field.value = it
-            }
+        when (field.type) {
+            FieldType.DATE ->
+                if (value is String) {
+                    field.value = ISO8601DateFormatFactory.ISO8601().parse(value)
+                } else if (value is Date) {
+                    field.value = value
+                }
+            FieldType.GEOMETRY ->
+                if (value is ByteArray) {
+                    field.value = ObservationLocation(ObservationLocation.MANUAL_PROVIDER, GeometryUtility.toGeometry(value))
+                }
+            else -> field.value = value
         }
     }
 }
