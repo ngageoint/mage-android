@@ -85,14 +85,14 @@ class SelectFieldDialog : DialogFragment() {
             listView.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE)
 
             val multiChoiceField = (field as MultiChoiceFormField)
-            selectedChoices.addAll(multiChoiceField.value as Collection<String>)
+            multiChoiceField.value?.let { selectedChoices.addAll(it) }
         } else {
             adapter = ArrayAdapter(context!!, android.R.layout.simple_list_item_single_choice, filteredChoices)
             listView.setAdapter(adapter)
             listView.setChoiceMode(ListView.CHOICE_MODE_SINGLE)
 
             val singleChoiceField = (field as SingleChoiceFormField)
-            singleChoiceField.value?.let { selectedChoices.add(it as String) }
+            singleChoiceField.value?.let { selectedChoices.add(it) }
         }
 
         if (selectedChoices.isEmpty()) {

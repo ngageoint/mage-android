@@ -199,7 +199,7 @@ class MultiChoiceFormField(
         choices: List<Choice>
 ): ChoiceFormField<List<String>>(id, type, name, title, required, archived, choices) {
     override fun hasValue(): Boolean {
-        return (value != null) && value!!.isNotEmpty()
+        return !value.isNullOrEmpty()
     }
 }
 
