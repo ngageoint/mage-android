@@ -9,7 +9,6 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
@@ -31,7 +30,6 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.bumptech.glide.Glide;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
 
@@ -109,14 +107,6 @@ public class LandingActivity extends DaggerAppCompatActivity implements Navigati
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_landing);
-
-        new AsyncTask<Void, Void, Void>() {
-            @Override
-            protected Void doInBackground(Void[] objects) {
-                Glide.get(getApplicationContext()).clearDiskCache();
-                return null;
-            }
-        }.execute();
 
         drawerLayout = findViewById(R.id.drawer_layout);
         navigationView = findViewById(R.id.navigation);
@@ -335,7 +325,7 @@ public class LandingActivity extends DaggerAppCompatActivity implements Navigati
             for (final Event event : events) {
                 MenuItem item = recentEventsMenu
                         .add(R.id.events_group, Menu.NONE, i++, event.getName())
-                        .setIcon(R.drawable.ic_access_time_white_24dp);
+                        .setIcon(R.drawable.ic_restore_black_24dp);
 
                 item.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
                     @Override
