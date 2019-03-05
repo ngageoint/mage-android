@@ -209,12 +209,15 @@ public class ObservationFeedFragment extends DaggerFragment implements IObservat
 		super.onPause();
 
 		listState = recyclerView.getLayoutManager().onSaveInstanceState();
+		recyclerView.setAdapter(null);
 
 		ObservationHelper.getInstance(context).removeListener(this);
 
 		if (queryUpdateHandle != null) {
 			queryUpdateHandle.cancel(true);
 		}
+
+		adapter.closeCursor();
 	}
 
 

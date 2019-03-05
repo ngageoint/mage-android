@@ -94,16 +94,16 @@ public class ObservationListAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         ObservationViewHolder(View view) {
             super(view);
 
-            markerView = (ImageView) view.findViewById(R.id.observation_marker);
-            shapeView = (ImageView) view.findViewById(R.id.observation_shape);
-            primaryView = (TextView) view.findViewById(R.id.primary);
-            timeView = (TextView) view.findViewById(R.id.time);
-            secondaryView = (TextView) view.findViewById(R.id.secondary);
-            userView = (TextView) view.findViewById(R.id.user);
+            markerView = view.findViewById(R.id.observation_marker);
+            shapeView = view.findViewById(R.id.observation_shape);
+            primaryView = view.findViewById(R.id.primary);
+            timeView = view.findViewById(R.id.time);
+            secondaryView = view.findViewById(R.id.secondary);
+            userView = view.findViewById(R.id.user);
             flaggedBadge = view.findViewById(R.id.flagged);
             syncBadge = view.findViewById(R.id.sync_status);
             errorBadge = view.findViewById(R.id.error_status);
-            attachmentLayout = (LinearLayout) view.findViewById(R.id.image_gallery);
+            attachmentLayout = view.findViewById(R.id.image_gallery);
             favoriteView = view.findViewById(R.id.favorite);
             directionsView = view.findViewById(R.id.directions);
         }
@@ -123,7 +123,7 @@ public class ObservationListAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         FooterViewHolder(View view) {
             super(view);
 
-            footerText = (TextView) view.findViewById(R.id.footer_text);
+            footerText = view.findViewById(R.id.footer_text);
         }
     }
 
@@ -134,9 +134,18 @@ public class ObservationListAdapter extends RecyclerView.Adapter<RecyclerView.Vi
     }
 
     public void setCursor(Cursor cursor, PreparedQuery<Observation> query) {
+        closeCursor();
+
         this.cursor = cursor;
         this.query = query;
         this.notifyDataSetChanged();
+    }
+
+    public void closeCursor() {
+        if (cursor != null) {
+            cursor.close();
+            cursor = null;
+        }
     }
 
     public void setFooterText(String footerText) {
@@ -145,7 +154,7 @@ public class ObservationListAdapter extends RecyclerView.Adapter<RecyclerView.Vi
 
     @Override
     public int getItemViewType(int position) {
-        if (position == cursor.getCount()) {
+        if (cursor != null && position == cursor.getCount()) {
             return TYPE_FOOTER;
         } else {
             return TYPE_OBSERVATION;
@@ -176,6 +185,8 @@ public class ObservationListAdapter extends RecyclerView.Adapter<RecyclerView.Vi
 
     @Override
     public int getItemCount() {
+        if (cursor == null) return 0;
+
         return cursor.getCount() + 1;
     }
 
@@ -203,6 +214,8 @@ public class ObservationListAdapter extends RecyclerView.Adapter<RecyclerView.Vi
     }
 
     private void bindObservationViewHolder(RecyclerView.ViewHolder holder, int position) {
+        if (cursor == null) return;
+
         cursor.moveToPosition(position);
         ObservationViewHolder vh = (ObservationViewHolder) holder;
 

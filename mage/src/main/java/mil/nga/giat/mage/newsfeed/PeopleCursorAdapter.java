@@ -6,11 +6,11 @@ import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.graphics.drawable.DrawableCompat;
+import android.support.v4.widget.CursorAdapter;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.CursorAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -42,8 +42,8 @@ public class PeopleCursorAdapter extends CursorAdapter {
 	private TeamHelper teamHelper;
 	Collection<Team> eventTeams;
 
-	public PeopleCursorAdapter(Context context, Cursor c, PreparedQuery<Location> query) {
-		super(context, c, false);
+	public PeopleCursorAdapter(Context context, Cursor cursor, PreparedQuery<Location> query) {
+		super(context, cursor, false);
 
 		this.inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 		this.query = query;
@@ -80,10 +80,10 @@ public class PeopleCursorAdapter extends CursorAdapter {
 					.centerCrop()
 					.into(iconView);
 
-			TextView name = (TextView) v.findViewById(R.id.name);
+			TextView name = v.findViewById(R.id.name);
 			name.setText(user.getDisplayName());
 
-			TextView date = (TextView) v.findViewById(R.id.date);
+			TextView date = v.findViewById(R.id.date);
 			String timeText = new PrettyTime().format(location.getTimestamp());
 			date.setText(timeText);
 
@@ -96,7 +96,7 @@ public class PeopleCursorAdapter extends CursorAdapter {
 				}
 			});
 
-			TextView teamsView = (TextView) v.findViewById(R.id.teams);
+			TextView teamsView = v.findViewById(R.id.teams);
 			teamsView.setText(StringUtils.join(teamNames, ", "));
 
 		} catch (SQLException sqle) {

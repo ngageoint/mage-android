@@ -7,6 +7,8 @@ import android.database.Cursor;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Parcelable;
+import android.support.v4.app.LoaderManager;
+import android.support.v4.content.Loader;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -23,7 +25,7 @@ import android.widget.ListView;
 import android.widget.TextView;
 
 import com.j256.ormlite.android.AndroidDatabaseResults;
-import com.j256.ormlite.dao.CloseableIterator;
+import com.j256.ormlite.android.apptools.support.OrmLiteCursorLoader;
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.stmt.PreparedQuery;
 import com.j256.ormlite.stmt.QueryBuilder;
@@ -33,10 +35,6 @@ import java.sql.SQLException;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
 
 import javax.inject.Inject;
 
@@ -53,7 +51,7 @@ import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.event.ILocationEventListener;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
 
-public class PeopleFeedFragment extends DaggerFragment implements OnItemClickListener, ILocationEventListener {
+public class PeopleFeedFragment extends DaggerFragment implements OnItemClickListener, ILocationEventListener, LoaderManager.LoaderCallbacks<Cursor> {
 	
 	private static final String LOG_NAME = PeopleFeedFragment.class.getName();
 
@@ -68,9 +66,8 @@ public class PeopleFeedFragment extends DaggerFragment implements OnItemClickLis
     private ViewGroup footer;
     private ListView lv;
     private Parcelable listState;
-    private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
-    private ScheduledFuture<?> queryUpdateHandle;
     private SwipeRefreshLayout swipeContainer;
+    private PeopleFeedFragment.RefreshUI refreshTask;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -86,9 +83,22 @@ public class PeopleFeedFragment extends DaggerFragment implements OnItemClickLis
             }
         });
 
-        lv = rootView.findViewById(R.id.people_feed_list);
         footer = (ViewGroup) inflater.inflate(R.layout.feed_footer, lv, false);
+
+        try {
+            Dao<Location, Long> dao = DaoStore.getInstance(context).getLocationDao();
+            query = buildQuery(dao, getTimeFilterId());
+            adapter = new PeopleCursorAdapter(context, null, query);
+        } catch(SQLException e) {
+            Log.e(LOG_NAME, "Could not setup people feed query", e);
+        }
+
+        lv = rootView.findViewById(R.id.people_feed_list);
         lv.addFooterView(footer, null, false);
+        lv.setAdapter(adapter);
+        lv.setOnItemClickListener(this);
+
+        getLoaderManager().initLoader(0, null, this);
 
         return rootView;
     }
@@ -99,21 +109,12 @@ public class PeopleFeedFragment extends DaggerFragment implements OnItemClickLis
 
         LocationHelper.getInstance(context).addListener(this);
 
-        try {
-            Dao<Location, Long> locationDao = DaoStore.getInstance(context).getLocationDao();
-            query = buildQuery(locationDao, getTimeFilterId());
-            Cursor c = obtainCursor(query, locationDao);
-            adapter = new PeopleCursorAdapter(context, c, query);
-            footer.setVisibility(View.GONE);
-            lv.setAdapter(adapter);
-            lv.setOnItemClickListener(this);
+        reload();
 
-            if (listState != null) {
-                lv.onRestoreInstanceState(listState);
-            }
+        footer.setVisibility(View.GONE);
 
-        } catch (Exception e) {
-            Log.e(LOG_NAME, "Problem getting cursor or setting adapter.", e);
+        if (listState != null) {
+            lv.onRestoreInstanceState(listState);
         }
     }
 
@@ -125,8 +126,8 @@ public class PeopleFeedFragment extends DaggerFragment implements OnItemClickLis
 
         listState = lv.onSaveInstanceState();
 
-        if (queryUpdateHandle != null) {
-            queryUpdateHandle.cancel(true);
+        if (refreshTask != null) {
+            getView().removeCallbacks(refreshTask);
         }
     }
 
@@ -147,44 +148,42 @@ public class PeopleFeedFragment extends DaggerFragment implements OnItemClickLis
         }
     }
 
+    @Override
+    public Loader<Cursor> onCreateLoader(int id, Bundle args) {
+        try {
+            Dao<Location, Long> dao = DaoStore.getInstance(context).getLocationDao();
+            query = buildQuery(dao, getTimeFilterId());
+            return new OrmLiteCursorLoader(getContext(), dao, query);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return null;
+    }
+
+    @Override
+    public void onLoadFinished(Loader<Cursor> loader, Cursor cursor) {
+        if (cursor != null) {
+            adapter.swapCursor(cursor);
+            adapter.notifyDataSetChanged();
+
+            // setup timer to update UI
+            if (refreshTask != null) {
+                getView().removeCallbacks(refreshTask);
+            }
+
+            refreshTask = new PeopleFeedFragment.RefreshUI();
+            scheduleRefresh(refreshTask);
+        }
+    }
+
+    @Override
+    public void onLoaderReset(Loader<Cursor> loader) {
+        adapter.swapCursor(null);
+    }
+
     private int getTimeFilterId() {
         return preferences.getInt(getResources().getString(R.string.activeLocationTimeFilterKey), getResources().getInteger(R.integer.time_filter_none));
-    }
-
-    private Cursor obtainCursor(PreparedQuery<Location> query, Dao<Location, Long> lDao) throws SQLException {
-        Cursor c = null;
-        CloseableIterator<Location> iterator = lDao.iterator(query);
-
-        // get the raw results which can be cast under Android
-        AndroidDatabaseResults results = (AndroidDatabaseResults) iterator.getRawResults();
-        c = results.getRawCursor();
-        if (c.moveToLast()) {
-            if (queryUpdateHandle != null) {
-                queryUpdateHandle.cancel(true);
-            }
-            queryUpdateHandle = scheduler.schedule(new Runnable() {
-                public void run() {
-                    updateTimeFilter(getTimeFilterId());
-                }
-            }, 30*1000, TimeUnit.MILLISECONDS);
-            c.moveToFirst();
-        }
-        return c;
-    }
-
-    private void updateTimeFilter(final int filterId) {
-        getActivity().runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                	Dao<Location, Long> locationDao = DaoStore.getInstance(context).getLocationDao();
-                    query = buildQuery(locationDao, filterId);
-                    adapter.changeCursor(obtainCursor(query, locationDao));
-                } catch (Exception e) {
-                    Log.e(LOG_NAME, "Unable to change cursor", e);
-                }
-            }
-        });
     }
 
 	private int getCustomTimeNumber() {
@@ -195,8 +194,8 @@ public class PeopleFeedFragment extends DaggerFragment implements OnItemClickLis
 		return preferences.getString(getResources().getString(R.string.customLocationTimeUnitFilterKey), getResources().getStringArray(R.array.timeUnitEntries)[0]);
 	}
     
-    private PreparedQuery<Location> buildQuery(Dao<Location, Long> lDao, int filterId) throws SQLException {
-        QueryBuilder<Location, Long> qb = lDao.queryBuilder();
+    private PreparedQuery<Location> buildQuery(Dao<Location, Long> dao, int filterId) throws SQLException {
+        QueryBuilder<Location, Long> qb = dao.queryBuilder();
         Calendar c = Calendar.getInstance();
 		String subtitle = "";
 		String footerText = "All people have been returned";
@@ -246,7 +245,7 @@ public class PeopleFeedFragment extends DaggerFragment implements OnItemClickLis
             c.setTime(new Date(0));
         }
 
-        TextView footerTextView = (TextView)footer.findViewById(R.id.footer_text);
+        TextView footerTextView = footer.findViewById(R.id.footer_text);
         footerTextView.setText(footerText);
 		User currentUser = null;
 		try {
@@ -254,13 +253,17 @@ public class PeopleFeedFragment extends DaggerFragment implements OnItemClickLis
 		} catch (UserException e) {
 			e.printStackTrace();
 		}
+
 		Where<Location, Long> where = qb.where().gt("timestamp", c.getTime());
 		if (currentUser != null) {
-			where.and().ne("user_id", currentUser.getId()).and().eq("event_id", currentUser.getUserLocal().getCurrentEvent().getId());
-		}
+			where
+                .and()
+                .ne("user_id", currentUser.getId())
+                .and()
+                .eq("event_id", currentUser.getUserLocal().getCurrentEvent().getId());
+        }
 
 		qb.orderBy("timestamp", false);
-
 
         ((AppCompatActivity) getActivity()).getSupportActionBar().setSubtitle(subtitle);
 
@@ -280,7 +283,7 @@ public class PeopleFeedFragment extends DaggerFragment implements OnItemClickLis
 			Location l = query.mapRow(new AndroidDatabaseResults(c, null, false));
 			Intent profileView = new Intent(context, ProfileActivity.class);
 			profileView.putExtra(ProfileActivity.USER_ID, l.getUser().getRemoteId());
-			getActivity().startActivityForResult(profileView, 2);
+			getActivity().startActivity(profileView);
 		} catch (Exception e) {
 			Log.e(LOG_NAME, "Problem.", e);
 		}
@@ -293,18 +296,31 @@ public class PeopleFeedFragment extends DaggerFragment implements OnItemClickLis
 
 	@Override
 	public void onLocationCreated(Collection<Location> location) {
-		updateTimeFilter(getTimeFilterId());
+        reload();
 	}
 
 	@Override
 	public void onLocationUpdated(Location location) {
-		updateTimeFilter(getTimeFilterId());
+        reload();
 	}
 
 	@Override
 	public void onLocationDeleted(Collection<Location> location) {
-		updateTimeFilter(getTimeFilterId());
+	    reload();
 	}
+
+    private void scheduleRefresh(PeopleFeedFragment.RefreshUI task) {
+        getView().postDelayed(task, 60 * 1000);
+    }
+
+    private void reload() {
+	    getActivity().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                getLoaderManager().restartLoader(0, null, PeopleFeedFragment.this);
+            }
+        });
+    }
 
     private class LocationRefreshTask extends AsyncTask<Void, Void, Void> {
 
@@ -317,6 +333,14 @@ public class PeopleFeedFragment extends DaggerFragment implements OnItemClickLis
         @Override
         protected void onPostExecute(Void aVoid) {
             swipeContainer.setRefreshing(false);
+        }
+    }
+
+    private class RefreshUI implements Runnable {
+        public void run() {
+            if (PeopleFeedFragment.this.isDetached()) return;
+
+            reload();
         }
     }
 }
