@@ -153,7 +153,12 @@ public class UserDeserializer extends Deserializer {
 		Collection<Permission> permissions = new ArrayList<>();
 		while (parser.nextToken() != JsonToken.END_ARRAY) {
 			String permission = parser.getText().toUpperCase(Locale.US);
-			permissions.add(Permission.valueOf(permission));
+			try {
+				permissions.add(Permission.valueOf(permission));
+			} catch (IllegalArgumentException ignore) {
+				// ignore any permissions that come from the server that we don't know about
+				Log.w(LOG_NAME, "Permission " + permission + " ignored");
+			}
 		}
 
 		return new Permissions(permissions);
