@@ -1,4 +1,4 @@
-package mil.nga.giat.mage.map.marker;
+package mil.nga.giat.mage.map.download;
 
 import android.app.DownloadManager;
 import android.content.BroadcastReceiver;
