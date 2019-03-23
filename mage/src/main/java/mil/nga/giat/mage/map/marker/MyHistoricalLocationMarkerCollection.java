@@ -71,7 +71,11 @@ public class MyHistoricalLocationMarkerCollection implements PointCollection<Pai
 			options.visible(visible);
 			Marker marker = map.addMarker(options);
 			markerIdToLocation.put(marker.getId(), pair);
-			locationIdToMarker.put(location.getId(), marker);
+			Marker oldMarker = locationIdToMarker.put(location.getId(), marker);
+			if (oldMarker != null) {
+				oldMarker.remove();
+			}
+
 			locationQueue.add(location);
 
 			while (locationQueue.size() > LocationPushTask.Companion.getMinNumberOfLocationsToKeep()) {
@@ -79,6 +83,7 @@ public class MyHistoricalLocationMarkerCollection implements PointCollection<Pai
 
 				Marker markerToRemove = locationIdToMarker.remove(locationToRemove.getId());
 				if (markerToRemove != null) {
+					markerToRemove.remove();
 					markerIdToLocation.remove(markerToRemove.getId());
 				}
 			}
