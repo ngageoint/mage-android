@@ -104,7 +104,7 @@ public class UserResource {
             Retrofit retrofit = new Retrofit.Builder()
                     .baseUrl(baseUrl)
                     .addConverterFactory(GsonConverterFactory.create())
-                    .client(HttpClientManager.getInstance(context).httpClient())
+                    .client(HttpClientManager.getInstance().httpClient())
                     .build();
 
             UserService service = retrofit.create(UserService.class);
@@ -138,7 +138,7 @@ public class UserResource {
             Retrofit retrofit = new Retrofit.Builder()
                     .baseUrl(baseUrl)
                     .addConverterFactory(GsonConverterFactory.create())
-                    .client(HttpClientManager.getInstance(context).httpClient())
+                    .client(HttpClientManager.getInstance().httpClient())
                     .build();
 
             UserService service = retrofit.create(UserService.class);
@@ -176,7 +176,7 @@ public class UserResource {
             Retrofit retrofit = new Retrofit.Builder()
                     .baseUrl(baseUrl)
                     .addConverterFactory(GsonConverterFactory.create())
-                    .client(HttpClientManager.getInstance(context).httpClient())
+                    .client(HttpClientManager.getInstance().httpClient())
                     .build();
 
             UserService service = retrofit.create(UserService.class);
@@ -195,7 +195,7 @@ public class UserResource {
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl(baseUrl)
                 .addConverterFactory(UsersConverterFactory.create(context))
-                .client(HttpClientManager.getInstance(context).httpClient())
+                .client(HttpClientManager.getInstance().httpClient())
                 .build();
 
         UserService service = retrofit.create(UserService.class);
@@ -220,7 +220,7 @@ public class UserResource {
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl(baseUrl)
                 .addConverterFactory(GsonConverterFactory.create())
-                .client(HttpClientManager.getInstance(context).httpClient())
+                .client(HttpClientManager.getInstance().httpClient())
                 .build();
 
         JsonObject json = new JsonObject();
@@ -257,7 +257,7 @@ public class UserResource {
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl(baseUrl)
                 .addConverterFactory(UserConverterFactory.create(context))
-                .client(HttpClientManager.getInstance(context).httpClient())
+                .client(HttpClientManager.getInstance().httpClient())
                 .build();
 
         UserService service = retrofit.create(UserService.class);
@@ -281,7 +281,7 @@ public class UserResource {
         String baseUrl = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.serverURLKey), context.getString(R.string.serverURLDefaultValue));
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl(baseUrl)
-                .client(HttpClientManager.getInstance(context).httpClient())
+                .client(HttpClientManager.getInstance().httpClient())
                 .build();
 
         UserService service = retrofit.create(UserService.class);
@@ -305,7 +305,7 @@ public class UserResource {
         String baseUrl = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.serverURLKey), context.getString(R.string.serverURLDefaultValue));
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl(baseUrl)
-                .client(HttpClientManager.getInstance(context).httpClient())
+                .client(HttpClientManager.getInstance().httpClient())
                 .build();
 
         UserService service = retrofit.create(UserService.class);
@@ -328,7 +328,7 @@ public class UserResource {
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl(baseUrl)
                 .addConverterFactory(UserConverterFactory.create(context))
-                .client(HttpClientManager.getInstance(context).httpClient())
+                .client(HttpClientManager.getInstance().httpClient())
                 .build();
 
         UserService service = retrofit.create(UserService.class);
@@ -353,7 +353,7 @@ public class UserResource {
             Retrofit retrofit = new Retrofit.Builder()
                     .baseUrl(baseUrl)
                     .addConverterFactory(UserConverterFactory.create(context))
-                    .client(HttpClientManager.getInstance(context).httpClient())
+                    .client(HttpClientManager.getInstance().httpClient())
                     .build();
 
             UserService service = retrofit.create(UserService.class);
@@ -396,7 +396,7 @@ public class UserResource {
     public void changePassword(String username, String password, String newPassword, String newPasswordConfirm, Callback<JsonObject> callback) {
         String baseUrl = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.serverURLKey), context.getString(R.string.serverURLDefaultValue));
 
-        OkHttpClient httpClient = HttpClientManager.getInstance(context).httpClient().newBuilder().build();
+        OkHttpClient httpClient = HttpClientManager.getInstance().httpClient().newBuilder().build();
         httpClient.interceptors().clear();
 
         Retrofit retrofit = new Retrofit.Builder()

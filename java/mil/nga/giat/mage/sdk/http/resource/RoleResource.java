@@ -40,13 +40,13 @@ public class RoleResource {
     }
 
     public Collection<Role> getRoles() throws IOException {
-        Collection<Role> roles = new ArrayList<Role>();
+        Collection<Role> roles = new ArrayList<>();
 
         String baseUrl = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.serverURLKey), context.getString(R.string.serverURLDefaultValue));
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl(baseUrl)
                 .addConverterFactory(GsonConverterFactory.create(RolesDeserializer.getGsonBuilder()))
-                .client(HttpClientManager.getInstance(context).httpClient())
+                .client(HttpClientManager.getInstance().httpClient())
                 .build();
 
         RoleService service = retrofit.create(RoleService.class);

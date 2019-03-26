@@ -117,7 +117,7 @@ public class ObservationResource {
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl(baseUrl)
                 .addConverterFactory(ObservationsConverterFactory.create(event))
-                .client(HttpClientManager.getInstance(context).httpClient())
+                .client(HttpClientManager.getInstance().httpClient())
                 .build();
 
         DateFormat iso8601Format = ISO8601DateFormatFactory.ISO8601();
@@ -160,7 +160,7 @@ public class ObservationResource {
             Retrofit retrofit = new Retrofit.Builder()
                     .baseUrl(baseUrl)
                     .addConverterFactory(ObservationConverterFactory.create(observation.getEvent()))
-                    .client(HttpClientManager.getInstance(context).httpClient())
+                    .client(HttpClientManager.getInstance().httpClient())
                     .build();
 
             ObservationService service = retrofit.create(ObservationService.class);
@@ -225,7 +225,7 @@ public class ObservationResource {
             Retrofit retrofit = new Retrofit.Builder()
                     .baseUrl(baseUrl)
                     .addConverterFactory(ObservationConverterFactory.create(observation.getEvent()))
-                    .client(HttpClientManager.getInstance(context).httpClient())
+                    .client(HttpClientManager.getInstance().httpClient())
                     .build();
 
             ObservationService service = retrofit.create(ObservationService.class);
@@ -286,7 +286,7 @@ public class ObservationResource {
             Retrofit retrofit = new Retrofit.Builder()
                     .baseUrl(baseUrl)
                     .addConverterFactory(GsonConverterFactory.create())
-                    .client(HttpClientManager.getInstance(context).httpClient())
+                    .client(HttpClientManager.getInstance().httpClient())
                     .build();
 
             JsonObject state = new JsonObject();
@@ -346,7 +346,7 @@ public class ObservationResource {
         String baseUrl = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.serverURLKey), context.getString(R.string.serverURLDefaultValue));
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl(baseUrl)
-                .client(HttpClientManager.getInstance(context).httpClient())
+                .client(HttpClientManager.getInstance().httpClient())
                 .build();
 
         ObservationService service = retrofit.create(ObservationService.class);
@@ -369,7 +369,7 @@ public class ObservationResource {
         String baseUrl = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.serverURLKey), context.getString(R.string.serverURLDefaultValue));
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl(baseUrl)
-                .client(HttpClientManager.getInstance(context).httpClient())
+                .client(HttpClientManager.getInstance().httpClient())
                 .build();
 
         ObservationService service = retrofit.create(ObservationService.class);
@@ -397,7 +397,7 @@ public class ObservationResource {
             Retrofit retrofit = new Retrofit.Builder()
                     .baseUrl(baseUrl)
                     .addConverterFactory(AttachmentConverterFactory.create())
-                    .client(HttpClientManager.getInstance(context).httpClient())
+                    .client(HttpClientManager.getInstance().httpClient())
                     .build();
 
             ObservationService service = retrofit.create(ObservationService.class);
@@ -447,7 +447,7 @@ public class ObservationResource {
             Retrofit retrofit = new Retrofit.Builder()
                     .baseUrl(baseUrl)
                     .addConverterFactory(ObservationConverterFactory.create(observation.getEvent()))
-                    .client(HttpClientManager.getInstance(context).httpClient())
+                    .client(HttpClientManager.getInstance().httpClient())
                     .build();
 
             ObservationService service = retrofit.create(ObservationService.class);
@@ -486,7 +486,7 @@ public class ObservationResource {
             Retrofit retrofit = new Retrofit.Builder()
                     .baseUrl(baseUrl)
                     .addConverterFactory(ObservationImportantConverterFactory.create(observation.getEvent()))
-                    .client(HttpClientManager.getInstance(context).httpClient())
+                    .client(HttpClientManager.getInstance().httpClient())
                     .build();
 
             ObservationService service = retrofit.create(ObservationService.class);

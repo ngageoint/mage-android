@@ -1,6 +1,6 @@
 package mil.nga.giat.mage.sdk.http;
 
-import android.content.Context;
+import android.app.Application;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
@@ -35,41 +35,49 @@ public class HttpClientManager implements IEventDispatcher<ISessionEventListener
 
     private static final String LOG_NAME = HttpClientManager.class.getName();
 
-    private static HttpClientManager httpClientManager;
+    private static HttpClientManager instance;
+
+    private Application context;
     private String userAgent;
+    private CookieManager cookieManager;
+    private OkHttpClient client;
 
-    private Context context;
     private Collection<ISessionEventListener> listeners = new CopyOnWriteArrayList<>();
-    CookieManager cookieManager;
 
-    public static HttpClientManager getInstance(final Context context) {
-        if (context == null) {
-            return null;
+    public static synchronized HttpClientManager initialize(Application context) {
+        if (instance != null) {
+            throw new Error("attempt to initialize " + HttpClientManager.class.getName() + " singleton more than once");
         }
 
-        if (httpClientManager == null) {
-            String userAgent = System.getProperty("http.agent");
-            userAgent = (userAgent == null) ? "" : userAgent;
+        String userAgent = System.getProperty("http.agent");
+        userAgent = userAgent == null ? "" : userAgent;
 
-            CookieManager cookieManager = new CookieManager();
-            cookieManager.setCookiePolicy(CookiePolicy.ACCEPT_ORIGINAL_SERVER);
+        CookieManager cookieManager = new CookieManager();
+        cookieManager.setCookiePolicy(CookiePolicy.ACCEPT_ORIGINAL_SERVER);
 
-            httpClientManager = new HttpClientManager(context, userAgent, cookieManager);
-        }
+        instance = new HttpClientManager(context, userAgent, cookieManager);
 
-        return httpClientManager;
+        return instance;
     }
 
-    private HttpClientManager(Context context, String userAgent, CookieManager cookieManager) {
+    public static HttpClientManager getInstance() {
+        return instance;
+    }
+
+    private HttpClientManager(Application context, String userAgent, CookieManager cookieManager) {
         this.context = context;
         this.userAgent = userAgent;
         this.cookieManager = cookieManager;
+
+        initializeClient();
     }
 
-    public OkHttpClient httpClient() {
+    private void initializeClient() {
         OkHttpClient.Builder builder = new OkHttpClient.Builder()
+                .
                 .connectTimeout(30, TimeUnit.SECONDS)
                 .readTimeout(30, TimeUnit.SECONDS)
+                .writeTimeout(30, TimeUnit.SECONDS)
                 .cookieJar(new JavaNetCookieJar(cookieManager));
 
         builder.addInterceptor(new Interceptor() {
@@ -111,7 +119,11 @@ public class HttpClientManager implements IEventDispatcher<ISessionEventListener
             }
         });
 
-        return builder.build();
+        client = builder.build();
+    }
+
+    public OkHttpClient httpClient() {
+        return client;
     }
 
     @Override

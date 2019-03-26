@@ -236,7 +236,7 @@ public class EventServerFetch extends AsyncTask<Void, Void, Exception> {
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl(baseUrl)
                 .addConverterFactory(GsonConverterFactory.create(LayerDeserializer.getGsonBuilder(event)))
-                .client(HttpClientManager.getInstance(context).httpClient())
+                .client(HttpClientManager.getInstance().httpClient())
                 .build();
 
         LayerResource.LayerService service = retrofit.create(LayerResource.LayerService.class);

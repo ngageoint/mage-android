@@ -55,7 +55,7 @@ public class LocationResource {
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl(baseUrl)
                 .addConverterFactory(LocationConverterFactory.create(event, true))
-                .client(HttpClientManager.getInstance(context).httpClient())
+                .client(HttpClientManager.getInstance().httpClient())
                 .build();
 
         try {
@@ -93,7 +93,7 @@ public class LocationResource {
             Retrofit retrofit = new Retrofit.Builder()
                     .baseUrl(baseUrl)
                     .addConverterFactory(LocationConverterFactory.create(event, false))
-                    .client(HttpClientManager.getInstance(context).httpClient())
+                    .client(HttpClientManager.getInstance().httpClient())
                     .build();
 
             LocationService service = retrofit.create(LocationService.class);

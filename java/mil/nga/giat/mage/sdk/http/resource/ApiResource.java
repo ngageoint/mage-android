@@ -35,7 +35,7 @@ public class ApiResource {
         try {
             Retrofit retrofit = new Retrofit.Builder()
                     .baseUrl(url)
-                    .client(HttpClientManager.getInstance(context).httpClient())
+                    .client(HttpClientManager.getInstance().httpClient())
                     .build();
 
             ApiService service = retrofit.create(ApiService.class);

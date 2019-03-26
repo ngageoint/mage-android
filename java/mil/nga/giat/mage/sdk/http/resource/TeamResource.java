@@ -48,7 +48,7 @@ public class TeamResource {
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl(baseUrl)
                 .addConverterFactory(GsonConverterFactory.create(TeamsDeserializer.getGsonBuilder(context)))
-                .client(HttpClientManager.getInstance(context).httpClient())
+                .client(HttpClientManager.getInstance().httpClient())
                 .build();
 
         TeamService service = retrofit.create(TeamService.class);
