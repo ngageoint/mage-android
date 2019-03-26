@@ -83,7 +83,7 @@ class AttachmentSyncWorker(var context: Context, params: WorkerParameters) : Wor
             val retrofit = Retrofit.Builder()
                     .baseUrl(baseUrl!!)
                     .addConverterFactory(AttachmentConverterFactory.create())
-                    .client(HttpClientManager.getInstance(context).httpClient())
+                    .client(HttpClientManager.getInstance().httpClient())
                     .build()
 
             val service = retrofit.create<ObservationResource.ObservationService>(ObservationResource.ObservationService::class.java)

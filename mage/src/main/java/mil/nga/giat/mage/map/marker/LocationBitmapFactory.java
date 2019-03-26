@@ -19,6 +19,7 @@ import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 
 import java.io.IOException;
+import java.io.InputStream;
 
 import mil.nga.giat.mage.sdk.datastore.location.Location;
 import mil.nga.giat.mage.sdk.datastore.user.User;
@@ -90,6 +91,7 @@ public class LocationBitmapFactory {
 	
 	public static Bitmap createDot(Context context, Location location, User user) {
 		Bitmap dotBitmap = null;
+		InputStream is = null;
 		
 		try {
 			Long interval = (System.currentTimeMillis() - location.getTimestamp().getTime()) / 1000l;
@@ -121,16 +123,18 @@ public class LocationBitmapFactory {
 			float[] colorMatrix_Negative = { -1.0f, 0, 0, 0, 255, 0, -1.0f, 0, 0, 255, 0, 0, -1.0f, 0, 255, 0, 0, 0, 1.0f, 0 };
 
 			// make a mutable copy of the bitmap
-			Bitmap bitmapFile = BitmapFactory.decodeStream(context.getAssets().open("dots/black_dot.png"));
+			is = context.getAssets().open("dots/black_dot.png");
+			Bitmap bitmap = BitmapFactory.decodeStream(is);
+
 			// scale the image to a good size
-			Integer maxDimension = Math.max(bitmapFile.getWidth(), bitmapFile.getHeight());
+			Integer maxDimension = Math.max(bitmap.getWidth(), bitmap.getHeight());
 			float density = context.getResources().getDisplayMetrics().xdpi; //context.getResources().getDisplayMetrics().densityDpi;
 			double scale = (density/10.0) / maxDimension;
-			int outWidth = Double.valueOf(scale*Integer.valueOf(bitmapFile.getWidth()).doubleValue()).intValue();
-			int outHeight = Double.valueOf(scale*Integer.valueOf(bitmapFile.getHeight()).doubleValue()).intValue();
-			bitmapFile = Bitmap.createScaledBitmap(bitmapFile, outWidth, outHeight, true);
+			int outWidth = Double.valueOf(scale*Integer.valueOf(bitmap.getWidth()).doubleValue()).intValue();
+			int outHeight = Double.valueOf(scale*Integer.valueOf(bitmap.getHeight()).doubleValue()).intValue();
+			bitmap = Bitmap.createScaledBitmap(bitmap, outWidth, outHeight, true);
 			
-			dotBitmap = bitmapFile.copy(Bitmap.Config.ARGB_8888, true);
+			dotBitmap = bitmap.copy(Bitmap.Config.ARGB_8888, true);
 
 			Canvas myCanvas = new Canvas(dotBitmap);
 			// invert the gradient first
@@ -155,7 +159,16 @@ public class LocationBitmapFactory {
 			} catch (IOException e2) {
 				Log.e(LOG_NAME, "Problem setting generating bitmap", e2);
 			}
+		} finally {
+			if (is != null) {
+				try {
+					is.close();
+				} catch (IOException ignore) {
+				}
+			}
 		}
+
+
 		return dotBitmap;
 	}
 

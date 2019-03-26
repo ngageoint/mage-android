@@ -37,8 +37,6 @@ class ObservationFetchService : Service(), SharedPreferences.OnSharedPreferenceC
 
         observationFetchFrequency = getObservationFetchFrequency()
         preferences.registerOnSharedPreferenceChangeListener(this);
-
-        scheduleFetch()
     }
 
     override fun onDestroy() {
@@ -46,6 +44,15 @@ class ObservationFetchService : Service(), SharedPreferences.OnSharedPreferenceC
 
         preferences.unregisterOnSharedPreferenceChangeListener(this);
         stopFetch()
+    }
+
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        super.onStartCommand(intent, flags, startId)
+
+        stopFetch()
+        scheduleFetch()
+
+        return START_NOT_STICKY
     }
 
     override fun onBind(intent: Intent?): IBinder? {

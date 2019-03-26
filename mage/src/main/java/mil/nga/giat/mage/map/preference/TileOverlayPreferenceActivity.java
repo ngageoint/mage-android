@@ -228,7 +228,7 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
             Retrofit retrofit = new Retrofit.Builder()
                     .baseUrl(baseUrl)
                     .addConverterFactory(GsonConverterFactory.create(LayerDeserializer.getGsonBuilder(event)))
-                    .client(HttpClientManager.getInstance(context).httpClient())
+                    .client(HttpClientManager.getInstance().httpClient())
                     .build();
 
             Collection<Layer> layers = new ArrayList<>();

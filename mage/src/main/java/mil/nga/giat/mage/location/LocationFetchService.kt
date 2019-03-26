@@ -41,6 +41,7 @@ class LocationFetchService : Service(), SharedPreferences.OnSharedPreferenceChan
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         super.onStartCommand(intent, flags, startId)
 
+        stopFetch()
         scheduleFetch()
 
         return START_NOT_STICKY

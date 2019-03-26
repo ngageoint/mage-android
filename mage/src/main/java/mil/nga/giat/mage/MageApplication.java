@@ -94,6 +94,8 @@ public class MageApplication extends DaggerApplication implements LifecycleObser
 
 		ProcessLifecycleOwner.get().getLifecycle().addObserver(this);
 
+		HttpClientManager.initialize(this);
+
 		// setup the screen unlock stuff
 		registerReceiver(ScreenChangeReceiver.getInstance(), new IntentFilter(Intent.ACTION_SCREEN_ON));
 
@@ -120,7 +122,7 @@ public class MageApplication extends DaggerApplication implements LifecycleObser
 		SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
 		preferences.registerOnSharedPreferenceChangeListener(this);
 
-		HttpClientManager.getInstance(getApplicationContext()).addListener(this);
+		HttpClientManager.getInstance().addListener(this);
 
 		// Start fetching and pushing observations and locations
 		if (!UserUtility.getInstance(getApplicationContext()).isTokenExpired()) {
@@ -134,7 +136,7 @@ public class MageApplication extends DaggerApplication implements LifecycleObser
 		SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
 		preferences.registerOnSharedPreferenceChangeListener(this);
 
-		HttpClientManager.getInstance(getApplicationContext()).removeListener(this);
+		HttpClientManager.getInstance().removeListener(this);
 
 		destroyFetching();
 		destroyPushing();

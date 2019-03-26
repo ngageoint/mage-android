@@ -169,7 +169,7 @@ dependencies {
         google_play_services_version = '10.2.6'
         lifecycle_version= '1.1.1'
         dagger_version = '2.15'
-        work_version = '1.0.0-beta01'
+        work_version = '1.0.0'
     }
 
     // this block allows the mage-android-wear-bridge to be pulled in dynamically when that flavor is built
@@ -210,9 +210,9 @@ dependencies {
     api 'mil.nga.geopackage.map:geopackage-android-map:1.4.1'
     api 'org.ocpsoft.prettytime:prettytime:3.2.5.Final'
 
-    implementation 'com.github.bumptech.glide:glide:4.8.0'
-    implementation 'com.github.bumptech.glide:okhttp-integration:4.8.0'
-    kapt 'com.github.bumptech.glide:compiler:4.8.0'
+    implementation 'com.github.bumptech.glide:glide:4.9.0'
+    implementation 'com.github.bumptech.glide:okhttp3-integration:4.9.0'
+    kapt 'com.github.bumptech.glide:compiler:4.9.0'
 
     api 'com.google.android:flexbox:0.3.2'
     api 'com.nulab-inc:zxcvbn:1.2.3'

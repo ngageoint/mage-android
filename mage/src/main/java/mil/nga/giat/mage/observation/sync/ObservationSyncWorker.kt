@@ -104,7 +104,7 @@ class ObservationSyncWorker(var context: Context, params: WorkerParameters) : Wo
         val retrofit = Retrofit.Builder()
                 .baseUrl(baseUrl!!)
                 .addConverterFactory(ObservationConverterFactory.create(observation.event))
-                .client(HttpClientManager.getInstance(context).httpClient())
+                .client(HttpClientManager.getInstance().httpClient())
                 .build()
 
         val service = retrofit.create<ObservationResource.ObservationService>(ObservationResource.ObservationService::class.java)
@@ -147,7 +147,7 @@ class ObservationSyncWorker(var context: Context, params: WorkerParameters) : Wo
         val retrofit = Retrofit.Builder()
                 .baseUrl(baseUrl!!)
                 .addConverterFactory(ObservationConverterFactory.create(observation.event))
-                .client(HttpClientManager.getInstance(context).httpClient())
+                .client(HttpClientManager.getInstance().httpClient())
                 .build()
 
         val service = retrofit.create<ObservationResource.ObservationService>(ObservationResource.ObservationService::class.java)
@@ -189,7 +189,7 @@ class ObservationSyncWorker(var context: Context, params: WorkerParameters) : Wo
         val retrofit = Retrofit.Builder()
                 .baseUrl(baseUrl!!)
                 .addConverterFactory(GsonConverterFactory.create())
-                .client(HttpClientManager.getInstance(context).httpClient())
+                .client(HttpClientManager.getInstance().httpClient())
                 .build()
 
         val state = JsonObject()
@@ -249,7 +249,7 @@ class ObservationSyncWorker(var context: Context, params: WorkerParameters) : Wo
             val retrofit = Retrofit.Builder()
                     .baseUrl(baseUrl!!)
                     .addConverterFactory(ObservationImportantConverterFactory.create(observation.event))
-                    .client(HttpClientManager.getInstance(context).httpClient())
+                    .client(HttpClientManager.getInstance().httpClient())
                     .build()
 
             val service = retrofit.create<ObservationResource.ObservationService>(ObservationResource.ObservationService::class.java)
@@ -291,7 +291,7 @@ class ObservationSyncWorker(var context: Context, params: WorkerParameters) : Wo
             val retrofit = Retrofit.Builder()
                     .baseUrl(baseUrl!!)
                     .addConverterFactory(ObservationConverterFactory.create(observation.event))
-                    .client(HttpClientManager.getInstance(context).httpClient())
+                    .client(HttpClientManager.getInstance().httpClient())
                     .build()
 
             val service = retrofit.create<ObservationResource.ObservationService>(ObservationResource.ObservationService::class.java)
