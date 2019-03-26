@@ -41,49 +41,51 @@ class LocationSaveTask(val context: Context, private val listener: LocationDatab
         return location
     }
 
-    private fun saveLocation(location: Location) {
-        Log.v(LOG_NAME, "Saving MAGE location to database.")
+    private fun saveLocation(gpsLocation: Location) {
+        Log.v(LOG_NAME, "Saving GPS location to database.")
 
-        if (location.time > 0) {
+        if (gpsLocation.time > 0) {
             val locationProperties = ArrayList<LocationProperty>()
 
             val locationHelper = LocationHelper.getInstance(context)
 
             // build properties
-            locationProperties.add(LocationProperty("accuracy", location.accuracy))
-            locationProperties.add(LocationProperty("bearing", location.bearing))
-            locationProperties.add(LocationProperty("speed", location.speed))
-            locationProperties.add(LocationProperty("provider", location.provider))
-            locationProperties.add(LocationProperty("altitude", location.altitude))
+            locationProperties.add(LocationProperty("accuracy", gpsLocation.accuracy))
+            locationProperties.add(LocationProperty("bearing", gpsLocation.bearing))
+            locationProperties.add(LocationProperty("speed", gpsLocation.speed))
+            locationProperties.add(LocationProperty("provider", gpsLocation.provider))
+            locationProperties.add(LocationProperty("altitude", gpsLocation.altitude))
 
             val level = batteryStatus?.getIntExtra(BatteryManager.EXTRA_LEVEL, -1)
             level?.let {
                 locationProperties.add(LocationProperty("battery_level", it))
             }
 
-            var currentUser: User? = null
+            var user: User? = null
             try {
-                currentUser = UserHelper.getInstance(context).readCurrentUser()
+                user = UserHelper.getInstance(context).readCurrentUser()
             } catch (e: UserException) {
-                Log.e(LOG_NAME, "Could not get current User!")
+                Log.e(LOG_NAME, "Error reading current user from database", e)
             }
 
-            // build location
-            val loc = mil.nga.giat.mage.sdk.datastore.location.Location(
-                    "Feature",
-                    currentUser,
-                    locationProperties,
-                    Point(location.longitude, location.latitude),
-                    Date(location.time),
-                    currentUser!!.currentEvent)
+            if (user == null || user.currentEvent == null) {
+                Log.e(LOG_NAME, "Not saving location for user: $user in event: ${user?.currentEvent}")
+                return
+            }
 
-            // save the location
             try {
-                locationHelper.create(loc)
-            } catch (le: LocationException) {
-                Log.e(LOG_NAME, "Unable to save current location locally!", le)
-            }
+                val location = mil.nga.giat.mage.sdk.datastore.location.Location(
+                        "Feature",
+                        user,
+                        locationProperties,
+                        Point(gpsLocation.longitude, gpsLocation.latitude),
+                        Date(gpsLocation.time),
+                        user.currentEvent)
 
+                locationHelper.create(location)
+            } catch (e: LocationException) {
+                Log.e(LOG_NAME, "Error saving GPS location", e)
+            }
         }
     }
 
