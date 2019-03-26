@@ -9,8 +9,6 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.widget.TextView;
 
-import org.apache.commons.lang3.StringUtils;
-
 import javax.inject.Inject;
 
 import dagger.android.support.DaggerAppCompatActivity;
@@ -38,23 +36,19 @@ public class DisclaimerActivity extends DaggerAppCompatActivity {
 		super.onResume();
 
 		SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-		String disclaimerText = sharedPreferences.getString(getString(R.string.serverDisclaimerText), null);
-		if(disclaimerText == null) {
-			disclaimerText = "";
-		}
-		sharedPreferences.edit().putString(getString(R.string.disclaimerText), disclaimerText).apply();
 
-		if (StringUtils.isBlank(sharedPreferences.getString(getString(R.string.disclaimerText), null))) {
-			agree(null);
-		} else {
-			TextView disclaimerTitleView = (TextView) findViewById(R.id.disclaimer_text);
-			disclaimerTitleView.setText(disclaimerText);
-		}
+		boolean showDisclaimer = sharedPreferences.getBoolean(getString(R.string.serverDisclaimerShow), false);
 
-		String disclaimerTitle = sharedPreferences.getString(getString(R.string.serverDisclaimerTitle), null);
-		if (disclaimerTitle != null) {
-			TextView disclaimerTitleView = (TextView) findViewById(R.id.disclaimer_title);
+		if (showDisclaimer) {
+			String disclaimerTitle = sharedPreferences.getString(getString(R.string.serverDisclaimerTitle), null);
+			TextView disclaimerTitleView = findViewById(R.id.disclaimer_title);
 			disclaimerTitleView.setText(disclaimerTitle);
+
+			TextView disclaimerTextView = findViewById(R.id.disclaimer_text);
+			String disclaimerText = sharedPreferences.getString(getString(R.string.serverDisclaimerText), null);
+			disclaimerTextView.setText(disclaimerText);
+		} else {
+			agree(null);
 		}
 	}
 
@@ -67,6 +61,7 @@ public class DisclaimerActivity extends DaggerAppCompatActivity {
 		if (extras != null) {
 			intent.putExtras(extras);
 		}
+
 		startActivity(intent);
 		finish();
 	}
