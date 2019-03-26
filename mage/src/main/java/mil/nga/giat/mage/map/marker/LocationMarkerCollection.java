@@ -26,6 +26,8 @@ import com.google.android.gms.maps.model.MarkerOptions;
 
 import org.ocpsoft.prettytime.PrettyTime;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -181,7 +183,8 @@ public class LocationMarkerCollection implements PointCollection<Pair<Location, 
 
 	@Override
 	public void refreshMarkerIcons(Filter<Temporal> filter) {
-		for (Marker m : userIdToMarker.values()) {
+		Collection<Marker> markers = new ArrayList<>(userIdToMarker.values());
+		for (Marker m : markers) {
 			Pair<Location, User> pair = markerIdToPair.get(m.getId());
 			Location location = pair.first;
 			User user = pair.second;
