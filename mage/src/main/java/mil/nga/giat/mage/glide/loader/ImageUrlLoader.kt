@@ -1,9 +1,11 @@
 package mil.nga.giat.mage.glide.loader
 
 import android.content.Context
-import android.preference.PreferenceManager
 import com.bumptech.glide.load.Options
-import com.bumptech.glide.load.model.*
+import com.bumptech.glide.load.model.GlideUrl
+import com.bumptech.glide.load.model.ModelLoader
+import com.bumptech.glide.load.model.ModelLoaderFactory
+import com.bumptech.glide.load.model.MultiModelLoaderFactory
 import com.bumptech.glide.load.model.stream.BaseGlideUrlLoader
 import mil.nga.giat.mage.sdk.datastore.observation.Attachment
 import okhttp3.HttpUrl
@@ -18,11 +20,6 @@ class ImageUrlLoader private constructor(private val context: Context, concreteL
         }
 
         override fun teardown() {}
-    }
-
-    override fun getHeaders(model: Attachment?, width: Int, height: Int, options: Options?): Headers? {
-        val token = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(mil.nga.giat.mage.sdk.R.string.tokenKey), "")
-        return LazyHeaders.Builder().addHeader("Authorization", "Bearer $token").build()
     }
 
     override fun getUrl(attachment: Attachment, width: Int, height: Int, options: Options): String? {

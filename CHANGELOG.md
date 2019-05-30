@@ -3,11 +3,18 @@ All notable changes to this project will be documented in this file.
 Adheres to [Semantic Versioning](http://semver.org/).
 
 ---
-## 6.2.3 (TBD)
+## 6.2.4 (TBD)
 
 ##### Features
 
 ##### Bug Fixes
+
+## [6.2.3](https://github.com/ngageoint/mage-android/releases/tag/6.2.3) (05-30-2019)
+
+##### Features
+
+##### Bug Fixes
+* Glide attachment image url loader should not set Authorization header as its already set by OkHttp3 interceptor
 
 ## [6.2.2](https://github.com/ngageoint/mage-android/releases/tag/6.2.2) (01-22-2019)
 

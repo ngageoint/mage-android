@@ -39,7 +39,7 @@ class VideoUrlLoader private constructor(private val context: Context) : ModelLo
             val token = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(mil.nga.giat.mage.sdk.R.string.tokenKey), "")
 
             try {
-                mediaMetadataRetriever.setDataSource(model.url, mapOf("authorization" to "Bearer $token"))
+                mediaMetadataRetriever.setDataSource(model.url, mapOf("Authorization" to "Bearer $token"))
                 val bitmap = mediaMetadataRetriever.getFrameAtTime(100)
                 callback.onDataReady(bitmapToByte(bitmap))
             } finally {
