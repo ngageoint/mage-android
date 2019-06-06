@@ -3,6 +3,7 @@ package mil.nga.giat.mage.sdk.datastore.user;
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
@@ -155,7 +156,7 @@ public class User {
 	}
 
 	public List<String> getRecentEventIds() {
- 		return Arrays.asList(recentEventIds.split(","));
+		return Arrays.asList(StringUtils.split(recentEventIds, ","));
 	}
 
 	public void setRecentEventIds(String recentEventIds) {

@@ -241,10 +241,10 @@ public class EventHelper extends DaoHelper<Event> {
                     .in(Event.COLUMN_NAME_REMOTE_ID, user.getRecentEventIds())
                     .query();
             } else {
-                Log.d(LOG_NAME, "Current user is null.  Why?");
+                Log.d(LOG_NAME, "Current user is null.");
             }
         } catch(Exception e) {
-            throw new EventException("There was a problem reading users current event");
+            Log.e(LOG_NAME, "There was a problem reading users current event", e);
         }
 
         return events;
