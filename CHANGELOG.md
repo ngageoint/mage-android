@@ -3,11 +3,18 @@ All notable changes to this project will be documented in this file.
 Adheres to [Semantic Versioning](http://semver.org/).
 
 ---
-## 6.2.4 (TBD)
+## 6.2.5 (TBD)
 
 ##### Features
 
 ##### Bug Fixes
+
+## [6.2.4](https://github.com/ngageoint/mage-android/releases/tag/6.2.4) (06-06-2019)
+
+##### Features
+
+##### Bug Fixes
+* Properly handle empty recent event ids list
 
 ## [6.2.3](https://github.com/ngageoint/mage-android/releases/tag/6.2.3) (05-30-2019)
 
