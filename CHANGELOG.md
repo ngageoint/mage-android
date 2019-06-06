@@ -14,6 +14,7 @@ Adheres to [Semantic Versioning](http://semver.org/).
 ##### Features
 
 ##### Bug Fixes
+* Handle empty/null geometry default value
 * Properly handle empty recent event ids list
 
 ## [6.2.3](https://github.com/ngageoint/mage-android/releases/tag/6.2.3) (05-30-2019)

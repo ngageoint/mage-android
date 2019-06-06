@@ -298,11 +298,16 @@ class LocationParser: JsonDeserializer<ObservationLocation>, JsonSerializer<Obse
     }
 
     override fun deserialize(json: JsonElement, typeOfT: Type, context: JsonDeserializationContext): ObservationLocation? {
+        var location: ObservationLocation? = null
+
         val parser = jsonFactory.createParser(json.toString())
         parser.nextToken()
         val geometry = geometryDeserializer.parseGeometry(parser)
+        if (geometry != null) {
+            location =  ObservationLocation(ObservationLocation.MANUAL_PROVIDER, geometry)
+        }
 
-        return ObservationLocation(ObservationLocation.MANUAL_PROVIDER, geometry)
+        return location
     }
 
     override fun serialize(location: ObservationLocation, typeOfSrc: Type?, context: JsonSerializationContext?): JsonElement? {
