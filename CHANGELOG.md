@@ -16,6 +16,7 @@ Adheres to [Semantic Versioning](http://semver.org/).
 ##### Bug Fixes
 * Handle empty/null geometry default value
 * Properly handle empty recent event ids list
+* Fix bug where geometry form field default wasn't showing in form view after setting default
 
 ## [6.2.3](https://github.com/ngageoint/mage-android/releases/tag/6.2.3) (05-30-2019)
 

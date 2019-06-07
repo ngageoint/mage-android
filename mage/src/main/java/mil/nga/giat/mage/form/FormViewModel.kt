@@ -75,8 +75,9 @@ class FormViewModel : ViewModel() {
                     field.value = value
                 }
             FieldType.GEOMETRY ->
-                if (value is ByteArray) {
-                    field.value = ObservationLocation(ObservationLocation.MANUAL_PROVIDER, GeometryUtility.toGeometry(value))
+                when (value) {
+                    is ObservationLocation -> field.value = value
+                    is ByteArray -> field.value = ObservationLocation(ObservationLocation.MANUAL_PROVIDER, GeometryUtility.toGeometry(value))
                 }
             else -> field.value = value
         }
