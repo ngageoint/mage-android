@@ -5,7 +5,6 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.preference.PreferenceManager
 import android.util.Log
-import androidx.work.ListenableWorker
 import androidx.work.Worker
 import androidx.work.WorkerParameters
 import mil.nga.giat.mage.sdk.R
@@ -27,11 +26,11 @@ import java.util.*
 
 class AttachmentSyncWorker(var context: Context, params: WorkerParameters) : Worker(context, params) {
 
-    private fun ListenableWorker.Result.withFlag(flag: Int): Int {
+    private fun Result.withFlag(flag: Int): Int {
         return when(this) {
-            is ListenableWorker.Result.Success -> AttachmentSyncWorker.RESULT_FAILURE_FLAG or flag
-            is ListenableWorker.Result.Retry -> AttachmentSyncWorker.RESULT_RETRY_FLAG or flag
-            else -> AttachmentSyncWorker.RESULT_SUCCESS_FLAG or flag
+            is Result.Success -> RESULT_FAILURE_FLAG or flag
+            is Result.Retry -> RESULT_RETRY_FLAG or flag
+            else -> RESULT_SUCCESS_FLAG or flag
         }
     }
 
@@ -48,9 +47,15 @@ class AttachmentSyncWorker(var context: Context, params: WorkerParameters) : Wor
     }
 
     override fun doWork(): Result {
-        val result = syncAttachments()
+        var result = RESULT_SUCCESS_FLAG
 
-        return if (result.containsFlag(AttachmentSyncWorker.RESULT_RETRY_FLAG)) {
+        try {
+            result = syncAttachments()
+        } catch(e: Exception) {
+            Log.e(LOG_NAME, "Failed to sync attachments", e)
+        }
+
+        return if (result.containsFlag(RESULT_RETRY_FLAG)) {
             Result.retry()
         } else {
             Result.success()
@@ -58,17 +63,21 @@ class AttachmentSyncWorker(var context: Context, params: WorkerParameters) : Wor
     }
 
     private fun syncAttachments(): Int {
-        var result = AttachmentSyncWorker.RESULT_SUCCESS_FLAG
+        var result = RESULT_SUCCESS_FLAG
 
         val attachmentHelper = AttachmentHelper.getInstance(applicationContext)
         for (attachment in attachmentHelper.dirtyAttachments.filter { !it.observation.remoteId.isNullOrEmpty() }) {
-            result = save(attachment).withFlag(result)
+            try {
+                result = syncAttachment(attachment).withFlag(result)
+            } catch(e: Exception) {
+                Log.e(LOG_NAME, "Failed to sync attachment", e)
+            }
         }
 
         return result
     }
 
-    private fun save(attachment: Attachment): Result {
+    private fun syncAttachment(attachment: Attachment): Result {
         if (!attachment.remoteId.isNullOrEmpty()) {
             Log.i(LOG_NAME, "Already pushed attachment ${attachment.id}, skipping.")
             return Result.success()
@@ -124,7 +133,7 @@ class AttachmentSyncWorker(var context: Context, params: WorkerParameters) : Wor
                 return if (response.code() == HttpURLConnection.HTTP_UNAUTHORIZED) Result.failure() else Result.retry()
             }
         } catch (e: IOException) {
-            Log.e(LOG_NAME, "Failure saving observation.", e)
+            Log.e(LOG_NAME, "Failure saving attachment.", e)
             return Result.retry()
         }
     }

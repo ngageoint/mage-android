@@ -3,7 +3,6 @@ package mil.nga.giat.mage.observation.sync
 import android.content.Context
 import android.preference.PreferenceManager
 import android.util.Log
-import androidx.work.ListenableWorker
 import androidx.work.Worker
 import androidx.work.WorkerParameters
 import com.google.gson.JsonObject
@@ -22,11 +21,11 @@ import java.net.HttpURLConnection
 
 class ObservationSyncWorker(var context: Context, params: WorkerParameters) : Worker(context, params) {
 
-    private fun ListenableWorker.Result.withFlag(flag: Int): Int {
+    private fun Result.withFlag(flag: Int): Int {
         return when(this) {
-            is ListenableWorker.Result.Failure -> ObservationSyncWorker.RESULT_FAILURE_FLAG or flag
-            is ListenableWorker.Result.Retry -> ObservationSyncWorker.RESULT_RETRY_FLAG or flag
-            else -> ObservationSyncWorker.RESULT_SUCCESS_FLAG or flag
+            is Result.Failure -> RESULT_FAILURE_FLAG or flag
+            is Result.Retry -> RESULT_RETRY_FLAG or flag
+            else -> RESULT_SUCCESS_FLAG or flag
         }
     }
 
@@ -47,32 +46,48 @@ class ObservationSyncWorker(var context: Context, params: WorkerParameters) : Wo
     }
 
     override fun doWork(): Result {
-        var result = ObservationSyncWorker.RESULT_SUCCESS_FLAG
+        var result = RESULT_SUCCESS_FLAG
 
-        result = syncObservations().withFlag(result)
-        result = syncObservationImportant().withFlag(result)
-        result = syncObservationFavorites().withFlag(result)
+        try {
+            result = syncObservations().withFlag(result)
+            result = syncObservationImportant().withFlag(result)
+            result = syncObservationFavorites().withFlag(result)
+        } catch (e: Exception) {
+            Log.e(LOG_NAME, "Error trying to sync observations with server", e)
+        }
 
         return if (result.containsFlag(RESULT_RETRY_FLAG)) Result.retry() else Result.success()
     }
 
     private fun syncObservations(): Int {
-        var result = ObservationSyncWorker.RESULT_SUCCESS_FLAG
+        var result = RESULT_SUCCESS_FLAG
 
         val observationHelper = ObservationHelper.getInstance(applicationContext)
         for (observation in observationHelper.dirty) {
+            result = syncObservation(observation).withFlag(result)
+        }
+
+        return result
+    }
+
+    private fun syncObservation(observation: Observation): Int {
+        var result = RESULT_SUCCESS_FLAG
+
+        try {
             result = if (observation.state == State.ARCHIVE) {
                 archive(observation).withFlag(result)
             } else {
                 save(observation).withFlag(result)
             }
+        } catch(e: Exception) {
+            Log.e(LOG_NAME, "Failed to sync observation with server", e)
         }
 
         return result
     }
 
     private fun syncObservationImportant(): Int {
-        var result = ObservationSyncWorker.RESULT_SUCCESS_FLAG
+        var result = RESULT_SUCCESS_FLAG
 
         for (observation in ObservationHelper.getInstance(context).dirtyImportant) {
             result = updateImportant(observation).withFlag(result)
@@ -82,7 +97,7 @@ class ObservationSyncWorker(var context: Context, params: WorkerParameters) : Wo
     }
 
     private fun syncObservationFavorites(): Int {
-        var result = ObservationSyncWorker.RESULT_SUCCESS_FLAG
+        var result = RESULT_SUCCESS_FLAG
 
         for (favorite in ObservationHelper.getInstance(context).dirtyFavorites) {
             result = updateFavorite(favorite).withFlag(result)
