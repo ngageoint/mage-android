@@ -48,6 +48,8 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import androidx.work.WorkManager;
+
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 
@@ -194,6 +196,9 @@ public class LoginActivity extends DaggerAppCompatActivity implements LoginFragm
 		// if token is not expired, then skip the login module
 		if (!UserUtility.getInstance(getApplicationContext()).isTokenExpired()) {
 			skipLogin();
+		} else {
+			// temporarily prune complete work on every login to ensure our unique work is rescheduled
+			WorkManager.getInstance().pruneWork();
 		}
 
 		// no title bar
