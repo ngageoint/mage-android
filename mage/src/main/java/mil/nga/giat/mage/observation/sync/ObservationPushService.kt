@@ -18,7 +18,7 @@ class ObservationPushService : Service(), IObservationEventListener {
     lateinit var context: Context
 
     companion object {
-        private val OBSERVATION_SYNC_WORK = "mil.nga.mage.OBSERVATION_SYNC_WORK"
+        private const val OBSERVATION_SYNC_WORK = "mil.nga.mage.OBSERVATION_SYNC_WORK"
 
         private fun workRequest(): OneTimeWorkRequest {
             val constraints = Constraints.Builder()
@@ -69,7 +69,7 @@ class ObservationPushService : Service(), IObservationEventListener {
     }
 
     override fun onObservationCreated(observations: MutableCollection<Observation>, sendUserNotifcations: Boolean) {
-        if (observations.any({it.isDirty})) {
+        if (observations.any{ it.isDirty }) {
             beginWork()
         }
     }
@@ -77,7 +77,7 @@ class ObservationPushService : Service(), IObservationEventListener {
     override fun onObservationUpdated(observation: Observation) {
         if (observation.isDirty ||
                 observation.important?.isDirty == true ||
-                observation.favorites.any({it.isDirty})) {
+                observation.favorites.any{ it.isDirty }) {
             beginWork()
         }
     }
