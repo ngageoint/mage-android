@@ -3,8 +3,8 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content">
 
-     <Button
-         android:id="@+id/oauth_button"
+     <mil.nga.giat.mage.login.AuthenticationButton
+         android:id="@+id/authentication_button"
          android:layout_width="match_parent"
          android:layout_height="wrap_content"
          android:layout_marginTop="4dp"

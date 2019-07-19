@@ -35,6 +35,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.caci.kuato.di.module.ApplicationContext;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.j256.ormlite.android.AndroidDatabaseResults;
@@ -105,7 +106,7 @@ public class ObservationFeedFragment extends DaggerFragment implements IObservat
 	private SwipeRefreshLayout swipeContainer;
 
 	@Inject
-	protected Context context;
+	protected @ApplicationContext Context context;
 
 	@Inject
 	protected SharedPreferences preferences;

@@ -11,6 +11,7 @@ import android.view.LayoutInflater
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
+import com.caci.kuato.di.module.ApplicationContext
 import dagger.android.support.DaggerAppCompatActivity
 import kotlinx.android.synthetic.main.activity_event.*
 import kotlinx.android.synthetic.main.recycler_form_list_item.view.*
@@ -31,8 +32,7 @@ class EventActivity : DaggerAppCompatActivity() {
         val EVENT_ID_EXTRA = "EVENT_ID_EXTRA"
     }
 
-    @Inject
-    lateinit var context: Context
+    lateinit @ApplicationContext var context: Context
 
     private lateinit var viewAdapter: RecyclerView.Adapter<*>
     private lateinit var viewManager: RecyclerView.LayoutManager

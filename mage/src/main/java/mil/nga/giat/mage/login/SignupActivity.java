@@ -30,6 +30,7 @@ import java.util.Collections;
 import java.util.List;
 
 import mil.nga.giat.mage.R;
+import mil.nga.giat.mage.login.oauth.OAuthLoginActivity;
 import mil.nga.giat.mage.sdk.login.AccountDelegate;
 import mil.nga.giat.mage.sdk.login.AccountStatus;
 import mil.nga.giat.mage.sdk.login.SignupTask;
@@ -202,9 +203,9 @@ public class SignupActivity extends AppCompatActivity implements AccountDelegate
 	}
 
 	private void googleSignup() {
-		Intent intent = new Intent(getApplicationContext(), OAuthActivity.class);
-		intent.putExtra(OAuthActivity.EXTRA_SERVER_URL, serverURL);
-		intent.putExtra(OAuthActivity.EXTRA_OAUTH_TYPE, OAuthActivity.OAuthType.SIGINUP);
+		Intent intent = new Intent(getApplicationContext(), OAuthLoginActivity.class);
+		intent.putExtra(OAuthLoginActivity.EXTRA_SERVER_URL, serverURL);
+		intent.putExtra(OAuthLoginActivity.EXTRA_OAUTH_TYPE, OAuthLoginActivity.OAuthType.SIGINUP);
 		startActivityForResult(intent, EXTRA_OAUTH_RESULT);
 	}
 

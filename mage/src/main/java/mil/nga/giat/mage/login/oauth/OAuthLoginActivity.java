@@ -1,4 +1,4 @@
-package mil.nga.giat.mage.login;
+package mil.nga.giat.mage.login.oauth;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -16,6 +16,8 @@ import com.google.gson.JsonObject;
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.disclaimer.DisclaimerActivity;
 import mil.nga.giat.mage.event.EventsActivity;
+import mil.nga.giat.mage.login.LoginActivity;
+import mil.nga.giat.mage.login.SignupActivity;
 import mil.nga.giat.mage.sdk.login.AbstractAccountTask;
 import mil.nga.giat.mage.sdk.login.AccountDelegate;
 import mil.nga.giat.mage.sdk.login.AccountStatus;
@@ -26,14 +28,14 @@ import mil.nga.giat.mage.sdk.utils.DeviceUuidFactory;
 /**
  * Created by wnewman on 10/14/15.
  */
-public class OAuthActivity extends FragmentActivity implements AccountDelegate {
+public class OAuthLoginActivity extends FragmentActivity implements AccountDelegate {
 
     public enum OAuthType {
         SIGNIN,
         SIGINUP
     }
 
-    private static final String LOG_NAME = OAuthActivity.class.getName();
+    private static final String LOG_NAME = OAuthLoginActivity.class.getName();
 
     public static final String EXTRA_SERVER_URL = "EXTRA_SERVER_URL";
     public static final String EXTRA_OAUTH_TYPE = "EXTRA_OAUTH_TYPE";
@@ -62,7 +64,7 @@ public class OAuthActivity extends FragmentActivity implements AccountDelegate {
 
         progress = findViewById(R.id.progress);
 
-        webView = (WebView) findViewById(R.id.webView);
+        webView = findViewById(R.id.webView);
         WebSettings settings = webView.getSettings();
         settings.setJavaScriptEnabled(true);
         settings.setJavaScriptCanOpenWindowsAutomatically(true);
@@ -87,7 +89,7 @@ public class OAuthActivity extends FragmentActivity implements AccountDelegate {
                 new OAuthLoginTask(this, getApplicationContext()) :
                 new OAuthSignupTask(this, getApplicationContext());
 
-        loginTask.execute(new String[]{ oauthStrategy, uuid, login });
+        loginTask.execute(oauthStrategy, uuid, login );
     }
 
     @Override

@@ -8,13 +8,14 @@ import android.location.LocationListener
 import android.location.LocationManager
 import android.os.Bundle
 import android.util.Log
+import com.caci.kuato.di.module.ApplicationContext
 import mil.nga.giat.mage.R
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
 class LocationProvider @Inject
-constructor(val context: Context, val preferences: SharedPreferences) : LiveData<Location>(), SharedPreferences.OnSharedPreferenceChangeListener {
+constructor(@ApplicationContext val context: Context, val preferences: SharedPreferences) : LiveData<Location>(), SharedPreferences.OnSharedPreferenceChangeListener {
     companion object {
         private val LOG_NAME = LocationProvider::class.java.simpleName
     }

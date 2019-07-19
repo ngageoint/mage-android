@@ -24,6 +24,7 @@ import android.widget.HeaderViewListAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import com.caci.kuato.di.module.ApplicationContext;
 import com.j256.ormlite.android.AndroidDatabaseResults;
 import com.j256.ormlite.android.apptools.support.OrmLiteCursorLoader;
 import com.j256.ormlite.dao.Dao;
@@ -56,7 +57,7 @@ public class PeopleFeedFragment extends DaggerFragment implements OnItemClickLis
 	private static final String LOG_NAME = PeopleFeedFragment.class.getName();
 
 	@Inject
-    Context context;
+    protected @ApplicationContext Context context;
 
 	@Inject
     SharedPreferences preferences;

@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.IBinder
 import androidx.work.*
+import com.caci.kuato.di.module.ApplicationContext
 import dagger.android.AndroidInjection
 import mil.nga.giat.mage.sdk.datastore.observation.Attachment
 import mil.nga.giat.mage.sdk.datastore.observation.AttachmentHelper
@@ -14,7 +15,7 @@ import javax.inject.Inject
 
 class AttachmentPushService : Service(), IAttachmentEventListener {
 
-    @Inject
+    @Inject @field:ApplicationContext
     lateinit var context: Context
 
     companion object {

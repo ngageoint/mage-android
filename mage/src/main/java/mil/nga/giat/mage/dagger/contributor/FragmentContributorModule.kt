@@ -2,6 +2,9 @@ package mil.nga.giat.mage.dagger.contributor
 
 import dagger.Module
 import dagger.android.ContributesAndroidInjector
+import mil.nga.giat.mage.login.ldap.LdapLoginFragment
+import mil.nga.giat.mage.login.mage.MageLoginFragment
+import mil.nga.giat.mage.login.oauth.OAuthLoginFragment
 import mil.nga.giat.mage.map.MapFragment
 import mil.nga.giat.mage.map.preference.FeatureOverlayPreferenceActivity
 import mil.nga.giat.mage.newsfeed.ObservationFeedFragment
@@ -11,6 +14,15 @@ import mil.nga.giat.mage.preferences.LocationPreferencesActivity
 
 @Module
 abstract class FragmentContributorModule {
+
+    @ContributesAndroidInjector
+    internal abstract fun contributeMageLoginFragment(): MageLoginFragment
+
+    @ContributesAndroidInjector
+    internal abstract fun contributeLdapLoginFragment(): LdapLoginFragment
+
+    @ContributesAndroidInjector
+    internal abstract fun contributeOAuthLoginFragment(): OAuthLoginFragment
 
     @ContributesAndroidInjector
     internal abstract fun contributeMapFragment(): MapFragment

@@ -11,7 +11,7 @@ apply plugin: 'kotlin-kapt'
 apply plugin: 'maven-publish'
 group 'mil.nga.giat.mage'
 archivesBaseName = 'mage-android'
-version '6.2.4'
+version '6.2.5'
 ext {
     versionCode = 65
     sourceRefspec = Grgit.open().head().id
@@ -167,7 +167,7 @@ dependencies {
         support_library_version = '28.0.0'
         google_play_services_version = '10.2.6'
         lifecycle_version= '1.1.1'
-        dagger_version = '2.15'
+        dagger_version = '2.21'
         work_version = '1.0.0'
     }
 
@@ -204,7 +204,7 @@ dependencies {
     }
 
 //        api project(':sdk') // uncomment me to build locally, and see top-level build.gradle
-    api 'mil.nga.giat.mage:mage-android-sdk:6.2.3' // comment me to build locally
+    api 'mil.nga.giat.mage:mage-android-sdk:6.2.4' // comment me to build locally
     api 'com.google.maps.android:android-maps-utils:0.5'
     api 'mil.nga.geopackage.map:geopackage-android-map:1.4.1'
     api 'org.ocpsoft.prettytime:prettytime:3.2.5.Final'

@@ -9,6 +9,7 @@ import android.view.Menu
 import android.view.MenuInflater
 import android.view.MenuItem
 import android.view.View
+import com.caci.kuato.di.module.ApplicationContext
 import com.google.gson.JsonObject
 import dagger.android.support.DaggerAppCompatActivity
 import kotlinx.android.synthetic.main.activity_form_defaults.*
@@ -16,7 +17,6 @@ import mil.nga.giat.mage.R
 import mil.nga.giat.mage.sdk.datastore.user.Event
 import mil.nga.giat.mage.sdk.datastore.user.EventHelper
 import mil.nga.giat.mage.sdk.exceptions.EventException
-import javax.inject.Inject
 
 class FormDefaultActivity : DaggerAppCompatActivity() {
 
@@ -34,8 +34,7 @@ class FormDefaultActivity : DaggerAppCompatActivity() {
         }
     }
 
-    @Inject
-    lateinit var context: Context
+    lateinit @ApplicationContext var context: Context
 
     private var event: Event? = null
     private var formJson: JsonObject? = null

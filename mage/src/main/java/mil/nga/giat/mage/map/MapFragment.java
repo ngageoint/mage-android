@@ -43,6 +43,7 @@ import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.caci.kuato.di.module.ApplicationContext;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.GoogleMap.OnInfoWindowClickListener;
@@ -188,7 +189,7 @@ public class MapFragment extends DaggerFragment implements OnMapReadyCallback, O
 	}
 
 	@Inject
-	protected Context context;
+	protected @ApplicationContext Context context;
 
 	@Inject
 	protected SharedPreferences preferences;

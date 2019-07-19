@@ -21,6 +21,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CompoundButton;
 
+import com.caci.kuato.di.module.ApplicationContext;
+
 import javax.inject.Inject;
 
 import dagger.android.support.AndroidSupportInjection;
@@ -37,13 +39,13 @@ public class LocationPreferencesActivity extends DaggerAppCompatActivity {
     protected MageApplication application;
 
     @Inject
-    protected Context context;
+    protected @ApplicationContext Context context;
 
     private Toolbar toolbar;
 
     public static class LocationPreferenceFragment extends PreferenceFragmentCompat {
         @Inject
-        protected Context context;
+        protected @ApplicationContext Context context;
 
         @Override
         public void onCreate(Bundle savedInstanceState) {

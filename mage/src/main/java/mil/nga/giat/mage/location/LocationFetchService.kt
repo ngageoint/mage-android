@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.os.IBinder
+import com.caci.kuato.di.module.ApplicationContext
 import dagger.android.AndroidInjection
 import mil.nga.giat.mage.R
 import java.util.concurrent.Executors
@@ -15,7 +16,7 @@ import javax.inject.Inject
 
 class LocationFetchService : Service(), SharedPreferences.OnSharedPreferenceChangeListener  {
 
-    @Inject
+    @Inject @field:ApplicationContext
     lateinit var context: Context
 
     @Inject
