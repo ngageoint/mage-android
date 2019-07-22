@@ -3,11 +3,18 @@ All notable changes to this project will be documented in this file.
 Adheres to [Semantic Versioning](http://semver.org/).
 
 ---
-## 6.2.5 (TBD)
+## 6.2.6 (TBD)
 
 ##### Features
 
 ##### Bug Fixes
+
+## [6.2.5](https://github.com/ngageoint/mage-android/releases/tag/6.2.5)
+
+##### Features
+
+##### Bug Fixes
+* Fixed a bug where offline users switching events were unable to create observations.
 
 ## [6.2.4](https://github.com/ngageoint/mage-android/releases/tag/6.2.4) (06-06-2019)
 
