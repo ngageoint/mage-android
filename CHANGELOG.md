@@ -15,6 +15,7 @@ Adheres to [Semantic Versioning](http://semver.org/).
 
 ##### Bug Fixes
 * Fixed a bug where offline users switching events were unable to create observations.
+* Fixed a bug causing events with no forms to crash on observation create.
 
 ## [6.2.4](https://github.com/ngageoint/mage-android/releases/tag/6.2.4) (06-06-2019)
 

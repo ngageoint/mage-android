@@ -61,7 +61,7 @@ class EventActivity : DaggerAppCompatActivity() {
         }
 
         viewManager = LinearLayoutManager(this)
-        val forms = event?.forms?.map {
+        val forms = event?.forms?.mapNotNull {
             Form.fromJson(it?.asJsonObject)
         } ?: emptyList()
 

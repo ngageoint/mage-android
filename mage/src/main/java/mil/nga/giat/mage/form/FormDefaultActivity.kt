@@ -61,11 +61,12 @@ class FormDefaultActivity : DaggerAppCompatActivity() {
             event = eventHelper.read(intent.getLongExtra(EVENT_ID_EXTRA, 0))
             formJson = event?.formMap?.get(intent.getLongExtra(FORM_ID_EXTRA, 0))
 
-            val form = Form.fromJson(formJson)
-            formPreferences = FormPreferences(context, event!!, form.id)
+            Form.fromJson(formJson)?.let {
+                formPreferences = FormPreferences(context, event!!, it.id)
 
-            if (formModel.getForm().value == null) {
-                formModel.setForm(form, formPreferences.getDefaults())
+                if (formModel.getForm().value == null) {
+                    formModel.setForm(it, formPreferences.getDefaults())
+                }
             }
         } catch(e: EventException) {
             Log.e(LOG_NAME, "Error reading event", e)
@@ -116,12 +117,14 @@ class FormDefaultActivity : DaggerAppCompatActivity() {
         formModel.getForm().value?.let { form ->
             val transform : (FormField<Any>) -> Pair<String, FormField<Any>> = { it.name to it }
             val formMap = form.fields.associateTo(mutableMapOf(), transform)
-            val defaultFormMap = Form.fromJson(formJson).fields.associateTo(mutableMapOf(), transform)
 
-            if (formMap.equals(defaultFormMap)) {
-                formPreferences.clearDefaults()
-            } else {
-                formPreferences.saveDefaults(form)
+            Form.fromJson(formJson)?.let {
+                val defaultFormMap = it.fields.associateTo(mutableMapOf(), transform)
+                if (formMap.equals(defaultFormMap)) {
+                    formPreferences.clearDefaults()
+                } else {
+                    formPreferences.saveDefaults(form)
+                }
             }
         }
 
@@ -129,7 +132,8 @@ class FormDefaultActivity : DaggerAppCompatActivity() {
     }
 
     private fun clearDefaults() {
-        val form = Form.fromJson(formJson)
-        formModel.setForm(form)
+        Form.fromJson(formJson)?.let {
+            formModel.setForm(it)
+        }
     }
 }

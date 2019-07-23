@@ -209,7 +209,9 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 				FormPreferences formPreferences = new FormPreferences(getApplicationContext(), event, formId);
 
 				form = Form.Companion.fromJson(formMap.get(formId));
-				model.setForm(form, formPreferences.getDefaults());
+				if (form != null) {
+					model.setForm(form, formPreferences.getDefaults());
+				}
 			}
 		} else {
 			try {
@@ -224,7 +226,9 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 						values.put(entry.getKey(), entry.getValue().getValue());
 					}
 
-					model.setForm(form, values);
+					if (form != null) {
+						model.setForm(form, values);
+					}
 				}
 			} catch (ObservationException oe) {
 				Log.e(LOG_NAME, "Problem reading observation.", oe);

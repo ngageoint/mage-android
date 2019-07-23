@@ -36,8 +36,12 @@ class Form(
                 .registerTypeAdapter(FormField::class.java, FormFieldDeserializer())
                 .create()
 
-        fun fromJson(jsonObject: JsonObject?): Form {
-            return gson.fromJson(jsonObject, Form::class.java)
+        fun fromJson(jsonObject: JsonObject?): Form? {
+            return try {
+                gson.fromJson(jsonObject, Form::class.java)
+            } catch (e: Exception) {
+                null
+            }
         }
     }
 }
