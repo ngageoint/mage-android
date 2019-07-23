@@ -533,21 +533,7 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 	}
 
 	private void saveObservation() {
-		List<Field<?>> invalid = new ArrayList<>();
-		for (Field<?> editField : formFragment.getEditFields()) {
-			if (!editField.validate(true)) {
-				invalid.add(editField);
-			}
-		}
-
-		if (!invalid.isEmpty()) {
-			// scroll to first invalid control
-			View firstInvalid = invalid.get(0);
-			findViewById(R.id.properties).scrollTo(0, firstInvalid.getBottom());
-			firstInvalid.clearFocus();
-			firstInvalid.requestFocus();
-			firstInvalid.requestFocusFromTouch();
-
+		if (!validateForm()) {
 			return;
 		}
 
@@ -603,6 +589,32 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 		} catch (Exception e) {
 			Log.e(LOG_NAME, e.getMessage(), e);
 		}
+	}
+
+	private boolean validateForm() {
+		if (formFragment == null) return true;
+
+		List<Field<?>> invalid = new ArrayList<>();
+
+		for (Field<?> editField : formFragment.getEditFields()) {
+			if (!editField.validate(true)) {
+				invalid.add(editField);
+			}
+		}
+
+
+		if (!invalid.isEmpty()) {
+			// scroll to first invalid control
+			View firstInvalid = invalid.get(0);
+			findViewById(R.id.properties).scrollTo(0, firstInvalid.getBottom());
+			firstInvalid.clearFocus();
+			firstInvalid.requestFocus();
+			firstInvalid.requestFocusFromTouch();
+
+			return false;
+		}
+
+		return true;
 	}
 
 	public void onCameraClick(View v) {
