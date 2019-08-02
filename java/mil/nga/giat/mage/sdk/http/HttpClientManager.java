@@ -90,9 +90,7 @@ public class HttpClientManager implements IEventDispatcher<ISessionEventListener
                     builder.addHeader("Authorization", "Bearer " + token);
                 }
 
-                // add Accept-Encoding:gzip
-                builder.addHeader("Accept-Encoding", "gzip")
-                    .addHeader("User-Agent", userAgent);
+                builder.addHeader("User-Agent", userAgent);
 
                 Response response = chain.proceed(builder.build());
 
