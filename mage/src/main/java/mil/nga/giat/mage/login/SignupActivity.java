@@ -30,7 +30,7 @@ import java.util.Collections;
 import java.util.List;
 
 import mil.nga.giat.mage.R;
-import mil.nga.giat.mage.login.oauth.OAuthLoginActivity;
+import mil.nga.giat.mage.login.idp.IdpLoginActivity;
 import mil.nga.giat.mage.sdk.login.AccountDelegate;
 import mil.nga.giat.mage.sdk.login.AccountStatus;
 import mil.nga.giat.mage.sdk.login.SignupTask;
@@ -43,10 +43,10 @@ import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
  */
 public class SignupActivity extends AppCompatActivity implements AccountDelegate {
 
-	public static final int EXTRA_OAUTH_RESULT = 1;
+	public static final int EXTRA_IDP_RESULT = 1;
 
-	public static final String EXTRA_OAUTH_ERROR = "OAUTH_ERROR";
-	public static final String EXTRA_OAUTH_ERROR_MESSAGE = "OAUTH_ERROR_MESSAGE";
+	public static final String EXTRA_IDP_ERROR = "IDP_ERROR";
+	public static final String EXTRA_IDP_ERROR_MESSAGE = "IDP_ERROR_MESSAGE";
 
 	private static final String LOG_NAME = SignupActivity.class.getName();
 
@@ -203,10 +203,10 @@ public class SignupActivity extends AppCompatActivity implements AccountDelegate
 	}
 
 	private void googleSignup() {
-		Intent intent = new Intent(getApplicationContext(), OAuthLoginActivity.class);
-		intent.putExtra(OAuthLoginActivity.EXTRA_SERVER_URL, serverURL);
-		intent.putExtra(OAuthLoginActivity.EXTRA_OAUTH_TYPE, OAuthLoginActivity.OAuthType.SIGINUP);
-		startActivityForResult(intent, EXTRA_OAUTH_RESULT);
+		Intent intent = new Intent(getApplicationContext(), IdpLoginActivity.class);
+		intent.putExtra(IdpLoginActivity.EXTRA_SERVER_URL, serverURL);
+		intent.putExtra(IdpLoginActivity.EXTRA_IDP_TYPE, IdpLoginActivity.IdpType.SIGINUP);
+		startActivityForResult(intent, EXTRA_IDP_RESULT);
 	}
 
 	/**
@@ -351,9 +351,9 @@ public class SignupActivity extends AppCompatActivity implements AccountDelegate
 
 	@Override
 	protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
-		if (requestCode == EXTRA_OAUTH_RESULT && resultCode == RESULT_OK) {
-			if (intent.getBooleanExtra(EXTRA_OAUTH_ERROR, false)) {
-				String errorMessage = intent.getStringExtra(EXTRA_OAUTH_ERROR_MESSAGE);
+		if (requestCode == EXTRA_IDP_RESULT && resultCode == RESULT_OK) {
+			if (intent.getBooleanExtra(EXTRA_IDP_ERROR, false)) {
+				String errorMessage = intent.getStringExtra(EXTRA_IDP_ERROR_MESSAGE);
 				AlertDialog.Builder alertDialog = new AlertDialog.Builder(this);
 				alertDialog.setTitle("Problem Creating Account");
 				alertDialog.setMessage(errorMessage);

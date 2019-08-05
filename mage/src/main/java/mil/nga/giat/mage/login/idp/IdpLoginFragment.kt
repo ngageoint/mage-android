@@ -1,4 +1,4 @@
-package mil.nga.giat.mage.login.oauth
+package mil.nga.giat.mage.login.idp
 
 import android.app.Activity
 import android.arch.lifecycle.ViewModelProvider
@@ -13,21 +13,21 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import dagger.android.support.AndroidSupportInjection
-import kotlinx.android.synthetic.main.fragment_authentication_oauth.*
+import kotlinx.android.synthetic.main.fragment_authentication_idp.*
 import mil.nga.giat.mage.R
 import mil.nga.giat.mage.login.LoginViewModel
 import org.json.JSONObject
 import javax.inject.Inject
 
-class OAuthLoginFragment : Fragment() {
+class IdpLoginFragment : Fragment() {
 
     companion object {
-        private val EXTRA_OAUTH_RESULT = 1
+        private val EXTRA_IDP_RESULT = 1
 
-        val EXTRA_OAUTH_UNREGISTERED_DEVICE = "OAUTH_UNREGISTERED_DEVICE"
+        val EXTRA_IDP_UNREGISTERED_DEVICE = "IDP_UNREGISTERED_DEVICE"
 
-        fun newInstance(strategyName: String, strategy: JSONObject): OAuthLoginFragment {
-            val fragment = OAuthLoginFragment()
+        fun newInstance(strategyName: String, strategy: JSONObject): IdpLoginFragment {
+            val fragment = IdpLoginFragment()
             fragment.strategyName = strategyName
             fragment.strategy = strategy
             return fragment
@@ -59,32 +59,32 @@ class OAuthLoginFragment : Fragment() {
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-        return inflater.inflate(R.layout.fragment_authentication_oauth, container, false)
+        return inflater.inflate(R.layout.fragment_authentication_idp, container, false)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
 		authentication_button.bind(strategy)
-        authentication_button.setOnClickListener { oauthLogin(strategyName) }
+        authentication_button.setOnClickListener { idpLogin(strategyName) }
     }
 
-    private fun oauthLogin(strategy: String?) {
+    private fun idpLogin(strategy: String?) {
         val serverUrl = preferences.getString(getString(R.string.serverURLKey), getString(R.string.serverURLDefaultValue))
 
-        val intent = Intent(context, OAuthLoginActivity::class.java)
-        intent.putExtra(OAuthLoginActivity.EXTRA_SERVER_URL, serverUrl)
-        intent.putExtra(OAuthLoginActivity.EXTRA_OAUTH_TYPE, OAuthLoginActivity.OAuthType.SIGNIN)
-        intent.putExtra(OAuthLoginActivity.EXTRA_OAUTH_STRATEGY, strategy)
-        startActivityForResult(intent, EXTRA_OAUTH_RESULT)
+        val intent = Intent(context, IdpLoginActivity::class.java)
+        intent.putExtra(IdpLoginActivity.EXTRA_SERVER_URL, serverUrl)
+        intent.putExtra(IdpLoginActivity.EXTRA_IDP_TYPE, IdpLoginActivity.IdpType.SIGNIN)
+        intent.putExtra(IdpLoginActivity.EXTRA_IDP_STRATEGY, strategy)
+        startActivityForResult(intent, EXTRA_IDP_RESULT)
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, intent: Intent?) {
-        if (requestCode == EXTRA_OAUTH_RESULT && resultCode == Activity.RESULT_OK) {
-            if (intent?.getBooleanExtra(EXTRA_OAUTH_UNREGISTERED_DEVICE, false) == true) {
+        if (requestCode == EXTRA_IDP_RESULT && resultCode == Activity.RESULT_OK) {
+            if (intent?.getBooleanExtra(EXTRA_IDP_UNREGISTERED_DEVICE, false) == true) {
                 showUnregisteredDeviceDialog()
             } else {
-                showOAuthErrorDialog()
+                showIdpErrorDialog()
             }
         }
     }
@@ -97,7 +97,7 @@ class OAuthLoginFragment : Fragment() {
                 .show()
     }
 
-    private fun showOAuthErrorDialog() {
+    private fun showIdpErrorDialog() {
         AlertDialog.Builder(requireActivity())
                 .setTitle("Inactive MAGE Account")
                 .setMessage("Please contact a MAGE administrator to activate your account.")

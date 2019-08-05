@@ -1,4 +1,4 @@
-package mil.nga.giat.mage.login.oauth;
+package mil.nga.giat.mage.login.idp;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -21,30 +21,30 @@ import mil.nga.giat.mage.login.SignupActivity;
 import mil.nga.giat.mage.sdk.login.AbstractAccountTask;
 import mil.nga.giat.mage.sdk.login.AccountDelegate;
 import mil.nga.giat.mage.sdk.login.AccountStatus;
-import mil.nga.giat.mage.sdk.login.OAuthLoginTask;
-import mil.nga.giat.mage.sdk.login.OAuthSignupTask;
+import mil.nga.giat.mage.sdk.login.IdpLoginTask;
+import mil.nga.giat.mage.sdk.login.IdpSignupTask;
 import mil.nga.giat.mage.sdk.utils.DeviceUuidFactory;
 
 /**
  * Created by wnewman on 10/14/15.
  */
-public class OAuthLoginActivity extends FragmentActivity implements AccountDelegate {
+public class IdpLoginActivity extends FragmentActivity implements AccountDelegate {
 
-    public enum OAuthType {
+    public enum IdpType {
         SIGNIN,
         SIGINUP
     }
 
-    private static final String LOG_NAME = OAuthLoginActivity.class.getName();
+    private static final String LOG_NAME = IdpLoginActivity.class.getName();
 
     public static final String EXTRA_SERVER_URL = "EXTRA_SERVER_URL";
-    public static final String EXTRA_OAUTH_TYPE = "EXTRA_OAUTH_TYPE";
-    public static final String EXTRA_OAUTH_STRATEGY = "EXTRA_OAUTH_STRATEGY";
+    public static final String EXTRA_IDP_TYPE = "EXTRA_IDP_TYPE";
+    public static final String EXTRA_IDP_STRATEGY = "EXTRA_IDP_STRATEGY";
 
     private String serverURL;
-    private String oauthURL;
-    private OAuthType oauthType;
-    private String oauthStrategy;
+    private String idpURL;
+    private IdpType idpType;
+    private String idpStrategy;
 
     private WebView webView;
     private View progress;
@@ -53,12 +53,12 @@ public class OAuthLoginActivity extends FragmentActivity implements AccountDeleg
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_oauth);
+        setContentView(R.layout.activity_idp);
 
         serverURL = getIntent().getStringExtra(EXTRA_SERVER_URL);
-        oauthType = (OAuthType) getIntent().getSerializableExtra(EXTRA_OAUTH_TYPE);
-        oauthStrategy = getIntent().getStringExtra(EXTRA_OAUTH_STRATEGY);
-        oauthURL = String.format("%s/auth/%s/signin", serverURL, oauthStrategy);
+        idpType = (IdpType) getIntent().getSerializableExtra(EXTRA_IDP_TYPE);
+        idpStrategy = getIntent().getStringExtra(EXTRA_IDP_STRATEGY);
+        idpURL = String.format("%s/auth/%s/signin", serverURL, idpStrategy);
 
         uuid = new DeviceUuidFactory(this).getDeviceUuid().toString();
 
@@ -80,16 +80,16 @@ public class OAuthLoginActivity extends FragmentActivity implements AccountDeleg
             }
         });
 
-        webView.loadUrl(oauthURL);
+        webView.loadUrl(idpURL);
     }
 
     @JavascriptInterface
     public void getLogin(String login) {
-        AbstractAccountTask loginTask = oauthType == OAuthType.SIGNIN ?
-                new OAuthLoginTask(this, getApplicationContext()) :
-                new OAuthSignupTask(this, getApplicationContext());
+        AbstractAccountTask loginTask = idpType == IdpType.SIGNIN ?
+                new IdpLoginTask(this, getApplicationContext()) :
+                new IdpSignupTask(this, getApplicationContext());
 
-        loginTask.execute(oauthStrategy, uuid, login );
+        loginTask.execute(idpStrategy, uuid, login );
     }
 
     @Override
@@ -106,7 +106,7 @@ public class OAuthLoginActivity extends FragmentActivity implements AccountDeleg
             finish();
         } else if (accountStatus.getStatus().equals(AccountStatus.Status.SUCCESSFUL_REGISTRATION)) {
             Intent intent = new Intent();
-            intent.putExtra(LoginActivity.EXTRA_OAUTH_UNREGISTERED_DEVICE, true);
+            intent.putExtra(LoginActivity.EXTRA_IDP_UNREGISTERED_DEVICE, true);
             setResult(RESULT_OK, intent);
             finish();
         } else if (accountStatus.getStatus().equals(AccountStatus.Status.SUCCESSFUL_SIGNUP)) {
@@ -122,13 +122,13 @@ public class OAuthLoginActivity extends FragmentActivity implements AccountDeleg
             }
 
             Intent intent = new Intent();
-            intent.putExtra(SignupActivity.EXTRA_OAUTH_ERROR, true);
-            intent.putExtra(SignupActivity.EXTRA_OAUTH_ERROR_MESSAGE, errorMessage);
+            intent.putExtra(SignupActivity.EXTRA_IDP_ERROR, true);
+            intent.putExtra(SignupActivity.EXTRA_IDP_ERROR_MESSAGE, errorMessage);
             setResult(RESULT_OK, intent);
             finish();
         } else {
             Intent intent = new Intent();
-            intent.putExtra(LoginActivity.EXTRA_OAUTH_ERROR, true);
+            intent.putExtra(LoginActivity.EXTRA_IDP_ERROR, true);
             setResult(RESULT_OK, intent);
             finish();
         }

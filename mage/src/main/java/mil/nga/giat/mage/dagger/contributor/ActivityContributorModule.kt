@@ -8,7 +8,7 @@ import mil.nga.giat.mage.event.EventActivity
 import mil.nga.giat.mage.event.EventsActivity
 import mil.nga.giat.mage.form.FormDefaultActivity
 import mil.nga.giat.mage.login.LoginActivity
-import mil.nga.giat.mage.login.oauth.OAuthLoginActivity
+import mil.nga.giat.mage.login.idp.IdpLoginActivity
 import mil.nga.giat.mage.preferences.LocationPreferencesActivity
 import mil.nga.giat.mage.profile.ChangePasswordActivity
 import mil.nga.giat.mage.profile.ProfileActivity
@@ -26,7 +26,7 @@ abstract class ActivityContributorModule {
     internal abstract fun contributeLoginActivity(): LoginActivity
 
     @ContributesAndroidInjector
-    internal abstract fun contributeOAuthActivity(): OAuthLoginActivity
+    internal abstract fun contributeIdpActivity(): IdpLoginActivity
 
     @ContributesAndroidInjector
     internal abstract fun contributeEventActivity(): EventActivity

@@ -53,7 +53,7 @@ import mil.nga.giat.mage.disclaimer.DisclaimerActivity;
 import mil.nga.giat.mage.event.EventsActivity;
 import mil.nga.giat.mage.login.ldap.LdapLoginFragment;
 import mil.nga.giat.mage.login.mage.MageLoginFragment;
-import mil.nga.giat.mage.login.oauth.OAuthLoginFragment;
+import mil.nga.giat.mage.login.idp.IdpLoginFragment;
 import mil.nga.giat.mage.sdk.datastore.DaoStore;
 import mil.nga.giat.mage.sdk.datastore.user.Event;
 import mil.nga.giat.mage.sdk.datastore.user.User;
@@ -71,8 +71,8 @@ import mil.nga.giat.mage.sdk.utils.UserUtility;
 public class LoginActivity extends DaggerAppCompatActivity implements LoginListener {
 
 	public static final String EXTRA_PICK_DEFAULT_EVENT = "PICK_DEFAULT_EVENT";
-	public static final String EXTRA_OAUTH_ERROR = "OAUTH_ERROR";
-	public static final String EXTRA_OAUTH_UNREGISTERED_DEVICE = "OAUTH_UNREGISTERED_DEVICE";
+	public static final String EXTRA_IDP_ERROR = "IDP_ERROR";
+	public static final String EXTRA_IDP_UNREGISTERED_DEVICE = "IDP_UNREGISTERED_DEVICE";
 	public static final String EXTRA_CONTINUE_SESSION = "CONTINUE_SESSION";
 	public static final String EXTRA_CONTINUE_SESSION_WHILE_USING = "CONTINUE_SESSION_WHILE_USING";
 
@@ -294,7 +294,11 @@ public class LoginActivity extends DaggerAppCompatActivity implements LoginListe
 			} else if ("google".equals(authenticationName)) {
 				findViewById(R.id.google_login_button).setVisibility(View.VISIBLE);
 			} else if ("oauth".equals(authenticationType)) {
-				Fragment loginFragment = OAuthLoginFragment.Companion.newInstance(entry.getKey(), entry.getValue());
+				Fragment loginFragment = IdpLoginFragment.Companion.newInstance(entry.getKey(), entry.getValue());
+				transaction.add(R.id.third_party_auth, loginFragment, entry.getKey());
+				authenticationFragments.put(authenticationType, loginFragment);
+			} else if ("saml".equals(authenticationType)) {
+				Fragment loginFragment = IdpLoginFragment.Companion.newInstance(entry.getKey(), entry.getValue());
 				transaction.add(R.id.third_party_auth, loginFragment, entry.getKey());
 				authenticationFragments.put(authenticationType, loginFragment);
 			} else if ("ldap".equals(authenticationType)) {

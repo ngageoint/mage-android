@@ -54,7 +54,7 @@
          android:layout_marginBottom="4dp"
          android:drawablePadding="0dp"
          android:backgroundTint="?attr/colorPrimary"
-         android:drawableStart="@drawable/oauth_icon"
+         android:drawableStart="@drawable/authentication_remote_icon"
          android:textColor="@color/md_white_1000"
          android:text="Sign In" />
 

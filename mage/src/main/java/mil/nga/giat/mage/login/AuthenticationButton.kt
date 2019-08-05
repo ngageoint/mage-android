@@ -49,7 +49,7 @@ class AuthenticationButton : AppCompatButton {
                 val icon = RoundedBitmapDrawableFactory.create(resources, Bitmap.createScaledBitmap(bitmap, size, size, true))
                 icon.gravity = Gravity.CENTER
 
-                val ld = ContextCompat.getDrawable(context, R.drawable.oauth_icon)!!.mutate() as LayerDrawable
+                val ld = ContextCompat.getDrawable(context, R.drawable.authentication_remote_icon)!!.mutate() as LayerDrawable
                 ld.setDrawableByLayerId(R.id.icon, icon)
 
                 ld.setLayerInset(1,
@@ -71,7 +71,7 @@ class AuthenticationButton : AppCompatButton {
                 val drawable = RoundedBitmapDrawableFactory.create(resources, coloredIcon)
                 drawable.gravity = Gravity.CENTER
 
-                val ld = ContextCompat.getDrawable(context, R.drawable.oauth_icon)!!.mutate() as LayerDrawable
+                val ld = ContextCompat.getDrawable(context, R.drawable.authentication_remote_icon)!!.mutate() as LayerDrawable
                 ld.setDrawableByLayerId(R.id.icon, drawable)
                 this.setCompoundDrawablesWithIntrinsicBounds(ld, null, null, null)
             }

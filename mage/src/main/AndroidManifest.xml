@@ -106,7 +106,7 @@
         </activity>
 
         <activity
-            android:name=".login.oauth.OAuthLoginActivity"
+            android:name=".login.idp.IdpLoginActivity"
             android:windowSoftInputMode="adjustResize" />
         <activity
             android:name=".login.SignupActivity"

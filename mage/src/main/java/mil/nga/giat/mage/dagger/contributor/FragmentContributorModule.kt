@@ -2,9 +2,9 @@ package mil.nga.giat.mage.dagger.contributor
 
 import dagger.Module
 import dagger.android.ContributesAndroidInjector
+import mil.nga.giat.mage.login.idp.IdpLoginFragment
 import mil.nga.giat.mage.login.ldap.LdapLoginFragment
 import mil.nga.giat.mage.login.mage.MageLoginFragment
-import mil.nga.giat.mage.login.oauth.OAuthLoginFragment
 import mil.nga.giat.mage.map.MapFragment
 import mil.nga.giat.mage.map.preference.FeatureOverlayPreferenceActivity
 import mil.nga.giat.mage.newsfeed.ObservationFeedFragment
@@ -22,7 +22,7 @@ abstract class FragmentContributorModule {
     internal abstract fun contributeLdapLoginFragment(): LdapLoginFragment
 
     @ContributesAndroidInjector
-    internal abstract fun contributeOAuthLoginFragment(): OAuthLoginFragment
+    internal abstract fun contributeIdpLoginFragment(): IdpLoginFragment
 
     @ContributesAndroidInjector
     internal abstract fun contributeMapFragment(): MapFragment
