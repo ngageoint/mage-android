@@ -123,13 +123,21 @@ public class MediaUtility {
 			String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
 			String imageFileName = "MAGE_" + timeStamp;
 
-			MimeTypeMap mime = MimeTypeMap.getSingleton();
-			String extension = "." + mime.getExtensionFromMimeType(contentResolver.getType(uri));
+			String displayName = getDisplayName(context, uri);
+			String extension = getFileExtension(displayName);
+			if (extension == null) {
+				MimeTypeMap mime = MimeTypeMap.getSingleton();
+				extension = mime.getExtensionFromMimeType(contentResolver.getType(uri));
+			}
+
+			if (extension == null) {
+				throw new IOException("Cannot determine file extension for file " + displayName);
+			}
 
 			File directory  = context.getExternalFilesDir("media");
 			File file =  File.createTempFile(
 					imageFileName,  /* prefix */
-					extension,         /* suffix */
+					"." + extension,         /* suffix */
 					directory      /* directory */
 			);
 
