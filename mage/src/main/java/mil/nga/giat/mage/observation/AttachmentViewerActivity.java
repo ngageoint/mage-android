@@ -56,12 +56,10 @@ public class AttachmentViewerActivity extends AppCompatActivity {
 	public final static String EDITABLE = "EDITABLE";
 	public final static String ATTACHMENT_ID = "ATTACHMENT_ID";
 	public final static String ATTACHMENT_PATH = "ATTACHMENT_PATH";
-	public final static String SHOULD_REMOVE = "SHOULD_REMOVE";
 	private static final String LOG_NAME = AttachmentViewerActivity.class.getName();
 
 	private static final int PERMISSIONS_REQUEST_STORAGE = 100;
 
-	private ProgressDialog progressDialog;
 	private Attachment attachment;
 	private String contentType;
 
@@ -73,11 +71,7 @@ public class AttachmentViewerActivity extends AppCompatActivity {
 
 		getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
-		Intent intent = getIntent();
-		ImageView iv = (ImageView) findViewById(R.id.image);
-		if (!intent.getBooleanExtra(EDITABLE, false)) {
-//			findViewById(R.id.remove_btn).setVisibility(View.GONE);
-		}
+		ImageView iv = findViewById(R.id.image);
 
 		String url = null;
 		String path = getIntent().getStringExtra(ATTACHMENT_PATH);
@@ -116,8 +110,8 @@ public class AttachmentViewerActivity extends AppCompatActivity {
 				final VideoView videoView = (VideoView) findViewById(R.id.video);
 				MediaController mediaController = new MediaController(this);
 				mediaController.setAnchorView(videoView);
+				videoView.setZOrderOnTop(true);
 				videoView.setMediaController(mediaController);
-
 				videoView.setVideoURI(uri);
 
 				findViewById(R.id.video).setVisibility(View.VISIBLE);
@@ -131,13 +125,8 @@ public class AttachmentViewerActivity extends AppCompatActivity {
 			} else if (contentType.startsWith("audio")) {
 				findViewById(R.id.audio_image).setVisibility(View.VISIBLE);
 
-				final VideoView videoView = (VideoView) findViewById(R.id.video);
-				final MediaController mediaController = new MediaController(this) {
-					@Override
-					public void hide() {
-						//Do not hide.
-					}
-				};
+				final VideoView videoView = findViewById(R.id.video);
+				final MediaController mediaController = new MediaController(this);
 				mediaController.setAnchorView(videoView);
 				videoView.setMediaController(mediaController);
 				videoView.setVideoURI(uri);
@@ -153,7 +142,6 @@ public class AttachmentViewerActivity extends AppCompatActivity {
 			}
 		} else if (url != null) {
 			if (contentType.startsWith("image")) {
-				Uri uri = Uri.parse(url);
 				findViewById(R.id.progress).setVisibility(View.VISIBLE);
 				GlideApp.with(getApplicationContext())
 						.load(attachment)
@@ -181,11 +169,11 @@ public class AttachmentViewerActivity extends AppCompatActivity {
 				String token = PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).getString(getApplicationContext().getString(mil.nga.giat.mage.sdk.R.string.tokenKey), null);
 				Uri uri = Uri.parse(url + "?access_token=" + token);
 
-				final VideoView videoView = (VideoView) findViewById(R.id.video);
-				MediaController mediaController = new MediaController(this);
+				final VideoView videoView = findViewById(R.id.video);
+				final MediaController mediaController = new MediaController(this);
 				mediaController.setAnchorView(videoView);
 				videoView.setMediaController(mediaController);
-
+				videoView.setZOrderOnTop(true);
 
 				videoView.setOnErrorListener(new MediaPlayer.OnErrorListener() {
 					@Override
@@ -203,29 +191,23 @@ public class AttachmentViewerActivity extends AppCompatActivity {
 					public void onPrepared(MediaPlayer mp) {
 						findViewById(R.id.progress).setVisibility(View.INVISIBLE);
 						videoView.start();
+						mediaController.show();
 					}
 				});
 
 				videoView.setVideoURI(uri);
 			} else if (contentType.startsWith("audio")) {
 				findViewById(R.id.progress).setVisibility(View.VISIBLE);
+				findViewById(R.id.video).setVisibility(View.VISIBLE);
 
 				String token = PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).getString(getApplicationContext().getString(mil.nga.giat.mage.sdk.R.string.tokenKey), null);
 				Uri uri = Uri.parse(url + "?access_token=" + token);
 
-				final VideoView videoView = (VideoView) findViewById(R.id.video);
-				videoView.setBackground(ContextCompat.getDrawable(this, R.drawable.ic_mic_gray_48dp));
-				videoView.setBackgroundColor(ContextCompat.getColor(this, android.R.color.white));
-				final MediaController mediaController = new MediaController(this) {
-					@Override
-					public void hide() {
-						//Do not hide.
-					}
-				};
-
+				final VideoView videoView = findViewById(R.id.video);
+				final MediaController mediaController = new MediaController(this);
 				mediaController.setAnchorView(videoView);
 				videoView.setMediaController(mediaController);
-				findViewById(R.id.video).setVisibility(View.VISIBLE);
+				videoView.setZOrderOnTop(false);
 
 				videoView.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
 					@Override
@@ -306,10 +288,6 @@ public class AttachmentViewerActivity extends AppCompatActivity {
 				break;
 			}
 		}
-	}
-
-	public void goBack(View v) {
-		onBackPressed();
 	}
 
 	private void saveAttachment() {

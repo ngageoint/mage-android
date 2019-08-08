@@ -250,7 +250,7 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 		}
 
 		attachmentLayout = findViewById(R.id.image_gallery);
-		attachmentGallery = new AttachmentGallery(getApplicationContext(), 100, 100);
+		attachmentGallery = new AttachmentGallery(getApplicationContext(), 200, 200);
 		attachmentGallery.addOnAttachmentClickListener(new AttachmentGallery.OnAttachmentClickListener() {
 			@Override
 			public void onAttachmentClick(Attachment attachment) {
@@ -814,8 +814,6 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 				attachmentsToCreate.add(capture);
 				attachmentGallery.addAttachment(attachmentLayout, capture);
 				MediaUtility.addImageToGallery(getApplicationContext(), Uri.fromFile(new File(currentMediaPath)));
-
-
 
 				break;
 			case GALLERY_ACTIVITY_REQUEST_CODE:

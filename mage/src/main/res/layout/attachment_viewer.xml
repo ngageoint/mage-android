@@ -26,13 +26,14 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:layout_centerInParent="true"
+                android:background="@color/background"
                 android:visibility="gone"/>
 
             <ImageView
                 android:id="@+id/audio_image"
-                android:src="@drawable/ic_mic_gray_48dp"
-                android:layout_width="96dp"
-                android:layout_height="96dp"
+                android:src="@drawable/ic_audio_attachment_200dp"
+                android:layout_width="200dp"
+                android:layout_height="200dp"
                 android:layout_centerHorizontal="true"
                 android:layout_centerVertical="true"
                 android:visibility="gone"/>
@@ -92,30 +93,10 @@
 
                 </LinearLayout>
 
-
             </RelativeLayout>
 
         </RelativeLayout>
 
-        <LinearLayout
-            android:layout_height="wrap_content"
-            android:layout_width="match_parent"
-            style="@android:style/Widget.Holo.ActionBar"
-            android:orientation="horizontal">
-            <Button android:text="Remove"
-                android:id="@+id/remove_btn"
-                android:onClick="removeImage"
-                android:layout_height="match_parent"
-                android:layout_width="fill_parent"
-                style="@android:style/Widget.Holo.ActionButton"
-                android:layout_weight="1"/>
-            <Button android:text="OK"
-                android:onClick="goBack"
-                android:layout_height="match_parent"
-                android:layout_width="fill_parent"
-                style="@android:style/Widget.Holo.ActionButton"
-                android:layout_weight="1"/>
-        </LinearLayout>
     </LinearLayout>
 
 </android.support.design.widget.CoordinatorLayout>

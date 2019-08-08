@@ -75,9 +75,9 @@ public class AttachmentGallery {
         if (a.getLocalPath() != null) {
             String fileExtension = MimeTypeMap.getFileExtensionFromUrl(a.getLocalPath());
             String mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(fileExtension.toLowerCase());
-            isVideo = mimeType.contains("video/mp4");
+            isVideo = mimeType.startsWith("video/");
         } else if (a.getContentType() != null) {
-            isVideo = a.getContentType().contains("video/mp4");
+            isVideo = a.getContentType().startsWith("video/");
         }
 
         Collection<BitmapTransformation> transformations = new ArrayList<>();

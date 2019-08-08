@@ -9,6 +9,7 @@ Adheres to [Semantic Versioning](http://semver.org/).
 
 ##### Bug Fixes
 * User avatars now load in feed and profile page
+* Fix crash when trying to add audio attachments on some Samsung devices
 
 ## [6.2.5](https://github.com/ngageoint/mage-android/releases/tag/6.2.5)
 
