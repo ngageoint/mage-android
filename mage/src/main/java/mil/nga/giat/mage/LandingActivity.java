@@ -310,11 +310,12 @@ public class LandingActivity extends DaggerAppCompatActivity implements Navigati
         Menu recentEventsMenu = menu.findItem(R.id.recents_events_item).getSubMenu();
         recentEventsMenu.removeGroup(R.id.events_group);
 
+        EventHelper eventHelper = EventHelper.getInstance(getApplicationContext());
         try {
-            final Event currentEvent = EventHelper.getInstance(getApplicationContext()).getCurrentEvent();
+            final Event currentEvent = eventHelper.getCurrentEvent();
             menu.findItem(R.id.event_navigation).setTitle(currentEvent.getName()).setActionView(R.layout.navigation_item_info);
 
-            Iterable<Event> events = Iterables.filter(EventHelper.getInstance(getApplicationContext()).getRecentEvents(), new Predicate<Event>() {
+            Iterable<Event> recentEvents = Iterables.filter(eventHelper.getRecentEvents(), new Predicate<Event>() {
                 @Override
                 public boolean apply(Event event) {
                     return !event.getRemoteId().equals(currentEvent.getRemoteId());
@@ -322,7 +323,7 @@ public class LandingActivity extends DaggerAppCompatActivity implements Navigati
             });
 
             int i = 1;
-            for (final Event event : events) {
+            for (final Event event : recentEvents) {
                 MenuItem item = recentEventsMenu
                         .add(R.id.events_group, Menu.NONE, i++, event.getName())
                         .setIcon(R.drawable.ic_restore_black_24dp);
@@ -339,21 +340,19 @@ public class LandingActivity extends DaggerAppCompatActivity implements Navigati
                 });
             }
 
-            if (i > 1) {
-                MenuItem item = recentEventsMenu
-                        .add(R.id.events_group, Menu.NONE, i, "More Events")
-                        .setIcon(R.drawable.ic_event_note_white_24dp);
+            MenuItem item = recentEventsMenu
+                    .add(R.id.events_group, Menu.NONE, i, "More Events")
+                    .setIcon(R.drawable.ic_event_note_white_24dp);
 
-                item.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
-                    @Override
-                    public boolean onMenuItemClick(MenuItem menuItem) {
-                        drawerLayout.closeDrawer(GravityCompat.START);
-                        Intent intent = new Intent(LandingActivity.this, ChangeEventActivity.class);
-                        startActivityForResult(intent, CHANGE_EVENT_REQUEST);
-                        return true;
-                    }
-                });
-            }
+            item.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+                @Override
+                public boolean onMenuItemClick(MenuItem menuItem) {
+                    drawerLayout.closeDrawer(GravityCompat.START);
+                    Intent intent = new Intent(LandingActivity.this, ChangeEventActivity.class);
+                    startActivityForResult(intent, CHANGE_EVENT_REQUEST);
+                    return true;
+                }
+            });
         } catch (EventException e) {
             e.printStackTrace();
         }
