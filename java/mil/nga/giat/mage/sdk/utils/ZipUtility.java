@@ -2,14 +2,12 @@ package mil.nga.giat.mage.sdk.utils;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Enumeration;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
-import java.util.zip.ZipOutputStream;
 
 /**
  *
@@ -20,38 +18,13 @@ import java.util.zip.ZipOutputStream;
  */
 public class ZipUtility {
 
-	public static final void zipDirectory(File directory, File zip) throws IOException {
-		ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(zip));
-		zip(directory, directory, zos);
-		zos.close();
-	}
-
-	private static void zip(File directory, File base, ZipOutputStream zos) throws IOException {
-		File[] files = directory.listFiles();
-		byte[] buffer = new byte[8192];
-		int read = 0;
-		for (int i = 0, n = files.length; i < n; i++) {
-			if (files[i].isDirectory()) {
-				zip(files[i], base, zos);
-				// files[i].delete();
-			} else {
-				FileInputStream in = new FileInputStream(files[i]);
-				ZipEntry entry = new ZipEntry(files[i].getPath().substring(base.getPath().length() + 1));
-				zos.putNextEntry(entry);
-				while (-1 != (read = in.read(buffer))) {
-					zos.write(buffer, 0, read);
-				}
-				in.close();
-			}
-		}
-	}
-
-	public static final void unzip(File zip, File extractTo) throws IOException {
+	public static void unzip(File zip, File extractTo) throws IOException {
 		ZipFile archive = new ZipFile(zip);
-		Enumeration<ZipEntry> e = (Enumeration<ZipEntry>) archive.entries();
+		Enumeration<? extends ZipEntry> e = archive.entries();
 		while (e.hasMoreElements()) {
 			ZipEntry entry = e.nextElement();
-			File file = new File(extractTo, entry.getName());
+			String zipCanonicalPath = validateZipEntry(entry.getName(), extractTo);
+			File file = new File(zipCanonicalPath);
 
 			if (file.exists()) {
 				deleteDirectoryOrFile(file);
@@ -85,18 +58,31 @@ public class ZipUtility {
 		archive.close();
 	}
 
-	public static void deleteDirectoryOrFile(File file) {
+	private static String validateZipEntry(String zipEntryRelativePath, File destDir) throws IOException {
+		File zipEntryTarget = new File(destDir, zipEntryRelativePath);
+		String zipCanonicalPath = zipEntryTarget.getCanonicalPath();
+
+		if (zipCanonicalPath.startsWith(destDir.getCanonicalPath())) {
+			return(zipCanonicalPath);
+		}
+
+		throw new IllegalStateException("ZIP entry tried to write outside destination directory");
+	}
+
+	private static void deleteDirectoryOrFile(File file) {
 		if (file.exists()) {
 			if (file.isDirectory()) {
 				File[] files = file.listFiles();
-				for (int i = 0; i < files.length; i++) {
-					if (files[i].isDirectory()) {
-						deleteDirectoryOrFile(files[i]);
-					} else {
-						files[i].delete();
-					}
-				}
+
+				for (File child : files) {
+                    if (child.isDirectory()) {
+                        deleteDirectoryOrFile(child);
+                    } else {
+                        child.delete();
+                    }
+                }
 			}
+
 			file.delete();
 		}
 	}
