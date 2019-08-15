@@ -1,6 +1,7 @@
 package mil.nga.giat.mage.event;
 
 import android.content.SharedPreferences;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
@@ -18,6 +19,7 @@ import java.util.Collections;
 import java.util.List;
 
 import mil.nga.giat.mage.R;
+import mil.nga.giat.mage.observation.sync.ObservationServerFetch;
 import mil.nga.giat.mage.sdk.datastore.user.Event;
 import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
 import mil.nga.giat.mage.sdk.datastore.user.User;
@@ -152,6 +154,14 @@ public class ChangeEventActivity extends AppCompatActivity {
 			SharedPreferences.Editor sp = PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).edit();
 			sp.putBoolean(getString(R.string.reportLocationKey), false).apply();
 		}
+
+
+		AsyncTask.execute(new Runnable() {
+			@Override
+			public void run() {
+				new ObservationServerFetch(getApplicationContext()).fetch(false);
+			}
+		});
 
 		setResult(RESULT_OK);
 		finish();
