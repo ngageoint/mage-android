@@ -416,6 +416,9 @@ public class MapFragment extends DaggerFragment implements OnMapReadyCallback, O
 			googleMap.setMapStyle(MapStyleOptions.loadRawResourceStyle(getContext(), R.raw.map_theme_night));
 		}
 
+		boolean showTraffic = preferences.getBoolean(getResources().getString(R.string.showTrafficKey), getResources().getBoolean(R.bool.showTrafficDefaultValue));
+		map.setTrafficEnabled(showTraffic);
+
 		Event currentEvent = EventHelper.getInstance(getActivity()).getCurrentEvent();
 		long currentEventId = this.currentEventId;
 		if (currentEvent != null) {

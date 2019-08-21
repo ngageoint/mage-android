@@ -12,10 +12,17 @@
             android:summary="%s"/>
 
         <android.support.v7.preference.SwitchPreferenceCompat
+            android:defaultValue="@bool/showTrafficDefaultValue"
+            android:key="@string/showTrafficKey"
+            android:summary="Google Maps Traffic"
+            android:title="Traffic">
+        </android.support.v7.preference.SwitchPreferenceCompat>
+
+        <android.support.v7.preference.SwitchPreferenceCompat
             android:defaultValue="@bool/showMGRSDefaultValue"
             android:key="@string/showMGRSKey"
-            android:summary="Show Military Grid Reference System overlay"
-            android:title="Show MGRS">
+            android:summary="Military Grid Reference System overlay"
+            android:title="MGRS">
         </android.support.v7.preference.SwitchPreferenceCompat>
 
         <mil.nga.giat.mage.map.preference.OverlayPreference

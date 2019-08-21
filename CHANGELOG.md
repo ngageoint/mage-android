@@ -3,9 +3,16 @@ All notable changes to this project will be documented in this file.
 Adheres to [Semantic Versioning](http://semver.org/).
 
 ---
-## 6.2.7 (TBD)
+## 6.287 (TBD)
 
 ##### Features
+
+##### Bug Fixes
+
+## [6.2.7](https://github.com/ngageoint/mage-android/releases/tag/6.2.7)
+
+##### Features
+* Traffic map layer 
 
 ##### Bug Fixes
 
