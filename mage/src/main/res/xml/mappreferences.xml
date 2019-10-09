@@ -31,7 +31,7 @@
 
         <mil.nga.giat.mage.map.preference.OverlayPreference
             android:key="@string/tileOverlaysKey"
-            android:title="Overlay Maps"/>
+            android:title="Downloadable Maps"/>
 
     </android.support.v7.preference.PreferenceCategory>
 
