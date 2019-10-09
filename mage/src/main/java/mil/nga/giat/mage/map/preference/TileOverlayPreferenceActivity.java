@@ -737,9 +737,6 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
 
             view.findViewById(R.id.section_header).setVisibility(i == 0 ? View.VISIBLE : View.GONE);
 
-            ImageView imageView = (ImageView) view.findViewById(R.id.layer_image);
-            imageView.setImageResource(R.drawable.ic_geopackage);
-
             TextView cacheName = (TextView) view.findViewById(R.id.layer_name);
             cacheName.setText(layer.getName());
 
