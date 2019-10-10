@@ -251,7 +251,20 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
                 }
             });
 
-            loadStaticFeatures();
+            fetchStaticLayers();
+        }
+
+        private void fetchStaticLayers(){
+            //This executes off the current thread
+            application.loadStaticFeatures(true, new StaticFeatureServerFetch.OnStaticLayersListener() {
+                @Override
+                public void onStaticLayersLoaded(Collection<Layer> layers) {
+                    synchronized (overlayAdapterLock) {
+                        overlayAdapter.getStaticFeatures().clear();
+                        overlayAdapter.getStaticFeatures().addAll(layers);
+                    }
+                }
+            });
         }
 
         private void fetchGeopackageLayers(Callback<Collection<Layer>> callback) {
@@ -344,7 +357,7 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
                     }
 
                     //TODO we need to pull these again due to the loss of the overlayadapter
-                    loadStaticFeatures();
+                    fetchStaticLayers();
 
                     getActivity().runOnUiThread(new Runnable() {
                         @Override
@@ -406,20 +419,6 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
             }
             return overlays;
         }
-
-        private void loadStaticFeatures(){
-            //This executes off the current thread
-            application.loadStaticFeatures(true, new StaticFeatureServerFetch.OnStaticLayersListener() {
-                @Override
-                public void onStaticLayersLoaded(Collection<Layer> layers) {
-                    synchronized (overlayAdapterLock) {
-                        overlayAdapter.getStaticFeatures().clear();
-                        overlayAdapter.getStaticFeatures().addAll(layers);
-                    }
-                }
-            });
-        }
-
 
         private void updateGeopackageDownloadProgress() {
             getActivity().runOnUiThread(new Runnable() {
