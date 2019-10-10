@@ -298,6 +298,7 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
 
         @Override
         public void onCacheOverlay(final List<CacheOverlay> cacheOverlays) {
+            //TODO this competes with the manual refresh
             List<Layer> geopackages = Collections.EMPTY_LIST;
             final Event event = EventHelper.getInstance(getContext()).getCurrentEvent();
             try {
@@ -341,6 +342,8 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
                         overlayAdapter = new OverlayAdapter(getActivity(), event, cacheOverlays, layers, downloadManager);
                         listView.setAdapter(overlayAdapter);
                     }
+
+                    //TODO we need to pull these again due to the loss of the overlayadapter
                     loadStaticFeatures();
 
                     getActivity().runOnUiThread(new Runnable() {
@@ -356,7 +359,7 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
                     downloadRefreshTimer.schedule(new TimerTask() {
                         @Override
                         public void run() {
-                            backgroundRefresh();
+                            updateGeopackageDownloadProgress();
                         }
                     }, 0, 2000);
                 }
@@ -418,8 +421,7 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
         }
 
 
-        private void backgroundRefresh() {
-            //TODO this competes with manual refresh
+        private void updateGeopackageDownloadProgress() {
             getActivity().runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
