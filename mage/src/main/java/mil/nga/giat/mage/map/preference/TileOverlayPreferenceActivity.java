@@ -5,6 +5,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.Environment;
@@ -28,6 +29,7 @@ import android.widget.BaseExpandableListAdapter;
 import android.widget.CheckBox;
 import android.widget.ExpandableListView;
 import android.widget.ImageView;
+import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
@@ -37,11 +39,16 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import javax.inject.Inject;
+
+import dagger.android.support.AndroidSupportInjection;
 import mil.nga.geopackage.GeoPackageManager;
 import mil.nga.geopackage.factory.GeoPackageFactory;
+import mil.nga.giat.mage.MageApplication;
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.cache.CacheUtils;
 import mil.nga.giat.mage.map.cache.CacheOverlay;
@@ -53,9 +60,13 @@ import mil.nga.giat.mage.map.cache.XYZDirectoryCacheOverlay;
 import mil.nga.giat.mage.map.download.GeoPackageDownloadManager;
 import mil.nga.giat.mage.sdk.datastore.layer.Layer;
 import mil.nga.giat.mage.sdk.datastore.layer.LayerHelper;
+import mil.nga.giat.mage.sdk.datastore.staticfeature.StaticFeatureHelper;
 import mil.nga.giat.mage.sdk.datastore.user.Event;
 import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
+import mil.nga.giat.mage.sdk.event.ILayerEventListener;
+import mil.nga.giat.mage.sdk.event.IStaticFeatureEventListener;
 import mil.nga.giat.mage.sdk.exceptions.LayerException;
+import mil.nga.giat.mage.sdk.fetch.StaticFeatureServerFetch;
 import mil.nga.giat.mage.sdk.gson.deserializer.LayerDeserializer;
 import mil.nga.giat.mage.sdk.http.HttpClientManager;
 import mil.nga.giat.mage.sdk.http.resource.LayerResource;
@@ -101,7 +112,9 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
         }
     }
 
-    public static class OverlayListFragment extends ListFragment implements OnCacheOverlayListener {
+    public static class OverlayListFragment extends ListFragment implements OnCacheOverlayListener, ILayerEventListener, IStaticFeatureEventListener {
+        @Inject
+        MageApplication application;
 
         private OverlayAdapter overlayAdapter;
         private ExpandableListView listView;
@@ -123,6 +136,7 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
                     overlayAdapter.notifyDataSetChanged();
                 }
             });
+            AndroidSupportInjection.inject(this);
         }
 
         @Override
@@ -157,6 +171,14 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
         }
 
         @Override
+        public void onViewCreated(View view, Bundle savedInstanceState) {
+            super.onViewCreated(view, savedInstanceState);
+
+            ListView listView = getListView();
+            listView.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);
+        }
+
+        @Override
         public void onResume() {
             super.onResume();
 
@@ -172,6 +194,8 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
             if (downloadRefreshTimer != null) {
                 downloadRefreshTimer.cancel();
             }
+            LayerHelper.getInstance(getActivity()).removeListener(this);
+            StaticFeatureHelper.getInstance(getActivity()).removeListener(this);
         }
 
         @Override
@@ -186,6 +210,8 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
             // The problem is that onResume gets called before this so my menu is
             // not yet setup and I will not have a handle on this button
             CacheProvider.getInstance(getActivity()).registerCacheOverlayListener(this);
+            LayerHelper.getInstance(getActivity()).addListener(this);
+            StaticFeatureHelper.getInstance(getActivity()).addListener(this);
         }
 
         @Override
@@ -197,6 +223,80 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
                 default:
                     return super.onOptionsItemSelected(item);
             }
+        }
+
+        @Override
+        public void onLayerCreated(Layer layer) {
+            getActivity().runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    List<Layer> layers = new ArrayList<>();
+
+                    try {
+                        layers = LayerHelper.getInstance(getActivity()).readByEvent(EventHelper.getInstance(getActivity()).getCurrentEvent(), "Feature");
+                    } catch(Exception e) {
+                        Log.e(LOG_NAME, "Problem getting layers.", e);
+                    }
+                    ListView listView = getListView();
+                    listView.clearChoices();
+
+                    overlayAdapter.getStaticFeatures().clear();
+                    overlayAdapter.getStaticFeatures().addAll(layers);
+
+                    // Set what should be checked based on preferences.
+                    SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
+                    Set<String> overlays = preferences.getStringSet(getResources().getString(R.string.staticFeatureLayersKey), Collections.<String> emptySet());
+                    for (int i = 0; i < listView.getCount(); i++) {
+                        Layer layer = (Layer) listView.getItemAtPosition(i);
+                        if (overlays.contains(layer.getId().toString())) {
+                            listView.setItemChecked(i, true);
+                        }
+                    }
+
+                    //TODO handle different views?
+                    if (!layers.isEmpty()) {
+                        //noContentView.setVisibility(View.GONE);
+                        //contentView.setVisibility(View.VISIBLE);
+                    } else {
+                        //noContentView.setVisibility(View.VISIBLE);
+                        //contentView.setVisibility(View.GONE);
+                        //((TextView) noContentView.findViewById(R.id.title)).setText(getResources().getString(R.string.feature_overlay_no_content_text));
+                        //noContentView.findViewById(R.id.summary).setVisibility(View.VISIBLE);
+                        //noContentView.findViewById(R.id.progressBar).setVisibility(View.GONE);
+                    }
+
+                    refreshButton.setEnabled(true);
+                    getListView().setEnabled(true);
+                }
+            });
+        }
+
+        @Override
+        public void onLayerUpdated(Layer layer) {
+
+        }
+
+        @Override
+        public void onStaticFeaturesCreated(final Layer layer) {
+            getActivity().runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    int i = overlayAdapter.getStaticFeatures().indexOf(layer);
+                    Layer l = overlayAdapter.getStaticFeatures().get(i);
+
+                    if (l != null) {
+                        l.setLoaded(layer.isLoaded());
+                        overlayAdapter.notifyDataSetChanged();
+                    } else {
+                        Log.d(LOG_NAME, "Static layer " + layer.getName() + ":" + layer.getId() + " is not available, adapter size is: " + overlayAdapter.getStaticFeatures().size());
+                    }
+                }
+            });
+        }
+
+        @Override
+        public void onError(Throwable error) {
+
         }
 
         private void refresh(MenuItem item) {
@@ -231,7 +331,6 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
                     .client(HttpClientManager.getInstance().httpClient())
                     .build();
 
-            Collection<Layer> layers = new ArrayList<>();
             LayerResource.LayerService service = retrofit.create(LayerResource.LayerService.class);
 
             service.getLayers(event.getRemoteId(), "GeoPackage").enqueue(callback);
@@ -363,6 +462,12 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
 
         private void refreshDownloads() {
             List<Layer> layers = overlayAdapter.getGeopackages();
+            application.loadStaticFeatures(true, new StaticFeatureServerFetch.OnStaticLayersListener() {
+                @Override
+                public void onStaticLayersLoaded(Collection<Layer> layers) {
+                    onLayerCreated(null);
+                }
+            });
             for (int i = 0; i < layers.size(); i++) {
                 final Layer layer = layers.get(i);
 
@@ -538,19 +643,24 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
         /**
          * Context
          */
-        private Activity activity;
+        private final Activity activity;
 
         /**
          * List of cache overlays
          */
-        private List<CacheOverlay> overlays;
+        private final List<CacheOverlay> overlays;
 
         /**
          * List of geopackages
          */
-        private List<Layer> geopackages = new ArrayList<>();
+        private final List<Layer> geopackages;
 
-        private GeoPackageDownloadManager downloadManager;
+        /**
+         * List of static features such as KML
+         */
+        private final List<Layer> staticFeatures = new ArrayList<>();
+
+        private final GeoPackageDownloadManager downloadManager;
 
         /**
          * Constructor
@@ -585,12 +695,14 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
             return geopackages;
         }
 
+        public List<Layer> getStaticFeatures(){return this.staticFeatures;}
+
         public void updateDownloadProgress(View view, int progress, long size) {
             if (progress <= 0) {
                 return;
             }
 
-            ProgressBar progressBar = (ProgressBar) view.findViewById(R.id.layer_progress);
+            ProgressBar progressBar = view.findViewById(R.id.layer_progress);
             if (progressBar == null) {
                 return;
             }
@@ -598,7 +710,7 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
             int currentProgress = (int) (progress / (float) size * 100);
             progressBar.setProgress(currentProgress);
 
-            TextView layerSize = (TextView) view.findViewById(R.id.layer_size);
+            TextView layerSize = view.findViewById(R.id.layer_size);
             layerSize.setText(String.format("Downloading: %s of %s",
                 Formatter.formatFileSize(activity.getApplicationContext(), progress),
                 Formatter.formatFileSize(activity.getApplicationContext(), size)));
