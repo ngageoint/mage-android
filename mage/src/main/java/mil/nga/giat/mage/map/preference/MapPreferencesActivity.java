@@ -44,7 +44,6 @@ public class MapPreferencesActivity extends AppCompatActivity {
 	public static String LOG_NAME = MapPreferencesActivity.class.getName();
 
 	public static final int TILE_OVERLAY_ACTIVITY = 100;
-	public static final int FEATURE_OVERLAY_ACTIVITY = 200;
 	public static final String OVERLAY_EXTENDED_DATA_KEY = "overlay";
 
 	private MapPreferenceFragment preference = new MapPreferenceFragment();
@@ -65,15 +64,6 @@ public class MapPreferencesActivity extends AppCompatActivity {
 				public boolean onPreferenceClick(Preference preference) {
 					Intent intent = new Intent(getActivity(), TileOverlayPreferenceActivity.class);
 					getActivity().startActivityForResult(intent, TILE_OVERLAY_ACTIVITY);
-					return true;
-				}
-			});
-
-			findPreference(getString(R.string.staticFeatureLayersKey)).setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
-				@Override
-				public boolean onPreferenceClick(Preference preference) {
-					Intent intent = new Intent(getActivity(), FeatureOverlayPreferenceActivity.class);
-					getActivity().startActivityForResult(intent, FEATURE_OVERLAY_ACTIVITY);
 					return true;
 				}
 			});
@@ -116,22 +106,6 @@ public class MapPreferencesActivity extends AppCompatActivity {
 			} catch (Exception e) {
 				Log.e(LOG_NAME, "Problem setting preference.", e);
 			}
-
-			// TODO : Remove the below and rework OverlayPreference to have a 'entities' similar to a list preference, these would be the 'display values'
-			p = (OverlayPreference) findPreference(getResources().getString(R.string.staticFeatureLayersKey));
-			try {
-				Set<String> layerIds = p.getValues();
-				Collection<String> values = new ArrayList<>(layerIds.size());
-				for (Layer l : LayerHelper.getInstance(getActivity()).readByEvent(event, "Feature")) {
-					if (layerIds.contains(l.getId().toString())) {
-						values.add(l.getName());
-					}
-				}
-				p.setSummary(StringUtils.join(values, "\n"));
-			} catch (LayerException e) {
-				Log.e(LOG_NAME, "Problem setting preference.", e);
-			}
-
 		}
 
 		@Override
@@ -139,7 +113,6 @@ public class MapPreferencesActivity extends AppCompatActivity {
 			super.onPause();
 
 			findPreference(getString(R.string.tileOverlaysKey)).setOnPreferenceClickListener(null);
-			findPreference(getString(R.string.staticFeatureLayersKey)).setOnPreferenceClickListener(null);
 		}
 	}
 
@@ -155,13 +128,6 @@ public class MapPreferencesActivity extends AppCompatActivity {
 			case TILE_OVERLAY_ACTIVITY: {
 				if (resultCode == Activity.RESULT_OK) {
 					OverlayPreference p = (OverlayPreference) preference.findPreference(getString(R.string.tileOverlaysKey));
-					p.setValues(new HashSet<>(data.getStringArrayListExtra(OVERLAY_EXTENDED_DATA_KEY)));
-				}
-				break;
-			}
-			case FEATURE_OVERLAY_ACTIVITY: {
-				if (resultCode == Activity.RESULT_OK) {
-					OverlayPreference p = (OverlayPreference) preference.findPreference(getString(R.string.staticFeatureLayersKey));
 					p.setValues(new HashSet<>(data.getStringArrayListExtra(OVERLAY_EXTENDED_DATA_KEY)));
 				}
 				break;

@@ -39,6 +39,7 @@
         android:logo="@drawable/ic_wand_white_50dp"
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
+        android:usesCleartextTraffic="true"
         android:networkSecurityConfig="@xml/network_security_config">
 
         <uses-library android:name="org.apache.http.legacy" android:required="false"/>
@@ -171,13 +172,7 @@
             android:parentActivityName=".LandingActivity" />
         <activity
             android:name=".map.preference.TileOverlayPreferenceActivity"
-            android:label="Overlay Maps"
-            android:launchMode="singleTop"
-            android:parentActivityName=".map.preference.MapPreferencesActivity"
-            android:uiOptions="splitActionBarWhenNarrow" />
-        <activity
-            android:name=".map.preference.FeatureOverlayPreferenceActivity"
-            android:label="Feature Overlays"
+            android:label="Downloadable Maps"
             android:launchMode="singleTop"
             android:parentActivityName=".map.preference.MapPreferencesActivity"
             android:uiOptions="splitActionBarWhenNarrow" />

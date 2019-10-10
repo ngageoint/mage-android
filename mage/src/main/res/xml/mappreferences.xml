@@ -26,10 +26,6 @@
         </android.support.v7.preference.SwitchPreferenceCompat>
 
         <mil.nga.giat.mage.map.preference.OverlayPreference
-            android:key="@string/staticFeatureLayersKey"
-            android:title="Feature Overlays"/>
-
-        <mil.nga.giat.mage.map.preference.OverlayPreference
             android:key="@string/tileOverlaysKey"
             android:title="Downloadable Maps"/>
 

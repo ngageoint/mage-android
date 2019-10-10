@@ -39,7 +39,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -60,11 +59,8 @@ import mil.nga.giat.mage.map.cache.XYZDirectoryCacheOverlay;
 import mil.nga.giat.mage.map.download.GeoPackageDownloadManager;
 import mil.nga.giat.mage.sdk.datastore.layer.Layer;
 import mil.nga.giat.mage.sdk.datastore.layer.LayerHelper;
-import mil.nga.giat.mage.sdk.datastore.staticfeature.StaticFeatureHelper;
 import mil.nga.giat.mage.sdk.datastore.user.Event;
 import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
-import mil.nga.giat.mage.sdk.event.ILayerEventListener;
-import mil.nga.giat.mage.sdk.event.IStaticFeatureEventListener;
 import mil.nga.giat.mage.sdk.exceptions.LayerException;
 import mil.nga.giat.mage.sdk.fetch.StaticFeatureServerFetch;
 import mil.nga.giat.mage.sdk.gson.deserializer.LayerDeserializer;
@@ -112,7 +108,7 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
         }
     }
 
-    public static class OverlayListFragment extends ListFragment implements OnCacheOverlayListener, ILayerEventListener, IStaticFeatureEventListener {
+    public static class OverlayListFragment extends ListFragment implements OnCacheOverlayListener {
         @Inject
         MageApplication application;
 
@@ -194,8 +190,6 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
             if (downloadRefreshTimer != null) {
                 downloadRefreshTimer.cancel();
             }
-            LayerHelper.getInstance(getActivity()).removeListener(this);
-            StaticFeatureHelper.getInstance(getActivity()).removeListener(this);
         }
 
         @Override
@@ -210,8 +204,6 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
             // The problem is that onResume gets called before this so my menu is
             // not yet setup and I will not have a handle on this button
             CacheProvider.getInstance(getActivity()).registerCacheOverlayListener(this);
-            LayerHelper.getInstance(getActivity()).addListener(this);
-            StaticFeatureHelper.getInstance(getActivity()).addListener(this);
         }
 
         @Override
@@ -223,80 +215,6 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
                 default:
                     return super.onOptionsItemSelected(item);
             }
-        }
-
-        @Override
-        public void onLayerCreated(Layer layer) {
-            getActivity().runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    List<Layer> layers = new ArrayList<>();
-
-                    try {
-                        layers = LayerHelper.getInstance(getActivity()).readByEvent(EventHelper.getInstance(getActivity()).getCurrentEvent(), "Feature");
-                    } catch(Exception e) {
-                        Log.e(LOG_NAME, "Problem getting layers.", e);
-                    }
-                    ListView listView = getListView();
-                    listView.clearChoices();
-
-                    overlayAdapter.getStaticFeatures().clear();
-                    overlayAdapter.getStaticFeatures().addAll(layers);
-
-                    // Set what should be checked based on preferences.
-                    SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
-                    Set<String> overlays = preferences.getStringSet(getResources().getString(R.string.staticFeatureLayersKey), Collections.<String> emptySet());
-                    for (int i = 0; i < listView.getCount(); i++) {
-                        Layer layer = (Layer) listView.getItemAtPosition(i);
-                        if (overlays.contains(layer.getId().toString())) {
-                            listView.setItemChecked(i, true);
-                        }
-                    }
-
-                    //TODO handle different views?
-                    if (!layers.isEmpty()) {
-                        //noContentView.setVisibility(View.GONE);
-                        //contentView.setVisibility(View.VISIBLE);
-                    } else {
-                        //noContentView.setVisibility(View.VISIBLE);
-                        //contentView.setVisibility(View.GONE);
-                        //((TextView) noContentView.findViewById(R.id.title)).setText(getResources().getString(R.string.feature_overlay_no_content_text));
-                        //noContentView.findViewById(R.id.summary).setVisibility(View.VISIBLE);
-                        //noContentView.findViewById(R.id.progressBar).setVisibility(View.GONE);
-                    }
-
-                    refreshButton.setEnabled(true);
-                    getListView().setEnabled(true);
-                }
-            });
-        }
-
-        @Override
-        public void onLayerUpdated(Layer layer) {
-
-        }
-
-        @Override
-        public void onStaticFeaturesCreated(final Layer layer) {
-            getActivity().runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    int i = overlayAdapter.getStaticFeatures().indexOf(layer);
-                    Layer l = overlayAdapter.getStaticFeatures().get(i);
-
-                    if (l != null) {
-                        l.setLoaded(layer.isLoaded());
-                        overlayAdapter.notifyDataSetChanged();
-                    } else {
-                        Log.d(LOG_NAME, "Static layer " + layer.getName() + ":" + layer.getId() + " is not available, adapter size is: " + overlayAdapter.getStaticFeatures().size());
-                    }
-                }
-            });
-        }
-
-        @Override
-        public void onError(Throwable error) {
-
         }
 
         private void refresh(MenuItem item) {
@@ -318,6 +236,8 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
                     Log.e(LOG_NAME, "Error fetching event geopackage layers", t);
                 }
             });
+
+            loadStaticFeatures();
 
         }
 
@@ -403,6 +323,7 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
                 public void onReady(List<Layer> layers) {
                     overlayAdapter = new OverlayAdapter(getActivity(), event, cacheOverlays, layers, downloadManager);
                     listView.setAdapter(overlayAdapter);
+                    loadStaticFeatures();
 
                     refreshButton.setEnabled(true);
                     listView.setEnabled(true);
@@ -460,14 +381,19 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
             return overlays;
         }
 
-        private void refreshDownloads() {
-            List<Layer> layers = overlayAdapter.getGeopackages();
+        private void loadStaticFeatures(){
             application.loadStaticFeatures(true, new StaticFeatureServerFetch.OnStaticLayersListener() {
                 @Override
                 public void onStaticLayersLoaded(Collection<Layer> layers) {
-                    onLayerCreated(null);
+                    overlayAdapter.getStaticFeatures().clear();
+                    overlayAdapter.getStaticFeatures().addAll(layers);
                 }
             });
+        }
+
+
+        private void refreshDownloads() {
+            List<Layer> layers = overlayAdapter.getGeopackages();
             for (int i = 0; i < layers.size(); i++) {
                 final Layer layer = layers.get(i);
 
@@ -723,10 +649,10 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
 
         @Override
         public int getChildrenCount(int i) {
-            if (i < geopackages.size() || i < staticFeatures.size()) {
+            if (i < geopackages.size() + staticFeatures.size()) {
                 return 0;
             } else {
-                int children = overlays.get(i - geopackages.size()).getChildren().size();
+                int children = overlays.get(i - geopackages.size() - staticFeatures.size()).getChildren().size();
 
                 for (Layer geopackage : geopackages) {
                     if (geopackage.isLoaded()) {
@@ -745,13 +671,13 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
             } else if(i < geopackages.size() + staticFeatures.size()) {
                 return staticFeatures.get(i - geopackages.size());
             }else {
-                return overlays.get(i - geopackages.size());
+                return overlays.get(i - geopackages.size() - staticFeatures.size());
             }
         }
 
         @Override
         public Object getChild(int i, int j) {
-            return overlays.get(i - geopackages.size()).getChildren().get(j);
+            return overlays.get(i - geopackages.size() - staticFeatures.size()).getChildren().get(j);
         }
 
         @Override
@@ -784,14 +710,15 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
             LayoutInflater inflater = LayoutInflater.from(activity);
             view = inflater.inflate(R.layout.cache_overlay_group, viewGroup, false);
 
-            final CacheOverlay overlay = overlays.get(i - geopackages.size());
+            final CacheOverlay overlay = overlays.get(i - geopackages.size() - staticFeatures.size());
 
+            //TODO check this index against static features
             view.findViewById(R.id.section_header).setVisibility(i == geopackages.size() ? View.VISIBLE : View.GONE);
 
-            ImageView imageView = (ImageView) view.findViewById(R.id.cache_overlay_group_image);
-            TextView cacheName = (TextView) view.findViewById(R.id.cache_overlay_group_name);
-            TextView childCount = (TextView) view.findViewById(R.id.cache_overlay_group_count);
-            CheckBox checkBox = (CheckBox) view.findViewById(R.id.cache_overlay_group_checkbox);
+            ImageView imageView = view.findViewById(R.id.cache_overlay_group_image);
+            TextView cacheName =  view.findViewById(R.id.cache_overlay_group_name);
+            TextView childCount =  view.findViewById(R.id.cache_overlay_group_count);
+            CheckBox checkBox =  view.findViewById(R.id.cache_overlay_group_checkbox);
 
             checkBox.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -849,10 +776,10 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
             LayoutInflater inflater = LayoutInflater.from(activity);
             view = inflater.inflate(R.layout.layer_overlay, viewGroup, false);
 
-            Layer layer = null;
+            Layer layer;
             if(i < geopackages.size()){
                 layer = geopackages.get(i);
-            } else{
+            } else {
                 layer = staticFeatures.get(i - geopackages.size());
             }
 
@@ -864,43 +791,44 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
             TextView layerSize =  view.findViewById(R.id.layer_size);
 
 
-                final ProgressBar progressBar =  view.findViewById(R.id.layer_progress);
-                final View download = view.findViewById(R.id.layer_download);
-                if (!layer.getType().equals("Feature") && downloadManager.isDownloading(layer)) {
-                    int progress = downloadManager.getProgress(layer);
-                    long fileSize = layer.getFileSize();
+            final ProgressBar progressBar =  view.findViewById(R.id.layer_progress);
+            final View download = view.findViewById(R.id.layer_download);
+            if (!layer.getType().equals("Feature") && downloadManager.isDownloading(layer)) {
+                int progress = downloadManager.getProgress(layer);
+                long fileSize = layer.getFileSize();
+                progressBar.setVisibility(View.VISIBLE);
+                download.setVisibility(View.GONE);
 
-                    progressBar.setVisibility(View.VISIBLE);
-                    download.setVisibility(View.GONE);
+                view.setEnabled(false);
+                view.setOnClickListener(null);
 
-                    view.setEnabled(false);
-                    view.setOnClickListener(null);
+                int currentProgress = (int) (progress / (float) layer.getFileSize() * 100);
+                progressBar.setProgress(currentProgress);
 
-                    int currentProgress = (int) (progress / (float) layer.getFileSize() * 100);
-                    progressBar.setProgress(currentProgress);
+                layerSize.setVisibility(View.VISIBLE);
+                layerSize.setText(String.format("Downloading: %s of %s",
+                        Formatter.formatFileSize(activity.getApplicationContext(), progress),
+                        Formatter.formatFileSize(activity.getApplicationContext(), fileSize)));
+            } else {
+                progressBar.setVisibility(View.GONE);
+                download.setVisibility(View.VISIBLE);
+            }
 
-                    layerSize.setVisibility(View.VISIBLE);
-                    layerSize.setText(String.format("Downloading: %s of %s",
-                            Formatter.formatFileSize(activity.getApplicationContext(), progress),
-                            Formatter.formatFileSize(activity.getApplicationContext(), fileSize)));
-                } else {
-                    progressBar.setVisibility(View.GONE);
-                    download.setVisibility(View.VISIBLE);
-                }
-
-                if(layer.getType().equals("Feature")){
-                    download.setVisibility(View.GONE);
-                }else {
-                    final Layer threadLayer = layer;
-                    download.setOnClickListener(new View.OnClickListener() {
-                        @Override
-                        public void onClick(View v) {
-                            progressBar.setVisibility(View.VISIBLE);
-                            download.setVisibility(View.GONE);
-                            downloadManager.downloadGeoPackage(threadLayer);
-                        }
-                    });
-                }
+            if(layer.getType().equals("Feature")) {
+                //KML is always downloaded
+                progressBar.setVisibility(View.GONE);
+                download.setVisibility(View.GONE);
+            } else {
+                final Layer threadLayer = layer;
+                download.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        progressBar.setVisibility(View.VISIBLE);
+                        download.setVisibility(View.GONE);
+                        downloadManager.downloadGeoPackage(threadLayer);
+                    }
+                });
+            }
 
             return view;
         }
@@ -913,7 +841,7 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
                 convertView = inflater.inflate(R.layout.cache_overlay_child, parent, false);
             }
 
-            final CacheOverlay overlay = overlays.get(groupPosition - geopackages.size());
+            final CacheOverlay overlay = overlays.get(groupPosition - geopackages.size() - staticFeatures.size());
             final CacheOverlay childCache = overlay.getChildren().get(childPosition);
 
             ImageView imageView =  convertView.findViewById(R.id.cache_overlay_child_image);
