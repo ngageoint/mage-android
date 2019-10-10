@@ -263,6 +263,15 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
                         overlayAdapter.getStaticFeatures().clear();
                         overlayAdapter.getStaticFeatures().addAll(layers);
                     }
+                    getActivity().runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            refreshButton.setEnabled(true);
+                            listView.setEnabled(true);
+                            progress.setVisibility(View.GONE);
+                            overlayAdapter.notifyDataSetChanged();
+                        }
+                    });
                 }
             });
         }
@@ -358,15 +367,6 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
 
                     //TODO we need to pull these again due to the loss of the overlayadapter
                     fetchStaticLayers();
-
-                    getActivity().runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            refreshButton.setEnabled(true);
-                            listView.setEnabled(true);
-                            progress.setVisibility(View.GONE);
-                        }
-                    });
 
                     downloadRefreshTimer = new Timer();
                     downloadRefreshTimer.schedule(new TimerTask() {
