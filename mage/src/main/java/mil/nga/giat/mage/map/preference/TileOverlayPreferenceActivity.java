@@ -142,7 +142,7 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
         @Override
         public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
             View view = inflater.inflate(R.layout.fragment_cache_overlay, container, false);
-            listView = (ExpandableListView) view.findViewById(android.R.id.list);
+            listView = view.findViewById(android.R.id.list);
             listView.setEnabled(true);
 
             progress = view.findViewById(R.id.progress);
@@ -718,12 +718,12 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
 
         @Override
         public int getGroupCount() {
-            return overlays.size() + geopackages.size();
+            return overlays.size() + geopackages.size() + staticFeatures.size();
         }
 
         @Override
         public int getChildrenCount(int i) {
-            if (i < geopackages.size()) {
+            if (i < geopackages.size() || i < staticFeatures.size()) {
                 return 0;
             } else {
                 int children = overlays.get(i - geopackages.size()).getChildren().size();
@@ -742,7 +742,9 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
         public Object getGroup(int i) {
             if (i < geopackages.size()) {
                 return geopackages.get(i);
-            } else {
+            } else if(i < geopackages.size() + staticFeatures.size()) {
+                return staticFeatures.get(i - geopackages.size());
+            }else {
                 return overlays.get(i - geopackages.size());
             }
         }
@@ -771,7 +773,9 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
         public View getGroupView(int i, boolean isExpanded, View view, ViewGroup viewGroup) {
             if (i < geopackages.size()) {
                 return getLayerView(i, isExpanded, view, viewGroup);
-            } else {
+            } else if(i < geopackages.size() + staticFeatures.size()) {
+                return getLayerView(i, isExpanded, view, viewGroup);
+            }else {
                 return getOverlayView(i, isExpanded, view, viewGroup);
             }
         }
@@ -845,49 +849,58 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
             LayoutInflater inflater = LayoutInflater.from(activity);
             view = inflater.inflate(R.layout.layer_overlay, viewGroup, false);
 
-            final Layer layer = geopackages.get(i);
+            Layer layer = null;
+            if(i < geopackages.size()){
+                layer = geopackages.get(i);
+            } else{
+                layer = staticFeatures.get(i - geopackages.size());
+            }
 
             view.findViewById(R.id.section_header).setVisibility(i == 0 ? View.VISIBLE : View.GONE);
 
-            TextView cacheName = (TextView) view.findViewById(R.id.layer_name);
+            TextView cacheName = view.findViewById(R.id.layer_name);
             cacheName.setText(layer.getName());
 
-            TextView layerSize = (TextView) view.findViewById(R.id.layer_size);
+            TextView layerSize =  view.findViewById(R.id.layer_size);
 
-            final ProgressBar progressBar = (ProgressBar) view.findViewById(R.id.layer_progress);
-            final View download = view.findViewById(R.id.layer_download);
 
-            if (downloadManager.isDownloading(layer)) {
-                int progress =  downloadManager.getProgress(layer);
-                long fileSize = layer.getFileSize();
+                final ProgressBar progressBar =  view.findViewById(R.id.layer_progress);
+                final View download = view.findViewById(R.id.layer_download);
+                if (!layer.getType().equals("Feature") && downloadManager.isDownloading(layer)) {
+                    int progress = downloadManager.getProgress(layer);
+                    long fileSize = layer.getFileSize();
 
-                progressBar.setVisibility(View.VISIBLE);
-                download.setVisibility(View.GONE);
-
-                view.setEnabled(false);
-                view.setOnClickListener(null);
-
-                int currentProgress = (int) (progress / (float) layer.getFileSize() * 100);
-                progressBar.setProgress(currentProgress);
-
-                layerSize.setVisibility(View.VISIBLE);
-                layerSize.setText(String.format("Downloading: %s of %s",
-                        Formatter.formatFileSize(activity.getApplicationContext(), progress),
-                        Formatter.formatFileSize(activity.getApplicationContext(), fileSize)));
-            } else {
-                progressBar.setVisibility(View.GONE);
-                download.setVisibility(View.VISIBLE);
-            }
-
-            download.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    progressBar.setVisibility(View.VISIBLE );
+                    progressBar.setVisibility(View.VISIBLE);
                     download.setVisibility(View.GONE);
 
-                    downloadManager.downloadGeoPackage(layer);
+                    view.setEnabled(false);
+                    view.setOnClickListener(null);
+
+                    int currentProgress = (int) (progress / (float) layer.getFileSize() * 100);
+                    progressBar.setProgress(currentProgress);
+
+                    layerSize.setVisibility(View.VISIBLE);
+                    layerSize.setText(String.format("Downloading: %s of %s",
+                            Formatter.formatFileSize(activity.getApplicationContext(), progress),
+                            Formatter.formatFileSize(activity.getApplicationContext(), fileSize)));
+                } else {
+                    progressBar.setVisibility(View.GONE);
+                    download.setVisibility(View.VISIBLE);
                 }
-            });
+
+                if(layer.getType().equals("Feature")){
+                    download.setVisibility(View.GONE);
+                }else {
+                    final Layer threadLayer = layer;
+                    download.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            progressBar.setVisibility(View.VISIBLE);
+                            download.setVisibility(View.GONE);
+                            downloadManager.downloadGeoPackage(threadLayer);
+                        }
+                    });
+                }
 
             return view;
         }
@@ -903,10 +916,10 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
             final CacheOverlay overlay = overlays.get(groupPosition - geopackages.size());
             final CacheOverlay childCache = overlay.getChildren().get(childPosition);
 
-            ImageView imageView = (ImageView) convertView.findViewById(R.id.cache_overlay_child_image);
-            TextView tableName = (TextView) convertView.findViewById(R.id.cache_overlay_child_name);
-            TextView info = (TextView) convertView.findViewById(R.id.cache_overlay_child_info);
-            CheckBox checkBox = (CheckBox) convertView.findViewById(R.id.cache_overlay_child_checkbox);
+            ImageView imageView =  convertView.findViewById(R.id.cache_overlay_child_image);
+            TextView tableName =  convertView.findViewById(R.id.cache_overlay_child_name);
+            TextView info =  convertView.findViewById(R.id.cache_overlay_child_info);
+            CheckBox checkBox =  convertView.findViewById(R.id.cache_overlay_child_checkbox);
 
             convertView.findViewById(R.id.divider).setVisibility(isLastChild ? View.VISIBLE : View.INVISIBLE);
 
