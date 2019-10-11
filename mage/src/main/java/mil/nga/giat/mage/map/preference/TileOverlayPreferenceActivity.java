@@ -231,7 +231,6 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
         }
 
         private void manualRefresh(MenuItem item) {
-            //TODO this competes with background refreshing
             item.setEnabled(false);
             progress.setVisibility(View.VISIBLE);
             listView.setEnabled(false);
@@ -241,6 +240,7 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
                 public void onResponse(Call<Collection<Layer>> call, Response<Collection<Layer>> response) {
                     if (response.isSuccessful()) {
                         saveGeopackageLayers(response.body());
+                        //This will call onCacheOverlay, and we will download static layers there
                         CacheProvider.getInstance(getActivity()).refreshTileOverlays();
                     }
                 }
@@ -250,11 +250,10 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
                     Log.e(LOG_NAME, "Error fetching event geopackage layers", t);
                 }
             });
-
-            fetchStaticLayers();
         }
 
         private void fetchStaticLayers(){
+            //TODO make this act the same was as geopackage (i.e. not fully downloaded)
             //This executes off the current thread
             application.loadStaticFeatures(true, new StaticFeatureServerFetch.OnStaticLayersListener() {
                 @Override
@@ -320,7 +319,6 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
 
         @Override
         public void onCacheOverlay(final List<CacheOverlay> cacheOverlays) {
-            //TODO this competes with the manual refresh
             List<Layer> geopackages = Collections.EMPTY_LIST;
             final Event event = EventHelper.getInstance(getContext()).getCurrentEvent();
             try {
@@ -365,9 +363,10 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
                         listView.setAdapter(overlayAdapter);
                     }
 
-                    //TODO we need to pull these again due to the loss of the overlayadapter
+                    //TODO test that this gets called even if there are no geopackages
                     fetchStaticLayers();
 
+                    //TODO does this need to be paused when the back button is pressed?
                     downloadRefreshTimer = new Timer();
                     downloadRefreshTimer.schedule(new TimerTask() {
                         @Override
