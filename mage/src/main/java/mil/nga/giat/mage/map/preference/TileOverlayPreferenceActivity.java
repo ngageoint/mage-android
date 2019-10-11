@@ -94,6 +94,15 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
         Intent intent = new Intent();
         intent.putStringArrayListExtra(MapPreferencesActivity.OVERLAY_EXTENDED_DATA_KEY, overlayFragment.getSelectedOverlays());
         setResult(Activity.RESULT_OK, intent);
+
+        if(this.overlayFragment != null){
+            synchronized (overlayFragment.timerLock) {
+                if (this.overlayFragment.downloadRefreshTimer != null) {
+                    this.overlayFragment.downloadRefreshTimer.cancel();
+                }
+            }
+        }
+
         finish();
     }
 
@@ -119,6 +128,7 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
         private MenuItem refreshButton;
         private GeoPackageDownloadManager downloadManager;
         private Timer downloadRefreshTimer;
+        private final Object timerLock = new Object();
 
         @Override
         public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -199,8 +209,10 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
 
             downloadManager.onPause();
 
-            if (downloadRefreshTimer != null) {
-                downloadRefreshTimer.cancel();
+            synchronized (timerLock) {
+                if (downloadRefreshTimer != null) {
+                    downloadRefreshTimer.cancel();
+                }
             }
         }
 
@@ -365,14 +377,29 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
                     //TODO test that this gets called even if there are no geopackages
                     fetchStaticLayers();
 
-                    //TODO does this need to be paused when the back button is pressed?
-                    downloadRefreshTimer = new Timer();
-                    downloadRefreshTimer.schedule(new TimerTask() {
-                        @Override
-                        public void run() {
-                            updateGeopackageDownloadProgress();
-                        }
-                    }, 0, 2000);
+                    synchronized (timerLock) {
+                        downloadRefreshTimer = new Timer();
+                        downloadRefreshTimer.schedule(new TimerTask() {
+                            private boolean canceled = false;
+
+                            @Override
+                            public void run() {
+                                synchronized(timerLock) {
+                                    if (!canceled) {
+                                        updateGeopackageDownloadProgress();
+                                    }
+                                }
+                            }
+
+                            @Override
+                            public boolean cancel() {
+                                synchronized (timerLock) {
+                                    canceled = true;
+                                }
+                                return super.cancel();
+                            }
+                        }, 0, 2000);
+                    }
                 }
             });
         }
@@ -419,28 +446,35 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
         }
 
         private void updateGeopackageDownloadProgress() {
+            if(getActivity() == null) {
+                return;
+            }
             getActivity().runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
                     synchronized (overlayAdapterLock) {
-                        List<Layer> layers = overlayAdapter.getGeopackages();
-                        for (int i = 0; i < layers.size(); i++) {
-                            final Layer layer = layers.get(i);
+                        try {
+                            List<Layer> layers = overlayAdapter.getGeopackages();
+                            for (int i = 0; i < layers.size(); i++) {
+                                final Layer layer = layers.get(i);
 
-                            if (layer.getDownloadId() != null && !layer.isLoaded()) {
-                                // layer is currently downloading, get progress and refresh view
-                                final View view = listView.getChildAt(i - listView.getFirstVisiblePosition());
-                                if (view == null) {
-                                    continue;
+                                if (layer.getDownloadId() != null && !layer.isLoaded()) {
+                                    // layer is currently downloading, get progress and refresh view
+                                    final View view = listView.getChildAt(i - listView.getFirstVisiblePosition());
+                                    if (view == null) {
+                                        continue;
+                                    }
+
+                                    Activity activity = getActivity();
+                                    if (activity == null) {
+                                        continue;
+                                    }
+
+                                    overlayAdapter.updateDownloadProgress(view, downloadManager.getProgress(layer), layer.getFileSize());
                                 }
-
-                                Activity activity = getActivity();
-                                if (activity == null) {
-                                    continue;
-                                }
-
-                                overlayAdapter.updateDownloadProgress(view, downloadManager.getProgress(layer), layer.getFileSize());
                             }
+                        }catch(Exception e){
+
                         }
                     }
                 }
