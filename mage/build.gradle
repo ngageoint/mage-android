@@ -89,6 +89,12 @@ android {
         exclude 'META-INF/NOTICE.txt'
         exclude 'META-INF/INDEX.LIST'
     }
+
+    useLibrary 'android.test.runner'
+
+    useLibrary 'android.test.base'
+    useLibrary 'android.test.mock'
+
 }
 
 def configurePom(pom) {
