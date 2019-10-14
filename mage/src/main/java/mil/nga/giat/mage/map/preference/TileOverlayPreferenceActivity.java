@@ -136,7 +136,7 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
 
             setHasOptionsMenu(true);
 
-            downloadManager = new GeoPackageDownloadManager(getContext(), new GeoPackageDownloadManager.GeoPackageDownloadListener() {
+            downloadManager = new GeoPackageDownloadManager(getActivity().getApplicationContext(), new GeoPackageDownloadManager.GeoPackageDownloadListener() {
                 @Override
                 public void onGeoPackageDownloaded(Layer layer, CacheOverlay overlay) {
                     synchronized (overlayAdapterLock){
@@ -152,6 +152,7 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
                     });
                 }
             });
+
             AndroidSupportInjection.inject(this);
         }
 
@@ -241,6 +242,11 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
             }
         }
 
+        /**
+         * This is called when the user click the refresh button
+         *
+         * @param item
+         */
         private void manualRefresh(MenuItem item) {
             item.setEnabled(false);
             progress.setVisibility(View.VISIBLE);
@@ -302,7 +308,7 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
         }
 
         private void saveGeopackageLayers(Collection<Layer> layers) {
-            Context context = getContext();
+            Context context = getActivity().getApplicationContext();
             LayerHelper layerHelper = LayerHelper.getInstance(context);
             try {
                 layerHelper.deleteAll("GeoPackage");
@@ -331,9 +337,9 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
         @Override
         public void onCacheOverlay(final List<CacheOverlay> cacheOverlays) {
             List<Layer> geopackages = Collections.EMPTY_LIST;
-            final Event event = EventHelper.getInstance(getContext()).getCurrentEvent();
+            final Event event = EventHelper.getInstance(getActivity().getApplicationContext()).getCurrentEvent();
             try {
-                geopackages = LayerHelper.getInstance(getContext()).readByEvent(event,"GeoPackage");
+                geopackages = LayerHelper.getInstance(getActivity().getApplicationContext()).readByEvent(event,"GeoPackage");
             } catch (LayerException e) {
             }
 
@@ -473,8 +479,8 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
                                     overlayAdapter.updateDownloadProgress(view, downloadManager.getProgress(layer), layer.getFileSize());
                                 }
                             }
-                        }catch(Exception e){
-
+                        }catch(Exception e) {
+                            //This is sort of a hack to manage the craziness in the lifecycle
                         }
                     }
                 }
@@ -605,7 +611,7 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
             }
 
             if (path.getAbsolutePath().startsWith(String.format("%s/MAGE/geopackages", getContext().getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)))) {
-                LayerHelper layerHelper = LayerHelper.getInstance(getContext());
+                LayerHelper layerHelper = LayerHelper.getInstance(getActivity().getApplicationContext());
 
                 try {
                     String relativePath = path.getAbsolutePath().split(getContext().getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS).getAbsolutePath() + "/")[1];
@@ -824,9 +830,9 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
                 if (filePath.startsWith(String.format("%s/MAGE/geopackages", activity.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)))) {
                     try {
                         String relativePath = filePath.split(activity.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS).getAbsolutePath() + "/")[1];
-                        layer = LayerHelper.getInstance(activity).getByRelativePath(relativePath);
+                        layer = LayerHelper.getInstance(activity.getApplicationContext()).getByRelativePath(relativePath);
                     } catch(Exception e) {
-                        Log.e(LOG_NAME, "Error getting layer by relative paht", e);
+                        Log.e(LOG_NAME, "Error getting layer by relative path", e);
                     }
                 }
             }
@@ -863,29 +869,31 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
 
             final ProgressBar progressBar =  view.findViewById(R.id.layer_progress);
             final View download = view.findViewById(R.id.layer_download);
-            if (!layer.getType().equals("Feature") && downloadManager.isDownloading(layer)) {
-                int progress = downloadManager.getProgress(layer);
-                long fileSize = layer.getFileSize();
-                progressBar.setVisibility(View.VISIBLE);
-                download.setVisibility(View.GONE);
+            if (!layer.getType().equals("Feature")) {
+                if (downloadManager.isDownloading(layer)) {
+                    int progress = downloadManager.getProgress(layer);
+                    long fileSize = layer.getFileSize();
+                    progressBar.setVisibility(View.VISIBLE);
+                    download.setVisibility(View.GONE);
 
-                view.setEnabled(false);
-                view.setOnClickListener(null);
+                    view.setEnabled(false);
+                    view.setOnClickListener(null);
 
-                int currentProgress = (int) (progress / (float) layer.getFileSize() * 100);
-                progressBar.setProgress(currentProgress);
+                    int currentProgress = (int) (progress / (float) layer.getFileSize() * 100);
+                    progressBar.setProgress(currentProgress);
 
-                layerSize.setVisibility(View.VISIBLE);
-                layerSize.setText(String.format("Downloading: %s of %s",
-                        Formatter.formatFileSize(activity.getApplicationContext(), progress),
-                        Formatter.formatFileSize(activity.getApplicationContext(), fileSize)));
-            } else {
-                progressBar.setVisibility(View.GONE);
-                download.setVisibility(View.VISIBLE);
+                    layerSize.setVisibility(View.VISIBLE);
+                    layerSize.setText(String.format("Downloading: %s of %s",
+                            Formatter.formatFileSize(activity.getApplicationContext(), progress),
+                            Formatter.formatFileSize(activity.getApplicationContext(), fileSize)));
+                } else {
+                    progressBar.setVisibility(View.GONE);
+                    download.setVisibility(View.VISIBLE);
+                }
             }
 
             if(layer.getType().equals("Feature")) {
-                //KML is always downloaded
+                //TODO KML is always downloaded
                 progressBar.setVisibility(View.GONE);
                 download.setVisibility(View.GONE);
             } else {
