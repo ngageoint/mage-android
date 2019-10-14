@@ -43,12 +43,14 @@ public class GeoPackageDownloadManager {
 
     private static final String LOG_NAME = GeoPackageDownloadManager.class.getName();
 
-    private Context context;
-    private String baseUrl;
-    private LayerHelper layerHelper;
-    private GeoPackageDownloadListener listener;
-    private DownloadManager downloadManager;
-    private BroadcastReceiver downloadReceiver = new GeoPackageDownloadReceiver();
+    private final Context context;
+    private final String baseUrl;
+    private final LayerHelper layerHelper;
+    private final GeoPackageDownloadListener listener;
+    private final DownloadManager downloadManager;
+    private final BroadcastReceiver downloadReceiver = new GeoPackageDownloadReceiver();
+
+    private final Object downloadLock = new Object();
 
     public GeoPackageDownloadManager(Context context, GeoPackageDownloadListener listener) {
         this.context = context;
@@ -78,13 +80,15 @@ public class GeoPackageDownloadManager {
         request.addRequestHeader("Accept", "application/octet-stream");
         // TODO test no notification
 
-        long downloadId = downloadManager.enqueue(request);
+        synchronized(downloadLock) {
+            long downloadId = downloadManager.enqueue(request);
 
-        try {
-            layer.setDownloadId(downloadId);
-            layerHelper.update(layer);
-        } catch (LayerException e) {
-            Log.e(LOG_NAME, "Error saving layer download id", e);
+            try {
+                layer.setDownloadId(downloadId);
+                layerHelper.update(layer);
+            } catch (LayerException e) {
+                Log.e(LOG_NAME, "Error saving layer download id", e);
+            }
         }
     }
 
@@ -137,29 +141,31 @@ public class GeoPackageDownloadManager {
     }
 
     private void loadGeopackage(long downloadId, GeoPackageDownloadListener listener) {
-        try {
-            Layer layer = layerHelper.getByDownloadId(downloadId);
-            String relativePath = getRelativePath(layer);
+        synchronized (downloadLock) {
+            try {
+                Layer layer = layerHelper.getByDownloadId(downloadId);
 
-            if (layer != null) {
-                GeoPackageManager geoPackageManager = GeoPackageFactory.getManager(context);
-                CacheProvider cacheProvider = CacheProvider.getInstance(context);
-                File cache = new File(context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), relativePath);
-                CacheOverlay overlay = cacheProvider.getGeoPackageCacheOverlay(context, cache, geoPackageManager);
-                if (overlay != null) {
-                    cacheProvider.addCacheOverlay(overlay);
+                if (layer != null) {
+                    String relativePath = getRelativePath(layer);
+                    GeoPackageManager geoPackageManager = GeoPackageFactory.getManager(context);
+                    CacheProvider cacheProvider = CacheProvider.getInstance(context);
+                    File cache = new File(context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), relativePath);
+                    CacheOverlay overlay = cacheProvider.getGeoPackageCacheOverlay(context, cache, geoPackageManager);
+                    if (overlay != null) {
+                        cacheProvider.addCacheOverlay(overlay);
+                    }
+
+                    layer.setRelativePath(relativePath);
+                    layer.setLoaded(true);
+                    layerHelper.update(layer);
+
+                    if (listener != null) {
+                        listener.onGeoPackageDownloaded(layer, overlay);
+                    }
                 }
-
-                layer.setRelativePath(relativePath);
-                layer.setLoaded(true);
-                layerHelper.update(layer);
-
-                if (listener != null) {
-                    listener.onGeoPackageDownloaded(layer, overlay);
-                }
+            } catch (LayerException e) {
+                Log.e(LOG_NAME, "Error saving layer", e);
             }
-        } catch (LayerException e) {
-            Log.e(LOG_NAME, "Error saving layer", e);
         }
     }
 
