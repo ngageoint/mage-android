@@ -38,6 +38,7 @@ import mil.nga.giat.mage.observation.sync.AttachmentPushService;
 import mil.nga.giat.mage.observation.sync.ObservationFetchService;
 import mil.nga.giat.mage.observation.sync.ObservationFetchWorker;
 import mil.nga.giat.mage.observation.sync.ObservationPushService;
+import mil.nga.giat.mage.sdk.datastore.layer.LayerHelper;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
@@ -91,6 +92,10 @@ public class MageApplication extends DaggerApplication implements LifecycleObser
 	@Override
 	public void onCreate() {
 		super.onCreate();
+
+		//This ensures the singleton is created with the correct context, which needs to be the
+		//application context
+		LayerHelper.getInstance(this.getApplicationContext());
 
 		ProcessLifecycleOwner.get().getLifecycle().addObserver(this);
 
