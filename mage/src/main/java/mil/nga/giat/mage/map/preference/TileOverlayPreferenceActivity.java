@@ -11,6 +11,7 @@ import android.os.Environment;
 import android.os.Looper;
 import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
+import android.support.annotation.UiThread;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.ListFragment;
 import android.support.v4.content.ContextCompat;
@@ -138,14 +139,13 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
 
             downloadManager = new GeoPackageDownloadManager(getActivity().getApplicationContext(), new GeoPackageDownloadManager.GeoPackageDownloadListener() {
                 @Override
-                public void onGeoPackageDownloaded(Layer layer, CacheOverlay overlay) {
-                    synchronized (overlayAdapterLock){
-                        overlayAdapter.addOverlay(overlay, layer);
-                    }
+                public void onGeoPackageDownloaded(final Layer layer, final CacheOverlay overlay) {
+
                     getActivity().runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
                             synchronized (overlayAdapterLock) {
+                                overlayAdapter.addOverlay(overlay, layer);
                                 overlayAdapter.notifyDataSetChanged();
                             }
                         }
@@ -247,6 +247,7 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
          *
          * @param item
          */
+        @UiThread
         private void manualRefresh(MenuItem item) {
             item.setEnabled(false);
             progress.setVisibility(View.VISIBLE);
@@ -274,14 +275,15 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
             //This executes off the current thread
             application.loadStaticFeatures(true, new StaticFeatureServerFetch.OnStaticLayersListener() {
                 @Override
-                public void onStaticLayersLoaded(Collection<Layer> layers) {
-                    synchronized (overlayAdapterLock) {
-                        overlayAdapter.getStaticFeatures().clear();
-                        overlayAdapter.getStaticFeatures().addAll(layers);
-                    }
+                public void onStaticLayersLoaded(final Collection<Layer> layers) {
+
                     getActivity().runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
+                            synchronized (overlayAdapterLock) {
+                                overlayAdapter.getStaticFeatures().clear();
+                                overlayAdapter.getStaticFeatures().addAll(layers);
+                            }
                             refreshButton.setEnabled(true);
                             listView.setEnabled(true);
                             progress.setVisibility(View.GONE);
@@ -430,6 +432,7 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
          *
          * @return
          */
+        @UiThread
         public ArrayList<String> getSelectedOverlays() {
             ArrayList<String> overlays = new ArrayList<>();
             synchronized (overlayAdapterLock) {
@@ -551,6 +554,7 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
          * Delete the cache overlay
          * @param cacheOverlay
          */
+        @UiThread
         private void deleteCacheOverlay(CacheOverlay cacheOverlay){
 
             progress.setVisibility(View.VISIBLE);
@@ -635,7 +639,11 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
 
     /**
      * Cache Overlay Expandable list adapter
+     *
+     * <p></p>
+     * <b>ALL public methods MUST be made on the UI thread to ensure concurrency.</b>
      */
+    @UiThread
     public static class OverlayAdapter extends BaseExpandableListAdapter {
 
         /**
@@ -674,6 +682,11 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
         }
 
         public void addOverlay(CacheOverlay overlay, Layer layer) {
+            if(Looper.getMainLooper().getThread() != Thread.currentThread()){
+                Log.e(LOG_NAME, "Call to components that are accessed on the UI thread");
+                return;
+            }
+
             if (layer.isLoaded()) {
                 geopackages.remove(layer);
                 overlays.add(overlay);
@@ -702,6 +715,7 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
 
             if(Looper.getMainLooper().getThread() != Thread.currentThread()){
                 Log.e(LOG_NAME, "Call to a UI component not on main thread");
+                return;
             }
 
             ProgressBar progressBar = view.findViewById(R.id.layer_progress);
