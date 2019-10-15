@@ -205,9 +205,7 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
         @Override
         public void onPause() {
             super.onPause();
-
-            //TODO handle background static feature loading
-
+            
             downloadManager.onPause();
 
             synchronized (timerLock) {
@@ -345,34 +343,42 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
             } catch (LayerException e) {
             }
 
-            //TODO does this need to be on the UI thread?
-            listView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
-                @Override
-                public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
-                    int itemType = ExpandableListView.getPackedPositionType(id);
-                    if (itemType == ExpandableListView.PACKED_POSITION_TYPE_CHILD) {
-                        int childPosition = ExpandableListView.getPackedPositionChild(id);
-                        int groupPosition = ExpandableListView.getPackedPositionGroup(id);
-                        // Handle child row long clicks here
-                        return true;
-                    } else if (itemType == ExpandableListView.PACKED_POSITION_TYPE_GROUP) {
-                        int groupPosition = ExpandableListView.getPackedPositionGroup(id);
+            if(getActivity() != null) {
+                getActivity().runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        listView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+                            @Override
+                            public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+                                int itemType = ExpandableListView.getPackedPositionType(id);
+                                if (itemType == ExpandableListView.PACKED_POSITION_TYPE_CHILD) {
+                                    int childPosition = ExpandableListView.getPackedPositionChild(id);
+                                    int groupPosition = ExpandableListView.getPackedPositionGroup(id);
+                                    // Handle child row long clicks here
+                                    return true;
+                                } else if (itemType == ExpandableListView.PACKED_POSITION_TYPE_GROUP) {
+                                    int groupPosition = ExpandableListView.getPackedPositionGroup(id);
 
-                        synchronized (overlayAdapterLock) {
-                            Object group = overlayAdapter.getGroup(groupPosition);
-                            if (group instanceof CacheOverlay) {
-                                CacheOverlay cacheOverlay = (CacheOverlay) overlayAdapter.getGroup(groupPosition);
-                                deleteCacheOverlayConfirm(cacheOverlay);
-                                return true;
+                                    synchronized (overlayAdapterLock) {
+                                        Object group = overlayAdapter.getGroup(groupPosition);
+                                        if (group instanceof CacheOverlay) {
+                                            CacheOverlay cacheOverlay = (CacheOverlay) overlayAdapter.getGroup(groupPosition);
+                                            deleteCacheOverlayConfirm(cacheOverlay);
+                                            return true;
+                                        }
+                                    }
+
+                                    return false;
+                                }
+
+                                return false;
                             }
-                        }
-
-                        return false;
+                        });
                     }
-
-                    return false;
-                }
-            });
+                });
+            } else {
+                Log.e(LOG_NAME, "No activity available to register callback on the UI thread");
+            }
 
             downloadManager.reconcileDownloads(geopackages, new GeoPackageDownloadManager.GeoPackageLoadListener() {
                 @Override
