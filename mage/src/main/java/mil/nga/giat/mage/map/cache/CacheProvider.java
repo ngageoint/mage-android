@@ -350,6 +350,7 @@ public class CacheProvider {
                 GeometryType geometryType = featureDao.getGeometryType();
                 FeatureIndexManager indexer = new FeatureIndexManager(context, geoPackage, featureDao);
                 boolean indexed = indexer.isIndexed();
+                indexer.close();
                 int minZoom = 0;
                 if (indexed) {
                     minZoom = featureDao.getZoomLevel() + context.getResources().getInteger(R.integer.geopackage_feature_tiles_min_zoom_offset);
