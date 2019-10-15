@@ -99,8 +99,9 @@ public class GeoPackageDownloadManager {
         if (downloadId != null) {
             DownloadManager.Query query = new DownloadManager.Query();
             query.setFilterById(downloadId);
-            Cursor cursor = downloadManager.query(query);
-            status = getDownloadStatus(cursor);
+            try(Cursor cursor = downloadManager.query(query)) {
+                status = getDownloadStatus(cursor);
+            }
         }
 
         return status == DownloadManager.STATUS_RUNNING || status == DownloadManager.STATUS_PENDING;
@@ -125,11 +126,12 @@ public class GeoPackageDownloadManager {
         if (downloadId != null) {
             DownloadManager.Query query = new DownloadManager.Query();
             query.setFilterById(downloadId);
-            Cursor cursor = downloadManager.query(query);
+            try (Cursor cursor = downloadManager.query(query)) {
 
-            if (cursor.moveToFirst()) {
-                int columnIndex = cursor.getColumnIndex(DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR);
-                progress = cursor.getInt(columnIndex);
+                if (cursor.moveToFirst()) {
+                    int columnIndex = cursor.getColumnIndex(DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR);
+                    progress = cursor.getInt(columnIndex);
+                }
             }
         }
 
@@ -190,11 +192,12 @@ public class GeoPackageDownloadManager {
                 long downloadId = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, 0);
                 DownloadManager.Query query = new DownloadManager.Query();
                 query.setFilterById(downloadId);
-                Cursor cursor = downloadManager.query(query);
-                int status = getDownloadStatus(cursor);
+                try(Cursor cursor = downloadManager.query(query)) {
+                    int status = getDownloadStatus(cursor);
 
-                if (status == DownloadManager.STATUS_SUCCESSFUL) {
-                    loadGeopackage(downloadId, listener);
+                    if (status == DownloadManager.STATUS_SUCCESSFUL) {
+                        loadGeopackage(downloadId, listener);
+                    }
                 }
             }
         }
@@ -219,13 +222,14 @@ public class GeoPackageDownloadManager {
                 } else {
                     DownloadManager.Query ImageDownloadQuery = new DownloadManager.Query();
                     ImageDownloadQuery.setFilterById(downloadId);
-                    Cursor cursor = downloadManager.query(ImageDownloadQuery);
-                    int status = getDownloadStatus(cursor);
+                    try(Cursor cursor = downloadManager.query(ImageDownloadQuery)) {
+                        int status = getDownloadStatus(cursor);
 
-                    if (status == DownloadManager.STATUS_SUCCESSFUL) {
-                        loadGeopackage(downloadId, null);
-                    } else {
-                        layersToDownload.add(layer);
+                        if (status == DownloadManager.STATUS_SUCCESSFUL) {
+                            loadGeopackage(downloadId, null);
+                        } else {
+                            layersToDownload.add(layer);
+                        }
                     }
                 }
             }
