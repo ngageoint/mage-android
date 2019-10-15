@@ -4,7 +4,6 @@
 
     <data>
         <import type="mil.nga.giat.mage.form.field.NumberConverter"/>
-        <import type="java.lang.Number"/>
         <variable name="field" type="mil.nga.giat.mage.form.FormField&lt;Number>"/>
     </data>
 

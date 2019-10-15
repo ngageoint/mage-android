@@ -1,9 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    package="mil.nga.giat.mage"
-    android:versionCode="1"
-    android:versionName="1">
+    package="mil.nga.giat.mage">
 
     <permission
         android:name="${applicationId}.permission.MAPS_RECEIVE"
@@ -128,7 +126,6 @@
             android:label="@string/observation_filter" />
         <activity
             android:name=".filter.LocationFilterActivity"
-            android:label="@string/locations_filter" />
             android:label="@string/locations_filter" />
         <activity
             android:name=".LandingActivity"
