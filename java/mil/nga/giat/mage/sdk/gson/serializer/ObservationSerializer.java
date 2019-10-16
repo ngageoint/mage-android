@@ -22,7 +22,7 @@ import mil.nga.giat.mage.sdk.datastore.observation.ObservationForm;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationProperty;
 import mil.nga.giat.mage.sdk.utils.GeometryUtility;
 import mil.nga.giat.mage.sdk.utils.ISO8601DateFormatFactory;
-import mil.nga.wkb.geom.Geometry;
+import mil.nga.sf.Geometry;
 
 
 public class ObservationSerializer implements JsonSerializer<Observation> {

@@ -5,11 +5,11 @@ import android.util.Log;
 import java.io.IOException;
 import java.nio.ByteOrder;
 
-import mil.nga.wkb.geom.Geometry;
-import mil.nga.wkb.io.ByteReader;
-import mil.nga.wkb.io.ByteWriter;
-import mil.nga.wkb.io.WkbGeometryReader;
-import mil.nga.wkb.io.WkbGeometryWriter;
+import mil.nga.sf.Geometry;
+import mil.nga.sf.util.ByteReader;
+import mil.nga.sf.util.ByteWriter;
+import mil.nga.sf.wkb.GeometryReader;
+import mil.nga.sf.wkb.GeometryWriter;
 
 /**
  * Geometry Utilities
@@ -27,7 +27,7 @@ public class GeometryUtility {
     public static Geometry toGeometry(byte[] geometryBytes) {
         ByteReader reader = new ByteReader(geometryBytes);
         reader.setByteOrder(ByteOrder.BIG_ENDIAN);
-        Geometry geometry = WkbGeometryReader.readGeometry(reader);
+        Geometry geometry = GeometryReader.readGeometry(reader);
         return geometry;
     }
 
@@ -42,7 +42,7 @@ public class GeometryUtility {
         ByteWriter writer = new ByteWriter();
         try {
             writer.setByteOrder(ByteOrder.BIG_ENDIAN);
-            WkbGeometryWriter.writeGeometry(writer, geometry);
+            GeometryWriter.writeGeometry(writer, geometry);
             bytes = writer.getBytes();
         } catch (IOException e) {
             Log.e(GeometryUtility.class.getSimpleName(), "Problem reading observation.", e);

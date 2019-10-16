@@ -26,7 +26,7 @@ import mil.nga.giat.mage.sdk.datastore.observation.State;
 import mil.nga.giat.mage.sdk.datastore.user.Event;
 import mil.nga.giat.mage.sdk.utils.GeometryUtility;
 import mil.nga.giat.mage.sdk.utils.ISO8601DateFormatFactory;
-import mil.nga.wkb.geom.Geometry;
+import mil.nga.sf.Geometry;
 
 public class ObservationDeserializer extends Deserializer {
 

@@ -16,7 +16,7 @@ import java.util.Map;
 
 import mil.nga.giat.mage.sdk.datastore.layer.Layer;
 import mil.nga.giat.mage.sdk.utils.GeometryUtility;
-import mil.nga.wkb.geom.Geometry;
+import mil.nga.sf.Geometry;
 
 @DatabaseTable(tableName = "staticfeatures")
 public class StaticFeature implements Comparable<StaticFeature> {
