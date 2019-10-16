@@ -50,7 +50,7 @@ public class LayerHelper extends DaoHelper<Layer> implements IEventDispatcher<IL
      *            Application Context
      * @return A fully constructed and operational LocationHelper.
      */
-    public static LayerHelper getInstance(Context context) {
+    public static synchronized LayerHelper getInstance(Context context) {
         if (mLayerHelper == null) {
             mLayerHelper = new LayerHelper(context);
         }
@@ -154,7 +154,7 @@ public class LayerHelper extends DaoHelper<Layer> implements IEventDispatcher<IL
 	@Override
 	public Layer update(Layer layer) throws LayerException {
 		try {
-			layerDao.update(layer);
+			int count = layerDao.update(layer);
 		} catch (SQLException sqle) {
 			Log.e(LOG_NAME, "There was a problem updating layer: " + layer);
 			throw new LayerException("There was a problem updating layer: " + layer, sqle);

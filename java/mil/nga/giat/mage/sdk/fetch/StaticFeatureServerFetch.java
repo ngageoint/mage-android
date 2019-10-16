@@ -63,7 +63,7 @@ public class StaticFeatureServerFetch extends AbstractServerFetch {
 			Collection<Layer> layers = layerResource.getLayers(event);
 
 			if (deleteLocal) {
-				layerHelper.deleteAll();
+				layerHelper.deleteAll(FEATURE_TYPE);
 			}
 
 			// get local layers
