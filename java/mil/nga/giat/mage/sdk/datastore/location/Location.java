@@ -1,6 +1,6 @@
 package mil.nga.giat.mage.sdk.datastore.location;
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 import com.j256.ormlite.field.DataType;
 import com.j256.ormlite.field.DatabaseField;
