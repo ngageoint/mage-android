@@ -177,6 +177,12 @@
             android:parentActivityName=".map.preference.MapPreferencesActivity"
             android:uiOptions="splitActionBarWhenNarrow" />
         <activity
+            android:name=".map.preference.OnlineMapsPreferenceActivity"
+            android:label="Online Maps"
+            android:launchMode="singleTop"
+            android:parentActivityName=".map.preference.MapPreferencesActivity"
+            android:uiOptions="splitActionBarWhenNarrow" />
+        <activity
             android:name=".observation.ObservationViewActivity"
             android:launchMode="singleTop"
             android:label="@string/observation_view"

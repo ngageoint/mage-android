@@ -44,6 +44,7 @@ public class MapPreferencesActivity extends AppCompatActivity {
 	public static String LOG_NAME = MapPreferencesActivity.class.getName();
 
 	public static final int TILE_OVERLAY_ACTIVITY = 100;
+	public static final int ONLINE_MAPS_OVERLAY_ACTIVITY = 200;
 	public static final String OVERLAY_EXTENDED_DATA_KEY = "overlay";
 
 	private MapPreferenceFragment preference = new MapPreferenceFragment();
@@ -64,6 +65,15 @@ public class MapPreferencesActivity extends AppCompatActivity {
 				public boolean onPreferenceClick(Preference preference) {
 					Intent intent = new Intent(getActivity(), TileOverlayPreferenceActivity.class);
 					getActivity().startActivityForResult(intent, TILE_OVERLAY_ACTIVITY);
+					return true;
+				}
+			});
+
+			findPreference(getString(R.string.onlineMapsKey)).setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+				@Override
+				public boolean onPreferenceClick(Preference preference) {
+					Intent intent = new Intent(getActivity(), OnlineMapsPreferenceActivity.class);
+					getActivity().startActivityForResult(intent, ONLINE_MAPS_OVERLAY_ACTIVITY);
 					return true;
 				}
 			});

@@ -37,6 +37,7 @@
     <!-- TODO : should the following go in pairs? -->
     <string name="clearDataKey">clearData</string>
     <string name="tileOverlaysKey">tileOverlays</string>
+    <string name="onlineMapsKey">onlineMaps</string>
 
     <string name="staticFeatureLayersKey">staticFeatureLayers</string>
 
