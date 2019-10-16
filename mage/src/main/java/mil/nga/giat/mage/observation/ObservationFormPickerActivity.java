@@ -29,7 +29,7 @@ import com.google.gson.JsonObject;
 
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
-import mil.nga.wkb.geom.Point;
+import mil.nga.sf.Point;
 
 public class ObservationFormPickerActivity extends AppCompatActivity implements OnMapReadyCallback {
 

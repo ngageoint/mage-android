@@ -104,10 +104,6 @@ import mil.nga.geopackage.map.tiles.overlay.BoundedOverlay;
 import mil.nga.geopackage.map.tiles.overlay.FeatureOverlay;
 import mil.nga.geopackage.map.tiles.overlay.FeatureOverlayQuery;
 import mil.nga.geopackage.map.tiles.overlay.GeoPackageOverlayFactory;
-import mil.nga.geopackage.projection.Projection;
-import mil.nga.geopackage.projection.ProjectionConstants;
-import mil.nga.geopackage.projection.ProjectionFactory;
-import mil.nga.geopackage.projection.ProjectionTransform;
 import mil.nga.geopackage.tiles.TileBoundingBoxUtils;
 import mil.nga.geopackage.tiles.features.DefaultFeatureTiles;
 import mil.nga.geopackage.tiles.features.FeatureTiles;
@@ -158,8 +154,12 @@ import mil.nga.giat.mage.sdk.exceptions.LayerException;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
 import mil.nga.mgrs.MGRS;
 import mil.nga.mgrs.gzd.MGRSTileProvider;
-import mil.nga.wkb.geom.Geometry;
-import mil.nga.wkb.geom.GeometryType;
+import mil.nga.sf.Geometry;
+import mil.nga.sf.GeometryType;
+import mil.nga.sf.proj.Projection;
+import mil.nga.sf.proj.ProjectionConstants;
+import mil.nga.sf.proj.ProjectionFactory;
+import mil.nga.sf.proj.ProjectionTransform;
 
 public class MapFragment extends DaggerFragment implements OnMapReadyCallback, OnMapClickListener, OnMapLongClickListener, OnMarkerClickListener, OnInfoWindowClickListener, GoogleMap.OnCameraMoveListener, GoogleMap.OnCameraIdleListener, GoogleMap.OnCameraMoveStartedListener, OnClickListener, LocationSource, OnCacheOverlayListener,
 		IObservationEventListener, ILocationEventListener, IUserEventListener, IStaticFeatureEventListener, Observer<Location> {
@@ -1233,11 +1233,9 @@ public class MapFragment extends DaggerFragment implements OnMapReadyCallback, O
 						ContentsDao contentsDao = geoPackage.getContentsDao();
 						Contents contents = contentsDao.queryForId(tableCacheOverlay.getName());
 						BoundingBox contentsBoundingBox = contents.getBoundingBox();
-						Projection projection = ProjectionFactory
-								.getProjection(contents.getSrs().getOrganizationCoordsysId());
-
+						Projection projection = ProjectionFactory.getProjection(contents.getSrs().getOrganizationCoordsysId());
 						ProjectionTransform transform = projection.getTransformation(ProjectionConstants.EPSG_WORLD_GEODETIC_SYSTEM);
-						BoundingBox boundingBox = transform.transform(contentsBoundingBox);
+						BoundingBox boundingBox = contentsBoundingBox.transform(transform);
 						boundingBox = TileBoundingBoxUtils.boundWgs84BoundingBoxWithWebMercatorLimits(boundingBox);
 
 						if (addedCacheBoundingBox == null) {
@@ -1382,7 +1380,7 @@ public class MapFragment extends DaggerFragment implements OnMapReadyCallback, O
 							FeatureRow featureRow = featureCursor.getRow();
 							GeoPackageGeometryData geometryData = featureRow.getGeometry();
 							if (geometryData != null && !geometryData.isEmpty()) {
-								mil.nga.wkb.geom.Geometry geometry = geometryData.getGeometry();
+								Geometry geometry = geometryData.getGeometry();
 								if (geometry != null) {
 									GoogleMapShape shape = shapeConverter.toShape(geometry);
 									// Set the Shape Marker, PolylineOptions, and PolygonOptions here if needed to change color and style

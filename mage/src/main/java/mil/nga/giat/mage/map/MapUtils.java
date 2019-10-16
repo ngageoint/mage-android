@@ -2,9 +2,9 @@ package mil.nga.giat.mage.map;
 
 import com.google.android.gms.maps.GoogleMap;
 
-import mil.nga.wkb.geom.LineString;
-import mil.nga.wkb.geom.Point;
-import mil.nga.wkb.geom.Polygon;
+import mil.nga.sf.LineString;
+import mil.nga.sf.Point;
+import mil.nga.sf.Polygon;
 
 /**
  * Map utilities

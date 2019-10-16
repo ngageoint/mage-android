@@ -36,7 +36,6 @@ import com.google.android.material.tabs.TabLayout
 import com.google.android.material.textfield.TextInputLayout
 import kotlinx.android.synthetic.main.dialog_geometry_field.*
 import mil.nga.geopackage.map.geom.*
-import mil.nga.geopackage.projection.ProjectionConstants
 import mil.nga.giat.mage.R
 import mil.nga.giat.mage.coordinate.CoordinateSystem
 import mil.nga.giat.mage.form.FormField
@@ -48,10 +47,11 @@ import mil.nga.giat.mage.observation.ObservationLocation
 import mil.nga.giat.mage.observation.ObservationShapeStyle
 import mil.nga.mgrs.MGRS
 import mil.nga.mgrs.gzd.MGRSTileProvider
-import mil.nga.wkb.geom.*
-import mil.nga.wkb.geom.Polygon
-import mil.nga.wkb.util.GeometryEnvelopeBuilder
-import mil.nga.wkb.util.GeometryUtils
+import mil.nga.sf.*
+import mil.nga.sf.Polygon
+import mil.nga.sf.proj.ProjectionConstants
+import mil.nga.sf.util.GeometryEnvelopeBuilder
+import mil.nga.sf.util.GeometryUtils
 import java.text.DecimalFormat
 import java.text.ParseException
 import java.util.*

@@ -45,7 +45,7 @@ import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.exceptions.ObservationException;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
-import mil.nga.wkb.geom.GeometryType;
+import mil.nga.sf.GeometryType;
 
 /**
  * Created by wnewman on 10/30/17.

@@ -72,7 +72,7 @@ import mil.nga.giat.mage.sdk.exceptions.ObservationException;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
 import mil.nga.giat.mage.utils.DateFormatFactory;
 import mil.nga.giat.mage.widget.CoordinateView;
-import mil.nga.wkb.geom.Geometry;
+import mil.nga.sf.Geometry;
 
 public class ObservationViewActivity extends AppCompatActivity implements OnMapReadyCallback, OnCameraIdleListener {
 

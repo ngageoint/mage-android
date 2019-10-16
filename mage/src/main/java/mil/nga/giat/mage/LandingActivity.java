@@ -74,7 +74,7 @@ import mil.nga.giat.mage.sdk.utils.MediaUtility;
 public class LandingActivity extends DaggerAppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
 
     /**
-     * Extra key for storing the local file path used to launch MAGE
+     * Extra key for storing the local file path used to lauch MAGE
      */
     public static final String EXTRA_OPEN_FILE_PATH = "extra_open_file_path";
 

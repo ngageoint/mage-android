@@ -85,7 +85,7 @@ import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.event.IObservationEventListener;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
-import mil.nga.wkb.geom.Geometry;
+import mil.nga.sf.Geometry;
 
 public class ObservationFeedFragment extends DaggerFragment implements IObservationEventListener, ObservationListAdapter.ObservationActionListener, Observer<Location> {
 

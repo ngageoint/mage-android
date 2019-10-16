@@ -13,7 +13,7 @@ import mil.nga.giat.mage.sdk.datastore.user.User
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper
 import mil.nga.giat.mage.sdk.exceptions.LocationException
 import mil.nga.giat.mage.sdk.exceptions.UserException
-import mil.nga.wkb.geom.Point
+import mil.nga.sf.Point
 import java.util.*
 
 class LocationSaveTask(val context: Context, private val listener: LocationDatabaseListener) : AsyncTask<Location, Void, Location>() {

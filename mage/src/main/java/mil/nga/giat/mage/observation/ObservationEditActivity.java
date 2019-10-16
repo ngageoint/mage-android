@@ -98,7 +98,7 @@ import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.exceptions.ObservationException;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
-import mil.nga.wkb.geom.Geometry;
+import mil.nga.sf.Geometry;
 
 public class ObservationEditActivity extends AppCompatActivity implements OnMapReadyCallback, OnCameraIdleListener {
 

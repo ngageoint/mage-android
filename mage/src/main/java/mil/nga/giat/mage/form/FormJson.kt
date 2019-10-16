@@ -16,7 +16,7 @@ import mil.nga.giat.mage.sdk.gson.serializer.GeometrySerializer
 import mil.nga.giat.mage.sdk.jackson.deserializer.GeometryDeserializer
 import mil.nga.giat.mage.sdk.utils.GeometryUtility
 import mil.nga.giat.mage.sdk.utils.ISO8601DateFormatFactory
-import mil.nga.wkb.geom.Geometry
+import mil.nga.sf.Geometry
 import java.io.Serializable
 import java.lang.reflect.Type
 import java.text.ParseException

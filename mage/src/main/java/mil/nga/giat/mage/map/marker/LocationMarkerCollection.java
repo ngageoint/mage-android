@@ -41,9 +41,9 @@ import mil.nga.giat.mage.sdk.Temporal;
 import mil.nga.giat.mage.sdk.datastore.location.Location;
 import mil.nga.giat.mage.sdk.datastore.location.LocationProperty;
 import mil.nga.giat.mage.sdk.datastore.user.User;
-import mil.nga.wkb.geom.Geometry;
-import mil.nga.wkb.geom.Point;
-import mil.nga.wkb.util.GeometryUtils;
+import mil.nga.sf.Geometry;
+import mil.nga.sf.Point;
+import mil.nga.sf.util.GeometryUtils;
 
 public class LocationMarkerCollection implements PointCollection<Pair<Location, User>>, OnMarkerClickListener {
 

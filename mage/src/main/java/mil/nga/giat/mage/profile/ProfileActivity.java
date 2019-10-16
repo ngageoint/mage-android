@@ -74,8 +74,8 @@ import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
 import mil.nga.giat.mage.sdk.profile.UpdateProfileTask;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
-import mil.nga.wkb.geom.Point;
-import mil.nga.wkb.util.GeometryUtils;
+import mil.nga.sf.Point;
+import mil.nga.sf.util.GeometryUtils;
 
 public class ProfileActivity extends DaggerAppCompatActivity implements OnMapReadyCallback {
 

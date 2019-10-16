@@ -19,8 +19,8 @@ import mil.nga.giat.mage.sdk.datastore.location.Location;
 import mil.nga.giat.mage.sdk.datastore.user.Event;
 import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
 import mil.nga.giat.mage.sdk.datastore.user.User;
-import mil.nga.wkb.geom.Point;
-import mil.nga.wkb.util.GeometryUtils;
+import mil.nga.sf.Point;
+import mil.nga.sf.util.GeometryUtils;
 
 public class LocationTask extends AsyncTask<Location, Pair<MarkerOptions, Pair<Location, User>>, Void> {
     public enum Type {
