@@ -1,10 +1,10 @@
 package mil.nga.giat.mage.form.field
 
 import android.content.Context
-import android.databinding.InverseMethod
-import android.support.design.widget.TextInputEditText
 import android.util.AttributeSet
 import android.view.LayoutInflater
+import androidx.databinding.InverseMethod
+import com.google.android.material.textfield.TextInputEditText
 import kotlinx.android.synthetic.main.view_form_edit_number.view.*
 import mil.nga.giat.mage.databinding.ViewFormEditNumberBinding
 import mil.nga.giat.mage.databinding.ViewFormNumberBinding

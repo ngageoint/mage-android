@@ -3,14 +3,15 @@ package mil.nga.giat.mage.map.marker;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.util.Log;
 import android.util.Pair;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import com.bumptech.glide.request.target.CustomViewTarget;
 import com.bumptech.glide.request.target.Target;

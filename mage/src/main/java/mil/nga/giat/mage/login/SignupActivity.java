@@ -8,9 +8,6 @@ import android.content.SharedPreferences.Editor;
 import android.graphics.Typeface;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
-import android.support.design.widget.TextInputLayout;
-import android.support.v7.app.AlertDialog;
-import android.support.v7.app.AppCompatActivity;
 import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
@@ -22,6 +19,11 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
+
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
+
+import com.google.android.material.textfield.TextInputLayout;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -350,6 +352,8 @@ public class SignupActivity extends AppCompatActivity implements AccountDelegate
 
 	@Override
 	protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
+		super.onActivityResult(requestCode, resultCode, intent);
+
 		if (requestCode == EXTRA_OAUTH_RESULT && resultCode == RESULT_OK) {
 			if (intent.getBooleanExtra(EXTRA_OAUTH_ERROR, false)) {
 				String errorMessage = intent.getStringExtra(EXTRA_OAUTH_ERROR_MESSAGE);

@@ -4,13 +4,14 @@ import android.app.Activity;
 import android.content.Intent;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
-import android.support.v4.content.ContextCompat;
-import android.support.v4.graphics.drawable.DrawableCompat;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.content.res.AppCompatResources;
-import android.support.v7.preference.Preference;
-import android.support.v7.preference.PreferenceFragmentCompat;
 import android.util.Log;
+
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.content.res.AppCompatResources;
+import androidx.core.content.ContextCompat;
+import androidx.core.graphics.drawable.DrawableCompat;
+import androidx.preference.Preference;
+import androidx.preference.PreferenceFragmentCompat;
 
 import com.google.common.base.Predicate;
 import com.google.common.collect.Collections2;

@@ -6,14 +6,15 @@ import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.LayerDrawable;
 import android.os.Bundle;
-import android.support.v4.graphics.drawable.DrawableCompat;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
+
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.graphics.drawable.DrawableCompat;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.flexbox.FlexDirection;
 import com.google.android.flexbox.FlexboxLayoutManager;

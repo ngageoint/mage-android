@@ -2,11 +2,12 @@ package mil.nga.giat.mage.map.marker;
 
 import android.app.Activity;
 import android.content.DialogInterface;
-import android.support.v7.app.AlertDialog;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.webkit.WebView;
+
+import androidx.appcompat.app.AlertDialog;
 
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.LatLng;

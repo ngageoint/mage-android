@@ -1,11 +1,11 @@
 package mil.nga.giat.mage.form.field
 
 import android.content.Context
-import android.databinding.BindingAdapter
-import android.support.design.widget.TextInputLayout
 import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.widget.TextView
+import androidx.databinding.BindingAdapter
+import com.google.android.material.textfield.TextInputLayout
 import kotlinx.android.synthetic.main.view_form_edit_geometry.view.*
 import mil.nga.giat.mage.coordinate.CoordinateFormatter
 import mil.nga.giat.mage.coordinate.CoordinateSystem

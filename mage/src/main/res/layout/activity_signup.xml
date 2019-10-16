@@ -112,14 +112,14 @@
 
                 </LinearLayout>
 
-                <android.support.design.widget.TextInputLayout
+                <com.google.android.material.textfield.TextInputLayout
                     android:id="@+id/username_layout"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:theme="@style/AppTheme.TextInputLayout"
                     app:errorTextAppearance="@style/AppTheme.ErrorTextAppearance">
 
-                    <android.support.design.widget.TextInputEditText
+                    <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/signup_username"
                         android:layout_width="fill_parent"
                         android:layout_height="wrap_content"
@@ -127,16 +127,16 @@
                         android:inputType="textVisiblePassword|textNoSuggestions"
                         android:maxLines="1" />
 
-                </android.support.design.widget.TextInputLayout>
+                </com.google.android.material.textfield.TextInputLayout>
 
-                <android.support.design.widget.TextInputLayout
+                <com.google.android.material.textfield.TextInputLayout
                     android:id="@+id/displayname_layout"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     app:errorTextAppearance="@style/AppTheme.ErrorTextAppearance"
                     android:theme="@style/AppTheme.TextInputLayout">
 
-                    <android.support.design.widget.TextInputEditText
+                    <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/signup_displayname"
                         android:layout_width="fill_parent"
                         android:layout_height="wrap_content"
@@ -144,16 +144,16 @@
                         android:inputType="textPersonName|textCapSentences|textNoSuggestions"
                         android:maxLines="1" />
 
-                </android.support.design.widget.TextInputLayout>
+                </com.google.android.material.textfield.TextInputLayout>
 
-                <android.support.design.widget.TextInputLayout
+                <com.google.android.material.textfield.TextInputLayout
                     android:id="@+id/email_layout"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     app:errorTextAppearance="@style/AppTheme.ErrorTextAppearance"
                     android:theme="@style/AppTheme.TextInputLayout">
 
-                    <android.support.design.widget.TextInputEditText
+                    <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/signup_email"
                         android:layout_width="fill_parent"
                         android:layout_height="wrap_content"
@@ -161,16 +161,16 @@
                         android:inputType="textEmailAddress"
                         android:maxLines="1" />
 
-                </android.support.design.widget.TextInputLayout>
+                </com.google.android.material.textfield.TextInputLayout>
 
-                <android.support.design.widget.TextInputLayout
+                <com.google.android.material.textfield.TextInputLayout
                     android:id="@+id/phone_layout"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     app:errorTextAppearance="@style/AppTheme.ErrorTextAppearance"
                     android:theme="@style/AppTheme.TextInputLayout">
 
-                    <android.support.design.widget.TextInputEditText
+                    <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/signup_phone"
                         android:layout_width="fill_parent"
                         android:layout_height="wrap_content"
@@ -178,9 +178,9 @@
                         android:inputType="phone"
                         android:maxLines="1" />
 
-                </android.support.design.widget.TextInputLayout>
+                </com.google.android.material.textfield.TextInputLayout>
 
-                <android.support.design.widget.TextInputLayout
+                <com.google.android.material.textfield.TextInputLayout
                     android:id="@+id/password_layout"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -189,7 +189,7 @@
                     style="@style/AppTheme.TextInputLayout"
                     android:theme="@style/AppTheme.TextInputLayout">
 
-                    <android.support.design.widget.TextInputEditText
+                    <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/signup_password"
                         android:layout_width="fill_parent"
                         android:layout_height="wrap_content"
@@ -197,9 +197,9 @@
                         android:inputType="textPassword"
                         android:maxLines="1" />
 
-                </android.support.design.widget.TextInputLayout>
+                </com.google.android.material.textfield.TextInputLayout>
 
-                <android.support.design.widget.TextInputLayout
+                <com.google.android.material.textfield.TextInputLayout
                     android:id="@+id/confirmpassword_layout"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -208,7 +208,7 @@
                     style="@style/AppTheme.TextInputLayout"
                     android:theme="@style/AppTheme.TextInputLayout">
 
-                    <android.support.design.widget.TextInputEditText
+                    <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/signup_confirmpassword"
                         android:layout_width="fill_parent"
                         android:layout_height="wrap_content"
@@ -217,7 +217,7 @@
                         android:imeActionLabel="Sign up"
                         android:maxLines="1" />
 
-                </android.support.design.widget.TextInputLayout>
+                </com.google.android.material.textfield.TextInputLayout>
 
                 <fragment android:name="mil.nga.giat.mage.login.PasswordStrengthFragment"
                     android:id="@+id/password_strength_fragment"

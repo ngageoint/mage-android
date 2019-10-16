@@ -1,13 +1,14 @@
 package mil.nga.giat.mage.observation;
 
 import android.content.Context;
-import android.support.v4.content.res.ResourcesCompat;
-import android.support.v4.widget.CircularProgressDrawable;
-import android.support.v7.widget.AppCompatImageView;
 import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.MimeTypeMap;
 import android.widget.LinearLayout;
+
+import androidx.appcompat.widget.AppCompatImageView;
+import androidx.core.content.res.ResourcesCompat;
+import androidx.swiperefreshlayout.widget.CircularProgressDrawable;
 
 import com.bumptech.glide.load.resource.bitmap.BitmapTransformation;
 import com.bumptech.glide.load.resource.bitmap.CenterCrop;

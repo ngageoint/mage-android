@@ -1,13 +1,13 @@
 package mil.nga.giat.mage.form
 
-import android.arch.lifecycle.Observer
-import android.arch.lifecycle.ViewModelProviders
 import android.content.Context
 import android.os.Bundle
-import android.support.v4.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.fragment.app.Fragment
+import androidx.lifecycle.Observer
+import androidx.lifecycle.ViewModelProviders
 import kotlinx.android.synthetic.main.fragement_form.*
 import mil.nga.giat.mage.R
 import mil.nga.giat.mage.form.field.*
@@ -15,7 +15,8 @@ import mil.nga.giat.mage.form.field.dialog.DateFieldDialog
 import mil.nga.giat.mage.form.field.dialog.GeometryFieldDialog
 import mil.nga.giat.mage.form.field.dialog.SelectFieldDialog
 import mil.nga.giat.mage.observation.ObservationLocation
-import java.util.*
+import java.util.Date;
+import kotlin.collections.ArrayList
 
 class FormFragment : Fragment() {
 
@@ -36,7 +37,7 @@ class FormFragment : Fragment() {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        model.getForm().observe(this, Observer<Form> { form ->
+        model.getForm().observe(this, Observer { form ->
             form?.let { buildForm(it) }
         })
     }
@@ -208,16 +209,22 @@ class FormFragment : Fragment() {
 
     private fun onDateFieldClick(field: FormField<*>) {
         val dialog = DateFieldDialog.newInstance(field.name)
-        dialog.show(activity?.supportFragmentManager, "DIALOG_DATE_FIELD")
+        activity?.supportFragmentManager?.let {
+            dialog.show(it, "DIALOG_DATE_FIELD")
+        }
     }
 
     private fun onSelectFieldClick(field: FormField<*>) {
         val dialog = SelectFieldDialog.newInstance(field.name)
-        dialog.show(activity?.supportFragmentManager, "DIALOG_SELECT_FIELD")
+        activity?.supportFragmentManager?.let {
+            dialog.show(it, "DIALOG_SELECT_FIELD")
+        }
     }
 
     private fun onGeometryFieldClick(field: FormField<*>) {
         val dialog = GeometryFieldDialog.newInstance(field.name)
-        dialog.show(activity?.supportFragmentManager, "DIALOG_GEOMETRY_FIELD")
+        activity?.supportFragmentManager?.let {
+            dialog.show(it, "DIALOG_GEOMETRY_FIELD")
+        }
     }
 }

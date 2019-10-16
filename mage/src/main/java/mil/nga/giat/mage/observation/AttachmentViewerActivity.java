@@ -14,12 +14,6 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
-import android.support.annotation.Nullable;
-import android.support.design.widget.Snackbar;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
-import android.support.v7.app.AlertDialog;
-import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -30,10 +24,17 @@ import android.widget.MediaController;
 import android.widget.Toast;
 import android.widget.VideoView;
 
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+
 import com.bumptech.glide.load.DataSource;
 import com.bumptech.glide.load.engine.GlideException;
 import com.bumptech.glide.request.RequestListener;
 import com.bumptech.glide.request.target.Target;
+import com.google.android.material.snackbar.Snackbar;
 
 import org.apache.commons.lang3.StringUtils;
 

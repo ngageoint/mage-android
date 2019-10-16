@@ -1,6 +1,5 @@
 package mil.nga.giat.mage.form.field.dialog
 
-import android.arch.lifecycle.ViewModelProviders
 import android.content.Context
 import android.content.res.Configuration
 import android.graphics.Bitmap
@@ -10,15 +9,6 @@ import android.os.Bundle
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.preference.PreferenceManager
-import android.support.design.widget.FloatingActionButton
-import android.support.design.widget.Snackbar
-import android.support.design.widget.TabLayout
-import android.support.design.widget.TextInputLayout
-import android.support.v4.app.DialogFragment
-import android.support.v4.app.Fragment
-import android.support.v4.graphics.drawable.DrawableCompat
-import android.support.v7.app.AlertDialog
-import android.support.v7.content.res.AppCompatResources
 import android.text.Editable
 import android.text.InputFilter
 import android.text.TextWatcher
@@ -29,11 +19,21 @@ import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
 import android.widget.EditText
 import android.widget.TextView
+import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.content.res.AppCompatResources
+import androidx.core.graphics.drawable.DrawableCompat
+import androidx.fragment.app.DialogFragment
+import androidx.fragment.app.Fragment
+import androidx.lifecycle.ViewModelProviders
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.*
+import com.google.android.material.floatingactionbutton.FloatingActionButton
+import com.google.android.material.snackbar.Snackbar
+import com.google.android.material.tabs.TabLayout
+import com.google.android.material.textfield.TextInputLayout
 import kotlinx.android.synthetic.main.dialog_geometry_field.*
 import mil.nga.geopackage.map.geom.*
 import mil.nga.geopackage.projection.ProjectionConstants
@@ -1250,7 +1250,7 @@ class GeometryFieldDialog : DialogFragment(),
             clearFocus()
         }
 
-        override fun onAttachFragment(fragment: Fragment?) {
+        override fun onAttachFragment(fragment: Fragment) {
             if (fragment is CoordinateChangeListener) {
                 coordinateChangeListener = fragment
             }
@@ -1361,7 +1361,7 @@ class GeometryFieldDialog : DialogFragment(),
             })
         }
 
-        override fun onAttachFragment(fragment: Fragment?) {
+        override fun onAttachFragment(fragment: Fragment) {
             if (fragment is CoordinateChangeListener) {
                 coordinateChangeListener = fragment
             }

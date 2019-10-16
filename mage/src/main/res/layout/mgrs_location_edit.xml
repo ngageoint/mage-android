@@ -5,7 +5,7 @@
     android:layout_height="wrap_content"
     android:orientation="vertical">
 
-    <android.support.design.widget.TextInputLayout
+    <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/mgrs_layout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -14,7 +14,7 @@
         app:hintAnimationEnabled="false"
         app:errorTextAppearance="@style/AppTheme.ErrorTextAppearance">
 
-        <EditText
+        <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/mgrs"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -24,7 +24,7 @@
             android:inputType="textNoSuggestions|textVisiblePassword"
             android:theme="@style/AppTheme.White" />
 
-    </android.support.design.widget.TextInputLayout>
+    </com.google.android.material.textfield.TextInputLayout>
 
 </LinearLayout>
 

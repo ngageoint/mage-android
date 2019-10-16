@@ -7,7 +7,7 @@
         <variable name="field" type="mil.nga.giat.mage.form.FormField&lt;Number>"/>
     </data>
 
-    <android.support.design.widget.TextInputLayout
+    <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/textInputLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -17,13 +17,13 @@
         android:theme="@style/AppTheme.TextInputLayout"
         android:hint="@{field.title}">
 
-        <android.support.design.widget.TextInputEditText
+        <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/editText"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:inputType="number|numberDecimal"
             android:text="@={NumberConverter.toString(editText, field.value, field.value)}"/>
 
-    </android.support.design.widget.TextInputLayout>
+    </com.google.android.material.textfield.TextInputLayout>
 
 </layout>

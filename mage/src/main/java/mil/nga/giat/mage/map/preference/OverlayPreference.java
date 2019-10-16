@@ -5,10 +5,11 @@ import android.content.SharedPreferences;
 import android.graphics.drawable.Drawable;
 import android.os.Parcel;
 import android.os.Parcelable;
-import android.support.v7.preference.Preference;
-import android.support.v7.preference.PreferenceViewHolder;
 import android.util.AttributeSet;
 import android.widget.TextView;
+
+import androidx.preference.Preference;
+import androidx.preference.PreferenceViewHolder;
 
 import java.util.ArrayList;
 import java.util.HashSet;

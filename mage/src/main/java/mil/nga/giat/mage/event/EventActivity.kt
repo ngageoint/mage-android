@@ -2,15 +2,14 @@ package mil.nga.giat.mage.event
 
 import android.content.Context
 import android.os.Bundle
-import android.support.v7.widget.DividerItemDecoration
-import android.support.v7.widget.DividerItemDecoration.VERTICAL
-import android.support.v7.widget.LinearLayoutManager
-import android.support.v7.widget.RecyclerView
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
+import androidx.recyclerview.widget.DividerItemDecoration
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import dagger.android.support.DaggerAppCompatActivity
 import kotlinx.android.synthetic.main.activity_event.*
 import kotlinx.android.synthetic.main.recycler_form_list_item.view.*
@@ -71,7 +70,7 @@ class EventActivity : DaggerAppCompatActivity() {
             layoutManager = viewManager
             adapter = viewAdapter
             setHasFixedSize(true)
-            addItemDecoration(DividerItemDecoration(getContext(), VERTICAL))
+            addItemDecoration(DividerItemDecoration(getContext(), DividerItemDecoration.VERTICAL))
         }
 
         eventName.text = event?.name
