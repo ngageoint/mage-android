@@ -113,6 +113,8 @@ public class MapPreferencesActivity extends AppCompatActivity {
 					DrawableCompat.setTintList(icon, AppCompatResources.getColorStateList(getContext(), R.color.download_icon));
 					p.setDownloadIcon(icon);
 				}
+
+				//TODO load anything for online maps if required
 			} catch (Exception e) {
 				Log.e(LOG_NAME, "Problem setting preference.", e);
 			}
@@ -123,6 +125,7 @@ public class MapPreferencesActivity extends AppCompatActivity {
 			super.onPause();
 
 			findPreference(getString(R.string.tileOverlaysKey)).setOnPreferenceClickListener(null);
+			findPreference(getString(R.string.onlineMapsKey)).setOnPreferenceClickListener(null);
 		}
 	}
 
@@ -142,8 +145,13 @@ public class MapPreferencesActivity extends AppCompatActivity {
 				}
 				break;
 			}
-			default:
+			case ONLINE_MAPS_OVERLAY_ACTIVITY: {
+				//TODO implement for online maps.  Fall through to default for now
+			}
+			default: {
 				super.onActivityResult(requestCode, resultCode, data);
+				break;
+			}
 		}
 	}
 }

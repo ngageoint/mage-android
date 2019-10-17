@@ -7,7 +7,7 @@
     android:paddingRight="8dp" >
 
     <LinearLayout
-        android:id="@+id/content"
+        android:id="@+id/online_maps_content"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
@@ -45,7 +45,7 @@
     </LinearLayout>
 
     <LinearLayout
-        android:id="@+id/no_content"
+        android:id="@+id/online_maps_no_content"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
         android:gravity="center"
@@ -54,7 +54,7 @@
         android:paddingTop="15dp">
 
         <TextView
-            android:id="@+id/title"
+            android:id="@+id/online_maps_title"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:gravity="center"
@@ -64,7 +64,7 @@
             android:textSize="22sp" />
 
         <TextView
-            android:id="@+id/summary"
+            android:id="@+id/online_maps_summary"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:gravity="center"
@@ -72,7 +72,7 @@
             android:visibility="gone" />
 
         <ProgressBar
-            android:id="@+id/progressBar"
+            android:id="@+id/online_maps_progressBar"
             style="?android:attr/progressBarStyleLarge"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content" />
