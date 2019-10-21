@@ -50,6 +50,9 @@ public class Layer implements Comparable<Layer> {
 	@ForeignCollectionField(eager = false)
 	private Collection<StaticFeature> staticFeatures = new ArrayList<>();
 
+	@DatabaseField
+	private String url;
+
 	public Layer() {
 		// ORMLite needs a no-arg constructor
 	}
@@ -141,6 +144,10 @@ public class Layer implements Comparable<Layer> {
 	public Collection<StaticFeature> getStaticFeatures() {
 		return staticFeatures;
 	}
+
+	public void setUrl(String url){this.url = url;}
+
+	public String getUrl(){return this.url;}
 
 	@Override
 	public String toString() {

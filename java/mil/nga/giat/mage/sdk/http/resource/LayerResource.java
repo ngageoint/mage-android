@@ -86,6 +86,31 @@ public class LayerResource {
         return layers;
     }
 
+    public Collection<Layer> getImageryLayers(Event event) throws IOException {
+        Collection<Layer> layers = new ArrayList<>();
+
+        String baseUrl = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.serverURLKey), context.getString(R.string.serverURLDefaultValue));
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl(baseUrl)
+                .addConverterFactory(GsonConverterFactory.create(LayerDeserializer.getGsonBuilder(event)))
+                .client(HttpClientManager.getInstance().httpClient())
+                .build();
+
+        LayerService service = retrofit.create(LayerService.class);
+        Response<Collection<Layer>> response = service.getLayers(event.getRemoteId(), "Imagery").execute();
+
+        if (response.isSuccessful()) {
+            layers = response.body();
+        } else {
+            Log.e(LOG_NAME, "Bad request.");
+            if (response.errorBody() != null) {
+                Log.e(LOG_NAME, response.errorBody().string());
+            }
+        }
+
+        return layers;
+    }
+
     public Collection<StaticFeature> getFeatures(Layer layer) throws IOException {
         Collection<StaticFeature> features = new ArrayList<>();
 

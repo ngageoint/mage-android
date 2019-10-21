@@ -49,6 +49,9 @@ public class LayerDeserializer implements JsonDeserializer<Layer> {
 		layer.setRemoteId(feature.get("id").getAsString());
 		layer.setType(feature.get("type").getAsString());
 		layer.setName(feature.get("name").getAsString());
+		if(feature.get("url") != null) {
+			layer.setUrl(feature.get("url").getAsString());
+		}
 
 		JsonObject file = feature.getAsJsonObject("file");
 		if (file != null) {
