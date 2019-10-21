@@ -216,9 +216,6 @@ public class OnlineMapsPreferenceActivity extends AppCompatActivity {
                     } catch(Exception e) {
                         Log.e(LOG_NAME, "Problem getting layers.", e);
                     }
-                    for(Layer l : layers){
-                        l.setLoaded(true);
-                    }
 
                     ListView listView = getListView();
                     listView.clearChoices();
@@ -233,9 +230,9 @@ public class OnlineMapsPreferenceActivity extends AppCompatActivity {
                     } else {
                         noContentView.setVisibility(View.VISIBLE);
                         contentView.setVisibility(View.GONE);
-                        ((TextView) noContentView.findViewById(R.id.title)).setText(getResources().getString(R.string.online_maps_no_content_text));
-                        noContentView.findViewById(R.id.summary).setVisibility(View.VISIBLE);
-                        noContentView.findViewById(R.id.progressBar).setVisibility(View.GONE);
+                        ((TextView) noContentView.findViewById(R.id.online_maps_title)).setText(getResources().getString(R.string.online_maps_no_content_text));
+                        noContentView.findViewById(R.id.online_maps_summary).setVisibility(View.VISIBLE);
+                        noContentView.findViewById(R.id.online_maps_progressBar).setVisibility(View.GONE);
                     }
 
                     refreshButton.setEnabled(true);
@@ -279,9 +276,8 @@ public class OnlineMapsPreferenceActivity extends AppCompatActivity {
             TextView title = view.findViewById(R.id.online_maps_title);
             title.setText(name);
 
-            //TODO fix once the sdk changes are merged/checked in
             TextView summary = view.findViewById(R.id.online_maps_summary);
-            //summary.setText(layer.getUrl());
+            summary.setText(layer.getUrl());
 
             View progressBar = view.findViewById(R.id.online_maps_progressBar);
             progressBar.setVisibility(layer.isLoaded() ? View.GONE : View.VISIBLE);
