@@ -23,6 +23,8 @@ import android.widget.Checkable;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -31,6 +33,7 @@ import java.util.Set;
 
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.map.cache.CacheProvider;
+import mil.nga.giat.mage.map.cache.URLCacheOverlay;
 import mil.nga.giat.mage.sdk.datastore.layer.Layer;
 import mil.nga.giat.mage.sdk.datastore.layer.LayerHelper;
 import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
@@ -177,7 +180,7 @@ public class OnlineMapsPreferenceActivity extends AppCompatActivity {
                     try {
                         imageryServerFetch.fetch();
                     } catch (Exception e) {
-                        e.printStackTrace();
+                        Log.w(LOG_NAME, "Failed fetching imagery",e);
                     }
                 }
             };
@@ -200,8 +203,6 @@ public class OnlineMapsPreferenceActivity extends AppCompatActivity {
 
                     ListView listView = getListView();
                     listView.clearChoices();
-
-                    //TODO what to do with XYZ imagery layers??
 
                     onlineMapsAdapter = new OnlineMapsAdapter(getActivity(), new ArrayList<>(layers));
                     setListAdapter(onlineMapsAdapter);
@@ -277,7 +278,7 @@ public class OnlineMapsPreferenceActivity extends AppCompatActivity {
         public View getView(int position, View convertView, ViewGroup parent) {
             View view = super.getView(position, convertView, parent);
 
-            Layer layer = getItem(position);
+            final Layer layer = getItem(position);
             final String name = layer.getName();
             TextView title = view.findViewById(R.id.online_maps_title);
             title.setText(name);
@@ -292,10 +293,10 @@ public class OnlineMapsPreferenceActivity extends AppCompatActivity {
             sw.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    boolean isChecked = ((Checkable)v).isChecked();
-                    if(isChecked) {
-                        CacheProvider.getInstance(getContext()).enableAndRefreshTileOverlays(name);
-                    }else{
+                    boolean isChecked = ((Checkable) v).isChecked();
+                    if (isChecked) {
+                        CacheProvider.getInstance(getContext()).enableAndRefreshTileOverlays(layer.getName());
+                    } else {
                         CacheProvider.getInstance(getContext()).removeCacheOverlay(name);
                     }
                 }

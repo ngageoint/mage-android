@@ -45,7 +45,7 @@ public class CacheProvider {
 
     private final Context context;
 
-    private final List<CacheOverlay> cacheOverlays = Collections.synchronizedList(new ArrayList<CacheOverlay>());
+    private final Map<String, CacheOverlay> cacheOverlays = Collections.synchronizedMap(new HashMap<String, CacheOverlay>());
     private final List<OnCacheOverlayListener> cacheOverlayListeners = Collections.synchronizedList(new ArrayList<OnCacheOverlayListener>());
 
     private static CacheProvider instance = null;
@@ -69,7 +69,7 @@ public class CacheProvider {
     public List<CacheOverlay> getCacheOverlays() {
         List<CacheOverlay> copy = null;
         synchronized(cacheOverlays) {
-            copy = Collections.unmodifiableList(cacheOverlays);
+            copy = Collections.unmodifiableList(new ArrayList<>(cacheOverlays.values()));
         }
 
         return copy;
@@ -83,24 +83,11 @@ public class CacheProvider {
     }
 
     public void addCacheOverlay(CacheOverlay cacheOverlay) {
-        cacheOverlays.add(cacheOverlay);
+        cacheOverlays.put(cacheOverlay.getCacheName(), cacheOverlay);
     }
 
     public boolean removeCacheOverlay(String name) {
-        boolean removed = false;
-        synchronized(cacheOverlays) {
-            Iterator<CacheOverlay> iterator = cacheOverlays.iterator();
-            while (iterator.hasNext()) {
-                CacheOverlay cacheOverlay = iterator.next();
-                if (cacheOverlay.getCacheName().equalsIgnoreCase(name)) {
-                    iterator.remove();
-                    removed = true;
-                    break;
-                }
-            }
-        }
-
-        return removed;
+        return cacheOverlays.remove(name) != null;
     }
 
     public void unregisterCacheOverlayListener(OnCacheOverlayListener listener) {
@@ -124,7 +111,9 @@ public class CacheProvider {
     private void setCacheOverlays(List<CacheOverlay> cacheOverlays) {
         synchronized (this.cacheOverlays) {
             this.cacheOverlays.clear();
-            this.cacheOverlays.addAll(cacheOverlays);
+            for(CacheOverlay overlay : cacheOverlays) {
+                addCacheOverlay(overlay);
+            }
         }
 
         synchronized(cacheOverlayListeners) {
