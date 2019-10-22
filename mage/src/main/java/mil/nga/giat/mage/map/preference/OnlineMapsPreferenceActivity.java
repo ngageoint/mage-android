@@ -1,18 +1,17 @@
 package mil.nga.giat.mage.map.preference;
 
-import android.Manifest;
+import android.app.Activity;
 import android.content.Context;
-import android.content.DialogInterface;
-import android.content.pm.PackageManager;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
 import android.support.annotation.UiThread;
-import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.ListFragment;
-import android.support.v4.content.ContextCompat;
-import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.util.SparseBooleanArray;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -20,14 +19,18 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.Checkable;
 import android.widget.ListView;
 import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 import mil.nga.giat.mage.R;
+import mil.nga.giat.mage.map.cache.CacheProvider;
 import mil.nga.giat.mage.sdk.datastore.layer.Layer;
 import mil.nga.giat.mage.sdk.datastore.layer.LayerHelper;
 import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
@@ -46,9 +49,6 @@ public class OnlineMapsPreferenceActivity extends AppCompatActivity {
      */
     private static final String LOG_NAME = OnlineMapsPreferenceActivity.class.getName();
 
-    //TODO should this just be the value from MapPreferencesActivity.ONLINE_MAPS_OVERLAY_ACTIVITY??
-    private static final int PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE = 200;
-
     /**
      * Fragment showing the actual online map URLs
      */
@@ -64,10 +64,9 @@ public class OnlineMapsPreferenceActivity extends AppCompatActivity {
 
     @Override
     public void onBackPressed() {
-        //TODO do I need this?
-       // Intent intent = new Intent();
-        //intent.putStringArrayListExtra(MapPreferencesActivity.OVERLAY_EXTENDED_DATA_KEY, overlayFragment.getSelectedOverlays());
-       // setResult(Activity.RESULT_OK, intent);
+        Intent intent = new Intent();
+        intent.putStringArrayListExtra(MapPreferencesActivity.ONLINE_MAPS_DATA_KEY, onlineMapsFragment.getSelectedOverlays());
+        setResult(Activity.RESULT_OK, intent);
 
         finish();
     }
@@ -105,25 +104,7 @@ public class OnlineMapsPreferenceActivity extends AppCompatActivity {
             contentView = view.findViewById(R.id.online_maps_content);
             noContentView = view.findViewById(R.id.online_maps_no_content);
 
-            //TODO do we also need to check network permissions?
-            if (ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-                if (ActivityCompat.shouldShowRequestPermissionRationale(getActivity(), Manifest.permission.READ_EXTERNAL_STORAGE)) {
-                    new AlertDialog.Builder(getActivity(), R.style.AppCompatAlertDialogStyle)
-                            .setTitle(R.string.overlay_access_title)
-                            .setMessage(R.string.overlay_access_message)
-                            .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE);
-                                }
-                            })
-                            .create()
-                            .show();
-
-                } else {
-                    requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE);
-                }
-            }
+            //TODO request and/or check for any needed permissions
 
             return view;
         }
@@ -220,9 +201,20 @@ public class OnlineMapsPreferenceActivity extends AppCompatActivity {
                     ListView listView = getListView();
                     listView.clearChoices();
 
+                    //TODO what to do with XYZ imagery layers??
+
                     onlineMapsAdapter = new OnlineMapsAdapter(getActivity(), new ArrayList<>(layers));
                     setListAdapter(onlineMapsAdapter);
 
+                    // Set what should be checked based on preferences.
+                    SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
+                    Set<String> overlays = preferences.getStringSet(getResources().getString(R.string.onlineMapsKey), Collections.<String> emptySet());
+                    for (int i = 0; i < listView.getCount(); i++) {
+                        Layer layer = (Layer) listView.getItemAtPosition(i);
+                        if (overlays.contains(layer.getId().toString())) {
+                            listView.setItemChecked(i, true);
+                        }
+                    }
 
                     if (!layers.isEmpty()) {
                         noContentView.setVisibility(View.GONE);
@@ -246,6 +238,20 @@ public class OnlineMapsPreferenceActivity extends AppCompatActivity {
 
         }
 
+        public ArrayList<String> getSelectedOverlays() {
+            //TODO implement, since this does not work ATM with the toggle switch
+            ArrayList<String> overlays = new ArrayList<>();
+            SparseBooleanArray checked = getListView().getCheckedItemPositions();
+            for (int i = 0; i < checked.size(); i++) {
+                if (checked.valueAt(i)) {
+                    Layer layer = (Layer) getListView().getItemAtPosition(checked.keyAt(i));
+                    overlays.add(layer.getId().toString());
+                }
+            }
+
+            return overlays;
+        }
+
         @Override
         public void onLayerUpdated(Layer layer) {
 
@@ -259,7 +265,7 @@ public class OnlineMapsPreferenceActivity extends AppCompatActivity {
      */
     @UiThread
     public static class OnlineMapsAdapter extends ArrayAdapter<Layer> {
-        private List<Layer> layers;
+        private final List<Layer> layers;
 
         public OnlineMapsAdapter(Context context, List<Layer> overlays) {
             super(context, R.layout.online_maps_list_item, R.id.online_maps_title, overlays);
@@ -272,7 +278,7 @@ public class OnlineMapsPreferenceActivity extends AppCompatActivity {
             View view = super.getView(position, convertView, parent);
 
             Layer layer = getItem(position);
-            String name = layer.getName();
+            final String name = layer.getName();
             TextView title = view.findViewById(R.id.online_maps_title);
             title.setText(name);
 
@@ -281,6 +287,20 @@ public class OnlineMapsPreferenceActivity extends AppCompatActivity {
 
             View progressBar = view.findViewById(R.id.online_maps_progressBar);
             progressBar.setVisibility(layer.isLoaded() ? View.GONE : View.VISIBLE);
+
+            View sw = view.findViewById(R.id.online_maps_toolbar_switch);
+            sw.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    boolean isChecked = ((Checkable)v).isChecked();
+                    if(isChecked) {
+                        CacheProvider.getInstance(getContext()).enableAndRefreshTileOverlays(name);
+                    }else{
+                        CacheProvider.getInstance(getContext()).removeCacheOverlay(name);
+                    }
+                }
+            });
+
 
             return view;
         }

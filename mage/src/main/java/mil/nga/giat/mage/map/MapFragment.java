@@ -125,6 +125,7 @@ import mil.nga.giat.mage.map.cache.CacheProvider.OnCacheOverlayListener;
 import mil.nga.giat.mage.map.cache.GeoPackageCacheOverlay;
 import mil.nga.giat.mage.map.cache.GeoPackageFeatureTableCacheOverlay;
 import mil.nga.giat.mage.map.cache.GeoPackageTileTableCacheOverlay;
+import mil.nga.giat.mage.map.cache.URLCacheOverlay;
 import mil.nga.giat.mage.map.cache.XYZDirectoryCacheOverlay;
 import mil.nga.giat.mage.map.marker.LocationMarkerCollection;
 import mil.nga.giat.mage.map.marker.MyHistoricalLocationMarkerCollection;
@@ -1133,6 +1134,10 @@ public class MapFragment extends DaggerFragment implements OnMapReadyCallback, O
 					case GEOPACKAGE:
 						addGeoPackageCacheOverlay(enabledCacheOverlays, enabledGeoPackages, (GeoPackageCacheOverlay)cacheOverlay);
 						break;
+
+					case URL:
+						addURLCacheOverlay(enabledCacheOverlays, (URLCacheOverlay)cacheOverlay);
+						break;
 				}
 			}
 
@@ -1169,6 +1174,22 @@ public class MapFragment extends DaggerFragment implements OnMapReadyCallback, O
 				Log.e(LOG_NAME, "Unable to move camera to newly added cache location", e);
 			}
 		}
+	}
+
+	private void addURLCacheOverlay(Map<String, CacheOverlay> enabledCacheOverlays, URLCacheOverlay urlCacheOverlay){
+        // Retrieve the cache overlay if it already exists (and remove from cache overlays)
+		CacheOverlay cacheOverlay = cacheOverlays.remove(urlCacheOverlay.getCacheName());
+		if(cacheOverlay == null){
+			// Create a new tile provider and add to the map
+			TileProvider tileProvider = new URLTileProvider(256, 256, urlCacheOverlay.getURL());
+			TileOverlayOptions overlayOptions = createTileOverlayOptions(tileProvider);
+			// Set the tile overlay in the cache overlay
+			TileOverlay tileOverlay = map.addTileOverlay(overlayOptions);
+			urlCacheOverlay.setTileOverlay(tileOverlay);
+			cacheOverlay = urlCacheOverlay;
+		}
+		// Add the cache overlay to the enabled cache overlays
+		enabledCacheOverlays.put(cacheOverlay.getCacheName(), cacheOverlay);
 	}
 
 	/**

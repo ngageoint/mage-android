@@ -440,6 +440,7 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
          */
         @UiThread
         public ArrayList<String> getSelectedOverlays() {
+            //TODO grab the static ids as well
             ArrayList<String> overlays = new ArrayList<>();
             synchronized (overlayAdapterLock) {
                 for (CacheOverlay cacheOverlay : overlayAdapter.getOverlays()) {

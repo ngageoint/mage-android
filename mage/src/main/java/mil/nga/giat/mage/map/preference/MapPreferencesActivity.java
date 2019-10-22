@@ -46,6 +46,7 @@ public class MapPreferencesActivity extends AppCompatActivity {
 	public static final int TILE_OVERLAY_ACTIVITY = 100;
 	public static final int ONLINE_MAPS_OVERLAY_ACTIVITY = 200;
 	public static final String OVERLAY_EXTENDED_DATA_KEY = "overlay";
+	public static final String ONLINE_MAPS_DATA_KEY = "onlineMapsDataKey";
 
 	private MapPreferenceFragment preference = new MapPreferenceFragment();
 

@@ -8,6 +8,7 @@ import android.preference.PreferenceManager;
 import android.util.Log;
 
 import java.io.File;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -42,15 +43,18 @@ public class CacheProvider {
 
     private static final String LOG_NAME = CacheProvider.class.getName();
 
-    private Context context;
+    private final Context context;
+
+    private final List<CacheOverlay> cacheOverlays = Collections.synchronizedList(new ArrayList<CacheOverlay>());
+    private final List<OnCacheOverlayListener> cacheOverlayListeners = Collections.synchronizedList(new ArrayList<OnCacheOverlayListener>());
 
     private static CacheProvider instance = null;
 
-    protected CacheProvider(Context context) {
+    private CacheProvider(Context context) {
         this.context = context;
     }
 
-    public static CacheProvider getInstance(Context context) {
+    public static synchronized CacheProvider getInstance(Context context) {
         if (instance == null) {
             instance = new CacheProvider(context);
         }
@@ -62,17 +66,20 @@ public class CacheProvider {
         void onCacheOverlay(List<CacheOverlay> cacheOverlays);
     }
 
-    private List<CacheOverlay> cacheOverlays = new ArrayList<>();
-    private Collection<OnCacheOverlayListener> cacheOverlayListeners = new ArrayList<>();
-
     public List<CacheOverlay> getCacheOverlays() {
-        return cacheOverlays;
+        List<CacheOverlay> copy = null;
+        synchronized(cacheOverlays) {
+            copy = Collections.unmodifiableList(cacheOverlays);
+        }
+
+        return copy;
     }
 
     public void registerCacheOverlayListener(OnCacheOverlayListener listener) {
         cacheOverlayListeners.add(listener);
-        if (cacheOverlays != null)
-            listener.onCacheOverlay(cacheOverlays);
+        synchronized(cacheOverlays) {
+            listener.onCacheOverlay(getCacheOverlays());
+        }
     }
 
     public void addCacheOverlay(CacheOverlay cacheOverlay) {
@@ -81,17 +88,18 @@ public class CacheProvider {
 
     public boolean removeCacheOverlay(String name) {
         boolean removed = false;
-        if(cacheOverlays != null){
+        synchronized(cacheOverlays) {
             Iterator<CacheOverlay> iterator = cacheOverlays.iterator();
-            while(iterator.hasNext()){
+            while (iterator.hasNext()) {
                 CacheOverlay cacheOverlay = iterator.next();
-                if(cacheOverlay.getCacheName().equalsIgnoreCase(name)){
+                if (cacheOverlay.getCacheName().equalsIgnoreCase(name)) {
                     iterator.remove();
                     removed = true;
                     break;
                 }
             }
         }
+
         return removed;
     }
 
@@ -100,32 +108,35 @@ public class CacheProvider {
     }
 
     public void refreshTileOverlays() {
-        TileOverlaysTask task = new TileOverlaysTask(null);
-        task.execute();
+       enableAndRefreshTileOverlays(null);
     }
 
     public void enableAndRefreshTileOverlays(String enableOverlayName) {
-        List<String> overlayNames = new ArrayList<>();
-        overlayNames.add(enableOverlayName);
-        enableAndRefreshTileOverlays(overlayNames);
-    }
-
-    public void enableAndRefreshTileOverlays(Collection<String> enableOverlayNames) {
-        TileOverlaysTask task = new TileOverlaysTask(enableOverlayNames);
+        List<String> overlayNames = null;
+        if(enableOverlayName != null) {
+            overlayNames = new ArrayList<>(1);
+            overlayNames.add(enableOverlayName);
+        }
+        TileOverlaysTask task = new TileOverlaysTask(overlayNames);
         task.execute();
     }
 
     private void setCacheOverlays(List<CacheOverlay> cacheOverlays) {
-        this.cacheOverlays = cacheOverlays;
+        synchronized (this.cacheOverlays) {
+            this.cacheOverlays.clear();
+            this.cacheOverlays.addAll(cacheOverlays);
+        }
 
-        for (OnCacheOverlayListener listener : cacheOverlayListeners) {
-            listener.onCacheOverlay(cacheOverlays);
+        synchronized(cacheOverlayListeners) {
+            for (OnCacheOverlayListener listener : cacheOverlayListeners) {
+                listener.onCacheOverlay(cacheOverlays);
+            }
         }
     }
 
     private class TileOverlaysTask extends AsyncTask<Void, Void, List<CacheOverlay>> {
 
-        private Set<String> enable = new HashSet<>();
+        private final Set<String> enable = new HashSet<>();
 
         public TileOverlaysTask(Collection<String> enable){
             if(enable != null) {
@@ -173,6 +184,16 @@ public class CacheProvider {
                         }
                     }
                 }
+            }
+
+            try {
+                List<Layer> imageryLayers = LayerHelper.getInstance(context).readAll("Imagery");
+
+                for(Layer imagery : imageryLayers){
+                    overlays.add(new URLCacheOverlay(imagery.getName(), new URL(imagery.getUrl())));
+                }
+            }catch(Exception e){
+                Log.w(LOG_NAME, "Failed to load imagery layers", e);
             }
 
             // Set what should be enabled based on preferences.
@@ -238,50 +259,52 @@ public class CacheProvider {
         protected void onPostExecute(List<CacheOverlay> result) {
             setCacheOverlays(result);
         }
-    }
 
-    /**
-     * Add GeoPackage Cache Overlay for the existing databases
-     *
-     * @param context
-     * @param overlays
-     * @param geoPackageManager
-     */
-    private void addGeoPackageCacheOverlays(Context context, List<CacheOverlay> overlays, GeoPackageManager geoPackageManager) {
+        /**
+         * Add GeoPackage Cache Overlay for the existing databases
+         *
+         * @param context
+         * @param overlays
+         * @param geoPackageManager
+         */
+        private void addGeoPackageCacheOverlays(Context context, List<CacheOverlay> overlays, GeoPackageManager geoPackageManager) {
 
-        // Delete any GeoPackages where the file is no longer accessible
-        geoPackageManager.deleteAllMissingExternal();
+            // Delete any GeoPackages where the file is no longer accessible
+            geoPackageManager.deleteAllMissingExternal();
 
-        try {
-            LayerHelper layerHelper = LayerHelper.getInstance(context);
-            List<Layer> layers = layerHelper.readAll("GeoPackage");
-            for (Layer layer : layers) {
-                if (!layer.isLoaded()) {
-                    continue;
-                }
+            try {
+                LayerHelper layerHelper = LayerHelper.getInstance(context);
+                List<Layer> layers = layerHelper.readAll("GeoPackage");
+                for (Layer layer : layers) {
+                    if (!layer.isLoaded()) {
+                        continue;
+                    }
 
-                String relativePath = layer.getRelativePath();
-                if (relativePath != null) {
-                    File file = new File(context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), relativePath);
-                    if (!file.exists()) {
-                        layer.setLoaded(true);
-                        layerHelper.update(layer);
+                    String relativePath = layer.getRelativePath();
+                    if (relativePath != null) {
+                        File file = new File(context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), relativePath);
+                        if (!file.exists()) {
+                            layer.setLoaded(true);
+                            layerHelper.update(layer);
+                        }
                     }
                 }
+            } catch (LayerException e) {
+                Log.i(LOG_NAME, "Error reconciling downloaded layers", e);
             }
-        } catch (LayerException e) {
-            Log.i(LOG_NAME, "Error reconciling downloaded layers", e);
-        }
 
-        // Add each existing database as a cache
-        List<String> externalDatabases = geoPackageManager.externalDatabases();
-        for (String database : externalDatabases) {
-            GeoPackageCacheOverlay cacheOverlay = getGeoPackageCacheOverlay(context, geoPackageManager, database);
-            if (cacheOverlay != null) {
-                overlays.add(cacheOverlay);
+            // Add each existing database as a cache
+            List<String> externalDatabases = geoPackageManager.externalDatabases();
+            for (String database : externalDatabases) {
+                GeoPackageCacheOverlay cacheOverlay = getGeoPackageCacheOverlay(context, geoPackageManager, database);
+                if (cacheOverlay != null) {
+                    overlays.add(cacheOverlay);
+                }
             }
         }
     }
+
+
 
     /**
      * Get GeoPackage Cache Overlay for the database file
