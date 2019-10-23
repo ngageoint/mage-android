@@ -75,7 +75,7 @@ import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
 /**
- * This activity is the downloadable maps section and deals with geopackages and static features
+ * This activity is the downloadable layers section and deals with geopackages and static features
  */
 public class TileOverlayPreferenceActivity extends AppCompatActivity {
 

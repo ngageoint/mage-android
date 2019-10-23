@@ -12,16 +12,6 @@
         android:indeterminate="true"
         android:visibility="visible" />
 
-    <ImageButton
-        android:id="@+id/refreshButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:background="@null"
-        android:paddingRight="5dip"
-        android:src="@drawable/ic_place_black_24dp"
-        android:alpha=".54"
-        android:visibility="gone" />
-
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
