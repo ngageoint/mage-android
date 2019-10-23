@@ -194,6 +194,7 @@ public class CacheProvider {
             SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
             Set<String> updatedEnabledOverlays = new HashSet<>();
             updatedEnabledOverlays.addAll(preferences.getStringSet(context.getString(R.string.tileOverlaysKey), Collections.<String>emptySet()));
+            updatedEnabledOverlays.addAll(preferences.getStringSet(context.getString(R.string.onlineLayersKey), Collections.<String>emptySet()));
             Set<String> enabledOverlays = new HashSet<>();
             enabledOverlays.addAll(updatedEnabledOverlays);
 
