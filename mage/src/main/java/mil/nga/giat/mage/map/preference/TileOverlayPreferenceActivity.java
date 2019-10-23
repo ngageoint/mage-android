@@ -985,8 +985,6 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
             Integer imageResource = childCache.getIconImageResourceId();
             if (imageResource != null){
                 imageView.setImageResource(imageResource);
-            } else {
-                imageView.setImageResource(-1);
             }
 
             return convertView;

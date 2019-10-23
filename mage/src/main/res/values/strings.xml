@@ -109,8 +109,8 @@
     <string name="feature_overlay_refresh">You are about to refresh all feature overlays, this could take a while.</string>
     <string name="clear_data_message">You are about to delete the selected data and logout.\n\n Are you sure you want to do this?</string>
 
-    <string name="online_maps_no_content_text">No online maps, click the refresh button above to pull all online maps from the server.</string>
-    <string name="online_maps_no_content_loading">Loading Online Maps&#8230;</string>
+    <string name="online_maps_no_content_text">No online layers, click the refresh button above to pull all online layers from the server.</string>
+    <string name="online_layers_no_content_loading">Loading Online Layers&#8230;</string>
 
     <string name="overlay_cache_directory">MapCache</string>
 

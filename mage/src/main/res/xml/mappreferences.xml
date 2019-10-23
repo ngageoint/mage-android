@@ -27,11 +27,11 @@
 
         <mil.nga.giat.mage.map.preference.OverlayPreference
             android:key="@string/tileOverlaysKey"
-            android:title="Downloadable Maps"/>
+            android:title="Downloadable Layers"/>
 
         <mil.nga.giat.mage.map.preference.OverlayPreference
             android:key="@string/onlineMapsKey"
-            android:title="Online Maps"/>
+            android:title="Online Layers"/>
 
     </android.support.v7.preference.PreferenceCategory>
 
