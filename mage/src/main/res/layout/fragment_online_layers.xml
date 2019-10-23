@@ -54,7 +54,7 @@
         android:paddingTop="15dp">
 
         <TextView
-            android:id="@+id/online_layers_title"
+            android:id="@+id/online_layers_no_content_title"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:gravity="center"
@@ -64,7 +64,7 @@
             android:textSize="22sp" />
 
         <TextView
-            android:id="@+id/online_layers_summary"
+            android:id="@+id/online_layers_no_content_summary"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:gravity="center"
@@ -72,7 +72,7 @@
             android:visibility="gone" />
 
         <ProgressBar
-            android:id="@+id/online_layers_progressBar"
+            android:id="@+id/online_layers_no_content_progressBar"
             style="?android:attr/progressBarStyleLarge"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content" />

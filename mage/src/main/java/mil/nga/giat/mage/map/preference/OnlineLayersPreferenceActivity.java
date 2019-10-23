@@ -160,9 +160,9 @@ public class OnlineLayersPreferenceActivity extends AppCompatActivity {
             getListView().setEnabled(false);
             noContentView.setVisibility(View.VISIBLE);
             contentView.setVisibility(View.GONE);
-            ((TextView) noContentView.findViewById(R.id.online_layers_title)).setText(getResources().getString(R.string.online_layers_no_content_loading));
-            noContentView.findViewById(R.id.online_layers_summary).setVisibility(View.GONE);
-            noContentView.findViewById(R.id.online_layers_progressBar).setVisibility(View.VISIBLE);
+            ((TextView) noContentView.findViewById(R.id.online_layers_no_content_title)).setText(getResources().getString(R.string.online_layers_no_content_loading));
+            noContentView.findViewById(R.id.online_layers_no_content_summary).setVisibility(View.GONE);
+            noContentView.findViewById(R.id.online_layers_no_content_progressBar).setVisibility(View.VISIBLE);
 
             onlineLayersAdapter.clear();
             onlineLayersAdapter.notifyDataSetChanged();
@@ -221,9 +221,9 @@ public class OnlineLayersPreferenceActivity extends AppCompatActivity {
                     } else {
                         noContentView.setVisibility(View.VISIBLE);
                         contentView.setVisibility(View.GONE);
-                        ((TextView) noContentView.findViewById(R.id.online_layers_title)).setText(getResources().getString(R.string.online_layers_no_content_text));
-                        noContentView.findViewById(R.id.online_layers_summary).setVisibility(View.VISIBLE);
-                        noContentView.findViewById(R.id.online_layers_progressBar).setVisibility(View.GONE);
+                        ((TextView) noContentView.findViewById(R.id.online_layers_no_content_title)).setText(getResources().getString(R.string.online_layers_no_content_text));
+                        noContentView.findViewById(R.id.online_layers_no_content_summary).setVisibility(View.VISIBLE);
+                        noContentView.findViewById(R.id.online_layers_no_content_progressBar).setVisibility(View.GONE);
                     }
 
                     refreshButton.setEnabled(true);
@@ -263,7 +263,7 @@ public class OnlineLayersPreferenceActivity extends AppCompatActivity {
         private final List<Layer> layers;
 
         public OnlineLayersAdapter(Context context, List<Layer> overlays) {
-            super(context, R.layout.online_layers_list_item, R.id.online_layers_title, overlays);
+            super(context, R.layout.online_layers_list_item, R.id.online_layers_no_content_title, overlays);
 
             this.layers = overlays;
         }
@@ -274,13 +274,13 @@ public class OnlineLayersPreferenceActivity extends AppCompatActivity {
 
             final Layer layer = getItem(position);
 
-            TextView title = view.findViewById(R.id.online_layers_title);
+            TextView title = view.findViewById(R.id.online_layers_no_content_title);
             title.setText(layer.getName());
 
-            TextView summary = view.findViewById(R.id.online_layers_summary);
+            TextView summary = view.findViewById(R.id.online_layers_no_content_summary);
             summary.setText(layer.getUrl());
 
-            View progressBar = view.findViewById(R.id.online_layers_progressBar);
+            View progressBar = view.findViewById(R.id.online_layers_no_content_progressBar);
             progressBar.setVisibility(layer.isLoaded() ? View.GONE : View.VISIBLE);
 
             View sw = view.findViewById(R.id.online_layers_toggle);
