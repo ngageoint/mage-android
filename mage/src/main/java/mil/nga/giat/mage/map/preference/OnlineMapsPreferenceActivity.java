@@ -11,7 +11,6 @@ import android.support.annotation.UiThread;
 import android.support.v4.app.ListFragment;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
-import android.util.SparseBooleanArray;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -23,8 +22,6 @@ import android.widget.Checkable;
 import android.widget.ListView;
 import android.widget.TextView;
 
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -38,7 +35,6 @@ import mil.nga.giat.mage.map.cache.URLCacheOverlay;
 import mil.nga.giat.mage.sdk.datastore.layer.Layer;
 import mil.nga.giat.mage.sdk.datastore.layer.LayerHelper;
 import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
-import mil.nga.giat.mage.sdk.event.ILayerEventListener;
 import mil.nga.giat.mage.sdk.fetch.ImageryServerFetch;
 
 
