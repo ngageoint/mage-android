@@ -57,15 +57,15 @@ public class OnlineLayersPreferenceActivity extends AppCompatActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_online_maps);
+        setContentView(R.layout.activity_online_layers);
 
-        onlineLayersFragment = (OnlineLayersListFragment) getSupportFragmentManager().findFragmentById(R.id.online_maps_fragment);
+        onlineLayersFragment = (OnlineLayersListFragment) getSupportFragmentManager().findFragmentById(R.id.online_layers_fragment);
     }
 
     @Override
     public void onBackPressed() {
         Intent intent = new Intent();
-        intent.putStringArrayListExtra(MapPreferencesActivity.ONLINE_MAPS_DATA_KEY, onlineLayersFragment.getSelectedOverlays());
+        intent.putStringArrayListExtra(MapPreferencesActivity.ONLINE_LAYERS_DATA_KEY, onlineLayersFragment.getSelectedOverlays());
         setResult(Activity.RESULT_OK, intent);
 
         finish();
@@ -87,7 +87,7 @@ public class OnlineLayersPreferenceActivity extends AppCompatActivity {
         /**
          * This class is synchronized by only being accessed on the UI thread
          */
-        private OnlineMapsAdapter onlineMapsAdapter;
+        private OnlineLayersAdapter onlineLayersAdapter;
         private MenuItem refreshButton;
         private View contentView;
         private View noContentView;
@@ -102,7 +102,7 @@ public class OnlineLayersPreferenceActivity extends AppCompatActivity {
 
         @Override
         public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-            View view = inflater.inflate(R.layout.fragment_online_maps, container, false);
+            View view = inflater.inflate(R.layout.fragment_online_layers, container, false);
 
             contentView = view.findViewById(R.id.online_layers_content);
             noContentView = view.findViewById(R.id.online_layers_no_content);
@@ -131,9 +131,9 @@ public class OnlineLayersPreferenceActivity extends AppCompatActivity {
 
         @Override
         public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-            inflater.inflate(R.menu.online_maps_menu, menu);
+            inflater.inflate(R.menu.online_layers_menu, menu);
 
-            refreshButton = menu.findItem(R.id.online_maps_refresh);
+            refreshButton = menu.findItem(R.id.online_layers_refresh);
             refreshButton.setEnabled(false);
 
             CacheProvider.getInstance(getActivity()).registerCacheOverlayListener(this);
@@ -142,7 +142,7 @@ public class OnlineLayersPreferenceActivity extends AppCompatActivity {
         @Override
         public boolean onOptionsItemSelected(MenuItem item) {
             switch (item.getItemId()) {
-                case R.id.online_maps_refresh:
+                case R.id.online_layers_refresh:
                     manualRefresh();
                     return true;
                 default:
@@ -164,8 +164,8 @@ public class OnlineLayersPreferenceActivity extends AppCompatActivity {
             noContentView.findViewById(R.id.online_layers_summary).setVisibility(View.GONE);
             noContentView.findViewById(R.id.online_layers_progressBar).setVisibility(View.VISIBLE);
 
-            onlineMapsAdapter.clear();
-            onlineMapsAdapter.notifyDataSetChanged();
+            onlineLayersAdapter.clear();
+            onlineLayersAdapter.notifyDataSetChanged();
 
             final Context c = getActivity().getApplicationContext();
             Runnable runnable = new Runnable() {
@@ -200,12 +200,12 @@ public class OnlineLayersPreferenceActivity extends AppCompatActivity {
                     ListView listView = getListView();
                     listView.clearChoices();
 
-                    onlineMapsAdapter = new OnlineMapsAdapter(getActivity(), new ArrayList<>(layers));
-                    setListAdapter(onlineMapsAdapter);
+                    onlineLayersAdapter = new OnlineLayersAdapter(getActivity(), new ArrayList<>(layers));
+                    setListAdapter(onlineLayersAdapter);
 
                     // Set what should be checked based on preferences.
                     SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
-                    Set<String> overlays = preferences.getStringSet(getResources().getString(R.string.onlineMapsKey), Collections.<String>emptySet());
+                    Set<String> overlays = preferences.getStringSet(getResources().getString(R.string.onlineLayersKey), Collections.<String>emptySet());
                     for (Layer layer : layers) {
                         boolean enabled = overlays.contains(layer.getName());
 
@@ -221,7 +221,7 @@ public class OnlineLayersPreferenceActivity extends AppCompatActivity {
                     } else {
                         noContentView.setVisibility(View.VISIBLE);
                         contentView.setVisibility(View.GONE);
-                        ((TextView) noContentView.findViewById(R.id.online_layers_title)).setText(getResources().getString(R.string.online_maps_no_content_text));
+                        ((TextView) noContentView.findViewById(R.id.online_layers_title)).setText(getResources().getString(R.string.online_layers_no_content_text));
                         noContentView.findViewById(R.id.online_layers_summary).setVisibility(View.VISIBLE);
                         noContentView.findViewById(R.id.online_layers_progressBar).setVisibility(View.GONE);
                     }
@@ -259,11 +259,11 @@ public class OnlineLayersPreferenceActivity extends AppCompatActivity {
      * <b>ALL public methods MUST be made on the UI thread to ensure concurrency.</b>
      */
     @UiThread
-    public static class OnlineMapsAdapter extends ArrayAdapter<Layer> {
+    public static class OnlineLayersAdapter extends ArrayAdapter<Layer> {
         private final List<Layer> layers;
 
-        public OnlineMapsAdapter(Context context, List<Layer> overlays) {
-            super(context, R.layout.online_maps_list_item, R.id.online_layers_title, overlays);
+        public OnlineLayersAdapter(Context context, List<Layer> overlays) {
+            super(context, R.layout.online_layers_list_item, R.id.online_layers_title, overlays);
 
             this.layers = overlays;
         }
@@ -283,7 +283,7 @@ public class OnlineLayersPreferenceActivity extends AppCompatActivity {
             View progressBar = view.findViewById(R.id.online_layers_progressBar);
             progressBar.setVisibility(layer.isLoaded() ? View.GONE : View.VISIBLE);
 
-            View sw = view.findViewById(R.id.online_maps_toolbar_switch);
+            View sw = view.findViewById(R.id.online_layers_toolbar_switch);
             sw.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {

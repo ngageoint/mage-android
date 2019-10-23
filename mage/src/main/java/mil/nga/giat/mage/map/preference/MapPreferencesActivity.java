@@ -43,9 +43,9 @@ public class MapPreferencesActivity extends AppCompatActivity {
 	public static String LOG_NAME = MapPreferencesActivity.class.getName();
 
 	public static final int TILE_OVERLAY_ACTIVITY = 100;
-	public static final int ONLINE_MAPS_OVERLAY_ACTIVITY = 200;
+	public static final int ONLINE_LAYERS_OVERLAY_ACTIVITY = 200;
 	public static final String OVERLAY_EXTENDED_DATA_KEY = "overlay";
-	public static final String ONLINE_MAPS_DATA_KEY = "onlineMapsDataKey";
+	public static final String ONLINE_LAYERS_DATA_KEY = "onlineLayersDataKey";
 
 	private MapPreferenceFragment preference = new MapPreferenceFragment();
 
@@ -69,11 +69,11 @@ public class MapPreferencesActivity extends AppCompatActivity {
 				}
 			});
 
-			findPreference(getString(R.string.onlineMapsKey)).setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+			findPreference(getString(R.string.onlineLayersKey)).setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
 				@Override
 				public boolean onPreferenceClick(Preference preference) {
 					Intent intent = new Intent(getActivity(), OnlineLayersPreferenceActivity.class);
-					getActivity().startActivityForResult(intent, ONLINE_MAPS_OVERLAY_ACTIVITY);
+					getActivity().startActivityForResult(intent, ONLINE_LAYERS_OVERLAY_ACTIVITY);
 					return true;
 				}
 			});
@@ -125,7 +125,7 @@ public class MapPreferencesActivity extends AppCompatActivity {
 			super.onPause();
 
 			findPreference(getString(R.string.tileOverlaysKey)).setOnPreferenceClickListener(null);
-			findPreference(getString(R.string.onlineMapsKey)).setOnPreferenceClickListener(null);
+			findPreference(getString(R.string.onlineLayersKey)).setOnPreferenceClickListener(null);
 		}
 	}
 
@@ -145,10 +145,10 @@ public class MapPreferencesActivity extends AppCompatActivity {
 				}
 				break;
 			}
-			case ONLINE_MAPS_OVERLAY_ACTIVITY: {
+			case ONLINE_LAYERS_OVERLAY_ACTIVITY: {
 				if (resultCode == Activity.RESULT_OK) {
-					OverlayPreference p = (OverlayPreference) preference.findPreference(getString(R.string.onlineMapsKey));
-					p.setValues(new HashSet<>(data.getStringArrayListExtra(ONLINE_MAPS_DATA_KEY)));
+					OverlayPreference p = (OverlayPreference) preference.findPreference(getString(R.string.onlineLayersKey));
+					p.setValues(new HashSet<>(data.getStringArrayListExtra(ONLINE_LAYERS_DATA_KEY)));
 				}
 				break;
 			}

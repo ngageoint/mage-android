@@ -30,7 +30,7 @@
             android:title="Downloadable Layers"/>
 
         <mil.nga.giat.mage.map.preference.OverlayPreference
-            android:key="@string/onlineMapsKey"
+            android:key="@string/onlineLayersKey"
             android:title="Online Layers"/>
 
     </android.support.v7.preference.PreferenceCategory>

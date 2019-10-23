@@ -58,7 +58,7 @@
             android:layout_height="match_parent">
 
             <android.support.v7.widget.SwitchCompat
-                android:id="@+id/online_maps_toolbar_switch"
+                android:id="@+id/online_layers_toolbar_switch"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_centerHorizontal="true"

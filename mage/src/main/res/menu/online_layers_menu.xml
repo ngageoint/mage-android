@@ -2,7 +2,7 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <item android:id="@+id/online_maps_refresh"
+    <item android:id="@+id/online_layers_refresh"
         android:title="@string/overlay_map_refresh_enabled"
         android:icon="@drawable/ic_refresh_white_24dp"
         app:showAsAction="always" />
