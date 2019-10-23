@@ -57,13 +57,14 @@
             android:layout_width="wrap_content"
             android:layout_height="match_parent">
 
-            <android.support.v7.widget.SwitchCompat
-                android:id="@+id/online_layers_toolbar_switch"
+            <CheckBox
+                android:id="@+id/online_layers_toggle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_centerHorizontal="true"
-                android:layout_centerVertical="true"
-                android:layout_marginEnd="16dp" />
+                android:layout_marginTop="16dp"
+                android:layout_marginLeft="16dp"
+                android:layout_marginRight="16dp"
+                android:focusable="false" />
 
         </LinearLayout>
 

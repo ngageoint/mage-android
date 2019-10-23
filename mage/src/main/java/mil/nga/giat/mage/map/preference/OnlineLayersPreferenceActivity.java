@@ -283,7 +283,7 @@ public class OnlineLayersPreferenceActivity extends AppCompatActivity {
             View progressBar = view.findViewById(R.id.online_layers_progressBar);
             progressBar.setVisibility(layer.isLoaded() ? View.GONE : View.VISIBLE);
 
-            View sw = view.findViewById(R.id.online_layers_toolbar_switch);
+            View sw = view.findViewById(R.id.online_layers_toggle);
             sw.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
