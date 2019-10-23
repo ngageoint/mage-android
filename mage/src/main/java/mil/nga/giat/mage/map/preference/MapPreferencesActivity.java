@@ -31,7 +31,6 @@ import mil.nga.giat.mage.sdk.datastore.layer.Layer;
 import mil.nga.giat.mage.sdk.datastore.layer.LayerHelper;
 import mil.nga.giat.mage.sdk.datastore.user.Event;
 import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
-import mil.nga.giat.mage.sdk.exceptions.LayerException;
 
 /**
  * Provides map configuration driven settings that are available to the user.
@@ -73,7 +72,7 @@ public class MapPreferencesActivity extends AppCompatActivity {
 			findPreference(getString(R.string.onlineMapsKey)).setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
 				@Override
 				public boolean onPreferenceClick(Preference preference) {
-					Intent intent = new Intent(getActivity(), OnlineMapsPreferenceActivity.class);
+					Intent intent = new Intent(getActivity(), OnlineLayersPreferenceActivity.class);
 					getActivity().startActivityForResult(intent, ONLINE_MAPS_OVERLAY_ACTIVITY);
 					return true;
 				}

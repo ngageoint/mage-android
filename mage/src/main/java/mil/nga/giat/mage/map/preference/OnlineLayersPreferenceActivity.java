@@ -39,33 +39,33 @@ import mil.nga.giat.mage.sdk.fetch.ImageryServerFetch;
 
 
 /**
- * This activity is the view component for online maps
+ * This activity is the view component for online layers
  *
  */
-public class OnlineMapsPreferenceActivity extends AppCompatActivity {
+public class OnlineLayersPreferenceActivity extends AppCompatActivity {
 
     /**
      * logger
      */
-    private static final String LOG_NAME = OnlineMapsPreferenceActivity.class.getName();
+    private static final String LOG_NAME = OnlineLayersPreferenceActivity.class.getName();
 
     /**
-     * Fragment showing the actual online map URLs
+     * Fragment showing the actual online layers URLs
      */
-    private OnlineMapsListFragment onlineMapsFragment;
+    private OnlineLayersListFragment onlineLayersFragment;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_online_maps);
 
-        onlineMapsFragment = (OnlineMapsListFragment) getSupportFragmentManager().findFragmentById(R.id.online_maps_fragment);
+        onlineLayersFragment = (OnlineLayersListFragment) getSupportFragmentManager().findFragmentById(R.id.online_maps_fragment);
     }
 
     @Override
     public void onBackPressed() {
         Intent intent = new Intent();
-        intent.putStringArrayListExtra(MapPreferencesActivity.ONLINE_MAPS_DATA_KEY, onlineMapsFragment.getSelectedOverlays());
+        intent.putStringArrayListExtra(MapPreferencesActivity.ONLINE_MAPS_DATA_KEY, onlineLayersFragment.getSelectedOverlays());
         setResult(Activity.RESULT_OK, intent);
 
         finish();
@@ -82,7 +82,7 @@ public class OnlineMapsPreferenceActivity extends AppCompatActivity {
         }
     }
 
-    public static class OnlineMapsListFragment extends ListFragment  implements CacheProvider.OnCacheOverlayListener {
+    public static class OnlineLayersListFragment extends ListFragment  implements CacheProvider.OnCacheOverlayListener {
 
         /**
          * This class is synchronized by only being accessed on the UI thread

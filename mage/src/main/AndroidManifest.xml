@@ -177,7 +177,7 @@
             android:parentActivityName=".map.preference.MapPreferencesActivity"
             android:uiOptions="splitActionBarWhenNarrow" />
         <activity
-            android:name=".map.preference.OnlineMapsPreferenceActivity"
+            android:name=".map.preference.OnlineLayersPreferenceActivity"
             android:label="Online Layers"
             android:launchMode="singleTop"
             android:parentActivityName=".map.preference.MapPreferencesActivity"
