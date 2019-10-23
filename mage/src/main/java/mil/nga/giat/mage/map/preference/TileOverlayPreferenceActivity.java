@@ -444,9 +444,8 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
         public ArrayList<String> getSelectedOverlays() {
             //TODO grab the static ids as well
             ArrayList<String> overlays = new ArrayList<>();
-            synchronized (overlayAdapterLock) {
-                for (CacheOverlay cacheOverlay : overlayAdapter.getOverlays()) {
-
+            for (CacheOverlay cacheOverlay : CacheProvider.getInstance(getContext()).getCacheOverlays()) {
+                if(cacheOverlay instanceof GeoPackageCacheOverlay) {
                     boolean childAdded = false;
                     for (CacheOverlay childCache : cacheOverlay.getChildren()) {
                         if (childCache.isEnabled()) {
@@ -460,10 +459,14 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
                     }
                 }
             }
+
             return overlays;
         }
 
         private void updateGeopackageDownloadProgress() {
+            /*
+            TODO this method was difficult to put on the UI thread, so as it sits, it is not robust
+            */
             if(getActivity() == null) {
                 return;
             }
@@ -493,6 +496,7 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
                             }
                         }catch(Exception e) {
                             //This is sort of a hack to manage the craziness in the lifecycle
+                            //Typically this is an NPE
                         }
                     }
                 }
@@ -663,7 +667,7 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
         /**
          * List of geopackage cache overlays
          */
-        private final List<CacheOverlay> overlays;
+        private final List<CacheOverlay> geopackageOverlays;
 
         /**
          * List of geopackages
@@ -685,8 +689,8 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
          */
         public OverlayAdapter(Activity activity, Event event, List<CacheOverlay> overlays, List<Layer> geopackages, GeoPackageDownloadManager downloadManager) {
             this.activity = activity;
-            this.overlays = new CacheOverlayFilter(activity.getApplicationContext(), event).filter(overlays);
-            Iterator<CacheOverlay> it = this.overlays.iterator();
+            this.geopackageOverlays = new CacheOverlayFilter(activity.getApplicationContext(), event).filter(overlays);
+            Iterator<CacheOverlay> it = this.geopackageOverlays.iterator();
             while(it.hasNext()){
                 CacheOverlay overlay = it.next();
                 if(!(overlay instanceof GeoPackageCacheOverlay)) {
@@ -703,18 +707,9 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
             if(overlay instanceof GeoPackageCacheOverlay) {
                 if (layer.isLoaded()) {
                     geopackages.remove(layer);
-                    overlays.add(overlay);
+                    geopackageOverlays.add(overlay);
                 }
             }
-        }
-
-        /**
-         * Get the overlays
-         *
-         * @return
-         */
-        public List<CacheOverlay> getOverlays() {
-            return overlays;
         }
 
         public List<Layer> getGeopackages() {
@@ -744,7 +739,7 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
 
         @Override
         public int getGroupCount() {
-            return overlays.size() + geopackages.size() + staticFeatures.size();
+            return geopackageOverlays.size() + geopackages.size() + staticFeatures.size();
         }
 
         @Override
@@ -752,7 +747,7 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
             if (i < geopackages.size() + staticFeatures.size()) {
                 return 0;
             } else {
-                int children = overlays.get(i - geopackages.size() - staticFeatures.size()).getChildren().size();
+                int children = geopackageOverlays.get(i - geopackages.size() - staticFeatures.size()).getChildren().size();
 
                 for (Layer geopackage : geopackages) {
                     if (geopackage.isLoaded()) {
@@ -771,13 +766,13 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
             } else if(i < geopackages.size() + staticFeatures.size()) {
                 return staticFeatures.get(i - geopackages.size());
             }else {
-                return overlays.get(i - geopackages.size() - staticFeatures.size());
+                return geopackageOverlays.get(i - geopackages.size() - staticFeatures.size());
             }
         }
 
         @Override
         public Object getChild(int i, int j) {
-            return overlays.get(i - geopackages.size() - staticFeatures.size()).getChildren().get(j);
+            return geopackageOverlays.get(i - geopackages.size() - staticFeatures.size()).getChildren().get(j);
         }
 
         @Override
@@ -810,7 +805,7 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
             LayoutInflater inflater = LayoutInflater.from(activity);
             view = inflater.inflate(R.layout.cache_overlay_group, viewGroup, false);
 
-            final CacheOverlay overlay = overlays.get(i - geopackages.size() - staticFeatures.size());
+            final CacheOverlay overlay = geopackageOverlays.get(i - geopackages.size() - staticFeatures.size());
 
             //TODO check this index against static features
             view.findViewById(R.id.section_header).setVisibility(i == geopackages.size() ? View.VISIBLE : View.GONE);
@@ -918,8 +913,6 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
                 //TODO KML is always downloaded
                 progressBar.setVisibility(View.GONE);
                 download.setVisibility(View.GONE);
-            } else if (layer.getType().equals("Imagery")) {
-                //Ignore
             } else {
                 final Layer threadLayer = layer;
                 download.setOnClickListener(new View.OnClickListener() {
@@ -943,7 +936,7 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
                 convertView = inflater.inflate(R.layout.cache_overlay_child, parent, false);
             }
 
-            final CacheOverlay overlay = overlays.get(groupPosition - geopackages.size() - staticFeatures.size());
+            final CacheOverlay overlay = geopackageOverlays.get(groupPosition - geopackages.size() - staticFeatures.size());
             final CacheOverlay childCache = overlay.getChildren().get(childPosition);
 
             ImageView imageView =  convertView.findViewById(R.id.cache_overlay_child_image);
