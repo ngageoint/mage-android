@@ -75,6 +75,10 @@ public class CacheProvider {
         return copy;
     }
 
+    public CacheOverlay getOverlay(String name){
+        return cacheOverlays.get(name);
+    }
+
     public void registerCacheOverlayListener(OnCacheOverlayListener listener) {
         cacheOverlayListeners.add(listener);
         synchronized(cacheOverlays) {

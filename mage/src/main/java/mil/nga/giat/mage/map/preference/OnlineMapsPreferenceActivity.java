@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.Set;
 
 import mil.nga.giat.mage.R;
+import mil.nga.giat.mage.map.cache.CacheOverlay;
 import mil.nga.giat.mage.map.cache.CacheProvider;
 import mil.nga.giat.mage.map.cache.URLCacheOverlay;
 import mil.nga.giat.mage.sdk.datastore.layer.Layer;
@@ -85,8 +86,11 @@ public class OnlineMapsPreferenceActivity extends AppCompatActivity {
         }
     }
 
-    public static class OnlineMapsListFragment extends ListFragment  implements ILayerEventListener {
+    public static class OnlineMapsListFragment extends ListFragment  implements CacheProvider.OnCacheOverlayListener {
 
+        /**
+         * This class is synchronized by only being accessed on the UI thread
+         */
         private OnlineMapsAdapter onlineMapsAdapter;
         private MenuItem refreshButton;
         private View contentView;
@@ -106,8 +110,6 @@ public class OnlineMapsPreferenceActivity extends AppCompatActivity {
 
             contentView = view.findViewById(R.id.online_maps_content);
             noContentView = view.findViewById(R.id.online_maps_no_content);
-
-            //TODO request and/or check for any needed permissions
 
             return view;
         }
@@ -129,7 +131,6 @@ public class OnlineMapsPreferenceActivity extends AppCompatActivity {
         @Override
         public void onPause() {
             super.onPause();
-            LayerHelper.getInstance(getActivity()).removeListener(this);
         }
 
         @Override
@@ -139,9 +140,7 @@ public class OnlineMapsPreferenceActivity extends AppCompatActivity {
             refreshButton = menu.findItem(R.id.online_maps_refresh);
             refreshButton.setEnabled(false);
 
-            onLayerCreated(null);
-
-            LayerHelper.getInstance(getActivity()).addListener(this);
+            CacheProvider.getInstance(getActivity()).registerCacheOverlayListener(this);
         }
 
         @Override
@@ -179,6 +178,7 @@ public class OnlineMapsPreferenceActivity extends AppCompatActivity {
                     ImageryServerFetch imageryServerFetch = new ImageryServerFetch(c);
                     try {
                         imageryServerFetch.fetch();
+                        CacheProvider.getInstance(getContext()).refreshTileOverlays();
                     } catch (Exception e) {
                         Log.w(LOG_NAME, "Failed fetching imagery",e);
                     }
@@ -189,7 +189,7 @@ public class OnlineMapsPreferenceActivity extends AppCompatActivity {
         }
 
         @Override
-        public void onLayerCreated(Layer layer) {
+        public void onCacheOverlay(final List<CacheOverlay> cacheOverlays) {
             getActivity().runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
@@ -197,7 +197,7 @@ public class OnlineMapsPreferenceActivity extends AppCompatActivity {
 
                     try {
                         layers = LayerHelper.getInstance(getActivity()).readByEvent(EventHelper.getInstance(getActivity()).getCurrentEvent(), "Imagery");
-                    } catch(Exception e) {
+                    } catch (Exception e) {
                         Log.e(LOG_NAME, "Problem getting layers.", e);
                     }
 
@@ -209,11 +209,13 @@ public class OnlineMapsPreferenceActivity extends AppCompatActivity {
 
                     // Set what should be checked based on preferences.
                     SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
-                    Set<String> overlays = preferences.getStringSet(getResources().getString(R.string.onlineMapsKey), Collections.<String> emptySet());
-                    for (int i = 0; i < listView.getCount(); i++) {
-                        Layer layer = (Layer) listView.getItemAtPosition(i);
-                        if (overlays.contains(layer.getId().toString())) {
-                            listView.setItemChecked(i, true);
+                    Set<String> overlays = preferences.getStringSet(getResources().getString(R.string.onlineMapsKey), Collections.<String>emptySet());
+                    for (Layer layer : layers) {
+                        boolean enabled = overlays.contains(layer.getName());
+
+                        CacheOverlay overlay = CacheProvider.getInstance(getContext()).getOverlay(layer.getName());
+                        if(overlay != null){
+                            overlay.setEnabled(enabled);
                         }
                     }
 
@@ -234,19 +236,13 @@ public class OnlineMapsPreferenceActivity extends AppCompatActivity {
             });
         }
 
-        @Override
-        public void onError(Throwable error) {
-
-        }
-
         public ArrayList<String> getSelectedOverlays() {
-            //TODO implement, since this does not work ATM with the toggle switch
             ArrayList<String> overlays = new ArrayList<>();
-            SparseBooleanArray checked = getListView().getCheckedItemPositions();
-            for (int i = 0; i < checked.size(); i++) {
-                if (checked.valueAt(i)) {
-                    Layer layer = (Layer) getListView().getItemAtPosition(checked.keyAt(i));
-                    overlays.add(layer.getId().toString());
+            for (CacheOverlay overlay : CacheProvider.getInstance(getContext()).getCacheOverlays()) {
+                if (overlay instanceof URLCacheOverlay) {
+                    if (overlay.isEnabled()) {
+                        overlays.add(overlay.getName());
+                    }
                 }
             }
 
@@ -254,8 +250,10 @@ public class OnlineMapsPreferenceActivity extends AppCompatActivity {
         }
 
         @Override
-        public void onLayerUpdated(Layer layer) {
+        public void onDestroy() {
+            super.onDestroy();
 
+            CacheProvider.getInstance(getActivity()).unregisterCacheOverlayListener(this);
         }
     }
 
@@ -279,9 +277,9 @@ public class OnlineMapsPreferenceActivity extends AppCompatActivity {
             View view = super.getView(position, convertView, parent);
 
             final Layer layer = getItem(position);
-            final String name = layer.getName();
+
             TextView title = view.findViewById(R.id.online_maps_title);
-            title.setText(name);
+            title.setText(layer.getName());
 
             TextView summary = view.findViewById(R.id.online_maps_summary);
             summary.setText(layer.getUrl());
@@ -294,13 +292,18 @@ public class OnlineMapsPreferenceActivity extends AppCompatActivity {
                 @Override
                 public void onClick(View v) {
                     boolean isChecked = ((Checkable) v).isChecked();
-                    if (isChecked) {
-                        CacheProvider.getInstance(getContext()).enableAndRefreshTileOverlays(layer.getName());
-                    } else {
-                        CacheProvider.getInstance(getContext()).removeCacheOverlay(name);
+
+                    CacheOverlay overlay = CacheProvider.getInstance(getContext()).getOverlay(layer.getName());
+                    if(overlay != null){
+                        overlay.setEnabled(isChecked);
                     }
                 }
             });
+
+            CacheOverlay overlay = CacheProvider.getInstance(getContext()).getOverlay(layer.getName());
+            if(overlay != null){
+                ((Checkable) sw).setChecked(overlay.isEnabled());
+            }
 
 
             return view;

@@ -147,7 +147,11 @@ public class MapPreferencesActivity extends AppCompatActivity {
 				break;
 			}
 			case ONLINE_MAPS_OVERLAY_ACTIVITY: {
-				//TODO implement for online maps.  Fall through to default for now
+				if (resultCode == Activity.RESULT_OK) {
+					OverlayPreference p = (OverlayPreference) preference.findPreference(getString(R.string.onlineMapsKey));
+					p.setValues(new HashSet<>(data.getStringArrayListExtra(ONLINE_MAPS_DATA_KEY)));
+				}
+				break;
 			}
 			default: {
 				super.onActivityResult(requestCode, resultCode, data);
