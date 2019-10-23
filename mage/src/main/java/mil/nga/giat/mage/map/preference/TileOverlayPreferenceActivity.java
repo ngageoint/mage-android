@@ -8,7 +8,6 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.Environment;
-import android.os.Looper;
 import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
 import android.support.annotation.UiThread;
@@ -38,6 +37,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Timer;
@@ -74,6 +74,9 @@ import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
+/**
+ * This activity is the downloadable maps section and deals with geopackages and static features
+ */
 public class TileOverlayPreferenceActivity extends AppCompatActivity {
 
     private static final String LOG_NAME = TileOverlayPreferenceActivity.class.getName();
@@ -96,11 +99,10 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
         intent.putStringArrayListExtra(MapPreferencesActivity.OVERLAY_EXTENDED_DATA_KEY, overlayFragment.getSelectedOverlays());
         setResult(Activity.RESULT_OK, intent);
 
-        if(this.overlayFragment != null){
-            synchronized (overlayFragment.timerLock) {
-                if (this.overlayFragment.downloadRefreshTimer != null) {
-                    this.overlayFragment.downloadRefreshTimer.cancel();
-                }
+
+        synchronized (overlayFragment.timerLock) {
+            if (this.overlayFragment.downloadRefreshTimer != null) {
+                this.overlayFragment.downloadRefreshTimer.cancel();
             }
         }
 
@@ -659,7 +661,7 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
         private final Activity activity;
 
         /**
-         * List of cache overlays
+         * List of geopackage cache overlays
          */
         private final List<CacheOverlay> overlays;
 
@@ -684,19 +686,25 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
         public OverlayAdapter(Activity activity, Event event, List<CacheOverlay> overlays, List<Layer> geopackages, GeoPackageDownloadManager downloadManager) {
             this.activity = activity;
             this.overlays = new CacheOverlayFilter(activity.getApplicationContext(), event).filter(overlays);
+            Iterator<CacheOverlay> it = this.overlays.iterator();
+            while(it.hasNext()){
+                CacheOverlay overlay = it.next();
+                if(!(overlay instanceof GeoPackageCacheOverlay)) {
+                    it.remove();
+                }
+            }
+
             this.geopackages = geopackages;
             this.downloadManager = downloadManager;
         }
 
         public void addOverlay(CacheOverlay overlay, Layer layer) {
-            if(Looper.getMainLooper().getThread() != Thread.currentThread()){
-                Log.e(LOG_NAME, "Call to components that are accessed on the UI thread");
-                return;
-            }
 
-            if (layer.isLoaded()) {
-                geopackages.remove(layer);
-                overlays.add(overlay);
+            if(overlay instanceof GeoPackageCacheOverlay) {
+                if (layer.isLoaded()) {
+                    geopackages.remove(layer);
+                    overlays.add(overlay);
+                }
             }
         }
 
@@ -717,11 +725,6 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
 
         public void updateDownloadProgress(View view, int progress, long size) {
             if (progress <= 0) {
-                return;
-            }
-
-            if(Looper.getMainLooper().getThread() != Thread.currentThread()){
-                Log.e(LOG_NAME, "Call to a UI component not on main thread");
                 return;
             }
 
@@ -841,8 +844,6 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
             Integer imageResource = overlay.getIconImageResourceId();
             if (imageResource != null) {
                 imageView.setImageResource(imageResource);
-            } else {
-                imageView.setImageResource(-1);
             }
 
             Layer layer = null;
@@ -874,7 +875,7 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
             view = inflater.inflate(R.layout.layer_overlay, viewGroup, false);
 
             Layer layer;
-            if(i < geopackages.size()){
+            if (i < geopackages.size()) {
                 layer = geopackages.get(i);
             } else {
                 layer = staticFeatures.get(i - geopackages.size());
@@ -885,10 +886,10 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
             TextView cacheName = view.findViewById(R.id.layer_name);
             cacheName.setText(layer.getName());
 
-            TextView layerSize =  view.findViewById(R.id.layer_size);
+            TextView layerSize = view.findViewById(R.id.layer_size);
 
 
-            final ProgressBar progressBar =  view.findViewById(R.id.layer_progress);
+            final ProgressBar progressBar = view.findViewById(R.id.layer_progress);
             final View download = view.findViewById(R.id.layer_download);
             if (!layer.getType().equals("Feature")) {
                 if (downloadManager.isDownloading(layer)) {
@@ -913,10 +914,12 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
                 }
             }
 
-            if(layer.getType().equals("Feature")) {
+            if (layer.getType().equals("Feature")) {
                 //TODO KML is always downloaded
                 progressBar.setVisibility(View.GONE);
                 download.setVisibility(View.GONE);
+            } else if (layer.getType().equals("Imagery")) {
+                //Ignore
             } else {
                 final Layer threadLayer = layer;
                 download.setOnClickListener(new View.OnClickListener() {
