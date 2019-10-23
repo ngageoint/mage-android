@@ -442,7 +442,7 @@ public class ObservationListAdapter extends RecyclerView.Adapter<RecyclerView.Vi
 
         @Override
         protected ObservationProperty doInBackground(Observation... observations) {
-            return type == Type.PRIMARY ? observations[0].getPrimaryField() : observations[0].getSecondaryField();
+            return type == Type.PRIMARY ? observations[0].getPrimaryFeedField() : observations[0].getSecondaryFeedField();
         }
 
         @Override
