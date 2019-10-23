@@ -1,10 +1,10 @@
-<?xml version="1.0" encoding="utf-8"?>
-<android.support.design.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+	xmlns:android="http://schemas.android.com/apk/res/android"
 	xmlns:app="http://schemas.android.com/apk/res-auto"
 	android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-	<android.support.constraint.ConstraintLayout
+	<androidx.constraintlayout.widget.ConstraintLayout
 		android:layout_width="match_parent"
 		android:layout_height="match_parent">
 
@@ -44,7 +44,7 @@
 				android:layout_height="wrap_content"
 				android:orientation="horizontal">
 
-				<android.support.v4.widget.Space
+				<Space
 					android:layout_width="0dp"
 					android:layout_height="wrap_content"
 					android:layout_weight="1"/>
@@ -66,7 +66,7 @@
 				android:orientation="horizontal"
 				android:layout_marginTop="8dp">
 
-				<android.support.v4.widget.Space
+				<Space
 					android:layout_width="0dp"
 					android:layout_height="wrap_content"
 					android:layout_weight="1" />
@@ -205,6 +205,6 @@
 
 		</LinearLayout>
 
-	</android.support.constraint.ConstraintLayout>
+	</androidx.constraintlayout.widget.ConstraintLayout>
 
-</android.support.design.widget.CoordinatorLayout>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

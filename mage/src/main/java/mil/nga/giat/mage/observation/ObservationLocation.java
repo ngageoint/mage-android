@@ -13,22 +13,22 @@ import com.google.android.gms.maps.model.LatLngBounds;
 
 import java.util.List;
 
-import mil.nga.geopackage.projection.ProjectionConstants;
 import mil.nga.giat.mage.sdk.utils.GeometryUtility;
-import mil.nga.wkb.geom.CompoundCurve;
-import mil.nga.wkb.geom.Geometry;
-import mil.nga.wkb.geom.GeometryCollection;
-import mil.nga.wkb.geom.GeometryEnvelope;
-import mil.nga.wkb.geom.GeometryType;
-import mil.nga.wkb.geom.LineString;
-import mil.nga.wkb.geom.MultiLineString;
-import mil.nga.wkb.geom.MultiPoint;
-import mil.nga.wkb.geom.MultiPolygon;
-import mil.nga.wkb.geom.Point;
-import mil.nga.wkb.geom.Polygon;
-import mil.nga.wkb.geom.PolyhedralSurface;
-import mil.nga.wkb.util.GeometryEnvelopeBuilder;
-import mil.nga.wkb.util.GeometryUtils;
+import mil.nga.sf.CompoundCurve;
+import mil.nga.sf.Geometry;
+import mil.nga.sf.GeometryCollection;
+import mil.nga.sf.GeometryEnvelope;
+import mil.nga.sf.GeometryType;
+import mil.nga.sf.LineString;
+import mil.nga.sf.MultiLineString;
+import mil.nga.sf.MultiPoint;
+import mil.nga.sf.MultiPolygon;
+import mil.nga.sf.Point;
+import mil.nga.sf.Polygon;
+import mil.nga.sf.PolyhedralSurface;
+import mil.nga.sf.proj.ProjectionConstants;
+import mil.nga.sf.util.GeometryEnvelopeBuilder;
+import mil.nga.sf.util.GeometryUtils;
 
 /**
  * Observation location containing the geometry and location collection information

@@ -2,7 +2,7 @@ package mil.nga.giat.mage.observation;
 
 import android.content.Context;
 import android.graphics.Color;
-import android.support.v4.graphics.ColorUtils;
+import androidx.core.graphics.ColorUtils;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;

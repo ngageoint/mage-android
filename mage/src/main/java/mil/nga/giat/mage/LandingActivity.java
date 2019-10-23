@@ -12,17 +12,6 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
-import android.support.annotation.NonNull;
-import android.support.design.widget.BottomNavigationView;
-import android.support.design.widget.NavigationView;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.content.ContextCompat;
-import android.support.v4.view.GravityCompat;
-import android.support.v4.widget.DrawerLayout;
-import android.support.v7.app.AlertDialog;
-import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -30,6 +19,18 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.widget.Toolbar;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+import androidx.core.view.GravityCompat;
+import androidx.drawerlayout.widget.DrawerLayout;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
+
+import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.google.android.material.navigation.NavigationView;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
 
@@ -73,7 +74,7 @@ import mil.nga.giat.mage.sdk.utils.MediaUtility;
 public class LandingActivity extends DaggerAppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
 
     /**
-     * Extra key for storing the local file path used to launch MAGE
+     * Extra key for storing the local file path used to lauch MAGE
      */
     public static final String EXTRA_OPEN_FILE_PATH = "extra_open_file_path";
 
@@ -310,11 +311,12 @@ public class LandingActivity extends DaggerAppCompatActivity implements Navigati
         Menu recentEventsMenu = menu.findItem(R.id.recents_events_item).getSubMenu();
         recentEventsMenu.removeGroup(R.id.events_group);
 
+        EventHelper eventHelper = EventHelper.getInstance(getApplicationContext());
         try {
-            final Event currentEvent = EventHelper.getInstance(getApplicationContext()).getCurrentEvent();
+            final Event currentEvent = eventHelper.getCurrentEvent();
             menu.findItem(R.id.event_navigation).setTitle(currentEvent.getName()).setActionView(R.layout.navigation_item_info);
 
-            Iterable<Event> events = Iterables.filter(EventHelper.getInstance(getApplicationContext()).getRecentEvents(), new Predicate<Event>() {
+            Iterable<Event> recentEvents = Iterables.filter(eventHelper.getRecentEvents(), new Predicate<Event>() {
                 @Override
                 public boolean apply(Event event) {
                     return !event.getRemoteId().equals(currentEvent.getRemoteId());
@@ -322,7 +324,7 @@ public class LandingActivity extends DaggerAppCompatActivity implements Navigati
             });
 
             int i = 1;
-            for (final Event event : events) {
+            for (final Event event : recentEvents) {
                 MenuItem item = recentEventsMenu
                         .add(R.id.events_group, Menu.NONE, i++, event.getName())
                         .setIcon(R.drawable.ic_restore_black_24dp);
@@ -339,21 +341,19 @@ public class LandingActivity extends DaggerAppCompatActivity implements Navigati
                 });
             }
 
-            if (i > 1) {
-                MenuItem item = recentEventsMenu
-                        .add(R.id.events_group, Menu.NONE, i, "More Events")
-                        .setIcon(R.drawable.ic_event_note_white_24dp);
+            MenuItem item = recentEventsMenu
+                    .add(R.id.events_group, Menu.NONE, i, "More Events")
+                    .setIcon(R.drawable.ic_event_note_white_24dp);
 
-                item.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
-                    @Override
-                    public boolean onMenuItemClick(MenuItem menuItem) {
-                        drawerLayout.closeDrawer(GravityCompat.START);
-                        Intent intent = new Intent(LandingActivity.this, ChangeEventActivity.class);
-                        startActivityForResult(intent, CHANGE_EVENT_REQUEST);
-                        return true;
-                    }
-                });
-            }
+            item.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+                @Override
+                public boolean onMenuItemClick(MenuItem menuItem) {
+                    drawerLayout.closeDrawer(GravityCompat.START);
+                    Intent intent = new Intent(LandingActivity.this, ChangeEventActivity.class);
+                    startActivityForResult(intent, CHANGE_EVENT_REQUEST);
+                    return true;
+                }
+            });
         } catch (EventException e) {
             e.printStackTrace();
         }
@@ -444,6 +444,8 @@ public class LandingActivity extends DaggerAppCompatActivity implements Navigati
     }
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
         if (requestCode == CHANGE_EVENT_REQUEST) {
             if (resultCode == RESULT_OK) {
                 setTitle();

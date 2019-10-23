@@ -24,8 +24,8 @@ import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
 import mil.nga.giat.mage.utils.DateFormatFactory;
-import mil.nga.wkb.geom.Point;
-import mil.nga.wkb.util.GeometryUtils;
+import mil.nga.sf.Point;
+import mil.nga.sf.util.GeometryUtils;
 
 public class HistoricLocationLoadTask extends AsyncTask<Void, Pair<MarkerOptions, Pair<Location, User>>, Void> {
 

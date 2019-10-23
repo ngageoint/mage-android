@@ -1,13 +1,14 @@
 package mil.nga.giat.mage.observation;
 
 import android.content.Context;
-import android.support.v4.content.res.ResourcesCompat;
-import android.support.v4.widget.CircularProgressDrawable;
-import android.support.v7.widget.AppCompatImageView;
 import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.MimeTypeMap;
 import android.widget.LinearLayout;
+
+import androidx.appcompat.widget.AppCompatImageView;
+import androidx.core.content.res.ResourcesCompat;
+import androidx.swiperefreshlayout.widget.CircularProgressDrawable;
 
 import com.bumptech.glide.load.resource.bitmap.BitmapTransformation;
 import com.bumptech.glide.load.resource.bitmap.CenterCrop;
@@ -75,9 +76,9 @@ public class AttachmentGallery {
         if (a.getLocalPath() != null) {
             String fileExtension = MimeTypeMap.getFileExtensionFromUrl(a.getLocalPath());
             String mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(fileExtension.toLowerCase());
-            isVideo = mimeType.contains("video/mp4");
+            isVideo = mimeType.startsWith("video/");
         } else if (a.getContentType() != null) {
-            isVideo = a.getContentType().contains("video/mp4");
+            isVideo = a.getContentType().startsWith("video/");
         }
 
         Collection<BitmapTransformation> transformations = new ArrayList<>();

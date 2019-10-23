@@ -2,7 +2,8 @@ package mil.nga.giat.mage.login;
 
 import android.content.Context;
 import android.os.Bundle;
-import android.support.v4.app.Fragment;
+
+import androidx.fragment.app.Fragment;
 
 import mil.nga.giat.mage.sdk.preferences.ServerApi;
 

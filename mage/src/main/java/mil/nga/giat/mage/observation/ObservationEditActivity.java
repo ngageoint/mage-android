@@ -4,7 +4,6 @@ import android.Manifest;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.Dialog;
-import android.arch.lifecycle.ViewModelProviders;
 import android.content.ClipData;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -18,12 +17,6 @@ import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.provider.MediaStore;
 import android.provider.Settings;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
-import android.support.v4.content.FileProvider;
-import android.support.v7.app.AlertDialog;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.Menu;
@@ -39,6 +32,14 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+import androidx.core.content.FileProvider;
+import androidx.lifecycle.ViewModelProviders;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -69,18 +70,18 @@ import kotlin.jvm.functions.Function1;
 import mil.nga.giat.mage.BuildConfig;
 import mil.nga.giat.mage.LandingActivity;
 import mil.nga.giat.mage.R;
-import mil.nga.giat.mage.form.FormFragment;
-import mil.nga.giat.mage.form.FormMode;
-import mil.nga.giat.mage.form.FormPreferences;
-import mil.nga.giat.mage.form.FormViewModel;
 import mil.nga.giat.mage.form.DateFormField;
 import mil.nga.giat.mage.form.FieldType;
 import mil.nga.giat.mage.form.Form;
 import mil.nga.giat.mage.form.FormField;
+import mil.nga.giat.mage.form.FormFragment;
+import mil.nga.giat.mage.form.FormMode;
+import mil.nga.giat.mage.form.FormPreferences;
+import mil.nga.giat.mage.form.FormViewModel;
 import mil.nga.giat.mage.form.GeometryFormField;
 import mil.nga.giat.mage.form.field.EditDate;
-import mil.nga.giat.mage.form.field.Field;
 import mil.nga.giat.mage.form.field.EditGeometry;
+import mil.nga.giat.mage.form.field.Field;
 import mil.nga.giat.mage.form.field.dialog.DateFieldDialog;
 import mil.nga.giat.mage.form.field.dialog.GeometryFieldDialog;
 import mil.nga.giat.mage.sdk.datastore.observation.Attachment;
@@ -97,7 +98,7 @@ import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.exceptions.ObservationException;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
-import mil.nga.wkb.geom.Geometry;
+import mil.nga.sf.Geometry;
 
 public class ObservationEditActivity extends AppCompatActivity implements OnMapReadyCallback, OnCameraIdleListener {
 
@@ -250,7 +251,7 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 		}
 
 		attachmentLayout = findViewById(R.id.image_gallery);
-		attachmentGallery = new AttachmentGallery(getApplicationContext(), 100, 100);
+		attachmentGallery = new AttachmentGallery(getApplicationContext(), 200, 200);
 		attachmentGallery.addOnAttachmentClickListener(new AttachmentGallery.OnAttachmentClickListener() {
 			@Override
 			public void onAttachmentClick(Attachment attachment) {
@@ -430,6 +431,8 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 
 	@Override
 	protected void onSaveInstanceState(Bundle outState) {
+		super.onSaveInstanceState(outState);
+
 		outState.putParcelableArrayList("attachmentsToCreate", attachmentsToCreate);
 		outState.putString(CURRENT_MEDIA_PATH, currentMediaPath);
 	}
@@ -803,6 +806,8 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 
 	@Override
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+		super.onActivityResult(requestCode, resultCode, data);
+
 		if (resultCode != RESULT_OK) {
 			return;
 		}
@@ -814,8 +819,6 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 				attachmentsToCreate.add(capture);
 				attachmentGallery.addAttachment(attachmentLayout, capture);
 				MediaUtility.addImageToGallery(getApplicationContext(), Uri.fromFile(new File(currentMediaPath)));
-
-
 
 				break;
 			case GALLERY_ACTIVITY_REQUEST_CODE:

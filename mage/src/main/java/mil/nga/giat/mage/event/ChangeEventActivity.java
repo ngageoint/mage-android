@@ -1,23 +1,26 @@
 package mil.nga.giat.mage.event;
 
 import android.content.SharedPreferences;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.DefaultItemAnimator;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
-import android.support.v7.widget.SearchView;
-import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
+
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.SearchView;
+import androidx.appcompat.widget.Toolbar;
+import androidx.recyclerview.widget.DefaultItemAnimator;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 import mil.nga.giat.mage.R;
+import mil.nga.giat.mage.observation.sync.ObservationServerFetch;
 import mil.nga.giat.mage.sdk.datastore.user.Event;
 import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
 import mil.nga.giat.mage.sdk.datastore.user.User;
@@ -152,6 +155,14 @@ public class ChangeEventActivity extends AppCompatActivity {
 			SharedPreferences.Editor sp = PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).edit();
 			sp.putBoolean(getString(R.string.reportLocationKey), false).apply();
 		}
+
+
+		AsyncTask.execute(new Runnable() {
+			@Override
+			public void run() {
+				new ObservationServerFetch(getApplicationContext()).fetch(false);
+			}
+		});
 
 		setResult(RESULT_OK);
 		finish();

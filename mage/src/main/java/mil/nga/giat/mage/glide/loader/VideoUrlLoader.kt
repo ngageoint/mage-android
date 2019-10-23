@@ -3,7 +3,7 @@ package mil.nga.giat.mage.glide.loader
 import android.content.Context
 import android.graphics.Bitmap
 import android.media.MediaMetadataRetriever
-import android.support.v7.preference.PreferenceManager
+import androidx.preference.PreferenceManager
 import com.bumptech.glide.Priority
 import com.bumptech.glide.load.DataSource
 import com.bumptech.glide.load.Options

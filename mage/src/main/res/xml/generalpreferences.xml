@@ -45,13 +45,13 @@
         android:summary="%s"
         android:title="Theme"
         android:icon="@drawable/ic_brightness_medium_preference_24dp" />
-    <android.support.v7.preference.SwitchPreferenceCompat
+    <SwitchPreferenceCompat
         android:defaultValue="@bool/notificationsEnabledDefaultValue"
         android:key="@string/notificationsEnabledKey"
         android:summary="Receive notifications for new observations"
         android:title="Notifications"
         android:icon="@drawable/ic_notifications_none_preference_24dp">
-    </android.support.v7.preference.SwitchPreferenceCompat>
+    </SwitchPreferenceCompat>t>
     <PreferenceCategory
         android:title="MEDIA">
         <mil.nga.giat.mage.sdk.preferences.IntegerListPreference

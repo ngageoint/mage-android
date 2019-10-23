@@ -28,10 +28,10 @@ import mil.nga.giat.mage.map.marker.StaticGeometryCollection;
 import mil.nga.giat.mage.sdk.datastore.layer.Layer;
 import mil.nga.giat.mage.sdk.datastore.staticfeature.StaticFeature;
 import mil.nga.giat.mage.sdk.datastore.staticfeature.StaticFeatureProperty;
-import mil.nga.wkb.geom.Geometry;
-import mil.nga.wkb.geom.GeometryType;
-import mil.nga.wkb.geom.LineString;
-import mil.nga.wkb.geom.Point;
+import mil.nga.sf.Geometry;
+import mil.nga.sf.GeometryType;
+import mil.nga.sf.LineString;
+import mil.nga.sf.Point;
 
 public class StaticFeatureLoadTask extends AsyncTask<Layer, Object, Void> {
 
@@ -129,7 +129,7 @@ public class StaticFeatureLoadTask extends AsyncTask<Layer, Object, Void> {
                     }
                 }
 
-				mil.nga.wkb.geom.Polygon polygon = (mil.nga.wkb.geom.Polygon) geometry;
+				mil.nga.sf.Polygon polygon = (mil.nga.sf.Polygon) geometry;
 				List<LineString> rings = polygon.getRings();
 				LineString polygonLineString = rings.get(0);
 				for (Point point : polygonLineString.getPoints()) {

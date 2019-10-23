@@ -3,11 +3,27 @@ All notable changes to this project will be documented in this file.
 Adheres to [Semantic Versioning](http://semver.org/).
 
 ---
-## 6.2.6 (TBD)
+## 6.2.8 (TBD)
 
 ##### Features
 
 ##### Bug Fixes
+
+## [6.2.7](https://github.com/ngageoint/mage-android/releases/tag/6.2.7)
+
+##### Features
+* Traffic map layer 
+
+##### Bug Fixes
+
+## [6.2.6](https://github.com/ngageoint/mage-android/releases/tag/6.2.6)
+
+##### Features
+
+##### Bug Fixes
+* User avatars now load in feed and profile page
+* Fix crash when trying to add audio attachments on some Samsung devices
+* Pull observations after switching events
 
 ## [6.2.5](https://github.com/ngageoint/mage-android/releases/tag/6.2.5)
 
