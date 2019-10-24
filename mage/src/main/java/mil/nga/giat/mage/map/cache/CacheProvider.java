@@ -183,7 +183,7 @@ public class CacheProvider {
                 List<Layer> imageryLayers = LayerHelper.getInstance(context).readAll("Imagery");
 
                 for(Layer imagery : imageryLayers){
-                    overlays.add(new URLCacheOverlay(imagery.getName(), new URL(imagery.getUrl())));
+                    overlays.add(new URLCacheOverlay(imagery.getName(), new URL(imagery.getUrl()), imagery.getFormat()));
                 }
             }catch(Exception e){
                 Log.w(LOG_NAME, "Failed to load imagery layers", e);

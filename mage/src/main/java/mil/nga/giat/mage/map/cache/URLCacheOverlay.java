@@ -8,14 +8,17 @@ public class URLCacheOverlay extends CacheOverlay {
 
     private final URL myUrl;
 
+    private final String myFormat;
+
     /**
      * Tile Overlay
      */
     private TileOverlay tileOverlay;
 
-    public URLCacheOverlay(String name, URL url){
+    public URLCacheOverlay(String name, URL url, String format){
         super(name, CacheOverlayType.URL, false);
         myUrl = url;
+        myFormat = format;
     }
 
     @Override
@@ -29,6 +32,7 @@ public class URLCacheOverlay extends CacheOverlay {
     public URL getURL(){
         return myUrl;
     }
+    public String getFormat() {return myFormat;}
 
     /**
      * Get the tile overlay

@@ -1181,7 +1181,7 @@ public class MapFragment extends DaggerFragment implements OnMapReadyCallback, O
 		CacheOverlay cacheOverlay = cacheOverlays.remove(urlCacheOverlay.getCacheName());
 		if(cacheOverlay == null){
 			// Create a new tile provider and add to the map
-			TileProvider tileProvider = new URLTileProvider(256, 256, urlCacheOverlay.getURL());
+			TileProvider tileProvider = new URLTileProvider(256, 256, urlCacheOverlay);
 			TileOverlayOptions overlayOptions = createTileOverlayOptions(tileProvider);
 			// Set the tile overlay in the cache overlay
 			TileOverlay tileOverlay = map.addTileOverlay(overlayOptions);
