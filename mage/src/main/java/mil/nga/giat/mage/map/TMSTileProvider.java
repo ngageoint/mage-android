@@ -9,13 +9,13 @@ import java.net.URL;
 
 import mil.nga.giat.mage.map.cache.URLCacheOverlay;
 
-public class URLTileProvider extends UrlTileProvider {
+public class TMSTileProvider  extends UrlTileProvider {
 
-    private static final String LOG_NAME = URLTileProvider.class.getName();
+    private static final String LOG_NAME = TMSTileProvider.class.getName();
 
     private final URLCacheOverlay myOverlay;
 
-    public URLTileProvider(int width, int height, URLCacheOverlay overlay) {
+    public TMSTileProvider(int width, int height, URLCacheOverlay overlay) {
         super(width, height);
 
         myOverlay = overlay;
@@ -26,23 +26,19 @@ public class URLTileProvider extends UrlTileProvider {
         String path = myOverlay.getURL().toString();
         path = path.replaceAll("\\{s\\}\\.", "");
         path = path.replaceAll("\\{x\\}", Integer.toString(x));
-        long fixedY = y;
+        long fixedY = (long) Math.pow(2, z) - y - 1;
 
-        if(myOverlay.getFormat() != null && myOverlay.getFormat().equalsIgnoreCase("tms")) {
-            fixedY = (long)Math.pow(2, z) - y - 1;
-        }
         path = path.replaceAll("\\{y\\}", Long.toString(fixedY));
         path = path.replaceAll("\\{z\\}", Integer.toString(z));
 
         URL newPath = null;
 
-        try{
+        try {
             newPath = new URL(path);
-        }catch(MalformedURLException e){
+        } catch (MalformedURLException e) {
             Log.w(LOG_NAME, "Problem with URL " + path, e);
         }
 
         return newPath;
     }
-
 }
