@@ -9,6 +9,8 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 
 import java.lang.reflect.Type;
+import java.util.HashMap;
+import java.util.Map;
 
 import mil.nga.giat.mage.sdk.datastore.layer.Layer;
 import mil.nga.giat.mage.sdk.datastore.user.Event;
@@ -49,11 +51,30 @@ public class LayerDeserializer implements JsonDeserializer<Layer> {
 		layer.setRemoteId(feature.get("id").getAsString());
 		layer.setType(feature.get("type").getAsString());
 		layer.setName(feature.get("name").getAsString());
-		if(feature.get("url") != null) {
+		if(feature.has("url")) {
 			layer.setUrl(feature.get("url").getAsString());
 		}
-		if(feature.get("format") != null){
+		if(feature.has("format")){
 			layer.setFormat(feature.get("format").getAsString());
+		}
+
+		JsonObject wms = feature.getAsJsonObject("wms");
+		if(wms != null) {
+			if(wms.has("format")){
+				layer.setWmsFormat(wms.get("format").getAsString());
+			}
+			if(wms.has("version")){
+				layer.setWmsVersion(wms.get("version").getAsString());
+			}
+			if(wms.has("transparent")){
+				layer.setWmsTransparent(wms.get("transparent").getAsString());
+			}
+			if(wms.has("styles")){
+				layer.setWmsStyles(wms.get("styles").getAsString());
+			}
+			if(wms.has("layers")){
+				layer.setWmsLayers(wms.get("layers").getAsString());
+			}
 		}
 
 		JsonObject file = feature.getAsJsonObject("file");

@@ -56,6 +56,21 @@ public class Layer implements Comparable<Layer> {
 	@DatabaseField
 	private String format;
 
+	@DatabaseField
+	private String wmsFormat;
+
+	@DatabaseField
+	private String wmsVersion;
+
+	@DatabaseField
+	private String wmsLayers;
+
+	@DatabaseField
+	private String wmsStyles;
+
+	@DatabaseField
+	private String wmsTransparent;
+
 	public Layer() {
 		// ORMLite needs a no-arg constructor
 	}
@@ -155,6 +170,46 @@ public class Layer implements Comparable<Layer> {
 	public void setFormat(String format){this.format = format;}
 
 	public String getFormat(){return this.format;}
+
+	public String getWmsFormat() {
+		return wmsFormat;
+	}
+
+	public void setWmsFormat(String wmsFormat) {
+		this.wmsFormat = wmsFormat;
+	}
+
+	public String getWmsVersion() {
+		return wmsVersion;
+	}
+
+	public void setWmsVersion(String wmsVersion) {
+		this.wmsVersion = wmsVersion;
+	}
+
+	public String getWmsLayers() {
+		return wmsLayers;
+	}
+
+	public void setWmsLayers(String wmsLayers) {
+		this.wmsLayers = wmsLayers;
+	}
+
+	public String getWmsStyles() {
+		return wmsStyles;
+	}
+
+	public void setWmsStyles(String wmsStyles) {
+		this.wmsStyles = wmsStyles;
+	}
+
+	public String getWmsTransparent() {
+		return wmsTransparent;
+	}
+
+	public void setWmsTransparent(String wmsTransparent) {
+		this.wmsTransparent = wmsTransparent;
+	}
 
 	@Override
 	public String toString() {
