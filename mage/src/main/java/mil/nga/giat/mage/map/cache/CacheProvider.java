@@ -183,7 +183,12 @@ public class CacheProvider {
                 List<Layer> imageryLayers = LayerHelper.getInstance(context).readAll("Imagery");
 
                 for(Layer imagery : imageryLayers){
-                    overlays.add(new URLCacheOverlay(imagery.getName(), new URL(imagery.getUrl()), imagery.getFormat()));
+                    if(imagery.getFormat() == null || !imagery.getFormat().equalsIgnoreCase("wms")) {
+                        overlays.add(new URLCacheOverlay(imagery.getName(), new URL(imagery.getUrl()), imagery.getFormat()));
+                    }else{
+                        //TODO grab parameters
+                        overlays.add(new WMSCacheOverlay(imagery.getName(), new URL(imagery.getUrl()), imagery.getFormat(), null));
+                    }
                 }
             }catch(Exception e){
                 Log.w(LOG_NAME, "Failed to load imagery layers", e);
