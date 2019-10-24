@@ -16,6 +16,7 @@ import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.URLUtil;
@@ -306,32 +307,36 @@ public class OnlineLayersPreferenceActivity extends AppCompatActivity {
             progressBar.setVisibility(layer.isLoaded() ? View.GONE : View.VISIBLE);
 
             View sw = view.findViewById(R.id.online_layers_toggle);
-            sw.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    boolean isChecked = ((Checkable) v).isChecked();
 
-                    //TODO this still allows for check box to be checked
-                    if (URLUtil.isHttpUrl(layer.getUrl())) {
+            if (URLUtil.isHttpUrl(layer.getUrl())) {
+                view.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
                         new AlertDialog.Builder(getContext())
                                 .setTitle("Non HTTPS Layer")
                                 .setMessage("We cannot load this layer on mobile because it cannot be accessed securely.")
                                 .setPositiveButton("OK", null).show();
-                        return;
                     }
+                });
+                sw.setEnabled(false);
+            } else {
+                sw.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        boolean isChecked = ((Checkable) v).isChecked();
 
-                    CacheOverlay overlay = CacheProvider.getInstance(getContext()).getOverlay(layer.getName());
-                    if(overlay != null){
-                        overlay.setEnabled(isChecked);
+                        CacheOverlay overlay = CacheProvider.getInstance(getContext()).getOverlay(layer.getName());
+                        if (overlay != null) {
+                            overlay.setEnabled(isChecked);
+                        }
                     }
+                });
+
+                CacheOverlay overlay = CacheProvider.getInstance(getContext()).getOverlay(layer.getName());
+                if (overlay != null) {
+                    ((Checkable) sw).setChecked(overlay.isEnabled());
                 }
-            });
-
-            CacheOverlay overlay = CacheProvider.getInstance(getContext()).getOverlay(layer.getName());
-            if(overlay != null){
-                ((Checkable) sw).setChecked(overlay.isEnabled());
             }
-
 
             return view;
         }
