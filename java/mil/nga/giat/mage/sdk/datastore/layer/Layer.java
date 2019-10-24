@@ -53,6 +53,9 @@ public class Layer implements Comparable<Layer> {
 	@DatabaseField
 	private String url;
 
+	@DatabaseField
+	private String format;
+
 	public Layer() {
 		// ORMLite needs a no-arg constructor
 	}
@@ -148,6 +151,10 @@ public class Layer implements Comparable<Layer> {
 	public void setUrl(String url){this.url = url;}
 
 	public String getUrl(){return this.url;}
+
+	public void setFormat(String format){this.format = format;}
+
+	public String getFormat(){return this.format;}
 
 	@Override
 	public String toString() {
