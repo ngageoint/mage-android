@@ -263,7 +263,7 @@ public class OnlineLayersPreferenceActivity extends AppCompatActivity {
         private final List<Layer> layers;
 
         public OnlineLayersAdapter(Context context, List<Layer> overlays) {
-            super(context, R.layout.online_layers_list_item, R.id.online_layers_no_content_title, overlays);
+            super(context, R.layout.online_layers_list_item, R.id.online_layers_title, overlays);
 
             this.layers = overlays;
         }
@@ -274,13 +274,13 @@ public class OnlineLayersPreferenceActivity extends AppCompatActivity {
 
             final Layer layer = getItem(position);
 
-            TextView title = view.findViewById(R.id.online_layers_no_content_title);
+            TextView title = view.findViewById(R.id.online_layers_title);
             title.setText(layer.getName());
 
-            TextView summary = view.findViewById(R.id.online_layers_no_content_summary);
+            TextView summary = view.findViewById(R.id.online_layers_summary);
             summary.setText(layer.getUrl());
 
-            View progressBar = view.findViewById(R.id.online_layers_no_content_progressBar);
+            View progressBar = view.findViewById(R.id.online_layers_progressBar);
             progressBar.setVisibility(layer.isLoaded() ? View.GONE : View.VISIBLE);
 
             View sw = view.findViewById(R.id.online_layers_toggle);
