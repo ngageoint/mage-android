@@ -184,10 +184,9 @@ public class CacheProvider {
 
                 for(Layer imagery : imageryLayers){
                     if(imagery.getFormat() == null || !imagery.getFormat().equalsIgnoreCase("wms")) {
-                        overlays.add(new URLCacheOverlay(imagery.getName(), new URL(imagery.getUrl()), imagery.getFormat()));
+                        overlays.add(new URLCacheOverlay(imagery.getName(), new URL(imagery.getUrl()), imagery));
                     }else{
-                        //TODO grab parameters
-                        overlays.add(new WMSCacheOverlay(imagery.getName(), new URL(imagery.getUrl()), imagery.getFormat(), null));
+                        overlays.add(new WMSCacheOverlay(imagery.getName(), new URL(imagery.getUrl()), imagery));
                     }
                 }
             }catch(Exception e){

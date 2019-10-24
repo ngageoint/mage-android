@@ -1,6 +1,5 @@
 package mil.nga.giat.mage.map;
 
-import android.support.v4.math.MathUtils;
 import android.util.Log;
 
 import com.google.android.gms.maps.model.UrlTileProvider;
@@ -25,13 +24,13 @@ public class WMSTileProvider extends UrlTileProvider {
 
     @Override
     public URL getTileUrl(int x, int y, int z) {
-        String version = myOverlay.getParameters().get("version");
+        String version = myOverlay.getWmsVersion();
         String epsgKey = "SRS";
         if(version.equals("1.3")){
             epsgKey = "CRS";
         }
 
-        Integer transparent = Integer.parseInt(myOverlay.getParameters().get("transparent"));
+        Integer transparent = Integer.parseInt(myOverlay.getWmsTransparent());
         String transparentValue = "false";
         if(transparent.equals(new Integer(1))){
             transparentValue = "true";
@@ -40,11 +39,11 @@ public class WMSTileProvider extends UrlTileProvider {
         String path = myOverlay.getURL().toString();
 
         path = path + "?request=GetMap&service=WMS&styles="
-                + myOverlay.getParameters().get("styles")
-                + "&layers=" + myOverlay.getParameters().get("layers")
-                + "&version=" + myOverlay.getParameters().get("version")
+                + myOverlay.getWmsStyles()
+                + "&layers=" + myOverlay.getWmsLayers()
+                + "&version=" + myOverlay.getWmsVersion()
                 + "&" + epsgKey +" =EPSG:3857&width=256&height=256&format="
-                + myOverlay.getParameters().get("format")
+                + myOverlay.getWmsFormat()
                 + "&transparent=" + transparentValue;
 
         URL newPath = null;

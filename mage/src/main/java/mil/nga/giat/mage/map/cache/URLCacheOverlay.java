@@ -4,6 +4,8 @@ import com.google.android.gms.maps.model.TileOverlay;
 
 import java.net.URL;
 
+import mil.nga.giat.mage.sdk.datastore.layer.Layer;
+
 public class URLCacheOverlay extends CacheOverlay {
 
     private final URL myUrl;
@@ -15,10 +17,10 @@ public class URLCacheOverlay extends CacheOverlay {
      */
     private TileOverlay tileOverlay;
 
-    public URLCacheOverlay(String name, URL url, String format){
+    public URLCacheOverlay(String name, URL url, Layer layer){
         super(name, CacheOverlayType.URL, false);
         myUrl = url;
-        myFormat = format;
+        myFormat = layer.getFormat();
     }
 
     @Override
