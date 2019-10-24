@@ -26,12 +26,7 @@ public class XYZTileProvider extends UrlTileProvider {
         String path = myOverlay.getURL().toString();
         path = path.replaceAll("\\{s\\}\\.", "");
         path = path.replaceAll("\\{x\\}", Integer.toString(x));
-        long fixedY = y;
-
-        if(myOverlay.getFormat() != null && myOverlay.getFormat().equalsIgnoreCase("tms")) {
-            fixedY = (long)Math.pow(2, z) - y - 1;
-        }
-        path = path.replaceAll("\\{y\\}", Long.toString(fixedY));
+        path = path.replaceAll("\\{y\\}", Long.toString(y));
         path = path.replaceAll("\\{z\\}", Integer.toString(z));
 
         URL newPath = null;
