@@ -9,6 +9,7 @@ import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
 import android.support.annotation.UiThread;
 import android.support.v4.app.ListFragment;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -17,6 +18,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.webkit.URLUtil;
 import android.widget.ArrayAdapter;
 import android.widget.Checkable;
 import android.widget.ListView;
@@ -87,7 +89,9 @@ public class OnlineLayersPreferenceActivity extends AppCompatActivity {
         /**
          * This class is synchronized by only being accessed on the UI thread
          */
-        private OnlineLayersAdapter onlineLayersAdapter;
+        private OnlineLayersAdapter secureOnlineLayersAdapter;
+        private OnlineLayersAdapter insecureOnlineLayersAdapter;
+
         private MenuItem refreshButton;
         private View contentView;
         private View noContentView;
@@ -114,8 +118,17 @@ public class OnlineLayersPreferenceActivity extends AppCompatActivity {
         public void onViewCreated(View view, Bundle savedInstanceState) {
             super.onViewCreated(view, savedInstanceState);
 
-            ListView listView = getListView();
-            listView.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);
+            ListView secureListView = getListView();
+            secureListView.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);
+
+            secureOnlineLayersAdapter = new OnlineLayersAdapter(getActivity(), new ArrayList<Layer>());
+            secureListView.setAdapter(secureOnlineLayersAdapter);
+
+            ListView insecureListView = view.findViewById(R.id.insecure_layers_list);
+            insecureListView.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);
+
+            insecureOnlineLayersAdapter = new OnlineLayersAdapter(getActivity(), new ArrayList<Layer>());
+            insecureListView.setAdapter(insecureOnlineLayersAdapter);
         }
 
         @Override
@@ -164,8 +177,8 @@ public class OnlineLayersPreferenceActivity extends AppCompatActivity {
             noContentView.findViewById(R.id.online_layers_no_content_summary).setVisibility(View.GONE);
             noContentView.findViewById(R.id.online_layers_no_content_progressBar).setVisibility(View.VISIBLE);
 
-            onlineLayersAdapter.clear();
-            onlineLayersAdapter.notifyDataSetChanged();
+            secureOnlineLayersAdapter.clear();
+            insecureOnlineLayersAdapter.clear();
 
             final Context c = getActivity().getApplicationContext();
             Runnable runnable = new Runnable() {
@@ -200,8 +213,11 @@ public class OnlineLayersPreferenceActivity extends AppCompatActivity {
                     ListView listView = getListView();
                     listView.clearChoices();
 
-                    onlineLayersAdapter = new OnlineLayersAdapter(getActivity(), new ArrayList<>(layers));
-                    setListAdapter(onlineLayersAdapter);
+                   secureOnlineLayersAdapter.clear();
+                   insecureOnlineLayersAdapter.clear();
+
+                   List<Layer> secureLayers = new ArrayList<>();
+                   List<Layer> insecureLayers = new ArrayList<>();
 
                     // Set what should be checked based on preferences.
                     SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
@@ -213,7 +229,16 @@ public class OnlineLayersPreferenceActivity extends AppCompatActivity {
                         if(overlay != null){
                             overlay.setEnabled(enabled);
                         }
+
+                        if(URLUtil.isHttpsUrl(layer.getUrl())){
+                            secureLayers.add(layer);
+                        }else{
+                            insecureLayers.add(layer);
+                        }
                     }
+
+                    secureOnlineLayersAdapter.addAll(secureLayers);
+                    insecureOnlineLayersAdapter.addAll(insecureLayers);
 
                     if (!layers.isEmpty()) {
                         noContentView.setVisibility(View.GONE);
@@ -285,6 +310,15 @@ public class OnlineLayersPreferenceActivity extends AppCompatActivity {
                 @Override
                 public void onClick(View v) {
                     boolean isChecked = ((Checkable) v).isChecked();
+
+                    //TODO this still allows for check box to be checked
+                    if (URLUtil.isHttpUrl(layer.getUrl())) {
+                        new AlertDialog.Builder(getContext())
+                                .setTitle("Non HTTPS Layer")
+                                .setMessage("We cannot load this layer on mobile because it cannot be accessed securely.")
+                                .setPositiveButton("OK", null).show();
+                        return;
+                    }
 
                     CacheOverlay overlay = CacheProvider.getInstance(getContext()).getOverlay(layer.getName());
                     if(overlay != null){

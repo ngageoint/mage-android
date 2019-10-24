@@ -34,14 +34,48 @@
             android:layout_height="2dip"
             android:background="?android:attr/dividerHorizontal" />
 
+        <LinearLayout android:layout_weight="1"
+            android:layout_height="fill_parent"
+            android:layout_width="fill_parent">
         <ListView
             android:id="@android:id/list"
-            android:layout_width="match_parent"
-            android:layout_height="0dip"
-            android:layout_weight="1"
             android:drawSelectorOnTop="false"
+            android:layout_height="fill_parent"
+            android:layout_width="fill_parent"
             android:divider="@drawable/static_layer_divider"
             android:dividerHeight="1dip"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal" >
+
+            <TextView
+                android:layout_width="0dip"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:paddingBottom="4dp"
+                android:text="Insecure Layers"
+                android:textSize="14sp" />
+        </LinearLayout>
+
+        <View
+            android:layout_width="fill_parent"
+            android:layout_height="2dip"
+            android:background="?android:attr/dividerHorizontal" />
+
+        <LinearLayout android:layout_weight="1"
+            android:layout_height="fill_parent"
+            android:layout_width="fill_parent">
+            <ListView
+                android:id="@+id/insecure_layers_list"
+                android:drawSelectorOnTop="false"
+                android:layout_height="fill_parent"
+                android:layout_width="fill_parent"
+                android:divider="@drawable/static_layer_divider"
+                android:dividerHeight="1dip"/>
+        </LinearLayout>
     </LinearLayout>
 
     <LinearLayout
