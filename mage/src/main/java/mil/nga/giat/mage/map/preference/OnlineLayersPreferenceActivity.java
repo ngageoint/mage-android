@@ -260,12 +260,9 @@ public class OnlineLayersPreferenceActivity extends AppCompatActivity {
      */
     @UiThread
     public static class OnlineLayersAdapter extends ArrayAdapter<Layer> {
-        private final List<Layer> layers;
 
         public OnlineLayersAdapter(Context context, List<Layer> overlays) {
             super(context, R.layout.online_layers_list_item, R.id.online_layers_title, overlays);
-
-            this.layers = overlays;
         }
 
         @Override
@@ -303,35 +300,6 @@ public class OnlineLayersPreferenceActivity extends AppCompatActivity {
 
 
             return view;
-        }
-
-        @Override
-        public int getPosition(Layer layer) {
-            for (int i = 0; i < layers.size(); i++) {
-                if (layer.equals(layers.get(i))) {
-                    return i;
-                }
-            }
-
-            return -1;
-        }
-
-        @Override
-        public Layer getItem(int index) {
-            Layer layer = null;
-
-            try {
-                layer = layers.get(index);
-            } catch (ArrayIndexOutOfBoundsException e) {
-                Log.e(LOG_NAME, "Why out of bounds?", e);
-            }
-
-            return layer;
-        }
-
-        @Override
-        public long getItemId(int index) {
-            return index;
         }
 
         @Override
