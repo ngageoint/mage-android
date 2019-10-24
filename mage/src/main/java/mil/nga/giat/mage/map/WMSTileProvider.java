@@ -40,12 +40,17 @@ public class WMSTileProvider extends UrlTileProvider {
 
         StringBuilder path = new StringBuilder(myOverlay.getURL().toString());
 
-        path.append("?request=GetMap&service=WMS&styles="
-                + myOverlay.getWmsStyles() != null ? myOverlay.getWmsStyles() : "");
-        path.append("&layers=" + myOverlay.getWmsLayers() != null ? myOverlay.getWmsLayers() : "");
+        path.append("?request=GetMap&service=WMS");
+        if(myOverlay.getWmsStyles() != null){
+            path.append("&styles=" + myOverlay.getWmsStyles());
+        }
+        if(myOverlay.getWmsLayers() != null){
+            path.append("&layers=" + myOverlay.getWmsLayers());
+        }
         path.append("&version=" + myOverlay.getWmsVersion());
-        path.append("&" + epsgKey + " =EPSG:3857&width=256&height=256&format=" + myOverlay.getWmsFormat());
+        path.append("&" + epsgKey + "=EPSG:3857&width=256&height=256&format=" + myOverlay.getWmsFormat());
         path.append("&transparent=" + transparentValue);
+        path.append(buildBBox(x,y,z));
 
         URL newPath = null;
 
@@ -58,24 +63,31 @@ public class WMSTileProvider extends UrlTileProvider {
         return newPath;
     }
 
-    public double getX(int x, int z){
+    private double getX(int x, int z){
         return x / Math.pow(2.0, z) * 360.0 - 180;
     }
 
-    public double getY(int y, int z){
+    private double getY(int y, int z){
         double n = Math.PI - 2.0 * Math.PI * y / Math.pow(2.0, z);
         return 180.0 / Math.PI * Math.atan(0.5 * (Math.exp(n) - Math.exp (-n)));
     }
 
-    public double mercatorXOfLongitude(double lon){
+    private double mercatorXOfLongitude(double lon){
         return lon * 20037508.34 / 180;
     }
 
-    public double mercatorYOfLatitude(double lat){
+    private double mercatorYOfLatitude(double lat){
         double y = Math.log(Math.tan((90 + lat) * Math.PI / 360)) / (Math.PI / 180);
         y = y * 20037508.34 / 180;
         return y;
     }
 
+    private String buildBBox(int x, int y, int z){
+        double left =  mercatorXOfLongitude(getX(x, z));
+        double right = mercatorXOfLongitude(getX(x+1 ,z));
+        double bottom = mercatorYOfLatitude(getY(y+1, z));
+        double top = mercatorYOfLatitude(getY(y, z));
 
+        return "&BBOX=" + left +"," + bottom + "," + right + "," + top;
+    }
 }
