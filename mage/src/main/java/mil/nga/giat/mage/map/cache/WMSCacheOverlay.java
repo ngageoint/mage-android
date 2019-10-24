@@ -1,8 +1,6 @@
 package mil.nga.giat.mage.map.cache;
 
 import java.net.URL;
-import java.util.HashSet;
-import java.util.Set;
 
 import mil.nga.giat.mage.sdk.datastore.layer.Layer;
 

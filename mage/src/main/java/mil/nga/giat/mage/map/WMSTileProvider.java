@@ -26,21 +26,21 @@ public class WMSTileProvider extends UrlTileProvider {
     public URL getTileUrl(int x, int y, int z) {
         String version = myOverlay.getWmsVersion();
         String epsgKey = "SRS";
-        if(version.equals("1.3")){
+        if(version != null && version.equals("1.3")){
             epsgKey = "CRS";
         }
 
         Integer transparent = Integer.parseInt(myOverlay.getWmsTransparent());
         String transparentValue = "false";
-        if(transparent.equals(new Integer(1))){
+        if(transparent != null && transparent.equals(new Integer(1))){
             transparentValue = "true";
         }
 
         String path = myOverlay.getURL().toString();
 
         path = path + "?request=GetMap&service=WMS&styles="
-                + myOverlay.getWmsStyles()
-                + "&layers=" + myOverlay.getWmsLayers()
+                + myOverlay.getWmsStyles() != null ? myOverlay.getWmsStyles() : ""
+                + "&layers=" + myOverlay.getWmsLayers() != null ? myOverlay.getWmsLayers() : ""
                 + "&version=" + myOverlay.getWmsVersion()
                 + "&" + epsgKey +" =EPSG:3857&width=256&height=256&format="
                 + myOverlay.getWmsFormat()
