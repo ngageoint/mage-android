@@ -26,30 +26,31 @@ public class WMSTileProvider extends UrlTileProvider {
     public URL getTileUrl(int x, int y, int z) {
         String version = myOverlay.getWmsVersion();
         String epsgKey = "SRS";
-        if(version != null && version.equals("1.3")){
+        if (version != null && version.equals("1.3") || version.equals("1.3.0")) {
             epsgKey = "CRS";
         }
 
-        Integer transparent = Integer.parseInt(myOverlay.getWmsTransparent());
         String transparentValue = "false";
-        if(transparent != null && transparent.equals(new Integer(1))){
-            transparentValue = "true";
+        if (myOverlay.getWmsTransparent() != null) {
+            Integer transparent = Integer.parseInt(myOverlay.getWmsTransparent());
+            if (transparent != null && transparent.equals(new Integer(1))) {
+                transparentValue = "true";
+            }
         }
 
-        String path = myOverlay.getURL().toString();
+        StringBuilder path = new StringBuilder(myOverlay.getURL().toString());
 
-        path = path + "?request=GetMap&service=WMS&styles="
-                + myOverlay.getWmsStyles() != null ? myOverlay.getWmsStyles() : ""
-                + "&layers=" + myOverlay.getWmsLayers() != null ? myOverlay.getWmsLayers() : ""
-                + "&version=" + myOverlay.getWmsVersion()
-                + "&" + epsgKey +" =EPSG:3857&width=256&height=256&format="
-                + myOverlay.getWmsFormat()
-                + "&transparent=" + transparentValue;
+        path.append("?request=GetMap&service=WMS&styles="
+                + myOverlay.getWmsStyles() != null ? myOverlay.getWmsStyles() : "");
+        path.append("&layers=" + myOverlay.getWmsLayers() != null ? myOverlay.getWmsLayers() : "");
+        path.append("&version=" + myOverlay.getWmsVersion());
+        path.append("&" + epsgKey + " =EPSG:3857&width=256&height=256&format=" + myOverlay.getWmsFormat());
+        path.append("&transparent=" + transparentValue);
 
         URL newPath = null;
 
         try {
-            newPath = new URL(path);
+            newPath = new URL(path.toString());
         } catch (MalformedURLException e) {
             Log.w(LOG_NAME, "Problem with URL " + path, e);
         }
