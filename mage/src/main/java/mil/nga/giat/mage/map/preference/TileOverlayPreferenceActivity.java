@@ -450,7 +450,6 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
          */
         @UiThread
         public ArrayList<String> getSelectedOverlays() {
-            //TODO grab the static ids as well
             ArrayList<String> overlays = new ArrayList<>();
             for (CacheOverlay cacheOverlay : CacheProvider.getInstance(getContext()).getCacheOverlays()) {
                 if(cacheOverlay instanceof GeoPackageCacheOverlay) {
@@ -815,6 +814,10 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
             view = inflater.inflate(R.layout.cache_overlay_group, viewGroup, false);
 
             final CacheOverlay overlay = geopackageOverlays.get(i - layers.size());
+
+            Event event = EventHelper.getInstance(activity.getApplicationContext()).getCurrentEvent();
+            TextView groupView = view.findViewById(R.id.cache_over_group_text);
+            groupView.setText(event.getName() +" Layers");
 
             view.findViewById(R.id.section_header).setVisibility(i == layers.size() ? View.VISIBLE : View.GONE);
 
