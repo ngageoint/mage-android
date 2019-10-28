@@ -30,6 +30,11 @@ public enum CacheOverlayType {
     /**
      * Url of a tile server
      */
-    URL;
+    URL,
+
+    /**
+     * Static features like XML
+     */
+    STATIC_FEATURE
 
 }

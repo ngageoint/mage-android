@@ -43,12 +43,8 @@ import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import javax.inject.Inject;
-
-import dagger.android.support.AndroidSupportInjection;
 import mil.nga.geopackage.GeoPackageManager;
 import mil.nga.geopackage.factory.GeoPackageFactory;
-import mil.nga.giat.mage.MageApplication;
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.cache.CacheUtils;
 import mil.nga.giat.mage.map.cache.CacheOverlay;
@@ -56,6 +52,7 @@ import mil.nga.giat.mage.map.cache.CacheOverlayFilter;
 import mil.nga.giat.mage.map.cache.CacheProvider;
 import mil.nga.giat.mage.map.cache.CacheProvider.OnCacheOverlayListener;
 import mil.nga.giat.mage.map.cache.GeoPackageCacheOverlay;
+import mil.nga.giat.mage.map.cache.StaticFeatureCacheOverlay;
 import mil.nga.giat.mage.map.cache.XYZDirectoryCacheOverlay;
 import mil.nga.giat.mage.map.download.GeoPackageDownloadManager;
 import mil.nga.giat.mage.sdk.datastore.layer.Layer;
@@ -680,9 +677,9 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
         private final Activity activity;
 
         /**
-         * List of geopackage cache overlays
+         * List of geopackage and static feature cache overlays
          */
-        private final List<CacheOverlay> geopackageOverlays;
+        private final List<CacheOverlay> cacheOverlays;
 
         /**
          * all layers
@@ -701,13 +698,14 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
          */
         public OverlayAdapter(Activity activity, Event event, List<CacheOverlay> overlays, GeoPackageDownloadManager downloadManager) {
             this.activity = activity;
-            this.geopackageOverlays = new CacheOverlayFilter(activity.getApplicationContext(), event).filter(overlays);
-            Iterator<CacheOverlay> it = this.geopackageOverlays.iterator();
+            this.cacheOverlays = new CacheOverlayFilter(activity.getApplicationContext(), event).filter(overlays);
+            Iterator<CacheOverlay> it = this.cacheOverlays.iterator();
             while(it.hasNext()){
                 CacheOverlay overlay = it.next();
-                if(!(overlay instanceof GeoPackageCacheOverlay)) {
-                    it.remove();
+                if(overlay instanceof GeoPackageCacheOverlay || overlay instanceof StaticFeatureCacheOverlay) {
+                    continue;
                 }
+                it.remove();
             }
 
             this.downloadManager = downloadManager;
@@ -715,10 +713,10 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
 
         public void addOverlay(CacheOverlay overlay, Layer layer) {
 
-            if(overlay instanceof GeoPackageCacheOverlay) {
+            if(overlay instanceof GeoPackageCacheOverlay || overlay instanceof StaticFeatureCacheOverlay) {
                 if (layer.isLoaded()) {
                     layers.remove(layer);
-                    geopackageOverlays.add(overlay);
+                    cacheOverlays.add(overlay);
                 }
             }
         }
@@ -748,7 +746,7 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
 
         @Override
         public int getGroupCount() {
-            return geopackageOverlays.size() + layers.size();
+            return cacheOverlays.size() + layers.size();
         }
 
         @Override
@@ -756,7 +754,7 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
             if (i < layers.size()) {
                 return 0;
             } else {
-                int children = geopackageOverlays.get(i - layers.size()).getChildren().size();
+                int children = cacheOverlays.get(i - layers.size()).getChildren().size();
 
                 for (Layer layer : layers) {
                     if(layer.getType().equalsIgnoreCase("geopackage")) {
@@ -775,13 +773,13 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
             if (i < layers.size()) {
                 return layers.get(i);
             } else {
-                return geopackageOverlays.get(i - layers.size());
+                return cacheOverlays.get(i - layers.size());
             }
         }
 
         @Override
         public Object getChild(int i, int j) {
-            return geopackageOverlays.get(i - layers.size()).getChildren().get(j);
+            return cacheOverlays.get(i - layers.size()).getChildren().get(j);
         }
 
         @Override
@@ -812,7 +810,7 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
             LayoutInflater inflater = LayoutInflater.from(activity);
             view = inflater.inflate(R.layout.cache_overlay_group, viewGroup, false);
 
-            final CacheOverlay overlay = geopackageOverlays.get(i - layers.size());
+            final CacheOverlay overlay = cacheOverlays.get(i - layers.size());
 
             Event event = EventHelper.getInstance(activity.getApplicationContext()).getCurrentEvent();
             TextView groupView = view.findViewById(R.id.cache_over_group_text);
@@ -897,7 +895,7 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
 
             final ProgressBar progressBar = view.findViewById(R.id.layer_progress);
             final View download = view.findViewById(R.id.layer_download);
-            if (!layer.getType().equals("Feature")) {
+            if (layer.getType().equalsIgnoreCase("geopackage")) {
                 if (downloadManager.isDownloading(layer)) {
                     int progress = downloadManager.getProgress(layer);
                     long fileSize = layer.getFileSize();
@@ -919,10 +917,11 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
                     progressBar.setVisibility(View.GONE);
                     download.setVisibility(View.VISIBLE);
                 }
-            }else{
-                //TODO handle downloading of features
-                progressBar.setVisibility(View.GONE);
-                download.setVisibility(View.VISIBLE);
+            }else if (layer.getType().equalsIgnoreCase("feature")){
+                if(!layer.isLoaded()) {
+                    progressBar.setVisibility(View.GONE);
+                    download.setVisibility(View.VISIBLE);
+                }
             }
 
             final Layer threadLayer = layer;
@@ -931,10 +930,23 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
                 public void onClick(View v) {
                     progressBar.setVisibility(View.VISIBLE);
                     download.setVisibility(View.GONE);
+
                     if (threadLayer.getType().equalsIgnoreCase("geopackage")) {
                         downloadManager.downloadGeoPackage(threadLayer);
                     } else if (threadLayer.getType().equalsIgnoreCase("feature")) {
-                        //TODO download static feature
+                        Runnable r = new Runnable() {
+                            @Override
+                            public void run() {
+                                StaticFeatureServerFetch staticFeatureServerFetch = new StaticFeatureServerFetch(activity.getApplicationContext());
+                                try {
+                                    staticFeatureServerFetch.load(null, threadLayer);
+                                    CacheProvider.getInstance(activity.getApplicationContext()).refreshTileOverlays();
+                                } catch (Exception e) {
+                                    Log.w(LOG_NAME, "Error fetching static layers",e);
+                                }
+                            }
+                        };
+                        new Thread(r).start();
                     }
                 }
             });
@@ -950,7 +962,7 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
                 convertView = inflater.inflate(R.layout.cache_overlay_child, parent, false);
             }
 
-            final CacheOverlay overlay = geopackageOverlays.get(groupPosition - layers.size());
+            final CacheOverlay overlay = cacheOverlays.get(groupPosition - layers.size());
             final CacheOverlay childCache = overlay.getChildren().get(childPosition);
 
             ImageView imageView =  convertView.findViewById(R.id.cache_overlay_child_image);

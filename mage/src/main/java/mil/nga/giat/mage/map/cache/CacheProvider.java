@@ -14,7 +14,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -187,6 +186,18 @@ public class CacheProvider {
                         overlays.add(new URLCacheOverlay(imagery.getName(), new URL(imagery.getUrl()), imagery));
                     }else{
                         overlays.add(new WMSCacheOverlay(imagery.getName(), new URL(imagery.getUrl()), imagery));
+                    }
+                }
+            }catch(Exception e){
+                Log.w(LOG_NAME, "Failed to load imagery layers", e);
+            }
+
+            try {
+                List<Layer> featureLayers = LayerHelper.getInstance(context).readAll("Feature");
+
+                for(Layer feature : featureLayers){
+                    if(feature.isLoaded()){
+                        overlays.add(new StaticFeatureCacheOverlay(feature.getName()));
                     }
                 }
             }catch(Exception e){
