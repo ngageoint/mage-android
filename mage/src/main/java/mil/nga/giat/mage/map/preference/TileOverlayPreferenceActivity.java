@@ -34,7 +34,6 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import java.io.File;
-import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -122,10 +121,7 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
         }
     }
 
-    public static class OverlayListFragment extends ListFragment implements OnCacheOverlayListener {
-        @Inject
-        MageApplication application;
-
+    public static class OverlayListFragment extends ListFragment implements OnCacheOverlayListener, StaticFeatureServerFetch.OnStaticLayersListener {
         private OverlayAdapter overlayAdapter;
         private final Object overlayAdapterLock = new Object();
         private ExpandableListView listView;
@@ -156,8 +152,6 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
                     });
                 }
             });
-
-            AndroidSupportInjection.inject(this);
         }
 
         @Override
@@ -273,31 +267,40 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
         }
 
         private void fetchStaticLayers(){
-            //TODO make this act the same was as geopackage (i.e. not fully downloaded)
-            //This executes off the current thread
-            application.loadStaticFeatures(true, new StaticFeatureServerFetch.OnStaticLayersListener() {
+            Runnable runnable = new Runnable() {
                 @Override
-                public void onStaticLayersLoaded(final Collection<Layer> layers) {
+                public void run() {
+                    StaticFeatureServerFetch staticFeatureServerFetch = new StaticFeatureServerFetch(getContext());
+                    try {
+                        staticFeatureServerFetch.fetch(true, OverlayListFragment.this);
+                    } catch (Exception e) {
+                        Log.w(LOG_NAME, "Error fetching static layers",e);
+                    }
+                }
+            };
 
-                    getActivity().runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            synchronized (overlayAdapterLock) {
-                                Iterator<Layer> it = overlayAdapter.getLayers().iterator();
-                                while(it.hasNext()){
-                                    Layer layer = it.next();
-                                    if(layer.getType().equalsIgnoreCase("Feature")){
-                                        it.remove();
-                                    }
-                                }
-                                overlayAdapter.getLayers().addAll(layers);
+            new Thread(runnable).start();
+        }
+
+        @Override
+        public void onStaticLayersLoaded(final Collection<Layer> layers){
+            getActivity().runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    synchronized (overlayAdapterLock) {
+                        Iterator<Layer> it = overlayAdapter.getLayers().iterator();
+                        while(it.hasNext()){
+                            Layer layer = it.next();
+                            if(layer.getType().equalsIgnoreCase("Feature")){
+                                it.remove();
                             }
-                            refreshButton.setEnabled(true);
-                            listView.setEnabled(true);
-                            progress.setVisibility(View.GONE);
-                            overlayAdapter.notifyDataSetChanged();
                         }
-                    });
+                        overlayAdapter.getLayers().addAll(layers);
+                    }
+                    refreshButton.setEnabled(true);
+                    listView.setEnabled(true);
+                    progress.setVisibility(View.GONE);
+                    overlayAdapter.notifyDataSetChanged();
                 }
             });
         }
@@ -437,7 +440,7 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
                 case PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE: {
                     if(grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                         CacheProvider.getInstance(getActivity()).refreshTileOverlays();
-                    };
+                    }
 
                     break;
                 }
@@ -885,9 +888,9 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
             cacheName.setText(layer.getName());
             TextView description = view.findViewById(R.id.layer_description);
 
-            if(layer.getType().equalsIgnoreCase("geopackage")){
+            if (layer.getType().equalsIgnoreCase("geopackage")) {
                 description.setText(ByteUtils.getInstance().getDisplay(layer.getFileSize(), false));
-            }else{
+            } else {
                 description.setText("Static feature data");
             }
 
@@ -916,23 +919,25 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
                     progressBar.setVisibility(View.GONE);
                     download.setVisibility(View.VISIBLE);
                 }
+            }else{
+                //TODO handle downloading of features
+                progressBar.setVisibility(View.GONE);
+                download.setVisibility(View.VISIBLE);
             }
 
-            if (layer.getType().equals("Feature")) {
-                //TODO KML is always downloaded
-                progressBar.setVisibility(View.GONE);
-                download.setVisibility(View.GONE);
-            } else {
-                final Layer threadLayer = layer;
-                download.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        progressBar.setVisibility(View.VISIBLE);
-                        download.setVisibility(View.GONE);
+            final Layer threadLayer = layer;
+            download.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    progressBar.setVisibility(View.VISIBLE);
+                    download.setVisibility(View.GONE);
+                    if (threadLayer.getType().equalsIgnoreCase("geopackage")) {
                         downloadManager.downloadGeoPackage(threadLayer);
+                    } else if (threadLayer.getType().equalsIgnoreCase("feature")) {
+                        //TODO download static feature
                     }
-                });
-            }
+                }
+            });
 
             return view;
         }
