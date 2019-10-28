@@ -47,12 +47,14 @@ public class StaticFeatureServerFetch extends AbstractServerFetch {
 
 
 	// TODO test that icons are pulled correctly
-	public void fetch(boolean deleteLocal, OnStaticLayersListener listener) {
+	public List<Layer> fetch(boolean deleteLocal, OnStaticLayersListener listener) {
+
+		List<Layer> newLayers = new ArrayList<>();
 
 		// if you are disconnect, skip this
 		if(!ConnectivityUtility.isOnline(mContext) || LoginTaskFactory.getInstance(mContext).isLocalLogin()) {
 			Log.d(LOG_NAME, "Disconnected, not pulling static layers.");
-			return;
+			return newLayers;
 		}
 
 		Event event = EventHelper.getInstance(mContext).getCurrentEvent();
@@ -75,7 +77,7 @@ public class StaticFeatureServerFetch extends AbstractServerFetch {
 				layerHelper.create(layer);
 			}
 
-			Collection<Layer> newLayers = layerHelper.readAll(FEATURE_TYPE);
+			newLayers.addAll(layerHelper.readAll(FEATURE_TYPE));
 
 			if (listener != null) {
 				listener.onStaticLayersLoaded(newLayers);
@@ -83,6 +85,8 @@ public class StaticFeatureServerFetch extends AbstractServerFetch {
 		} catch (Exception e) {
 			Log.e(LOG_NAME, "Problem creating layers.", e);
 		}
+
+		return newLayers;
 	}
 
 	public void load(OnStaticLayersListener listener, Layer layer) {
