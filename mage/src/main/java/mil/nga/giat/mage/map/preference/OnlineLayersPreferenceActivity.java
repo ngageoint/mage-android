@@ -28,6 +28,7 @@ import android.widget.TextView;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 
@@ -238,6 +239,16 @@ public class OnlineLayersPreferenceActivity extends AppCompatActivity {
                         }
                     }
 
+                    Comparator<Layer> compare = new Comparator<Layer>() {
+                        @Override
+                        public int compare(Layer o1, Layer o2) {
+                            return o1.getName().compareTo(o2.getName());
+
+                        }
+                    };
+
+                    Collections.sort(secureLayers, compare);
+                    Collections.sort(insecureLayers, compare);
                     secureOnlineLayersAdapter.addAll(secureLayers);
                     insecureOnlineLayersAdapter.addAll(insecureLayers);
 
