@@ -69,6 +69,7 @@ import mil.nga.giat.mage.sdk.gson.deserializer.LayerDeserializer;
 import mil.nga.giat.mage.sdk.http.HttpClientManager;
 import mil.nga.giat.mage.sdk.http.resource.LayerResource;
 import mil.nga.giat.mage.sdk.utils.StorageUtility;
+import mil.nga.giat.mage.utils.ByteUtils;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -671,11 +672,6 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
     public static class OverlayAdapter extends BaseExpandableListAdapter {
 
         /**
-         * Used when formatting file sizes
-         */
-        private static final String[] ourSizeUnits = new String[] { "B", "KB", "MB", "GB", "TB" };
-
-        /**
          * Context
          */
         private final Activity activity;
@@ -890,11 +886,7 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
             TextView description = view.findViewById(R.id.layer_description);
 
             if(layer.getType().equalsIgnoreCase("geopackage")){
-                long size = layer.getFileSize();
-                int digitGroups = (int) (Math.log10(size) / Math.log10(1024));
-
-                String stringSize = new DecimalFormat("#,##0.#").format(size / Math.pow(1024, digitGroups)) + " " + ourSizeUnits[digitGroups];
-                description.setText(stringSize);
+                description.setText(ByteUtils.getInstance().getDisplay(layer.getFileSize(), false));
             }else{
                 description.setText("Static feature data");
             }
