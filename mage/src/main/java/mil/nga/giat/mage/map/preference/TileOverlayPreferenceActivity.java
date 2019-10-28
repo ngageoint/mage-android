@@ -34,6 +34,7 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import java.io.File;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -681,6 +682,8 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
 
         private final GeoPackageDownloadManager downloadManager;
 
+        private final String[] units = new String[] { "B", "KB", "MB", "GB", "TB" };
+
         /**
          * Constructor
          *
@@ -880,6 +883,17 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
 
             TextView cacheName = view.findViewById(R.id.layer_name);
             cacheName.setText(layer.getName());
+            TextView description = view.findViewById(R.id.layer_description);
+
+            if(layer.getType().equalsIgnoreCase("geopackage")){
+                long size = layer.getFileSize();
+                int digitGroups = (int) (Math.log10(size) / Math.log10(1024));
+
+                String stringSize = new DecimalFormat("#,##0.#").format(size / Math.pow(1024, digitGroups)) + " " + units[digitGroups];
+                description.setText(stringSize);
+            }else{
+                description.setText("Static feature data");
+            }
 
             TextView layerSize = view.findViewById(R.id.layer_size);
 

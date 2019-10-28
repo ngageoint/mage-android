@@ -47,6 +47,12 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_vertical"
                 style="@style/ListTextPrimary" />
+            <TextView
+                android:id="@+id/layer_description"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                style="@style/ListTextPrimary" />
 
             <ProgressBar
                 android:id="@+id/layer_progress"
