@@ -148,6 +148,7 @@ public class StaticFeatureServerFetch extends AbstractServerFetch {
 
 					layer = staticFeatureHelper.createAll(staticFeatures, layer);
 					try {
+						layer.setLoaded(true);
 						DaoStore.getInstance(mContext).getLayerDao().update(layer);
 					} catch (SQLException e) {
 						throw new StaticFeatureException("Unable to update the layer to loaded: " + layer.getName());
