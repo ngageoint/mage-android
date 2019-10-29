@@ -1190,6 +1190,12 @@ public class MapFragment extends DaggerFragment implements OnMapReadyCallback, O
 				tileProvider = new WMSTileProvider(256, 256, urlCacheOverlay);
 			}
 			TileOverlayOptions overlayOptions = createTileOverlayOptions(tileProvider);
+
+			if(urlCacheOverlay.isBase()) {
+				overlayOptions.zIndex(-2);
+			} else{
+				overlayOptions.zIndex(-3);
+			}
 			// Set the tile overlay in the cache overlay
 			TileOverlay tileOverlay = map.addTileOverlay(overlayOptions);
 			urlCacheOverlay.setTileOverlay(tileOverlay);

@@ -12,6 +12,8 @@ public class URLCacheOverlay extends CacheOverlay {
 
     private final String myFormat;
 
+    private final boolean base;
+
     /**
      * Tile Overlay
      */
@@ -21,6 +23,7 @@ public class URLCacheOverlay extends CacheOverlay {
         super(name, CacheOverlayType.URL, false);
         myUrl = url;
         myFormat = layer.getFormat();
+        base = layer.getBase();
     }
 
     @Override
@@ -35,6 +38,10 @@ public class URLCacheOverlay extends CacheOverlay {
         return myUrl;
     }
     public String getFormat() {return myFormat;}
+
+    public boolean isBase() {
+        return base;
+    }
 
     /**
      * Get the tile overlay
