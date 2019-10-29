@@ -42,6 +42,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.Semaphore;
 
 import mil.nga.geopackage.GeoPackageManager;
 import mil.nga.geopackage.factory.GeoPackageFactory;
@@ -253,6 +254,8 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
             // The problem is that onResume gets called before this so my menu is
             // not yet setup and I will not have a handle on this button
             CacheProvider.getInstance(getActivity()).registerCacheOverlayListener(this);
+
+            manualRefresh(refreshButton);
         }
 
         @Override
@@ -277,31 +280,81 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
             progress.setVisibility(View.VISIBLE);
             listView.setEnabled(false);
             overlayAdapter.getLayers().clear();
-            overlayAdapter.getOverlays().clear();
+            overlayAdapter.notifyDataSetChanged();
 
             Runnable fetcher = new Runnable() {
                 @Override
                 public void run() {
+                    final Semaphore lock = new Semaphore(1);
+                    lock.drainPermits();
                     fetchGeopackageLayers(new Callback<Collection<Layer>>() {
                         @Override
                         public void onResponse(Call<Collection<Layer>> call, Response<Collection<Layer>> response) {
-                            if (response.isSuccessful()) {
-                                saveGeopackageLayers(response.body());
+                            try {
+                                if (response.isSuccessful()) {
+                                    saveGeopackageLayers(response.body());
+                                }
+                            } finally {
+                                lock.release();
                             }
                         }
 
                         @Override
                         public void onFailure(Call<Collection<Layer>> call, Throwable t) {
                             Log.e(LOG_NAME, "Error fetching event geopackage layers", t);
+                            lock.release();
                         }
                     });
-                    fetchStaticLayers();
-                    CacheProvider.getInstance(getActivity()).refreshTileOverlays();
+                    try {
+                        lock.acquire();
+                    }catch(InterruptedException e) {
+                        fetchStaticLayers();
+                    }
+
+                    final Event event = EventHelper.getInstance(getActivity().getApplicationContext()).getCurrentEvent();
+
+                    List<Layer> layers = new ArrayList<>();
+                    try {
+                        for (Layer layer : LayerHelper.getInstance(getActivity().getApplicationContext()).readByEvent(event, "GeoPackage")) {
+                            if (!layer.isLoaded()) {
+                                layers.add(layer);
+                            }
+                        }
+                        for (Layer layer : LayerHelper.getInstance(getActivity().getApplicationContext()).readByEvent(event, "Feature")) {
+                            if (!layer.isLoaded()) {
+                                layers.add(layer);
+                            }
+                        }
+                    } catch (LayerException e) {
+                    }
+
+                    OverlayListFragment.this.onManualRefreshComplete(layers);
                 }
             };
             new Thread(fetcher).start();
         }
 
+        private void onManualRefreshComplete(final List<Layer> layers){
+            getActivity().runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    synchronized (overlayAdapterLock){
+                        overlayAdapter.getLayers().removeAll(layers);
+                        overlayAdapter.getLayers().addAll(layers);
+                        overlayAdapter.notifyDataSetChanged();
+                    }
+                    refreshButton.setEnabled(true);
+                    progress.setVisibility(View.GONE);
+                    listView.setEnabled(true);
+                }
+            });
+        }
+
+        /**
+         * This reads the remote layers from the server but does not download them
+         *
+         * @return
+         */
         private List<Layer> fetchStaticLayers(){
             StaticFeatureServerFetch staticFeatureServerFetch = new StaticFeatureServerFetch(getContext());
             return staticFeatureServerFetch.fetch(true, null);
@@ -352,32 +405,38 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
         @Override
         public void onCacheOverlay(final List<CacheOverlay> cacheOverlays) {
             final Event event = EventHelper.getInstance(getActivity().getApplicationContext()).getCurrentEvent();
-            
-            try {
-                List<Layer> staticFeatures = LayerHelper.getInstance(getActivity().getApplicationContext()).readByEvent(event,"Feature");
-                synchronized (overlayAdapterLock){
-                    overlayAdapter.getLayers().addAll(staticFeatures);
-                    overlayAdapter.notifyDataSetChanged();
+
+            synchronized (overlayAdapterLock) {
+                overlayAdapter.getOverlays().removeAll(cacheOverlays);
+
+                for (CacheOverlay overlay : cacheOverlays) {
+                    if(overlay instanceof StaticFeatureCacheOverlay) {
+                        overlayAdapter.getOverlays().add(overlay);
+                    }
                 }
-            } catch (LayerException e) {
             }
 
-            refreshButton.setEnabled(true);
-            listView.setEnabled(true);
-            progress.setVisibility(View.GONE);
             overlayAdapter.notifyDataSetChanged();
 
             List<Layer> geopackages = Collections.EMPTY_LIST;
             try {
-                geopackages = LayerHelper.getInstance(getActivity().getApplicationContext()).readByEvent(event,"GeoPackage");
+                geopackages = LayerHelper.getInstance(getActivity().getApplicationContext()).readByEvent(event, "GeoPackage");
             } catch (LayerException e) {
             }
 
             downloadManager.reconcileDownloads(geopackages, new GeoPackageDownloadManager.GeoPackageLoadListener() {
                 @Override
                 public void onReady(List<Layer> layers) {
-                    synchronized (overlayAdapterLock) {
+
+                    synchronized (overlayAdapterLock){
+                        overlayAdapter.getLayers().removeAll(layers);
                         overlayAdapter.getLayers().addAll(layers);
+                        List<CacheOverlay> filtered = new CacheOverlayFilter(getContext(), event).filter(cacheOverlays);
+                        for(CacheOverlay overlay : filtered) {
+                            if(overlay instanceof GeoPackageCacheOverlay) {
+                                overlayAdapter.getOverlays().add(overlay);
+                            }
+                        }
                         overlayAdapter.notifyDataSetChanged();
                     }
 
@@ -388,7 +447,7 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
 
                             @Override
                             public void run() {
-                                synchronized(timerLock) {
+                                synchronized (timerLock) {
                                     if (!canceled) {
                                         updateGeopackageDownloadProgress();
                                     }
@@ -561,9 +620,6 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
         @UiThread
         private void deleteCacheOverlay(CacheOverlay cacheOverlay){
 
-            progress.setVisibility(View.VISIBLE);
-            listView.setEnabled(false);
-
             switch(cacheOverlay.getType()) {
 
                 case XYZ_DIRECTORY:
@@ -574,8 +630,18 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
                     deleteGeoPackageCacheOverlay((GeoPackageCacheOverlay)cacheOverlay);
                     break;
 
+                case STATIC_FEATURE:
+                    //TODO delete the static feature
+                    break;
+
             }
 
+            synchronized (overlayAdapterLock) {
+                overlayAdapter.getOverlays().clear();
+                overlayAdapter.notifyDataSetChanged();
+            }
+
+            manualRefresh(refreshButton);
             CacheProvider.getInstance(getActivity()).refreshTileOverlays();
         }
 
@@ -862,7 +928,6 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
                 description.setText("Static feature data");
             }
 
-
             final ProgressBar progressBar = view.findViewById(R.id.layer_progress);
             final View download = view.findViewById(R.id.layer_download);
             if (layer.getType().equalsIgnoreCase("geopackage")) {
@@ -887,8 +952,8 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
                     progressBar.setVisibility(View.GONE);
                     download.setVisibility(View.VISIBLE);
                 }
-            }else if (layer.getType().equalsIgnoreCase("feature")){
-                if(!layer.isLoaded()) {
+            } else if (layer.getType().equalsIgnoreCase("feature")) {
+                if (!layer.isLoaded()) {
                     progressBar.setVisibility(View.GONE);
                     download.setVisibility(View.VISIBLE);
                 }
@@ -912,7 +977,7 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
                                     staticFeatureServerFetch.load(null, threadLayer);
                                     CacheProvider.getInstance(activity.getApplicationContext()).refreshTileOverlays();
                                 } catch (Exception e) {
-                                    Log.w(LOG_NAME, "Error fetching static layers",e);
+                                    Log.w(LOG_NAME, "Error fetching static layers", e);
                                 }
                             }
                         };
