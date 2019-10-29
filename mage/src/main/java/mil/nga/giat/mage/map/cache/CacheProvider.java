@@ -197,7 +197,7 @@ public class CacheProvider {
 
                 for(Layer feature : featureLayers){
                     if(feature.isLoaded()){
-                        overlays.add(new StaticFeatureCacheOverlay(feature.getName()));
+                        overlays.add(new StaticFeatureCacheOverlay(feature.getName(), feature.getId()));
                     }
                 }
             }catch(Exception e){

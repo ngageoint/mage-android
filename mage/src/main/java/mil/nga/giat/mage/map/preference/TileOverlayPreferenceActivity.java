@@ -308,8 +308,8 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
                     try {
                         lock.acquire();
                     }catch(InterruptedException e) {
-                        fetchStaticLayers();
                     }
+                    fetchStaticLayers();
 
                     final Event event = EventHelper.getInstance(getActivity().getApplicationContext()).getCurrentEvent();
 
@@ -357,7 +357,7 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
          */
         private List<Layer> fetchStaticLayers(){
             StaticFeatureServerFetch staticFeatureServerFetch = new StaticFeatureServerFetch(getContext());
-            return staticFeatureServerFetch.fetch(true, null);
+            return staticFeatureServerFetch.fetch(false, null);
         }
 
         private void fetchGeopackageLayers(Callback<Collection<Layer>> callback) {
@@ -631,7 +631,7 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
                     break;
 
                 case STATIC_FEATURE:
-                    //TODO delete the static feature
+                    deleteStaticFeatureCacheOverlay((StaticFeatureCacheOverlay)cacheOverlay);
                     break;
 
             }
@@ -705,6 +705,13 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
             }
         }
 
+        private void deleteStaticFeatureCacheOverlay(StaticFeatureCacheOverlay cacheOverlay) {
+            try {
+                LayerHelper.getInstance(getContext()).delete(cacheOverlay.getId());
+            } catch (LayerException e) {
+
+            }
+        }
     }
 
     /**
@@ -953,8 +960,8 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
                     download.setVisibility(View.VISIBLE);
                 }
             } else if (layer.getType().equalsIgnoreCase("feature")) {
+                progressBar.setVisibility(View.GONE);
                 if (!layer.isLoaded()) {
-                    progressBar.setVisibility(View.GONE);
                     download.setVisibility(View.VISIBLE);
                 }
             }
@@ -963,10 +970,10 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
             download.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    progressBar.setVisibility(View.VISIBLE);
                     download.setVisibility(View.GONE);
 
                     if (threadLayer.getType().equalsIgnoreCase("geopackage")) {
+                        progressBar.setVisibility(View.VISIBLE);
                         downloadManager.downloadGeoPackage(threadLayer);
                     } else if (threadLayer.getType().equalsIgnoreCase("feature")) {
                         Runnable r = new Runnable() {
@@ -975,7 +982,7 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
                                 StaticFeatureServerFetch staticFeatureServerFetch = new StaticFeatureServerFetch(activity.getApplicationContext());
                                 try {
                                     staticFeatureServerFetch.load(null, threadLayer);
-                                    CacheProvider.getInstance(activity.getApplicationContext()).refreshTileOverlays();
+                                    onStaticFeatureDownloadComplete(threadLayer);
                                 } catch (Exception e) {
                                     Log.w(LOG_NAME, "Error fetching static layers", e);
                                 }
@@ -987,6 +994,18 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
             });
 
             return view;
+        }
+
+        @UiThread
+        private void onStaticFeatureDownloadComplete(final Layer layer){
+           activity.runOnUiThread(new Runnable() {
+               @Override
+               public void run() {
+                   OverlayAdapter.this.layers.remove(layer);
+                   notifyDataSetChanged();
+                   CacheProvider.getInstance(activity.getApplicationContext()).refreshTileOverlays();
+               }
+           });
         }
 
         @Override
