@@ -22,6 +22,8 @@ public class WMSTileProvider extends UrlTileProvider {
         myOverlay = (WMSCacheOverlay)overlay;
     }
 
+    public WMSCacheOverlay getOverlay (){return myOverlay;}
+
     @Override
     public URL getTileUrl(int x, int y, int z) {
         String version = myOverlay.getWmsVersion();
