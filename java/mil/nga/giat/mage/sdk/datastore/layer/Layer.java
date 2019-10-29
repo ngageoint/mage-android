@@ -71,6 +71,9 @@ public class Layer implements Comparable<Layer> {
 	@DatabaseField
 	private String wmsTransparent;
 
+	@DatabaseField
+	private boolean base = false;
+
 	public Layer() {
 		// ORMLite needs a no-arg constructor
 	}
@@ -209,6 +212,14 @@ public class Layer implements Comparable<Layer> {
 
 	public void setWmsTransparent(String wmsTransparent) {
 		this.wmsTransparent = wmsTransparent;
+	}
+
+	public boolean getBase() {
+		return base;
+	}
+
+	public void setBase(boolean base) {
+		this.base = base;
 	}
 
 	@Override

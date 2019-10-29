@@ -57,6 +57,9 @@ public class LayerDeserializer implements JsonDeserializer<Layer> {
 		if(feature.has("format")){
 			layer.setFormat(feature.get("format").getAsString());
 		}
+		if(feature.has("base")){
+			layer.setBase(Boolean.parseBoolean(feature.get("base").getAsString()));
+		}
 
 		JsonObject wms = feature.getAsJsonObject("wms");
 		if(wms != null) {
