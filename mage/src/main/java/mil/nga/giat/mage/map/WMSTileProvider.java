@@ -34,8 +34,8 @@ public class WMSTileProvider extends UrlTileProvider {
 
         String transparentValue = "false";
         if (myOverlay.getWmsTransparent() != null) {
-            Integer transparent = Integer.parseInt(myOverlay.getWmsTransparent());
-            if (transparent != null && transparent.equals(new Integer(1))) {
+            Boolean transparent = Boolean.parseBoolean(myOverlay.getWmsTransparent());
+            if (transparent.equals(Boolean.TRUE)) {
                 transparentValue = "true";
             }
         }
