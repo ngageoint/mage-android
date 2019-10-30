@@ -126,6 +126,7 @@ import mil.nga.giat.mage.map.cache.GeoPackageCacheOverlay;
 import mil.nga.giat.mage.map.cache.GeoPackageFeatureTableCacheOverlay;
 import mil.nga.giat.mage.map.cache.GeoPackageTileTableCacheOverlay;
 import mil.nga.giat.mage.map.cache.URLCacheOverlay;
+import mil.nga.giat.mage.map.cache.WMSCacheOverlay;
 import mil.nga.giat.mage.map.cache.XYZDirectoryCacheOverlay;
 import mil.nga.giat.mage.map.marker.LocationMarkerCollection;
 import mil.nga.giat.mage.map.marker.MyHistoricalLocationMarkerCollection;
@@ -1182,19 +1183,24 @@ public class MapFragment extends DaggerFragment implements OnMapReadyCallback, O
 		if(cacheOverlay == null){
 			// Create a new tile provider and add to the map
 			TileProvider tileProvider = null;
+			boolean isTransparent = false;
 			if(urlCacheOverlay.getFormat().equalsIgnoreCase("xyz")) {
 				tileProvider = new XYZTileProvider(256, 256, urlCacheOverlay);
 			}else if(urlCacheOverlay.getFormat().equalsIgnoreCase("tms")){
 				tileProvider = new TMSTileProvider(256, 256, urlCacheOverlay);
-			}else{
+			}else {
 				tileProvider = new WMSTileProvider(256, 256, urlCacheOverlay);
+				WMSCacheOverlay wms = (WMSCacheOverlay)urlCacheOverlay;
+				isTransparent =  Boolean.parseBoolean(wms.getWmsTransparent());
 			}
 			TileOverlayOptions overlayOptions = createTileOverlayOptions(tileProvider);
 
 			if(urlCacheOverlay.isBase()) {
-				overlayOptions.zIndex(-2);
-			} else{
+				overlayOptions.zIndex(-4);
+			} else if(!isTransparent) {
 				overlayOptions.zIndex(-3);
+			} else{
+				overlayOptions.zIndex(-2);
 			}
 			// Set the tile overlay in the cache overlay
 			TileOverlay tileOverlay = map.addTileOverlay(overlayOptions);
