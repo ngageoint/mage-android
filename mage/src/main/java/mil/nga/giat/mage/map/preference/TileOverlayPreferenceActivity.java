@@ -562,8 +562,8 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
                 @Override
                 public void run() {
                     AlertDialog deleteDialog = new AlertDialog.Builder(getActivity())
-                            .setTitle("Delete Cache")
-                            .setMessage("Delete " + cacheOverlay.getName() + " Cache?")
+                            .setTitle("Delete Layer")
+                            .setMessage("Delete " + cacheOverlay.getName() + " Layer?")
                             .setPositiveButton("Delete",
                                     new DialogInterface.OnClickListener() {
                                         @Override
