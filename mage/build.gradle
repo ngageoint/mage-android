@@ -15,6 +15,16 @@ version '6.2.7'
 ext {
     versionCode = 70
     sourceRefspec = Grgit.open().head().id
+
+    //Test resources
+    buildToolsVersion = "28.0.3"
+    androidxLibVersion = "1.0.0"
+    robolectricVersion = "4.3"
+    extTruthVersion = '1.3.0-alpha02'
+    coreVersion = "1.2.1-alpha02"
+    extJUnitVersion = "1.1.2-alpha02"
+    runnerVersion = "1.3.0-alpha02"
+    espressoVersion = "3.3.0-alpha02"
 }
 
 def serverURL = hasProperty('SERVER_URL') ? SERVER_URL : ''
@@ -55,6 +65,8 @@ android {
         resValue "string", "applicationId", applicationId
         manifestPlaceholders source_refspec: project.sourceRefspec
         buildConfigField "String", "SOURCE_REFSPEC", $/"${project.sourceRefspec}"/$
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
     buildTypes {
@@ -88,6 +100,12 @@ android {
         exclude 'META-INF/NOTICE'
         exclude 'META-INF/NOTICE.txt'
         exclude 'META-INF/INDEX.LIST'
+    }
+
+    testOptions {
+        unitTests {
+            includeAndroidResources = true
+        }
     }
 
     useLibrary 'android.test.runner'
@@ -222,6 +240,23 @@ dependencies {
     api 'com.nulab-inc:zxcvbn:1.2.3'
     api (name:'mgrs-0.0.2-release', ext:'aar')
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+
+    // Testing-only dependencies
+    androidTestImplementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+    androidTestImplementation 'androidx.test:core:' +coreVersion
+    androidTestImplementation 'androidx.test:core-ktx:' + coreVersion
+    androidTestImplementation 'androidx.test.ext:junit:' + extJUnitVersion
+    androidTestImplementation 'androidx.test.ext:junit-ktx:' + extJUnitVersion
+    androidTestImplementation 'androidx.test:runner:' + runnerVersion
+    androidTestImplementation 'androidx.test.espresso:espresso-core:' +espressoVersion
+
+    testImplementation 'androidx.test:core:' + coreVersion
+    testImplementation 'androidx.test.ext:junit:' + extJUnitVersion
+    testImplementation 'junit:junit:4.12'
+    testImplementation 'org.robolectric:robolectric:' + robolectricVersion
+    testImplementation 'androidx.test.espresso:espresso-core:' + espressoVersion
+    testImplementation 'androidx.test.espresso:espresso-intents:' + espressoVersion
+    testImplementation 'androidx.test.ext:truth:' + extTruthVersion
 }
 
 task androidArtifactVersion {
