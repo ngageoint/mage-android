@@ -37,7 +37,6 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Timer;
@@ -166,9 +165,7 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
                 public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
                     int itemType = ExpandableListView.getPackedPositionType(id);
                     if (itemType == ExpandableListView.PACKED_POSITION_TYPE_CHILD) {
-                        int childPosition = ExpandableListView.getPackedPositionChild(id);
-                        int groupPosition = ExpandableListView.getPackedPositionGroup(id);
-                        // Handle child row long clicks here
+                        // TODO Handle child row long clicks here
                         return true;
                     } else if (itemType == ExpandableListView.PACKED_POSITION_TYPE_GROUP) {
                         int groupPosition = ExpandableListView.getPackedPositionGroup(id);
@@ -272,7 +269,7 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
         /**
          * This is called when the user click the refresh button
          *
-         * @param item
+         * @param item refresh button
          */
         @UiThread
         private void manualRefresh(MenuItem item) {
@@ -308,6 +305,7 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
                     try {
                         lock.acquire();
                     }catch(InterruptedException e) {
+                        Log.d(LOG_NAME, "Interrupted while waiting for semaphore",e);
                     }
                     fetchStaticLayers();
 
@@ -353,11 +351,10 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
         /**
          * This reads the remote layers from the server but does not download them
          *
-         * @return
          */
-        private List<Layer> fetchStaticLayers(){
+        private void fetchStaticLayers(){
             StaticFeatureServerFetch staticFeatureServerFetch = new StaticFeatureServerFetch(getContext());
-            return staticFeatureServerFetch.fetch(false, null);
+            staticFeatureServerFetch.fetch(false, null);
         }
 
         private void fetchGeopackageLayers(Callback<Collection<Layer>> callback) {
@@ -422,6 +419,7 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
             try {
                 geopackages = LayerHelper.getInstance(getActivity().getApplicationContext()).readByEvent(event, "GeoPackage");
             } catch (LayerException e) {
+                Log.w(LOG_NAME, "Error reading geopackage layers",e);
             }
 
             downloadManager.reconcileDownloads(geopackages, new GeoPackageDownloadManager.GeoPackageLoadListener() {
@@ -485,7 +483,7 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
         /**
          * Get the selected cache overlays and child cache overlays
          *
-         * @return
+         * @return added cache overlays
          */
         @UiThread
         public ArrayList<String> getSelectedOverlays() {
@@ -709,7 +707,7 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
             try {
                 LayerHelper.getInstance(getContext()).delete(cacheOverlay.getId());
             } catch (LayerException e) {
-
+                Log.w(LOG_NAME, "Failed to delete static feature " + cacheOverlay.getCacheName() ,e);
             }
         }
     }
@@ -747,12 +745,12 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
          *
          * @param activity
          */
-        public OverlayAdapter(Activity activity, GeoPackageDownloadManager downloadManager) {
+        OverlayAdapter(Activity activity, GeoPackageDownloadManager downloadManager) {
             this.activity = activity;
             this.downloadManager = downloadManager;
         }
 
-        public void addOverlay(CacheOverlay overlay, Layer layer) {
+        void addOverlay(CacheOverlay overlay, Layer layer) {
 
             if(overlay instanceof GeoPackageCacheOverlay || overlay instanceof StaticFeatureCacheOverlay) {
                 if (layer.isLoaded()) {
@@ -768,7 +766,7 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
 
         public List<CacheOverlay> getOverlays() {return this.cacheOverlays;}
 
-        public void updateDownloadProgress(View view, int progress, long size) {
+        void updateDownloadProgress(View view, int progress, long size) {
             if (progress <= 0) {
                 return;
             }

@@ -16,7 +16,6 @@ import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.URLUtil;
@@ -182,25 +181,34 @@ public class OnlineLayersPreferenceActivity extends AppCompatActivity {
             secureOnlineLayersAdapter.clear();
             insecureOnlineLayersAdapter.clear();
 
-            final Context c = getActivity().getApplicationContext();
-            Runnable runnable = new Runnable() {
-                @Override
-                public void run() {
-                    ImageryServerFetch imageryServerFetch = new ImageryServerFetch(c);
-                    try {
-                        imageryServerFetch.fetch();
-                        CacheProvider.getInstance(getContext()).refreshTileOverlays();
-                    } catch (Exception e) {
-                        Log.w(LOG_NAME, "Failed fetching imagery",e);
+            if (getActivity() != null) {
+                final Context c = getActivity().getApplicationContext();
+                Runnable runnable = new Runnable() {
+                    @Override
+                    public void run() {
+                        ImageryServerFetch imageryServerFetch = new ImageryServerFetch(c);
+                        try {
+                            imageryServerFetch.fetch();
+                            CacheProvider.getInstance(getContext()).refreshTileOverlays();
+                        } catch (Exception e) {
+                            Log.w(LOG_NAME, "Failed fetching imagery", e);
+                        }
                     }
-                }
-            };
+                };
 
-            new Thread(runnable).start();
+                new Thread(runnable).start();
+            } else {
+                Log.e(LOG_NAME, "Activity is null");
+            }
         }
 
         @Override
         public void onCacheOverlay(final List<CacheOverlay> cacheOverlays) {
+            if(getActivity() == null) {
+                Log.w(LOG_NAME, "Failed to handle new cache overly since activity was null");
+                return;
+            }
+
             getActivity().runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
@@ -225,7 +233,7 @@ public class OnlineLayersPreferenceActivity extends AppCompatActivity {
                     SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
                     Set<String> overlays = preferences.getStringSet(getResources().getString(R.string.onlineLayersKey), Collections.<String>emptySet());
                     for (Layer layer : layers) {
-                        boolean enabled = overlays.contains(layer.getName());
+                        boolean enabled = overlays != null ? overlays.contains(layer.getName()) : false;
 
                         CacheOverlay overlay = CacheProvider.getInstance(getContext()).getOverlay(layer.getName());
                         if(overlay != null){
@@ -298,7 +306,7 @@ public class OnlineLayersPreferenceActivity extends AppCompatActivity {
     @UiThread
     public static class OnlineLayersAdapter extends ArrayAdapter<Layer> {
 
-        public OnlineLayersAdapter(Context context, List<Layer> overlays) {
+        OnlineLayersAdapter(Context context, List<Layer> overlays) {
             super(context, R.layout.online_layers_list_item, R.id.online_layers_title, overlays);
         }
 
@@ -309,7 +317,7 @@ public class OnlineLayersPreferenceActivity extends AppCompatActivity {
             final Layer layer = getItem(position);
 
             TextView title = view.findViewById(R.id.online_layers_title);
-            title.setText(layer.getName());
+            title.setText(layer != null ? layer.getName() : "");
 
             TextView summary = view.findViewById(R.id.online_layers_summary);
             summary.setText(layer.getUrl());
