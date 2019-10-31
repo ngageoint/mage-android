@@ -39,11 +39,13 @@ public class ImageryServerFetch extends AbstractServerFetch {
         }
 
         try {
-            layerHelper.deleteAll(TYPE);
+            Collection<Layer> remoteLayers = layerResource.getImageryLayers(event);
 
-            Collection<Layer> imageryLayers = layerResource.getImageryLayers(event);
+            // get local layers
+            Collection<Layer> localLayers = layerHelper.readAll(TYPE);
+            remoteLayers.removeAll(localLayers);
 
-            for (Layer layer : imageryLayers) {
+            for (Layer layer : remoteLayers) {
                 if(isCanceled.get()){
                     break;
                 }
