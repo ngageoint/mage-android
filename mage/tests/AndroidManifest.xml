@@ -4,13 +4,18 @@
     android:versionCode="6"
     android:versionName="4.0.0">
 
+    <!--This permission is required to enable/disable system animations from the app itself-->
+    <uses-permission android:name="android.permission.SET_ANIMATION_SCALE"/>
+
     <uses-sdk
         android:minSdkVersion="16"
         android:targetSdkVersion="19" />
 
     <instrumentation
-        android:name="android.test.InstrumentationTestRunner"
-        android:targetPackage="mil.nga.giat.mage" />
+        android:label="AndroidJUnitRunner"
+        android:name="androidx.test.runner.AndroidJUnitRunner"
+        android:targetPackage="mil.nga.giat.mage"
+        android:functionalTest="true"/>
 
     <application>
         <uses-library android:name="android.test.runner" />

@@ -121,12 +121,14 @@ public class OnlineLayersPreferenceActivity extends AppCompatActivity {
 
             ListView secureListView = getListView();
             secureListView.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);
+            secureListView.setTag("SecureView");
 
             secureOnlineLayersAdapter = new OnlineLayersAdapter(getActivity(), new ArrayList<Layer>());
             secureListView.setAdapter(secureOnlineLayersAdapter);
 
             ListView insecureListView = view.findViewById(R.id.insecure_layers_list);
             insecureListView.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);
+            insecureListView.setTag("InsecureView");
 
             insecureOnlineLayersAdapter = new OnlineLayersAdapter(getActivity(), new ArrayList<Layer>());
             insecureListView.setAdapter(insecureOnlineLayersAdapter);

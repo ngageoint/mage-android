@@ -2,22 +2,27 @@ package mil.nga.giat.mage.map.preference;
 
 
 import android.content.Context;
+import android.view.View;
 
 import static androidx.test.core.app.ApplicationProvider.getApplicationContext;
+import static androidx.test.espresso.Espresso.onData;
 import static androidx.test.espresso.Espresso.onView;
 import static androidx.test.espresso.action.ViewActions.click;
 import static androidx.test.espresso.assertion.ViewAssertions.matches;
 import static androidx.test.espresso.matcher.ViewMatchers.isDisplayed;
 import static androidx.test.espresso.matcher.ViewMatchers.isEnabled;
 import static androidx.test.espresso.matcher.ViewMatchers.withId;
+import static org.hamcrest.Matchers.instanceOf;
 
-import androidx.test.espresso.Espresso;
 import androidx.test.ext.junit.rules.ActivityScenarioRule;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.LargeTest;
 
 import junit.framework.AssertionFailedError;
 
+import org.hamcrest.Description;
+import org.hamcrest.Matcher;
+import org.hamcrest.TypeSafeMatcher;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -33,6 +38,14 @@ import mil.nga.giat.mage.sdk.datastore.layer.LayerHelper;
 import mil.nga.giat.mage.sdk.datastore.user.Event;
 import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
 
+/**
+ * brew cask install android-platform-tools
+ *
+ * adb shell settings put global window_animation_scale 0 &
+ * adb shell settings put global transition_animation_scale 0 &
+ * adb shell settings put global animator_duration_scale 0 &
+ *
+ */
 @RunWith(AndroidJUnit4.class)
 @LargeTest
 public class OnlineLayersPreferenceActivityTest {
@@ -46,6 +59,8 @@ public class OnlineLayersPreferenceActivityTest {
 
     @BeforeClass
     public static void setup() throws Exception{
+
+        //TODO must log into mage app independent of this test to bypass login creds for now
         Event currentEvent = EventHelper.getInstance(getApplicationContext()).getCurrentEvent();
 
         Layer secureLayer = new Layer();
@@ -97,8 +112,35 @@ public class OnlineLayersPreferenceActivityTest {
         onView(withId(R.id.online_layers_refresh)).perform(click());
 
         //TODO somehow check to verify that the layers are in the appropriate lists
-        Espresso.onData(withId(android.R.id.list));
-        Espresso.onData(withId(R.id.insecure_layers_list));
+
+        //Espresso.onData(equalTo(ourSecureImageryLayer)).onChildView(withId(android.R.id.list)).check(matches(isDisplayed()));
+        //Espresso.onData(equalTo(ourNonSecureImageryLayer)).onChildView(withId(R.id.insecure_layers_list)).check(matches(isDisplayed()));
+
+        //TODO this should display a popup about non-https layer
+        onData(instanceOf(Layer.class)).inAdapterView(withTag("InsecureView")).atPosition(0).perform(click());
+
+        //onData(instanceOf(Layer.class)).inAdapterView(withTag("InsecureView")).perform(click());
+        Thread.sleep(10000);
+    }
+
+    static Matcher<View> withTag(final Object tag) {
+        return new TypeSafeMatcher<View>() {
+
+            @Override
+            public void describeTo(final Description description) {
+                description.appendText("has tag equals to: " + tag);
+            }
+
+            @Override
+            protected boolean matchesSafely(final View view) {
+                Object viewTag = view.getTag();
+                if (viewTag == null) {
+                    return tag == null;
+                }
+
+                return viewTag.equals(tag);
+            }
+        };
     }
 
 }

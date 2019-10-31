@@ -130,7 +130,6 @@
         <activity
             android:name=".filter.LocationFilterActivity"
             android:label="@string/locations_filter" />
-            android:label="@string/locations_filter" />
         <activity
             android:name=".LandingActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
