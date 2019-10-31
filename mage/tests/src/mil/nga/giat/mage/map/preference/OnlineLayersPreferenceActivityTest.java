@@ -39,12 +39,26 @@ import mil.nga.giat.mage.sdk.datastore.user.Event;
 import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
 
 /**
- * brew cask install android-platform-tools
+ * There are some current limitations to espresso that can be worked around in an automated
+ * fashion.  As such, that automated way is not implemented, and thus the following steps must
+ * be run <b>MANUALLY!!!!</b>
+ * <p>
+ * Ensure you have ADB installed (mac instruction)
+ * <p>
+ * <pre>
+ *     brew cask install android-platform-tools
+ * </pre>
  *
- * adb shell settings put global window_animation_scale 0 &
- * adb shell settings put global transition_animation_scale 0 &
- * adb shell settings put global animator_duration_scale 0 &
+ *<p>
+ * Assuming you only have 1 adb device (listed via 'adb devices' command), run the following:
+ * <p>
+ * <pre>
+ *     adb shell settings put global window_animation_scale 0 &
+ *     adb shell settings put global transition_animation_scale 0 &
+ *     adb shell settings put global animator_duration_scale 0 &
+ * </pre>
  *
+ * @since 10/31/2019
  */
 @RunWith(AndroidJUnit4.class)
 @LargeTest
@@ -54,6 +68,9 @@ public class OnlineLayersPreferenceActivityTest {
     public ActivityScenarioRule<OnlineLayersPreferenceActivity> activityRule =
             new ActivityScenarioRule(OnlineLayersPreferenceActivity.class);
 
+    /**
+     * Test layer objects
+     */
     private static Layer ourSecureImageryLayer;
     private static Layer ourNonSecureImageryLayer;
 
@@ -123,7 +140,13 @@ public class OnlineLayersPreferenceActivityTest {
         Thread.sleep(10000);
     }
 
-    static Matcher<View> withTag(final Object tag) {
+    /**
+     * This helps "find" the lists in the activity, since there is more than 1.
+     *
+     * @param tag
+     * @return
+     */
+    private static Matcher<View> withTag(final Object tag) {
         return new TypeSafeMatcher<View>() {
 
             @Override
