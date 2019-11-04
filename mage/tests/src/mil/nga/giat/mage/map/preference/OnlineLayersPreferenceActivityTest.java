@@ -3,6 +3,7 @@ package mil.nga.giat.mage.map.preference;
 
 import android.content.Context;
 import android.view.View;
+import android.webkit.URLUtil;
 
 import static androidx.test.core.app.ApplicationProvider.getApplicationContext;
 import static androidx.test.espresso.Espresso.onData;
@@ -32,6 +33,10 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 import java.util.UUID;
 
 import mil.nga.giat.mage.R;
@@ -44,17 +49,19 @@ import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
  * There are some current limitations to espresso that can be worked around in an automated
  * fashion.  As such, that automated way is not implemented, and thus the following steps must
  * be run <b>MANUALLY!!!!</b>
- * <p>
- * Ensure you have ADB installed (mac instruction)
+ * <br><br>
+ * Ensure you have ADB installed (mac instruction):
  * <p>
  * <pre>
  *     brew cask install android-platform-tools
  * </pre>
  *
- * <p>
+ * <br>
+ * Application Interaction:
  * <pre>
  *     Launch MAGE using an AVD
- *     log in
+ *     Log in
+ *     Select an event
  * </pre>
  *
  *<p>
@@ -76,6 +83,8 @@ public class OnlineLayersPreferenceActivityTest {
     public ActivityScenarioRule<OnlineLayersPreferenceActivity> activityRule =
             new ActivityScenarioRule(OnlineLayersPreferenceActivity.class);
 
+    private static final String TYPE = "Imagery";
+
     /**
      * Test layer objects
      */
@@ -88,12 +97,14 @@ public class OnlineLayersPreferenceActivityTest {
         //TODO must log into mage app independent of this test to bypass login creds for now
         Event currentEvent = EventHelper.getInstance(getApplicationContext()).getCurrentEvent();
 
+        LayerHelper.getInstance(getApplicationContext()).deleteAll(TYPE);
+
         Layer secureLayer = new Layer();
         secureLayer.setRemoteId(UUID.randomUUID().toString());
         secureLayer.setLoaded(true);
         secureLayer.setFormat("XYZ");
         secureLayer.setName("Unit Test Secure Layer");
-        secureLayer.setType("Imagery");
+        secureLayer.setType(TYPE);
         secureLayer.setUrl("https://www.google.com");
         secureLayer.setEvent(currentEvent);
 
@@ -104,7 +115,7 @@ public class OnlineLayersPreferenceActivityTest {
         nonSecureLayer.setLoaded(true);
         nonSecureLayer.setFormat("XYZ");
         nonSecureLayer.setName("Unit Test Nonsecure Layer");
-        nonSecureLayer.setType("Imagery");
+        nonSecureLayer.setType(TYPE);
         nonSecureLayer.setUrl("http://www.google.com");
         nonSecureLayer.setEvent(currentEvent);
 
@@ -136,13 +147,57 @@ public class OnlineLayersPreferenceActivityTest {
 
         onView(withId(R.id.online_layers_refresh)).perform(click());
 
-        //TODO somehow check to verify that the layers are in the appropriate lists
 
-        //Espresso.onData(equalTo(ourSecureImageryLayer)).onChildView(withId(android.R.id.list)).check(matches(isDisplayed()));
-        //Espresso.onData(equalTo(ourNonSecureImageryLayer)).onChildView(withId(R.id.insecure_layers_list)).check(matches(isDisplayed()));
+        Event currentEvent = EventHelper.getInstance(getApplicationContext()).getCurrentEvent();
+        List<Layer> imageryLayers = LayerHelper.getInstance(getApplicationContext()).readByEvent(currentEvent, TYPE);
+
+        List<Layer> secureLayers = new ArrayList<>();
+        List<Layer> insecureLayers = new ArrayList<>();
+
+        for(Layer layer : imageryLayers){
+            if(URLUtil.isHttpUrl(layer.getUrl())){
+                insecureLayers.add(layer);
+            }else{
+                secureLayers.add(layer);
+            }
+        }
+
+        Collections.sort(secureLayers, new Comparator<Layer>() {
+            @Override
+            public int compare(Layer o1, Layer o2) {
+                return o1.getName().compareTo(o2.getName());
+            }
+        });
+
+        Collections.sort(insecureLayers, new Comparator<Layer>() {
+            @Override
+            public int compare(Layer o1, Layer o2) {
+                return o1.getName().compareTo(o2.getName());
+            }
+        });
+
+        int secureIdx = -1;
+        for(int i = 0 ; i < secureLayers.size(); i++){
+            Layer layer = secureLayers.get(i);
+            if(layer.equals(ourSecureImageryLayer)){
+                secureIdx = i;
+                break;
+            }
+        }
+        Assert.assertNotEquals(-1, secureIdx);
+
+        int insecureIdx = -1;
+        for(int i = 0; i < insecureLayers.size(); i++){
+            Layer layer = insecureLayers.get(i);
+            if(layer.equals(ourNonSecureImageryLayer)){
+                insecureIdx = i;
+                break;
+            }
+        }
+        Assert.assertNotEquals(-1, insecureIdx);
 
         //Verify a dialog is displayed about a non HTTPS layer
-        onData(instanceOf(Layer.class)).inAdapterView(withTag("InsecureView")).atPosition(0).perform(click());
+        onData(instanceOf(Layer.class)).inAdapterView(withTag("InsecureView")).atPosition(insecureIdx).perform(click());
         onView(withText("Non HTTPS Layer")).inRoot(isDialog()).check(matches(isDisplayed()));
         onView(withId(android.R.id.button1)).perform(click());
     }
