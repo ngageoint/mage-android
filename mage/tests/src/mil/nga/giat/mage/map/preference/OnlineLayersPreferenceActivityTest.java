@@ -9,9 +9,11 @@ import static androidx.test.espresso.Espresso.onData;
 import static androidx.test.espresso.Espresso.onView;
 import static androidx.test.espresso.action.ViewActions.click;
 import static androidx.test.espresso.assertion.ViewAssertions.matches;
+import static androidx.test.espresso.matcher.RootMatchers.isDialog;
 import static androidx.test.espresso.matcher.ViewMatchers.isDisplayed;
 import static androidx.test.espresso.matcher.ViewMatchers.isEnabled;
 import static androidx.test.espresso.matcher.ViewMatchers.withId;
+import static androidx.test.espresso.matcher.ViewMatchers.withText;
 import static org.hamcrest.Matchers.instanceOf;
 
 import androidx.test.ext.junit.rules.ActivityScenarioRule;
@@ -47,6 +49,12 @@ import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
  * <p>
  * <pre>
  *     brew cask install android-platform-tools
+ * </pre>
+ *
+ * <p>
+ * <pre>
+ *     Launch MAGE using an AVD
+ *     log in
  * </pre>
  *
  *<p>
@@ -133,11 +141,10 @@ public class OnlineLayersPreferenceActivityTest {
         //Espresso.onData(equalTo(ourSecureImageryLayer)).onChildView(withId(android.R.id.list)).check(matches(isDisplayed()));
         //Espresso.onData(equalTo(ourNonSecureImageryLayer)).onChildView(withId(R.id.insecure_layers_list)).check(matches(isDisplayed()));
 
-        //TODO this should display a popup about non-https layer
+        //Verify a dialog is displayed about a non HTTPS layer
         onData(instanceOf(Layer.class)).inAdapterView(withTag("InsecureView")).atPosition(0).perform(click());
-
-        //onData(instanceOf(Layer.class)).inAdapterView(withTag("InsecureView")).perform(click());
-        Thread.sleep(10000);
+        onView(withText("Non HTTPS Layer")).inRoot(isDialog()).check(matches(isDisplayed()));
+        onView(withId(android.R.id.button1)).perform(click());
     }
 
     /**
