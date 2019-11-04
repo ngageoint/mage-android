@@ -4,6 +4,8 @@ import android.content.Context;
 import android.util.Log;
 
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import mil.nga.giat.mage.sdk.connectivity.ConnectivityUtility;
@@ -43,14 +45,25 @@ public class ImageryServerFetch extends AbstractServerFetch {
 
             // get local layers
             Collection<Layer> localLayers = layerHelper.readAll(TYPE);
-            remoteLayers.removeAll(localLayers);
+
+            Map<String, Layer> remoteIdToLayer = new HashMap<>(localLayers.size());
+            for(Layer layer : localLayers){
+                remoteIdToLayer.put(layer.getRemoteId(), layer);
+            }
 
             for (Layer layer : remoteLayers) {
-                if(isCanceled.get()){
+                if (isCanceled.get()) {
                     break;
                 }
                 layer.setLoaded(true);
-                layerHelper.create(layer);
+
+                if (!localLayers.contains(layer)) {
+                    layerHelper.create(layer);
+                } else {
+                    Layer localLayer = remoteIdToLayer.get(layer.getRemoteId());
+                    layerHelper.delete(localLayer.getId());
+                    layerHelper.create(layer);
+                }
             }
         }catch(Exception e){
             Log.w(LOG_NAME, "Error performing imagery layer operations",e);
