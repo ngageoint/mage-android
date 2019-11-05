@@ -12,7 +12,9 @@ import java.net.URL;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import mil.nga.giat.mage.sdk.connectivity.ConnectivityUtility;
 import mil.nga.giat.mage.sdk.datastore.DaoStore;
@@ -71,10 +73,19 @@ public class StaticFeatureServerFetch extends AbstractServerFetch {
 			// get local layers
 			Collection<Layer> localLayers = layerHelper.readAll(FEATURE_TYPE);
 
-			remoteLayers.removeAll(localLayers);
+			Map<String, Layer> remoteIdToLayer = new HashMap<>(localLayers.size());
+			for(Layer layer : localLayers){
+				remoteIdToLayer.put(layer.getRemoteId(), layer);
+			}
 
 			for (Layer layer : remoteLayers) {
-				layerHelper.create(layer);
+				if (!localLayers.contains(layer)) {
+					layerHelper.create(layer);
+				} else {
+					Layer localLayer = remoteIdToLayer.get(layer.getRemoteId());
+					layerHelper.delete(localLayer.getId());
+					layerHelper.create(layer);
+				}
 			}
 
 			newLayers.addAll(layerHelper.readAll(FEATURE_TYPE));
