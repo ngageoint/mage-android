@@ -17,6 +17,7 @@ import static androidx.test.espresso.matcher.ViewMatchers.withId;
 import static androidx.test.espresso.matcher.ViewMatchers.withText;
 import static org.hamcrest.Matchers.instanceOf;
 
+import androidx.lifecycle.Lifecycle;
 import androidx.test.ext.junit.rules.ActivityScenarioRule;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.LargeTest;
@@ -28,6 +29,7 @@ import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;
 import org.junit.AfterClass;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
@@ -128,6 +130,11 @@ public class OnlineLayersPreferenceActivityTest {
         LayerHelper.getInstance(getApplicationContext()).delete(ourNonSecureImageryLayer.getId());
     }
 
+    @Before
+    public void before(){
+        activityRule.getScenario().moveToState(Lifecycle.State.RESUMED);
+    }
+
     @Test
     public void testRefresh() throws Exception {
         try {
@@ -162,19 +169,9 @@ public class OnlineLayersPreferenceActivityTest {
             }
         }
 
-        Collections.sort(secureLayers, new Comparator<Layer>() {
-            @Override
-            public int compare(Layer o1, Layer o2) {
-                return o1.getName().compareTo(o2.getName());
-            }
-        });
+        Collections.sort(secureLayers,new LayerNameComparator());
 
-        Collections.sort(insecureLayers, new Comparator<Layer>() {
-            @Override
-            public int compare(Layer o1, Layer o2) {
-                return o1.getName().compareTo(o2.getName());
-            }
-        });
+        Collections.sort(insecureLayers, new LayerNameComparator());
 
         int secureIdx = -1;
         for(int i = 0 ; i < secureLayers.size(); i++){
