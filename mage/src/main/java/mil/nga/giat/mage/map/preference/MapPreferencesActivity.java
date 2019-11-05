@@ -81,24 +81,10 @@ public class MapPreferencesActivity extends AppCompatActivity {
 			Event event = EventHelper.getInstance(getActivity().getApplicationContext()).getCurrentEvent();
 
 			// TODO : Remove the below and rework OverlayPreference to have a 'entities' similar to a list preference, these would be the 'display values'
-			OverlayPreference p = (OverlayPreference) findPreference(getResources().getString(R.string.tileOverlaysKey));
 			try {
-				List<CacheOverlay> overlays = new CacheOverlayFilter(getContext(), event).filter(CacheProvider.getInstance(getContext()).getCacheOverlays());
-				Set<String> layerIds = p.getValues();
-				Collection<String> values = new ArrayList<>(layerIds.size());
-
-				for (CacheOverlay overlay : overlays) {
-					for (CacheOverlay child : overlay.getChildren()) {
-						String name = overlay.getName() + "-" + child.getName();
-						if (layerIds.contains(name)) {
-							values.add(name );
-						}
-					}
-				}
-
-				p.setSummary(StringUtils.join(values, "\n"));
-
 				List<Layer> layers = LayerHelper.getInstance(getContext()).readByEvent(event, "GeoPackage");
+				layers.addAll(LayerHelper.getInstance(getContext()).readByEvent(event, "Feature"));
+				layers.addAll(LayerHelper.getInstance(getContext()).readByEvent(event, "Imagery"));
 				Collection<Layer> available = Collections2.filter(layers, new Predicate<Layer>() {
 					@Override
 					public boolean apply(Layer layer) {
@@ -106,6 +92,7 @@ public class MapPreferencesActivity extends AppCompatActivity {
 					}
 				});
 
+				OverlayPreference p = (OverlayPreference) findPreference(getResources().getString(R.string.tileOverlaysKey));
 				if (available.isEmpty()) {
 					p.setDownloadIcon(null);
 				} else {
@@ -113,8 +100,6 @@ public class MapPreferencesActivity extends AppCompatActivity {
 					DrawableCompat.setTintList(icon, AppCompatResources.getColorStateList(getContext(), R.color.download_icon));
 					p.setDownloadIcon(icon);
 				}
-
-				//TODO load anything for online maps if required
 			} catch (Exception e) {
 				Log.e(LOG_NAME, "Problem setting preference.", e);
 			}
