@@ -339,6 +339,7 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
                     synchronized (overlayAdapterLock){
                         overlayAdapter.getLayers().removeAll(layers);
                         overlayAdapter.getLayers().addAll(layers);
+                        Collections.sort(overlayAdapter.getLayers(), new LayerNameComparator());
                         overlayAdapter.notifyDataSetChanged();
                     }
                     refreshButton.setEnabled(true);
@@ -411,9 +412,9 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
                         overlayAdapter.getOverlays().add(overlay);
                     }
                 }
+                Collections.sort(overlayAdapter.getOverlays());
+                overlayAdapter.notifyDataSetChanged();
             }
-
-            overlayAdapter.notifyDataSetChanged();
 
             List<Layer> geopackages = Collections.EMPTY_LIST;
             try {
@@ -429,12 +430,14 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
                     synchronized (overlayAdapterLock){
                         overlayAdapter.getLayers().removeAll(layers);
                         overlayAdapter.getLayers().addAll(layers);
+                        Collections.sort(overlayAdapter.getLayers(), new LayerNameComparator());
                         List<CacheOverlay> filtered = new CacheOverlayFilter(getContext(), event).filter(cacheOverlays);
                         for(CacheOverlay overlay : filtered) {
                             if(overlay instanceof GeoPackageCacheOverlay) {
                                 overlayAdapter.getOverlays().add(overlay);
                             }
                         }
+                        Collections.sort(overlayAdapter.getOverlays());
                         overlayAdapter.notifyDataSetChanged();
                     }
 
