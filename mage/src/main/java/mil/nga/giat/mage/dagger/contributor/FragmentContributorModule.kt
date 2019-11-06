@@ -3,7 +3,7 @@ package mil.nga.giat.mage.dagger.contributor
 import dagger.Module
 import dagger.android.ContributesAndroidInjector
 import mil.nga.giat.mage.map.MapFragment
-import mil.nga.giat.mage.map.preference.FeatureOverlayPreferenceActivity
+import mil.nga.giat.mage.map.preference.OnlineLayersPreferenceActivity
 import mil.nga.giat.mage.map.preference.TileOverlayPreferenceActivity
 import mil.nga.giat.mage.newsfeed.ObservationFeedFragment
 import mil.nga.giat.mage.newsfeed.PeopleFeedFragment
@@ -30,4 +30,7 @@ abstract class FragmentContributorModule {
 
     @ContributesAndroidInjector
     internal abstract fun contributeLocationPrefernceFragment(): LocationPreferencesActivity.LocationPreferenceFragment
+
+    @ContributesAndroidInjector
+    internal abstract fun contributeOnlineLayersListFragment(): OnlineLayersPreferenceActivity.OnlineLayersListFragment
 }

@@ -5,12 +5,16 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.preference.PreferenceManager;
-import android.support.annotation.Nullable;
+import android.support.annotation.NonNull;
 import android.support.annotation.UiThread;
-import android.support.v4.app.ListFragment;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.DefaultItemAnimator;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -19,9 +23,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.URLUtil;
-import android.widget.ArrayAdapter;
 import android.widget.Checkable;
-import android.widget.ListView;
 import android.widget.TextView;
 
 import java.util.ArrayList;
@@ -31,6 +33,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 
+import dagger.android.support.DaggerFragment;
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.map.cache.CacheOverlay;
 import mil.nga.giat.mage.map.cache.CacheProvider;
@@ -85,24 +88,19 @@ public class OnlineLayersPreferenceActivity extends AppCompatActivity {
         }
     }
 
-    public static class OnlineLayersListFragment extends ListFragment  implements CacheProvider.OnCacheOverlayListener {
+    public static class OnlineLayersListFragment extends DaggerFragment implements CacheProvider.OnCacheOverlayListener {
 
         /**
          * This class is synchronized by only being accessed on the UI thread
          */
-        private OnlineLayersAdapter secureOnlineLayersAdapter;
-        private OnlineLayersAdapter insecureOnlineLayersAdapter;
+        private OnlineLayersAdapter adapter;
 
         private MenuItem refreshButton;
         private View contentView;
         private View noContentView;
-
-        @Override
-        public void onCreate(@Nullable Bundle savedInstanceState) {
-            super.onCreate(savedInstanceState);
-
-            setHasOptionsMenu(true);
-        }
+        private RecyclerView recyclerView;
+        private SwipeRefreshLayout swipeContainer;
+        private Parcelable listState;
 
 
         @Override
@@ -112,38 +110,28 @@ public class OnlineLayersPreferenceActivity extends AppCompatActivity {
             contentView = view.findViewById(R.id.online_layers_content);
             noContentView = view.findViewById(R.id.online_layers_no_content);
 
+            setHasOptionsMenu(true);
+
+            swipeContainer = view.findViewById(R.id.swipeContainer);
+            swipeContainer.setColorSchemeResources(R.color.md_blue_600, R.color.md_orange_A200);
+            swipeContainer.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+                @Override
+                public void onRefresh() {
+                    manualRefresh();
+                }
+            });
+
+            recyclerView = view.findViewById(R.id.recycler_view);
+
+            RecyclerView.LayoutManager mLayoutManager = new LinearLayoutManager(getActivity());
+            recyclerView.setLayoutManager(mLayoutManager);
+            recyclerView.setItemAnimator(new DefaultItemAnimator());
+
+            adapter = new OnlineLayersAdapter(getActivity());
+
             return view;
         }
 
-        @Override
-        public void onViewCreated(View view, Bundle savedInstanceState) {
-            super.onViewCreated(view, savedInstanceState);
-
-            ListView secureListView = getListView();
-            secureListView.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);
-            secureListView.setTag("SecureView");
-
-            secureOnlineLayersAdapter = new OnlineLayersAdapter(getActivity(), new ArrayList<Layer>());
-            secureListView.setAdapter(secureOnlineLayersAdapter);
-
-            ListView insecureListView = view.findViewById(R.id.insecure_layers_list);
-            insecureListView.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);
-            insecureListView.setTag("InsecureView");
-
-            insecureOnlineLayersAdapter = new OnlineLayersAdapter(getActivity(), new ArrayList<Layer>());
-            insecureListView.setAdapter(insecureOnlineLayersAdapter);
-        }
-
-        @Override
-        public void onResume() {
-            super.onResume();
-            getListView().setEnabled(false);
-        }
-
-        @Override
-        public void onPause() {
-            super.onPause();
-        }
 
         @Override
         public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
@@ -166,22 +154,21 @@ public class OnlineLayersPreferenceActivity extends AppCompatActivity {
             }
         }
 
-        /**
+        /**vcvvvv
          * This is called when the user click the refresh button
          *
          */
         @UiThread
         private void manualRefresh() {
             refreshButton.setEnabled(false);
-            getListView().setEnabled(false);
             noContentView.setVisibility(View.VISIBLE);
             contentView.setVisibility(View.GONE);
             ((TextView) noContentView.findViewById(R.id.online_layers_no_content_title)).setText(getResources().getString(R.string.online_layers_no_content_loading));
             noContentView.findViewById(R.id.online_layers_no_content_summary).setVisibility(View.GONE);
             noContentView.findViewById(R.id.online_layers_no_content_progressBar).setVisibility(View.VISIBLE);
 
-            secureOnlineLayersAdapter.clear();
-            insecureOnlineLayersAdapter.clear();
+            adapter.clear();
+            adapter.notifyDataSetChanged();
 
             if (getActivity() != null) {
                 final Context c = getActivity().getApplicationContext();
@@ -222,14 +209,12 @@ public class OnlineLayersPreferenceActivity extends AppCompatActivity {
                         Log.e(LOG_NAME, "Problem getting layers.", e);
                     }
 
-                    ListView listView = getListView();
-                    listView.clearChoices();
 
-                   secureOnlineLayersAdapter.clear();
-                   insecureOnlineLayersAdapter.clear();
+                    adapter.clear();
+                    adapter.notifyDataSetChanged();
 
-                   List<Layer> secureLayers = new ArrayList<>();
-                   List<Layer> insecureLayers = new ArrayList<>();
+                    List<Layer> secureLayers = new ArrayList<>();
+                    List<Layer> insecureLayers = new ArrayList<>();
 
                     // Set what should be checked based on preferences.
                     SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
@@ -238,13 +223,13 @@ public class OnlineLayersPreferenceActivity extends AppCompatActivity {
                         boolean enabled = overlays != null ? overlays.contains(layer.getName()) : false;
 
                         CacheOverlay overlay = CacheProvider.getInstance(getContext()).getOverlay(layer.getName());
-                        if(overlay != null){
+                        if (overlay != null) {
                             overlay.setEnabled(enabled);
                         }
 
-                        if(URLUtil.isHttpsUrl(layer.getUrl())){
+                        if (URLUtil.isHttpsUrl(layer.getUrl())) {
                             secureLayers.add(layer);
-                        }else{
+                        } else {
                             insecureLayers.add(layer);
                         }
                     }
@@ -259,8 +244,10 @@ public class OnlineLayersPreferenceActivity extends AppCompatActivity {
 
                     Collections.sort(secureLayers, compare);
                     Collections.sort(insecureLayers, compare);
-                    secureOnlineLayersAdapter.addAll(secureLayers);
-                    insecureOnlineLayersAdapter.addAll(insecureLayers);
+
+                    adapter.addAllNonLayers(insecureLayers);
+                    adapter.addAllSecureLayers(secureLayers);
+                    adapter.notifyDataSetChanged();
 
                     if (!layers.isEmpty()) {
                         noContentView.setVisibility(View.GONE);
@@ -274,7 +261,7 @@ public class OnlineLayersPreferenceActivity extends AppCompatActivity {
                     }
 
                     refreshButton.setEnabled(true);
-                    getListView().setEnabled(true);
+                    swipeContainer.setRefreshing(false);
                 }
             });
         }
@@ -298,6 +285,24 @@ public class OnlineLayersPreferenceActivity extends AppCompatActivity {
 
             CacheProvider.getInstance(getActivity()).unregisterCacheOverlayListener(this);
         }
+
+        @Override
+        public void onResume() {
+            super.onResume();
+            recyclerView.setAdapter(adapter);
+
+            if (listState != null) {
+                recyclerView.getLayoutManager().onRestoreInstanceState(listState);
+            }
+        }
+
+        @Override
+        public void onPause() {
+            super.onPause();
+
+            listState = recyclerView.getLayoutManager().onSaveInstanceState();
+            recyclerView.setAdapter(null);
+        }
     }
 
     /**
@@ -306,17 +311,58 @@ public class OnlineLayersPreferenceActivity extends AppCompatActivity {
      * <b>ALL public methods MUST be made on the UI thread to ensure concurrency.</b>
      */
     @UiThread
-    public static class OnlineLayersAdapter extends ArrayAdapter<Layer> {
+    public static class OnlineLayersAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>{
 
-        OnlineLayersAdapter(Context context, List<Layer> overlays) {
-            super(context, R.layout.online_layers_list_item, R.id.online_layers_title, overlays);
+        private static final int ITEM_TYPE_HEADER = 1;
+        private static final int ITEM_TYPE_LAYER = 2;
+
+        private final Context context;
+        private final List<Layer> secureLayers = new ArrayList<>();
+        private final List<Layer> nonSecureLayers = new ArrayList<>();
+
+        OnlineLayersAdapter(Context context) {
+            this.context = context;
+        }
+
+        public void clear(){
+            this.secureLayers.clear();
+            this.nonSecureLayers.clear();
+        }
+
+        @NonNull
+        @Override
+        public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int i) {
+            if (i == ITEM_TYPE_LAYER) {
+                View itemView = LayoutInflater.from(parent.getContext()).inflate(R.layout.online_layers_list_item, parent, false);
+                return new LayerViewHolder(itemView);
+            } else if (i == ITEM_TYPE_HEADER) {
+                View itemView = LayoutInflater.from(parent.getContext()).inflate(R.layout.event_list_section_header, parent, false);
+                return new SectionViewHolder(itemView);
+            } else {
+                return null;
+            }
         }
 
         @Override
-        public View getView(int position, View convertView, ViewGroup parent) {
-            View view = super.getView(position, convertView, parent);
+        public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int i) {
+            if (holder instanceof LayerViewHolder) {
+                bindLayerViewHolder((LayerViewHolder) holder, i);
+            } else if (holder instanceof SectionViewHolder) {
+                bindSectionViewHolder((SectionViewHolder) holder, i);
+            }
+        }
 
-            final Layer layer = getItem(position);
+        private void bindLayerViewHolder(LayerViewHolder holder, int i) {
+            View view = holder.itemView;
+            Layer tmp = null;
+
+            if (i <= secureLayers.size()) {
+                tmp = secureLayers.get(i - 1);
+            } else {
+                tmp = nonSecureLayers.get(i - secureLayers.size() - 2);
+            }
+
+            final Layer layer = tmp;
 
             TextView title = view.findViewById(R.id.online_layers_title);
             title.setText(layer != null ? layer.getName() : "");
@@ -333,7 +379,7 @@ public class OnlineLayersPreferenceActivity extends AppCompatActivity {
                 view.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        new AlertDialog.Builder(getContext())
+                        new AlertDialog.Builder(context)
                                 .setTitle("Non HTTPS Layer")
                                 .setMessage("We cannot load this layer on mobile because it cannot be accessed securely.")
                                 .setPositiveButton("OK", null).show();
@@ -341,31 +387,66 @@ public class OnlineLayersPreferenceActivity extends AppCompatActivity {
                 });
                 sw.setEnabled(false);
             } else {
+                sw.setEnabled(true);
                 sw.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
                         boolean isChecked = ((Checkable) v).isChecked();
 
-                        CacheOverlay overlay = CacheProvider.getInstance(getContext()).getOverlay(layer.getName());
+                        CacheOverlay overlay = CacheProvider.getInstance(context).getOverlay(layer.getName());
                         if (overlay != null) {
                             overlay.setEnabled(isChecked);
                         }
                     }
                 });
 
-                CacheOverlay overlay = CacheProvider.getInstance(getContext()).getOverlay(layer.getName());
+                CacheOverlay overlay = CacheProvider.getInstance(context).getOverlay(layer.getName());
                 if (overlay != null) {
                     ((Checkable) sw).setChecked(overlay.isEnabled());
                 }
             }
+        }
 
-            return view;
+        private void bindSectionViewHolder(SectionViewHolder holder, int position) {
+            holder.sectionName.setText(position == 0 ? "Secure Layers" : "Nonsecure Layers");
+        }
+
+        public void addAllSecureLayers(List<Layer> layers){
+            this.secureLayers.addAll(layers);
+        }
+
+        public void addAllNonLayers(List<Layer> layers){
+            this.nonSecureLayers.addAll(layers);
         }
 
         @Override
-        public boolean hasStableIds() {
-            return true;
+        public int getItemCount() {
+            return secureLayers.size() + nonSecureLayers.size() + 2;
         }
 
+        @Override
+        public int getItemViewType(int position) {
+            if (position == 0 || position == secureLayers.size() + 1) {
+                return ITEM_TYPE_HEADER;
+            } else {
+                return ITEM_TYPE_LAYER;
+            }
+        }
+
+        private class LayerViewHolder extends RecyclerView.ViewHolder {
+            LayerViewHolder(View view) {
+                super(view);
+            }
+        }
+
+        private class SectionViewHolder extends RecyclerView.ViewHolder {
+            private TextView sectionName;
+
+            private SectionViewHolder(View view) {
+                super(view);
+
+                sectionName = (TextView) view.findViewById(R.id.section_name);
+            }
+        }
     }
 }

@@ -1,10 +1,23 @@
-<?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<android.support.design.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/coordinator_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:paddingLeft="8dp"
-    android:paddingRight="8dp" >
+    android:orientation="vertical">
+
+    <android.support.v4.widget.SwipeRefreshLayout
+        android:id="@+id/swipeContainer"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+
+        <android.support.v7.widget.RecyclerView
+            android:id="@+id/recycler_view"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:scrollbars="vertical"
+            />
+
+    </android.support.v4.widget.SwipeRefreshLayout>
 
     <LinearLayout
         android:id="@+id/online_layers_content"
@@ -14,68 +27,6 @@
         android:paddingBottom="15dp"
         android:paddingTop="15dp"
         android:visibility="gone" >
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal" >
-
-            <TextView
-                android:layout_width="0dip"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:paddingBottom="4dp"
-                android:text="Secure Layers"
-                android:textSize="14sp" />
-        </LinearLayout>
-
-        <View
-            android:layout_width="fill_parent"
-            android:layout_height="2dip"
-            android:background="?android:attr/dividerHorizontal" />
-
-        <LinearLayout android:layout_weight="1"
-            android:layout_height="fill_parent"
-            android:layout_width="fill_parent">
-        <ListView
-            android:id="@android:id/list"
-            android:drawSelectorOnTop="false"
-            android:layout_height="fill_parent"
-            android:layout_width="fill_parent"
-            android:divider="@drawable/static_layer_divider"
-            android:dividerHeight="1dip"/>
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal" >
-
-            <TextView
-                android:layout_width="0dip"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:paddingBottom="4dp"
-                android:text="Insecure Layers"
-                android:textSize="14sp" />
-        </LinearLayout>
-
-        <View
-            android:layout_width="fill_parent"
-            android:layout_height="2dip"
-            android:background="?android:attr/dividerHorizontal" />
-
-        <LinearLayout android:layout_weight="1"
-            android:layout_height="fill_parent"
-            android:layout_width="fill_parent">
-            <ListView
-                android:id="@+id/insecure_layers_list"
-                android:drawSelectorOnTop="false"
-                android:layout_height="fill_parent"
-                android:layout_width="fill_parent"
-                android:divider="@drawable/static_layer_divider"
-                android:dividerHeight="1dip"/>
-        </LinearLayout>
     </LinearLayout>
 
     <LinearLayout
@@ -113,4 +64,4 @@
 
     </LinearLayout>
 
-</LinearLayout>
+</android.support.design.widget.CoordinatorLayout>
