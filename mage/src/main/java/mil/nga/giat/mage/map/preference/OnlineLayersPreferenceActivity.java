@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Parcelable;
+import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.annotation.UiThread;
 import android.support.v4.widget.SwipeRefreshLayout;
@@ -68,7 +69,7 @@ public class OnlineLayersPreferenceActivity extends AppCompatActivity {
         setContentView(R.layout.activity_online_layers);
 
         onlineLayersFragment = (OnlineLayersListFragment) getSupportFragmentManager().findFragmentById(R.id.online_layers_fragment);
-        ourSharedPreferences = getSharedPreferences("OnlineLayersPreferences" , 0);
+        ourSharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
     }
 
     @Override
