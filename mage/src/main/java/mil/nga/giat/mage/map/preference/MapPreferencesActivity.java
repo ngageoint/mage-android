@@ -45,7 +45,6 @@ public class MapPreferencesActivity extends AppCompatActivity {
 	public static final int TILE_OVERLAY_ACTIVITY = 100;
 	public static final int ONLINE_LAYERS_OVERLAY_ACTIVITY = 200;
 	public static final String OVERLAY_EXTENDED_DATA_KEY = "overlay";
-	public static final String ONLINE_LAYERS_DATA_KEY = "onlineLayersDataKey";
 
 	private MapPreferenceFragment preference = new MapPreferenceFragment();
 
@@ -133,7 +132,7 @@ public class MapPreferencesActivity extends AppCompatActivity {
 			case ONLINE_LAYERS_OVERLAY_ACTIVITY: {
 				if (resultCode == Activity.RESULT_OK) {
 					OverlayPreference p = (OverlayPreference) preference.findPreference(getString(R.string.onlineLayersKey));
-					p.setValues(new HashSet<>(data.getStringArrayListExtra(ONLINE_LAYERS_DATA_KEY)));
+					p.setValues(new HashSet<>(data.getStringArrayListExtra(getString(R.string.onlineLayersKey))));
 				}
 				break;
 			}
