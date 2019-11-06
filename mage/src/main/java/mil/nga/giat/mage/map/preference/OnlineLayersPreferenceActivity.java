@@ -373,7 +373,7 @@ public class OnlineLayersPreferenceActivity extends AppCompatActivity {
             View progressBar = view.findViewById(R.id.online_layers_progressBar);
             progressBar.setVisibility(layer.isLoaded() ? View.GONE : View.VISIBLE);
 
-            View sw = view.findViewById(R.id.online_layers_toggle);
+            final View sw = view.findViewById(R.id.online_layers_toggle);
 
             if (URLUtil.isHttpUrl(layer.getUrl())) {
                 view.setOnClickListener(new View.OnClickListener() {
@@ -385,21 +385,32 @@ public class OnlineLayersPreferenceActivity extends AppCompatActivity {
                                 .setPositiveButton("OK", null).show();
                     }
                 });
+                sw.setOnClickListener(null);
                 sw.setEnabled(false);
+                ((Checkable) sw).setChecked(false);
             } else {
-                sw.setEnabled(true);
+                //TODO allow for selection by row??
+                /*view.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        boolean checked = ((Checkable) sw).isChecked();
+                        ((Checkable) sw).setChecked(!checked);
+                    }
+                });*/
+                view.setOnClickListener(null);
                 sw.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
                         boolean isChecked = ((Checkable) v).isChecked();
 
+                        //TODO persist this infor to the DB
                         CacheOverlay overlay = CacheProvider.getInstance(context).getOverlay(layer.getName());
                         if (overlay != null) {
                             overlay.setEnabled(isChecked);
                         }
                     }
                 });
-
+                sw.setEnabled(true);
                 CacheOverlay overlay = CacheProvider.getInstance(context).getOverlay(layer.getName());
                 if (overlay != null) {
                     ((Checkable) sw).setChecked(overlay.isEnabled());
