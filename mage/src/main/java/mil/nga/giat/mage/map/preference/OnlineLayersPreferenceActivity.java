@@ -1,12 +1,9 @@
 package mil.nga.giat.mage.map.preference;
 
-import android.app.Activity;
 import android.content.Context;
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Parcelable;
-import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.annotation.UiThread;
 import android.support.v4.widget.SwipeRefreshLayout;
@@ -61,7 +58,7 @@ public class OnlineLayersPreferenceActivity extends AppCompatActivity {
      */
     private OnlineLayersListFragment onlineLayersFragment;
 
-    private static SharedPreferences sharedPreferences;
+    private static SharedPreferences ourSharedPreferences;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -69,16 +66,12 @@ public class OnlineLayersPreferenceActivity extends AppCompatActivity {
         setContentView(R.layout.activity_online_layers);
 
         onlineLayersFragment = (OnlineLayersListFragment) getSupportFragmentManager().findFragmentById(R.id.online_layers_fragment);
-        sharedPreferences = getSharedPreferences("OnlineLayersPreferences" , 0);
+        ourSharedPreferences = getSharedPreferences("OnlineLayersPreferences" , 0);
     }
 
     @Override
     public void onBackPressed() {
-        //Intent intent = new Intent();
-        //intent.putStringArrayListExtra(MapPreferencesActivity.ONLINE_LAYERS_DATA_KEY, onlineLayersFragment.getSelectedOverlays());
-        //setResult(Activity.RESULT_OK, intent);
-
-        SharedPreferences.Editor editor = sharedPreferences.edit();
+        SharedPreferences.Editor editor = ourSharedPreferences.edit();
         editor.putStringSet(getResources().getString(R.string.onlineLayersKey), new HashSet<>(onlineLayersFragment.getSelectedOverlays()));
         editor.commit();
 
@@ -187,7 +180,7 @@ public class OnlineLayersPreferenceActivity extends AppCompatActivity {
                         try {
                             imageryServerFetch.fetch();
 
-                            SharedPreferences.Editor editor = sharedPreferences.edit();
+                            SharedPreferences.Editor editor = ourSharedPreferences.edit();
                             editor.putStringSet(getResources().getString(R.string.onlineLayersKey), new HashSet<>(getSelectedOverlays()));
                             editor.commit();
 
@@ -230,7 +223,7 @@ public class OnlineLayersPreferenceActivity extends AppCompatActivity {
                     List<Layer> insecureLayers = new ArrayList<>();
 
                     // Set what should be checked based on preferences.
-                    Set<String> overlays = sharedPreferences.getStringSet(getResources().getString(R.string.onlineLayersKey), Collections.<String>emptySet());
+                    Set<String> overlays = ourSharedPreferences.getStringSet(getResources().getString(R.string.onlineLayersKey), Collections.<String>emptySet());
                     for (Layer layer : layers) {
                         boolean enabled = overlays != null ? overlays.contains(layer.getName()) : false;
 
@@ -414,7 +407,7 @@ public class OnlineLayersPreferenceActivity extends AppCompatActivity {
                     @Override
                     public void onClick(View v) {
                         boolean isChecked = ((Checkable) v).isChecked();
-                        
+
                         CacheOverlay overlay = CacheProvider.getInstance(context).getOverlay(layer.getName());
                         if (overlay != null) {
                             overlay.setEnabled(isChecked);
@@ -467,7 +460,7 @@ public class OnlineLayersPreferenceActivity extends AppCompatActivity {
             private SectionViewHolder(View view) {
                 super(view);
 
-                sectionName = (TextView) view.findViewById(R.id.section_name);
+                sectionName = view.findViewById(R.id.section_name);
             }
         }
     }
