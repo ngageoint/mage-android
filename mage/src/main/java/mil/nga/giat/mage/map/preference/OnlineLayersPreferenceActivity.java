@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -60,19 +61,26 @@ public class OnlineLayersPreferenceActivity extends AppCompatActivity {
      */
     private OnlineLayersListFragment onlineLayersFragment;
 
+    private static SharedPreferences sharedPreferences;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_online_layers);
 
         onlineLayersFragment = (OnlineLayersListFragment) getSupportFragmentManager().findFragmentById(R.id.online_layers_fragment);
+        sharedPreferences = getSharedPreferences("OnlineLayersPreferences" , 0);
     }
 
     @Override
     public void onBackPressed() {
-        Intent intent = new Intent();
-        intent.putStringArrayListExtra(MapPreferencesActivity.ONLINE_LAYERS_DATA_KEY, onlineLayersFragment.getSelectedOverlays());
-        setResult(Activity.RESULT_OK, intent);
+        //Intent intent = new Intent();
+        //intent.putStringArrayListExtra(MapPreferencesActivity.ONLINE_LAYERS_DATA_KEY, onlineLayersFragment.getSelectedOverlays());
+        //setResult(Activity.RESULT_OK, intent);
+
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putStringSet(getResources().getString(R.string.onlineLayersKey), new HashSet<>(onlineLayersFragment.getSelectedOverlays()));
+        editor.commit();
 
         finish();
     }
@@ -178,6 +186,11 @@ public class OnlineLayersPreferenceActivity extends AppCompatActivity {
                         ImageryServerFetch imageryServerFetch = new ImageryServerFetch(c);
                         try {
                             imageryServerFetch.fetch();
+
+                            SharedPreferences.Editor editor = sharedPreferences.edit();
+                            editor.putStringSet(getResources().getString(R.string.onlineLayersKey), new HashSet<>(getSelectedOverlays()));
+                            editor.commit();
+
                             CacheProvider.getInstance(getContext()).refreshTileOverlays();
                         } catch (Exception e) {
                             Log.w(LOG_NAME, "Failed fetching imagery", e);
@@ -217,8 +230,7 @@ public class OnlineLayersPreferenceActivity extends AppCompatActivity {
                     List<Layer> insecureLayers = new ArrayList<>();
 
                     // Set what should be checked based on preferences.
-                    SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
-                    Set<String> overlays = preferences.getStringSet(getResources().getString(R.string.onlineLayersKey), Collections.<String>emptySet());
+                    Set<String> overlays = sharedPreferences.getStringSet(getResources().getString(R.string.onlineLayersKey), Collections.<String>emptySet());
                     for (Layer layer : layers) {
                         boolean enabled = overlays != null ? overlays.contains(layer.getName()) : false;
 
@@ -402,8 +414,7 @@ public class OnlineLayersPreferenceActivity extends AppCompatActivity {
                     @Override
                     public void onClick(View v) {
                         boolean isChecked = ((Checkable) v).isChecked();
-
-                        //TODO persist this infor to the DB
+                        
                         CacheOverlay overlay = CacheProvider.getInstance(context).getOverlay(layer.getName());
                         if (overlay != null) {
                             overlay.setEnabled(isChecked);
