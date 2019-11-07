@@ -250,7 +250,7 @@ public class DownloadableLayersAdapter extends BaseExpandableListAdapter {
         TextView description = view.findViewById(R.id.layer_description);
 
         if (layer.getType().equalsIgnoreCase("geopackage")) {
-            description.setText(ByteUtils.getInstance().getDisplay(layer.getFileSize(), false));
+            description.setText(ByteUtils.getInstance().getDisplay(layer.getFileSize(), true));
         } else {
             description.setText("Static feature data");
         }
