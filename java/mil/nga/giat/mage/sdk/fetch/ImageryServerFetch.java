@@ -51,18 +51,22 @@ public class ImageryServerFetch extends AbstractServerFetch {
                 remoteIdToLayer.put(layer.getRemoteId(), layer);
             }
 
-            for (Layer layer : remoteLayers) {
+            for (Layer remoteLayer : remoteLayers) {
                 if (isCanceled.get()) {
                     break;
                 }
-                layer.setLoaded(true);
+                remoteLayer.setLoaded(true);
 
-                if (!localLayers.contains(layer)) {
-                    layerHelper.create(layer);
+                if (!localLayers.contains(remoteLayer)) {
+                    //New layer from remote server
+                    layerHelper.create(remoteLayer);
                 } else {
-                    Layer localLayer = remoteIdToLayer.get(layer.getRemoteId());
-                    layerHelper.delete(localLayer.getId());
-                    layerHelper.create(layer);
+                    Layer localLayer = remoteIdToLayer.get(remoteLayer.getRemoteId());
+                    //Only remove a local layer if the even has changed
+                    if(!remoteLayer.getEvent().equals(localLayer.getEvent())) {
+                        layerHelper.delete(localLayer.getId());
+                        layerHelper.create(remoteLayer);
+                    }
                 }
             }
         }catch(Exception e){
