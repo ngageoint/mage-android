@@ -268,6 +268,7 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
             listView.setEnabled(false);
             synchronized (adapterLock) {
                 adapter.getLayers().clear();
+                adapter.getOverlays().clear();
                 adapter.notifyDataSetChanged();
             }
 
@@ -389,8 +390,6 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
             final Event event = EventHelper.getInstance(getActivity().getApplicationContext()).getCurrentEvent();
 
             synchronized (adapterLock) {
-                adapter.getOverlays().removeAll(cacheOverlays);
-
                 //Here we are only handling static overlays.  geopackage overlays will be handled later on
                 for (CacheOverlay overlay : cacheOverlays) {
                     if(overlay instanceof StaticFeatureCacheOverlay) {
@@ -679,7 +678,7 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
 
                                     if (layer.getDownloadId() != null && !layer.isLoaded()) {
                                         // layer is currently downloading, get progress and refresh view
-                                        final View view = listView.getChildAt(i - listView.getFirstVisiblePosition());
+                                        final View view = listView.getChildAt(i);
                                         if (view == null) {
                                             continue;
                                         }

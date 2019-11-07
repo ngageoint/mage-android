@@ -114,10 +114,8 @@ public class DownloadableLayersAdapter extends BaseExpandableListAdapter {
 
     @Override
     public int getChildrenCount(int i) {
-        if (i < layers.size()) {
-            return 0;
-        } else {
-            int children = cacheOverlays.get(i - layers.size()).getChildren().size();
+        if (i < cacheOverlays.size()) {
+            int children = cacheOverlays.get(i).getChildren().size();
 
             for (Layer layer : layers) {
                 if(layer.getType().equalsIgnoreCase("geopackage")) {
@@ -128,21 +126,23 @@ public class DownloadableLayersAdapter extends BaseExpandableListAdapter {
             }
 
             return children;
+        } else {
+            return 0;
         }
     }
 
     @Override
     public Object getGroup(int i) {
-        if (i < layers.size()) {
-            return layers.get(i);
+        if (i < cacheOverlays.size()) {
+            return cacheOverlays.get(i);
         } else {
-            return cacheOverlays.get(i - layers.size());
+            return layers.get(i - cacheOverlays.size());
         }
     }
 
     @Override
     public Object getChild(int i, int j) {
-        return cacheOverlays.get(i - layers.size()).getChildren().get(j);
+        return cacheOverlays.get(i).getChildren().get(j);
     }
 
     @Override
@@ -162,10 +162,10 @@ public class DownloadableLayersAdapter extends BaseExpandableListAdapter {
 
     @Override
     public View getGroupView(int i, boolean isExpanded, View view, ViewGroup viewGroup) {
-        if (i < layers.size()) {
-            return getLayerView(i, isExpanded, view, viewGroup);
-        } else {
+        if (i < cacheOverlays.size()) {
             return getOverlayView(i, isExpanded, view, viewGroup);
+        } else {
+            return getLayerView(i, isExpanded, view, viewGroup);
         }
     }
 
@@ -173,13 +173,13 @@ public class DownloadableLayersAdapter extends BaseExpandableListAdapter {
         LayoutInflater inflater = LayoutInflater.from(activity);
         view = inflater.inflate(R.layout.cache_overlay_group, viewGroup, false);
 
-        final CacheOverlay overlay = cacheOverlays.get(i - layers.size());
+        final CacheOverlay overlay = cacheOverlays.get(i);
 
         Event event = EventHelper.getInstance(activity.getApplicationContext()).getCurrentEvent();
         TextView groupView = view.findViewById(R.id.cache_over_group_text);
         groupView.setText(event.getName() +" Layers");
 
-        view.findViewById(R.id.section_header).setVisibility(i == layers.size() ? View.VISIBLE : View.GONE);
+        view.findViewById(R.id.section_header).setVisibility(i == 0 ? View.VISIBLE : View.GONE);
 
         ImageView imageView = view.findViewById(R.id.cache_overlay_group_image);
         TextView cacheName =  view.findViewById(R.id.cache_overlay_group_name);
@@ -240,10 +240,10 @@ public class DownloadableLayersAdapter extends BaseExpandableListAdapter {
         LayoutInflater inflater = LayoutInflater.from(activity);
         view = inflater.inflate(R.layout.layer_overlay, viewGroup, false);
 
-        Layer layer = layers.get(i);
+        Layer layer = layers.get(i - cacheOverlays.size());
 
 
-        view.findViewById(R.id.section_header).setVisibility(i == 0 ? View.VISIBLE : View.GONE);
+        view.findViewById(R.id.section_header).setVisibility(i == cacheOverlays.size() ? View.VISIBLE : View.GONE);
 
         TextView cacheName = view.findViewById(R.id.layer_name);
         cacheName.setText(layer.getName());
@@ -331,7 +331,7 @@ public class DownloadableLayersAdapter extends BaseExpandableListAdapter {
             convertView = inflater.inflate(R.layout.cache_overlay_child, parent, false);
         }
 
-        final CacheOverlay overlay = cacheOverlays.get(groupPosition - layers.size());
+        final CacheOverlay overlay = cacheOverlays.get(groupPosition);
         final CacheOverlay childCache = overlay.getChildren().get(childPosition);
 
         ImageView imageView =  convertView.findViewById(R.id.cache_overlay_child_image);
