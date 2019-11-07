@@ -79,9 +79,15 @@ public class CacheProvider {
     }
 
     public void registerCacheOverlayListener(OnCacheOverlayListener listener) {
+       registerCacheOverlayListener(listener, true);
+    }
+
+    public void registerCacheOverlayListener(OnCacheOverlayListener listener, boolean fire) {
         cacheOverlayListeners.add(listener);
-        synchronized(cacheOverlays) {
-            listener.onCacheOverlay(getCacheOverlays());
+        if(fire) {
+            synchronized (cacheOverlays) {
+                listener.onCacheOverlay(getCacheOverlays());
+            }
         }
     }
 

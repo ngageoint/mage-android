@@ -210,6 +210,8 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
         public void onResume() {
             super.onResume();
 
+            CacheProvider.getInstance(getActivity()).registerCacheOverlayListener(this, false);
+
             downloadManager.onResume();
 
             synchronized (timerLock) {
@@ -221,6 +223,8 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
         @Override
         public void onPause() {
             super.onPause();
+
+            CacheProvider.getInstance(getActivity()).unregisterCacheOverlayListener(this);
             
             downloadManager.onPause();
 
@@ -238,11 +242,6 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
             refreshButton = menu.findItem(R.id.tile_overlay_refresh);
             refreshButton.setEnabled(true);
 
-            // This really should be done in the onResume, but I need to have the refreshButton
-            // before I register as the callback will set it to enabled.
-            // The problem is that onResume gets called before this so my menu is
-            // not yet setup and I will not have a handle on this button
-            CacheProvider.getInstance(getActivity()).registerCacheOverlayListener(this);
             manualRefresh(refreshButton);
         }
 
@@ -267,8 +266,10 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
             item.setEnabled(false);
             progress.setVisibility(View.VISIBLE);
             listView.setEnabled(false);
-            adapter.getLayers().clear();
-            adapter.notifyDataSetChanged();
+            synchronized (adapterLock) {
+                adapter.getLayers().clear();
+                adapter.notifyDataSetChanged();
+            }
 
             @SuppressLint("StaticFieldLeak") AsyncTask<Void, Void, List<Layer>> fetcher = new AsyncTask<Void, Void, List<Layer>>() {
                 @Override
@@ -317,6 +318,8 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
                     } catch (LayerException e) {
                     }
 
+                    CacheProvider.getInstance(getActivity().getApplicationContext()).refreshTileOverlays();
+
                     return layers;
                 }
 
@@ -325,7 +328,6 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
                     super.onPostExecute(layers);
 
                     synchronized (adapterLock){
-                        adapter.getLayers().clear();
                         adapter.getLayers().addAll(layers);
                         Collections.sort(adapter.getLayers(), new LayerNameComparator());
                         adapter.notifyDataSetChanged();
@@ -380,13 +382,6 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
             } catch (LayerException e) {
                 Log.e(LOG_NAME, "Error saving geopackage layers", e);
             }
-        }
-
-        @Override
-        public void onDestroy() {
-            super.onDestroy();
-
-            CacheProvider.getInstance(getActivity()).unregisterCacheOverlayListener(this);
         }
 
         @Override
@@ -565,7 +560,6 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
             }
 
             manualRefresh(refreshButton);
-            CacheProvider.getInstance(getActivity()).refreshTileOverlays();
         }
 
         /**
