@@ -295,6 +295,7 @@ public class DownloadableLayersAdapter extends BaseExpandableListAdapter {
                 if (threadLayer.getType().equalsIgnoreCase("geopackage")) {
                     downloadManager.downloadGeoPackage(threadLayer);
                 } else if (threadLayer.getType().equalsIgnoreCase("feature")) {
+                    progressBar.setIndeterminate(true);
                     @SuppressLint("StaticFieldLeak") AsyncTask<Layer, Void, Layer> fetcher = new AsyncTask<Layer, Void, Layer>() {
                         @Override
                         protected Layer doInBackground(Layer... layers) {
