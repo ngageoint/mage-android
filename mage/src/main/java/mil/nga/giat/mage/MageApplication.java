@@ -1,5 +1,6 @@
 package mil.nga.giat.mage;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.Application;
 import android.app.Notification;
@@ -14,6 +15,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
@@ -38,8 +40,10 @@ import mil.nga.giat.mage.observation.sync.AttachmentPushService;
 import mil.nga.giat.mage.observation.sync.ObservationFetchService;
 import mil.nga.giat.mage.observation.sync.ObservationFetchWorker;
 import mil.nga.giat.mage.observation.sync.ObservationPushService;
+import mil.nga.giat.mage.sdk.datastore.DaoStore;
 import mil.nga.giat.mage.sdk.datastore.layer.LayerHelper;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
+import mil.nga.giat.mage.sdk.datastore.staticfeature.StaticFeatureHelper;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.event.ISessionEventListener;
@@ -95,7 +99,9 @@ public class MageApplication extends DaggerApplication implements LifecycleObser
 
 		//This ensures the singleton is created with the correct context, which needs to be the
 		//application context
+		DaoStore.getInstance(this.getApplicationContext());
 		LayerHelper.getInstance(this.getApplicationContext());
+		StaticFeatureHelper.getInstance(this.getApplicationContext());
 
 		ProcessLifecycleOwner.get().getLifecycle().addObserver(this);
 
@@ -169,19 +175,19 @@ public class MageApplication extends DaggerApplication implements LifecycleObser
 	}
 
 	public void loadStaticFeatures(final boolean force, final StaticFeatureServerFetch.OnStaticLayersListener listener) {
-		Runnable runnable = new Runnable() {
+		@SuppressLint("StaticFieldLeak") AsyncTask<Void, Void, Void> fetcher = new AsyncTask<Void, Void, Void>() {
 			@Override
-			public void run() {
+			protected Void doInBackground(Void... voids) {
 				staticFeatureServerFetch = new StaticFeatureServerFetch(getApplicationContext());
 				try {
 					staticFeatureServerFetch.fetch(force, listener);
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
+				return null;
 			}
-		};
-
-		new Thread(runnable).start();
+		} ;
+		fetcher.execute();
 	}
 
 	public void onLogout(Boolean clearTokenInformationAndSendLogoutRequest, final OnLogoutListener logoutListener) {

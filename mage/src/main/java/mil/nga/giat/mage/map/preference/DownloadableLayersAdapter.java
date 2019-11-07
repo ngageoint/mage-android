@@ -1,6 +1,8 @@
 package mil.nga.giat.mage.map.preference;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.os.AsyncTask;
 import android.os.Environment;
 import android.support.annotation.UiThread;
 import android.text.format.Formatter;
@@ -289,41 +291,36 @@ public class DownloadableLayersAdapter extends BaseExpandableListAdapter {
             @Override
             public void onClick(View v) {
                 download.setVisibility(View.GONE);
-
+                progressBar.setVisibility(View.VISIBLE);
                 if (threadLayer.getType().equalsIgnoreCase("geopackage")) {
-                    progressBar.setVisibility(View.VISIBLE);
                     downloadManager.downloadGeoPackage(threadLayer);
                 } else if (threadLayer.getType().equalsIgnoreCase("feature")) {
-                    Runnable r = new Runnable() {
+                    @SuppressLint("StaticFieldLeak") AsyncTask<Layer, Void, Layer> fetcher = new AsyncTask<Layer, Void, Layer>() {
                         @Override
-                        public void run() {
+                        protected Layer doInBackground(Layer... layers) {
                             StaticFeatureServerFetch staticFeatureServerFetch = new StaticFeatureServerFetch(activity.getApplicationContext());
                             try {
-                                staticFeatureServerFetch.load(null, threadLayer);
-                                onStaticFeatureDownloadComplete(threadLayer);
+                                staticFeatureServerFetch.load(null, layers[0]);
                             } catch (Exception e) {
                                 Log.w(LOG_NAME, "Error fetching static layers", e);
                             }
+                            return layers[0];
+                        }
+
+                        @Override
+                        protected void onPostExecute(Layer layer) {
+                            super.onPostExecute(layer);
+                            DownloadableLayersAdapter.this.layers.remove(layer);
+                            notifyDataSetChanged();
+                            CacheProvider.getInstance(activity.getApplicationContext()).refreshTileOverlays();
                         }
                     };
-                    new Thread(r).start();
+                   fetcher.execute(threadLayer);
                 }
             }
         });
 
         return view;
-    }
-
-    @UiThread
-    private void onStaticFeatureDownloadComplete(final Layer layer){
-        activity.runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                DownloadableLayersAdapter.this.layers.remove(layer);
-                notifyDataSetChanged();
-                CacheProvider.getInstance(activity.getApplicationContext()).refreshTileOverlays();
-            }
-        });
     }
 
     @Override

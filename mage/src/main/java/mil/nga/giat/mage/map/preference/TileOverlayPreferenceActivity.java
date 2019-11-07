@@ -1,11 +1,13 @@
 package mil.nga.giat.mage.map.preference;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
 import android.preference.PreferenceManager;
@@ -180,7 +182,7 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
             });
 
             progress = view.findViewById(R.id.progress);
-            progress.setVisibility(View.VISIBLE);
+            progress.setVisibility(View.GONE);
 
             if (ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
                 if (ActivityCompat.shouldShowRequestPermissionRationale(getActivity(), Manifest.permission.READ_EXTERNAL_STORAGE)) {
@@ -205,18 +207,15 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
         }
 
         @Override
-        public void onViewCreated(View view, Bundle savedInstanceState) {
-            super.onViewCreated(view, savedInstanceState);
-
-            ListView listView = getListView();
-            listView.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);
-        }
-
-        @Override
         public void onResume() {
             super.onResume();
 
             downloadManager.onResume();
+
+            synchronized (timerLock) {
+                downloadRefreshTimer = new Timer();
+                downloadRefreshTimer.schedule(new GeopackageDownloadProgressTimer(getActivity()), 0, 2000);
+            }
         }
 
         @Override
@@ -237,14 +236,13 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
             inflater.inflate(R.menu.tile_overlay_menu, menu);
 
             refreshButton = menu.findItem(R.id.tile_overlay_refresh);
-            refreshButton.setEnabled(false);
+            refreshButton.setEnabled(true);
 
             // This really should be done in the onResume, but I need to have the refreshButton
             // before I register as the callback will set it to enabled.
             // The problem is that onResume gets called before this so my menu is
             // not yet setup and I will not have a handle on this button
             CacheProvider.getInstance(getActivity()).registerCacheOverlayListener(this);
-
             manualRefresh(refreshButton);
         }
 
@@ -272,9 +270,9 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
             adapter.getLayers().clear();
             adapter.notifyDataSetChanged();
 
-            Runnable fetcher = new Runnable() {
+            @SuppressLint("StaticFieldLeak") AsyncTask<Void, Void, List<Layer>> fetcher = new AsyncTask<Void, Void, List<Layer>>() {
                 @Override
-                public void run() {
+                protected List<Layer> doInBackground(Void... objects) {
                     final Semaphore lock = new Semaphore(1);
                     lock.drainPermits();
                     fetchGeopackageLayers(new Callback<Collection<Layer>>() {
@@ -319,18 +317,15 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
                     } catch (LayerException e) {
                     }
 
-                    OverlayListFragment.this.onManualRefreshComplete(layers);
+                    return layers;
                 }
-            };
-            new Thread(fetcher).start();
-        }
 
-        private void onManualRefreshComplete(final List<Layer> layers){
-            getActivity().runOnUiThread(new Runnable() {
                 @Override
-                public void run() {
+                protected void onPostExecute(List<Layer> layers) {
+                    super.onPostExecute(layers);
+
                     synchronized (adapterLock){
-                        adapter.getLayers().removeAll(layers);
+                        adapter.getLayers().clear();
                         adapter.getLayers().addAll(layers);
                         Collections.sort(adapter.getLayers(), new LayerNameComparator());
                         adapter.notifyDataSetChanged();
@@ -339,7 +334,8 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
                     progress.setVisibility(View.GONE);
                     listView.setEnabled(true);
                 }
-            });
+            };
+            fetcher.execute();
         }
 
         /**
@@ -400,6 +396,7 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
             synchronized (adapterLock) {
                 adapter.getOverlays().removeAll(cacheOverlays);
 
+                //Here we are only handling static overlays.  geopackage overlays will be handled later on
                 for (CacheOverlay overlay : cacheOverlays) {
                     if(overlay instanceof StaticFeatureCacheOverlay) {
                         adapter.getOverlays().add(overlay);
@@ -432,30 +429,6 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
                         }
                         Collections.sort(adapter.getOverlays());
                         adapter.notifyDataSetChanged();
-                    }
-
-                    synchronized (timerLock) {
-                        downloadRefreshTimer = new Timer();
-                        downloadRefreshTimer.schedule(new TimerTask() {
-                            private boolean canceled = false;
-
-                            @Override
-                            public void run() {
-                                synchronized (timerLock) {
-                                    if (!canceled) {
-                                        updateGeopackageDownloadProgress();
-                                    }
-                                }
-                            }
-
-                            @Override
-                            public boolean cancel() {
-                                synchronized (timerLock) {
-                                    canceled = true;
-                                }
-                                return super.cancel();
-                            }
-                        }, 0, 2000);
                     }
                 }
             });
@@ -501,50 +474,6 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
             }
 
             return overlays;
-        }
-
-        private void updateGeopackageDownloadProgress() {
-            /*
-            TODO this method was difficult to put on the UI thread, so as it sits, it is not robust
-            */
-            if(getActivity() == null) {
-                return;
-            }
-            getActivity().runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    synchronized (adapterLock) {
-                        try {
-                            List<Layer> layers = adapter.getLayers();
-                            for (int i = 0; i < layers.size(); i++) {
-                                final Layer layer = layers.get(i);
-
-                                if(!layer.getType().equalsIgnoreCase("geopackage")){
-                                    continue;
-                                }
-
-                                if (layer.getDownloadId() != null && !layer.isLoaded()) {
-                                    // layer is currently downloading, get progress and refresh view
-                                    final View view = listView.getChildAt(i - listView.getFirstVisiblePosition());
-                                    if (view == null) {
-                                        continue;
-                                    }
-
-                                    Activity activity = getActivity();
-                                    if (activity == null) {
-                                        continue;
-                                    }
-
-                                    adapter.updateDownloadProgress(view, downloadManager.getProgress(layer), layer.getFileSize());
-                                }
-                            }
-                        }catch(Exception e) {
-                            //This is sort of a hack to manage the craziness in the lifecycle
-                            //Typically this is an NPE
-                        }
-                    }
-                }
-            });
         }
 
         /**
@@ -704,6 +633,72 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
                 LayerHelper.getInstance(getContext()).delete(cacheOverlay.getId());
             } catch (LayerException e) {
                 Log.w(LOG_NAME, "Failed to delete static feature " + cacheOverlay.getCacheName() ,e);
+            }
+        }
+
+        private class GeopackageDownloadProgressTimer extends TimerTask {
+            private boolean canceled = false;
+
+            private final Activity myActivity;
+
+            public GeopackageDownloadProgressTimer(Activity activity){
+                myActivity = activity;
+            }
+
+            @Override
+            public void run() {
+                synchronized (timerLock) {
+                    if (!canceled) {
+                        try {
+                            updateGeopackageDownloadProgress();
+                        }catch(Exception e){
+                            //ignore
+                        }
+                    }
+                }
+            }
+
+            @Override
+            public boolean cancel() {
+                synchronized (timerLock) {
+                    canceled = true;
+                }
+                return super.cancel();
+            }
+
+            private void updateGeopackageDownloadProgress() {
+                myActivity.runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        synchronized (adapterLock) {
+                            if(adapter == null){
+                                return;
+                            }
+                            try {
+                                List<Layer> layers = adapter.getLayers();
+                                for (int i = 0; i < layers.size(); i++) {
+                                    final Layer layer = layers.get(i);
+
+                                    if (!layer.getType().equalsIgnoreCase("geopackage")) {
+                                        continue;
+                                    }
+
+                                    if (layer.getDownloadId() != null && !layer.isLoaded()) {
+                                        // layer is currently downloading, get progress and refresh view
+                                        final View view = listView.getChildAt(i - listView.getFirstVisiblePosition());
+                                        if (view == null) {
+                                            continue;
+                                        }
+
+                                        adapter.updateDownloadProgress(view, downloadManager.getProgress(layer), layer.getFileSize());
+                                    }
+                                }
+                            } catch (Exception e) {
+                                //ignore
+                            }
+                        }
+                    }
+                });
             }
         }
     }
