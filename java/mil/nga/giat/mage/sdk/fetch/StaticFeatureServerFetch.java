@@ -78,13 +78,15 @@ public class StaticFeatureServerFetch extends AbstractServerFetch {
 				remoteIdToLayer.put(layer.getRemoteId(), layer);
 			}
 
-			for (Layer layer : remoteLayers) {
-				if (!localLayers.contains(layer)) {
-					layerHelper.create(layer);
+			for (Layer remoteLayer : remoteLayers) {
+				if (!localLayers.contains(remoteLayer)) {
+					layerHelper.create(remoteLayer);
 				} else {
-					Layer localLayer = remoteIdToLayer.get(layer.getRemoteId());
-					layerHelper.delete(localLayer.getId());
-					layerHelper.create(layer);
+					Layer localLayer = remoteIdToLayer.get(remoteLayer.getRemoteId());
+					if(!remoteLayer.getEvent().equals(localLayer.getEvent())) {
+						layerHelper.delete(localLayer.getId());
+						layerHelper.create(remoteLayer);
+					}
 				}
 			}
 
@@ -160,8 +162,8 @@ public class StaticFeatureServerFetch extends AbstractServerFetch {
 					layer = staticFeatureHelper.createAll(staticFeatures, layer);
 					try {
 						layer.setLoaded(true);
-						DaoStore.getInstance(mContext).getLayerDao().update(layer);
-					} catch (SQLException e) {
+						LayerHelper.getInstance(mContext).update(layer);
+					} catch (Exception e) {
 						throw new StaticFeatureException("Unable to update the layer to loaded: " + layer.getName());
 					}
 
