@@ -33,7 +33,7 @@ import mil.nga.giat.mage.sdk.fetch.StaticFeatureServerFetch;
 import mil.nga.giat.mage.utils.ByteUtils;
 
 /**
- * Cache Overlay Expandable list adapter
+ * Adapter used to control the downloadable layers
  *
  * <p></p>
  * <b>ALL public methods MUST be made on the UI thread to ensure concurrency.</b>
@@ -41,6 +41,9 @@ import mil.nga.giat.mage.utils.ByteUtils;
 @UiThread
 public class DownloadableLayersAdapter extends BaseExpandableListAdapter {
 
+    /**
+     * log identifier
+     */
     private static final String LOG_NAME = DownloadableLayersAdapter.class.getName();
 
     /**
@@ -49,14 +52,14 @@ public class DownloadableLayersAdapter extends BaseExpandableListAdapter {
     private final Activity activity;
 
     /**
-     * List of geopackage and static feature cache overlays
+     * List of geopackage and static feature cache overlays (downloaded)
      */
     private final List<CacheOverlay> cacheOverlays = new ArrayList<>();
 
     /**
-     * all layers
+     * Layers that can be downloaded
      */
-    private final List<Layer> layers = new ArrayList<>();
+    private final List<Layer> downloadableLayers = new ArrayList<>();
 
 
     private final GeoPackageDownloadManager downloadManager;
@@ -72,23 +75,41 @@ public class DownloadableLayersAdapter extends BaseExpandableListAdapter {
         this.downloadManager = downloadManager;
     }
 
+    /**
+     * Call when a layer is downloaded and turned into a cache overlay
+     *
+     * @param overlay the downloaded overlay
+     * @param layer the layer to remove
+     */
     public void addOverlay(CacheOverlay overlay, Layer layer) {
 
         if(overlay instanceof GeoPackageCacheOverlay || overlay instanceof StaticFeatureCacheOverlay) {
             if (layer.isLoaded()) {
-                layers.remove(layer);
+                downloadableLayers.remove(layer);
                 cacheOverlays.add(overlay);
             }
         }
     }
 
-    public List<Layer> getLayers() {
-        return layers;
+    /**
+     * This is the live list of downloadable layers and any actions on
+     * this list should be synchronized
+     *
+     * @return
+     */
+    public List<Layer> getDownloadableLayers() {
+        return downloadableLayers;
     }
 
+    /**
+     * This is the live list of overlays and any actions on
+     * this list should be synchronized
+     *
+     * @return
+     */
     public List<CacheOverlay> getOverlays() {return this.cacheOverlays;}
 
-    void updateDownloadProgress(View view, int progress, long size) {
+    public void updateDownloadProgress(View view, int progress, long size) {
         if (progress <= 0) {
             return;
         }
@@ -109,7 +130,7 @@ public class DownloadableLayersAdapter extends BaseExpandableListAdapter {
 
     @Override
     public int getGroupCount() {
-        return cacheOverlays.size() + layers.size();
+        return cacheOverlays.size() + downloadableLayers.size();
     }
 
     @Override
@@ -117,7 +138,7 @@ public class DownloadableLayersAdapter extends BaseExpandableListAdapter {
         if (i < cacheOverlays.size()) {
             int children = cacheOverlays.get(i).getChildren().size();
 
-            for (Layer layer : layers) {
+            for (Layer layer : downloadableLayers) {
                 if(layer.getType().equalsIgnoreCase("geopackage")) {
                     if (layer.isLoaded()) {
                         children++;
@@ -136,7 +157,7 @@ public class DownloadableLayersAdapter extends BaseExpandableListAdapter {
         if (i < cacheOverlays.size()) {
             return cacheOverlays.get(i);
         } else {
-            return layers.get(i - cacheOverlays.size());
+            return downloadableLayers.get(i - cacheOverlays.size());
         }
     }
 
@@ -165,7 +186,7 @@ public class DownloadableLayersAdapter extends BaseExpandableListAdapter {
         if (i < cacheOverlays.size()) {
             return getOverlayView(i, isExpanded, view, viewGroup);
         } else {
-            return getLayerView(i, isExpanded, view, viewGroup);
+            return getDownloadableLayerView(i, isExpanded, view, viewGroup);
         }
     }
 
@@ -236,11 +257,11 @@ public class DownloadableLayersAdapter extends BaseExpandableListAdapter {
         return view;
     }
 
-    private View getLayerView(int i, boolean isExpanded, View view, ViewGroup viewGroup) {
+    private View getDownloadableLayerView(int i, boolean isExpanded, View view, ViewGroup viewGroup) {
         LayoutInflater inflater = LayoutInflater.from(activity);
         view = inflater.inflate(R.layout.layer_overlay, viewGroup, false);
 
-        Layer layer = layers.get(i - cacheOverlays.size());
+        Layer layer = downloadableLayers.get(i - cacheOverlays.size());
 
 
         view.findViewById(R.id.section_header).setVisibility(i == cacheOverlays.size() ? View.VISIBLE : View.GONE);
@@ -280,9 +301,12 @@ public class DownloadableLayersAdapter extends BaseExpandableListAdapter {
                 download.setVisibility(View.VISIBLE);
             }
         } else if (layer.getType().equalsIgnoreCase("feature")) {
-            progressBar.setVisibility(View.GONE);
             if (!layer.isLoaded()) {
                 download.setVisibility(View.VISIBLE);
+                progressBar.setVisibility(View.GONE);
+            }else {
+                progressBar.setVisibility(View.VISIBLE);
+                progressBar.setIndeterminate(true);
             }
         }
 
@@ -296,10 +320,12 @@ public class DownloadableLayersAdapter extends BaseExpandableListAdapter {
                     downloadManager.downloadGeoPackage(threadLayer);
                 } else if (threadLayer.getType().equalsIgnoreCase("feature")) {
                     progressBar.setIndeterminate(true);
-                    @SuppressLint("StaticFieldLeak") AsyncTask<Layer, Void, Layer> fetcher = new AsyncTask<Layer, Void, Layer>() {
+                    @SuppressLint("StaticFieldLeak") AsyncTask<Layer, Void, Layer> fetcher =
+                            new AsyncTask<Layer, Void, Layer>() {
                         @Override
                         protected Layer doInBackground(Layer... layers) {
-                            StaticFeatureServerFetch staticFeatureServerFetch = new StaticFeatureServerFetch(activity.getApplicationContext());
+                            StaticFeatureServerFetch staticFeatureServerFetch =
+                                    new StaticFeatureServerFetch(activity.getApplicationContext());
                             try {
                                 staticFeatureServerFetch.load(null, layers[0]);
                             } catch (Exception e) {
@@ -311,7 +337,8 @@ public class DownloadableLayersAdapter extends BaseExpandableListAdapter {
                         @Override
                         protected void onPostExecute(Layer layer) {
                             super.onPostExecute(layer);
-                            DownloadableLayersAdapter.this.layers.remove(layer);
+                            DownloadableLayersAdapter.this.getDownloadableLayers().remove(layer);
+                            DownloadableLayersAdapter.this.getOverlays().clear();
                             notifyDataSetChanged();
                             CacheProvider.getInstance(activity.getApplicationContext()).refreshTileOverlays();
                         }
@@ -321,11 +348,14 @@ public class DownloadableLayersAdapter extends BaseExpandableListAdapter {
             }
         });
 
+        view.setTag(layer.getName());
+
         return view;
     }
 
     @Override
-    public View getChildView(int groupPosition, int childPosition, boolean isLastChild, View convertView, ViewGroup parent) {
+    public View getChildView(int groupPosition, int childPosition, boolean isLastChild,
+                             View convertView, ViewGroup parent) {
 
         if (convertView == null) {
             LayoutInflater inflater = LayoutInflater.from(activity);

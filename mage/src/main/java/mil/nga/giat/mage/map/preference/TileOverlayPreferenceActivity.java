@@ -27,12 +27,12 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ExpandableListView;
-import android.widget.ListView;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Timer;
@@ -267,7 +267,7 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
             progress.setVisibility(View.VISIBLE);
             listView.setEnabled(false);
             synchronized (adapterLock) {
-                adapter.getLayers().clear();
+                adapter.getDownloadableLayers().clear();
                 adapter.getOverlays().clear();
                 adapter.notifyDataSetChanged();
             }
@@ -329,8 +329,8 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
                     super.onPostExecute(layers);
 
                     synchronized (adapterLock){
-                        adapter.getLayers().addAll(layers);
-                        Collections.sort(adapter.getLayers(), new LayerNameComparator());
+                        adapter.getDownloadableLayers().addAll(layers);
+                        Collections.sort(adapter.getDownloadableLayers(), new LayerNameComparator());
                         adapter.notifyDataSetChanged();
                     }
                     refreshButton.setEnabled(true);
@@ -365,20 +365,36 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
             service.getLayers(event.getRemoteId(), "GeoPackage").enqueue(callback);
         }
 
-        private void saveGeopackageLayers(Collection<Layer> layers) {
+        private void saveGeopackageLayers(Collection<Layer> remoteLayers) {
             Context context = getActivity().getApplicationContext();
             LayerHelper layerHelper = LayerHelper.getInstance(context);
             try {
-                layerHelper.deleteAll("GeoPackage");
+                // get local layers
+                Collection<Layer> localLayers = layerHelper.readAll("GeoPackage");
+
+                Map<String, Layer> remoteIdToLayer = new HashMap<>(localLayers.size());
+                for(Layer layer : localLayers){
+                    remoteIdToLayer.put(layer.getRemoteId(), layer);
+                }
 
                 GeoPackageManager manager = GeoPackageFactory.getManager(context);
-                for (Layer layer : layers) {
+                for (Layer remoteLayer : remoteLayers) {
                     // Check if its loaded
-                    File file = new File(context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), String.format("MAGE/geopackages/%s/%s", layer.getRemoteId(), layer.getFileName()));
+                    File file = new File(context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS),
+                            String.format("MAGE/geopackages/%s/%s", remoteLayer.getRemoteId(), remoteLayer.getFileName()));
                     if (file.exists() && manager.existsAtExternalFile(file)) {
-                        layer.setLoaded(true);
+                        remoteLayer.setLoaded(true);
                     }
-                    layerHelper.create(layer);
+                    if(!localLayers.contains(remoteLayer)) {
+                        layerHelper.create(remoteLayer);
+                    }else {
+                        Layer localLayer = remoteIdToLayer.get(remoteLayer.getRemoteId());
+                        //Only remove a local layer if the even has changed
+                        if (!remoteLayer.getEvent().equals(localLayer.getEvent())) {
+                            layerHelper.delete(localLayer.getId());
+                            layerHelper.create(remoteLayer);
+                        }
+                    }
                 }
             } catch (LayerException e) {
                 Log.e(LOG_NAME, "Error saving geopackage layers", e);
@@ -390,6 +406,8 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
             final Event event = EventHelper.getInstance(getActivity().getApplicationContext()).getCurrentEvent();
 
             synchronized (adapterLock) {
+                this.adapter.getOverlays().removeAll(cacheOverlays);
+
                 //Here we are only handling static overlays.  geopackage overlays will be handled later on
                 for (CacheOverlay overlay : cacheOverlays) {
                     if(overlay instanceof StaticFeatureCacheOverlay) {
@@ -412,9 +430,9 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
                 public void onReady(List<Layer> layers) {
 
                     synchronized (adapterLock){
-                        adapter.getLayers().removeAll(layers);
-                        adapter.getLayers().addAll(layers);
-                        Collections.sort(adapter.getLayers(), new LayerNameComparator());
+                        adapter.getDownloadableLayers().removeAll(layers);
+                        adapter.getDownloadableLayers().addAll(layers);
+                        Collections.sort(adapter.getDownloadableLayers(), new LayerNameComparator());
                         List<CacheOverlay> filtered = new CacheOverlayFilter(getContext(), event).filter(cacheOverlays);
                         for(CacheOverlay overlay : filtered) {
                             if(overlay instanceof GeoPackageCacheOverlay) {
@@ -668,18 +686,15 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
                                 return;
                             }
                             try {
-                                List<Layer> layers = adapter.getLayers();
-                                for (int i = 0; i < layers.size(); i++) {
-                                    final Layer layer = layers.get(i);
-
-                                    if (!layer.getType().equalsIgnoreCase("geopackage")) {
+                                List<Layer> layers = adapter.getDownloadableLayers();
+                                for(Layer layer : layers){
+                                    if(layer.getDownloadId() == null || layer.isLoaded()){
                                         continue;
                                     }
 
-                                    if (layer.getDownloadId() != null && !layer.isLoaded()) {
-                                        // layer is currently downloading, get progress and refresh view
+                                    for(int i = 0; i < layers.size(); i++) {
                                         final View view = listView.getChildAt(i);
-                                        if (view == null) {
+                                        if (view == null || view.getTag() == null || !view.getTag().equals(layer.getName())) {
                                             continue;
                                         }
 
