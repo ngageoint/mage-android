@@ -52,7 +52,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_vertical"
-                style="@style/ListTextPrimary" />
+                style="@style/ListTextSecondary" />
 
             <ProgressBar
                 android:id="@+id/layer_progress"
