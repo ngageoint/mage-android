@@ -333,9 +333,7 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
                         Collections.sort(adapter.getDownloadableLayers(), new LayerNameComparator());
                         adapter.notifyDataSetChanged();
                     }
-                    refreshButton.setEnabled(true);
-                    progress.setVisibility(View.GONE);
-                    listView.setEnabled(true);
+
                 }
             };
             fetcher.execute();
@@ -442,6 +440,10 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
                         Collections.sort(adapter.getOverlays());
                         adapter.notifyDataSetChanged();
                     }
+
+                    refreshButton.setEnabled(true);
+                    progress.setVisibility(View.GONE);
+                    listView.setEnabled(true);
                 }
             });
         }
