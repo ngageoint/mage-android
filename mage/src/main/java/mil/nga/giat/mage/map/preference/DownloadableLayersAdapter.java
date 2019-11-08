@@ -11,7 +11,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseExpandableListAdapter;
-import android.widget.CheckBox;
+import android.widget.Checkable;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -205,12 +205,12 @@ public class DownloadableLayersAdapter extends BaseExpandableListAdapter {
         ImageView imageView = view.findViewById(R.id.cache_overlay_group_image);
         TextView cacheName =  view.findViewById(R.id.cache_overlay_group_name);
         TextView childCount =  view.findViewById(R.id.cache_overlay_group_count);
-        CheckBox checkBox =  view.findViewById(R.id.cache_overlay_group_checkbox);
+        View checkable =  view.findViewById(R.id.cache_overlay_group_checkbox);
 
-        checkBox.setOnClickListener(new View.OnClickListener() {
+        checkable.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                boolean checked = ((CheckBox) v).isChecked();
+                boolean checked = ((Checkable) v).isChecked();
 
                 overlay.setEnabled(checked);
 
@@ -227,7 +227,7 @@ public class DownloadableLayersAdapter extends BaseExpandableListAdapter {
                 }
             }
         });
-        
+
         Integer imageResource = overlay.getIconImageResourceId();
         if (imageResource != null){
             imageView.setImageResource(imageResource);
@@ -252,7 +252,7 @@ public class DownloadableLayersAdapter extends BaseExpandableListAdapter {
         } else {
             childCount.setText("");
         }
-        checkBox.setChecked(overlay.isEnabled());
+        ((Checkable)checkable).setChecked(overlay.isEnabled());
 
         return view;
     }
@@ -368,14 +368,14 @@ public class DownloadableLayersAdapter extends BaseExpandableListAdapter {
         ImageView imageView =  convertView.findViewById(R.id.cache_overlay_child_image);
         TextView tableName =  convertView.findViewById(R.id.cache_overlay_child_name);
         TextView info =  convertView.findViewById(R.id.cache_overlay_child_info);
-        CheckBox checkBox =  convertView.findViewById(R.id.cache_overlay_child_checkbox);
+        View checkBox =  convertView.findViewById(R.id.cache_overlay_child_checkbox);
 
         convertView.findViewById(R.id.divider).setVisibility(isLastChild ? View.VISIBLE : View.INVISIBLE);
 
         checkBox.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                boolean checked = ((CheckBox) v).isChecked();
+                boolean checked = ((Checkable) v).isChecked();
 
                 childCache.setEnabled(checked);
 
@@ -406,7 +406,7 @@ public class DownloadableLayersAdapter extends BaseExpandableListAdapter {
 
         tableName.setText(childCache.getName());
         info.setText(childCache.getInfo());
-        checkBox.setChecked(childCache.isEnabled());
+        ((Checkable)checkBox).setChecked(childCache.isEnabled());
 
         Integer imageResource = childCache.getIconImageResourceId();
         if (imageResource != null){
