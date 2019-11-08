@@ -227,8 +227,11 @@ public class DownloadableLayersAdapter extends BaseExpandableListAdapter {
                 }
             }
         });
-
-        imageView.setImageResource(R.drawable.ic_folder_open_black_24dp);
+        
+        Integer imageResource = overlay.getIconImageResourceId();
+        if (imageResource != null){
+            imageView.setImageResource(imageResource);
+        }
 
         Layer layer = null;
         if (overlay instanceof GeoPackageCacheOverlay) {
@@ -245,7 +248,7 @@ public class DownloadableLayersAdapter extends BaseExpandableListAdapter {
         cacheName.setText(layer != null ? layer.getName() : overlay.getName());
 
         if (overlay.isSupportsChildren()) {
-            childCount.setText("(" + getChildrenCount(i) + ")");
+            childCount.setText("(" + getChildrenCount(i) + " layers)");
         } else {
             childCount.setText("");
         }
