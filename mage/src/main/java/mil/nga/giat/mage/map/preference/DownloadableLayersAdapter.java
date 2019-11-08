@@ -228,10 +228,7 @@ public class DownloadableLayersAdapter extends BaseExpandableListAdapter {
             }
         });
 
-        Integer imageResource = overlay.getIconImageResourceId();
-        if (imageResource != null) {
-            imageView.setImageResource(imageResource);
-        }
+        imageView.setImageResource(R.drawable.ic_folder_open_black_24dp);
 
         Layer layer = null;
         if (overlay instanceof GeoPackageCacheOverlay) {
