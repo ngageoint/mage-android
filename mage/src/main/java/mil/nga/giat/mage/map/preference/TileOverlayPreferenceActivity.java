@@ -27,6 +27,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ExpandableListView;
+import android.widget.TextView;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -117,7 +118,8 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
         private DownloadableLayersAdapter adapter;
         private final Object adapterLock = new Object();
         private ExpandableListView listView;
-        private View progress;
+        private View contentView;
+        private View noContentView;
         private MenuItem refreshButton;
         private GeoPackageDownloadManager downloadManager;
         private Timer downloadRefreshTimer;
@@ -181,8 +183,9 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
                 }
             });
 
-            progress = view.findViewById(R.id.downloadable_layers_no_content);
-            progress.setVisibility(View.GONE);
+            contentView = view.findViewById(R.id.downloadable_layers_content);
+            noContentView = view.findViewById(R.id.downloadable_layers_no_content);
+            noContentView.setVisibility(View.GONE);
 
             if (ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
                 if (ActivityCompat.shouldShowRequestPermissionRationale(getActivity(), Manifest.permission.READ_EXTERNAL_STORAGE)) {
@@ -264,7 +267,11 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
         @UiThread
         private void manualRefresh(MenuItem item) {
             item.setEnabled(false);
-            progress.setVisibility(View.VISIBLE);
+            noContentView.setVisibility(View.VISIBLE);
+            contentView.setVisibility(View.GONE);
+            ((TextView) noContentView.findViewById(R.id.downloadable_layers_no_content_title)).setText(getResources().getString(R.string.downloadable_layers_no_content_loading));
+            noContentView.findViewById(R.id.downloadable_layers_no_content_summary).setVisibility(View.GONE);
+            noContentView.findViewById(R.id.downloadable_layers_no_content_progressBar).setVisibility(View.VISIBLE);
             listView.setEnabled(false);
             synchronized (adapterLock) {
                 adapter.getDownloadableLayers().clear();
@@ -427,7 +434,10 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
                 @Override
                 public void onReady(List<Layer> layers) {
 
+                    boolean isEmpty = false;
                     synchronized (adapterLock){
+
+
                         adapter.getDownloadableLayers().removeAll(layers);
                         adapter.getDownloadableLayers().addAll(layers);
                         Collections.sort(adapter.getDownloadableLayers(), new LayerNameComparator());
@@ -439,10 +449,23 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
                         }
                         Collections.sort(adapter.getOverlays());
                         adapter.notifyDataSetChanged();
+
+                        if(adapter.getDownloadableLayers().isEmpty() || adapter.getOverlays().isEmpty()){
+                            isEmpty = true;
+                        }
                     }
 
                     refreshButton.setEnabled(true);
-                    progress.setVisibility(View.GONE);
+                    if (!isEmpty) {
+                        noContentView.setVisibility(View.GONE);
+                        contentView.setVisibility(View.VISIBLE);
+                    } else {
+                        noContentView.setVisibility(View.VISIBLE);
+                        contentView.setVisibility(View.GONE);
+                        ((TextView) noContentView.findViewById(R.id.downloadable_layers_no_content_title)).setText(getResources().getString(R.string.downloadable_layers_no_content_text));
+                        noContentView.findViewById(R.id.downloadable_layers_no_content_summary).setVisibility(View.VISIBLE);
+                        noContentView.findViewById(R.id.downloadable_layers_no_content_progressBar).setVisibility(View.GONE);
+                    }
                     listView.setEnabled(true);
                 }
             });
