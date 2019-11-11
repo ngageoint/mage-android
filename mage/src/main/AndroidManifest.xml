@@ -39,7 +39,6 @@
         android:logo="@drawable/ic_wand_white_50dp"
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
-        android:usesCleartextTraffic="true"
         android:networkSecurityConfig="@xml/network_security_config">
 
         <uses-library android:name="org.apache.http.legacy" android:required="false"/>
