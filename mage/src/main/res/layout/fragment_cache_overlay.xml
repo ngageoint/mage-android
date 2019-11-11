@@ -13,18 +13,39 @@
         android:dividerHeight="1dp"
         android:childDivider="#00000000"/>
 
-    <RelativeLayout
-        android:id="@+id/progress"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
+    <LinearLayout
+        android:id="@+id/downloadable_layers_no_content"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
         android:gravity="center"
-        android:background="#33000000">
+        android:orientation="vertical"
+        android:paddingBottom="15dp"
+        android:paddingTop="15dp">
+
+        <TextView
+            android:id="@+id/downloadable_layers_no_content_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:paddingBottom="20dip"
+            android:text="@string/downloadable_layers_no_content_loading"
+            android:textColor="#777"
+            android:textSize="22sp" />
+
+        <TextView
+            android:id="@+id/downloadable_layers_no_content_summary"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:textColor="#999"
+            android:visibility="gone" />
 
         <ProgressBar
-            android:layout_width="100dp"
-            android:layout_height="100dp"
-            android:indeterminate="true"/>
+            android:id="@+id/downloadable_layers_no_content_progressBar"
+            style="?android:attr/progressBarStyleLarge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
 
-    </RelativeLayout>
+    </LinearLayout>
 
 </RelativeLayout>

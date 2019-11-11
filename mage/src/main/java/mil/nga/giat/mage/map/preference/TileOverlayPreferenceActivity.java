@@ -181,7 +181,7 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
                 }
             });
 
-            progress = view.findViewById(R.id.progress);
+            progress = view.findViewById(R.id.downloadable_layers_no_content);
             progress.setVisibility(View.GONE);
 
             if (ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
