@@ -282,10 +282,39 @@ public class MediaUtility {
      * @return The value of the _data column, which is typically a file path.
      */
     public static String getDataColumn(Context context, Uri uri, String selection,
-            String[] selectionArgs) {
+									   String[] selectionArgs) {
+        return getColumn(context, uri, MediaStore.Files.FileColumns.DATA, selection, selectionArgs);
+    }
+
+    /**
+     * Get the value of the display name for this Uri
+     *
+     * @param context The context.
+     * @param uri The Uri to query.
+     * @param selection (Optional) Filter used in the query.
+     * @param selectionArgs (Optional) Selection arguments used in the query.
+     * @return The value of the _data column, which is typically a file path.
+     * @author paulburke
+     */
+    public static String getDisplayNameColumn(Context context, Uri uri, String selection,
+											  String[] selectionArgs) {
+        return getColumn(context, uri, DocumentsContract.Document.COLUMN_DISPLAY_NAME, selection, selectionArgs);
+    }
+
+    /**
+     * Get the value of the column for this Uri
+     *
+     * @param context The context.
+     * @param column The column.
+     * @param uri The Uri to query.
+     * @param selection (Optional) Filter used in the query.
+     * @param selectionArgs (Optional) Selection arguments used in the query.
+     * @return The value of the _data column, which is typically a file path.
+     */
+    public static String getColumn(Context context, Uri uri, String column, String selection,
+								   String[] selectionArgs) {
 
         Cursor cursor = null;
-        final String column = "_data";
         final String[] projection = {
                 column
         };
@@ -299,10 +328,11 @@ public class MediaUtility {
                 return cursor.getString(column_index);
             }
         } catch (Exception e) {
-			Log.e(LOG_NAME, "Error getting data column", e);
-		} finally {
-            if (cursor != null)
+            Log.w(LOG_NAME, "Error getting " + column + " column", e);
+        } finally {
+            if (cursor != null) {
                 cursor.close();
+            }
         }
         return null;
     }
@@ -371,10 +401,41 @@ public class MediaUtility {
             else if (isDownloadsDocument(uri)) {
 
                 final String id = getDocumentId(uri);
-                final Uri contentUri = ContentUris.withAppendedId(
-                        Uri.parse("content://downloads/public_downloads"), Long.valueOf(id));
 
-                return getDataColumn(context, contentUri, null, null);
+                String rawPrefix = "raw:";
+                if(id.startsWith(rawPrefix)){
+                    return id.substring(rawPrefix.length());
+                }
+
+                try {
+                    String[] contentUriPrefixesToTry = new String[]{
+                            "content://downloads/public_downloads",
+                            "content://downloads/my_downloads",
+                            "content://downloads/all_downloads"
+                    };
+
+
+                    for (String contentUriPrefix : contentUriPrefixesToTry) {
+                        Uri contentUri = ContentUris.withAppendedId(Uri.parse(contentUriPrefix), Long.valueOf(id));
+                        try {
+                            String path = getDataColumn(context, contentUri, null, null);
+                            if (path != null) {
+                                return path;
+                            }
+                        } catch (Exception e) {
+                        }
+                    }
+                }catch(NumberFormatException e){
+                }
+
+                String displayName = getDisplayNameColumn(context, uri, null, null);
+                if(displayName != null){
+                    File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), displayName);
+                    if(file.exists()){
+                        return file.getAbsolutePath();
+                    }
+                }
+
             }
             // MediaProvider
             else if (isMediaDocument(uri)) {
@@ -475,19 +536,7 @@ public class MediaUtility {
 		String name = null;
 
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-			ContentResolver resolver = context.getContentResolver();
-			Cursor nameCursor = resolver.query(uri, null, null, null, null);
-			try {
-				if (nameCursor.getCount() > 0) {
-					int displayNameIndex = nameCursor
-							.getColumnIndex(DocumentsContract.Document.COLUMN_DISPLAY_NAME);
-					if (displayNameIndex >= 0 && nameCursor.moveToFirst()) {
-						name = nameCursor.getString(displayNameIndex);
-					}
-				}
-			} finally {
-				nameCursor.close();
-			}
+			name = getDisplayNameColumn(context, uri, null, null);
 		}
 
 		if (name == null) {
