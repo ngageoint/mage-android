@@ -8,7 +8,7 @@
         <variable name="clickListener" type="kotlin.jvm.functions.Function0"/>
     </data>
 
-    <android.support.design.widget.TextInputLayout
+    <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/textInputLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -18,7 +18,7 @@
         android:theme="@style/AppTheme.TextInputLayout"
         android:hint="@{field.title}">
 
-    <android.support.design.widget.TextInputEditText
+    <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/editText"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -30,6 +30,6 @@
             app:multiSelectText='@{field.value}'
             android:onClick="@{() -> clickListener.invoke() }"/>
 
-    </android.support.design.widget.TextInputLayout>
+    </com.google.android.material.textfield.TextInputLayout>
 
 </layout>

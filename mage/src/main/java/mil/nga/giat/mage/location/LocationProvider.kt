@@ -1,6 +1,5 @@
 package mil.nga.giat.mage.location
 
-import android.arch.lifecycle.LiveData
 import android.content.Context
 import android.content.SharedPreferences
 import android.location.Location
@@ -8,6 +7,7 @@ import android.location.LocationListener
 import android.location.LocationManager
 import android.os.Bundle
 import android.util.Log
+import androidx.lifecycle.LiveData
 import mil.nga.giat.mage.R
 import javax.inject.Inject
 import javax.inject.Singleton

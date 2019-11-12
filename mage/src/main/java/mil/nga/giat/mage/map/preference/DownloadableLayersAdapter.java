@@ -4,7 +4,6 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.os.AsyncTask;
 import android.os.Environment;
-import android.support.annotation.UiThread;
 import android.text.format.Formatter;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -38,7 +37,6 @@ import mil.nga.giat.mage.utils.ByteUtils;
  * <p></p>
  * <b>ALL public methods MUST be made on the UI thread to ensure concurrency.</b>
  */
-@UiThread
 public class DownloadableLayersAdapter extends BaseExpandableListAdapter {
 
     /**

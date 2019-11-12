@@ -19,7 +19,7 @@ import mil.nga.giat.mage.location.LocationPushTask;
 import mil.nga.giat.mage.sdk.Temporal;
 import mil.nga.giat.mage.sdk.datastore.location.Location;
 import mil.nga.giat.mage.sdk.datastore.user.User;
-import mil.nga.wkb.geom.Geometry;
+import mil.nga.sf.Geometry;
 
 /**
  * Class uses a queue like structure to limit the Collection size. Size determined

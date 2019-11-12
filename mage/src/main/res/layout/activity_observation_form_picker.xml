@@ -27,7 +27,7 @@
             android:fontFamily="sans-serif-medium"
             android:text="What type of observation would you like to create?"/>
 
-        <android.support.v7.widget.RecyclerView
+        <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/forms"
             android:layout_width="match_parent"
             android:layout_height="0dp"

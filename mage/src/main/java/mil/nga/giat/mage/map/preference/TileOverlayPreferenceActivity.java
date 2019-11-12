@@ -11,13 +11,6 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
 import android.preference.PreferenceManager;
-import android.support.annotation.Nullable;
-import android.support.annotation.UiThread;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.app.ListFragment;
-import android.support.v4.content.ContextCompat;
-import android.support.v7.app.AlertDialog;
-import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -28,6 +21,13 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ExpandableListView;
 import android.widget.TextView;
+
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+import androidx.fragment.app.ListFragment;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -228,7 +228,7 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
             super.onPause();
 
             CacheProvider.getInstance(getActivity()).unregisterCacheOverlayListener(this);
-            
+
             downloadManager.onPause();
 
             synchronized (timerLock) {
@@ -264,7 +264,6 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
          *
          * @param item refresh button
          */
-        @UiThread
         private void manualRefresh(MenuItem item) {
             item.setEnabled(false);
             noContentView.setVisibility(View.VISIBLE);
@@ -491,7 +490,6 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
          *
          * @return added cache overlays
          */
-        @UiThread
         public ArrayList<String> getSelectedOverlays() {
             ArrayList<String> overlays = new ArrayList<>();
             for (CacheOverlay cacheOverlay : CacheProvider.getInstance(getContext()).getCacheOverlays()) {
@@ -577,7 +575,6 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
          * Delete the cache overlay
          * @param cacheOverlay
          */
-        @UiThread
         private void deleteCacheOverlay(CacheOverlay cacheOverlay){
 
             switch(cacheOverlay.getType()) {

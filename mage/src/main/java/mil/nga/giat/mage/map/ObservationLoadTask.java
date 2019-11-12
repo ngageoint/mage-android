@@ -27,9 +27,9 @@ import mil.nga.giat.mage.sdk.Temporal;
 import mil.nga.giat.mage.sdk.datastore.DaoStore;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
-import mil.nga.wkb.geom.Geometry;
-import mil.nga.wkb.geom.Point;
-import mil.nga.wkb.util.GeometryUtils;
+import mil.nga.sf.Geometry;
+import mil.nga.sf.Point;
+import mil.nga.sf.util.GeometryUtils;
 
 public class ObservationLoadTask extends AsyncTask<Void, Pair<MarkerOptions, Observation>, Void> {
     

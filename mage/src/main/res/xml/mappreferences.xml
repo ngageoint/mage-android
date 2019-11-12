@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.v7.preference.PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
                   android:title="@string/map_settings">
-
-    <android.support.v7.preference.PreferenceCategory android:title="Layers">
+    <PreferenceCategory android:title="Layers">
         <mil.nga.giat.mage.sdk.preferences.IntegerListPreference
             android:defaultValue="@integer/baseLayerDefaultValue"
             android:entries="@array/baseLayerEntries"
@@ -11,19 +10,19 @@
             android:title="Base Layer"
             android:summary="%s"/>
 
-        <android.support.v7.preference.SwitchPreferenceCompat
+        <SwitchPreferenceCompat
             android:defaultValue="@bool/showTrafficDefaultValue"
             android:key="@string/showTrafficKey"
             android:summary="Show Google Maps Traffic"
             android:title="Traffic">
-        </android.support.v7.preference.SwitchPreferenceCompat>
+        </SwitchPreferenceCompat>
 
-        <android.support.v7.preference.SwitchPreferenceCompat
+        <SwitchPreferenceCompat
             android:defaultValue="@bool/showMGRSDefaultValue"
             android:key="@string/showMGRSKey"
             android:summary="Military Grid Reference System overlay"
             android:title="MGRS">
-        </android.support.v7.preference.SwitchPreferenceCompat>
+        </SwitchPreferenceCompat>
 
         <mil.nga.giat.mage.map.preference.OverlayPreference
             android:key="@string/tileOverlaysKey"
@@ -32,23 +31,22 @@
         <mil.nga.giat.mage.map.preference.OverlayPreference
             android:key="@string/onlineLayersKey"
             android:title="Online Layers"/>
+    </PreferenceCategory>
 
-    </android.support.v7.preference.PreferenceCategory>
+    <PreferenceCategory android:title="MAGE">
+            <SwitchPreferenceCompat
+                android:defaultValue="@bool/showObservationsDefaultValue"
+                android:key="@string/showObservationsKey"
+                android:summary="Show observations on map"
+                android:title="Observations">
+            </SwitchPreferenceCompat>
 
-    <android.support.v7.preference.PreferenceCategory android:title="MAGE">
-        <android.support.v7.preference.SwitchPreferenceCompat
-            android:defaultValue="@bool/showObservationsDefaultValue"
-            android:key="@string/showObservationsKey"
-            android:summary="Show observations on map"
-            android:title="Observations">
-        </android.support.v7.preference.SwitchPreferenceCompat>
+            <SwitchPreferenceCompat
+                android:defaultValue="@bool/showLocationsDefaultValue"
+                android:key="@string/showLocationsKey"
+                android:summary="Show people on map"
+                android:title="People">
+            </SwitchPreferenceCompat>
+    </PreferenceCategory>
 
-        <android.support.v7.preference.SwitchPreferenceCompat
-            android:defaultValue="@bool/showLocationsDefaultValue"
-            android:key="@string/showLocationsKey"
-            android:summary="Show people on map"
-            android:title="People">
-        </android.support.v7.preference.SwitchPreferenceCompat>
-    </android.support.v7.preference.PreferenceCategory>
-
-</android.support.v7.preference.PreferenceScreen>
+</PreferenceScreen>

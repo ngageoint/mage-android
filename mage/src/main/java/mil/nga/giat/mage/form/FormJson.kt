@@ -1,8 +1,8 @@
 package mil.nga.giat.mage.form
 
-import android.databinding.BaseObservable
-import android.databinding.Bindable
-import com.android.databinding.library.baseAdapters.BR
+import androidx.databinding.BaseObservable
+import androidx.databinding.Bindable
+import androidx.databinding.library.baseAdapters.BR
 import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.google.gson.*
@@ -16,7 +16,7 @@ import mil.nga.giat.mage.sdk.gson.serializer.GeometrySerializer
 import mil.nga.giat.mage.sdk.jackson.deserializer.GeometryDeserializer
 import mil.nga.giat.mage.sdk.utils.GeometryUtility
 import mil.nga.giat.mage.sdk.utils.ISO8601DateFormatFactory
-import mil.nga.wkb.geom.Geometry
+import mil.nga.sf.Geometry
 import java.io.Serializable
 import java.lang.reflect.Type
 import java.text.ParseException

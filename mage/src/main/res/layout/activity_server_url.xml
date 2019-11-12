@@ -25,7 +25,7 @@
             android:textSize="24sp"
             android:text="Set MAGE Server URL"/>
 
-        <android.support.design.widget.TextInputLayout
+        <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/server_url_layout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -34,7 +34,7 @@
             app:errorTextAppearance="@style/AppTheme.ErrorTextAppearance"
             android:theme="@style/AppTheme.TextInputLayout">
 
-            <EditText
+            <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/server_url"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -43,7 +43,7 @@
                 android:inputType="textUri"
                 android:imeActionLabel="Go" />
 
-        </android.support.design.widget.TextInputLayout>
+        </com.google.android.material.textfield.TextInputLayout>
 
         <LinearLayout
             android:layout_width="match_parent"

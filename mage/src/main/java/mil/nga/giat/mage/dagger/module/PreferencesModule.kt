@@ -1,7 +1,7 @@
 package mil.nga.giat.mage.dagger.module
 
 import android.content.SharedPreferences
-import android.support.v7.preference.PreferenceManager
+import androidx.preference.PreferenceManager
 import dagger.Module
 import dagger.Provides
 import mil.nga.giat.mage.MageApplication

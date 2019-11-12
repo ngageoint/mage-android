@@ -5,7 +5,6 @@ import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.app.Activity;
 import android.app.Dialog;
-import android.arch.lifecycle.Observer;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -18,14 +17,6 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.design.widget.BottomSheetBehavior;
-import android.support.design.widget.FloatingActionButton;
-import android.support.v4.content.ContextCompat;
-import android.support.v7.app.AlertDialog;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.SearchView;
 import android.text.SpannableString;
 import android.text.util.Linkify;
 import android.util.Log;
@@ -42,6 +33,14 @@ import android.webkit.WebView;
 import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.SearchView;
+import androidx.core.content.ContextCompat;
+import androidx.lifecycle.Observer;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -61,6 +60,8 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.TileOverlay;
 import com.google.android.gms.maps.model.TileOverlayOptions;
 import com.google.android.gms.maps.model.TileProvider;
+import com.google.android.material.bottomsheet.BottomSheetBehavior;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.Sets;
@@ -103,10 +104,6 @@ import mil.nga.geopackage.map.tiles.overlay.BoundedOverlay;
 import mil.nga.geopackage.map.tiles.overlay.FeatureOverlay;
 import mil.nga.geopackage.map.tiles.overlay.FeatureOverlayQuery;
 import mil.nga.geopackage.map.tiles.overlay.GeoPackageOverlayFactory;
-import mil.nga.geopackage.projection.Projection;
-import mil.nga.geopackage.projection.ProjectionConstants;
-import mil.nga.geopackage.projection.ProjectionFactory;
-import mil.nga.geopackage.projection.ProjectionTransform;
 import mil.nga.geopackage.tiles.TileBoundingBoxUtils;
 import mil.nga.geopackage.tiles.features.DefaultFeatureTiles;
 import mil.nga.geopackage.tiles.features.FeatureTiles;
@@ -159,8 +156,12 @@ import mil.nga.giat.mage.sdk.exceptions.LayerException;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
 import mil.nga.mgrs.MGRS;
 import mil.nga.mgrs.gzd.MGRSTileProvider;
-import mil.nga.wkb.geom.Geometry;
-import mil.nga.wkb.geom.GeometryType;
+import mil.nga.sf.Geometry;
+import mil.nga.sf.GeometryType;
+import mil.nga.sf.proj.Projection;
+import mil.nga.sf.proj.ProjectionConstants;
+import mil.nga.sf.proj.ProjectionFactory;
+import mil.nga.sf.proj.ProjectionTransform;
 
 public class MapFragment extends DaggerFragment implements OnMapReadyCallback, OnMapClickListener, OnMapLongClickListener, OnMarkerClickListener, OnInfoWindowClickListener, GoogleMap.OnCameraMoveListener, GoogleMap.OnCameraIdleListener, GoogleMap.OnCameraMoveStartedListener, OnClickListener, LocationSource, OnCacheOverlayListener,
 		IObservationEventListener, ILocationEventListener, IUserEventListener, IStaticFeatureEventListener, Observer<Location> {
@@ -241,7 +242,7 @@ public class MapFragment extends DaggerFragment implements OnMapReadyCallback, O
 	private TextView mgrsNorthingTextView;
 
 	@Override
-	public View onCreateView(@NonNull  LayoutInflater  inflater, ViewGroup container, Bundle savedInstanceState) {
+	public View onCreateView(@NonNull LayoutInflater  inflater, ViewGroup container, Bundle savedInstanceState) {
 		View view = inflater.inflate(R.layout.fragment_map, container, false);
 
 		setHasOptionsMenu(true);
@@ -1272,11 +1273,9 @@ public class MapFragment extends DaggerFragment implements OnMapReadyCallback, O
 						ContentsDao contentsDao = geoPackage.getContentsDao();
 						Contents contents = contentsDao.queryForId(tableCacheOverlay.getName());
 						BoundingBox contentsBoundingBox = contents.getBoundingBox();
-						Projection projection = ProjectionFactory
-								.getProjection(contents.getSrs().getOrganizationCoordsysId());
-
+						Projection projection = ProjectionFactory.getProjection(contents.getSrs().getOrganizationCoordsysId());
 						ProjectionTransform transform = projection.getTransformation(ProjectionConstants.EPSG_WORLD_GEODETIC_SYSTEM);
-						BoundingBox boundingBox = transform.transform(contentsBoundingBox);
+						BoundingBox boundingBox = contentsBoundingBox.transform(transform);
 						boundingBox = TileBoundingBoxUtils.boundWgs84BoundingBoxWithWebMercatorLimits(boundingBox);
 
 						if (addedCacheBoundingBox == null) {
@@ -1421,7 +1420,7 @@ public class MapFragment extends DaggerFragment implements OnMapReadyCallback, O
 							FeatureRow featureRow = featureCursor.getRow();
 							GeoPackageGeometryData geometryData = featureRow.getGeometry();
 							if (geometryData != null && !geometryData.isEmpty()) {
-								mil.nga.wkb.geom.Geometry geometry = geometryData.getGeometry();
+								Geometry geometry = geometryData.getGeometry();
 								if (geometry != null) {
 									GoogleMapShape shape = shapeConverter.toShape(geometry);
 									// Set the Shape Marker, PolylineOptions, and PolygonOptions here if needed to change color and style

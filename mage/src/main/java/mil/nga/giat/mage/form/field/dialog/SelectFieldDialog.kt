@@ -1,14 +1,14 @@
 package mil.nga.giat.mage.form.field.dialog
 
-import android.arch.lifecycle.ViewModelProviders
 import android.os.Bundle
-import android.support.v4.app.DialogFragment
-import android.support.v7.widget.SearchView
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ArrayAdapter
 import android.widget.ListView
+import androidx.appcompat.widget.SearchView
+import androidx.fragment.app.DialogFragment
+import androidx.lifecycle.ViewModelProviders
 import kotlinx.android.synthetic.main.dialog_select_field.*
 import mil.nga.giat.mage.R
 import mil.nga.giat.mage.form.*

@@ -1,20 +1,11 @@
 package mil.nga.giat.mage.map.preference;
 
-import android.app.Activity;
 import android.content.Context;
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.preference.PreferenceManager;
-import android.support.annotation.NonNull;
-import android.support.annotation.UiThread;
-import android.support.v4.widget.SwipeRefreshLayout;
-import android.support.v7.app.AlertDialog;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.DefaultItemAnimator;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
+
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -25,6 +16,14 @@ import android.view.ViewGroup;
 import android.webkit.URLUtil;
 import android.widget.Checkable;
 import android.widget.TextView;
+
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.DefaultItemAnimator;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -158,11 +157,10 @@ public class OnlineLayersPreferenceActivity extends AppCompatActivity {
             }
         }
 
-        /**vcvvvv
+        /**
          * This is called when the user click the refresh button
          *
          */
-        @UiThread
         private void manualRefresh() {
             refreshButton.setEnabled(false);
             noContentView.setVisibility(View.VISIBLE);
@@ -318,7 +316,6 @@ public class OnlineLayersPreferenceActivity extends AppCompatActivity {
      * <p></p>
      * <b>ALL public methods MUST be made on the UI thread to ensure concurrency.</b>
      */
-    @UiThread
     public static class OnlineLayersAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>{
 
         private static final int ITEM_TYPE_HEADER = 1;
@@ -337,7 +334,6 @@ public class OnlineLayersPreferenceActivity extends AppCompatActivity {
             this.nonSecureLayers.clear();
         }
 
-        @NonNull
         @Override
         public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int i) {
             if (i == ITEM_TYPE_LAYER) {

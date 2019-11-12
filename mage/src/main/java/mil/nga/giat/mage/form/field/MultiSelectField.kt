@@ -1,7 +1,7 @@
 package mil.nga.giat.mage.form.field
 
 import android.content.Context
-import android.databinding.BindingAdapter
+import androidx.databinding.BindingAdapter
 import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.widget.TextView
