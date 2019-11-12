@@ -93,13 +93,7 @@ public class MapPreferencesActivity extends AppCompatActivity {
 				});
 
 				OverlayPreference p = (OverlayPreference) findPreference(getResources().getString(R.string.tileOverlaysKey));
-				if (available.isEmpty()) {
-					p.setDownloadIcon(null);
-				} else {
-					Drawable icon = DrawableCompat.wrap(ContextCompat.getDrawable(getContext(), R.drawable.baseline_cloud_download_white_24)).mutate();
-					DrawableCompat.setTintList(icon, AppCompatResources.getColorStateList(getContext(), R.color.download_icon));
-					p.setDownloadIcon(icon);
-				}
+				p.setAvailableDownloads(!available.isEmpty());
 			} catch (Exception e) {
 				Log.e(LOG_NAME, "Problem setting preference.", e);
 			}

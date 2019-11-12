@@ -16,10 +16,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import mil.nga.giat.mage.R;
+
 public class OverlayPreference extends Preference {
 
-    private Drawable downloadIcon;
-    private TextView titleView;
     private Set<String> overlays = new HashSet<>();
 
     public OverlayPreference(Context context) {
@@ -53,10 +53,6 @@ public class OverlayPreference extends Preference {
     @Override
     public void onBindViewHolder(PreferenceViewHolder holder) {
         super.onBindViewHolder(holder);
-
-        titleView = (TextView) holder.findViewById(android.R.id.title);
-        titleView.setCompoundDrawablePadding(20);
-        titleView.setCompoundDrawablesWithIntrinsicBounds(null, null, downloadIcon, null);
     }
 
     @Override
@@ -64,8 +60,12 @@ public class OverlayPreference extends Preference {
         setValues(restoreValue ? getPersistedStringSet(overlays) : (Set<String>) defaultValue);
     }
 
-    public void setDownloadIcon(Drawable downloadIcon) {
-        this.downloadIcon = downloadIcon;
+    public void setAvailableDownloads(boolean availableDownloads) {
+        if (availableDownloads) {
+            setWidgetLayoutResource(R.layout.offline_layers_image);
+        } else {
+            setWidgetLayoutResource(0);
+        }
         notifyChanged();
     }
 
