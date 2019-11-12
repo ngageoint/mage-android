@@ -101,9 +101,9 @@
     <!-- map overlay menus -->
     <string name="overlay_map_refresh_enabled">Refresh</string>
     <string name="overlay_map_refresh_disabled">DISCOVERING MAP OVERLAYS&#8230;</string>
-    <string name="downloadable_layers_no_content_title">No Downloadable Layers</string>
-    <string name="downloadable_layers_no_content_loading">Loading Downloadable Layers&#8230;</string>
-    <string name="downloadable_layers_no_content_text">No downloadable layers, click the refresh button above to pull all downloadable layers from the server.</string>
+    <string name="downloadable_layers_no_content_title">No Offline Layers</string>
+    <string name="downloadable_layers_no_content_loading">Loading Offline Layers&#8230;</string>
+    <string name="downloadable_layers_no_content_text">No offline layers, click the refresh button above to pull all offline layers from the server.</string>
     <string name="clear_data_message">You are about to delete the selected data and logout.\n\n Are you sure you want to do this?</string>
 
     <string name="online_layers_no_content_text">No online layers, click the refresh button above to pull all online layers from the server.</string>

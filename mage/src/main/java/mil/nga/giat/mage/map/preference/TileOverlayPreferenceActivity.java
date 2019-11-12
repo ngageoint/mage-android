@@ -115,7 +115,7 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
     }
 
     public static class OverlayListFragment extends ListFragment implements OnCacheOverlayListener {
-        private DownloadableLayersAdapter adapter;
+        private OfflineLayersAdapter adapter;
         private final Object adapterLock = new Object();
         private ExpandableListView listView;
         private View contentView;
@@ -147,7 +147,7 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
                 }
             });
 
-            adapter = new DownloadableLayersAdapter(getActivity(), downloadManager);
+            adapter = new OfflineLayersAdapter(getActivity(), downloadManager);
         }
 
         @Override

@@ -37,12 +37,12 @@ import mil.nga.giat.mage.utils.ByteUtils;
  * <p></p>
  * <b>ALL public methods MUST be made on the UI thread to ensure concurrency.</b>
  */
-public class DownloadableLayersAdapter extends BaseExpandableListAdapter {
+public class OfflineLayersAdapter extends BaseExpandableListAdapter {
 
     /**
      * log identifier
      */
-    private static final String LOG_NAME = DownloadableLayersAdapter.class.getName();
+    private static final String LOG_NAME = OfflineLayersAdapter.class.getName();
 
     /**
      * Context
@@ -68,7 +68,7 @@ public class DownloadableLayersAdapter extends BaseExpandableListAdapter {
      *
      * @param activity
      */
-    public DownloadableLayersAdapter(Activity activity, GeoPackageDownloadManager downloadManager) {
+    public OfflineLayersAdapter(Activity activity, GeoPackageDownloadManager downloadManager) {
         this.activity = activity;
         this.downloadManager = downloadManager;
     }
@@ -335,8 +335,8 @@ public class DownloadableLayersAdapter extends BaseExpandableListAdapter {
                         @Override
                         protected void onPostExecute(Layer layer) {
                             super.onPostExecute(layer);
-                            DownloadableLayersAdapter.this.getDownloadableLayers().remove(layer);
-                            DownloadableLayersAdapter.this.getOverlays().clear();
+                            OfflineLayersAdapter.this.getDownloadableLayers().remove(layer);
+                            OfflineLayersAdapter.this.getOverlays().clear();
                             notifyDataSetChanged();
                             CacheProvider.getInstance(activity.getApplicationContext()).refreshTileOverlays();
                         }

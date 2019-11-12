@@ -52,7 +52,7 @@
             android:layout_gravity="center_vertical"
             style="@style/ListTextSecondary" />
 
-        <Switch
+        <CheckBox
             android:id="@+id/cache_overlay_group_checkbox"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

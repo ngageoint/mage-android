@@ -39,7 +39,7 @@
 
         </LinearLayout>
 
-        <Switch
+        <CheckBox
             android:id="@+id/cache_overlay_child_checkbox"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
