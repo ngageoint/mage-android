@@ -1,6 +1,6 @@
 package mil.nga.giat.mage.sdk.datastore.location;
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 import com.j256.ormlite.field.DataType;
 import com.j256.ormlite.field.DatabaseField;
@@ -21,7 +21,7 @@ import mil.nga.giat.mage.sdk.Temporal;
 import mil.nga.giat.mage.sdk.datastore.user.Event;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.utils.GeometryUtility;
-import mil.nga.wkb.geom.Geometry;
+import mil.nga.sf.Geometry;
 
 @DatabaseTable(tableName = "locations")
 public class Location implements Comparable<Location>, Temporal {

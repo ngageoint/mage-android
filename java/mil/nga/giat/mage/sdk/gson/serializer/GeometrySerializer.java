@@ -12,15 +12,15 @@ import com.google.gson.JsonSerializer;
 import java.lang.reflect.Type;
 import java.util.List;
 
-import mil.nga.wkb.geom.Geometry;
-import mil.nga.wkb.geom.GeometryCollection;
-import mil.nga.wkb.geom.GeometryType;
-import mil.nga.wkb.geom.LineString;
-import mil.nga.wkb.geom.MultiLineString;
-import mil.nga.wkb.geom.MultiPoint;
-import mil.nga.wkb.geom.MultiPolygon;
-import mil.nga.wkb.geom.Point;
-import mil.nga.wkb.geom.Polygon;
+import mil.nga.sf.Geometry;
+import mil.nga.sf.LineString;
+import mil.nga.sf.MultiPoint;
+import mil.nga.sf.Point;
+import mil.nga.sf.GeometryCollection;
+import mil.nga.sf.GeometryType;
+import mil.nga.sf.MultiLineString;
+import mil.nga.sf.MultiPolygon;
+import mil.nga.sf.Polygon;
 
 public class GeometrySerializer implements JsonSerializer<Geometry> {
 
