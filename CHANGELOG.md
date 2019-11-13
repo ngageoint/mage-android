@@ -6,13 +6,15 @@ Adheres to [Semantic Versioning](http://semver.org/).
 ## 6.2.8 (TBD)
 
 ##### Features
+* android-maps-utils version 0.6.2
 
 ##### Bug Fixes
+* Minor Kotlin updates for compile errors
 
 ## [6.2.7](https://github.com/ngageoint/mage-android/releases/tag/6.2.7)
 
 ##### Features
-* Traffic map layer 
+* Traffic map layer
 
 ##### Bug Fixes
 
@@ -116,7 +118,7 @@ Adheres to [Semantic Versioning](http://semver.org/).
 ##### Features
 
 ##### Bug Fixes
-* Fix crash when trying to edit observation location 
+* Fix crash when trying to edit observation location
 * Fix observation and location time filtering
 * Fix observation and location info window click crash
 * Fix map layout height in profile view
@@ -184,7 +186,7 @@ Adheres to [Semantic Versioning](http://semver.org/).
 ##### Features
 
 ##### Bug Fixes
-* Fixed bug causing non-required select fields to show as required 
+* Fixed bug causing non-required select fields to show as required
 
 ## [5.3.1](https://github.com/ngageoint/mage-android/releases/tag/5.3.1) (07-20-2017)
 

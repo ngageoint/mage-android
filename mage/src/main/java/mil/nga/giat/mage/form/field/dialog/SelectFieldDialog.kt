@@ -192,10 +192,10 @@ class SelectFieldDialog : DialogFragment() {
         }
 
         if (field.type == FieldType.MULTISELECTDROPDOWN) {
-            listView.adapter = ArrayAdapter(context, android.R.layout.simple_list_item_multiple_choice, filteredChoices)
+            listView.adapter = ArrayAdapter(context!!, android.R.layout.simple_list_item_multiple_choice, filteredChoices)
             listView.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE)
         } else {
-            listView.adapter = ArrayAdapter(context, android.R.layout.simple_list_item_single_choice, filteredChoices)
+            listView.adapter = ArrayAdapter(context!!, android.R.layout.simple_list_item_single_choice, filteredChoices)
             listView.setChoiceMode(ListView.CHOICE_MODE_SINGLE)
         }
 
