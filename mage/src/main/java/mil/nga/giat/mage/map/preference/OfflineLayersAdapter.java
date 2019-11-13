@@ -423,6 +423,7 @@ public class OfflineLayersAdapter extends BaseExpandableListAdapter {
                             super.onPostExecute(layer);
                             OfflineLayersAdapter.this.getDownloadableLayers().remove(layer);
                             OfflineLayersAdapter.this.getOverlays().clear();
+                            OfflineLayersAdapter.this.getSideloadedOverlays().clear();
                             notifyDataSetChanged();
                             CacheProvider.getInstance(activity.getApplicationContext()).refreshTileOverlays();
                         }

@@ -47,6 +47,8 @@ public abstract class CacheOverlay implements Comparable<CacheOverlay> {
      */
     private final boolean supportsChildren;
 
+    private boolean isSideloaded = false;
+
     /**
      * Constructor
      *
@@ -181,6 +183,14 @@ public abstract class CacheOverlay implements Comparable<CacheOverlay> {
      */
     public static String buildChildCacheName(String name, String childName) {
         return name + "-" + childName;
+    }
+
+    public boolean isSideloaded() {
+        return isSideloaded;
+    }
+
+    public void setSideloaded(boolean sideloaded) {
+        isSideloaded = sideloaded;
     }
 
     @Override

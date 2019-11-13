@@ -22,6 +22,7 @@ import android.widget.AdapterView;
 import android.widget.ExpandableListView;
 import android.widget.TextView;
 
+import androidx.annotation.MainThread;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
@@ -69,7 +70,7 @@ import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
 /**
- * This activity is the downloadable layers section and deals with geopackages and static features
+ * This activity is the offline layers section and deals with geopackages and static features
  */
 public class TileOverlayPreferenceActivity extends AppCompatActivity {
 
@@ -115,6 +116,7 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
     }
 
     public static class OverlayListFragment extends ListFragment implements OnCacheOverlayListener {
+
         private OfflineLayersAdapter adapter;
         private final Object adapterLock = new Object();
         private ExpandableListView listView;
@@ -245,26 +247,24 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
             refreshButton = menu.findItem(R.id.tile_overlay_refresh);
             refreshButton.setEnabled(true);
 
-            manualRefresh(refreshButton);
+            preRefresh(refreshButton);
+            refresh();
         }
 
         @Override
         public boolean onOptionsItemSelected(MenuItem item) {
             switch (item.getItemId()) {
                 case R.id.tile_overlay_refresh:
-                    manualRefresh(item);
+                    preRefresh(item);
+                    refresh();
                     return true;
                 default:
                     return super.onOptionsItemSelected(item);
             }
         }
 
-        /**
-         * This is called when the user click the refresh button
-         *
-         * @param item refresh button
-         */
-        private void manualRefresh(MenuItem item) {
+        @MainThread
+        private void preRefresh(MenuItem item){
             item.setEnabled(false);
             noContentView.setVisibility(View.VISIBLE);
             contentView.setVisibility(View.GONE);
@@ -272,12 +272,20 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
             noContentView.findViewById(R.id.downloadable_layers_no_content_summary).setVisibility(View.GONE);
             noContentView.findViewById(R.id.downloadable_layers_no_content_progressBar).setVisibility(View.VISIBLE);
             listView.setEnabled(false);
+
             synchronized (adapterLock) {
                 adapter.getDownloadableLayers().clear();
                 adapter.getOverlays().clear();
                 adapter.getSideloadedOverlays().clear();
                 adapter.notifyDataSetChanged();
             }
+        }
+
+        /**
+         * Attempt to pull all the layers from the remote server as well as refreshing any local overlays
+         *
+         */
+        private void refresh() {
 
             @SuppressLint("StaticFieldLeak") AsyncTask<Void, Void, List<Layer>> fetcher = new AsyncTask<Void, Void, List<Layer>>() {
                 @Override
@@ -407,6 +415,7 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
         }
 
         @Override
+        @MainThread
         public void onCacheOverlay(final List<CacheOverlay> cacheOverlays) {
             final Event event = EventHelper.getInstance(getActivity().getApplicationContext()).getCurrentEvent();
 
@@ -441,15 +450,19 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
                         Collections.sort(adapter.getDownloadableLayers(), new LayerNameComparator());
                         List<CacheOverlay> filtered = new CacheOverlayFilter(getContext(), event).filter(cacheOverlays);
                         for(CacheOverlay overlay : filtered) {
-                            if(overlay instanceof GeoPackageCacheOverlay) {
-                                adapter.getOverlays().add(overlay);
+                            if (overlay instanceof GeoPackageCacheOverlay) {
+                                if (overlay.isSideloaded()) {
+                                    adapter.getSideloadedOverlays().add(overlay);
+                                } else {
+                                    adapter.getOverlays().add(overlay);
+                                }
                             }
                         }
                         Collections.sort(adapter.getSideloadedOverlays());
                         Collections.sort(adapter.getOverlays());
                         adapter.notifyDataSetChanged();
 
-                        if(adapter.getDownloadableLayers().isEmpty() && adapter.getOverlays().isEmpty()){
+                        if(adapter.getDownloadableLayers().isEmpty() && adapter.getOverlays().isEmpty() && adapter.getSideloadedOverlays().isEmpty()){
                             isEmpty = true;
                         }
                     }
@@ -515,33 +528,29 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
          * Delete the cache overlay
          * @param cacheOverlay
          */
+        @MainThread
         private void deleteCacheOverlayConfirm(final CacheOverlay cacheOverlay) {
-            getActivity().runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    AlertDialog deleteDialog = new AlertDialog.Builder(getActivity())
-                            .setTitle("Delete Layer")
-                            .setMessage("Delete " + cacheOverlay.getName() + " Layer?")
-                            .setPositiveButton("Delete",
-                                    new DialogInterface.OnClickListener() {
-                                        @Override
-                                        public void onClick(DialogInterface dialog,
-                                                            int which) {
-                                            deleteCacheOverlay(cacheOverlay);
-                                        }
-                                    })
+            AlertDialog deleteDialog = new AlertDialog.Builder(getActivity())
+                    .setTitle("Delete Layer")
+                    .setMessage("Delete " + cacheOverlay.getName() + " Layer?")
+                    .setPositiveButton("Delete",
+                            new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog,
+                                                    int which) {
+                                    deleteCacheOverlay(cacheOverlay);
+                                }
+                            })
 
-                            .setNegativeButton(getString(R.string.cancel),
-                                    new DialogInterface.OnClickListener() {
-                                        @Override
-                                        public void onClick(DialogInterface dialog,
-                                                            int which) {
-                                            dialog.dismiss();
-                                        }
-                                    }).create();
-                    deleteDialog.show();
-                }
-            });
+                    .setNegativeButton(getString(R.string.cancel),
+                            new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog,
+                                                    int which) {
+                                    dialog.dismiss();
+                                }
+                            }).create();
+            deleteDialog.show();
         }
 
         /**
@@ -575,30 +584,36 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
          * Delete the cache overlay
          * @param cacheOverlay
          */
-        private void deleteCacheOverlay(CacheOverlay cacheOverlay){
+        @MainThread
+        private void deleteCacheOverlay(final CacheOverlay cacheOverlay){
 
-            switch(cacheOverlay.getType()) {
+           preRefresh(refreshButton);
 
-                case XYZ_DIRECTORY:
-                    deleteXYZCacheOverlay((XYZDirectoryCacheOverlay)cacheOverlay);
-                    break;
+            @SuppressLint("StaticFieldLeak") AsyncTask<Void, Void, Void> deleteTask = new AsyncTask<Void, Void, Void>() {
+                @Override
+                protected Void doInBackground(Void... voids) {
+                    switch(cacheOverlay.getType()) {
 
-                case GEOPACKAGE:
-                    deleteGeoPackageCacheOverlay((GeoPackageCacheOverlay)cacheOverlay);
-                    break;
+                        case XYZ_DIRECTORY:
+                            deleteXYZCacheOverlay((XYZDirectoryCacheOverlay)cacheOverlay);
+                            break;
 
-                case STATIC_FEATURE:
-                    deleteStaticFeatureCacheOverlay((StaticFeatureCacheOverlay)cacheOverlay);
-                    break;
+                        case GEOPACKAGE:
+                            deleteGeoPackageCacheOverlay((GeoPackageCacheOverlay)cacheOverlay);
+                            break;
 
-            }
+                        case STATIC_FEATURE:
+                            deleteStaticFeatureCacheOverlay((StaticFeatureCacheOverlay)cacheOverlay);
+                            break;
+                    }
 
-            synchronized (adapterLock) {
-                adapter.getOverlays().clear();
-                adapter.notifyDataSetChanged();
-            }
+                    refresh();
 
-            manualRefresh(refreshButton);
+                    return null;
+                }
+            };
+
+            deleteTask.execute();
         }
 
         /**
