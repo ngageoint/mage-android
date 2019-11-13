@@ -55,6 +55,11 @@ public class OfflineLayersAdapter extends BaseExpandableListAdapter {
     private final List<CacheOverlay> cacheOverlays = new ArrayList<>();
 
     /**
+     * Sideloaded layers.
+     */
+    private final List<CacheOverlay> sideloadedOverlays = new ArrayList<>();
+
+    /**
      * Layers that can be downloaded
      */
     private final List<Layer> downloadableLayers = new ArrayList<>();
@@ -107,6 +112,8 @@ public class OfflineLayersAdapter extends BaseExpandableListAdapter {
      */
     public List<CacheOverlay> getOverlays() {return this.cacheOverlays;}
 
+    public List<CacheOverlay> getSideloadedOverlays() {return this.sideloadedOverlays; }
+
     public void updateDownloadProgress(View view, int progress, long size) {
         if (progress <= 0) {
             return;
@@ -128,40 +135,53 @@ public class OfflineLayersAdapter extends BaseExpandableListAdapter {
 
     @Override
     public int getGroupCount() {
-        return cacheOverlays.size() + downloadableLayers.size();
+        return cacheOverlays.size() + sideloadedOverlays.size() + downloadableLayers.size();
     }
 
     @Override
     public int getChildrenCount(int i) {
-        if (i < cacheOverlays.size()) {
-            int children = cacheOverlays.get(i).getChildren().size();
+        int children = 0;
 
-            for (Layer layer : downloadableLayers) {
-                if(layer.getType().equalsIgnoreCase("geopackage")) {
-                    if (layer.isLoaded()) {
-                        children++;
-                    }
+        if(i < cacheOverlays.size() ){
+            children = cacheOverlays.get(i).getChildren().size();
+        } else if( i - cacheOverlays.size() < sideloadedOverlays.size()){
+            children = sideloadedOverlays.get(i - cacheOverlays.size()).getChildren().size();
+        }
+
+        for (Layer layer : downloadableLayers) {
+            if(layer.getType().equalsIgnoreCase("geopackage")) {
+                if (layer.isLoaded()) {
+                    children++;
                 }
             }
-
-            return children;
-        } else {
-            return 0;
         }
+
+        return children;
     }
 
     @Override
     public Object getGroup(int i) {
+        Object group = null;
         if (i < cacheOverlays.size()) {
-            return cacheOverlays.get(i);
+            group = cacheOverlays.get(i);
+        } else if( i - cacheOverlays.size() < cacheOverlays.size()) {
+            group = sideloadedOverlays.get(i - cacheOverlays.size());
         } else {
-            return downloadableLayers.get(i - cacheOverlays.size());
+            group = downloadableLayers.get(i - cacheOverlays.size() - sideloadedOverlays.size());
         }
+        return group;
     }
 
     @Override
     public Object getChild(int i, int j) {
-        return cacheOverlays.get(i).getChildren().get(j);
+        Object child = null;
+        if (i < cacheOverlays.size()) {
+            child = cacheOverlays.get(i).getChildren().get(j);
+        } else if (i - cacheOverlays.size() < sideloadedOverlays.size()) {
+            child = sideloadedOverlays.get(i - cacheOverlays.size()).getChildren().get(j);
+        }
+
+        return child;
     }
 
     @Override
@@ -183,7 +203,9 @@ public class OfflineLayersAdapter extends BaseExpandableListAdapter {
     public View getGroupView(int i, boolean isExpanded, View view, ViewGroup viewGroup) {
         if (i < cacheOverlays.size()) {
             return getOverlayView(i, isExpanded, view, viewGroup);
-        } else {
+        } else if(i - cacheOverlays.size() < sideloadedOverlays.size()) {
+            return getOverlaySideloadedView(i, isExpanded, view, viewGroup);
+        }else {
             return getDownloadableLayerView(i, isExpanded, view, viewGroup);
         }
     }
@@ -191,19 +213,18 @@ public class OfflineLayersAdapter extends BaseExpandableListAdapter {
     private View getOverlayView(int i, boolean isExpanded, View view, ViewGroup viewGroup) {
         LayoutInflater inflater = LayoutInflater.from(activity);
         view = inflater.inflate(R.layout.cache_overlay_group, viewGroup, false);
-
         final CacheOverlay overlay = cacheOverlays.get(i);
 
-        Event event = EventHelper.getInstance(activity.getApplicationContext()).getCurrentEvent();
         TextView groupView = view.findViewById(R.id.cache_over_group_text);
-        groupView.setText(event.getName() +" Layers");
+        Event event = EventHelper.getInstance(activity.getApplicationContext()).getCurrentEvent();
+        groupView.setText(event.getName() + " Layers");
 
         view.findViewById(R.id.section_header).setVisibility(i == 0 ? View.VISIBLE : View.GONE);
 
         ImageView imageView = view.findViewById(R.id.cache_overlay_group_image);
-        TextView cacheName =  view.findViewById(R.id.cache_overlay_group_name);
-        TextView childCount =  view.findViewById(R.id.cache_overlay_group_count);
-        View checkable =  view.findViewById(R.id.cache_overlay_group_checkbox);
+        TextView cacheName = view.findViewById(R.id.cache_overlay_group_name);
+        TextView childCount = view.findViewById(R.id.cache_overlay_group_count);
+        View checkable = view.findViewById(R.id.cache_overlay_group_checkbox);
 
         checkable.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -227,7 +248,7 @@ public class OfflineLayersAdapter extends BaseExpandableListAdapter {
         });
 
         Integer imageResource = overlay.getIconImageResourceId();
-        if (imageResource != null){
+        if (imageResource != null) {
             imageView.setImageResource(imageResource);
         }
 
@@ -238,7 +259,7 @@ public class OfflineLayersAdapter extends BaseExpandableListAdapter {
                 try {
                     String relativePath = filePath.split(activity.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS).getAbsolutePath() + "/")[1];
                     layer = LayerHelper.getInstance(activity.getApplicationContext()).getByRelativePath(relativePath);
-                } catch(Exception e) {
+                } catch (Exception e) {
                     Log.e(LOG_NAME, "Error getting layer by relative path", e);
                 }
             }
@@ -250,7 +271,73 @@ public class OfflineLayersAdapter extends BaseExpandableListAdapter {
         } else {
             childCount.setText("");
         }
-        ((Checkable)checkable).setChecked(overlay.isEnabled());
+        ((Checkable) checkable).setChecked(overlay.isEnabled());
+
+        return view;
+    }
+
+    private View getOverlaySideloadedView(int i, boolean isExpanded, View view, ViewGroup viewGroup) {
+        LayoutInflater inflater = LayoutInflater.from(activity);
+        view = inflater.inflate(R.layout.cache_overlay_side_group, viewGroup, false);
+        final CacheOverlay overlay = sideloadedOverlays.get(i - cacheOverlays.size());
+
+        TextView groupView = view.findViewById(R.id.cache_overlay_side_group_text);
+
+        groupView.setText("My Layers");
+
+        view.findViewById(R.id.section_header).setVisibility(i - cacheOverlays.size() == 0 ? View.VISIBLE : View.GONE);
+
+        ImageView imageView = view.findViewById(R.id.cache_overlay_side_group_image);
+        TextView cacheName = view.findViewById(R.id.cache_overlay_side_group_name);
+        TextView childCount = view.findViewById(R.id.cache_overlay_side_group_count);
+        View checkable = view.findViewById(R.id.cache_overlay_side_group_checkbox);
+
+        checkable.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                boolean checked = ((Checkable) v).isChecked();
+
+                overlay.setEnabled(checked);
+
+                boolean modified = false;
+                for (CacheOverlay childCache : overlay.getChildren()) {
+                    if (childCache.isEnabled() != checked) {
+                        childCache.setEnabled(checked);
+                        modified = true;
+                    }
+                }
+
+                if (modified) {
+                    notifyDataSetChanged();
+                }
+            }
+        });
+
+        Integer imageResource = overlay.getIconImageResourceId();
+        if (imageResource != null) {
+            imageView.setImageResource(imageResource);
+        }
+
+        Layer layer = null;
+        if (overlay instanceof GeoPackageCacheOverlay) {
+            String filePath = ((GeoPackageCacheOverlay) overlay).getFilePath();
+            if (filePath.startsWith(String.format("%s/MAGE/geopackages", activity.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)))) {
+                try {
+                    String relativePath = filePath.split(activity.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS).getAbsolutePath() + "/")[1];
+                    layer = LayerHelper.getInstance(activity.getApplicationContext()).getByRelativePath(relativePath);
+                } catch (Exception e) {
+                    Log.e(LOG_NAME, "Error getting layer by relative path", e);
+                }
+            }
+        }
+        cacheName.setText(layer != null ? layer.getName() : overlay.getName());
+
+        if (overlay.isSupportsChildren()) {
+            childCount.setText("(" + getChildrenCount(i) + " layers)");
+        } else {
+            childCount.setText("");
+        }
+        ((Checkable) checkable).setChecked(overlay.isEnabled());
 
         return view;
     }
@@ -259,10 +346,9 @@ public class OfflineLayersAdapter extends BaseExpandableListAdapter {
         LayoutInflater inflater = LayoutInflater.from(activity);
         view = inflater.inflate(R.layout.layer_overlay, viewGroup, false);
 
-        Layer layer = downloadableLayers.get(i - cacheOverlays.size());
+        Layer layer = downloadableLayers.get(i - cacheOverlays.size() - sideloadedOverlays.size());
 
-
-        view.findViewById(R.id.section_header).setVisibility(i == cacheOverlays.size() ? View.VISIBLE : View.GONE);
+        view.findViewById(R.id.section_header).setVisibility(i - cacheOverlays.size() - sideloadedOverlays.size() == 0 ? View.VISIBLE : View.GONE);
 
         TextView cacheName = view.findViewById(R.id.layer_name);
         cacheName.setText(layer.getName());

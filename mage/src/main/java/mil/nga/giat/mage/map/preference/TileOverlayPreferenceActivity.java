@@ -275,6 +275,7 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
             synchronized (adapterLock) {
                 adapter.getDownloadableLayers().clear();
                 adapter.getOverlays().clear();
+                adapter.getSideloadedOverlays().clear();
                 adapter.notifyDataSetChanged();
             }
 
@@ -444,6 +445,7 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
                                 adapter.getOverlays().add(overlay);
                             }
                         }
+                        Collections.sort(adapter.getSideloadedOverlays());
                         Collections.sort(adapter.getOverlays());
                         adapter.notifyDataSetChanged();
 
