@@ -103,6 +103,12 @@ public class StaticFeatureServerFetch extends AbstractServerFetch {
 	}
 
 	public void load(OnStaticLayersListener listener, Layer layer) {
+		// if you are disconnect, skip this
+		if(!ConnectivityUtility.isOnline(mContext) || LoginTaskFactory.getInstance(mContext).isLocalLogin()) {
+			Log.d(LOG_NAME, "Disconnected, not loading static features.");
+			return;
+		}
+
 		try {
 			if (!layer.isLoaded()) {
 				StaticFeatureHelper staticFeatureHelper = StaticFeatureHelper.getInstance(mContext);
