@@ -283,7 +283,7 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
                 protected List<Layer> doInBackground(Void... objects) {
                     final Semaphore lock = new Semaphore(1);
                     lock.drainPermits();
-                    fetchGeopackageLayers(new Callback<Collection<Layer>>() {
+                    fetchRemoteGeopackageLayers(new Callback<Collection<Layer>>() {
                         @Override
                         public void onResponse(Call<Collection<Layer>> call, Response<Collection<Layer>> response) {
                             try {
@@ -306,7 +306,7 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
                     }catch(InterruptedException e) {
                         Log.d(LOG_NAME, "Interrupted while waiting for semaphore",e);
                     }
-                    fetchStaticLayers();
+                    fetchRemoteStaticLayers();
 
                     final Event event = EventHelper.getInstance(getActivity().getApplicationContext()).getCurrentEvent();
 
@@ -349,12 +349,12 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
          * This reads the remote layers from the server but does not download them
          *
          */
-        private void fetchStaticLayers(){
+        private void fetchRemoteStaticLayers(){
             StaticFeatureServerFetch staticFeatureServerFetch = new StaticFeatureServerFetch(getContext());
             staticFeatureServerFetch.fetch(false, null);
         }
 
-        private void fetchGeopackageLayers(Callback<Collection<Layer>> callback) {
+        private void fetchRemoteGeopackageLayers(Callback<Collection<Layer>> callback) {
             Context context = getContext();
             Event event = EventHelper.getInstance(context).getCurrentEvent();
             String baseUrl = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(mil.nga.giat.mage.sdk.R.string.serverURLKey), context.getString(mil.nga.giat.mage.sdk.R.string.serverURLDefaultValue));
@@ -435,8 +435,6 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
 
                     boolean isEmpty = false;
                     synchronized (adapterLock){
-
-
                         adapter.getDownloadableLayers().removeAll(layers);
                         adapter.getDownloadableLayers().addAll(layers);
                         Collections.sort(adapter.getDownloadableLayers(), new LayerNameComparator());
