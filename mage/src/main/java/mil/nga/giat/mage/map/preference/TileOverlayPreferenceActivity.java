@@ -449,7 +449,7 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
                         Collections.sort(adapter.getOverlays());
                         adapter.notifyDataSetChanged();
 
-                        if(adapter.getDownloadableLayers().isEmpty() || adapter.getOverlays().isEmpty()){
+                        if(adapter.getDownloadableLayers().isEmpty() && adapter.getOverlays().isEmpty()){
                             isEmpty = true;
                         }
                     }
