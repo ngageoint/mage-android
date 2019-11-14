@@ -277,10 +277,6 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
         @MainThread
         private void preRefresh(MenuItem item){
             item.setEnabled(false);
-            contentView.setVisibility(View.GONE);
-            noContentView.setVisibility(View.VISIBLE);
-            listView.setEnabled(false);
-            swipeContainer.setRefreshing(true);
 
             synchronized (adapterLock) {
                 adapter.getDownloadableLayers().clear();
@@ -288,6 +284,11 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
                 adapter.getSideloadedOverlays().clear();
                 adapter.notifyDataSetChanged();
             }
+
+            contentView.setVisibility(View.GONE);
+            noContentView.setVisibility(View.VISIBLE);
+            listView.setEnabled(false);
+            swipeContainer.setRefreshing(true);
         }
 
         /**
@@ -343,8 +344,6 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
                     } catch (LayerException e) {
                     }
 
-                    CacheProvider.getInstance(getActivity().getApplicationContext()).refreshTileOverlays();
-
                     return layers;
                 }
 
@@ -355,8 +354,9 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
                     synchronized (adapterLock){
                         adapter.getDownloadableLayers().addAll(layers);
                         Collections.sort(adapter.getDownloadableLayers(), new LayerNameComparator());
-                        adapter.notifyDataSetChanged();
                     }
+
+                    CacheProvider.getInstance(getActivity().getApplicationContext()).refreshTileOverlays();
 
                 }
             };
@@ -438,7 +438,6 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
                     }
                 }
                 Collections.sort(adapter.getOverlays());
-                adapter.notifyDataSetChanged();
             }
 
             List<Layer> geopackages = Collections.EMPTY_LIST;
@@ -469,23 +468,24 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
                         }
                         Collections.sort(adapter.getSideloadedOverlays());
                         Collections.sort(adapter.getOverlays());
-                        adapter.notifyDataSetChanged();
 
                         if(adapter.getDownloadableLayers().isEmpty() && adapter.getOverlays().isEmpty() && adapter.getSideloadedOverlays().isEmpty()){
                             isEmpty = true;
                         }
-                    }
 
-                    refreshButton.setEnabled(true);
-                    if (!isEmpty) {
-                        noContentView.setVisibility(View.GONE);
-                        contentView.setVisibility(View.VISIBLE);
-                    } else {
-                        contentView.setVisibility(View.GONE);
-                        noContentView.setVisibility(View.VISIBLE);
+                        refreshButton.setEnabled(true);
+                        if (!isEmpty) {
+                            noContentView.setVisibility(View.GONE);
+                            contentView.setVisibility(View.VISIBLE);
+                        } else {
+                            contentView.setVisibility(View.GONE);
+                            noContentView.setVisibility(View.VISIBLE);
+                        }
+                        swipeContainer.setRefreshing(false);
+                        listView.setEnabled(true);
+
+                        adapter.notifyDataSetChanged();
                     }
-                    swipeContainer.setRefreshing(false);
-                    listView.setEnabled(true);
                 }
             });
         }
