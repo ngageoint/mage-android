@@ -56,12 +56,6 @@
             android:textColor="#999"
             android:visibility="gone" />
 
-        <ProgressBar
-            android:id="@+id/online_layers_no_content_progressBar"
-            style="?android:attr/progressBarStyleLarge"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
-
     </LinearLayout>
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

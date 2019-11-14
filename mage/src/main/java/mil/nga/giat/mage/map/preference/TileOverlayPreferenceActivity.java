@@ -29,6 +29,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.ListFragment;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -123,6 +124,7 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
         private View contentView;
         private View noContentView;
         private MenuItem refreshButton;
+        private SwipeRefreshLayout swipeContainer;
         private GeoPackageDownloadManager downloadManager;
         private Timer downloadRefreshTimer;
         private final Object timerLock = new Object();
@@ -182,6 +184,16 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
                     }
 
                     return false;
+                }
+            });
+
+            swipeContainer = view.findViewById(R.id.offline_layers_swipeContainer);
+            swipeContainer.setColorSchemeResources(R.color.md_blue_600, R.color.md_orange_A200);
+            swipeContainer.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+                @Override
+                public void onRefresh() {
+                    preRefresh(refreshButton);
+                    refresh();
                 }
             });
 
@@ -270,8 +282,8 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
             contentView.setVisibility(View.GONE);
             ((TextView) noContentView.findViewById(R.id.downloadable_layers_no_content_title)).setText(getResources().getString(R.string.downloadable_layers_no_content_loading));
             noContentView.findViewById(R.id.downloadable_layers_no_content_summary).setVisibility(View.GONE);
-            noContentView.findViewById(R.id.downloadable_layers_no_content_progressBar).setVisibility(View.VISIBLE);
             listView.setEnabled(false);
+            swipeContainer.setRefreshing(true);
 
             synchronized (adapterLock) {
                 adapter.getDownloadableLayers().clear();
@@ -476,8 +488,8 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
                         contentView.setVisibility(View.GONE);
                         ((TextView) noContentView.findViewById(R.id.downloadable_layers_no_content_title)).setText(getResources().getString(R.string.downloadable_layers_no_content_text));
                         noContentView.findViewById(R.id.downloadable_layers_no_content_summary).setVisibility(View.VISIBLE);
-                        noContentView.findViewById(R.id.downloadable_layers_no_content_progressBar).setVisibility(View.GONE);
                     }
+                    swipeContainer.setRefreshing(false);
                     listView.setEnabled(true);
                 }
             });
