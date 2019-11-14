@@ -280,7 +280,7 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
             item.setEnabled(false);
             noContentView.setVisibility(View.VISIBLE);
             contentView.setVisibility(View.GONE);
-            noContentView.findViewById(R.id.downloadable_layers_no_content_summary).setVisibility(View.GONE);
+            noContentView.findViewById(R.id.downloadable_layers_no_content_title).setVisibility(View.GONE);
             listView.setEnabled(false);
             swipeContainer.setRefreshing(true);
 
@@ -485,8 +485,7 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
                     } else {
                         noContentView.setVisibility(View.VISIBLE);
                         contentView.setVisibility(View.GONE);
-                        ((TextView) noContentView.findViewById(R.id.downloadable_layers_no_content_title)).setText(getResources().getString(R.string.downloadable_layers_no_content_text));
-                        noContentView.findViewById(R.id.downloadable_layers_no_content_summary).setVisibility(View.VISIBLE);
+                        noContentView.findViewById(R.id.downloadable_layers_no_content_title).setVisibility(View.VISIBLE);
                     }
                     swipeContainer.setRefreshing(false);
                     listView.setEnabled(true);

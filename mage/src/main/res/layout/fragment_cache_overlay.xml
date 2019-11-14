@@ -47,15 +47,8 @@
             android:gravity="center"
             android:paddingBottom="20dip"
             android:textColor="#777"
-            android:textSize="22sp" />
-
-        <TextView
-            android:id="@+id/downloadable_layers_no_content_summary"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            android:textColor="#999"
-            android:visibility="gone" />
+            android:textSize="22sp"
+            android:text="@string/downloadable_layers_no_content_text"/>
 
     </LinearLayout>
 
