@@ -279,8 +279,6 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
             item.setEnabled(false);
             contentView.setVisibility(View.GONE);
             noContentView.setVisibility(View.VISIBLE);
-            noContentView.findViewById(R.id.downloadable_layers_no_content_title).setVisibility(View.GONE);
-            noContentView.findViewById(R.id.downloadable_layers_no_content_summary).setVisibility(View.GONE);
             listView.setEnabled(false);
             swipeContainer.setRefreshing(true);
 
@@ -485,8 +483,6 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
                     } else {
                         contentView.setVisibility(View.GONE);
                         noContentView.setVisibility(View.VISIBLE);
-                        noContentView.findViewById(R.id.downloadable_layers_no_content_title).setVisibility(View.VISIBLE);
-                        noContentView.findViewById(R.id.downloadable_layers_no_content_summary).setVisibility(View.VISIBLE);
                     }
                     swipeContainer.setRefreshing(false);
                     listView.setEnabled(true);
@@ -730,12 +726,14 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
                     @Override
                     public void run() {
                         synchronized (adapterLock) {
-                            if(adapter == null){
-                                return;
-                            }
                             try {
                                 List<Layer> layers = adapter.getDownloadableLayers();
                                 for(Layer layer : layers){
+                                    synchronized (timerLock){
+                                        if(canceled){
+                                            return;
+                                        }
+                                    }
                                     if(layer.getDownloadId() == null || layer.isLoaded()){
                                         continue;
                                     }

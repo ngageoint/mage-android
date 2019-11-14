@@ -101,12 +101,12 @@
     <!-- map overlay menus -->
     <string name="overlay_map_refresh_enabled">Refresh</string>
     <string name="overlay_map_refresh_disabled">DISCOVERING MAP OVERLAYS&#8230;</string>
-    <string name="offline_layers_no_content_title_text">No offline layers loaded</string>
-    <string name="offline_layers_no_content_summary_text">Click the refresh button above to pull all offline layers from the server</string>
+    <string name="offline_layers_no_content_title_text">No offline layers</string>
+    <string name="offline_layers_no_content_summary_text">Event administrators can add layers to your event, or can be shared from other applications.</string>
     <string name="clear_data_message">You are about to delete the selected data and logout.\n\n Are you sure you want to do this?</string>
 
-    <string name="online_layers_no_content_title_text">No online layers loaded</string>
-    <string name="online_layers_no_content_summary_text">Click the refresh button above to pull all online layers from the server</string>
+    <string name="online_layers_no_content_title_text">No online layers</string>
+    <string name="online_layers_no_content_summary_text">Event administrators can add layers to your event, or can be shared from other applications.</string>
 
     <string name="overlay_cache_directory">MapCache</string>
 

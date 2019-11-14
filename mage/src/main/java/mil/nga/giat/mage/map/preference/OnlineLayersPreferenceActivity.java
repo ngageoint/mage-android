@@ -165,8 +165,6 @@ public class OnlineLayersPreferenceActivity extends AppCompatActivity {
             refreshButton.setEnabled(false);
             contentView.setVisibility(View.GONE);
             noContentView.setVisibility(View.VISIBLE);
-            noContentView.findViewById(R.id.online_layers_no_content_title).setVisibility(View.GONE);
-            noContentView.findViewById(R.id.online_layers_no_content_summary).setVisibility(View.GONE);
             swipeContainer.setRefreshing(true);
 
             adapter.clear();
@@ -261,8 +259,6 @@ public class OnlineLayersPreferenceActivity extends AppCompatActivity {
                     } else {
                         contentView.setVisibility(View.GONE);
                         noContentView.setVisibility(View.VISIBLE);
-                        noContentView.findViewById(R.id.online_layers_no_content_title).setVisibility(View.VISIBLE);
-                        noContentView.findViewById(R.id.online_layers_no_content_summary).setVisibility(View.VISIBLE);
                     }
 
                     refreshButton.setEnabled(true);

@@ -40,15 +40,21 @@
         android:paddingBottom="15dp"
         android:paddingTop="15dp">
 
+        <ImageView
+            android:layout_width="200dp"
+            android:layout_height="200dp"
+            android:alpha=".60"
+            android:src="@drawable/ic_layers_black_vector_24dp"/>
+
         <TextView
             android:id="@+id/downloadable_layers_no_content_title"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:gravity="center"
             android:paddingBottom="20dip"
-            android:textColor="#777"
+            android:textColor="@color/md_black_1000"
             android:textSize="32sp"
-            android:drawableTop="@drawable/ic_layers_gray_24dp"
+            android:alpha=".87"
             android:text="@string/offline_layers_no_content_title_text"/>
 
         <TextView
@@ -57,8 +63,9 @@
             android:layout_height="wrap_content"
             android:gravity="center"
             android:paddingBottom="20dip"
-            android:textColor="#777"
+            android:textColor="@color/md_black_1000"
             android:textSize="22sp"
+            android:alpha=".60"
             android:text="@string/offline_layers_no_content_summary_text"/>
 
     </LinearLayout>
