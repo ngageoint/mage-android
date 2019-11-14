@@ -212,7 +212,7 @@ public class OfflineLayersAdapter extends BaseExpandableListAdapter {
 
     private View getOverlayView(int i, boolean isExpanded, View view, ViewGroup viewGroup) {
         LayoutInflater inflater = LayoutInflater.from(activity);
-        view = inflater.inflate(R.layout.cache_overlay_group, viewGroup, false);
+        view = inflater.inflate(R.layout.offline_layer_group, viewGroup, false);
         final CacheOverlay overlay = cacheOverlays.get(i);
 
         TextView groupView = view.findViewById(R.id.cache_over_group_text);
@@ -278,7 +278,7 @@ public class OfflineLayersAdapter extends BaseExpandableListAdapter {
 
     private View getOverlaySideloadedView(int i, boolean isExpanded, View view, ViewGroup viewGroup) {
         LayoutInflater inflater = LayoutInflater.from(activity);
-        view = inflater.inflate(R.layout.cache_overlay_side_group, viewGroup, false);
+        view = inflater.inflate(R.layout.offline_layer_sideloaded, viewGroup, false);
         final CacheOverlay overlay = sideloadedOverlays.get(i - cacheOverlays.size());
 
         TextView groupView = view.findViewById(R.id.cache_overlay_side_group_text);
@@ -444,7 +444,7 @@ public class OfflineLayersAdapter extends BaseExpandableListAdapter {
 
         if (convertView == null) {
             LayoutInflater inflater = LayoutInflater.from(activity);
-            convertView = inflater.inflate(R.layout.cache_overlay_child, parent, false);
+            convertView = inflater.inflate(R.layout.offline_layer_child, parent, false);
         }
 
         final CacheOverlay overlay = cacheOverlays.get(groupPosition);
