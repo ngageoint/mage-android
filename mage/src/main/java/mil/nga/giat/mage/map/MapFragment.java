@@ -92,8 +92,9 @@ import mil.nga.geopackage.GeoPackageManager;
 import mil.nga.geopackage.core.contents.Contents;
 import mil.nga.geopackage.core.contents.ContentsDao;
 import mil.nga.geopackage.extension.link.FeatureTileTableLinker;
+import mil.nga.geopackage.extension.scale.TileScaling;
+import mil.nga.geopackage.extension.scale.TileTableScaling;
 import mil.nga.geopackage.factory.GeoPackageFactory;
-import mil.nga.geopackage.features.index.FeatureIndexManager;
 import mil.nga.geopackage.features.user.FeatureCursor;
 import mil.nga.geopackage.features.user.FeatureDao;
 import mil.nga.geopackage.features.user.FeatureRow;
@@ -1311,12 +1312,18 @@ public class MapFragment extends DaggerFragment implements OnMapReadyCallback, O
 		if(cacheOverlay == null){
 			// Create a new GeoPackage tile provider and add to the map
 			TileDao tileDao = geoPackage.getTileDao(tileTableCacheOverlay.getName());
-			BoundedOverlay geoPackageTileProvider = GeoPackageOverlayFactory.getBoundedOverlay(tileDao);
+
+			TileTableScaling tileTableScaling = new TileTableScaling(geoPackage, tileDao);
+			TileScaling tileScaling = tileTableScaling.get();
+
+			BoundedOverlay overlay = GeoPackageOverlayFactory
+					.getBoundedOverlay(tileDao, getResources().getDisplayMetrics().density, tileScaling);
+
 			TileOverlayOptions overlayOptions = null;
 			if(linkedToFeatures){
-				overlayOptions = createFeatureTileOverlayOptions(geoPackageTileProvider);
+				overlayOptions = createFeatureTileOverlayOptions(overlay);
 			}else {
-				overlayOptions = createTileOverlayOptions(geoPackageTileProvider);
+				overlayOptions = createTileOverlayOptions(overlay);
 			}
 			TileOverlay tileOverlay = map.addTileOverlay(overlayOptions);
 			tileTableCacheOverlay.setTileOverlay(tileOverlay);
@@ -1328,14 +1335,11 @@ public class MapFragment extends DaggerFragment implements OnMapReadyCallback, O
 			for(FeatureDao featureDao: featureDaos){
 
 				// Create the feature tiles
-				FeatureTiles featureTiles = new DefaultFeatureTiles(getActivity(), featureDao);
-
-				// Create an index manager
-				FeatureIndexManager indexer = new FeatureIndexManager(getActivity(), geoPackage, featureDao);
-				featureTiles.setIndexManager(indexer);
+				FeatureTiles featureTiles = new DefaultFeatureTiles(getActivity(), geoPackage, featureDao,
+						getResources().getDisplayMetrics().density);
 
 				// Add the feature overlay query
-				FeatureOverlayQuery featureOverlayQuery = new FeatureOverlayQuery(getActivity(), geoPackageTileProvider, featureTiles);
+				FeatureOverlayQuery featureOverlayQuery = new FeatureOverlayQuery(getActivity(), overlay, featureTiles);
 				tileTableCacheOverlay.addFeatureOverlayQuery(featureOverlayQuery);
 			}
 
@@ -1360,10 +1364,6 @@ public class MapFragment extends DaggerFragment implements OnMapReadyCallback, O
 				cacheOverlay = null;
 			}
 			for(GeoPackageTileTableCacheOverlay linkedTileTable: featureTableCacheOverlay.getLinkedTileTables()){
-				if(cacheOverlay != null){
-					// Add the existing linked tile cache overlays
-					addGeoPackageTileCacheOverlay(enabledCacheOverlays, linkedTileTable, geoPackage, true);
-				}
 				cacheOverlays.remove(linkedTileTable.getCacheName());
 			}
 		}
@@ -1373,7 +1373,8 @@ public class MapFragment extends DaggerFragment implements OnMapReadyCallback, O
 
 			// If indexed, add as a tile overlay
 			if(featureTableCacheOverlay.isIndexed()){
-				FeatureTiles featureTiles = new DefaultFeatureTiles(getActivity(), featureDao);
+				FeatureTiles featureTiles = new DefaultFeatureTiles(getActivity(), geoPackage, featureDao,
+						getResources().getDisplayMetrics().density);
 				Integer maxFeaturesPerTile = null;
 				if(featureDao.getGeometryType() == GeometryType.POINT){
 					maxFeaturesPerTile = getResources().getInteger(R.integer.geopackage_feature_tiles_max_points_per_tile);
@@ -1385,19 +1386,17 @@ public class MapFragment extends DaggerFragment implements OnMapReadyCallback, O
 				// Adjust the max features number tile draw paint attributes here as needed to
 				// change how tiles are drawn when more than the max features exist in a tile
 				featureTiles.setMaxFeaturesTileDraw(numberFeaturesTile);
-				featureTiles.setIndexManager(new FeatureIndexManager(getActivity(), geoPackage, featureDao));
 				// Adjust the feature tiles draw paint attributes here as needed to change how
 				// features are drawn on tiles
 				FeatureOverlay featureOverlay = new FeatureOverlay(featureTiles);
 				featureOverlay.setMinZoom(featureTableCacheOverlay.getMinZoom());
 
-				FeatureTileTableLinker linker = new FeatureTileTableLinker(geoPackage);
-				List<TileDao> tileDaos = linker.getTileDaosForFeatureTable(featureDao.getTableName());
-				featureOverlay.ignoreTileDaos(tileDaos);
+				// Get the tile linked overlay
+				BoundedOverlay overlay = GeoPackageOverlayFactory.getLinkedFeatureOverlay(featureOverlay, geoPackage);
 
-				FeatureOverlayQuery featureOverlayQuery = new FeatureOverlayQuery(getActivity(), featureOverlay);
+				FeatureOverlayQuery featureOverlayQuery = new FeatureOverlayQuery(getActivity(), overlay, featureTiles);
 				featureTableCacheOverlay.setFeatureOverlayQuery(featureOverlayQuery);
-				TileOverlayOptions overlayOptions = createFeatureTileOverlayOptions(featureOverlay);
+				TileOverlayOptions overlayOptions = createFeatureTileOverlayOptions(overlay);
 				TileOverlay tileOverlay = map.addTileOverlay(overlayOptions);
 				featureTableCacheOverlay.setTileOverlay(tileOverlay);
 			}
@@ -1443,11 +1442,6 @@ public class MapFragment extends DaggerFragment implements OnMapReadyCallback, O
 				} finally {
 					featureCursor.close();
 				}
-			}
-
-			// Add linked tile tables
-			for(GeoPackageTileTableCacheOverlay linkedTileTable: featureTableCacheOverlay.getLinkedTileTables()){
-				addGeoPackageTileCacheOverlay(enabledCacheOverlays, linkedTileTable, geoPackage, true);
 			}
 
 			cacheOverlay = featureTableCacheOverlay;

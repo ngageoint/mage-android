@@ -7,6 +7,7 @@ Adheres to [Semantic Versioning](http://semver.org/).
 
 ##### Features
 * android-maps-utils version 0.6.2
+* Improved GeoPackage functionality including styles and scaling
 
 ##### Bug Fixes
 * Minor Kotlin updates for compile errors
