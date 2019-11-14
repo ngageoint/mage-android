@@ -203,8 +203,8 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
             if (ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
                 if (ActivityCompat.shouldShowRequestPermissionRationale(getActivity(), Manifest.permission.READ_EXTERNAL_STORAGE)) {
                     new AlertDialog.Builder(getActivity(), R.style.AppCompatAlertDialogStyle)
-                            .setTitle(R.string.overlay_access_title)
-                            .setMessage(R.string.overlay_access_message)
+                            .setTitle(R.string.offline_layers_access_title)
+                            .setMessage(R.string.offline_layers_access_message)
                             .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
                                 @Override
                                 public void onClick(DialogInterface dialog, int which) {
@@ -253,7 +253,7 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
 
         @Override
         public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-            inflater.inflate(R.menu.tile_overlay_menu, menu);
+            inflater.inflate(R.menu.offline_layers_menu, menu);
 
             refreshButton = menu.findItem(R.id.tile_overlay_refresh);
             refreshButton.setEnabled(true);

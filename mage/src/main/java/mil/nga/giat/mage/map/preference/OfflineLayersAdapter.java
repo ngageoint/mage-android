@@ -15,6 +15,8 @@ import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import androidx.annotation.MainThread;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -37,6 +39,7 @@ import mil.nga.giat.mage.utils.ByteUtils;
  * <p></p>
  * <b>ALL public methods MUST be made on the UI thread to ensure concurrency.</b>
  */
+@MainThread
 public class OfflineLayersAdapter extends BaseExpandableListAdapter {
 
     /**
