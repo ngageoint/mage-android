@@ -46,7 +46,6 @@
             android:layout_height="wrap_content"
             android:gravity="center"
             android:paddingBottom="20dip"
-            android:text="@string/downloadable_layers_no_content_loading"
             android:textColor="#777"
             android:textSize="22sp" />
 

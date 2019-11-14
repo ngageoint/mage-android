@@ -280,7 +280,6 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
             item.setEnabled(false);
             noContentView.setVisibility(View.VISIBLE);
             contentView.setVisibility(View.GONE);
-            ((TextView) noContentView.findViewById(R.id.downloadable_layers_no_content_title)).setText(getResources().getString(R.string.downloadable_layers_no_content_loading));
             noContentView.findViewById(R.id.downloadable_layers_no_content_summary).setVisibility(View.GONE);
             listView.setEnabled(false);
             swipeContainer.setRefreshing(true);
