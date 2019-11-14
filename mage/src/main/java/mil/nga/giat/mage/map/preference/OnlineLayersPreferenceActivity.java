@@ -356,7 +356,7 @@ public class OnlineLayersPreferenceActivity extends AppCompatActivity {
         }
 
         private void bindLayerViewHolder(LayerViewHolder holder, int i) {
-            View view = holder.itemView;
+            final View view = holder.itemView;
             Layer tmp = null;
 
             if (i <= secureLayers.size()) {
@@ -392,15 +392,13 @@ public class OnlineLayersPreferenceActivity extends AppCompatActivity {
                 sw.setEnabled(false);
                 ((Checkable) sw).setChecked(false);
             } else {
-                //TODO allow for selection by row??
-                /*view.setOnClickListener(new View.OnClickListener() {
+                view.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        boolean checked = ((Checkable) sw).isChecked();
-                        ((Checkable) sw).setChecked(!checked);
+                        View toggle = view.findViewById(R.id.online_layers_toggle);
+                        toggle.performClick();
                     }
-                });*/
-                view.setOnClickListener(null);
+                });
                 sw.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
