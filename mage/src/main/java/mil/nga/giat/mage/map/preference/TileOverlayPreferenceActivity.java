@@ -277,9 +277,10 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
         @MainThread
         private void preRefresh(MenuItem item){
             item.setEnabled(false);
-            noContentView.setVisibility(View.VISIBLE);
             contentView.setVisibility(View.GONE);
+            noContentView.setVisibility(View.VISIBLE);
             noContentView.findViewById(R.id.downloadable_layers_no_content_title).setVisibility(View.GONE);
+            noContentView.findViewById(R.id.downloadable_layers_no_content_summary).setVisibility(View.GONE);
             listView.setEnabled(false);
             swipeContainer.setRefreshing(true);
 
@@ -482,9 +483,10 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
                         noContentView.setVisibility(View.GONE);
                         contentView.setVisibility(View.VISIBLE);
                     } else {
-                        noContentView.setVisibility(View.VISIBLE);
                         contentView.setVisibility(View.GONE);
+                        noContentView.setVisibility(View.VISIBLE);
                         noContentView.findViewById(R.id.downloadable_layers_no_content_title).setVisibility(View.VISIBLE);
+                        noContentView.findViewById(R.id.downloadable_layers_no_content_summary).setVisibility(View.VISIBLE);
                     }
                     swipeContainer.setRefreshing(false);
                     listView.setEnabled(true);
