@@ -31,6 +31,8 @@ import mil.nga.giat.mage.cache.CacheUtils;
 import mil.nga.giat.mage.cache.GeoPackageCacheUtils;
 import mil.nga.giat.mage.sdk.datastore.layer.Layer;
 import mil.nga.giat.mage.sdk.datastore.layer.LayerHelper;
+import mil.nga.giat.mage.sdk.datastore.user.Event;
+import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
 import mil.nga.giat.mage.sdk.exceptions.LayerException;
 import mil.nga.giat.mage.sdk.utils.StorageUtility;
 import mil.nga.sf.GeometryType;
@@ -184,8 +186,10 @@ public class CacheProvider {
                 }
             }
 
+            final Event event = EventHelper.getInstance(context).getCurrentEvent();
+
             try {
-                List<Layer> imageryLayers = LayerHelper.getInstance(context).readAll("Imagery");
+                List<Layer> imageryLayers = LayerHelper.getInstance(context).readByEvent(event, "Imagery");
 
                 for(Layer imagery : imageryLayers){
                     if(imagery.getFormat() == null || !imagery.getFormat().equalsIgnoreCase("wms")) {
@@ -199,7 +203,7 @@ public class CacheProvider {
             }
 
             try {
-                List<Layer> featureLayers = LayerHelper.getInstance(context).readAll("Feature");
+                List<Layer> featureLayers = LayerHelper.getInstance(context).readByEvent(event,"Feature");
 
                 for(Layer feature : featureLayers){
                     if(feature.isLoaded()){
