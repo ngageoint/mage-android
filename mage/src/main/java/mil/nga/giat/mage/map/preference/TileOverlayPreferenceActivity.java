@@ -78,26 +78,26 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
 
     private static final int PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE = 100;
 
-    private OverlayListFragment overlayFragment;
+    private OverlayListFragment offlineLayersFragment;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_offline_layers);
 
-        overlayFragment = (OverlayListFragment) getSupportFragmentManager().findFragmentById(R.id.overlay_fragment);
+        offlineLayersFragment = (OverlayListFragment) getSupportFragmentManager().findFragmentById(R.id.offline_layers_fragment);
     }
 
     @Override
     public void onBackPressed() {
         Intent intent = new Intent();
-        intent.putStringArrayListExtra(MapPreferencesActivity.OVERLAY_EXTENDED_DATA_KEY, overlayFragment.getSelectedOverlays());
+        intent.putStringArrayListExtra(MapPreferencesActivity.OVERLAY_EXTENDED_DATA_KEY, offlineLayersFragment.getSelectedOverlays());
         setResult(Activity.RESULT_OK, intent);
 
 
-        synchronized (overlayFragment.timerLock) {
-            if (this.overlayFragment.downloadRefreshTimer != null) {
-                this.overlayFragment.downloadRefreshTimer.cancel();
+        synchronized (offlineLayersFragment.timerLock) {
+            if (this.offlineLayersFragment.downloadRefreshTimer != null) {
+                this.offlineLayersFragment.downloadRefreshTimer.cancel();
             }
         }
 

@@ -5,7 +5,7 @@
     android:orientation="vertical" >
 
     <fragment
-        android:id="@+id/overlay_fragment"
+        android:id="@+id/offline_layers_fragment"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:name="mil.nga.giat.mage.map.preference.TileOverlayPreferenceActivity$OverlayListFragment"/>
