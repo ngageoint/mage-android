@@ -20,7 +20,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ExpandableListView;
-import android.widget.TextView;
 
 import androidx.annotation.MainThread;
 import androidx.annotation.Nullable;
@@ -84,7 +83,7 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.cache_overlay);
+        setContentView(R.layout.activity_offline_layers);
 
         overlayFragment = (OverlayListFragment) getSupportFragmentManager().findFragmentById(R.id.overlay_fragment);
     }
@@ -156,7 +155,7 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
 
         @Override
         public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-            View view = inflater.inflate(R.layout.fragment_cache_overlay, container, false);
+            View view = inflater.inflate(R.layout.fragment_offline_layers, container, false);
             listView = view.findViewById(android.R.id.list);
             listView.setEnabled(true);
             listView.setAdapter(adapter);
