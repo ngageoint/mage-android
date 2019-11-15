@@ -6,6 +6,7 @@ Adheres to [Semantic Versioning](http://semver.org/).
 ## 6.2.8 (TBD)
 
 ##### Features
+* geopackage-android-map version 3.4.0
 * android-maps-utils version 0.6.2
 * Improved GeoPackage functionality including styles and scaling
 
