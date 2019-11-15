@@ -450,7 +450,8 @@ public class OfflineLayersAdapter extends BaseExpandableListAdapter {
             convertView = inflater.inflate(R.layout.offline_layer_child, parent, false);
         }
 
-        final CacheOverlay overlay = cacheOverlays.get(groupPosition);
+        final CacheOverlay overlay = groupPosition < cacheOverlays.size()
+                ? cacheOverlays.get(groupPosition) : sideloadedOverlays.get(groupPosition - cacheOverlays.size());
         final CacheOverlay childCache = overlay.getChildren().get(childPosition);
 
         ImageView imageView =  convertView.findViewById(R.id.cache_overlay_child_image);

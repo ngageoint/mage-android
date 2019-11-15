@@ -291,6 +291,7 @@ public class CacheProvider {
             // Delete any GeoPackages where the file is no longer accessible
             geoPackageManager.deleteAllMissingExternal();
 
+            final Map<String, String> nonSideloadedGeopackages = new HashMap<>();
             try {
                 LayerHelper layerHelper = LayerHelper.getInstance(context);
                 List<Layer> layers = layerHelper.readAll("GeoPackage");
@@ -302,6 +303,7 @@ public class CacheProvider {
                     String relativePath = layer.getRelativePath();
                     if (relativePath != null) {
                         File file = new File(context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), relativePath);
+                        nonSideloadedGeopackages.put(file.getName(), file.getName());
                         if (!file.exists()) {
                             layer.setLoaded(true);
                             layerHelper.update(layer);
@@ -317,6 +319,10 @@ public class CacheProvider {
             for (String database : externalDatabases) {
                 GeoPackageCacheOverlay cacheOverlay = getGeoPackageCacheOverlay(context, geoPackageManager, database);
                 if (cacheOverlay != null) {
+                    File f = new File(cacheOverlay.getFilePath());
+                    if(!nonSideloadedGeopackages.containsKey(f.getName())){
+                        cacheOverlay.setSideloaded(true);
+                    }
                     overlays.add(cacheOverlay);
                 }
             }
