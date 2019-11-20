@@ -13,7 +13,7 @@ group 'mil.nga.giat.mage'
 archivesBaseName = 'mage-android'
 version '6.2.8'
 ext {
-    versionCode = 70
+    versionCode = 71
     sourceRefspec = Grgit.open().head().id
 }
 
@@ -39,6 +39,11 @@ android {
     sourceSets {
         androidTest.setRoot('tests')
         androidTest.java.srcDirs = ['tests/src']
+    }
+
+    compileOptions {
+        sourceCompatibility 1.8
+        targetCompatibility 1.8
     }
 
     defaultConfig {
