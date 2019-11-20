@@ -41,6 +41,11 @@ android {
         androidTest.java.srcDirs = ['tests/src']
     }
 
+    compileOptions {
+        sourceCompatibility 1.8
+        targetCompatibility 1.8
+    }
+
     defaultConfig {
         applicationId "mil.nga.giat.mage"
         versionName project.version
