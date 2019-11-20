@@ -8,7 +8,7 @@ Adheres to [Semantic Versioning](http://semver.org/).
 ##### Features
 * geopackage-android-map version 3.4.0
 * android-maps-utils version 0.6.2
-* Improved GeoPackage functionality including styles and scaling
+* Improved GeoPackage functionality including styles, scaling, and zoom
 
 ##### Bug Fixes
 * Minor Kotlin updates for compile errors

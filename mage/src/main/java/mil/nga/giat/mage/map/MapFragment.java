@@ -1231,18 +1231,15 @@ public class MapFragment extends DaggerFragment implements OnMapReadyCallback, O
 				if(geoPackageCacheOverlay.isAdded()){
 
 					try {
-						ContentsDao contentsDao = geoPackage.getContentsDao();
-						Contents contents = contentsDao.queryForId(tableCacheOverlay.getName());
-						BoundingBox contentsBoundingBox = contents.getBoundingBox();
-						Projection projection = ProjectionFactory.getProjection(contents.getSrs().getOrganizationCoordsysId());
-						ProjectionTransform transform = projection.getTransformation(ProjectionConstants.EPSG_WORLD_GEODETIC_SYSTEM);
-						BoundingBox boundingBox = contentsBoundingBox.transform(transform);
-						boundingBox = TileBoundingBoxUtils.boundWgs84BoundingBoxWithWebMercatorLimits(boundingBox);
-
-						if (addedCacheBoundingBox == null) {
-							addedCacheBoundingBox = boundingBox;
-						} else {
-							addedCacheBoundingBox = TileBoundingBoxUtils.union(addedCacheBoundingBox, boundingBox);
+						BoundingBox boundingBox = geoPackage.getBoundingBox(
+								ProjectionFactory.getProjection(ProjectionConstants.EPSG_WORLD_GEODETIC_SYSTEM),
+								tableCacheOverlay.getName());
+						if(boundingBox != null) {
+							if (addedCacheBoundingBox == null) {
+								addedCacheBoundingBox = boundingBox;
+							} else {
+								addedCacheBoundingBox = TileBoundingBoxUtils.union(addedCacheBoundingBox, boundingBox);
+							}
 						}
 					}catch(Exception e){
 						Log.e(LOG_NAME, "Failed to retrieve GeoPackage Table bounding box. GeoPackage: "
