@@ -31,6 +31,7 @@ import androidx.fragment.app.ListFragment;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -39,7 +40,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.concurrent.Semaphore;
 
 import mil.nga.geopackage.GeoPackageManager;
 import mil.nga.geopackage.factory.GeoPackageFactory;
@@ -63,8 +63,6 @@ import mil.nga.giat.mage.sdk.gson.deserializer.LayerDeserializer;
 import mil.nga.giat.mage.sdk.http.HttpClientManager;
 import mil.nga.giat.mage.sdk.http.resource.LayerResource;
 import mil.nga.giat.mage.sdk.utils.StorageUtility;
-import retrofit2.Call;
-import retrofit2.Callback;
 import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
@@ -300,31 +298,7 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
             @SuppressLint("StaticFieldLeak") AsyncTask<Void, Void, List<Layer>> fetcher = new AsyncTask<Void, Void, List<Layer>>() {
                 @Override
                 protected List<Layer> doInBackground(Void... objects) {
-                    final Semaphore lock = new Semaphore(1);
-                    lock.drainPermits();
-                    fetchRemoteGeopackageLayers(new Callback<Collection<Layer>>() {
-                        @Override
-                        public void onResponse(Call<Collection<Layer>> call, Response<Collection<Layer>> response) {
-                            try {
-                                if (response.isSuccessful()) {
-                                    saveGeopackageLayers(response.body());
-                                }
-                            } finally {
-                                lock.release();
-                            }
-                        }
-
-                        @Override
-                        public void onFailure(Call<Collection<Layer>> call, Throwable t) {
-                            Log.e(LOG_NAME, "Error fetching event geopackage layers", t);
-                            lock.release();
-                        }
-                    });
-                    try {
-                        lock.acquire();
-                    }catch(InterruptedException e) {
-                        Log.d(LOG_NAME, "Interrupted while waiting for semaphore",e);
-                    }
+                    fetchRemoteGeopackageLayers();
                     fetchRemoteStaticLayers();
 
                     final Event event = EventHelper.getInstance(getActivity().getApplicationContext()).getCurrentEvent();
@@ -372,7 +346,7 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
             staticFeatureServerFetch.fetch(false, null);
         }
 
-        private void fetchRemoteGeopackageLayers(Callback<Collection<Layer>> callback) {
+        private void fetchRemoteGeopackageLayers() {
             Context context = getContext();
             Event event = EventHelper.getInstance(context).getCurrentEvent();
             String baseUrl = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(mil.nga.giat.mage.sdk.R.string.serverURLKey), context.getString(mil.nga.giat.mage.sdk.R.string.serverURLDefaultValue));
@@ -384,7 +358,15 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
 
             LayerResource.LayerService service = retrofit.create(LayerResource.LayerService.class);
 
-            service.getLayers(event.getRemoteId(), "GeoPackage").enqueue(callback);
+            try {
+                Response<Collection<Layer>> response =
+                        service.getLayers(event.getRemoteId(), "GeoPackage").execute();
+                if (response.isSuccessful()) {
+                    saveGeopackageLayers(response.body());
+                }
+            }catch (IOException e){
+                Log.w(LOG_NAME, "Failed to fect geopackages",e);
+            }
         }
 
         private void saveGeopackageLayers(Collection<Layer> remoteLayers) {
