@@ -125,6 +125,7 @@ public class OnlineLayersPreferenceActivity extends AppCompatActivity {
             });
 
             recyclerView = view.findViewById(R.id.recycler_view);
+            recyclerView.setTag("online");
 
             RecyclerView.LayoutManager mLayoutManager = new LinearLayoutManager(getActivity());
             recyclerView.setLayoutManager(mLayoutManager);

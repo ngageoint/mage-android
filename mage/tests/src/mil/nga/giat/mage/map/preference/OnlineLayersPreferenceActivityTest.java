@@ -194,7 +194,7 @@ public class OnlineLayersPreferenceActivityTest {
         insecureIdx += 2;
 
         //Verify a dialog is displayed about a non HTTPS layer
-        onView(withId(2131296751)).perform(RecyclerViewActions.actionOnItemAtPosition(insecureIdx,
+        onView(withTag("online")).perform(RecyclerViewActions.actionOnItemAtPosition(insecureIdx,
                 click()));
         onView(withText("Non HTTPS Layer")).inRoot(isDialog()).check(matches(isDisplayed()));
         onView(withId(android.R.id.button1)).perform(click());
