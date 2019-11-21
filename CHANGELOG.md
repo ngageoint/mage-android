@@ -3,15 +3,21 @@ All notable changes to this project will be documented in this file.
 Adheres to [Semantic Versioning](http://semver.org/).
 
 ---
-## 6.2.8 (TBD)
+## 6.2.9 (TBD)
 
 ##### Features
-* geopackage-android-map version 3.4.0
-* android-maps-utils version 0.6.2
-* Improved GeoPackage functionality including styles and scaling
 
 ##### Bug Fixes
-* Minor Kotlin updates for compile errors
+
+## [6.2.8](https://github.com/ngageoint/mage-android/releases/tag/6.2.8)
+
+##### Features
+* Update support library to androidx
+* Improved GeoPackage functionality including styles, scaling, and zoom
+* geopackage-android-map version 3.4.0
+* android-maps-utils version 0.6.2
+
+##### Bug Fixes
 
 ## [6.2.7](https://github.com/ngageoint/mage-android/releases/tag/6.2.7)
 
