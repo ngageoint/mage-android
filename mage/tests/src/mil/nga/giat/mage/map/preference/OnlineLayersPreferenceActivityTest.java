@@ -6,7 +6,6 @@ import android.view.View;
 import android.webkit.URLUtil;
 
 import static androidx.test.core.app.ApplicationProvider.getApplicationContext;
-import static androidx.test.espresso.Espresso.onData;
 import static androidx.test.espresso.Espresso.onView;
 import static androidx.test.espresso.action.ViewActions.click;
 import static androidx.test.espresso.assertion.ViewAssertions.matches;
@@ -18,6 +17,7 @@ import static androidx.test.espresso.matcher.ViewMatchers.withText;
 import static org.hamcrest.Matchers.instanceOf;
 
 import androidx.lifecycle.Lifecycle;
+import androidx.test.espresso.contrib.RecyclerViewActions;
 import androidx.test.ext.junit.rules.ActivityScenarioRule;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.LargeTest;
@@ -137,12 +137,6 @@ public class OnlineLayersPreferenceActivityTest {
 
     @Test
     public void testRefresh() throws Exception {
-        try {
-            onView(withId(R.id.online_layers_no_content_progressBar)).check(matches(isDisplayed()));
-            Assert.fail("Progress bar should not be displayed");
-        } catch (AssertionFailedError e) {
-
-        }
 
         onView(withId(R.id.online_layers_refresh)).check(matches(isDisplayed()));
         onView(withId(R.id.online_layers_refresh)).check(matches(isEnabled()));
@@ -183,6 +177,9 @@ public class OnlineLayersPreferenceActivityTest {
         }
         Assert.assertNotEquals(-1, secureIdx);
 
+        //Account for 1 section header
+        secureIdx++;
+
         int insecureIdx = -1;
         for(int i = 0; i < insecureLayers.size(); i++){
             Layer layer = insecureLayers.get(i);
@@ -193,8 +190,12 @@ public class OnlineLayersPreferenceActivityTest {
         }
         Assert.assertNotEquals(-1, insecureIdx);
 
+        //Account for 2 section headers
+        insecureIdx += 2;
+
         //Verify a dialog is displayed about a non HTTPS layer
-        onData(instanceOf(Layer.class)).inAdapterView(withTag("InsecureView")).atPosition(insecureIdx).perform(click());
+        onView(withId(2131296751)).perform(RecyclerViewActions.actionOnItemAtPosition(insecureIdx,
+                click()));
         onView(withText("Non HTTPS Layer")).inRoot(isDialog()).check(matches(isDisplayed()));
         onView(withId(android.R.id.button1)).perform(click());
     }
