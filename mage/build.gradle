@@ -50,6 +50,11 @@ android {
         androidTest.java.srcDirs = ['tests/src']
     }
 
+    compileOptions {
+        sourceCompatibility 1.8
+        targetCompatibility 1.8
+    }
+
     defaultConfig {
         applicationId "mil.nga.giat.mage"
         versionName project.version
@@ -247,6 +252,7 @@ dependencies {
     androidTestImplementation 'androidx.test:runner:' + runnerVersion
     androidTestImplementation 'androidx.test:rules:' + runnerVersion
     androidTestImplementation 'androidx.test.espresso:espresso-core:' +espressoVersion
+    androidTestImplementation 'androidx.test.espresso:espresso-contrib:' + espressoVersion
 }
 
 task androidArtifactVersion {
