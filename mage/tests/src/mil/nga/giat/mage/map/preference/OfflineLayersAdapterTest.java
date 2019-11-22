@@ -15,6 +15,7 @@ import java.util.List;
 
 import mil.nga.giat.mage.map.cache.CacheOverlay;
 import mil.nga.giat.mage.map.cache.CacheOverlayType;
+import mil.nga.giat.mage.map.cache.StaticFeatureCacheOverlay;
 import mil.nga.giat.mage.sdk.datastore.layer.Layer;
 
 import static androidx.test.core.app.ApplicationProvider.getApplicationContext;
@@ -89,5 +90,27 @@ public class OfflineLayersAdapterTest {
         Assert.assertEquals(1, adapter.getChildrenCount(1));
         Assert.assertEquals(child, adapter.getChild(1, 0));
 
+    }
+
+    @Test
+    public void testAddOverlay(){
+        Context context = getApplicationContext();
+        Assert.assertNotNull(context);
+
+        OfflineLayersAdapter adapter = new OfflineLayersAdapter(context, null);
+
+        adapter.addOverlay(null, new Layer());
+        Assert.assertEquals(0, adapter.getOverlays().size());
+
+        Layer existing = new Layer();
+        existing.setLoaded(true);
+
+        adapter.getDownloadableLayers().add(existing);
+        CacheOverlay overlay = new StaticFeatureCacheOverlay("test", 12345l);
+
+        adapter.addOverlay(overlay, existing);
+        Assert.assertEquals(0, adapter.getDownloadableLayers().size());
+        Assert.assertEquals(1, adapter.getOverlays().size());
+        Assert.assertEquals(overlay, adapter.getOverlays().get(0));
     }
 }
