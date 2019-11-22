@@ -25,7 +25,7 @@ import static org.hamcrest.Matchers.not;
 
 @RunWith(AndroidJUnit4.class)
 @LargeTest
-public class OfflineLayersPreferencyActivityTest {
+public class OfflineLayersPreferenceActivityTest {
 
     @Rule
     public ActivityScenarioRule<TileOverlayPreferenceActivity> activityRule =
@@ -45,7 +45,6 @@ public class OfflineLayersPreferencyActivityTest {
         Context context = getApplicationContext();
 
         onView(withId(R.id.tile_overlay_refresh)).perform(click());
-        onView(withId(R.id.downloadable_layers_no_content)).check(matches(isDisplayed()));
-        onView(withId(R.id.tile_overlay_refresh)).check(matches(not(isEnabled())));
+
     }
 }
