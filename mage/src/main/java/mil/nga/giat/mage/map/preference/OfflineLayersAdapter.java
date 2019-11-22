@@ -2,6 +2,7 @@ package mil.nga.giat.mage.map.preference;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.content.Context;
 import android.os.AsyncTask;
 import android.os.Environment;
 import android.text.format.Formatter;
@@ -50,7 +51,7 @@ public class OfflineLayersAdapter extends BaseExpandableListAdapter {
     /**
      * Context
      */
-    private final Activity activity;
+    private final Context context;
 
     /**
      * List of geopackage and static feature cache overlays (downloaded)
@@ -76,8 +77,8 @@ public class OfflineLayersAdapter extends BaseExpandableListAdapter {
      *
      * @param activity
      */
-    public OfflineLayersAdapter(Activity activity, GeoPackageDownloadManager downloadManager) {
-        this.activity = activity;
+    public OfflineLayersAdapter(Context activity, GeoPackageDownloadManager downloadManager) {
+        this.context = activity;
         this.downloadManager = downloadManager;
     }
 
@@ -132,8 +133,8 @@ public class OfflineLayersAdapter extends BaseExpandableListAdapter {
 
         TextView layerSize = view.findViewById(R.id.layer_size);
         layerSize.setText(String.format("Downloading: %s of %s",
-                Formatter.formatFileSize(activity.getApplicationContext(), progress),
-                Formatter.formatFileSize(activity.getApplicationContext(), size)));
+                Formatter.formatFileSize(context, progress),
+                Formatter.formatFileSize(context, size)));
     }
 
     @Override
@@ -214,12 +215,12 @@ public class OfflineLayersAdapter extends BaseExpandableListAdapter {
     }
 
     private View getOverlayView(int i, boolean isExpanded, View view, ViewGroup viewGroup) {
-        LayoutInflater inflater = LayoutInflater.from(activity);
+        LayoutInflater inflater = LayoutInflater.from(context);
         view = inflater.inflate(R.layout.offline_layer_group, viewGroup, false);
         final CacheOverlay overlay = cacheOverlays.get(i);
 
         TextView groupView = view.findViewById(R.id.cache_over_group_text);
-        Event event = EventHelper.getInstance(activity.getApplicationContext()).getCurrentEvent();
+        Event event = EventHelper.getInstance(context).getCurrentEvent();
         groupView.setText(event.getName() + " Layers");
 
         view.findViewById(R.id.section_header).setVisibility(i == 0 ? View.VISIBLE : View.GONE);
@@ -258,10 +259,10 @@ public class OfflineLayersAdapter extends BaseExpandableListAdapter {
         Layer layer = null;
         if (overlay instanceof GeoPackageCacheOverlay) {
             String filePath = ((GeoPackageCacheOverlay) overlay).getFilePath();
-            if (filePath.startsWith(String.format("%s/MAGE/geopackages", activity.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)))) {
+            if (filePath.startsWith(String.format("%s/MAGE/geopackages", context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)))) {
                 try {
-                    String relativePath = filePath.split(activity.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS).getAbsolutePath() + "/")[1];
-                    layer = LayerHelper.getInstance(activity.getApplicationContext()).getByRelativePath(relativePath);
+                    String relativePath = filePath.split(context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS).getAbsolutePath() + "/")[1];
+                    layer = LayerHelper.getInstance(context.getApplicationContext()).getByRelativePath(relativePath);
                 } catch (Exception e) {
                     Log.e(LOG_NAME, "Error getting layer by relative path", e);
                 }
@@ -280,7 +281,7 @@ public class OfflineLayersAdapter extends BaseExpandableListAdapter {
     }
 
     private View getOverlaySideloadedView(int i, boolean isExpanded, View view, ViewGroup viewGroup) {
-        LayoutInflater inflater = LayoutInflater.from(activity);
+        LayoutInflater inflater = LayoutInflater.from(context);
         view = inflater.inflate(R.layout.offline_layer_sideloaded, viewGroup, false);
         final CacheOverlay overlay = sideloadedOverlays.get(i - cacheOverlays.size());
 
@@ -324,10 +325,10 @@ public class OfflineLayersAdapter extends BaseExpandableListAdapter {
         Layer layer = null;
         if (overlay instanceof GeoPackageCacheOverlay) {
             String filePath = ((GeoPackageCacheOverlay) overlay).getFilePath();
-            if (filePath.startsWith(String.format("%s/MAGE/geopackages", activity.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)))) {
+            if (filePath.startsWith(String.format("%s/MAGE/geopackages", context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)))) {
                 try {
-                    String relativePath = filePath.split(activity.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS).getAbsolutePath() + "/")[1];
-                    layer = LayerHelper.getInstance(activity.getApplicationContext()).getByRelativePath(relativePath);
+                    String relativePath = filePath.split(context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS).getAbsolutePath() + "/")[1];
+                    layer = LayerHelper.getInstance(context.getApplicationContext()).getByRelativePath(relativePath);
                 } catch (Exception e) {
                     Log.e(LOG_NAME, "Error getting layer by relative path", e);
                 }
@@ -346,7 +347,7 @@ public class OfflineLayersAdapter extends BaseExpandableListAdapter {
     }
 
     private View getDownloadableLayerView(int i, boolean isExpanded, View view, ViewGroup viewGroup) {
-        LayoutInflater inflater = LayoutInflater.from(activity);
+        LayoutInflater inflater = LayoutInflater.from(context);
         view = inflater.inflate(R.layout.layer_overlay, viewGroup, false);
 
         Layer layer = downloadableLayers.get(i - cacheOverlays.size() - sideloadedOverlays.size());
@@ -381,8 +382,8 @@ public class OfflineLayersAdapter extends BaseExpandableListAdapter {
                 TextView layerSize = view.findViewById(R.id.layer_size);
                 layerSize.setVisibility(View.VISIBLE);
                 layerSize.setText(String.format("Downloading: %s of %s",
-                        Formatter.formatFileSize(activity.getApplicationContext(), progress),
-                        Formatter.formatFileSize(activity.getApplicationContext(), fileSize)));
+                        Formatter.formatFileSize(context, progress),
+                        Formatter.formatFileSize(context, fileSize)));
             } else {
                 progressBar.setVisibility(View.GONE);
                 download.setVisibility(View.VISIBLE);
@@ -412,7 +413,7 @@ public class OfflineLayersAdapter extends BaseExpandableListAdapter {
                         @Override
                         protected Layer doInBackground(Layer... layers) {
                             StaticFeatureServerFetch staticFeatureServerFetch =
-                                    new StaticFeatureServerFetch(activity.getApplicationContext());
+                                    new StaticFeatureServerFetch(context);
                             try {
                                 staticFeatureServerFetch.load(null, layers[0]);
                             } catch (Exception e) {
@@ -428,7 +429,7 @@ public class OfflineLayersAdapter extends BaseExpandableListAdapter {
                             OfflineLayersAdapter.this.getOverlays().clear();
                             OfflineLayersAdapter.this.getSideloadedOverlays().clear();
                             notifyDataSetChanged();
-                            CacheProvider.getInstance(activity.getApplicationContext()).refreshTileOverlays();
+                            CacheProvider.getInstance(context).refreshTileOverlays();
                         }
                     };
                    fetcher.execute(threadLayer);
@@ -446,7 +447,7 @@ public class OfflineLayersAdapter extends BaseExpandableListAdapter {
                              View convertView, ViewGroup parent) {
 
         if (convertView == null) {
-            LayoutInflater inflater = LayoutInflater.from(activity);
+            LayoutInflater inflater = LayoutInflater.from(context);
             convertView = inflater.inflate(R.layout.offline_layer_child, parent, false);
         }
 
