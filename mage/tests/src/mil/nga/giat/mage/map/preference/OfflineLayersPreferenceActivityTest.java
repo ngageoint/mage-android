@@ -45,6 +45,8 @@ public class OfflineLayersPreferenceActivityTest {
         Context context = getApplicationContext();
 
         onView(withId(R.id.tile_overlay_refresh)).perform(click());
+        onView(withId(R.id.tile_overlay_refresh)).check(matches(isEnabled()));
+        onView(withId(R.id.downloadable_layers_content)).check(matches(isDisplayed()));
 
     }
 }
