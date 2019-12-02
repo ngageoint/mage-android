@@ -1,5 +1,7 @@
 package mil.nga.giat.mage.map;
 
+import androidx.test.filters.SmallTest;
+
 import junit.framework.TestCase;
 
 import org.junit.Assert;
@@ -11,8 +13,14 @@ import mil.nga.giat.mage.map.cache.URLCacheOverlay;
 import mil.nga.giat.mage.map.cache.WMSCacheOverlay;
 import mil.nga.giat.mage.sdk.datastore.layer.Layer;
 
+@SmallTest
 public class WMSTileProviderTest  extends TestCase {
 
+    /**
+     * Test that the tile provider can handle all defaults without blowing up
+     *
+     * @throws Exception
+     */
     @Test
     public void testDefaults() throws Exception {
         Layer layer = new Layer();

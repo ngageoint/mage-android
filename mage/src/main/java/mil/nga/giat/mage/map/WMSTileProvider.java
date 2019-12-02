@@ -49,7 +49,9 @@ public class WMSTileProvider extends UrlTileProvider {
         if(myOverlay.getWmsLayers() != null){
             path.append("&layers=" + myOverlay.getWmsLayers());
         }
-        path.append("&version=" + myOverlay.getWmsVersion());
+        if(version != null) {
+            path.append("&version=" + version);
+        }
         path.append("&" + epsgKey + "=EPSG:3857&width=256&height=256&format=" + myOverlay.getWmsFormat());
         path.append("&transparent=" + transparentValue);
         path.append(buildBBox(x,y,z));
