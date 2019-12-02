@@ -28,7 +28,7 @@ public class WMSTileProvider extends UrlTileProvider {
     public URL getTileUrl(int x, int y, int z) {
         String version = myOverlay.getWmsVersion();
         String epsgKey = "SRS";
-        if (version != null && version.equals("1.3") || version.equals("1.3.0")) {
+        if (version != null && (version.equals("1.3") || version.equals("1.3.0"))) {
             epsgKey = "CRS";
         }
 
