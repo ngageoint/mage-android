@@ -15,10 +15,13 @@ public class WMSTileProvider extends UrlTileProvider {
     private static final String LOG_NAME = WMSTileProvider.class.getName();
 
     private final WMSCacheOverlay myOverlay;
+    private final int myWidth;
+    private final int myHeight;
 
     public WMSTileProvider(int width, int height, URLCacheOverlay overlay) {
         super(width, height);
-
+        myWidth = width;
+        myHeight = height;
         myOverlay = (WMSCacheOverlay)overlay;
     }
 
@@ -26,7 +29,7 @@ public class WMSTileProvider extends UrlTileProvider {
 
     @Override
     public URL getTileUrl(int x, int y, int z) {
-        String version = myOverlay.getWmsVersion();
+        final String version = myOverlay.getWmsVersion();
         String epsgKey = "SRS";
         if (version != null && (version.equals("1.3") || version.equals("1.3.0"))) {
             epsgKey = "CRS";
@@ -40,7 +43,7 @@ public class WMSTileProvider extends UrlTileProvider {
             }
         }
 
-        StringBuilder path = new StringBuilder(myOverlay.getURL().toString());
+        final StringBuilder path = new StringBuilder(myOverlay.getURL().toString());
 
         path.append("?request=GetMap&service=WMS");
         if(myOverlay.getWmsStyles() != null){
@@ -52,7 +55,10 @@ public class WMSTileProvider extends UrlTileProvider {
         if(version != null) {
             path.append("&version=" + version);
         }
-        path.append("&" + epsgKey + "=EPSG:3857&width=256&height=256&format=" + myOverlay.getWmsFormat());
+        path.append("&" + epsgKey + "=EPSG:3857");
+        path.append("&width=" + myWidth);
+        path.append("&height=" + myHeight);
+        path.append("&format=" + myOverlay.getWmsFormat());
         path.append("&transparent=" + transparentValue);
         path.append(buildBBox(x,y,z));
 
