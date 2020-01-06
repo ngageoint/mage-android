@@ -31,29 +31,29 @@
         android:visibility="gone" >
     </LinearLayout>
 
-    <LinearLayout
+    <RelativeLayout
         android:id="@+id/downloadable_layers_no_content"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
-        android:gravity="center"
-        android:orientation="vertical"
-        android:paddingBottom="15dp"
-        android:paddingTop="15dp">
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp">
 
         <ImageView
-            android:layout_width="200dp"
-            android:layout_height="200dp"
+            android:layout_width="150dp"
+            android:layout_height="150dp"
             android:alpha=".60"
+            android:layout_centerHorizontal="true"
+            android:layout_above="@id/downloadable_layers_no_content_title"
             android:src="@drawable/ic_layers_black_vector_24dp"/>
 
         <TextView
             android:id="@+id/downloadable_layers_no_content_title"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:gravity="center"
-            android:paddingBottom="20dip"
+            android:layout_centerInParent="true"
+            android:layout_marginBottom="16dp"
+            style="@style/TextAppearance.MaterialComponents.Headline5"
             android:textColor="@color/md_black_1000"
-            android:textSize="32sp"
             android:alpha=".87"
             android:text="@string/offline_layers_no_content_title_text"/>
 
@@ -62,12 +62,12 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:gravity="center"
-            android:paddingBottom="20dip"
+            android:layout_below="@id/downloadable_layers_no_content_title"
             android:textColor="@color/md_black_1000"
-            android:textSize="22sp"
+            style="@style/TextAppearance.MaterialComponents.Body1"
             android:alpha=".60"
             android:text="@string/offline_layers_no_content_summary_text"/>
 
-    </LinearLayout>
+    </RelativeLayout>
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
