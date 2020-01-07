@@ -120,7 +120,7 @@ public class OnlineLayersPreferenceActivity extends AppCompatActivity {
             swipeContainer.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
                 @Override
                 public void onRefresh() {
-                    manualRefresh();
+                    refresh();
                 }
             });
 
@@ -145,13 +145,14 @@ public class OnlineLayersPreferenceActivity extends AppCompatActivity {
             refreshButton.setEnabled(false);
 
             CacheProvider.getInstance(getActivity()).registerCacheOverlayListener(this);
+            refresh();
         }
 
         @Override
         public boolean onOptionsItemSelected(MenuItem item) {
             switch (item.getItemId()) {
                 case R.id.online_layers_refresh:
-                    manualRefresh();
+                    refresh();
                     return true;
                 default:
                     return super.onOptionsItemSelected(item);
@@ -159,10 +160,10 @@ public class OnlineLayersPreferenceActivity extends AppCompatActivity {
         }
 
         /**
-         * This is called when the user click the refresh button
+         * refresh the data from the server
          *
          */
-        private void manualRefresh() {
+        private void refresh() {
             refreshButton.setEnabled(false);
             contentView.setVisibility(View.GONE);
             noContentView.setVisibility(View.VISIBLE);
