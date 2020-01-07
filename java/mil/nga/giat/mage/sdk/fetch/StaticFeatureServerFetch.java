@@ -13,6 +13,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -74,8 +75,17 @@ public class StaticFeatureServerFetch extends AbstractServerFetch {
 			Collection<Layer> localLayers = layerHelper.readAll(FEATURE_TYPE);
 
 			Map<String, Layer> remoteIdToLayer = new HashMap<>(localLayers.size());
-			for(Layer layer : localLayers){
-				remoteIdToLayer.put(layer.getRemoteId(), layer);
+			Iterator<Layer> it = localLayers.iterator();
+			while(it.hasNext()) {
+				Layer localLayer = it.next();
+
+				//See if the layer has been deleted on the server
+				if(!remoteLayers.contains(localLayer)){
+					it.remove();
+					layerHelper.delete(localLayer.getId());
+				}else{
+					remoteIdToLayer.put(localLayer.getRemoteId(), localLayer);
+				}
 			}
 
 			for (Layer remoteLayer : remoteLayers) {
