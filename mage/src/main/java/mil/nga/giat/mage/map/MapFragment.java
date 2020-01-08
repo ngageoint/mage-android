@@ -64,7 +64,6 @@ import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Collections2;
-import com.google.common.collect.Sets;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 
@@ -89,8 +88,6 @@ import mil.nga.geopackage.BoundingBox;
 import mil.nga.geopackage.GeoPackage;
 import mil.nga.geopackage.GeoPackageCache;
 import mil.nga.geopackage.GeoPackageManager;
-import mil.nga.geopackage.core.contents.Contents;
-import mil.nga.geopackage.core.contents.ContentsDao;
 import mil.nga.geopackage.extension.link.FeatureTileTableLinker;
 import mil.nga.geopackage.extension.scale.TileScaling;
 import mil.nga.geopackage.extension.scale.TileTableScaling;
@@ -123,6 +120,7 @@ import mil.nga.giat.mage.map.cache.CacheProvider.OnCacheOverlayListener;
 import mil.nga.giat.mage.map.cache.GeoPackageCacheOverlay;
 import mil.nga.giat.mage.map.cache.GeoPackageFeatureTableCacheOverlay;
 import mil.nga.giat.mage.map.cache.GeoPackageTileTableCacheOverlay;
+import mil.nga.giat.mage.map.cache.StaticFeatureCacheOverlay;
 import mil.nga.giat.mage.map.cache.URLCacheOverlay;
 import mil.nga.giat.mage.map.cache.WMSCacheOverlay;
 import mil.nga.giat.mage.map.cache.XYZDirectoryCacheOverlay;
@@ -144,14 +142,12 @@ import mil.nga.giat.mage.sdk.datastore.location.LocationHelper;
 import mil.nga.giat.mage.sdk.datastore.location.LocationProperty;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
-import mil.nga.giat.mage.sdk.datastore.staticfeature.StaticFeatureHelper;
 import mil.nga.giat.mage.sdk.datastore.user.Event;
 import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.event.ILocationEventListener;
 import mil.nga.giat.mage.sdk.event.IObservationEventListener;
-import mil.nga.giat.mage.sdk.event.IStaticFeatureEventListener;
 import mil.nga.giat.mage.sdk.event.IUserEventListener;
 import mil.nga.giat.mage.sdk.exceptions.LayerException;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
@@ -162,10 +158,9 @@ import mil.nga.sf.GeometryType;
 import mil.nga.sf.proj.Projection;
 import mil.nga.sf.proj.ProjectionConstants;
 import mil.nga.sf.proj.ProjectionFactory;
-import mil.nga.sf.proj.ProjectionTransform;
 
 public class MapFragment extends DaggerFragment implements OnMapReadyCallback, OnMapClickListener, OnMapLongClickListener, OnMarkerClickListener, OnInfoWindowClickListener, GoogleMap.OnCameraMoveListener, GoogleMap.OnCameraIdleListener, GoogleMap.OnCameraMoveStartedListener, OnClickListener, LocationSource, OnCacheOverlayListener,
-		IObservationEventListener, ILocationEventListener, IUserEventListener, IStaticFeatureEventListener, Observer<Location> {
+		IObservationEventListener, ILocationEventListener, IUserEventListener, Observer<Location> {
 
 	private static final String LOG_NAME = MapFragment.class.getName();
 
@@ -437,7 +432,6 @@ public class MapFragment extends DaggerFragment implements OnMapReadyCallback, O
 
 		ObservationHelper.getInstance(context).addListener(this);
 		LocationHelper.getInstance(context).addListener(this);
-		StaticFeatureHelper.getInstance(context).addListener(this);
 		UserHelper.getInstance(context).addListener(this);
 		CacheProvider.getInstance(context).registerCacheOverlayListener(this);
 
@@ -482,7 +476,6 @@ public class MapFragment extends DaggerFragment implements OnMapReadyCallback, O
 		locationLoad.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
 
 		updateMapView();
-		updateStaticFeatureLayers();
 
 		// Set visibility on map markers as preferences may have changed
 		observations.setVisibility(preferences.getBoolean(getResources().getString(R.string.showObservationsKey), true));
@@ -672,7 +665,6 @@ public class MapFragment extends DaggerFragment implements OnMapReadyCallback, O
 
 		ObservationHelper.getInstance(context).removeListener(this);
 		LocationHelper.getInstance(context).removeListener(this);
-		StaticFeatureHelper.getInstance(context).removeListener(this);
 		UserHelper.getInstance(context).removeListener(this);
 
 		if (observations != null) {
@@ -684,7 +676,6 @@ public class MapFragment extends DaggerFragment implements OnMapReadyCallback, O
 		}
 
 		CacheProvider.getInstance(getActivity().getApplicationContext()).unregisterCacheOverlayListener(this);
-		StaticFeatureHelper.getInstance(getActivity().getApplicationContext()).removeListener(this);
 
 		if (map != null) {
 			saveMapView();
@@ -1116,6 +1107,9 @@ public class MapFragment extends DaggerFragment implements OnMapReadyCallback, O
 		addedCacheBoundingBox = null;
 
 		for (CacheOverlay cacheOverlay : cacheOverlays) {
+			if(cacheOverlay instanceof StaticFeatureCacheOverlay){
+				staticGeometryCollection.removeLayer(((StaticFeatureCacheOverlay)cacheOverlay).getId().toString());
+			}
 
 			// If this cache overlay potentially replaced by a new version
 			if(cacheOverlay.isAdded()){
@@ -1140,6 +1134,10 @@ public class MapFragment extends DaggerFragment implements OnMapReadyCallback, O
 
 					case URL:
 						addURLCacheOverlay(enabledCacheOverlays, (URLCacheOverlay)cacheOverlay);
+						break;
+
+					case STATIC_FEATURE:
+						addStaticFeatureOverlay(enabledCacheOverlays, (StaticFeatureCacheOverlay)cacheOverlay);
 						break;
 				}
 			}
@@ -1211,6 +1209,20 @@ public class MapFragment extends DaggerFragment implements OnMapReadyCallback, O
 		}
 		// Add the cache overlay to the enabled cache overlays
 		enabledCacheOverlays.put(cacheOverlay.getCacheName(), cacheOverlay);
+	}
+
+	private void addStaticFeatureOverlay(Map<String, CacheOverlay> enabledCacheOverlays, final StaticFeatureCacheOverlay cacheOverlay) {
+		try {
+			final Layer layer = LayerHelper.getInstance(getActivity().getApplicationContext()).read(cacheOverlay.getId());
+			new Handler(Looper.getMainLooper()).post(new Runnable() {
+				@Override
+				public void run() {
+					new StaticFeatureLoadTask(getActivity().getApplicationContext(), staticGeometryCollection, map).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, layer);
+				}
+			});
+		} catch (LayerException e) {
+			Log.e(LOG_NAME, "Problem updating static features.", e);
+		}
 	}
 
 	/**
@@ -1477,58 +1489,6 @@ public class MapFragment extends DaggerFragment implements OnMapReadyCallback, O
 		overlayOptions.tileProvider(tileProvider);
 		overlayOptions.zIndex(zIndex);
 		return overlayOptions;
-	}
-
-	private void updateStaticFeatureLayers() {
-		removeStaticFeatureLayers();
-
-		try {
-			for (Layer l : LayerHelper.getInstance(getActivity().getApplicationContext()).readByEvent(EventHelper.getInstance(getActivity().getApplicationContext()).getCurrentEvent(), "Feature")) {
-				onStaticFeatureLayer(l);
-			}
-		} catch (LayerException e) {
-			Log.e(LOG_NAME, "Problem updating static features.", e);
-		}
-	}
-
-	private void removeStaticFeatureLayers() {
-		Set<String> selectedLayerIds = preferences.getStringSet(getResources().getString(R.string.staticFeatureLayersKey), Collections.<String> emptySet());
-
-		Set<String> eventLayerIds = new HashSet<>();
-		try {
-			for (Layer layer : LayerHelper.getInstance(getActivity()).readByEvent(EventHelper.getInstance(getActivity().getApplicationContext()).getCurrentEvent(), "Feature")) {
-				eventLayerIds.add(layer.getRemoteId());
-			}
-		} catch (LayerException e) {
-			Log.e(LOG_NAME, "Problem reading static layers", e);
-		}
-		Set<String> layersNotInEvent = Sets.difference(selectedLayerIds, eventLayerIds);
-
-		for (String layerId : staticGeometryCollection.getLayers()) {
-			if (!selectedLayerIds.contains(layerId) || layersNotInEvent.contains(layerId)) {
-				staticGeometryCollection.removeLayer(layerId);
-			}
-		}
-	}
-
-	@Override
-	public void onStaticFeaturesCreated(final Layer layer) {
-		new Handler(Looper.getMainLooper()).post(new Runnable() {
-			@Override
-			public void run() {
-				onStaticFeatureLayer(layer);
-			}
-		});
-	}
-
-	private void onStaticFeatureLayer(Layer layer) {
-		Set<String> layers = preferences.getStringSet(getString(R.string.staticFeatureLayersKey), Collections.<String> emptySet());
-
-		// The user has asked for this feature layer
-		String layerId = layer.getId().toString();
-		if (layers.contains(layerId) && layer.isLoaded()) {
-			new StaticFeatureLoadTask(getActivity().getApplicationContext(), staticGeometryCollection, map).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, layer);
-		}
 	}
 
 	private void updateMapView() {

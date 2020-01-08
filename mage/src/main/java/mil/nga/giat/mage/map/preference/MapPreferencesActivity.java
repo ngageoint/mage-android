@@ -45,7 +45,6 @@ public class MapPreferencesActivity extends AppCompatActivity {
 
 	public static final int TILE_OVERLAY_ACTIVITY = 100;
 	public static final int ONLINE_LAYERS_OVERLAY_ACTIVITY = 200;
-	public static final String OVERLAY_EXTENDED_DATA_KEY = "overlay";
 
 	private MapPreferenceFragment preference = new MapPreferenceFragment();
 
@@ -112,29 +111,5 @@ public class MapPreferencesActivity extends AppCompatActivity {
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		getSupportFragmentManager().beginTransaction().replace(android.R.id.content, preference).commit();
-	}
-
-	@Override
-	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-		switch (requestCode) {
-			case TILE_OVERLAY_ACTIVITY: {
-				if (resultCode == Activity.RESULT_OK) {
-					OverlayPreference p = (OverlayPreference) preference.findPreference(getString(R.string.tileOverlaysKey));
-					p.setValues(new HashSet<>(data.getStringArrayListExtra(OVERLAY_EXTENDED_DATA_KEY)));
-				}
-				break;
-			}
-			case ONLINE_LAYERS_OVERLAY_ACTIVITY: {
-				if (resultCode == Activity.RESULT_OK) {
-					OverlayPreference p = (OverlayPreference) preference.findPreference(getString(R.string.onlineLayersKey));
-					p.setValues(new HashSet<>(data.getStringArrayListExtra(getString(R.string.onlineLayersKey))));
-				}
-				break;
-			}
-			default: {
-				super.onActivityResult(requestCode, resultCode, data);
-				break;
-			}
-		}
 	}
 }

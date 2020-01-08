@@ -93,10 +93,6 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
 
     @Override
     public void onBackPressed() {
-        Intent intent = new Intent();
-        intent.putStringArrayListExtra(MapPreferencesActivity.OVERLAY_EXTENDED_DATA_KEY, offlineLayersFragment.getSelectedOverlays());
-        setResult(Activity.RESULT_OK, intent);
-
         SharedPreferences.Editor editor = ourSharedPreferences.edit();
         editor.putStringSet(getResources().getString(R.string.tileOverlaysKey), new HashSet<>(offlineLayersFragment.getSelectedOverlays()));
         editor.commit();
@@ -515,7 +511,7 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
                     if (!childAdded && cacheOverlay.isEnabled()) {
                         overlays.add(cacheOverlay.getCacheName());
                     }
-                } else{
+                } else if(cacheOverlay.isEnabled()) {
                     if(cacheOverlay instanceof StaticFeatureCacheOverlay ||
                             cacheOverlay instanceof XYZDirectoryCacheOverlay) {
                         overlays.add(cacheOverlay.getCacheName());
