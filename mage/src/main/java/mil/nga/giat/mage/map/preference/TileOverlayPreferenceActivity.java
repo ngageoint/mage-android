@@ -6,6 +6,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -36,6 +37,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Timer;
@@ -78,12 +80,15 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
 
     private OverlayListFragment offlineLayersFragment;
 
+    private static SharedPreferences ourSharedPreferences;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_offline_layers);
 
         offlineLayersFragment = (OverlayListFragment) getSupportFragmentManager().findFragmentById(R.id.offline_layers_fragment);
+        ourSharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
     }
 
     @Override
@@ -92,6 +97,9 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
         intent.putStringArrayListExtra(MapPreferencesActivity.OVERLAY_EXTENDED_DATA_KEY, offlineLayersFragment.getSelectedOverlays());
         setResult(Activity.RESULT_OK, intent);
 
+        SharedPreferences.Editor editor = ourSharedPreferences.edit();
+        editor.putStringSet(getResources().getString(R.string.tileOverlaysKey), new HashSet<>(offlineLayersFragment.getSelectedOverlays()));
+        editor.commit();
 
         synchronized (offlineLayersFragment.timerLock) {
             if (this.offlineLayersFragment.downloadRefreshTimer != null) {
@@ -505,6 +513,11 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
                     }
 
                     if (!childAdded && cacheOverlay.isEnabled()) {
+                        overlays.add(cacheOverlay.getCacheName());
+                    }
+                } else{
+                    if(cacheOverlay instanceof StaticFeatureCacheOverlay ||
+                            cacheOverlay instanceof XYZDirectoryCacheOverlay) {
                         overlays.add(cacheOverlay.getCacheName());
                     }
                 }
