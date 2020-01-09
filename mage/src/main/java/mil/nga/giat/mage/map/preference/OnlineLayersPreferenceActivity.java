@@ -120,7 +120,8 @@ public class OnlineLayersPreferenceActivity extends AppCompatActivity {
             swipeContainer.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
                 @Override
                 public void onRefresh() {
-                    refresh();
+                    softRefresh();
+                    hardRefresh();
                 }
             });
 
@@ -144,34 +145,36 @@ public class OnlineLayersPreferenceActivity extends AppCompatActivity {
             refreshButton = menu.findItem(R.id.online_layers_refresh);
             refreshButton.setEnabled(false);
 
-            CacheProvider.getInstance(getActivity()).registerCacheOverlayListener(this);
-            refresh();
+            CacheProvider.getInstance(getActivity()).registerCacheOverlayListener(this, false);
+            softRefresh();
+            CacheProvider.getInstance(getContext()).refreshTileOverlays();
         }
 
         @Override
         public boolean onOptionsItemSelected(MenuItem item) {
             switch (item.getItemId()) {
                 case R.id.online_layers_refresh:
-                    refresh();
+                    softRefresh();
+                    hardRefresh();
                     return true;
                 default:
                     return super.onOptionsItemSelected(item);
             }
         }
 
-        /**
-         * refresh the data from the server
-         *
-         */
-        private void refresh() {
+        private void softRefresh(){
             refreshButton.setEnabled(false);
-            contentView.setVisibility(View.GONE);
-            noContentView.setVisibility(View.VISIBLE);
             swipeContainer.setRefreshing(true);
 
             adapter.clear();
             adapter.notifyDataSetChanged();
 
+            SharedPreferences.Editor editor = ourSharedPreferences.edit();
+            editor.putStringSet(getResources().getString(R.string.onlineLayersKey), new HashSet<>(getSelectedOverlays()));
+            editor.commit();
+        }
+
+        private void hardRefresh(){
             if (getActivity() != null) {
                 final Context c = getActivity().getApplicationContext();
                 Runnable runnable = new Runnable() {
