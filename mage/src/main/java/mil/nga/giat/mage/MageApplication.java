@@ -49,6 +49,7 @@ import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.event.ISessionEventListener;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
+import mil.nga.giat.mage.sdk.fetch.ImageryServerFetch;
 import mil.nga.giat.mage.sdk.fetch.StaticFeatureServerFetch;
 import mil.nga.giat.mage.sdk.http.HttpClientManager;
 import mil.nga.giat.mage.sdk.http.resource.UserResource;
@@ -84,8 +85,6 @@ public class MageApplication extends DaggerApplication implements LifecycleObser
 	private Intent locationReportingServiceIntent;
 
 	private ObservationNotificationListener observationNotificationListener = null;
-
-	private StaticFeatureServerFetch staticFeatureServerFetch = null;
 
 	private Activity runningActivity;
 
@@ -170,18 +169,25 @@ public class MageApplication extends DaggerApplication implements LifecycleObser
 		ObservationFetchWorker.Companion.beginWork();
 
 		// Pull static layers and features just once
-		loadStaticFeatures(false, null);
+		loadOnlineAndOfflineLayers(false, null);
 
 		InitializeMAGEWearBridge.startBridgeIfWearBuild(getApplicationContext());
 	}
 
-	public void loadStaticFeatures(final boolean force, final StaticFeatureServerFetch.OnStaticLayersListener listener) {
+	private void loadOnlineAndOfflineLayers(final boolean force, final StaticFeatureServerFetch.OnStaticLayersListener listener) {
 		@SuppressLint("StaticFieldLeak") AsyncTask<Void, Void, Void> fetcher = new AsyncTask<Void, Void, Void>() {
 			@Override
 			protected Void doInBackground(Void... voids) {
-				staticFeatureServerFetch = new StaticFeatureServerFetch(getApplicationContext());
+				StaticFeatureServerFetch staticFeatureServerFetch = new StaticFeatureServerFetch(getApplicationContext());
 				try {
 					staticFeatureServerFetch.fetch(force, listener);
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+
+				try {
+					ImageryServerFetch imageryServerFetch = new ImageryServerFetch(getApplicationContext());
+					imageryServerFetch.fetch();
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
@@ -333,11 +339,6 @@ public class MageApplication extends DaggerApplication implements LifecycleObser
 	private void destroyFetching() {
 		stopService(new Intent(getApplicationContext(), LocationFetchService.class));
 		stopService(new Intent(getApplicationContext(), ObservationFetchService.class));
-
-		if (staticFeatureServerFetch != null) {
-			staticFeatureServerFetch.destroy();
-			staticFeatureServerFetch = null;
-		}
 	}
 
 	/**
