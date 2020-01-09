@@ -5,7 +5,6 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
 import android.content.DialogInterface;
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.AsyncTask;
@@ -193,8 +192,8 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
             swipeContainer.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
                 @Override
                 public void onRefresh() {
-                    preRefresh(refreshButton);
-                    refresh();
+                    softRefresh(refreshButton);
+                    hardRefresh();
                 }
             });
 
@@ -225,10 +224,15 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
         }
 
         @Override
+        public void onDestroy() {
+            super.onDestroy();
+
+            CacheProvider.getInstance(getActivity()).unregisterCacheOverlayListener(this);
+        }
+
+        @Override
         public void onResume() {
             super.onResume();
-
-            CacheProvider.getInstance(getActivity()).registerCacheOverlayListener(this, false);
 
             downloadManager.onResume();
 
@@ -260,16 +264,18 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
             refreshButton = menu.findItem(R.id.tile_overlay_refresh);
             refreshButton.setEnabled(true);
 
-            preRefresh(refreshButton);
-            refresh();
+            CacheProvider.getInstance(getActivity()).registerCacheOverlayListener(this, false);
+            softRefresh(refreshButton);
+            refreshLocalDownloadableLayers();
+            CacheProvider.getInstance(getActivity().getApplicationContext()).refreshTileOverlays();
         }
 
         @Override
         public boolean onOptionsItemSelected(MenuItem item) {
             switch (item.getItemId()) {
                 case R.id.tile_overlay_refresh:
-                    preRefresh(item);
-                    refresh();
+                    softRefresh(item);
+                    hardRefresh();
                     return true;
                 default:
                     return super.onOptionsItemSelected(item);
@@ -277,7 +283,7 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
         }
 
         @MainThread
-        private void preRefresh(MenuItem item){
+        private void softRefresh(MenuItem item){
             item.setEnabled(false);
 
             synchronized (adapterLock) {
@@ -297,14 +303,33 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
          * Attempt to pull all the layers from the remote server as well as refreshing any local overlays
          *
          */
-        private void refresh() {
+        private void hardRefresh() {
 
-            @SuppressLint("StaticFieldLeak") AsyncTask<Void, Void, List<Layer>> fetcher = new AsyncTask<Void, Void, List<Layer>>() {
+            @SuppressLint("StaticFieldLeak") AsyncTask<Void, Void, Void> fetcher = new AsyncTask<Void, Void, Void>() {
                 @Override
-                protected List<Layer> doInBackground(Void... objects) {
+                protected Void doInBackground(Void... objects) {
                     fetchRemoteGeopackageLayers();
                     fetchRemoteStaticLayers();
 
+                   return null;
+                }
+
+                @Override
+                protected void onPostExecute(Void v) {
+                    super.onPostExecute(v);
+
+                    refreshLocalDownloadableLayers();
+                    CacheProvider.getInstance(getActivity().getApplicationContext()).refreshTileOverlays();
+
+                }
+            };
+            fetcher.execute();
+        }
+
+        private void refreshLocalDownloadableLayers(){
+            @SuppressLint("StaticFieldLeak") AsyncTask<Void, Void, List<Layer>> fetcher = new AsyncTask<Void, Void, List<Layer>>() {
+                @Override
+                protected List<Layer> doInBackground(Void... objects) {
                     final Event event = EventHelper.getInstance(getActivity().getApplicationContext()).getCurrentEvent();
 
                     List<Layer> layers = new ArrayList<>();
@@ -333,9 +358,6 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
                         adapter.getDownloadableLayers().addAll(layers);
                         Collections.sort(adapter.getDownloadableLayers(), new LayerNameComparator());
                     }
-
-                    CacheProvider.getInstance(getActivity().getApplicationContext()).refreshTileOverlays();
-
                 }
             };
             fetcher.execute();
@@ -585,7 +607,7 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
         @MainThread
         private void deleteCacheOverlay(final CacheOverlay cacheOverlay){
 
-           preRefresh(refreshButton);
+           softRefresh(refreshButton);
 
             @SuppressLint("StaticFieldLeak") AsyncTask<Void, Void, Void> deleteTask = new AsyncTask<Void, Void, Void>() {
                 @Override
@@ -605,7 +627,7 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
                             break;
                     }
 
-                    refresh();
+                    hardRefresh();
 
                     return null;
                 }
