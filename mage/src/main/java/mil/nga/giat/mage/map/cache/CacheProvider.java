@@ -320,6 +320,7 @@ public class CacheProvider {
                 GeoPackageCacheOverlay cacheOverlay = getGeoPackageCacheOverlay(context, geoPackageManager, database);
                 if (cacheOverlay != null) {
                     File f = new File(cacheOverlay.getFilePath());
+                    //TODO what happens if there are 2 geopackages with the same name
                     if(!nonSideloadedGeopackages.containsKey(f.getName())){
                         cacheOverlay.setSideloaded(true);
                     }
