@@ -6,11 +6,6 @@ Adheres to [Semantic Versioning](http://semver.org/).
 ## 6.2.9 (TBD)
 
 ##### Features
-* Moved geopackages and static features (e.g. XML) into a new preference called offline layers.
-  These offline layers only exist on a remote server until downloaded onto the client.
-* Online layers preference added.  This gives users access to layers that exist on remote XYZ, TMS,
-  and WMS servers without needing to be downloaded.  Only supports HTTPS.
-* Moved Observations and People preferences to new preference category called MAGE.
 
 ##### Bug Fixes
 
@@ -21,6 +16,11 @@ Adheres to [Semantic Versioning](http://semver.org/).
 * Improved GeoPackage functionality including styles, scaling, and zoom
 * geopackage-android-map version 3.4.0
 * android-maps-utils version 0.6.2
+* Moved geopackages and static features (e.g. XML) into a new preference called offline layers.
+  These offline layers only exist on a remote server until downloaded onto the client.
+* Online layers preference added.  This gives users access to layers that exist on remote XYZ, TMS,
+  and WMS servers without needing to be downloaded.  Only supports HTTPS.
+* Moved Observations and People preferences to new preference category called MAGE.
 
 ##### Bug Fixes
 
