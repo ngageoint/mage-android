@@ -64,7 +64,6 @@ import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Collections2;
-import com.google.common.collect.Sets;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 
@@ -73,7 +72,6 @@ import org.apache.commons.lang3.StringUtils;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -89,11 +87,10 @@ import mil.nga.geopackage.BoundingBox;
 import mil.nga.geopackage.GeoPackage;
 import mil.nga.geopackage.GeoPackageCache;
 import mil.nga.geopackage.GeoPackageManager;
-import mil.nga.geopackage.core.contents.Contents;
-import mil.nga.geopackage.core.contents.ContentsDao;
 import mil.nga.geopackage.extension.link.FeatureTileTableLinker;
+import mil.nga.geopackage.extension.scale.TileScaling;
+import mil.nga.geopackage.extension.scale.TileTableScaling;
 import mil.nga.geopackage.factory.GeoPackageFactory;
-import mil.nga.geopackage.features.index.FeatureIndexManager;
 import mil.nga.geopackage.features.user.FeatureCursor;
 import mil.nga.geopackage.features.user.FeatureDao;
 import mil.nga.geopackage.features.user.FeatureRow;
@@ -122,6 +119,9 @@ import mil.nga.giat.mage.map.cache.CacheProvider.OnCacheOverlayListener;
 import mil.nga.giat.mage.map.cache.GeoPackageCacheOverlay;
 import mil.nga.giat.mage.map.cache.GeoPackageFeatureTableCacheOverlay;
 import mil.nga.giat.mage.map.cache.GeoPackageTileTableCacheOverlay;
+import mil.nga.giat.mage.map.cache.StaticFeatureCacheOverlay;
+import mil.nga.giat.mage.map.cache.URLCacheOverlay;
+import mil.nga.giat.mage.map.cache.WMSCacheOverlay;
 import mil.nga.giat.mage.map.cache.XYZDirectoryCacheOverlay;
 import mil.nga.giat.mage.map.marker.LocationMarkerCollection;
 import mil.nga.giat.mage.map.marker.MyHistoricalLocationMarkerCollection;
@@ -141,14 +141,12 @@ import mil.nga.giat.mage.sdk.datastore.location.LocationHelper;
 import mil.nga.giat.mage.sdk.datastore.location.LocationProperty;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
-import mil.nga.giat.mage.sdk.datastore.staticfeature.StaticFeatureHelper;
 import mil.nga.giat.mage.sdk.datastore.user.Event;
 import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.event.ILocationEventListener;
 import mil.nga.giat.mage.sdk.event.IObservationEventListener;
-import mil.nga.giat.mage.sdk.event.IStaticFeatureEventListener;
 import mil.nga.giat.mage.sdk.event.IUserEventListener;
 import mil.nga.giat.mage.sdk.exceptions.LayerException;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
@@ -159,10 +157,9 @@ import mil.nga.sf.GeometryType;
 import mil.nga.sf.proj.Projection;
 import mil.nga.sf.proj.ProjectionConstants;
 import mil.nga.sf.proj.ProjectionFactory;
-import mil.nga.sf.proj.ProjectionTransform;
 
 public class MapFragment extends DaggerFragment implements OnMapReadyCallback, OnMapClickListener, OnMapLongClickListener, OnMarkerClickListener, OnInfoWindowClickListener, GoogleMap.OnCameraMoveListener, GoogleMap.OnCameraIdleListener, GoogleMap.OnCameraMoveStartedListener, OnClickListener, LocationSource, OnCacheOverlayListener,
-		IObservationEventListener, ILocationEventListener, IUserEventListener, IStaticFeatureEventListener, Observer<Location> {
+		IObservationEventListener, ILocationEventListener, IUserEventListener, Observer<Location> {
 
 	private static final String LOG_NAME = MapFragment.class.getName();
 
@@ -434,7 +431,6 @@ public class MapFragment extends DaggerFragment implements OnMapReadyCallback, O
 
 		ObservationHelper.getInstance(context).addListener(this);
 		LocationHelper.getInstance(context).addListener(this);
-		StaticFeatureHelper.getInstance(context).addListener(this);
 		UserHelper.getInstance(context).addListener(this);
 		CacheProvider.getInstance(context).registerCacheOverlayListener(this);
 
@@ -479,7 +475,6 @@ public class MapFragment extends DaggerFragment implements OnMapReadyCallback, O
 		locationLoad.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
 
 		updateMapView();
-		updateStaticFeatureLayers();
 
 		// Set visibility on map markers as preferences may have changed
 		observations.setVisibility(preferences.getBoolean(getResources().getString(R.string.showObservationsKey), true));
@@ -669,7 +664,6 @@ public class MapFragment extends DaggerFragment implements OnMapReadyCallback, O
 
 		ObservationHelper.getInstance(context).removeListener(this);
 		LocationHelper.getInstance(context).removeListener(this);
-		StaticFeatureHelper.getInstance(context).removeListener(this);
 		UserHelper.getInstance(context).removeListener(this);
 
 		if (observations != null) {
@@ -681,7 +675,6 @@ public class MapFragment extends DaggerFragment implements OnMapReadyCallback, O
 		}
 
 		CacheProvider.getInstance(getActivity().getApplicationContext()).unregisterCacheOverlayListener(this);
-		StaticFeatureHelper.getInstance(getActivity().getApplicationContext()).removeListener(this);
 
 		if (map != null) {
 			saveMapView();
@@ -1113,6 +1106,9 @@ public class MapFragment extends DaggerFragment implements OnMapReadyCallback, O
 		addedCacheBoundingBox = null;
 
 		for (CacheOverlay cacheOverlay : cacheOverlays) {
+			if(cacheOverlay instanceof StaticFeatureCacheOverlay){
+				staticGeometryCollection.removeLayer(((StaticFeatureCacheOverlay)cacheOverlay).getId().toString());
+			}
 
 			// If this cache overlay potentially replaced by a new version
 			if(cacheOverlay.isAdded()){
@@ -1133,6 +1129,14 @@ public class MapFragment extends DaggerFragment implements OnMapReadyCallback, O
 
 					case GEOPACKAGE:
 						addGeoPackageCacheOverlay(enabledCacheOverlays, enabledGeoPackages, (GeoPackageCacheOverlay)cacheOverlay);
+						break;
+
+					case URL:
+						addURLCacheOverlay(enabledCacheOverlays, (URLCacheOverlay)cacheOverlay);
+						break;
+
+					case STATIC_FEATURE:
+						addStaticFeatureOverlay(enabledCacheOverlays, (StaticFeatureCacheOverlay)cacheOverlay);
 						break;
 				}
 			}
@@ -1169,6 +1173,54 @@ public class MapFragment extends DaggerFragment implements OnMapReadyCallback, O
 			} catch (Exception e) {
 				Log.e(LOG_NAME, "Unable to move camera to newly added cache location", e);
 			}
+		}
+	}
+
+	private void addURLCacheOverlay(Map<String, CacheOverlay> enabledCacheOverlays, URLCacheOverlay urlCacheOverlay){
+        // Retrieve the cache overlay if it already exists (and remove from cache overlays)
+		CacheOverlay cacheOverlay = cacheOverlays.remove(urlCacheOverlay.getCacheName());
+		if(cacheOverlay == null){
+			// Create a new tile provider and add to the map
+			TileProvider tileProvider = null;
+			boolean isTransparent = false;
+			if(urlCacheOverlay.getFormat().equalsIgnoreCase("xyz")) {
+				tileProvider = new XYZTileProvider(256, 256, urlCacheOverlay);
+			}else if(urlCacheOverlay.getFormat().equalsIgnoreCase("tms")){
+				tileProvider = new TMSTileProvider(256, 256, urlCacheOverlay);
+			}else {
+				tileProvider = new WMSTileProvider(256, 256, urlCacheOverlay);
+				WMSCacheOverlay wms = (WMSCacheOverlay)urlCacheOverlay;
+				isTransparent =  Boolean.parseBoolean(wms.getWmsTransparent());
+			}
+			TileOverlayOptions overlayOptions = createTileOverlayOptions(tileProvider);
+
+			if(urlCacheOverlay.isBase()) {
+				overlayOptions.zIndex(-4);
+			} else if(!isTransparent) {
+				overlayOptions.zIndex(-3);
+			} else{
+				overlayOptions.zIndex(-2);
+			}
+			// Set the tile overlay in the cache overlay
+			TileOverlay tileOverlay = map.addTileOverlay(overlayOptions);
+			urlCacheOverlay.setTileOverlay(tileOverlay);
+			cacheOverlay = urlCacheOverlay;
+		}
+		// Add the cache overlay to the enabled cache overlays
+		enabledCacheOverlays.put(cacheOverlay.getCacheName(), cacheOverlay);
+	}
+
+	private void addStaticFeatureOverlay(Map<String, CacheOverlay> enabledCacheOverlays, final StaticFeatureCacheOverlay cacheOverlay) {
+		try {
+			final Layer layer = LayerHelper.getInstance(getActivity().getApplicationContext()).read(cacheOverlay.getId());
+			new Handler(Looper.getMainLooper()).post(new Runnable() {
+				@Override
+				public void run() {
+					new StaticFeatureLoadTask(getActivity().getApplicationContext(), staticGeometryCollection, map).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, layer);
+				}
+			});
+		} catch (LayerException e) {
+			Log.e(LOG_NAME, "Problem updating static features.", e);
 		}
 	}
 
@@ -1230,18 +1282,15 @@ public class MapFragment extends DaggerFragment implements OnMapReadyCallback, O
 				if(geoPackageCacheOverlay.isAdded()){
 
 					try {
-						ContentsDao contentsDao = geoPackage.getContentsDao();
-						Contents contents = contentsDao.queryForId(tableCacheOverlay.getName());
-						BoundingBox contentsBoundingBox = contents.getBoundingBox();
-						Projection projection = ProjectionFactory.getProjection(contents.getSrs().getOrganizationCoordsysId());
-						ProjectionTransform transform = projection.getTransformation(ProjectionConstants.EPSG_WORLD_GEODETIC_SYSTEM);
-						BoundingBox boundingBox = contentsBoundingBox.transform(transform);
-						boundingBox = TileBoundingBoxUtils.boundWgs84BoundingBoxWithWebMercatorLimits(boundingBox);
-
-						if (addedCacheBoundingBox == null) {
-							addedCacheBoundingBox = boundingBox;
-						} else {
-							addedCacheBoundingBox = TileBoundingBoxUtils.union(addedCacheBoundingBox, boundingBox);
+						BoundingBox boundingBox = geoPackage.getBoundingBox(
+								ProjectionFactory.getProjection(ProjectionConstants.EPSG_WORLD_GEODETIC_SYSTEM),
+								tableCacheOverlay.getName());
+						if(boundingBox != null) {
+							if (addedCacheBoundingBox == null) {
+								addedCacheBoundingBox = boundingBox;
+							} else {
+								addedCacheBoundingBox = TileBoundingBoxUtils.union(addedCacheBoundingBox, boundingBox);
+							}
 						}
 					}catch(Exception e){
 						Log.e(LOG_NAME, "Failed to retrieve GeoPackage Table bounding box. GeoPackage: "
@@ -1271,12 +1320,18 @@ public class MapFragment extends DaggerFragment implements OnMapReadyCallback, O
 		if(cacheOverlay == null){
 			// Create a new GeoPackage tile provider and add to the map
 			TileDao tileDao = geoPackage.getTileDao(tileTableCacheOverlay.getName());
-			BoundedOverlay geoPackageTileProvider = GeoPackageOverlayFactory.getBoundedOverlay(tileDao);
+
+			TileTableScaling tileTableScaling = new TileTableScaling(geoPackage, tileDao);
+			TileScaling tileScaling = tileTableScaling.get();
+
+			BoundedOverlay overlay = GeoPackageOverlayFactory
+					.getBoundedOverlay(tileDao, getResources().getDisplayMetrics().density, tileScaling);
+
 			TileOverlayOptions overlayOptions = null;
 			if(linkedToFeatures){
-				overlayOptions = createFeatureTileOverlayOptions(geoPackageTileProvider);
+				overlayOptions = createFeatureTileOverlayOptions(overlay);
 			}else {
-				overlayOptions = createTileOverlayOptions(geoPackageTileProvider);
+				overlayOptions = createTileOverlayOptions(overlay);
 			}
 			TileOverlay tileOverlay = map.addTileOverlay(overlayOptions);
 			tileTableCacheOverlay.setTileOverlay(tileOverlay);
@@ -1288,14 +1343,11 @@ public class MapFragment extends DaggerFragment implements OnMapReadyCallback, O
 			for(FeatureDao featureDao: featureDaos){
 
 				// Create the feature tiles
-				FeatureTiles featureTiles = new DefaultFeatureTiles(getActivity(), featureDao);
-
-				// Create an index manager
-				FeatureIndexManager indexer = new FeatureIndexManager(getActivity(), geoPackage, featureDao);
-				featureTiles.setIndexManager(indexer);
+				FeatureTiles featureTiles = new DefaultFeatureTiles(getActivity(), geoPackage, featureDao,
+						getResources().getDisplayMetrics().density);
 
 				// Add the feature overlay query
-				FeatureOverlayQuery featureOverlayQuery = new FeatureOverlayQuery(getActivity(), geoPackageTileProvider, featureTiles);
+				FeatureOverlayQuery featureOverlayQuery = new FeatureOverlayQuery(getActivity(), overlay, featureTiles);
 				tileTableCacheOverlay.addFeatureOverlayQuery(featureOverlayQuery);
 			}
 
@@ -1320,10 +1372,6 @@ public class MapFragment extends DaggerFragment implements OnMapReadyCallback, O
 				cacheOverlay = null;
 			}
 			for(GeoPackageTileTableCacheOverlay linkedTileTable: featureTableCacheOverlay.getLinkedTileTables()){
-				if(cacheOverlay != null){
-					// Add the existing linked tile cache overlays
-					addGeoPackageTileCacheOverlay(enabledCacheOverlays, linkedTileTable, geoPackage, true);
-				}
 				cacheOverlays.remove(linkedTileTable.getCacheName());
 			}
 		}
@@ -1333,7 +1381,8 @@ public class MapFragment extends DaggerFragment implements OnMapReadyCallback, O
 
 			// If indexed, add as a tile overlay
 			if(featureTableCacheOverlay.isIndexed()){
-				FeatureTiles featureTiles = new DefaultFeatureTiles(getActivity(), featureDao);
+				FeatureTiles featureTiles = new DefaultFeatureTiles(getActivity(), geoPackage, featureDao,
+						getResources().getDisplayMetrics().density);
 				Integer maxFeaturesPerTile = null;
 				if(featureDao.getGeometryType() == GeometryType.POINT){
 					maxFeaturesPerTile = getResources().getInteger(R.integer.geopackage_feature_tiles_max_points_per_tile);
@@ -1345,19 +1394,17 @@ public class MapFragment extends DaggerFragment implements OnMapReadyCallback, O
 				// Adjust the max features number tile draw paint attributes here as needed to
 				// change how tiles are drawn when more than the max features exist in a tile
 				featureTiles.setMaxFeaturesTileDraw(numberFeaturesTile);
-				featureTiles.setIndexManager(new FeatureIndexManager(getActivity(), geoPackage, featureDao));
 				// Adjust the feature tiles draw paint attributes here as needed to change how
 				// features are drawn on tiles
 				FeatureOverlay featureOverlay = new FeatureOverlay(featureTiles);
 				featureOverlay.setMinZoom(featureTableCacheOverlay.getMinZoom());
 
-				FeatureTileTableLinker linker = new FeatureTileTableLinker(geoPackage);
-				List<TileDao> tileDaos = linker.getTileDaosForFeatureTable(featureDao.getTableName());
-				featureOverlay.ignoreTileDaos(tileDaos);
+				// Get the tile linked overlay
+				BoundedOverlay overlay = GeoPackageOverlayFactory.getLinkedFeatureOverlay(featureOverlay, geoPackage);
 
-				FeatureOverlayQuery featureOverlayQuery = new FeatureOverlayQuery(getActivity(), featureOverlay);
+				FeatureOverlayQuery featureOverlayQuery = new FeatureOverlayQuery(getActivity(), overlay, featureTiles);
 				featureTableCacheOverlay.setFeatureOverlayQuery(featureOverlayQuery);
-				TileOverlayOptions overlayOptions = createFeatureTileOverlayOptions(featureOverlay);
+				TileOverlayOptions overlayOptions = createFeatureTileOverlayOptions(overlay);
 				TileOverlay tileOverlay = map.addTileOverlay(overlayOptions);
 				featureTableCacheOverlay.setTileOverlay(tileOverlay);
 			}
@@ -1405,11 +1452,6 @@ public class MapFragment extends DaggerFragment implements OnMapReadyCallback, O
 				}
 			}
 
-			// Add linked tile tables
-			for(GeoPackageTileTableCacheOverlay linkedTileTable: featureTableCacheOverlay.getLinkedTileTables()){
-				addGeoPackageTileCacheOverlay(enabledCacheOverlays, linkedTileTable, geoPackage, true);
-			}
-
 			cacheOverlay = featureTableCacheOverlay;
 		}
 
@@ -1446,58 +1488,6 @@ public class MapFragment extends DaggerFragment implements OnMapReadyCallback, O
 		overlayOptions.tileProvider(tileProvider);
 		overlayOptions.zIndex(zIndex);
 		return overlayOptions;
-	}
-
-	private void updateStaticFeatureLayers() {
-		removeStaticFeatureLayers();
-
-		try {
-			for (Layer l : LayerHelper.getInstance(getActivity().getApplicationContext()).readByEvent(EventHelper.getInstance(getActivity().getApplicationContext()).getCurrentEvent(), "Feature")) {
-				onStaticFeatureLayer(l);
-			}
-		} catch (LayerException e) {
-			Log.e(LOG_NAME, "Problem updating static features.", e);
-		}
-	}
-
-	private void removeStaticFeatureLayers() {
-		Set<String> selectedLayerIds = preferences.getStringSet(getResources().getString(R.string.staticFeatureLayersKey), Collections.<String> emptySet());
-
-		Set<String> eventLayerIds = new HashSet<>();
-		try {
-			for (Layer layer : LayerHelper.getInstance(getActivity()).readByEvent(EventHelper.getInstance(getActivity().getApplicationContext()).getCurrentEvent(), "Feature")) {
-				eventLayerIds.add(layer.getRemoteId());
-			}
-		} catch (LayerException e) {
-			Log.e(LOG_NAME, "Problem reading static layers", e);
-		}
-		Set<String> layersNotInEvent = Sets.difference(selectedLayerIds, eventLayerIds);
-
-		for (String layerId : staticGeometryCollection.getLayers()) {
-			if (!selectedLayerIds.contains(layerId) || layersNotInEvent.contains(layerId)) {
-				staticGeometryCollection.removeLayer(layerId);
-			}
-		}
-	}
-
-	@Override
-	public void onStaticFeaturesCreated(final Layer layer) {
-		new Handler(Looper.getMainLooper()).post(new Runnable() {
-			@Override
-			public void run() {
-				onStaticFeatureLayer(layer);
-			}
-		});
-	}
-
-	private void onStaticFeatureLayer(Layer layer) {
-		Set<String> layers = preferences.getStringSet(getString(R.string.staticFeatureLayersKey), Collections.<String> emptySet());
-
-		// The user has asked for this feature layer
-		String layerId = layer.getId().toString();
-		if (layers.contains(layerId) && layer.isLoaded()) {
-			new StaticFeatureLoadTask(getActivity().getApplicationContext(), staticGeometryCollection, map).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, layer);
-		}
 	}
 
 	private void updateMapView() {

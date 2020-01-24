@@ -25,6 +25,16 @@ public enum CacheOverlayType {
     /**
      * GeoPackage feature table
      */
-    GEOPACKAGE_FEATURE_TABLE;
+    GEOPACKAGE_FEATURE_TABLE,
+
+    /**
+     * Url of a tile server
+     */
+    URL,
+
+    /**
+     * Static features like XML
+     */
+    STATIC_FEATURE
 
 }

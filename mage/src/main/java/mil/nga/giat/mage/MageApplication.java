@@ -1,5 +1,6 @@
 package mil.nga.giat.mage;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.Application;
 import android.app.Notification;
@@ -10,6 +11,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
@@ -39,11 +41,15 @@ import mil.nga.giat.mage.observation.sync.AttachmentPushService;
 import mil.nga.giat.mage.observation.sync.ObservationFetchService;
 import mil.nga.giat.mage.observation.sync.ObservationFetchWorker;
 import mil.nga.giat.mage.observation.sync.ObservationPushService;
+import mil.nga.giat.mage.sdk.datastore.DaoStore;
+import mil.nga.giat.mage.sdk.datastore.layer.LayerHelper;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
+import mil.nga.giat.mage.sdk.datastore.staticfeature.StaticFeatureHelper;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.event.ISessionEventListener;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
+import mil.nga.giat.mage.sdk.fetch.ImageryServerFetch;
 import mil.nga.giat.mage.sdk.fetch.StaticFeatureServerFetch;
 import mil.nga.giat.mage.sdk.http.HttpClientManager;
 import mil.nga.giat.mage.sdk.http.resource.UserResource;
@@ -80,8 +86,6 @@ public class MageApplication extends DaggerApplication implements LifecycleObser
 
 	private ObservationNotificationListener observationNotificationListener = null;
 
-	private StaticFeatureServerFetch staticFeatureServerFetch = null;
-
 	private Activity runningActivity;
 
     @Override
@@ -92,6 +96,12 @@ public class MageApplication extends DaggerApplication implements LifecycleObser
 	@Override
 	public void onCreate() {
 		super.onCreate();
+
+		//This ensures the singleton is created with the correct context, which needs to be the
+		//application context
+		DaoStore.getInstance(this.getApplicationContext());
+		LayerHelper.getInstance(this.getApplicationContext());
+		StaticFeatureHelper.getInstance(this.getApplicationContext());
 
 		ProcessLifecycleOwner.get().getLifecycle().addObserver(this);
 
@@ -159,25 +169,32 @@ public class MageApplication extends DaggerApplication implements LifecycleObser
 		ObservationFetchWorker.Companion.beginWork();
 
 		// Pull static layers and features just once
-		loadStaticFeatures(false, null);
+		loadOnlineAndOfflineLayers(false, null);
 
 		InitializeMAGEWearBridge.startBridgeIfWearBuild(getApplicationContext());
 	}
 
-	public void loadStaticFeatures(final boolean force, final StaticFeatureServerFetch.OnStaticLayersListener listener) {
-		Runnable runnable = new Runnable() {
+	private void loadOnlineAndOfflineLayers(final boolean force, final StaticFeatureServerFetch.OnStaticLayersListener listener) {
+		@SuppressLint("StaticFieldLeak") AsyncTask<Void, Void, Void> fetcher = new AsyncTask<Void, Void, Void>() {
 			@Override
-			public void run() {
-				staticFeatureServerFetch = new StaticFeatureServerFetch(getApplicationContext());
+			protected Void doInBackground(Void... voids) {
+				StaticFeatureServerFetch staticFeatureServerFetch = new StaticFeatureServerFetch(getApplicationContext());
 				try {
 					staticFeatureServerFetch.fetch(force, listener);
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
-			}
-		};
 
-		new Thread(runnable).start();
+				try {
+					ImageryServerFetch imageryServerFetch = new ImageryServerFetch(getApplicationContext());
+					imageryServerFetch.fetch();
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+				return null;
+			}
+		} ;
+		fetcher.execute();
 	}
 
 	public void onLogout(Boolean clearTokenInformationAndSendLogoutRequest, final OnLogoutListener logoutListener) {
@@ -322,11 +339,6 @@ public class MageApplication extends DaggerApplication implements LifecycleObser
 	private void destroyFetching() {
 		stopService(new Intent(getApplicationContext(), LocationFetchService.class));
 		stopService(new Intent(getApplicationContext(), ObservationFetchService.class));
-
-		if (staticFeatureServerFetch != null) {
-			staticFeatureServerFetch.destroy();
-			staticFeatureServerFetch = null;
-		}
 	}
 
 	/**

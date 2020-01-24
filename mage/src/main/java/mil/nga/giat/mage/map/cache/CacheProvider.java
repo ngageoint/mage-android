@@ -8,12 +8,12 @@ import android.preference.PreferenceManager;
 import android.util.Log;
 
 import java.io.File;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -31,6 +31,8 @@ import mil.nga.giat.mage.cache.CacheUtils;
 import mil.nga.giat.mage.cache.GeoPackageCacheUtils;
 import mil.nga.giat.mage.sdk.datastore.layer.Layer;
 import mil.nga.giat.mage.sdk.datastore.layer.LayerHelper;
+import mil.nga.giat.mage.sdk.datastore.user.Event;
+import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
 import mil.nga.giat.mage.sdk.exceptions.LayerException;
 import mil.nga.giat.mage.sdk.utils.StorageUtility;
 import mil.nga.sf.GeometryType;
@@ -42,15 +44,18 @@ public class CacheProvider {
 
     private static final String LOG_NAME = CacheProvider.class.getName();
 
-    private Context context;
+    private final Context context;
+
+    private final Map<String, CacheOverlay> cacheOverlays = Collections.synchronizedMap(new HashMap<String, CacheOverlay>());
+    private final List<OnCacheOverlayListener> cacheOverlayListeners = Collections.synchronizedList(new ArrayList<OnCacheOverlayListener>());
 
     private static CacheProvider instance = null;
 
-    protected CacheProvider(Context context) {
+    private CacheProvider(Context context) {
         this.context = context;
     }
 
-    public static CacheProvider getInstance(Context context) {
+    public static synchronized CacheProvider getInstance(Context context) {
         if (instance == null) {
             instance = new CacheProvider(context);
         }
@@ -62,37 +67,38 @@ public class CacheProvider {
         void onCacheOverlay(List<CacheOverlay> cacheOverlays);
     }
 
-    private List<CacheOverlay> cacheOverlays = new ArrayList<>();
-    private Collection<OnCacheOverlayListener> cacheOverlayListeners = new ArrayList<>();
-
     public List<CacheOverlay> getCacheOverlays() {
-        return cacheOverlays;
+        List<CacheOverlay> copy = null;
+        synchronized(cacheOverlays) {
+            copy = Collections.unmodifiableList(new ArrayList<>(cacheOverlays.values()));
+        }
+
+        return copy;
+    }
+
+    public CacheOverlay getOverlay(String name){
+        return cacheOverlays.get(name);
     }
 
     public void registerCacheOverlayListener(OnCacheOverlayListener listener) {
+       registerCacheOverlayListener(listener, true);
+    }
+
+    public void registerCacheOverlayListener(OnCacheOverlayListener listener, boolean fire) {
         cacheOverlayListeners.add(listener);
-        if (cacheOverlays != null)
-            listener.onCacheOverlay(cacheOverlays);
+        if(fire) {
+            synchronized (cacheOverlays) {
+                listener.onCacheOverlay(getCacheOverlays());
+            }
+        }
     }
 
     public void addCacheOverlay(CacheOverlay cacheOverlay) {
-        cacheOverlays.add(cacheOverlay);
+        cacheOverlays.put(cacheOverlay.getCacheName(), cacheOverlay);
     }
 
     public boolean removeCacheOverlay(String name) {
-        boolean removed = false;
-        if(cacheOverlays != null){
-            Iterator<CacheOverlay> iterator = cacheOverlays.iterator();
-            while(iterator.hasNext()){
-                CacheOverlay cacheOverlay = iterator.next();
-                if(cacheOverlay.getCacheName().equalsIgnoreCase(name)){
-                    iterator.remove();
-                    removed = true;
-                    break;
-                }
-            }
-        }
-        return removed;
+        return cacheOverlays.remove(name) != null;
     }
 
     public void unregisterCacheOverlayListener(OnCacheOverlayListener listener) {
@@ -100,32 +106,37 @@ public class CacheProvider {
     }
 
     public void refreshTileOverlays() {
-        TileOverlaysTask task = new TileOverlaysTask(null);
-        task.execute();
+       enableAndRefreshTileOverlays(null);
     }
 
     public void enableAndRefreshTileOverlays(String enableOverlayName) {
-        List<String> overlayNames = new ArrayList<>();
-        overlayNames.add(enableOverlayName);
-        enableAndRefreshTileOverlays(overlayNames);
-    }
-
-    public void enableAndRefreshTileOverlays(Collection<String> enableOverlayNames) {
-        TileOverlaysTask task = new TileOverlaysTask(enableOverlayNames);
+        List<String> overlayNames = null;
+        if(enableOverlayName != null) {
+            overlayNames = new ArrayList<>(1);
+            overlayNames.add(enableOverlayName);
+        }
+        TileOverlaysTask task = new TileOverlaysTask(overlayNames);
         task.execute();
     }
 
     private void setCacheOverlays(List<CacheOverlay> cacheOverlays) {
-        this.cacheOverlays = cacheOverlays;
+        synchronized (this.cacheOverlays) {
+            this.cacheOverlays.clear();
+            for(CacheOverlay overlay : cacheOverlays) {
+                addCacheOverlay(overlay);
+            }
+        }
 
-        for (OnCacheOverlayListener listener : cacheOverlayListeners) {
-            listener.onCacheOverlay(cacheOverlays);
+        synchronized(cacheOverlayListeners) {
+            for (OnCacheOverlayListener listener : cacheOverlayListeners) {
+                listener.onCacheOverlay(cacheOverlays);
+            }
         }
     }
 
     private class TileOverlaysTask extends AsyncTask<Void, Void, List<CacheOverlay>> {
 
-        private Set<String> enable = new HashSet<>();
+        private final Set<String> enable = new HashSet<>();
 
         public TileOverlaysTask(Collection<String> enable){
             if(enable != null) {
@@ -175,11 +186,40 @@ public class CacheProvider {
                 }
             }
 
+            final Event event = EventHelper.getInstance(context).getCurrentEvent();
+
+            try {
+                List<Layer> imageryLayers = LayerHelper.getInstance(context).readByEvent(event, "Imagery");
+
+                for(Layer imagery : imageryLayers){
+                    if(imagery.getFormat() == null || !imagery.getFormat().equalsIgnoreCase("wms")) {
+                        overlays.add(new URLCacheOverlay(imagery.getName(), new URL(imagery.getUrl()), imagery));
+                    }else{
+                        overlays.add(new WMSCacheOverlay(imagery.getName(), new URL(imagery.getUrl()), imagery));
+                    }
+                }
+            }catch(Exception e){
+                Log.w(LOG_NAME, "Failed to load imagery layers", e);
+            }
+
+            try {
+                List<Layer> featureLayers = LayerHelper.getInstance(context).readByEvent(event,"Feature");
+
+                for(Layer feature : featureLayers){
+                    if(feature.isLoaded()){
+                        overlays.add(new StaticFeatureCacheOverlay(feature.getName(), feature.getId()));
+                    }
+                }
+            }catch(Exception e){
+                Log.w(LOG_NAME, "Failed to load imagery layers", e);
+            }
+
             // Set what should be enabled based on preferences.
             boolean update = false;
             SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
             Set<String> updatedEnabledOverlays = new HashSet<>();
             updatedEnabledOverlays.addAll(preferences.getStringSet(context.getString(R.string.tileOverlaysKey), Collections.<String>emptySet()));
+            updatedEnabledOverlays.addAll(preferences.getStringSet(context.getString(R.string.onlineLayersKey), Collections.<String>emptySet()));
             Set<String> enabledOverlays = new HashSet<>();
             enabledOverlays.addAll(updatedEnabledOverlays);
 
@@ -238,50 +278,59 @@ public class CacheProvider {
         protected void onPostExecute(List<CacheOverlay> result) {
             setCacheOverlays(result);
         }
-    }
 
-    /**
-     * Add GeoPackage Cache Overlay for the existing databases
-     *
-     * @param context
-     * @param overlays
-     * @param geoPackageManager
-     */
-    private void addGeoPackageCacheOverlays(Context context, List<CacheOverlay> overlays, GeoPackageManager geoPackageManager) {
+        /**
+         * Add GeoPackage Cache Overlay for the existing databases
+         *
+         * @param context
+         * @param overlays
+         * @param geoPackageManager
+         */
+        private void addGeoPackageCacheOverlays(Context context, List<CacheOverlay> overlays, GeoPackageManager geoPackageManager) {
 
-        // Delete any GeoPackages where the file is no longer accessible
-        geoPackageManager.deleteAllMissingExternal();
+            // Delete any GeoPackages where the file is no longer accessible
+            geoPackageManager.deleteAllMissingExternal();
 
-        try {
-            LayerHelper layerHelper = LayerHelper.getInstance(context);
-            List<Layer> layers = layerHelper.readAll("GeoPackage");
-            for (Layer layer : layers) {
-                if (!layer.isLoaded()) {
-                    continue;
-                }
+            final Map<String, String> nonSideloadedGeopackages = new HashMap<>();
+            try {
+                LayerHelper layerHelper = LayerHelper.getInstance(context);
+                List<Layer> layers = layerHelper.readAll("GeoPackage");
+                for (Layer layer : layers) {
+                    if (!layer.isLoaded()) {
+                        continue;
+                    }
 
-                String relativePath = layer.getRelativePath();
-                if (relativePath != null) {
-                    File file = new File(context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), relativePath);
-                    if (!file.exists()) {
-                        layer.setLoaded(true);
-                        layerHelper.update(layer);
+                    String relativePath = layer.getRelativePath();
+                    if (relativePath != null) {
+                        File file = new File(context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), relativePath);
+                        nonSideloadedGeopackages.put(file.getName(), file.getName());
+                        if (!file.exists()) {
+                            layer.setLoaded(true);
+                            layerHelper.update(layer);
+                        }
                     }
                 }
+            } catch (LayerException e) {
+                Log.i(LOG_NAME, "Error reconciling downloaded layers", e);
             }
-        } catch (LayerException e) {
-            Log.i(LOG_NAME, "Error reconciling downloaded layers", e);
-        }
 
-        // Add each existing database as a cache
-        List<String> externalDatabases = geoPackageManager.externalDatabases();
-        for (String database : externalDatabases) {
-            GeoPackageCacheOverlay cacheOverlay = getGeoPackageCacheOverlay(context, geoPackageManager, database);
-            if (cacheOverlay != null) {
-                overlays.add(cacheOverlay);
+            // Add each existing database as a cache
+            List<String> externalDatabases = geoPackageManager.externalDatabases();
+            for (String database : externalDatabases) {
+                GeoPackageCacheOverlay cacheOverlay = getGeoPackageCacheOverlay(context, geoPackageManager, database);
+                if (cacheOverlay != null) {
+                    File f = new File(cacheOverlay.getFilePath());
+                    //TODO what happens if there are 2 geopackages with the same name
+                    if(!nonSideloadedGeopackages.containsKey(f.getName())){
+                        cacheOverlay.setSideloaded(true);
+                    }
+                    overlays.add(cacheOverlay);
+                }
             }
         }
     }
+
+
 
     /**
      * Get GeoPackage Cache Overlay for the database file
@@ -350,6 +399,7 @@ public class CacheProvider {
                 GeometryType geometryType = featureDao.getGeometryType();
                 FeatureIndexManager indexer = new FeatureIndexManager(context, geoPackage, featureDao);
                 boolean indexed = indexer.isIndexed();
+                indexer.close();
                 int minZoom = 0;
                 if (indexed) {
                     minZoom = featureDao.getZoomLevel() + context.getResources().getInteger(R.integer.geopackage_feature_tiles_min_zoom_offset);

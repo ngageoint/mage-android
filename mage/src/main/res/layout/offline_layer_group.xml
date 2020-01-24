@@ -12,6 +12,7 @@
         android:layout_marginStart="16dp">
 
         <TextView
+            android:id="@+id/cache_over_group_text"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center_vertical"

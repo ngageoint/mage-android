@@ -11,10 +11,19 @@ apply plugin: 'kotlin-kapt'
 apply plugin: 'maven-publish'
 group 'mil.nga.giat.mage'
 archivesBaseName = 'mage-android'
-version '6.2.7'
+version '6.2.8'
 ext {
-    versionCode = 70
+    versionCode = 71
     sourceRefspec = Grgit.open().head().id
+
+    //Test resources
+    buildToolsVersion = "28.0.3"
+    androidxLibVersion = "1.0.0"
+    extTruthVersion = '1.2.0'
+    coreVersion = "1.2.0"
+    extJUnitVersion = "1.1.1"
+    runnerVersion = "1.2.0"
+    espressoVersion = "3.2.0"
 }
 
 def serverURL = hasProperty('SERVER_URL') ? SERVER_URL : ''
@@ -41,6 +50,11 @@ android {
         androidTest.java.srcDirs = ['tests/src']
     }
 
+    compileOptions {
+        sourceCompatibility 1.8
+        targetCompatibility 1.8
+    }
+
     defaultConfig {
         applicationId "mil.nga.giat.mage"
         versionName project.version
@@ -55,6 +69,8 @@ android {
         resValue "string", "applicationId", applicationId
         manifestPlaceholders source_refspec: project.sourceRefspec
         buildConfigField "String", "SOURCE_REFSPEC", $/"${project.sourceRefspec}"/$
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
     buildTypes {
@@ -89,6 +105,17 @@ android {
         exclude 'META-INF/NOTICE.txt'
         exclude 'META-INF/INDEX.LIST'
     }
+
+    testOptions {
+        unitTests {
+            includeAndroidResources = true
+            animationsDisabled = true
+        }
+    }
+
+    useLibrary 'android.test.runner'
+    useLibrary 'android.test.base'
+    useLibrary 'android.test.mock'\
 }
 
 def configurePom(pom) {
@@ -160,6 +187,7 @@ repositories {
         publishing.repositories.add sharedRepo
     }
     mavenCentral()
+    google()
 }
 
 dependencies {
@@ -202,8 +230,8 @@ dependencies {
 
 //        api project(':sdk') // uncomment me to build locally, and see top-level build.gradle
     api 'mil.nga.giat.mage:mage-android-sdk:6.2.5' // comment me to build locally
-    api 'com.google.maps.android:android-maps-utils:0.5'
-    api 'mil.nga.geopackage.map:geopackage-android-map:3.3.0'
+    api 'com.google.maps.android:android-maps-utils:0.6.2'
+    api 'mil.nga.geopackage.map:geopackage-android-map:3.4.0'
     api 'org.ocpsoft.prettytime:prettytime:3.2.5.Final'
 
     implementation 'com.github.bumptech.glide:glide:4.9.0'
@@ -214,6 +242,17 @@ dependencies {
     api 'com.nulab-inc:zxcvbn:1.2.3'
     api (name:'mgrs-0.0.2-release', ext:'aar')
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+
+    // Testing-only dependencies
+    androidTestImplementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+    androidTestImplementation 'androidx.test:core:' +coreVersion
+    androidTestImplementation 'androidx.test:core-ktx:' + coreVersion
+    androidTestImplementation 'androidx.test.ext:junit:' + extJUnitVersion
+    androidTestImplementation 'androidx.test.ext:junit-ktx:' + extJUnitVersion
+    androidTestImplementation 'androidx.test:runner:' + runnerVersion
+    androidTestImplementation 'androidx.test:rules:' + runnerVersion
+    androidTestImplementation 'androidx.test.espresso:espresso-core:' +espressoVersion
+    androidTestImplementation 'androidx.test.espresso:espresso-contrib:' + espressoVersion
 }
 
 task androidArtifactVersion {

@@ -16,7 +16,7 @@
             android:layout_height="wrap_content"
             android:layout_gravity="center_vertical"
             style="@style/ListSubheaderPrimary"
-            android:text="Available For Download"/>
+            android:text="Available Layers"/>
 
     </LinearLayout>
 
@@ -47,6 +47,12 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_vertical"
                 style="@style/ListTextPrimary" />
+            <TextView
+                android:id="@+id/layer_description"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                style="@style/ListTextSecondary" />
 
             <ProgressBar
                 android:id="@+id/layer_progress"

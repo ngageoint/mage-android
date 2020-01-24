@@ -3,16 +3,31 @@ All notable changes to this project will be documented in this file.
 Adheres to [Semantic Versioning](http://semver.org/).
 
 ---
-## 6.2.8 (TBD)
+## 6.2.9 (TBD)
 
 ##### Features
+
+##### Bug Fixes
+
+## [6.2.8](https://github.com/ngageoint/mage-android/releases/tag/6.2.8)
+
+##### Features
+* Update support library to androidx
+* Improved GeoPackage functionality including styles, scaling, and zoom
+* geopackage-android-map version 3.4.0
+* android-maps-utils version 0.6.2
+* Moved geopackages and static features (e.g. XML) into a new preference called offline layers.
+  These offline layers only exist on a remote server until downloaded onto the client.
+* Online layers preference added.  This gives users access to layers that exist on remote XYZ, TMS,
+  and WMS servers without needing to be downloaded.  Only supports HTTPS.
+* Moved Observations and People preferences to new preference category called MAGE.
 
 ##### Bug Fixes
 
 ## [6.2.7](https://github.com/ngageoint/mage-android/releases/tag/6.2.7)
 
 ##### Features
-* Traffic map layer 
+* Traffic map layer
 
 ##### Bug Fixes
 
@@ -116,7 +131,7 @@ Adheres to [Semantic Versioning](http://semver.org/).
 ##### Features
 
 ##### Bug Fixes
-* Fix crash when trying to edit observation location 
+* Fix crash when trying to edit observation location
 * Fix observation and location time filtering
 * Fix observation and location info window click crash
 * Fix map layout height in profile view
@@ -184,7 +199,7 @@ Adheres to [Semantic Versioning](http://semver.org/).
 ##### Features
 
 ##### Bug Fixes
-* Fixed bug causing non-required select fields to show as required 
+* Fixed bug causing non-required select fields to show as required
 
 ## [5.3.1](https://github.com/ngageoint/mage-android/releases/tag/5.3.1) (07-20-2017)
 

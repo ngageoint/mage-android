@@ -52,7 +52,7 @@ class EventActivity : DaggerAppCompatActivity() {
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
         val eventHelper: EventHelper = EventHelper.getInstance(context)
-        val eventId =  intent.extras.getLong(EVENT_ID_EXTRA)
+        val eventId =  intent.extras?.getLong(EVENT_ID_EXTRA)
         try {
             event = eventHelper.read(eventId)
         } catch(e: EventException) {
