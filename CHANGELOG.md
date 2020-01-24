@@ -6,6 +6,7 @@ Adheres to [Semantic Versioning](http://semver.org/).
 ## 6.2.9 (TBD)
 
 ##### Features
+* Observation feed show/hide primary/secondary form feed fields.
 
 ##### Bug Fixes
 
