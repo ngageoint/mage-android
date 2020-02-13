@@ -307,8 +307,10 @@ public class SignupActivity extends AppCompatActivity implements AccountDelegate
 				}
 			}
 
+			boolean isActive = accountStatus.getAccountInformation().get("active").getAsBoolean();
+
 			// Tell the user that their account was made
-			showSignupSuccessDialog();
+			showSignupSuccessDialog(isActive);
 		} else {
 			if (accountStatus.getErrorIndices().isEmpty()) {
 				getUsernameEditText().requestFocus();
@@ -363,15 +365,20 @@ public class SignupActivity extends AppCompatActivity implements AccountDelegate
 				alertDialog.setPositiveButton("Ok", null);
 				alertDialog.show();
 			} else {
-				showSignupSuccessDialog();
+				//TODO see if any user info is in the intent
+				showSignupSuccessDialog(false);
 			}
 		}
 	}
 
-	private void showSignupSuccessDialog() {
+	private void showSignupSuccessDialog(boolean isActive) {
 		AlertDialog.Builder alertDialog = new AlertDialog.Builder(this);
 		alertDialog.setTitle("Account Created");
-		alertDialog.setMessage("Your account has been created but it is not enabled.  An administrator needs to enable your account before you can log in.");
+		if(!isActive) {
+			alertDialog.setMessage("Your account has been created but it is not enabled.  An administrator needs to enable your account before you can log in.");
+		} else{
+			alertDialog.setMessage("Your account has been created and is now active.");
+		}
 		alertDialog.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
 			public void onClick(DialogInterface dialog, int which) {
 				login(null);
