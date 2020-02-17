@@ -375,7 +375,7 @@ public class SignupActivity extends AppCompatActivity implements AccountDelegate
 		AlertDialog.Builder alertDialog = new AlertDialog.Builder(this);
 		alertDialog.setTitle("Account Created");
 		if(!isActive) {
-			alertDialog.setMessage("Your account has been created but it is not enabled.  An administrator needs to enable your account before you can log in.");
+			alertDialog.setMessage("Your account has been created but it is not active.  An administrator needs to activate your account before you can log in.");
 		} else{
 			alertDialog.setMessage("Your account has been created and is now active.");
 		}
