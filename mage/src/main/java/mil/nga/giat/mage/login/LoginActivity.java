@@ -401,24 +401,31 @@ public class LoginActivity extends DaggerAppCompatActivity implements LoginFragm
                         ViewCompat.setBackgroundTintList(oauthButton, csl);
 					}
 
+					//This flag is there to handle an empty icon
+					boolean hasIcon = false;
 					if (strategy.has("icon")) {
 						byte[] decodedString = Base64.decode(strategy.getString("icon"), Base64.DEFAULT);
 						Bitmap bitmap = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
-						int size = (18 * getApplicationContext().getResources().getDisplayMetrics().densityDpi) / DisplayMetrics.DENSITY_DEFAULT;
-						RoundedBitmapDrawable icon = RoundedBitmapDrawableFactory.create(getResources(), Bitmap.createScaledBitmap(bitmap, size, size, true));
-						icon.setGravity(Gravity.CENTER);
+						if(bitmap != null) {
+							hasIcon = true;
+							int size = (18 * getApplicationContext().getResources().getDisplayMetrics().densityDpi) / DisplayMetrics.DENSITY_DEFAULT;
+							RoundedBitmapDrawable icon = RoundedBitmapDrawableFactory.create(getResources(), Bitmap.createScaledBitmap(bitmap, size, size, true));
+							icon.setGravity(Gravity.CENTER);
 
-						LayerDrawable ld = (LayerDrawable) ContextCompat.getDrawable(getApplicationContext(), R.drawable.oauth_icon).mutate();
-						ld.setDrawableByLayerId(R.id.icon, icon);
+							LayerDrawable ld = (LayerDrawable) ContextCompat.getDrawable(getApplicationContext(), R.drawable.oauth_icon).mutate();
+							ld.setDrawableByLayerId(R.id.icon, icon);
 
-						ld.setLayerInset(1,
-								(int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, -7, getResources().getDisplayMetrics()),
-								0,
-								0,
-								0);
+							ld.setLayerInset(1,
+									(int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, -7, getResources().getDisplayMetrics()),
+									0,
+									0,
+									0);
 
-						oauthButton.setCompoundDrawablesWithIntrinsicBounds(ld, null, null, null);
-					} else if (strategy.has("buttonColor")) {
+							oauthButton.setCompoundDrawablesWithIntrinsicBounds(ld, null, null, null);
+						}
+					}
+
+					if (strategy.has("buttonColor") && !hasIcon) {
 						// No icon from server, color the default icon the same color as the button color
 						Bitmap defaultIcon = BitmapFactory.decodeResource(getResources(), R.drawable.ic_security_white_18dp);
 						Paint paint = new Paint();
