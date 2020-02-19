@@ -393,7 +393,11 @@ public class LoginActivity extends DaggerAppCompatActivity implements LoginFragm
 					}
 
 					if (strategy.has("textColor")) {
-						oauthButton.setTextColor(Color.parseColor(strategy.getString("textColor")));
+						try {
+							oauthButton.setTextColor(Color.parseColor(strategy.getString("textColor")));
+						}catch(Exception e){
+							Log.e(LOG_NAME, "Failed to parse color " + strategy.getString("textColor"), e);
+						}
 					}
 
 					if (strategy.has("buttonColor")) {
