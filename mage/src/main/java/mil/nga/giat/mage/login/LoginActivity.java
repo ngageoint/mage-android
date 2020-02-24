@@ -323,7 +323,7 @@ public class LoginActivity extends DaggerAppCompatActivity implements LoginFragm
 		PreferenceHelper preferenceHelper = PreferenceHelper.getInstance(getApplicationContext());
 
 		boolean localAuthentication = false;
-		Map<String, JSONObject> oauthStratigies = new HashMap<>();
+		Map<String, JSONObject> thirdPartyStrategies = new HashMap<>();
 
 		// TODO marshal this to POJOs with Jackson
 		JSONObject authenticationStrategies = preferenceHelper.getAuthenticationStrategies();
@@ -338,14 +338,14 @@ public class LoginActivity extends DaggerAppCompatActivity implements LoginFragm
 
 			try {
 				JSONObject strategy = (JSONObject) authenticationStrategies.get(strategyKey);
-				oauthStratigies.put(strategyKey, strategy);
+				thirdPartyStrategies.put(strategyKey, strategy);
 			} catch (JSONException e) {
 				e.printStackTrace();
 			}
 		}
 
-		findViewById(R.id.or).setVisibility(localAuthentication && oauthStratigies.size() > 0 ? View.VISIBLE : View.GONE);
-		findViewById(R.id.sign_up).setVisibility(localAuthentication || oauthStratigies.size() > 0 ? View.VISIBLE : View.GONE);
+		findViewById(R.id.or).setVisibility(localAuthentication && thirdPartyStrategies.size() > 0 ? View.VISIBLE : View.GONE);
+		findViewById(R.id.sign_up).setVisibility(localAuthentication || thirdPartyStrategies.size() > 0 ? View.VISIBLE : View.GONE);
 
 		if (localAuthentication) {
 			Button localButton = findViewById(R.id.local_login_button);
@@ -360,41 +360,59 @@ public class LoginActivity extends DaggerAppCompatActivity implements LoginFragm
 			findViewById(R.id.local_auth).setVisibility(View.GONE);
 		}
 
-		LinearLayout oauthLayout = findViewById(R.id.third_party_auth);
-		if (oauthStratigies.size() > 0) {
-			oauthLayout.removeAllViews();
-			oauthLayout.setVisibility(View.VISIBLE);
+		LinearLayout thirdPartAuthLayout = findViewById(R.id.third_party_auth);
+		if (thirdPartyStrategies.size() > 0) {
+			thirdPartAuthLayout.removeAllViews();
+			thirdPartAuthLayout.setVisibility(View.VISIBLE);
 		}
 
 		LayoutInflater inflater = getLayoutInflater();
-		for (final Map.Entry<String, JSONObject> entry : oauthStratigies.entrySet()) {
-			Button oauthButton = null;
+		for (final Map.Entry<String, JSONObject> entry : thirdPartyStrategies.entrySet()) {
+			Button thirdPartyButton = null;
+			View thirdPartyView = null;
 
 			// TODO Google is special in that it has its own button style
 			// Investigate making this generic like the rest of the strategies
 			if ("google".equals(entry.getKey())) {
-				oauthButton = findViewById(R.id.google_login_button);
+				thirdPartyButton = findViewById(R.id.google_login_button);
 				findViewById(R.id.google_login_button).setVisibility(View.VISIBLE);
+				thirdPartyButton.setOnClickListener(new View.OnClickListener() {
+					@Override
+					public void onClick(View v) {
+						oauthLogin(entry.getKey());
+					}
+				});
 			} else  {
 				findViewById(R.id.google_login_button).setVisibility(View.GONE);
 
 				try {
 					JSONObject strategy = entry.getValue();
 
-					if (!strategy.has("type") || "!oauth2".equals(strategy.getString("type"))) {
+					if (!strategy.has("type")) {
 						continue;
+					} else if ("ldap".equals(strategy.getString("type"))) {
+						thirdPartyView = inflater.inflate(R.layout.view_ldap, null);
+						thirdPartyButton = thirdPartyView.findViewById(R.id.ldap_button);
+					} else if (!"oauth2".equals(strategy.getString("type"))) {
+						continue;
+					} else{
+						thirdPartyView = inflater.inflate(R.layout.view_oauth, null);
+						thirdPartyButton = thirdPartyView.findViewById(R.id.oauth_button);
+						thirdPartyButton.setOnClickListener(new View.OnClickListener() {
+							@Override
+							public void onClick(View v) {
+								oauthLogin(entry.getKey());
+							}
+						});
 					}
 
-					View oauthView = inflater.inflate(R.layout.view_oauth, null);
-					oauthButton = oauthView.findViewById(R.id.oauth_button);
-
 					if (strategy.has("title")) {
-						oauthButton.setText(String.format("Sign In With %s", strategy.getString("title")));
+						thirdPartyButton.setText(String.format("Sign In With %s", strategy.getString("title")));
 					}
 
 					if (strategy.has("textColor")) {
 						try {
-							oauthButton.setTextColor(Color.parseColor(strategy.getString("textColor")));
+							thirdPartyButton.setTextColor(Color.parseColor(strategy.getString("textColor")));
 						}catch(Exception e){
 							Log.e(LOG_NAME, "Failed to parse color " + strategy.getString("textColor"), e);
 						}
@@ -402,7 +420,7 @@ public class LoginActivity extends DaggerAppCompatActivity implements LoginFragm
 
 					if (strategy.has("buttonColor")) {
                         ColorStateList csl = new ColorStateList(new int[][]{{}}, new int[]{Color.parseColor(strategy.getString("buttonColor"))});
-                        ViewCompat.setBackgroundTintList(oauthButton, csl);
+                        ViewCompat.setBackgroundTintList(thirdPartyButton, csl);
 					}
 
 					//This flag is there to handle an empty icon
@@ -425,7 +443,7 @@ public class LoginActivity extends DaggerAppCompatActivity implements LoginFragm
 									0,
 									0);
 
-							oauthButton.setCompoundDrawablesWithIntrinsicBounds(ld, null, null, null);
+							thirdPartyButton.setCompoundDrawablesWithIntrinsicBounds(ld, null, null, null);
 						}
 					}
 
@@ -443,21 +461,14 @@ public class LoginActivity extends DaggerAppCompatActivity implements LoginFragm
 
 						LayerDrawable ld = (LayerDrawable) ContextCompat.getDrawable(getApplicationContext(), R.drawable.oauth_icon).mutate();
 						ld.setDrawableByLayerId(R.id.icon, drawable);
-						oauthButton.setCompoundDrawablesWithIntrinsicBounds(ld, null, null, null);
+						thirdPartyButton.setCompoundDrawablesWithIntrinsicBounds(ld, null, null, null);
 					}
 
-					oauthLayout.addView(oauthView);
+					thirdPartAuthLayout.addView(thirdPartyView);
 				} catch (JSONException e) {
 					e.printStackTrace();
 				}
 			}
-
-			oauthButton.setOnClickListener(new View.OnClickListener() {
-				@Override
-				public void onClick(View v) {
-					oauthLogin(entry.getKey());
-				}
-			});
 		}
 	}
 
