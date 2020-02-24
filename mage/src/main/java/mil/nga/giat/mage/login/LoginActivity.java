@@ -106,8 +106,16 @@ public class LoginActivity extends DaggerAppCompatActivity implements LoginFragm
 	private EditText mUsernameEditText;
 	private TextInputLayout mUsernameLayout;
 
+	private EditText mLdapUsernameEditText;
+	private TextInputLayout mLdapUsernameLayout;
+
 	private EditText mPasswordEditText;
 	private TextInputLayout mPasswordLayout;
+
+	private EditText mLdapPasswordEditText;
+	private TextInputLayout mLdapPasswordLayout;
+	private Button mLdapButton;
+	private View mLdapView;
 
 	private TextView mServerURL;
 
@@ -215,8 +223,19 @@ public class LoginActivity extends DaggerAppCompatActivity implements LoginFragm
 
 		mPasswordEditText = findViewById(R.id.login_password);
 		mPasswordLayout = findViewById(R.id.password_layout);
-
 		mPasswordEditText.setTypeface(Typeface.DEFAULT);
+
+		LayoutInflater inflater = getLayoutInflater();
+		mLdapView = inflater.inflate(R.layout.view_ldap, null);
+
+		mLdapUsernameEditText = mLdapView.findViewById(R.id.ldap_login_username);
+		mLdapUsernameLayout = mLdapView.findViewById(R.id.ldap_username_layout);
+
+		mLdapPasswordEditText = mLdapView.findViewById(R.id.ldap_login_password);
+		mLdapPasswordLayout = mLdapView.findViewById(R.id.ldap_password_layout);
+		mLdapPasswordEditText.setTypeface(Typeface.DEFAULT);
+		mLdapButton = mLdapView.findViewById(R.id.ldap_button);
+
 		mServerURL = findViewById(R.id.server_url);
 
 		String serverURL = sharedPreferences.getString(getString(R.string.serverURLKey), getString(R.string.serverURLDefaultValue));
@@ -236,6 +255,9 @@ public class LoginActivity extends DaggerAppCompatActivity implements LoginFragm
 		mUsernameEditText.setText(sharedPreferences.getString(getString(R.string.usernameKey), getString(R.string.usernameDefaultValue)));
 		mUsernameEditText.setSelection(mUsernameEditText.getText().length());
 
+		mLdapUsernameEditText.setText(sharedPreferences.getString(getString(R.string.usernameKey), getString(R.string.usernameDefaultValue)));
+		mLdapUsernameEditText.setSelection(mUsernameEditText.getText().length());
+
 		mUsernameEditText.addTextChangedListener(new TextWatcher() {
 			@Override
 			public void beforeTextChanged(CharSequence s, int start, int count, int after) {
@@ -251,6 +273,25 @@ public class LoginActivity extends DaggerAppCompatActivity implements LoginFragm
 			public void afterTextChanged(Editable s) {
 				if (StringUtils.isNoneBlank(s)) {
 					mUsernameLayout.setError(null);
+				}
+			}
+		});
+
+		mLdapUsernameEditText.addTextChangedListener(new TextWatcher() {
+			@Override
+			public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+			}
+
+			@Override
+			public void onTextChanged(CharSequence s, int start, int before, int count) {
+
+			}
+
+			@Override
+			public void afterTextChanged(Editable s) {
+				if (StringUtils.isNoneBlank(s)) {
+					mLdapUsernameLayout.setError(null);
 				}
 			}
 		});
@@ -274,11 +315,42 @@ public class LoginActivity extends DaggerAppCompatActivity implements LoginFragm
 			}
 		});
 
+		mLdapPasswordEditText.addTextChangedListener(new TextWatcher() {
+			@Override
+			public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+			}
+
+			@Override
+			public void onTextChanged(CharSequence s, int start, int before, int count) {
+
+			}
+
+			@Override
+			public void afterTextChanged(Editable s) {
+				if (StringUtils.isNoneBlank(s)) {
+					mLdapPasswordLayout.setError(null);
+				}
+			}
+		});
+
 		mPasswordEditText.setOnKeyListener(new View.OnKeyListener() {
 			@Override
 			public boolean onKey(View v, int keyCode, KeyEvent event) {
 				if (keyCode == KeyEvent.KEYCODE_ENTER) {
 					login(v);
+					return true;
+				} else {
+					return false;
+				}
+			}
+		});
+
+		mLdapPasswordEditText.setOnKeyListener(new View.OnKeyListener() {
+			@Override
+			public boolean onKey(View v, int keyCode, KeyEvent event) {
+				if (keyCode == KeyEvent.KEYCODE_ENTER) {
+					ldapLogin(v);
 					return true;
 				} else {
 					return false;
@@ -391,9 +463,17 @@ public class LoginActivity extends DaggerAppCompatActivity implements LoginFragm
 					if (!strategy.has("type")) {
 						continue;
 					} else if ("ldap".equals(strategy.getString("type"))) {
-						thirdPartyView = inflater.inflate(R.layout.view_ldap, null);
-						thirdPartyButton = thirdPartyView.findViewById(R.id.ldap_button);
-					} else if (!"oauth2".equals(strategy.getString("type"))) {
+						thirdPartyView = mLdapView;
+						thirdPartyButton = mLdapButton;
+						thirdPartyButton.setOnClickListener(new View.OnClickListener() {
+							@Override
+							public void onClick(View v) {
+								ldapLogin(v);
+							}
+						});
+					} else if (!"oauth2".equals(strategy.getString("type"))
+							&& !"oauth".equals(strategy.getString("type"))
+							&& !"saml".equals(strategy.getString("type"))) {
 						continue;
 					} else{
 						thirdPartyView = inflater.inflate(R.layout.view_oauth, null);
@@ -463,6 +543,7 @@ public class LoginActivity extends DaggerAppCompatActivity implements LoginFragm
 						ld.setDrawableByLayerId(R.id.icon, drawable);
 						thirdPartyButton.setCompoundDrawablesWithIntrinsicBounds(ld, null, null, null);
 					}
+
 
 					thirdPartAuthLayout.addView(thirdPartyView);
 				} catch (JSONException e) {
@@ -565,6 +646,64 @@ public class LoginActivity extends DaggerAppCompatActivity implements LoginFragm
 		credentials.add(password);
 		credentials.add(server);
 		credentials.add(Boolean.FALSE.toString());
+		final String[] credentialsArray = credentials.toArray(new String[credentials.size()]);
+
+		// show spinner, and hide form
+		findViewById(R.id.login_form).setVisibility(View.GONE);
+		findViewById(R.id.login_status).setVisibility(View.VISIBLE);
+
+		String serverURLPref =  sharedPreferences.getString(getString(R.string.serverURLKey), getString(R.string.serverURLDefaultValue));
+
+		// if the username is different, then clear the token information
+		String oldUsername = sharedPreferences.getString(getString(R.string.usernameKey), null);
+		if (StringUtils.isNotEmpty(oldUsername) && (!username.equals(oldUsername) || !server.equals(serverURLPref))) {
+			PreferenceHelper preferenceHelper = PreferenceHelper.getInstance(getApplicationContext());
+			preferenceHelper.initialize(true, mil.nga.giat.mage.sdk.R.xml.class, R.xml.class);
+			UserUtility.getInstance(getApplicationContext()).clearTokenInformation();
+
+			SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+			int dayNightTheme = preferences.getInt(getResources().getString(R.string.dayNightThemeKey), getResources().getInteger(R.integer.dayNightThemeDefaultValue));
+			AppCompatDelegate.setDefaultNightMode(dayNightTheme);
+		}
+
+		loginFragment.authenticate(credentialsArray);
+	}
+
+	private void ldapLogin(View view) {
+
+		InputMethodManager inputMethodManager = (InputMethodManager) getSystemService(Activity.INPUT_METHOD_SERVICE);
+		if (getCurrentFocus() != null) {
+			inputMethodManager.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(), 0);
+		}
+
+		SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+		currentUsername = sharedPreferences.getString(getApplicationContext().getString(mil.nga.giat.mage.sdk.R.string.usernameKey), null);
+
+		// reset errors
+		mLdapUsernameLayout.setError(null);
+		mLdapPasswordLayout.setError(null);
+
+		String username = mLdapUsernameEditText.getText().toString();
+		String password = mLdapPasswordEditText.getText().toString();
+		String server = mServerURL.getText().toString();
+
+		// are the inputs valid?
+		if (TextUtils.isEmpty(username)) {
+			mLdapUsernameLayout.setError("Username can not be blank");
+			return;
+		}
+
+		if (TextUtils.isEmpty(password)) {
+			mLdapPasswordLayout.setError("Password can not be blank");
+			return;
+		}
+
+		List<String> credentials = new ArrayList<String>();
+		credentials.add(username);
+		credentials.add(password);
+		credentials.add(server);
+		credentials.add(Boolean.FALSE.toString());
+		credentials.add("ldap");
 		final String[] credentialsArray = credentials.toArray(new String[credentials.size()]);
 
 		// show spinner, and hide form

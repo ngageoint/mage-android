@@ -13,14 +13,14 @@
         android:orientation="vertical">
 
         <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/username_layout"
+            android:id="@+id/ldap_username_layout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             app:errorTextAppearance="@style/AppTheme.ErrorTextAppearance"
             android:theme="@style/AppTheme.TextInputLayout">
 
             <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/login_username"
+                android:id="@+id/ldap_login_username"
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="7dip"
@@ -33,7 +33,7 @@
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/password_layout"
+            android:id="@+id/ldap_password_layout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             app:passwordToggleEnabled="true"
@@ -42,7 +42,7 @@
             android:theme="@style/AppTheme.TextInputLayout">
 
             <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/login_password"
+                android:id="@+id/ldap_login_password"
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="7dip"
@@ -64,23 +64,5 @@
             android:theme="@style/AppTheme.PrimaryButton.NoShadow"/>
 
     </LinearLayout>
-
-    <!--
-    <WebView android:id="@+id/webView"
-        android:layout_width="fill_parent"
-        android:layout_height="fill_parent" />
-
-    <RelativeLayout android:id="@+id/progress"
-        android:layout_width="fill_parent"
-        android:layout_height="fill_parent"
-        android:gravity="center">
-
-        <ProgressBar
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            style="?android:attr/progressBarStyleLarge"/>
-
-   </RelativeLayout>
- -->
 
 </FrameLayout>
