@@ -52,6 +52,7 @@ import androidx.work.WorkManager;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.material.textfield.TextInputLayout;
+import com.google.gson.JsonObject;
 
 import org.apache.commons.lang3.StringUtils;
 import org.json.JSONException;
@@ -766,12 +767,34 @@ public class LoginActivity extends DaggerAppCompatActivity implements LoginFragm
 
 	@Override
 	public void onAuthentication(AccountStatus accountStatus) {
+		EditText usernameEditText = mUsernameEditText;
+		EditText passwordEditText = mPasswordEditText;
+
+		TextInputLayout usernameLayout = mUsernameLayout;
+		TextInputLayout passwordLayout = mPasswordLayout;
+
+		if(accountStatus.getAccountInformation() != null && accountStatus.getAccountInformation().has("user")) {
+			JsonObject user = accountStatus.getAccountInformation().get("user").getAsJsonObject();
+			if(user.has("authentication")) {
+				JsonObject auth = accountStatus.getAccountInformation().get("user").getAsJsonObject().get("authentication").getAsJsonObject();
+				String authType = auth.get("type").getAsString();
+
+				if(authType.equalsIgnoreCase("ldap")) {
+					usernameEditText = mLdapUsernameEditText;
+					passwordEditText = mLdapPasswordEditText;
+
+					usernameLayout = mLdapUsernameLayout;
+					passwordLayout = mLdapPasswordLayout;
+				}
+			}
+		}
+
 		if (accountStatus.getStatus().equals(AccountStatus.Status.SUCCESSFUL_LOGIN) || accountStatus.getStatus().equals(AccountStatus.Status.DISCONNECTED_LOGIN)) {
 			SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
 			Editor editor = sharedPreferences.edit();
-			editor.putString(getApplicationContext().getString(R.string.usernameKey), mUsernameEditText.getText().toString()).commit();
+			editor.putString(getApplicationContext().getString(R.string.usernameKey), usernameEditText.getText().toString()).commit();
 			try {
-				String hashedPassword = PasswordUtility.getSaltedHash(mPasswordEditText.getText().toString());
+				String hashedPassword = PasswordUtility.getSaltedHash(passwordEditText.getText().toString());
 				editor.putString(getApplicationContext().getString(R.string.passwordHashKey), hashedPassword).commit();
 			} catch (Exception e) {
 				Log.e(LOG_NAME, "Could not hash password", e);
@@ -798,7 +821,7 @@ public class LoginActivity extends DaggerAppCompatActivity implements LoginFragm
 			}
 		} else if (accountStatus.getStatus().equals(AccountStatus.Status.SUCCESSFUL_REGISTRATION)) {
 			Editor sp = PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).edit();
-			sp.putString(getApplicationContext().getString(R.string.usernameKey), mUsernameEditText.getText().toString()).commit();
+			sp.putString(getApplicationContext().getString(R.string.usernameKey), usernameEditText.getText().toString()).commit();
 			showUnregisteredDeviceDialog();
 		} else {
 			if (accountStatus.getStatus().equals(AccountStatus.Status.INVALID_SERVER)) {
@@ -812,8 +835,8 @@ public class LoginActivity extends DaggerAppCompatActivity implements LoginFragm
 							}
 						}).show();
 			} else if (accountStatus.getErrorIndices().isEmpty()) {
-				mUsernameLayout.setError(null);
-				mPasswordLayout.setError(null);
+				usernameLayout.setError(null);
+				passwordLayout.setError(null);
 				new AlertDialog.Builder(this)
 						.setTitle("Incorrect Credentials")
 						.setMessage("The username or password you entered was incorrect.")
@@ -823,7 +846,7 @@ public class LoginActivity extends DaggerAppCompatActivity implements LoginFragm
 						dialog.dismiss();
 					}
 				}).show();
-				mPasswordLayout.requestFocus();
+				passwordLayout.requestFocus();
 			} else {
 				int errorMessageIndex = 0;
 				for (Integer errorIndex : accountStatus.getErrorIndices()) {
@@ -832,11 +855,11 @@ public class LoginActivity extends DaggerAppCompatActivity implements LoginFragm
 						message = accountStatus.getErrorMessages().get(errorMessageIndex++);
 					}
 					if (errorIndex == 0) {
-						mUsernameLayout.setError(message);
-						mUsernameLayout.requestFocus();
+						usernameLayout.setError(message);
+						usernameLayout.requestFocus();
 					} else if (errorIndex == 1) {
-						mPasswordLayout.setError(message);
-						mPasswordLayout.requestFocus();
+						passwordLayout.setError(message);
+						passwordLayout.requestFocus();
 					} else if (errorIndex == 2) {
 						new AlertDialog.Builder(this)
 							.setTitle("Login Failed")
