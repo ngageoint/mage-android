@@ -462,6 +462,8 @@ public class LoginActivity extends DaggerAppCompatActivity implements LoginFragm
 					JSONObject strategy = entry.getValue();
 
 					if (!strategy.has("type")) {
+						Log.e(LOG_NAME,
+								"Unable to determine authentication strategy, since the type is null");
 						continue;
 					} else if ("ldap".equals(strategy.getString("type"))) {
 						thirdPartyView = mLdapView;
@@ -475,6 +477,8 @@ public class LoginActivity extends DaggerAppCompatActivity implements LoginFragm
 					} else if (!"oauth2".equals(strategy.getString("type"))
 							&& !"oauth".equals(strategy.getString("type"))
 							&& !"saml".equals(strategy.getString("type"))) {
+						Log.e(LOG_NAME, "Unable to handle authentication type "
+								+ strategy.getString("type"));
 						continue;
 					} else{
 						thirdPartyView = inflater.inflate(R.layout.view_oauth, null);
