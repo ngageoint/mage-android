@@ -52,6 +52,7 @@ import androidx.work.WorkManager;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.material.textfield.TextInputLayout;
+import com.google.gson.JsonObject;
 
 import org.apache.commons.lang3.StringUtils;
 import org.json.JSONException;
@@ -106,8 +107,16 @@ public class LoginActivity extends DaggerAppCompatActivity implements LoginFragm
 	private EditText mUsernameEditText;
 	private TextInputLayout mUsernameLayout;
 
+	private EditText mLdapUsernameEditText;
+	private TextInputLayout mLdapUsernameLayout;
+
 	private EditText mPasswordEditText;
 	private TextInputLayout mPasswordLayout;
+
+	private EditText mLdapPasswordEditText;
+	private TextInputLayout mLdapPasswordLayout;
+	private Button mLdapButton;
+	private View mLdapView;
 
 	private TextView mServerURL;
 
@@ -215,8 +224,19 @@ public class LoginActivity extends DaggerAppCompatActivity implements LoginFragm
 
 		mPasswordEditText = findViewById(R.id.login_password);
 		mPasswordLayout = findViewById(R.id.password_layout);
-
 		mPasswordEditText.setTypeface(Typeface.DEFAULT);
+
+		LayoutInflater inflater = getLayoutInflater();
+		mLdapView = inflater.inflate(R.layout.view_ldap, null);
+
+		mLdapUsernameEditText = mLdapView.findViewById(R.id.ldap_login_username);
+		mLdapUsernameLayout = mLdapView.findViewById(R.id.ldap_username_layout);
+
+		mLdapPasswordEditText = mLdapView.findViewById(R.id.ldap_login_password);
+		mLdapPasswordLayout = mLdapView.findViewById(R.id.ldap_password_layout);
+		mLdapPasswordEditText.setTypeface(Typeface.DEFAULT);
+		mLdapButton = mLdapView.findViewById(R.id.ldap_button);
+
 		mServerURL = findViewById(R.id.server_url);
 
 		String serverURL = sharedPreferences.getString(getString(R.string.serverURLKey), getString(R.string.serverURLDefaultValue));
@@ -236,6 +256,9 @@ public class LoginActivity extends DaggerAppCompatActivity implements LoginFragm
 		mUsernameEditText.setText(sharedPreferences.getString(getString(R.string.usernameKey), getString(R.string.usernameDefaultValue)));
 		mUsernameEditText.setSelection(mUsernameEditText.getText().length());
 
+		mLdapUsernameEditText.setText(sharedPreferences.getString(getString(R.string.usernameKey), getString(R.string.usernameDefaultValue)));
+		mLdapUsernameEditText.setSelection(mUsernameEditText.getText().length());
+
 		mUsernameEditText.addTextChangedListener(new TextWatcher() {
 			@Override
 			public void beforeTextChanged(CharSequence s, int start, int count, int after) {
@@ -251,6 +274,25 @@ public class LoginActivity extends DaggerAppCompatActivity implements LoginFragm
 			public void afterTextChanged(Editable s) {
 				if (StringUtils.isNoneBlank(s)) {
 					mUsernameLayout.setError(null);
+				}
+			}
+		});
+
+		mLdapUsernameEditText.addTextChangedListener(new TextWatcher() {
+			@Override
+			public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+			}
+
+			@Override
+			public void onTextChanged(CharSequence s, int start, int before, int count) {
+
+			}
+
+			@Override
+			public void afterTextChanged(Editable s) {
+				if (StringUtils.isNoneBlank(s)) {
+					mLdapUsernameLayout.setError(null);
 				}
 			}
 		});
@@ -274,11 +316,42 @@ public class LoginActivity extends DaggerAppCompatActivity implements LoginFragm
 			}
 		});
 
+		mLdapPasswordEditText.addTextChangedListener(new TextWatcher() {
+			@Override
+			public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+			}
+
+			@Override
+			public void onTextChanged(CharSequence s, int start, int before, int count) {
+
+			}
+
+			@Override
+			public void afterTextChanged(Editable s) {
+				if (StringUtils.isNoneBlank(s)) {
+					mLdapPasswordLayout.setError(null);
+				}
+			}
+		});
+
 		mPasswordEditText.setOnKeyListener(new View.OnKeyListener() {
 			@Override
 			public boolean onKey(View v, int keyCode, KeyEvent event) {
 				if (keyCode == KeyEvent.KEYCODE_ENTER) {
 					login(v);
+					return true;
+				} else {
+					return false;
+				}
+			}
+		});
+
+		mLdapPasswordEditText.setOnKeyListener(new View.OnKeyListener() {
+			@Override
+			public boolean onKey(View v, int keyCode, KeyEvent event) {
+				if (keyCode == KeyEvent.KEYCODE_ENTER) {
+					ldapLogin(v);
 					return true;
 				} else {
 					return false;
@@ -323,7 +396,7 @@ public class LoginActivity extends DaggerAppCompatActivity implements LoginFragm
 		PreferenceHelper preferenceHelper = PreferenceHelper.getInstance(getApplicationContext());
 
 		boolean localAuthentication = false;
-		Map<String, JSONObject> oauthStratigies = new HashMap<>();
+		Map<String, JSONObject> thirdPartyStrategies = new HashMap<>();
 
 		// TODO marshal this to POJOs with Jackson
 		JSONObject authenticationStrategies = preferenceHelper.getAuthenticationStrategies();
@@ -338,14 +411,14 @@ public class LoginActivity extends DaggerAppCompatActivity implements LoginFragm
 
 			try {
 				JSONObject strategy = (JSONObject) authenticationStrategies.get(strategyKey);
-				oauthStratigies.put(strategyKey, strategy);
+				thirdPartyStrategies.put(strategyKey, strategy);
 			} catch (JSONException e) {
 				e.printStackTrace();
 			}
 		}
 
-		findViewById(R.id.or).setVisibility(localAuthentication && oauthStratigies.size() > 0 ? View.VISIBLE : View.GONE);
-		findViewById(R.id.sign_up).setVisibility(localAuthentication || oauthStratigies.size() > 0 ? View.VISIBLE : View.GONE);
+		findViewById(R.id.or).setVisibility(localAuthentication && thirdPartyStrategies.size() > 0 ? View.VISIBLE : View.GONE);
+		findViewById(R.id.sign_up).setVisibility(localAuthentication || thirdPartyStrategies.size() > 0 ? View.VISIBLE : View.GONE);
 
 		if (localAuthentication) {
 			Button localButton = findViewById(R.id.local_login_button);
@@ -360,41 +433,71 @@ public class LoginActivity extends DaggerAppCompatActivity implements LoginFragm
 			findViewById(R.id.local_auth).setVisibility(View.GONE);
 		}
 
-		LinearLayout oauthLayout = findViewById(R.id.third_party_auth);
-		if (oauthStratigies.size() > 0) {
-			oauthLayout.removeAllViews();
-			oauthLayout.setVisibility(View.VISIBLE);
+		LinearLayout thirdPartAuthLayout = findViewById(R.id.third_party_auth);
+		if (thirdPartyStrategies.size() > 0) {
+			thirdPartAuthLayout.removeAllViews();
+			thirdPartAuthLayout.setVisibility(View.VISIBLE);
 		}
 
 		LayoutInflater inflater = getLayoutInflater();
-		for (final Map.Entry<String, JSONObject> entry : oauthStratigies.entrySet()) {
-			Button oauthButton = null;
+		for (final Map.Entry<String, JSONObject> entry : thirdPartyStrategies.entrySet()) {
+			Button thirdPartyButton = null;
+			View thirdPartyView = null;
 
 			// TODO Google is special in that it has its own button style
 			// Investigate making this generic like the rest of the strategies
 			if ("google".equals(entry.getKey())) {
-				oauthButton = findViewById(R.id.google_login_button);
+				thirdPartyButton = findViewById(R.id.google_login_button);
 				findViewById(R.id.google_login_button).setVisibility(View.VISIBLE);
+				thirdPartyButton.setOnClickListener(new View.OnClickListener() {
+					@Override
+					public void onClick(View v) {
+						oauthLogin(entry.getKey());
+					}
+				});
 			} else  {
 				findViewById(R.id.google_login_button).setVisibility(View.GONE);
 
 				try {
 					JSONObject strategy = entry.getValue();
 
-					if (!strategy.has("type") || "!oauth2".equals(strategy.getString("type"))) {
+					if (!strategy.has("type")) {
+						Log.e(LOG_NAME,
+								"Unable to determine authentication strategy, since the type is null");
 						continue;
+					} else if ("ldap".equals(strategy.getString("type"))) {
+						thirdPartyView = mLdapView;
+						thirdPartyButton = mLdapButton;
+						thirdPartyButton.setOnClickListener(new View.OnClickListener() {
+							@Override
+							public void onClick(View v) {
+								ldapLogin(v);
+							}
+						});
+					} else if (!"oauth2".equals(strategy.getString("type"))
+							&& !"oauth".equals(strategy.getString("type"))
+							&& !"saml".equals(strategy.getString("type"))) {
+						Log.e(LOG_NAME, "Unable to handle authentication type "
+								+ strategy.getString("type"));
+						continue;
+					} else{
+						thirdPartyView = inflater.inflate(R.layout.view_oauth, null);
+						thirdPartyButton = thirdPartyView.findViewById(R.id.oauth_button);
+						thirdPartyButton.setOnClickListener(new View.OnClickListener() {
+							@Override
+							public void onClick(View v) {
+								oauthLogin(entry.getKey());
+							}
+						});
 					}
 
-					View oauthView = inflater.inflate(R.layout.view_oauth, null);
-					oauthButton = oauthView.findViewById(R.id.oauth_button);
-
 					if (strategy.has("title")) {
-						oauthButton.setText(String.format("Sign In With %s", strategy.getString("title")));
+						thirdPartyButton.setText(String.format("Sign In With %s", strategy.getString("title")));
 					}
 
 					if (strategy.has("textColor")) {
 						try {
-							oauthButton.setTextColor(Color.parseColor(strategy.getString("textColor")));
+							thirdPartyButton.setTextColor(Color.parseColor(strategy.getString("textColor")));
 						}catch(Exception e){
 							Log.e(LOG_NAME, "Failed to parse color " + strategy.getString("textColor"), e);
 						}
@@ -402,7 +505,7 @@ public class LoginActivity extends DaggerAppCompatActivity implements LoginFragm
 
 					if (strategy.has("buttonColor")) {
                         ColorStateList csl = new ColorStateList(new int[][]{{}}, new int[]{Color.parseColor(strategy.getString("buttonColor"))});
-                        ViewCompat.setBackgroundTintList(oauthButton, csl);
+                        ViewCompat.setBackgroundTintList(thirdPartyButton, csl);
 					}
 
 					//This flag is there to handle an empty icon
@@ -425,7 +528,7 @@ public class LoginActivity extends DaggerAppCompatActivity implements LoginFragm
 									0,
 									0);
 
-							oauthButton.setCompoundDrawablesWithIntrinsicBounds(ld, null, null, null);
+							thirdPartyButton.setCompoundDrawablesWithIntrinsicBounds(ld, null, null, null);
 						}
 					}
 
@@ -443,21 +546,15 @@ public class LoginActivity extends DaggerAppCompatActivity implements LoginFragm
 
 						LayerDrawable ld = (LayerDrawable) ContextCompat.getDrawable(getApplicationContext(), R.drawable.oauth_icon).mutate();
 						ld.setDrawableByLayerId(R.id.icon, drawable);
-						oauthButton.setCompoundDrawablesWithIntrinsicBounds(ld, null, null, null);
+						thirdPartyButton.setCompoundDrawablesWithIntrinsicBounds(ld, null, null, null);
 					}
 
-					oauthLayout.addView(oauthView);
+
+					thirdPartAuthLayout.addView(thirdPartyView);
 				} catch (JSONException e) {
 					e.printStackTrace();
 				}
 			}
-
-			oauthButton.setOnClickListener(new View.OnClickListener() {
-				@Override
-				public void onClick(View v) {
-					oauthLogin(entry.getKey());
-				}
-			});
 		}
 	}
 
@@ -577,6 +674,64 @@ public class LoginActivity extends DaggerAppCompatActivity implements LoginFragm
 		loginFragment.authenticate(credentialsArray);
 	}
 
+	private void ldapLogin(View view) {
+
+		InputMethodManager inputMethodManager = (InputMethodManager) getSystemService(Activity.INPUT_METHOD_SERVICE);
+		if (getCurrentFocus() != null) {
+			inputMethodManager.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(), 0);
+		}
+
+		SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+		currentUsername = sharedPreferences.getString(getApplicationContext().getString(mil.nga.giat.mage.sdk.R.string.usernameKey), null);
+
+		// reset errors
+		mLdapUsernameLayout.setError(null);
+		mLdapPasswordLayout.setError(null);
+
+		String username = mLdapUsernameEditText.getText().toString();
+		String password = mLdapPasswordEditText.getText().toString();
+		String server = mServerURL.getText().toString();
+
+		// are the inputs valid?
+		if (TextUtils.isEmpty(username)) {
+			mLdapUsernameLayout.setError("Username can not be blank");
+			return;
+		}
+
+		if (TextUtils.isEmpty(password)) {
+			mLdapPasswordLayout.setError("Password can not be blank");
+			return;
+		}
+
+		List<String> credentials = new ArrayList<String>();
+		credentials.add(username);
+		credentials.add(password);
+		credentials.add(server);
+		credentials.add(Boolean.FALSE.toString());
+		credentials.add("ldap");
+		final String[] credentialsArray = credentials.toArray(new String[credentials.size()]);
+
+		// show spinner, and hide form
+		findViewById(R.id.login_form).setVisibility(View.GONE);
+		findViewById(R.id.login_status).setVisibility(View.VISIBLE);
+
+		String serverURLPref =  sharedPreferences.getString(getString(R.string.serverURLKey), getString(R.string.serverURLDefaultValue));
+
+		// if the username is different, then clear the token information
+		String oldUsername = sharedPreferences.getString(getString(R.string.usernameKey), null);
+		if (StringUtils.isNotEmpty(oldUsername) && (!username.equals(oldUsername) || !server.equals(serverURLPref))) {
+			PreferenceHelper preferenceHelper = PreferenceHelper.getInstance(getApplicationContext());
+			preferenceHelper.initialize(true, mil.nga.giat.mage.sdk.R.xml.class, R.xml.class);
+			UserUtility.getInstance(getApplicationContext()).clearTokenInformation();
+
+			SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+			int dayNightTheme = preferences.getInt(getResources().getString(R.string.dayNightThemeKey), getResources().getInteger(R.integer.dayNightThemeDefaultValue));
+			AppCompatDelegate.setDefaultNightMode(dayNightTheme);
+		}
+
+		loginFragment.authenticate(credentialsArray);
+	}
+
 	private void oauthLogin(String strategy) {
 		Intent intent = new Intent(getApplicationContext(), OAuthActivity.class);
 		intent.putExtra(OAuthActivity.EXTRA_SERVER_URL, mServerURL.getText());
@@ -616,12 +771,34 @@ public class LoginActivity extends DaggerAppCompatActivity implements LoginFragm
 
 	@Override
 	public void onAuthentication(AccountStatus accountStatus) {
+		EditText usernameEditText = mUsernameEditText;
+		EditText passwordEditText = mPasswordEditText;
+
+		TextInputLayout usernameLayout = mUsernameLayout;
+		TextInputLayout passwordLayout = mPasswordLayout;
+
+		if(accountStatus.getAccountInformation() != null && accountStatus.getAccountInformation().has("user")) {
+			JsonObject user = accountStatus.getAccountInformation().get("user").getAsJsonObject();
+			if(user.has("authentication")) {
+				JsonObject auth = accountStatus.getAccountInformation().get("user").getAsJsonObject().get("authentication").getAsJsonObject();
+				String authType = auth.get("type").getAsString();
+
+				if(authType.equalsIgnoreCase("ldap")) {
+					usernameEditText = mLdapUsernameEditText;
+					passwordEditText = mLdapPasswordEditText;
+
+					usernameLayout = mLdapUsernameLayout;
+					passwordLayout = mLdapPasswordLayout;
+				}
+			}
+		}
+
 		if (accountStatus.getStatus().equals(AccountStatus.Status.SUCCESSFUL_LOGIN) || accountStatus.getStatus().equals(AccountStatus.Status.DISCONNECTED_LOGIN)) {
 			SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
 			Editor editor = sharedPreferences.edit();
-			editor.putString(getApplicationContext().getString(R.string.usernameKey), mUsernameEditText.getText().toString()).commit();
+			editor.putString(getApplicationContext().getString(R.string.usernameKey), usernameEditText.getText().toString()).commit();
 			try {
-				String hashedPassword = PasswordUtility.getSaltedHash(mPasswordEditText.getText().toString());
+				String hashedPassword = PasswordUtility.getSaltedHash(passwordEditText.getText().toString());
 				editor.putString(getApplicationContext().getString(R.string.passwordHashKey), hashedPassword).commit();
 			} catch (Exception e) {
 				Log.e(LOG_NAME, "Could not hash password", e);
@@ -648,7 +825,7 @@ public class LoginActivity extends DaggerAppCompatActivity implements LoginFragm
 			}
 		} else if (accountStatus.getStatus().equals(AccountStatus.Status.SUCCESSFUL_REGISTRATION)) {
 			Editor sp = PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).edit();
-			sp.putString(getApplicationContext().getString(R.string.usernameKey), mUsernameEditText.getText().toString()).commit();
+			sp.putString(getApplicationContext().getString(R.string.usernameKey), usernameEditText.getText().toString()).commit();
 			showUnregisteredDeviceDialog();
 		} else {
 			if (accountStatus.getStatus().equals(AccountStatus.Status.INVALID_SERVER)) {
@@ -662,8 +839,8 @@ public class LoginActivity extends DaggerAppCompatActivity implements LoginFragm
 							}
 						}).show();
 			} else if (accountStatus.getErrorIndices().isEmpty()) {
-				mUsernameLayout.setError(null);
-				mPasswordLayout.setError(null);
+				usernameLayout.setError(null);
+				passwordLayout.setError(null);
 				new AlertDialog.Builder(this)
 						.setTitle("Incorrect Credentials")
 						.setMessage("The username or password you entered was incorrect.")
@@ -673,7 +850,7 @@ public class LoginActivity extends DaggerAppCompatActivity implements LoginFragm
 						dialog.dismiss();
 					}
 				}).show();
-				mPasswordLayout.requestFocus();
+				passwordLayout.requestFocus();
 			} else {
 				int errorMessageIndex = 0;
 				for (Integer errorIndex : accountStatus.getErrorIndices()) {
@@ -682,11 +859,11 @@ public class LoginActivity extends DaggerAppCompatActivity implements LoginFragm
 						message = accountStatus.getErrorMessages().get(errorMessageIndex++);
 					}
 					if (errorIndex == 0) {
-						mUsernameLayout.setError(message);
-						mUsernameLayout.requestFocus();
+						usernameLayout.setError(message);
+						usernameLayout.requestFocus();
 					} else if (errorIndex == 1) {
-						mPasswordLayout.setError(message);
-						mPasswordLayout.requestFocus();
+						passwordLayout.setError(message);
+						passwordLayout.requestFocus();
 					} else if (errorIndex == 2) {
 						new AlertDialog.Builder(this)
 							.setTitle("Login Failed")
