@@ -52,8 +52,8 @@ import retrofit2.http.Path;
 public class UserResource {
 
     public interface UserService {
-        @POST("/auth/local/signin")
-        Call<JsonObject> signin(@Body JsonObject body);
+        @POST("/auth/{strategy}/signin")
+        Call<JsonObject> signin(@Path("strategy") String strategy, @Body JsonObject body);
 
         @POST("/auth/{strategy}/authorize")
         Call<JsonObject> authorize(@Path("strategy") String strategy, @Body JsonObject body);
@@ -95,7 +95,7 @@ public class UserResource {
         this.context = context;
     }
 
-    public Response<JsonObject> signin(String username, String uid, String password) {
+    public Response<JsonObject> signin(String strategy, String username, String uid, String password) {
         Response<JsonObject> response = null;
 
         String baseUrl = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.serverURLKey), context.getString(R.string.serverURLDefaultValue));
@@ -121,7 +121,7 @@ public class UserResource {
                 Log.e(LOG_NAME , "Problem retrieving package info.", e);
             }
 
-            response = service.signin(json).execute();
+            response = service.signin(strategy, json).execute();
         } catch (Exception e) {
             Log.e(LOG_NAME, "Bad request.", e);
         }

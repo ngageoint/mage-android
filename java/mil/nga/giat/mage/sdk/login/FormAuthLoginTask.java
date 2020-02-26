@@ -62,6 +62,10 @@ public class FormAuthLoginTask extends AbstractAccountTask {
 		String password = params[1];
 		String serverURL = params[2];
 		Boolean needToRegisterDevice = Boolean.valueOf(params[3]);
+		String strategy = "local";
+		if(params.length >= 5) {
+			strategy = params[4];
+		}
 
 		SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(mApplicationContext);
 
@@ -107,7 +111,7 @@ public class FormAuthLoginTask extends AbstractAccountTask {
 		try {
 			// Does the device need to be registered?
 			if (needToRegisterDevice) {
-				AccountStatus.Status regStatus = registerDevice(uuid);
+				AccountStatus.Status regStatus = registerDevice(uuid, strategy);
 
 				if (regStatus.equals(AccountStatus.Status.SUCCESSFUL_REGISTRATION)) {
 					return new AccountStatus(regStatus);
@@ -117,13 +121,13 @@ public class FormAuthLoginTask extends AbstractAccountTask {
 			}
 
 			UserResource userResource = new UserResource(mApplicationContext);
-			Response<JsonObject> response = userResource.signin(username, uuid, password);
+			Response<JsonObject> response = userResource.signin(strategy, username, uuid, password);
 
 			if (response.isSuccessful()) {
-				JsonObject authorizeResponse = userResource.authorize("local", uuid);
+				JsonObject authorizeResponse = userResource.authorize(strategy, uuid);
 				if (authorizeResponse == null) {
 					DeviceResource deviceResource = new DeviceResource(mApplicationContext);
-					JsonObject deviceJson = deviceResource.createDevice("local", uuid);
+					JsonObject deviceJson = deviceResource.createDevice(strategy, uuid);
 					if (deviceJson.get("registered").getAsBoolean()) {
 						return new AccountStatus(AccountStatus.Status.ALREADY_REGISTERED);
 					} else {
@@ -185,7 +189,7 @@ public class FormAuthLoginTask extends AbstractAccountTask {
 				// Could be that the device is not registered.
 				if (!needToRegisterDevice) {
 					// Try to register it
-					AccountStatus.Status regStatus = registerDevice(uuid);
+					AccountStatus.Status regStatus = registerDevice(uuid, strategy);
 
 					if (regStatus.equals(AccountStatus.Status.SUCCESSFUL_REGISTRATION)) {
 						return new AccountStatus(regStatus);
@@ -211,10 +215,10 @@ public class FormAuthLoginTask extends AbstractAccountTask {
 		return new AccountStatus(AccountStatus.Status.FAILED_LOGIN);
 	}
 
-	private AccountStatus.Status registerDevice(String uid) {
+	private AccountStatus.Status registerDevice(String uid, String strategy) {
 		try {
 			DeviceResource deviceResource = new DeviceResource(mApplicationContext);
-			JsonObject deviceJson = deviceResource.createDevice("local", uid);
+			JsonObject deviceJson = deviceResource.createDevice(strategy, uid);
 			if (deviceJson != null) {
 				if (deviceJson.get("registered").getAsBoolean()) {
 					return AccountStatus.Status.ALREADY_REGISTERED;
