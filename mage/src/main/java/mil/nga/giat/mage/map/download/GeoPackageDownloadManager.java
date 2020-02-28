@@ -107,6 +107,29 @@ public class GeoPackageDownloadManager {
         return status == DownloadManager.STATUS_RUNNING || status == DownloadManager.STATUS_PENDING;
     }
 
+    public String isFailed(Layer layer) {
+        String status = null;
+        Long downloadId = layer.getDownloadId();
+
+        if (downloadId != null) {
+            DownloadManager.Query query = new DownloadManager.Query();
+            query.setFilterById(downloadId);
+            try(Cursor cursor = downloadManager.query(query)) {
+                if(DownloadManager.STATUS_FAILED == getDownloadStatus(cursor)) {
+                    status = getDownloadFailureStatus(cursor);
+                    try {
+                        layer.setDownloadId(null);
+                        layerHelper.update(layer);
+                    } catch (LayerException e) {
+                        Log.e(LOG_NAME, "Error saving layer download id", e);
+                    }
+                }
+            }
+        }
+
+        return status;
+    }
+
     public void reconcileDownloads(Collection<Layer> layers, GeoPackageLoadListener listener) {
         Predicate notDownloadedPredicate = new Predicate<Layer>() {
             @Override
@@ -130,7 +153,9 @@ public class GeoPackageDownloadManager {
 
                 if (cursor.moveToFirst()) {
                     int columnIndex = cursor.getColumnIndex(DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR);
-                    progress = cursor.getInt(columnIndex);
+                    if(columnIndex != -1) {
+                        progress = cursor.getInt(columnIndex);
+                    }
                 }
             }
         }
@@ -177,6 +202,50 @@ public class GeoPackageDownloadManager {
         if (cursor.moveToFirst()) {
             int columnIndex = cursor.getColumnIndex(DownloadManager.COLUMN_STATUS);
             status = cursor.getInt(columnIndex);
+        }
+
+        return status;
+    }
+
+    private String getDownloadFailureStatus(Cursor cursor) {
+        String status = null;
+
+        if (cursor.moveToFirst()) {
+            int columnIndex = cursor.getColumnIndex(DownloadManager.COLUMN_REASON);
+            if(columnIndex != -1) {
+                int reason = cursor.getInt(columnIndex);
+
+                switch (reason) {
+                    case DownloadManager.ERROR_CANNOT_RESUME:
+                        status = "Cannot Resume";
+                        break;
+                    case DownloadManager.ERROR_DEVICE_NOT_FOUND:
+                        status = "Device Not Found";
+                        break;
+                    case DownloadManager.ERROR_FILE_ALREADY_EXISTS:
+                        status = "File Already Exists";
+                        break;
+                    case DownloadManager.ERROR_FILE_ERROR:
+                        status = "File Error";
+                        break;
+                    case DownloadManager.ERROR_HTTP_DATA_ERROR:
+                        status = "HTTP Data Error";
+                        break;
+                    case DownloadManager.ERROR_INSUFFICIENT_SPACE:
+                        status = "Insufficient Space";
+                        break;
+                    case DownloadManager.ERROR_TOO_MANY_REDIRECTS:
+                        status = "Too Many Redirects";
+                        break;
+                    case DownloadManager.ERROR_UNHANDLED_HTTP_CODE:
+                        status = "Unhandled HTTP Code";
+                        break;
+                    case DownloadManager.ERROR_UNKNOWN:
+                    default:
+                        status = "Unknown Error";
+                        break;
+                }
+            }
         }
 
         return status;

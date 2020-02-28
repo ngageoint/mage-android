@@ -1,7 +1,6 @@
 package mil.nga.giat.mage.map.preference;
 
 import android.annotation.SuppressLint;
-import android.app.Activity;
 import android.content.Context;
 import android.os.AsyncTask;
 import android.os.Environment;
@@ -15,8 +14,11 @@ import android.widget.Checkable;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.MainThread;
+
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -118,13 +120,20 @@ public class OfflineLayersAdapter extends BaseExpandableListAdapter {
 
     public List<CacheOverlay> getSideloadedOverlays() {return this.sideloadedOverlays; }
 
-    public void updateDownloadProgress(View view, int progress, long size) {
-        if (progress <= 0) {
-            return;
-        }
+    public void updateDownloadProgress(View view, Layer layer) {
+        int progress = downloadManager.getProgress(layer);
+        long size = layer.getFileSize();
 
-        ProgressBar progressBar = view.findViewById(R.id.layer_progress);
-        if (progressBar == null) {
+        final ProgressBar progressBar = view.findViewById(R.id.layer_progress);
+        final View download = view.findViewById(R.id.layer_download);
+
+        if (progress <= 0) {
+            String reason = downloadManager.isFailed(layer);
+            if(!StringUtils.isEmpty(reason)) {
+                Toast.makeText(context, reason, Toast.LENGTH_LONG).show();
+                progressBar.setVisibility(View.GONE);
+                download.setVisibility(View.VISIBLE);
+            }
             return;
         }
 
@@ -377,6 +386,7 @@ public class OfflineLayersAdapter extends BaseExpandableListAdapter {
                 view.setOnClickListener(null);
 
                 int currentProgress = (int) (progress / (float) layer.getFileSize() * 100);
+                progressBar.setIndeterminate(false);
                 progressBar.setProgress(currentProgress);
 
                 TextView layerSize = view.findViewById(R.id.layer_size);
@@ -385,6 +395,10 @@ public class OfflineLayersAdapter extends BaseExpandableListAdapter {
                         Formatter.formatFileSize(context, progress),
                         Formatter.formatFileSize(context, fileSize)));
             } else {
+                String reason = downloadManager.isFailed(layer);
+                if(!StringUtils.isEmpty(reason)) {
+                    Toast.makeText(context, reason, Toast.LENGTH_LONG).show();
+                }
                 progressBar.setVisibility(View.GONE);
                 download.setVisibility(View.VISIBLE);
             }

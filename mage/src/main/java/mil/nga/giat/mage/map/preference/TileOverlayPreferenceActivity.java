@@ -757,7 +757,7 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
                                             continue;
                                         }
 
-                                        adapter.updateDownloadProgress(view, downloadManager.getProgress(layer), layer.getFileSize());
+                                        adapter.updateDownloadProgress(view, layer);
                                     }
                                 }
                             } catch (Exception e) {
