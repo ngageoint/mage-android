@@ -138,6 +138,7 @@ public class OfflineLayersAdapter extends BaseExpandableListAdapter {
         }
 
         int currentProgress = (int) (progress / (float) size * 100);
+        progressBar.setIndeterminate(false);
         progressBar.setProgress(currentProgress);
 
         TextView layerSize = view.findViewById(R.id.layer_size);
