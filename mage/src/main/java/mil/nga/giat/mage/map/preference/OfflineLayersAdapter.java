@@ -404,10 +404,11 @@ public class OfflineLayersAdapter extends BaseExpandableListAdapter {
                 download.setVisibility(View.VISIBLE);
             }
         } else if (layer.getType().equalsIgnoreCase("feature")) {
-            if (!layer.isLoaded()) {
+            if (!layer.isLoaded() && layer.getDownloadId() == null) {
                 download.setVisibility(View.VISIBLE);
                 progressBar.setVisibility(View.GONE);
             }else {
+                download.setVisibility(View.GONE);
                 progressBar.setVisibility(View.VISIBLE);
                 progressBar.setIndeterminate(true);
             }

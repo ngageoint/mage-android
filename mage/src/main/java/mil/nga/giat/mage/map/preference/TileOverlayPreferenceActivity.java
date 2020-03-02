@@ -335,12 +335,12 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
                     List<Layer> layers = new ArrayList<>();
                     try {
                         for (Layer layer : LayerHelper.getInstance(getActivity().getApplicationContext()).readByEvent(event, "GeoPackage")) {
-                            if (!layer.isLoaded()) {
+                            if (!layer.isLoaded() && layer.getDownloadId() == null) {
                                 layers.add(layer);
                             }
                         }
                         for (Layer layer : LayerHelper.getInstance(getActivity().getApplicationContext()).readByEvent(event, "Feature")) {
-                            if (!layer.isLoaded()) {
+                            if (!layer.isLoaded() && layer.getDownloadId() == null) {
                                 layers.add(layer);
                             }
                         }
