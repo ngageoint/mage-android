@@ -326,25 +326,26 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
             fetcher.execute();
         }
 
-        private void refreshLocalDownloadableLayers(){
-            @SuppressLint("StaticFieldLeak") AsyncTask<Void, Void, List<Layer>> fetcher = new AsyncTask<Void, Void, List<Layer>>() {
+        private void refreshLocalDownloadableLayers() {
+            @SuppressLint("StaticFieldLeak") AsyncTask<Void, Void, List<Layer>> fetcher =
+                    new AsyncTask<Void, Void, List<Layer>>() {
                 @Override
                 protected List<Layer> doInBackground(Void... objects) {
-                    final Event event = EventHelper.getInstance(getActivity().getApplicationContext()).getCurrentEvent();
+                    final Event event =
+                            EventHelper.getInstance(getActivity().getApplicationContext()).getCurrentEvent();
 
                     List<Layer> layers = new ArrayList<>();
                     try {
-                        for (Layer layer : LayerHelper.getInstance(getActivity().getApplicationContext()).readByEvent(event, "GeoPackage")) {
-                            if (!layer.isLoaded() && layer.getDownloadId() == null) {
-                                layers.add(layer);
-                            }
-                        }
-                        for (Layer layer : LayerHelper.getInstance(getActivity().getApplicationContext()).readByEvent(event, "Feature")) {
-                            if (!layer.isLoaded() && layer.getDownloadId() == null) {
-                                layers.add(layer);
+                        for (Layer layer : LayerHelper.getInstance(getActivity().getApplicationContext()).readByEvent(event, null)) {
+                            if (layer.getType().equalsIgnoreCase("GeoPackage")
+                                    || layer.getType().equalsIgnoreCase("Feature")) {
+                                if (!layer.isLoaded() && layer.getDownloadId() == null) {
+                                    layers.add(layer);
+                                }
                             }
                         }
                     } catch (LayerException e) {
+                        Log.e(LOG_NAME, "Error refreshing local downloadable layers",e);
                     }
 
                     return layers;
@@ -354,9 +355,10 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
                 protected void onPostExecute(List<Layer> layers) {
                     super.onPostExecute(layers);
 
-                    synchronized (adapterLock){
+                    synchronized (adapterLock) {
                         adapter.getDownloadableLayers().addAll(layers);
                         Collections.sort(adapter.getDownloadableLayers(), new LayerNameComparator());
+                        adapter.notifyDataSetChanged();
                     }
                 }
             };
@@ -477,7 +479,9 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
                         Collections.sort(adapter.getSideloadedOverlays());
                         Collections.sort(adapter.getOverlays());
 
-                        if(adapter.getDownloadableLayers().isEmpty() && adapter.getOverlays().isEmpty() && adapter.getSideloadedOverlays().isEmpty()){
+                        if(adapter.getDownloadableLayers().isEmpty()
+                                && adapter.getOverlays().isEmpty()
+                                && adapter.getSideloadedOverlays().isEmpty()) {
                             isEmpty = true;
                         }
 
