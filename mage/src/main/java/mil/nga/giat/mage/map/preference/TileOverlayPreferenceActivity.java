@@ -79,7 +79,7 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
 
     private OverlayListFragment offlineLayersFragment;
 
-    private static SharedPreferences ourSharedPreferences;
+    private static volatile SharedPreferences ourSharedPreferences;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -358,7 +358,7 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
                     synchronized (adapterLock) {
                         adapter.getDownloadableLayers().addAll(layers);
                         Collections.sort(adapter.getDownloadableLayers(), new LayerNameComparator());
-                        adapter.notifyDataSetChanged();
+                        //The adapter will be notified of a data set change in onCacheOverlay
                     }
                 }
             };
