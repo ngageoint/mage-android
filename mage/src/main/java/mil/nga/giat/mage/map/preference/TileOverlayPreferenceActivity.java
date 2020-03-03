@@ -171,15 +171,18 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
                     } else if (itemType == ExpandableListView.PACKED_POSITION_TYPE_GROUP) {
                         int groupPosition = ExpandableListView.getPackedPositionGroup(id);
 
-                        synchronized (adapterLock) {
-                            Object group = adapter.getGroup(groupPosition);
-                            if (group instanceof CacheOverlay) {
-                                CacheOverlay cacheOverlay = (CacheOverlay) adapter.getGroup(groupPosition);
-                                deleteCacheOverlayConfirm(cacheOverlay);
-                                return true;
+                        if(groupPosition != -1) {
+                            synchronized (adapterLock) {
+                                Object group = adapter.getGroup(groupPosition);
+                                if (group instanceof CacheOverlay) {
+                                    CacheOverlay cacheOverlay = (CacheOverlay) adapter.getGroup(groupPosition);
+                                    deleteCacheOverlayConfirm(cacheOverlay);
+                                    return true;
+                                }
                             }
                         }
 
+                        Log.w(LOG_NAME, "Failed to locate group at index " + id);
                         return false;
                     }
 
