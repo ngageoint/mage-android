@@ -448,6 +448,8 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
 
             downloadManager.reconcileDownloads(geopackages,
                     new GeoPackageDownloadManager.GeoPackageLoadListener() {
+
+                @MainThread
                 @Override
                 public void onReady(List<Layer> layers) {
 
@@ -456,10 +458,11 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
                         adapter.getDownloadableLayers().removeAll(layers);
                         adapter.getDownloadableLayers().addAll(layers);
 
-                        adapter.getOverlays().removeAll(cacheOverlays);
-                        adapter.getSideloadedOverlays().removeAll(cacheOverlays);
+                        adapter.getOverlays().clear();
+                        adapter.getSideloadedOverlays().clear();
 
-                        List<CacheOverlay> filtered = new CacheOverlayFilter(getContext(), event).filter(cacheOverlays);
+                        List<CacheOverlay> filtered =
+                                new CacheOverlayFilter(getContext(), event).filter(cacheOverlays);
                         for(CacheOverlay overlay : filtered) {
                             if (overlay instanceof GeoPackageCacheOverlay) {
                                 if (overlay.isSideloaded()) {
