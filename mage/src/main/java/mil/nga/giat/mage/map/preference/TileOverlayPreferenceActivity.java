@@ -270,7 +270,6 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
             CacheProvider.getInstance(getActivity()).registerCacheOverlayListener(this, false);
             softRefresh(refreshButton);
             refreshLocalDownloadableLayers();
-            CacheProvider.getInstance(getActivity().getApplicationContext()).refreshTileOverlays();
         }
 
         @Override
@@ -322,8 +321,6 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
                     super.onPostExecute(v);
 
                     refreshLocalDownloadableLayers();
-                    CacheProvider.getInstance(getActivity().getApplicationContext()).refreshTileOverlays();
-
                 }
             };
             fetcher.execute();
@@ -362,6 +359,7 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
                         adapter.getDownloadableLayers().addAll(layers);
                         Collections.sort(adapter.getDownloadableLayers(), new LayerNameComparator());
                         //The adapter will be notified of a data set change in onCacheOverlay
+                        CacheProvider.getInstance(getActivity().getApplicationContext()).refreshTileOverlays();
                     }
                 }
             };
@@ -441,18 +439,6 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
         public void onCacheOverlay(final List<CacheOverlay> cacheOverlays) {
             final Event event = EventHelper.getInstance(getActivity().getApplicationContext()).getCurrentEvent();
 
-            synchronized (adapterLock) {
-                this.adapter.getOverlays().removeAll(cacheOverlays);
-
-                //Here we are only handling static overlays.  geopackage overlays will be handled later on
-                for (CacheOverlay overlay : cacheOverlays) {
-                    if(overlay instanceof StaticFeatureCacheOverlay) {
-                        adapter.getOverlays().add(overlay);
-                    }
-                }
-                Collections.sort(adapter.getOverlays());
-            }
-
             List<Layer> geopackages = Collections.EMPTY_LIST;
             try {
                 geopackages = LayerHelper.getInstance(getActivity().getApplicationContext()).readByEvent(event, "GeoPackage");
@@ -460,7 +446,8 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
                 Log.w(LOG_NAME, "Error reading geopackage layers",e);
             }
 
-            downloadManager.reconcileDownloads(geopackages, new GeoPackageDownloadManager.GeoPackageLoadListener() {
+            downloadManager.reconcileDownloads(geopackages,
+                    new GeoPackageDownloadManager.GeoPackageLoadListener() {
                 @Override
                 public void onReady(List<Layer> layers) {
 
@@ -468,7 +455,10 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
                     synchronized (adapterLock){
                         adapter.getDownloadableLayers().removeAll(layers);
                         adapter.getDownloadableLayers().addAll(layers);
-                        Collections.sort(adapter.getDownloadableLayers(), new LayerNameComparator());
+
+                        adapter.getOverlays().removeAll(cacheOverlays);
+                        adapter.getSideloadedOverlays().removeAll(cacheOverlays);
+
                         List<CacheOverlay> filtered = new CacheOverlayFilter(getContext(), event).filter(cacheOverlays);
                         for(CacheOverlay overlay : filtered) {
                             if (overlay instanceof GeoPackageCacheOverlay) {
@@ -477,8 +467,12 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
                                 } else {
                                     adapter.getOverlays().add(overlay);
                                 }
+                            } else if (overlay instanceof StaticFeatureCacheOverlay) {
+                                adapter.getOverlays().add(overlay);
                             }
                         }
+
+                        Collections.sort(adapter.getDownloadableLayers(), new LayerNameComparator());
                         Collections.sort(adapter.getSideloadedOverlays());
                         Collections.sort(adapter.getOverlays());
 
