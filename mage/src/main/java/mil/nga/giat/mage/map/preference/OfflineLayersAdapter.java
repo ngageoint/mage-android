@@ -419,11 +419,12 @@ public class OfflineLayersAdapter extends BaseExpandableListAdapter {
             @Override
             public void onClick(View v) {
                 download.setVisibility(View.GONE);
+                progressBar.setIndeterminate(true);
                 progressBar.setVisibility(View.VISIBLE);
+
                 if (threadLayer.getType().equalsIgnoreCase("geopackage")) {
                     downloadManager.downloadGeoPackage(threadLayer);
                 } else if (threadLayer.getType().equalsIgnoreCase("feature")) {
-                    progressBar.setIndeterminate(true);
                     @SuppressLint("StaticFieldLeak") AsyncTask<Layer, Void, Layer> fetcher =
                             new AsyncTask<Layer, Void, Layer>() {
                         @Override
