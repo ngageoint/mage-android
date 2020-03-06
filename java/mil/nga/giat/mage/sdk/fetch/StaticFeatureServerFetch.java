@@ -123,6 +123,12 @@ public class StaticFeatureServerFetch extends AbstractServerFetch {
 			if (!layer.isLoaded()) {
 				StaticFeatureHelper staticFeatureHelper = StaticFeatureHelper.getInstance(mContext);
 				try {
+					try {
+						layer.setDownloadId(1l);
+						LayerHelper.getInstance(mContext).update(layer);
+					} catch (Exception e) {
+						throw new StaticFeatureException("Unable to update the layer to loaded: " + layer.getName());
+					}
 					Log.i(LOG_NAME, "Loading static features for layer " + layer.getName() + ".");
 
 					Collection<StaticFeature> staticFeatures = layerResource.getFeatures(layer);
@@ -178,6 +184,7 @@ public class StaticFeatureServerFetch extends AbstractServerFetch {
 					layer = staticFeatureHelper.createAll(staticFeatures, layer);
 					try {
 						layer.setLoaded(true);
+						layer.setDownloadId(null);
 						LayerHelper.getInstance(mContext).update(layer);
 					} catch (Exception e) {
 						throw new StaticFeatureException("Unable to update the layer to loaded: " + layer.getName());
