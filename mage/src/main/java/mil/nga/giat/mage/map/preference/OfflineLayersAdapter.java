@@ -156,9 +156,9 @@ public class OfflineLayersAdapter extends BaseExpandableListAdapter {
     public int getChildrenCount(int i) {
         int children = 0;
 
-        if(i < cacheOverlays.size() ){
+        if(!cacheOverlays.isEmpty() && i < cacheOverlays.size() ){
             children = cacheOverlays.get(i).getChildren().size();
-        } else if( i - cacheOverlays.size() < sideloadedOverlays.size()){
+        } else if(!sideloadedOverlays.isEmpty() && i - cacheOverlays.size() < sideloadedOverlays.size()){
             children = sideloadedOverlays.get(i - cacheOverlays.size()).getChildren().size();
         }
 
@@ -215,9 +215,9 @@ public class OfflineLayersAdapter extends BaseExpandableListAdapter {
 
     @Override
     public View getGroupView(int i, boolean isExpanded, View view, ViewGroup viewGroup) {
-        if (i < cacheOverlays.size()) {
+        if (!cacheOverlays.isEmpty() && i < cacheOverlays.size()) {
             return getOverlayView(i, isExpanded, view, viewGroup);
-        } else if(i - cacheOverlays.size() < sideloadedOverlays.size()) {
+        } else if(!sideloadedOverlays.isEmpty() && i - cacheOverlays.size() < sideloadedOverlays.size()) {
             return getOverlaySideloadedView(i, isExpanded, view, viewGroup);
         }else {
             return getDownloadableLayerView(i, isExpanded, view, viewGroup);
