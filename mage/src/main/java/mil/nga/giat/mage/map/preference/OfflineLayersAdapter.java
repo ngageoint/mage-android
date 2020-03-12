@@ -1,7 +1,6 @@
 package mil.nga.giat.mage.map.preference;
 
 import android.annotation.SuppressLint;
-import android.app.Activity;
 import android.content.Context;
 import android.os.AsyncTask;
 import android.os.Environment;
@@ -15,8 +14,11 @@ import android.widget.Checkable;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.MainThread;
+
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -118,17 +120,25 @@ public class OfflineLayersAdapter extends BaseExpandableListAdapter {
 
     public List<CacheOverlay> getSideloadedOverlays() {return this.sideloadedOverlays; }
 
-    public void updateDownloadProgress(View view, int progress, long size) {
-        if (progress <= 0) {
-            return;
-        }
+    public void updateDownloadProgress(View view, Layer layer) {
+        int progress = downloadManager.getProgress(layer);
+        long size = layer.getFileSize();
 
-        ProgressBar progressBar = view.findViewById(R.id.layer_progress);
-        if (progressBar == null) {
+        final ProgressBar progressBar = view.findViewById(R.id.layer_progress);
+        final View download = view.findViewById(R.id.layer_download);
+
+        if (progress <= 0) {
+            String reason = downloadManager.isFailed(layer);
+            if(!StringUtils.isEmpty(reason)) {
+                Toast.makeText(context, reason, Toast.LENGTH_LONG).show();
+                progressBar.setVisibility(View.GONE);
+                download.setVisibility(View.VISIBLE);
+            }
             return;
         }
 
         int currentProgress = (int) (progress / (float) size * 100);
+        progressBar.setIndeterminate(false);
         progressBar.setProgress(currentProgress);
 
         TextView layerSize = view.findViewById(R.id.layer_size);
@@ -146,9 +156,9 @@ public class OfflineLayersAdapter extends BaseExpandableListAdapter {
     public int getChildrenCount(int i) {
         int children = 0;
 
-        if(i < cacheOverlays.size() ){
+        if(!cacheOverlays.isEmpty() && i < cacheOverlays.size() ){
             children = cacheOverlays.get(i).getChildren().size();
-        } else if( i - cacheOverlays.size() < sideloadedOverlays.size()){
+        } else if(!sideloadedOverlays.isEmpty() && i - cacheOverlays.size() < sideloadedOverlays.size()){
             children = sideloadedOverlays.get(i - cacheOverlays.size()).getChildren().size();
         }
 
@@ -166,9 +176,9 @@ public class OfflineLayersAdapter extends BaseExpandableListAdapter {
     @Override
     public Object getGroup(int i) {
         Object group = null;
-        if (i < cacheOverlays.size()) {
+        if (!cacheOverlays.isEmpty() && i < cacheOverlays.size()) {
             group = cacheOverlays.get(i);
-        } else if( i - cacheOverlays.size() < cacheOverlays.size()) {
+        } else if(!sideloadedOverlays.isEmpty() && i - cacheOverlays.size() < sideloadedOverlays.size()) {
             group = sideloadedOverlays.get(i - cacheOverlays.size());
         } else {
             group = downloadableLayers.get(i - cacheOverlays.size() - sideloadedOverlays.size());
@@ -179,9 +189,9 @@ public class OfflineLayersAdapter extends BaseExpandableListAdapter {
     @Override
     public Object getChild(int i, int j) {
         Object child = null;
-        if (i < cacheOverlays.size()) {
+        if (!cacheOverlays.isEmpty() && i < cacheOverlays.size()) {
             child = cacheOverlays.get(i).getChildren().get(j);
-        } else if (i - cacheOverlays.size() < sideloadedOverlays.size()) {
+        } else if (!sideloadedOverlays.isEmpty() && i - cacheOverlays.size() < sideloadedOverlays.size()) {
             child = sideloadedOverlays.get(i - cacheOverlays.size()).getChildren().get(j);
         }
 
@@ -205,9 +215,9 @@ public class OfflineLayersAdapter extends BaseExpandableListAdapter {
 
     @Override
     public View getGroupView(int i, boolean isExpanded, View view, ViewGroup viewGroup) {
-        if (i < cacheOverlays.size()) {
+        if (!cacheOverlays.isEmpty() && i < cacheOverlays.size()) {
             return getOverlayView(i, isExpanded, view, viewGroup);
-        } else if(i - cacheOverlays.size() < sideloadedOverlays.size()) {
+        } else if(!sideloadedOverlays.isEmpty() && i - cacheOverlays.size() < sideloadedOverlays.size()) {
             return getOverlaySideloadedView(i, isExpanded, view, viewGroup);
         }else {
             return getDownloadableLayerView(i, isExpanded, view, viewGroup);
@@ -377,6 +387,7 @@ public class OfflineLayersAdapter extends BaseExpandableListAdapter {
                 view.setOnClickListener(null);
 
                 int currentProgress = (int) (progress / (float) layer.getFileSize() * 100);
+                progressBar.setIndeterminate(false);
                 progressBar.setProgress(currentProgress);
 
                 TextView layerSize = view.findViewById(R.id.layer_size);
@@ -385,14 +396,19 @@ public class OfflineLayersAdapter extends BaseExpandableListAdapter {
                         Formatter.formatFileSize(context, progress),
                         Formatter.formatFileSize(context, fileSize)));
             } else {
+                String reason = downloadManager.isFailed(layer);
+                if(!StringUtils.isEmpty(reason)) {
+                    Toast.makeText(context, reason, Toast.LENGTH_LONG).show();
+                }
                 progressBar.setVisibility(View.GONE);
                 download.setVisibility(View.VISIBLE);
             }
         } else if (layer.getType().equalsIgnoreCase("feature")) {
-            if (!layer.isLoaded()) {
+            if (!layer.isLoaded() && layer.getDownloadId() == null) {
                 download.setVisibility(View.VISIBLE);
                 progressBar.setVisibility(View.GONE);
             }else {
+                download.setVisibility(View.GONE);
                 progressBar.setVisibility(View.VISIBLE);
                 progressBar.setIndeterminate(true);
             }
@@ -403,11 +419,12 @@ public class OfflineLayersAdapter extends BaseExpandableListAdapter {
             @Override
             public void onClick(View v) {
                 download.setVisibility(View.GONE);
+                progressBar.setIndeterminate(true);
                 progressBar.setVisibility(View.VISIBLE);
+
                 if (threadLayer.getType().equalsIgnoreCase("geopackage")) {
                     downloadManager.downloadGeoPackage(threadLayer);
                 } else if (threadLayer.getType().equalsIgnoreCase("feature")) {
-                    progressBar.setIndeterminate(true);
                     @SuppressLint("StaticFieldLeak") AsyncTask<Layer, Void, Layer> fetcher =
                             new AsyncTask<Layer, Void, Layer>() {
                         @Override

@@ -79,7 +79,7 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
 
     private OverlayListFragment offlineLayersFragment;
 
-    private static SharedPreferences ourSharedPreferences;
+    private static volatile SharedPreferences ourSharedPreferences;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -171,15 +171,18 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
                     } else if (itemType == ExpandableListView.PACKED_POSITION_TYPE_GROUP) {
                         int groupPosition = ExpandableListView.getPackedPositionGroup(id);
 
-                        synchronized (adapterLock) {
-                            Object group = adapter.getGroup(groupPosition);
-                            if (group instanceof CacheOverlay) {
-                                CacheOverlay cacheOverlay = (CacheOverlay) adapter.getGroup(groupPosition);
-                                deleteCacheOverlayConfirm(cacheOverlay);
-                                return true;
+                        if(groupPosition != -1) {
+                            synchronized (adapterLock) {
+                                Object group = adapter.getGroup(groupPosition);
+                                if (group instanceof CacheOverlay) {
+                                    CacheOverlay cacheOverlay = (CacheOverlay) adapter.getGroup(groupPosition);
+                                    deleteCacheOverlayConfirm(cacheOverlay);
+                                    return true;
+                                }
                             }
                         }
 
+                        Log.w(LOG_NAME, "Failed to locate group at index " + id);
                         return false;
                     }
 
@@ -267,7 +270,6 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
             CacheProvider.getInstance(getActivity()).registerCacheOverlayListener(this, false);
             softRefresh(refreshButton);
             refreshLocalDownloadableLayers();
-            CacheProvider.getInstance(getActivity().getApplicationContext()).refreshTileOverlays();
         }
 
         @Override
@@ -319,32 +321,31 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
                     super.onPostExecute(v);
 
                     refreshLocalDownloadableLayers();
-                    CacheProvider.getInstance(getActivity().getApplicationContext()).refreshTileOverlays();
-
                 }
             };
             fetcher.execute();
         }
 
-        private void refreshLocalDownloadableLayers(){
-            @SuppressLint("StaticFieldLeak") AsyncTask<Void, Void, List<Layer>> fetcher = new AsyncTask<Void, Void, List<Layer>>() {
+        private void refreshLocalDownloadableLayers() {
+            @SuppressLint("StaticFieldLeak") AsyncTask<Void, Void, List<Layer>> fetcher =
+                    new AsyncTask<Void, Void, List<Layer>>() {
                 @Override
                 protected List<Layer> doInBackground(Void... objects) {
-                    final Event event = EventHelper.getInstance(getActivity().getApplicationContext()).getCurrentEvent();
+                    final Event event =
+                            EventHelper.getInstance(getActivity().getApplicationContext()).getCurrentEvent();
 
                     List<Layer> layers = new ArrayList<>();
                     try {
-                        for (Layer layer : LayerHelper.getInstance(getActivity().getApplicationContext()).readByEvent(event, "GeoPackage")) {
-                            if (!layer.isLoaded()) {
-                                layers.add(layer);
-                            }
-                        }
-                        for (Layer layer : LayerHelper.getInstance(getActivity().getApplicationContext()).readByEvent(event, "Feature")) {
-                            if (!layer.isLoaded()) {
-                                layers.add(layer);
+                        for (Layer layer : LayerHelper.getInstance(getActivity().getApplicationContext()).readByEvent(event, null)) {
+                            if (layer.getType().equalsIgnoreCase("GeoPackage")
+                                    || layer.getType().equalsIgnoreCase("Feature")) {
+                                if (!layer.isLoaded() && layer.getDownloadId() == null) {
+                                    layers.add(layer);
+                                }
                             }
                         }
                     } catch (LayerException e) {
+                        Log.e(LOG_NAME, "Error refreshing local downloadable layers",e);
                     }
 
                     return layers;
@@ -354,9 +355,11 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
                 protected void onPostExecute(List<Layer> layers) {
                     super.onPostExecute(layers);
 
-                    synchronized (adapterLock){
+                    synchronized (adapterLock) {
                         adapter.getDownloadableLayers().addAll(layers);
                         Collections.sort(adapter.getDownloadableLayers(), new LayerNameComparator());
+                        //The adapter will be notified of a data set change in onCacheOverlay
+                        CacheProvider.getInstance(getActivity().getApplicationContext()).refreshTileOverlays();
                     }
                 }
             };
@@ -436,18 +439,6 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
         public void onCacheOverlay(final List<CacheOverlay> cacheOverlays) {
             final Event event = EventHelper.getInstance(getActivity().getApplicationContext()).getCurrentEvent();
 
-            synchronized (adapterLock) {
-                this.adapter.getOverlays().removeAll(cacheOverlays);
-
-                //Here we are only handling static overlays.  geopackage overlays will be handled later on
-                for (CacheOverlay overlay : cacheOverlays) {
-                    if(overlay instanceof StaticFeatureCacheOverlay) {
-                        adapter.getOverlays().add(overlay);
-                    }
-                }
-                Collections.sort(adapter.getOverlays());
-            }
-
             List<Layer> geopackages = Collections.EMPTY_LIST;
             try {
                 geopackages = LayerHelper.getInstance(getActivity().getApplicationContext()).readByEvent(event, "GeoPackage");
@@ -455,7 +446,10 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
                 Log.w(LOG_NAME, "Error reading geopackage layers",e);
             }
 
-            downloadManager.reconcileDownloads(geopackages, new GeoPackageDownloadManager.GeoPackageLoadListener() {
+            downloadManager.reconcileDownloads(geopackages,
+                    new GeoPackageDownloadManager.GeoPackageLoadListener() {
+
+                @MainThread
                 @Override
                 public void onReady(List<Layer> layers) {
 
@@ -463,8 +457,12 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
                     synchronized (adapterLock){
                         adapter.getDownloadableLayers().removeAll(layers);
                         adapter.getDownloadableLayers().addAll(layers);
-                        Collections.sort(adapter.getDownloadableLayers(), new LayerNameComparator());
-                        List<CacheOverlay> filtered = new CacheOverlayFilter(getContext(), event).filter(cacheOverlays);
+
+                        adapter.getOverlays().clear();
+                        adapter.getSideloadedOverlays().clear();
+
+                        List<CacheOverlay> filtered =
+                                new CacheOverlayFilter(getContext(), event).filter(cacheOverlays);
                         for(CacheOverlay overlay : filtered) {
                             if (overlay instanceof GeoPackageCacheOverlay) {
                                 if (overlay.isSideloaded()) {
@@ -472,12 +470,18 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
                                 } else {
                                     adapter.getOverlays().add(overlay);
                                 }
+                            } else if (overlay instanceof StaticFeatureCacheOverlay) {
+                                adapter.getOverlays().add(overlay);
                             }
                         }
+
+                        Collections.sort(adapter.getDownloadableLayers(), new LayerNameComparator());
                         Collections.sort(adapter.getSideloadedOverlays());
                         Collections.sort(adapter.getOverlays());
 
-                        if(adapter.getDownloadableLayers().isEmpty() && adapter.getOverlays().isEmpty() && adapter.getSideloadedOverlays().isEmpty()){
+                        if(adapter.getDownloadableLayers().isEmpty()
+                                && adapter.getOverlays().isEmpty()
+                                && adapter.getSideloadedOverlays().isEmpty()) {
                             isEmpty = true;
                         }
 
@@ -757,7 +761,7 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
                                             continue;
                                         }
 
-                                        adapter.updateDownloadProgress(view, downloadManager.getProgress(layer), layer.getFileSize());
+                                        adapter.updateDownloadProgress(view, layer);
                                     }
                                 }
                             } catch (Exception e) {
