@@ -176,9 +176,9 @@ public class OfflineLayersAdapter extends BaseExpandableListAdapter {
     @Override
     public Object getGroup(int i) {
         Object group = null;
-        if (i < cacheOverlays.size()) {
+        if (!cacheOverlays.isEmpty() && i < cacheOverlays.size()) {
             group = cacheOverlays.get(i);
-        } else if( i - cacheOverlays.size() < cacheOverlays.size()) {
+        } else if(!sideloadedOverlays.isEmpty() && i - cacheOverlays.size() < sideloadedOverlays.size()) {
             group = sideloadedOverlays.get(i - cacheOverlays.size());
         } else {
             group = downloadableLayers.get(i - cacheOverlays.size() - sideloadedOverlays.size());
@@ -189,9 +189,9 @@ public class OfflineLayersAdapter extends BaseExpandableListAdapter {
     @Override
     public Object getChild(int i, int j) {
         Object child = null;
-        if (i < cacheOverlays.size()) {
+        if (!cacheOverlays.isEmpty() && i < cacheOverlays.size()) {
             child = cacheOverlays.get(i).getChildren().get(j);
-        } else if (i - cacheOverlays.size() < sideloadedOverlays.size()) {
+        } else if (!sideloadedOverlays.isEmpty() && i - cacheOverlays.size() < sideloadedOverlays.size()) {
             child = sideloadedOverlays.get(i - cacheOverlays.size()).getChildren().get(j);
         }
 
