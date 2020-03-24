@@ -3,12 +3,19 @@ All notable changes to this project will be documented in this file.
 Adheres to [Semantic Versioning](http://semver.org/).
 
 ---
-## 6.2.9 (TBD)
+## 6.2.10 (TBD)
+
+##### Features
+
+##### Bug Fixes
+
+## [6.2.9](https://github.com/ngageoint/mage-android/releases/tag/6.2.9)
 
 ##### Features
 * Observation feed show/hide primary/secondary form feed fields.
 
 ##### Bug Fixes
+* Fix for LDAP authentication.
 
 ## [6.2.8](https://github.com/ngageoint/mage-android/releases/tag/6.2.8)
 
