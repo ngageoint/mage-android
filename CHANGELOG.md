@@ -15,6 +15,7 @@ Adheres to [Semantic Versioning](http://semver.org/).
 * Observation feed show/hide primary/secondary form feed fields.
 
 ##### Bug Fixes
+* Work around patch for Google Maps bug 154855417.  This will remove data pushed by Google Maps causing application to crash.
 * Fix for LDAP authentication.
 
 ## [6.2.8](https://github.com/ngageoint/mage-android/releases/tag/6.2.8)

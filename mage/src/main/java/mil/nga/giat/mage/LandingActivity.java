@@ -107,6 +107,14 @@ public class LandingActivity extends DaggerAppCompatActivity implements Navigati
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        SharedPreferences googleBug = getSharedPreferences("google_bug_154855417", Context.MODE_PRIVATE);
+        if (!googleBug.contains("fixed")) {
+            File corruptedZoomTables = new File(getFilesDir(), "ZoomTables.data");
+            corruptedZoomTables.delete();
+            googleBug.edit().putBoolean("fixed", true).apply();
+        }
+
         setContentView(R.layout.activity_landing);
 
         drawerLayout = findViewById(R.id.drawer_layout);
