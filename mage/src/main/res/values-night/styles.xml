@@ -107,4 +107,9 @@
         <item name="android:alpha">.54</item>
     </style>
 
+    <style name="TextAppearance.Mage.Headline5" parent="TextAppearance.MaterialComponents.Headline5">
+        <item name="android:textColor">@color/md_white_1000</item>
+        <item name="android:alpha">.87</item>
+    </style>
+
 </resources>

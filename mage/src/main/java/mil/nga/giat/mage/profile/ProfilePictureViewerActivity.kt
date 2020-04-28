@@ -2,20 +2,13 @@ package mil.nga.giat.mage.profile
 
 import android.content.Context
 import android.content.Intent
-import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.util.Log
 import android.view.View
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import com.bumptech.glide.load.DataSource
-import com.bumptech.glide.load.engine.GlideException
-import com.bumptech.glide.request.RequestListener
-import com.bumptech.glide.request.target.Target
 import kotlinx.android.synthetic.main.attachment_viewer.*
 import mil.nga.giat.mage.R
-import mil.nga.giat.mage.glide.GlideApp
-import mil.nga.giat.mage.glide.model.Avatar
 import mil.nga.giat.mage.sdk.datastore.user.User
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper
 
@@ -52,21 +45,24 @@ class ProfilePictureViewerActivity : AppCompatActivity() {
             val user = UserHelper.getInstance(applicationContext).read(userID)
             this.title = user.displayName
 
-            GlideApp.with(this)
-                    .load(Avatar.forUser(user))
-                    .listener(object : RequestListener<Drawable> {
-                        override fun onLoadFailed(e: GlideException?, model: Any, target: Target<Drawable>, isFirstResource: Boolean): Boolean {
-                            progress.visibility = View.GONE
-                            no_content.visibility = View.VISIBLE
-                            return false
-                        }
+            no_content.visibility = View.VISIBLE
 
-                        override fun onResourceReady(resource: Drawable, model: Any, target: Target<Drawable>, dataSource: DataSource, isFirstResource: Boolean): Boolean {
-                            progress.visibility = View.GONE
-                            return false
-                        }
-                    })
-                    .into(image)
+
+//            GlideApp.with(this)
+//                    .load(Avatar.forUser(user))
+//                    .listener(object : RequestListener<Drawable> {
+//                        override fun onLoadFailed(e: GlideException?, model: Any, target: Target<Drawable>, isFirstResource: Boolean): Boolean {
+//                            progress.visibility = View.GONE
+//                            no_content.visibility = View.VISIBLE
+//                            return false
+//                        }
+//
+//                        override fun onResourceReady(resource: Drawable, model: Any, target: Target<Drawable>, dataSource: DataSource, isFirstResource: Boolean): Boolean {
+//                            progress.visibility = View.GONE
+//                            return false
+//                        }
+//                    })
+//                    .into(image)
         } catch (e: Exception) {
             Log.e(LOG_NAME, "Could not set title.", e)
             progress.visibility = View.GONE

@@ -1,7 +1,6 @@
 package mil.nga.giat.mage.observation;
 
 import android.app.Dialog;
-import android.app.DialogFragment;
 import android.content.DialogInterface;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -9,13 +8,15 @@ import android.view.View;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatDialogFragment;
 
 import mil.nga.giat.mage.R;
+import mil.nga.giat.mage.sdk.datastore.observation.ObservationImportant;
 
 /**
  * Created by wnewman on 8/22/16.
  */
-public class ImportantDialog extends DialogFragment {
+public class ImportantDialog extends AppCompatDialogFragment {
 
     private static String DESCRIPTION = "DESCRIPTION";
 
@@ -29,10 +30,10 @@ public class ImportantDialog extends DialogFragment {
     public ImportantDialog() {
     }
 
-    public static ImportantDialog newInstance(String description) {
+    public static ImportantDialog newInstance(ObservationImportant important) {
         ImportantDialog dialog = new ImportantDialog();
         Bundle args = new Bundle();
-        args.putString(DESCRIPTION, description);
+        args.putString(DESCRIPTION, important != null ? important.getDescription() : null);
         dialog.setArguments(args);
 
         return dialog;

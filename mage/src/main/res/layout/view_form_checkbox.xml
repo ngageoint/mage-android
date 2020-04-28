@@ -16,13 +16,14 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="4dp"
-            android:textAppearance="@style/TextAppearance.AppCompat.Caption.Label"
-            android:text="@{field.title}"/>
+            android:text="@{field.title}"
+            style="@style/ListTextSecondary"/>
 
         <CheckBox
             android:id="@+id/checkbox"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginStart="-6dp"
             android:enabled="false"
             android:checked="@{safeUnbox(field.value)}"/>
 

@@ -1,7 +1,6 @@
 package mil.nga.giat.mage.newsfeed;
 
 import android.Manifest;
-import android.annotation.SuppressLint;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -9,9 +8,6 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
-import android.graphics.Canvas;
-import android.graphics.Rect;
-import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -29,13 +25,13 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
-import androidx.core.view.ViewCompat;
 import androidx.lifecycle.Observer;
 import androidx.recyclerview.widget.DefaultItemAnimator;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
+import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.j256.ormlite.android.AndroidDatabaseResults;
@@ -66,6 +62,8 @@ import mil.nga.giat.mage.filter.ObservationFilterActivity;
 import mil.nga.giat.mage.location.LocationProvider;
 import mil.nga.giat.mage.observation.AttachmentGallery;
 import mil.nga.giat.mage.observation.AttachmentViewerActivity;
+import mil.nga.giat.mage.observation.ImportantDialog;
+import mil.nga.giat.mage.observation.ImportantRemoveDialog;
 import mil.nga.giat.mage.observation.ObservationEditActivity;
 import mil.nga.giat.mage.observation.ObservationFormPickerActivity;
 import mil.nga.giat.mage.observation.ObservationLocation;
@@ -84,6 +82,7 @@ import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.event.IObservationEventListener;
+import mil.nga.giat.mage.sdk.exceptions.ObservationException;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
 import mil.nga.sf.Geometry;
 
@@ -162,7 +161,6 @@ public class ObservationFeedFragment extends DaggerFragment implements IObservat
 		RecyclerView.LayoutManager mLayoutManager = new LinearLayoutManager(getActivity());
 		recyclerView.setLayoutManager(mLayoutManager);
 		recyclerView.setItemAnimator(new DefaultItemAnimator());
-		recyclerView.addItemDecoration(new ObservationItemDecorator());
 
 		adapter = new ObservationListAdapter(getActivity(), attachmentGallery, this);
 
@@ -526,6 +524,68 @@ public class ObservationFeedFragment extends DaggerFragment implements IObservat
 		});
 	}
 
+	public void onObservationImportant(Observation observation) {
+		ObservationImportant important = observation.getImportant();
+		boolean isImportant = important != null && important.isImportant();
+		if (isImportant) {
+			BottomSheetDialog dialog = new BottomSheetDialog(requireActivity());
+			View view = getLayoutInflater().inflate(R.layout.view_important_bottom_sheet, null);
+			view.findViewById(R.id.update_button).setOnClickListener(v -> {
+				onUpdateImportantClick(observation);
+				dialog.dismiss();
+			});
+			view.findViewById(R.id.remove_button).setOnClickListener(v -> {
+				onRemoveImportantClick(observation);
+				dialog.dismiss();
+			});
+			dialog.setContentView(view);
+			dialog.show();
+		} else {
+			onUpdateImportantClick(observation);
+		}
+	}
+
+	public void onUpdateImportantClick(Observation observation) {
+		ImportantDialog dialog = ImportantDialog.newInstance(observation.getImportant());
+		dialog.setOnImportantListener(description -> {
+			ObservationHelper observationHelper = ObservationHelper.getInstance(context);
+			try {
+				ObservationImportant important = observation.getImportant();
+				if (important == null) {
+					important = new ObservationImportant();
+					observation.setImportant(important);
+				}
+
+				if (currentUser != null) {
+					important.setUserId(currentUser.getRemoteId());
+				}
+
+				important.setTimestamp(new Date());
+				important.setDescription(description);
+				observationHelper.addImportant(observation);
+			} catch (ObservationException e) {
+				Log.e(LOG_NAME, "Error updating important flag for observation: " + observation.getRemoteId());
+			}
+		});
+
+		dialog.show(getFragmentManager(), "important");
+	}
+
+
+	public void onRemoveImportantClick(Observation o) {
+		ImportantRemoveDialog dialog = new ImportantRemoveDialog();
+		dialog.setOnRemoveImportantListener(() -> {
+			ObservationHelper observationHelper = ObservationHelper.getInstance(context);
+			try {
+				observationHelper.removeImportant(o);
+			} catch (ObservationException e) {
+				Log.e(LOG_NAME, "Error removing important flag for observation: " + o.getRemoteId());
+			}
+		});
+
+		dialog.show(getFragmentManager(), "remove_important");
+	}
+
 	@Override
 	public void onObservationDirections(Observation observation) {
 		Intent intent = new Intent(android.content.Intent.ACTION_VIEW, observation.getGoogleMapsUri());
@@ -542,44 +602,6 @@ public class ObservationFeedFragment extends DaggerFragment implements IObservat
 	@Override
 	public void onChanged(@Nullable Location location) {
 
-	}
-
-	private class ObservationItemDecorator extends RecyclerView.ItemDecoration {
-		private Drawable divider;
-
-		ObservationItemDecorator() {
-			divider = ContextCompat.getDrawable(context, R.drawable.people_feed_divider);
-		}
-
-		@Override
-		@SuppressLint("NewApi")
-		public void onDraw(Canvas c, RecyclerView parent, RecyclerView.State state) {
-			c.save();
-			final int left;
-			final int right;
-			if (parent.getClipToPadding()) {
-				left = parent.getPaddingLeft();
-				right = parent.getWidth() - parent.getPaddingRight();
-				c.clipRect(left, parent.getPaddingTop(), right, parent.getHeight() - parent.getPaddingBottom());
-			} else {
-				left = 0;
-				right = parent.getWidth();
-			}
-
-			final int childCount = parent.getChildCount();
-			Rect outBounds = new Rect();
-
-			// Go to childCount - 1 to skip drawing a divider after the last view
-			for (int i = 0; i < childCount - 1; i++) {
-				final View child = parent.getChildAt(i);
-				parent.getDecoratedBoundsWithMargins(child, outBounds);
-				final int bottom = outBounds.bottom + Math.round(ViewCompat.getTranslationY(child));
-				final int top = bottom - divider.getIntrinsicHeight();
-				divider.setBounds(left, top, right, bottom);
-				divider.draw(c);
-			}
-			c.restore();
-		}
 	}
 
 	private class ObservationRefreshTask extends AsyncTask<Void, Void, Void> {

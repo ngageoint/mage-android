@@ -16,5 +16,6 @@
     <color name="divider">#19FFFFFF</color>
 
     <color name="icon">#8A000000</color>
+    <color name="primary_icon">#DEFFFFFF</color>
 
 </resources>

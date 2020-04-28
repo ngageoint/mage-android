@@ -3,7 +3,6 @@ package mil.nga.giat.mage.newsfeed;
 import android.content.Context;
 import android.database.Cursor;
 import android.graphics.Bitmap;
-import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
@@ -17,7 +16,6 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.core.content.ContextCompat;
-import androidx.core.content.res.ResourcesCompat;
 import androidx.core.graphics.drawable.DrawableCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -35,17 +33,16 @@ import java.util.Locale;
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.map.marker.ObservationBitmapFactory;
 import mil.nga.giat.mage.observation.AttachmentGallery;
-import mil.nga.giat.mage.observation.ObservationShapeStyleParser;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationError;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationFavorite;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
+import mil.nga.giat.mage.sdk.datastore.observation.ObservationImportant;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationProperty;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.exceptions.ObservationException;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
-import mil.nga.sf.GeometryType;
 
 /**
  * Created by wnewman on 10/30/17.
@@ -55,6 +52,7 @@ public class ObservationListAdapter extends RecyclerView.Adapter<RecyclerView.Vi
 
     public interface ObservationActionListener {
         void onObservationClick(Observation observation);
+        void onObservationImportant(Observation observation);
         void onObservationDirections(Observation observation);
     }
 
@@ -76,17 +74,20 @@ public class ObservationListAdapter extends RecyclerView.Adapter<RecyclerView.Vi
 
     private class ObservationViewHolder extends RecyclerView.ViewHolder {
         private ImageView markerView;
-        private ImageView shapeView;
         private TextView primaryView;
         private TextView timeView;
         private TextView secondaryView;
         private TextView userView;
-        private View flaggedBadge;
+        private View importantView;
+        private TextView importantOverline;
+        private TextView importantDescription;
+        private ImageView importantButton;
         private View syncBadge;
         private View errorBadge;
         private LinearLayout attachmentLayout;
-        private View favoriteView;
-        private View directionsView;
+        private ImageView favoriteButton;
+        private TextView favoriteCount;
+        private View directionsButton;
         private IconTask iconTask;
         private UserTask userTask;
         private PropertyTask primaryPropertyTask;
@@ -96,25 +97,24 @@ public class ObservationListAdapter extends RecyclerView.Adapter<RecyclerView.Vi
             super(view);
 
             markerView = view.findViewById(R.id.observation_marker);
-            shapeView = view.findViewById(R.id.observation_shape);
             primaryView = view.findViewById(R.id.primary);
             timeView = view.findViewById(R.id.time);
             secondaryView = view.findViewById(R.id.secondary);
             userView = view.findViewById(R.id.user);
-            flaggedBadge = view.findViewById(R.id.flagged);
+            importantView = view.findViewById(R.id.important);
+            importantOverline = view.findViewById(R.id.important_overline);
+            importantDescription = view.findViewById(R.id.important_description);
+            importantButton = view.findViewById(R.id.important_button);
             syncBadge = view.findViewById(R.id.sync_status);
             errorBadge = view.findViewById(R.id.error_status);
             attachmentLayout = view.findViewById(R.id.image_gallery);
-            favoriteView = view.findViewById(R.id.favorite);
-            directionsView = view.findViewById(R.id.directions);
+            favoriteButton = view.findViewById(R.id.favorite_button);
+            favoriteCount = view.findViewById(R.id.favorite_count);
+            directionsButton = view.findViewById(R.id.directions_button);
         }
 
         public void bind(final Observation observation, final ObservationActionListener listener) {
-            itemView.setOnClickListener(new View.OnClickListener() {
-                @Override public void onClick(View v) {
-                    listener.onObservationClick(observation);
-                }
-            });
+            itemView.setOnClickListener(v -> listener.onObservationClick(observation));
         }
     }
 
@@ -221,35 +221,16 @@ public class ObservationListAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         ObservationViewHolder vh = (ObservationViewHolder) holder;
 
         try {
-
             final Observation observation = query.mapRow(new AndroidDatabaseResults(cursor, null, false));
             vh.bind(observation, observationActionListener);
 
-            Drawable markerPlaceholder = DrawableCompat.wrap(ContextCompat.getDrawable(context, R.drawable.ic_place_white_24dp));
+            Drawable markerPlaceholder = DrawableCompat.wrap(ContextCompat.getDrawable(context, R.drawable.ic_place_white_48dp));
             DrawableCompat.setTint(markerPlaceholder, ContextCompat.getColor(context, R.color.icon));
-            DrawableCompat.setTintMode(markerPlaceholder, PorterDuff.Mode.SRC_ATOP);
+            DrawableCompat.setTintMode(markerPlaceholder, PorterDuff.Mode.SRC_IN);
 
             vh.markerView.setImageDrawable(markerPlaceholder);
             vh.iconTask = new IconTask(vh.markerView);
             vh.iconTask.execute(observation);
-
-            Drawable drawable;
-            if (observation.getGeometry().getGeometryType() == GeometryType.POINT) {
-                drawable = ResourcesCompat.getDrawable(context.getResources(), R.drawable.ic_place_white_24dp, null);
-
-                vh.shapeView.setImageDrawable(drawable);
-                vh.shapeView.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
-                DrawableCompat.setTint(drawable, Color.parseColor("#737373"));
-            } else {
-                drawable = observation.getGeometry().getGeometryType() == GeometryType.LINESTRING ?
-                        ResourcesCompat.getDrawable(context.getResources(), R.drawable.line_string_marker, null) :
-                        ResourcesCompat.getDrawable(context.getResources(), R.drawable.polygon_marker, null);
-
-                vh.shapeView.setImageDrawable(drawable);
-                vh.shapeView.setScaleType(ImageView.ScaleType.CENTER_CROP);
-                int strokeColor = ObservationShapeStyleParser.getStyle(context, observation).getStrokeColor();
-                DrawableCompat.setTint(drawable, strokeColor);
-            }
 
             vh.primaryView.setText("");
             vh.primaryPropertyTask = new PropertyTask(PropertyTask.Type.PRIMARY, vh.primaryView);
@@ -268,8 +249,8 @@ public class ObservationListAdapter extends RecyclerView.Adapter<RecyclerView.Vi
             vh.userTask = new UserTask(vh.userView);
             vh.userTask.execute(observation);
 
-            boolean isFlagged = observation.getImportant() != null && observation.getImportant().isImportant();
-            vh.flaggedBadge.setVisibility(isFlagged ? View.VISIBLE : View.GONE);
+            vh.importantButton.setOnClickListener(v -> observationActionListener.onObservationImportant(observation));
+            setImportantView(observation.getImportant(), vh);
 
             ObservationError error = observation.getError();
             if (error != null) {
@@ -289,22 +270,10 @@ public class ObservationListAdapter extends RecyclerView.Adapter<RecyclerView.Vi
                 attachmentGallery.addAttachments(vh.attachmentLayout, observation.getAttachments());
             }
 
-            vh.favoriteView.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    toggleFavorite(observation, v);
-                }
-            });
-            setFavoriteImage(observation.getFavorites(), vh.favoriteView, isFavorite(observation));
+            vh.favoriteButton.setOnClickListener(v -> toggleFavorite(observation, vh));
+            setFavoriteImage(observation.getFavorites(), vh, isFavorite(observation));
 
-            vh.directionsView.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    getDirections(observation);
-                }
-            });
-
-
+            vh.directionsButton.setOnClickListener(v -> getDirections(observation));
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -316,20 +285,44 @@ public class ObservationListAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         vh.footerText.setText(footerText);
     }
 
-    private void setFavoriteImage(Collection<ObservationFavorite> favorites, View view, boolean isFavorite) {
-        ImageView favoriteIcon = (ImageView) view.findViewById(R.id.favoriteIcon);
-        if (isFavorite) {
-            favoriteIcon.setColorFilter(ContextCompat.getColor(context, R.color.observation_favorite_active));
-        } else {
-            favoriteIcon.setColorFilter(ContextCompat.getColor(context, R.color.observation_favorite_inactive));
+    private void setImportantView(ObservationImportant important, ObservationViewHolder vh) {
+        boolean isImportant = important != null && important.isImportant();
+        vh.importantView.setVisibility(isImportant ? View.VISIBLE : View.GONE);
+
+        if (isImportant) {
+            try {
+                User user = UserHelper.getInstance(context).read(important.getUserId());
+                vh.importantOverline.setText(String.format("FLAGGED BY %s", user.getDisplayName().toUpperCase()));
+            } catch (UserException e) {
+                e.printStackTrace();
+            }
+
+            vh.importantDescription.setText(important.getDescription());
         }
 
-        TextView favoriteCount = (TextView) view.findViewById(R.id.favoriteCount);
-        favoriteCount.setVisibility(favorites.size() > 0 ? View.VISIBLE : View.GONE);
-        favoriteCount.setText(Integer.toString(favorites.size()));
+        if (isImportant) {
+            vh.importantButton.setImageDrawable(ContextCompat.getDrawable(context, R.drawable.ic_flag_white_24dp));
+            vh.importantButton.setColorFilter(ContextCompat.getColor(context, R.color.observation_flag_active));
+        } else {
+            vh.importantButton.setImageDrawable(ContextCompat.getDrawable(context, R.drawable.ic_flag_outlined_white_24dp));
+            vh.importantButton.setColorFilter(ContextCompat.getColor(context, R.color.observation_flag_inactive));
+        }
     }
 
-    private void toggleFavorite(Observation observation, View view) {
+    private void setFavoriteImage(Collection<ObservationFavorite> favorites, ObservationViewHolder vh, boolean isFavorite) {
+        if (isFavorite) {
+            vh.favoriteButton.setImageDrawable(ContextCompat.getDrawable(context, R.drawable.ic_favorite_white_24dp));
+            vh.favoriteButton.setColorFilter(ContextCompat.getColor(context, R.color.observation_favorite_active));
+        } else {
+            vh.favoriteButton.setImageDrawable(ContextCompat.getDrawable(context, R.drawable.ic_favorite_border_white_24dp));
+            vh.favoriteButton.setColorFilter(ContextCompat.getColor(context, R.color.observation_favorite_inactive));
+        }
+
+        vh.favoriteCount.setVisibility(favorites.size() > 0 ? View.VISIBLE : View.GONE);
+        vh.favoriteCount.setText(String.format(Locale.getDefault(), "%d", favorites.size()));
+    }
+
+    private void toggleFavorite(Observation observation, ObservationViewHolder vh) {
         ObservationHelper observationHelper = ObservationHelper.getInstance(context);
         boolean isFavorite = isFavorite(observation);
         try {
@@ -339,7 +332,7 @@ public class ObservationListAdapter extends RecyclerView.Adapter<RecyclerView.Vi
                 observationHelper.favoriteObservation(observation, currentUser);
             }
 
-            setFavoriteImage(observation.getFavorites(), view, isFavorite);
+            setFavoriteImage(observation.getFavorites(), vh, isFavorite);
         } catch (ObservationException e) {
             Log.e(LOG_NAME, "Could not unfavorite observation", e);
         }

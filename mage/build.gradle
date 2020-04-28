@@ -11,9 +11,9 @@ apply plugin: 'kotlin-kapt'
 apply plugin: 'maven-publish'
 group 'mil.nga.giat.mage'
 archivesBaseName = 'mage-android'
-version '6.2.9'
+version '6.2.10'
 ext {
-    versionCode = 73
+    versionCode = 74
     sourceRefspec = Grgit.open().head().id
 
     //Test resources
@@ -229,7 +229,7 @@ dependencies {
     }
 
 //        api project(':sdk') // uncomment me to build locally, and see top-level build.gradle
-    api 'mil.nga.giat.mage:mage-android-sdk:6.2.6' // comment me to build locally
+    api 'mil.nga.giat.mage:mage-android-sdk:6.2.7' // comment me to build locally
     api 'com.google.maps.android:android-maps-utils:0.6.2'
     api 'mil.nga.geopackage.map:geopackage-android-map:3.4.0'
     api 'org.ocpsoft.prettytime:prettytime:3.2.5.Final'
@@ -238,7 +238,7 @@ dependencies {
     implementation 'com.github.bumptech.glide:okhttp3-integration:4.9.0'
     kapt 'com.github.bumptech.glide:compiler:4.9.0'
 
-    api 'com.google.android:flexbox:0.3.2'
+    api 'com.google.android:flexbox:2.0.1'
     api 'com.nulab-inc:zxcvbn:1.2.3'
     api (name:'mgrs-0.0.2-release', ext:'aar')
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
