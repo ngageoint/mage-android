@@ -39,7 +39,7 @@ public class ObservationProperty extends Property {
 		} else if (value instanceof ArrayList) {
 			return ((ArrayList) value).size() == 0;
 		} else {
-			return value != null;
+			return value == null;
 		}
 	}
 }
