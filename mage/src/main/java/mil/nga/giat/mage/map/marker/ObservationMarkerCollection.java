@@ -1,12 +1,16 @@
 package mil.nga.giat.mage.map.marker;
 
 import android.content.Context;
+import android.util.Log;
+import android.util.Pair;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.TextView;
 
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.GoogleMap.OnMarkerClickListener;
+import com.google.android.gms.maps.model.Circle;
+import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
@@ -25,12 +29,17 @@ import mil.nga.giat.mage.observation.MapShapeObservation;
 import mil.nga.giat.mage.sdk.Temporal;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationProperty;
+import mil.nga.sf.Geometry;
+import mil.nga.sf.Point;
+import mil.nga.sf.util.GeometryUtils;
 
 public class ObservationMarkerCollection implements PointCollection<Observation>, OnMarkerClickListener {
+    private static final String LOG_NAME = ObservationMarkerCollection.class.getName();
 
     private GoogleMap map;
     private Context context;
     private Date latestObservationDate = new Date(0);
+    protected Pair<String, Circle> observationAccuracyCircle = null;
 
     private boolean visible = true;
 
@@ -75,6 +84,10 @@ public class ObservationMarkerCollection implements PointCollection<Observation>
 
         this.visible = visible;
         mapObservations.setVisible(visible);
+
+        if (observationAccuracyCircle != null) {
+            observationAccuracyCircle.second.setVisible(visible);
+        }
     }
 
     @Override
@@ -85,6 +98,11 @@ public class ObservationMarkerCollection implements PointCollection<Observation>
     @Override
     public void remove(Observation o) {
         mapObservations.remove(o.getId());
+
+        if (observationAccuracyCircle != null && observationAccuracyCircle.second.getId().equals(o.getRemoteId())) {
+            observationAccuracyCircle.second.remove();
+            observationAccuracyCircle = null;
+        }
     }
 
     @Override
@@ -94,6 +112,31 @@ public class ObservationMarkerCollection implements PointCollection<Observation>
 
         Observation observation = mapObservations.getMarkerObservation(marker.getId());
         if (observation != null) {
+            final Geometry g = observation.getGeometry();
+            if (g != null) {
+                Point point = GeometryUtils.getCentroid(g);
+                LatLng latLng = new LatLng(point.getY(), point.getX());
+                Float accuracy = observation.getAccuracy();
+                if (accuracy != null) {
+                    try {
+                        if (observationAccuracyCircle != null) {
+                            observationAccuracyCircle.second.remove();
+                        }
+
+                        Circle circle = map.addCircle(new CircleOptions()
+                            .center(latLng)
+                            .radius(accuracy)
+                            .fillColor(context.getResources().getColor(R.color.accuracy_circle_fill))
+                            .strokeColor(context.getResources().getColor(R.color.accuracy_circle_stroke))
+                            .strokeWidth(2.0f));
+
+                        observationAccuracyCircle = new Pair<>(observation.getRemoteId(), circle);
+                    } catch (NumberFormatException nfe) {
+                        Log.e(LOG_NAME, "Problem adding accuracy circle to the map.", nfe);
+                    }
+                }
+            }
+
             map.setInfoWindowAdapter(infoWindowAdapter);
             marker.showInfoWindow();
             handled = true;
@@ -148,12 +191,22 @@ public class ObservationMarkerCollection implements PointCollection<Observation>
     @Override
     public void offMarkerClick(){
         mapObservations.clearShapeMarker();
+
+        if (observationAccuracyCircle != null) {
+            observationAccuracyCircle.second.remove();
+            observationAccuracyCircle = null;
+        }
     }
 
     @Override
     public void clear() {
         mapObservations.clear();
         latestObservationDate = new Date(0);
+
+        if (observationAccuracyCircle != null) {
+            observationAccuracyCircle.second.remove();
+            observationAccuracyCircle = null;
+        }
     }
 
     @Override

@@ -6,6 +6,7 @@ Adheres to [Semantic Versioning](http://semver.org/).
 ## 6.2.10 (TBD)
 
 ##### Features
+* Show observation accuracy if available.  Shown on map as accuracy circle and in observation view as text.
 
 ##### Bug Fixes
 

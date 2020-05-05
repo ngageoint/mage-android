@@ -98,7 +98,6 @@ import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.exceptions.ObservationException;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
-import mil.nga.sf.Geometry;
 
 public class ObservationEditActivity extends AppCompatActivity implements OnMapReadyCallback, OnCameraIdleListener {
 
@@ -295,15 +294,7 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 			// this is an edit of an existing observation
 			attachmentGallery.addAttachments(attachmentLayout, observation.getAttachments());
 
-			Geometry geometry = observation.getGeometry();
-			String provider = observation.getProvider() != null ? observation.getProvider() : ObservationLocation.MANUAL_PROVIDER;
-			ObservationLocation location = new ObservationLocation(provider, geometry);
-
-			Float accuracy = observation.getAccuracy();
-			if (accuracy != null) {
-				location.setAccuracy(accuracy);
-			}
-
+			ObservationLocation location = new ObservationLocation(observation);
 			model.getLocation().getValue().setValue(location);
 			model.getTimestamp().getValue().setValue(observation.getTimestamp());
 		}
@@ -391,23 +382,16 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 
 		float zoom = getIntent().getFloatExtra(INITIAL_ZOOM, 0);
 		map.moveCamera(CameraUpdateFactory.newLatLngZoom(initialLatLng, zoom));
-		map.animateCamera(location.getCameraUpdate(mapFragment.getView()));
 		map.getUiSettings().setMapToolbarEnabled(false);
-
-		map.animateCamera(location.getCameraUpdate(mapFragment.getView()));
+		map.animateCamera(location.getCameraUpdate(mapFragment.getView(), true, 1.0f/6));
 
 		if (accuracyCircle != null) {
 			accuracyCircle.remove();
 		}
 
-		if (location.getAccuracy() > 0) {
-			CircleOptions circleOptions = new CircleOptions()
-					.fillColor(getResources().getColor(R.color.accuracy_circle_fill))
-					.strokeColor(getResources().getColor(R.color.accuracy_circle_stroke))
-					.strokeWidth(5)
-					.center(location.getCentroidLatLng())
-					.radius(location.getAccuracy());
-			accuracyCircle = map.addCircle(circleOptions);
+		CircleOptions circle = location.getAccuracyCircle(getResources());
+		if (circle != null) {
+			accuracyCircle = map.addCircle(circle);
 		}
 
 		if (mapObservation != null) {

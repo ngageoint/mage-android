@@ -1,5 +1,7 @@
 package mil.nga.giat.mage.observation;
 
+import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -33,11 +35,12 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.GoogleMap.OnCameraIdleListener;
 import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MapStyleOptions;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
-import com.google.common.base.Function;
+import com.google.android.material.snackbar.Snackbar;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Collections2;
 import com.google.gson.JsonElement;
@@ -100,6 +103,7 @@ public class ObservationViewActivity extends AppCompatActivity implements OnMapR
 	private MapObservationManager mapObservationManager;
 	private IconTask iconTask;
 
+	CoordinateView locationTextView;
 	ImageView favoriteIcon;
 
 	@Override
@@ -141,6 +145,11 @@ public class ObservationViewActivity extends AppCompatActivity implements OnMapR
 		} catch (Exception e) {
 			Log.e(LOG_NAME, "Cannot read current user", e);
 		}
+
+		locationTextView = findViewById(R.id.location);
+		findViewById(R.id.location_layout).setOnClickListener(view -> {
+			onLocationClick();
+		});
 
 		favoriteIcon = findViewById(R.id.favorite_icon);
 		favoriteIcon.setOnClickListener(v -> toggleFavorite(o));
@@ -306,16 +315,13 @@ public class ObservationViewActivity extends AppCompatActivity implements OnMapR
             TextView timestamp = findViewById(R.id.time);
             timestamp.setText(dateFormat.format(o.getTimestamp()));
 
-            // TODO add location info
 			Geometry geometry = o.getGeometry();
 			ObservationLocation location = new ObservationLocation(geometry);
-			CoordinateView locationTextView = findViewById(R.id.location);
 			LatLng latLng = location.getCentroidLatLng();
 			locationTextView.setLatLng(latLng);
 
-            String provider = o.getProvider();
-            if (provider != null) {
-                ((TextView) findViewById(R.id.location_provider)).setText(provider.toUpperCase());
+            if (location.getProvider() != null && !location.isManualProvider()) {
+                ((TextView) findViewById(R.id.location_provider)).setText(location.getProvider().toUpperCase());
             } else {
                 findViewById(R.id.location_provider).setVisibility(View.GONE);
             }
@@ -385,8 +391,7 @@ public class ObservationViewActivity extends AppCompatActivity implements OnMapR
 			return;
 		}
 
-		Geometry geometry = o.getGeometry();
-		ObservationLocation location = new ObservationLocation(geometry);
+		ObservationLocation location = new ObservationLocation(o);
 
 		SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
 		map.getUiSettings().setZoomControlsEnabled(false);
@@ -404,12 +409,17 @@ public class ObservationViewActivity extends AppCompatActivity implements OnMapR
 			if (initialLatLng == null) {
 				initialLatLng = new LatLng(0, 0);
 			}
-			map.moveCamera(CameraUpdateFactory.newLatLngZoom(initialLatLng, 15));
 
-			map.animateCamera(location.getCameraUpdate(mapFragment.getView(), 15));
+			map.moveCamera(CameraUpdateFactory.newLatLngZoom(initialLatLng, 15));
+			map.animateCamera(location.getCameraUpdate(mapFragment.getView(), true, 1.0f/6));
 		} else {
 			mapObservation.remove();
-			map.moveCamera(location.getCameraUpdate(mapFragment.getView(), (int)map.getCameraPosition().zoom));
+			map.moveCamera(location.getCameraUpdate(mapFragment.getView(),true, 1.0f/6));
+		}
+
+		CircleOptions circle = location.getAccuracyCircle(getResources());
+		if (circle != null) {
+			map.addCircle(circle);
 		}
 
 		mapObservation = mapObservationManager.addToMap(o);
@@ -625,6 +635,16 @@ public class ObservationViewActivity extends AppCompatActivity implements OnMapR
 			favoriteIcon.setImageDrawable(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_favorite_border_white_24dp));
 			favoriteIcon.setColorFilter(ContextCompat.getColor(getApplicationContext(), R.color.observation_favorite_inactive));
 		}
+	}
+
+	private void onLocationClick() {
+		String location = locationTextView.getText().toString();
+		ClipboardManager clipboard = (ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
+		ClipData clip = ClipData.newPlainText("Observation Location", location);
+		if (clipboard == null || clip == null) return;
+		clipboard.setPrimaryClip(clip);
+
+		Snackbar.make(findViewById(R.id.coordinator_layout), R.string.location_text_copy_message, Snackbar.LENGTH_SHORT).show();
 	}
 
 	private void share(final Observation observation) {

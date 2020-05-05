@@ -2,6 +2,7 @@
 <androidx.coordinatorlayout.widget.CoordinatorLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/coordinator_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/background_card"
@@ -182,59 +183,55 @@
                         android:layout_marginTop="16dp"/>
 
                     <LinearLayout
+                        android:id="@+id/location_layout"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        android:clickable="true">
+                        android:orientation="horizontal"
+                        android:paddingTop="16dp"
+                        android:paddingBottom="16dp"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:background="?attr/selectableItemBackground">
 
-                        <LinearLayout
-                            android:layout_width="match_parent"
+                        <ImageView
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:layout_marginStart="16dp"
+                            android:layout_marginEnd="16dp"
+                            android:src="@drawable/ic_my_location_white_24dp"
+                            android:tint="@color/primary_icon">
+                        </ImageView>
+
+                        <mil.nga.giat.mage.widget.CoordinateView
+                            android:id="@+id/location"
+                            android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="16dp"
-                            android:layout_marginBottom="16dp"
-                            android:orientation="horizontal">
+                            android:layout_marginEnd="8dp"
+                            android:fontFamily="sans-serif"
+                            android:theme="@style/ListTextPrimary" />
 
-                            <ImageView
-                                android:layout_width="24dp"
-                                android:layout_height="24dp"
-                                android:layout_marginStart="16dp"
-                                android:layout_marginEnd="16dp"
-                                android:src="@drawable/ic_my_location_white_24dp"
-                                android:tint="@color/primary_icon">
-                            </ImageView>
+                        <TextView
+                            android:id="@+id/location_provider"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="4dp"
+                            android:theme="@style/ListTextSecondary"
+                            android:textSize="14sp"/>
 
-                            <mil.nga.giat.mage.widget.CoordinateView
-                                android:id="@+id/location"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginEnd="8dp"
-                                android:fontFamily="sans-serif"
-                                android:textIsSelectable="true"
-                                android:theme="@style/ListTextPrimary" />
-
-                            <TextView
-                                android:id="@+id/location_provider"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginEnd="4dp"
-                                android:theme="@style/ListTextSecondary"
-                                android:textSize="14sp"/>
-
-                            <TextView
-                                android:id="@+id/location_accuracy"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:theme="@style/ListTextSecondary"
-                                android:textSize="14sp"/>
+                        <TextView
+                            android:id="@+id/location_accuracy"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:theme="@style/ListTextSecondary"
+                            android:textSize="14sp"/>
 
                         </LinearLayout>
 
-                        <View
-                            android:layout_width="match_parent"
-                            android:layout_height="1dp"
-                            android:background="#DDDDDD"/>
 
-                    </LinearLayout>
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="#DDDDDD"/>
 
                     <RelativeLayout
                         android:layout_width="match_parent"

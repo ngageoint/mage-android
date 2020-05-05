@@ -142,7 +142,12 @@ public class LocationMarkerCollection implements PointCollection<Pair<Location, 
 					if (clickedAccuracyCircle != null) {
 						clickedAccuracyCircle.remove();
 					}
-					clickedAccuracyCircle = map.addCircle(new CircleOptions().center(latLng).radius(accuracy).fillColor(0x1D43b0ff).strokeColor(0x620069cc).strokeWidth(1.0f));
+					clickedAccuracyCircle = map.addCircle(new CircleOptions()
+							.center(latLng)
+							.radius(accuracy)
+							.fillColor(context.getResources().getColor(R.color.accuracy_circle_fill))
+							.strokeColor(context.getResources().getColor(R.color.accuracy_circle_stroke))
+							.strokeWidth(2.0f));
 					clickedAccuracyCircleUserId = user.getId();
 				} catch (NumberFormatException nfe) {
 					Log.e(LOG_NAME, "Problem adding accuracy circle to the map.", nfe);
