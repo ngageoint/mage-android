@@ -40,6 +40,7 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SearchView;
 import androidx.core.content.ContextCompat;
+import androidx.lifecycle.LiveData;
 import androidx.lifecycle.Observer;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -110,7 +111,7 @@ import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.filter.DateTimeFilter;
 import mil.nga.giat.mage.filter.Filter;
 import mil.nga.giat.mage.filter.FilterActivity;
-import mil.nga.giat.mage.location.LocationProvider;
+import mil.nga.giat.mage.location.LocationPolicy;
 import mil.nga.giat.mage.map.cache.CacheOverlay;
 import mil.nga.giat.mage.map.cache.CacheOverlayFilter;
 import mil.nga.giat.mage.map.cache.CacheOverlayType;
@@ -172,7 +173,6 @@ public class MapFragment extends DaggerFragment implements OnMapReadyCallback, O
 
 	private static final int MARKER_REFRESH_INTERVAL_SECONDS = 300;
 	private static final int OBSERVATION_REFRESH_INTERVAL_SECONDS = 60;
-	private static final int LOCATION_STALE_INTERVAL = 1000 * 60 * 2;
 
 	private enum LocateState {
 		OFF,
@@ -195,14 +195,14 @@ public class MapFragment extends DaggerFragment implements OnMapReadyCallback, O
 	private GoogleMap map;
 	private View searchLayout;
 	private SearchView searchView;
-	private Location location;
 	private LocateState locateState = LocateState.OFF;
 	protected User currentUser = null;
 	private long currentEventId = -1;
 	private OnLocationChangedListener locationChangedListener;
 
 	@Inject
-	protected LocationProvider locationProvider;
+	protected LocationPolicy locationPolicy;
+	private LiveData<Location> locationProvider;
 
 	private RefreshMarkersRunnable refreshObservationsTask;
 	private RefreshMarkersRunnable refreshLocationsTask;
@@ -248,31 +248,16 @@ public class MapFragment extends DaggerFragment implements OnMapReadyCallback, O
 		zoomToLocationButton = view.findViewById(R.id.zoom_button);
 
 		compassButton = view.findViewById(R.id.compass_button);
-		compassButton.setOnClickListener(new OnClickListener() {
-			@Override
-			public void onClick(View v) {
-				resetMapBearing();
-			}
-		});
+		compassButton.setOnClickListener(v -> resetMapBearing());
 
 		searchButton = view.findViewById(R.id.map_search_button);
 		if (Geocoder.isPresent()) {
-			searchButton.setOnClickListener(new OnClickListener() {
-				@Override
-				public void onClick(View v) {
-					search();
-				}
-			});
+			searchButton.setOnClickListener(v -> search());
 		} else {
 			searchButton.hide();
 		}
 
-		view.findViewById(R.id.new_observation_button).setOnClickListener(new OnClickListener() {
-			@Override
-			public void onClick(View v) {
-				onNewObservation();
-			}
-		});
+		view.findViewById(R.id.new_observation_button).setOnClickListener(v -> onNewObservation());
 
 		searchLayout = view.findViewById(R.id.search_layout);
 		searchView = view.findViewById(R.id.search_view);
@@ -302,29 +287,25 @@ public class MapFragment extends DaggerFragment implements OnMapReadyCallback, O
 		GeoPackageManager geoPackageManager = GeoPackageFactory.getManager(getActivity().getApplicationContext());
 		geoPackageCache = new GeoPackageCache(geoPackageManager);
 
+		locationProvider = locationPolicy.getBestLocationProvider();
+
 		return view;
 	}
 
 	@Override
 	public void onChanged(@Nullable Location location) {
-		Log.i(LOG_NAME, "Got a location");
+		if (locationChangedListener != null) {
+			locationChangedListener.onLocationChanged(location);
+		}
 
-		if (isBetterLocation(location, this.location)) {
-			this.location = location;
+		if (locateState == LocateState.FOLLOW) {
+			CameraPosition cameraPosition = new CameraPosition.Builder()
+				.target(new LatLng(location.getLatitude(), location.getLongitude()))
+				.zoom(17)
+				.bearing(location.getBearing())
+				.build();
 
-			if (locationChangedListener != null) {
-				locationChangedListener.onLocationChanged(location);
-			}
-
-			if (locateState == LocateState.FOLLOW) {
-				CameraPosition cameraPosition = new CameraPosition.Builder()
-						.target(new LatLng(location.getLatitude(), location.getLongitude()))
-						.zoom(17)
-						.bearing(location.getBearing())
-						.build();
-
-				map.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
-			}
+			map.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
 		}
 	}
 
@@ -434,32 +415,29 @@ public class MapFragment extends DaggerFragment implements OnMapReadyCallback, O
 		UserHelper.getInstance(context).addListener(this);
 		CacheProvider.getInstance(context).registerCacheOverlayListener(this);
 
-		zoomToLocationButton.setOnClickListener(new OnClickListener() {
-			@Override
-			public void onClick(View v) {
-				locateState = locateState.next();
+		zoomToLocationButton.setOnClickListener(v -> {
+			locateState = locateState.next();
 
-				switch (locateState) {
-					case OFF:
-						zoomToLocationButton.setSelected(false);
-						resetMapBearing();
-						break;
-					case FOLLOW:
-						zoomToLocationButton.setSelected(true);
+			switch (locateState) {
+				case OFF:
+					zoomToLocationButton.setSelected(false);
+					resetMapBearing();
+					break;
+				case FOLLOW:
+					zoomToLocationButton.setSelected(true);
 
-                        Location location = locationProvider.getValue();
-						if (location != null) {
-							CameraPosition cameraPosition = new CameraPosition.Builder()
-									.target(new LatLng(location.getLatitude(), location.getLongitude()))
-									.zoom(17)
-									.bearing(45)
-									.build();
+					Location location = locationProvider.getValue();
+					if (location != null) {
+						CameraPosition cameraPosition = new CameraPosition.Builder()
+								.target(new LatLng(location.getLatitude(), location.getLongitude()))
+								.zoom(17)
+								.bearing(45)
+								.build();
 
-							map.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
-						}
+						map.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
+					}
 
-						break;
-				}
+					break;
 			}
 		});
 
@@ -508,53 +486,6 @@ public class MapFragment extends DaggerFragment implements OnMapReadyCallback, O
 				.build();
 
 		map.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
-	}
-
-	private boolean isBetterLocation(Location location, Location currentBestLocation) {
-
-		if (currentBestLocation == null) {
-			// A new location is always better than no location
-			return true;
-		}
-
-		// Check whether the new location fix is newer or older
-		long timeDelta = location.getTime() - currentBestLocation.getTime();
-		boolean isSignificantlyNewer = timeDelta > LOCATION_STALE_INTERVAL;
-		boolean isSignificantlyOlder = timeDelta < - LOCATION_STALE_INTERVAL;
-		boolean isNewer = timeDelta > 0;
-
-		// If it's been more than two minutes since the current location, use the new location because the user has likely moved
-		if (isSignificantlyNewer) {
-			return true;
-			// If the new location is more than two minutes older, it must be worse
-		} else if (isSignificantlyOlder) {
-			return false;
-		}
-
-		// Check whether the new location fix is more or less accurate
-		int accuracyDelta = (int) (location.getAccuracy() - currentBestLocation.getAccuracy());
-		boolean isLessAccurate = accuracyDelta > 0;
-		boolean isMoreAccurate = accuracyDelta < 0;
-		boolean isSignificantlyLessAccurate = accuracyDelta > 200;
-
-		// Determine location quality using a combination of timeliness and accuracy
-		if (isMoreAccurate) {
-			return true;
-		} else if (isNewer && !isLessAccurate) {
-			return true;
-		} else if (isNewer && !isSignificantlyLessAccurate && isSameGPSProvider(location.getProvider(), currentBestLocation.getProvider())) {
-			return true;
-		}
-
-		return false;
-	}
-
-	private boolean isSameGPSProvider(String provider1, String provider2) {
-		if (provider1 == null) {
-			return provider2 == null;
-		}
-
-		return provider1.equals(provider2);
 	}
 
 	private void initializePeriodicTasks() {
@@ -706,9 +637,9 @@ public class MapFragment extends DaggerFragment implements OnMapReadyCallback, O
 
 		// if there is not a location from the location service, then try to pull one from the database.
 		if (locationProvider.getValue() == null) {
-			List<mil.nga.giat.mage.sdk.datastore.location.Location> tLocations = LocationHelper.getInstance(getActivity().getApplicationContext()).getCurrentUserLocations(1, true);
-			if (!tLocations.isEmpty()) {
-				mil.nga.giat.mage.sdk.datastore.location.Location tLocation = tLocations.get(0);
+			List<mil.nga.giat.mage.sdk.datastore.location.Location> locations = LocationHelper.getInstance(getActivity().getApplicationContext()).getCurrentUserLocations(1, true);
+			if (!locations.isEmpty()) {
+				mil.nga.giat.mage.sdk.datastore.location.Location tLocation = locations.get(0);
 				Geometry geo = tLocation.getGeometry();
 				Map<String, LocationProperty> propertiesMap = tLocation.getPropertiesMap();
 				String provider = ObservationLocation.MANUAL_PROVIDER;
@@ -849,15 +780,12 @@ public class MapFragment extends DaggerFragment implements OnMapReadyCallback, O
 
 	@Override
 	public void onUserIconUpdated(final User user) {
-		new Handler(Looper.getMainLooper()).post(new Runnable() {
-			@Override
-			public void run() {
-				if (locations == null) {
-					return;
-				}
-
-				locations.refresh(new Pair(new mil.nga.giat.mage.sdk.datastore.location.Location(), user));
+		new Handler(Looper.getMainLooper()).post(() -> {
+			if (locations == null) {
+				return;
 			}
+
+			locations.refresh(new Pair(new mil.nga.giat.mage.sdk.datastore.location.Location(), user));
 		});
 	}
 
@@ -921,7 +849,7 @@ public class MapFragment extends DaggerFragment implements OnMapReadyCallback, O
 		// static layer
 		if(marker.getSnippet() != null) {
 			View markerInfoWindow = LayoutInflater.from(getActivity()).inflate(R.layout.static_feature_infowindow, null, false);
-			WebView webView = ((WebView) markerInfoWindow.findViewById(R.id.static_feature_infowindow_content));
+			WebView webView = markerInfoWindow.findViewById(R.id.static_feature_infowindow_content);
 			webView.loadData(marker.getSnippet(), "text/html; charset=UTF-8", null);
 			new AlertDialog.Builder(getActivity())
 				.setView(markerInfoWindow)
@@ -1026,6 +954,7 @@ public class MapFragment extends DaggerFragment implements OnMapReadyCallback, O
 		Log.i(LOG_NAME, "map location, activate");
 
 		locationChangedListener = listener;
+		Location location = locationProvider.getValue();
 		if (location != null) {
 			Log.i(LOG_NAME, "map location, activate we have a location, let our listener know");
 			locationChangedListener.onLocationChanged(location);

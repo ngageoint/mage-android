@@ -12,6 +12,7 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.graphics.ColorUtils;
 
 import com.bumptech.glide.request.target.CustomViewTarget;
 import com.bumptech.glide.request.target.Target;
@@ -138,15 +139,17 @@ public class LocationMarkerCollection implements PointCollection<Pair<Location, 
 			LocationProperty accuracyProperty = location.getPropertiesMap().get("accuracy");
 			if (accuracyProperty != null && !accuracyProperty.getValue().toString().trim().isEmpty()) {
 				try {
-					Float accuracy = Float.valueOf(accuracyProperty.getValue().toString());
+					float accuracy = Float.parseFloat(accuracyProperty.getValue().toString());
 					if (clickedAccuracyCircle != null) {
 						clickedAccuracyCircle.remove();
 					}
+
+					int color = LocationBitmapFactory.locationColor(context, location);
 					clickedAccuracyCircle = map.addCircle(new CircleOptions()
 							.center(latLng)
 							.radius(accuracy)
-							.fillColor(context.getResources().getColor(R.color.accuracy_circle_fill))
-							.strokeColor(context.getResources().getColor(R.color.accuracy_circle_stroke))
+							.fillColor(ColorUtils.setAlphaComponent(color, (int) (256 * .20)))
+							.strokeColor(ColorUtils.setAlphaComponent(color, (int) (256 * .87)))
 							.strokeWidth(2.0f));
 					clickedAccuracyCircleUserId = user.getId();
 				} catch (NumberFormatException nfe) {

@@ -20,6 +20,17 @@ fun geometryHint(view: TextInputLayout, value: String) {
     view.hint = "${value} (${if (coordinateSystem == CoordinateSystem.WGS84) "Lat, Lng" else "MGRS"})"
 }
 
+@BindingAdapter("geometryHelperText")
+fun geometryHelper(view: TextInputLayout, location: ObservationLocation?) {
+    if (location?.isManualProvider == true) return;
+
+    location?.accuracy?.let { accuracy ->
+        val provider = if ("gps".equals(location.provider) == true) "GPS" else location.provider?.capitalize();
+        view.helperText = "$provider Location Accuracy +/- ${"%.2f".format(accuracy)}m"
+    }
+}
+
+
 @BindingAdapter("geometryText")
 fun geometryText(view: TextView, value: ObservationLocation?) {
     if (value == null) {

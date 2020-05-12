@@ -25,6 +25,7 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
+import androidx.lifecycle.LiveData;
 import androidx.lifecycle.Observer;
 import androidx.recyclerview.widget.DefaultItemAnimator;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -59,7 +60,7 @@ import javax.inject.Inject;
 import dagger.android.support.DaggerFragment;
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.filter.ObservationFilterActivity;
-import mil.nga.giat.mage.location.LocationProvider;
+import mil.nga.giat.mage.location.LocationPolicy;
 import mil.nga.giat.mage.observation.AttachmentGallery;
 import mil.nga.giat.mage.observation.AttachmentViewerActivity;
 import mil.nga.giat.mage.observation.ImportantDialog;
@@ -111,7 +112,8 @@ public class ObservationFeedFragment extends DaggerFragment implements IObservat
 	protected SharedPreferences preferences;
 
 	@Inject
-	protected LocationProvider locationProvider;
+	protected LocationPolicy locationPolicy;
+	private LiveData<Location> locationProvider;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -122,6 +124,8 @@ public class ObservationFeedFragment extends DaggerFragment implements IObservat
 		} catch (UserException e) {
 			Log.e(LOG_NAME, "Error reading current user", e);
 		}
+
+		locationProvider = locationPolicy.getBestLocationProvider();
 	}
 
 	@Override
@@ -259,7 +263,7 @@ public class ObservationFeedFragment extends DaggerFragment implements IObservat
 					.setMessage(getActivity().getResources().getString(R.string.location_no_event_message))
 					.setPositiveButton(android.R.string.ok, null)
 					.show();
-		} else if(location != null) {
+		} else if (location != null) {
 			Intent intent;
 
 			// show form picker or go to
@@ -304,9 +308,9 @@ public class ObservationFeedFragment extends DaggerFragment implements IObservat
 
 		// if there is not a location from the location service, then try to pull one from the database.
 		if (locationProvider.getValue() == null) {
-			List<mil.nga.giat.mage.sdk.datastore.location.Location> tLocations = LocationHelper.getInstance(context).getCurrentUserLocations(1, true);
-			if (!tLocations.isEmpty()) {
-				mil.nga.giat.mage.sdk.datastore.location.Location tLocation = tLocations.get(0);
+			List<mil.nga.giat.mage.sdk.datastore.location.Location> locations = LocationHelper.getInstance(context).getCurrentUserLocations(1, true);
+			if (!locations.isEmpty()) {
+				mil.nga.giat.mage.sdk.datastore.location.Location tLocation = locations.get(0);
 				Geometry geo = tLocation.getGeometry();
 				Map<String, LocationProperty> propertiesMap = tLocation.getPropertiesMap();
 				String provider = ObservationLocation.MANUAL_PROVIDER;
@@ -466,15 +470,12 @@ public class ObservationFeedFragment extends DaggerFragment implements IObservat
 
 	@Override
 	public void onObservationCreated(final Collection<Observation> observations, Boolean sendUserNotifcations) {
-		getActivity().runOnUiThread(new Runnable() {
-			@Override
-			public void run() {
-				try {
-					query = buildQuery(oDao, getTimeFilterId());
-					adapter.setCursor(obtainCursor(query, oDao), query);
-				} catch (Exception e) {
-					Log.e(LOG_NAME, "Unable to change cursor", e);
-				}
+		getActivity().runOnUiThread(() -> {
+			try {
+				query = buildQuery(oDao, getTimeFilterId());
+				adapter.setCursor(obtainCursor(query, oDao), query);
+			} catch (Exception e) {
+				Log.e(LOG_NAME, "Unable to change cursor", e);
 			}
 		});
 
@@ -482,44 +483,35 @@ public class ObservationFeedFragment extends DaggerFragment implements IObservat
 
 	@Override
 	public void onObservationDeleted(final Observation observation) {
-		getActivity().runOnUiThread(new Runnable() {
-			@Override
-			public void run() {
-				try {
-					query = buildQuery(oDao, getTimeFilterId());
-					adapter.setCursor(obtainCursor(query, oDao), query);
-				} catch (Exception e) {
-					Log.e(LOG_NAME, "Unable to change cursor", e);
-				}
+		getActivity().runOnUiThread(() -> {
+			try {
+				query = buildQuery(oDao, getTimeFilterId());
+				adapter.setCursor(obtainCursor(query, oDao), query);
+			} catch (Exception e) {
+				Log.e(LOG_NAME, "Unable to change cursor", e);
 			}
 		});
 	}
 
 	@Override
 	public void onObservationUpdated(final Observation observation) {
-		getActivity().runOnUiThread(new Runnable() {
-			@Override
-			public void run() {
-				try {
-					query = buildQuery(oDao, getTimeFilterId());
-					adapter.setCursor(obtainCursor(query, oDao), query);
-				} catch (Exception e) {
-					Log.e(LOG_NAME, "Unable to change cursor", e);
-				}
+		getActivity().runOnUiThread(() -> {
+			try {
+				query = buildQuery(oDao, getTimeFilterId());
+				adapter.setCursor(obtainCursor(query, oDao), query);
+			} catch (Exception e) {
+				Log.e(LOG_NAME, "Unable to change cursor", e);
 			}
 		});
 	}
 
 	private void updateFilter() {
-		getActivity().runOnUiThread(new Runnable() {
-			@Override
-			public void run() {
-				try {
-					query = buildQuery(oDao, getTimeFilterId());
-					adapter.setCursor(obtainCursor(query, oDao), query);
-				} catch (Exception e) {
-					Log.e(LOG_NAME, "Unable to change cursor", e);
-				}
+		getActivity().runOnUiThread(() -> {
+			try {
+				query = buildQuery(oDao, getTimeFilterId());
+				adapter.setCursor(obtainCursor(query, oDao), query);
+			} catch (Exception e) {
+				Log.e(LOG_NAME, "Unable to change cursor", e);
 			}
 		});
 	}

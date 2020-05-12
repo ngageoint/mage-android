@@ -79,7 +79,6 @@ import mil.nga.giat.mage.sdk.exceptions.ObservationException;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
 import mil.nga.giat.mage.utils.DateFormatFactory;
 import mil.nga.giat.mage.widget.CoordinateView;
-import mil.nga.sf.Geometry;
 
 public class ObservationViewActivity extends AppCompatActivity implements OnMapReadyCallback, OnCameraIdleListener {
 
@@ -315,8 +314,7 @@ public class ObservationViewActivity extends AppCompatActivity implements OnMapR
             TextView timestamp = findViewById(R.id.time);
             timestamp.setText(dateFormat.format(o.getTimestamp()));
 
-			Geometry geometry = o.getGeometry();
-			ObservationLocation location = new ObservationLocation(geometry);
+			ObservationLocation location = new ObservationLocation(o);
 			LatLng latLng = location.getCentroidLatLng();
 			locationTextView.setLatLng(latLng);
 
@@ -328,7 +326,7 @@ public class ObservationViewActivity extends AppCompatActivity implements OnMapR
 
             Float accuracy = o.getAccuracy();
             if (accuracy != null && accuracy > 0) {
-                ((TextView) findViewById(R.id.location_accuracy)).setText("\u00B1 " + accuracy + "m");
+				((TextView) findViewById(R.id.location_accuracy)).setText(String.format(" \u00B1 %.2fm", accuracy));
             } else {
                 findViewById(R.id.location_accuracy).setVisibility(View.GONE);
             }

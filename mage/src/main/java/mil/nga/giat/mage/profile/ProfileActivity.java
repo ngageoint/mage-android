@@ -33,6 +33,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
+import androidx.core.graphics.ColorUtils;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -40,7 +41,9 @@ import com.google.android.gms.maps.MapView;
 import com.google.android.gms.maps.MapsInitializer;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.model.BitmapDescriptor;
+import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.MapStyleOptions;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
@@ -60,13 +63,13 @@ import dagger.android.support.DaggerAppCompatActivity;
 import mil.nga.giat.mage.BuildConfig;
 import mil.nga.giat.mage.MageApplication;
 import mil.nga.giat.mage.R;
-import mil.nga.giat.mage.coordinate.CoordinateFormatter;
 import mil.nga.giat.mage.glide.GlideApp;
 import mil.nga.giat.mage.glide.model.Avatar;
 import mil.nga.giat.mage.login.LoginActivity;
 import mil.nga.giat.mage.map.marker.LocationBitmapFactory;
 import mil.nga.giat.mage.sdk.datastore.location.Location;
 import mil.nga.giat.mage.sdk.datastore.location.LocationHelper;
+import mil.nga.giat.mage.sdk.datastore.location.LocationProperty;
 import mil.nga.giat.mage.sdk.datastore.user.Event;
 import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
 import mil.nga.giat.mage.sdk.datastore.user.User;
@@ -74,6 +77,7 @@ import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
 import mil.nga.giat.mage.sdk.profile.UpdateProfileTask;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
+import mil.nga.giat.mage.widget.CoordinateView;
 import mil.nga.sf.Point;
 import mil.nga.sf.util.GeometryUtils;
 
@@ -193,20 +197,24 @@ public class ProfileActivity extends DaggerAppCompatActivity implements OnMapRea
 		}
 
 		View locationLayout = findViewById(R.id.location_layout);
-		locationLayout.setOnLongClickListener(new View.OnLongClickListener() {
-			@Override
-			public boolean onLongClick(View v) {
-				onLocationLongCLick(v);
-				return true;
-			}
+		locationLayout.setOnLongClickListener(v -> {
+			onLocationLongCLick(v);
+			return true;
 		});
 		if (location != null) {
-			CoordinateFormatter formatter = new CoordinateFormatter(getApplicationContext());
+			final CoordinateView coordinateView = findViewById(R.id.location);
 			Point point = GeometryUtils.getCentroid(location.getGeometry());
-			coordinate = formatter.format(new LatLng(point.getY(), point.getX()));
-			final TextView coordinateView = (TextView) findViewById(R.id.location);
-			coordinateView.setText(coordinate);
+			coordinateView.setLatLng(new LatLng(point.getY(), point.getX()));
 			locationLayout.setVisibility(View.VISIBLE);
+			coordinate = coordinateView.getText().toString();
+
+			LocationProperty accuracyProperty = location.getPropertiesMap().get("accuracy");
+			if (accuracyProperty != null) {
+				float accuracy = Float.parseFloat(accuracyProperty.getValue().toString());
+				final TextView accuracyView = findViewById(R.id.location_accuracy);
+				accuracyView.setText(String.format("GPS \u00B1 %.2f", accuracy));
+			}
+
 		} else {
 			locationLayout.setVisibility(View.GONE);
 		}
@@ -222,52 +230,22 @@ public class ProfileActivity extends DaggerAppCompatActivity implements OnMapRea
 		avatarActionsDialog = new BottomSheetDialog(ProfileActivity.this);
 		final View avatarBottomSheetView = getLayoutInflater().inflate(R.layout.dialog_avatar_actions, null);
 		avatarActionsDialog.setContentView(avatarBottomSheetView);
-		findViewById(R.id.avatar).setOnClickListener(new View.OnClickListener() {
-			@Override
-			public void onClick(View v) {
-				onAvatarClick();
-			}
-		});
+		findViewById(R.id.avatar).setOnClickListener(v -> onAvatarClick());
 
-		avatarBottomSheetView.findViewById(R.id.view_avatar_layout).setOnClickListener(new View.OnClickListener() {
-			@Override
-			public void onClick(View v) {
-				viewAvatar();
-			}
-		});
+		avatarBottomSheetView.findViewById(R.id.view_avatar_layout).setOnClickListener(v -> viewAvatar());
 
-		avatarBottomSheetView.findViewById(R.id.gallery_avatar_layout).setOnClickListener(new View.OnClickListener() {
-			@Override
-			public void onClick(View v) {
-				updateAvatarFromGallery();
-			}
-		});
+		avatarBottomSheetView.findViewById(R.id.gallery_avatar_layout).setOnClickListener(v -> updateAvatarFromGallery());
 
-		avatarBottomSheetView.findViewById(R.id.camera_avatar_layout).setOnClickListener(new View.OnClickListener() {
-			@Override
-			public void onClick(View v) {
-				updateAvatarFromCamera();
-			}
-		});
+		avatarBottomSheetView.findViewById(R.id.camera_avatar_layout).setOnClickListener(v -> updateAvatarFromCamera());
 
 		if (isCurrentUser) {
 			profileActionDialog = new BottomSheetDialog(ProfileActivity.this);
 			View sheetView = getLayoutInflater().inflate(R.layout.fragment_profile_actions, null);
 			profileActionDialog.setContentView(sheetView);
 
-			sheetView.findViewById(R.id.change_password_layout).setOnClickListener(new View.OnClickListener() {
-				@Override
-				public void onClick(View v) {
-					changePassword();
-				}
-			});
+			sheetView.findViewById(R.id.change_password_layout).setOnClickListener(v -> changePassword());
 
-			sheetView.findViewById(R.id.logout_layout).setOnClickListener(new View.OnClickListener() {
-				@Override
-				public void onClick(View v) {
-					logout();
-				}
-			});
+			sheetView.findViewById(R.id.logout_layout).setOnClickListener(v -> logout());
 		}
 	}
 
@@ -484,10 +462,32 @@ public class ProfileActivity extends DaggerAppCompatActivity implements OnMapRea
 
 		if (latLng != null && icon != null) {
 			map.addMarker(new MarkerOptions()
-					.position(latLng)
-					.icon(icon));
+				.position(latLng)
+				.icon(icon));
 
-			map.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15));
+			LocationProperty accuracyProperty = location.getPropertiesMap().get("accuracy");
+			if (accuracyProperty != null) {
+				float accuracy = Float.parseFloat(accuracyProperty.getValue().toString());
+
+				int color = LocationBitmapFactory.locationColor(getApplicationContext(), location);
+				map.addCircle(new CircleOptions()
+					.center(latLng)
+					.radius(accuracy)
+					.fillColor(ColorUtils.setAlphaComponent(color, (int) (256 * .20)))
+					.strokeColor(ColorUtils.setAlphaComponent(color, (int) (256 * .87)))
+					.strokeWidth(2.0f));
+
+				double latitudePadding = (accuracy / 111325);
+				LatLngBounds bounds = new LatLngBounds(
+						new LatLng(latLng.latitude - latitudePadding, latLng.longitude),
+						new LatLng(latLng.latitude + latitudePadding, latLng.longitude));
+
+				int minDimension = Math.min(mapView.getWidth(), mapView.getHeight());
+				int padding = (int) Math.floor(minDimension / 5f);
+				map.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds, padding));
+			} else {
+				map.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 17));
+			}
 		}
 	}
 	
@@ -565,16 +565,13 @@ public class ProfileActivity extends DaggerAppCompatActivity implements OnMapRea
 
 		AlertDialog dialog = new AlertDialog.Builder(this)
 				.setCustomTitle(titleView)
-				.setItems(items, new DialogInterface.OnClickListener() {
-					@Override
-					public void onClick(DialogInterface dialog, int item) {
-						if (item == 0) {
-							onLocationClick(view);
-						} else {
-							ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
-							ClipData clip = ClipData.newPlainText("Location", coordinate);
-							clipboard.setPrimaryClip(clip);
-						}
+				.setItems(items, (dialog1, item) -> {
+					if (item == 0) {
+						onLocationClick(view);
+					} else {
+						ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+						ClipData clip = ClipData.newPlainText("Location", coordinate);
+						clipboard.setPrimaryClip(clip);
 					}
 				})
 				.create();
@@ -638,23 +635,19 @@ public class ProfileActivity extends DaggerAppCompatActivity implements OnMapRea
 		ImageView icon = titleView.findViewById(R.id.icon);
 		icon.setImageResource(R.drawable.ic_email_white_24dp);
 
-		AlertDialog dialog = new AlertDialog.Builder(this)
-				.setCustomTitle(titleView)
-				.setItems(items, new DialogInterface.OnClickListener() {
-					@Override
-					public void onClick(DialogInterface dialog, int item) {
-						if (item == 0) {
-							onEmailClick(view);
-						} else {
-							ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
-							ClipData clip = ClipData.newPlainText("Email", user.getEmail());
-							clipboard.setPrimaryClip(clip);
-						}
-					}
-				})
-				.create();
-
-		dialog.show();
+		new AlertDialog.Builder(this)
+		.setCustomTitle(titleView)
+			.setItems(items, (dialog, item) -> {
+				if (item == 0) {
+					onEmailClick(view);
+				} else {
+					ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+					ClipData clip = ClipData.newPlainText("Email", user.getEmail());
+					clipboard.setPrimaryClip(clip);
+				}
+			})
+			.create()
+			.show();
 	}
 
 	private List<Uri> getUris(Intent intent) {

@@ -60,7 +60,7 @@ public class HistoricLocationLoadTask extends AsyncTask<Void, Pair<MarkerOptions
 				LatLng latLng = new LatLng(point.getY(), point.getX());
 				MarkerOptions options = new MarkerOptions()
 						.position(latLng)
-						.icon(LocationBitmapFactory.dotBitmapDescriptor(context, location, currentUser))
+						.icon(LocationBitmapFactory.dotBitmapDescriptor(context, location))
 						.title("My Location")
 						.snippet(dateFormat.format(location.getTimestamp()));
 

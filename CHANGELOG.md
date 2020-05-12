@@ -7,6 +7,8 @@ Adheres to [Semantic Versioning](http://semver.org/).
 
 ##### Features
 * Show observation accuracy if available.  Shown on map as accuracy circle and in observation view as text.
+* Use algorithm to determine "best" device location based on provider, accuracy and time to determine
+  new observation location.
 
 ##### Bug Fixes
 

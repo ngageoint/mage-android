@@ -21,6 +21,10 @@
 
     <color name="divider">#19000000</color>
 
+    <color name="location_circle_fill_min">@color/md_blue_800</color>
+    <color name="location_circle_fill_intermediate">@color/md_yellow_600</color>
+    <color name="location_circle_fill_max">@color/md_orange_800</color>
+
     <color name="accuracy_circle_fill">#661E88E5</color>
     <color name="accuracy_circle_stroke">#DE1565C0</color>
 

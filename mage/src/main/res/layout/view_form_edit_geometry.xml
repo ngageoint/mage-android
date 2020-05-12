@@ -16,7 +16,8 @@
         app:errorTextAppearance="@style/AppTheme.ErrorTextAppearance"
         style="@style/AppTheme.TextInputLayout"
         android:theme="@style/AppTheme.TextInputLayout"
-        app:geometryHint="@{field.title}">
+        app:geometryHint="@{field.title}"
+        app:geometryHelperText="@{field.value}">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/editText"
