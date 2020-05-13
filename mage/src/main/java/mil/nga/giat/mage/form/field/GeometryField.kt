@@ -22,6 +22,8 @@ fun geometryHint(view: TextInputLayout, value: String) {
 
 @BindingAdapter("geometryHelperText")
 fun geometryHelper(view: TextInputLayout, location: ObservationLocation?) {
+    view.helperText = null
+
     if (location?.isManualProvider == true) return;
 
     location?.accuracy?.let { accuracy ->
