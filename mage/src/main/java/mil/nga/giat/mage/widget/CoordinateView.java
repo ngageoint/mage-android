@@ -1,14 +1,16 @@
 package mil.nga.giat.mage.widget;
 
 import android.content.Context;
-import android.support.annotation.Nullable;
 import android.util.AttributeSet;
+
+import androidx.annotation.Nullable;
+import androidx.appcompat.widget.AppCompatTextView;
 
 import com.google.android.gms.maps.model.LatLng;
 
 import mil.nga.giat.mage.coordinate.CoordinateFormatter;
 
-public class CoordinateView extends android.support.v7.widget.AppCompatTextView {
+public class CoordinateView extends AppCompatTextView {
 
     private CoordinateFormatter coordinateFormatter;
 

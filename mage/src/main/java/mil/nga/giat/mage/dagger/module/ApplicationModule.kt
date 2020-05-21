@@ -1,11 +1,10 @@
-package com.caci.kuato.di.module
+package mil.nga.giat.mage.dagger.module
 
 import android.content.Context
 import dagger.Binds
 import dagger.Module
 import dagger.android.support.AndroidSupportInjectionModule
 import mil.nga.giat.mage.MageApplication
-import mil.nga.giat.mage.dagger.module.ViewModelModule
 import javax.inject.Qualifier
 import javax.inject.Singleton
 
@@ -13,7 +12,7 @@ import javax.inject.Singleton
 @kotlin.annotation.Retention(AnnotationRetention.RUNTIME)
 annotation class ApplicationContext
 
-@Module(includes = arrayOf(AndroidSupportInjectionModule::class, ViewModelModule::class))
+@Module(includes = [AndroidSupportInjectionModule::class, ViewModelModule::class])
 abstract class ApplicationModule {
 
     @Singleton

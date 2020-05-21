@@ -1,23 +1,23 @@
 package mil.nga.giat.mage.form.field.dialog
 
-import android.arch.lifecycle.ViewModelProviders
 import android.os.Build
 import android.os.Bundle
-import android.support.design.widget.TabLayout
-import android.support.v4.app.DialogFragment
-import android.support.v4.app.Fragment
-import android.support.v4.app.FragmentManager
-import android.support.v4.app.FragmentPagerAdapter
-import android.support.v4.view.ViewPager
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.DatePicker
 import android.widget.TimePicker
+import androidx.fragment.app.DialogFragment
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.FragmentManager
+import androidx.fragment.app.FragmentPagerAdapter
+import androidx.lifecycle.ViewModelProviders
+import androidx.viewpager.widget.ViewPager
+import com.google.android.material.tabs.TabLayout
 import kotlinx.android.synthetic.main.date_time_dialog.view.*
 import mil.nga.giat.mage.R
-import mil.nga.giat.mage.form.FormViewModel
 import mil.nga.giat.mage.form.DateFormField
+import mil.nga.giat.mage.form.FormViewModel
 import mil.nga.giat.mage.utils.DateFormatFactory
 import java.text.DateFormat
 import java.util.*
@@ -258,7 +258,7 @@ class DateFieldDialog : DialogFragment() {
         }
     }
 
-    class DateTimePagerAdapter(fragmentManager: FragmentManager, internal var fragments: List<Fragment>) : FragmentPagerAdapter(fragmentManager) {
+    class DateTimePagerAdapter(fragmentManager: FragmentManager, internal var fragments: List<Fragment>) : FragmentPagerAdapter(fragmentManager, BEHAVIOR_RESUME_ONLY_CURRENT_FRAGMENT) {
         override fun getItem(position: Int): Fragment {
             return fragments[position]
         }

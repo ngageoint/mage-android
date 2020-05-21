@@ -9,6 +9,9 @@
     <string name="baseLayerKey">baseLayer</string>
     <integer name="baseLayerDefaultValue">1</integer>
 
+    <string name="showTrafficKey">showTraffic</string>
+    <bool name="showTrafficDefaultValue">false</bool>
+
     <string name="showMGRSKey">showMGRS</string>
     <bool name="showMGRSDefaultValue">false</bool>
 
@@ -34,6 +37,7 @@
     <!-- TODO : should the following go in pairs? -->
     <string name="clearDataKey">clearData</string>
     <string name="tileOverlaysKey">tileOverlays</string>
+    <string name="onlineLayersKey">onlineLayers</string>
 
     <string name="staticFeatureLayersKey">staticFeatureLayers</string>
 

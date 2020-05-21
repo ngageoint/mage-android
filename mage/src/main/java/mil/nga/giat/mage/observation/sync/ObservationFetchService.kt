@@ -5,9 +5,9 @@ import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.os.IBinder
-import com.caci.kuato.di.module.ApplicationContext
 import dagger.android.AndroidInjection
 import mil.nga.giat.mage.R
+import mil.nga.giat.mage.dagger.module.ApplicationContext
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.ScheduledFuture

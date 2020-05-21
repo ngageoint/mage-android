@@ -2,21 +2,20 @@ package mil.nga.giat.mage.event
 
 import android.content.Context
 import android.os.Bundle
-import android.support.v7.widget.DividerItemDecoration
-import android.support.v7.widget.DividerItemDecoration.VERTICAL
-import android.support.v7.widget.LinearLayoutManager
-import android.support.v7.widget.RecyclerView
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
-import com.caci.kuato.di.module.ApplicationContext
+import androidx.recyclerview.widget.DividerItemDecoration
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import dagger.android.support.DaggerAppCompatActivity
 import kotlinx.android.synthetic.main.activity_event.*
 import kotlinx.android.synthetic.main.recycler_form_list_item.view.*
 import mil.nga.giat.mage.MageApplication
 import mil.nga.giat.mage.R
+import mil.nga.giat.mage.dagger.module.ApplicationContext
 import mil.nga.giat.mage.form.Form
 import mil.nga.giat.mage.form.FormDefaultActivity
 import mil.nga.giat.mage.sdk.datastore.user.Event
@@ -32,7 +31,8 @@ class EventActivity : DaggerAppCompatActivity() {
         val EVENT_ID_EXTRA = "EVENT_ID_EXTRA"
     }
 
-    lateinit @ApplicationContext var context: Context
+    @ApplicationContext
+    lateinit var context: Context
 
     private lateinit var viewAdapter: RecyclerView.Adapter<*>
     private lateinit var viewManager: RecyclerView.LayoutManager
@@ -53,7 +53,7 @@ class EventActivity : DaggerAppCompatActivity() {
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
         val eventHelper: EventHelper = EventHelper.getInstance(context)
-        val eventId =  intent.extras.getLong(EVENT_ID_EXTRA)
+        val eventId =  intent.extras?.getLong(EVENT_ID_EXTRA)
         try {
             event = eventHelper.read(eventId)
         } catch(e: EventException) {
@@ -61,7 +61,7 @@ class EventActivity : DaggerAppCompatActivity() {
         }
 
         viewManager = LinearLayoutManager(this)
-        val forms = event?.forms?.map {
+        val forms = event?.forms?.mapNotNull {
             Form.fromJson(it?.asJsonObject)
         } ?: emptyList()
 
@@ -71,7 +71,7 @@ class EventActivity : DaggerAppCompatActivity() {
             layoutManager = viewManager
             adapter = viewAdapter
             setHasFixedSize(true)
-            addItemDecoration(DividerItemDecoration(getContext(), VERTICAL))
+            addItemDecoration(DividerItemDecoration(getContext(), DividerItemDecoration.VERTICAL))
         }
 
         eventName.text = event?.name

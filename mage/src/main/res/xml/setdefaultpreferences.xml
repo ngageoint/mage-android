@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- This data is not fronted by a screen.  It is here to populate shared preferences by default -->
-<android.support.v7.preference.PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
 
     <!-- Signup password length -->
     <mil.nga.giat.mage.sdk.preferences.IntegerEditTextPreference
@@ -20,4 +20,4 @@
         android:defaultValue="@string/recentMapXYZDefaultValue"
         android:key="@string/recentMapXYZKey"/>
 
-</android.support.v7.preference.PreferenceScreen>
+</PreferenceScreen>

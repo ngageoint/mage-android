@@ -1,6 +1,5 @@
 package mil.nga.giat.mage.form
 
-import android.arch.lifecycle.ViewModelProviders
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
@@ -9,11 +8,12 @@ import android.view.Menu
 import android.view.MenuInflater
 import android.view.MenuItem
 import android.view.View
-import com.caci.kuato.di.module.ApplicationContext
+import androidx.lifecycle.ViewModelProviders
 import com.google.gson.JsonObject
 import dagger.android.support.DaggerAppCompatActivity
 import kotlinx.android.synthetic.main.activity_form_defaults.*
 import mil.nga.giat.mage.R
+import mil.nga.giat.mage.dagger.module.ApplicationContext
 import mil.nga.giat.mage.sdk.datastore.user.Event
 import mil.nga.giat.mage.sdk.datastore.user.EventHelper
 import mil.nga.giat.mage.sdk.exceptions.EventException
@@ -34,7 +34,8 @@ class FormDefaultActivity : DaggerAppCompatActivity() {
         }
     }
 
-    lateinit @ApplicationContext var context: Context
+    @ApplicationContext
+    lateinit var context: Context
 
     private var event: Event? = null
     private var formJson: JsonObject? = null
@@ -60,11 +61,12 @@ class FormDefaultActivity : DaggerAppCompatActivity() {
             event = eventHelper.read(intent.getLongExtra(EVENT_ID_EXTRA, 0))
             formJson = event?.formMap?.get(intent.getLongExtra(FORM_ID_EXTRA, 0))
 
-            val form = Form.fromJson(formJson)
-            formPreferences = FormPreferences(context, event!!, form.id)
+            Form.fromJson(formJson)?.let {
+                formPreferences = FormPreferences(context, event!!, it.id)
 
-            if (formModel.getForm().value == null) {
-                formModel.setForm(form, formPreferences.getDefaults())
+                if (formModel.getForm().value == null) {
+                    formModel.setForm(it, formPreferences.getDefaults())
+                }
             }
         } catch(e: EventException) {
             Log.e(LOG_NAME, "Error reading event", e)
@@ -115,12 +117,14 @@ class FormDefaultActivity : DaggerAppCompatActivity() {
         formModel.getForm().value?.let { form ->
             val transform : (FormField<Any>) -> Pair<String, FormField<Any>> = { it.name to it }
             val formMap = form.fields.associateTo(mutableMapOf(), transform)
-            val defaultFormMap = Form.fromJson(formJson).fields.associateTo(mutableMapOf(), transform)
 
-            if (formMap.equals(defaultFormMap)) {
-                formPreferences.clearDefaults()
-            } else {
-                formPreferences.saveDefaults(form)
+            Form.fromJson(formJson)?.let {
+                val defaultFormMap = it.fields.associateTo(mutableMapOf(), transform)
+                if (formMap.equals(defaultFormMap)) {
+                    formPreferences.clearDefaults()
+                } else {
+                    formPreferences.saveDefaults(form)
+                }
             }
         }
 
@@ -128,7 +132,8 @@ class FormDefaultActivity : DaggerAppCompatActivity() {
     }
 
     private fun clearDefaults() {
-        val form = Form.fromJson(formJson)
-        formModel.setForm(form)
+        Form.fromJson(formJson)?.let {
+            formModel.setForm(it)
+        }
     }
 }

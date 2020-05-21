@@ -2,9 +2,6 @@ package mil.nga.giat.mage.login;
 
 import android.app.Activity;
 import android.app.Dialog;
-import android.arch.lifecycle.Observer;
-import android.arch.lifecycle.ViewModelProvider;
-import android.arch.lifecycle.ViewModelProviders;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnClickListener;
 import android.content.Intent;
@@ -13,10 +10,6 @@ import android.graphics.Typeface;
 import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
-import android.support.annotation.Nullable;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentTransaction;
-import android.support.v7.app.AlertDialog;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnTouchListener;
@@ -26,6 +19,13 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentTransaction;
+import androidx.lifecycle.Observer;
+import androidx.lifecycle.ViewModelProvider;
+import androidx.lifecycle.ViewModelProviders;
 import androidx.work.WorkManager;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -51,9 +51,9 @@ import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.cache.CacheUtils;
 import mil.nga.giat.mage.disclaimer.DisclaimerActivity;
 import mil.nga.giat.mage.event.EventsActivity;
+import mil.nga.giat.mage.login.idp.IdpLoginFragment;
 import mil.nga.giat.mage.login.ldap.LdapLoginFragment;
 import mil.nga.giat.mage.login.mage.MageLoginFragment;
-import mil.nga.giat.mage.login.idp.IdpLoginFragment;
 import mil.nga.giat.mage.sdk.datastore.DaoStore;
 import mil.nga.giat.mage.sdk.datastore.user.Event;
 import mil.nga.giat.mage.sdk.datastore.user.User;
@@ -70,7 +70,6 @@ import mil.nga.giat.mage.sdk.utils.UserUtility;
  */
 public class LoginActivity extends DaggerAppCompatActivity implements LoginListener {
 
-	public static final String EXTRA_PICK_DEFAULT_EVENT = "PICK_DEFAULT_EVENT";
 	public static final String EXTRA_IDP_ERROR = "IDP_ERROR";
 	public static final String EXTRA_IDP_UNREGISTERED_DEVICE = "IDP_UNREGISTERED_DEVICE";
 	public static final String EXTRA_CONTINUE_SESSION = "CONTINUE_SESSION";
@@ -285,7 +284,7 @@ public class LoginActivity extends DaggerAppCompatActivity implements LoginListe
 			String authenticationName = entry.getKey();
 			String authenticationType = entry.getValue().optString("type");
 
-			if (authenticationFragments.containsKey(authenticationType)) continue;
+			if (authenticationFragments.containsKey(authenticationName)) continue;
 
 			if ("local".equals(authenticationName)) {
 				Fragment loginFragment = MageLoginFragment.Companion.newInstance(this);
@@ -296,15 +295,15 @@ public class LoginActivity extends DaggerAppCompatActivity implements LoginListe
 			} else if ("oauth".equals(authenticationType)) {
 				Fragment loginFragment = IdpLoginFragment.Companion.newInstance(entry.getKey(), entry.getValue());
 				transaction.add(R.id.third_party_auth, loginFragment, entry.getKey());
-				authenticationFragments.put(authenticationType, loginFragment);
+				authenticationFragments.put(authenticationName, loginFragment);
 			} else if ("saml".equals(authenticationType)) {
 				Fragment loginFragment = IdpLoginFragment.Companion.newInstance(entry.getKey(), entry.getValue());
 				transaction.add(R.id.third_party_auth, loginFragment, entry.getKey());
-				authenticationFragments.put(authenticationType, loginFragment);
+				authenticationFragments.put(authenticationName, loginFragment);
 			} else if ("ldap".equals(authenticationType)) {
 				Fragment loginFragment = LdapLoginFragment.Companion.newInstance(entry.getValue(), this);
 				transaction.add(R.id.third_party_auth, loginFragment, entry.getKey());
-				authenticationFragments.put(authenticationType, loginFragment);
+				authenticationFragments.put(authenticationName, loginFragment);
 			}
 		}
 

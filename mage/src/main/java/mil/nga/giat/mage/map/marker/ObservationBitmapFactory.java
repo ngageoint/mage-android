@@ -19,9 +19,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Stack;
 
+import mil.nga.giat.mage.event.EventServerFetch;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationProperty;
-import mil.nga.giat.mage.sdk.fetch.EventServerFetch;
 
 public class ObservationBitmapFactory {
 	

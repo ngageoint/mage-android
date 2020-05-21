@@ -1,11 +1,11 @@
 package mil.nga.giat.mage.form.field
 
 import android.content.Context
-import android.databinding.BindingAdapter
-import android.support.design.widget.TextInputLayout
 import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.widget.TextView
+import androidx.databinding.BindingAdapter
+import com.google.android.material.textfield.TextInputLayout
 import kotlinx.android.synthetic.main.view_form_edit_geometry.view.*
 import mil.nga.giat.mage.coordinate.CoordinateFormatter
 import mil.nga.giat.mage.coordinate.CoordinateSystem
@@ -19,6 +19,19 @@ fun geometryHint(view: TextInputLayout, value: String) {
     val coordinateSystem = CoordinateFormatter(view.context).coordinateSystem
     view.hint = "${value} (${if (coordinateSystem == CoordinateSystem.WGS84) "Lat, Lng" else "MGRS"})"
 }
+
+@BindingAdapter("geometryHelperText")
+fun geometryHelper(view: TextInputLayout, location: ObservationLocation?) {
+    view.helperText = null
+
+    if (location?.isManualProvider == true) return;
+
+    location?.accuracy?.let { accuracy ->
+        val provider = if ("gps".equals(location.provider) == true) "GPS" else location.provider?.capitalize();
+        view.helperText = "$provider Location Accuracy +/- ${"%.2f".format(accuracy)}m"
+    }
+}
+
 
 @BindingAdapter("geometryText")
 fun geometryText(view: TextView, value: ObservationLocation?) {

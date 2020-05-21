@@ -19,7 +19,7 @@ import mil.nga.giat.mage.location.LocationPushTask;
 import mil.nga.giat.mage.sdk.Temporal;
 import mil.nga.giat.mage.sdk.datastore.location.Location;
 import mil.nga.giat.mage.sdk.datastore.user.User;
-import mil.nga.wkb.geom.Geometry;
+import mil.nga.sf.Geometry;
 
 /**
  * Class uses a queue like structure to limit the Collection size. Size determined
@@ -110,12 +110,11 @@ public class MyHistoricalLocationMarkerCollection implements PointCollection<Pai
 		for (Marker m : locationIdToMarker.values()) {
 			Pair<Location, User> pair = markerIdToLocation.get(m.getId());
 			Location location = pair.first;
-			User user = pair.second;
 
 			if (location != null) {
 				boolean showWindow = m.isInfoWindowShown();
 				// make sure to set the Anchor after this call as well, because the size of the icon might have changed
-				m.setIcon(LocationBitmapFactory.dotBitmapDescriptor(context, location, user));
+				m.setIcon(LocationBitmapFactory.dotBitmapDescriptor(context, location));
 				m.setAnchor(0.5f, 1.0f);
 				if (showWindow) {
 					m.showInfoWindow();

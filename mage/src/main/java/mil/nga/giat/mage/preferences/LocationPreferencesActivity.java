@@ -9,11 +9,6 @@ import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
-import android.support.v4.content.ContextCompat;
-import android.support.v7.preference.Preference;
-import android.support.v7.preference.PreferenceFragmentCompat;
-import android.support.v7.widget.SwitchCompat;
-import android.support.v7.widget.Toolbar;
 import android.view.ContextThemeWrapper;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
@@ -21,7 +16,11 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CompoundButton;
 
-import com.caci.kuato.di.module.ApplicationContext;
+import androidx.appcompat.widget.SwitchCompat;
+import androidx.appcompat.widget.Toolbar;
+import androidx.core.content.ContextCompat;
+import androidx.preference.Preference;
+import androidx.preference.PreferenceFragmentCompat;
 
 import javax.inject.Inject;
 
@@ -29,6 +28,7 @@ import dagger.android.support.AndroidSupportInjection;
 import dagger.android.support.DaggerAppCompatActivity;
 import mil.nga.giat.mage.MageApplication;
 import mil.nga.giat.mage.R;
+import mil.nga.giat.mage.dagger.module.ApplicationContext;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 
 public class LocationPreferencesActivity extends DaggerAppCompatActivity {

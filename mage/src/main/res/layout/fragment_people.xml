@@ -6,6 +6,6 @@
         android:id="@+id/recycler_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        class="android.support.v7.widget.RecyclerView"/>
+        class="androidx.recyclerview.widget.RecyclerView"/>
 
 </RelativeLayout>

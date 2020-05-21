@@ -57,7 +57,7 @@ public class EventServerFetch extends AsyncTask<Void, Void, Exception> {
         void onEventFetched(boolean status, Exception e);
     }
 
-    private static final String LOG_NAME = mil.nga.giat.mage.sdk.fetch.EventServerFetch.class.getName();
+    private static final String LOG_NAME = EventServerFetch.class.getName();
 
     Context context;
     private String eventId;
@@ -114,14 +114,14 @@ public class EventServerFetch extends AsyncTask<Void, Void, Exception> {
         Long start = System.currentTimeMillis();
 
         UserHelper userHelper = UserHelper.getInstance(context);
-
-        EventResource eventResource = new EventResource(context);
-        userHelper.deleteUserTeams();
         Log.d(LOG_NAME, "Attempting to fetch teams...");
 
         try {
+            EventResource eventResource = new EventResource(context);
             Map<Team, Collection<User>> teams = eventResource.getTeams(eventId.toString());
             Log.d(LOG_NAME, "Fetched " + teams.size() + " teams");
+
+            userHelper.deleteUserTeams();
 
             final ArrayList<User> iconUsers = new ArrayList<>();
 

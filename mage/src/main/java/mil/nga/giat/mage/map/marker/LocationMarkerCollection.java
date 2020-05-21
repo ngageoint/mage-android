@@ -3,14 +3,16 @@ package mil.nga.giat.mage.map.marker;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.util.Log;
 import android.util.Pair;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.core.graphics.ColorUtils;
 
 import com.bumptech.glide.request.target.CustomViewTarget;
 import com.bumptech.glide.request.target.Target;
@@ -40,9 +42,9 @@ import mil.nga.giat.mage.sdk.Temporal;
 import mil.nga.giat.mage.sdk.datastore.location.Location;
 import mil.nga.giat.mage.sdk.datastore.location.LocationProperty;
 import mil.nga.giat.mage.sdk.datastore.user.User;
-import mil.nga.wkb.geom.Geometry;
-import mil.nga.wkb.geom.Point;
-import mil.nga.wkb.util.GeometryUtils;
+import mil.nga.sf.Geometry;
+import mil.nga.sf.Point;
+import mil.nga.sf.util.GeometryUtils;
 
 public class LocationMarkerCollection implements PointCollection<Pair<Location, User>>, OnMarkerClickListener {
 
@@ -137,11 +139,18 @@ public class LocationMarkerCollection implements PointCollection<Pair<Location, 
 			LocationProperty accuracyProperty = location.getPropertiesMap().get("accuracy");
 			if (accuracyProperty != null && !accuracyProperty.getValue().toString().trim().isEmpty()) {
 				try {
-					Float accuracy = Float.valueOf(accuracyProperty.getValue().toString());
+					float accuracy = Float.parseFloat(accuracyProperty.getValue().toString());
 					if (clickedAccuracyCircle != null) {
 						clickedAccuracyCircle.remove();
 					}
-					clickedAccuracyCircle = map.addCircle(new CircleOptions().center(latLng).radius(accuracy).fillColor(0x1D43b0ff).strokeColor(0x620069cc).strokeWidth(1.0f));
+
+					int color = LocationBitmapFactory.locationColor(context, location);
+					clickedAccuracyCircle = map.addCircle(new CircleOptions()
+							.center(latLng)
+							.radius(accuracy)
+							.fillColor(ColorUtils.setAlphaComponent(color, (int) (256 * .20)))
+							.strokeColor(ColorUtils.setAlphaComponent(color, (int) (256 * .87)))
+							.strokeWidth(2.0f));
 					clickedAccuracyCircleUserId = user.getId();
 				} catch (NumberFormatException nfe) {
 					Log.e(LOG_NAME, "Problem adding accuracy circle to the map.", nfe);

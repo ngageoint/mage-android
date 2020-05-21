@@ -5,14 +5,14 @@
     android:layout_height="match_parent"
     android:orientation="vertical">
 
-    <android.support.design.widget.TextInputLayout
+    <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/username_layout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         app:errorTextAppearance="@style/AppTheme.ErrorTextAppearance"
         android:theme="@style/AppTheme.TextInputLayout">
 
-        <android.support.design.widget.TextInputEditText
+        <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/username"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
@@ -23,9 +23,9 @@
             android:inputType="textVisiblePassword|textNoSuggestions"
             android:maxLines="1" />
 
-    </android.support.design.widget.TextInputLayout>
+    </com.google.android.material.textfield.TextInputLayout>
 
-    <android.support.design.widget.TextInputLayout
+    <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/password_layout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -34,7 +34,7 @@
         style="@style/AppTheme.TextInputLayout"
         android:theme="@style/AppTheme.TextInputLayout">
 
-        <android.support.design.widget.TextInputEditText
+        <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/password"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
@@ -45,7 +45,7 @@
             android:imeActionLabel="Log In"
             android:maxLines="1" />
 
-    </android.support.design.widget.TextInputLayout>
+    </com.google.android.material.textfield.TextInputLayout>
 
     <!-- Login button -->
     <Button

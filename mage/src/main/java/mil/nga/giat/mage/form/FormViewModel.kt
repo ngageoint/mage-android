@@ -1,8 +1,8 @@
 package mil.nga.giat.mage.form
 
-import android.arch.lifecycle.LiveData
-import android.arch.lifecycle.MutableLiveData
-import android.arch.lifecycle.ViewModel
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.ViewModel
 import mil.nga.giat.mage.observation.ObservationLocation
 import mil.nga.giat.mage.sdk.utils.GeometryUtility
 import mil.nga.giat.mage.sdk.utils.ISO8601DateFormatFactory

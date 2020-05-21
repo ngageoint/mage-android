@@ -4,7 +4,10 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapView;
 import com.google.android.gms.maps.model.LatLng;
 
+import org.apache.commons.lang3.builder.CompareToBuilder;
+
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -12,7 +15,7 @@ import java.util.List;
  *
  * @author osbornb
  */
-public abstract class CacheOverlay {
+public abstract class CacheOverlay implements Comparable<CacheOverlay> {
 
     /**
      * Name
@@ -43,6 +46,8 @@ public abstract class CacheOverlay {
      * True if the cache type supports child caches
      */
     private final boolean supportsChildren;
+
+    private boolean isSideloaded = false;
 
     /**
      * Constructor
@@ -180,4 +185,16 @@ public abstract class CacheOverlay {
         return name + "-" + childName;
     }
 
+    public boolean isSideloaded() {
+        return isSideloaded;
+    }
+
+    public void setSideloaded(boolean sideloaded) {
+        isSideloaded = sideloaded;
+    }
+
+    @Override
+    public int compareTo(CacheOverlay o) {
+        return new CompareToBuilder().append(this.getCacheName(), o.getCacheName()).toComparison();
+    }
 }

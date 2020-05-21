@@ -14,7 +14,7 @@ import mil.nga.geopackage.map.geom.GoogleMapShape;
 import mil.nga.geopackage.map.geom.GoogleMapShapeConverter;
 import mil.nga.geopackage.map.tiles.overlay.FeatureOverlayQuery;
 import mil.nga.giat.mage.R;
-import mil.nga.wkb.geom.GeometryType;
+import mil.nga.sf.GeometryType;
 
 /**
  * GeoPackage Feature Table cache overlay
@@ -93,7 +93,7 @@ public class GeoPackageFeatureTableCacheOverlay extends GeoPackageTableCacheOver
 
     @Override
     public Integer getIconImageResourceId() {
-        return R.drawable.ic_timeline_gray_24dp;
+        return R.drawable.ic_place_preference_24dp;
     }
 
     @Override

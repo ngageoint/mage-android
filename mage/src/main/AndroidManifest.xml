@@ -1,9 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    package="mil.nga.giat.mage"
-    android:versionCode="1"
-    android:versionName="1">
+    package="mil.nga.giat.mage">
 
     <permission
         android:name="${applicationId}.permission.MAPS_RECEIVE"
@@ -46,7 +44,7 @@
         <meta-data android:name="${applicationId}.source_refspec" android:value="${source_refspec}"/>
 
         <provider
-            android:name="android.support.v4.content.FileProvider"
+            android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"
             android:exported="false"
             android:grantUriPermissions="true">
@@ -95,7 +93,7 @@
                 <data android:mimeType="application/octet-stream" />
             </intent-filter>
             <!-- Google Drive or sends from other apps -->
-            <intent-filter>
+            <intent-filter tools:ignore="AppLinkUrlError">
                 <action android:name="android.intent.action.VIEW" />
                 <action android:name="android.intent.action.SEND" />
 
@@ -128,7 +126,6 @@
             android:label="@string/observation_filter" />
         <activity
             android:name=".filter.LocationFilterActivity"
-            android:label="@string/locations_filter" />
             android:label="@string/locations_filter" />
         <activity
             android:name=".LandingActivity"
@@ -171,13 +168,13 @@
             android:parentActivityName=".LandingActivity" />
         <activity
             android:name=".map.preference.TileOverlayPreferenceActivity"
-            android:label="Overlay Maps"
+            android:label="Offline Layers"
             android:launchMode="singleTop"
             android:parentActivityName=".map.preference.MapPreferencesActivity"
             android:uiOptions="splitActionBarWhenNarrow" />
         <activity
-            android:name=".map.preference.FeatureOverlayPreferenceActivity"
-            android:label="Feature Overlays"
+            android:name=".map.preference.OnlineLayersPreferenceActivity"
+            android:label="Online Layers"
             android:launchMode="singleTop"
             android:parentActivityName=".map.preference.MapPreferencesActivity"
             android:uiOptions="splitActionBarWhenNarrow" />

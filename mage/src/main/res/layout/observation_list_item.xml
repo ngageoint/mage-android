@@ -1,191 +1,244 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/observation_list_container"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:descendantFocusability="blocksDescendants"
     android:orientation="vertical"
-    android:paddingLeft="5dip"
-    android:paddingRight="5dip"
-    android:paddingTop="8dip"
     android:clickable="true"
     android:focusable="true"
     android:background="?android:attr/selectableItemBackground">
 
-    <LinearLayout
+    <com.google.android.material.card.MaterialCardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal">
-
-        <ImageView
-            android:id="@+id/observation_marker"
-            android:layout_width="40dip"
-            android:layout_height="40dip"
-            android:layout_marginLeft="16dp"
-            android:layout_marginRight="16dp"
-            android:src="@drawable/ic_place_white_24dp"/>
-
-        <LinearLayout
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:orientation="vertical">
-
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal">
-
-                <TextView
-                    android:id="@+id/primary"
-                    style="@style/ListTextPrimary"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:layout_gravity="bottom"
-                    android:layout_marginEnd="8dp"
-                    android:ellipsize="end"
-                    android:maxLines="1" />
-
-                <ImageView
-                    android:id="@+id/observation_shape"
-                    android:layout_width="20dip"
-                    android:layout_height="16dip"
-                    android:layout_marginTop="2dp"
-                    android:layout_marginStart="-4dp"
-                    android:layout_marginEnd="4dp"
-                    android:layout_gravity="center_vertical"
-                    android:tint="@color/observation_marker"
-                    android:src="@drawable/ic_ray_start_end_black_24dp"/>
-
-                <TextView
-                    android:id="@+id/time"
-                    style="@style/ListTextSecondary"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="bottom"/>
-
-            </LinearLayout>
-
-            <TextView
-                android:id="@+id/secondary"
-                style="@style/ListTextSecondaryDark"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
-
-            <TextView
-                android:id="@+id/user"
-                style="@style/ListTextSecondary"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
-
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layoutDirection="rtl"
-            android:layout_marginStart="8dip"
-            android:paddingStart="6dp"
-            android:paddingEnd="6dp"
-            android:clipToPadding="false">
-
-            <ImageView
-                android:id="@+id/flagged"
-                android:layout_width="20dip"
-                android:layout_height="20dip"
-                android:layout_marginEnd="-6dp"
-                android:src="@drawable/flag_badge_24dp"/>
-
-            <ImageView
-                android:id="@+id/sync_status"
-                android:layout_width="20dip"
-                android:layout_height="20dip"
-                android:layout_marginEnd="-6dp"
-                android:src="@drawable/sync_badge_24dp"/>
-
-            <ImageView
-                android:id="@+id/error_status"
-                android:layout_width="20dip"
-                android:layout_height="20dip"
-                android:layout_marginEnd="-6dp"
-                android:src="@drawable/error_badge_24dp"/>
-
-        </LinearLayout>
-
-    </LinearLayout>
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical">
-
-        <HorizontalScrollView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="72dip">
-
-            <LinearLayout
-                android:id="@+id/image_gallery"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginTop="16dip" />
-
-        </HorizontalScrollView>
+        android:layout_marginTop="8dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="8dp">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginStart="48dip"
-            android:layout_marginEnd="16dip"
-            android:gravity="start">
+            android:orientation="vertical">
 
             <LinearLayout
-                android:id="@+id/favorite"
-                android:layout_width="wrap_content"
+                android:id="@+id/important"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:paddingTop="24dip"
-                android:paddingBottom="20dip"
-                android:paddingStart="24dp"
-                android:paddingEnd="24dip"
-                android:clickable="true"
-                android:background="?attr/selectableItemBackgroundBorderless">
+                android:paddingTop="8dp"
+                android:paddingBottom="8dp"
+                android:paddingEnd="16dp"
+                android:background="@color/md_orange_A400">
 
                 <ImageView
-                    android:id="@+id/favoriteIcon"
-                    android:layout_width="24dip"
-                    android:layout_height="24dip"
-                    android:layout_marginEnd="3dip"
-                    android:tint="#8A000000"
-                    android:src="@drawable/ic_favorite_white_24dp"/>
-
-                <TextView
-                    android:id="@+id/favoriteCount"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:layout_marginStart="16dp"
+                    android:layout_marginEnd="16dp"
+                    android:src="@drawable/ic_flag_white_24dp"
+                    android:tint="@color/md_black_1000"
                     android:layout_gravity="center_vertical"
-                    style="@style/ListTextSecondary" />
+                    android:alpha=".87"/>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/important_overline"
+                        android:layout_gravity="center_vertical"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        style="@style/TextAppearance.Mage.Overline.Dark"/>
+
+                    <TextView
+                        android:id="@+id/important_description"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        style="@style/ListTextPrimaryOnDark">
+                    </TextView>
+
+                </LinearLayout>
 
             </LinearLayout>
 
-            <android.support.v7.widget.AppCompatImageButton
-                android:id="@+id/directions"
-                android:layout_width="wrap_content"
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:paddingTop="24dip"
-                android:paddingBottom="20dip"
-                android:paddingStart="24dp"
-                android:paddingEnd="24dip"
-                android:src="@drawable/ic_directions_24dp"
-                android:background="?attr/selectableItemBackgroundBorderless"/>
+                android:orientation="horizontal"
+                android:layout_marginTop="16dp"
+                android:layout_marginStart="16dp"
+                android:layout_marginEnd="16dp">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:layout_marginBottom="16dp">
+
+                        <RelativeLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="4dp">
+
+                            <ImageView
+                                android:id="@+id/sync_status"
+                                android:layout_width="20dip"
+                                android:layout_height="20dip"
+                                android:layout_gravity="top"
+                                android:src="@drawable/sync_badge_24dp"/>
+
+                            <ImageView
+                                android:id="@+id/error_status"
+                                android:layout_width="20dip"
+                                android:layout_height="20dip"
+                                android:layout_gravity="center_vertical"
+                                android:src="@drawable/error_badge_24dp"/>
+
+                        </RelativeLayout>
+
+                        <TextView
+                            android:id="@+id/user"
+                            android:layout_gravity="center_vertical"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            style="@style/TextAppearance.MaterialComponents.Overline"
+                            android:alpha=".6"/>
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center_vertical"
+                            android:layout_marginStart="4dp"
+                            android:layout_marginEnd="4dp"
+                            android:text="\u2022"
+                            style="@style/TextAppearance.MaterialComponents.Overline"
+                            android:alpha=".6" />
+
+                        <TextView
+                            android:id="@+id/time"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center_vertical"
+                            style="@style/TextAppearance.MaterialComponents.Overline"
+                            android:alpha=".6"/>
+
+                    </LinearLayout>
+
+                    <TextView
+                        android:id="@+id/primary"
+                        style="@style/TextAppearance.Mage.Headline5"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="bottom"
+                        android:ellipsize="end"
+                        android:maxLines="1" />
+
+                    <TextView
+                        android:id="@+id/secondary"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        style="@style/ListTextPrimary"
+                        android:alpha=".6"/>
+                </LinearLayout>
+
+                <ImageView
+                    android:id="@+id/observation_marker"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:layout_marginStart="16dp"
+                    android:src="@drawable/ic_place_white_48dp"/>
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <HorizontalScrollView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="16dp">
+
+                    <LinearLayout
+                        android:id="@+id/image_gallery"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:layout_marginTop="16dip" />
+
+                </HorizontalScrollView>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="end"
+                    android:layout_marginEnd="12dp"
+                    android:layout_marginTop="8dp"
+                    android:layout_marginBottom="12dp">
+
+                    <LinearLayout
+                        android:id="@+id/favorite"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="16dp"
+                        android:orientation="horizontal">
+
+                        <androidx.appcompat.widget.AppCompatImageButton
+                            android:id="@+id/important_button"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:padding="12dip"
+                            android:tint="#8A000000"
+                            android:src="@drawable/ic_flag_outlined_white_24dp"
+                            android:background="?attr/selectableItemBackgroundBorderless"/>
+
+                        <androidx.appcompat.widget.AppCompatImageButton
+                            android:id="@+id/favorite_button"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:padding="12dip"
+                            android:tint="#8A000000"
+                            android:src="@drawable/ic_favorite_border_white_24dp"
+                            android:background="?attr/selectableItemBackgroundBorderless"/>
+
+                        <TextView
+                            android:id="@+id/favorite_count"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center_vertical"
+                            android:layout_marginStart="-8dip"
+                            style="@style/ListTextSecondary" />
+
+                    </LinearLayout>
+
+                    <androidx.appcompat.widget.AppCompatImageButton
+                        android:id="@+id/directions_button"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:padding="12dip"
+                        android:tint="#8A000000"
+                        android:src="@drawable/ic_directions_outlined_white_24dp"
+                        android:background="?attr/selectableItemBackgroundBorderless"/>
+
+                </LinearLayout>
+
+            </LinearLayout>
 
         </LinearLayout>
 
-    </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+
+
 
 </LinearLayout>

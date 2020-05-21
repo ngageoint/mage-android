@@ -57,7 +57,7 @@ public class GeoPackageCacheOverlay extends CacheOverlay {
 
     @Override
     public Integer getIconImageResourceId() {
-        return R.drawable.ic_geopackage;
+        return R.drawable.ic_folder_open_black_24dp;
     }
 
     @Override

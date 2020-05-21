@@ -4,7 +4,6 @@ import android.Manifest;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.Dialog;
-import android.arch.lifecycle.ViewModelProviders;
 import android.content.ClipData;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -18,12 +17,6 @@ import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.provider.MediaStore;
 import android.provider.Settings;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
-import android.support.v4.content.FileProvider;
-import android.support.v7.app.AlertDialog;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.Menu;
@@ -39,6 +32,14 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+import androidx.core.content.FileProvider;
+import androidx.lifecycle.ViewModelProviders;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -69,18 +70,18 @@ import kotlin.jvm.functions.Function1;
 import mil.nga.giat.mage.BuildConfig;
 import mil.nga.giat.mage.LandingActivity;
 import mil.nga.giat.mage.R;
-import mil.nga.giat.mage.form.FormFragment;
-import mil.nga.giat.mage.form.FormMode;
-import mil.nga.giat.mage.form.FormPreferences;
-import mil.nga.giat.mage.form.FormViewModel;
 import mil.nga.giat.mage.form.DateFormField;
 import mil.nga.giat.mage.form.FieldType;
 import mil.nga.giat.mage.form.Form;
 import mil.nga.giat.mage.form.FormField;
+import mil.nga.giat.mage.form.FormFragment;
+import mil.nga.giat.mage.form.FormMode;
+import mil.nga.giat.mage.form.FormPreferences;
+import mil.nga.giat.mage.form.FormViewModel;
 import mil.nga.giat.mage.form.GeometryFormField;
 import mil.nga.giat.mage.form.field.EditDate;
-import mil.nga.giat.mage.form.field.Field;
 import mil.nga.giat.mage.form.field.EditGeometry;
+import mil.nga.giat.mage.form.field.Field;
 import mil.nga.giat.mage.form.field.dialog.DateFieldDialog;
 import mil.nga.giat.mage.form.field.dialog.GeometryFieldDialog;
 import mil.nga.giat.mage.sdk.datastore.observation.Attachment;
@@ -97,7 +98,6 @@ import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.exceptions.ObservationException;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
-import mil.nga.wkb.geom.Geometry;
 
 public class ObservationEditActivity extends AppCompatActivity implements OnMapReadyCallback, OnCameraIdleListener {
 
@@ -209,7 +209,9 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 				FormPreferences formPreferences = new FormPreferences(getApplicationContext(), event, formId);
 
 				form = Form.Companion.fromJson(formMap.get(formId));
-				model.setForm(form, formPreferences.getDefaults());
+				if (form != null) {
+					model.setForm(form, formPreferences.getDefaults());
+				}
 			}
 		} else {
 			try {
@@ -224,7 +226,9 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 						values.put(entry.getKey(), entry.getValue().getValue());
 					}
 
-					model.setForm(form, values);
+					if (form != null) {
+						model.setForm(form, values);
+					}
 				}
 			} catch (ObservationException oe) {
 				Log.e(LOG_NAME, "Problem reading observation.", oe);
@@ -246,7 +250,7 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 		}
 
 		attachmentLayout = findViewById(R.id.image_gallery);
-		attachmentGallery = new AttachmentGallery(getApplicationContext(), 100, 100);
+		attachmentGallery = new AttachmentGallery(getApplicationContext(), 200, 200);
 		attachmentGallery.addOnAttachmentClickListener(new AttachmentGallery.OnAttachmentClickListener() {
 			@Override
 			public void onAttachmentClick(Attachment attachment) {
@@ -290,15 +294,7 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 			// this is an edit of an existing observation
 			attachmentGallery.addAttachments(attachmentLayout, observation.getAttachments());
 
-			Geometry geometry = observation.getGeometry();
-			String provider = observation.getProvider() != null ? observation.getProvider() : ObservationLocation.MANUAL_PROVIDER;
-			ObservationLocation location = new ObservationLocation(provider, geometry);
-
-			Float accuracy = observation.getAccuracy();
-			if (accuracy != null) {
-				location.setAccuracy(accuracy);
-			}
-
+			ObservationLocation location = new ObservationLocation(observation);
 			model.getLocation().getValue().setValue(location);
 			model.getTimestamp().getValue().setValue(observation.getTimestamp());
 		}
@@ -386,23 +382,16 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 
 		float zoom = getIntent().getFloatExtra(INITIAL_ZOOM, 0);
 		map.moveCamera(CameraUpdateFactory.newLatLngZoom(initialLatLng, zoom));
-		map.animateCamera(location.getCameraUpdate(mapFragment.getView()));
 		map.getUiSettings().setMapToolbarEnabled(false);
-
-		map.animateCamera(location.getCameraUpdate(mapFragment.getView()));
+		map.animateCamera(location.getCameraUpdate(mapFragment.getView(), true, 1.0f/6));
 
 		if (accuracyCircle != null) {
 			accuracyCircle.remove();
 		}
 
-		if (location.getAccuracy() > 0) {
-			CircleOptions circleOptions = new CircleOptions()
-					.fillColor(getResources().getColor(R.color.accuracy_circle_fill))
-					.strokeColor(getResources().getColor(R.color.accuracy_circle_stroke))
-					.strokeWidth(5)
-					.center(location.getCentroidLatLng())
-					.radius(location.getAccuracy());
-			accuracyCircle = map.addCircle(circleOptions);
+		CircleOptions circle = location.getAccuracyCircle(getResources());
+		if (circle != null) {
+			accuracyCircle = map.addCircle(circle);
 		}
 
 		if (mapObservation != null) {
@@ -426,6 +415,8 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 
 	@Override
 	protected void onSaveInstanceState(Bundle outState) {
+		super.onSaveInstanceState(outState);
+
 		outState.putParcelableArrayList("attachmentsToCreate", attachmentsToCreate);
 		outState.putString(CURRENT_MEDIA_PATH, currentMediaPath);
 	}
@@ -529,21 +520,7 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 	}
 
 	private void saveObservation() {
-		List<Field<?>> invalid = new ArrayList<>();
-		for (Field<?> editField : formFragment.getEditFields()) {
-			if (!editField.validate(true)) {
-				invalid.add(editField);
-			}
-		}
-
-		if (!invalid.isEmpty()) {
-			// scroll to first invalid control
-			View firstInvalid = invalid.get(0);
-			findViewById(R.id.properties).scrollTo(0, firstInvalid.getBottom());
-			firstInvalid.clearFocus();
-			firstInvalid.requestFocus();
-			firstInvalid.requestFocusFromTouch();
-
+		if (!validateForm()) {
 			return;
 		}
 
@@ -599,6 +576,32 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 		} catch (Exception e) {
 			Log.e(LOG_NAME, e.getMessage(), e);
 		}
+	}
+
+	private boolean validateForm() {
+		if (formFragment == null) return true;
+
+		List<Field<?>> invalid = new ArrayList<>();
+
+		for (Field<?> editField : formFragment.getEditFields()) {
+			if (!editField.validate(true)) {
+				invalid.add(editField);
+			}
+		}
+
+
+		if (!invalid.isEmpty()) {
+			// scroll to first invalid control
+			View firstInvalid = invalid.get(0);
+			findViewById(R.id.properties).scrollTo(0, firstInvalid.getBottom());
+			firstInvalid.clearFocus();
+			firstInvalid.requestFocus();
+			firstInvalid.requestFocusFromTouch();
+
+			return false;
+		}
+
+		return true;
 	}
 
 	public void onCameraClick(View v) {
@@ -787,6 +790,8 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 
 	@Override
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+		super.onActivityResult(requestCode, resultCode, data);
+
 		if (resultCode != RESULT_OK) {
 			return;
 		}
@@ -798,8 +803,6 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 				attachmentsToCreate.add(capture);
 				attachmentGallery.addAttachment(attachmentLayout, capture);
 				MediaUtility.addImageToGallery(getApplicationContext(), Uri.fromFile(new File(currentMediaPath)));
-
-
 
 				break;
 			case GALLERY_ACTIVITY_REQUEST_CODE:

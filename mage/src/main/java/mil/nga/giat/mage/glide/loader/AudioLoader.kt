@@ -1,5 +1,6 @@
 package mil.nga.giat.mage.glide.loader
 
+import android.webkit.MimeTypeMap
 import com.bumptech.glide.load.Options
 import com.bumptech.glide.load.model.ModelLoader
 import com.bumptech.glide.load.model.ModelLoaderFactory
@@ -15,7 +16,13 @@ class AudioLoader private constructor(private val fileLoader: ModelLoader<Int, I
     }
 
     override fun handles(model: Attachment): Boolean {
-        return model.contentType?.contains("audio", ignoreCase = true) ?: false
+        return if (model.contentType != null) {
+            model.contentType?.contains("audio", ignoreCase = true) ?: false
+        } else {
+            val fileExtension = MimeTypeMap.getFileExtensionFromUrl(model.localPath)
+            val mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(fileExtension.toLowerCase())
+            mimeType?.contains("audio", ignoreCase = true) ?: false
+        }
     }
 
     class Factory : ModelLoaderFactory<Attachment, InputStream> {

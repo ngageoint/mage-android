@@ -43,12 +43,14 @@ public class GeoPackageDownloadManager {
 
     private static final String LOG_NAME = GeoPackageDownloadManager.class.getName();
 
-    private Context context;
-    private String baseUrl;
-    private LayerHelper layerHelper;
-    private GeoPackageDownloadListener listener;
-    private DownloadManager downloadManager;
-    private BroadcastReceiver downloadReceiver = new GeoPackageDownloadReceiver();
+    private final Context context;
+    private final String baseUrl;
+    private final LayerHelper layerHelper;
+    private final GeoPackageDownloadListener listener;
+    private final DownloadManager downloadManager;
+    private final BroadcastReceiver downloadReceiver = new GeoPackageDownloadReceiver();
+
+    private final Object downloadLock = new Object();
 
     public GeoPackageDownloadManager(Context context, GeoPackageDownloadListener listener) {
         this.context = context;
@@ -78,13 +80,15 @@ public class GeoPackageDownloadManager {
         request.addRequestHeader("Accept", "application/octet-stream");
         // TODO test no notification
 
-        long downloadId = downloadManager.enqueue(request);
+        synchronized(downloadLock) {
+            long downloadId = downloadManager.enqueue(request);
 
-        try {
-            layer.setDownloadId(downloadId);
-            layerHelper.update(layer);
-        } catch (LayerException e) {
-            Log.e(LOG_NAME, "Error saving layer download id", e);
+            try {
+                layer.setDownloadId(downloadId);
+                layerHelper.update(layer);
+            } catch (LayerException e) {
+                Log.e(LOG_NAME, "Error saving layer download id", e);
+            }
         }
     }
 
@@ -95,11 +99,35 @@ public class GeoPackageDownloadManager {
         if (downloadId != null) {
             DownloadManager.Query query = new DownloadManager.Query();
             query.setFilterById(downloadId);
-            Cursor cursor = downloadManager.query(query);
-            status = getDownloadStatus(cursor);
+            try(Cursor cursor = downloadManager.query(query)) {
+                status = getDownloadStatus(cursor);
+            }
         }
 
         return status == DownloadManager.STATUS_RUNNING || status == DownloadManager.STATUS_PENDING;
+    }
+
+    public String isFailed(Layer layer) {
+        String status = null;
+        Long downloadId = layer.getDownloadId();
+
+        if (downloadId != null) {
+            DownloadManager.Query query = new DownloadManager.Query();
+            query.setFilterById(downloadId);
+            try(Cursor cursor = downloadManager.query(query)) {
+                if(DownloadManager.STATUS_FAILED == getDownloadStatus(cursor)) {
+                    status = getDownloadFailureStatus(cursor);
+                    try {
+                        layer.setDownloadId(null);
+                        layerHelper.update(layer);
+                    } catch (LayerException e) {
+                        Log.e(LOG_NAME, "Error saving layer download id", e);
+                    }
+                }
+            }
+        }
+
+        return status;
     }
 
     public void reconcileDownloads(Collection<Layer> layers, GeoPackageLoadListener listener) {
@@ -121,11 +149,14 @@ public class GeoPackageDownloadManager {
         if (downloadId != null) {
             DownloadManager.Query query = new DownloadManager.Query();
             query.setFilterById(downloadId);
-            Cursor cursor = downloadManager.query(query);
+            try (Cursor cursor = downloadManager.query(query)) {
 
-            if (cursor.moveToFirst()) {
-                int columnIndex = cursor.getColumnIndex(DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR);
-                progress = cursor.getInt(columnIndex);
+                if (cursor.moveToFirst()) {
+                    int columnIndex = cursor.getColumnIndex(DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR);
+                    if(columnIndex != -1) {
+                        progress = cursor.getInt(columnIndex);
+                    }
+                }
             }
         }
 
@@ -137,29 +168,31 @@ public class GeoPackageDownloadManager {
     }
 
     private void loadGeopackage(long downloadId, GeoPackageDownloadListener listener) {
-        try {
-            Layer layer = layerHelper.getByDownloadId(downloadId);
-            String relativePath = getRelativePath(layer);
+        synchronized (downloadLock) {
+            try {
+                Layer layer = layerHelper.getByDownloadId(downloadId);
 
-            if (layer != null) {
-                GeoPackageManager geoPackageManager = GeoPackageFactory.getManager(context);
-                CacheProvider cacheProvider = CacheProvider.getInstance(context);
-                File cache = new File(context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), relativePath);
-                CacheOverlay overlay = cacheProvider.getGeoPackageCacheOverlay(context, cache, geoPackageManager);
-                if (overlay != null) {
-                    cacheProvider.addCacheOverlay(overlay);
+                if (layer != null) {
+                    String relativePath = getRelativePath(layer);
+                    GeoPackageManager geoPackageManager = GeoPackageFactory.getManager(context);
+                    CacheProvider cacheProvider = CacheProvider.getInstance(context);
+                    File cache = new File(context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), relativePath);
+                    CacheOverlay overlay = cacheProvider.getGeoPackageCacheOverlay(context, cache, geoPackageManager);
+                    if (overlay != null) {
+                        cacheProvider.addCacheOverlay(overlay);
+                    }
+
+                    layer.setRelativePath(relativePath);
+                    layer.setLoaded(true);
+                    layerHelper.update(layer);
+
+                    if (listener != null) {
+                        listener.onGeoPackageDownloaded(layer, overlay);
+                    }
                 }
-
-                layer.setRelativePath(relativePath);
-                layer.setLoaded(true);
-                layerHelper.update(layer);
-
-                if (listener != null) {
-                    listener.onGeoPackageDownloaded(layer, overlay);
-                }
+            } catch (LayerException e) {
+                Log.e(LOG_NAME, "Error saving layer", e);
             }
-        } catch (LayerException e) {
-            Log.e(LOG_NAME, "Error saving layer", e);
         }
     }
 
@@ -169,6 +202,50 @@ public class GeoPackageDownloadManager {
         if (cursor.moveToFirst()) {
             int columnIndex = cursor.getColumnIndex(DownloadManager.COLUMN_STATUS);
             status = cursor.getInt(columnIndex);
+        }
+
+        return status;
+    }
+
+    private String getDownloadFailureStatus(Cursor cursor) {
+        String status = null;
+
+        if (cursor.moveToFirst()) {
+            int columnIndex = cursor.getColumnIndex(DownloadManager.COLUMN_REASON);
+            if(columnIndex != -1) {
+                int reason = cursor.getInt(columnIndex);
+
+                switch (reason) {
+                    case DownloadManager.ERROR_CANNOT_RESUME:
+                        status = "Cannot Resume";
+                        break;
+                    case DownloadManager.ERROR_DEVICE_NOT_FOUND:
+                        status = "Device Not Found";
+                        break;
+                    case DownloadManager.ERROR_FILE_ALREADY_EXISTS:
+                        status = "File Already Exists";
+                        break;
+                    case DownloadManager.ERROR_FILE_ERROR:
+                        status = "File Error";
+                        break;
+                    case DownloadManager.ERROR_HTTP_DATA_ERROR:
+                        status = "HTTP Data Error";
+                        break;
+                    case DownloadManager.ERROR_INSUFFICIENT_SPACE:
+                        status = "Insufficient Space";
+                        break;
+                    case DownloadManager.ERROR_TOO_MANY_REDIRECTS:
+                        status = "Too Many Redirects";
+                        break;
+                    case DownloadManager.ERROR_UNHANDLED_HTTP_CODE:
+                        status = "Unhandled HTTP Code";
+                        break;
+                    case DownloadManager.ERROR_UNKNOWN:
+                    default:
+                        status = "Unknown Error";
+                        break;
+                }
+            }
         }
 
         return status;
@@ -184,11 +261,12 @@ public class GeoPackageDownloadManager {
                 long downloadId = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, 0);
                 DownloadManager.Query query = new DownloadManager.Query();
                 query.setFilterById(downloadId);
-                Cursor cursor = downloadManager.query(query);
-                int status = getDownloadStatus(cursor);
+                try(Cursor cursor = downloadManager.query(query)) {
+                    int status = getDownloadStatus(cursor);
 
-                if (status == DownloadManager.STATUS_SUCCESSFUL) {
-                    loadGeopackage(downloadId, listener);
+                    if (status == DownloadManager.STATUS_SUCCESSFUL) {
+                        loadGeopackage(downloadId, listener);
+                    }
                 }
             }
         }
@@ -213,13 +291,14 @@ public class GeoPackageDownloadManager {
                 } else {
                     DownloadManager.Query ImageDownloadQuery = new DownloadManager.Query();
                     ImageDownloadQuery.setFilterById(downloadId);
-                    Cursor cursor = downloadManager.query(ImageDownloadQuery);
-                    int status = getDownloadStatus(cursor);
+                    try(Cursor cursor = downloadManager.query(ImageDownloadQuery)) {
+                        int status = getDownloadStatus(cursor);
 
-                    if (status == DownloadManager.STATUS_SUCCESSFUL) {
-                        loadGeopackage(downloadId, null);
-                    } else {
-                        layersToDownload.add(layer);
+                        if (status == DownloadManager.STATUS_SUCCESSFUL) {
+                            loadGeopackage(downloadId, null);
+                        } else {
+                            layersToDownload.add(layer);
+                        }
                     }
                 }
             }

@@ -1,38 +1,39 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical">
-
-    <TextView
-        android:id="@+id/form_name"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
-        android:layout_marginBottom="8dp"
-        android:paddingStart="8dp"
-        android:fontFamily="sans-serif-medium"
-        android:textSize="16sp"
-        android:theme="@style/ListSubheader"/>
+    android:layout_margin="8dp">
 
     <LinearLayout
-        android:id="@+id/form_content"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:paddingBottom="16dp"
-        android:paddingStart="16dp"
-        android:paddingEnd="16dp"
-        android:focusable="true"
-        android:focusableInTouchMode="true"
-        android:background="@color/background_dialog">
+        android:padding="16dp">
 
-        <!-- This will get populated programmatically -->
-        <fragment
-            class="mil.nga.giat.mage.form.FormFragment"
+        <TextView
+            android:id="@+id/form_name"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"/>
+            android:layout_height="wrap_content"
+            style="@style/TextAppearance.Mage.Headline5" />
+
+        <LinearLayout
+            android:id="@+id/form_content"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:focusable="true"
+            android:focusableInTouchMode="true"
+            android:background="@color/background_dialog">
+
+            <!-- This will get populated programmatically -->
+            <fragment
+                class="mil.nga.giat.mage.form.FormFragment"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"/>
+
+        </LinearLayout>
 
     </LinearLayout>
 
-</LinearLayout>
+</com.google.android.material.card.MaterialCardView>

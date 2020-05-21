@@ -4,7 +4,10 @@ import android.content.Context
 import android.preference.PreferenceManager
 import android.text.TextUtils
 import com.bumptech.glide.load.Options
-import com.bumptech.glide.load.model.*
+import com.bumptech.glide.load.model.GlideUrl
+import com.bumptech.glide.load.model.ModelLoader
+import com.bumptech.glide.load.model.ModelLoaderFactory
+import com.bumptech.glide.load.model.MultiModelLoaderFactory
 import mil.nga.giat.mage.glide.model.Avatar
 import mil.nga.giat.mage.sdk.R
 import okhttp3.HttpUrl
@@ -33,16 +36,11 @@ class AvatarLoader private constructor(private val context: Context, private val
                 return null
             }
 
-            val url = GlideUrl(stringURL, getHeaders(model, width, height, options))
+            val url = GlideUrl(stringURL)
             urlLoader.buildLoadData(url, width, height, options)
         } else {
             null
         }
-    }
-
-    fun getHeaders(model: Avatar?, width: Int, height: Int, options: Options?): Headers? {
-        val token = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(mil.nga.giat.mage.sdk.R.string.tokenKey), "")
-        return LazyHeaders.Builder().addHeader("Authorization", "Bearer $token").build()
     }
 
     fun getUrl(user: Avatar, width: Int, height: Int, options: Options): String? {

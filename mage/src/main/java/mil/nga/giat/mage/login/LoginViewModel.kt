@@ -1,10 +1,10 @@
 package mil.nga.giat.mage.login
 
-import android.arch.lifecycle.LiveData
-import android.arch.lifecycle.MutableLiveData
-import android.arch.lifecycle.ViewModel
 import android.content.Context
-import com.caci.kuato.di.module.ApplicationContext
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.ViewModel
+import mil.nga.giat.mage.dagger.module.ApplicationContext
 import mil.nga.giat.mage.sdk.login.AccountStatus
 import mil.nga.giat.mage.sdk.login.LdapLoginTask
 import mil.nga.giat.mage.sdk.login.LoginTaskFactory

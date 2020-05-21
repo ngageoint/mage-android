@@ -1,19 +1,20 @@
 package mil.nga.giat.mage.observation;
 
 import android.app.Dialog;
-import android.app.DialogFragment;
 import android.content.DialogInterface;
 import android.os.Bundle;
-import android.support.v7.app.AlertDialog;
 import android.view.LayoutInflater;
 import android.view.View;
+
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatDialogFragment;
 
 import mil.nga.giat.mage.R;
 
 /**
  * Created by wnewman on 8/22/16.
  */
-public class ImportantRemoveDialog extends DialogFragment {
+public class ImportantRemoveDialog extends AppCompatDialogFragment {
 
     public interface OnRemoveImportantListener {
         void onRemoveImportant();

@@ -1,14 +1,14 @@
 package mil.nga.giat.mage.form.field.dialog
 
-import android.arch.lifecycle.ViewModelProviders
 import android.os.Bundle
-import android.support.v4.app.DialogFragment
-import android.support.v7.widget.SearchView
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ArrayAdapter
 import android.widget.ListView
+import androidx.appcompat.widget.SearchView
+import androidx.fragment.app.DialogFragment
+import androidx.lifecycle.ViewModelProviders
 import kotlinx.android.synthetic.main.dialog_select_field.*
 import mil.nga.giat.mage.R
 import mil.nga.giat.mage.form.*
@@ -32,14 +32,14 @@ class SelectFieldDialog : DialogFragment() {
 
     companion object {
         private const val DEFAULT_TEXT = ""
-        private val FORM_FIELD_KEY_EXTRA = "FORM_FIELD_KEY_EXTRA"
+        private const val FORM_FIELD_KEY_EXTRA = "FORM_FIELD_KEY_EXTRA"
 
         fun newInstance(fieldKey: String): SelectFieldDialog {
             val fragment = SelectFieldDialog()
             val bundle = Bundle()
             bundle.putString(FORM_FIELD_KEY_EXTRA, fieldKey)
 
-            fragment.setStyle(DialogFragment.STYLE_NO_TITLE, 0)
+            fragment.setStyle(STYLE_NO_TITLE, 0)
             fragment.isCancelable = false
             fragment.arguments = bundle
 
@@ -65,7 +65,7 @@ class SelectFieldDialog : DialogFragment() {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        searchToolbar.inflateMenu(R.menu.edit_select_menu);
+        searchToolbar.inflateMenu(R.menu.edit_select_menu)
         searchToolbar.title = field.title
         searchToolbar.setOnMenuItemClickListener { item ->
             when(item.itemId) {
@@ -81,28 +81,28 @@ class SelectFieldDialog : DialogFragment() {
 
         if (field.type == FieldType.MULTISELECTDROPDOWN) {
             adapter = ArrayAdapter(context!!, android.R.layout.simple_list_item_multiple_choice, filteredChoices)
-            listView.setAdapter(adapter)
-            listView.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE)
+            listView.adapter = adapter
+            listView.choiceMode = ListView.CHOICE_MODE_MULTIPLE
 
             val multiChoiceField = (field as MultiChoiceFormField)
             multiChoiceField.value?.let { selectedChoices.addAll(it) }
         } else {
             adapter = ArrayAdapter(context!!, android.R.layout.simple_list_item_single_choice, filteredChoices)
-            listView.setAdapter(adapter)
-            listView.setChoiceMode(ListView.CHOICE_MODE_SINGLE)
+            listView.adapter = adapter
+            listView.choiceMode = ListView.CHOICE_MODE_SINGLE
 
             val singleChoiceField = (field as SingleChoiceFormField)
             singleChoiceField.value?.let { selectedChoices.add(it) }
         }
 
         if (selectedChoices.isEmpty()) {
-            selectedChoicesTextView.setText(DEFAULT_TEXT)
+            selectedChoicesTextView.text = DEFAULT_TEXT
         } else {
             checkSelected()
-            selectedChoicesTextView.setText(getSelectedChoicesString(selectedChoices))
+            selectedChoicesTextView.text = getSelectedChoicesString(selectedChoices)
         }
 
-        listView.setOnItemClickListener { adapterView, itemView, position, id ->
+        listView.setOnItemClickListener { adapterView, _, position, _ ->
             val selectedItem = adapterView.getItemAtPosition(position) as String
 
             if (field.type == FieldType.MULTISELECTDROPDOWN) {
@@ -121,13 +121,13 @@ class SelectFieldDialog : DialogFragment() {
             }
 
             if (selectedChoices.isEmpty()) {
-                selectedChoicesTextView.setText(DEFAULT_TEXT)
+                selectedChoicesTextView.text = DEFAULT_TEXT
             } else {
-                selectedChoicesTextView.setText(getSelectedChoicesString(selectedChoices))
+                selectedChoicesTextView.text = getSelectedChoicesString(selectedChoices)
             }
         }
 
-        searchView.setIconified(false)
+        searchView.isIconified = false
         searchView.setIconifiedByDefault(false)
         searchView.clearFocus()
         searchView.setOnQueryTextListener(object: SearchView.OnQueryTextListener {
@@ -159,13 +159,13 @@ class SelectFieldDialog : DialogFragment() {
     }
 
     private fun getSelectedChoicesString(choices: List<String>): String {
-        val template = "%d Selected - %s";
+        val template = "%d Selected - %s"
         return template.format(choices.size, choices.joinToString(" | "))
     }
 
     private fun checkSelected() {
         for (count in selectedChoices.indices) {
-            val index = filteredChoices.indexOf(selectedChoices.get(count))
+            val index = filteredChoices.indexOf(selectedChoices[count])
             if (index != -1) {
                 listView.setItemChecked(index, true)
             }
@@ -180,11 +180,13 @@ class SelectFieldDialog : DialogFragment() {
     }
 
     private fun onSearchTextChanged(text: String) {
+        val context = context ?: return
+
         filteredChoices.clear()
 
         for (position in choices.indices) {
-            if (text.length <= choices.get(position).length) {
-                val currentChoice = choices.get(position)
+            if (text.length <= choices[position].length) {
+                val currentChoice = choices[position]
                 if (StringUtils.containsIgnoreCase(currentChoice, text)) {
                     filteredChoices.add(currentChoice)
                 }
@@ -193,10 +195,10 @@ class SelectFieldDialog : DialogFragment() {
 
         if (field.type == FieldType.MULTISELECTDROPDOWN) {
             listView.adapter = ArrayAdapter(context, android.R.layout.simple_list_item_multiple_choice, filteredChoices)
-            listView.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE)
+            listView.choiceMode = ListView.CHOICE_MODE_MULTIPLE
         } else {
             listView.adapter = ArrayAdapter(context, android.R.layout.simple_list_item_single_choice, filteredChoices)
-            listView.setChoiceMode(ListView.CHOICE_MODE_SINGLE)
+            listView.choiceMode = ListView.CHOICE_MODE_SINGLE
         }
 
         checkSelected()

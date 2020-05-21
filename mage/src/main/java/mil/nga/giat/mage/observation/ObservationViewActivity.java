@@ -1,20 +1,17 @@
 package mil.nga.giat.mage.observation;
 
-import android.app.FragmentManager;
-import android.arch.lifecycle.ViewModelProviders;
+import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
+import android.graphics.Bitmap;
+import android.graphics.PorterDuff;
+import android.graphics.drawable.Drawable;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
-import android.support.annotation.NonNull;
-import android.support.design.widget.BottomSheetBehavior;
-import android.support.design.widget.FloatingActionButton;
-import android.support.v4.content.ContextCompat;
-import android.support.v7.app.AlertDialog;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
@@ -25,21 +22,31 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
+import androidx.core.content.ContextCompat;
+import androidx.core.graphics.drawable.DrawableCompat;
+import androidx.fragment.app.FragmentManager;
+import androidx.lifecycle.ViewModelProviders;
+
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.GoogleMap.OnCameraIdleListener;
 import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MapStyleOptions;
-import com.google.common.base.Function;
+import com.google.android.material.bottomsheet.BottomSheetDialog;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.android.material.snackbar.Snackbar;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Collections2;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
-import org.apache.commons.lang3.StringUtils;
-
+import java.lang.ref.WeakReference;
 import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -53,6 +60,7 @@ import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.form.Form;
 import mil.nga.giat.mage.form.FormMode;
 import mil.nga.giat.mage.form.FormViewModel;
+import mil.nga.giat.mage.map.marker.ObservationBitmapFactory;
 import mil.nga.giat.mage.people.PeopleActivity;
 import mil.nga.giat.mage.sdk.datastore.observation.Attachment;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
@@ -71,7 +79,6 @@ import mil.nga.giat.mage.sdk.exceptions.ObservationException;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
 import mil.nga.giat.mage.utils.DateFormatFactory;
 import mil.nga.giat.mage.widget.CoordinateView;
-import mil.nga.wkb.geom.Geometry;
 
 public class ObservationViewActivity extends AppCompatActivity implements OnMapReadyCallback, OnCameraIdleListener {
 
@@ -93,8 +100,9 @@ public class ObservationViewActivity extends AppCompatActivity implements OnMapR
 	private MapObservation mapObservation;
 	private MapFragment mapFragment;
 	private MapObservationManager mapObservationManager;
-	private BottomSheetBehavior bottomSheetBehavior;
+	private IconTask iconTask;
 
+	CoordinateView locationTextView;
 	ImageView favoriteIcon;
 
 	@Override
@@ -137,29 +145,20 @@ public class ObservationViewActivity extends AppCompatActivity implements OnMapR
 			Log.e(LOG_NAME, "Cannot read current user", e);
 		}
 
-		favoriteIcon = (ImageView) findViewById(R.id.favoriteIcon);
-		favoriteIcon.setOnClickListener(new View.OnClickListener() {
-			@Override
-			public void onClick(View v) {
-				toggleFavorite(o);
-			}
-		});
-		findViewById(R.id.directions).setOnClickListener(new View.OnClickListener() {
-			@Override
-			public void onClick(View v) {
-				getDirections();
-			}
+		locationTextView = findViewById(R.id.location);
+		findViewById(R.id.location_layout).setOnClickListener(view -> {
+			onLocationClick();
 		});
 
-		findViewById(R.id.favorites).setOnClickListener(new View.OnClickListener() {
-			@Override
-			public void onClick(View v) {
-				onFavoritesClick(o.getFavorites());
-			}
-		});
+		favoriteIcon = findViewById(R.id.favorite_icon);
+		favoriteIcon.setOnClickListener(v -> toggleFavorite(o));
+		findViewById(R.id.directions_icon).setOnClickListener(v -> getDirections());
+
+		findViewById(R.id.favorites).setOnClickListener(v -> onFavoritesClick(o.getFavorites()));
 
 		final FloatingActionButton editButton = findViewById(R.id.edit_button);
 		editButton.setVisibility(canEditObservation ? View.VISIBLE : View.GONE);
+
 		editButton.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
@@ -167,32 +166,7 @@ public class ObservationViewActivity extends AppCompatActivity implements OnMapR
 			}
 		});
 
-		View bottomSheet = findViewById(R.id.bottom_sheet);
-		bottomSheetBehavior = BottomSheetBehavior.from(bottomSheet);
-		bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
-		bottomSheetBehavior.setBottomSheetCallback(new BottomSheetBehavior.BottomSheetCallback() {
-			@Override
-			public void onStateChanged(@NonNull View bottomSheet, int newState) {
-			}
-
-			@Override
-			public void onSlide(@NonNull View bottomSheet, float slideOffset) {
-				float scale = slideOffset < 0 ? Math.abs(slideOffset) : 1 - slideOffset;
-				if (!Float.isNaN(scale)) {
-					editButton.animate().scaleX(scale).scaleY(scale).setDuration(0).start();
-				}
-			}
-		});
-		findViewById(R.id.important_actions_button).setOnClickListener(new View.OnClickListener() {
-			@Override
-			public void onClick(View v) {
-				if(bottomSheetBehavior.getState() != BottomSheetBehavior.STATE_EXPANDED) {
-					bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
-				} else {
-					bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
-				}
-			}
-		});
+		findViewById(R.id.important_icon).setOnClickListener(v -> onImportantClick());
 
 		observationEventListener = new IObservationEventListener() {
 			@Override
@@ -210,13 +184,10 @@ public class ObservationViewActivity extends AppCompatActivity implements OnMapR
 
 				for (final Observation observation : observations) {
 					if (o == null || (observation.getId().equals(o.getId()) && !observation.getLastModified().equals(o.getLastModified()))) {
-						ObservationViewActivity.this.runOnUiThread(new Runnable() {
-							@Override
-							public void run() {
-								o = observation;
-								setupObservation();
-								setupMap();
-							}
+						ObservationViewActivity.this.runOnUiThread(() -> {
+							o = observation;
+							setupObservation();
+							setupMap();
 						});
 					}
 				}
@@ -249,6 +220,11 @@ public class ObservationViewActivity extends AppCompatActivity implements OnMapR
 		super.onPause();
 
 		ObservationHelper.getInstance(getApplicationContext()).removeListener(observationEventListener);
+
+		if (iconTask != null) {
+			iconTask.cancel(false);
+			iconTask = null;
+		}
 	}
 
 	@Override
@@ -307,8 +283,17 @@ public class ObservationViewActivity extends AppCompatActivity implements OnMapR
 				name.setText(form.getName());
 			}
 
+			Drawable markerPlaceholder = DrawableCompat.wrap(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_place_white_48dp));
+			DrawableCompat.setTint(markerPlaceholder, ContextCompat.getColor(getApplicationContext(), R.color.icon));
+			DrawableCompat.setTintMode(markerPlaceholder, PorterDuff.Mode.SRC_IN);
+
+			ImageView markerView = findViewById(R.id.observation_marker);
+			markerView.setImageDrawable(markerPlaceholder);
+			iconTask = new IconTask(markerView);
+			iconTask.execute(o);
+
 			ObservationProperty primary = o.getPrimaryField();
-			TextView primaryView = findViewById(R.id.primary_field);
+			TextView primaryView = findViewById(R.id.primary);
 			if (primary == null || primary.isEmpty()) {
 				primaryView.setVisibility(View.GONE);
 			} else {
@@ -318,7 +303,7 @@ public class ObservationViewActivity extends AppCompatActivity implements OnMapR
 			}
 
 			ObservationProperty secondary = o.getSecondaryField();
-			TextView secondaryView = findViewById(R.id.secondary_field);
+			TextView secondaryView = findViewById(R.id.secondary);
 			if (secondary == null || secondary.isEmpty()) {
 				secondaryView.setVisibility(View.GONE);
 			} else {
@@ -326,32 +311,30 @@ public class ObservationViewActivity extends AppCompatActivity implements OnMapR
 				secondaryView.setText(secondary.getValue().toString());
 			}
             
-            TextView timestamp = findViewById(R.id.timestamp);
+            TextView timestamp = findViewById(R.id.time);
             timestamp.setText(dateFormat.format(o.getTimestamp()));
 
-			Geometry geometry = o.getGeometry();
-			ObservationLocation location = new ObservationLocation(geometry);
-			CoordinateView locationTextView = (CoordinateView) findViewById(R.id.location);
+			ObservationLocation location = new ObservationLocation(o);
 			LatLng latLng = location.getCentroidLatLng();
 			locationTextView.setLatLng(latLng);
 
-            String provider = o.getProvider();
-            if (provider != null) {
-                ((TextView) findViewById(R.id.location_provider)).setText("(" + provider + ")");
+            if (location.getProvider() != null && !location.isManualProvider()) {
+                ((TextView) findViewById(R.id.location_provider)).setText(location.getProvider().toUpperCase());
             } else {
                 findViewById(R.id.location_provider).setVisibility(View.GONE);
             }
-            
+
             Float accuracy = o.getAccuracy();
             if (accuracy != null && accuracy > 0) {
-                ((TextView) findViewById(R.id.location_accuracy)).setText("\u00B1" + accuracy + "m");
+				((TextView) findViewById(R.id.location_accuracy)).setText(String.format(" \u00B1 %.2fm", accuracy));
             } else {
                 findViewById(R.id.location_accuracy).setVisibility(View.GONE);
             }
 
 			setupImportant(o.getImportant());
+
 			setFavorites();
-			setFavoriteImage(isFavorite(o));
+			setFavoriteIcon(isFavorite(o));
 
             LinearLayout galleryLayout = findViewById(R.id.image_gallery);
             galleryLayout.removeAllViews();
@@ -373,7 +356,7 @@ public class ObservationViewActivity extends AppCompatActivity implements OnMapR
                 attachmentGallery.addAttachments(galleryLayout, o.getAttachments());
 			}
 
-			TextView user = findViewById(R.id.username);
+			TextView user = findViewById(R.id.user);
 			String userText = "Unknown User";
 			User u = UserHelper.getInstance(this).read(o.getUserId());
 			if (u != null) {
@@ -406,8 +389,7 @@ public class ObservationViewActivity extends AppCompatActivity implements OnMapR
 			return;
 		}
 
-		Geometry geometry = o.getGeometry();
-		ObservationLocation location = new ObservationLocation(geometry);
+		ObservationLocation location = new ObservationLocation(o);
 
 		SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
 		map.getUiSettings().setZoomControlsEnabled(false);
@@ -425,12 +407,17 @@ public class ObservationViewActivity extends AppCompatActivity implements OnMapR
 			if (initialLatLng == null) {
 				initialLatLng = new LatLng(0, 0);
 			}
-			map.moveCamera(CameraUpdateFactory.newLatLngZoom(initialLatLng, 15));
 
-			map.animateCamera(location.getCameraUpdate(mapFragment.getView(), 15));
+			map.moveCamera(CameraUpdateFactory.newLatLngZoom(initialLatLng, 15));
+			map.animateCamera(location.getCameraUpdate(mapFragment.getView(), true, 1.0f/6));
 		} else {
 			mapObservation.remove();
-			map.moveCamera(location.getCameraUpdate(mapFragment.getView(), (int)map.getCameraPosition().zoom));
+			map.moveCamera(location.getCameraUpdate(mapFragment.getView(),true, 1.0f/6));
+		}
+
+		CircleOptions circle = location.getAccuracyCircle(getResources());
+		if (circle != null) {
+			map.addCircle(circle);
 		}
 
 		mapObservation = mapObservationManager.addToMap(o);
@@ -466,95 +453,98 @@ public class ObservationViewActivity extends AppCompatActivity implements OnMapR
 	}
 
 	private void setupImportant(ObservationImportant important) {
-		UserHelper userHelper = UserHelper.getInstance(getApplicationContext());
+		View importantView = findViewById(R.id.important);
 
 		boolean isImportant = important != null && important.isImportant();
+		importantView.setVisibility(isImportant ? View.VISIBLE : View.GONE);
 
-		View imporantView = findViewById(R.id.important);
 		if (isImportant) {
-			imporantView.setVisibility(View.VISIBLE);
-
-			String displayName = "Unknown user";
 			try {
-				User user = userHelper.read(important.getUserId());
-				displayName = user.getDisplayName();
+				TextView overline = findViewById(R.id.important_overline);
+				User user = UserHelper.getInstance(getApplicationContext()).read(important.getUserId());
+				overline.setText(String.format("FLAGGED BY %s", user.getDisplayName().toUpperCase()));
 			} catch (UserException e) {
-				Log.e(LOG_NAME, "Error finding user with remote id: " + important.getUserId());
+				e.printStackTrace();
 			}
-			((TextView) findViewById(R.id.importantUser)).setText(String.format(getString(R.string.important_flagged_by), displayName));
 
-			DateFormat dateFormat = DateFormat.getDateInstance(DateFormat.MEDIUM, Locale.getDefault());
-			((TextView) findViewById(R.id.importantDate)).setText(dateFormat.format(important.getTimestamp()));
+			TextView description = findViewById(R.id.important_description);
+			description.setText(important.getDescription());
+		}
 
-			String description = important.getDescription();
-			TextView descriptionView = (TextView) findViewById(R.id.importantDescription);
-			descriptionView.setVisibility(StringUtils.isNoneEmpty(description) ? View.VISIBLE : View.GONE);
-			descriptionView.setText(description);
-
-			findViewById(R.id.addImportant).setVisibility(View.GONE);
-			findViewById(R.id.important_actions_button).setVisibility(canFlagObservation() ? View.VISIBLE : View.GONE);
+		ImageView importantIcon = findViewById(R.id.important_icon);
+		if (isImportant) {
+			importantIcon.setImageDrawable(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_flag_white_24dp));
+			importantIcon.setColorFilter(ContextCompat.getColor(getApplicationContext(), R.color.observation_flag_active));
 		} else {
-			imporantView.setVisibility(View.GONE);
-			findViewById(R.id.important_actions_button).setVisibility(View.GONE);
-			findViewById(R.id.addImportant).setVisibility(canFlagObservation() ? View.VISIBLE : View.GONE);
+			importantIcon.setImageDrawable(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_flag_outlined_white_24dp));
+			importantIcon.setColorFilter(ContextCompat.getColor(getApplicationContext(), R.color.observation_flag_inactive));
 		}
 	}
 
-	public void onUpdateImportantClick(View v) {
-		bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
+	private void onImportantClick() {
+		ObservationImportant important = o.getImportant();
+		boolean isImportant = important != null && important.isImportant();
+		if (isImportant) {
+			BottomSheetDialog dialog = new BottomSheetDialog(this);
+			View view = getLayoutInflater().inflate(R.layout.view_important_bottom_sheet, null);
+			view.findViewById(R.id.update_button).setOnClickListener(v -> {
+				onUpdateImportantClick();
+				dialog.dismiss();
+			});
+			view.findViewById(R.id.remove_button).setOnClickListener(v -> {
+				onRemoveImportantClick();
+				dialog.dismiss();
+			});
+			dialog.setContentView(view);
+			dialog.show();
+		} else {
+			onUpdateImportantClick();
+		}
+	}
 
-		final ObservationImportant important = o.getImportant();
-		String description = important != null ? important.getDescription() : null;
-		ImportantDialog dialog = ImportantDialog.newInstance(description);
-		dialog.setOnImportantListener(new ImportantDialog.OnImportantListener() {
-			@Override
-			public void onImportant(String description) {
-				ObservationHelper observationHelper = ObservationHelper.getInstance(getApplicationContext());
-				try {
-					ObservationImportant important = o.getImportant();
-					if (important == null) {
-						important = new ObservationImportant();
-						o.setImportant(important);
-					}
-
-					if (currentUser != null) {
-						important.setUserId(currentUser.getRemoteId());
-					}
-
-					important.setTimestamp(new Date());
-					important.setDescription(description);
-					observationHelper.addImportant(o);
-
-					setupImportant(important);
-				} catch (ObservationException e) {
-					Log.e(LOG_NAME, "Error updating important flag for observation: " + o.getRemoteId());
+	public void onUpdateImportantClick() {
+		ImportantDialog dialog = ImportantDialog.newInstance(o.getImportant());
+		dialog.setOnImportantListener(description1 -> {
+			ObservationHelper observationHelper = ObservationHelper.getInstance(getApplicationContext());
+			try {
+				ObservationImportant important = o.getImportant();
+				if (important == null) {
+					important = new ObservationImportant();
+					o.setImportant(important);
 				}
+
+				if (currentUser != null) {
+					important.setUserId(currentUser.getRemoteId());
+				}
+
+				important.setTimestamp(new Date());
+				important.setDescription(description1);
+				observationHelper.addImportant(o);
+
+				setupImportant(important);
+			} catch (ObservationException e) {
+				Log.e(LOG_NAME, "Error updating important flag for observation: " + o.getRemoteId());
 			}
 		});
 
-		FragmentManager fm = getFragmentManager();
+		FragmentManager fm = getSupportFragmentManager();
 		dialog.show(fm, "important");
 	}
 
 
-	public void onRemoveImportantClick(View v) {
-		bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
-
+	public void onRemoveImportantClick() {
 		ImportantRemoveDialog dialog = new ImportantRemoveDialog();
-		dialog.setOnRemoveImportantListener(new ImportantRemoveDialog.OnRemoveImportantListener() {
-			@Override
-			public void onRemoveImportant() {
-				ObservationHelper observationHelper = ObservationHelper.getInstance(getApplicationContext());
-				try {
-					observationHelper.removeImportant(o);
-					setupImportant(o.getImportant());
-				} catch (ObservationException e) {
-					Log.e(LOG_NAME, "Error removing important flag for observation: " + o.getRemoteId());
-				}
+		dialog.setOnRemoveImportantListener(() -> {
+			ObservationHelper observationHelper = ObservationHelper.getInstance(getApplicationContext());
+			try {
+				observationHelper.removeImportant(o);
+				setupImportant(o.getImportant());
+			} catch (ObservationException e) {
+				Log.e(LOG_NAME, "Error removing important flag for observation: " + o.getRemoteId());
 			}
 		});
 
-		FragmentManager fm = getFragmentManager();
+		FragmentManager fm = getSupportFragmentManager();
 		dialog.show(fm, "remove_important");
 	}
 
@@ -581,12 +571,7 @@ public class ObservationViewActivity extends AppCompatActivity implements OnMapR
 	}
 
 	private void onFavoritesClick(Collection<ObservationFavorite> favorites) {
-		Collection<String> userIds = Collections2.transform(favorites, new Function<ObservationFavorite, String>() {
-			@Override
-			public String apply(ObservationFavorite favorite) {
-				return favorite.getUserId();
-			}
-		});
+		Collection<String> userIds = Collections2.transform(favorites, favorite -> favorite.getUserId());
 
 		Intent intent = new Intent(this, PeopleActivity.class);
 		intent.putStringArrayListExtra(PeopleActivity.USER_REMOTE_IDS, new ArrayList<>(userIds));
@@ -603,7 +588,7 @@ public class ObservationViewActivity extends AppCompatActivity implements OnMapR
 				observationHelper.favoriteObservation(observation, currentUser);
 			}
 
-			setFavoriteImage(!isFavorite);
+			setFavoriteIcon(!isFavorite);
 		} catch (ObservationException e) {
 			String text = isFavorite ? "Problem unfavoriting observation" : "Problem favoriting observation";
 			Toast.makeText(getApplicationContext(), text, Toast.LENGTH_LONG).show();
@@ -632,24 +617,60 @@ public class ObservationViewActivity extends AppCompatActivity implements OnMapR
 
 		findViewById(R.id.favorites).setVisibility(favoritesCount > 0 ? View.VISIBLE : View.GONE) ;
 		if (favoritesCount > 0) {
-			TextView favoriteCountView = (TextView) findViewById(R.id.favoritesCount);
+			TextView favoriteCountView = findViewById(R.id.favoritesCount);
 			favoriteCountView.setText(favoritesCount.toString());
 
-			TextView favoritesLabel = (TextView) findViewById(R.id.favoritesLabel);
+			TextView favoritesLabel = findViewById(R.id.favoritesLabel);
 			favoritesLabel.setText(favoritesCount == 1 ? "FAVORITE" : "FAVORITES");
 		}
 	}
 
-	private void setFavoriteImage(boolean isFavorite) {
+	private void setFavoriteIcon(boolean isFavorite) {
 		if (isFavorite) {
-			favoriteIcon.setColorFilter(ContextCompat.getColor(this, R.color.observation_favorite_active));
+			favoriteIcon.setImageDrawable(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_favorite_white_24dp));
+			favoriteIcon.setColorFilter(ContextCompat.getColor(getApplicationContext(), R.color.observation_favorite_active));
 		} else {
-			favoriteIcon.setColorFilter(ContextCompat.getColor(this, R.color.observation_favorite_inactive));
+			favoriteIcon.setImageDrawable(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_favorite_border_white_24dp));
+			favoriteIcon.setColorFilter(ContextCompat.getColor(getApplicationContext(), R.color.observation_favorite_inactive));
 		}
+	}
+
+	private void onLocationClick() {
+		String location = locationTextView.getText().toString();
+		ClipboardManager clipboard = (ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
+		ClipData clip = ClipData.newPlainText("Observation Location", location);
+		if (clipboard == null || clip == null) return;
+		clipboard.setPrimaryClip(clip);
+
+		Snackbar.make(findViewById(R.id.coordinator_layout), R.string.location_text_copy_message, Snackbar.LENGTH_SHORT).show();
 	}
 
 	private void share(final Observation observation) {
 		new ObservationShareTask(this, observation).execute();
 	}
 
+	class IconTask extends AsyncTask<Observation, Void, Bitmap> {
+		private final WeakReference<ImageView> reference;
+
+		public IconTask(ImageView imageView) {
+			this.reference = new WeakReference<>(imageView);
+		}
+
+		@Override
+		protected Bitmap doInBackground(Observation... observations) {
+			return ObservationBitmapFactory.bitmap(getApplicationContext(), observations[0]);
+		}
+
+		@Override
+		protected void onPostExecute(Bitmap bitmap) {
+			if (isCancelled()) {
+				bitmap = null;
+			}
+
+			ImageView imageView = reference.get();
+			if (imageView != null && bitmap != null) {
+				imageView.setImageBitmap(bitmap);
+			}
+		}
+	}
 }

@@ -3,11 +3,62 @@ All notable changes to this project will be documented in this file.
 Adheres to [Semantic Versioning](http://semver.org/).
 
 ---
-## 6.2.5 (TBD)
+## 6.2.10 (TBD)
+
+##### Features
+* Show observation accuracy if available.  Shown on map as accuracy circle and in observation view as text.
+* Use algorithm to determine "best" device location based on provider, accuracy and time to determine
+  new observation location.
+
+##### Bug Fixes
+
+## [6.2.9](https://github.com/ngageoint/mage-android/releases/tag/6.2.9)
+
+##### Features
+* Observation feed show/hide primary/secondary form feed fields.
+
+##### Bug Fixes
+* Work around patch for Google Maps bug 154855417.  This will remove data pushed by Google Maps causing application to crash.
+* Fix for LDAP authentication.
+
+## [6.2.8](https://github.com/ngageoint/mage-android/releases/tag/6.2.8)
+
+##### Features
+* Update support library to androidx
+* Improved GeoPackage functionality including styles, scaling, and zoom
+* geopackage-android-map version 3.4.0
+* android-maps-utils version 0.6.2
+* Moved geopackages and static features (e.g. XML) into a new preference called offline layers.
+  These offline layers only exist on a remote server until downloaded onto the client.
+* Online layers preference added.  This gives users access to layers that exist on remote XYZ, TMS,
+  and WMS servers without needing to be downloaded.  Only supports HTTPS.
+* Moved Observations and People preferences to new preference category called MAGE.
+
+##### Bug Fixes
+
+## [6.2.7](https://github.com/ngageoint/mage-android/releases/tag/6.2.7)
+
+##### Features
+* Traffic map layer
+
+##### Bug Fixes
+
+## [6.2.6](https://github.com/ngageoint/mage-android/releases/tag/6.2.6)
 
 ##### Features
 
 ##### Bug Fixes
+* User avatars now load in feed and profile page
+* Fix crash when trying to add audio attachments on some Samsung devices
+* Pull observations after switching events
+
+## [6.2.5](https://github.com/ngageoint/mage-android/releases/tag/6.2.5)
+
+##### Features
+
+##### Bug Fixes
+* Fixed a bug where offline users switching events were unable to create observations.
+* Fixed a bug causing events with no forms to crash on observation create.
 
 ## [6.2.4](https://github.com/ngageoint/mage-android/releases/tag/6.2.4) (06-06-2019)
 
@@ -92,7 +143,7 @@ Adheres to [Semantic Versioning](http://semver.org/).
 ##### Features
 
 ##### Bug Fixes
-* Fix crash when trying to edit observation location 
+* Fix crash when trying to edit observation location
 * Fix observation and location time filtering
 * Fix observation and location info window click crash
 * Fix map layout height in profile view
@@ -160,7 +211,7 @@ Adheres to [Semantic Versioning](http://semver.org/).
 ##### Features
 
 ##### Bug Fixes
-* Fixed bug causing non-required select fields to show as required 
+* Fixed bug causing non-required select fields to show as required
 
 ## [5.3.1](https://github.com/ngageoint/mage-android/releases/tag/5.3.1) (07-20-2017)
 

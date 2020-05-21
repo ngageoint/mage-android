@@ -5,8 +5,8 @@ import android.content.Context
 import android.content.Intent
 import android.os.IBinder
 import androidx.work.*
-import com.caci.kuato.di.module.ApplicationContext
 import dagger.android.AndroidInjection
+import mil.nga.giat.mage.dagger.module.ApplicationContext
 import mil.nga.giat.mage.sdk.datastore.observation.Attachment
 import mil.nga.giat.mage.sdk.datastore.observation.AttachmentHelper
 import mil.nga.giat.mage.sdk.event.IAttachmentEventListener

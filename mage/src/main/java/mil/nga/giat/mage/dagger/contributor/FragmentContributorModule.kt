@@ -6,7 +6,8 @@ import mil.nga.giat.mage.login.idp.IdpLoginFragment
 import mil.nga.giat.mage.login.ldap.LdapLoginFragment
 import mil.nga.giat.mage.login.mage.MageLoginFragment
 import mil.nga.giat.mage.map.MapFragment
-import mil.nga.giat.mage.map.preference.FeatureOverlayPreferenceActivity
+import mil.nga.giat.mage.map.preference.OnlineLayersPreferenceActivity
+import mil.nga.giat.mage.map.preference.TileOverlayPreferenceActivity
 import mil.nga.giat.mage.newsfeed.ObservationFeedFragment
 import mil.nga.giat.mage.newsfeed.PeopleFeedFragment
 import mil.nga.giat.mage.preferences.ClearDataPreferenceActivity
@@ -34,11 +35,14 @@ abstract class FragmentContributorModule {
     internal abstract fun contributePeopleFeedFragment(): PeopleFeedFragment
 
     @ContributesAndroidInjector
-    internal abstract fun contributeFeatureListFragment(): FeatureOverlayPreferenceActivity.FeatureListFragment
+    internal abstract fun contributeOverlayListFragment(): TileOverlayPreferenceActivity.OverlayListFragment
 
     @ContributesAndroidInjector
     internal abstract fun contributeClearDataFragment(): ClearDataPreferenceActivity.ClearDataFragment
 
     @ContributesAndroidInjector
     internal abstract fun contributeLocationPrefernceFragment(): LocationPreferencesActivity.LocationPreferenceFragment
+
+    @ContributesAndroidInjector
+    internal abstract fun contributeOnlineLayersListFragment(): OnlineLayersPreferenceActivity.OnlineLayersListFragment
 }

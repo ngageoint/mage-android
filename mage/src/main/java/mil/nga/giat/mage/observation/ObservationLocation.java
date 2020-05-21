@@ -1,5 +1,6 @@
 package mil.nga.giat.mage.observation;
 
+import android.content.res.Resources;
 import android.location.Location;
 import android.os.Parcel;
 import android.os.Parcelable;
@@ -8,27 +9,30 @@ import android.view.View;
 
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 
 import java.util.List;
 
-import mil.nga.geopackage.projection.ProjectionConstants;
+import mil.nga.giat.mage.R;
+import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.utils.GeometryUtility;
-import mil.nga.wkb.geom.CompoundCurve;
-import mil.nga.wkb.geom.Geometry;
-import mil.nga.wkb.geom.GeometryCollection;
-import mil.nga.wkb.geom.GeometryEnvelope;
-import mil.nga.wkb.geom.GeometryType;
-import mil.nga.wkb.geom.LineString;
-import mil.nga.wkb.geom.MultiLineString;
-import mil.nga.wkb.geom.MultiPoint;
-import mil.nga.wkb.geom.MultiPolygon;
-import mil.nga.wkb.geom.Point;
-import mil.nga.wkb.geom.Polygon;
-import mil.nga.wkb.geom.PolyhedralSurface;
-import mil.nga.wkb.util.GeometryEnvelopeBuilder;
-import mil.nga.wkb.util.GeometryUtils;
+import mil.nga.sf.CompoundCurve;
+import mil.nga.sf.Geometry;
+import mil.nga.sf.GeometryCollection;
+import mil.nga.sf.GeometryEnvelope;
+import mil.nga.sf.GeometryType;
+import mil.nga.sf.LineString;
+import mil.nga.sf.MultiLineString;
+import mil.nga.sf.MultiPoint;
+import mil.nga.sf.MultiPolygon;
+import mil.nga.sf.Point;
+import mil.nga.sf.Polygon;
+import mil.nga.sf.PolyhedralSurface;
+import mil.nga.sf.proj.ProjectionConstants;
+import mil.nga.sf.util.GeometryEnvelopeBuilder;
+import mil.nga.sf.util.GeometryUtils;
 
 /**
  * Observation location containing the geometry and location collection information
@@ -45,12 +49,13 @@ public class ObservationLocation implements Parcelable {
     /**
      * Default camera single point zoom level
      */
-    public static final int DEFAULT_POINT_ZOOM = 17;
+    private static final int DEFAULT_POINT_ZOOM = 17;
 
     /**
      * Default camera padding percentage when building a camera update for geometry zoom
      */
-    public static final float DEFAULT_PADDING_PERCENTAGE = .18f;
+    private static final float DEFAULT_PADDING_PERCENTAGE = 1/5f;
+
 
     /**
      * Parcelable CREATOR implementation
@@ -73,7 +78,7 @@ public class ObservationLocation implements Parcelable {
     /**
      * {@link Location#getAccuracy()}
      */
-    private float accuracy;
+    private Float accuracy;
 
     /**
      * {@link Location#getProvider()} or {@link #MANUAL_PROVIDER}
@@ -107,6 +112,12 @@ public class ObservationLocation implements Parcelable {
         setProvider(location.getProvider());
         setTime(location.getTime());
         setElapsedRealtimeNanos(location.getElapsedRealtimeNanos());
+    }
+
+    public ObservationLocation(Observation observation) {
+        setGeometry(observation.getGeometry());
+        setProvider(observation.getProvider());
+        setAccuracy(observation.getAccuracy());
     }
 
     /**
@@ -170,7 +181,7 @@ public class ObservationLocation implements Parcelable {
         byte[] geometryBytes = new byte[in.readInt()];
         in.readByteArray(geometryBytes);
         geometry = GeometryUtility.toGeometry(geometryBytes);
-        accuracy = in.readFloat();
+        accuracy = (Float) in.readValue(Float.class.getClassLoader());
         provider = in.readString();
         time = in.readLong();
         elapsedRealtimeNanos = in.readLong();
@@ -208,7 +219,7 @@ public class ObservationLocation implements Parcelable {
      *
      * @return accuracy
      */
-    public float getAccuracy() {
+    public Float getAccuracy() {
         return accuracy;
     }
 
@@ -217,7 +228,7 @@ public class ObservationLocation implements Parcelable {
      *
      * @param accuracy accuracy
      */
-    public void setAccuracy(float accuracy) {
+    public void setAccuracy(Float accuracy) {
         this.accuracy = accuracy;
     }
 
@@ -271,8 +282,26 @@ public class ObservationLocation implements Parcelable {
      *
      * @param elapsedRealtimeNanos elapsed realtime nanos time
      */
-    public void setElapsedRealtimeNanos(long elapsedRealtimeNanos) {
+    private void setElapsedRealtimeNanos(long elapsedRealtimeNanos) {
         this.elapsedRealtimeNanos = elapsedRealtimeNanos;
+    }
+
+    public boolean isManualProvider() {
+        return MANUAL_PROVIDER.equals(provider);
+    }
+
+    public CircleOptions getAccuracyCircle(Resources resources) {
+        CircleOptions circle = null;
+        if (geometry.getGeometryType() == GeometryType.POINT && !isManualProvider() && accuracy != null) {
+            circle = new CircleOptions()
+                .fillColor(resources.getColor(R.color.accuracy_circle_fill))
+                .strokeColor(resources.getColor(R.color.accuracy_circle_stroke))
+                .strokeWidth(2)
+                .center(getFirstLatLng())
+                .radius(accuracy);
+        }
+
+        return circle;
     }
 
     /**
@@ -280,7 +309,7 @@ public class ObservationLocation implements Parcelable {
      *
      * @return point
      */
-    public Point getFirstPoint() {
+    private Point getFirstPoint() {
         return getFirstPoint(geometry);
     }
 
@@ -340,10 +369,9 @@ public class ObservationLocation implements Parcelable {
      *
      * @return lat lng
      */
-    public LatLng getFirstLatLng() {
+    private LatLng getFirstLatLng() {
         Point point = getFirstPoint();
-        LatLng latLng = new LatLng(point.getY(), point.getX());
-        return latLng;
+        return new LatLng(point.getY(), point.getX());
     }
 
     /**
@@ -362,8 +390,7 @@ public class ObservationLocation implements Parcelable {
      */
     public LatLng getCentroidLatLng() {
         Point point = GeometryUtils.getCentroid(geometry);
-        LatLng latLng = new LatLng(point.getY(), point.getX());
-        return latLng;
+        return new LatLng(point.getY(), point.getX());
     }
 
     /**
@@ -371,7 +398,7 @@ public class ObservationLocation implements Parcelable {
      *
      * @return geometry envelope
      */
-    public GeometryEnvelope getGeometryEnvelope() {
+    private GeometryEnvelope getGeometryEnvelope() {
         Geometry geometryCopy = geometry.copy();
         GeometryUtils.minimizeGeometry(geometryCopy, ProjectionConstants.WGS84_HALF_WORLD_LON_WIDTH);
         return GeometryEnvelopeBuilder.buildEnvelope(geometryCopy);
@@ -382,70 +409,53 @@ public class ObservationLocation implements Parcelable {
      *
      * @return camera update
      */
-    public CameraUpdate getCameraUpdate() {
-        return getCameraUpdate(null);
-    }
-
-    /**
-     * Get the camera update for zooming to the geometry
-     *
-     * @param view view
-     * @return camera update
-     */
     public CameraUpdate getCameraUpdate(View view) {
-        return getCameraUpdate(view, DEFAULT_POINT_ZOOM, DEFAULT_PADDING_PERCENTAGE);
+        return getCameraUpdate(view, DEFAULT_PADDING_PERCENTAGE);
     }
 
     /**
      * Get the camera update for zooming to the geometry
      *
-     * @param view      view
-     * @param pointZoom point zoom
-     * @return camera update
-     */
-    public CameraUpdate getCameraUpdate(View view, int pointZoom) {
-        return getCameraUpdate(view, pointZoom, DEFAULT_PADDING_PERCENTAGE);
-    }
-
-    /**
-     * Get the camera update for zooming to the geometry
-     *
-     * @param pointZoom point zoom
-     * @return camera update
-     */
-    public CameraUpdate getCameraUpdate(int pointZoom) {
-        return getCameraUpdate(null, pointZoom);
-    }
-
-    /**
-     * Get the camera update for zooming to the geometry
-     *
-     * @param view              view
      * @param paddingPercentage padding percentage
      * @return camera update
      */
-    public CameraUpdate getCameraUpdate(View view, float paddingPercentage) {
-        return getCameraUpdate(view, DEFAULT_POINT_ZOOM, paddingPercentage);
+    private CameraUpdate getCameraUpdate(View view, float paddingPercentage) {
+        return getCameraUpdate(view, false, DEFAULT_POINT_ZOOM, paddingPercentage);
+    }
+
+    CameraUpdate getCameraUpdate(View view, boolean zoomToAccuracy, float paddingPercentage) {
+        return getCameraUpdate(view, zoomToAccuracy, DEFAULT_POINT_ZOOM, paddingPercentage);
     }
 
     /**
      * Get the camera update for zooming to the geometry
      *
-     * @param view              view
-     * @param pointZoom         point zoom
      * @param paddingPercentage padding percentage
      * @return camera update
      */
-    public CameraUpdate getCameraUpdate(View view, int pointZoom, float paddingPercentage) {
-
-        CameraUpdate update = null;
+    private CameraUpdate getCameraUpdate(View view, boolean zoomToAccuracy, int pointZoomDefault, float paddingPercentage) {
+        CameraUpdate update;
 
         if (geometry.getGeometryType() == GeometryType.POINT) {
+            LatLng latLng = getFirstLatLng();
 
-            update = CameraUpdateFactory.newLatLngZoom(getFirstLatLng(), pointZoom);
+            if (zoomToAccuracy && !isManualProvider()  && accuracy != null) {
+                double latitudePadding = (accuracy / 111325);
+                LatLngBounds bounds = new LatLngBounds(
+                        new LatLng(latLng.latitude - latitudePadding, latLng.longitude),
+                        new LatLng(latLng.latitude + latitudePadding, latLng.longitude));
 
+                int padding = 0;
+                if (view != null) {
+                    int minDimension = Math.min(view.getWidth(), view.getHeight());
+                    padding = (int) Math.floor(minDimension * paddingPercentage);
+                }
+
+                update = CameraUpdateFactory.newLatLngBounds(bounds, padding);
+            } else {
+                update = CameraUpdateFactory.newLatLngZoom(latLng, pointZoomDefault);
+            }
         } else {
-
             GeometryEnvelope envelope = getGeometryEnvelope();
 
             final LatLngBounds.Builder boundsBuilder = new LatLngBounds.Builder();
@@ -456,14 +466,11 @@ public class ObservationLocation implements Parcelable {
 
             int padding = 0;
             if (view != null) {
-                int minViewLength = Math.min(view.getWidth(), view.getHeight());
-                padding = (int) Math.floor(minViewLength
-                        * paddingPercentage);
+                int minDimension = Math.min(view.getWidth(), view.getHeight());
+                padding = (int) Math.floor(minDimension * paddingPercentage);
             }
 
-            update = CameraUpdateFactory.newLatLngBounds(
-                    boundsBuilder.build(), padding);
-
+            update = CameraUpdateFactory.newLatLngBounds(boundsBuilder.build(), padding);
         }
 
         return update;
@@ -485,7 +492,7 @@ public class ObservationLocation implements Parcelable {
         byte[] geometryBytes = GeometryUtility.toGeometryBytes(geometry);
         out.writeInt(geometryBytes.length);
         out.writeByteArray(geometryBytes);
-        out.writeFloat(accuracy);
+        out.writeValue(accuracy);
         out.writeString(provider);
         out.writeLong(time);
         out.writeLong(elapsedRealtimeNanos);
