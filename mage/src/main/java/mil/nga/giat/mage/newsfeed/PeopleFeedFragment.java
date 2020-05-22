@@ -41,6 +41,7 @@ import javax.inject.Inject;
 
 import dagger.android.support.DaggerFragment;
 import mil.nga.giat.mage.R;
+import mil.nga.giat.mage.dagger.module.ApplicationContext;
 import mil.nga.giat.mage.filter.LocationFilterActivity;
 import mil.nga.giat.mage.location.LocationServerFetch;
 import mil.nga.giat.mage.profile.ProfileActivity;
@@ -57,7 +58,7 @@ public class PeopleFeedFragment extends DaggerFragment implements OnItemClickLis
 	private static final String LOG_NAME = PeopleFeedFragment.class.getName();
 
 	@Inject
-    Context context;
+    protected @ApplicationContext Context context;
 
 	@Inject
     SharedPreferences preferences;

@@ -59,6 +59,7 @@ import javax.inject.Inject;
 
 import dagger.android.support.DaggerFragment;
 import mil.nga.giat.mage.R;
+import mil.nga.giat.mage.dagger.module.ApplicationContext;
 import mil.nga.giat.mage.filter.ObservationFilterActivity;
 import mil.nga.giat.mage.location.LocationPolicy;
 import mil.nga.giat.mage.observation.AttachmentGallery;
@@ -106,7 +107,7 @@ public class ObservationFeedFragment extends DaggerFragment implements IObservat
 	private SwipeRefreshLayout swipeContainer;
 
 	@Inject
-	protected Context context;
+	protected @ApplicationContext Context context;
 
 	@Inject
 	protected SharedPreferences preferences;

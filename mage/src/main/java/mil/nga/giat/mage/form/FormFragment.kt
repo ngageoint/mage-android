@@ -128,7 +128,6 @@ class FormFragment : Fragment() {
                 val view = ViewGeometry(context)
                 view.bind(field as FormField<ObservationLocation>)
 
-
                 view
             }
         }

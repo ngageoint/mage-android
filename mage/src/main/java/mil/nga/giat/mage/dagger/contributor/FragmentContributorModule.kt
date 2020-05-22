@@ -2,6 +2,9 @@ package mil.nga.giat.mage.dagger.contributor
 
 import dagger.Module
 import dagger.android.ContributesAndroidInjector
+import mil.nga.giat.mage.login.idp.IdpLoginFragment
+import mil.nga.giat.mage.login.ldap.LdapLoginFragment
+import mil.nga.giat.mage.login.mage.MageLoginFragment
 import mil.nga.giat.mage.map.MapFragment
 import mil.nga.giat.mage.map.preference.OnlineLayersPreferenceActivity
 import mil.nga.giat.mage.map.preference.TileOverlayPreferenceActivity
@@ -12,6 +15,15 @@ import mil.nga.giat.mage.preferences.LocationPreferencesActivity
 
 @Module
 abstract class FragmentContributorModule {
+
+    @ContributesAndroidInjector
+    internal abstract fun contributeMageLoginFragment(): MageLoginFragment
+
+    @ContributesAndroidInjector
+    internal abstract fun contributeLdapLoginFragment(): LdapLoginFragment
+
+    @ContributesAndroidInjector
+    internal abstract fun contributeIdpLoginFragment(): IdpLoginFragment
 
     @ContributesAndroidInjector
     internal abstract fun contributeMapFragment(): MapFragment

@@ -28,6 +28,7 @@ import dagger.android.support.AndroidSupportInjection;
 import dagger.android.support.DaggerAppCompatActivity;
 import mil.nga.giat.mage.MageApplication;
 import mil.nga.giat.mage.R;
+import mil.nga.giat.mage.dagger.module.ApplicationContext;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 
 public class LocationPreferencesActivity extends DaggerAppCompatActivity {
@@ -38,13 +39,13 @@ public class LocationPreferencesActivity extends DaggerAppCompatActivity {
     protected MageApplication application;
 
     @Inject
-    protected Context context;
+    protected @ApplicationContext Context context;
 
     private Toolbar toolbar;
 
     public static class LocationPreferenceFragment extends PreferenceFragmentCompat {
         @Inject
-        protected Context context;
+        protected @ApplicationContext Context context;
 
         @Override
         public void onCreate(Bundle savedInstanceState) {

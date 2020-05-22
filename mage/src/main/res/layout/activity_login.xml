@@ -84,185 +84,78 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
 
-                <LinearLayout
-                    android:visibility="gone"
-                    android:id="@+id/server_configuration"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:layout_marginTop="80dp"
-                    android:paddingLeft="24dip"
-                    android:paddingRight="24dip">
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:layout_marginTop="80dip"
-                        android:layout_marginBottom="7dip"
-                        android:orientation="vertical"
-                        android:clickable="true"
-                        android:onClick="changeServerURL">
-
-                        <TextView
-                            android:id="@+id/server_configuration_url"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:gravity="center"
-                            android:text="MAGE server URL not set, click here to change."
-                            android:textSize="20sp" />
-
-                    </LinearLayout>
-
-                </LinearLayout>
-
                 <!-- Login Form -->
                 <LinearLayout
                     android:id="@+id/login_form"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:orientation="vertical"
                     android:visibility="visible"
                     android:paddingBottom="24dp"
                     android:paddingLeft="24dp"
                     android:paddingRight="24dp">
 
+                    <Button
+                        android:id="@+id/google_login_button"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Sign in with Google"
+                        android:background="@drawable/common_google_signin_btn_text_dark"
+                        android:textColor="@color/md_white_1000"
+                        android:textAlignment="gravity"
+                        android:gravity="center"
+                        android:visibility="gone"/>
+
                     <LinearLayout
+                        android:visibility="visible"
+                        android:id="@+id/third_party_auth"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center_vertical"
+                        android:orientation="vertical">
+
+                        <!-- Populated dynamically based on server configuration -->
+
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:id="@+id/or"
+                        android:visibility="visible"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:paddingTop="20dip"
+                        android:paddingBottom="20dip">
+
+                        <View
+                            android:layout_width="0dip"
+                            android:layout_height="1dp"
+                            android:background="@color/divider"
+                            android:layout_weight=".5"
+                            android:layout_marginTop="10dip"/>
+
+                        <TextView
+                            android:layout_width="0dip"
+                            android:layout_height="wrap_content"
+                            android:gravity="center"
+                            android:text="or"
+                            android:layout_weight=".15" />
+
+                        <View
+                            android:layout_width="0dip"
+                            android:layout_height="1dp"
+                            android:background="@color/divider"
+                            android:layout_weight=".5"
+                            android:layout_marginTop="10dip"/>
+
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:visibility="visible"
+                        android:id="@+id/local_auth"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="vertical">
-
-                        <Button
-                            android:id="@+id/google_login_button"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:text="Sign in with Google"
-                            android:background="@drawable/common_google_signin_btn_text_dark"
-                            android:textColor="@color/md_white_1000"
-                            android:textAlignment="gravity"
-                            android:gravity="center"
-                            android:visibility="gone"/>
-
-                        <LinearLayout
-                            android:visibility="visible"
-                            android:id="@+id/third_party_auth"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_gravity="center_vertical"
-                            android:orientation="vertical">
-
-                            <!-- Populated dynamically based on server configuration -->
-
-                        </LinearLayout>
-
-                        <LinearLayout
-                            android:id="@+id/or"
-                            android:visibility="visible"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:orientation="horizontal"
-                            android:paddingTop="20dip"
-                            android:paddingBottom="20dip">
-
-                            <View
-                                android:layout_width="0dip"
-                                android:layout_height="1dp"
-                                android:background="@color/divider"
-                                android:layout_weight=".5"
-                                android:layout_marginTop="10dip"/>
-
-                            <TextView
-                                android:layout_width="0dip"
-                                android:layout_height="wrap_content"
-                                android:gravity="center"
-                                android:text="or"
-                                android:layout_weight=".15" />
-
-                            <View
-                                android:layout_width="0dip"
-                                android:layout_height="1dp"
-                                android:background="@color/divider"
-                                android:layout_weight=".5"
-                                android:layout_marginTop="10dip"/>
-
-                        </LinearLayout>
-
-                        <LinearLayout
-                            android:visibility="visible"
-                            android:id="@+id/local_auth"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:orientation="vertical">
-
-                            <com.google.android.material.textfield.TextInputLayout
-                                android:id="@+id/username_layout"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                app:errorTextAppearance="@style/AppTheme.ErrorTextAppearance"
-                                android:theme="@style/AppTheme.TextInputLayout">
-
-                                <com.google.android.material.textfield.TextInputEditText
-                                    android:id="@+id/login_username"
-                                    android:layout_width="fill_parent"
-                                    android:layout_height="wrap_content"
-                                    android:layout_marginBottom="7dip"
-                                    android:layout_marginTop="7dip"
-                                    android:hint="Username"
-                                    android:imeOptions="actionNext"
-                                    android:inputType="textVisiblePassword|textNoSuggestions"
-                                    android:maxLines="1" />
-
-                            </com.google.android.material.textfield.TextInputLayout>
-
-                            <com.google.android.material.textfield.TextInputLayout
-                                android:id="@+id/password_layout"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                app:passwordToggleEnabled="true"
-                                app:errorTextAppearance="@style/AppTheme.ErrorTextAppearance"
-                                style="@style/AppTheme.TextInputLayout"
-                                android:theme="@style/AppTheme.TextInputLayout">
-
-                                <com.google.android.material.textfield.TextInputEditText
-                                    android:id="@+id/login_password"
-                                    android:layout_width="fill_parent"
-                                    android:layout_height="wrap_content"
-                                    android:layout_marginBottom="7dip"
-                                    android:layout_marginTop="7dip"
-                                    android:hint="Password"
-                                    android:inputType="textPassword"
-                                    android:imeActionLabel="Log In"
-                                    android:maxLines="1" />
-
-                            </com.google.android.material.textfield.TextInputLayout>
-
-                            <!-- Login button -->
-                            <Button
-                                android:id="@+id/local_login_button"
-                                android:layout_width="fill_parent"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="10dip"
-                                android:text="Log In"
-                                android:theme="@style/AppTheme.PrimaryButton.NoShadow"/>
-
-                            <LinearLayout
-                                android:id="@+id/sign_up"
-                                android:layout_width="match_parent"
-                                android:layout_height="match_parent"
-                                android:layout_marginTop="24dp"
-                                android:orientation="horizontal" >
-
-                                <!-- Link to Signup Screen? -->
-                                <TextView
-                                    android:id="@+id/link_to_signup"
-                                    android:layout_width="fill_parent"
-                                    android:layout_height="wrap_content"
-                                    android:clickable="true"
-                                    android:gravity="center"
-                                    android:onClick="signup"
-                                    android:text="New to MAGE? Signup here"
-                                    android:textSize="16sp" />
-                            </LinearLayout>
-
-                        </LinearLayout>
 
                     </LinearLayout>
 
@@ -272,10 +165,7 @@
 
         </ScrollView>
 
-
     </RelativeLayout>
-
-
 
 </RelativeLayout>
 

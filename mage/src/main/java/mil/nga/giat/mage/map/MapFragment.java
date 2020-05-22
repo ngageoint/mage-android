@@ -108,6 +108,7 @@ import mil.nga.geopackage.tiles.features.FeatureTiles;
 import mil.nga.geopackage.tiles.features.custom.NumberFeaturesTile;
 import mil.nga.geopackage.tiles.user.TileDao;
 import mil.nga.giat.mage.R;
+import mil.nga.giat.mage.dagger.module.ApplicationContext;
 import mil.nga.giat.mage.filter.DateTimeFilter;
 import mil.nga.giat.mage.filter.Filter;
 import mil.nga.giat.mage.filter.FilterActivity;
@@ -186,7 +187,7 @@ public class MapFragment extends DaggerFragment implements OnMapReadyCallback, O
 	}
 
 	@Inject
-	protected Context context;
+	protected @ApplicationContext Context context;
 
 	@Inject
 	protected SharedPreferences preferences;

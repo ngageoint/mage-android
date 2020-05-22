@@ -1,0 +1,61 @@
+ <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+     xmlns:app="http://schemas.android.com/apk/res-auto"
+     android:layout_width="match_parent"
+     android:layout_height="wrap_content"
+     android:orientation="vertical">
+
+      <com.google.android.material.textfield.TextInputLayout
+          android:id="@+id/username_layout"
+          android:layout_width="match_parent"
+          android:layout_height="wrap_content"
+          app:errorTextAppearance="@style/AppTheme.ErrorTextAppearance"
+          android:theme="@style/AppTheme.TextInputLayout">
+
+           <com.google.android.material.textfield.TextInputEditText
+               android:id="@+id/username"
+               android:layout_width="fill_parent"
+               android:layout_height="wrap_content"
+               android:layout_marginBottom="7dip"
+               android:layout_marginTop="7dip"
+               android:hint="LDAP Username"
+               android:imeOptions="actionNext"
+               android:inputType="textVisiblePassword|textNoSuggestions"
+               android:maxLines="1" />
+
+      </com.google.android.material.textfield.TextInputLayout>
+
+      <com.google.android.material.textfield.TextInputLayout
+          android:id="@+id/password_layout"
+          android:layout_width="match_parent"
+          android:layout_height="wrap_content"
+          app:passwordToggleEnabled="true"
+          app:errorTextAppearance="@style/AppTheme.ErrorTextAppearance"
+          style="@style/AppTheme.TextInputLayout"
+          android:theme="@style/AppTheme.TextInputLayout">
+
+           <com.google.android.material.textfield.TextInputEditText
+               android:id="@+id/password"
+               android:layout_width="fill_parent"
+               android:layout_height="wrap_content"
+               android:layout_marginBottom="7dip"
+               android:layout_marginTop="7dip"
+               android:hint="LDAP Password"
+               android:inputType="textPassword"
+               android:imeActionLabel="Log In"
+               android:maxLines="1" />
+
+      </com.google.android.material.textfield.TextInputLayout>
+
+     <mil.nga.giat.mage.login.AuthenticationButton
+         android:id="@+id/authentication_button"
+         android:layout_width="match_parent"
+         android:layout_height="wrap_content"
+         android:layout_marginTop="4dp"
+         android:layout_marginBottom="4dp"
+         android:drawablePadding="0dp"
+         android:backgroundTint="?attr/colorPrimary"
+         android:drawableStart="@drawable/authentication_remote_icon"
+         android:textColor="@color/md_white_1000"
+         android:text="Sign In" />
+
+</LinearLayout>

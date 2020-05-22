@@ -26,6 +26,10 @@ ext {
     espressoVersion = "3.2.0"
 }
 
+kapt {
+    correctErrorTypes true
+}
+
 def serverURL = hasProperty('SERVER_URL') ? SERVER_URL : ''
 def googleMapsApiReleaseKey = hasProperty('RELEASE_MAPS_API_KEY') ? RELEASE_MAPS_API_KEY : ''
 def googleMapsApiDebugKey = hasProperty('DEBUG_MAPS_API_KEY') ? DEBUG_MAPS_API_KEY : ''
@@ -194,7 +198,7 @@ dependencies {
     ext {
         google_play_services_version = '10.2.6'
         lifecycle_version= '1.1.1'
-        dagger_version = '2.24'
+        dagger_version = '2.27'
         work_version = '1.0.0'
     }
 
@@ -216,7 +220,7 @@ dependencies {
     api 'com.google.android.material:material:1.0.0'
     api 'androidx.cardview:cardview:1.0.0'
     api 'androidx.preference:preference:1.1.0'
-    implementation 'androidx.lifecycle:lifecycle-extensions:1.1.0'
+    implementation "androidx.lifecycle:lifecycle-extensions:$lifecycle_version"
     implementation "com.google.android.gms:play-services-maps:$google_play_services_version"
 
     implementation "com.google.dagger:dagger:$dagger_version"
@@ -229,7 +233,7 @@ dependencies {
     }
 
 //        api project(':sdk') // uncomment me to build locally, and see top-level build.gradle
-    api 'mil.nga.giat.mage:mage-android-sdk:6.2.7' // comment me to build locally
+    api 'mil.nga.giat.mage:mage-android-sdk:6.2.8' // comment me to build locally
     api 'com.google.maps.android:android-maps-utils:0.6.2'
     api 'mil.nga.geopackage.map:geopackage-android-map:3.4.0'
     api 'org.ocpsoft.prettytime:prettytime:3.2.5.Final'

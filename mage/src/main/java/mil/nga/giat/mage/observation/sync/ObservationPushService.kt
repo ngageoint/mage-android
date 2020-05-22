@@ -6,6 +6,7 @@ import android.content.Intent
 import android.os.IBinder
 import androidx.work.*
 import dagger.android.AndroidInjection
+import mil.nga.giat.mage.dagger.module.ApplicationContext
 import mil.nga.giat.mage.sdk.datastore.observation.Observation
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper
 import mil.nga.giat.mage.sdk.event.IObservationEventListener
@@ -14,7 +15,7 @@ import javax.inject.Inject
 
 class ObservationPushService : Service(), IObservationEventListener {
 
-    @Inject
+    @Inject @field:ApplicationContext
     lateinit var context: Context
 
     companion object {

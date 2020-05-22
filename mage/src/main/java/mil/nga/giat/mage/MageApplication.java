@@ -33,7 +33,7 @@ import mil.nga.giat.mage.dagger.DaggerMageComponent;
 import mil.nga.giat.mage.location.LocationFetchService;
 import mil.nga.giat.mage.location.LocationReportingService;
 import mil.nga.giat.mage.login.LoginActivity;
-import mil.nga.giat.mage.login.OAuthActivity;
+import mil.nga.giat.mage.login.idp.IdpLoginActivity;
 import mil.nga.giat.mage.login.ServerUrlActivity;
 import mil.nga.giat.mage.login.SignupActivity;
 import mil.nga.giat.mage.observation.ObservationNotificationListener;
@@ -90,7 +90,7 @@ public class MageApplication extends DaggerApplication implements LifecycleObser
 
     @Override
     protected AndroidInjector<? extends DaggerApplication> applicationInjector() {
-    	return DaggerMageComponent.builder().application(this).build();
+    	return DaggerMageComponent.factory().create(this);
     }
 
 	@Override
@@ -422,7 +422,7 @@ public class MageApplication extends DaggerApplication implements LifecycleObser
 
 		if (runningActivity != null &&
 				!(runningActivity instanceof LoginActivity) &&
-				!(runningActivity instanceof OAuthActivity) &&
+				!(runningActivity instanceof IdpLoginActivity) &&
 				!(runningActivity instanceof SignupActivity) &&
 				!(runningActivity instanceof ServerUrlActivity)) {
 			forceLogin(true);
@@ -444,7 +444,7 @@ public class MageApplication extends DaggerApplication implements LifecycleObser
 
 		if (UserUtility.getInstance(getApplicationContext()).isTokenExpired() &&
 				!(activity instanceof LoginActivity) &&
-				!(activity instanceof OAuthActivity) &&
+				!(activity instanceof IdpLoginActivity) &&
 				!(activity instanceof SignupActivity) &&
 				!(activity instanceof ServerUrlActivity)) {
 			forceLogin(false);

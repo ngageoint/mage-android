@@ -7,6 +7,7 @@ import android.content.SharedPreferences
 import android.os.IBinder
 import dagger.android.AndroidInjection
 import mil.nga.giat.mage.R
+import mil.nga.giat.mage.dagger.module.ApplicationContext
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.ScheduledFuture
@@ -15,7 +16,7 @@ import javax.inject.Inject
 
 class LocationFetchService : Service(), SharedPreferences.OnSharedPreferenceChangeListener  {
 
-    @Inject
+    @Inject @field:ApplicationContext
     lateinit var context: Context
 
     @Inject

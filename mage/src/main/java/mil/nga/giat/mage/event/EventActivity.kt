@@ -15,6 +15,7 @@ import kotlinx.android.synthetic.main.activity_event.*
 import kotlinx.android.synthetic.main.recycler_form_list_item.view.*
 import mil.nga.giat.mage.MageApplication
 import mil.nga.giat.mage.R
+import mil.nga.giat.mage.dagger.module.ApplicationContext
 import mil.nga.giat.mage.form.Form
 import mil.nga.giat.mage.form.FormDefaultActivity
 import mil.nga.giat.mage.sdk.datastore.user.Event
@@ -30,7 +31,7 @@ class EventActivity : DaggerAppCompatActivity() {
         val EVENT_ID_EXTRA = "EVENT_ID_EXTRA"
     }
 
-    @Inject
+    @ApplicationContext
     lateinit var context: Context
 
     private lateinit var viewAdapter: RecyclerView.Adapter<*>

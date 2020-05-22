@@ -13,10 +13,10 @@ import com.google.gson.JsonObject
 import dagger.android.support.DaggerAppCompatActivity
 import kotlinx.android.synthetic.main.activity_form_defaults.*
 import mil.nga.giat.mage.R
+import mil.nga.giat.mage.dagger.module.ApplicationContext
 import mil.nga.giat.mage.sdk.datastore.user.Event
 import mil.nga.giat.mage.sdk.datastore.user.EventHelper
 import mil.nga.giat.mage.sdk.exceptions.EventException
-import javax.inject.Inject
 
 class FormDefaultActivity : DaggerAppCompatActivity() {
 
@@ -34,7 +34,7 @@ class FormDefaultActivity : DaggerAppCompatActivity() {
         }
     }
 
-    @Inject
+    @ApplicationContext
     lateinit var context: Context
 
     private var event: Event? = null

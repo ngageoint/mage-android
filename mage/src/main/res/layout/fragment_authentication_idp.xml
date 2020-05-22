@@ -3,15 +3,15 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content">
 
-     <Button
-         android:id="@+id/oauth_button"
+     <mil.nga.giat.mage.login.AuthenticationButton
+         android:id="@+id/authentication_button"
          android:layout_width="match_parent"
          android:layout_height="wrap_content"
          android:layout_marginTop="4dp"
          android:layout_marginBottom="4dp"
          android:drawablePadding="0dp"
          android:backgroundTint="?attr/colorPrimary"
-         android:drawableLeft="@drawable/oauth_icon"
+         android:drawableLeft="@drawable/authentication_remote_icon"
          android:textColor="@color/md_white_1000"
          android:text="Sign In" />
 
