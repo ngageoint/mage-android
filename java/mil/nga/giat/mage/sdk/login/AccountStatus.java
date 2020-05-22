@@ -2,8 +2,6 @@ package mil.nga.giat.mage.sdk.login;
 
 import com.google.gson.JsonObject;
 
-import org.json.JSONObject;
-
 import java.util.ArrayList;
 import java.util.List;
 

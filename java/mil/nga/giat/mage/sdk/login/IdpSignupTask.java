@@ -14,11 +14,11 @@ import java.util.ArrayList;
  * @author newmanw
  *
  */
-public class OAuthSignupTask extends AbstractAccountTask {
+public class IdpSignupTask extends AbstractAccountTask {
 
-	private static final String LOG_NAME = OAuthSignupTask.class.getName();
+	private static final String LOG_NAME = IdpSignupTask.class.getName();
 
-	public OAuthSignupTask(AccountDelegate delegate, Context applicationContext) {
+	public IdpSignupTask(AccountDelegate delegate, Context applicationContext) {
 		super(delegate, applicationContext);
 	}
 
