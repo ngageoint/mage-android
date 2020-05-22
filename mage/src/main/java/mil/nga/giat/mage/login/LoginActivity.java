@@ -290,8 +290,6 @@ public class LoginActivity extends DaggerAppCompatActivity implements LoginListe
 				Fragment loginFragment = MageLoginFragment.Companion.newInstance(this);
 				transaction.add(R.id.local_auth, loginFragment, authenticationName);
 				authenticationFragments.put(authenticationType, loginFragment);
-			} else if ("google".equals(authenticationName)) {
-				findViewById(R.id.google_login_button).setVisibility(View.VISIBLE);
 			} else if ("oauth".equals(authenticationType)) {
 				Fragment loginFragment = IdpLoginFragment.Companion.newInstance(entry.getKey(), entry.getValue());
 				transaction.add(R.id.third_party_auth, loginFragment, entry.getKey());
