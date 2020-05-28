@@ -73,11 +73,8 @@ public class ImageryServerFetch extends AbstractServerFetch {
                     layerHelper.create(remoteLayer);
                 } else {
                     Layer localLayer = remoteIdToLayer.get(remoteLayer.getRemoteId());
-                    //Only remove a local layer if the even has changed
-                    if(!remoteLayer.getEvent().equals(localLayer.getEvent())) {
-                        layerHelper.delete(localLayer.getId());
-                        layerHelper.create(remoteLayer);
-                    }
+                    layerHelper.delete(localLayer.getId());
+                    layerHelper.create(remoteLayer);
                 }
             }
         }catch(Exception e){

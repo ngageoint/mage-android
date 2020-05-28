@@ -7,7 +7,9 @@ import android.util.Log;
 import java.io.IOException;
 import java.net.CookieManager;
 import java.net.CookiePolicy;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 
@@ -15,8 +17,10 @@ import mil.nga.giat.mage.sdk.R;
 import mil.nga.giat.mage.sdk.event.IEventDispatcher;
 import mil.nga.giat.mage.sdk.event.ISessionEventListener;
 import mil.nga.giat.mage.sdk.utils.UserUtility;
+import okhttp3.Cookie;
+import okhttp3.CookieJar;
+import okhttp3.HttpUrl;
 import okhttp3.Interceptor;
-import okhttp3.JavaNetCookieJar;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -39,7 +43,6 @@ public class HttpClientManager implements IEventDispatcher<ISessionEventListener
 
     private Application context;
     private String userAgent;
-    private CookieManager cookieManager;
     private OkHttpClient client;
 
     private Collection<ISessionEventListener> listeners = new CopyOnWriteArrayList<>();
@@ -52,10 +55,7 @@ public class HttpClientManager implements IEventDispatcher<ISessionEventListener
         String userAgent = System.getProperty("http.agent");
         userAgent = userAgent == null ? "" : userAgent;
 
-        CookieManager cookieManager = new CookieManager();
-        cookieManager.setCookiePolicy(CookiePolicy.ACCEPT_ORIGINAL_SERVER);
-
-        instance = new HttpClientManager(context, userAgent, cookieManager);
+        instance = new HttpClientManager(context, userAgent);
 
         return instance;
     }
@@ -64,10 +64,9 @@ public class HttpClientManager implements IEventDispatcher<ISessionEventListener
         return instance;
     }
 
-    private HttpClientManager(Application context, String userAgent, CookieManager cookieManager) {
+    private HttpClientManager(Application context, String userAgent) {
         this.context = context;
         this.userAgent = userAgent;
-        this.cookieManager = cookieManager;
 
         initializeClient();
     }
@@ -77,7 +76,7 @@ public class HttpClientManager implements IEventDispatcher<ISessionEventListener
                 .connectTimeout(30, TimeUnit.SECONDS)
                 .readTimeout(30, TimeUnit.SECONDS)
                 .writeTimeout(30, TimeUnit.SECONDS)
-                .cookieJar(new JavaNetCookieJar(cookieManager));
+                .cookieJar(new SessionCookieJar());
 
         builder.addInterceptor(new Interceptor() {
             @Override
@@ -132,4 +131,42 @@ public class HttpClientManager implements IEventDispatcher<ISessionEventListener
     public boolean removeListener(ISessionEventListener listener) {
         return listeners.remove(listener);
     }
+
+    private class SessionCookieJar implements CookieJar {
+
+        private android.webkit.CookieManager webViewCookieManager = android.webkit.CookieManager.getInstance();
+
+        SessionCookieJar() {
+            CookieManager cookieManager = new CookieManager();
+            cookieManager.setCookiePolicy(CookiePolicy.ACCEPT_ORIGINAL_SERVER);
+        }
+
+        @Override
+        public void saveFromResponse(HttpUrl url, List<Cookie> cookies) {
+            for (Cookie cookie: cookies) {
+                webViewCookieManager.setCookie(url.toString(), cookie.toString());
+            }
+        }
+
+        @Override
+        public List<Cookie> loadForRequest(HttpUrl url) {
+            List<Cookie> cookies = new ArrayList<>();
+
+            String urlString = url.toString();
+            String cookie = webViewCookieManager.getCookie(urlString);
+            if (cookie != null && !cookie.isEmpty()) {
+                String[] cookieHeaders = cookie.split(";");
+
+                for (String header : cookieHeaders) {
+                    Cookie c = Cookie.parse(url, header);
+                    if (c != null && c.name().startsWith("mage-session")) {
+                        cookies.add(c);
+                    }
+                }
+            }
+
+            return cookies;
+        }
+    }
+
 }

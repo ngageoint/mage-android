@@ -5,7 +5,6 @@ import android.preference.PreferenceManager;
 import android.util.Log;
 
 import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 
 import mil.nga.giat.mage.sdk.R;
 
@@ -63,6 +62,6 @@ public class LoginTaskFactory {
 		} catch (Exception e) {
 			Log.e(LOG_NAME, "Problem making new instance of " + String.valueOf(className) + ".", e);
 		}
-		return new FormAuthLoginTask(delegate, context);
+		return new MageLoginTask(delegate, context);
 	}
 }

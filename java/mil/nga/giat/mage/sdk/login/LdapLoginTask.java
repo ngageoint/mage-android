@@ -2,7 +2,6 @@ package mil.nga.giat.mage.sdk.login;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.content.SharedPreferences.Editor;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
@@ -14,7 +13,6 @@ import java.util.Date;
 import java.util.List;
 
 import mil.nga.giat.mage.sdk.R;
-import mil.nga.giat.mage.sdk.connectivity.ConnectivityUtility;
 import mil.nga.giat.mage.sdk.datastore.DaoStore;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.http.resource.DeviceResource;
@@ -23,21 +21,20 @@ import mil.nga.giat.mage.sdk.jackson.deserializer.UserDeserializer;
 import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
 import mil.nga.giat.mage.sdk.utils.DeviceUuidFactory;
 import mil.nga.giat.mage.sdk.utils.ISO8601DateFormatFactory;
-import mil.nga.giat.mage.sdk.utils.PasswordUtility;
 import retrofit2.Response;
 
 /**
  * Performs login to specified server with username and password.
  *
- * @author wiedemanns
+ * @author wnewman
  */
-public class FormAuthLoginTask extends AbstractAccountTask {
+public class LdapLoginTask extends AbstractAccountTask {
 
-	private static final String LOG_NAME = FormAuthLoginTask.class.getName();
+	private static final String LOG_NAME = LdapLoginTask.class.getName();
 	private DateFormat iso8601Format = ISO8601DateFormatFactory.ISO8601();
 	private UserDeserializer userDeserializer;
 
-	public FormAuthLoginTask(AccountDelegate delegate, Context context) {
+	public LdapLoginTask(AccountDelegate delegate, Context context) {
 		super(delegate, context);
 
 		userDeserializer = new UserDeserializer(context);
@@ -57,47 +54,11 @@ public class FormAuthLoginTask extends AbstractAccountTask {
 	}
 
 	private AccountStatus login(String... params) {
-		// get inputs
-		String username = params[0];
-		String password = params[1];
-		String serverURL = params[2];
-		Boolean needToRegisterDevice = Boolean.valueOf(params[3]);
-		String strategy = "local";
-		if(params.length >= 5) {
-			strategy = params[4];
-		}
+		JsonObject parameters = new JsonObject();
+		parameters.addProperty("username", params[0]);
+		parameters.addProperty("password", params[1]);
 
 		SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(mApplicationContext);
-
-		// Make sure you have connectivity
-		if (!ConnectivityUtility.isOnline(mApplicationContext)) {
-			// try disconnected login
-			try {
-				String oldUsername = sharedPreferences.getString(mApplicationContext.getString(R.string.usernameKey), mApplicationContext.getString(R.string.usernameDefaultValue));
-				String serverURLPref = sharedPreferences.getString(mApplicationContext.getString(R.string.serverURLKey), mApplicationContext.getString(R.string.serverURLDefaultValue));
-				String oldPasswordHash = sharedPreferences.getString(mApplicationContext.getString(R.string.passwordHashKey), null);
-				if (oldUsername != null && oldPasswordHash != null && !oldPasswordHash.trim().isEmpty()) {
-					if (oldUsername.equals(username) && serverURL.equals(serverURLPref) && PasswordUtility.equal(password, oldPasswordHash)) {
-						// put the token expiration information in the shared preferences
-						long tokenExpirationLength = Math.max(sharedPreferences.getLong(mApplicationContext.getString(R.string.tokenExpirationLengthKey), 0), 0);
-						Date tokenExpiration = new Date(System.currentTimeMillis() + tokenExpirationLength);
-						sharedPreferences.edit().putString(mApplicationContext.getString(R.string.tokenExpirationDateKey), iso8601Format.format(tokenExpiration)).commit();
-
-						return new AccountStatus(AccountStatus.Status.DISCONNECTED_LOGIN);
-					} else {
-						return new AccountStatus(AccountStatus.Status.FAILED_LOGIN);
-					}
-				}
-			} catch (Exception e) {
-				Log.e(LOG_NAME, "Could not hash password", e);
-			}
-
-			List<Integer> errorIndices = new ArrayList<>();
-			errorIndices.add(2);
-			List<String> errorMessages = new ArrayList<>();
-			errorMessages.add("No connection.");
-			return new AccountStatus(AccountStatus.Status.FAILED_LOGIN, errorIndices, errorMessages);
-		}
 
 		String uuid = new DeviceUuidFactory(mApplicationContext).getDeviceUuid().toString();
 		if (uuid == null) {
@@ -109,25 +70,14 @@ public class FormAuthLoginTask extends AbstractAccountTask {
 		}
 
 		try {
-			// Does the device need to be registered?
-			if (needToRegisterDevice) {
-				AccountStatus.Status regStatus = registerDevice(uuid, strategy);
-
-				if (regStatus.equals(AccountStatus.Status.SUCCESSFUL_REGISTRATION)) {
-					return new AccountStatus(regStatus);
-				} else if (regStatus == AccountStatus.Status.FAILED_LOGIN) {
-					return new AccountStatus(regStatus);
-				}
-			}
-
 			UserResource userResource = new UserResource(mApplicationContext);
-			Response<JsonObject> response = userResource.signin(strategy, username, uuid, password);
+			Response<JsonObject> response = userResource.signin("ldap", parameters);
 
 			if (response.isSuccessful()) {
-				JsonObject authorizeResponse = userResource.authorize(strategy, uuid);
+				JsonObject authorizeResponse = userResource.authorize("ldap", uuid);
 				if (authorizeResponse == null) {
 					DeviceResource deviceResource = new DeviceResource(mApplicationContext);
-					JsonObject deviceJson = deviceResource.createDevice(strategy, uuid);
+					JsonObject deviceJson = deviceResource.createDevice("ldap", uuid);
 					if (deviceJson.get("registered").getAsBoolean()) {
 						return new AccountStatus(AccountStatus.Status.ALREADY_REGISTERED);
 					} else {
@@ -143,7 +93,7 @@ public class FormAuthLoginTask extends AbstractAccountTask {
 				}
 
 				// put the token information in the shared preferences
-				Editor editor = sharedPreferences.edit();
+				SharedPreferences.Editor editor = sharedPreferences.edit();
 
 				editor.putString(mApplicationContext.getString(R.string.tokenKey), authorizeResponse.get("token").getAsString().trim());
 				try {
@@ -182,43 +132,32 @@ public class FormAuthLoginTask extends AbstractAccountTask {
 					return new AccountStatus(AccountStatus.Status.FAILED_LOGIN, errorIndices, errorMessages);
 				}
 
-				editor.commit();
+				editor.apply();
 
 				return new AccountStatus(AccountStatus.Status.SUCCESSFUL_LOGIN, new ArrayList<Integer>(), new ArrayList<String>(), authorizeResponse);
 			} else {
-				// Could be that the device is not registered.
-				if (!needToRegisterDevice) {
-					// Try to register it
-					AccountStatus.Status regStatus = registerDevice(uuid, strategy);
-
-					if (regStatus.equals(AccountStatus.Status.SUCCESSFUL_REGISTRATION)) {
-						return new AccountStatus(regStatus);
-					} else if (regStatus == AccountStatus.Status.FAILED_LOGIN) {
-						String errorMessage = "Please check your username and password and try again.";
-						if (response.errorBody() != null) {
-							errorMessage = response.errorBody().string();
-						}
-
-						List<Integer> errorIndices = new ArrayList<>();
-						errorIndices.add(2);
-						List<String> errorMessages = new ArrayList<>();
-						errorMessages.add(errorMessage);
-						return new AccountStatus(regStatus, errorIndices, errorMessages);
-					}
+				// TODO use ldap error message
+				String errorMessage = "Please check your username and password and try again.";
+				if (response.errorBody() != null) {
+					errorMessage = response.errorBody().string();
 				}
+
+				List<Integer> errorIndices = new ArrayList<>();
+				errorIndices.add(2);
+				List<String> errorMessages = new ArrayList<>();
+				errorMessages.add(errorMessage);
+				return new AccountStatus(AccountStatus.Status.FAILED_LOGIN, errorIndices, errorMessages);
 			}
 		} catch (Exception e) {
 			Log.e(LOG_NAME, "Problem logging in.", e);
+			return new AccountStatus(AccountStatus.Status.FAILED_LOGIN);
 		}
-
-
-		return new AccountStatus(AccountStatus.Status.FAILED_LOGIN);
 	}
 
-	private AccountStatus.Status registerDevice(String uid, String strategy) {
+	private AccountStatus.Status registerDevice(String uid) {
 		try {
 			DeviceResource deviceResource = new DeviceResource(mApplicationContext);
-			JsonObject deviceJson = deviceResource.createDevice(strategy, uid);
+			JsonObject deviceJson = deviceResource.createDevice("local", uid);
 			if (deviceJson != null) {
 				if (deviceJson.get("registered").getAsBoolean()) {
 					return AccountStatus.Status.ALREADY_REGISTERED;
