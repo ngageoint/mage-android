@@ -1,21 +1,16 @@
 package mil.nga.giat.mage.login;
 
-import android.app.Activity;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.SharedPreferences.Editor;
 import android.graphics.Typeface;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
-import android.util.Log;
 import android.util.Patterns;
 import android.view.KeyEvent;
 import android.view.View;
-import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -32,24 +27,11 @@ import java.util.Collections;
 import java.util.List;
 
 import mil.nga.giat.mage.R;
-import mil.nga.giat.mage.login.idp.IdpLoginActivity;
-import mil.nga.giat.mage.sdk.login.AccountDelegate;
-import mil.nga.giat.mage.sdk.login.AccountStatus;
+import mil.nga.giat.mage.sdk.login.SignupStatus;
 import mil.nga.giat.mage.sdk.login.SignupTask;
 import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
 
-/**
- * The signup screen
- *
- * @author wiedemanns
- */
-public class SignupActivity extends AppCompatActivity implements AccountDelegate {
-
-	public static final int EXTRA_IDP_RESULT = 1;
-
-	public static final String EXTRA_IDP_ERROR = "IDP_ERROR";
-	public static final String EXTRA_IDP_ERROR_MESSAGE = "IDP_ERROR_MESSAGE";
-
+public class SignupActivity extends AppCompatActivity implements SignupTask.SignupDelegate {
 	private static final String LOG_NAME = SignupActivity.class.getName();
 
 	private EditText mDisplayNameEditText;
@@ -101,25 +83,25 @@ public class SignupActivity extends AppCompatActivity implements AccountDelegate
 
 		setContentView(R.layout.activity_signup);
 
-		TextView appName = (TextView) findViewById(R.id.mage);
+		TextView appName = findViewById(R.id.mage);
 		appName.setTypeface(Typeface.createFromAsset(getAssets(),"fonts/GondolaMage-Regular.otf"));
 
 		final PasswordStrengthFragment passwordStrengthFragment = (PasswordStrengthFragment) getSupportFragmentManager().findFragmentById(R.id.password_strength_fragment);
 
-		mDisplayNameEditText = (EditText) findViewById(R.id.signup_displayname);
-		mDisplayNameLayout = (TextInputLayout) findViewById(R.id.displayname_layout);
+		mDisplayNameEditText = findViewById(R.id.signup_displayname);
+		mDisplayNameLayout = findViewById(R.id.displayname_layout);
 
-		mUsernameEditText = (EditText) findViewById(R.id.signup_username);
-		mUsernameLayout = (TextInputLayout) findViewById(R.id.username_layout);
+		mUsernameEditText = findViewById(R.id.signup_username);
+		mUsernameLayout = findViewById(R.id.username_layout);
 
-		mEmailEditText = (EditText) findViewById(R.id.signup_email);
-		mEmailLayout = (TextInputLayout) findViewById(R.id.email_layout);
+		mEmailEditText = findViewById(R.id.signup_email);
+		mEmailLayout = findViewById(R.id.email_layout);
 
-		mPhoneEditText = (EditText) findViewById(R.id.signup_phone);
+		mPhoneEditText = findViewById(R.id.signup_phone);
 
-		mPasswordEditText = (EditText) findViewById(R.id.signup_password);
+		mPasswordEditText = findViewById(R.id.signup_password);
 		mPasswordEditText.setTypeface(Typeface.DEFAULT);
-		mPasswordLayout = (TextInputLayout) findViewById(R.id.password_layout);
+		mPasswordLayout = findViewById(R.id.password_layout);
 		mPasswordEditText.addTextChangedListener(new TextWatcher() {
 			@Override
 			public void beforeTextChanged(CharSequence s, int start, int count, int after) {
@@ -144,22 +126,19 @@ public class SignupActivity extends AppCompatActivity implements AccountDelegate
 			}
 		});
 
-		mConfirmPasswordEditText = (EditText) findViewById(R.id.signup_confirmpassword);
+		mConfirmPasswordEditText = findViewById(R.id.signup_confirmpassword);
 		mConfirmPasswordEditText.setTypeface(Typeface.DEFAULT);
-		mConfirmPasswordLayout = (TextInputLayout) findViewById(R.id.confirmpassword_layout);
+		mConfirmPasswordLayout = findViewById(R.id.confirmpassword_layout);
 
 		SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
 		serverURL = sharedPreferences.getString(getString(R.string.serverURLKey), getString(R.string.serverURLDefaultValue));
 
-		mConfirmPasswordEditText.setOnKeyListener(new View.OnKeyListener() {
-			@Override
-			public boolean onKey(View v, int keyCode, KeyEvent event) {
-				if (keyCode == KeyEvent.KEYCODE_ENTER) {
-					signup(v);
-					return true;
-				} else {
-					return false;
-				}
+		mConfirmPasswordEditText.setOnKeyListener((v, keyCode, event) -> {
+			if (keyCode == KeyEvent.KEYCODE_ENTER) {
+				signup(v);
+				return true;
+			} else {
+				return false;
 			}
 		});
 
@@ -168,29 +147,9 @@ public class SignupActivity extends AppCompatActivity implements AccountDelegate
 
 	private void configureSignup() {
 		PreferenceHelper preferenceHelper = PreferenceHelper.getInstance(getApplicationContext());
-		boolean googleAuthentication = preferenceHelper.containsGoogleAuthentication();
-		boolean localAuthentication = preferenceHelper.containsLocalAuthentication();
-
 		if (preferenceHelper.containsLocalAuthentication()) {
-			Button localButton = (Button) findViewById(R.id.local_signup_button);
-			localButton.setOnClickListener(new View.OnClickListener() {
-				@Override
-				public void onClick(View v) {
-					signup(v);
-				}
-			});
-		}
-
-		Button googleButton = (Button) findViewById(R.id.google_signup_button);
-		googleButton.setVisibility(googleAuthentication ? View.VISIBLE : View.GONE);
-		findViewById(R.id.or).setVisibility(localAuthentication && googleAuthentication ? View.VISIBLE : View.GONE);
-		if (preferenceHelper.containsGoogleAuthentication()) {
-			googleButton.setOnClickListener(new View.OnClickListener() {
-				@Override
-				public void onClick(View v) {
-					googleSignup();
-				}
-			});
+			Button localButton = findViewById(R.id.local_signup_button);
+			localButton.setOnClickListener(this::signup);
 		}
 	}
 
@@ -204,12 +163,6 @@ public class SignupActivity extends AppCompatActivity implements AccountDelegate
 		finish();
 	}
 
-	private void googleSignup() {
-		Intent intent = new Intent(getApplicationContext(), IdpLoginActivity.class);
-		intent.putExtra(IdpLoginActivity.EXTRA_SERVER_URL, serverURL);
-		intent.putExtra(IdpLoginActivity.EXTRA_IDP_TYPE, IdpLoginActivity.IdpType.SIGINUP);
-		startActivityForResult(intent, EXTRA_IDP_RESULT);
-	}
 
 	/**
 	 * Fired when user clicks signup
@@ -254,10 +207,12 @@ public class SignupActivity extends AppCompatActivity implements AccountDelegate
 		}
 
 		SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-		Integer passwordLength = sharedPreferences.getInt(getString(R.string.passwordMinLengthKey), getResources().getInteger(R.integer.passwordMinLengthDefaultValue));
-		if (password.length() < passwordLength) {
-			mPasswordLayout.setError("Password must be " + passwordLength + " characters");
-			return;
+		if (sharedPreferences.contains(getString(R.string.localPasswordMinLength))) {
+			int passwordLength = sharedPreferences.getInt(getString(R.string.localPasswordMinLength), -1);
+			if (password.length() < passwordLength) {
+				mPasswordLayout.setError("Password must be " + passwordLength + " characters");
+				return;
+			}
 		}
 
 		if (TextUtils.isEmpty(confirmpassword)) {
@@ -284,61 +239,23 @@ public class SignupActivity extends AppCompatActivity implements AccountDelegate
 		findViewById(R.id.signup_form).setVisibility(View.GONE);
 		findViewById(R.id.signup_status).setVisibility(View.VISIBLE);
 
-		new SignupTask(this, this.getApplicationContext()).execute(accountInfo.toArray(new String[accountInfo.size()]));
-	}
-
-	private void showKeyboard() {
-		InputMethodManager inputMethodManager = (InputMethodManager) getSystemService(Activity.INPUT_METHOD_SERVICE);
-		inputMethodManager.toggleSoftInput(InputMethodManager.SHOW_IMPLICIT, 0);
+		new SignupTask(this.getApplicationContext(), this).execute(accountInfo.toArray(new String[accountInfo.size()]));
 	}
 
 	@Override
-	public void finishAccount(AccountStatus accountStatus) {
-		if (accountStatus.getStatus() == AccountStatus.Status.SUCCESSFUL_SIGNUP) {
-
-			// we might be able to set the username for the user
-			SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-			String oldUsername = sharedPreferences.getString(getString(mil.nga.giat.mage.sdk.R.string.usernameKey), getString(mil.nga.giat.mage.sdk.R.string.usernameDefaultValue));
-			Editor sp = sharedPreferences.edit();
-			if (TextUtils.isEmpty(oldUsername)) {
-				try {
-					sp.putString(getApplicationContext().getString(R.string.usernameKey), accountStatus.getAccountInformation().get("username").getAsString()).commit();
-				} catch (Exception e) {
-					Log.w(LOG_NAME, "Unable to save username");
-				}
-			}
-
-			boolean isActive = accountStatus.getAccountInformation().get("active").getAsBoolean();
+	public void onSignupComplete(SignupStatus status) {
+		if (status.getStatus() == SignupStatus.Status.SUCCESSFUL_SIGNUP) {
+			boolean isActive = status.getUser().get("active").getAsBoolean();
 
 			// Tell the user that their account was made
 			showSignupSuccessDialog(isActive);
 		} else {
-			if (accountStatus.getErrorIndices().isEmpty()) {
-				getUsernameEditText().requestFocus();
-			} else {
-				int errorMessageIndex = 0;
-				for (Integer errorIndex : accountStatus.getErrorIndices()) {
-					String message = "Error";
-					if (errorMessageIndex < accountStatus.getErrorMessages().size()) {
-						message = accountStatus.getErrorMessages().get(errorMessageIndex++);
-					}
-					if (errorIndex == 0) {
-						mDisplayNameLayout.setError(message);
-					} else if (errorIndex == 1) {
-						mUsernameLayout.setError(message);
-					} else if (errorIndex == 2) {
-						mEmailLayout.setError(message);
-					} else if (errorIndex == 3) {
-						mPasswordLayout.setError(message);
-					} else if (errorIndex == 5) {
-						new AlertDialog.Builder(this)
-							.setTitle("Signup Failed")
-							.setMessage(message)
-							.setPositiveButton(android.R.string.ok, null)
-							.show();
-					}
-				}
-			}
+			new AlertDialog.Builder(this)
+					.setTitle("Signup Failed")
+					.setMessage(status.getMessage())
+					.setPositiveButton(android.R.string.ok, null)
+					.show();
+
 			// show form, and hide spinner
 			findViewById(R.id.signup_status).setVisibility(View.GONE);
 			findViewById(R.id.signup_form).setVisibility(View.VISIBLE);
@@ -353,36 +270,17 @@ public class SignupActivity extends AppCompatActivity implements AccountDelegate
 		findViewById(R.id.signup_form).setVisibility(View.VISIBLE);
 	}
 
-	@Override
-	protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
-		if (requestCode == EXTRA_IDP_RESULT && resultCode == RESULT_OK) {
-			if (intent.getBooleanExtra(EXTRA_IDP_ERROR, false)) {
-				String errorMessage = intent.getStringExtra(EXTRA_IDP_ERROR_MESSAGE);
-				AlertDialog.Builder alertDialog = new AlertDialog.Builder(this);
-				alertDialog.setTitle("Problem Creating Account");
-				alertDialog.setMessage(errorMessage);
-				alertDialog.setPositiveButton("Ok", null);
-				alertDialog.show();
-			} else {
-				//TODO see if any user info is in the intent
-				showSignupSuccessDialog(false);
-			}
-		}
-	}
-
 	private void showSignupSuccessDialog(boolean isActive) {
 		AlertDialog.Builder alertDialog = new AlertDialog.Builder(this);
-		alertDialog.setTitle("Account Created");
-		if(!isActive) {
-			alertDialog.setMessage("Your account has been created but it is not active.  An administrator needs to activate your account before you can log in.");
+		alertDialog.setTitle(R.string.account_inactive_title);
+
+		if (isActive) {
+			alertDialog.setMessage(getString(R.string.account_active_message));
 		} else{
-			alertDialog.setMessage("Your account has been created and is now active.");
+			alertDialog.setMessage(getString(R.string.account_inactive_message));
 		}
-		alertDialog.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
-			public void onClick(DialogInterface dialog, int which) {
-				login(null);
-			}
-		});
+
+		alertDialog.setPositiveButton("Ok", (dialog, which) -> login(null));
 		alertDialog.show();
 	}
 }

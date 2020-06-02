@@ -19,11 +19,9 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 
-import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
-import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.lifecycle.ViewModelProviders;
 import androidx.work.WorkManager;
@@ -51,6 +49,7 @@ import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.cache.CacheUtils;
 import mil.nga.giat.mage.disclaimer.DisclaimerActivity;
 import mil.nga.giat.mage.event.EventsActivity;
+import mil.nga.giat.mage.login.LoginViewModel.Authentication;
 import mil.nga.giat.mage.login.idp.IdpLoginFragment;
 import mil.nga.giat.mage.login.ldap.LdapLoginFragment;
 import mil.nga.giat.mage.login.mage.MageLoginFragment;
@@ -59,6 +58,8 @@ import mil.nga.giat.mage.sdk.datastore.user.Event;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
+import mil.nga.giat.mage.sdk.login.AuthenticationStatus;
+import mil.nga.giat.mage.sdk.login.AuthorizationStatus;
 import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
 import mil.nga.giat.mage.sdk.utils.UserUtility;
@@ -68,14 +69,10 @@ import mil.nga.giat.mage.sdk.utils.UserUtility;
  *
  * @author wiedemanns
  */
-public class LoginActivity extends DaggerAppCompatActivity implements LoginListener {
+public class LoginActivity extends DaggerAppCompatActivity {
 
-	public static final String EXTRA_IDP_ERROR = "IDP_ERROR";
-	public static final String EXTRA_IDP_UNREGISTERED_DEVICE = "IDP_UNREGISTERED_DEVICE";
 	public static final String EXTRA_CONTINUE_SESSION = "CONTINUE_SESSION";
 	public static final String EXTRA_CONTINUE_SESSION_WHILE_USING = "CONTINUE_SESSION_WHILE_USING";
-
-	private static final String LOG_NAME = LoginActivity.class.getName();
 
 	@Inject
 	protected MageApplication application;
@@ -204,23 +201,15 @@ public class LoginActivity extends DaggerAppCompatActivity implements LoginListe
 		// Setup login based on last api pull
 		configureLogin();
 
-        viewModel = ViewModelProviders.of(this, viewModelFactory).get(LoginViewModel.class);
-        viewModel.getApiStatus().observe(this, new Observer<Boolean>() {
-			@Override
-			public void onChanged(@Nullable Boolean valid) {
-				observeApi();
-			}
-		});
+		viewModel = ViewModelProviders.of(this, viewModelFactory).get(LoginViewModel.class);
+		viewModel.getApiStatus().observe(this, valid -> observeApi());
 
-        viewModel.getAuthenticationStatus().observe(this, new Observer<LoginViewModel.AuthenticationStatus>() {
-			@Override
-			public void onChanged(@Nullable LoginViewModel.AuthenticationStatus status) {
-				observeAuthenticating(status);
-			}
-		});
+		viewModel.getAuthenticationState().observe(this, this::observeAuthenticationState);
+		viewModel.getAuthenticationStatus().observe(this, this::observeAuthentication);
+		viewModel.getAuthorizationStatus().observe(this, this::observeAuthorization);
 
-        viewModel.api(serverUrl);
-    }
+		viewModel.api(serverUrl);
+	}
 
 	@Override
 	public void onBackPressed() {
@@ -237,18 +226,83 @@ public class LoginActivity extends DaggerAppCompatActivity implements LoginListe
 		super.onBackPressed();
 	}
 
+
 	private void observeApi() {
 		configureLogin();
 	}
 
-	private void observeAuthenticating(LoginViewModel.AuthenticationStatus status) {
-		if (status == LoginViewModel.AuthenticationStatus.LOADING) {
+	private void observeAuthenticationState(LoginViewModel.AuthenticationState state) {
+		if (state == LoginViewModel.AuthenticationState.LOADING) {
 			findViewById(R.id.login_status).setVisibility(View.VISIBLE);
 			findViewById(R.id.login_form).setVisibility(View.GONE);
-		} else if (status == LoginViewModel.AuthenticationStatus.ERROR) {
+		} else if (state == LoginViewModel.AuthenticationState.ERROR) {
 			findViewById(R.id.login_status).setVisibility(View.GONE);
 			findViewById(R.id.login_form).setVisibility(View.VISIBLE);
 		}
+	}
+
+	private void observeAuthentication(Authentication authentication) {
+		if (authentication == null) return;
+
+		AuthenticationStatus status = authentication.getStatus();
+
+		if (status.getStatus() == AuthenticationStatus.Status.SUCCESSFUL_AUTHENTICATION) {
+			viewModel.authorize(authentication.getStrategy(), status.getToken(), status);
+		} else if (status.getStatus() == AuthenticationStatus.Status.DISCONNECTED_AUTHENTICATION) {
+			new AlertDialog.Builder(this)
+				.setTitle("Disconnected Login")
+				.setMessage("You are logging into MAGE in disconnected mode.  You must re-establish a connection in order to push and pull information to and from your server.")
+				.setPositiveButton(android.R.string.ok, (dialog, which) -> {
+					loginComplete(false);
+					dialog.dismiss();
+				})
+				.setCancelable(false)
+				.show();
+		} else if(status.getStatus() == AuthenticationStatus.Status.ACCOUNT_CREATED) {
+			String message = status.getMessage();
+			if (message == null) {
+				message = "Please contact a MAGE administrator to activate your account.";
+			}
+
+			new AlertDialog.Builder(this)
+					.setTitle("Account Created")
+					.setMessage(message)
+					.setPositiveButton(android.R.string.ok, null)
+					.show();
+		} else {
+			new AlertDialog.Builder(this)
+				.setTitle("Signin Failed")
+				.setMessage(status.getMessage())
+				.setPositiveButton(android.R.string.ok, null)
+				.show();
+		}
+	}
+
+	private void observeAuthorization(LoginViewModel.Authorization authorization) {
+		if (authorization == null) return;
+
+		AuthorizationStatus.Status status = authorization.getStatus().getStatus();
+		if (status == AuthorizationStatus.Status.SUCCESSFUL_AUTHORIZATION) {
+			loginComplete(authorization.getUserChanged());
+		} else if (status == AuthorizationStatus.Status.FAILED_AUTHORIZATION) {
+			new AlertDialog.Builder(this)
+					.setTitle("Registration Sent")
+					.setMessage(R.string.device_registered_text)
+					.setPositiveButton(android.R.string.ok, null)
+					.show();
+		} else if (status == AuthorizationStatus.Status.INVALID_SERVER) {
+            new AlertDialog.Builder(this)
+                    .setTitle("Application Compatibility Error")
+                    .setMessage("This app is not compatible with this server. Please update your context or talk to your MAGE administrator.")
+                    .setPositiveButton(android.R.string.ok, null)
+                    .show();
+        } else {
+            new AlertDialog.Builder(this)
+                    .setTitle("Signin Failed")
+                    .setMessage(authorization.getStatus().getMessage())
+                    .setPositiveButton(android.R.string.ok, null)
+                    .show();
+        }
 	}
 
 	private void configureLogin() {
@@ -287,7 +341,7 @@ public class LoginActivity extends DaggerAppCompatActivity implements LoginListe
 			if (authenticationFragments.containsKey(authenticationName)) continue;
 
 			if ("local".equals(authenticationName)) {
-				Fragment loginFragment = MageLoginFragment.Companion.newInstance(this);
+				Fragment loginFragment = MageLoginFragment.Companion.newInstance();
 				transaction.add(R.id.local_auth, loginFragment, authenticationName);
 				authenticationFragments.put(authenticationType, loginFragment);
 			} else if ("oauth".equals(authenticationType)) {
@@ -299,7 +353,7 @@ public class LoginActivity extends DaggerAppCompatActivity implements LoginListe
 				transaction.add(R.id.third_party_auth, loginFragment, entry.getKey());
 				authenticationFragments.put(authenticationName, loginFragment);
 			} else if ("ldap".equals(authenticationType)) {
-				Fragment loginFragment = LdapLoginFragment.Companion.newInstance(entry.getValue(), this);
+				Fragment loginFragment = LdapLoginFragment.Companion.newInstance(entry.getValue());
 				transaction.add(R.id.third_party_auth, loginFragment, entry.getKey());
 				authenticationFragments.put(authenticationName, loginFragment);
 			}
@@ -381,17 +435,14 @@ public class LoginActivity extends DaggerAppCompatActivity implements LoginListe
 		finish();
 	}
 
-    @Override
-    public void onLoginComplete(Boolean userChanged) {
-        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-        boolean preserveActivityStack = !userChanged && mContinueSession;
-
-        startNextActivityAndFinish(preserveActivityStack);
-    }
+	private void loginComplete(Boolean userChanged) {
+		boolean preserveActivityStack = !userChanged && mContinueSession;
+		startNextActivityAndFinish(preserveActivityStack);
+	}
 
 	public void startNextActivityAndFinish(boolean preserveActivityStack) {
-
-		if (preserveActivityStack) {
+		// Continue session if there are other activities on the stack
+		if (preserveActivityStack && !isTaskRoot()) {
 			// We are going to return user to the app where they last left off,
 			// make sure to start up MAGE services
 			application.onLogin();

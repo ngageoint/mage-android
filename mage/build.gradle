@@ -223,6 +223,10 @@ dependencies {
     implementation "androidx.lifecycle:lifecycle-extensions:$lifecycle_version"
     implementation "com.google.android.gms:play-services-maps:$google_play_services_version"
 
+    implementation ('androidx.browser:browser:1.3.0-alpha01') {
+        exclude group: 'com.google.guava', module: 'listenablefuture'
+    }
+
     implementation "com.google.dagger:dagger:$dagger_version"
     implementation "com.google.dagger:dagger-android-support:$dagger_version"
     kapt "com.google.dagger:dagger-compiler:$dagger_version"
@@ -245,6 +249,8 @@ dependencies {
     api 'com.google.android:flexbox:2.0.1'
     api 'com.nulab-inc:zxcvbn:1.2.3'
     api (name:'mgrs-0.0.2-release', ext:'aar')
+
+    implementation "androidx.core:core-ktx:1.2.0"
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
 
     // Testing-only dependencies

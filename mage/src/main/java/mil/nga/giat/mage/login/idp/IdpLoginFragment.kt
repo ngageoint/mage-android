@@ -8,7 +8,6 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelProviders
@@ -16,15 +15,14 @@ import dagger.android.support.AndroidSupportInjection
 import kotlinx.android.synthetic.main.fragment_authentication_idp.*
 import mil.nga.giat.mage.R
 import mil.nga.giat.mage.login.LoginViewModel
+import mil.nga.giat.mage.login.idp.IdpLoginActivity.Companion.EXTRA_IDP_TOKEN
 import org.json.JSONObject
 import javax.inject.Inject
 
 class IdpLoginFragment : Fragment() {
 
     companion object {
-        private val EXTRA_IDP_RESULT = 1
-
-        val EXTRA_IDP_UNREGISTERED_DEVICE = "IDP_UNREGISTERED_DEVICE"
+        private const val EXTRA_IDP_RESULT = 100
 
         fun newInstance(strategyName: String, strategy: JSONObject): IdpLoginFragment {
             val fragment = IdpLoginFragment()
@@ -41,7 +39,7 @@ class IdpLoginFragment : Fragment() {
     @Inject
     protected lateinit var preferences: SharedPreferences
 
-    private var strategyName: String? = null
+    private lateinit var strategyName: String
     private var strategy: JSONObject? = null
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
@@ -71,37 +69,18 @@ class IdpLoginFragment : Fragment() {
 
     private fun idpLogin(strategy: String?) {
         val serverUrl = preferences.getString(getString(R.string.serverURLKey), getString(R.string.serverURLDefaultValue))
-
-        val intent = Intent(context, IdpLoginActivity::class.java)
-        intent.putExtra(IdpLoginActivity.EXTRA_SERVER_URL, serverUrl)
-        intent.putExtra(IdpLoginActivity.EXTRA_IDP_TYPE, IdpLoginActivity.IdpType.SIGNIN)
-        intent.putExtra(IdpLoginActivity.EXTRA_IDP_STRATEGY, strategy)
+        val intent = IdpLoginActivity.intent(context, serverUrl, strategy)
         startActivityForResult(intent, EXTRA_IDP_RESULT)
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, intent: Intent?) {
         if (requestCode == EXTRA_IDP_RESULT && resultCode == Activity.RESULT_OK) {
-            if (intent?.getBooleanExtra(EXTRA_IDP_UNREGISTERED_DEVICE, false) == true) {
-                showUnregisteredDeviceDialog()
-            } else {
-                showIdpErrorDialog()
-            }
+            val token = intent?.getStringExtra(EXTRA_IDP_TOKEN)
+            authorize(token)
         }
     }
 
-    private fun showUnregisteredDeviceDialog() {
-        AlertDialog.Builder(requireActivity())
-                .setTitle("Registration Sent")
-                .setMessage(R.string.device_registered_text)
-                .setPositiveButton(android.R.string.ok, null)
-                .show()
-    }
-
-    private fun showIdpErrorDialog() {
-        AlertDialog.Builder(requireActivity())
-                .setTitle("Inactive MAGE Account")
-                .setMessage("Please contact a MAGE administrator to activate your account.")
-                .setPositiveButton(android.R.string.ok, null)
-                .show()
+    private fun authorize(token: String?) {
+        viewModel.authorize(strategyName,  token ?: "")
     }
 }

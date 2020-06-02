@@ -102,14 +102,26 @@
                 <data android:mimeType="application/octet-stream" />
             </intent-filter>
         </activity>
-
         <activity
             android:name=".login.idp.IdpLoginActivity"
             android:windowSoftInputMode="adjustResize" />
         <activity
+            android:name=".login.idp.IdpRedirectUriReceiverActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="mage" android:host="app" android:path="/authentication"/>
+                <data android:scheme="mage" android:host="app" android:path="/invalid_account"/>
+            </intent-filter>
+        </activity>
+        <activity
             android:name=".login.SignupActivity"
             android:theme="@style/AppTheme.NoActionBar"
             android:windowSoftInputMode="stateAlwaysHidden" />
+        <activity android:name=".login.AccountStateActivity"
+            android:launchMode="singleTask">
+        </activity>
         <activity
             android:name=".login.ServerUrlActivity"
             android:theme="@style/AppTheme.NoActionBar"
