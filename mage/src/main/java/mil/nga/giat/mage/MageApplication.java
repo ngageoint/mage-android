@@ -27,9 +27,15 @@ import androidx.lifecycle.LifecycleObserver;
 import androidx.lifecycle.OnLifecycleEvent;
 import androidx.lifecycle.ProcessLifecycleOwner;
 
+import java.io.File;
+
+import javax.inject.Inject;
+
 import dagger.android.AndroidInjector;
 import dagger.android.support.DaggerApplication;
 import mil.nga.giat.mage.dagger.DaggerMageComponent;
+import mil.nga.giat.mage.data.MageDatabase;
+import mil.nga.giat.mage.feed.FeedFetchService;
 import mil.nga.giat.mage.location.LocationFetchService;
 import mil.nga.giat.mage.location.LocationReportingService;
 import mil.nga.giat.mage.login.LoginActivity;
@@ -45,6 +51,7 @@ import mil.nga.giat.mage.sdk.datastore.DaoStore;
 import mil.nga.giat.mage.sdk.datastore.layer.LayerHelper;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
 import mil.nga.giat.mage.sdk.datastore.staticfeature.StaticFeatureHelper;
+import mil.nga.giat.mage.sdk.datastore.user.Event;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.event.ISessionEventListener;
@@ -54,6 +61,7 @@ import mil.nga.giat.mage.sdk.fetch.StaticFeatureServerFetch;
 import mil.nga.giat.mage.sdk.http.HttpClientManager;
 import mil.nga.giat.mage.sdk.http.resource.UserResource;
 import mil.nga.giat.mage.sdk.screen.ScreenChangeReceiver;
+import mil.nga.giat.mage.sdk.utils.MediaUtility;
 import mil.nga.giat.mage.sdk.utils.UserUtility;
 import mil.nga.giat.mage.wearable.InitializeMAGEWearBridge;
 import okhttp3.ResponseBody;
@@ -87,6 +95,9 @@ public class MageApplication extends DaggerApplication implements LifecycleObser
 	private ObservationNotificationListener observationNotificationListener = null;
 
 	private Activity runningActivity;
+
+	@Inject
+	protected MageDatabase database;
 
     @Override
     protected AndroidInjector<? extends DaggerApplication> applicationInjector() {
@@ -136,7 +147,17 @@ public class MageApplication extends DaggerApplication implements LifecycleObser
 		HttpClientManager.getInstance().addListener(this);
 
 		// Start fetching and pushing observations and locations
-		if (!UserUtility.getInstance(getApplicationContext()).isTokenExpired()) {
+		Event event = null;
+		try {
+			User user = UserHelper.getInstance(getApplicationContext()).readCurrentUser();
+			if (user != null) {
+				event = user.getCurrentEvent();
+			}
+		} catch (UserException e) {
+			e.printStackTrace();
+		}
+
+		if (!UserUtility.getInstance(getApplicationContext()).isTokenExpired() && event != null) {
 			startPushing();
 			startFetching();
 		}
@@ -248,12 +269,48 @@ public class MageApplication extends DaggerApplication implements LifecycleObser
 		} catch (UserException e) {
 			e.printStackTrace();
 		}
+	}
 
-		Boolean deleteAllDataOnLogout = sharedPreferences.getBoolean(getApplicationContext().getString(R.string.deleteAllDataOnLogoutKey), getResources().getBoolean(R.bool.deleteAllDataOnLogoutDefaultValue));
+//	public void clearData() {
+//		database.destroy(this);
+//		PreferenceManager.getDefaultSharedPreferences(this).edit().clear().apply();
+//		deleteDir(MediaUtility.getMediaStageDirectory(this));
+//		clearApplicationData();
+//	}
 
-		if (deleteAllDataOnLogout) {
-			LandingActivity.deleteAllData(getApplicationContext());
+	private void clearApplicationData() {
+		File cache = getCacheDir();
+		File appDir = new File(cache.getParent());
+		if (appDir.exists()) {
+			String[] children = appDir.list();
+			for (String s : children) {
+				if (!s.equals("lib") && !s.equals("databases")) {
+					File f = new File(appDir, s);
+					Log.d(LOG_NAME, "Deleting " + f.getAbsolutePath());
+					deleteDir(f);
+				}
+			}
 		}
+
+		deleteDir(MediaUtility.getMediaStageDirectory(this));
+	}
+
+	private boolean deleteDir(File dir) {
+		if (dir != null && dir.isDirectory()) {
+			String[] children = dir.list();
+			for (String kid : children) {
+				boolean success = deleteDir(new File(dir, kid));
+				if (!success) {
+					return false;
+				}
+			}
+		}
+
+		if (dir == null) {
+			return true;
+		}
+
+		return dir.delete();
 	}
 
 	private void destroyNotification() {
@@ -331,6 +388,7 @@ public class MageApplication extends DaggerApplication implements LifecycleObser
 	private void startFetching() {
 		startService(new Intent(getApplicationContext(), LocationFetchService.class));
 		startService(new Intent(getApplicationContext(), ObservationFetchService.class));
+		startService(new Intent(getApplicationContext(), FeedFetchService.class));
 	}
 
 	/**
@@ -339,6 +397,7 @@ public class MageApplication extends DaggerApplication implements LifecycleObser
 	private void destroyFetching() {
 		stopService(new Intent(getApplicationContext(), LocationFetchService.class));
 		stopService(new Intent(getApplicationContext(), ObservationFetchService.class));
+		stopService(new Intent(getApplicationContext(), FeedFetchService.class));
 	}
 
 	/**

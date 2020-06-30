@@ -20,6 +20,13 @@
         </menu>
     </item>
 
+    <item android:id="@+id/feeds_item"
+        android:title="Feeds">
+        <menu>
+            <group android:id="@+id/feeds_group"/>
+        </menu>
+    </item>
+
     <group android:id="@+id/group_three">
 
         <item

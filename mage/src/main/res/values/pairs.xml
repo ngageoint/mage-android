@@ -53,6 +53,10 @@
     <string name="customLocationTimeNumberFilterKey">customLocationTimeNumberFilter</string>
     <string name="customLocationTimeUnitFilterKey">customLocationTimeUnitFilter</string>
 
+    <!-- FEED Fetch -->
+    <string name="feedFetchFrequencyKey">feedFetchFrequency</string>
+    <integer name="feedFetchFrequencyDefaultValue">300000</integer>
+
     <!-- TIME DISPLAY -->
     <string name="timeZoneKey">timeZones</string>
     <integer name="timeZoneDefaultValue">0</integer>

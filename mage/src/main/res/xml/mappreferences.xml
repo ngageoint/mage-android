@@ -49,4 +49,8 @@
             </SwitchPreferenceCompat>
     </PreferenceCategory>
 
+    <PreferenceCategory
+        android:key="feeds"
+        android:title="Feeds"/>
+
 </PreferenceScreen>

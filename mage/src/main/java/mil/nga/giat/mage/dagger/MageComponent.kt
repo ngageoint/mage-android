@@ -9,7 +9,9 @@ import mil.nga.giat.mage.dagger.contributor.ActivityContributorModule
 import mil.nga.giat.mage.dagger.contributor.FragmentContributorModule
 import mil.nga.giat.mage.dagger.contributor.ServiceContributorModule
 import mil.nga.giat.mage.dagger.module.ApplicationModule
+import mil.nga.giat.mage.dagger.module.NetworkModule
 import mil.nga.giat.mage.dagger.module.PreferencesModule
+import mil.nga.giat.mage.dagger.module.RoomModule
 import javax.inject.Singleton
 
 @Singleton
@@ -17,6 +19,8 @@ import javax.inject.Singleton
     AndroidSupportInjectionModule::class,
     ApplicationModule::class,
     PreferencesModule::class,
+    RoomModule::class,
+    NetworkModule::class,
     ActivityContributorModule::class,
     FragmentContributorModule::class,
     ServiceContributorModule::class

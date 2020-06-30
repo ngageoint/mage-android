@@ -2,6 +2,7 @@ package mil.nga.giat.mage.dagger.contributor
 
 import dagger.Module
 import dagger.android.ContributesAndroidInjector
+import mil.nga.giat.mage.feed.FeedFetchService
 import mil.nga.giat.mage.location.LocationFetchService
 import mil.nga.giat.mage.location.LocationReportingService
 import mil.nga.giat.mage.observation.sync.AttachmentPushService
@@ -26,4 +27,6 @@ abstract class ServiceContributorModule {
     @ContributesAndroidInjector
     internal abstract fun contributeAttachmentPushService(): AttachmentPushService
 
+    @ContributesAndroidInjector
+    internal abstract fun contributeFeedFetchService(): FeedFetchService
 }

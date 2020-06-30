@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="?attr/selectableItemBackground"
+    android:paddingTop="16dp"
+    android:paddingBottom="16dp">
+
+    <ImageView
+        android:id="@+id/icon"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:src="@drawable/ic_place_black_48"/>
+
+    <TextView
+        android:id="@+id/overline"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_toEndOf="@id/icon"
+        android:layout_marginEnd="16dp"
+        android:maxLines="1"
+        style="@style/TextAppearance.MaterialComponents.Overline"
+        android:textAppearance="?attr/textAppearanceOverline"
+        android:alpha=".6"/>
+
+    <TextView
+        android:id="@+id/primary"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/overline"
+        android:layout_toEndOf="@id/icon"
+        android:layout_marginEnd="16dp"
+        android:maxLines="1"
+        style="@style/ListTextPrimary"
+        android:textAppearance="?attr/textAppearanceSubtitle1" />
+
+    <TextView
+        android:id="@+id/secondary"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/primary"
+        android:layout_gravity="center_vertical"
+        android:layout_toEndOf="@id/icon"
+        android:layout_marginEnd="16dp"
+        android:maxLines="2"
+        style="@style/ListTextSecondary"
+        android:textAppearance="?attr/textAppearanceBody2" />
+
+    <LinearLayout
+        android:id="@+id/noContent"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_toEndOf="@id/icon"
+        android:orientation="vertical"
+        android:layout_marginEnd="16dp"
+        android:background="@color/background_card">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            style="@style/ListTextSecondary"
+            android:textSize="32sp"
+            android:text="No Content"/>
+
+    </LinearLayout>
+
+</RelativeLayout>

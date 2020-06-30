@@ -1,0 +1,201 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 1,
+    "identityHash": "3bc63f2114416038ef4f872e63060ff6",
+    "entities": [
+      {
+        "tableName": "feed",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`update_frequency` INTEGER, `item_temporal_property` TEXT, `item_primary_property` TEXT, `item_secondary_property` TEXT, `constant_params` TEXT, `variable_params` TEXT, `id` TEXT NOT NULL, `title` TEXT NOT NULL, `summary` TEXT, `items_have_identity` INTEGER NOT NULL, `items_have_spatial_dimension` INTEGER NOT NULL, `event_remote_id` TEXT NOT NULL, `style_icon_url` TEXT, `style_stroke` TEXT, `style_stroke_opacity` REAL, `style_stroke_width` INTEGER, `style_fill` TEXT, `style_fill_opacity` REAL, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "updateFrequency",
+            "columnName": "update_frequency",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "itemTemporalProperty",
+            "columnName": "item_temporal_property",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "itemPrimaryProperty",
+            "columnName": "item_primary_property",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "itemSecondaryProperty",
+            "columnName": "item_secondary_property",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "constantParams",
+            "columnName": "constant_params",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "variableParams",
+            "columnName": "variable_params",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "title",
+            "columnName": "title",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "summary",
+            "columnName": "summary",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "itemsHaveIdentity",
+            "columnName": "items_have_identity",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "itemsHaveSpatialDimension",
+            "columnName": "items_have_spatial_dimension",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "eventRemoteId",
+            "columnName": "event_remote_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "style.iconUrl",
+            "columnName": "style_icon_url",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "style.stroke",
+            "columnName": "style_stroke",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "style.strokeOpacity",
+            "columnName": "style_stroke_opacity",
+            "affinity": "REAL",
+            "notNull": false
+          },
+          {
+            "fieldPath": "style.strokeWidth",
+            "columnName": "style_stroke_width",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "style.fill",
+            "columnName": "style_fill",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "style.fillOpacity",
+            "columnName": "style_fill_opacity",
+            "affinity": "REAL",
+            "notNull": false
+          }
+        ],
+        "primaryKey": {
+          "columnNames": [
+            "id"
+          ],
+          "autoGenerate": false
+        },
+        "indices": [],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "feed_local",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`last_sync` INTEGER, `feed_id` TEXT NOT NULL, PRIMARY KEY(`feed_id`))",
+        "fields": [
+          {
+            "fieldPath": "lastSync",
+            "columnName": "last_sync",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "feedId",
+            "columnName": "feed_id",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "columnNames": [
+            "feed_id"
+          ],
+          "autoGenerate": false
+        },
+        "indices": [],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "feed_item",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `geometry` BLOB, `properties` TEXT, `feed_id` TEXT NOT NULL, PRIMARY KEY(`id`, `feed_id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "geometry",
+            "columnName": "geometry",
+            "affinity": "BLOB",
+            "notNull": false
+          },
+          {
+            "fieldPath": "properties",
+            "columnName": "properties",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "feedId",
+            "columnName": "feed_id",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "columnNames": [
+            "id",
+            "feed_id"
+          ],
+          "autoGenerate": false
+        },
+        "indices": [],
+        "foreignKeys": []
+      }
+    ],
+    "views": [],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '3bc63f2114416038ef4f872e63060ff6')"
+    ]
+  }
+}

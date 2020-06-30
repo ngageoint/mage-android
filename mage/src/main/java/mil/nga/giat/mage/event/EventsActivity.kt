@@ -6,6 +6,9 @@ import android.preference.PreferenceManager
 import android.util.Log
 import android.view.View
 import androidx.appcompat.widget.SearchView
+import androidx.lifecycle.Observer
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.ViewModelProviders
 import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.LinearLayoutManager
 import dagger.android.support.DaggerAppCompatActivity
@@ -14,12 +17,12 @@ import mil.nga.giat.mage.LandingActivity
 import mil.nga.giat.mage.MageApplication
 import mil.nga.giat.mage.R
 import mil.nga.giat.mage.login.LoginActivity
+import mil.nga.giat.mage.network.Resource
 import mil.nga.giat.mage.sdk.datastore.user.Event
 import mil.nga.giat.mage.sdk.datastore.user.EventHelper
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper
 import mil.nga.giat.mage.sdk.login.AccountDelegate
 import mil.nga.giat.mage.sdk.login.RecentEventTask
-import java.util.*
 import javax.inject.Inject
 
 class EventsActivity : DaggerAppCompatActivity(), EventsFetchFragment.EventsFetchListener {
@@ -31,6 +34,10 @@ class EventsActivity : DaggerAppCompatActivity(), EventsFetchFragment.EventsFetc
 
     @Inject
     lateinit var application: MageApplication
+
+    @Inject
+    protected lateinit var viewModelFactory: ViewModelProvider.Factory
+    private lateinit var viewModel: EventViewModel
 
     private var events = emptyList<Event>()
 
@@ -62,6 +69,11 @@ class EventsActivity : DaggerAppCompatActivity(), EventsFetchFragment.EventsFetc
         }
 
         eventsFetchFragment = fragment
+
+        viewModel = ViewModelProviders.of(this, viewModelFactory).get(EventViewModel::class.java)
+        viewModel.syncStatus.observe(this, Observer {
+            finishEvent(it)
+        })
     }
 
     override fun onResume() {
@@ -130,26 +142,26 @@ class EventsActivity : DaggerAppCompatActivity(), EventsFetchFragment.EventsFetc
         loadingStatus.visibility = View.VISIBLE
 
         loadingText.text = "Loading ${event.name}"
-
-        val eventFetch = EventServerFetch(applicationContext, event.remoteId)
-        eventFetch.setEventFetchListener { _, _ -> finishEvent(event) }
-        eventFetch.execute()
+        viewModel.syncEvent(event)
     }
 
-    private fun finishEvent(event: Event) {
-        // Send chosen event to the server
-        val userRecentEventInfo = ArrayList<String>()
-        userRecentEventInfo.add(event.remoteId)
-        RecentEventTask(AccountDelegate {
-            // No need to check if this failed
-        }, applicationContext).execute(*userRecentEventInfo.toTypedArray())
+    private fun finishEvent(resource: Resource<out Event> ) {
+        if (resource.status == Resource.Status.SUCCESS) {
+            // Send chosen event to the server
+            val event = resource.data!!
+            val userRecentEventInfo = ArrayList<String>()
+            userRecentEventInfo.add(event.remoteId)
+            RecentEventTask(AccountDelegate {
+                // No need to check if this failed
+            }, applicationContext).execute(*userRecentEventInfo.toTypedArray())
 
-        try {
-            val userHelper = UserHelper.getInstance(applicationContext)
-            val user = userHelper.readCurrentUser()
-            userHelper.setCurrentEvent(user, event)
-        } catch (e: Exception) {
-            Log.e(LOG_NAME, "Could not set current event.")
+            try {
+                val userHelper = UserHelper.getInstance(applicationContext)
+                val user = userHelper.readCurrentUser()
+                userHelper.setCurrentEvent(user, event)
+            } catch (e: Exception) {
+                Log.e(LOG_NAME, "Could not set current event.")
+            }
         }
 
         // disable pushing locations
