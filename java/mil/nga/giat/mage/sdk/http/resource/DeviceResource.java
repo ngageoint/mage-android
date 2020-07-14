@@ -8,17 +8,16 @@ import android.util.Log;
 
 import com.google.gson.JsonObject;
 
-import java.io.IOException;
-
 import mil.nga.giat.mage.sdk.R;
 import mil.nga.giat.mage.sdk.http.HttpClientManager;
+import okhttp3.OkHttpClient;
 import retrofit2.Call;
 import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 import retrofit2.http.Body;
+import retrofit2.http.Header;
 import retrofit2.http.POST;
-import retrofit2.http.Path;
 
 /***
  * RESTful communication for devices
@@ -29,8 +28,8 @@ import retrofit2.http.Path;
 public class DeviceResource {
 
     public interface DeviceService {
-        @POST("/auth/{strategy}/devices")
-        Call<JsonObject> createDevice(@Path("strategy") String strategy, @Body JsonObject device);
+        @POST("/auth/token")
+        Call<JsonObject> authorize(@Header("Authorization") String authorization, @Body JsonObject body);
     }
 
     private static final String LOG_NAME = DeviceResource.class.getName();
@@ -41,39 +40,39 @@ public class DeviceResource {
         this.context = context;
     }
 
-    public JsonObject createDevice(String strategy, String uid) throws IOException {
-        JsonObject device = null;
+    public Response<JsonObject> authorize(String token, String uid) {
+        Response<JsonObject> response = null;
 
         String baseUrl = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.serverURLKey), context.getString(R.string.serverURLDefaultValue));
-        Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl(baseUrl)
-                .addConverterFactory(GsonConverterFactory.create())
-                .client(HttpClientManager.getInstance().httpClient())
-                .build();
-
-        DeviceService service = retrofit.create(DeviceService.class);
-
-        JsonObject json = new JsonObject();
-        json.addProperty("uid", uid);
 
         try {
-            PackageInfo packageInfo = context.getPackageManager().getPackageInfo(context.getPackageName(), 0);
-            json.addProperty("appVersion", String.format("%s-%s", packageInfo.versionName, packageInfo.versionCode));
-        } catch (PackageManager.NameNotFoundException e) {
-            Log.e(LOG_NAME , "Problem retrieving package info.", e);
-        }
+            OkHttpClient.Builder builder = HttpClientManager.getInstance().httpClient().newBuilder();
+            builder.interceptors().clear();
+            OkHttpClient client = builder.build();
 
-        Response<JsonObject> response = service.createDevice(strategy, json).execute();
+            Retrofit retrofit = new Retrofit.Builder()
+                    .baseUrl(baseUrl)
+                    .addConverterFactory(GsonConverterFactory.create())
+                    .client(client)
+                    .build();
 
-        if (response.isSuccessful()) {
-            device = response.body();
-        } else {
-            Log.e(LOG_NAME, "Bad request.");
-            if (response.errorBody() != null) {
-                Log.e(LOG_NAME, response.errorBody().string());
+            DeviceService service = retrofit.create(DeviceService.class);
+
+            JsonObject json = new JsonObject();
+            json.addProperty("uid", uid);
+
+            try {
+                PackageInfo packageInfo = context.getPackageManager().getPackageInfo(context.getPackageName(), 0);
+                json.addProperty("appVersion", String.format("%s-%s", packageInfo.versionName, packageInfo.versionCode));
+            } catch (PackageManager.NameNotFoundException e) {
+                Log.e(LOG_NAME , "Problem retrieving package info.", e);
             }
+
+            response = service.authorize(String.format("Bearer %s", token), json).execute();
+        } catch (Exception e) {
+            Log.e(LOG_NAME, "Bad request.", e);
         }
 
-        return device;
+        return response;
     }
 }

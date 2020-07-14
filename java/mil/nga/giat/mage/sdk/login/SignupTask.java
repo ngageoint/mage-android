@@ -1,6 +1,7 @@
 package mil.nga.giat.mage.sdk.login;
 
 import android.content.Context;
+import android.os.AsyncTask;
 import android.util.Log;
 
 import com.google.gson.JsonObject;
@@ -9,25 +10,28 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
 
 import mil.nga.giat.mage.sdk.connectivity.ConnectivityUtility;
 import mil.nga.giat.mage.sdk.http.resource.UserResource;
 import mil.nga.giat.mage.sdk.utils.DeviceUuidFactory;
 
 /**
- * Creates a user
- * 
- * @author wiedemanns
- * 
+ * Creates a new local user account
  */
-public class SignupTask extends AbstractAccountTask {
+public class SignupTask extends AsyncTask<String, Void, SignupStatus> {
+
+	public interface SignupDelegate {
+		void onSignupComplete(SignupStatus status);
+	}
 
 	private static final String LOG_NAME = SignupTask.class.getName();
+
+	protected Context applicationContext;
+	protected SignupDelegate delegate;
 	
-	public SignupTask(AccountDelegate delegate, Context applicationContext) {
-		super(delegate, applicationContext);
+	public SignupTask(Context applicationContext, SignupDelegate delegate) {
+		this.applicationContext = applicationContext;
+		this.delegate = delegate;
 	}
 
 	/**
@@ -36,11 +40,10 @@ public class SignupTask extends AbstractAccountTask {
 	 * @param params
 	 *            Should contain displayname, username, email, password,
 	 *            and serverURL; in that order.
-	 * @return On success, {@link AccountStatus#getAccountInformation()}
-	 *         contains the username
+	 * @return On success, returns {@link SignupStatus}
 	 */
 	@Override
-	protected AccountStatus doInBackground(String... params) {
+	protected SignupStatus doInBackground(String... params) {
 
 		// get inputs
 		String username = params[0];
@@ -51,48 +54,48 @@ public class SignupTask extends AbstractAccountTask {
 		String serverURL = params[5];
 
 		// Make sure you have connectivity
-		if (!ConnectivityUtility.isOnline(mApplicationContext)) {
-			List<Integer> errorIndices = new ArrayList<>();
-			errorIndices.add(5);
-			List<String> errorMessages = new ArrayList<>();
-			errorMessages.add("No connection");
-			return new AccountStatus(AccountStatus.Status.FAILED_SIGNUP, errorIndices, errorMessages);
+		if (!ConnectivityUtility.isOnline(applicationContext)) {
+			return new SignupStatus.Builder(SignupStatus.Status.FAILED_SIGNUP)
+					.message("No Connection")
+					.build();
 		}
 
-        String uuid = new DeviceUuidFactory(mApplicationContext).getDeviceUuid().toString();
-		if (uuid == null) {
-			List<Integer> errorIndices = new ArrayList<>();
-			errorIndices.add(5);
-			List<String> errorMessages = new ArrayList<>();
-			errorMessages.add("Problem generating device uuid");
-			return new AccountStatus(AccountStatus.Status.FAILED_SIGNUP, errorIndices, errorMessages);
+        String uid = new DeviceUuidFactory(applicationContext).getDeviceUuid().toString();
+		if (uid == null) {
+			return new SignupStatus.Builder(SignupStatus.Status.FAILED_SIGNUP)
+					.message("Problem generating device uuid")
+					.build();
 		}
 
 		// is server a valid URL? (already checked username and password)
 		try {
 			new URL(serverURL);
 		} catch (MalformedURLException e) {
-			List<Integer> errorIndices = new ArrayList<>();
-			errorIndices.add(5);
-			List<String> errorMessages = new ArrayList<>();
-			errorMessages.add("Bad URL");
-			return new AccountStatus(AccountStatus.Status.FAILED_SIGNUP, errorIndices, errorMessages);
+			return new SignupStatus.Builder(SignupStatus.Status.FAILED_SIGNUP)
+					.message("Bad Server URL")
+					.build();
 		}
 
 		try {
-			UserResource userResource = new UserResource(mApplicationContext);
-			JsonObject jsonUser = userResource.createUser(username, displayName, email, phone, uuid, password);
-			return new AccountStatus(AccountStatus.Status.SUCCESSFUL_SIGNUP, new ArrayList<Integer>(), new ArrayList<String>(), jsonUser);
+			UserResource userResource = new UserResource(applicationContext);
+			JsonObject jsonUser = userResource.createUser(username, displayName, email, phone, uid, password);
+
+			return new SignupStatus.Builder(SignupStatus.Status.SUCCESSFUL_SIGNUP)
+					.user(jsonUser)
+					.build();
 		} catch (Exception e) {
 			Log.e(LOG_NAME, "Problem signing up.", e);
-			if (!StringUtils.isBlank(e.getMessage())) {
-				List<Integer> errorIndices = new ArrayList<>();
-				errorIndices.add(5);
-				List<String> errorMessages = new ArrayList<>();
-				errorMessages.add(e.getMessage());
-				return new AccountStatus(AccountStatus.Status.FAILED_SIGNUP, errorIndices, errorMessages);
-			}
-			return new AccountStatus(AccountStatus.Status.FAILED_SIGNUP);
+			String message = StringUtils.isBlank(e.getMessage()) ? null : e.getMessage();
+			return new SignupStatus.Builder(SignupStatus.Status.FAILED_SIGNUP)
+					.message(message)
+					.build();
 		}
+	}
+
+	@Override
+	protected void onPostExecute(SignupStatus status) {
+		super.onPostExecute(status);
+
+		delegate.onSignupComplete(status);
 	}
 }

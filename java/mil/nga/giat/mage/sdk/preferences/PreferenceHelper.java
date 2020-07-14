@@ -152,11 +152,8 @@ public class PreferenceHelper implements SharedPreferences.OnSharedPreferenceCha
 	}
 
 	public boolean validateServerVersion(Integer majorVersion, Integer minorVersion) {
-
-		// check versions
-		SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(mContext);
-		Integer compatibleMajorVersion = sharedPreferences.getInt(mContext.getString(R.string.compatibleVersionMajorKey), mContext.getResources().getInteger(R.integer.compatibleVersionMajorDefaultValue));
-		Integer compatibleMinorVersion = sharedPreferences.getInt(mContext.getString(R.string.compatibleVersionMinorKey), mContext.getResources().getInteger(R.integer.compatibleVersionMinorDefaultValue));
+		Integer compatibleMajorVersion = mContext.getResources().getInteger(R.integer.compatibleVersionMajor);
+		Integer compatibleMinorVersion = mContext.getResources().getInteger(R.integer.compatibleVersionMinor);
 
 		if (majorVersion == null || minorVersion == null) {
 			return false;

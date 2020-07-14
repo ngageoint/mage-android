@@ -12,10 +12,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import mil.nga.giat.mage.sdk.connectivity.ConnectivityUtility;
 import mil.nga.giat.mage.sdk.datastore.layer.Layer;
 import mil.nga.giat.mage.sdk.datastore.layer.LayerHelper;
-import mil.nga.giat.mage.sdk.http.resource.LayerResource;
 import mil.nga.giat.mage.sdk.datastore.user.Event;
 import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
-import mil.nga.giat.mage.sdk.login.LoginTaskFactory;
+import mil.nga.giat.mage.sdk.http.resource.LayerResource;
 
 public class ImageryServerFetch extends AbstractServerFetch {
 
@@ -31,12 +30,12 @@ public class ImageryServerFetch extends AbstractServerFetch {
         layerResource = new LayerResource(context);
     }
 
-    public void fetch(){
+    public void fetch() {
         Event event = EventHelper.getInstance(mContext).getCurrentEvent();
         LayerHelper layerHelper = LayerHelper.getInstance(mContext);
 
         // if you are disconnect, skip this
-        if(!ConnectivityUtility.isOnline(mContext) || LoginTaskFactory.getInstance(mContext).isLocalLogin()) {
+        if (!ConnectivityUtility.isOnline(mContext)) {
             Log.d(LOG_NAME, "Disconnected, not pulling imagery.");
             return;
         }
@@ -49,14 +48,14 @@ public class ImageryServerFetch extends AbstractServerFetch {
 
             Map<String, Layer> remoteIdToLayer = new HashMap<>(localLayers.size());
             Iterator<Layer> it = localLayers.iterator();
-            while(it.hasNext()) {
+            while (it.hasNext()) {
                 Layer localLayer = it.next();
 
                 //See if the layer has been deleted on the server
-                if(!remoteLayers.contains(localLayer)){
+                if (!remoteLayers.contains(localLayer)){
                     it.remove();
                     layerHelper.delete(localLayer.getId());
-                }else{
+                } else {
                     remoteIdToLayer.put(localLayer.getRemoteId(), localLayer);
                 }
             }
@@ -77,7 +76,7 @@ public class ImageryServerFetch extends AbstractServerFetch {
                     layerHelper.create(remoteLayer);
                 }
             }
-        }catch(Exception e){
+        } catch(Exception e) {
             Log.w(LOG_NAME, "Error performing imagery layer operations",e);
         }
     }

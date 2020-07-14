@@ -9,7 +9,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.net.URL;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -18,7 +17,6 @@ import java.util.List;
 import java.util.Map;
 
 import mil.nga.giat.mage.sdk.connectivity.ConnectivityUtility;
-import mil.nga.giat.mage.sdk.datastore.DaoStore;
 import mil.nga.giat.mage.sdk.datastore.layer.Layer;
 import mil.nga.giat.mage.sdk.datastore.layer.LayerHelper;
 import mil.nga.giat.mage.sdk.datastore.staticfeature.StaticFeature;
@@ -28,7 +26,6 @@ import mil.nga.giat.mage.sdk.datastore.user.Event;
 import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
 import mil.nga.giat.mage.sdk.exceptions.StaticFeatureException;
 import mil.nga.giat.mage.sdk.http.resource.LayerResource;
-import mil.nga.giat.mage.sdk.login.LoginTaskFactory;
 
 public class StaticFeatureServerFetch extends AbstractServerFetch {
 
@@ -55,7 +52,7 @@ public class StaticFeatureServerFetch extends AbstractServerFetch {
 		List<Layer> newLayers = new ArrayList<>();
 
 		// if you are disconnect, skip this
-		if(!ConnectivityUtility.isOnline(mContext) || LoginTaskFactory.getInstance(mContext).isLocalLogin()) {
+		if (!ConnectivityUtility.isOnline(mContext)) {
 			Log.d(LOG_NAME, "Disconnected, not pulling static layers.");
 			return newLayers;
 		}
@@ -114,7 +111,7 @@ public class StaticFeatureServerFetch extends AbstractServerFetch {
 
 	public void load(OnStaticLayersListener listener, Layer layer) {
 		// if you are disconnect, skip this
-		if(!ConnectivityUtility.isOnline(mContext) || LoginTaskFactory.getInstance(mContext).isLocalLogin()) {
+		if (!ConnectivityUtility.isOnline(mContext)) {
 			Log.d(LOG_NAME, "Disconnected, not loading static features.");
 			return;
 		}
