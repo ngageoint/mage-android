@@ -1,8 +1,8 @@
 package mil.nga.giat.mage.data.feed
 
 import androidx.room.*
-import androidx.room.ForeignKey.CASCADE
 import com.google.gson.JsonElement
+import com.google.gson.annotations.JsonAdapter
 import com.google.gson.annotations.SerializedName
 
 @Entity(tableName = "feed"
@@ -39,7 +39,7 @@ data class Feed(
         var eventRemoteId: String
 ) {
 
-    @SerializedName("updateFrequency")
+    @SerializedName("updateFrequencySeconds")
     @ColumnInfo(name = "update_frequency")
     var updateFrequency: Long? = null
         get() {

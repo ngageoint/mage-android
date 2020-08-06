@@ -26,7 +26,7 @@
                 android:layout_width="48dp"
                 android:layout_height="48dp"
                 android:layout_marginEnd="16dp"
-                android:src="@drawable/ic_place_black_48"/>
+                android:src="@drawable/default_marker_24"/>
 
             <LinearLayout
                 android:id="@+id/header"
@@ -53,6 +53,7 @@
                     android:layout_marginEnd="16dp"
                     android:visibility="gone"
                     android:maxLines="1"
+                    android:ellipsize="end"
                     style="@style/ListTextPrimary"
                     android:textAppearance="?attr/textAppearanceSubtitle1" />
 
@@ -63,7 +64,8 @@
                     android:layout_gravity="center_vertical"
                     android:layout_marginEnd="16dp"
                     android:visibility="gone"
-                    android:maxLines="2"
+                    android:maxLines="1"
+                    android:ellipsize="end"
                     style="@style/ListTextSecondary"
                     android:textAppearance="?attr/textAppearanceBody2" />
 

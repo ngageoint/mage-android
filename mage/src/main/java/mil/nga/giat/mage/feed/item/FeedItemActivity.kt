@@ -108,7 +108,7 @@ class FeedItemActivity: DaggerAppCompatActivity(), OnMapReadyCallback {
 
         Glide.with(this)
             .load(feed.style?.iconUrl)
-            .placeholder(R.drawable.ic_place_black_48)
+            .placeholder(R.drawable.default_marker_24)
             .fitCenter()
             .into(icon)
 

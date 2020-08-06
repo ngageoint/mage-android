@@ -7,9 +7,11 @@ import android.graphics.drawable.Drawable
 import android.util.TypedValue
 import android.view.LayoutInflater
 import android.view.View
+import android.widget.LinearLayout
 import androidx.core.content.ContextCompat
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.target.CustomTarget
+import com.bumptech.glide.request.target.Target.SIZE_ORIGINAL
 import com.bumptech.glide.request.transition.Transition
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
@@ -79,7 +81,7 @@ class FeedItemCollection(val context: Context, val map: GoogleMap) {
 
             val px = TypedValue.applyDimension(
                 TypedValue.COMPLEX_UNIT_DIP,
-                24f,
+                48f,
                 context.resources.displayMetrics).toInt()
 
             Glide.with(context)
@@ -90,7 +92,7 @@ class FeedItemCollection(val context: Context, val map: GoogleMap) {
                         }
 
                         override fun onLoadFailed(errorDrawable: Drawable?) {
-                            val resource = errorDrawable ?: ContextCompat.getDrawable(context, R.drawable.ic_place_black_24dp)!!
+                            val resource = errorDrawable ?: ContextCompat.getDrawable(context, R.drawable.default_marker_24)!!
                             setResource(resource)
                         }
 
@@ -161,7 +163,8 @@ class FeedItemCollection(val context: Context, val map: GoogleMap) {
         }
 
         override fun getInfoWindow(marker: Marker?): View? {
-            val view = layoutInflater.inflate(R.layout.feeditem_info_window, null)
+            val view = layoutInflater.inflate(R.layout.feeditem_info_window, null) as LinearLayout
+
             val itemWithFeed = marker?.tag as ItemWithFeed
             val feed = itemWithFeed.feed
 

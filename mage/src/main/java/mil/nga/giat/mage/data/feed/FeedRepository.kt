@@ -20,16 +20,16 @@ class FeedRepository @Inject constructor(
     private val feedItemDao: FeedItemDao,
     private val feedService: FeedService
 ) {
-    suspend fun syncFeed(feedId: String): Resource<out Array<FeedItem>> {
+    suspend fun syncFeed(feedId: String): Resource<out FeedContent> {
         return withContext(Dispatchers.IO) {
             val resource = try {
                 val event = EventHelper.getInstance(context).currentEvent
 
                 val response = feedService.getFeedItems(event.remoteId, feedId).execute()
                 if (response.isSuccessful) {
-                    val items = response.body()!!
-                    saveFeed(feedId, items)
-                    Resource.success(items)
+                    val content = response.body()!!
+                    saveFeed(feedId, content)
+                    Resource.success(content)
                 } else {
                     Resource.error(response.message(), null)
                 }
@@ -46,9 +46,9 @@ class FeedRepository @Inject constructor(
     }
 
     @WorkerThread
-    private fun saveFeed(feedId: String, items: Array<FeedItem>) {
+    private fun saveFeed(feedId: String, content: FeedContent) {
         // TODO delete all items if non-stable feed items ids
-        for (item in items) {
+        for (item in content.items) {
             item.feedId = feedId
             feedItemDao.upsert(item)
         }

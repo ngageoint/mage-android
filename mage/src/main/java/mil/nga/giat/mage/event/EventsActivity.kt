@@ -146,9 +146,9 @@ class EventsActivity : DaggerAppCompatActivity(), EventsFetchFragment.EventsFetc
     }
 
     private fun finishEvent(resource: Resource<out Event> ) {
-        if (resource.status == Resource.Status.SUCCESS) {
+        if (resource.data != null) {
             // Send chosen event to the server
-            val event = resource.data!!
+            val event = resource.data
             val userRecentEventInfo = ArrayList<String>()
             userRecentEventInfo.add(event.remoteId)
             RecentEventTask(AccountDelegate {

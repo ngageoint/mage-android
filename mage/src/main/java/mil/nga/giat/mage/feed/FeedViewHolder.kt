@@ -28,7 +28,7 @@ class FeedViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
 
         Glide.with(itemView.context)
             .load(feed.style?.iconUrl)
-            .placeholder(R.drawable.ic_place_black_48)
+            .placeholder(R.drawable.default_marker_24)
             .fitCenter()
             .into(itemView.icon)
 
