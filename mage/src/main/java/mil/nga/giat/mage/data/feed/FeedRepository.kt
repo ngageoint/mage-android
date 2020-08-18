@@ -1,7 +1,9 @@
 package mil.nga.giat.mage.data.feed
 
 import android.content.Context
+import android.view.View
 import androidx.annotation.WorkerThread
+import kotlinx.android.synthetic.main.activity_feed_item.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import mil.nga.giat.mage.dagger.module.ApplicationContext
@@ -20,15 +22,15 @@ class FeedRepository @Inject constructor(
     private val feedItemDao: FeedItemDao,
     private val feedService: FeedService
 ) {
-    suspend fun syncFeed(feedId: String): Resource<out FeedContent> {
+    suspend fun syncFeed(feed: Feed): Resource<out FeedContent> {
         return withContext(Dispatchers.IO) {
             val resource = try {
                 val event = EventHelper.getInstance(context).currentEvent
 
-                val response = feedService.getFeedItems(event.remoteId, feedId).execute()
+                val response = feedService.getFeedItems(event.remoteId, feed.id).execute()
                 if (response.isSuccessful) {
                     val content = response.body()!!
-                    saveFeed(feedId, content)
+                    saveFeed(feed, content)
                     Resource.success(content)
                 } else {
                     Resource.error(response.message(), null)
@@ -37,7 +39,7 @@ class FeedRepository @Inject constructor(
                 Resource.error(e.localizedMessage, null)
             }
 
-            val local = FeedLocal(feedId)
+            val local = FeedLocal(feed.id)
             local.lastSync = Date().time
             feedLocalDao.upsert(local)
 
@@ -46,10 +48,19 @@ class FeedRepository @Inject constructor(
     }
 
     @WorkerThread
-    private fun saveFeed(feedId: String, content: FeedContent) {
-        // TODO delete all items if non-stable feed items ids
+    private fun saveFeed(feed: Feed, content: FeedContent) {
+        if (!feed.itemsHaveIdentity) {
+            feedItemDao.removeFeedItems(feed.id)
+        }
+
         for (item in content.items) {
-            item.feedId = feedId
+            item.feedId = feed.id
+
+            item.timestamp = null
+            if (feed.itemTemporalProperty != null) {
+                item.timestamp = item.properties?.asJsonObject?.get(feed.itemTemporalProperty)?.asLong
+            }
+
             feedItemDao.upsert(item)
         }
     }

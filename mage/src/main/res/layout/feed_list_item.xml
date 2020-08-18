@@ -12,7 +12,7 @@
         android:layout_height="48dp"
         android:layout_marginStart="16dp"
         android:layout_marginEnd="16dp"
-        android:src="@drawable/default_marker_24"/>
+        android:src="@drawable/default_marker"/>
 
     <TextView
         android:id="@+id/overline"

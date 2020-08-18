@@ -2,17 +2,9 @@ package mil.nga.giat.mage.data.feed
 
 import androidx.room.*
 import com.google.gson.JsonElement
-import com.google.gson.annotations.JsonAdapter
 import com.google.gson.annotations.SerializedName
 
-@Entity(tableName = "feed"
-//        foreignKeys = [
-//            ForeignKey(entity = FeedLocal::class,
-//                    parentColumns = arrayOf("id"),
-//                    childColumns = arrayOf("feed_id"),
-//                    onDelete = CASCADE)
-//        ]
-)
+@Entity(tableName = "feed")
 data class Feed(
         @SerializedName("id")
         @PrimaryKey
@@ -58,11 +50,11 @@ data class Feed(
     @ColumnInfo(name = "item_secondary_property")
     var itemSecondaryProperty: String? = null
 
-    @SerializedName("style")
-    @Embedded(prefix = "style_")
-    var style: Style? = null
+    @SerializedName("mapStyle")
+    @Embedded(prefix = "map_style_")
+    var mapStyle: MapStyle? = null
         get() {
-            return if (field == null) Style() else field
+            return if (field == null) MapStyle() else field
         }
 
     @SerializedName("constant_params")

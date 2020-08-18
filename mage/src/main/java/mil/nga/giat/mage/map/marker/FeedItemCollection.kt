@@ -8,7 +8,9 @@ import android.util.TypedValue
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.LinearLayout
+import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.content.ContextCompat
+import androidx.core.graphics.drawable.toBitmap
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.target.CustomTarget
 import com.bumptech.glide.request.target.Target.SIZE_ORIGINAL
@@ -33,6 +35,7 @@ import mil.nga.sf.GeometryType
 import mil.nga.sf.util.GeometryUtils
 import java.util.Locale
 import java.util.Date
+import com.bumptech.glide.request.target.Target
 
 class FeedItemCollection(val context: Context, val map: GoogleMap) {
 
@@ -40,6 +43,7 @@ class FeedItemCollection(val context: Context, val map: GoogleMap) {
     private var feedItemIdWithInfoWindow: String? = null
     private val infoWindowAdapter: GoogleMap.InfoWindowAdapter = InfoWindowAdapter(context)
     private val dateFormat = DateFormatFactory.format("yyyy-MM-dd HH:mm zz", Locale.getDefault(), context)
+    private val defaultMarker = AppCompatResources.getDrawable(context, R.drawable.default_marker)!!.toBitmap()
 
     fun setItems(feedWithItems: FeedWithItems) {
         var shapes = feedMap[feedWithItems.feed.id]
@@ -81,32 +85,27 @@ class FeedItemCollection(val context: Context, val map: GoogleMap) {
 
             val px = TypedValue.applyDimension(
                 TypedValue.COMPLEX_UNIT_DIP,
-                48f,
+                24f,
                 context.resources.displayMetrics).toInt()
 
             Glide.with(context)
-                    .load(feed.style?.iconUrl)
-                    .override(px, px)
-                    .into(object: CustomTarget<Drawable>() {
-                        override fun onLoadCleared(placeholder: Drawable?) {
-                        }
+                    .asBitmap()
+                    .load(feed.mapStyle?.iconUrl)
+                    .fitCenter()
+                    .into(object : CustomTarget<Bitmap>(px, Target.SIZE_ORIGINAL) {
+                        override fun onLoadCleared(placeholder: Drawable?) {}
 
                         override fun onLoadFailed(errorDrawable: Drawable?) {
-                            val resource = errorDrawable ?: ContextCompat.getDrawable(context, R.drawable.default_marker_24)!!
-                            setResource(resource)
+                            setIcon(defaultMarker)
                         }
 
-                        override fun onResourceReady(resource: Drawable, transition: Transition<in Drawable>?) {
-                            setResource(resource)
+                        override fun onResourceReady(resource: Bitmap, transition: Transition<in Bitmap>?) {
+                            setIcon(resource)
                         }
 
-                        fun setResource(resource: Drawable) {
+                        private fun setIcon(resource: Bitmap) {
                             if (marker.tag != null) {  // if tag is null marker has been removed from map
-                                val mutableBitmap = Bitmap.createBitmap(px, px, Bitmap.Config.ARGB_8888)
-                                val canvas = Canvas(mutableBitmap)
-                                resource.setBounds(0, 0, px, px)
-                                resource.draw(canvas)
-                                marker.setIcon(BitmapDescriptorFactory.fromBitmap(mutableBitmap))
+                                marker.setIcon(BitmapDescriptorFactory.fromBitmap(resource))
                                 marker.isVisible = true
                             }
                         }

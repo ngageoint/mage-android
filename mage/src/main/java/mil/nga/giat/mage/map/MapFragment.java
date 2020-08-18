@@ -688,7 +688,9 @@ public class MapFragment extends DaggerFragment implements
 	}
 
 	private void onFeedItems(FeedWithItems items) {
-		feedItems.setItems(items);
+		if (items != null) {
+			feedItems.setItems(items);
+		}
 	}
 
 	private void search() {

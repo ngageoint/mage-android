@@ -43,9 +43,10 @@ class FeedViewModel @Inject constructor(
     private val _refresh = MutableLiveData<Resource<*>>()
     val refresh: LiveData<Resource<*>> = _refresh
     fun refresh() {
+        val feed = this.feed.value ?: return
         GlobalScope.launch {
             _refresh.postValue(Resource.loading(null))
-            val resource = feedRepository.syncFeed(_feedId.value!!)
+            val resource = feedRepository.syncFeed(feed)
             _refresh.postValue(resource)
         }
     }

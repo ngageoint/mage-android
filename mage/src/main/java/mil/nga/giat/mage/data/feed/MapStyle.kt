@@ -3,7 +3,7 @@ package mil.nga.giat.mage.data.feed
 import androidx.room.ColumnInfo
 import com.google.gson.annotations.SerializedName
 
-class Style {
+class MapStyle {
     @SerializedName("iconUrl")
     @ColumnInfo(name = "icon_url")
     var iconUrl: String? = null

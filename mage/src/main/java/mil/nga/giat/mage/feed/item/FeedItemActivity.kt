@@ -8,26 +8,25 @@ import android.content.res.Configuration
 import android.os.Bundle
 import android.preference.PreferenceManager
 import android.view.View
+import androidx.appcompat.content.res.AppCompatResources
+import androidx.core.graphics.drawable.toBitmap
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelProviders
-import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.bumptech.glide.Glide
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
+import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MapStyleOptions
 import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.material.snackbar.Snackbar
-import com.google.gson.JsonElement
 import dagger.android.support.DaggerAppCompatActivity
-import kotlinx.android.synthetic.main.activity_feed.*
 import kotlinx.android.synthetic.main.activity_feed_item.*
 import kotlinx.android.synthetic.main.activity_feed_item.recyclerView
-import kotlinx.android.synthetic.main.feed_list_item.view.*
 import mil.nga.geopackage.map.geom.GoogleMapShapeConverter
 import mil.nga.giat.mage.R
 import mil.nga.giat.mage.data.feed.FeedItem
@@ -107,8 +106,8 @@ class FeedItemActivity: DaggerAppCompatActivity(), OnMapReadyCallback {
         header.visibility = if (properties.isEmpty()) View.GONE else View.VISIBLE
 
         Glide.with(this)
-            .load(feed.style?.iconUrl)
-            .placeholder(R.drawable.default_marker_24)
+            .load(feed.mapStyle?.iconUrl)
+            .placeholder(R.drawable.default_marker)
             .fitCenter()
             .into(icon)
 
@@ -162,7 +161,10 @@ class FeedItemActivity: DaggerAppCompatActivity(), OnMapReadyCallback {
             GeometryType.POINT -> {
                 val point = GeometryUtils.getCentroid(geometry)
                 val latLng = LatLng(point.y, point.x)
-                map.addMarker(MarkerOptions().position(latLng))
+                val icon = AppCompatResources.getDrawable(this, R.drawable.default_marker)!!.toBitmap()
+                map.addMarker(MarkerOptions()
+                   .position(latLng)
+                   .icon(BitmapDescriptorFactory.fromBitmap(icon)))
             }
             else -> {
                 val shapeConverter = GoogleMapShapeConverter()

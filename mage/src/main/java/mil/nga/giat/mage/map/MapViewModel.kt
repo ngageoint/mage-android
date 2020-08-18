@@ -1,12 +1,17 @@
 package mil.nga.giat.mage.map
 
 import android.content.Context
+import android.util.Log
 import androidx.lifecycle.*
 import androidx.paging.LivePagedListBuilder
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import mil.nga.giat.mage.dagger.module.ApplicationContext
 import mil.nga.giat.mage.data.feed.*
 import mil.nga.giat.mage.feed.FeedViewModel
 import mil.nga.giat.mage.map.preference.MapLayerPreferences
+import mil.nga.giat.mage.sdk.datastore.user.Event
 import javax.inject.Inject
 
 class MapViewModel @Inject constructor(

@@ -30,19 +30,18 @@ interface FeedDao {
     @Query("SELECT * FROM feed WHERE event_remote_id = :eventId AND items_have_spatial_dimension = 1")
     fun mappableFeeds(eventId: String): LiveData<List<Feed>>
 
-    @Query("SELECT * FROM feed where id = :feedId")
+    @Query("SELECT * FROM feed WHERE id = :feedId")
     fun feed(feedId: String): LiveData<Feed>
 
-    @Query("SELECT * FROM feed where id IN(:feedIds)")
+    @Query("SELECT * FROM feed WHERE id IN(:feedIds)")
     fun feeds(feedIds: List<String>): LiveData<List<Feed>>
 
     @Transaction
-    @Query("SELECT * FROM feed where id = :feedId")
+    @Query("SELECT * FROM feed WHERE id = :feedId")
     fun feedWithItems(feedId: String): List<FeedWithItems>
 
-    // TODO delete items that didn't come back from server for event
-    @Query("DELETE FROM feed where id = :feedId")
-    fun removeFeeds(feedId: String)
+    @Query("DELETE FROM feed WHERE event_remote_id = :eventId AND id NOT IN (:feedIds)")
+    fun preserveFeeds(eventId: String, feedIds: List<String>)
 
     @Query("DELETE FROM feed")
     fun destroy()

@@ -9,6 +9,7 @@
     <TextView android:id="@+id/key"
         android:layout_height="wrap_content"
         android:layout_width="match_parent"
+        android:layout_marginBottom="4dp"
         style="@style/TextAppearance.MaterialComponents.Overline"
         android:alpha=".6"/>
 

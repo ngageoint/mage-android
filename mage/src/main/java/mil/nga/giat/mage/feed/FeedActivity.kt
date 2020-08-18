@@ -63,6 +63,7 @@ class FeedActivity: DaggerAppCompatActivity() {
         viewModel.refresh.observe(this, Observer {
             swipeContainer.isRefreshing = false
         })
+
         swipeContainer.setOnRefreshListener {
             viewModel.refresh()
         }

@@ -148,7 +148,7 @@ class FeedFetchService : LifecycleService() {
                     val feed = getNextFeed()
                     if (feed != null) {
                         Log.d(LOG_NAME, "Sync feed items for feed ${feed.title}")
-                        feedRepository.syncFeed(feed.id)
+                        feedRepository.syncFeed(feed)
                     }
                 } finally {
                     scheduleFetch(getFetchDelay() * 1000)

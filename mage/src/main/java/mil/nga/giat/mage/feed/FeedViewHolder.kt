@@ -6,14 +6,10 @@ import android.view.View
 import androidx.core.content.res.ResourcesCompat
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
-import com.google.gson.JsonObject
 import kotlinx.android.synthetic.main.feed_list_item.view.*
 import mil.nga.giat.mage.R
-import mil.nga.giat.mage.data.feed.Feed
-import mil.nga.giat.mage.data.feed.FeedItem
 import mil.nga.giat.mage.data.feed.ItemWithFeed
 import mil.nga.giat.mage.utils.DateFormatFactory
-import org.json.JSONObject
 import java.util.*
 
 class FeedViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
@@ -27,8 +23,8 @@ class FeedViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val feed = itemWithFeed.feed
 
         Glide.with(itemView.context)
-            .load(feed.style?.iconUrl)
-            .placeholder(R.drawable.default_marker_24)
+            .load(feed.mapStyle?.iconUrl)
+            .placeholder(R.drawable.default_marker)
             .fitCenter()
             .into(itemView.icon)
 

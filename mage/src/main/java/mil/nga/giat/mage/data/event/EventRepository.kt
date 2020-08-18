@@ -192,7 +192,7 @@ class EventRepository @Inject constructor(
     private fun syncFeeds(event: Event) {
         val response = feedService.getFeeds(event.remoteId).execute()
         if (response.isSuccessful) {
-            val enabledFeeds = mapLayerPreferences.getEnabledFeeds(event.remoteId).toMutableSet()
+            var enabledFeeds = mapLayerPreferences.getEnabledFeeds(event.remoteId).toMutableSet()
             val feeds = response.body()!!
             for (feed in feeds) {
                 feed.eventRemoteId = event.remoteId
@@ -202,7 +202,10 @@ class EventRepository @Inject constructor(
                 }
             }
 
+            val feedIds = feeds.map { it.id }
+            enabledFeeds = enabledFeeds.intersect(feedIds).toMutableSet()
             mapLayerPreferences.setEnabledFeeds(event.remoteId, enabledFeeds)
+            feedDao.preserveFeeds(event.remoteId, feedIds)
         }
     }
 }

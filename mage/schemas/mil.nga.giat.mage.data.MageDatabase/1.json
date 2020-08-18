@@ -2,11 +2,11 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "3bc63f2114416038ef4f872e63060ff6",
+    "identityHash": "9fb887536d9f27f15e0f57084969d763",
     "entities": [
       {
         "tableName": "feed",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`update_frequency` INTEGER, `item_temporal_property` TEXT, `item_primary_property` TEXT, `item_secondary_property` TEXT, `constant_params` TEXT, `variable_params` TEXT, `id` TEXT NOT NULL, `title` TEXT NOT NULL, `summary` TEXT, `items_have_identity` INTEGER NOT NULL, `items_have_spatial_dimension` INTEGER NOT NULL, `event_remote_id` TEXT NOT NULL, `style_icon_url` TEXT, `style_stroke` TEXT, `style_stroke_opacity` REAL, `style_stroke_width` INTEGER, `style_fill` TEXT, `style_fill_opacity` REAL, PRIMARY KEY(`id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`update_frequency` INTEGER, `item_temporal_property` TEXT, `item_primary_property` TEXT, `item_secondary_property` TEXT, `constant_params` TEXT, `variable_params` TEXT, `id` TEXT NOT NULL, `title` TEXT NOT NULL, `summary` TEXT, `items_have_identity` INTEGER NOT NULL, `items_have_spatial_dimension` INTEGER NOT NULL, `event_remote_id` TEXT NOT NULL, `map_style_icon_url` TEXT, `map_style_stroke` TEXT, `map_style_stroke_opacity` REAL, `map_style_stroke_width` INTEGER, `map_style_fill` TEXT, `map_style_fill_opacity` REAL, PRIMARY KEY(`id`))",
         "fields": [
           {
             "fieldPath": "updateFrequency",
@@ -81,38 +81,38 @@
             "notNull": true
           },
           {
-            "fieldPath": "style.iconUrl",
-            "columnName": "style_icon_url",
+            "fieldPath": "mapStyle.iconUrl",
+            "columnName": "map_style_icon_url",
             "affinity": "TEXT",
             "notNull": false
           },
           {
-            "fieldPath": "style.stroke",
-            "columnName": "style_stroke",
+            "fieldPath": "mapStyle.stroke",
+            "columnName": "map_style_stroke",
             "affinity": "TEXT",
             "notNull": false
           },
           {
-            "fieldPath": "style.strokeOpacity",
-            "columnName": "style_stroke_opacity",
+            "fieldPath": "mapStyle.strokeOpacity",
+            "columnName": "map_style_stroke_opacity",
             "affinity": "REAL",
             "notNull": false
           },
           {
-            "fieldPath": "style.strokeWidth",
-            "columnName": "style_stroke_width",
+            "fieldPath": "mapStyle.strokeWidth",
+            "columnName": "map_style_stroke_width",
             "affinity": "INTEGER",
             "notNull": false
           },
           {
-            "fieldPath": "style.fill",
-            "columnName": "style_fill",
+            "fieldPath": "mapStyle.fill",
+            "columnName": "map_style_fill",
             "affinity": "TEXT",
             "notNull": false
           },
           {
-            "fieldPath": "style.fillOpacity",
-            "columnName": "style_fill_opacity",
+            "fieldPath": "mapStyle.fillOpacity",
+            "columnName": "map_style_fill_opacity",
             "affinity": "REAL",
             "notNull": false
           }
@@ -128,7 +128,7 @@
       },
       {
         "tableName": "feed_local",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`last_sync` INTEGER, `feed_id` TEXT NOT NULL, PRIMARY KEY(`feed_id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`last_sync` INTEGER, `feed_id` TEXT NOT NULL, PRIMARY KEY(`feed_id`), FOREIGN KEY(`feed_id`) REFERENCES `feed`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "lastSync",
@@ -150,12 +150,30 @@
           "autoGenerate": false
         },
         "indices": [],
-        "foreignKeys": []
+        "foreignKeys": [
+          {
+            "table": "feed",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "feed_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
       },
       {
         "tableName": "feed_item",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `geometry` BLOB, `properties` TEXT, `feed_id` TEXT NOT NULL, PRIMARY KEY(`id`, `feed_id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`timestamp` INTEGER, `id` TEXT NOT NULL, `geometry` BLOB, `properties` TEXT, `feed_id` TEXT NOT NULL, PRIMARY KEY(`id`, `feed_id`), FOREIGN KEY(`feed_id`) REFERENCES `feed`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
         "fields": [
+          {
+            "fieldPath": "timestamp",
+            "columnName": "timestamp",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
           {
             "fieldPath": "id",
             "columnName": "id",
@@ -189,13 +207,25 @@
           "autoGenerate": false
         },
         "indices": [],
-        "foreignKeys": []
+        "foreignKeys": [
+          {
+            "table": "feed",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "feed_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
       }
     ],
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '3bc63f2114416038ef4f872e63060ff6')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '9fb887536d9f27f15e0f57084969d763')"
     ]
   }
 }

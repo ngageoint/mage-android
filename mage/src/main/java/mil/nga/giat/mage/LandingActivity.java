@@ -8,11 +8,15 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
+import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -20,6 +24,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
@@ -31,6 +36,9 @@ import androidx.fragment.app.FragmentManager;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.lifecycle.ViewModelProviders;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.request.target.CustomTarget;
+import com.bumptech.glide.request.transition.Transition;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.navigation.NavigationView;
 import com.google.common.collect.Iterables;
@@ -52,6 +60,7 @@ import mil.nga.giat.mage.event.EventActivity;
 import mil.nga.giat.mage.feed.FeedActivity;
 import mil.nga.giat.mage.glide.GlideApp;
 import mil.nga.giat.mage.glide.model.Avatar;
+import mil.nga.giat.mage.glide.transform.PadToFrame;
 import mil.nga.giat.mage.help.HelpActivity;
 import mil.nga.giat.mage.login.LoginActivity;
 import mil.nga.giat.mage.map.MapFragment;
@@ -324,9 +333,31 @@ public class LandingActivity extends DaggerAppCompatActivity implements Navigati
 
         int i = 1;
         for (final Feed feed : feeds) {
+
             MenuItem item = feedsMenu
                     .add(R.id.feeds_group, Menu.NONE, i++, feed.getTitle())
                     .setIcon(R.drawable.ic_rss_feed_24);
+
+            if (feed.getMapStyle().getIconUrl() != null) {
+                int px = (int) Math.floor(TypedValue.applyDimension(
+                        TypedValue.COMPLEX_UNIT_DIP,
+                        24f,
+                        getResources().getDisplayMetrics()));
+
+                Glide.with(this)
+                    .asBitmap()
+                    .load(feed.getMapStyle().getIconUrl())
+                    .transform(new PadToFrame())
+                    .into(new CustomTarget<Bitmap>(px, px) {
+                        @Override
+                        public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
+                            item.setIcon(new BitmapDrawable(getResources(), resource));
+                        }
+
+                        @Override
+                        public void onLoadCleared(@Nullable Drawable placeholder) { }
+                    });
+                }
 
             item.setOnMenuItemClickListener(menuItem -> {
                 drawerLayout.closeDrawer(GravityCompat.START);
