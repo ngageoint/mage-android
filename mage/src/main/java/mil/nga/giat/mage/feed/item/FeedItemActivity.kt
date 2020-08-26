@@ -5,17 +5,24 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.content.res.Configuration
+import android.graphics.Bitmap
+import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.preference.PreferenceManager
+import android.util.TypedValue
 import android.view.View
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.graphics.drawable.toBitmap
+import androidx.core.view.ViewCompat
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelProviders
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.bumptech.glide.Glide
+import com.bumptech.glide.request.target.CustomTarget
+import com.bumptech.glide.request.target.Target
+import com.bumptech.glide.request.transition.Transition
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
@@ -26,7 +33,6 @@ import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.material.snackbar.Snackbar
 import dagger.android.support.DaggerAppCompatActivity
 import kotlinx.android.synthetic.main.activity_feed_item.*
-import kotlinx.android.synthetic.main.activity_feed_item.recyclerView
 import mil.nga.geopackage.map.geom.GoogleMapShapeConverter
 import mil.nga.giat.mage.R
 import mil.nga.giat.mage.data.feed.FeedItem
@@ -57,7 +63,7 @@ class FeedItemActivity: DaggerAppCompatActivity(), OnMapReadyCallback {
     private lateinit var viewModel: FeedItemViewModel
 
     private val adapter = FeedItemAdapter()
-    private lateinit var feedItem: FeedItem
+    private lateinit var itemWithFeed: ItemWithFeed
     private lateinit var mapFragment: SupportMapFragment
     private lateinit var dateFormat: DateFormat
 
@@ -94,8 +100,8 @@ class FeedItemActivity: DaggerAppCompatActivity(), OnMapReadyCallback {
     }
 
     private fun onFeedItem(itemWithFeed: ItemWithFeed) {
+        this.itemWithFeed = itemWithFeed
         val feed = itemWithFeed.feed
-        this.feedItem = itemWithFeed.item
 
         val propertyFactory = FeedItemPropertyFactory(applicationContext)
         val properties = if (itemWithFeed.item.properties?.isJsonNull == false) {
@@ -103,13 +109,7 @@ class FeedItemActivity: DaggerAppCompatActivity(), OnMapReadyCallback {
                 propertyFactory.createFeedItemProperty(feed, property.toPair())
             }
         } else emptyList()
-        header.visibility = if (properties.isEmpty()) View.GONE else View.VISIBLE
-
-        Glide.with(this)
-            .load(feed.mapStyle?.iconUrl)
-            .placeholder(R.drawable.default_marker)
-            .fitCenter()
-            .into(icon)
+        header.visibility = if (hasHeaderContent()) View.VISIBLE else View.GONE
 
         if (itemWithFeed.item.properties?.isJsonObject == true) {
             if (feed.itemTemporalProperty != null) {
@@ -131,12 +131,21 @@ class FeedItemActivity: DaggerAppCompatActivity(), OnMapReadyCallback {
         }
 
         mapFragment = supportFragmentManager.findFragmentById(R.id.map) as SupportMapFragment
-        if (itemWithFeed.feed.itemsHaveSpatialDimension && itemWithFeed.item.geometry != null) {
+        if (feed.itemsHaveSpatialDimension && itemWithFeed.item.geometry != null) {
             mapFragment.getMapAsync(this)
             location.setLatLng(LatLng(itemWithFeed.item.geometry.centroid.y, itemWithFeed.item.geometry.centroid.x))
+
+            icon.visibility = View.GONE
         } else {
             location_layout.visibility = View.GONE
             mapFragment.view?.visibility = View.GONE
+
+            icon.visibility = View.VISIBLE
+            Glide.with(this)
+               .load(feed.mapStyle?.iconUrl)
+               .placeholder(R.drawable.default_marker)
+               .fitCenter()
+               .into(icon)
         }
 
         adapter.submitList(properties)
@@ -153,18 +162,43 @@ class FeedItemActivity: DaggerAppCompatActivity(), OnMapReadyCallback {
             map.setMapStyle(MapStyleOptions.loadRawResourceStyle(applicationContext, R.raw.map_theme_night))
         }
 
-        val geometry = feedItem.geometry!!
+        val geometry = itemWithFeed.item.geometry!!
         val location = ObservationLocation(geometry)
         map.moveCamera(location.getCameraUpdate(mapFragment.view))
 
         when(geometry.geometryType) {
             GeometryType.POINT -> {
                 val point = GeometryUtils.getCentroid(geometry)
-                val latLng = LatLng(point.y, point.x)
-                val icon = AppCompatResources.getDrawable(this, R.drawable.default_marker)!!.toBitmap()
-                map.addMarker(MarkerOptions()
-                   .position(latLng)
-                   .icon(BitmapDescriptorFactory.fromBitmap(icon)))
+                val marker = map.addMarker(MarkerOptions()
+                   .position(LatLng(point.y, point.x))
+                   .visible(false))
+
+                val px = TypedValue.applyDimension(
+                   TypedValue.COMPLEX_UNIT_DIP,
+                   24f,
+                   resources.displayMetrics).toInt()
+
+                Glide.with(this)
+                   .asBitmap()
+                   .load(itemWithFeed.feed.mapStyle?.iconUrl)
+                   .fitCenter()
+                   .into(object : CustomTarget<Bitmap>(px, Target.SIZE_ORIGINAL) {
+                       override fun onLoadCleared(placeholder: Drawable?) {}
+
+                       override fun onLoadFailed(errorDrawable: Drawable?) {
+                           val defaultMarker = AppCompatResources.getDrawable(this@FeedItemActivity, R.drawable.default_marker)!!.toBitmap()
+                           setIcon(defaultMarker)
+                       }
+
+                       override fun onResourceReady(resource: Bitmap, transition: Transition<in Bitmap>?) {
+                           setIcon(resource)
+                       }
+
+                       private fun setIcon(resource: Bitmap) {
+                           marker.setIcon(BitmapDescriptorFactory.fromBitmap(resource))
+                           marker.isVisible = true
+                       }
+                   })
             }
             else -> {
                 val shapeConverter = GoogleMapShapeConverter()
@@ -172,6 +206,19 @@ class FeedItemActivity: DaggerAppCompatActivity(), OnMapReadyCallback {
                 GoogleMapShapeConverter.addShapeToMap(map, shape)
             }
         }
+    }
+
+    private fun hasHeaderContent(): Boolean {
+        val item = itemWithFeed.item
+
+        return if (item.properties?.isJsonObject == true) {
+            val feed = itemWithFeed.feed
+            val properties = item.properties.asJsonObject
+
+            (feed.itemTemporalProperty != null && properties?.get(feed.itemTemporalProperty) != null) ||
+               (feed.itemPrimaryProperty != null && properties?.get(feed.itemPrimaryProperty) != null) ||
+               (feed.itemSecondaryProperty != null && properties?.get(feed.itemSecondaryProperty) != null)
+        } else false
     }
 
     private fun onLocationClick() {

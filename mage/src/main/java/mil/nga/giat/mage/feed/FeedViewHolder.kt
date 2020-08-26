@@ -44,11 +44,13 @@ class FeedViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
                 }
             }
 
+            itemView.primary.visibility = View.GONE
             if (feed.itemPrimaryProperty != null) {
                 itemView.primary.visibility = View.VISIBLE
                 itemView.primary.text = properties.asJsonObject.get(feed.itemPrimaryProperty)?.asString
             }
 
+            itemView.secondary.visibility = View.GONE
             if (feed.itemSecondaryProperty != null) {
                 itemView.secondary.visibility = View.VISIBLE
                 itemView.secondary.text = properties.asJsonObject.get(feed.itemSecondaryProperty)?.asString

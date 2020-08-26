@@ -54,15 +54,14 @@
         android:layout_height="match_parent"
         android:layout_toEndOf="@id/icon"
         android:orientation="vertical"
-        android:layout_marginEnd="16dp"
-        android:background="@color/background_card">
+        android:layout_marginEnd="16dp">
 
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             style="@style/ListTextSecondary"
             android:textSize="32sp"
-            android:text="No Content"/>
+            android:text="No Content" />
 
     </LinearLayout>
 
