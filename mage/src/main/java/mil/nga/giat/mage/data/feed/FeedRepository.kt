@@ -1,6 +1,7 @@
 package mil.nga.giat.mage.data.feed
 
 import android.content.Context
+import android.util.Log
 import android.view.View
 import androidx.annotation.WorkerThread
 import kotlinx.android.synthetic.main.activity_feed_item.*
@@ -63,5 +64,8 @@ class FeedRepository @Inject constructor(
 
             feedItemDao.upsert(item)
         }
+
+        val itemIds = content.items.map { it.id }
+        feedItemDao.preserveFeedItems(feed.id, itemIds)
     }
 }

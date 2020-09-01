@@ -40,6 +40,9 @@ interface FeedItemDao {
     @Query("DELETE FROM feed_item WHERE feed_id = :feedId")
     fun removeFeedItems(feedId: String)
 
+    @Query("DELETE FROM feed_item WHERE feed_id = :feedId AND id NOT IN (:itemIds)")
+    fun preserveFeedItems(feedId: String, itemIds: List<String>)
+
     @Query("DELETE FROM feed_item")
     fun destroy()
 }
