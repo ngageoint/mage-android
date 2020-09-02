@@ -37,6 +37,8 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.lifecycle.ViewModelProviders;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.MultiTransformation;
+import com.bumptech.glide.load.resource.bitmap.FitCenter;
 import com.bumptech.glide.request.target.CustomTarget;
 import com.bumptech.glide.request.transition.Transition;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
@@ -335,19 +337,19 @@ public class LandingActivity extends DaggerAppCompatActivity implements Navigati
         for (final Feed feed : feeds) {
 
             MenuItem item = feedsMenu
-                    .add(R.id.feeds_group, Menu.NONE, i++, feed.getTitle())
-                    .setIcon(R.drawable.ic_rss_feed_24);
+                .add(R.id.feeds_group, Menu.NONE, i++, feed.getTitle())
+                .setIcon(R.drawable.ic_rss_feed_24);
 
             if (feed.getMapStyle().getIconUrl() != null) {
                 int px = (int) Math.floor(TypedValue.applyDimension(
-                        TypedValue.COMPLEX_UNIT_DIP,
-                        24f,
-                        getResources().getDisplayMetrics()));
+                    TypedValue.COMPLEX_UNIT_DIP,
+                    24f,
+                    getResources().getDisplayMetrics()));
 
                 Glide.with(this)
                     .asBitmap()
                     .load(feed.getMapStyle().getIconUrl())
-                    .transform(new PadToFrame())
+                    .transform(new MultiTransformation<>(new FitCenter(), new PadToFrame()))
                     .into(new CustomTarget<Bitmap>(px, px) {
                         @Override
                         public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
@@ -355,9 +357,9 @@ public class LandingActivity extends DaggerAppCompatActivity implements Navigati
                         }
 
                         @Override
-                        public void onLoadCleared(@Nullable Drawable placeholder) { }
+                        public void onLoadCleared(@Nullable Drawable placeholder) {}
                     });
-                }
+            }
 
             item.setOnMenuItemClickListener(menuItem -> {
                 drawerLayout.closeDrawer(GravityCompat.START);

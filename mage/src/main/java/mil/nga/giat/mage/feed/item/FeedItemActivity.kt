@@ -5,28 +5,20 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.content.res.Configuration
-import android.graphics.Bitmap
-import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.preference.PreferenceManager
 import android.util.TypedValue
 import android.view.View
-import androidx.appcompat.content.res.AppCompatResources
-import androidx.core.graphics.drawable.toBitmap
-import androidx.core.view.ViewCompat
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelProviders
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.bumptech.glide.Glide
-import com.bumptech.glide.request.target.CustomTarget
-import com.bumptech.glide.request.target.Target
-import com.bumptech.glide.request.transition.Transition
+
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
-import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MapStyleOptions
 import com.google.android.gms.maps.model.MarkerOptions
@@ -37,6 +29,7 @@ import mil.nga.geopackage.map.geom.GoogleMapShapeConverter
 import mil.nga.giat.mage.R
 import mil.nga.giat.mage.data.feed.FeedItem
 import mil.nga.giat.mage.data.feed.ItemWithFeed
+import mil.nga.giat.mage.glide.target.MarkerTarget
 import mil.nga.giat.mage.observation.ObservationLocation
 import mil.nga.giat.mage.utils.DateFormatFactory
 import mil.nga.sf.GeometryType
@@ -44,6 +37,7 @@ import mil.nga.sf.util.GeometryUtils
 import java.text.DateFormat
 import java.util.*
 import javax.inject.Inject
+
 
 class FeedItemActivity: DaggerAppCompatActivity(), OnMapReadyCallback {
     companion object {
@@ -173,32 +167,13 @@ class FeedItemActivity: DaggerAppCompatActivity(), OnMapReadyCallback {
                    .position(LatLng(point.y, point.x))
                    .visible(false))
 
-                val px = TypedValue.applyDimension(
-                   TypedValue.COMPLEX_UNIT_DIP,
-                   24f,
-                   resources.displayMetrics).toInt()
+                marker.tag = itemWithFeed.item
 
                 Glide.with(this)
                    .asBitmap()
                    .load(itemWithFeed.feed.mapStyle?.iconUrl)
-                   .fitCenter()
-                   .into(object : CustomTarget<Bitmap>(px, Target.SIZE_ORIGINAL) {
-                       override fun onLoadCleared(placeholder: Drawable?) {}
-
-                       override fun onLoadFailed(errorDrawable: Drawable?) {
-                           val defaultMarker = AppCompatResources.getDrawable(this@FeedItemActivity, R.drawable.default_marker)!!.toBitmap()
-                           setIcon(defaultMarker)
-                       }
-
-                       override fun onResourceReady(resource: Bitmap, transition: Transition<in Bitmap>?) {
-                           setIcon(resource)
-                       }
-
-                       private fun setIcon(resource: Bitmap) {
-                           marker.setIcon(BitmapDescriptorFactory.fromBitmap(resource))
-                           marker.isVisible = true
-                       }
-                   })
+                   .error(R.drawable.default_marker)
+                   .into(MarkerTarget(applicationContext, marker, 24, 24))
             }
             else -> {
                 val shapeConverter = GoogleMapShapeConverter()

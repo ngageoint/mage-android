@@ -9,7 +9,7 @@ import java.security.MessageDigest
 
 class PadToFrame : BitmapTransformation() {
    companion object {
-      private const val ID = "mil.nga.mage.PadToFrameTransformation"
+      private const val ID = "mil.nga.mage.PadToFrame"
       private val ID_BYTES = ID.toByteArray(Charset.forName("UTF-8"))
    }
 

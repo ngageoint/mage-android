@@ -36,6 +36,7 @@ import mil.nga.sf.util.GeometryUtils
 import java.util.Locale
 import java.util.Date
 import com.bumptech.glide.request.target.Target
+import mil.nga.giat.mage.glide.target.MarkerTarget
 
 class FeedItemCollection(val context: Context, val map: GoogleMap) {
 
@@ -71,8 +72,8 @@ class FeedItemCollection(val context: Context, val map: GoogleMap) {
             val point = GeometryUtils.getCentroid(geometry)
 
             val marker = map.addMarker(MarkerOptions()
-                    .position(LatLng(point.y, point.x))
-                    .visible(false))
+                .position(LatLng(point.y, point.x))
+                .visible(false))
 
             marker.tag = ItemWithFeed(feed, feedItem)
             if (feedItemIdWithInfoWindow == feedItem.id) {
@@ -83,33 +84,11 @@ class FeedItemCollection(val context: Context, val map: GoogleMap) {
             val shape = GoogleMapShape(GeometryType.POINT, GoogleMapShapeType.MARKER, marker)
             shapes[feedItem.id] = shape
 
-            val px = TypedValue.applyDimension(
-                TypedValue.COMPLEX_UNIT_DIP,
-                24f,
-                context.resources.displayMetrics).toInt()
-
             Glide.with(context)
-                    .asBitmap()
-                    .load(feed.mapStyle?.iconUrl)
-                    .fitCenter()
-                    .into(object : CustomTarget<Bitmap>(px, Target.SIZE_ORIGINAL) {
-                        override fun onLoadCleared(placeholder: Drawable?) {}
-
-                        override fun onLoadFailed(errorDrawable: Drawable?) {
-                            setIcon(defaultMarker)
-                        }
-
-                        override fun onResourceReady(resource: Bitmap, transition: Transition<in Bitmap>?) {
-                            setIcon(resource)
-                        }
-
-                        private fun setIcon(resource: Bitmap) {
-                            if (marker.tag != null) {  // if tag is null marker has been removed from map
-                                marker.setIcon(BitmapDescriptorFactory.fromBitmap(resource))
-                                marker.isVisible = true
-                            }
-                        }
-                    })
+               .asBitmap()
+               .load(feed.mapStyle?.iconUrl)
+               .error(R.drawable.default_marker)
+               .into(MarkerTarget(context, marker, 24, 24))
         } else {
             // TODO set style
             val shape = GoogleMapShapeConverter.addShapeToMap(map, GoogleMapShapeConverter().toShape(geometry))
