@@ -253,13 +253,6 @@ public class SignupActivity extends AppCompatActivity implements AccountDelegate
 			return;
 		}
 
-		SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-		Integer passwordLength = sharedPreferences.getInt(getString(R.string.passwordMinLengthKey), getResources().getInteger(R.integer.passwordMinLengthDefaultValue));
-		if (password.length() < passwordLength) {
-			mPasswordLayout.setError("Password must be " + passwordLength + " characters");
-			return;
-		}
-
 		if (TextUtils.isEmpty(confirmpassword)) {
 			mConfirmPasswordLayout.setError("Enter password again");
 			return;
