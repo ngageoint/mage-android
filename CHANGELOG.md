@@ -3,7 +3,13 @@ All notable changes to this project will be documented in this file.
 Adheres to [Semantic Versioning](http://semver.org/).
 
 ---
-## 6.2.10 (TBD)
+## 6.2.11 (TBD)
+
+##### Features
+
+##### Bug Fixes
+
+## [6.2.10](https://github.com/ngageoint/mage-android/releases/tag/6.2.10)
 
 ##### Features
 * Show observation accuracy if available.  Shown on map as accuracy circle and in observation view as text.

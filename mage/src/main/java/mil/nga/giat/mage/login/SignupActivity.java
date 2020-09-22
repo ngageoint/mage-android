@@ -206,15 +206,6 @@ public class SignupActivity extends AppCompatActivity implements SignupTask.Sign
 			return;
 		}
 
-		SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-		if (sharedPreferences.contains(getString(R.string.localPasswordMinLength))) {
-			int passwordLength = sharedPreferences.getInt(getString(R.string.localPasswordMinLength), -1);
-			if (password.length() < passwordLength) {
-				mPasswordLayout.setError("Password must be " + passwordLength + " characters");
-				return;
-			}
-		}
-
 		if (TextUtils.isEmpty(confirmpassword)) {
 			mConfirmPasswordLayout.setError("Enter password again");
 			return;
