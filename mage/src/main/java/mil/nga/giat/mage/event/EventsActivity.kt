@@ -17,7 +17,6 @@ import mil.nga.giat.mage.login.LoginActivity
 import mil.nga.giat.mage.sdk.datastore.user.Event
 import mil.nga.giat.mage.sdk.datastore.user.EventHelper
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper
-import mil.nga.giat.mage.sdk.login.AccountDelegate
 import mil.nga.giat.mage.sdk.login.RecentEventTask
 import java.util.*
 import javax.inject.Inject
@@ -140,9 +139,9 @@ class EventsActivity : DaggerAppCompatActivity(), EventsFetchFragment.EventsFetc
         // Send chosen event to the server
         val userRecentEventInfo = ArrayList<String>()
         userRecentEventInfo.add(event.remoteId)
-        RecentEventTask(AccountDelegate {
+        RecentEventTask(applicationContext) {
             // No need to check if this failed
-        }, applicationContext).execute(*userRecentEventInfo.toTypedArray())
+        }.execute(*userRecentEventInfo.toTypedArray())
 
         try {
             val userHelper = UserHelper.getInstance(applicationContext)
