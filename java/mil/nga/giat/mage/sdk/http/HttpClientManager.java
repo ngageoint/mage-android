@@ -90,7 +90,7 @@ public class HttpClientManager implements IEventDispatcher<ISessionEventListener
                     UserUtility userUtility = UserUtility.getInstance(context);
 
                     // If token has not expired yet, expire it and send notification to listeners
-                    if (!userUtility.isTokenExpired()) {
+                    if (hasToken()) {
                         UserUtility.getInstance(context).clearTokenInformation();
 
                         for (ISessionEventListener listener : listeners) {
@@ -122,6 +122,11 @@ public class HttpClientManager implements IEventDispatcher<ISessionEventListener
     @Override
     public boolean removeListener(ISessionEventListener listener) {
         return listeners.remove(listener);
+    }
+
+    private Boolean hasToken() {
+        String token = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.tokenKey), null);
+        return token != null && !token.isEmpty();
     }
 
 }
