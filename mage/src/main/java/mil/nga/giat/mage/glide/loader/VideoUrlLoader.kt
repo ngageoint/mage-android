@@ -47,9 +47,9 @@ class VideoUrlLoader private constructor(private val context: Context) : ModelLo
             }
         }
 
-        private fun bitmapToByte(bitmap: Bitmap): ByteBuffer {
+        private fun bitmapToByte(bitmap: Bitmap?): ByteBuffer {
             val stream = ByteArrayOutputStream()
-            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream)
+            bitmap?.compress(Bitmap.CompressFormat.JPEG, 100, stream)
             return ByteBuffer.wrap(stream.toByteArray())
         }
 

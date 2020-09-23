@@ -221,6 +221,7 @@
 
         <service
             android:name=".location.LocationReportingService"
+            android:foregroundServiceType="location"
             android:exported="false" />
 
         <service

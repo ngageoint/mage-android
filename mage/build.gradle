@@ -11,9 +11,9 @@ apply plugin: 'kotlin-kapt'
 apply plugin: 'maven-publish'
 group 'mil.nga.giat.mage'
 archivesBaseName = 'mage-android'
-version '6.2.10'
+version '6.2.11'
 ext {
-    versionCode = 75
+    versionCode = 76
     sourceRefspec = Grgit.open().head().id
 
     //Test resources
@@ -37,8 +37,8 @@ def signedApkPath = hasProperty('SIGNED_APK_PATH') ? SIGNED_APK_PATH : "${projec
 def signedDebugApkPath = hasProperty('SIGNED_DEBUG_APK_PATH') ? SIGNED_DEBUG_APK_PATH : "${project.buildDir}/outputs/apk/defaults/debug/${archivesBaseName}-defaults-debug.apk"
 
 android {
-    compileSdkVersion 28
-    buildToolsVersion '28.0.3'
+    compileSdkVersion 30
+    buildToolsVersion '30.0.2'
     flavorDimensions "default"
 
     dataBinding {
@@ -63,8 +63,8 @@ android {
         applicationId "mil.nga.giat.mage"
         versionName project.version
         versionCode project.versionCode as int
-        minSdkVersion 21
-        targetSdkVersion 28
+        minSdkVersion 22
+        targetSdkVersion 30
         multiDexEnabled true
         resValue "string", "serverURLDefaultValue", serverURL
         resValue "string", "recentMapXYZDefaultValue", "263.0,40.0,3"

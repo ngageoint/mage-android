@@ -126,8 +126,8 @@ class AttachmentSyncWorker(var context: Context, params: WorkerParameters) : Wor
                 return Result.success()
             } else {
                 Log.e(LOG_NAME, "Bad request.")
-                response.errorBody().let {
-                    Log.e(LOG_NAME, it?.string())
+                response.errorBody()?.let {
+                    Log.e(LOG_NAME, it.string())
                 }
 
                 return if (response.code() == HttpURLConnection.HTTP_UNAUTHORIZED) Result.failure() else Result.retry()

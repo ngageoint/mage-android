@@ -144,11 +144,9 @@ class ObservationSyncWorker(var context: Context, params: WorkerParameters) : Wo
             observationError.statusCode = response.code()
             observationError.description = response.message()
 
-            if (response.errorBody() != null) {
-                val errorBody = response.errorBody()?.string()
-                Log.e(LOG_NAME, errorBody)
-
-                observationError.message = errorBody
+            response.errorBody()?.string()?.let {
+                Log.e(LOG_NAME, it)
+                observationError.message = it
             }
 
             ObservationHelper.getInstance(context).update(observation)
@@ -183,11 +181,9 @@ class ObservationSyncWorker(var context: Context, params: WorkerParameters) : Wo
             observationError.statusCode = response.code()
             observationError.description = response.message()
 
-            if (response.errorBody() != null) {
-                val errorBody = response.errorBody()?.string()
-                Log.e(LOG_NAME, errorBody)
-
-                observationError.message = errorBody
+            response.errorBody()?.string()?.let {
+                Log.e(LOG_NAME, it)
+                observationError.message = it
             }
 
             observation.error = observationError
@@ -230,11 +226,9 @@ class ObservationSyncWorker(var context: Context, params: WorkerParameters) : Wo
                 observationError.statusCode = response.code()
                 observationError.description = response.message()
 
-                if (response.errorBody() != null) {
-                    val errorBody = response.errorBody()?.string()
-                    Log.e(LOG_NAME, errorBody)
-
-                    observationError.message = errorBody
+                response.errorBody()?.string()?.let {
+                    Log.e(LOG_NAME, it)
+                    observationError.message = it
                 }
 
                 observationHelper.update(observation)
@@ -285,8 +279,8 @@ class ObservationSyncWorker(var context: Context, params: WorkerParameters) : Wo
                 return Result.success()
             } else {
                 Log.e(LOG_NAME, "Bad request.")
-                if (response.errorBody() != null) {
-                    Log.e(LOG_NAME, response.errorBody()?.string())
+                response.errorBody()?.string()?.let {
+                    Log.e(LOG_NAME, it)
                 }
 
                 return if (response.code() == HttpURLConnection.HTTP_UNAUTHORIZED) Result.failure() else Result.retry()
@@ -326,8 +320,8 @@ class ObservationSyncWorker(var context: Context, params: WorkerParameters) : Wo
                 return Result.success()
             } else {
                 Log.e(LOG_NAME, "Bad request.")
-                if (response.errorBody() != null) {
-                    Log.e(LOG_NAME, response.errorBody()?.string())
+                response.errorBody()?.string()?.let {
+                    Log.e(LOG_NAME, it)
                 }
 
                 return if (response.code() == HttpURLConnection.HTTP_UNAUTHORIZED) Result.failure() else Result.retry()

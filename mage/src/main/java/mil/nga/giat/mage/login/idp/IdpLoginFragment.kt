@@ -68,7 +68,7 @@ class IdpLoginFragment : Fragment() {
     }
 
     private fun idpLogin(strategy: String?) {
-        val serverUrl = preferences.getString(getString(R.string.serverURLKey), getString(R.string.serverURLDefaultValue))
+        val serverUrl = preferences.getString(getString(R.string.serverURLKey), getString(R.string.serverURLDefaultValue))!!
         val intent = IdpLoginActivity.intent(context, serverUrl, strategy)
         startActivityForResult(intent, EXTRA_IDP_RESULT)
     }

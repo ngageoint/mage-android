@@ -6,6 +6,8 @@ Adheres to [Semantic Versioning](http://semver.org/).
 ## 6.2.11 (TBD)
 
 ##### Features
+* Support for Android 11.  Includes updates to handle new location permissions.
+* Upgrade Gradle and Kotlin versions.
 
 ##### Bug Fixes
 
