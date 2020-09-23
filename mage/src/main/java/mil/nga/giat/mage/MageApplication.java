@@ -130,7 +130,7 @@ public class MageApplication extends DaggerApplication implements LifecycleObser
 	}
 
 	@OnLifecycleEvent(Lifecycle.Event.ON_START)
-	protected void onApplicationStart() {
+	public void onApplicationStart() {
 		SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
 		preferences.registerOnSharedPreferenceChangeListener(this);
 
@@ -144,7 +144,7 @@ public class MageApplication extends DaggerApplication implements LifecycleObser
 	}
 
 	@OnLifecycleEvent(Lifecycle.Event.ON_STOP)
-	protected void onApplicationStop() {
+	public void onApplicationStop() {
 		SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
 		preferences.registerOnSharedPreferenceChangeListener(this);
 
@@ -348,7 +348,6 @@ public class MageApplication extends DaggerApplication implements LifecycleObser
 			observationPushServiceIntent = new Intent(getApplicationContext(), ObservationPushService.class);
 			startService(observationPushServiceIntent);
 		}
-
 
 		if (attachmentPushServiceIntent == null) {
 			attachmentPushServiceIntent = new Intent(getApplicationContext(), AttachmentPushService.class);
