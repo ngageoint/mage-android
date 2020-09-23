@@ -62,6 +62,6 @@ public class UserUtility {
 		SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(mContext);
 		Editor editor = sharedPreferences.edit();
 		editor.remove(mContext.getString(R.string.tokenKey)).commit();
-        editor.remove(mContext.getString(R.string.tokenExpirationDateKey)).commit();
+		editor.remove(mContext.getString(R.string.tokenExpirationDateKey)).commit();
 	}
 }
