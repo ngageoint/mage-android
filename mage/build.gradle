@@ -123,7 +123,7 @@ android {
 
     useLibrary 'android.test.runner'
     useLibrary 'android.test.base'
-    useLibrary 'android.test.mock'\
+    useLibrary 'android.test.mock'
 }
 
 def configurePom(pom) {
