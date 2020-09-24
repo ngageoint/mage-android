@@ -59,6 +59,10 @@ android {
         targetCompatibility 1.8
     }
 
+    kotlinOptions {
+        jvmTarget = "1.8"
+    }
+
     defaultConfig {
         applicationId "mil.nga.giat.mage"
         versionName project.version
