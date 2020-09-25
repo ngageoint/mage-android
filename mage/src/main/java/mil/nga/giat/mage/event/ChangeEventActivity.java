@@ -31,8 +31,6 @@ import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
-import mil.nga.giat.mage.sdk.login.AccountDelegate;
-import mil.nga.giat.mage.sdk.login.AccountStatus;
 import mil.nga.giat.mage.sdk.login.RecentEventTask;
 
 /**
@@ -136,12 +134,9 @@ public class ChangeEventActivity extends DaggerAppCompatActivity {
 		Event event = resource.getData();
 		List<String> userRecentEventInfo = new ArrayList<>();
 		userRecentEventInfo.add(event.getRemoteId());
-		new RecentEventTask(new AccountDelegate() {
-			@Override
-			public void finishAccount(AccountStatus accountStatus) {
-				// no-op, don't care if server didn't get event selection
-			}
-		}, getApplicationContext()).execute(userRecentEventInfo.toArray(new String[userRecentEventInfo.size()]));
+		new RecentEventTask(getApplicationContext(), status -> {
+			// no-op, don't care if server didn't get event selection
+		}).execute(userRecentEventInfo.toArray(new String[userRecentEventInfo.size()]));
 
 		try {
 			UserHelper userHelper = UserHelper.getInstance(getApplicationContext());

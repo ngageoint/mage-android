@@ -38,10 +38,11 @@ import mil.nga.giat.mage.data.MageDatabase;
 import mil.nga.giat.mage.feed.FeedFetchService;
 import mil.nga.giat.mage.location.LocationFetchService;
 import mil.nga.giat.mage.location.LocationReportingService;
+import mil.nga.giat.mage.login.AccountStateActivity;
 import mil.nga.giat.mage.login.LoginActivity;
-import mil.nga.giat.mage.login.idp.IdpLoginActivity;
 import mil.nga.giat.mage.login.ServerUrlActivity;
 import mil.nga.giat.mage.login.SignupActivity;
+import mil.nga.giat.mage.login.idp.IdpLoginActivity;
 import mil.nga.giat.mage.observation.ObservationNotificationListener;
 import mil.nga.giat.mage.observation.sync.AttachmentPushService;
 import mil.nga.giat.mage.observation.sync.ObservationFetchService;
@@ -140,7 +141,7 @@ public class MageApplication extends DaggerApplication implements LifecycleObser
 	}
 
 	@OnLifecycleEvent(Lifecycle.Event.ON_START)
-	protected void onApplicationStart() {
+	public void onApplicationStart() {
 		SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
 		preferences.registerOnSharedPreferenceChangeListener(this);
 
@@ -164,7 +165,7 @@ public class MageApplication extends DaggerApplication implements LifecycleObser
 	}
 
 	@OnLifecycleEvent(Lifecycle.Event.ON_STOP)
-	protected void onApplicationStop() {
+	public void onApplicationStop() {
 		SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
 		preferences.registerOnSharedPreferenceChangeListener(this);
 
@@ -255,8 +256,6 @@ public class MageApplication extends DaggerApplication implements LifecycleObser
 				logoutListener.onLogout();
 			}
 		}
-
-		unregisterActivityLifecycleCallbacks(this);
 
 		SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
 		SharedPreferences.Editor editor = sharedPreferences.edit();
@@ -409,7 +408,6 @@ public class MageApplication extends DaggerApplication implements LifecycleObser
 			startService(observationPushServiceIntent);
 		}
 
-
 		if (attachmentPushServiceIntent == null) {
 			attachmentPushServiceIntent = new Intent(getApplicationContext(), AttachmentPushService.class);
 			startService(attachmentPushServiceIntent);
@@ -471,21 +469,7 @@ public class MageApplication extends DaggerApplication implements LifecycleObser
 
 	@Override
 	public void onTokenExpired() {
-		destroyFetching();
-		destroyPushing();
-		createNotification();
-
-		ObservationFetchWorker.Companion.stopWork();
-
-		PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).edit().putBoolean(getString(R.string.disclaimerAcceptedKey), false).apply();
-
-		if (runningActivity != null &&
-				!(runningActivity instanceof LoginActivity) &&
-				!(runningActivity instanceof IdpLoginActivity) &&
-				!(runningActivity instanceof SignupActivity) &&
-				!(runningActivity instanceof ServerUrlActivity)) {
-			forceLogin(true);
-		}
+		invalidateSession(runningActivity, true);
 	}
 
 	@Override
@@ -500,13 +484,8 @@ public class MageApplication extends DaggerApplication implements LifecycleObser
 
 	@Override
 	public void onActivityResumed(Activity activity) {
-
-		if (UserUtility.getInstance(getApplicationContext()).isTokenExpired() &&
-				!(activity instanceof LoginActivity) &&
-				!(activity instanceof IdpLoginActivity) &&
-				!(activity instanceof SignupActivity) &&
-				!(activity instanceof ServerUrlActivity)) {
-			forceLogin(false);
+		if (UserUtility.getInstance(getApplicationContext()).isTokenExpired()) {
+			invalidateSession(activity, false);
 		}
 
 		runningActivity = activity;
@@ -532,14 +511,31 @@ public class MageApplication extends DaggerApplication implements LifecycleObser
 
 	}
 
+	private void invalidateSession(Activity activity, Boolean applicationInUse) {
+		destroyFetching();
+		destroyPushing();
+		createNotification();
+
+		ObservationFetchWorker.Companion.stopWork();
+
+		// TODO JWT where else is disclaimer accepted set to false.
+		// Why not set to false if activity resumed onActivityResumed and token is invalid?
+		PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).edit().putBoolean(getString(R.string.disclaimerAcceptedKey), false).apply();
+
+		if (!(activity instanceof LoginActivity) &&
+				!(activity instanceof IdpLoginActivity) &&
+				!(activity instanceof AccountStateActivity) &&
+				!(activity instanceof SignupActivity) &&
+				!(activity instanceof ServerUrlActivity)) {
+			forceLogin(applicationInUse);
+		}
+	}
+
 	private void forceLogin(boolean applicationInUse) {
 		Intent intent = new Intent(this, LoginActivity.class);
 		intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 		intent.putExtra(LoginActivity.EXTRA_CONTINUE_SESSION, true);
-
-		if (applicationInUse) {
-			intent.putExtra(LoginActivity.EXTRA_CONTINUE_SESSION_WHILE_USING, true);
-		}
+		intent.putExtra(LoginActivity.EXTRA_CONTINUE_SESSION_WHILE_USING, applicationInUse);
 
 		startActivity(intent);
 	}

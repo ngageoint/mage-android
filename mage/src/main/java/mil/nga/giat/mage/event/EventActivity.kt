@@ -78,8 +78,8 @@ class EventActivity : DaggerAppCompatActivity() {
         eventDescription.text = event?.description
     }
 
-    override fun onOptionsItemSelected(item: MenuItem?): Boolean {
-        return if (item?.itemId == android.R.id.home) {
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return if (item.itemId == android.R.id.home) {
             finish()
             true
         } else {

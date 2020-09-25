@@ -53,6 +53,10 @@
     <string name="customLocationTimeNumberFilterKey">customLocationTimeNumberFilter</string>
     <string name="customLocationTimeUnitFilterKey">customLocationTimeUnitFilter</string>
 
+    <!-- Session tracking -->
+    <string name="sessionUserKey">mil.nga.mage.session.user</string>
+    <string name="sessionStrategyKey">mil.nga.mage.session.strategy</string>
+
     <!-- FEED Fetch -->
     <string name="feedFetchFrequencyKey">feedFetchFrequency</string>
     <integer name="feedFetchFrequencyDefaultValue">300000</integer>

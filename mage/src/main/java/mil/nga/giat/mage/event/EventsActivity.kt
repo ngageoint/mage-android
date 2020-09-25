@@ -21,7 +21,6 @@ import mil.nga.giat.mage.network.Resource
 import mil.nga.giat.mage.sdk.datastore.user.Event
 import mil.nga.giat.mage.sdk.datastore.user.EventHelper
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper
-import mil.nga.giat.mage.sdk.login.AccountDelegate
 import mil.nga.giat.mage.sdk.login.RecentEventTask
 import javax.inject.Inject
 

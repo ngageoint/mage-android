@@ -70,30 +70,29 @@ constructor(@ApplicationContext val context: Context, val preferences: SharedPre
     private fun requestLocationUpdates() {
         Log.v(LOG_NAME, "request location updates")
 
-        locationListener = LiveDataLocationListener()
+        locationListener = LiveDataLocationListener().apply {
+            try {
+                locationManager?.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, minimumDistanceChangeForUpdates.toFloat(), this)
+            } catch (ex: java.lang.SecurityException) {
+                Log.i(LOG_NAME, "Error requesting location updates", ex)
+            } catch (ex: IllegalArgumentException) {
+                Log.d(LOG_NAME, "LocationManager.NETWORK_PROVIDER does not exist, " + ex.message)
+            }
 
-        try {
-            locationManager?.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, minimumDistanceChangeForUpdates.toFloat(), locationListener)
-        } catch (ex: java.lang.SecurityException) {
-            Log.i(LOG_NAME, "Error requesting location updates", ex)
-        } catch (ex: IllegalArgumentException) {
-            Log.d(LOG_NAME, "LocationManager.NETWORK_PROVIDER does not exist, " + ex.message)
-        }
-
-        try {
-            locationManager?.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, minimumDistanceChangeForUpdates.toFloat(), locationListener)
-        } catch (ex: java.lang.SecurityException) {
-            Log.i(LOG_NAME, "Error requesting location updates", ex)
-        } catch (ex: IllegalArgumentException) {
-            Log.d(LOG_NAME, "LocationManager.GPS_PROVIDER does not exist, " + ex.message)
+            try {
+                locationManager?.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, minimumDistanceChangeForUpdates.toFloat(), this)
+            } catch (ex: java.lang.SecurityException) {
+                Log.i(LOG_NAME, "Error requesting location updates", ex)
+            } catch (ex: IllegalArgumentException) {
+                Log.d(LOG_NAME, "LocationManager.GPS_PROVIDER does not exist, " + ex.message)
+            }
         }
     }
 
     private fun removeLocationUpdates() {
         Log.v(LOG_NAME, "Removing location updates.")
-
-        if (locationListener != null) {
-            locationManager?.removeUpdates(locationListener)
+        locationListener?.let {
+            locationManager?.removeUpdates(it)
             locationListener = null
         }
     }
