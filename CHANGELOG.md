@@ -3,9 +3,16 @@ All notable changes to this project will be documented in this file.
 Adheres to [Semantic Versioning](http://semver.org/).
 
 ---
-## 6.2.11 (TBD)
+## 6.3.1 (TBD)
 
 ##### Features
+
+##### Bug Fixes
+
+## 6.3.0 (TBD)
+
+##### Features
+* Google authentication support is back. This includes updates for all third party authentication strategies to align with Google guidelines.
 * Support for Android 11.  Includes updates to handle new location permissions.
 * Upgrade Gradle and Kotlin versions.
 
