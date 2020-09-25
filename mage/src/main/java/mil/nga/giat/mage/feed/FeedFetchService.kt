@@ -84,7 +84,7 @@ class FeedFetchService : LifecycleService() {
         return START_NOT_STICKY
     }
 
-    override fun onBind(intent: Intent?): IBinder? {
+    override fun onBind(intent: Intent): IBinder? {
         super.onBind(intent)
 
         return null
@@ -101,13 +101,14 @@ class FeedFetchService : LifecycleService() {
     }
 
     private fun stopPoll() {
-        feedHandler.removeCallbacks(feedTask)
+        feedTask?.let { feedHandler.removeCallbacks(it) }
         polling = false
     }
 
     private fun scheduleFetch(delay: Long) {
-        feedTask = FeedTask()
-        feedHandler.postDelayed(feedTask, delay)
+        feedTask = FeedTask().apply {
+            feedHandler.postDelayed(this, delay)
+        }
     }
 
     private fun getFetchDelay(): Long {

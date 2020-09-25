@@ -11,9 +11,9 @@ apply plugin: 'kotlin-kapt'
 apply plugin: 'maven-publish'
 group 'mil.nga.giat.mage'
 archivesBaseName = 'mage-android'
-version '6.3.0'
+version '6.4.0'
 ext {
-    versionCode = 78
+    versionCode = 79
     sourceRefspec = Grgit.open().head().id
 
     //Test resources
@@ -232,6 +232,7 @@ dependencies {
     api 'com.google.android.material:material:1.0.0'
     api 'androidx.cardview:cardview:1.0.0'
     api 'androidx.preference:preference:1.1.1'
+    api "androidx.paging:paging-runtime-ktx:$paging_version"
     implementation "androidx.lifecycle:lifecycle-extensions:$lifecycle_version"
     implementation "com.google.android.gms:play-services-maps:$google_play_services_version"
 

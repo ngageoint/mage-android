@@ -71,8 +71,8 @@ class FeedItemActivity: DaggerAppCompatActivity(), OnMapReadyCallback {
 
         require(intent.hasExtra(FEED_ID_EXTRA)) {"FEED_ID_EXTRA is required to launch FeedActivity"}
         require(intent.hasExtra(FEED_ITEM_ID_EXTRA)) {"FEED_ITEM_ID_EXTRA is required to launch FeedActivity"}
-        val feedId = intent.extras.getString(FEED_ID_EXTRA)!!
-        val feedItemId = intent.extras.getString(FEED_ITEM_ID_EXTRA)!!
+        val feedId = intent.getStringExtra(FEED_ID_EXTRA)!!
+        val feedItemId = intent.getStringExtra(FEED_ITEM_ID_EXTRA)!!
 
         recyclerView.layoutManager = LinearLayoutManager(this)
         recyclerView.adapter = adapter
@@ -199,10 +199,11 @@ class FeedItemActivity: DaggerAppCompatActivity(), OnMapReadyCallback {
     private fun onLocationClick() {
         val location: String = location.text.toString()
         val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager?
-        // TODO Change text from "Feed Item Location"
         val clip = ClipData.newPlainText("Feed Item Location", location)
-        if (clipboard == null || clip == null) return
-        clipboard.primaryClip = clip
-        Snackbar.make(findViewById(R.id.coordinator_layout), R.string.location_text_copy_message, Snackbar.LENGTH_SHORT).show()
+
+        if (clipboard != null && clip != null) {
+            clipboard.setPrimaryClip(clip)
+            Snackbar.make(findViewById(R.id.coordinator_layout), R.string.location_text_copy_message, Snackbar.LENGTH_SHORT).show()
+        }
     }
 }

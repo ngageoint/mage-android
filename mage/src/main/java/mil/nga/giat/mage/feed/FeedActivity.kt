@@ -45,7 +45,7 @@ class FeedActivity: DaggerAppCompatActivity() {
         supportActionBar?.setDisplayShowHomeEnabled(true)
 
         require(intent.hasExtra(FEED_ID_EXTRA)) {"FEED_ID_EXTRA is required to launch FeedActivity"}
-        val feedId = intent.extras.getString(FEED_ID_EXTRA)!!
+        val feedId = intent.getStringExtra(FEED_ID_EXTRA)!!
 
         recyclerView.layoutManager = LinearLayoutManager(this)
         recyclerView.addItemDecoration(DividerItemDecoration(recyclerView.context, VERTICAL))

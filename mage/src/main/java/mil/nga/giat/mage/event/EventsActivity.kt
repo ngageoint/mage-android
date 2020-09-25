@@ -150,9 +150,9 @@ class EventsActivity : DaggerAppCompatActivity(), EventsFetchFragment.EventsFetc
             val event = resource.data
             val userRecentEventInfo = ArrayList<String>()
             userRecentEventInfo.add(event.remoteId)
-            RecentEventTask(AccountDelegate {
+            RecentEventTask(applicationContext) {
                 // No need to check if this failed
-            }, applicationContext).execute(*userRecentEventInfo.toTypedArray())
+            }.execute(*userRecentEventInfo.toTypedArray())
 
             try {
                 val userHelper = UserHelper.getInstance(applicationContext)
