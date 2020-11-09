@@ -4,8 +4,9 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.content.pm.PackageManager.NameNotFoundException;
-import androidx.preference.PreferenceManager;
 import android.util.Log;
+
+import androidx.preference.PreferenceManager;
 
 import org.apache.commons.lang3.StringUtils;
 import org.json.JSONException;
@@ -74,10 +75,12 @@ public class PreferenceHelper implements SharedPreferences.OnSharedPreferenceCha
 				forceReinitialize = true;
 			}
 		}
+		Editor editor = sharedPreferences.edit();
 
 		if (forceReinitialize) {
-			sharedPreferences.edit().clear().commit();
+			editor.clear();
 		}
+
 		Set<Integer> resourcesToLoad = new LinkedHashSet<>();
 		for (Class xmlClass : xmlClasses) {
 			for (Field field : xmlClass.getDeclaredFields()) {
@@ -95,13 +98,15 @@ public class PreferenceHelper implements SharedPreferences.OnSharedPreferenceCha
 		initializeLocal(resourcesToLoad.toArray((new Integer[resourcesToLoad.size()])));
 
 		// add programmatic preferences
-		Editor editor = sharedPreferences.edit();
+
 		if (!StringUtils.isBlank(newBuildVersion)) {
-			editor.putString(mContext.getString(R.string.buildVersionKey), newBuildVersion).commit();
+			editor.putString(mContext.getString(R.string.buildVersionKey), newBuildVersion);
 		}
 
 		// add back in the server url
-		editor.putString(mContext.getString(R.string.serverURLKey), oldServerURL).commit();
+		editor.putString(mContext.getString(R.string.serverURLKey), oldServerURL);
+
+		editor.apply();
 
 		sharedPreferences.registerOnSharedPreferenceChangeListener(this);
 	}

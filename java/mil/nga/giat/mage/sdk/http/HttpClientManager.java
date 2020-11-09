@@ -1,6 +1,7 @@
 package mil.nga.giat.mage.sdk.http;
 
 import android.app.Application;
+import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
@@ -87,8 +88,6 @@ public class HttpClientManager implements IEventDispatcher<ISessionEventListener
 
                 int statusCode = response.code();
                 if (statusCode == HTTP_UNAUTHORIZED) {
-                    UserUtility userUtility = UserUtility.getInstance(context);
-
                     // If token has not expired yet, expire it and send notification to listeners
                     if (hasToken()) {
                         UserUtility.getInstance(context).clearTokenInformation();
@@ -125,8 +124,11 @@ public class HttpClientManager implements IEventDispatcher<ISessionEventListener
     }
 
     private Boolean hasToken() {
-        String token = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.tokenKey), null);
-        return token != null && !token.isEmpty();
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
+        String token = preferences.getString(context.getString(R.string.tokenKey), "");
+        String tokenExpiration = preferences.getString(context.getString(R.string.tokenExpirationDateKey), "");
+
+        return !token.isEmpty() || !tokenExpiration.isEmpty();
     }
 
 }
