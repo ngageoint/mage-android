@@ -38,7 +38,6 @@ def signedDebugApkPath = hasProperty('SIGNED_DEBUG_APK_PATH') ? SIGNED_DEBUG_APK
 
 android {
     compileSdkVersion 30
-    buildToolsVersion '30.0.2'
     flavorDimensions "default"
 
     dataBinding {

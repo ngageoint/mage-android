@@ -3,6 +3,7 @@ package mil.nga.giat.mage.login
 import android.content.Context
 import android.content.SharedPreferences
 import android.util.Log
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -15,6 +16,7 @@ import mil.nga.giat.mage.sdk.login.AuthenticationStatus
 import mil.nga.giat.mage.sdk.login.AuthenticationTask
 import mil.nga.giat.mage.sdk.login.AuthorizationStatus
 import mil.nga.giat.mage.sdk.login.AuthorizationTask
+import mil.nga.giat.mage.sdk.preferences.PreferenceHelper
 import mil.nga.giat.mage.sdk.preferences.ServerApi
 import mil.nga.giat.mage.sdk.utils.PasswordUtility
 import org.apache.commons.lang3.StringUtils
@@ -114,7 +116,7 @@ class LoginViewModel @Inject constructor(
     private fun setupDisconnectedLogin() {
         localCredentials?.let {
             val username = it[0]
-            val password = it[0]
+            val password = it[1]
             val editor = preferences.edit()
             editor.putString(context.getString(R.string.usernameKey), username).apply()
             try {
@@ -131,10 +133,16 @@ class LoginViewModel @Inject constructor(
     private fun completeAuthorization(strategy: String, user: User): Boolean {
         val previousUser = preferences.getString(context.getString(R.string.sessionUserKey), null)
         val previousStrategy = preferences.getString(context.getString(R.string.sessionStrategyKey), null)
-        val userChanged = (strategy != previousStrategy) || (user.username != previousUser)
+        val sessionChanged = (strategy != previousStrategy) || (previousUser != null && user.username != previousUser)
 
-        if (userChanged) {
+        if (sessionChanged) {
             DaoStore.getInstance(context).resetDatabase()
+
+            val preferenceHelper = PreferenceHelper.getInstance(context)
+            preferenceHelper.initialize(true, mil.nga.giat.mage.sdk.R.xml::class.java, R.xml::class.java)
+
+            val dayNightTheme = preferences.getInt(context.resources.getString(R.string.dayNightThemeKey), context.resources.getInteger(R.integer.dayNightThemeDefaultValue))
+            AppCompatDelegate.setDefaultNightMode(dayNightTheme)
         }
 
         user.fetchedDate = Date()
@@ -147,6 +155,6 @@ class LoginViewModel @Inject constructor(
             .putString(context.getString(R.string.sessionStrategyKey), strategy)
             .apply()
 
-        return userChanged
+        return sessionChanged
     }
 }

@@ -22,6 +22,7 @@ import kotlinx.android.synthetic.main.fragment_authentication_mage.view.*
 import mil.nga.giat.mage.R
 import mil.nga.giat.mage.login.LoginViewModel
 import mil.nga.giat.mage.sdk.preferences.PreferenceHelper
+import java.util.*
 import javax.inject.Inject
 
 /**
@@ -126,17 +127,7 @@ class MageLoginFragment : Fragment() {
             return
         }
 
-        // if the username is different, then fallback to default preferences
-        val oldUsername = preferences.getString(getString(R.string.usernameKey), null)
-        if (oldUsername?.isNotEmpty() == true && oldUsername != username) {
-            val preferenceHelper = PreferenceHelper.getInstance(context)
-            preferenceHelper.initialize(true, mil.nga.giat.mage.sdk.R.xml::class.java, R.xml::class.java)
-
-            val dayNightTheme = preferences.getInt(resources.getString(R.string.dayNightThemeKey), resources.getInteger(R.integer.dayNightThemeDefaultValue))
-            AppCompatDelegate.setDefaultNightMode(dayNightTheme)
-        }
-
-        viewModel.authenticate(STRATEGY_NAME, arrayOf(username, password, STRATEGY_NAME), true)
+        viewModel.authenticate(STRATEGY_NAME, arrayOf(username.toLowerCase(Locale.getDefault()), password, STRATEGY_NAME), true)
     }
 
     private fun observeLogin(authentication: LoginViewModel.Authentication?) {
