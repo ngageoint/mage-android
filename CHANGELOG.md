@@ -9,7 +9,7 @@ Adheres to [Semantic Versioning](http://semver.org/).
 
 ##### Bug Fixes
 
-## 6.3.0 (TBD)
+## [6.3.0](https://github.com/ngageoint/mage-android/releases/tag/6.3.0)
 
 ##### Features
 * Google authentication support is back. This includes updates for all third party authentication strategies to align with Google guidelines.
