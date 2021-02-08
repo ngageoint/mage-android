@@ -1,5 +1,6 @@
 package mil.nga.giat.mage.form
 
+import android.util.Log
 import androidx.databinding.BaseObservable
 import androidx.databinding.Bindable
 import androidx.databinding.library.baseAdapters.BR
@@ -11,6 +12,7 @@ import com.google.gson.reflect.TypeToken
 import com.google.gson.stream.JsonReader
 import com.google.gson.stream.JsonToken
 import com.google.gson.stream.JsonWriter
+import mil.nga.giat.mage.map.GeocoderTask
 import mil.nga.giat.mage.observation.ObservationLocation
 import mil.nga.giat.mage.sdk.gson.serializer.GeometrySerializer
 import mil.nga.giat.mage.sdk.jackson.deserializer.GeometryDeserializer
@@ -264,6 +266,8 @@ class ListTypeAdapterFactory: TypeAdapterFactory {
 }
 
 class DateTypeAdapter: TypeAdapter<Date>() {
+    private val LOG_NAME = DateTypeAdapter::class.java.name
+
     private val dateFormat = ISO8601DateFormatFactory.ISO8601()
 
     override fun write(out: JsonWriter, value: Date?) {
@@ -283,10 +287,11 @@ class DateTypeAdapter: TypeAdapter<Date>() {
         }
 
         val json = `in`.nextString()
-        try {
-            return dateFormat.parse(json)
+        return try {
+            dateFormat.parse(json)
         } catch (e: ParseException) {
-            throw JsonSyntaxException(json, e)
+            Log.e(LOG_NAME, "Error parsing Date", e)
+            null
         }
     }
 }

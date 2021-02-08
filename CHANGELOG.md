@@ -3,11 +3,18 @@ All notable changes to this project will be documented in this file.
 Adheres to [Semantic Versioning](http://semver.org/).
 
 ---
-## 6.3.1 (TBD)
+## 6.3.2 (TBD)
 
 ##### Features
 
 ##### Bug Fixes
+
+## [6.3.1](https://github.com/ngageoint/mage-android/releases/tag/6.3.1)
+
+##### Features
+
+##### Bug Fixes
+* Ignore invalid date/time in date form field default
 
 ## [6.3.0](https://github.com/ngageoint/mage-android/releases/tag/6.3.0)
 
