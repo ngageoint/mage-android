@@ -393,7 +393,7 @@ public class MageApplication extends DaggerApplication implements LifecycleObser
 	}
 	@Override
 	public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-		if (getString(R.string.reportLocationKey).equalsIgnoreCase(key)) {
+		if (getString(R.string.reportLocationKey).equalsIgnoreCase(key) && !UserUtility.getInstance(getApplicationContext()).isTokenExpired()) {
 			boolean reportLocation = sharedPreferences.getBoolean(getString(R.string.reportLocationKey), getResources().getBoolean(R.bool.reportLocationDefaultValue));
 			if (reportLocation) {
 				startLocationService();

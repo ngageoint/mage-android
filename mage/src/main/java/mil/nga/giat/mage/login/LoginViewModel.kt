@@ -10,7 +10,6 @@ import androidx.lifecycle.ViewModel
 import mil.nga.giat.mage.R
 import mil.nga.giat.mage.dagger.module.ApplicationContext
 import mil.nga.giat.mage.sdk.datastore.DaoStore
-import mil.nga.giat.mage.sdk.datastore.user.User
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper
 import mil.nga.giat.mage.sdk.login.AuthenticationStatus
 import mil.nga.giat.mage.sdk.login.AuthenticationTask
@@ -18,6 +17,7 @@ import mil.nga.giat.mage.sdk.login.AuthorizationStatus
 import mil.nga.giat.mage.sdk.login.AuthorizationTask
 import mil.nga.giat.mage.sdk.preferences.PreferenceHelper
 import mil.nga.giat.mage.sdk.preferences.ServerApi
+import mil.nga.giat.mage.sdk.utils.ISO8601DateFormatFactory
 import mil.nga.giat.mage.sdk.utils.PasswordUtility
 import org.apache.commons.lang3.StringUtils
 import java.util.*
@@ -39,7 +39,8 @@ class LoginViewModel @Inject constructor(
         SUCCESS, ERROR, LOADING
     }
 
-    private var currentUsername: String? = null
+    private val iso8601Format = ISO8601DateFormatFactory.ISO8601()
+
     private var localCredentials: Array<String>? = null
 
     private val _authenticationState = MutableLiveData<AuthenticationState>()
@@ -77,7 +78,7 @@ class LoginViewModel @Inject constructor(
                     setupDisconnectedLogin()
                 }
 
-                val userChanged = completeAuthorization(strategy, it.user)
+                val userChanged = completeAuthorization(strategy, it)
                 _authorizationStatus.value = Authorization(it, userChanged)
 
             } else {
@@ -130,10 +131,13 @@ class LoginViewModel @Inject constructor(
         localCredentials = null
     }
 
-    private fun completeAuthorization(strategy: String, user: User): Boolean {
+    private fun completeAuthorization(strategy: String, status: AuthorizationStatus): Boolean {
+        val user = status.user;
         val previousUser = preferences.getString(context.getString(R.string.sessionUserKey), null)
         val previousStrategy = preferences.getString(context.getString(R.string.sessionStrategyKey), null)
-        val sessionChanged = (strategy != previousStrategy) || (previousUser != null && user.username != previousUser)
+        val sessionChanged =
+            (previousStrategy != null && strategy != previousStrategy) ||
+            (previousUser != null && user.username != previousUser)
 
         if (sessionChanged) {
             DaoStore.getInstance(context).resetDatabase()
@@ -150,10 +154,14 @@ class LoginViewModel @Inject constructor(
         val currentUser = userHelper.createOrUpdate(user)
         userHelper.setCurrentUser(currentUser)
 
+        // Successful login, put the token information in the shared preferences
         preferences.edit()
-            .putString(context.getString(R.string.sessionUserKey), user.username)
-            .putString(context.getString(R.string.sessionStrategyKey), strategy)
-            .apply()
+           .putString(context.getString(R.string.sessionUserKey), user.username)
+           .putString(context.getString(R.string.sessionStrategyKey), strategy)
+           .putString(context.getString(R.string.tokenKey), status.token.trim { it <= ' ' })
+           .putString(context.getString(R.string.tokenExpirationDateKey), iso8601Format.format(status.tokenExpiration))
+           .putLong(context.getString(R.string.tokenExpirationLengthKey), status.tokenExpiration.time - Date().time)
+           .apply()
 
         return sessionChanged
     }

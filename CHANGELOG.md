@@ -15,6 +15,8 @@ Adheres to [Semantic Versioning](http://semver.org/).
 
 ##### Bug Fixes
 * Ignore invalid date/time in date form field default
+* Don't clear token after login on user change
+* Don't start location reporting if user token is invalid
 
 ## [6.3.0](https://github.com/ngageoint/mage-android/releases/tag/6.3.0)
 
