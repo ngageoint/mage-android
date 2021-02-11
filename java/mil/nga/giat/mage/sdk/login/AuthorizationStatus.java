@@ -1,5 +1,7 @@
 package mil.nga.giat.mage.sdk.login;
 
+import java.util.Date;
+
 import mil.nga.giat.mage.sdk.datastore.user.User;
 
 /**
@@ -26,6 +28,16 @@ public class AuthorizationStatus {
 	private User user;
 
 	/**
+	 * MAGE API Token used for api access
+	 */
+	private String token;
+
+	/**
+	 * MAGE API Token expiration
+	 */
+	private Date tokenExpiration;
+
+	/**
 	 * Message associated with authentication
 	 */
 	private String message;
@@ -42,6 +54,14 @@ public class AuthorizationStatus {
 		return user;
 	}
 
+	public final String getToken() {
+		return token;
+	}
+
+	public final Date getTokenExpiration() {
+		return tokenExpiration;
+	}
+
 	public final String getMessage() {
 		return message;
 	}
@@ -49,14 +69,22 @@ public class AuthorizationStatus {
 	public static class Builder {
 		private Status status;
 		private User user;
+		private String token;
+		private Date tokenExpiration;
 		private String message = null;
 
 		public Builder(Status status) {
 			this.status = status;
 		}
 
-		public Builder authorization(User user) {
+		public Builder authorization(User user, String token) {
 			this.user = user;
+			this.token = token;
+			return this;
+		}
+
+		public Builder tokenExpiration(Date tokenExpiration) {
+			this.tokenExpiration = tokenExpiration;
 			return this;
 		}
 
@@ -69,6 +97,8 @@ public class AuthorizationStatus {
 			AuthorizationStatus authentication = new AuthorizationStatus();
 			authentication.status = this.status;
 			authentication.user = this.user;
+			authentication.token = this.token;
+			authentication.tokenExpiration = this.tokenExpiration;
 			authentication.message = this.message;
 
 			return authentication;

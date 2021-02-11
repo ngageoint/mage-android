@@ -55,10 +55,12 @@ public class PreferenceHelper implements SharedPreferences.OnSharedPreferenceCha
 	public synchronized void initialize(Boolean forceReinitialize, final Class<?>... xmlClasses) {
 		SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(mContext);
 
-		// TODO preserve the server url.
-		// We really should have seperate preference files for each user.  Server url will be part
-		// of the 'global' preferences and not cleared when a different user logs in
+		// We really should have separate preference files for each user.  Server url and
+		// database version will be part of 'global' preferences and not cleared when a different user logs in
+		//  preserve the server url.
 		String oldServerURL = PreferenceManager.getDefaultSharedPreferences(mContext).getString(mContext.getString(R.string.serverURLKey), mContext.getString(R.string.serverURLDefaultValue));
+		//  preserve the database version.
+		int oldDatabaseVersion = PreferenceManager.getDefaultSharedPreferences(mContext).getInt(mContext.getString(R.string.databaseVersionKey), 0);
 
 		String oldBuildVersion = sharedPreferences.getString(mContext.getString(R.string.buildVersionKey), null);
 		String newBuildVersion = null;
@@ -103,10 +105,11 @@ public class PreferenceHelper implements SharedPreferences.OnSharedPreferenceCha
 			editor.putString(mContext.getString(R.string.buildVersionKey), newBuildVersion);
 		}
 
-		// add back in the server url
-		editor.putString(mContext.getString(R.string.serverURLKey), oldServerURL);
-
-		editor.apply();
+		// add back in the server url and database version
+		editor
+			.putString(mContext.getString(R.string.serverURLKey), oldServerURL)
+			.putInt(mContext.getString(R.string.databaseVersionKey), oldDatabaseVersion)
+			.apply();
 
 		sharedPreferences.registerOnSharedPreferenceChangeListener(this);
 	}

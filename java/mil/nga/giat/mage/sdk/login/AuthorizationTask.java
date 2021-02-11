@@ -1,17 +1,15 @@
 package mil.nga.giat.mage.sdk.login;
 
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.os.AsyncTask;
-import android.preference.PreferenceManager;
 import android.util.Log;
 
 import com.google.gson.JsonObject;
 
 import java.text.DateFormat;
+import java.text.ParseException;
 import java.util.Date;
 
-import mil.nga.giat.mage.sdk.R;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.http.resource.DeviceResource;
 import mil.nga.giat.mage.sdk.jackson.deserializer.UserDeserializer;
@@ -54,9 +52,6 @@ public class AuthorizationTask extends AsyncTask<String, Void, AuthorizationStat
 	protected AuthorizationStatus doInBackground(String... params) {
 		String jwt = params[0];
 
-		SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(applicationContext);
-		final SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(applicationContext).edit();
-
 		try {
 			DeviceResource deviceResource = new DeviceResource(applicationContext);
 			String uid = new DeviceUuidFactory(applicationContext).getDeviceUuid().toString();
@@ -78,21 +73,18 @@ public class AuthorizationTask extends AsyncTask<String, Void, AuthorizationStat
 
 			// Successful login, put the token information in the shared preferences
 			String token = authorization.get("token").getAsString();
-			editor.putString(applicationContext.getString(R.string.tokenKey), token.trim());
+			Date tokenExpiration = null;
 			try {
-				Date tokenExpiration = iso8601Format.parse(authorization.get("expirationDate").getAsString().trim());
-				long tokenExpirationLength = tokenExpiration.getTime() - (new Date()).getTime();
-				editor.putString(applicationContext.getString(R.string.tokenExpirationDateKey), iso8601Format.format(tokenExpiration));
-				editor.putLong(applicationContext.getString(R.string.tokenExpirationLengthKey), tokenExpirationLength);
-			} catch (java.text.ParseException e) {
+				tokenExpiration = iso8601Format.parse(authorization.get("expirationDate").getAsString().trim());
+			} catch (ParseException e) {
 				Log.e(LOG_NAME, "Problem parsing token expiration date.", e);
 			}
-			editor.apply();
 
 			JsonObject userJson = authorization.getAsJsonObject("user");
 			User user = userDeserializer.parseUser(userJson.toString());
 			return new AuthorizationStatus.Builder(AuthorizationStatus.Status.SUCCESSFUL_AUTHORIZATION)
-					.authorization(user)
+					.authorization(user, token)
+					.tokenExpiration(tokenExpiration)
 					.build();
 		} catch (Exception e) {
 			Log.e(LOG_NAME, "Problem with authorization attempt", e);
