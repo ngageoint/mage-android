@@ -29,7 +29,7 @@ public class DeviceResource {
 
     public interface DeviceService {
         @POST("/auth/token")
-        Call<JsonObject> authorize(@Header("Authorization") String authorization, @Body JsonObject body);
+        Call<JsonObject> authorize(@Header("Authorization") String authorization, @Header("user-agent") String userAgent, @Body JsonObject body);
     }
 
     private static final String LOG_NAME = DeviceResource.class.getName();
@@ -68,7 +68,7 @@ public class DeviceResource {
                 Log.e(LOG_NAME , "Problem retrieving package info.", e);
             }
 
-            response = service.authorize(String.format("Bearer %s", token), json).execute();
+            response = service.authorize(String.format("Bearer %s", token), System.getProperty("http.agent"), json).execute();
         } catch (Exception e) {
             Log.e(LOG_NAME, "Bad request.", e);
         }
