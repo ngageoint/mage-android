@@ -162,21 +162,11 @@ class GeometryFieldDialog : DialogFragment(),
         return inflater.inflate(R.layout.dialog_geometry_field, container, false)
     }
 
-    override fun onDestroyView() {
-        super.onDestroyView()
-
-        fragmentManager?.beginTransaction()
-                ?.remove(mapFragment)
-                ?.remove(wgs84CoordinateFragment)
-                ?.remove(mgrsCoordinateFragment)
-                ?.commit()
-    }
-
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        val wgs84CoordinateFragment = fragmentManager?.findFragmentById(R.id.wgs84CoordinateFragment) as WGS84CoordinateFragment
+        val wgs84CoordinateFragment = childFragmentManager.findFragmentById(R.id.wgs84CoordinateFragment) as WGS84CoordinateFragment
         this.wgs84CoordinateFragment = wgs84CoordinateFragment
 
-        val mgrsCoordinateFragment = fragmentManager?.findFragmentById(R.id.mgrsCoordinateFragment) as MGRSCoordinateFragment
+        val mgrsCoordinateFragment = childFragmentManager.findFragmentById(R.id.mgrsCoordinateFragment) as MGRSCoordinateFragment
         this.mgrsCoordinateFragment = mgrsCoordinateFragment
 
         toolbar.setNavigationIcon(R.drawable.ic_close_white_24dp)
@@ -200,18 +190,18 @@ class GeometryFieldDialog : DialogFragment(),
         val coordinateSystem = CoordinateSystem.get(preferences.getInt(resources.getString(R.string.coordinateSystemEditKey), defaultCoordinateSystem))
         when (coordinateSystem) {
             CoordinateSystem.MGRS -> {
-                fragmentManager?.beginTransaction()
-                        ?.show(mgrsCoordinateFragment)
-                        ?.hide(wgs84CoordinateFragment)
-                        ?.commit()
+                childFragmentManager.beginTransaction()
+                    .show(mgrsCoordinateFragment)
+                    .hide(wgs84CoordinateFragment)
+                    .commit()
 
                 tabs.getTabAt(MGRS_COORDINATE_TAB_POSITION)?.select()
             }
             else -> {
-                fragmentManager?.beginTransaction()
-                        ?.show(wgs84CoordinateFragment)
-                        ?.hide(mgrsCoordinateFragment)
-                        ?.commit()
+                childFragmentManager.beginTransaction()
+                    .show(wgs84CoordinateFragment)
+                    .hide(mgrsCoordinateFragment)
+                    .commit()
 
                 tabs.getTabAt(WGS84_COORDINATE_TAB_POSITION)?.select()
             }
@@ -224,7 +214,7 @@ class GeometryFieldDialog : DialogFragment(),
         editPolylineOptions = getEditPolylineOptions(style)
         editPolygonOptions = getEditPolygonOptions(style)
 
-        mapFragment = fragmentManager?.findFragmentById(R.id.mapFragment) as SupportMapFragment
+        mapFragment = childFragmentManager.findFragmentById(R.id.mapFragment) as SupportMapFragment
         mapFragment.getMapAsync(this)
     }
 
@@ -267,10 +257,10 @@ class GeometryFieldDialog : DialogFragment(),
         val position = tab.position
 
         if (position == WGS84_COORDINATE_TAB_POSITION) {
-            fragmentManager?.beginTransaction()
-                    ?.show(wgs84CoordinateFragment as Fragment)
-                    ?.hide(mgrsCoordinateFragment as Fragment)
-                    ?.commit()
+            childFragmentManager.beginTransaction()
+                .show(wgs84CoordinateFragment as Fragment)
+                .hide(mgrsCoordinateFragment as Fragment)
+                .commit()
 
             if (!wgs84CoordinateFragment.setLatLng(mgrsCoordinateFragment.getLatLng())) {
                 map.moveCamera(CameraUpdateFactory.newLatLng(wgs84CoordinateFragment.getLatLng()))
@@ -278,10 +268,10 @@ class GeometryFieldDialog : DialogFragment(),
 
             mgrsTileOverlay?.remove()
         } else if (position == MGRS_COORDINATE_TAB_POSITION) {
-            fragmentManager?.beginTransaction()
-                    ?.show(mgrsCoordinateFragment)
-                    ?.hide(wgs84CoordinateFragment)
-                    ?.commit()
+            childFragmentManager.beginTransaction()
+                .show(mgrsCoordinateFragment)
+                .hide(wgs84CoordinateFragment)
+                .commit()
 
             if (!mgrsCoordinateFragment.setLatLng(wgs84CoordinateFragment.getLatLng())) {
                 map.moveCamera(CameraUpdateFactory.newLatLng(mgrsCoordinateFragment.getLatLng()))
