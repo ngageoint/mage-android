@@ -15,6 +15,7 @@ Adheres to [Semantic Versioning](http://semver.org/).
 
 ##### Bug Fixes
 * Fix crash in GeometryEditDialog when accessing child fragments
+* Fix crash when accessing the application context in event form defaults activity
 * Ignore invalid date/time in date form field default
 * Don't clear token after login on user change
 * Don't start location reporting if user token is invalid

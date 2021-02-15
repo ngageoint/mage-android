@@ -8,17 +8,16 @@ import android.view.Menu
 import android.view.MenuInflater
 import android.view.MenuItem
 import android.view.View
+import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProviders
 import com.google.gson.JsonObject
-import dagger.android.support.DaggerAppCompatActivity
 import kotlinx.android.synthetic.main.activity_form_defaults.*
 import mil.nga.giat.mage.R
-import mil.nga.giat.mage.dagger.module.ApplicationContext
 import mil.nga.giat.mage.sdk.datastore.user.Event
 import mil.nga.giat.mage.sdk.datastore.user.EventHelper
 import mil.nga.giat.mage.sdk.exceptions.EventException
 
-class FormDefaultActivity : DaggerAppCompatActivity() {
+class FormDefaultActivity : AppCompatActivity() {
 
     companion object {
         private val LOG_NAME = FormDefaultActivity::class.java.name
@@ -33,9 +32,6 @@ class FormDefaultActivity : DaggerAppCompatActivity() {
             return intent
         }
     }
-
-    @ApplicationContext
-    lateinit var context: Context
 
     private var event: Event? = null
     private var formJson: JsonObject? = null
@@ -56,13 +52,13 @@ class FormDefaultActivity : DaggerAppCompatActivity() {
         formModel = ViewModelProviders.of(this).get(FormViewModel::class.java)
         formModel.formMode = FormMode.EDIT
 
-        val eventHelper: EventHelper = EventHelper.getInstance(context)
+        val eventHelper: EventHelper = EventHelper.getInstance(applicationContext)
         try {
             event = eventHelper.read(intent.getLongExtra(EVENT_ID_EXTRA, 0))
             formJson = event?.formMap?.get(intent.getLongExtra(FORM_ID_EXTRA, 0))
 
             Form.fromJson(formJson)?.let {
-                formPreferences = FormPreferences(context, event!!, it.id)
+                formPreferences = FormPreferences(applicationContext, event!!, it.id)
 
                 if (formModel.getForm().value == null) {
                     formModel.setForm(it, formPreferences.getDefaults())

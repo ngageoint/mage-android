@@ -7,6 +7,7 @@ import android.view.LayoutInflater
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
+import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -23,7 +24,7 @@ import mil.nga.giat.mage.sdk.datastore.user.EventHelper
 import mil.nga.giat.mage.sdk.exceptions.EventException
 import javax.inject.Inject
 
-class EventActivity : DaggerAppCompatActivity() {
+class EventActivity : AppCompatActivity() {
 
     companion object {
         private val LOG_NAME = EventActivity::class.java.name
@@ -31,28 +32,22 @@ class EventActivity : DaggerAppCompatActivity() {
         val EVENT_ID_EXTRA = "EVENT_ID_EXTRA"
     }
 
-    @ApplicationContext
-    lateinit var context: Context
-
     private lateinit var viewAdapter: RecyclerView.Adapter<*>
     private lateinit var viewManager: RecyclerView.LayoutManager
 
     var event: Event? = null
 
-    @Inject
-    lateinit var application: MageApplication
-
     public override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        require(intent.hasExtra(EVENT_ID_EXTRA), {"EVENT_ID_EXTRA is required to launch EventActivity"})
+        require(intent.hasExtra(EVENT_ID_EXTRA)) {"EVENT_ID_EXTRA is required to launch EventActivity"}
 
         setContentView(R.layout.activity_event)
 
         setSupportActionBar(toolbar);
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
-        val eventHelper: EventHelper = EventHelper.getInstance(context)
+        val eventHelper: EventHelper = EventHelper.getInstance(applicationContext)
         val eventId =  intent.extras?.getLong(EVENT_ID_EXTRA)
         try {
             event = eventHelper.read(eventId)
@@ -88,7 +83,7 @@ class EventActivity : DaggerAppCompatActivity() {
     }
 
     private fun onFormClicked(form: Form) {
-        startActivity(FormDefaultActivity.intent(context, event!!, form))
+        startActivity(FormDefaultActivity.intent(applicationContext, event!!, form))
     }
 
     class FormViewHolder(val view: View, val onClickListener: (Form) -> Unit) : RecyclerView.ViewHolder(view) {

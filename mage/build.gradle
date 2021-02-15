@@ -201,7 +201,7 @@ dependencies {
     ext {
         google_play_services_version = '10.2.6'
         lifecycle_version= '2.2.0'
-        dagger_version = '2.27'
+        dagger_version = '2.32'
         work_version = '1.0.0'
     }
 
