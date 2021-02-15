@@ -7,7 +7,6 @@ import android.view.LayoutInflater
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
-import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -24,7 +23,7 @@ import mil.nga.giat.mage.sdk.datastore.user.EventHelper
 import mil.nga.giat.mage.sdk.exceptions.EventException
 import javax.inject.Inject
 
-class EventActivity : AppCompatActivity() {
+class EventActivity : DaggerAppCompatActivity() {
 
     companion object {
         private val LOG_NAME = EventActivity::class.java.name
@@ -36,6 +35,9 @@ class EventActivity : AppCompatActivity() {
     private lateinit var viewManager: RecyclerView.LayoutManager
 
     var event: Event? = null
+
+    @Inject
+    lateinit var application: MageApplication
 
     public override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
