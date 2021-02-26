@@ -44,11 +44,11 @@ public class Observation implements Comparable<Observation>, Temporal {
     @DatabaseField(unique = true, columnName = "url")
     private String url;
 
-	/**
-	 * This is really the remote id!
-	 */
-	@DatabaseField(columnName = "user_id", canBeNull = false)
-	private String userId = "-1";
+    /**
+    * This is really the remote id!
+    */
+    @DatabaseField(columnName = "user_id", canBeNull = false)
+    private String userId = "-1";
 
     @DatabaseField(columnName = "device_id")
     private String deviceId;
@@ -71,7 +71,7 @@ public class Observation implements Comparable<Observation>, Temporal {
     @DatabaseField(canBeNull = false)
     private State state = State.ACTIVE;
 
-	@DatabaseField(columnName = "geometry", canBeNull = false, dataType = DataType.BYTE_ARRAY)
+	  @DatabaseField(columnName = "geometry", canBeNull = false, dataType = DataType.BYTE_ARRAY)
     private byte[] geometryBytes;
 
     @DatabaseField
@@ -170,11 +170,11 @@ public class Observation implements Comparable<Observation>, Temporal {
         this.state = state;
     }
 
-	public byte[] getGeometryBytes() {
+	  public byte[] getGeometryBytes() {
 		return geometryBytes;
 	}
 
-	public void setGeometryBytes(byte[] geometryBytes) {
+	  public void setGeometryBytes(byte[] geometryBytes) {
 		this.geometryBytes = geometryBytes;
 	}
 
@@ -362,20 +362,20 @@ public class Observation implements Comparable<Observation>, Temporal {
         return new EqualsBuilder().append(_id, other._id).append(remoteId, other.remoteId).isEquals();
     }
 
-	@Override
-	public Date getTimestamp() {
-		return timestamp;
-	}
+    @Override
+    public Date getTimestamp() {
+    return timestamp;
+    }
 
-	public void setTimestamp(Date timestamp) {
-		this.timestamp = timestamp;
-	}
+    public void setTimestamp(Date timestamp) {
+    this.timestamp = timestamp;
+    }
 
-	public ObservationProperty getPrimaryField() {
+    public ObservationProperty getPrimaryMapField() {
         return getField("primaryField");
     }
 
-    public ObservationProperty getSecondaryField() {
+    public ObservationProperty getSecondaryMapField() {
         return getField("variantField");
     }
 
