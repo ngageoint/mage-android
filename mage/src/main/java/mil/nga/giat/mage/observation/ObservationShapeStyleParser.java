@@ -80,7 +80,7 @@ public class ObservationShapeStyleParser {
             // Found the top level style
             JsonObject styleObject = styleField.getAsJsonObject();
 
-            ObservationProperty primaryProperty = observation.getPrimaryField();
+            ObservationProperty primaryProperty = observation.getPrimaryMapField();
             if (primaryProperty != null) {
                 String primary = primaryProperty.getValue().toString();
 
@@ -91,7 +91,7 @@ public class ObservationShapeStyleParser {
                     // Found the type level style
                     styleObject = primaryField.getAsJsonObject();
 
-                    ObservationProperty variantProperty = observation.getSecondaryField();
+                    ObservationProperty variantProperty = observation.getSecondaryMapField();
                     if (variantProperty != null) {
                         String variant = variantProperty.getValue().toString();
 

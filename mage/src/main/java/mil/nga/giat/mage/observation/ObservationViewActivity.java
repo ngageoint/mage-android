@@ -292,7 +292,7 @@ public class ObservationViewActivity extends AppCompatActivity implements OnMapR
 			iconTask = new IconTask(markerView);
 			iconTask.execute(o);
 
-			ObservationProperty primary = o.getPrimaryField();
+			ObservationProperty primary = o.getPrimaryFeedField();
 			TextView primaryView = findViewById(R.id.primary);
 			if (primary == null || primary.isEmpty()) {
 				primaryView.setVisibility(View.GONE);
@@ -302,7 +302,7 @@ public class ObservationViewActivity extends AppCompatActivity implements OnMapR
 				primaryView.setText(primary.getValue().toString());
 			}
 
-			ObservationProperty secondary = o.getSecondaryField();
+			ObservationProperty secondary = o.getPrimaryFeedField();
 			TextView secondaryView = findViewById(R.id.secondary);
 			if (secondary == null || secondary.isEmpty()) {
 				secondaryView.setVisibility(View.GONE);
@@ -311,33 +311,33 @@ public class ObservationViewActivity extends AppCompatActivity implements OnMapR
 				secondaryView.setText(secondary.getValue().toString());
 			}
             
-            TextView timestamp = findViewById(R.id.time);
-            timestamp.setText(dateFormat.format(o.getTimestamp()));
+			TextView timestamp = findViewById(R.id.time);
+			timestamp.setText(dateFormat.format(o.getTimestamp()));
 
 			ObservationLocation location = new ObservationLocation(o);
 			LatLng latLng = location.getCentroidLatLng();
 			locationTextView.setLatLng(latLng);
 
-            if (location.getProvider() != null && !location.isManualProvider()) {
-                ((TextView) findViewById(R.id.location_provider)).setText(location.getProvider().toUpperCase());
-            } else {
-                findViewById(R.id.location_provider).setVisibility(View.GONE);
-            }
+			if (location.getProvider() != null && !location.isManualProvider()) {
+					((TextView) findViewById(R.id.location_provider)).setText(location.getProvider().toUpperCase());
+			} else {
+					findViewById(R.id.location_provider).setVisibility(View.GONE);
+			}
 
-            Float accuracy = o.getAccuracy();
-            if (accuracy != null && accuracy > 0) {
+			Float accuracy = o.getAccuracy();
+			if (accuracy != null && accuracy > 0) {
 				((TextView) findViewById(R.id.location_accuracy)).setText(String.format(" \u00B1 %.2fm", accuracy));
-            } else {
-                findViewById(R.id.location_accuracy).setVisibility(View.GONE);
-            }
+			} else {
+				findViewById(R.id.location_accuracy).setVisibility(View.GONE);
+			}
 
 			setupImportant(o.getImportant());
 
 			setFavorites();
 			setFavoriteIcon(isFavorite(o));
 
-            LinearLayout galleryLayout = findViewById(R.id.image_gallery);
-            galleryLayout.removeAllViews();
+			LinearLayout galleryLayout = findViewById(R.id.image_gallery);
+			galleryLayout.removeAllViews();
 
 			if (o.getAttachments().size() == 0) {
 				findViewById(R.id.gallery_container).setVisibility(View.GONE);

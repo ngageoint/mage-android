@@ -75,12 +75,12 @@ public class ObservationBitmapFactory {
 
 			Stack<String> iconProperties = new Stack<>();
 
-			ObservationProperty secondaryField = observation.getSecondaryField();
+			ObservationProperty secondaryField = observation.getSecondaryMapField();
 			if (secondaryField != null) {
 				iconProperties.add(secondaryField.getValue().toString());
 			}
 
-			ObservationProperty primaryField = observation.getPrimaryField();
+			ObservationProperty primaryField = observation.getPrimaryMapField();
 			if (primaryField != null) {
 				iconProperties.add(primaryField.getValue().toString());
 			}

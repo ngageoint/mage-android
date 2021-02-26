@@ -118,8 +118,8 @@ class ObservationServerFetch(var context: Context) {
                 val pendingIntent = PendingIntent.getActivity(context, 0, intent, 0)
 
                 val information = mutableListOf<String>()
-                observation.primaryField?.value?.let { information.add(it.toString()) }
-                observation.secondaryField?.value?.let { information.add(it.toString()) }
+                observation.primaryFeedField?.value?.let { information.add(it.toString()) }
+                observation.secondaryFeedField?.value?.let { information.add(it.toString()) }
 
                 val content = if (information.isNotEmpty()) "${information.joinToString(", ")} was created in ${observation.event.name}" else "Observation was created in ${observation.event.name}"
 
