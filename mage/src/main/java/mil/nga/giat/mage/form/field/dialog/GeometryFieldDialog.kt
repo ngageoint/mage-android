@@ -239,6 +239,12 @@ class GeometryFieldDialog : DialogFragment(),
         } else {
             map.setMapStyle(MapStyleOptions.loadRawResourceStyle(context, R.raw.map_theme_night))
         }
+
+        // Don't wait for map to show up to init these values, otherwise bottomsheet will jitter
+        val showMgrs = preferences.getBoolean(resources.getString(R.string.showMGRSKey), false)
+        if (showMgrs) {
+            mgrsTileOverlay = map.addTileOverlay(TileOverlayOptions().tileProvider(MGRSTileProvider(context)))
+        }
     }
 
     override fun onCameraMoveStarted(reason: Int) {

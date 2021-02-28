@@ -6,6 +6,7 @@ Adheres to [Semantic Versioning](http://semver.org/).
 ## 6.3.2 (TBD)
 
 ##### Features
+* Show mgrs grid on observation geometry edit view if enabled
 
 ##### Bug Fixes
 * Fix crash on wgs84/mgrs manual coordinate change
