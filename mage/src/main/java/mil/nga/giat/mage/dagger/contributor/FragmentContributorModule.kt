@@ -41,7 +41,7 @@ abstract class FragmentContributorModule {
     internal abstract fun contributeClearDataFragment(): ClearDataPreferenceActivity.ClearDataFragment
 
     @ContributesAndroidInjector
-    internal abstract fun contributeLocationPrefernceFragment(): LocationPreferencesActivity.LocationPreferenceFragment
+    internal abstract fun contributeLocationPreferenceFragment(): LocationPreferencesActivity.LocationPreferenceFragment
 
     @ContributesAndroidInjector
     internal abstract fun contributeOnlineLayersListFragment(): OnlineLayersPreferenceActivity.OnlineLayersListFragment

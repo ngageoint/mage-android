@@ -8,6 +8,7 @@ Adheres to [Semantic Versioning](http://semver.org/).
 ##### Features
 
 ##### Bug Fixes
+* Fix crash on wgs84/mgrs manual coordinate change
 
 ## [6.3.1](https://github.com/ngageoint/mage-android/releases/tag/6.3.1)
 

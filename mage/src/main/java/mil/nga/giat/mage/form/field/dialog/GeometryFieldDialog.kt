@@ -24,6 +24,7 @@ import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.graphics.drawable.DrawableCompat
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelProviders
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
@@ -131,10 +132,10 @@ class GeometryFieldDialog : DialogFragment(),
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        setStyle(DialogFragment.STYLE_NORMAL, R.style.AppTheme_Dialog_Fullscreen)
+        setStyle(STYLE_NORMAL, R.style.AppTheme_Dialog_Fullscreen)
 
         model = activity?.run {
-            ViewModelProviders.of(this).get(FormViewModel::class.java)
+            ViewModelProvider(this).get(FormViewModel::class.java)
         } ?: throw Exception("Invalid Activity")
 
         val fieldKey = arguments?.getString(FORM_FIELD_KEY_EXTRA, null)
@@ -151,7 +152,7 @@ class GeometryFieldDialog : DialogFragment(),
 
         markerBitmap = arguments?.getParcelable(MARKER_BITMAP_EXTRA)
         if (markerBitmap == null) {
-            val stream = context!!.assets.open(DEFAULT_MARKER_ASSET)
+            val stream = requireContext().assets.open(DEFAULT_MARKER_ASSET)
             markerBitmap = BitmapFactory.decodeStream(stream)
         }
 
@@ -173,7 +174,7 @@ class GeometryFieldDialog : DialogFragment(),
         toolbar.setNavigationOnClickListener { dismiss() }
         toolbar.inflateMenu(R.menu.location_edit_menu)
         toolbar.setOnMenuItemClickListener {
-            when (it.getItemId()) {
+            when (it.itemId) {
                 R.id.apply -> {
                     updateLocation()
                     true
@@ -187,8 +188,7 @@ class GeometryFieldDialog : DialogFragment(),
 
         val preferences = PreferenceManager.getDefaultSharedPreferences(context)
         val defaultCoordinateSystem = preferences.getInt(resources.getString(R.string.coordinateSystemViewKey), CoordinateSystem.WGS84.preferenceValue)
-        val coordinateSystem = CoordinateSystem.get(preferences.getInt(resources.getString(R.string.coordinateSystemEditKey), defaultCoordinateSystem))
-        when (coordinateSystem) {
+        when (CoordinateSystem.get(preferences.getInt(resources.getString(R.string.coordinateSystemEditKey), defaultCoordinateSystem))) {
             CoordinateSystem.MGRS -> {
                 childFragmentManager.beginTransaction()
                     .show(mgrsCoordinateFragment)
@@ -216,6 +216,14 @@ class GeometryFieldDialog : DialogFragment(),
 
         mapFragment = childFragmentManager.findFragmentById(R.id.mapFragment) as SupportMapFragment
         mapFragment.getMapAsync(this)
+    }
+
+    override fun onAttachFragment(fragment: Fragment) {
+        if (fragment is WGS84CoordinateFragment) {
+            fragment.coordinateChangeListener = this
+        } else if (fragment is MGRSCoordinateFragment) {
+            fragment.coordinateChangeListener = this
+        }
     }
 
     override fun onMapReady(map: GoogleMap) {
@@ -399,7 +407,7 @@ class GeometryFieldDialog : DialogFragment(),
                     selectShapeMarker(marker)
                 } else if (!isRectangle && shapeMarkers != null && shapeMarkers!!.size() > 1) {
 
-                    val deleteDialog = AlertDialog.Builder(activity!!)
+                    val deleteDialog = AlertDialog.Builder(requireActivity())
                     val position = marker.position
                     deleteDialog.setTitle(R.string.location_edit_delete_point_title)
                     deleteDialog.setMessage(String.format(getString(R.string.location_edit_delete_point_message),
@@ -497,7 +505,7 @@ class GeometryFieldDialog : DialogFragment(),
     private fun setupMapButton(button: FloatingActionButton) {
         val drawable = DrawableCompat.wrap(button.drawable)
         button.setImageDrawable(drawable)
-        DrawableCompat.setTintList(drawable, AppCompatResources.getColorStateList(context!!, R.color.toggle_button_selected))
+        DrawableCompat.setTintList(drawable, AppCompatResources.getColorStateList(requireContext(), R.color.toggle_button_selected))
         button.setOnClickListener(this)
     }
 
@@ -653,7 +661,7 @@ class GeometryFieldDialog : DialogFragment(),
             // If changing to a point and there are multiple points in the current shape, confirm selection
             if (message != null) {
 
-                val changeDialog = AlertDialog.Builder(activity!!)
+                val changeDialog = AlertDialog.Builder(requireActivity())
                 changeDialog.setTitle(title)
                 changeDialog.setMessage(message)
                 changeDialog.setNegativeButton(R.string.cancel
@@ -1197,7 +1205,7 @@ class GeometryFieldDialog : DialogFragment(),
     class WGS84CoordinateFragment : Fragment(), TextWatcher, View.OnFocusChangeListener {
         private val LOCATION_PRECISION = "%.6f"
 
-        private var coordinateChangeListener: CoordinateChangeListener? = null
+        var coordinateChangeListener: CoordinateChangeListener? = null
 
         private lateinit var latitudeEdit: EditText
         private lateinit var longitudeEdit: EditText
@@ -1238,12 +1246,6 @@ class GeometryFieldDialog : DialogFragment(),
             })
 
             clearFocus()
-        }
-
-        override fun onAttachFragment(fragment: Fragment) {
-            if (fragment is CoordinateChangeListener) {
-                coordinateChangeListener = fragment
-            }
         }
 
         override fun onFocusChange(v: View, hasFocus: Boolean) {
@@ -1328,7 +1330,7 @@ class GeometryFieldDialog : DialogFragment(),
     }
 
     class MGRSCoordinateFragment : Fragment(), TextWatcher, View.OnFocusChangeListener {
-        private var coordinateChangeListener: CoordinateChangeListener? = null
+        var coordinateChangeListener: CoordinateChangeListener? = null
         private lateinit var mgrsEdit: EditText
         private lateinit var mgrsLayout: TextInputLayout
 
@@ -1349,12 +1351,6 @@ class GeometryFieldDialog : DialogFragment(),
                 }
                 false
             })
-        }
-
-        override fun onAttachFragment(fragment: Fragment) {
-            if (fragment is CoordinateChangeListener) {
-                coordinateChangeListener = fragment
-            }
         }
 
         override fun afterTextChanged(s: Editable) {

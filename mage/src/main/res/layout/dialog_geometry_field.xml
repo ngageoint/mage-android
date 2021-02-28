@@ -43,17 +43,19 @@
                     app:tabGravity="fill"
                     app:tabMode="fixed"/>
 
-                <fragment android:name="mil.nga.giat.mage.form.field.dialog.GeometryFieldDialog$WGS84CoordinateFragment"
+                <androidx.fragment.app.FragmentContainerView
                     android:id="@+id/wgs84CoordinateFragment"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"/>
+                    android:layout_marginTop="8dp"
+                    android:name="mil.nga.giat.mage.form.field.dialog.GeometryFieldDialog$WGS84CoordinateFragment" />
 
-                <fragment android:name="mil.nga.giat.mage.form.field.dialog.GeometryFieldDialog$MGRSCoordinateFragment"
+                <androidx.fragment.app.FragmentContainerView
                     android:id="@+id/mgrsCoordinateFragment"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"/>
+                    android:layout_marginTop="8dp"
+                    android:name="mil.nga.giat.mage.form.field.dialog.GeometryFieldDialog$MGRSCoordinateFragment" />
 
                 <TextView
                     android:id="@+id/hintText"
@@ -73,7 +75,7 @@
             android:layout_height="0dp"
             android:layout_weight="1">
 
-            <fragment
+            <androidx.fragment.app.FragmentContainerView
                 android:id="@+id/mapFragment"
                 android:name="com.google.android.gms.maps.SupportMapFragment"
                 android:layout_width="match_parent"
@@ -89,7 +91,7 @@
                     android:id="@+id/editPointButton"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginLeft="16dp"
+                    android:layout_marginStart="16dp"
                     android:layout_marginTop="16dp"
                     android:src="@drawable/ic_place_black_24dp"
                     app:backgroundTint="@color/toggle_button"
@@ -100,7 +102,7 @@
                     android:id="@+id/editLineButton"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginLeft="16dp"
+                    android:layout_marginStart="16dp"
                     android:layout_marginTop="16dp"
                     android:src="@drawable/line_string_marker"
                     app:backgroundTint="@color/toggle_button"
@@ -111,7 +113,7 @@
                     android:id="@+id/editRectangleButton"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginLeft="16dp"
+                    android:layout_marginStart="16dp"
                     android:layout_marginTop="16dp"
                     android:src="@drawable/rectangle"
                     app:backgroundTint="@color/toggle_button"
@@ -123,7 +125,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="16dp"
-                    android:layout_marginLeft="16dp"
+                    android:layout_marginStart="16dp"
                     android:layout_marginTop="16dp"
                     android:src="@drawable/polygon_marker"
                     app:backgroundTint="@color/toggle_button"
