@@ -21,7 +21,9 @@ import kotlinx.android.synthetic.main.fragment_authentication_mage.*
 import kotlinx.android.synthetic.main.fragment_authentication_mage.view.*
 import mil.nga.giat.mage.R
 import mil.nga.giat.mage.login.LoginViewModel
+import mil.nga.giat.mage.login.ldap.LdapLoginFragment
 import mil.nga.giat.mage.sdk.preferences.PreferenceHelper
+import org.json.JSONObject
 import java.util.*
 import javax.inject.Inject
 
@@ -32,10 +34,16 @@ import javax.inject.Inject
 class MageLoginFragment : Fragment() {
 
     companion object {
-        private const val STRATEGY_NAME = "local"
+        private const val EXTRA_LOCAL_STRATEGY = "EXTRA_LOCAL_STRATEGY"
+        private const val EXTRA_LOCAL_STRATEGY_NAME = "EXTRA_LOCAL_STRATEGY_NAME"
 
-        fun newInstance(): MageLoginFragment {
-            return MageLoginFragment()
+        fun newInstance(strategyName: String, strategy: JSONObject): MageLoginFragment {
+            return MageLoginFragment().apply {
+                arguments = Bundle().apply {
+                    putString(EXTRA_LOCAL_STRATEGY, strategy.toString())
+                    putString(EXTRA_LOCAL_STRATEGY_NAME, strategyName)
+                }
+            }
         }
     }
 
@@ -45,6 +53,19 @@ class MageLoginFragment : Fragment() {
     @Inject
     internal lateinit var viewModelFactory: ViewModelProvider.Factory
     private lateinit var viewModel: LoginViewModel
+
+    private lateinit var strategy: JSONObject
+    private lateinit var strategyName: String
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        require(arguments?.getString(EXTRA_LOCAL_STRATEGY) != null) {"EXTRA_LOCAL_STRATEGY is required to launch MageLoginFragment"}
+        require(arguments?.getString(EXTRA_LOCAL_STRATEGY_NAME) != null) {"EXTRA_LOCAL_STRATEGY_NAME is required to launch MageLoginFragment"}
+
+        strategy = JSONObject(requireArguments().getString(EXTRA_LOCAL_STRATEGY)!!)
+        strategyName = requireArguments().getString(EXTRA_LOCAL_STRATEGY_NAME)!!
+    }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         val view = inflater.inflate(R.layout.fragment_authentication_mage, container, false)
@@ -127,7 +148,7 @@ class MageLoginFragment : Fragment() {
             return
         }
 
-        viewModel.authenticate(STRATEGY_NAME, arrayOf(username.toLowerCase(Locale.getDefault()), password, STRATEGY_NAME), true)
+        viewModel.authenticate(strategyName, arrayOf(username.toLowerCase(Locale.getDefault()), password), true)
     }
 
     private fun observeLogin(authentication: LoginViewModel.Authentication?) {

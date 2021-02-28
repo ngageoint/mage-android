@@ -62,7 +62,7 @@ class LoginViewModel @Inject constructor(
             } else {
                 AuthenticationState.ERROR
             }
-        }.execute(*credentials)
+        }.execute(*credentials, strategy)
 
         _authenticationStatus.value = null
         _authenticationState.value = AuthenticationState.LOADING
@@ -110,8 +110,6 @@ class LoginViewModel @Inject constructor(
                 _apiStatus.value = valid
             }
         }
-
-        _apiStatus.value = null
     }
 
     private fun setupDisconnectedLogin() {

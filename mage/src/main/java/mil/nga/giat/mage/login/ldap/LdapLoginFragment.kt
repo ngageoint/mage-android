@@ -10,7 +10,6 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.ViewModelProviders
 import dagger.android.support.AndroidSupportInjection
 import kotlinx.android.synthetic.main.fragment_authentication_ldap.*
 import kotlinx.android.synthetic.main.fragment_authentication_ldap.view.*
@@ -23,12 +22,16 @@ import javax.inject.Inject
 class LdapLoginFragment: Fragment() {
 
     companion object {
-        private const val STRATEGY_NAME = "ldap"
+        private const val EXTRA_LDAP_STRATEGY = "EXTRA_LDAP_STRATEGY"
+        private const val EXTRA_LDAP_STRATEGY_NAME = "EXTRA_LDAP_STRATEGY_NAME"
 
-        fun newInstance(strategy: JSONObject): LdapLoginFragment {
-            val fragment = LdapLoginFragment()
-            fragment.strategy = strategy
-            return fragment
+        fun newInstance(strategyName: String, strategy: JSONObject): LdapLoginFragment {
+            return LdapLoginFragment().apply {
+                arguments = Bundle().apply {
+                    putString(EXTRA_LDAP_STRATEGY, strategy.toString())
+                    putString(EXTRA_LDAP_STRATEGY_NAME, strategyName)
+                }
+            }
         }
     }
 
@@ -39,13 +42,24 @@ class LdapLoginFragment: Fragment() {
     @Inject
     protected lateinit var preferences: SharedPreferences
 
-    private var strategy: JSONObject? = null
+    private lateinit var strategy: JSONObject
+    private lateinit var strategyName: String
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        require(arguments?.getString(EXTRA_LDAP_STRATEGY) != null) {"EXTRA_LDAP_STRATEGY is required to launch LdapLoginFragment"}
+        require(arguments?.getString(EXTRA_LDAP_STRATEGY_NAME) != null) {"EXTRA_LDAP_STRATEGY_NAME is required to launch LdapLoginFragment"}
+
+        strategy = JSONObject(requireArguments().getString(EXTRA_LDAP_STRATEGY)!!)
+        strategyName = requireArguments().getString(EXTRA_LDAP_STRATEGY_NAME)!!
+    }
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
 
         viewModel = activity?.run {
-            ViewModelProviders.of(this, viewModelFactory).get(LoginViewModel::class.java)
+            ViewModelProvider(this, viewModelFactory).get(LoginViewModel::class.java)
         } ?: throw Exception("Invalid Activity")
 
         viewModel.authenticationStatus.observe(viewLifecycleOwner, Observer { observeLogin(it) })
@@ -66,7 +80,7 @@ class LdapLoginFragment: Fragment() {
         view.authentication_button.setOnClickListener { login() }
 
         try {
-            val title = strategy?.getString("title")
+            val title = strategy.getString("title")
             username_layout.hint = String.format("%s username", title)
             password_layout.hint = String.format("%s password", title)
         } catch (ignore: JSONException) {}
@@ -88,7 +102,7 @@ class LdapLoginFragment: Fragment() {
             return
         }
 
-        viewModel.authenticate(STRATEGY_NAME, arrayOf(username, password, STRATEGY_NAME))
+        viewModel.authenticate(strategyName, arrayOf(username, password))
     }
 
     private fun observeLogin(authentication: LoginViewModel.Authentication?) {
