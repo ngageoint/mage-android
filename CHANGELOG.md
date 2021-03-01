@@ -11,6 +11,7 @@ Adheres to [Semantic Versioning](http://semver.org/).
 ##### Bug Fixes
 * Fix crash on wgs84/mgrs manual coordinate change
 * Fix duplication of login strategy fragments on device rotation
+* Update map clip in observation edit to reflect location updates from geometry edit
 
 ## [6.3.1](https://github.com/ngageoint/mage-android/releases/tag/6.3.1)
 

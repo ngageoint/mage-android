@@ -50,11 +50,7 @@ class ViewGeometry @JvmOverloads constructor(
         defStyleRes: Int = 0
 ) : Field<ObservationLocation>(context, attrs, defStyle, defStyleRes) {
 
-    private val binding: ViewFormGeometryBinding
-
-    init {
-        binding = ViewFormGeometryBinding.inflate(LayoutInflater.from(context), this, true)
-    }
+    private val binding: ViewFormGeometryBinding = ViewFormGeometryBinding.inflate(LayoutInflater.from(context), this, true)
 
     override fun bind(formField: FormField<ObservationLocation>) {
         binding.field = formField
@@ -68,13 +64,9 @@ class EditGeometry @JvmOverloads constructor(
         defStyleRes: Int = 0
 ) : Field<ObservationLocation>(context, attrs, defStyle, defStyleRes) {
 
-    private var binding: ViewFormEditGeometryBinding
+    private var binding: ViewFormEditGeometryBinding = ViewFormEditGeometryBinding.inflate(LayoutInflater.from(context), this, true)
     private var clickListener: ((field: FormField<ObservationLocation>) -> Unit)? = null
     private var required = false
-
-    init {
-        binding = ViewFormEditGeometryBinding.inflate(LayoutInflater.from(context), this, true)
-    }
 
     override fun bind(formField: FormField<ObservationLocation>) {
         binding.field = formField

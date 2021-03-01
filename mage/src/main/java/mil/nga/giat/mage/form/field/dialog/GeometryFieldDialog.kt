@@ -8,7 +8,6 @@ import android.os.Build
 import android.os.Bundle
 import android.os.VibrationEffect
 import android.os.Vibrator
-import android.preference.PreferenceManager
 import android.text.Editable
 import android.text.InputFilter
 import android.text.TextWatcher
@@ -25,7 +24,7 @@ import androidx.core.graphics.drawable.DrawableCompat
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.ViewModelProviders
+import androidx.preference.PreferenceManager
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
@@ -74,7 +73,14 @@ class GeometryFieldDialog : DialogFragment(),
         CoordinateChangeListener,
         TabLayout.OnTabSelectedListener
 {
+
+    interface GeometryFieldDialogListener {
+        fun onDismiss()
+    }
+
     private lateinit var model: FormViewModel
+
+    private var listener: GeometryFieldDialogListener? = null
 
     private var location: ObservationLocation = ObservationLocation(ObservationLocation.MANUAL_PROVIDER, LatLng(0.0, 0.0))
     private var newDrawing: Boolean = false
@@ -99,31 +105,32 @@ class GeometryFieldDialog : DialogFragment(),
     private var rectangleSameXSide1: Boolean = false
     private val shapeConverter = GoogleMapShapeConverter()
 
-    private var fieldKey: String? = null
     private var field: FormField<ObservationLocation>? = null
 
     private val locationFormatter = DecimalFormat("0.000000")
 
     companion object {
-        private val FORM_FIELD_KEY_EXTRA = "FORM_FIELD_KEY_EXTRA"
-        private var LOCATION_EXTRA = "LOCATION"
-        private var MARKER_BITMAP_EXTRA = "MARKER_BITMAP"
-        private var NEW_OBSERVATION_EXTRA = "NEW_OBSERVATION"
-        private val DEFAULT_MARKER_ASSET = "markers/default.png"
+        private const val FORM_FIELD_KEY_EXTRA = "FORM_FIELD_KEY_EXTRA"
+        private const val LOCATION_EXTRA = "LOCATION"
+        private const val MARKER_BITMAP_EXTRA = "MARKER_BITMAP"
+        private const val NEW_OBSERVATION_EXTRA = "NEW_OBSERVATION"
+        private const val DEFAULT_MARKER_ASSET = "markers/default.png"
 
-        private val WGS84_COORDINATE_TAB_POSITION = 0
-        private val MGRS_COORDINATE_TAB_POSITION = 1
+        private const val WGS84_COORDINATE_TAB_POSITION = 0
+        private const val MGRS_COORDINATE_TAB_POSITION = 1
 
         @JvmOverloads
-        fun newInstance(fieldKey: String? = null): GeometryFieldDialog {
+        fun newInstance(fieldKey: String? = null, listener: GeometryFieldDialogListener? = null): GeometryFieldDialog {
             val fragment = GeometryFieldDialog()
-            fragment.setStyle(DialogFragment.STYLE_NO_TITLE, 0)
+            fragment.setStyle(STYLE_NO_TITLE, 0)
 
             if (fieldKey != null) {
                 val bundle = Bundle()
                 bundle.putString(FORM_FIELD_KEY_EXTRA, fieldKey)
                 fragment.arguments = bundle
             }
+
+            fragment.listener = listener
 
             return fragment
         }
@@ -339,20 +346,19 @@ class GeometryFieldDialog : DialogFragment(),
                 vibrate(resources.getInteger(R.integer.shape_edit_add_long_click_vibrate).toLong())
 
                 if (shapeMarkers == null) {
-                    var geometry: Geometry? = null
                     val firstPoint = Point(point.longitude, point.latitude)
-                    when (shapeType) {
+                    val geometry = when (shapeType) {
                         GeometryType.LINESTRING -> {
                             val lineString = LineString()
                             lineString.addPoint(firstPoint)
-                            geometry = lineString
+                            lineString
                         }
                         GeometryType.POLYGON -> {
                             val polygon = Polygon()
                             val ring = LineString()
                             ring.addPoint(firstPoint)
                             polygon.addRing(ring)
-                            geometry = polygon
+                            polygon
                         }
                         else -> throw IllegalArgumentException("Unsupported Geometry Type: $shapeType")
                     }
@@ -361,11 +367,11 @@ class GeometryFieldDialog : DialogFragment(),
                     val markerOptions = getEditMarkerOptions()
                     markerOptions.position(point)
                     val marker = map.addMarker(markerOptions)
-                    var shape: ShapeMarkers? = null
-                    val mapShape = shapeMarkers?.getShape()
-                    when (mapShape?.getShapeType()) {
+                    val shape: ShapeMarkers?
+                    val mapShape = shapeMarkers?.shape
+                    when (mapShape?.shapeType) {
                         GoogleMapShapeType.POLYLINE_MARKERS -> {
-                            val polylineMarkers = mapShape.getShape() as PolylineMarkers
+                            val polylineMarkers = mapShape.shape as PolylineMarkers
                             shape = polylineMarkers
                             if (newDrawing) {
                                 polylineMarkers.add(marker)
@@ -374,7 +380,7 @@ class GeometryFieldDialog : DialogFragment(),
                             }
                         }
                         GoogleMapShapeType.POLYGON_MARKERS -> {
-                            val polygonMarkers = shapeMarkers?.getShape()?.getShape() as PolygonMarkers
+                            val polygonMarkers = shapeMarkers?.shape?.shape as PolygonMarkers
                             shape = polygonMarkers
                             if (newDrawing) {
                                 polygonMarkers.add(marker)
@@ -382,7 +388,7 @@ class GeometryFieldDialog : DialogFragment(),
                                 polygonMarkers.addNew(marker)
                             }
                         }
-                        else -> throw IllegalArgumentException("Unsupported Shape Type: " + mapShape?.getShapeType())
+                        else -> throw IllegalArgumentException("Unsupported Shape Type: " + mapShape?.shapeType)
                     }
                     shapeMarkers?.add(marker, shape)
                     selectShapeMarker(marker)
@@ -391,7 +397,7 @@ class GeometryFieldDialog : DialogFragment(),
             } else if (!shapeMarkersValid() && selectedMarker != null) {
                 // Allow long click to expand a zero area rectangle
                 vibrate(resources.getInteger(R.integer.shape_edit_add_long_click_vibrate).toLong())
-                selectedMarker!!.setPosition(point)
+                selectedMarker!!.position = point
                 updateShape(selectedMarker!!)
                 updateHint()
             }
@@ -409,7 +415,7 @@ class GeometryFieldDialog : DialogFragment(),
             val shape = shapeMarkers?.getShapeMarkers(marker)
             if (shape != null) {
 
-                if (selectedMarker?.getId() != marker.id) {
+                if (selectedMarker?.id != marker.id) {
                     selectShapeMarker(marker)
                 } else if (!isRectangle && shapeMarkers != null && shapeMarkers!!.size() > 1) {
 
@@ -419,13 +425,13 @@ class GeometryFieldDialog : DialogFragment(),
                     deleteDialog.setMessage(String.format(getString(R.string.location_edit_delete_point_message),
                             locationFormatter.format(position.latitude), locationFormatter.format(position.longitude)))
                     deleteDialog.setNegativeButton(R.string.cancel, null)
-                    deleteDialog.setPositiveButton(R.string.delete) { dialog, which ->
+                    deleteDialog.setPositiveButton(R.string.delete) { _, _ ->
                         val markers = getShapeMarkers()
 
                         // Find the index of the marker being deleted
                         var index = 1
                         for (i in markers.indices) {
-                            if (markers.get(i) == marker) {
+                            if (markers[i] == marker) {
                                 index = i
                                 break
                             }
@@ -441,7 +447,7 @@ class GeometryFieldDialog : DialogFragment(),
                             index = markers.size - 1
                         }
                         // Get the new marker to select
-                        val selectMarker = markers.get(index)
+                        val selectMarker = markers[index]
 
                         // Delete the marker, select the new, and update the shape
                         shapeMarkers?.delete(marker)
@@ -464,7 +470,7 @@ class GeometryFieldDialog : DialogFragment(),
     override fun onCoordinateChanged(coordinate: LatLng) {
         map.moveCamera(CameraUpdateFactory.newLatLng(coordinate))
         if (selectedMarker != null) {
-            selectedMarker!!.setPosition(coordinate)
+            selectedMarker!!.position = coordinate
             updateShape(selectedMarker!!)
         }
     }
@@ -472,25 +478,25 @@ class GeometryFieldDialog : DialogFragment(),
     override fun onCoordinateChangeStart(coordinate: LatLng) {
         // Move the camera to a selected line or polygon marker
         if (shapeType != GeometryType.POINT && selectedMarker != null) {
-            map.moveCamera(CameraUpdateFactory.newLatLng(selectedMarker!!.getPosition()))
+            map.moveCamera(CameraUpdateFactory.newLatLng(selectedMarker!!.position))
         }
 
         updateHint()
     }
 
-    override fun onCoordinateChangeEnd(coordinate: LatLng) {
+    override fun onCoordinateChangeEnd(coordinate: LatLng?) {
         updateHint()
     }
 
     private fun setupMap() {
-        map.moveCamera(location.getCameraUpdate(mapFragment.getView()))
+        map.moveCamera(location.getCameraUpdate(mapFragment.view))
 
-        if (tabs.getSelectedTabPosition() == MGRS_COORDINATE_TAB_POSITION) {
+        if (tabs.selectedTabPosition == MGRS_COORDINATE_TAB_POSITION) {
             mgrsTileOverlay = map.addTileOverlay(TileOverlayOptions().tileProvider(MGRSTileProvider(context)))
         }
 
-        map.getUiSettings().isCompassEnabled = false
-        map.getUiSettings().isRotateGesturesEnabled = false
+        map.uiSettings.isCompassEnabled = false
+        map.uiSettings.isRotateGesturesEnabled = false
         map.setOnCameraMoveListener(this)
         map.setOnCameraMoveStartedListener(this)
         map.setOnMapClickListener(this)
@@ -503,7 +509,7 @@ class GeometryFieldDialog : DialogFragment(),
         setupMapButton(editRectangleButton)
         setupMapButton(editPolygonButton)
 
-        val geometry = location.getGeometry()
+        val geometry = location.geometry
         setShapeType(geometry)
         addMapShape(geometry)
     }
@@ -519,7 +525,7 @@ class GeometryFieldDialog : DialogFragment(),
      * Clear the focus from the coordinate text entries
      */
     private fun clearCoordinateFocus() {
-        val tabPosition = tabs.getSelectedTabPosition()
+        val tabPosition = tabs.selectedTabPosition
         if (tabPosition == WGS84_COORDINATE_TAB_POSITION) {
             wgs84CoordinateFragment.clearFocus()
         } else if (tabPosition == MGRS_COORDINATE_TAB_POSITION) {
@@ -594,10 +600,10 @@ class GeometryFieldDialog : DialogFragment(),
      * Set the shape type selection to match the current shape type
      */
     private fun setShapeTypeSelection() {
-        editPointButton.setSelected(shapeType == GeometryType.POINT)
-        editLineButton.setSelected(shapeType == GeometryType.LINESTRING)
-        editRectangleButton.setSelected(shapeType == GeometryType.POLYGON && isRectangle)
-        editPolygonButton.setSelected(shapeType == GeometryType.POLYGON && !isRectangle)
+        editPointButton.isSelected = shapeType == GeometryType.POINT
+        editLineButton.isSelected = shapeType == GeometryType.LINESTRING
+        editRectangleButton.isSelected = shapeType == GeometryType.POLYGON && isRectangle
+        editPolygonButton.isSelected = shapeType == GeometryType.POLYGON && !isRectangle
     }
 
     override fun onClick(v: View) {
@@ -644,7 +650,7 @@ class GeometryFieldDialog : DialogFragment(),
                     if (markers.size == 4 || markers.size == 5) {
                         val points = ArrayList<Point>()
                         for (marker in markers) {
-                            points.add(shapeConverter.toPoint(marker.getPosition()))
+                            points.add(shapeConverter.toPoint(marker.position))
                         }
                         formRectangle = ObservationLocation.checkIfRectangle(points)
                     }
@@ -671,10 +677,10 @@ class GeometryFieldDialog : DialogFragment(),
                 changeDialog.setTitle(title)
                 changeDialog.setMessage(message)
                 changeDialog.setNegativeButton(R.string.cancel
-                ) { dialog, which -> revertShapeType() }
+                ) { _, _ -> revertShapeType() }
                 changeDialog.setOnCancelListener { revertShapeType() }
                 changeDialog.setPositiveButton(R.string.change
-                ) { dialog, which -> changeShapeType(selectedType, selectedRectangle) }
+                ) { _, _ -> changeShapeType(selectedType, selectedRectangle) }
                 changeDialog.show()
 
             } else {
@@ -693,11 +699,11 @@ class GeometryFieldDialog : DialogFragment(),
 
         isRectangle = selectedRectangle
 
-        var geometry: Geometry? = null
+        val geometry: Geometry?
 
         // Changing from point to a shape
         if (shapeType == GeometryType.POINT) {
-            val center = map.getCameraPosition().target
+            val center = map.cameraPosition.target
             val firstPoint = Point(center.longitude, center.latitude)
             val lineString = LineString()
             lineString.addPoint(firstPoint)
@@ -710,13 +716,13 @@ class GeometryFieldDialog : DialogFragment(),
                 lineString.addPoint(firstPoint)
             } else {
                 newDrawing = true
-            }// Changing to a line or polygon
-            when (selectedType) {
-                GeometryType.LINESTRING -> geometry = lineString
+            } // Changing to a line or polygon
+            geometry = when (selectedType) {
+                GeometryType.LINESTRING -> lineString
                 GeometryType.POLYGON -> {
                     val polygon = Polygon()
                     polygon.addRing(lineString)
-                    geometry = polygon
+                    polygon
                 }
                 else -> throw IllegalArgumentException("Unsupported Geometry Type: $selectedType")
             }
@@ -727,13 +733,13 @@ class GeometryFieldDialog : DialogFragment(),
             newDrawing = false
         } else {
 
-            var lineString: LineString? = null
+            var lineString: LineString
             if (shapeMarkers != null) {
 
                 var markers = getShapeMarkers()
 
                 // If all markers are in the same spot only keep one
-                if (!markers.isEmpty() && !multipleMarkerPositions(markers)) {
+                if (markers.isNotEmpty() && !multipleMarkerPositions(markers)) {
                     markers = markers.subList(0, 1)
                 }
 
@@ -744,7 +750,7 @@ class GeometryFieldDialog : DialogFragment(),
                     if (startLocation == null && selectedMarker != null && selectedMarker == marker) {
                         startLocation = latLngPoints.size
                     }
-                    latLngPoints.add(marker.getPosition())
+                    latLngPoints.add(marker.position)
                 }
 
                 // When going from the polygon or rectangle to a line
@@ -770,9 +776,8 @@ class GeometryFieldDialog : DialogFragment(),
             }
 
             when (selectedType) {
-
                 GeometryType.LINESTRING -> {
-                    newDrawing = lineString!!.points.size <= 1
+                    newDrawing = lineString.points.size <= 1
                     geometry = lineString
                 }
 
@@ -780,7 +785,7 @@ class GeometryFieldDialog : DialogFragment(),
 
                     // If converting to a rectangle, use the current shape bounds
                     if (selectedRectangle) {
-                        val lineStringCopy = lineString!!.copy() as LineString
+                        val lineStringCopy = lineString.copy() as LineString
                         GeometryUtils.minimizeGeometry(lineStringCopy, ProjectionConstants.WGS84_HALF_WORLD_LON_WIDTH)
                         val envelope = GeometryEnvelopeBuilder.buildEnvelope(lineStringCopy)
                         lineString = LineString()
@@ -794,7 +799,7 @@ class GeometryFieldDialog : DialogFragment(),
 
                     val polygon = Polygon()
                     polygon.addRing(lineString)
-                    newDrawing = lineString!!.points.size <= 2
+                    newDrawing = lineString.points.size <= 2
                     geometry = polygon
                 }
 
@@ -818,10 +823,9 @@ class GeometryFieldDialog : DialogFragment(),
         var newPointPosition: LatLng? = null
 
         return if (selectedMarker != null) {
-             selectedMarker!!.getPosition()
+             selectedMarker!!.position
         } else {
-            val latLng: LatLng? = null
-            val tabPosition = tabs.getSelectedTabPosition()
+            val tabPosition = tabs.selectedTabPosition
             if (tabPosition == WGS84_COORDINATE_TAB_POSITION) {
                 wgs84CoordinateFragment.clearFocus()
                 newPointPosition = wgs84CoordinateFragment.getLatLng()
@@ -831,7 +835,7 @@ class GeometryFieldDialog : DialogFragment(),
             }
 
             if (newPointPosition == null) {
-                val position = map.getCameraPosition()
+                val position = map.cameraPosition
                 LatLng(position.target.latitude, position.target.longitude)
             } else {
                 newPointPosition
@@ -848,7 +852,7 @@ class GeometryFieldDialog : DialogFragment(),
 
         var previousSelectedMarkerLocation: LatLng? = null
         if (selectedMarker != null) {
-            previousSelectedMarkerLocation = selectedMarker?.getPosition()
+            previousSelectedMarkerLocation = selectedMarker?.position
             selectedMarker = null
             clearRectangleCorners()
         }
@@ -866,10 +870,10 @@ class GeometryFieldDialog : DialogFragment(),
             shapeMarkers = shapeConverter.addShapeToMapAsMarkers(map, shape, null,
                     editMarkerOptions, editMarkerOptions, null, editPolylineOptions, editPolygonOptions)
             val markers = getShapeMarkers()
-            var selectMarker = markers.get(0)
+            var selectMarker = markers[0]
             if (previousSelectedMarkerLocation != null) {
                 for (marker in markers) {
-                    if (marker.getPosition() == previousSelectedMarkerLocation) {
+                    if (marker.position == previousSelectedMarkerLocation) {
                         selectMarker = marker
                         break
                     }
@@ -896,7 +900,7 @@ class GeometryFieldDialog : DialogFragment(),
     private fun updateHint(dragging: Boolean) {
 
         var locationEditHasFocus = false
-        val tabPosition = tabs.getSelectedTabPosition()
+        val tabPosition = tabs.selectedTabPosition
         if (tabPosition == WGS84_COORDINATE_TAB_POSITION) {
             locationEditHasFocus = wgs84CoordinateFragment.hasFocus()
         } else if (tabPosition == MGRS_COORDINATE_TAB_POSITION) {
@@ -906,46 +910,48 @@ class GeometryFieldDialog : DialogFragment(),
         var hint = ""
 
         when (shapeType) {
-            GeometryType.POINT -> if (locationEditHasFocus) {
-                hint = getString(R.string.location_edit_hint_point_edit)
+            GeometryType.POINT -> hint = if (locationEditHasFocus) {
+                getString(R.string.location_edit_hint_point_edit)
             } else {
-                hint = getString(R.string.location_edit_hint_point)
+                getString(R.string.location_edit_hint_point)
             }
             GeometryType.POLYGON -> {
                 if (isRectangle) {
-                    if (locationEditHasFocus) {
-                        hint = getString(R.string.location_edit_hint_rectangle_edit)
+                    hint = if (locationEditHasFocus) {
+                        getString(R.string.location_edit_hint_rectangle_edit)
                     } else if (dragging) {
-                        hint = getString(R.string.location_edit_hint_rectangle_drag)
+                        getString(R.string.location_edit_hint_rectangle_drag)
                     } else if (!multipleShapeMarkerPositions()) {
-                        hint = getString(R.string.location_edit_hint_rectangle_new)
+                        getString(R.string.location_edit_hint_rectangle_new)
                     } else {
-                        hint = getString(R.string.location_edit_hint_rectangle)
+                        getString(R.string.location_edit_hint_rectangle)
                     }
                 } else {
-                    if (locationEditHasFocus) {
-                        hint = getString(R.string.location_edit_hint_shape_edit)
+                    hint = if (locationEditHasFocus) {
+                        getString(R.string.location_edit_hint_shape_edit)
                     } else if (dragging) {
-                        hint = getString(R.string.location_edit_hint_shape_drag)
+                        getString(R.string.location_edit_hint_shape_drag)
                     } else if (newDrawing) {
-                        hint = getString(R.string.location_edit_hint_shape_new)
+                        getString(R.string.location_edit_hint_shape_new)
                     } else {
-                        hint = getString(R.string.location_edit_hint_shape)
+                        getString(R.string.location_edit_hint_shape)
                     }
                 }
             }
-            GeometryType.LINESTRING -> if (locationEditHasFocus) {
-                hint = getString(R.string.location_edit_hint_shape_edit)
-            } else if (dragging) {
-                hint = getString(R.string.location_edit_hint_shape_drag)
-            } else if (newDrawing) {
-                hint = getString(R.string.location_edit_hint_shape_new)
-            } else {
-                hint = getString(R.string.location_edit_hint_shape)
+            GeometryType.LINESTRING -> {
+                hint = if (locationEditHasFocus) {
+                    getString(R.string.location_edit_hint_shape_edit)
+                } else if (dragging) {
+                    getString(R.string.location_edit_hint_shape_drag)
+                } else if (newDrawing) {
+                    getString(R.string.location_edit_hint_shape_new)
+                } else {
+                    getString(R.string.location_edit_hint_shape)
+                }
             }
         }
 
-        hintText.setText(hint)
+        hintText.text = hint
     }
 
     /**
@@ -963,18 +969,19 @@ class GeometryFieldDialog : DialogFragment(),
      */
     private fun updateLocation() {
         // Save coordinate system used for edit
-        val coordinateSystem = if (tabs.getSelectedTabPosition() == 0) CoordinateSystem.WGS84 else CoordinateSystem.MGRS
+        val coordinateSystem = if (tabs.selectedTabPosition == 0) CoordinateSystem.WGS84 else CoordinateSystem.MGRS
         val editor = PreferenceManager.getDefaultSharedPreferences(context).edit()
         editor.putInt(resources.getString(R.string.coordinateSystemEditKey), coordinateSystem.preferenceValue).apply()
 
         val geometry = convertToGeometry() ?: return
-        location.setGeometry(geometry)
-        location.setProvider(ObservationLocation.MANUAL_PROVIDER)
-        location.setAccuracy(0.0f)
-        location.setTime(System.currentTimeMillis())
+        location.geometry = geometry
+        location.provider = ObservationLocation.MANUAL_PROVIDER
+        location.accuracy = 0.0f
+        location.time = System.currentTimeMillis()
 
         field?.value = location
 
+        listener?.onDismiss()
         dismiss()
     }
 
@@ -992,16 +999,16 @@ class GeometryFieldDialog : DialogFragment(),
 
         val geometry: Geometry
         if (shapeType == GeometryType.POINT) {
-            val center = map.getCameraPosition().target
+            val center = map.cameraPosition.target
             geometry = Point(center.longitude, center.latitude)
         } else {
             // general shape validity test
-            if (!(shapeMarkers?.isValid() ?: false)) {
+            if (shapeMarkers?.isValid != true) {
                 Snackbar.make(coordinatorLayout, getString(R.string.location_edit_error_shape), Snackbar.LENGTH_SHORT).show()
                 return null
             }
 
-            geometry = shapeConverter.toGeometry(shapeMarkers?.getShape())
+            geometry = shapeConverter.toGeometry(shapeMarkers?.shape)
 
             // validate polygon does not intersect itself
             if (shapeType == GeometryType.POLYGON && MapUtils.polygonHasKinks(geometry as Polygon)) {
@@ -1025,12 +1032,12 @@ class GeometryFieldDialog : DialogFragment(),
             val markers = getShapeMarkers()
             var afterMatchesX = rectangleSameXSide1
             for (i in markers.indices) {
-                val shapeMarker = markers.get(i)
-                if (shapeMarker.getId() == marker.id) {
+                val shapeMarker = markers[i]
+                if (shapeMarker.id == marker.id) {
                     val beforeIndex = if (i > 0) i - 1 else markers.size - 1
                     val afterIndex = if (i < markers.size - 1) i + 1 else 0
-                    val before = markers.get(beforeIndex)
-                    val after = markers.get(afterIndex)
+                    val before = markers[beforeIndex]
+                    val after = markers[afterIndex]
                     if (afterMatchesX) {
                         rectangleSameXMarker = after
                         rectangleSameYMarker = before
@@ -1051,12 +1058,10 @@ class GeometryFieldDialog : DialogFragment(),
      */
     private fun updateRectangleCorners(marker: Marker) {
         if (rectangleSameXMarker != null) {
-            rectangleSameXMarker!!.setPosition(
-                    LatLng(rectangleSameXMarker!!.getPosition().latitude, marker.position.longitude))
+            rectangleSameXMarker!!.position = LatLng(rectangleSameXMarker!!.position.latitude, marker.position.longitude)
         }
         if (rectangleSameYMarker != null) {
-            rectangleSameYMarker!!.setPosition(
-                    LatLng(marker.position.latitude, rectangleSameYMarker!!.getPosition().longitude))
+            rectangleSameYMarker!!.position = LatLng(marker.position.latitude, rectangleSameYMarker!!.position.longitude)
         }
     }
 
@@ -1075,9 +1080,9 @@ class GeometryFieldDialog : DialogFragment(),
      */
     private fun selectShapeMarker(marker: Marker) {
         clearRectangleCorners()
-        if (selectedMarker != null && selectedMarker!!.getId() != marker.id) {
+        if (selectedMarker != null && selectedMarker!!.id != marker.id) {
             selectedMarker!!.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.ic_shape_edit))
-            selectedMarker!!.setZIndex(0.0f)
+            selectedMarker!!.zIndex = 0.0f
         }
         selectedMarker = marker
         updateLatitudeLongitudeText(marker.position)
@@ -1095,7 +1100,7 @@ class GeometryFieldDialog : DialogFragment(),
         updateRectangleCorners(selectedMarker)
         if (shapeMarkers != null) {
             shapeMarkers!!.update()
-            if (shapeMarkers!!.isEmpty()) {
+            if (shapeMarkers!!.isEmpty) {
                 shapeMarkers = null
             }
         }
@@ -1107,7 +1112,7 @@ class GeometryFieldDialog : DialogFragment(),
      * @return true if valid
      */
     private fun shapeMarkersValid(): Boolean {
-        return multipleShapeMarkerPositions() && shapeMarkers?.isValid() ?: false
+        return multipleShapeMarkerPositions() && shapeMarkers?.isValid ?: false
     }
 
     /**
@@ -1150,7 +1155,7 @@ class GeometryFieldDialog : DialogFragment(),
      */
     private fun getShapeMarkers(): List<Marker> {
         return if (shapeMarkers != null) {
-            shapeMarkers!!.getShapeMarkersMap().values.iterator().next().getMarkers()
+            shapeMarkers!!.shapeMarkersMap.values.iterator().next().markers
         } else {
             listOf()
         }
@@ -1209,14 +1214,14 @@ class GeometryFieldDialog : DialogFragment(),
     }
 
     class WGS84CoordinateFragment : Fragment(), TextWatcher, View.OnFocusChangeListener {
-        private val LOCATION_PRECISION = "%.6f"
-
-        var coordinateChangeListener: CoordinateChangeListener? = null
+        companion object {
+            private const val LOCATION_PRECISION = "%.6f"
+            private const val LOCATION_MAX_PRECISION = 6
+        }
 
         private lateinit var latitudeEdit: EditText
         private lateinit var longitudeEdit: EditText
-
-        private val LOCATION_MAX_PRECISION = 6
+        lateinit var coordinateChangeListener: CoordinateChangeListener
 
         override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
             return inflater.inflate(R.layout.wgs84_location_edit, container, false)
@@ -1235,7 +1240,7 @@ class GeometryFieldDialog : DialogFragment(),
             latitudeEdit.addTextChangedListener(this)
             latitudeEdit.onFocusChangeListener = this
 
-            latitudeEdit.setOnEditorActionListener(TextView.OnEditorActionListener { v, actionId, event ->
+            latitudeEdit.setOnEditorActionListener(TextView.OnEditorActionListener { _, actionId, _ ->
                 if (actionId == EditorInfo.IME_ACTION_DONE) {
                     latitudeEdit.clearFocus()
                     return@OnEditorActionListener true
@@ -1243,7 +1248,7 @@ class GeometryFieldDialog : DialogFragment(),
                 false
             })
 
-            longitudeEdit.setOnEditorActionListener(TextView.OnEditorActionListener { v, actionId, event ->
+            longitudeEdit.setOnEditorActionListener(TextView.OnEditorActionListener { _, actionId, _ ->
                 if (actionId == EditorInfo.IME_ACTION_DONE) {
                     longitudeEdit.clearFocus()
                     return@OnEditorActionListener true
@@ -1259,11 +1264,11 @@ class GeometryFieldDialog : DialogFragment(),
                 val latLng = getLatLng()
 
                 if (longitudeEdit.hasFocus() || latitudeEdit.hasFocus()) {
-                    coordinateChangeListener!!.onCoordinateChangeStart(latLng)
+                    coordinateChangeListener.onCoordinateChangeStart(latLng)
                 } else {
                     val imm = activity?.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
                     imm.hideSoftInputFromWindow(v.getApplicationWindowToken(), 0)
-                    coordinateChangeListener!!.onCoordinateChangeEnd(latLng)
+                    coordinateChangeListener.onCoordinateChangeEnd(latLng)
                 }
             }
         }
@@ -1281,7 +1286,7 @@ class GeometryFieldDialog : DialogFragment(),
                 latLng = LatLng(0.0, 0.0)
             }
 
-            coordinateChangeListener!!.onCoordinateChanged(latLng)
+            coordinateChangeListener.onCoordinateChanged(latLng)
         }
 
         override fun beforeTextChanged(s: CharSequence, start: Int, count: Int, after: Int) {}
@@ -1303,21 +1308,17 @@ class GeometryFieldDialog : DialogFragment(),
             val longitudeString = longitudeEdit.text.toString()
 
             var latitude: Double? = null
-            if (!latitudeString.isEmpty()) {
+            if (latitudeString.isNotEmpty()) {
                 try {
                     latitude = java.lang.Double.parseDouble(latitudeString)
-                } catch (e: NumberFormatException) {
-                }
-
+                } catch (e: NumberFormatException) {}
             }
 
             var longitude: Double? = null
-            if (!longitudeString.isEmpty()) {
+            if (longitudeString.isNotEmpty()) {
                 try {
                     longitude = java.lang.Double.parseDouble(longitudeString)
-                } catch (e: NumberFormatException) {
-                }
-
+                } catch (e: NumberFormatException) {}
             }
 
             return if (latitude == null || longitude == null) {
@@ -1336,9 +1337,9 @@ class GeometryFieldDialog : DialogFragment(),
     }
 
     class MGRSCoordinateFragment : Fragment(), TextWatcher, View.OnFocusChangeListener {
-        var coordinateChangeListener: CoordinateChangeListener? = null
         private lateinit var mgrsEdit: EditText
         private lateinit var mgrsLayout: TextInputLayout
+        lateinit var coordinateChangeListener: CoordinateChangeListener
 
         override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
             return inflater.inflate(R.layout.mgrs_location_edit, container, false)
@@ -1350,7 +1351,7 @@ class GeometryFieldDialog : DialogFragment(),
 
             mgrsEdit.addTextChangedListener(this)
             mgrsEdit.onFocusChangeListener = this
-            mgrsEdit.setOnEditorActionListener(TextView.OnEditorActionListener { v, actionId, event ->
+            mgrsEdit.setOnEditorActionListener(TextView.OnEditorActionListener { _, actionId, _ ->
                 if (actionId == EditorInfo.IME_ACTION_DONE) {
                     mgrsEdit.clearFocus()
                     return@OnEditorActionListener true
@@ -1368,11 +1369,11 @@ class GeometryFieldDialog : DialogFragment(),
             val latLng = getLatLng()
 
             if (latLng == null) {
-                mgrsLayout.error = "Invaild MGRS Code"
+                mgrsLayout.error = "Invalid MGRS Code"
             } else {
                 mgrsLayout.error = null
                 mgrsLayout.isErrorEnabled = false
-                coordinateChangeListener!!.onCoordinateChanged(latLng)
+                coordinateChangeListener.onCoordinateChanged(latLng)
             }
         }
 
@@ -1384,11 +1385,11 @@ class GeometryFieldDialog : DialogFragment(),
             val latLng = getLatLng()
 
             if (mgrsEdit.hasFocus()) {
-                coordinateChangeListener!!.onCoordinateChangeStart(latLng)
+                coordinateChangeListener.onCoordinateChangeStart(latLng)
             } else {
                 val imm = activity?.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
                 imm.hideSoftInputFromWindow(v.applicationWindowToken, 0)
-                coordinateChangeListener!!.onCoordinateChangeEnd(latLng)
+                coordinateChangeListener.onCoordinateChangeEnd(latLng)
             }
         }
 
