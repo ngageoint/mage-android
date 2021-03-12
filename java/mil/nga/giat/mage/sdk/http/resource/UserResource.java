@@ -61,8 +61,11 @@ public class UserResource {
         @GET("/api/users")
         Call<Collection<User>> getUsers();
 
-        @POST("/api/users")
-        Call<JsonObject> createUser(@Body JsonObject body);
+        @POST("/api/users/signups")
+        Call<JsonObject> signup(@Body JsonObject body);
+
+        @POST("/api/users/signups/verifications")
+        Call<JsonObject> signupVerify(@Header("Authorization") String authorization, @Body JsonObject body);
 
         @GET("/api/users/{userId}")
         Call<User> getUser(@Path("userId") String userId);
@@ -164,9 +167,7 @@ public class UserResource {
         return users;
     }
 
-    public JsonObject createUser(String username, String displayname, String email, String phone, String uid, String password) throws Exception {
-        JsonObject user = null;
-
+    public void getCaptcha(String username, String background, Callback<JsonObject> callback) throws Exception {
         String baseUrl = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.serverURLKey), context.getString(R.string.serverURLDefaultValue));
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl(baseUrl)
@@ -176,29 +177,37 @@ public class UserResource {
 
         JsonObject json = new JsonObject();
         json.addProperty("username", username);
+        json.addProperty("background", background);
+        UserService service = retrofit.create(UserService.class);
+        service.signup(json).enqueue(callback);
+    }
+
+    public void verifyUser(
+            String displayname,
+            String email,
+            String phone,
+            String password,
+            String captchaText,
+            String token,
+            Callback<JsonObject> callback) throws Exception {
+        JsonObject user;
+
+        String baseUrl = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.serverURLKey), context.getString(R.string.serverURLDefaultValue));
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl(baseUrl)
+                .addConverterFactory(GsonConverterFactory.create())
+                .client(HttpClientManager.getInstance().httpClient())
+                .build();
+
+        JsonObject json = new JsonObject();
         json.addProperty("displayName", displayname);
         json.addProperty("email", email);
         json.addProperty("phone", phone);
-        json.addProperty("uid", uid);
         json.addProperty("password", password);
         json.addProperty("passwordconfirm", password);
-
+        json.addProperty("captchaText", captchaText);
         UserService service = retrofit.create(UserService.class);
-        Response<JsonObject> response = service.createUser(json).execute();
-
-        if (response.isSuccessful()) {
-            user = response.body();
-        } else {
-            String errorMessage = "Unable to create user account, please contact MAGE administrator.";
-            if (response.errorBody() != null) {
-                errorMessage = response.errorBody().string();
-            }
-
-            Log.e(LOG_NAME, errorMessage);
-            throw new RuntimeException(errorMessage);
-        }
-
-        return user;
+        service.signupVerify(String.format("Bearer %s", token), json).enqueue(callback);
     }
 
     public User getUser(String userId) throws IOException {
