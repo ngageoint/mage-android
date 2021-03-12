@@ -8,6 +8,7 @@ import dagger.multibindings.IntoMap
 import mil.nga.giat.mage.dagger.factory.ViewModelFactory
 import mil.nga.giat.mage.dagger.factory.ViewModelKey
 import mil.nga.giat.mage.login.LoginViewModel
+import mil.nga.giat.mage.login.SignupViewModel
 
 @Module
 internal abstract class ViewModelModule {
@@ -19,5 +20,10 @@ internal abstract class ViewModelModule {
     @IntoMap
     @ViewModelKey(LoginViewModel::class)
     protected abstract fun loginViewModel(viewModel: LoginViewModel): ViewModel
+
+    @Binds
+    @IntoMap
+    @ViewModelKey(SignupViewModel::class)
+    protected abstract fun signupViewModel(viewModel: SignupViewModel): ViewModel
 }
 

@@ -23,7 +23,6 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.lifecycle.ViewModelProvider;
-import androidx.lifecycle.ViewModelProviders;
 import androidx.work.WorkManager;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -196,7 +195,7 @@ public class LoginActivity extends DaggerAppCompatActivity {
       // Setup login based on last api pull
       configureLogin();
 
-      viewModel = ViewModelProviders.of(this, viewModelFactory).get(LoginViewModel.class);
+      viewModel = new ViewModelProvider(this, viewModelFactory).get(LoginViewModel.class);
       viewModel.getApiStatus().observe(this, valid -> observeApi());
 
       viewModel.getAuthenticationState().observe(this, this::observeAuthenticationState);

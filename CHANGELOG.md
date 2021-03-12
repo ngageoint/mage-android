@@ -3,7 +3,14 @@ All notable changes to this project will be documented in this file.
 Adheres to [Semantic Versioning](http://semver.org/).
 
 ---
-## 6.3.2 (TBD)
+## 6.3.3 (TBD)
+
+##### Features
+* Local user signup captcha
+
+##### Bug Fixes
+
+## 6.3.2
 
 ##### Features
 * Show mgrs grid on observation geometry edit view if enabled
