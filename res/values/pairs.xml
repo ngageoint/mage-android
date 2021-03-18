@@ -80,9 +80,6 @@
 
     <string name="authenticationStrategiesKey">authenticationStrategies</string>
 
-    <integer name="compatibleVersionMajor">5</integer>
-    <integer name="compatibleVersionMinor">4</integer>
-
     <!-- from the server /api call -->
     <string name="serverVersionMajorKey">gVersionMajor</string>
     <string name="serverVersionMinorKey">gVersionMinor</string>

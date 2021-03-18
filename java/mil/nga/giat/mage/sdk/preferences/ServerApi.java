@@ -10,6 +10,7 @@ import org.json.JSONObject;
 
 import java.util.Iterator;
 
+import mil.nga.giat.mage.sdk.Compatibility;
 import mil.nga.giat.mage.sdk.R;
 import mil.nga.giat.mage.sdk.http.resource.ApiResource;
 import okhttp3.ResponseBody;
@@ -77,17 +78,17 @@ public class ServerApi {
         // check versions
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
 
-        Integer serverMajorVersion = null;
+        Integer majorVersion = null;
         if (sharedPreferences.contains(context.getString(R.string.serverVersionMajorKey))) {
-            serverMajorVersion = sharedPreferences.getInt(context.getString(R.string.serverVersionMajorKey), 0);
+            majorVersion = sharedPreferences.getInt(context.getString(R.string.serverVersionMajorKey), 0);
         }
 
-        Integer serverMinorVersion = null;
+        Integer minorVersion = null;
         if (sharedPreferences.contains(context.getString(R.string.serverVersionMinorKey))) {
-            serverMinorVersion = sharedPreferences.getInt(context.getString(R.string.serverVersionMinorKey), 0);
+            minorVersion = sharedPreferences.getInt(context.getString(R.string.serverVersionMinorKey), 0);
         }
 
-        return PreferenceHelper.getInstance(context).validateServerVersion(serverMajorVersion, serverMinorVersion);
+        return Compatibility.Companion.isCompatibleWith(majorVersion, minorVersion);
     }
 
     private void parseAuthenticationStrategies(JSONObject json) {

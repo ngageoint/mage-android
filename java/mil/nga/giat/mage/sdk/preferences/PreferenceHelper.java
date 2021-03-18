@@ -159,29 +159,6 @@ public class PreferenceHelper implements SharedPreferences.OnSharedPreferenceCha
 		}
 	}
 
-	public boolean validateServerVersion(Integer majorVersion, Integer minorVersion) {
-		Integer compatibleMajorVersion = mContext.getResources().getInteger(R.integer.compatibleVersionMajor);
-		Integer compatibleMinorVersion = mContext.getResources().getInteger(R.integer.compatibleVersionMinor);
-
-		if (majorVersion == null || minorVersion == null) {
-			return false;
-		} else {
-			Log.d(LOG_NAME, "server major version: " + majorVersion);
-			Log.d(LOG_NAME, "server minor version: " + minorVersion);
-
-			Log.d(LOG_NAME, "compatibleMajorVersion: " + compatibleMajorVersion);
-			Log.d(LOG_NAME, "compatibleMinorVersion: " + compatibleMinorVersion);
-
-			if (!compatibleMajorVersion.equals(majorVersion)) {
-				return false;
-			} else if (compatibleMinorVersion > minorVersion) {
-				return false;
-			} else {
-				return true;
-			}
-		}
-	}
-
 	@Override
 	public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
 		Map<String, ?> sharedPreferenceMap = sharedPreferences.getAll();
