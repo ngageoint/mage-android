@@ -13,7 +13,7 @@ import retrofit2.Callback
 import retrofit2.Response
 import javax.inject.Inject
 
-class SignupViewModel @Inject constructor(
+open class SignupViewModel @Inject constructor(
    @ApplicationContext val context: Context,
    val preferences: SharedPreferences
 ): ViewModel() {
@@ -42,10 +42,10 @@ class SignupViewModel @Inject constructor(
    private val _captchaState = MutableLiveData<CaptchaState>()
    val captchaState: LiveData<CaptchaState> = _captchaState
 
-   private val _signupState = MutableLiveData<SignupState>()
+   protected val _signupState = MutableLiveData<SignupState>()
    val signupState: LiveData<SignupState> = _signupState
 
-   private val _signupStatus = MutableLiveData<SignupStatus>()
+   protected val _signupStatus = MutableLiveData<SignupStatus>()
    val signupStatus: LiveData<SignupStatus> = _signupStatus
 
    private val _captcha = MutableLiveData<String>()
@@ -76,7 +76,7 @@ class SignupViewModel @Inject constructor(
       _captchaState.value = CaptchaState.LOADING
    }
 
-   fun signup(account: Account, captchaText: String) {
+   open fun signup(account: Account, captchaText: String) {
       val userResource = UserResource(context)
       userResource.verifyUser(account.displayName, account.email, account.phone, account.password, captchaText, captchaToken, object: Callback<JsonObject> {
          override fun onResponse(call: Call<JsonObject>, response: Response<JsonObject>) {
@@ -104,6 +104,7 @@ class SignupViewModel @Inject constructor(
       _signupStatus.value = null
       _signupState.value = SignupState.LOADING
    }
+
    fun cancel() {
       _signupState.value = SignupState.CANCEL
    }

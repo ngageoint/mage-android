@@ -25,11 +25,11 @@ import mil.nga.giat.mage.login.SignupViewModel.*
 import javax.inject.Inject
 
 
-class SignupActivity : DaggerAppCompatActivity() {
+open class SignupActivity : DaggerAppCompatActivity() {
 
 	@Inject
    lateinit var viewModelFactory: ViewModelProvider.Factory
-   private lateinit var viewModel: SignupViewModel
+   protected lateinit var viewModel: SignupViewModel
 
    public override fun onCreate(savedInstanceState: Bundle?) {
       super.onCreate(savedInstanceState)
@@ -83,7 +83,7 @@ class SignupActivity : DaggerAppCompatActivity() {
 
    }
 
-   private fun onSignupState(state: SignupState) {
+   protected fun onSignupState(state: SignupState) {
       if (state == SignupState.CANCEL) {
          done()
       } else {
@@ -107,7 +107,7 @@ class SignupActivity : DaggerAppCompatActivity() {
       }
    }
 
-   private fun onSignup(status: SignupStatus?) {
+   protected fun onSignup(status: SignupStatus?) {
       if (status == null) return
 
       if (status.success) {
@@ -127,7 +127,7 @@ class SignupActivity : DaggerAppCompatActivity() {
       }
    }
 
-   private fun signup() {
+   open protected fun signup() {
       displayname_layout.error = null
       username_layout.error = null
       email_layout.error = null
@@ -191,7 +191,7 @@ class SignupActivity : DaggerAppCompatActivity() {
       viewModel.cancel()
    }
 
-   private fun hideKeyboard() {
+   protected fun hideKeyboard() {
       val view: View = findViewById(android.R.id.content)
       val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
       imm.hideSoftInputFromWindow(view.windowToken, 0)

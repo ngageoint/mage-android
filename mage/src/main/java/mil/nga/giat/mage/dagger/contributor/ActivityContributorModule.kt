@@ -3,6 +3,7 @@ package mil.nga.giat.mage.dagger.contributor
 import dagger.Module
 import dagger.android.ContributesAndroidInjector
 import mil.nga.giat.mage.LandingActivity
+import mil.nga.giat.mage._server5.login.SignupActivity_server5
 import mil.nga.giat.mage.disclaimer.DisclaimerActivity
 import mil.nga.giat.mage.event.EventActivity
 import mil.nga.giat.mage.event.EventsActivity
@@ -28,6 +29,9 @@ abstract class ActivityContributorModule {
 
     @ContributesAndroidInjector
     internal abstract fun contributeSignupActivity(): SignupActivity
+
+    @ContributesAndroidInjector
+    internal abstract fun contributeSignupActivity_server5(): SignupActivity_server5
 
     @ContributesAndroidInjector
     internal abstract fun contributeIdpActivity(): IdpLoginActivity

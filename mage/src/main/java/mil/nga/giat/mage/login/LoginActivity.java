@@ -42,6 +42,7 @@ import dagger.android.support.DaggerAppCompatActivity;
 import mil.nga.giat.mage.LandingActivity;
 import mil.nga.giat.mage.MageApplication;
 import mil.nga.giat.mage.R;
+import mil.nga.giat.mage._server5.login.SignupActivity_server5;
 import mil.nga.giat.mage.cache.CacheUtils;
 import mil.nga.giat.mage.disclaimer.DisclaimerActivity;
 import mil.nga.giat.mage.event.EventsActivity;
@@ -49,6 +50,7 @@ import mil.nga.giat.mage.login.LoginViewModel.Authentication;
 import mil.nga.giat.mage.login.idp.IdpLoginFragment;
 import mil.nga.giat.mage.login.ldap.LdapLoginFragment;
 import mil.nga.giat.mage.login.mage.MageLoginFragment;
+import mil.nga.giat.mage.sdk.Compatibility;
 import mil.nga.giat.mage.sdk.datastore.DaoStore;
 import mil.nga.giat.mage.sdk.datastore.user.Event;
 import mil.nga.giat.mage.sdk.datastore.user.User;
@@ -419,7 +421,14 @@ public class LoginActivity extends DaggerAppCompatActivity {
     * Fired when user clicks signup
     */
    public void signup(View view) {
-      Intent intent = new Intent(getApplicationContext(), SignupActivity.class);
+      Intent intent;
+      if (Compatibility.Companion.isServerVersion5(getApplicationContext())) {
+         intent = new Intent(getApplicationContext(), SignupActivity_server5.class);
+
+      } else {
+         intent = new Intent(getApplicationContext(), SignupActivity.class);
+      }
+
       startActivity(intent);
       finish();
    }
