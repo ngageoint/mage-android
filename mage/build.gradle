@@ -199,7 +199,7 @@ repositories {
 
 dependencies {
     ext {
-        google_play_services_version = '10.2.6'
+        google_play_services_version = '17.0.0'
         lifecycle_version= '2.2.0'
         dagger_version = '2.32'
         work_version = '1.0.0'
