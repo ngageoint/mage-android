@@ -11,7 +11,6 @@ import java.text.ParseException;
 import java.util.Date;
 
 import mil.nga.giat.mage.sdk.Compatibility;
-import mil.nga.giat.mage.sdk.R;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.http.resource.DeviceResource;
 import mil.nga.giat.mage.sdk.jackson.deserializer.UserDeserializer;
@@ -67,7 +66,7 @@ public class AuthorizationTask extends AsyncTask<String, Void, AuthorizationStat
 
 			// check server api version to ensure compatibility before continuing
 			JsonObject serverVersion = authorization.get("api").getAsJsonObject().get("version").getAsJsonObject();
-			if (Compatibility.Companion.isCompatibleWith(serverVersion.get("major").getAsInt(), serverVersion.get("minor").getAsInt())) {
+			if (!Compatibility.Companion.isCompatibleWith(serverVersion.get("major").getAsInt(), serverVersion.get("minor").getAsInt())) {
 				Log.e(LOG_NAME, "Server version not compatible");
 				return new AuthorizationStatus.Builder(AuthorizationStatus.Status.INVALID_SERVER).build();
 			}
