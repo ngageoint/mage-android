@@ -118,7 +118,7 @@ public class ProfileActivity extends DaggerAppCompatActivity implements MapAndVi
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 
-		setContentView(R.layout.fragment_profile);
+		setContentView(R.layout.activity_profile);
 		getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
 		final Context context = getApplicationContext();

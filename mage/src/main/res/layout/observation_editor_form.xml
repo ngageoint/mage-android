@@ -27,10 +27,11 @@
             android:background="@color/background_dialog">
 
             <!-- This will get populated programmatically -->
-            <fragment
-                class="mil.nga.giat.mage.form.FormFragment"
+            <androidx.fragment.app.FragmentContainerView
+                android:id="@+id/form_fragment"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"/>
+                android:layout_height="wrap_content"
+                android:name="mil.nga.giat.mage.form.FormFragment" />
 
         </LinearLayout>
 
