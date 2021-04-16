@@ -1,7 +1,6 @@
 import org.ajoberstar.grgit.Grgit
 
 plugins {
-    id 'net.linguica.maven-settings' version '0.5'
     id 'org.ajoberstar.grgit' version '1.6.0'
 }
 apply plugin: 'com.android.application'
@@ -125,76 +124,31 @@ android {
     useLibrary 'android.test.mock'
 }
 
-def configurePom(pom) {
-    pom.withXml {
-        // for dependencies and exclusions
-        def dependenciesNode = asNode().appendNode('dependencies')
-        project.configurations.compile.allDependencies.each { Dependency dep ->
-            if (dep instanceof SelfResolvingDependency) {
-                // apparently the files() dependency results in a SelfResolvingDependency - skip it
-                return
-            }
-
-            def dependencyNode = dependenciesNode.appendNode('dependency')
-            dependencyNode.appendNode('groupId', dep.group)
-            dependencyNode.appendNode('artifactId', dep.name)
-            dependencyNode.appendNode('version', dep.version)
-
-            // for exclusions
-            if (dep.excludeRules.size() > 0) {
-                def exclusions = dependencyNode.appendNode('exclusions')
-                dep.excludeRules.each { ExcludeRule ex ->
-                    def exclusion = exclusions.appendNode('exclusion')
-                    exclusion.appendNode('groupId', ex.group)
-                    exclusion.appendNode('artifactId', ex.module)
+afterEvaluate {
+    publishing {
+        publications {
+            defaultsApk(MavenPublication) {
+                artifactId archivesBaseName
+                pom.packaging 'apk'
+                artifact "${project.buildDir}/outputs/apk/defaults/release/${archivesBaseName}-defaults-release-unsigned.apk", {
+                    classifier 'unsigned'
+                }
+                if (file(signedApkPath).exists()) {
+                    artifact signedApkPath
+                }
+                if (file(signedDebugApkPath).exists()) {
+                    artifact signedDebugApkPath, {
+                        classifier 'debug'
+                    }
+                }
+                if (project.hasProperty('SKIP_DEBUG_SIGNING')) {
+                    artifact "${project.buildDir}/outputs/apk/defaults/debug/${archivesBaseName}-defaults-debug-unsigned.apk", {
+                        classifier 'debug-unsigned'
+                    }
                 }
             }
         }
     }
-}
-
-publishing {
-    publications {
-        defaultsApk(MavenPublication) {
-            artifactId archivesBaseName
-            pom.packaging 'apk'
-            configurePom(pom)
-            artifact "${project.buildDir}/outputs/apk/defaults/release/${archivesBaseName}-defaults-release-unsigned.apk", {
-                classifier 'unsigned'
-            }
-            if (file(signedApkPath).exists()) {
-                artifact signedApkPath
-            }
-            if (file(signedDebugApkPath).exists()) {
-                artifact signedDebugApkPath, {
-                    classifier 'debug'
-                }
-            }
-            if (project.hasProperty('SKIP_DEBUG_SIGNING')) {
-                artifact "${project.buildDir}/outputs/apk/defaults/debug/${archivesBaseName}-defaults-debug-unsigned.apk", {
-                    classifier 'debug-unsigned'
-                }
-            }
-        }
-    }
-}
-
-repositories {
-    def buildRepo = maven {
-        name 'build'
-        url project.properties['repositories.build.url'] ?: "${buildDir}/m2"
-    }
-    publishing.repositories.add buildRepo
-
-    if (project.hasProperty('repositories.shared.name')) {
-        def sharedRepo = maven {
-            name project.properties['repositories.shared.name']
-            url project.properties['repositories.shared.url']
-        }
-        publishing.repositories.add sharedRepo
-    }
-    mavenCentral()
-    google()
 }
 
 dependencies {
@@ -295,8 +249,7 @@ configure extensions.android, {
                 signingConfig signingConfigs.release
             }
         }
-    }
-    else {
+    } else {
         println 'no release key store configured - will skip signing'
     }
 
@@ -306,8 +259,7 @@ configure extensions.android, {
                 signingConfig null
             }
         }
-    }
-    else if (project.hasProperty('DEBUG_STORE_FILE') && file(project.getProperty('DEBUG_STORE_FILE')).exists()) {
+    } else if (project.hasProperty('DEBUG_STORE_FILE') && file(project.getProperty('DEBUG_STORE_FILE')).exists()) {
         signingConfigs {
             debug {
                 storeFile file(DEBUG_STORE_FILE)
