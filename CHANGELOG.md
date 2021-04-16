@@ -3,14 +3,24 @@ All notable changes to this project will be documented in this file.
 Adheres to [Semantic Versioning](http://semver.org/).
 
 ---
-## 6.3.3 (TBD)
+## 6.3.4 (TBD)
 
 ##### Features
-* Local user signup captcha
 
 ##### Bug Fixes
 
-## 6.3.2
+## [6.3.3](https://github.com/ngageoint/mage-android/releases/tag/6.3.3)
+
+##### Features
+* Local user signup captcha (Dependent on server version 6.0+)
+* Fix crash on older Android devices when viewing user profile
+* Fix crash on device rotation in observation edit activity
+* Update to latest google play services maps version
+
+##### Bug Fixes
+* Show full screen user avatar on tap from profile activity
+
+## [6.3.2](https://github.com/ngageoint/mage-android/releases/tag/6.3.2)
 
 ##### Features
 * Show mgrs grid on observation geometry edit view if enabled

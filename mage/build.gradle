@@ -11,9 +11,9 @@ apply plugin: 'kotlin-kapt'
 apply plugin: 'maven-publish'
 group 'mil.nga.giat.mage'
 archivesBaseName = 'mage-android'
-version '6.3.2'
+version '6.3.3'
 ext {
-    versionCode = 84
+    versionCode = 85
     sourceRefspec = Grgit.open().head().id
 
     //Test resources
