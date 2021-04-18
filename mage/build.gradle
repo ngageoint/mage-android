@@ -1,7 +1,6 @@
 import org.ajoberstar.grgit.Grgit
 
 plugins {
-    id 'net.linguica.maven-settings' version '0.5'
     id 'org.ajoberstar.grgit' version '1.6.0'
 }
 apply plugin: 'com.android.application'
@@ -10,10 +9,8 @@ apply plugin: 'kotlin-android-extensions'
 apply plugin: 'kotlin-kapt'
 apply plugin: 'maven-publish'
 group 'mil.nga.giat.mage'
-archivesBaseName = 'mage-android'
 version '6.3.3'
 ext {
-    versionCode = 85
     sourceRefspec = Grgit.open().head().id
 
     //Test resources
@@ -33,8 +30,6 @@ kapt {
 def serverURL = hasProperty('SERVER_URL') ? SERVER_URL : ''
 def googleMapsApiReleaseKey = hasProperty('RELEASE_MAPS_API_KEY') ? RELEASE_MAPS_API_KEY : ''
 def googleMapsApiDebugKey = hasProperty('DEBUG_MAPS_API_KEY') ? DEBUG_MAPS_API_KEY : ''
-def signedApkPath = hasProperty('SIGNED_APK_PATH') ? SIGNED_APK_PATH : "${project.buildDir}/outputs/apk/defaults/release/${archivesBaseName}-defaults-release.apk"
-def signedDebugApkPath = hasProperty('SIGNED_DEBUG_APK_PATH') ? SIGNED_DEBUG_APK_PATH : "${project.buildDir}/outputs/apk/defaults/debug/${archivesBaseName}-defaults-debug.apk"
 
 android {
     compileSdkVersion 30
@@ -65,7 +60,7 @@ android {
     defaultConfig {
         applicationId "mil.nga.giat.mage"
         versionName project.version
-        versionCode project.versionCode as int
+        versionCode VERSION_CODE as int
         minSdkVersion 22
         targetSdkVersion 30
         multiDexEnabled true
@@ -80,12 +75,25 @@ android {
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        release {
+            if (project.hasProperty('KEYSTORE')) {
+                storeFile file(KEYSTORE)
+                storePassword KEYSTORE_PASSWORD
+                keyAlias KEY_ALIAS
+                keyPassword KEY_PASSWORD
+            }
+        }
+    }
+
     buildTypes {
         release {
             minifyEnabled false
+            signingConfig signingConfigs.release
             proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.txt"
             resValue "string", "GOOGLE_MAPS_ANDROID_API_KEY", googleMapsApiReleaseKey
         }
+
         debug {
             applicationIdSuffix ".debug"
             versionNameSuffix "-debug"
@@ -123,78 +131,6 @@ android {
     useLibrary 'android.test.runner'
     useLibrary 'android.test.base'
     useLibrary 'android.test.mock'
-}
-
-def configurePom(pom) {
-    pom.withXml {
-        // for dependencies and exclusions
-        def dependenciesNode = asNode().appendNode('dependencies')
-        project.configurations.compile.allDependencies.each { Dependency dep ->
-            if (dep instanceof SelfResolvingDependency) {
-                // apparently the files() dependency results in a SelfResolvingDependency - skip it
-                return
-            }
-
-            def dependencyNode = dependenciesNode.appendNode('dependency')
-            dependencyNode.appendNode('groupId', dep.group)
-            dependencyNode.appendNode('artifactId', dep.name)
-            dependencyNode.appendNode('version', dep.version)
-
-            // for exclusions
-            if (dep.excludeRules.size() > 0) {
-                def exclusions = dependencyNode.appendNode('exclusions')
-                dep.excludeRules.each { ExcludeRule ex ->
-                    def exclusion = exclusions.appendNode('exclusion')
-                    exclusion.appendNode('groupId', ex.group)
-                    exclusion.appendNode('artifactId', ex.module)
-                }
-            }
-        }
-    }
-}
-
-publishing {
-    publications {
-        defaultsApk(MavenPublication) {
-            artifactId archivesBaseName
-            pom.packaging 'apk'
-            configurePom(pom)
-            artifact "${project.buildDir}/outputs/apk/defaults/release/${archivesBaseName}-defaults-release-unsigned.apk", {
-                classifier 'unsigned'
-            }
-            if (file(signedApkPath).exists()) {
-                artifact signedApkPath
-            }
-            if (file(signedDebugApkPath).exists()) {
-                artifact signedDebugApkPath, {
-                    classifier 'debug'
-                }
-            }
-            if (project.hasProperty('SKIP_DEBUG_SIGNING')) {
-                artifact "${project.buildDir}/outputs/apk/defaults/debug/${archivesBaseName}-defaults-debug-unsigned.apk", {
-                    classifier 'debug-unsigned'
-                }
-            }
-        }
-    }
-}
-
-repositories {
-    def buildRepo = maven {
-        name 'build'
-        url project.properties['repositories.build.url'] ?: "${buildDir}/m2"
-    }
-    publishing.repositories.add buildRepo
-
-    if (project.hasProperty('repositories.shared.name')) {
-        def sharedRepo = maven {
-            name project.properties['repositories.shared.name']
-            url project.properties['repositories.shared.url']
-        }
-        publishing.repositories.add sharedRepo
-    }
-    mavenCentral()
-    google()
 }
 
 dependencies {
@@ -268,6 +204,12 @@ dependencies {
     androidTestImplementation 'androidx.test.espresso:espresso-contrib:' + espressoVersion
 }
 
+task sdkVersion {
+    group = 'android'
+    description = 'Print the MAGE SDK version'
+    println configurations.api.allDependencies.find { it.name == 'mage-android-sdk'}.version
+}
+
 task androidArtifactVersion {
     group = 'android'
     description = 'Print the context ID, version code, and version name this build will produce in AndroidManifest.xml'
@@ -276,45 +218,5 @@ task androidArtifactVersion {
         println "applicationId: ${appExt.defaultConfig.applicationId}"
         println "versionCode: ${appExt.defaultConfig.versionCode}"
         println "versionName: ${appExt.defaultConfig.versionName}"
-    }
-}
-
-configure extensions.android, {
-    if (project.hasProperty('RELEASE_STORE_FILE') && file(project.getProperty('RELEASE_STORE_FILE')).exists()) {
-        println 'found release key store for signing'
-        signingConfigs {
-            release {
-                storeFile file(RELEASE_STORE_FILE)
-                storePassword RELEASE_STORE_PASSWORD
-                keyAlias RELEASE_KEY_ALIAS
-                keyPassword RELEASE_KEY_PASSWORD
-            }
-        }
-        buildTypes {
-            release {
-                signingConfig signingConfigs.release
-            }
-        }
-    }
-    else {
-        println 'no release key store configured - will skip signing'
-    }
-
-    if (project.hasProperty('SKIP_DEBUG_SIGNING')) {
-        buildTypes {
-            debug {
-                signingConfig null
-            }
-        }
-    }
-    else if (project.hasProperty('DEBUG_STORE_FILE') && file(project.getProperty('DEBUG_STORE_FILE')).exists()) {
-        signingConfigs {
-            debug {
-                storeFile file(DEBUG_STORE_FILE)
-                storePassword DEBUG_STORE_PASSWORD
-                keyAlias DEBUG_KEY_ALIAS
-                keyPassword DEBUG_KEY_PASSWORD
-            }
-        }
     }
 }
