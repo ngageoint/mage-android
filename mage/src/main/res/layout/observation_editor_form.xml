@@ -30,8 +30,7 @@
             <androidx.fragment.app.FragmentContainerView
                 android:id="@+id/form_fragment"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:name="mil.nga.giat.mage.form.FormFragment" />
+                android:layout_height="wrap_content" />
 
         </LinearLayout>
 
