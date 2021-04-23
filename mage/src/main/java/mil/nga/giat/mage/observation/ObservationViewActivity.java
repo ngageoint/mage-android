@@ -58,6 +58,7 @@ import java.util.Map;
 
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.form.Form;
+import mil.nga.giat.mage.form.FormFragment;
 import mil.nga.giat.mage.form.FormMode;
 import mil.nga.giat.mage.form.FormViewModel;
 import mil.nga.giat.mage.map.marker.ObservationBitmapFactory;
@@ -281,6 +282,12 @@ public class ObservationViewActivity extends AppCompatActivity implements OnMapR
 				LinearLayout formLayout = (LinearLayout) getLayoutInflater().inflate(R.layout.observation_editor_form, formsLayout, true);
 				TextView name = formLayout.findViewById(R.id.form_name);
 				name.setText(form.getName());
+
+				FormFragment formFragment = new FormFragment();
+				getSupportFragmentManager()
+						.beginTransaction()
+						.replace(R.id.form_content, formFragment, "VIEW_FORM_FRAGMENT")
+						.commit();
 			}
 
 			Drawable markerPlaceholder = DrawableCompat.wrap(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_place_white_48dp));
