@@ -11,6 +11,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
+import android.hardware.SensorManager;
 import android.location.Geocoder;
 import android.location.Location;
 import android.os.AsyncTask;
@@ -40,6 +41,7 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SearchView;
 import androidx.core.content.ContextCompat;
+import androidx.databinding.DataBindingUtil;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.Observer;
 
@@ -109,6 +111,7 @@ import mil.nga.geopackage.tiles.features.custom.NumberFeaturesTile;
 import mil.nga.geopackage.tiles.user.TileDao;
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.dagger.module.ApplicationContext;
+import mil.nga.giat.mage.databinding.FragmentMapBinding;
 import mil.nga.giat.mage.filter.DateTimeFilter;
 import mil.nga.giat.mage.filter.Filter;
 import mil.nga.giat.mage.filter.FilterActivity;
@@ -127,10 +130,14 @@ import mil.nga.giat.mage.map.cache.WMSCacheOverlay;
 import mil.nga.giat.mage.map.cache.XYZDirectoryCacheOverlay;
 import mil.nga.giat.mage.map.marker.LocationMarkerCollection;
 import mil.nga.giat.mage.map.marker.MyHistoricalLocationMarkerCollection;
+import mil.nga.giat.mage.map.marker.ObservationBitmapFactory;
 import mil.nga.giat.mage.map.marker.ObservationMarkerCollection;
 import mil.nga.giat.mage.map.marker.PointCollection;
 import mil.nga.giat.mage.map.marker.StaticGeometryCollection;
+import mil.nga.giat.mage.map.navigation.bearing.StraightLineNavigation;
+import mil.nga.giat.mage.map.navigation.bearing.StraightLineNavigationDelegate;
 import mil.nga.giat.mage.map.preference.MapPreferencesActivity;
+import mil.nga.giat.mage.newsfeed.ObservationListAdapter;
 import mil.nga.giat.mage.observation.ObservationEditActivity;
 import mil.nga.giat.mage.observation.ObservationFormPickerActivity;
 import mil.nga.giat.mage.observation.ObservationLocation;
@@ -156,12 +163,13 @@ import mil.nga.mgrs.MGRS;
 import mil.nga.mgrs.gzd.MGRSTileProvider;
 import mil.nga.sf.Geometry;
 import mil.nga.sf.GeometryType;
+import mil.nga.sf.Point;
 import mil.nga.sf.proj.Projection;
 import mil.nga.sf.proj.ProjectionConstants;
 import mil.nga.sf.proj.ProjectionFactory;
 
 public class MapFragment extends DaggerFragment implements OnMapReadyCallback, OnMapClickListener, OnMapLongClickListener, OnMarkerClickListener, OnInfoWindowClickListener, GoogleMap.OnCameraMoveListener, GoogleMap.OnCameraIdleListener, GoogleMap.OnCameraMoveStartedListener, OnClickListener, LocationSource, OnCacheOverlayListener,
-		IObservationEventListener, ILocationEventListener, IUserEventListener, Observer<Location> {
+		IObservationEventListener, ILocationEventListener, IUserEventListener, ObservationListAdapter.ObservationActionListener, Observer<Location>, StraightLineNavigationDelegate {
 
 	private static final String LOG_NAME = MapFragment.class.getName();
 
@@ -174,6 +182,77 @@ public class MapFragment extends DaggerFragment implements OnMapReadyCallback, O
 
 	private static final int MARKER_REFRESH_INTERVAL_SECONDS = 300;
 	private static final int OBSERVATION_REFRESH_INTERVAL_SECONDS = 60;
+
+	@Override
+	public void onObservationClick(Observation observation) {
+		Intent intent = new Intent(context, ObservationViewActivity.class);
+		intent.putExtra(ObservationViewActivity.OBSERVATION_ID, observation.getId());
+		intent.putExtra(ObservationViewActivity.INITIAL_LOCATION, map.getCameraPosition().target);
+		intent.putExtra(ObservationViewActivity.INITIAL_ZOOM, map.getCameraPosition().zoom);
+		startActivity(intent);
+	}
+
+	@Override
+	public void onObservationImportant(Observation observation) {
+	}
+
+	@Override
+	public void onObservationDirections(Observation observation) {
+		// present a dialog to pick between android system map and straight line
+		new AlertDialog.Builder(getActivity())
+			.setTitle(getActivity().getResources().getString(R.string.navigation_choice_title))
+			.setItems(R.array.navigationOptions, new DialogInterface.OnClickListener() {
+				@Override
+				public void onClick(DialogInterface dialog, int which) {
+					switch (which) {
+						case 0:
+							Intent intent = new Intent(android.content.Intent.ACTION_VIEW, observation.getGoogleMapsUri());
+							startActivity(intent);
+							break;
+						case 1:
+							Location location = null;
+							if (locationProvider.getValue() == null) {
+								if (ContextCompat.checkSelfPermission(getActivity().getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+									new AlertDialog.Builder(getActivity())
+											.setTitle(getActivity().getResources().getString(R.string.location_missing_title))
+											.setMessage(getActivity().getResources().getString(R.string.location_missing_message))
+											.setPositiveButton(android.R.string.ok, null)
+											.show();
+								} else {
+									new AlertDialog.Builder(getActivity())
+											.setTitle(getActivity().getResources().getString(R.string.location_access_observation_title))
+											.setMessage(getActivity().getResources().getString(R.string.location_access_observation_message))
+											.setPositiveButton(android.R.string.ok, new Dialog.OnClickListener() {
+												@Override
+												public void onClick(DialogInterface dialog, int which) {
+													requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION);
+												}
+											})
+											.show();
+								}
+							} else {
+								location = locationProvider.getValue();
+								Point centroid = observation.getGeometry().getCentroid();
+								LatLng latLng = new LatLng(centroid.getY(), centroid.getX());
+								straightLineNavigation.startNavigation(sensorManager, location, latLng, ObservationBitmapFactory.bitmap(context, observation));
+								featureBottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
+								nvaigationBottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+							}
+							break;
+					}
+
+				}
+			})
+			.setNegativeButton(android.R.string.cancel, null)
+			.show();
+	}
+
+	@Override
+	public void cancelStraightLineNavigation() {
+		straightLineNavigation.stopNavigation();
+//		newObservationButton.setTranslationY((-48 * getResources().getDisplayMetrics().density + 0.5f));
+//		mgrsBottomSheetBehavior.setPeekHeight((int) (50 * getResources().getDisplayMetrics().density + 0.5f));
+	}
 
 	private enum LocateState {
 		OFF,
@@ -196,6 +275,8 @@ public class MapFragment extends DaggerFragment implements OnMapReadyCallback, O
 	private GoogleMap map;
 	private View searchLayout;
 	private SearchView searchView;
+	private StraightLineNavigation straightLineNavigation;
+	private SensorManager sensorManager;
 	private LocateState locateState = LocateState.OFF;
 	protected User currentUser = null;
 	private long currentEventId = -1;
@@ -224,22 +305,24 @@ public class MapFragment extends DaggerFragment implements OnMapReadyCallback, O
 	private FloatingActionButton compassButton;
 	private FloatingActionButton searchButton;
 	private FloatingActionButton zoomToLocationButton;
+	private FloatingActionButton newObservationButton;
 
 	private boolean showMgrs;
 	private TileOverlay mgrsTileOverlay;
-	private BottomSheetBehavior mgrsBottomSheetBehavior;
+	private TextView mgrsChip;
+	private Boolean mgrsChipExpanded = false;
+
+	private BottomSheetBehavior featureBottomSheetBehavior;
+	private View featureBottomSheet;
+	private BottomSheetBehavior nvaigationBottomSheetBehavior;
+	private View navigationBottomSheet;
 	private View availableLayerDownloadsIcon;
-	private View mgrsBottomSheet;
-	private View mgrsCursor;
-	private TextView mgrsTextView;
-	private TextView mgrsGzdTextView;
-	private TextView mgrs100dKmTextView;
-	private TextView mgrsEastingTextView;
-	private TextView mgrsNorthingTextView;
+	private FragmentMapBinding binding;
 
 	@Override
 	public View onCreateView(@NonNull LayoutInflater  inflater, ViewGroup container, Bundle savedInstanceState) {
 		View view = inflater.inflate(R.layout.fragment_map, container, false);
+		binding = DataBindingUtil.bind(view);
 
 		setHasOptionsMenu(true);
 
@@ -250,6 +333,8 @@ public class MapFragment extends DaggerFragment implements OnMapReadyCallback, O
 
 		compassButton = view.findViewById(R.id.compass_button);
 		compassButton.setOnClickListener(v -> resetMapBearing());
+
+		newObservationButton = view.findViewById(R.id.new_observation_button);
 
 		searchButton = view.findViewById(R.id.map_search_button);
 		if (Geocoder.isPresent()) {
@@ -275,14 +360,33 @@ public class MapFragment extends DaggerFragment implements OnMapReadyCallback, O
 		Bundle mapState = (savedInstanceState != null) ? savedInstanceState.getBundle(MAP_VIEW_STATE): null;
 		mapView.onCreate(mapState);
 
-		mgrsBottomSheet = view.findViewById(R.id.mgrs_bottom_sheet);
-		mgrsBottomSheetBehavior = BottomSheetBehavior.from(mgrsBottomSheet);
-		mgrsCursor = view.findViewById(R.id.mgrs_grid_cursor);
-		mgrsTextView = mgrsBottomSheet.findViewById(R.id.mgrs_code);
-		mgrsGzdTextView = mgrsBottomSheet.findViewById(R.id.mgrs_gzd_zone);
-		mgrs100dKmTextView = mgrsBottomSheet.findViewById(R.id.mgrs_grid_zone);
-		mgrsEastingTextView = mgrsBottomSheet.findViewById(R.id.mgrs_easting);
-		mgrsNorthingTextView = mgrsBottomSheet.findViewById(R.id.mgrs_northing);
+		mgrsChip = view.findViewById(R.id.mgrs_chip);
+		view.findViewById(R.id.mgrs_chip_container).setOnClickListener(v -> toggleMgrsChip());
+
+		featureBottomSheet = view.findViewById(R.id.observation_bottom_sheet);
+		featureBottomSheetBehavior = BottomSheetBehavior.from(featureBottomSheet);
+		featureBottomSheetBehavior.setFitToContents(true);
+		featureBottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
+
+		navigationBottomSheet = view.findViewById(R.id.straight_line_nav_container);
+		nvaigationBottomSheetBehavior = BottomSheetBehavior.from(navigationBottomSheet);
+		nvaigationBottomSheetBehavior.setFitToContents(true);
+		nvaigationBottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
+
+		featureBottomSheetBehavior.setBottomSheetCallback(new BottomSheetBehavior.BottomSheetCallback() {
+			// this only is called when the user interacts with the sheet, not when we make it EXPANDED programmatically
+			@Override
+			public void onStateChanged(@NonNull View view, int newState) {
+				if (newState == BottomSheetBehavior.STATE_HIDDEN) {
+					unselectObservation();
+				}
+			}
+
+			@Override
+			public void onSlide(@NonNull View view, float v) {
+
+			}
+		});
 
 		// Initialize the GeoPackage cache with a GeoPackage manager
 		GeoPackageManager geoPackageManager = GeoPackageFactory.getManager(getActivity().getApplicationContext());
@@ -291,6 +395,11 @@ public class MapFragment extends DaggerFragment implements OnMapReadyCallback, O
 		locationProvider = locationPolicy.getBestLocationProvider();
 
 		return view;
+	}
+
+	void unselectObservation() {
+		featureBottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
+		binding.setChosenObservation(null);
 	}
 
 	@Override
@@ -307,6 +416,9 @@ public class MapFragment extends DaggerFragment implements OnMapReadyCallback, O
 				.build();
 
 			map.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
+		}
+		if (preferences.getBoolean(context.getResources().getString(R.string.showHeadingKey), false)) {
+			startHeading();
 		}
 	}
 
@@ -384,9 +496,12 @@ public class MapFragment extends DaggerFragment implements OnMapReadyCallback, O
 			map.setOnCameraMoveStartedListener(this);
 			map.setOnCameraMoveListener(this);
 
-			observations = new ObservationMarkerCollection(getActivity(), map);
+			observations = new ObservationMarkerCollection(getActivity(), map, this);
 			historicLocations = new MyHistoricalLocationMarkerCollection(context, map);
 			locations = new LocationMarkerCollection(getActivity(), map);
+
+			straightLineNavigation = new StraightLineNavigation(this, map, getActivity().findViewById(R.id.straight_line_nav_container), context);
+			sensorManager = (SensorManager)getActivity().getSystemService(Context.SENSOR_SERVICE);
 		}
 
 		int dayNightMode = getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK;
@@ -438,6 +553,8 @@ public class MapFragment extends DaggerFragment implements OnMapReadyCallback, O
 						map.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
 					}
 
+					startHeading();
+
 					break;
 			}
 		});
@@ -460,6 +577,11 @@ public class MapFragment extends DaggerFragment implements OnMapReadyCallback, O
 		locations.setVisibility(preferences.getBoolean(getResources().getString(R.string.showLocationsKey), true));
 		historicLocations.setVisibility(preferences.getBoolean(getResources().getString(R.string.showMyLocationHistoryKey), false));
 
+		// maybe need to turn off heading
+		if (!preferences.getBoolean(getResources().getString(R.string.showHeadingKey), false)) {
+			straightLineNavigation.stopHeading();
+		}
+
 		// Check if any map preferences changed that I care about
 		if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
 			map.setMyLocationEnabled(true);
@@ -471,12 +593,43 @@ public class MapFragment extends DaggerFragment implements OnMapReadyCallback, O
 
 		initializePeriodicTasks();
 
-		mgrsCursor.setVisibility(showMgrs ? View.VISIBLE : View.GONE);
 		if (showMgrs) {
 			mgrsTileOverlay = map.addTileOverlay(new TileOverlayOptions().tileProvider(new MGRSTileProvider(getContext())));
 		}
 
 		((AppCompatActivity) getActivity()).getSupportActionBar().setSubtitle(getFilterTitle());
+	}
+
+	private void startHeading() {
+		if (preferences.contains(context.getResources().getString(R.string.showHeadingKey))) {
+			Location location = locationProvider.getValue();
+			if (location != null && straightLineNavigation != null && preferences.getBoolean(context.getResources().getString(R.string.showHeadingKey), false)) {
+				straightLineNavigation.startHeading(sensorManager, location);
+			}
+		} else {
+			// show a dialog asking them what they want to do and set the preference
+			new AlertDialog.Builder(getActivity())
+					.setTitle(getActivity().getResources().getString(R.string.always_show_heading_title))
+					.setMessage(getActivity().getResources().getString(R.string.always_show_heading_message))
+					.setPositiveButton(getActivity().getResources().getString(R.string.yes), new Dialog.OnClickListener() {
+						@Override
+						public void onClick(DialogInterface dialog, int which) {
+							SharedPreferences.Editor edit = preferences.edit();
+							edit.putBoolean(context.getResources().getString(R.string.showHeadingKey), true);
+							edit.apply();
+							startHeading();
+						}
+					})
+					.setNegativeButton(getActivity().getResources().getString(R.string.no), new Dialog.OnClickListener() {
+						@Override
+						public void onClick(DialogInterface dialog, int which) {
+							SharedPreferences.Editor edit = preferences.edit();
+							edit.putBoolean(context.getResources().getString(R.string.showHeadingKey), false);
+							edit.apply();
+						}
+					})
+					.show();
+		}
 	}
 
 	private void resetMapBearing() {
@@ -534,10 +687,7 @@ public class MapFragment extends DaggerFragment implements OnMapReadyCallback, O
 
 		mapView.onResume();
 
-        // Don't wait for map to show up to init these values, otherwise bottomsheet will jitter
         showMgrs = preferences.getBoolean(getResources().getString(R.string.showMGRSKey), false);
-        mgrsBottomSheetBehavior.setHideable(!showMgrs);
-        mgrsBottomSheetBehavior.setState(showMgrs ? BottomSheetBehavior.STATE_COLLAPSED : BottomSheetBehavior.STATE_HIDDEN);
 
 		if (map == null) {
 			mapView.getMapAsync(this);
@@ -796,16 +946,6 @@ public class MapFragment extends DaggerFragment implements OnMapReadyCallback, O
 
 	@Override
 	public void onInfoWindowClick(Marker marker) {
-		Observation observation = observations.pointForMarker(marker);
-		if (observation != null) {
-			Intent intent = new Intent(context, ObservationViewActivity.class);
-			intent.putExtra(ObservationViewActivity.OBSERVATION_ID, observation.getId());
-			intent.putExtra(ObservationViewActivity.INITIAL_LOCATION, map.getCameraPosition().target);
-			intent.putExtra(ObservationViewActivity.INITIAL_ZOOM, map.getCameraPosition().zoom);
-			startActivity(intent);
-			return;
-		}
-
 		Pair<mil.nga.giat.mage.sdk.datastore.location.Location, User> pair = locations.pointForMarker(marker);
 		if (pair != null) {
 			Intent profileView = new Intent(context, ProfileActivity.class);
@@ -813,6 +953,13 @@ public class MapFragment extends DaggerFragment implements OnMapReadyCallback, O
 			startActivity(profileView);
 			return;
 		}
+	}
+
+	public void showObservationBottomSheet(Observation observation) {
+		binding.setChosenObservation(observation);
+		binding.observationBottomSheet.requestLayout();
+		featureBottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+		binding.observationBottomSheet.setObservationActionListener(this);
 	}
 
 	@Override
@@ -866,6 +1013,7 @@ public class MapFragment extends DaggerFragment implements OnMapReadyCallback, O
 		// remove old accuracy circle
 		locations.offMarkerClick();
 		observations.offMarkerClick();
+		unselectObservation();
 
 		observations.onMapClick(latLng);
 
@@ -1010,14 +1158,20 @@ public class MapFragment extends DaggerFragment implements OnMapReadyCallback, O
 	private void setMgrsCode() {
 		if (mgrsTileOverlay != null) {
 			LatLng center = map.getCameraPosition().target;
-
 			MGRS mgrs = MGRS.from(new mil.nga.mgrs.wgs84.LatLng(center.latitude, center.longitude));
-			mgrsTextView.setText(mgrs.format(5));
-			mgrsGzdTextView.setText(String.format(Locale.getDefault(),"%s%c", mgrs.getZone(), mgrs.getBand()));
-			mgrs100dKmTextView.setText(String.format(Locale.getDefault(),"%c%c", mgrs.getE100k(), mgrs.getN100k()));
-			mgrsEastingTextView.setText(String.format(Locale.getDefault(),"%05d", mgrs.getEasting()));
-			mgrsNorthingTextView.setText(String.format(Locale.getDefault(),"%05d", mgrs.getNorthing()));
+
+			if (mgrsChipExpanded) {
+				mgrsChip.setText(mgrs.format(5));
+			} else {
+				String partialMgrs = String.format(Locale.getDefault(),"%s%c%c%c", mgrs.getZone(), mgrs.getBand(), mgrs.getE100k(), mgrs.getN100k());
+				mgrsChip.setText(partialMgrs);
+			}
 		}
+	}
+
+	private void toggleMgrsChip() {
+		mgrsChipExpanded = !mgrsChipExpanded;
+		setMgrsCode();
 	}
 
 	@Override

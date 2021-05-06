@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <mil.nga.giat.mage.preferences.color.ColorPickerPreference
+        android:icon="@drawable/color_preference_preview"
+        android:defaultValue="@string/relativeBearingColorDefaultValue"
+        android:key="@string/relativeBearingColorKey"
+        android:title="Relative Bearing Line Color"/>
+
+    <mil.nga.giat.mage.preferences.color.ColorPickerPreference
+        android:icon="@drawable/color_preference_preview"
+        android:defaultValue="@string/headingColorDefaultValue"
+        android:key="@string/headingColorKey"
+        android:title="Heading Line Color"/>
+
+    <CheckBoxPreference
+        android:key="@string/showHeadingKey"
+        android:title="Always show heading on map"/>
+</PreferenceScreen>

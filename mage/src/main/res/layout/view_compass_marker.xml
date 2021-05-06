@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android">
+    <data>
+        <import type="mil.nga.giat.mage.map.navigation.bearing.CompassMarkerData"/>
+        <variable name="data" type="mil.nga.giat.mage.map.navigation.bearing.CompassMarkerData"/>
+    </data>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center_horizontal"
+        android:rotation="@{data.bearing.floatValue()}"
+        android:orientation="vertical">
+        <TextView
+            android:id="@+id/degreeText"
+            android:gravity="center"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:rotation="@{data.currentHeading.floatValue() - data.bearing.floatValue()}"
+            android:text='@{data.bearing % 30.0 == 0.0 ? String.format("%.0f", data.bearing) : ""}'>
+        </TextView>
+        <RelativeLayout
+            android:id="@+id/capsule"
+            android:layout_gravity="center_horizontal"
+            android:layout_width="5dp"
+            android:layout_height="wrap_content">
+        </RelativeLayout>
+        <TextView
+            android:id="@+id/degreeLabel"
+            android:gravity="center"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:rotation="@{data.currentHeading.floatValue() - data.bearing.floatValue()}"
+            android:text="@{data.degreeLabel}">
+        </TextView>
+    </LinearLayout>
+</layout>

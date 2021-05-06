@@ -64,6 +64,11 @@
 
     <string name="reauthentication_message"><b>You</b> were logged in as &lt;b>%s&lt;/b>, and your MAGE session has expired. Please login to resume using MAGE.</string>
 
+    <string name="navigation_choice_title"><font color='#DD000000'>How would you like to navigate?</font></string>
+    <string name="navigation_choice_message"></string>
+    <string name="navigation_choice_bearing">Bearing</string>
+    <string name="navigation_choice_android">Maps Application</string>
+
     <string name="location_services_enabled_summary">Click to configure GPS sensitivy and tracking options</string>
     <string name="location_services_disabled_summary">MAGE location services have been disabled. Click here to go to settings and enabled the location permission</string>
 
@@ -77,6 +82,9 @@
     <string name="location_access_rational_message">MAGE shares your location with the team, and enables you to add observations at your current position</string>
     <string name="location_access_observation_title"><font color='#DD000000'>Location Services Disabled</font></string>
     <string name="location_access_observation_message"><font color='#DD000000'>MAGE</font> has been denied access to location services.  To create an observation at your current location please go into your devices settings and enable the Location permission, otherwise long press on the map.</string>
+
+    <string name="always_show_heading_title">Display Your Heading</string>
+    <string name="always_show_heading_message">Would you like to display your heading on the map? This can be toggled in settings.</string>
 
     <string name="cache_access_rational_title">Use <font color='#DD000000'>MAGE</font> Offline Maps</string>
     <string name="cache_access_rational_message">MAGE is looking for offline maps that may reside in external storage on your device. Please allow MAGE to access external media to view this map.</string>
