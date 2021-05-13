@@ -182,7 +182,7 @@ public class ObservationDeserializer extends Deserializer {
 				}
 			} else if ("forms".equals(name)) {
 				parser.nextToken();
-				Collection<ObservationForm> forms = parseForms(parser);
+				List<ObservationForm> forms = parseForms(parser);
 				observation.setForms(forms);
 			} else {
 				parser.nextToken();
@@ -193,8 +193,8 @@ public class ObservationDeserializer extends Deserializer {
 		return properties;
 	}
 
-	private Collection<ObservationForm> parseForms(JsonParser parser) throws IOException {
-		Collection<ObservationForm> forms = new ArrayList<>();
+	private List<ObservationForm> parseForms(JsonParser parser) throws IOException {
+		List<ObservationForm> forms = new ArrayList<>();
 
 		if (parser.getCurrentToken() != JsonToken.START_ARRAY)
 			return forms;
