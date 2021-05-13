@@ -8,11 +8,14 @@ import android.widget.ArrayAdapter
 import android.widget.ListView
 import androidx.appcompat.widget.SearchView
 import androidx.fragment.app.DialogFragment
+import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModelProviders
 import kotlinx.android.synthetic.main.dialog_select_field.*
 import mil.nga.giat.mage.R
 import mil.nga.giat.mage.form.*
+import mil.nga.giat.mage.sdk.datastore.observation.ObservationProperty
 import org.apache.commons.lang3.StringUtils
+import java.io.Serializable
 import java.util.*
 
 /**
@@ -21,23 +24,33 @@ import java.util.*
 
 class SelectFieldDialog : DialogFragment() {
 
-    private lateinit var field: ChoiceFormField<out Any>
+    interface SelectFieldDialogListener {
+        fun onDismiss()
+    }
+
     private lateinit var model: FormViewModel
     private lateinit var adapter: ArrayAdapter<String>
 
-    private lateinit var fieldKey: String
+    private var formId: Long = 0
+    private lateinit var field: ChoiceFormField<out Any>
+    private lateinit var fieldName: String
+    private lateinit var fieldModel: FormViewModel.FieldModel
     private var choices: List<String> = ArrayList()
     private var selectedChoices:MutableList<String> = ArrayList()
     private var filteredChoices = ArrayList<String>()
 
+    var listener: SelectFieldDialogListener? = null
+
     companion object {
         private const val DEFAULT_TEXT = ""
-        private const val FORM_FIELD_KEY_EXTRA = "FORM_FIELD_KEY_EXTRA"
+        private const val FIELD_ID_KEY_EXTRA = "FIELD_ID_KEY_EXTRA"
+        private const val FORM_FIELD_NAME_KEY_EXTRA = "FORM_FIELD_NAME_KEY_EXTRA"
 
-        fun newInstance(fieldKey: String): SelectFieldDialog {
+        fun newInstance(formId: Long, fieldName: String): SelectFieldDialog {
             val fragment = SelectFieldDialog()
             val bundle = Bundle()
-            bundle.putString(FORM_FIELD_KEY_EXTRA, fieldKey)
+            bundle.putLong(FIELD_ID_KEY_EXTRA, formId)
+            bundle.putString(FORM_FIELD_NAME_KEY_EXTRA, fieldName)
 
             fragment.setStyle(STYLE_NO_TITLE, 0)
             fragment.isCancelable = false
@@ -50,14 +63,18 @@ class SelectFieldDialog : DialogFragment() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        require(arguments?.containsKey(FORM_FIELD_KEY_EXTRA) ?: false) {"FORM_FIELD_ID_EXTRA is required to launch DateFieldDialog"}
+        require(arguments?.containsKey(FIELD_ID_KEY_EXTRA) ?: false) {"FIELD_ID_KEY_EXTRA is required to launch SelectFieldDialog"}
+        require(arguments?.containsKey(FORM_FIELD_NAME_KEY_EXTRA) ?: false) {"FORM_FIELD_NAME_KEY_EXTRA is required to launch SelectFieldDialog"}
 
         model = activity?.run {
             ViewModelProviders.of(this).get(FormViewModel::class.java)
         } ?: throw Exception("Invalid Activity")
 
-        fieldKey = arguments!!.getString(FORM_FIELD_KEY_EXTRA, null)
-        field = model.getField(fieldKey) as ChoiceFormField<out Any>
+        formId = requireArguments().getLong(FIELD_ID_KEY_EXTRA, 0)
+        fieldName = requireArguments().getString(FORM_FIELD_NAME_KEY_EXTRA, null)
+        val form = model.getForms().value?.find { it.definition.id == formId }
+        field = form?.definition?.fields?.find { it.name == fieldName } as ChoiceFormField<out Any>
+        fieldModel = form.fieldModels.find { it.definition.name == fieldName } as FormViewModel.FieldModel
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
@@ -80,19 +97,21 @@ class SelectFieldDialog : DialogFragment() {
         filteredChoices.addAll(choices)
 
         if (field.type == FieldType.MULTISELECTDROPDOWN) {
-            adapter = ArrayAdapter(context!!, android.R.layout.simple_list_item_multiple_choice, filteredChoices)
+            adapter = ArrayAdapter(requireContext(), android.R.layout.simple_list_item_multiple_choice, filteredChoices)
             listView.adapter = adapter
             listView.choiceMode = ListView.CHOICE_MODE_MULTIPLE
 
-            val multiChoiceField = (field as MultiChoiceFormField)
-            multiChoiceField.value?.let { selectedChoices.addAll(it) }
+            val multiChoiceField = (fieldModel.liveData.value as? List<*>)
+            multiChoiceField?.map { it.toString() }?.let {
+                selectedChoices.addAll(it)
+            }
         } else {
-            adapter = ArrayAdapter(context!!, android.R.layout.simple_list_item_single_choice, filteredChoices)
+            adapter = ArrayAdapter(requireContext(), android.R.layout.simple_list_item_single_choice, filteredChoices)
             listView.adapter = adapter
             listView.choiceMode = ListView.CHOICE_MODE_SINGLE
 
-            val singleChoiceField = (field as SingleChoiceFormField)
-            singleChoiceField.value?.let { selectedChoices.add(it) }
+            val singleChoiceField = fieldModel.liveData.value as? String
+            singleChoiceField?.let { selectedChoices.add(it) }
         }
 
         if (selectedChoices.isEmpty()) {
@@ -146,13 +165,14 @@ class SelectFieldDialog : DialogFragment() {
         ok.setOnClickListener {
             when (field.type) {
                 FieldType.DROPDOWN -> {
-                    (field as ChoiceFormField<String>).value = selectedChoices.getOrNull(0)
+                    model.setFieldValue(0, fieldName, selectedChoices.getOrNull(0))
                 }
                 else -> {
-                    (field as ChoiceFormField<List<String>>).value = selectedChoices
+                    model.setFieldValue(0, fieldName, selectedChoices)
                 }
             }
 
+            listener?.onDismiss()
             dismiss()
         }
 

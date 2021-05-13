@@ -27,7 +27,7 @@
             android:cursorVisible="false"
             android:clickable="false"
             android:inputType="textNoSuggestions"
-            app:selectText='@{field.value}'
+            android:text='@{field.value}'
             android:onClick="@{() -> clickListener.invoke() }"/>
 
     </com.google.android.material.textfield.TextInputLayout>

@@ -15,20 +15,21 @@ import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import dagger.android.support.DaggerAppCompatActivity;
+
 import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.compose.ui.platform.ComposeView;
 import androidx.core.content.ContextCompat;
 import androidx.core.graphics.drawable.DrawableCompat;
 import androidx.fragment.app.FragmentManager;
-import androidx.lifecycle.ViewModelProviders;
+import androidx.lifecycle.ViewModelProvider;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -52,21 +53,19 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Locale;
-import java.util.Map;
+
+import javax.inject.Inject;
 
 import mil.nga.giat.mage.R;
-import mil.nga.giat.mage.form.Form;
-import mil.nga.giat.mage.form.FormFragment;
 import mil.nga.giat.mage.form.FormMode;
 import mil.nga.giat.mage.form.FormViewModel;
 import mil.nga.giat.mage.map.marker.ObservationBitmapFactory;
+import mil.nga.giat.mage.observation.form.FormView;
 import mil.nga.giat.mage.people.PeopleActivity;
 import mil.nga.giat.mage.sdk.datastore.observation.Attachment;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationFavorite;
-import mil.nga.giat.mage.sdk.datastore.observation.ObservationForm;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationImportant;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationProperty;
@@ -81,7 +80,7 @@ import mil.nga.giat.mage.sdk.exceptions.UserException;
 import mil.nga.giat.mage.utils.DateFormatFactory;
 import mil.nga.giat.mage.widget.CoordinateView;
 
-public class ObservationViewActivity extends AppCompatActivity implements OnMapReadyCallback, OnCameraIdleListener {
+public class ObservationViewActivity extends DaggerAppCompatActivity implements OnMapReadyCallback, OnCameraIdleListener {
 
 	private static final String LOG_NAME = ObservationViewActivity.class.getName();
 
@@ -89,7 +88,10 @@ public class ObservationViewActivity extends AppCompatActivity implements OnMapR
 	public static String INITIAL_LOCATION = "INITIAL_LOCATION";
 	public static String INITIAL_ZOOM = "INITIAL_ZOOM";
 
+	@Inject
+	protected ViewModelProvider.Factory viewModelFactory;
 	private FormViewModel model;
+
 	private DateFormat dateFormat;
 	private GoogleMap map;
     private AttachmentGallery attachmentGallery;
@@ -112,8 +114,11 @@ public class ObservationViewActivity extends AppCompatActivity implements OnMapR
 
 		setContentView(R.layout.activity_observation_view);
 
-		model = ViewModelProviders.of(this).get(FormViewModel.class);
+		model = new ViewModelProvider(this, viewModelFactory).get(FormViewModel.class);
 		model.setFormMode(FormMode.VIEW);
+
+		ComposeView composeView = findViewById(R.id.forms);
+		FormView.INSTANCE.setContent(composeView, model);
 
 		dateFormat = DateFormatFactory.format("yyyy-MM-dd HH:mm zz", Locale.getDefault(), getApplicationContext());
 		try {
@@ -263,32 +268,7 @@ public class ObservationViewActivity extends AppCompatActivity implements OnMapR
 
 	private void setupObservation() {
 		try {
-			if (!o.getForms().isEmpty()) {
-				ObservationForm observationForm = o.getForms().iterator().next();
-				Map<Long, JsonObject> formMap = EventHelper.getInstance(getApplicationContext()).getCurrentEvent().getFormMap();
-				JsonObject formJson = formMap.get(observationForm.getFormId());
-				Form form = Form.Companion.fromJson(formJson);
-
-				Map<String, Object> values = new HashMap<>();
-				for (Map.Entry<String, ObservationProperty> entry : observationForm.getPropertiesMap().entrySet()) {
-					values.put(entry.getKey(), entry.getValue().getValue());
-				}
-
-				model.setForm(form, values);
-
-				ViewGroup formsLayout = findViewById(R.id.forms);
-				formsLayout.removeAllViews();
-
-				LinearLayout formLayout = (LinearLayout) getLayoutInflater().inflate(R.layout.observation_editor_form, formsLayout, true);
-				TextView name = formLayout.findViewById(R.id.form_name);
-				name.setText(form.getName());
-
-				FormFragment formFragment = new FormFragment();
-				getSupportFragmentManager()
-						.beginTransaction()
-						.replace(R.id.form_content, formFragment, "VIEW_FORM_FRAGMENT")
-						.commit();
-			}
+			model.setForms(o.getForms());
 
 			Drawable markerPlaceholder = DrawableCompat.wrap(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_place_white_48dp));
 			DrawableCompat.setTint(markerPlaceholder, ContextCompat.getColor(getApplicationContext(), R.color.icon));
@@ -351,15 +331,12 @@ public class ObservationViewActivity extends AppCompatActivity implements OnMapR
 			} else {
 				findViewById(R.id.gallery_container).setVisibility(View.VISIBLE);
 				attachmentGallery = new AttachmentGallery(getBaseContext(), 150, 150);
-                attachmentGallery.addOnAttachmentClickListener(new AttachmentGallery.OnAttachmentClickListener() {
-                    @Override
-                    public void onAttachmentClick(Attachment attachment) {
-                        Intent intent = new Intent(getApplicationContext(), AttachmentViewerActivity.class);
-                        intent.putExtra(AttachmentViewerActivity.ATTACHMENT_ID, attachment.getId());
-                        intent.putExtra(AttachmentViewerActivity.EDITABLE, false);
-                        startActivity(intent);
-                    }
-                });
+                attachmentGallery.addOnAttachmentClickListener(attachment -> {
+					Intent intent = new Intent(getApplicationContext(), AttachmentViewerActivity.class);
+					intent.putExtra(AttachmentViewerActivity.ATTACHMENT_ID, attachment.getId());
+					intent.putExtra(AttachmentViewerActivity.EDITABLE, false);
+					startActivity(intent);
+				});
                 attachmentGallery.addAttachments(galleryLayout, o.getAttachments());
 			}
 

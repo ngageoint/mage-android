@@ -30,12 +30,11 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.compose.ui.platform.ComposeView;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
@@ -50,14 +49,15 @@ import com.google.android.gms.maps.model.Circle;
 import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MapStyleOptions;
+import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -65,6 +65,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.inject.Inject;
+
+import dagger.android.support.DaggerAppCompatActivity;
+import kotlin.Unit;
 import mil.nga.giat.mage.BuildConfig;
 import mil.nga.giat.mage.LandingActivity;
 import mil.nga.giat.mage.R;
@@ -72,16 +76,19 @@ import mil.nga.giat.mage.form.DateFormField;
 import mil.nga.giat.mage.form.FieldType;
 import mil.nga.giat.mage.form.Form;
 import mil.nga.giat.mage.form.FormField;
-import mil.nga.giat.mage.form.FormFragment;
 import mil.nga.giat.mage.form.FormMode;
-import mil.nga.giat.mage.form.FormPreferences;
 import mil.nga.giat.mage.form.FormViewModel;
 import mil.nga.giat.mage.form.GeometryFormField;
 import mil.nga.giat.mage.form.field.EditDate;
 import mil.nga.giat.mage.form.field.EditGeometry;
-import mil.nga.giat.mage.form.field.Field;
 import mil.nga.giat.mage.form.field.dialog.DateFieldDialog;
 import mil.nga.giat.mage.form.field.dialog.GeometryFieldDialog;
+import mil.nga.giat.mage.form.field.dialog.SelectFieldDialog;
+import mil.nga.giat.mage.observation.form.FormEdit;
+import mil.nga.giat.mage.observation.form.FormFieldEvent;
+import mil.nga.giat.mage.observation.form.FormState;
+import mil.nga.giat.mage.observation.form.FormsComposeView;
+import mil.nga.giat.mage.observation.form.FormsState;
 import mil.nga.giat.mage.sdk.datastore.observation.Attachment;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationForm;
@@ -97,7 +104,7 @@ import mil.nga.giat.mage.sdk.exceptions.ObservationException;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
 
-public class ObservationEditActivity extends AppCompatActivity implements OnMapReadyCallback, OnCameraIdleListener {
+public class ObservationEditActivity extends DaggerAppCompatActivity implements OnMapReadyCallback, OnCameraIdleListener {
 
    private static final String LOG_NAME = ObservationEditActivity.class.getName();
 
@@ -133,9 +140,14 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
    private long locationElapsedTimeMilliseconds = 0;
    private MapFragment mapFragment;
    private MapObservationManager mapObservationManager;
-   private FormFragment formFragment;
 
+   @Inject
+   protected ViewModelProvider.Factory viewModelFactory;
    private FormViewModel model;
+
+   FormEdit formEdit;
+   FormsState forms;
+   BottomSheetDialog formsDialog;
 
    private LinearLayout attachmentLayout;
    private AttachmentGallery attachmentGallery;
@@ -147,11 +159,14 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
 
       setContentView(R.layout.activity_observation_edit);
 
-      model = new ViewModelProvider(this).get(FormViewModel.class);
+      model = new ViewModelProvider(this, viewModelFactory).get(FormViewModel.class);
       model.setFormMode(FormMode.EDIT);
 
+      FormsComposeView composeView = findViewById(R.id.forms);
+      composeView.setViewModel(model);
+      formEdit = FormEdit.INSTANCE;
+
       final long observationId = getIntent().getLongExtra(OBSERVATION_ID, NEW_OBSERVATION);
-      final long formId = getIntent().getLongExtra(OBSERVATION_FORM_ID, NO_FORM);
 
       isNewObservation = observationId == NEW_OBSERVATION;
 
@@ -200,48 +215,47 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
       if (isNewObservation) {
          observation = new Observation();
 
-         if (model.getForm().getValue() == null) {
-            FormPreferences formPreferences = new FormPreferences(getApplicationContext(), event, formId);
+//         formEdit.setContent(composeView, model, observation, (formFieldEvent) -> {
+//            onSelectFieldClick(formFieldEvent);
+//            return Unit.INSTANCE;
+//         });
 
-            form = Form.Companion.fromJson(formMap.get(formId));
-            if (form != null) {
-               model.setForm(form, formPreferences.getDefaults());
-            }
-         }
+         // TODO multi-form
+         // Set up model with default an min forms already initialized
+         // Pop up form picker if no forms exist
+//         model.initializeForms(observation);
+
+//         if (model.getForm().getValue() == null) {
+//            FormPreferences formPreferences = new FormPreferences(getApplicationContext(), event, formId);
+//
+//            form = Form.Companion.fromJson(formMap.get(formId));
+//            if (form != null) {
+//               model.setForm(form, formPreferences.getDefaults());
+//            }
+//         }
       } else {
          try {
             observation = ObservationHelper.getInstance(getApplicationContext()).read(getIntent().getLongExtra(OBSERVATION_ID, 0L));
-            if (!observation.getForms().isEmpty() && model.getForm().getValue() == null) {
-               ObservationForm observationForm = observation.getForms().iterator().next();
-               JsonObject formJson = formMap.get(observationForm.getFormId());
-               form = Form.Companion.fromJson(formJson);
-
-               Map<String, Object> values = new HashMap<>();
-               for (Map.Entry<String, ObservationProperty> entry : observationForm.getPropertiesMap().entrySet()) {
-                  values.put(entry.getKey(), entry.getValue().getValue());
-               }
-
-               if (form != null) {
-                  model.setForm(form, values);
-               }
-            }
+            // TODO multi-form
+            // Set up with current forms that exist in this observation
+//            if (!observation.getForms().isEmpty() && model.getForm().getValue() == null) {
+//               ObservationForm observationForm = observation.getForms().iterator().next();
+//               JsonObject formJson = formMap.get(observationForm.getFormId());
+//               form = Form.Companion.fromJson(formJson);
+//
+//               Map<String, Object> values = new HashMap<>();
+//               for (Map.Entry<String, ObservationProperty> entry : observationForm.getPropertiesMap().entrySet()) {
+//                  values.put(entry.getKey(), entry.getValue().getValue());
+//               }
+//
+//               if (form != null) {
+//                  model.setForm(form, values);
+//               }
+//            }
          } catch (ObservationException oe) {
             Log.e(LOG_NAME, "Problem reading observation.", oe);
             return;
          }
-      }
-
-      // Get the form for this observation
-      if (model.getForm().getValue() != null) {
-         LinearLayout formLayout = (LinearLayout) getLayoutInflater().inflate(R.layout.observation_editor_form, (ViewGroup) findViewById(R.id.forms), true);
-         TextView name = formLayout.findViewById(R.id.form_name);
-         name.setText(model.getForm().getValue().getName());
-
-         formFragment = new FormFragment();
-         getSupportFragmentManager()
-                 .beginTransaction()
-                 .replace(R.id.form_content, formFragment, "EDIT_FORM_FRAGMENT")
-                 .commit();
       }
 
       attachmentLayout = findViewById(R.id.image_gallery);
@@ -294,16 +308,24 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
          model.getTimestamp().getValue().setValue(observation.getTimestamp());
       }
 
-      findViewById(R.id.save_button).setOnClickListener(v -> saveObservation());
+      formsDialog = new BottomSheetDialog(ObservationEditActivity.this);
+      final View avatarBottomSheetView = getLayoutInflater().inflate(R.layout.dialog_avatar_actions, null);
+      formsDialog.setContentView(avatarBottomSheetView);
+
+      avatarBottomSheetView.findViewById(R.id.view_avatar_layout).setOnClickListener(v -> pickForm());
+
+      findViewById(R.id.add_form).setOnClickListener(v -> pickForm());
    }
 
    @Override
    public boolean onCreateOptionsMenu(Menu menu) {
       MenuInflater inflater = getMenuInflater();
+         inflater.inflate(R.menu.observation_edit_menu, menu);
 
-      if (!isNewObservation && canDeleteObservation()) {
-         inflater.inflate(R.menu.observation_delete_menu, menu);
-      }
+         // TODO multi-form delete show in bottom sheet actions
+//      if (!isNewObservation && canDeleteObservation()) {
+//         inflater.inflate(R.menu.observation_edit_menu, menu);
+//      }
 
       return true;
    }
@@ -437,32 +459,67 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
             new AlertDialog.Builder(this)
                     .setTitle("Discard Changes")
                     .setMessage(R.string.cancel_edit)
-                    .setPositiveButton(R.string.discard_changes, new DialogInterface.OnClickListener() {
-                       public void onClick(DialogInterface dialog, int which) {
-                          finish();
-                       }
-                    }).setNegativeButton(R.string.no, null)
+                    .setPositiveButton(R.string.discard_changes, (dialog, which) -> finish())
+                    .setNegativeButton(R.string.no, null)
                     .show();
 
             break;
-         case R.id.observation_archive:
-            onArchiveObservation();
-            return true;
+         case R.id.save:
+            saveObservation();
+            // TODO multi-form
+//         case R.id.observation_archive:
+//            onArchiveObservation();
+//            return true;
       }
 
       return super.onOptionsItemSelected(item);
+   }
+
+   private void onSelectFieldClick(FormFieldEvent.OnClick event) {
+      SelectFieldDialog dialog = SelectFieldDialog.Companion.newInstance(event.getFormId(), event.getFieldName());
+      dialog.show(getSupportFragmentManager(), "DIALOG_SELECT_FIELD");
+   }
+
+//   private void pickForm() {
+//      // TODO show bottom sheet of all forms
+//      formsDialog.show();
+//   }
+
+   private void pickForm() {
+//      formsDialog.dismiss();
+
+      // TODO multi-form get form from picker
+      Map<Long, JsonObject> formMap = EventHelper.getInstance(getApplicationContext()).getCurrentEvent().getFormMap();
+      JsonObject formDefinition = formMap.get(89L);
+      Form form = Form.Companion.fromJson(formDefinition);
+//      forms.addForm(form);
+      Collection<ObservationProperty> properties = new ArrayList<>();
+      for (FormField<?> field : form.getFields()) {
+         properties.add(new ObservationProperty(field.getName(), field.serialize()));
+      }
+
+      ObservationForm observationForm = new ObservationForm();
+      observationForm.setFormId(form.getId());
+      observationForm.setProperties(properties);
+      observation.getForms().add(observationForm);
+      FormsComposeView composeView = findViewById(R.id.forms);
+      composeView.setViewModel(model);
+
+      composeView.setObservation(observation);
+
+//      formEdit.addForm(observation, model);
+
+//      forms = formEdit.setContent(composeView, model, observation, (formFieldEvent) -> {
+//         onSelectFieldClick(formFieldEvent);
+//         return Unit.INSTANCE;
+//      });
    }
 
    private void onArchiveObservation() {
       new AlertDialog.Builder(this)
               .setTitle("Delete Observation")
               .setMessage("Are you sure you want to remove this observation?")
-              .setPositiveButton("Delete", new Dialog.OnClickListener() {
-                 @Override
-                 public void onClick(DialogInterface dialog, int which) {
-                    archiveObservation();
-                 }
-              })
+              .setPositiveButton("Delete", (dialog, which) -> archiveObservation())
               .setNegativeButton(android.R.string.cancel, null)
               .show();
    }
@@ -533,23 +590,33 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
          observation.setLocationDelta(Long.toString(locationElapsedTimeMilliseconds));
       }
 
-      Collection<ObservationForm> observationForms = new ArrayList<>();
-      Form form = model.getForm().getValue();
-      if (form != null) {
-         Collection<ObservationProperty> properties = new ArrayList<>();
-         for (FormField<Object> field : form.getFields()) {
-            Serializable value = field.serialize();
-            if (value != null) {
-               properties.add(new ObservationProperty(field.getName(), value));
-            }
-         }
+//      List<FormState> forms = formEdit.getForms();
 
-         ObservationForm observationForm = new ObservationForm();
-         observationForm.setFormId(form.getId());
-         observationForm.addProperties(properties);
-         observationForms.add(observationForm);
-      }
-      observation.addForms(observationForms);
+      Collection<ObservationForm> observationForms = new ArrayList<>();
+      // TODO multi-form
+//      for (FormViewModel.FormWithModel form : model.getForms().getValue()) {
+//         ObservationForm observationForm = new ObservationForm();
+//         observationForm.setFormId(form.getDefinition().getId());
+//         observationForm.addProperties(form.getModel().getProperties());
+//         observationForms.add(observationForm);
+//      }
+
+//      Form form = model.getForm().getValue();
+//      if (form != null) {
+//         Collection<ObservationProperty> properties = new ArrayList<>();
+//         for (FormField<Object> field : form.getFields()) {
+//            Serializable value = field.serialize();
+//            if (value != null) {
+//               properties.add(new ObservationProperty(field.getName(), value));
+//            }
+//         }
+//
+//         ObservationForm observationForm = new ObservationForm();
+//         observationForm.setFormId(form.getId());
+//         observationForm.addProperties(properties);
+//         observationForms.add(observationForm);
+//      }
+      observation.setForms(observationForms);
 
       observation.getAttachments().addAll(attachmentsToCreate);
 
@@ -569,28 +636,29 @@ public class ObservationEditActivity extends AppCompatActivity implements OnMapR
       }
    }
 
+   // TODO multi-form, need to validate the form
    private boolean validateForm() {
-      if (formFragment == null) return true;
-
-      List<Field<?>> invalid = new ArrayList<>();
-
-      for (Field<?> editField : formFragment.getEditFields()) {
-         if (!editField.validate(true)) {
-            invalid.add(editField);
-         }
-      }
-
-
-      if (!invalid.isEmpty()) {
-         // scroll to first invalid control
-         View firstInvalid = invalid.get(0);
-         findViewById(R.id.properties).scrollTo(0, firstInvalid.getBottom());
-         firstInvalid.clearFocus();
-         firstInvalid.requestFocus();
-         firstInvalid.requestFocusFromTouch();
-
-         return false;
-      }
+//      if (formFragment == null) return true;
+//
+//      List<Field<?>> invalid = new ArrayList<>();
+//
+//      for (Field<?> editField : formFragment.getEditFields()) {
+//         if (!editField.validate(true)) {
+//            invalid.add(editField);
+//         }
+//      }
+//
+//
+//      if (!invalid.isEmpty()) {
+//         // scroll to first invalid control
+//         View firstInvalid = invalid.get(0);
+//         findViewById(R.id.properties).scrollTo(0, firstInvalid.getBottom());
+//         firstInvalid.clearFocus();
+//         firstInvalid.requestFocus();
+//         firstInvalid.requestFocusFromTouch();
+//
+//         return false;
+//      }
 
       return true;
    }

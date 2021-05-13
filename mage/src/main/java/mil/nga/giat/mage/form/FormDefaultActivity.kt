@@ -60,21 +60,22 @@ class FormDefaultActivity : AppCompatActivity() {
             Form.fromJson(formJson)?.let {
                 formPreferences = FormPreferences(applicationContext, event!!, it.id)
 
-                if (formModel.getForm().value == null) {
-                    formModel.setForm(it, formPreferences.getDefaults())
-                }
+                // TODO multi-form
+//                if (formModel.getForm().value == null) {
+//                    formModel.setForm(it, formPreferences.getDefaults())
+//                }
             }
         } catch(e: EventException) {
             Log.e(LOG_NAME, "Error reading event", e)
         }
 
         supportActionBar?.title = event?.name
-
-        formModel.getForm().value?.let { form ->
-            formName.text = form.name
-            formDescription.visibility = if (form.description.isNullOrEmpty()) View.GONE else View.VISIBLE
-            formDescription.text = form.description
-        }
+        // TODO multi-form
+//        formModel.getForm().value?.let { form ->
+//            formName.text = form.name
+//            formDescription.visibility = if (form.description.isNullOrEmpty()) View.GONE else View.VISIBLE
+//            formDescription.text = form.description
+//        }
 
         saveButton.setOnClickListener{ saveDefaults() }
     }
@@ -109,27 +110,29 @@ class FormDefaultActivity : AppCompatActivity() {
             !it.validate(enforceRequired = false)
         }
         if (invalidFields.isNotEmpty()) return
+        // TODO multi-form
 
-        formModel.getForm().value?.let { form ->
-            val transform : (FormField<Any>) -> Pair<String, FormField<Any>> = { it.name to it }
-            val formMap = form.fields.associateTo(mutableMapOf(), transform)
-
-            Form.fromJson(formJson)?.let {
-                val defaultFormMap = it.fields.associateTo(mutableMapOf(), transform)
-                if (formMap.equals(defaultFormMap)) {
-                    formPreferences.clearDefaults()
-                } else {
-                    formPreferences.saveDefaults(form)
-                }
-            }
-        }
+//        formModel.getForm().value?.let { form ->
+//            val transform : (FormField<Any>) -> Pair<String, FormField<Any>> = { it.name to it }
+//            val formMap = form.fields.associateTo(mutableMapOf(), transform)
+//
+//            Form.fromJson(formJson)?.let {
+//                val defaultFormMap = it.fields.associateTo(mutableMapOf(), transform)
+//                if (formMap.equals(defaultFormMap)) {
+//                    formPreferences.clearDefaults()
+//                } else {
+//                    formPreferences.saveDefaults(form)
+//                }
+//            }
+//        }
 
         finish()
     }
 
     private fun clearDefaults() {
-        Form.fromJson(formJson)?.let {
-            formModel.setForm(it)
-        }
+        // TODO multi-form
+//        Form.fromJson(formJson)?.let {
+//            formModel.setForm(it)
+//        }
     }
 }

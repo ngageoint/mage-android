@@ -11,6 +11,8 @@ import mil.nga.giat.mage.form.FormDefaultActivity
 import mil.nga.giat.mage.login.LoginActivity
 import mil.nga.giat.mage.login.SignupActivity
 import mil.nga.giat.mage.login.idp.IdpLoginActivity
+import mil.nga.giat.mage.observation.ObservationEditActivity
+import mil.nga.giat.mage.observation.ObservationViewActivity
 import mil.nga.giat.mage.preferences.LocationPreferencesActivity
 import mil.nga.giat.mage.profile.ChangePasswordActivity
 import mil.nga.giat.mage.profile.ProfileActivity
@@ -53,4 +55,10 @@ abstract class ActivityContributorModule {
 
     @ContributesAndroidInjector
     internal abstract fun contributeProfileActivity(): ProfileActivity
+
+    @ContributesAndroidInjector
+    internal abstract fun contributeObservationViewActivity(): ObservationViewActivity
+
+    @ContributesAndroidInjector
+    internal abstract fun contributeObservationEditActivity(): ObservationEditActivity
 }
