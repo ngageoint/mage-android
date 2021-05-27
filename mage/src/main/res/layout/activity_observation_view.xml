@@ -341,10 +341,10 @@
 
             </com.google.android.material.card.MaterialCardView>
 
-            <androidx.compose.ui.platform.ComposeView
-                android:id="@+id/forms"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"/>
+<!--            <mil.nga.giat.mage.observation.form.FormsComposeView-->
+<!--                android:id="@+id/forms"-->
+<!--                android:layout_width="match_parent"-->
+<!--                android:layout_height="wrap_content"/>-->
 
         </LinearLayout>
 

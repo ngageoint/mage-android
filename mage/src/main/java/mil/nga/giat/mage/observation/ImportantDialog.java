@@ -7,6 +7,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.TextView;
 
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatDialogFragment;
 
@@ -30,7 +31,7 @@ public class ImportantDialog extends AppCompatDialogFragment {
     public ImportantDialog() {
     }
 
-    public static ImportantDialog newInstance(ObservationImportant important) {
+    public static ImportantDialog newInstance(@Nullable ObservationImportant important) {
         ImportantDialog dialog = new ImportantDialog();
         Bundle args = new Bundle();
         args.putString(DESCRIPTION, important != null ? important.getDescription() : null);

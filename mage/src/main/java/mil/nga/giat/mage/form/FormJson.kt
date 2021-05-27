@@ -15,10 +15,8 @@ import com.google.gson.stream.JsonWriter
 import mil.nga.giat.mage.observation.ObservationLocation
 import mil.nga.giat.mage.sdk.gson.serializer.GeometrySerializer
 import mil.nga.giat.mage.sdk.jackson.deserializer.GeometryDeserializer
-import mil.nga.giat.mage.sdk.utils.GeometryUtility
 import mil.nga.giat.mage.sdk.utils.ISO8601DateFormatFactory
 import mil.nga.sf.Geometry
-import java.io.Serializable
 import java.lang.reflect.Type
 import java.text.ParseException
 import java.util.*
@@ -29,10 +27,13 @@ class Form(
   @SerializedName("description") val description: String?,
   @SerializedName("default") val default: Boolean,
   @SerializedName("archived") val archived: Boolean,
-  @SerializedName("color") val hexColor: String?,
+  @SerializedName("color") val hexColor: String,
+  @SerializedName("primaryField") val primaryMapField: String?,
+  @SerializedName("secondaryField") val secondaryMapField: String?,
   @SerializedName("primaryFeedField") val primaryFeedField: String?,
   @SerializedName("secondaryFeedField") val secondaryFeedField: String?,
-  @SerializedName("fields") val fields: List<FormField<Any>>
+  @SerializedName("fields") val fields: List<FormField<Any>>,
+  @SerializedName("style") val style: JsonObject
 ) {
   companion object {
     private val gson = GsonBuilder()
@@ -68,18 +69,6 @@ open class FormField<T>(
       notifyPropertyChanged(BR.value)
     }
 
-  open fun serialize(): Serializable? {
-    (value as? Serializable)?.let {
-      return it
-    }
-
-    return null
-  }
-
-  open fun hasValue(): Boolean {
-    return value != null
-  }
-
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
 
@@ -109,8 +98,6 @@ enum class FieldType(val typeClass: Class<out FormField<out Any>>) {
   NUMBERFIELD(NumberFormField::class.java),
   @SerializedName("email")
   EMAIL(TextFormField::class.java),
-  @SerializedName("password")
-  PASSWORD(TextFormField::class.java),
   @SerializedName("radio")
   RADIO(SingleChoiceFormField::class.java),
   @SerializedName("checkbox")
@@ -128,11 +115,7 @@ class TextFormField(
   title: String,
   required: Boolean,
   archived: Boolean
-) : FormField<String>(id, type, name, title, required, archived) {
-  override fun hasValue(): Boolean {
-    return !value.isNullOrEmpty()
-  }
-}
+) : FormField<String>(id, type, name, title, required, archived)
 
 class BooleanFormField(
   id: Long,
@@ -170,15 +153,7 @@ class GeometryFormField(
   title: String,
   required: Boolean,
   archived: Boolean
-) : FormField<ObservationLocation>(id, type, name, title, required, archived) {
-  override fun serialize(): Serializable? {
-    value?.geometry?.let {
-      return GeometryUtility.toGeometryBytes(it);
-    }
-
-    return null
-  }
-}
+) : FormField<ObservationLocation>(id, type, name, title, required, archived)
 
 class Choice(
   @SerializedName("id") val id: Int,
@@ -203,11 +178,7 @@ class SingleChoiceFormField(
   required: Boolean,
   archived: Boolean,
   choices: List<Choice>
-) : ChoiceFormField<String>(id, type, name, title, required, archived, choices) {
-  override fun hasValue(): Boolean {
-    return !value.isNullOrEmpty()
-  }
-}
+) : ChoiceFormField<String>(id, type, name, title, required, archived, choices)
 
 class MultiChoiceFormField(
   id: Long,
@@ -217,11 +188,7 @@ class MultiChoiceFormField(
   required: Boolean,
   archived: Boolean,
   choices: List<Choice>
-) : ChoiceFormField<List<String>>(id, type, name, title, required, archived, choices) {
-  override fun hasValue(): Boolean {
-    return !value.isNullOrEmpty()
-  }
-}
+) : ChoiceFormField<List<String>>(id, type, name, title, required, archived, choices)
 
 class FormFieldDeserializer : JsonDeserializer<FormField<out Any>>,
   JsonSerializer<FormField<out Any>> {
@@ -251,7 +218,7 @@ class FormFieldDeserializer : JsonDeserializer<FormField<out Any>>,
     typeOfT: Type?,
     context: JsonDeserializationContext?
   ): FormField<out Any>? {
-    val type = gson.fromJson<FieldType>(json.asJsonObject.get(TYPE_FIELD), FieldType::class.java)
+    val type = gson.fromJson(json.asJsonObject.get(TYPE_FIELD), FieldType::class.java)
       ?: return null
 
     val field = gson.fromJson(json, type.typeClass)

@@ -8,9 +8,15 @@
         <item name="android:windowBackground">@color/background</item>
 
         <item name="preferenceTheme">@style/PreferenceThemeOverlay.v14.Material</item>
+
+        <item name="dialogTheme">@style/AppTheme.Dialog.Fullscreen</item>
     </style>
 
     <style name="AppTheme.Dialog.Fullscreen" parent="AppTheme">
+        <item name="dialogTheme">@style/AppTheme.AppCompat.Dialog.Fullscreen</item>
+    </style>
+
+    <style name="AppTheme.AppCompat.Dialog.Fullscreen" parent="Theme.AppCompat.Dialog">
         <item name="android:windowNoTitle">true</item>
         <item name="android:windowFullscreen">false</item>
         <item name="android:windowIsFloating">false</item>

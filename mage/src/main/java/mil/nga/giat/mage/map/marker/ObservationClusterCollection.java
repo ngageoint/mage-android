@@ -20,7 +20,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import mil.nga.giat.mage.filter.Filter;
 import mil.nga.giat.mage.map.marker.ObservationClusterCollection.ObservationClusterItem;
-import mil.nga.giat.mage.observation.ObservationViewActivity;
+import mil.nga.giat.mage.observation.view.ObservationViewActivityKt;
 import mil.nga.giat.mage.sdk.Temporal;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.sf.Point;
@@ -136,8 +136,8 @@ public class ObservationClusterCollection implements PointCollection<Observation
 
     @Override
     public boolean onClusterItemClick(ObservationClusterItem item) {
-        Intent o = new Intent(context, ObservationViewActivity.class);
-        o.putExtra(ObservationViewActivity.OBSERVATION_ID, item.getId());
+        Intent o = new Intent(context, ObservationViewActivityKt.class);
+        o.putExtra(ObservationViewActivityKt.OBSERVATION_ID, item.getId());
         context.startActivity(o);
 
         return false;

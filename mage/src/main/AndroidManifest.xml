@@ -195,16 +195,12 @@
             android:parentActivityName=".map.preference.MapPreferencesActivity"
             android:uiOptions="splitActionBarWhenNarrow" />
         <activity
-            android:name=".observation.ObservationViewActivity"
+            android:name=".observation.view.ObservationViewActivityKt"
             android:launchMode="singleTop"
             android:label="@string/observation_view"
             android:theme="@style/AppTheme.NoActionBar"/>
         <activity
-            android:name=".observation.ObservationFormPickerActivity"
-            android:theme="@style/AppTheme.NoActionBar"
-            android:uiOptions="splitActionBarWhenNarrow" />
-        <activity
-            android:name=".observation.ObservationEditActivity"
+            android:name="mil.nga.giat.mage.observation.edit.ObservationEditActivityKt"
             android:theme="@style/AppTheme.NoActionBar" />
         <activity android:name=".observation.AttachmentViewerActivity" />
         <activity android:name=".profile.ProfilePictureViewerActivity" />

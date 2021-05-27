@@ -7,12 +7,13 @@ import android.util.Log
 import android.view.Menu
 import android.view.MenuInflater
 import android.view.MenuItem
-import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProviders
 import com.google.gson.JsonObject
 import kotlinx.android.synthetic.main.activity_form_defaults.*
 import mil.nga.giat.mage.R
+import mil.nga.giat.mage.observation.form.FormMode
+import mil.nga.giat.mage.observation.form.FormViewModel
 import mil.nga.giat.mage.sdk.datastore.user.Event
 import mil.nga.giat.mage.sdk.datastore.user.EventHelper
 import mil.nga.giat.mage.sdk.exceptions.EventException
@@ -106,11 +107,12 @@ class FormDefaultActivity : AppCompatActivity() {
     }
 
     private fun saveDefaults() {
-        val invalidFields = (formFragment as FormFragment).editFields.filter {
-            !it.validate(enforceRequired = false)
-        }
-        if (invalidFields.isNotEmpty()) return
         // TODO multi-form
+
+//        val invalidFields = (formFragment as FormFragment).editFields.filter {
+//            !it.validate(enforceRequired = false)
+//        }
+//        if (invalidFields.isNotEmpty()) return
 
 //        formModel.getForm().value?.let { form ->
 //            val transform : (FormField<Any>) -> Pair<String, FormField<Any>> = { it.name to it }

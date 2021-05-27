@@ -8,9 +8,9 @@ import dagger.multibindings.IntoMap
 import mil.nga.giat.mage._server5.login.SignupViewModel_server5
 import mil.nga.giat.mage.dagger.factory.ViewModelFactory
 import mil.nga.giat.mage.dagger.factory.ViewModelKey
-import mil.nga.giat.mage.form.FormViewModel
 import mil.nga.giat.mage.login.LoginViewModel
 import mil.nga.giat.mage.login.SignupViewModel
+import mil.nga.giat.mage.observation.form.FormViewModel
 
 @Module
 internal abstract class ViewModelModule {
