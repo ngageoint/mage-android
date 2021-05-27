@@ -250,20 +250,6 @@ public class Observation implements Comparable<Observation>, Temporal {
         this.forms = forms;
     }
 
-    public void addForms(Collection<ObservationForm> forms) {
-
-        Map<Long, ObservationForm> newFormsMap = new HashMap<Long, ObservationForm>();
-        for (ObservationForm form : forms) {
-            form.setObservation(this);
-            newFormsMap.put(form.getFormId(), form);
-        }
-
-        Map<Long, ObservationForm> oldFormsMap = getFormsMap();
-
-        oldFormsMap.putAll(newFormsMap);
-        this.forms = oldFormsMap.values();
-    }
-
     public Collection<Attachment> getAttachments() {
         return attachments;
     }
