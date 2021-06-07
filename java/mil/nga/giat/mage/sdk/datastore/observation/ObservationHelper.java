@@ -250,48 +250,70 @@ public class ObservationHelper extends DaoHelper<Observation> implements IEventD
 
 					observationDao.update(observation);
 
-					Map<Long, ObservationForm> forms = observation.getFormsMap();
-					Map<Long, ObservationForm> oldForms = oldObservation.getFormsMap();
-					Collection<Long> commonForms = Sets.intersection(forms.keySet(), oldForms.keySet());
+					// TODO might not need to delete all forms/properties when server sets a unique form id
+					// Delete all forms for this observation and all properties
+					for (ObservationForm form : oldObservation.getForms()) {
+						for (ObservationProperty property : form.getProperties()) {
+							observationPropertyDao.deleteById(property.getId());
+						}
 
-					// Map database ids from old forms to new forms
-					for (Long formId : commonForms) {
-						forms.get(formId).setId(oldForms.get(formId).getId());
+						observationFormDao.deleteById(form.getId());
 					}
 
-					for (ObservationForm form : forms.values()) {
+					for (ObservationForm form : observation.getForms()) {
 						form.setObservation(observation);
 						observationFormDao.createOrUpdate(form);
 
-						Map<String, ObservationProperty> properties = form.getPropertiesMap();
-						ObservationForm oldForm = oldForms.get(form.getFormId());
-						if (oldForm != null) {
-							Map<String, ObservationProperty> oldProperties = oldForm.getPropertiesMap();
-							Collection<String> commonProperties = Sets.intersection(properties.keySet(), oldProperties.keySet());
-
-							// Map database ids from old properties to new properties
-							for (String propertyKey : commonProperties) {
-								properties.get(propertyKey).setId(oldProperties.get(propertyKey).getId());
-							}
-
-							// Remove any properties that existed in the old form but do not exist
-							// in the new form.
-							for (String property : Sets.difference(oldProperties.keySet(), properties.keySet())) {
-								observationPropertyDao.deleteById(oldProperties.get(property).getId());
-							}
-						}
-
-						for (ObservationProperty property : properties.values()) {
+						for (ObservationProperty property : form.getProperties()) {
 							property.setObservationForm(form);
 							observationPropertyDao.createOrUpdate(property);
 						}
 					}
 
+
+//					Map<Long, ObservationForm> forms = observation.getFormsMap();
+//					Map<Long, ObservationForm> oldForms = oldObservation.getFormsMap();
+//					Collection<Long> commonForms = Sets.intersection(forms.keySet(), oldForms.keySet());
+
+					// Map database ids from old forms to new forms
+//					for (Long id : commonForms) {
+//						forms.get(id).setId(oldForms.get(id).getId());
+//					}
+
+					// TODO, delete old forms that were removed from this observation
+//					for (ObservationForm form : forms.values()) {
+//						form.setObservation(observation);
+//						observationFormDao.createOrUpdate(form);
+//
+//						Map<String, ObservationProperty> properties = form.getPropertiesMap();
+//						ObservationForm oldForm = oldForms.get(form.getId());
+//						if (oldForm != null) {
+//							Map<String, ObservationProperty> oldProperties = oldForm.getPropertiesMap();
+//							Collection<String> commonProperties = Sets.intersection(properties.keySet(), oldProperties.keySet());
+//
+//							// Map database ids from old properties to new properties
+//							for (String propertyKey : commonProperties) {
+//								properties.get(propertyKey).setId(oldProperties.get(propertyKey).getId());
+//							}
+//
+//							// Remove any properties that existed in the old form but do not exist
+//							// in the new form.
+//							for (String property : Sets.difference(oldProperties.keySet(), properties.keySet())) {
+//								observationPropertyDao.deleteById(oldProperties.get(property).getId());
+//							}
+//						}
+//
+//						for (ObservationProperty property : properties.values()) {
+//							property.setObservationForm(form);
+//							observationPropertyDao.createOrUpdate(property);
+//						}
+//					}
+
 					// Remove any forms that existed in the old observation but do not exist
 					// in the new observation.
-					for (Long formId : Sets.difference(oldForms.keySet(), forms.keySet())) {
-						observationFormDao.deleteById(oldForms.get(formId).getId());
-					}
+//					for (Long formId : Sets.difference(oldForms.keySet(), forms.keySet())) {
+//						observationFormDao.deleteById(oldForms.get(formId).getId());
+//					}
 
 					Map<String, ObservationFavorite> favorites = observation.getFavoritesMap();
 					Map<String, ObservationFavorite> oldFavorites = oldObservation.getFavoritesMap();

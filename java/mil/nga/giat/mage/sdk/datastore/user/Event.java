@@ -31,6 +31,12 @@ public class Event {
     @DatabaseField
     private String description;
 
+	@DatabaseField
+	private Integer minObservationForms;
+
+	@DatabaseField
+	private Integer maxObservationForms;
+
     @DatabaseField
 	private String forms;
 
@@ -72,6 +78,22 @@ public class Event {
 
 	public String getDescription() {
 		return description;
+	}
+
+	public Integer getMinObservationForms() {
+		return minObservationForms;
+	}
+
+	public void setMinObservationForms(Integer minObservationForms) {
+		this.minObservationForms = minObservationForms;
+	}
+
+	public Integer getMaxObservationForms() {
+		return maxObservationForms;
+	}
+
+	public void setMaxObservationForms(Integer maxObservationForms) {
+		this.maxObservationForms = maxObservationForms;
 	}
 
 	public JsonArray getForms() {

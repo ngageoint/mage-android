@@ -36,21 +36,38 @@ public class EventDeserializer implements JsonDeserializer<Event> {
 
     @Override
     public Event deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
-        JsonObject event = json.getAsJsonObject();
+        JsonObject eventJson = json.getAsJsonObject();
 
-        String remoteId = event.get("id").getAsString();
+        String remoteId = eventJson.get("id").getAsString();
 
-        String name = event.get("name").getAsString();
+        String name = eventJson.get("name").getAsString();
 
         String description = "";
-        if (event.has("description")) {
-            description = event.get("description").toString();
+        if (eventJson.has("description")) {
+            description = eventJson.get("description").toString();
         }
 
-        String form = event.get("forms").toString();
+        String form = eventJson.get("forms").toString();
 
-        String acl = event.get("acl").toString();
+        String acl = eventJson.get("acl").toString();
 
-        return new Event(remoteId, name, description, form, acl);
+        Event event = new Event(remoteId, name, description, form, acl);
+
+
+        Integer minObservationForms = null;
+        JsonElement minObservationFormsElement = eventJson.get("minObservationForms");
+        if (minObservationFormsElement != null && minObservationFormsElement.isJsonPrimitive()) {
+            minObservationForms = minObservationFormsElement.getAsInt();
+        }
+        event.setMinObservationForms(minObservationForms);
+
+        Integer maxObservationForms = null;
+        JsonElement maxObservationFormsElement = eventJson.get("maxObservationForms");
+        if (maxObservationFormsElement != null && maxObservationFormsElement.isJsonPrimitive()) {
+            maxObservationForms = maxObservationFormsElement.getAsInt();
+        }
+        event.setMaxObservationForms(maxObservationForms);
+
+        return event;
     }
 }
