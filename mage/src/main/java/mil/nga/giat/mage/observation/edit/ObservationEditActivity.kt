@@ -22,6 +22,7 @@ import com.google.android.material.snackbar.Snackbar
 import dagger.android.support.DaggerAppCompatActivity
 import mil.nga.giat.mage.BuildConfig
 import mil.nga.giat.mage.R
+import mil.nga.giat.mage._server5.observation.edit.FormViewModel_server5
 import mil.nga.giat.mage.form.*
 import mil.nga.giat.mage.observation.AttachmentViewerActivity
 import mil.nga.giat.mage.observation.ObservationLocation
@@ -32,6 +33,7 @@ import mil.nga.giat.mage.form.edit.dialog.GeometryFieldDialog
 import mil.nga.giat.mage.form.edit.dialog.SelectFieldDialog
 import mil.nga.giat.mage.form.edit.dialog.SelectFieldDialog.Companion.newInstance
 import mil.nga.giat.mage.form.field.*
+import mil.nga.giat.mage.sdk.Compatibility.Companion.isServerVersion5
 import mil.nga.giat.mage.sdk.datastore.observation.Attachment
 import mil.nga.giat.mage.sdk.utils.MediaUtility
 import java.io.File
@@ -39,7 +41,7 @@ import java.io.IOException
 import java.util.*
 import javax.inject.Inject
 
-class ObservationEditActivity : DaggerAppCompatActivity() {
+open class ObservationEditActivity : DaggerAppCompatActivity() {
   companion object {
     private val LOG_NAME = ObservationEditActivity::class.java.name
 
@@ -65,14 +67,18 @@ class ObservationEditActivity : DaggerAppCompatActivity() {
 
   @Inject
   lateinit var viewModelFactory: ViewModelProvider.Factory
-  private lateinit var viewModel: FormViewModel
+  protected lateinit var viewModel: FormViewModel
 
   private var currentMediaPath: String? = null
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
 
-    viewModel = ViewModelProvider(this, viewModelFactory).get(FormViewModel::class.java)
+    viewModel = if (isServerVersion5(applicationContext)) {
+      ViewModelProvider(this, viewModelFactory).get(FormViewModel_server5::class.java)
+    } else {
+      ViewModelProvider(this, viewModelFactory).get(FormViewModel::class.java)
+    }
 
     val defaultMapLatLng = intent.getParcelableExtra(INITIAL_LOCATION) ?: LatLng(0.0, 0.0)
     val defaultMapZoom = intent.getFloatExtra(INITIAL_ZOOM, 0.0f)
@@ -80,7 +86,8 @@ class ObservationEditActivity : DaggerAppCompatActivity() {
     val observationId = intent.getLongExtra(OBSERVATION_ID, NEW_OBSERVATION)
     if (observationId == NEW_OBSERVATION) {
       val location: ObservationLocation = intent.getParcelableExtra(LOCATION)!!
-      viewModel.createObservation(Date(), location, defaultMapZoom, defaultMapLatLng)
+      val showFormPicker = viewModel.createObservation(Date(), location, defaultMapZoom, defaultMapLatLng)
+      if (showFormPicker) { pickForm() }
     } else {
       viewModel.setObservation(observationId)
     }
@@ -439,7 +446,7 @@ class ObservationEditActivity : DaggerAppCompatActivity() {
     val observationState = viewModel.observationState.value
     val totalMax = observationState?.definition?.maxObservationForms
     val totalForms = observationState?.forms?.value?.size ?: 0
-    if (totalMax != null && totalMax >= totalForms) {
+    if (totalMax != null && totalForms >= totalMax) {
       Snackbar.make(findViewById(android.R.id.content), "Total number of forms in an observation cannot be more than $totalMax", Snackbar.LENGTH_LONG).show()
       return
     }

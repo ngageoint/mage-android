@@ -10,6 +10,7 @@ import mil.nga.giat.mage.map.preference.OnlineLayersPreferenceActivity
 import mil.nga.giat.mage.map.preference.TileOverlayPreferenceActivity
 import mil.nga.giat.mage.newsfeed.ObservationFeedFragment
 import mil.nga.giat.mage.newsfeed.PeopleFeedFragment
+import mil.nga.giat.mage.observation.edit.FormPickerBottomSheetFragment
 import mil.nga.giat.mage.preferences.ClearDataPreferenceActivity
 import mil.nga.giat.mage.preferences.LocationPreferencesActivity
 
@@ -45,4 +46,7 @@ abstract class FragmentContributorModule {
 
     @ContributesAndroidInjector
     internal abstract fun contributeOnlineLayersListFragment(): OnlineLayersPreferenceActivity.OnlineLayersListFragment
+
+    @ContributesAndroidInjector
+    internal abstract fun contributeFormPickerFragment(): FormPickerBottomSheetFragment
 }

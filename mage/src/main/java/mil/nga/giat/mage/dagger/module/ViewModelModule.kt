@@ -6,6 +6,7 @@ import dagger.Binds
 import dagger.Module
 import dagger.multibindings.IntoMap
 import mil.nga.giat.mage._server5.login.SignupViewModel_server5
+import mil.nga.giat.mage._server5.observation.edit.FormViewModel_server5
 import mil.nga.giat.mage.dagger.factory.ViewModelFactory
 import mil.nga.giat.mage.dagger.factory.ViewModelKey
 import mil.nga.giat.mage.form.FormViewModel
@@ -38,6 +39,11 @@ internal abstract class ViewModelModule {
     @IntoMap
     @ViewModelKey(FormViewModel::class)
     protected abstract fun formViewModel(viewModel: FormViewModel): ViewModel
+
+    @Binds
+    @IntoMap
+    @ViewModelKey(FormViewModel_server5::class)
+    protected abstract fun formViewModel_server5(viewModel: FormViewModel_server5): ViewModel
 
     @Binds
     @IntoMap

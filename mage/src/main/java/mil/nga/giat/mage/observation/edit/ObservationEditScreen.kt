@@ -1,6 +1,5 @@
 package mil.nga.giat.mage.observation.edit
 
-import android.util.Log
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.*
@@ -99,17 +98,21 @@ fun ObservationEditScreen(
         }
       },
       floatingActionButton = {
-        ExtendedFloatingActionButton(
-          icon = {
-            Icon(
-              Icons.Default.NoteAdd,
-              contentDescription = "Add Form",
-              tint = Color.White
-            )
-           },
-          text = { Text("ADD FORM", color = Color.White) },
-          onClick = { onAddForm?.invoke() }
-        )
+        val max = observationState?.definition?.maxObservationForms
+        val totalForms = observationState?.forms?.value?.size ?: 0
+        if (max == null || totalForms < max) {
+          ExtendedFloatingActionButton(
+            icon = {
+              Icon(
+                Icons.Default.NoteAdd,
+                contentDescription = "Add Form",
+                tint = Color.White
+              )
+            },
+            text = { Text("ADD FORM", color = Color.White) },
+            onClick = { onAddForm?.invoke() }
+          )
+        }
       }
     )
   }

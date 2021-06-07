@@ -1,7 +1,6 @@
 package mil.nga.giat.mage.form.edit
 
 import androidx.compose.animation.animateContentSize
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
@@ -13,7 +12,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import mil.nga.giat.mage.form.*
 
-import androidx.compose.ui.focus.FocusState
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
@@ -27,7 +25,6 @@ import java.util.*
 // TODO multi-form
 // Check required fields for all types
 // Auto scroll to new form on add form, TODO test with compose beta8
-// Compat with server version 5.x
 
 @Composable
 fun FormEditContent(

@@ -23,7 +23,7 @@ import mil.nga.giat.mage.sdk.exceptions.UserException
 import java.util.*
 import javax.inject.Inject
 
-class FormViewModel @Inject constructor(
+open class FormViewModel @Inject constructor(
   @ApplicationContext val context: Context,
 ) : ViewModel() {
 
@@ -31,13 +31,13 @@ class FormViewModel @Inject constructor(
     private val LOG_NAME = FormViewModel::class.java.name
   }
 
-  private val _observation = MutableLiveData<Observation>()
+  protected val _observation = MutableLiveData<Observation>()
   val observation: LiveData<Observation> = _observation
 
-  private val _observationState: MutableLiveData<ObservationState> = MutableLiveData()
+  protected val _observationState: MutableLiveData<ObservationState> = MutableLiveData()
   val observationState: LiveData<ObservationState> = _observationState
 
-  private val event: Event = EventHelper.getInstance(context).currentEvent
+  protected val event: Event = EventHelper.getInstance(context).currentEvent
 
   val attachments = mutableListOf<Attachment>()
 
@@ -65,8 +65,8 @@ class FormViewModel @Inject constructor(
     ObservationHelper.getInstance(context).removeListener(listener)
   }
 
-  fun createObservation(timestamp: Date, location: ObservationLocation, defaultMapZoom: Float? = null, defaultMapCenter: LatLng? = null) {
-    if (_observationState.value != null) return
+  open fun createObservation(timestamp: Date, location: ObservationLocation, defaultMapZoom: Float? = null, defaultMapCenter: LatLng? = null): Boolean {
+    if (_observationState.value != null) return false
 
     val jsonForms = event.forms
     val forms = mutableListOf<FormState>()
@@ -137,6 +137,8 @@ class FormViewModel @Inject constructor(
       userDisplayName = user?.displayName,
       forms = forms)
     _observationState.value = observationState
+
+    return observationState.forms.value.isEmpty() && formDefinitions.isNotEmpty()
   }
 
   fun setObservation(observationId: Long, defaultMapZoom: Float? = null, defaultMapCenter: LatLng? = null) {
@@ -150,7 +152,7 @@ class FormViewModel @Inject constructor(
     }
   }
 
-  private fun createObservationState(observation: Observation, defaultMapZoom: Float? = null, defaultMapCenter: LatLng? = null) {
+  protected open fun createObservationState(observation: Observation, defaultMapZoom: Float? = null, defaultMapCenter: LatLng? = null) {
     _observation.value = observation
 
     val formDefinitions = mutableMapOf<Long, Form>()
@@ -353,7 +355,7 @@ class FormViewModel @Inject constructor(
 
     _observationState.value?.attachments?.value = attachments
   }
-  
+
   fun flagObservation(description: String?) {
     val observation = _observation.value
     val observationImportant = observation?.important
@@ -379,7 +381,7 @@ class FormViewModel @Inject constructor(
       Log.e(LOG_NAME, "Error updating important flag for observation:" + observation?.remoteId)
     }
   }
-  
+
   fun unflagObservation() {
     val observation = _observation.value
 
@@ -413,7 +415,7 @@ class FormViewModel @Inject constructor(
     }
   }
 
-  private fun hasUpdatePermissionsInEventAcl(user: User?): Boolean {
+  protected fun hasUpdatePermissionsInEventAcl(user: User?): Boolean {
     return if (user != null) {
       event.acl[user.remoteId]
         ?.asJsonObject

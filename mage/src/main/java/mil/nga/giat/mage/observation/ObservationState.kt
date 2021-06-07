@@ -59,6 +59,7 @@ class ObservationState(
     for (formState in forms.value) {
       if (!formState.isValid()) {
         fieldsValid = false
+        formState.expanded.value = true
       }
     }
 
