@@ -32,7 +32,7 @@ fun FormContent(
   Card(
     Modifier
       .fillMaxWidth()
-      .padding(8.dp)
+      .padding(vertical = 8.dp)
   ) {
     Column(
       Modifier
@@ -65,7 +65,7 @@ fun FormHeaderContent(
     )
   )
 
-  Row() {
+  Row {
     Column(
       Modifier
         .weight(1f)
@@ -312,7 +312,7 @@ fun fieldText(
       CoordinateFormatter(context).format(fieldValue.location.centroidLatLng)
     }
     is FieldValue.Number -> {
-      fieldValue.number.toString()
+      fieldValue.number
     }
     is FieldValue.Multi -> {
       fieldValue.choices.joinToString(", ")

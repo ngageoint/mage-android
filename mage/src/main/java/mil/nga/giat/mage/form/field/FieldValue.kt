@@ -9,7 +9,7 @@ sealed class FieldValue {
   data class Date(val date: java.util.Date) : FieldValue()
   data class Location(val location: ObservationLocation) : FieldValue()
   data class Multi(val choices: List<String>) : FieldValue()
-  data class Number(val number: kotlin.Number) : FieldValue()
+  data class Number(val number: String) : FieldValue()
   data class Text(val text: String) : FieldValue()
 
   fun serialize(): Serializable {
@@ -18,7 +18,14 @@ sealed class FieldValue {
       is Date -> date
       is Location ->  GeometryUtility.toGeometryBytes(location.geometry)
       is Multi -> choices as Serializable
-      is Number -> number
+      is Number -> {
+        val value = number.toDouble()
+        if (value % 1.0 == 0.0) {
+          value.toInt()
+        } else {
+          value
+        }
+      }
       is Text -> text
     }
   }

@@ -1,6 +1,7 @@
 package mil.nga.giat.mage.form.edit
 
 import androidx.compose.animation.animateContentSize
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
@@ -25,10 +26,8 @@ import java.util.*
 
 // TODO multi-form
 // Check required fields for all types
-// Validation of fields, don't allow save and show error
-// Auto scroll to new form on ad form
-// TODO Web is not ordering fields correctly
-// Make sure all defaults are applied to new form fields
+// Auto scroll to new form on add form, TODO test with compose beta8
+// Compat with server version 5.x
 
 @Composable
 fun FormEditContent(
@@ -37,9 +36,7 @@ fun FormEditContent(
   onFieldClick: ((FieldState<*, *>) -> Unit)? = null
 ) {
   Card(
-    Modifier
-      .fillMaxWidth()
-      .padding(8.dp)
+    Modifier.fillMaxWidth()
   ) {
     Column(
       Modifier
@@ -67,7 +64,6 @@ fun FormEditContent(
             .padding(vertical = 16.dp)
         ) {
           TextButton(
-            // TODO multi-form show snackbar to let user undo delete of form
             onClick = { onFormDelete?.invoke() }
           ) {
             Text("DELETE FORM", color = MaterialTheme.colors.error)
@@ -159,6 +155,7 @@ fun DateEdit(
   val date = fieldState.answer?.date
 
   val focusManager = LocalFocusManager.current
+  val labelColor = if (fieldState.showErrors()) MaterialTheme.colors.error else MaterialTheme.colors.onSurface.copy(ContentAlpha.medium)
 
   Column(Modifier.padding(bottom = 16.dp)) {
     TextField(
@@ -169,9 +166,8 @@ fun DateEdit(
       isError = fieldState.showErrors(),
       colors = TextFieldDefaults.textFieldColors(
         disabledTextColor = LocalContentColor.current.copy(LocalContentAlpha.current),
-        disabledLabelColor =  MaterialTheme.colors.onSurface.copy(ContentAlpha.medium)
+        disabledLabelColor = labelColor
       ),
-
       modifier = Modifier
         .fillMaxWidth()
         .clickable(onClick = {
@@ -207,7 +203,7 @@ fun TextEdit(
       modifier = Modifier
         .fillMaxWidth()
         .onFocusChanged { focusState ->
-          val focused = focusState == FocusState.Active
+          val focused = focusState.isFocused
           fieldState.onFocusChange(focused)
           if (!focused) {
             fieldState.enableShowErrors()
@@ -223,27 +219,19 @@ fun TextEdit(
 @Composable
 fun NumberEdit(
   fieldState: FieldState<Number, FieldValue.Number>,
-  onAnswer: (Number) -> Unit,
+  onAnswer: (String) -> Unit,
 ) {
   Column(Modifier.padding(bottom = 16.dp)) {
     TextField(
       value = fieldState.answer?.number?.toString() ?: "",
-      onValueChange = {
-        it.toDoubleOrNull()?.let { value ->
-          if (value % 1.0 == 0.0) {
-            onAnswer(value.toInt())
-          } else {
-            onAnswer(value)
-          }
-        }
-      },
+      onValueChange = { onAnswer(it) },
       label = { Text("${fieldState.definition.title}${if (fieldState.definition.required) " *" else ""}") },
       singleLine = fieldState.definition.type != FieldType.TEXTAREA,
       isError = fieldState.showErrors(),
       modifier = Modifier
         .fillMaxWidth()
         .onFocusChanged { focusState ->
-          val focused = focusState == FocusState.Active
+          val focused = focusState.isFocused
           fieldState.onFocusChange(focused)
           if (!focused) {
             fieldState.enableShowErrors()
@@ -262,6 +250,7 @@ fun MultiSelectEdit(
   onClick: (() -> Unit)? = null
 ) {
   val focusManager = LocalFocusManager.current
+  val labelColor = if (fieldState.showErrors()) MaterialTheme.colors.error else MaterialTheme.colors.onSurface.copy(ContentAlpha.medium)
 
   Column(Modifier.padding(bottom = 16.dp)) {
     TextField(
@@ -272,7 +261,7 @@ fun MultiSelectEdit(
       isError = fieldState.showErrors(),
       colors = TextFieldDefaults.textFieldColors(
         disabledTextColor = LocalContentColor.current.copy(LocalContentAlpha.current),
-        disabledLabelColor =  MaterialTheme.colors.onSurface.copy(ContentAlpha.medium)
+        disabledLabelColor =  labelColor
       ),
 
       modifier = Modifier
@@ -295,6 +284,7 @@ fun SelectEdit(
   onClick: (() -> Unit)? = null
 ) {
   val focusManager = LocalFocusManager.current
+  val labelColor = if (fieldState.showErrors()) MaterialTheme.colors.error else MaterialTheme.colors.onSurface.copy(ContentAlpha.medium)
 
   Column(Modifier.padding(bottom = 16.dp)) {
     TextField(
@@ -305,7 +295,7 @@ fun SelectEdit(
       isError = fieldState.showErrors(),
       colors = TextFieldDefaults.textFieldColors(
         disabledTextColor = LocalContentColor.current.copy(LocalContentAlpha.current),
-        disabledLabelColor =  MaterialTheme.colors.onSurface.copy(ContentAlpha.medium)
+        disabledLabelColor =  labelColor//MaterialTheme.colors.onSurface.copy(ContentAlpha.medium)
       ),
       modifier = Modifier
         .fillMaxWidth()
@@ -370,7 +360,6 @@ fun TextFieldError(textError: String) {
         text = textError,
         modifier = Modifier.fillMaxWidth(),
         style = MaterialTheme.typography.caption.copy(color = MaterialTheme.colors.error)
-//      style = LocalTextStyle.current.copy(color = MaterialTheme.colors.error)
       )
     }
   }

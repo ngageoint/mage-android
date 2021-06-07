@@ -18,6 +18,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.lifecycle.ViewModelProvider
 import com.google.android.gms.maps.model.LatLng
+import com.google.android.material.snackbar.Snackbar
 import dagger.android.support.DaggerAppCompatActivity
 import mil.nga.giat.mage.BuildConfig
 import mil.nga.giat.mage.R
@@ -26,11 +27,11 @@ import mil.nga.giat.mage.observation.AttachmentViewerActivity
 import mil.nga.giat.mage.observation.ObservationLocation
 import mil.nga.giat.mage.observation.edit.FormPickerBottomSheetFragment.OnFormClickListener
 import mil.nga.giat.mage.form.edit.dialog.DateFieldDialog
+import mil.nga.giat.mage.form.edit.dialog.FormReorderDialog
 import mil.nga.giat.mage.form.edit.dialog.GeometryFieldDialog
 import mil.nga.giat.mage.form.edit.dialog.SelectFieldDialog
 import mil.nga.giat.mage.form.edit.dialog.SelectFieldDialog.Companion.newInstance
 import mil.nga.giat.mage.form.field.*
-import mil.nga.giat.mage.observation.form.*
 import mil.nga.giat.mage.sdk.datastore.observation.Attachment
 import mil.nga.giat.mage.sdk.utils.MediaUtility
 import java.io.File
@@ -38,9 +39,9 @@ import java.io.IOException
 import java.util.*
 import javax.inject.Inject
 
-class ObservationEditActivityKt : DaggerAppCompatActivity() {
+class ObservationEditActivity : DaggerAppCompatActivity() {
   companion object {
-    private val LOG_NAME = ObservationEditActivityKt::class.java.name
+    private val LOG_NAME = ObservationEditActivity::class.java.name
 
     const val OBSERVATION_ID = "OBSERVATION_ID"
     const val LOCATION = "LOCATION"
@@ -72,7 +73,6 @@ class ObservationEditActivityKt : DaggerAppCompatActivity() {
     super.onCreate(savedInstanceState)
 
     viewModel = ViewModelProvider(this, viewModelFactory).get(FormViewModel::class.java)
-    viewModel.formMode = FormMode.EDIT
 
     val defaultMapLatLng = intent.getParcelableExtra(INITIAL_LOCATION) ?: LatLng(0.0, 0.0)
     val defaultMapZoom = intent.getFloatExtra(INITIAL_ZOOM, 0.0f)
@@ -93,6 +93,7 @@ class ObservationEditActivityKt : DaggerAppCompatActivity() {
         onAction = { onAction(it) },
         onAddForm = { pickForm() },
         onDeleteForm = { deleteForm(it) },
+        onReorderForms = { reorderForms() },
         onFieldClick = { fieldState ->  onFieldClick(fieldState = fieldState) },
         onAttachmentClick = { attachment ->  onAttachmentClick(attachment) }
       )
@@ -254,8 +255,9 @@ class ObservationEditActivityKt : DaggerAppCompatActivity() {
   }
 
   private fun save() {
-    viewModel.saveObservation()
-    finish()
+    if (viewModel.saveObservation()) {
+      finish()
+    }
   }
 
   private fun cancel() {
@@ -434,16 +436,41 @@ class ObservationEditActivityKt : DaggerAppCompatActivity() {
   }
 
   private fun pickForm() {
+    val observationState = viewModel.observationState.value
+    val totalMax = observationState?.definition?.maxObservationForms
+    val totalForms = observationState?.forms?.value?.size ?: 0
+    if (totalMax != null && totalMax >= totalForms) {
+      Snackbar.make(findViewById(android.R.id.content), "Total number of forms in an observation cannot be more than $totalMax", Snackbar.LENGTH_LONG).show()
+      return
+    }
+
     val formPicker = FormPickerBottomSheetFragment()
     formPicker.formPickerListener = object : OnFormClickListener {
       override fun onFormPicked(form: Form) {
+        val formMax = form.max
+        val totalOfForm = observationState?.forms?.value?.filter { it.definition.id == form.id }?.size ?: 0
+        if (formMax != null && totalOfForm >= formMax) {
+          Snackbar.make(findViewById(android.R.id.content), "${form.name} cannot be included in an observation more than $formMax ${if (formMax > 1) "times" else "time"}.", Snackbar.LENGTH_LONG).show()
+          return
+        }
+
         viewModel.addForm(form)
       }
     }
-    formPicker.show(supportFragmentManager, "form_picker")
+    formPicker.show(supportFragmentManager, "DIALOG_FORM_PICKER")
   }
 
   private fun deleteForm(index: Int) {
     viewModel.deleteForm(index)
+  }
+
+  private fun reorderForms() {
+    val dialog = FormReorderDialog.newInstance()
+    dialog.listener = object : FormReorderDialog.FormReorderDialogListener {
+      override fun onReorder(forms: List<FormState>) {
+        viewModel.reorderForms(forms)
+      }
+    }
+    dialog.show(supportFragmentManager, "DIALOG_FORM_REORDER")
   }
 }

@@ -22,14 +22,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import mil.nga.giat.mage.coordinate.CoordinateFormatter
 import mil.nga.giat.mage.form.FormState
+import mil.nga.giat.mage.form.FormViewModel
 import mil.nga.giat.mage.map.marker.ObservationBitmapFactory
-import mil.nga.giat.mage.observation.form.ObservationState
-import mil.nga.giat.mage.observation.form.*
 import mil.nga.giat.mage.form.field.FieldValue
 import mil.nga.giat.mage.form.view.*
+import mil.nga.giat.mage.observation.ObservationPermission
+import mil.nga.giat.mage.observation.ObservationState
+import mil.nga.giat.mage.observation.ObservationStatusState
 import mil.nga.giat.mage.sdk.datastore.observation.Attachment
-import mil.nga.giat.mage.ui.theme.MageTheme
-import mil.nga.giat.mage.ui.theme.topAppBarBackground
+import mil.nga.giat.mage.ui.theme.*
 import mil.nga.giat.mage.utils.DateFormatFactory
 import java.util.*
 
@@ -87,7 +88,7 @@ fun ObservationViewTopBar(
   observationState: ObservationState?,
   onClose: () -> Unit
 ) {
-  val formState = observationState?.forms?.value?.first()
+  val formState = observationState?.forms?.value?.firstOrNull()
   val primary = formState?.fields?.find { it.definition.name == formState.definition.primaryMapField }?.answer as? FieldValue.Text
   val title = primary?.text ?: "Observation"
 
@@ -135,7 +136,7 @@ fun ObservationViewContent(
         .background(Color(0x19000000))
         .fillMaxHeight()
         .verticalScroll(rememberScrollState())
-        .padding(bottom = 80.dp)
+        .padding(start = 8.dp, end = 8.dp, bottom = 80.dp)
     ) {
       val forms by observationState.forms
 
@@ -147,6 +148,24 @@ fun ObservationViewContent(
 
       val attachments by observationState.attachments
       AttachmentsViewContent(attachments, onAttachmentClick)
+
+      if (forms.isNotEmpty()) {
+        Row(
+          verticalAlignment = Alignment.CenterVertically,
+          modifier = Modifier.padding(start = 8.dp, end = 8.dp, top = 16.dp)
+        ) {
+          CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
+            Text(
+              text = "FORMS",
+              style = MaterialTheme.typography.caption,
+              fontWeight = FontWeight.SemiBold,
+              modifier = Modifier
+                .weight(1f)
+                .padding(vertical = 8.dp)
+            )
+          }
+        }
+      }
 
       for (formState in forms) {
         FormContent(formState)
@@ -233,7 +252,10 @@ fun ObservationLocalStatus() {
 fun ObservationErrorStatus(
   error: String
 ) {
-  Column(Modifier.padding(vertical = 8.dp, horizontal = 16.dp)) {
+  Column(
+    horizontalAlignment = Alignment.CenterHorizontally,
+    modifier = Modifier.padding(vertical = 8.dp, horizontal = 16.dp)
+  ) {
     Row(
       verticalAlignment = Alignment.CenterVertically,
       horizontalArrangement = Arrangement.Center,
@@ -258,10 +280,12 @@ fun ObservationErrorStatus(
       )
     }
 
-    Text(
-      text = error,
-      style = MaterialTheme.typography.body2
-    )
+    CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
+      Text(
+        text = error,
+        style = MaterialTheme.typography.body1
+      )
+    }
   }
 }
 
@@ -273,13 +297,49 @@ fun ObservationViewHeaderContent(
 ) {
   val dateFormat =
     DateFormatFactory.format("yyyy-MM-dd HH:mm zz", Locale.getDefault(), LocalContext.current)
-  val formState = observationState?.forms?.value?.first()
+
+  val formState = observationState?.forms?.value?.firstOrNull()
   Card(
     Modifier
       .fillMaxWidth()
-      .padding(8.dp)
+      .padding(top = 8.dp)
   ) {
     Column {
+      val important = observationState?.important?.value
+      if (important != null) {
+        Row(
+          Modifier
+            .fillMaxWidth()
+            .background(MaterialTheme.colors.importantBackground)
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+        ) {
+          Icon(
+            imageVector = Icons.Default.Flag,
+            contentDescription = "Important Flag",
+            modifier = Modifier
+              .height(40.dp)
+              .width(40.dp)
+              .padding(end = 8.dp)
+          )
+
+          Column() {
+            CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
+              Text(
+                text = "Flagged by ${important.user}".toUpperCase(Locale.ROOT),
+                style = MaterialTheme.typography.overline,
+                fontWeight = FontWeight.SemiBold,
+              )
+            }
+
+            if (important.description != null) {
+              Text(
+                text = important.description
+              )
+            }
+          }
+        }
+      }
+
       Row(modifier = Modifier
         .padding(top = 16.dp, start = 16.dp, bottom = 16.dp)
       ) {
@@ -292,12 +352,12 @@ fun ObservationViewHeaderContent(
               observationState?.userDisplayName?.let {
                 Text(
                   text = it.toUpperCase(Locale.ROOT),
-                  fontWeight = FontWeight.Bold,
+                  fontWeight = FontWeight.SemiBold,
                   style = MaterialTheme.typography.overline
                 )
                 Text(
                   text = "\u2022",
-                  fontWeight = FontWeight.Bold,
+                  fontWeight = FontWeight.SemiBold,
                   style = MaterialTheme.typography.overline,
                   modifier = Modifier.padding(start = 4.dp, end = 4.dp)
                 )
@@ -306,7 +366,7 @@ fun ObservationViewHeaderContent(
               observationState?.timestampFieldState?.answer?.date?.let {
                 Text(
                   text = dateFormat.format(it).toUpperCase(Locale.ROOT),
-                  fontWeight = FontWeight.Bold,
+                  fontWeight = FontWeight.SemiBold,
                   style = MaterialTheme.typography.overline
                 )
               }
@@ -399,7 +459,7 @@ fun ObservationActions(
 
 
     if (observationState?.permissions?.contains(ObservationPermission.FLAG) == true) {
-      val isFlagged = observationState.important.value?.isImportant ?: false
+      val isFlagged = observationState.important.value != null
       val flagTint = if (isFlagged) {
         Color(0XFFFF9100)
       } else {

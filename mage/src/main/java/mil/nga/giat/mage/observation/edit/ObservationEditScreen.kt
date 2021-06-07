@@ -1,28 +1,33 @@
 package mil.nga.giat.mage.observation.edit
 
+import android.util.Log
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.*
 import androidx.compose.material.*
+import androidx.compose.material.ButtonDefaults.textButtonColors
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.launch
 import mil.nga.giat.mage.form.FormState
+import mil.nga.giat.mage.form.FormViewModel
 import mil.nga.giat.mage.form.edit.DateEdit
 import mil.nga.giat.mage.form.edit.FormEditContent
 import mil.nga.giat.mage.form.edit.GeometryEdit
-import mil.nga.giat.mage.observation.form.ObservationState
-import mil.nga.giat.mage.observation.form.*
+import mil.nga.giat.mage.observation.ObservationState
 import mil.nga.giat.mage.form.field.DateFieldState
 import mil.nga.giat.mage.form.field.FieldState
 import mil.nga.giat.mage.form.field.GeometryFieldState
 import mil.nga.giat.mage.form.view.AttachmentsViewContent
+import mil.nga.giat.mage.observation.ObservationValidationResult
 import mil.nga.giat.mage.sdk.datastore.observation.Attachment
 import mil.nga.giat.mage.ui.theme.MageTheme
 
@@ -38,18 +43,34 @@ fun ObservationEditScreen(
   onAction: ((ObservationMediaAction) -> Unit)? = null,
   onAddForm: (() -> Unit)? = null,
   onDeleteForm: ((Int) -> Unit)? = null,
+  onReorderForms: (() -> Unit)? = null,
   onFieldClick: ((FieldState<*, *>) -> Unit)? = null,
   onAttachmentClick: ((Attachment) -> Unit)? = null
 ) {
   val observationState by viewModel.observationState.observeAsState()
+  val scope = rememberCoroutineScope()
+  val scaffoldState = rememberScaffoldState()
+  val listState = rememberLazyListState()
 
   MageTheme {
     Scaffold(
+      scaffoldState = scaffoldState,
       topBar = {
         ObservationEditTopBar(
           isNewObservation = observationState?.id == null,
           eventName = observationState?.eventName,
-          onSave = { onSave?.invoke() },
+          onSave = {
+            observationState?.let { state ->
+              when (val result = state.validate()) {
+                is ObservationValidationResult.Invalid -> {
+                  scope.launch {
+                    scaffoldState.snackbarHostState.showSnackbar(result.error)
+                  }
+                }
+                is ObservationValidationResult.Valid -> onSave?.invoke()
+              }
+            }
+          },
           onCancel = { onCancel?.invoke() }
         )
       },
@@ -59,9 +80,21 @@ fun ObservationEditScreen(
 
           ObservationEditContent(
             observationState,
+            listState = listState,
             onFieldClick = onFieldClick,
             onAttachmentClick = onAttachmentClick,
-            onDeleteForm = onDeleteForm
+            onReorderForms = onReorderForms,
+            onDeleteForm = { index, formState ->
+              scope.launch {
+                val result = scaffoldState.snackbarHostState.showSnackbar("Form deleted", "UNDO")
+                if (result == SnackbarResult.ActionPerformed) {
+                  val forms = observationState?.forms?.value?.toMutableList() ?: mutableListOf()
+                  forms.add(index, formState)
+                  observationState?.forms?.value = forms
+                }
+              }
+              onDeleteForm?.invoke(index)
+            }
           )
         }
       },
@@ -107,8 +140,11 @@ fun ObservationEditTopBar(
       }
     },
     actions = {
-      TextButton(onClick = { onSave.invoke() }) {
-        Text("SAVE", color = Color.White)
+      TextButton(
+        onClick = { onSave.invoke() },
+        colors = textButtonColors(contentColor = Color.White)
+      ) {
+        Text("SAVE")
       }
     }
   )
@@ -144,35 +180,85 @@ fun ObservationMediaBar(
 @Composable
 fun ObservationEditContent(
   observationState: ObservationState?,
+  listState: LazyListState,
   onFieldClick: ((FieldState<*, *>) -> Unit)? = null,
   onAttachmentClick: ((Attachment) -> Unit)? = null,
-  onDeleteForm: ((Int) -> Unit)? = null,
-  ) {
+  onDeleteForm: ((Int, FormState) -> Unit)? = null,
+  onReorderForms: (() -> Unit)? = null
+) {
+
   if (observationState != null) {
-    Column(
+    val forms by observationState.forms
+    var initialized by remember { mutableStateOf(false) }
+
+    LaunchedEffect(forms.size) {
+      if (initialized) {
+        listState.animateScrollToItem(forms.size + 1)
+      }
+
+      initialized = true
+    }
+
+    LazyColumn(
+      state = listState,
+      contentPadding = PaddingValues(
+        start = 8.dp,
+        end = 8.dp,
+        top = 8.dp,
+        bottom = 72.dp),
+      verticalArrangement = Arrangement.spacedBy(8.dp),
       modifier = Modifier
         .background(Color(0x19000000))
         .fillMaxHeight()
-        .verticalScroll(rememberScrollState())
-        .padding(bottom = 72.dp)
     ) {
-      val forms by observationState.forms
+      item {
+        ObservationEditHeaderContent(
+          timestamp = observationState.timestampFieldState,
+          geometry = observationState.geometryFieldState,
+          formState = forms.getOrNull(0),
+          onTimestampClick = { onFieldClick?.invoke(observationState.timestampFieldState) },
+          onLocationClick = { onFieldClick?.invoke(observationState.geometryFieldState) }
+        )
 
-      ObservationEditHeaderContent(
-        timestamp = observationState.timestampFieldState,
-        geometry = observationState.geometryFieldState,
-        formState = forms.getOrNull(0),
-        onTimestampClick = { onFieldClick?.invoke(observationState.timestampFieldState) },
-        onLocationClick = { onFieldClick?.invoke(observationState.geometryFieldState) }
-      )
+        val attachments by observationState.attachments
+        AttachmentsViewContent(attachments, onAttachmentClick)
+      }
 
-      val attachments by observationState.attachments
-      AttachmentsViewContent(attachments, onAttachmentClick)
+      if (forms.isNotEmpty()) {
+        item {
+          Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.padding(horizontal = 8.dp)
+          ) {
+            CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
+              Text(
+                text = "FORMS",
+                style = MaterialTheme.typography.caption,
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier
+                  .weight(1f)
+                  .padding(vertical = 16.dp)
+              )
+            }
 
-      for ((index, formState) in forms.withIndex()) {
+            if (forms.size > 1) {
+              IconButton(
+                onClick = { onReorderForms?.invoke() },
+              ) {
+                Icon(
+                  Icons.Default.SwapVert,
+                  tint = MaterialTheme.colors.primary,
+                  contentDescription = "Reorder Forms")
+              }
+            }
+          }
+        }
+      }
+
+      itemsIndexed(forms) { index, formState ->
         FormEditContent(
           formState = formState,
-          onFormDelete = { onDeleteForm?.invoke(index) },
+          onFormDelete = { onDeleteForm?.invoke(index, formState) },
           onFieldClick = { onFieldClick?.invoke(it) }
         )
       }
@@ -189,9 +275,7 @@ fun ObservationEditHeaderContent(
   onLocationClick: (() -> Unit)? = null
 ) {
   Card(
-    Modifier
-      .fillMaxWidth()
-      .padding(8.dp)
+    Modifier.fillMaxWidth()
   ) {
     Column(Modifier.padding(top = 16.dp, start = 16.dp, end = 16.dp)) {
       DateEdit(

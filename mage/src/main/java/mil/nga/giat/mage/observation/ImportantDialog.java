@@ -31,10 +31,10 @@ public class ImportantDialog extends AppCompatDialogFragment {
     public ImportantDialog() {
     }
 
-    public static ImportantDialog newInstance(@Nullable ObservationImportant important) {
+    public static ImportantDialog newInstance(@Nullable String description) {
         ImportantDialog dialog = new ImportantDialog();
         Bundle args = new Bundle();
-        args.putString(DESCRIPTION, important != null ? important.getDescription() : null);
+        args.putString(DESCRIPTION, description);
         dialog.setArguments(args);
 
         return dialog;
@@ -50,7 +50,7 @@ public class ImportantDialog extends AppCompatDialogFragment {
         View view = inflater.inflate(R.layout.fragment_observation_important, null);
 
         String description = getArguments().getString(DESCRIPTION);
-        final TextView descriptionView = (TextView) view.findViewById(R.id.description);
+        final TextView descriptionView = view.findViewById(R.id.description);
 
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity())
                 .setTitle("Important Observation")
@@ -59,15 +59,11 @@ public class ImportantDialog extends AppCompatDialogFragment {
         descriptionView.setText(description);
 
         String positiveText = description == null ? "Flag as Important" : "Update";
-        builder.setPositiveButton(positiveText, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        if (onImportantListener != null) {
-                            onImportantListener.onImportant(descriptionView.getText().toString());
-                        }
-                    }
-                })
-                .setNegativeButton(android.R.string.cancel, null);
+        builder.setPositiveButton(positiveText, (dialog, which) -> {
+            if (onImportantListener != null) {
+                onImportantListener.onImportant(descriptionView.getText().toString());
+            }
+        }).setNegativeButton(android.R.string.cancel, null);
 
 
         return builder.create();

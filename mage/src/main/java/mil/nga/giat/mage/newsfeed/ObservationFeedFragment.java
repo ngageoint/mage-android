@@ -65,9 +65,9 @@ import mil.nga.giat.mage.observation.AttachmentViewerActivity;
 import mil.nga.giat.mage.observation.ImportantDialog;
 import mil.nga.giat.mage.observation.ImportantRemoveDialog;
 import mil.nga.giat.mage.observation.ObservationLocation;
-import mil.nga.giat.mage.observation.edit.ObservationEditActivityKt;
+import mil.nga.giat.mage.observation.edit.ObservationEditActivity;
 import mil.nga.giat.mage.observation.sync.ObservationServerFetch;
-import mil.nga.giat.mage.observation.view.ObservationViewActivityKt;
+import mil.nga.giat.mage.observation.view.ObservationViewActivity;
 import mil.nga.giat.mage.sdk.datastore.DaoStore;
 import mil.nga.giat.mage.sdk.datastore.location.LocationHelper;
 import mil.nga.giat.mage.sdk.datastore.location.LocationProperty;
@@ -262,8 +262,8 @@ public class ObservationFeedFragment extends DaggerFragment implements IObservat
 					.setPositiveButton(android.R.string.ok, null)
 					.show();
 		} else if (location != null) {
-			Intent intent = new Intent(getActivity(), ObservationEditActivityKt.class);
-			intent.putExtra(ObservationEditActivityKt.LOCATION, location);
+			Intent intent = new Intent(getActivity(), ObservationEditActivity.class);
+			intent.putExtra(ObservationEditActivity.LOCATION, location);
 			startActivity(intent);
 		} else {
 			if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
@@ -522,22 +522,24 @@ public class ObservationFeedFragment extends DaggerFragment implements IObservat
 	}
 
 	public void onUpdateImportantClick(Observation observation) {
-		ImportantDialog dialog = ImportantDialog.newInstance(observation.getImportant());
-		dialog.setOnImportantListener(description -> {
+		ObservationImportant important = observation.getImportant();
+		String description = important != null ? important.getDescription() : null;
+		ImportantDialog dialog = ImportantDialog.newInstance(description);
+		dialog.setOnImportantListener(text -> {
 			ObservationHelper observationHelper = ObservationHelper.getInstance(context);
 			try {
-				ObservationImportant important = observation.getImportant();
-				if (important == null) {
-					important = new ObservationImportant();
+				ObservationImportant observationImportant = observation.getImportant();
+				if (observationImportant == null) {
+					observationImportant = new ObservationImportant();
 					observation.setImportant(important);
 				}
 
 				if (currentUser != null) {
-					important.setUserId(currentUser.getRemoteId());
+					observationImportant.setUserId(currentUser.getRemoteId());
 				}
 
-				important.setTimestamp(new Date());
-				important.setDescription(description);
+				observationImportant.setTimestamp(new Date());
+				observationImportant.setDescription(text);
 				observationHelper.addImportant(observation);
 			} catch (ObservationException e) {
 				Log.e(LOG_NAME, "Error updating important flag for observation: " + observation.getRemoteId());
@@ -570,8 +572,8 @@ public class ObservationFeedFragment extends DaggerFragment implements IObservat
 
 	@Override
 	public void onObservationClick(Observation observation) {
-		Intent observationView = new Intent(context, ObservationViewActivityKt.class);
-		observationView.putExtra(ObservationViewActivityKt.OBSERVATION_ID, observation.getId());
+		Intent observationView = new Intent(context, ObservationViewActivity.class);
+		observationView.putExtra(ObservationViewActivity.OBSERVATION_ID, observation.getId());
 		startActivity(observationView);
 	}
 

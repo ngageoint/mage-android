@@ -9,12 +9,16 @@ import android.view.ViewGroup
 import android.view.LayoutInflater
 import android.view.View
 import androidx.core.widget.ImageViewCompat
+import androidx.lifecycle.ViewModelProviders
+import androidx.lifecycle.viewmodel.compose.viewModel
 import mil.nga.giat.mage.R
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.google.android.material.snackbar.Snackbar
 import com.google.gson.JsonObject
 import kotlinx.android.synthetic.main.view_form_picker_item.view.*
 import mil.nga.giat.mage.form.Form
+import mil.nga.giat.mage.form.FormViewModel
 import mil.nga.giat.mage.sdk.datastore.user.EventHelper
 
 class FormPickerBottomSheetFragment: BottomSheetDialogFragment() {
@@ -23,7 +27,18 @@ class FormPickerBottomSheetFragment: BottomSheetDialogFragment() {
     fun onFormPicked(form: Form)
   }
 
+  data class FormState(val form: Form, val disabled: Boolean)
+
   var formPickerListener: OnFormClickListener? = null
+  private lateinit var viewModel: FormViewModel
+
+  override fun onCreate(savedInstanceState: Bundle?) {
+    super.onCreate(savedInstanceState)
+
+    viewModel = activity?.run {
+      ViewModelProviders.of(this).get(FormViewModel::class.java)
+    } ?: throw Exception("Invalid Activity")
+  }
 
   override fun onCreateView(
     inflater: LayoutInflater,
@@ -37,22 +52,27 @@ class FormPickerBottomSheetFragment: BottomSheetDialogFragment() {
     val recyclerView: RecyclerView = view.findViewById(R.id.recycler_view)
     recyclerView.layoutManager = LinearLayoutManager(context)
 
-    // TODO get from viewmodel
+    // TODO get from ViewModel
     val jsonForms = EventHelper.getInstance(context).currentEvent.forms
-    val forms = mutableListOf<Form>()
+    val forms = mutableListOf<FormState>()
     for (jsonForm in jsonForms) {
       Form.fromJson(jsonForm as JsonObject)?.let { form ->
-        forms.add(form)
+        val formMax = form.max
+        val totalOfForm = viewModel.observationState.value?.forms?.value?.filter { it.definition.id == form.id }?.size ?: 0
+        val disabled = formMax != null && totalOfForm <= formMax
+        forms.add(FormState(form, disabled))
       }
     }
 
-    recyclerView.adapter = FormAdapter(forms) {
-      dismiss()
-      formPickerListener?.onFormPicked(it)
-    }
+    recyclerView.adapter = FormAdapter(forms) { onForm(it.form) }
   }
 
-  private class FormAdapter(private val forms: List<Form>, private val onFormClicked: (Form) -> Unit) : RecyclerView.Adapter<FormViewHolder>()  {
+  private fun onForm(form: Form) {
+    dismiss()
+    formPickerListener?.onFormPicked(form)
+  }
+
+  private class FormAdapter(private val forms: List<FormState>, private val onFormClicked: (FormState) -> Unit) : RecyclerView.Adapter<FormViewHolder>()  {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): FormViewHolder {
       val view = LayoutInflater.from(parent.context).inflate(R.layout.view_form_picker_item, parent, false)
@@ -60,8 +80,8 @@ class FormPickerBottomSheetFragment: BottomSheetDialogFragment() {
     }
 
     override fun onBindViewHolder(holder: FormViewHolder, position: Int) {
-      val form = forms[position]
-      holder.bindForm(form)
+      val formState = forms[position]
+      holder.bindForm(formState)
     }
 
     override fun getItemCount() = forms.size
@@ -72,14 +92,26 @@ class FormPickerBottomSheetFragment: BottomSheetDialogFragment() {
       view.setOnClickListener { onFormClicked(adapterPosition) }
     }
 
-    fun bindForm(form: Form) {
-      view.form_name.text = form.name
-      view.form_description.text = form.description
+    fun bindForm(formState: FormState) {
+      view.form_name.text = formState.form.name
+      view.form_description.text = formState.form.description
 
-      // Lets add a tiny bit of transparency to soften things up.
-      val color = form.hexColor.replace("#", "#DE")
-      ImageViewCompat.setImageTintMode(view.form_icon, PorterDuff.Mode.SRC_ATOP)
-      ImageViewCompat.setImageTintList(view.form_icon, ColorStateList.valueOf(Color.parseColor(color)))
+      if (formState.disabled) {
+        view.form_name.alpha = .38f
+        view.form_description.alpha = .38f
+
+        val color = formState.form.hexColor.replace("#", "#60")
+        ImageViewCompat.setImageTintMode(view.form_icon, PorterDuff.Mode.SRC_ATOP)
+        ImageViewCompat.setImageTintList(view.form_icon, ColorStateList.valueOf(Color.parseColor(color)))
+      } else {
+        view.form_name.alpha = .87f
+        view.form_description.alpha = .60f
+
+        // Lets add a tiny bit of transparency to soften things up.
+        val color = formState.form.hexColor.replace("#", "#DE")
+        ImageViewCompat.setImageTintMode(view.form_icon, PorterDuff.Mode.SRC_ATOP)
+        ImageViewCompat.setImageTintList(view.form_icon, ColorStateList.valueOf(Color.parseColor(color)))
+      }
     }
   }
 }

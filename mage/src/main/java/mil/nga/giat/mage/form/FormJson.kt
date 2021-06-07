@@ -28,6 +28,8 @@ class Form(
   @SerializedName("default") val default: Boolean,
   @SerializedName("archived") val archived: Boolean,
   @SerializedName("color") val hexColor: String,
+  @SerializedName("min") val min: Int?,
+  @SerializedName("max") val max: Int?,
   @SerializedName("primaryField") val primaryMapField: String?,
   @SerializedName("secondaryField") val secondaryMapField: String?,
   @SerializedName("primaryFeedField") val primaryFeedField: String?,

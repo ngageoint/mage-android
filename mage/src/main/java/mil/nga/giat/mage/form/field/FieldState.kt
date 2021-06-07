@@ -3,7 +3,9 @@ package mil.nga.giat.mage.form.field
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import mil.nga.giat.mage.form.FormField
+import mil.nga.giat.mage.form.*
+import mil.nga.giat.mage.observation.ObservationLocation
+import java.util.*
 
 open class FieldState<F, T : FieldValue> (
   val definition: FormField<F>,
@@ -45,6 +47,89 @@ open class FieldState<F, T : FieldValue> (
       errorFor(definition, answer)
     } else {
       null
+    }
+  }
+
+  companion object {
+    fun fromFormField(
+      fieldDefinition: FormField<Any>,
+      value: Any?,
+      default: Any? = null
+    ): FieldState<*, out FieldValue> {
+      return when (fieldDefinition.type) {
+        FieldType.CHECKBOX -> {
+          val fieldState = BooleanFieldState(fieldDefinition as BooleanFormField)
+          val boolean = default as? Boolean ?: value as? Boolean
+          if (boolean != null) {
+            fieldState.answer = FieldValue.Boolean(boolean)
+          }
+          fieldState
+        }
+        FieldType.DATE -> {
+          val fieldState = DateFieldState(fieldDefinition as DateFormField)
+          val date = default as? Date ?: value as? Date
+          if (date != null) {
+            fieldState.answer = FieldValue.Date(date)
+          }
+          fieldState
+        }
+        FieldType.DROPDOWN -> {
+          val fieldState = SelectFieldState(fieldDefinition as SingleChoiceFormField)
+          val text = default as? String ?: value as? String
+          if (text != null) {
+            fieldState.answer = FieldValue.Text(text)
+          }
+          fieldState
+        }
+        FieldType.EMAIL -> {
+          val fieldState = EmailFieldState(fieldDefinition as TextFormField)
+          val email = default as? String ?: value as? String
+          if (email != null) {
+            fieldState.answer = FieldValue.Text(email)
+          }
+          fieldState
+        }
+        FieldType.GEOMETRY -> {
+          val fieldState = GeometryFieldState(fieldDefinition as GeometryFormField)
+          val location = default as? ObservationLocation ?: value as? ObservationLocation
+          if (location != null) {
+            fieldState.answer = FieldValue.Location(location)
+          }
+          fieldState
+        }
+        FieldType.MULTISELECTDROPDOWN -> {
+          val fieldState = MultiSelectFieldState(fieldDefinition as MultiChoiceFormField)
+          val choices = default as? Collection<*> ?: value as? Collection<*>
+          if (choices != null) {
+            fieldState.answer = FieldValue.Multi(choices.map { it.toString() })
+          }
+          fieldState
+        }
+        FieldType.NUMBERFIELD -> {
+          val fieldState = NumberFieldState(fieldDefinition as NumberFormField)
+          val number = default?.toString() ?: value?.toString()
+          if (number != null) {
+            fieldState.answer = FieldValue.Number(number)
+          }
+          fieldState
+        }
+        FieldType.RADIO -> {
+          val fieldState = RadioFieldState(fieldDefinition as SingleChoiceFormField)
+          val text = default as? String ?: value as? String
+          if (text != null) {
+            fieldState.answer = FieldValue.Text(text)
+          }
+          fieldState
+        }
+        FieldType.TEXTAREA, FieldType.TEXTFIELD -> {
+          val fieldState = TextFieldState(fieldDefinition as TextFormField)
+          val text = default as? String ?: value as? String
+          if (text != null) {
+            fieldState.answer = FieldValue.Text(text)
+          }
+          fieldState
+        }
+      }
     }
   }
 }

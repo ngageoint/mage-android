@@ -7,12 +7,12 @@ import mil.nga.giat.mage._server5.login.SignupActivity_server5
 import mil.nga.giat.mage.disclaimer.DisclaimerActivity
 import mil.nga.giat.mage.event.EventActivity
 import mil.nga.giat.mage.event.EventsActivity
-import mil.nga.giat.mage.form.FormDefaultActivity
+import mil.nga.giat.mage.form.defaults.FormDefaultActivity
 import mil.nga.giat.mage.login.LoginActivity
 import mil.nga.giat.mage.login.SignupActivity
 import mil.nga.giat.mage.login.idp.IdpLoginActivity
-import mil.nga.giat.mage.observation.edit.ObservationEditActivityKt
-import mil.nga.giat.mage.observation.view.ObservationViewActivityKt
+import mil.nga.giat.mage.observation.edit.ObservationEditActivity
+import mil.nga.giat.mage.observation.view.ObservationViewActivity
 import mil.nga.giat.mage.preferences.LocationPreferencesActivity
 import mil.nga.giat.mage.profile.ChangePasswordActivity
 import mil.nga.giat.mage.profile.ProfileActivity
@@ -57,9 +57,8 @@ abstract class ActivityContributorModule {
     internal abstract fun contributeProfileActivity(): ProfileActivity
 
     @ContributesAndroidInjector
-    internal abstract fun contributeObservationViewActivityKt(): ObservationViewActivityKt
-
+    internal abstract fun contributeObservationViewActivity(): ObservationViewActivity
 
     @ContributesAndroidInjector
-    internal abstract fun contributeObservationEditActivityKt(): ObservationEditActivityKt
+    internal abstract fun contributeObservationEditActivity(): ObservationEditActivity
 }

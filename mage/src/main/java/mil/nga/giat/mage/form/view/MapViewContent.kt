@@ -66,12 +66,12 @@ fun MapViewContent(
     }
   }
 
-  val coroutineScope = rememberCoroutineScope()
+  val scope = rememberCoroutineScope()
   AndroidView({ map }) { mapView ->
     val primary = primaryFieldState?.answer as? FieldValue.Text
     val secondary = secondaryFieldState?.answer as? FieldValue.Text
 
-    coroutineScope.launch {
+    scope.launch {
       val googleMap = mapView.awaitMap()
       googleMap.clear()
       if (location.geometry.geometryType == GeometryType.POINT) {

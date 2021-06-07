@@ -23,14 +23,14 @@ import mil.nga.giat.mage.sdk.datastore.user.UserHelper
 import java.lang.Exception
 import javax.inject.Inject
 import androidx.appcompat.app.AlertDialog
-import mil.nga.giat.mage.observation.form.FormMode
-import mil.nga.giat.mage.observation.form.FormViewModel
-import mil.nga.giat.mage.observation.edit.ObservationEditActivityKt
+import kotlinx.android.synthetic.main.view_more_bottom_sheet.view.*
+import mil.nga.giat.mage.form.FormViewModel
+import mil.nga.giat.mage.observation.edit.ObservationEditActivity
 
-class ObservationViewActivityKt : DaggerAppCompatActivity() {
+class ObservationViewActivity : DaggerAppCompatActivity() {
 
   companion object {
-    private val LOG_NAME = ObservationViewActivityKt::class.java.name
+    private val LOG_NAME = ObservationViewActivity::class.java.name
 
     const val OBSERVATION_ID = "OBSERVATION_ID"
     const val INITIAL_LOCATION = "INITIAL_LOCATION"
@@ -51,7 +51,6 @@ class ObservationViewActivityKt : DaggerAppCompatActivity() {
     super.onCreate(savedInstanceState)
 
     viewModel = ViewModelProvider(this, viewModelFactory).get(FormViewModel::class.java)
-    viewModel.formMode = FormMode.VIEW
 
     defaultMapZoom = intent.getFloatExtra(INITIAL_ZOOM, 0.0f)
     defaultMapCenter = intent.getParcelableExtra(INITIAL_LOCATION) ?: LatLng(0.0, 0.0)
@@ -97,19 +96,17 @@ class ObservationViewActivityKt : DaggerAppCompatActivity() {
       return
     }
 
-    val intent = Intent(this, ObservationEditActivityKt::class.java)
-    intent.putExtra(ObservationEditActivityKt.OBSERVATION_ID, viewModel.observation.value?.id)
-    intent.putExtra(ObservationEditActivityKt.INITIAL_LOCATION, defaultMapCenter)
-    intent.putExtra(ObservationEditActivityKt.INITIAL_ZOOM, defaultMapZoom)
+    val intent = Intent(this, ObservationEditActivity::class.java)
+    intent.putExtra(ObservationEditActivity.OBSERVATION_ID, viewModel.observation.value?.id)
+    intent.putExtra(ObservationEditActivity.INITIAL_LOCATION, defaultMapCenter)
+    intent.putExtra(ObservationEditActivity.INITIAL_ZOOM, defaultMapZoom)
 
     startActivity(intent)
   }
 
   private fun onFlagObservation() {
     val important = viewModel.observationState.value?.important?.value
-    val isImportant = important != null && important.isImportant
-
-    if (isImportant) {
+    if (important != null) {
       val dialog = BottomSheetDialog(this)
       val view = layoutInflater.inflate(R.layout.view_important_bottom_sheet, null)
       view.findViewById<View>(R.id.update_button).setOnClickListener {
@@ -125,7 +122,7 @@ class ObservationViewActivityKt : DaggerAppCompatActivity() {
     } else {
       val dialog = ImportantDialog.newInstance(important)
       dialog.setOnImportantListener { description: String? ->
-        viewModel.flagObservation(important, description)
+        viewModel.flagObservation(description)
       }
 
       dialog.show(supportFragmentManager, "OBSERVATION_IMPORTANT")
@@ -134,9 +131,9 @@ class ObservationViewActivityKt : DaggerAppCompatActivity() {
 
   private fun onUpdateFlag() {
     val important = viewModel.observationState.value?.important?.value
-    val dialog = ImportantDialog.newInstance(important)
+    val dialog = ImportantDialog.newInstance(important?.description)
     dialog.setOnImportantListener { description: String? ->
-      viewModel.flagObservation(important, description)
+      viewModel.flagObservation(description)
     }
 
     dialog.show(supportFragmentManager, "OBSERVATION_IMPORTANT")
@@ -180,7 +177,8 @@ class ObservationViewActivityKt : DaggerAppCompatActivity() {
   private fun onMore() {
     val dialog = BottomSheetDialog(this)
     val view = layoutInflater.inflate(R.layout.view_more_bottom_sheet, null)
-    view.findViewById<View>(R.id.delete_button).setOnClickListener {
+
+    view.delete_button.setOnClickListener {
       onDeleteObservation()
       dialog.dismiss()
     }

@@ -1,6 +1,5 @@
 package mil.nga.giat.mage.event
 
-import android.content.Context
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -15,9 +14,8 @@ import kotlinx.android.synthetic.main.activity_event.*
 import kotlinx.android.synthetic.main.recycler_form_list_item.view.*
 import mil.nga.giat.mage.MageApplication
 import mil.nga.giat.mage.R
-import mil.nga.giat.mage.dagger.module.ApplicationContext
 import mil.nga.giat.mage.form.Form
-import mil.nga.giat.mage.form.FormDefaultActivity
+import mil.nga.giat.mage.form.defaults.FormDefaultActivity
 import mil.nga.giat.mage.sdk.datastore.user.Event
 import mil.nga.giat.mage.sdk.datastore.user.EventHelper
 import mil.nga.giat.mage.sdk.exceptions.EventException

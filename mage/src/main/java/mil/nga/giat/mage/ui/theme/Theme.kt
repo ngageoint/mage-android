@@ -43,3 +43,4 @@ fun MageTheme(
 }
 
 val Colors.topAppBarBackground: Color @Composable get() = primary
+val Colors.importantBackground: Color @Composable get() = OrangeA400

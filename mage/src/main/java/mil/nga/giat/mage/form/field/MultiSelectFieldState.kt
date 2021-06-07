@@ -15,7 +15,7 @@ private fun errorMessage(definition: FormField<List<String>>, value: FieldValue.
 }
 
 private fun isValid(definition: FormField<List<String>>, value: FieldValue.Multi?): Boolean {
-  return true
+  return !definition.required || value?.choices?.isNotEmpty() == true
 }
 
 private fun hasValue(value: FieldValue.Multi?): Boolean {

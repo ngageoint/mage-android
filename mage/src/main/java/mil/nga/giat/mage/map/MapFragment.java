@@ -130,8 +130,8 @@ import mil.nga.giat.mage.map.marker.PointCollection;
 import mil.nga.giat.mage.map.marker.StaticGeometryCollection;
 import mil.nga.giat.mage.map.preference.MapPreferencesActivity;
 import mil.nga.giat.mage.observation.ObservationLocation;
-import mil.nga.giat.mage.observation.edit.ObservationEditActivityKt;
-import mil.nga.giat.mage.observation.view.ObservationViewActivityKt;
+import mil.nga.giat.mage.observation.edit.ObservationEditActivity;
+import mil.nga.giat.mage.observation.view.ObservationViewActivity;
 import mil.nga.giat.mage.profile.ProfileActivity;
 import mil.nga.giat.mage.sdk.Temporal;
 import mil.nga.giat.mage.sdk.datastore.layer.Layer;
@@ -795,10 +795,10 @@ public class MapFragment extends DaggerFragment implements OnMapReadyCallback, O
 	public void onInfoWindowClick(Marker marker) {
 		Observation observation = observations.pointForMarker(marker);
 		if (observation != null) {
-			Intent intent = new Intent(context, ObservationViewActivityKt.class);
-			intent.putExtra(ObservationViewActivityKt.OBSERVATION_ID, observation.getId());
-			intent.putExtra(ObservationViewActivityKt.INITIAL_LOCATION, map.getCameraPosition().target);
-			intent.putExtra(ObservationViewActivityKt.INITIAL_ZOOM, map.getCameraPosition().zoom);
+			Intent intent = new Intent(context, ObservationViewActivity.class);
+			intent.putExtra(ObservationViewActivity.OBSERVATION_ID, observation.getId());
+			intent.putExtra(ObservationViewActivity.INITIAL_LOCATION, map.getCameraPosition().target);
+			intent.putExtra(ObservationViewActivity.INITIAL_ZOOM, map.getCameraPosition().zoom);
 			startActivity(intent);
 			return;
 		}
@@ -914,10 +914,10 @@ public class MapFragment extends DaggerFragment implements OnMapReadyCallback, O
 	}
 
 	private void newObservation(ObservationLocation location) {
-		Intent intent = new Intent(getActivity(), ObservationEditActivityKt.class);
-		intent.putExtra(ObservationEditActivityKt.LOCATION, location);
-		intent.putExtra(ObservationEditActivityKt.INITIAL_LOCATION, map.getCameraPosition().target);
-		intent.putExtra(ObservationEditActivityKt.INITIAL_ZOOM, map.getCameraPosition().zoom);
+		Intent intent = new Intent(getActivity(), ObservationEditActivity.class);
+		intent.putExtra(ObservationEditActivity.LOCATION, location);
+		intent.putExtra(ObservationEditActivity.INITIAL_LOCATION, map.getCameraPosition().target);
+		intent.putExtra(ObservationEditActivity.INITIAL_ZOOM, map.getCameraPosition().zoom);
 		startActivity(intent);
 	}
 

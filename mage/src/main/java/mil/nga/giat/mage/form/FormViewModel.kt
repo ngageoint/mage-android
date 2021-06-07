@@ -1,4 +1,4 @@
-package mil.nga.giat.mage.observation.form
+package mil.nga.giat.mage.form
 
 import android.content.Context
 import android.util.Log
@@ -11,10 +11,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import mil.nga.giat.mage.dagger.module.ApplicationContext
-import mil.nga.giat.mage.form.*
 import mil.nga.giat.mage.form.Form.Companion.fromJson
+import mil.nga.giat.mage.form.defaults.FormPreferences
 import mil.nga.giat.mage.form.field.*
-import mil.nga.giat.mage.observation.ObservationLocation
+import mil.nga.giat.mage.observation.*
 import mil.nga.giat.mage.sdk.datastore.observation.*
 import mil.nga.giat.mage.sdk.datastore.user.*
 import mil.nga.giat.mage.sdk.event.IObservationEventListener
@@ -22,11 +22,6 @@ import mil.nga.giat.mage.sdk.exceptions.ObservationException
 import mil.nga.giat.mage.sdk.exceptions.UserException
 import java.util.*
 import javax.inject.Inject
-
-enum class FormMode {
-  VIEW,
-  EDIT;
-}
 
 class FormViewModel @Inject constructor(
   @ApplicationContext val context: Context,
@@ -42,8 +37,6 @@ class FormViewModel @Inject constructor(
   private val _observationState: MutableLiveData<ObservationState> = MutableLiveData()
   val observationState: LiveData<ObservationState> = _observationState
 
-  var formMode = FormMode.VIEW
-
   private val event: Event = EventHelper.getInstance(context).currentEvent
 
   val attachments = mutableListOf<Attachment>()
@@ -52,7 +45,6 @@ class FormViewModel @Inject constructor(
     override fun onObservationUpdated(updated: Observation) {
       val observation = _observation.value
       if (updated.id == observation?.id && observation?.lastModified != updated.lastModified) {
-        // Update observation state, something changed
         GlobalScope.launch(Dispatchers.Main) {
           createObservationState(updated)
         }
@@ -75,18 +67,17 @@ class FormViewModel @Inject constructor(
 
   fun createObservation(timestamp: Date, location: ObservationLocation, defaultMapZoom: Float? = null, defaultMapCenter: LatLng? = null) {
     if (_observationState.value != null) return
-    
+
     val jsonForms = event.forms
     val forms = mutableListOf<FormState>()
+    val formDefinitions = mutableListOf<Form>()
     for ((index, jsonForm) in jsonForms.withIndex()) {
       fromJson(jsonForm as JsonObject)?.let { form ->
-        if (form.default) {
-          val fields = mutableListOf<FieldState<*, out FieldValue>>()
-          for (field in form.fields) {
-            fields.add(toFieldState(field, field.value))
-          }
+        formDefinitions.add(form)
 
-          val formState = FormState(event.remoteId, form, fields)
+        if (form.default) {
+          val defaultForm = FormPreferences(context, event.id, form.id).getDefaults()
+          val formState = FormState.fromForm(eventId = event.remoteId, form = form, defaultForm = defaultForm)
           formState.expanded.value = index == 0
           forms.add(formState)
         }
@@ -94,6 +85,7 @@ class FormViewModel @Inject constructor(
     }
 
     val observation = Observation()
+    _observation.value = observation
     observation.event = event
     observation.geometry = location.geometry
 
@@ -105,7 +97,6 @@ class FormViewModel @Inject constructor(
       }
     } catch (ue: UserException) { }
 
-    // TODO new stuff
     val timestampFieldState = DateFieldState(
       DateFormField(
         id = 0,
@@ -132,8 +123,14 @@ class FormViewModel @Inject constructor(
     )
     geometryFieldState.answer = FieldValue.Location(ObservationLocation(location.geometry))
 
+    val definition =  ObservationDefinition(
+      event.minObservationForms,
+      event.maxObservationForms,
+      forms = formDefinitions
+    )
     val observationState = ObservationState(
       status = ObservationStatusState(),
+      definition = definition,
       timestampFieldState = timestampFieldState,
       geometryFieldState = geometryFieldState,
       eventName = event.name,
@@ -156,25 +153,30 @@ class FormViewModel @Inject constructor(
   private fun createObservationState(observation: Observation, defaultMapZoom: Float? = null, defaultMapCenter: LatLng? = null) {
     _observation.value = observation
 
-    val jsonForms = event.formMap
+    val formDefinitions = mutableMapOf<Long, Form>()
+    for (jsonForm in event.forms) {
+      fromJson(jsonForm as JsonObject)?.let { form ->
+        formDefinitions.put(form.id, form)
+      }
+    }
+
     val forms = mutableListOf<FormState>()
     for ((index, observationForm) in observation.forms.withIndex()) {
-      val formJson = jsonForms[observationForm.formId]
-      val fields = mutableListOf<FieldState<*, out FieldValue>>()
-
-      fromJson(formJson)?.let { form ->
+      val form = formDefinitions[observationForm.formId]
+      if (form != null) {
+        val fields = mutableListOf<FieldState<*, out FieldValue>>()
         for (field in form.fields) {
           val property = observationForm.properties.find { it.key == field.name }
-          fields.add(toFieldState(field, property?.value))
+          val fieldState = FieldState.fromFormField(field, property?.value)
+          fields.add(fieldState)
         }
 
-        val formState = FormState(event.remoteId, form, fields)
+        val formState = FormState(observationForm.id, event.remoteId, form, fields)
         formState.expanded.value = index == 0
         forms.add(formState)
       }
     }
 
-    // TODO new stuff
     val timestampFieldState = DateFieldState(
       DateFormField(
         id = 0,
@@ -226,9 +228,26 @@ class FormViewModel @Inject constructor(
     } else false
 
     val status = ObservationStatusState(observation.isDirty, observation.lastModified, observation.error?.message)
+    val definition =  ObservationDefinition(
+      event.minObservationForms,
+      event.maxObservationForms,
+      forms = formDefinitions.values
+    )
+
+    val importantState = if (observation.important?.isImportant == true) {
+      val importantUser: User? = try {
+        UserHelper.getInstance(context).read(observation.important?.userId)
+      } catch (ue: UserException) { null }
+
+      ObservationImportantState(
+        description = observation.important?.description,
+        user = importantUser?.displayName
+      )
+    } else null
 
     val observationState = ObservationState(
       status = status,
+      definition = definition,
       permissions = permissions,
       timestampFieldState = timestampFieldState,
       geometryFieldState = geometryFieldState,
@@ -236,13 +255,13 @@ class FormViewModel @Inject constructor(
       userDisplayName = user?.displayName,
       forms = forms,
       attachments = observation.attachments,
-      important = observation.important,
+      important = importantState,
       favorite = isFavorite)
 
     _observationState.value = observationState
   }
 
-  fun saveObservation() {
+  fun saveObservation(): Boolean {
     val observation = _observation.value!!
 
     observation.state = State.ACTIVE
@@ -274,7 +293,9 @@ class FormViewModel @Inject constructor(
           properties.add(ObservationProperty(fieldState.definition.name, answer.serialize()))
         }
       }
+
       val observationForm = ObservationForm()
+      observationForm.id = formState.id
       observationForm.formId = formState.definition.id
       observationForm.addProperties(properties)
       observationForms.add(observationForm)
@@ -294,6 +315,8 @@ class FormViewModel @Inject constructor(
     } catch (e: java.lang.Exception) {
       Log.e(LOG_NAME, e.message, e)
     }
+
+    return true
   }
 
   fun deleteObservation() {
@@ -303,13 +326,10 @@ class FormViewModel @Inject constructor(
 
   fun addForm(form: Form) {
     val forms = observationState.value?.forms?.value?.toMutableList() ?: mutableListOf()
-    val fields = mutableListOf<FieldState<*, out FieldValue>>()
-    for (field in form.fields) {
-      fields.add(toFieldState(field, field.value))
-    }
-
-    forms.add(FormState(event.remoteId, form, fields))
-
+    val defaultForm = FormPreferences(context, event.id, form.id).getDefaults()
+    val formState = FormState.fromForm(eventId = event.remoteId, form = form, defaultForm = defaultForm)
+    formState.expanded.value = true
+    forms.add(formState)
     _observationState.value?.forms?.value = forms
   }
 
@@ -321,6 +341,10 @@ class FormViewModel @Inject constructor(
     } catch(e: IndexOutOfBoundsException) {}
   }
 
+  fun reorderForms(forms: List<FormState>) {
+    observationState.value?.forms?.value = forms
+  }
+
   fun addAttachment(attachment: Attachment) {
     this.attachments.add(attachment)
 
@@ -330,25 +354,27 @@ class FormViewModel @Inject constructor(
     _observationState.value?.attachments?.value = attachments
   }
   
-  fun flagObservation(observationImportant: ObservationImportant?, description: String?) {
+  fun flagObservation(description: String?) {
     val observation = _observation.value
-    try {
-      val important = if (observationImportant == null) {
-        val newImportant = ObservationImportant()
-        observation?.important = newImportant
-        newImportant
-      } else observationImportant
+    val observationImportant = observation?.important
 
+    val important = if (observationImportant == null) {
+      val important = ObservationImportant()
+      observation?.important = important
+      important
+    } else observationImportant
+
+    try {
       val user: User? = try {
         UserHelper.getInstance(context).readCurrentUser()
       } catch (e: Exception) { null }
-      
+
       important.userId = user?.remoteId
       important.timestamp = Date()
       important.description = description
 
       ObservationHelper.getInstance(context).addImportant(observation)
-      _observationState.value?.important?.value = important
+      _observationState.value?.important?.value = ObservationImportantState(description = description, user = user?.displayName)
     } catch (e: ObservationException) {
       Log.e(LOG_NAME, "Error updating important flag for observation:" + observation?.remoteId)
     }
@@ -384,83 +410,6 @@ class FormViewModel @Inject constructor(
       _observationState.value?.favorite?.value = !isFavorite
     } catch (e: ObservationException) {
       Log.e(LOG_NAME, "Could not toggle observation favorite", e)
-    }
-  }
-
-  private fun toFieldState(fieldDefinition: FormField<Any>, value: Any?): FieldState<*, out FieldValue> {
-    return when (fieldDefinition.type) {
-      FieldType.CHECKBOX -> {
-        val fieldState = BooleanFieldState(fieldDefinition as BooleanFormField)
-        val boolean = value as? Boolean
-        if (boolean != null) {
-          fieldState.answer = FieldValue.Boolean(boolean)
-        }
-        fieldState
-      }
-      FieldType.DATE -> {
-        val fieldState = DateFieldState(fieldDefinition as DateFormField)
-        val date = value as? Date
-        if (date != null) {
-          fieldState.answer = FieldValue.Date(date)
-        }
-        fieldState
-      }
-      FieldType.DROPDOWN -> {
-        val fieldState = SelectFieldState(fieldDefinition as SingleChoiceFormField)
-        val text = value as? String
-        if (text != null) {
-          fieldState.answer = FieldValue.Text(text)
-        }
-        fieldState
-      }
-      FieldType.EMAIL -> {
-        val fieldState = EmailFieldState(fieldDefinition as TextFormField)
-        val email = value as? String
-        if (email != null) {
-          fieldState.answer = FieldValue.Text(email)
-        }
-        fieldState
-      }
-      FieldType.GEOMETRY -> {
-        val fieldState = GeometryFieldState(fieldDefinition as GeometryFormField)
-        val geometry = value as? ObservationLocation
-        if (geometry != null) {
-          fieldState.answer = FieldValue.Location(geometry)
-        }
-        fieldState
-      }
-      FieldType.MULTISELECTDROPDOWN -> {
-        val fieldState = MultiSelectFieldState(fieldDefinition as MultiChoiceFormField)
-        val choices = value as? Collection<*>
-        if (choices != null) {
-          fieldState.answer = FieldValue.Multi(choices.map { it.toString() })
-        }
-        fieldState
-      }
-      FieldType.NUMBERFIELD -> {
-        val fieldState = NumberFieldState(fieldDefinition as NumberFormField)
-        val number = value as? Number
-        if (number != null) {
-          fieldState.answer = FieldValue.Number(number)
-        }
-        fieldState
-      }
-      FieldType.RADIO -> {
-        val fieldState = RadioFieldState(fieldDefinition as SingleChoiceFormField)
-        val text = value as? String
-        if (text != null) {
-          fieldState.answer = FieldValue.Text(text)
-        }
-        fieldState
-      }
-      FieldType.TEXTAREA, FieldType.TEXTFIELD -> {
-        val fieldState = TextFieldState(fieldDefinition as TextFormField)
-        val text = value as? String
-        if (text != null) {
-          fieldState.answer = FieldValue.Text(text)
-        }
-        fieldState
-      }
     }
   }
 
