@@ -39,8 +39,6 @@ open class FormViewModel @Inject constructor(
 
   protected val event: Event = EventHelper.getInstance(context).currentEvent
 
-  val attachments = mutableListOf<Attachment>()
-
   val listener = object : IObservationEventListener {
     override fun onObservationUpdated(updated: Observation) {
       val observation = _observation.value
@@ -168,12 +166,20 @@ open class FormViewModel @Inject constructor(
       if (form != null) {
         val fields = mutableListOf<FieldState<*, out FieldValue>>()
         for (field in form.fields) {
-          val property = observationForm.properties.find { it.key == field.name }
-          val fieldState = FieldState.fromFormField(field, property?.value)
+          val value: Any? = if (field.type == FieldType.ATTACHMENT) {
+            observation.attachments.filter {
+              it.fieldName == field.name && it.observationFormId == observationForm.remoteId
+            }.map {
+              Media(attachment = it)
+            }
+          } else {
+            observationForm.properties.find { it.key == field.name }?.value
+          }
+          val fieldState = FieldState.fromFormField(field, value)
           fields.add(fieldState)
         }
 
-        val formState = FormState(observationForm.id, event.remoteId, form, fields)
+        val formState = FormState(observationForm.id, observationForm.remoteId, event.remoteId, form, fields)
         formState.expanded.value = index == 0
         forms.add(formState)
       }
@@ -263,7 +269,7 @@ open class FormViewModel @Inject constructor(
     _observationState.value = observationState
   }
 
-  fun saveObservation(): Boolean {
+  open fun saveObservation(): Boolean {
     val observation = _observation.value!!
 
     observation.state = State.ACTIVE
@@ -292,19 +298,19 @@ open class FormViewModel @Inject constructor(
       for (fieldState in formState.fields) {
         val answer = fieldState.answer
         if (answer != null) {
+          // TODO, attachment field value, how to serialize/deserialize
           properties.add(ObservationProperty(fieldState.definition.name, answer.serialize()))
         }
       }
 
       val observationForm = ObservationForm()
-      observationForm.id = formState.id
+      observationForm.remoteId = formState.remoteId
       observationForm.formId = formState.definition.id
       observationForm.addProperties(properties)
       observationForms.add(observationForm)
     }
 
     observation.forms = observationForms
-    observation.attachments.addAll(attachments)
 
     try {
       if (observation.id == null) {
@@ -347,13 +353,29 @@ open class FormViewModel @Inject constructor(
     observationState.value?.forms?.value = forms
   }
 
-  fun addAttachment(attachment: Attachment) {
-    this.attachments.add(attachment)
+  open fun addAttachment(media: Media, fieldState: AttachmentFieldState?) {
+    val attachments = fieldState?.answer?.media?.toMutableList() ?: mutableListOf()
+    attachments.add(media)
+    fieldState?.answer = FieldValue.Attachment(attachments)
+  }
 
-    val attachments = observationState.value?.attachments?.value?.toMutableList() ?: mutableListOf()
-    attachments.add(attachment)
+  fun deleteAttachment(media: Media, fieldState: FieldState<*, *>?) {
+    val attachmentFieldState = fieldState as? AttachmentFieldState
+    attachmentFieldState?.answer?.media?.let { attachments ->
 
-    _observationState.value?.attachments?.value = attachments
+      if (media.url?.isNotEmpty() == true) {
+        // remote attachment, mark for delete
+        attachments.find { it.name == media.name }?.let {
+          it.action = Media.ATTACHMENT_DELETE_ACTION
+        }
+
+        fieldState.answer = FieldValue.Attachment(attachments)
+      } else {
+        // local attachment, just remove from list
+        val filtered = attachments.filter { it.name != media.name }
+        fieldState.answer = FieldValue.Attachment(filtered)
+      }
+    }
   }
 
   fun flagObservation(description: String?) {

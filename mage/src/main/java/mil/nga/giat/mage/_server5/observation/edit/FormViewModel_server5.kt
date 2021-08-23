@@ -1,6 +1,7 @@
 package mil.nga.giat.mage._server5.observation.edit
 
 import android.content.Context
+import android.util.Log
 import com.google.android.gms.maps.model.LatLng
 import com.google.gson.JsonObject
 import mil.nga.giat.mage.dagger.module.ApplicationContext
@@ -18,6 +19,12 @@ import javax.inject.Inject
 class FormViewModel_server5 @Inject constructor(
   @ApplicationContext context: Context,
 ) : FormViewModel(context) {
+
+  companion object {
+    private val LOG_NAME = FormViewModel_server5::class.java.name
+  }
+
+  val attachments = mutableListOf<Attachment>()
 
   override fun createObservation(timestamp: Date, location: ObservationLocation, defaultMapZoom: Float?, defaultMapCenter: LatLng?): Boolean {
     if (_observationState.value != null) return false
@@ -116,7 +123,7 @@ class FormViewModel_server5 @Inject constructor(
           fields.add(fieldState)
         }
 
-        val formState = FormState(observationForm.id, event.remoteId, form, fields)
+        val formState = FormState(observationForm.id, observationForm.remoteId, event.remoteId, form, fields)
         formState.expanded.value = index == 0
         forms.add(formState)
       }
@@ -204,5 +211,74 @@ class FormViewModel_server5 @Inject constructor(
       favorite = isFavorite)
 
     _observationState.value = observationState
+  }
+
+  override fun addAttachment(media: Media, fieldState: AttachmentFieldState?) {
+    val attachment = media as Attachment
+    this.attachments.add(media)
+
+    val attachments = observationState.value?.attachments?.value?.toMutableList() ?: mutableListOf()
+    attachments.add(attachment)
+
+    _observationState.value?.attachments?.value = attachments
+  }
+
+  override fun saveObservation(): Boolean {
+    val observation = _observation.value!!
+
+    observation.state = State.ACTIVE
+    observation.isDirty = true
+    observation.timestamp = observationState.value!!.timestampFieldState.answer!!.date
+
+    val location: ObservationLocation = observationState.value!!.geometryFieldState.answer!!.location
+    observation.geometry = location.geometry
+    observation.accuracy = location.accuracy
+
+    var provider = location.provider
+    if (provider == null || provider.trim { it <= ' ' }.isEmpty()) {
+      provider = "manual"
+    }
+    observation.provider = provider
+
+    if (!"manual".equals(provider, ignoreCase = true)) {
+      // TODO multi-form, what is locationDelta supposed to represent
+      observation.locationDelta = location.time.toString()
+    }
+
+    val observationForms: MutableCollection<ObservationForm> = ArrayList()
+    val formsState: List<FormState> = observationState.value?.forms?.value ?: emptyList()
+    for (formState in formsState) {
+      val properties: MutableCollection<ObservationProperty> = ArrayList()
+      for (fieldState in formState.fields) {
+        val answer = fieldState.answer
+        if (answer != null) {
+          // TODO, attachment field value, how to serialize/deserialize
+          properties.add(ObservationProperty(fieldState.definition.name, answer.serialize()))
+        }
+      }
+
+      val observationForm = ObservationForm()
+      observationForm.remoteId = formState.remoteId
+      observationForm.formId = formState.definition.id
+      observationForm.addProperties(properties)
+      observationForms.add(observationForm)
+    }
+
+    observation.forms = observationForms
+    observation.attachments.addAll(attachments)
+
+    try {
+      if (observation.id == null) {
+        val newObs = ObservationHelper.getInstance(context).create(observation)
+        Log.i(LOG_NAME, "Created new observation with id: " + newObs.id)
+      } else {
+        ObservationHelper.getInstance(context).update(observation)
+        Log.i(LOG_NAME, "Updated observation with remote id: " + observation.remoteId)
+      }
+    } catch (e: java.lang.Exception) {
+      Log.e(LOG_NAME, e.message, e)
+    }
+
+    return true
   }
 }

@@ -40,6 +40,7 @@ import java.io.File
 import java.io.IOException
 import java.util.*
 import javax.inject.Inject
+import android.webkit.MimeTypeMap
 
 open class ObservationEditActivity : DaggerAppCompatActivity() {
   companion object {
@@ -70,6 +71,7 @@ open class ObservationEditActivity : DaggerAppCompatActivity() {
   protected lateinit var viewModel: FormViewModel
 
   private var currentMediaPath: String? = null
+  private var attachmentFieldState: AttachmentFieldState? = null
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
@@ -97,12 +99,12 @@ open class ObservationEditActivity : DaggerAppCompatActivity() {
         viewModel = viewModel,
         onSave = { save() },
         onCancel = { cancel() },
-        onAction = { onAction(it) },
         onAddForm = { pickForm() },
         onDeleteForm = { deleteForm(it) },
         onReorderForms = { reorderForms() },
         onFieldClick = { fieldState ->  onFieldClick(fieldState = fieldState) },
-        onAttachmentClick = { attachment ->  onAttachmentClick(attachment) }
+        onMediaAction = { action, fieldState -> onMediaAction(action, fieldState) },
+        onAttachmentAction = { action, media, fieldState -> onAttachmentAction(action, media, fieldState) }
       )
     }
   }
@@ -114,9 +116,11 @@ open class ObservationEditActivity : DaggerAppCompatActivity() {
   override fun onRestoreInstanceState(savedInstanceState: Bundle) {
     super.onRestoreInstanceState(savedInstanceState)
 
-    savedInstanceState.getParcelableArrayList<Attachment>("attachmentsToCreate")?.let {
-      for (attachment in it) {
-        viewModel.addAttachment(attachment)
+    (viewModel as? FormViewModel_server5)?.let { viewModel ->
+      savedInstanceState.getParcelableArrayList<Attachment>("attachmentsToCreate")?.let {
+        for (attachment in it) {
+          viewModel.addAttachment(Media(attachment), null)
+        }
       }
     }
 
@@ -126,10 +130,12 @@ open class ObservationEditActivity : DaggerAppCompatActivity() {
   override fun onSaveInstanceState(outState: Bundle) {
     super.onSaveInstanceState(outState)
 
-    val attachments = arrayListOf<Attachment>().apply {
-      addAll(viewModel.attachments)
+    (viewModel as? FormViewModel_server5)?.let {
+      val attachments = arrayListOf<Attachment>().apply {
+        addAll(it.attachments)
+      }
+      outState.putParcelableArrayList("attachmentsToCreate", attachments)
     }
-    outState.putParcelableArrayList("attachmentsToCreate", attachments)
 
     outState.putString(CURRENT_MEDIA_PATH, currentMediaPath)
   }
@@ -137,31 +143,51 @@ open class ObservationEditActivity : DaggerAppCompatActivity() {
   override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
     super.onActivityResult(requestCode, resultCode, data)
 
+    val fieldState = attachmentFieldState
     if (resultCode != RESULT_OK) {
       return
     }
 
+    // TODO multi-form, need to add the attachment to the right form field
     when (requestCode) {
       CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE, CAPTURE_VIDEO_ACTIVITY_REQUEST_CODE -> {
-        val attachment = Attachment()
-        attachment.localPath = currentMediaPath
-        MediaUtility.addImageToGallery(applicationContext, Uri.fromFile(File(currentMediaPath)))
-        viewModel.addAttachment(attachment)
+        currentMediaPath?.let { path ->
+          val uri = Uri.fromFile(File(path))
+          val fileExtension = MimeTypeMap.getFileExtensionFromUrl(uri.toString())
+          val mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(fileExtension)
+          MediaUtility.addImageToGallery(applicationContext, uri)
+
+          val file = MediaUtility.copyMediaFromUri(applicationContext, uri)
+          val media = Media(Media.ATTACHMENT_ADD_ACTION)
+          media.localPath = file.absolutePath
+          media.name = file.name
+          media.contentType =  mimeType
+          media.size = file.length()
+          media.fieldName = fieldState?.definition?.name
+          viewModel.addAttachment(media, fieldState)
+        }
       }
       GALLERY_ACTIVITY_REQUEST_CODE, CAPTURE_VOICE_ACTIVITY_REQUEST_CODE -> {
         val uris: Collection<Uri> = getUris(data)
         for (uri in uris) {
           try {
             val file = MediaUtility.copyMediaFromUri(applicationContext, uri)
-            val attachment = Attachment()
-            attachment.localPath = file.absolutePath
-            viewModel.addAttachment(attachment)
+            val media = Media(Media.ATTACHMENT_ADD_ACTION)
+            media.localPath = file.absolutePath
+            media.name = file.name
+            media.contentType = contentResolver.getType(uri)
+            media.size = file.length()
+            media.fieldName = fieldState?.definition?.name
+            viewModel.addAttachment(media, fieldState)
           } catch (e: IOException) {
             Log.e(LOG_NAME, "Error copying gallery file to local storage", e)
           }
         }
       }
     }
+
+    currentMediaPath = null
+    attachmentFieldState = null
   }
 
   private fun getUris(intent: Intent?): Collection<Uri> {
@@ -233,7 +259,7 @@ open class ObservationEditActivity : DaggerAppCompatActivity() {
       }
       PERMISSIONS_REQUEST_STORAGE -> {
         if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-          launchGalleryIntent()
+          launchGalleryIntent(attachmentFieldState)
         } else {
           if (!ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.READ_EXTERNAL_STORAGE)) {
             // User denied storage with never ask again.  Since they will get here
@@ -276,11 +302,13 @@ open class ObservationEditActivity : DaggerAppCompatActivity() {
       .show()
   }
 
-  private fun onAction(mediaAction: ObservationMediaAction) {
+  private fun onMediaAction(mediaAction: ObservationMediaAction, fieldState: FieldState<*, *>?) {
+    attachmentFieldState = fieldState as? AttachmentFieldState
+
     when (mediaAction) {
       ObservationMediaAction.PHOTO -> onCameraAction()
       ObservationMediaAction.VIDEO -> onVideoAction()
-      ObservationMediaAction.GALLERY -> onGalleryAction()
+      ObservationMediaAction.GALLERY -> onGalleryAction(attachmentFieldState)
       ObservationMediaAction.VOICE -> onVoiceAction()
     }
   }
@@ -305,11 +333,11 @@ open class ObservationEditActivity : DaggerAppCompatActivity() {
     }
   }
 
-  private fun onGalleryAction() {
+  private fun onGalleryAction(fieldState: AttachmentFieldState?) {
     if (ContextCompat.checkSelfPermission(applicationContext, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
       ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE), PERMISSIONS_REQUEST_STORAGE)
     } else {
-      launchGalleryIntent()
+      launchGalleryIntent(fieldState)
     }
   }
 
@@ -349,11 +377,27 @@ open class ObservationEditActivity : DaggerAppCompatActivity() {
     }
   }
 
-  private fun launchGalleryIntent() {
+  private fun launchGalleryIntent(fieldState: AttachmentFieldState?) {
+    val fieldDefinition = fieldState?.definition as? AttachmentFormField
+
+    val types = if (fieldDefinition == null) {
+      listOf("image/*", "video/*")
+    } else {
+      val allowed = mutableListOf<String>()
+      if (fieldDefinition.allowedAttachmentTypes.contains(AttachmentType.IMAGE)) {
+        allowed.add("image/*")
+      }
+      if (fieldDefinition.allowedAttachmentTypes.contains(AttachmentType.VIDEO)) {
+        allowed.add("video/*")
+      }
+
+      allowed
+    }
+
     val intent = Intent(Intent.ACTION_GET_CONTENT)
-    intent.type = "image/*, video/*"
+    intent.type = types.joinToString(", ")
     intent.addCategory(Intent.CATEGORY_OPENABLE)
-    intent.putExtra(Intent.EXTRA_MIME_TYPES, arrayOf("image/*", "video/*"))
+    intent.putExtra(Intent.EXTRA_MIME_TYPES, types.toTypedArray())
     intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true)
     startActivityForResult(intent, GALLERY_ACTIVITY_REQUEST_CODE)
   }
@@ -429,7 +473,14 @@ open class ObservationEditActivity : DaggerAppCompatActivity() {
     }
   }
 
-  private fun onAttachmentClick(attachment: Attachment) {
+  private fun onAttachmentAction(action: AttachmentAction, media: Media, fieldState: FieldState<*, *>) {
+    when (action) {
+      AttachmentAction.VIEW -> viewAttachment(media)
+      AttachmentAction.DELETE -> deleteAttachment(media, fieldState)
+    }
+  }
+
+  private fun viewAttachment(attachment: Attachment) {
     val intent = Intent(applicationContext, AttachmentViewerActivity::class.java)
 
     if (attachment.id != null) {
@@ -440,6 +491,10 @@ open class ObservationEditActivity : DaggerAppCompatActivity() {
 
     intent.putExtra(AttachmentViewerActivity.EDITABLE, false)
     startActivity(intent)
+  }
+
+  private fun deleteAttachment(media: Media, fieldState: FieldState<*, *>?) {
+    viewModel.deleteAttachment(media, fieldState)
   }
 
   private fun pickForm() {

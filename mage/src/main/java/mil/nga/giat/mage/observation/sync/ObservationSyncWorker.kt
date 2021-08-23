@@ -7,6 +7,9 @@ import androidx.work.Worker
 import androidx.work.WorkerParameters
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
+import mil.nga.giat.mage.form.FieldType
+import mil.nga.giat.mage.form.Form
+import mil.nga.giat.mage.form.field.Media
 import mil.nga.giat.mage.sdk.R
 import mil.nga.giat.mage.sdk.datastore.observation.*
 import mil.nga.giat.mage.sdk.exceptions.ObservationException
@@ -133,7 +136,7 @@ class ObservationSyncWorker(var context: Context, params: WorkerParameters) : Wo
 
             // Got the observation id from the server, lets send the observation
             val result = update(observation)
-            if (result is Result.Success) {
+            if (result !is Result.Success) {
                 return if (response.code() == HttpURLConnection.HTTP_UNAUTHORIZED) Result.failure() else Result.retry()
             }
 
@@ -172,6 +175,33 @@ class ObservationSyncWorker(var context: Context, params: WorkerParameters) : Wo
             val returnedObservation = response.body()
             returnedObservation?.isDirty = false
             returnedObservation?.id = observation.id
+
+            // Mark new attachments as dirty and set local path for upload
+            for (observationForm in observation.forms) {
+                val formDefinition = Form.fromJson(observation.event.formMap[observationForm.formId])
+                for (observationProperty in observationForm.properties) {
+                    val fieldDefinition = formDefinition?.fields?.find { it.name == observationProperty.key }
+                    if (fieldDefinition?.type == FieldType.ATTACHMENT) {
+                        for (media in observationProperty.value as List<Media>) {
+                            if (media.action == Media.ATTACHMENT_ADD_ACTION) {
+                                val attachment = returnedObservation?.attachments?.find { attachment ->
+                                    attachment.url == null
+                                        && attachment.name == media.name
+                                        && attachment.fieldName == media.fieldName
+                                        && attachment.contentType == media.contentType
+                                }
+
+                                if (attachment != null) {
+                                    attachment.localPath = media.localPath
+                                    attachment.isDirty = true
+                                }
+                            } else if (media.action == Media.ATTACHMENT_DELETE_ACTION) {
+                                // TODO do I need to remove anything here?
+                            }
+                        }
+                    }
+                }
+            }
 
             ObservationHelper.getInstance(context).update(returnedObservation)
 

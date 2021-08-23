@@ -6,6 +6,7 @@ import mil.nga.giat.mage.form.field.FieldValue
 
 class FormState(
   val id: Long? = null,
+  val remoteId: String? = null,
   val eventId: String,
   val definition: Form,
   val fields: List<FieldState<*, *>>,
@@ -27,7 +28,7 @@ class FormState(
   }
 
   companion object {
-    fun fromForm(id: Long? = null, eventId: String, form: Form, defaultForm: Form? = null): FormState {
+    fun fromForm(id: Long? = null, remoteId: String? = null, eventId: String, form: Form, defaultForm: Form? = null): FormState {
       val defaultFields = defaultForm?.fields?.associateTo(mutableMapOf()) {
         it.name to it.value
       }
@@ -38,7 +39,7 @@ class FormState(
         fields.add(fieldState)
       }
 
-      return FormState(id, eventId, form, fields)
+      return FormState(id, remoteId, eventId, form, fields)
     }
   }
 }

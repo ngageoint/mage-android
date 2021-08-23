@@ -13,6 +13,7 @@ import com.google.gson.stream.JsonReader
 import com.google.gson.stream.JsonToken
 import com.google.gson.stream.JsonWriter
 import mil.nga.giat.mage.observation.ObservationLocation
+import mil.nga.giat.mage.sdk.datastore.observation.Attachment
 import mil.nga.giat.mage.sdk.gson.serializer.GeometrySerializer
 import mil.nga.giat.mage.sdk.jackson.deserializer.GeometryDeserializer
 import mil.nga.giat.mage.sdk.utils.ISO8601DateFormatFactory
@@ -88,6 +89,8 @@ open class FormField<T>(
 }
 
 enum class FieldType(val typeClass: Class<out FormField<out Any>>) {
+  @SerializedName("attachment")
+  ATTACHMENT(AttachmentFormField::class.java),
   @SerializedName("date")
   DATE(DateFormField::class.java),
   @SerializedName("geometry")
@@ -109,6 +112,29 @@ enum class FieldType(val typeClass: Class<out FormField<out Any>>) {
   @SerializedName("multiselectdropdown")
   MULTISELECTDROPDOWN(MultiChoiceFormField::class.java);
 }
+
+enum class AttachmentType(val type: String) {
+  IMAGE("image"),
+  VIDEO("video"),
+  AUDIO("audio");
+
+  companion object {
+    fun fromValue(type: String): AttachmentType? {
+      return values().firstOrNull { it.type == type }
+    }
+  }
+}
+
+class AttachmentFormField(
+  id: Long,
+  type: FieldType,
+  name: String,
+  title: String,
+  archived: Boolean,
+  @SerializedName("min") val min: Number?,
+  @SerializedName("max") val max: Number?,
+  val allowedAttachmentTypes: Collection<AttachmentType>
+) : FormField<Attachment>(id, type, name, title, false, archived)
 
 class TextFormField(
   id: Long,
@@ -200,6 +226,7 @@ class FormFieldDeserializer : JsonDeserializer<FormField<out Any>>,
 
     private val gson = GsonBuilder()
       .registerTypeAdapterFactory(ListTypeAdapterFactory())
+      .registerTypeAdapter(AttachmentType::class.java, AttachmentTypeAdapter())
       .registerTypeAdapter(Date::class.java, DateTypeAdapter())
       .registerTypeAdapter(FormField::class.java, FormFieldDeserializer())
       .registerTypeAdapter(ObservationLocation::class.java, LocationParser())
@@ -254,6 +281,28 @@ class ListTypeAdapterFactory : TypeAdapterFactory {
     }.nullSafe()
   }
 }
+
+class AttachmentTypeAdapter : TypeAdapter<AttachmentType>() {
+  override fun write(out: JsonWriter, value: AttachmentType?) {
+    if (value == null) {
+      out.nullValue()
+      return
+    }
+
+    out.value(value.type)
+  }
+
+  override fun read(`in`: JsonReader): AttachmentType? {
+    if (`in`.peek() === JsonToken.NULL) {
+      `in`.nextNull()
+      return null
+    }
+
+    val value = `in`.nextString()
+    return AttachmentType.fromValue(value)
+  }
+}
+
 
 class DateTypeAdapter : TypeAdapter<Date>() {
   private val LOG_NAME = DateTypeAdapter::class.java.name

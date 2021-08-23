@@ -146,9 +146,6 @@ fun ObservationViewContent(
         onLocationClick = { onLocationClick?.invoke(it) }
       )
 
-      val attachments by observationState.attachments
-      AttachmentsViewContent(attachments, onAttachmentClick)
-
       if (forms.isNotEmpty()) {
         Row(
           verticalAlignment = Alignment.CenterVertically,
@@ -168,7 +165,7 @@ fun ObservationViewContent(
       }
 
       for (formState in forms) {
-        FormContent(formState)
+        FormContent(formState, onAttachmentClick)
       }
     }
   }

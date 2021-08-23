@@ -1,4 +1,4 @@
-package mil.nga.giat.mage.form.view
+package mil.nga.giat.mage._server5.form.view
 
 import android.webkit.MimeTypeMap
 import androidx.compose.foundation.*
@@ -7,12 +7,13 @@ import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.key
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.bumptech.glide.load.resource.bitmap.BitmapTransformation
 import com.bumptech.glide.load.resource.bitmap.CenterCrop
@@ -23,43 +24,60 @@ import mil.nga.giat.mage.observation.edit.AttachmentAction
 import mil.nga.giat.mage.sdk.datastore.observation.Attachment
 import java.util.*
 
+//@Composable
+//fun AttachmentsViewContent_server5(
+//   attachments: Collection<Attachment>,
+//   onClick: ((Media) -> Unit)? = null
+//) {
+//   Card(
+//      Modifier
+//         .fillMaxWidth()) {
+//      Row(
+//         Modifier
+//            .fillMaxWidth()
+//            .horizontalScroll(rememberScrollState())) {
+//         for (attachment in attachments) {
+//            val media = Media(attachment)
+//            AttachmentViewContent_server5(media, deletable = false) {
+//               onClick?.invoke(media)
+//            }
+//         }
+//      }
+//   }
+//}
+
 @Composable
-fun AttachmentsViewContent(
-   media: List<Media>,
-   deletable: Boolean = false,
-   onAttachmentAction: ((AttachmentAction, Media) -> Unit)? = null,
+fun AttachmentsViewContent_server5(
+   attachments: Collection<Attachment>,
+   onClick: ((Attachment) -> Unit)? = null
 ) {
-   if (media.isNotEmpty()) {
-      Column(Modifier.fillMaxWidth()) {
-         val oddMedia = if (media.size % 2 == 0) null else media[0]
-         val evenMedia = if (media.size % 2 == 0) media else media.drop(1)
-
-         if (oddMedia != null) {
-            AttachmentViewContent(oddMedia, deletable) { action ->
-               onAttachmentAction?.invoke(action, oddMedia)
-            }
+   if (attachments.isNotEmpty()) {
+      Row(
+         verticalAlignment = Alignment.CenterVertically,
+         modifier = Modifier.padding(top = 16.dp, bottom = 8.dp, start = 8.dp, end = 8.dp)
+      ) {
+         CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
+            Text(
+               text = "ATTACHMENTS",
+               style = MaterialTheme.typography.caption,
+               fontWeight = FontWeight.SemiBold,
+               modifier = Modifier
+                  .weight(1f)
+                  .padding(vertical = 8.dp)
+            )
          }
+      }
 
-         evenMedia.chunked(2).forEach {  (media1, media2) ->
-            Row {
-               Column(
-                  Modifier
-                     .weight(1f)
-                     .padding(top = 4.dp, end = 2.dp)
-               ) {
-                  AttachmentViewContent(media1, deletable) { action ->
-                     onAttachmentAction?.invoke(action, media1)
-                  }
-               }
-               Column(
-                  Modifier
-                     .weight(1f)
-                     .padding(top = 4.dp, start = 2.dp)
-               ) {
-                  AttachmentViewContent(media2, deletable) { action ->
-                     onAttachmentAction?.invoke(action, media2)
-                  }
-               }
+      Card(
+         Modifier.fillMaxWidth()
+      ) {
+         Row(
+            Modifier
+               .fillMaxWidth()
+               .horizontalScroll(rememberScrollState())) {
+            for (attachment in attachments) {
+               val media = Media(attachment)
+               AttachmentViewContent_server5(media, deletable = false) { onClick?.invoke(media) }
             }
          }
       }
@@ -67,7 +85,7 @@ fun AttachmentsViewContent(
 }
 
 @Composable
-fun AttachmentViewContent(
+fun AttachmentViewContent_server5(
    media: Media,
    deletable: Boolean,
    onAttachmentAction: ((AttachmentAction) -> Unit)? = null
@@ -92,8 +110,9 @@ fun AttachmentViewContent(
 
    Box(
       Modifier
-         .fillMaxWidth()
-         .height(200.dp)
+         .width(100.dp)
+         .height(100.dp)
+         .padding(vertical = 8.dp, horizontal = 4.dp)
          .clip(MaterialTheme.shapes.large)
          .clickable { onAttachmentAction?.invoke(AttachmentAction.VIEW) }) {
       Image(

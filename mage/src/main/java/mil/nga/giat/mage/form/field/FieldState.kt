@@ -57,6 +57,15 @@ open class FieldState<F, T : FieldValue> (
       default: Any? = null
     ): FieldState<*, out FieldValue> {
       return when (fieldDefinition.type) {
+        FieldType.ATTACHMENT -> {
+          val fieldState = AttachmentFieldState(fieldDefinition as AttachmentFormField)
+          val attachments = value as? List<Media>
+          if (attachments != null) {
+            fieldState.answer = FieldValue.Attachment(attachments)
+//            fieldState.attachments = attachments
+          }
+          fieldState
+        }
         FieldType.CHECKBOX -> {
           val fieldState = BooleanFieldState(fieldDefinition as BooleanFormField)
           val boolean = default as? Boolean ?: value as? Boolean

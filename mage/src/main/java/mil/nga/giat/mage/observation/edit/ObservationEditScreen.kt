@@ -12,23 +12,26 @@ import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
+import mil.nga.giat.mage._server5.form.view.AttachmentsViewContent_server5
 import mil.nga.giat.mage.form.FormState
 import mil.nga.giat.mage.form.FormViewModel
 import mil.nga.giat.mage.form.edit.DateEdit
 import mil.nga.giat.mage.form.edit.FormEditContent
 import mil.nga.giat.mage.form.edit.GeometryEdit
+import mil.nga.giat.mage.form.field.*
 import mil.nga.giat.mage.observation.ObservationState
-import mil.nga.giat.mage.form.field.DateFieldState
-import mil.nga.giat.mage.form.field.FieldState
-import mil.nga.giat.mage.form.field.GeometryFieldState
-import mil.nga.giat.mage.form.view.AttachmentsViewContent
 import mil.nga.giat.mage.observation.ObservationValidationResult
-import mil.nga.giat.mage.sdk.datastore.observation.Attachment
+import mil.nga.giat.mage.sdk.Compatibility.Companion.isServerVersion5
 import mil.nga.giat.mage.ui.theme.MageTheme
+
+enum class AttachmentAction {
+  VIEW, DELETE
+}
 
 enum class ObservationMediaAction {
   GALLERY, PHOTO, VIDEO, VOICE
@@ -39,12 +42,12 @@ fun ObservationEditScreen(
   viewModel: FormViewModel,
   onSave: (() -> Unit)? = null,
   onCancel: (() -> Unit)? = null,
-  onAction: ((ObservationMediaAction) -> Unit)? = null,
   onAddForm: (() -> Unit)? = null,
   onDeleteForm: ((Int) -> Unit)? = null,
   onReorderForms: (() -> Unit)? = null,
   onFieldClick: ((FieldState<*, *>) -> Unit)? = null,
-  onAttachmentClick: ((Attachment) -> Unit)? = null
+  onAttachmentAction: ((AttachmentAction, Media, FieldState<*, *>) -> Unit)? = null,
+  onMediaAction: ((ObservationMediaAction, FieldState<*, *>?) -> Unit)? = null
 ) {
   val observationState by viewModel.observationState.observeAsState()
   val scope = rememberCoroutineScope()
@@ -75,18 +78,44 @@ fun ObservationEditScreen(
       },
       content = {
         Column {
-          ObservationMediaBar { onAction?.invoke(it) }
+          if (isServerVersion5(LocalContext.current)) {
+            ObservationMediaBar { onMediaAction?.invoke(it, null) }
+          }
 
           ObservationEditContent(
             observationState,
             listState = listState,
             onFieldClick = onFieldClick,
-            onAttachmentClick = onAttachmentClick,
+            onMediaAction = onMediaAction,
+            onAttachmentAction = { action, media, fieldState ->
+              when (action) {
+                AttachmentAction.VIEW -> onAttachmentAction?.invoke(action, media, fieldState)
+                AttachmentAction.DELETE -> {
+                  val attachmentFieldState = fieldState as AttachmentFieldState
+                  val attachments = attachmentFieldState.answer?.media?.toMutableList() ?: mutableListOf()
+                  val index = attachments.indexOf(media)
+                  val attachment = attachments[index]
+
+                  scope.launch {
+                    val result = scaffoldState.snackbarHostState.showSnackbar("Attachment removed.", "UNDO")
+                    if (result == SnackbarResult.ActionPerformed) {
+                      // TODO should I modify state here?
+                      if (attachment.url?.isNotEmpty() == true) {
+                        attachment.action = null
+                      }
+                      attachmentFieldState.answer = FieldValue.Attachment(attachments)
+                    }
+                  }
+                  onAttachmentAction?.invoke(action, media, fieldState)
+                }
+              }
+            },
             onReorderForms = onReorderForms,
             onDeleteForm = { index, formState ->
               scope.launch {
                 val result = scaffoldState.snackbarHostState.showSnackbar("Form deleted", "UNDO")
                 if (result == SnackbarResult.ActionPerformed) {
+                  // TODO should I modify state here?
                   val forms = observationState?.forms?.value?.toMutableList() ?: mutableListOf()
                   forms.add(index, formState)
                   observationState?.forms?.value = forms
@@ -185,7 +214,8 @@ fun ObservationEditContent(
   observationState: ObservationState?,
   listState: LazyListState,
   onFieldClick: ((FieldState<*, *>) -> Unit)? = null,
-  onAttachmentClick: ((Attachment) -> Unit)? = null,
+  onMediaAction: ((ObservationMediaAction, FieldState<*, *>) -> Unit)? = null,
+  onAttachmentAction: ((AttachmentAction, Media, FieldState<*, *>) -> Unit)? = null,
   onDeleteForm: ((Int, FormState) -> Unit)? = null,
   onReorderForms: (() -> Unit)? = null
 ) {
@@ -222,9 +252,13 @@ fun ObservationEditContent(
           onTimestampClick = { onFieldClick?.invoke(observationState.timestampFieldState) },
           onLocationClick = { onFieldClick?.invoke(observationState.geometryFieldState) }
         )
+      }
 
-        val attachments by observationState.attachments
-        AttachmentsViewContent(attachments, onAttachmentClick)
+      item {
+        if (isServerVersion5(LocalContext.current)) {
+          val attachments by observationState.attachments
+          AttachmentsViewContent_server5(attachments)
+        }
       }
 
       if (forms.isNotEmpty()) {
@@ -262,7 +296,9 @@ fun ObservationEditContent(
         FormEditContent(
           formState = formState,
           onFormDelete = { onDeleteForm?.invoke(index, formState) },
-          onFieldClick = { onFieldClick?.invoke(it) }
+          onFieldClick = { onFieldClick?.invoke(it) },
+          onMediaAction = onMediaAction,
+          onAttachmentAction = onAttachmentAction
         )
       }
     }

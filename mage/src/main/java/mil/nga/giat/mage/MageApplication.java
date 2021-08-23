@@ -27,8 +27,14 @@ import androidx.lifecycle.LifecycleObserver;
 import androidx.lifecycle.OnLifecycleEvent;
 import androidx.lifecycle.ProcessLifecycleOwner;
 
+import com.bumptech.glide.Glide;
+
 import dagger.android.AndroidInjector;
 import dagger.android.support.DaggerApplication;
+import dagger.hilt.EntryPoint;
+import dagger.hilt.InstallIn;
+import dagger.hilt.android.HiltAndroidApp;
+import dagger.hilt.components.SingletonComponent;
 import mil.nga.giat.mage.dagger.DaggerMageComponent;
 import mil.nga.giat.mage.location.LocationFetchService;
 import mil.nga.giat.mage.location.LocationReportingService;
@@ -62,6 +68,7 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
+@HiltAndroidApp
 public class MageApplication extends DaggerApplication implements LifecycleObserver, SharedPreferences.OnSharedPreferenceChangeListener, ISessionEventListener, Application.ActivityLifecycleCallbacks {
 
 	private static final String LOG_NAME = MageApplication.class.getName();
@@ -88,6 +95,11 @@ public class MageApplication extends DaggerApplication implements LifecycleObser
 	private ObservationNotificationListener observationNotificationListener = null;
 
 	private Activity runningActivity;
+
+	@EntryPoint
+	@InstallIn(SingletonComponent.class)
+	interface ApplicationInjector extends AndroidInjector<MageApplication> {
+	}
 
     @Override
     protected AndroidInjector<? extends DaggerApplication> applicationInjector() {

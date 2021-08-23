@@ -22,12 +22,14 @@ import androidx.compose.ui.unit.sp
 import mil.nga.giat.mage.coordinate.CoordinateFormatter
 import mil.nga.giat.mage.form.field.*
 import mil.nga.giat.mage.form.FormState
+import mil.nga.giat.mage.sdk.datastore.observation.Attachment
 import mil.nga.giat.mage.utils.DateFormatFactory
 import java.util.*
 
 @Composable
 fun FormContent(
-  formState: FormState
+  formState: FormState,
+  onAttachmentClick: ((Attachment) -> Unit)? = null
 ) {
   Card(
     Modifier
@@ -43,7 +45,7 @@ fun FormContent(
 
       if (formState.expanded.value) {
         for (fieldState in formState.fields.sortedBy { it.definition.id }) {
-          FieldContent(fieldState)
+          FieldContent(fieldState, onAttachmentClick)
         }
       }
     }
@@ -86,7 +88,7 @@ fun FormHeaderContent(
 
         CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
           Text(
-            formState.definition.name.toUpperCase(Locale.ROOT),
+            formState.definition.name.uppercase(Locale.ROOT),
             fontWeight = FontWeight.Bold,
             style = MaterialTheme.typography.overline
           )
@@ -139,7 +141,10 @@ fun FormHeaderContent(
 }
 
 @Composable
-fun FieldContent(fieldState: FieldState<*, out FieldValue>) {
+fun FieldContent(
+  fieldState: FieldState<*, out FieldValue>,
+  onAttachmentClick: ((Attachment) -> Unit)? = null
+) {
   when (fieldState) {
     is BooleanFieldState -> {
       BooleanFieldContent(fieldState)
@@ -153,9 +158,29 @@ fun FieldContent(fieldState: FieldState<*, out FieldValue>) {
     is MultiSelectFieldState -> {
       MultiFieldContent(fieldState)
     }
+    is AttachmentFieldState -> {
+      AttachmentsFieldContent(fieldState, onAttachmentClick)
+    }
     else -> {
       StringFieldContent(fieldState)
     }
+  }
+}
+
+@Composable
+fun AttachmentsFieldContent(
+  fieldState: AttachmentFieldState,
+  onAttachmentClick: ((Attachment) -> Unit)? = null
+) {
+  val media = fieldState.answer?.media
+  if (media != null) {
+    CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
+      Text(fieldState.definition.title, fontSize = 14.sp)
+    }
+
+    AttachmentsViewContent(media, onAttachmentAction = { _, attachment ->
+      onAttachmentClick?.invoke(attachment)
+    })
   }
 }
 

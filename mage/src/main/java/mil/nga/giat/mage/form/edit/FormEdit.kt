@@ -1,24 +1,36 @@
 package mil.nga.giat.mage.form.edit
 
 import androidx.compose.animation.animateContentSize
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.*
 
 import androidx.compose.material.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.*
+import androidx.compose.ui.Alignment
 
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import mil.nga.giat.mage.form.*
 
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.unit.sp
 import mil.nga.giat.mage.form.field.*
 import mil.nga.giat.mage.form.FormState
+import mil.nga.giat.mage.form.view.AttachmentsViewContent
 import mil.nga.giat.mage.form.view.FormHeaderContent
+import mil.nga.giat.mage.observation.edit.AttachmentAction
+import mil.nga.giat.mage.observation.edit.ObservationMediaAction
+import mil.nga.giat.mage.sdk.datastore.observation.Attachment
 import mil.nga.giat.mage.utils.DateFormatFactory
 import java.util.*
 
@@ -30,7 +42,9 @@ import java.util.*
 fun FormEditContent(
   formState: FormState,
   onFormDelete: (() -> Unit)? = null,
-  onFieldClick: ((FieldState<*, *>) -> Unit)? = null
+  onFieldClick: ((FieldState<*, *>) -> Unit)? = null,
+  onAttachmentAction: ((AttachmentAction, Media, FieldState<*, *>) -> Unit)? = null,
+  onMediaAction: ((ObservationMediaAction, FieldState<*, *>) -> Unit)? = null
 ) {
   Card(
     Modifier.fillMaxWidth()
@@ -46,9 +60,9 @@ fun FormEditContent(
         for (fieldState in formState.fields.sortedBy { it.definition.id }) {
           FieldEditContent(
             fieldState,
-            onClick = {
-              onFieldClick?.invoke(fieldState)
-            }
+            onClick = { onFieldClick?.invoke(fieldState) },
+            onMediaAction = { action -> onMediaAction?.invoke(action, fieldState) },
+            onAttachmentAction = { action, media -> onAttachmentAction?.invoke(action, media, fieldState) }
           )
         }
 
@@ -74,9 +88,14 @@ fun FormEditContent(
 @Composable
 fun FieldEditContent(
   fieldState: FieldState<*, out FieldValue>,
+  onMediaAction: ((ObservationMediaAction) -> Unit)? = null,
+  onAttachmentAction: ((AttachmentAction, Media) -> Unit)? = null,
   onClick: (() -> Unit)? = null
 ) {
   when (fieldState.definition.type) {
+    FieldType.ATTACHMENT -> {
+      AttachmentEdit(fieldState as AttachmentFieldState, onAttachmentAction, onMediaAction)
+    }
     FieldType.CHECKBOX -> {
       CheckboxEdit(fieldState as BooleanFieldState) {
         fieldState.answer = FieldValue.Boolean(it)
@@ -114,6 +133,130 @@ fun FieldEditContent(
         fieldState.answer = FieldValue.Text(it)
       }
     }
+  }
+}
+
+@Composable
+fun AttachmentEdit(
+  fieldState: AttachmentFieldState,
+  onAttachmentAction: ((AttachmentAction, Media) -> Unit)? = null,
+  onMediaAction: ((ObservationMediaAction) -> Unit)? = null
+) {
+  val media = fieldState.answer?.media?.filter { it.action != Media.ATTACHMENT_DELETE_ACTION }
+  var size by remember { mutableStateOf(media?.size) }
+  val error = fieldState.getError()
+  val fieldDefinition = fieldState.definition as? AttachmentFormField
+
+  LaunchedEffect(media?.size) {
+    if (size != media?.size) {
+      fieldState.onFocusChange(true)
+      fieldState.enableShowErrors()
+    }
+
+    size = media?.size ?: 0
+  }
+
+  Column(Modifier.padding(bottom = 16.dp)) {
+    Column(
+      Modifier
+        .fillMaxWidth()
+        .clip(shape = RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp))
+        .background(MaterialTheme.colors.onSurface.copy(alpha = TextFieldDefaults.BackgroundOpacity))
+    ) {
+      CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
+        val titleColor = if (error == null) Color.Unspecified else MaterialTheme.colors.error
+        val min = fieldDefinition?.min?.toInt() ?: 0
+        Text(
+          text = "${fieldState.definition.title} ${if (min > 0) "*" else ""}",
+          fontSize = 12.sp,
+          color = titleColor,
+          modifier = Modifier.padding(start = 16.dp, top = 8.dp, bottom = 8.dp)
+        )
+      }
+
+      Column {
+        if (media == null || media.isEmpty()) {
+          CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.disabled) {
+            Column(
+              horizontalAlignment = Alignment.CenterHorizontally,
+              verticalArrangement = Arrangement.Center,
+              modifier = Modifier
+                .fillMaxSize()
+                .height(200.dp)
+            ) {
+              Icon(
+                imageVector = Icons.Filled.InsertDriveFile,
+                contentDescription = "Form",
+                modifier = Modifier
+                  .padding(end = 8.dp)
+                  .height(60.dp)
+                  .width(60.dp)
+              )
+
+              Text(
+                text = "No Attachments",
+                style = MaterialTheme.typography.h5,
+                modifier = Modifier.padding(start = 16.dp, top = 8.dp, bottom = 8.dp)
+              )
+            }
+          }
+        } else {
+          AttachmentsViewContent(
+            media,
+            deletable = true,
+            onAttachmentAction = onAttachmentAction
+          )
+        }
+      }
+
+      Divider(color = MaterialTheme.colors.onSurface.copy(alpha = .4f))
+
+      CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
+        Row(
+          horizontalArrangement = Arrangement.End,
+          modifier = Modifier.fillMaxWidth()
+        ) {
+          if (fieldDefinition?.allowedAttachmentTypes?.any { it == AttachmentType.IMAGE || it == AttachmentType.VIDEO } == true) {
+            IconButton(
+              modifier = Modifier.padding(horizontal = 4.dp),
+              onClick = { onMediaAction?.invoke(ObservationMediaAction.GALLERY) }
+            ) {
+              Icon(Icons.Default.Image, "Capture Gallery")
+            }
+          }
+
+          if (fieldDefinition?.allowedAttachmentTypes?.contains(AttachmentType.IMAGE) == true) {
+            IconButton(
+              modifier = Modifier.padding(horizontal = 4.dp),
+              onClick = { onMediaAction?.invoke(ObservationMediaAction.PHOTO) }
+            ) {
+              Icon(Icons.Default.PhotoCamera, "Capture Photo")
+            }
+          }
+
+          if (fieldDefinition?.allowedAttachmentTypes?.contains(AttachmentType.VIDEO) == true) {
+            IconButton(
+              modifier = Modifier.padding(horizontal = 4.dp),
+              onClick = { onMediaAction?.invoke(ObservationMediaAction.VIDEO) }
+            ) {
+              Icon(Icons.Default.Videocam, "Capture Video")
+            }
+          }
+
+          if (fieldDefinition?.allowedAttachmentTypes?.contains(AttachmentType.AUDIO) == true) {
+            IconButton(
+              modifier = Modifier.padding(horizontal = 4.dp),
+              onClick = { onMediaAction?.invoke(ObservationMediaAction.VOICE) }
+            ) {
+              Icon(Icons.Default.Mic, "Capture Audio")
+            }
+          }
+        }
+      }
+
+    }
+
+    error?.let { error -> TextFieldError(textError = error) }
   }
 }
 
@@ -220,7 +363,7 @@ fun NumberEdit(
 ) {
   Column(Modifier.padding(bottom = 16.dp)) {
     TextField(
-      value = fieldState.answer?.number?.toString() ?: "",
+      value = fieldState.answer?.number ?: "",
       onValueChange = { onAnswer(it) },
       label = { Text("${fieldState.definition.title}${if (fieldState.definition.required) " *" else ""}") },
       singleLine = fieldState.definition.type != FieldType.TEXTAREA,

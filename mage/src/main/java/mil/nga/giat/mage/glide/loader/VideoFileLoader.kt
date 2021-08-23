@@ -15,6 +15,7 @@ import com.bumptech.glide.load.model.MultiModelLoaderFactory
 import com.bumptech.glide.signature.ObjectKey
 
 import mil.nga.giat.mage.sdk.datastore.observation.Attachment
+import java.io.File
 
 /**
  * Created by wnewman
@@ -57,7 +58,7 @@ class VideoFileLoader : ModelLoader<Attachment, Bitmap> {
     override fun handles(model: Attachment): Boolean {
         model.localPath?.let {
             val fileExtension = MimeTypeMap.getFileExtensionFromUrl(it)
-            val mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(fileExtension.toLowerCase())
+            val mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(fileExtension.lowercase())
             return mimeType?.contains("video", ignoreCase = true) ?: false
         }
 
