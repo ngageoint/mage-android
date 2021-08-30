@@ -160,7 +160,7 @@ class ObservationSyncWorker(var context: Context, params: WorkerParameters) : Wo
         }
     }
 
-    private fun update(observation: Observation): Result {
+    private fun  update(observation: Observation): Result {
         val baseUrl = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.serverURLKey), context.getString(R.string.serverURLDefaultValue))
         val retrofit = Retrofit.Builder()
                 .baseUrl(baseUrl!!)
@@ -182,21 +182,19 @@ class ObservationSyncWorker(var context: Context, params: WorkerParameters) : Wo
                 for (observationProperty in observationForm.properties) {
                     val fieldDefinition = formDefinition?.fields?.find { it.name == observationProperty.key }
                     if (fieldDefinition?.type == FieldType.ATTACHMENT) {
-                        for (media in observationProperty.value as List<Media>) {
-                            if (media.action == Media.ATTACHMENT_ADD_ACTION) {
-                                val attachment = returnedObservation?.attachments?.find { attachment ->
+                        for (attachment in observationProperty.value as List<Attachment>) {
+                            if (attachment.action == Media.ATTACHMENT_ADD_ACTION) {
+                                val returnedAttachment = returnedObservation?.attachments?.find { returnedAttachment ->
                                     attachment.url == null
-                                        && attachment.name == media.name
-                                        && attachment.fieldName == media.fieldName
-                                        && attachment.contentType == media.contentType
+                                        && attachment.name == returnedAttachment.name
+                                        && attachment.fieldName == returnedAttachment.fieldName
+                                        && attachment.contentType == returnedAttachment.contentType
                                 }
 
-                                if (attachment != null) {
-                                    attachment.localPath = media.localPath
-                                    attachment.isDirty = true
+                                if (returnedAttachment != null) {
+                                    returnedAttachment.localPath = attachment.localPath
+                                    returnedAttachment.isDirty = true
                                 }
-                            } else if (media.action == Media.ATTACHMENT_DELETE_ACTION) {
-                                // TODO do I need to remove anything here?
                             }
                         }
                     }

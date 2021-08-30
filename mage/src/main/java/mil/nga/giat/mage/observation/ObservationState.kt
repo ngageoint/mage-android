@@ -6,7 +6,6 @@ import mil.nga.giat.mage.form.Form
 import mil.nga.giat.mage.form.FormState
 import mil.nga.giat.mage.form.field.DateFieldState
 import mil.nga.giat.mage.form.field.GeometryFieldState
-import mil.nga.giat.mage.form.field.Media
 import mil.nga.giat.mage.sdk.datastore.observation.Attachment
 import java.util.*
 

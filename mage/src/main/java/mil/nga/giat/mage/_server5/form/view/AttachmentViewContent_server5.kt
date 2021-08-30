@@ -18,33 +18,10 @@ import androidx.compose.ui.unit.dp
 import com.bumptech.glide.load.resource.bitmap.BitmapTransformation
 import com.bumptech.glide.load.resource.bitmap.CenterCrop
 import com.google.accompanist.glide.rememberGlidePainter
-import mil.nga.giat.mage.form.field.Media
 import mil.nga.giat.mage.glide.transform.VideoOverlayTransformation
 import mil.nga.giat.mage.observation.edit.AttachmentAction
 import mil.nga.giat.mage.sdk.datastore.observation.Attachment
 import java.util.*
-
-//@Composable
-//fun AttachmentsViewContent_server5(
-//   attachments: Collection<Attachment>,
-//   onClick: ((Media) -> Unit)? = null
-//) {
-//   Card(
-//      Modifier
-//         .fillMaxWidth()) {
-//      Row(
-//         Modifier
-//            .fillMaxWidth()
-//            .horizontalScroll(rememberScrollState())) {
-//         for (attachment in attachments) {
-//            val media = Media(attachment)
-//            AttachmentViewContent_server5(media, deletable = false) {
-//               onClick?.invoke(media)
-//            }
-//         }
-//      }
-//   }
-//}
 
 @Composable
 fun AttachmentsViewContent_server5(
@@ -76,8 +53,7 @@ fun AttachmentsViewContent_server5(
                .fillMaxWidth()
                .horizontalScroll(rememberScrollState())) {
             for (attachment in attachments) {
-               val media = Media(attachment)
-               AttachmentViewContent_server5(media, deletable = false) { onClick?.invoke(media) }
+               AttachmentViewContent_server5(attachment, deletable = false) { onClick?.invoke(attachment) }
             }
          }
       }
@@ -86,18 +62,18 @@ fun AttachmentsViewContent_server5(
 
 @Composable
 fun AttachmentViewContent_server5(
-   media: Media,
+   attachment: Attachment,
    deletable: Boolean,
    onAttachmentAction: ((AttachmentAction) -> Unit)? = null
 ) {
    val isVideo = when {
-      media.localPath != null -> {
-         val fileExtension = MimeTypeMap.getFileExtensionFromUrl(media.localPath)
+      attachment.localPath != null -> {
+         val fileExtension = MimeTypeMap.getFileExtensionFromUrl(attachment.localPath)
          val mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(fileExtension.lowercase(Locale.ROOT))
          mimeType?.startsWith("video/") == true
       }
-      media.contentType != null -> {
-         media.contentType.startsWith("video/")
+      attachment.contentType != null -> {
+         attachment.contentType.startsWith("video/")
       }
       else -> false
    }
@@ -117,7 +93,7 @@ fun AttachmentViewContent_server5(
          .clickable { onAttachmentAction?.invoke(AttachmentAction.VIEW) }) {
       Image(
          painter = rememberGlidePainter(
-            media,
+            attachment,
             fadeIn = true,
             requestBuilder = {
                transforms(*transformations.toTypedArray())

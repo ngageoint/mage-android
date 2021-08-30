@@ -11,7 +11,6 @@ import androidx.lifecycle.ViewModelProvider
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.snackbar.Snackbar
-import dagger.android.support.DaggerAppCompatActivity
 import mil.nga.giat.mage.R
 import mil.nga.giat.mage.observation.AttachmentViewerActivity
 import mil.nga.giat.mage.observation.ImportantDialog
@@ -23,11 +22,14 @@ import mil.nga.giat.mage.sdk.datastore.user.UserHelper
 import java.lang.Exception
 import javax.inject.Inject
 import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.app.AppCompatActivity
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.android.synthetic.main.view_more_bottom_sheet.view.*
 import mil.nga.giat.mage.form.FormViewModel
 import mil.nga.giat.mage.observation.edit.ObservationEditActivity
 
-class ObservationViewActivity : DaggerAppCompatActivity() {
+@AndroidEntryPoint
+class ObservationViewActivity : AppCompatActivity() {
 
   companion object {
     private val LOG_NAME = ObservationViewActivity::class.java.name
@@ -43,21 +45,19 @@ class ObservationViewActivity : DaggerAppCompatActivity() {
   private var defaultMapZoom: Float? = null
   private var defaultMapCenter: LatLng? = null
 
-  @Inject
-  lateinit var viewModelFactory: ViewModelProvider.Factory
   private lateinit var viewModel: FormViewModel
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
 
-    viewModel = ViewModelProvider(this, viewModelFactory).get(FormViewModel::class.java)
+    viewModel = ViewModelProvider(this).get(FormViewModel::class.java)
 
     defaultMapZoom = intent.getFloatExtra(INITIAL_ZOOM, 0.0f)
     defaultMapCenter = intent.getParcelableExtra(INITIAL_LOCATION) ?: LatLng(0.0, 0.0)
 
     require(intent?.getLongExtra(OBSERVATION_ID, -1L) != -1L) { "OBSERVATION_ID is required to launch ObservationViewActivity" }
     val observationId = intent.getLongExtra(OBSERVATION_ID, -1L)
-    viewModel.setObservation(observationId, defaultMapZoom, defaultMapCenter)
+    viewModel.setObservation(observationId, observeChanges = true, defaultMapZoom, defaultMapCenter)
 
     try {
       currentUser = UserHelper.getInstance(this).readCurrentUser()

@@ -1,5 +1,6 @@
 package mil.nga.giat.mage.observation.edit
 
+import android.os.Parcelable
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.*
@@ -16,8 +17,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.android.parcel.Parcelize
 import kotlinx.coroutines.launch
 import mil.nga.giat.mage._server5.form.view.AttachmentsViewContent_server5
+import mil.nga.giat.mage.form.Form
+import mil.nga.giat.mage.form.FormField
 import mil.nga.giat.mage.form.FormState
 import mil.nga.giat.mage.form.FormViewModel
 import mil.nga.giat.mage.form.edit.DateEdit
@@ -27,15 +31,23 @@ import mil.nga.giat.mage.form.field.*
 import mil.nga.giat.mage.observation.ObservationState
 import mil.nga.giat.mage.observation.ObservationValidationResult
 import mil.nga.giat.mage.sdk.Compatibility.Companion.isServerVersion5
+import mil.nga.giat.mage.sdk.datastore.observation.Attachment
 import mil.nga.giat.mage.ui.theme.MageTheme
 
 enum class AttachmentAction {
   VIEW, DELETE
 }
 
-enum class ObservationMediaAction {
+enum class MediaActionType {
   GALLERY, PHOTO, VIDEO, VOICE
 }
+
+@Parcelize
+data class MediaAction (
+  val type: MediaActionType,
+  val formIndex: Int?,
+  val fieldName: String?
+): Parcelable
 
 @Composable
 fun ObservationEditScreen(
@@ -46,8 +58,8 @@ fun ObservationEditScreen(
   onDeleteForm: ((Int) -> Unit)? = null,
   onReorderForms: (() -> Unit)? = null,
   onFieldClick: ((FieldState<*, *>) -> Unit)? = null,
-  onAttachmentAction: ((AttachmentAction, Media, FieldState<*, *>) -> Unit)? = null,
-  onMediaAction: ((ObservationMediaAction, FieldState<*, *>?) -> Unit)? = null
+  onAttachmentAction: ((AttachmentAction, Attachment, FieldState<*, *>) -> Unit)? = null,
+  onMediaAction: ((MediaAction) -> Unit)? = null
 ) {
   val observationState by viewModel.observationState.observeAsState()
   val scope = rememberCoroutineScope()
@@ -79,7 +91,7 @@ fun ObservationEditScreen(
       content = {
         Column {
           if (isServerVersion5(LocalContext.current)) {
-            ObservationMediaBar { onMediaAction?.invoke(it, null) }
+            ObservationMediaBar { onMediaAction?.invoke(MediaAction(it, null, null)) }
           }
 
           ObservationEditContent(
@@ -92,7 +104,7 @@ fun ObservationEditScreen(
                 AttachmentAction.VIEW -> onAttachmentAction?.invoke(action, media, fieldState)
                 AttachmentAction.DELETE -> {
                   val attachmentFieldState = fieldState as AttachmentFieldState
-                  val attachments = attachmentFieldState.answer?.media?.toMutableList() ?: mutableListOf()
+                  val attachments = attachmentFieldState.answer?.attachments?.toMutableList() ?: mutableListOf()
                   val index = attachments.indexOf(media)
                   val attachment = attachments[index]
 
@@ -184,7 +196,7 @@ fun ObservationEditTopBar(
 
 @Composable
 fun ObservationMediaBar(
-  onAction: (ObservationMediaAction) -> Unit
+  onAction: (MediaActionType) -> Unit
 ) {
   Surface(
     elevation = 2.dp,
@@ -193,16 +205,16 @@ fun ObservationMediaBar(
       horizontalArrangement = Arrangement.SpaceEvenly,
       modifier = Modifier.fillMaxWidth()
     ) {
-      IconButton(onClick = { onAction.invoke(ObservationMediaAction.GALLERY) }) {
+      IconButton(onClick = { onAction.invoke(MediaActionType.GALLERY) }) {
         Icon(Icons.Default.Image, "Capture Gallery", tint = Color(0xFF66BB6A))
       }
-      IconButton(onClick = { onAction.invoke(ObservationMediaAction.PHOTO) }) {
+      IconButton(onClick = { onAction.invoke(MediaActionType.PHOTO) }) {
         Icon(Icons.Default.PhotoCamera, "Capture Photo", tint = Color(0xFF42A5F5))
       }
-      IconButton(onClick = { onAction.invoke(ObservationMediaAction.VIDEO) }) {
+      IconButton(onClick = { onAction.invoke(MediaActionType.VIDEO) }) {
         Icon(Icons.Default.Videocam, "Capture Video", tint = Color(0xFFEC407A))
       }
-      IconButton(onClick = { onAction.invoke(ObservationMediaAction.VOICE) }) {
+      IconButton(onClick = { onAction.invoke(MediaActionType.VOICE) }) {
         Icon(Icons.Default.Mic, "Capture Audio", tint = Color(0xFFAB47BC))
       }
     }
@@ -214,8 +226,8 @@ fun ObservationEditContent(
   observationState: ObservationState?,
   listState: LazyListState,
   onFieldClick: ((FieldState<*, *>) -> Unit)? = null,
-  onMediaAction: ((ObservationMediaAction, FieldState<*, *>) -> Unit)? = null,
-  onAttachmentAction: ((AttachmentAction, Media, FieldState<*, *>) -> Unit)? = null,
+  onMediaAction: ((MediaAction) -> Unit)? = null,
+  onAttachmentAction: ((AttachmentAction, Attachment, FieldState<*, *>) -> Unit)? = null,
   onDeleteForm: ((Int, FormState) -> Unit)? = null,
   onReorderForms: (() -> Unit)? = null
 ) {
@@ -297,7 +309,9 @@ fun ObservationEditContent(
           formState = formState,
           onFormDelete = { onDeleteForm?.invoke(index, formState) },
           onFieldClick = { onFieldClick?.invoke(it) },
-          onMediaAction = onMediaAction,
+          onMediaAction = { type, field ->
+            onMediaAction?.invoke(MediaAction(type, index, field.name))
+          },
           onAttachmentAction = onAttachmentAction
         )
       }

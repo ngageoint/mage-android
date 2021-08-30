@@ -1,9 +1,12 @@
 package mil.nga.giat.mage.dagger.module
 
+import android.app.Application
 import android.content.Context
-import dagger.Binds
 import dagger.Module
+import dagger.Provides
 import dagger.android.support.AndroidSupportInjectionModule
+import dagger.hilt.InstallIn
+import dagger.hilt.components.SingletonComponent
 import mil.nga.giat.mage.MageApplication
 import javax.inject.Qualifier
 import javax.inject.Singleton
@@ -12,12 +15,21 @@ import javax.inject.Singleton
 @kotlin.annotation.Retention(AnnotationRetention.RUNTIME)
 annotation class ApplicationContext
 
-@Module(includes = [AndroidSupportInjectionModule::class, ViewModelModule::class])
-abstract class ApplicationModule {
+@InstallIn(SingletonComponent::class)
+@Module(includes = [AndroidSupportInjectionModule::class])
+class ApplicationModule {
 
     @Singleton
-    @Binds
+    @Provides
     @ApplicationContext
-    abstract fun provideContext(application: MageApplication): Context
+    internal fun provideContext(application: Application): Context {
+        return application.applicationContext
+    }
+
+    @Singleton
+    @Provides
+    internal fun provideApplication(application: Application): MageApplication {
+        return application as MageApplication
+    }
 
 }

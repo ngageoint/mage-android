@@ -2,8 +2,10 @@ package mil.nga.giat.mage._server5.observation.edit
 
 import android.content.Context
 import android.util.Log
+import androidx.lifecycle.SavedStateHandle
 import com.google.android.gms.maps.model.LatLng
 import com.google.gson.JsonObject
+import dagger.hilt.android.lifecycle.HiltViewModel
 import mil.nga.giat.mage.dagger.module.ApplicationContext
 import mil.nga.giat.mage.form.*
 import mil.nga.giat.mage.form.Form.Companion.fromJson
@@ -16,8 +18,9 @@ import mil.nga.giat.mage.sdk.exceptions.UserException
 import java.util.*
 import javax.inject.Inject
 
+@HiltViewModel
 class FormViewModel_server5 @Inject constructor(
-  @ApplicationContext context: Context,
+  @ApplicationContext context: Context
 ) : FormViewModel(context) {
 
   companion object {
@@ -213,9 +216,8 @@ class FormViewModel_server5 @Inject constructor(
     _observationState.value = observationState
   }
 
-  override fun addAttachment(media: Media, fieldState: AttachmentFieldState?) {
-    val attachment = media as Attachment
-    this.attachments.add(media)
+  fun addAttachment(attachment: Attachment) {
+    this.attachments.add(attachment)
 
     val attachments = observationState.value?.attachments?.value?.toMutableList() ?: mutableListOf()
     attachments.add(attachment)

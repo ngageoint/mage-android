@@ -172,13 +172,13 @@ fun AttachmentsFieldContent(
   fieldState: AttachmentFieldState,
   onAttachmentClick: ((Attachment) -> Unit)? = null
 ) {
-  val media = fieldState.answer?.media
-  if (media != null) {
+  val attachments = fieldState.answer?.attachments
+  if (attachments != null) {
     CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
       Text(fieldState.definition.title, fontSize = 14.sp)
     }
 
-    AttachmentsViewContent(media, onAttachmentAction = { _, attachment ->
+    AttachmentsViewContent(attachments, onAttachmentAction = { _, attachment ->
       onAttachmentClick?.invoke(attachment)
     })
   }

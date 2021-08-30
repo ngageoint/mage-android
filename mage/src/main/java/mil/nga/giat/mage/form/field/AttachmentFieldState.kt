@@ -14,7 +14,7 @@ class AttachmentFieldState(definition: FormField<Attachment>) :
   )
 
 private fun errorMessage(definition: FormField<Attachment>, value: FieldValue.Attachment?): String {
-  val size = value?.media?.filter { it.action != Media.ATTACHMENT_DELETE_ACTION }?.size
+  val size = value?.attachments?.filter { it.action != Media.ATTACHMENT_DELETE_ACTION }?.size
 
   val fieldDefinition = definition as? AttachmentFormField
   return if (fieldDefinition?.min != null && (size == null || size < fieldDefinition.min.toDouble())) {
@@ -25,7 +25,7 @@ private fun errorMessage(definition: FormField<Attachment>, value: FieldValue.At
 }
 
 private fun isValid(definition: FormField<Attachment>, value: FieldValue.Attachment?): Boolean {
-  val size = value?.media?.filter { it.action != Media.ATTACHMENT_DELETE_ACTION }?.size
+  val size = value?.attachments?.filter { it.action != Media.ATTACHMENT_DELETE_ACTION }?.size
 
   val fieldDefinition = definition as? AttachmentFormField
   return if (fieldDefinition?.min != null && (size == null || size < fieldDefinition.min.toInt())) {
@@ -34,6 +34,5 @@ private fun isValid(definition: FormField<Attachment>, value: FieldValue.Attachm
 }
 
 private fun hasValue(value: FieldValue.Attachment?): Boolean {
-  value?.media
-  return value?.media?.any { it.action != Media.ATTACHMENT_DELETE_ACTION } == true
+  return value?.attachments?.any { it.action != Media.ATTACHMENT_DELETE_ACTION } == true
 }

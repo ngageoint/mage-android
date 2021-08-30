@@ -1,6 +1,5 @@
 package mil.nga.giat.mage.observation.edit
 
-import android.content.Context
 import android.content.res.ColorStateList
 import android.graphics.Color
 import android.graphics.PorterDuff
@@ -15,13 +14,13 @@ import mil.nga.giat.mage.R
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.gson.JsonObject
-import dagger.android.support.AndroidSupportInjection
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.android.synthetic.main.view_form_picker_item.view.*
 import mil.nga.giat.mage.form.Form
 import mil.nga.giat.mage.form.FormViewModel
 import mil.nga.giat.mage.sdk.datastore.user.EventHelper
-import javax.inject.Inject
 
+@AndroidEntryPoint
 class FormPickerBottomSheetFragment: BottomSheetDialogFragment() {
 
   interface OnFormClickListener {
@@ -32,19 +31,12 @@ class FormPickerBottomSheetFragment: BottomSheetDialogFragment() {
 
   var formPickerListener: OnFormClickListener? = null
 
-  @Inject
-  lateinit var viewModelFactory: ViewModelProvider.Factory
-  private lateinit var viewModel: FormViewModel
-
-  override fun onAttach(context: Context) {
-    AndroidSupportInjection.inject(this)
-    super.onAttach(context)
-  }
+  protected lateinit var viewModel: FormViewModel
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
 
-    viewModel = ViewModelProvider(this, viewModelFactory).get(FormViewModel::class.java)
+    viewModel = ViewModelProvider(this).get(FormViewModel::class.java)
   }
 
   override fun onCreateView(

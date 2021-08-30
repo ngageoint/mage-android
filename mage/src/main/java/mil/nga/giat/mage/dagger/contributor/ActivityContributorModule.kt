@@ -2,6 +2,8 @@ package mil.nga.giat.mage.dagger.contributor
 
 import dagger.Module
 import dagger.android.ContributesAndroidInjector
+import dagger.hilt.InstallIn
+import dagger.hilt.components.SingletonComponent
 import mil.nga.giat.mage.LandingActivity
 import mil.nga.giat.mage._server5.login.SignupActivity_server5
 import mil.nga.giat.mage.disclaimer.DisclaimerActivity
@@ -18,6 +20,7 @@ import mil.nga.giat.mage.profile.ChangePasswordActivity
 import mil.nga.giat.mage.profile.ProfileActivity
 
 @Module
+@InstallIn(SingletonComponent::class)
 abstract class ActivityContributorModule {
 
     @ContributesAndroidInjector
@@ -55,10 +58,4 @@ abstract class ActivityContributorModule {
 
     @ContributesAndroidInjector
     internal abstract fun contributeProfileActivity(): ProfileActivity
-
-    @ContributesAndroidInjector
-    internal abstract fun contributeObservationViewActivity(): ObservationViewActivity
-
-    @ContributesAndroidInjector
-    internal abstract fun contributeObservationEditActivity(): ObservationEditActivity
 }

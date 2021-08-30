@@ -7,7 +7,6 @@ import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.key
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -17,7 +16,6 @@ import androidx.compose.ui.unit.dp
 import com.bumptech.glide.load.resource.bitmap.BitmapTransformation
 import com.bumptech.glide.load.resource.bitmap.CenterCrop
 import com.google.accompanist.glide.rememberGlidePainter
-import mil.nga.giat.mage.form.field.Media
 import mil.nga.giat.mage.glide.transform.VideoOverlayTransformation
 import mil.nga.giat.mage.observation.edit.AttachmentAction
 import mil.nga.giat.mage.sdk.datastore.observation.Attachment
@@ -25,30 +23,30 @@ import java.util.*
 
 @Composable
 fun AttachmentsViewContent(
-   media: List<Media>,
+   attachments: List<Attachment>,
    deletable: Boolean = false,
-   onAttachmentAction: ((AttachmentAction, Media) -> Unit)? = null,
+   onAttachmentAction: ((AttachmentAction, Attachment) -> Unit)? = null,
 ) {
-   if (media.isNotEmpty()) {
+   if (attachments.isNotEmpty()) {
       Column(Modifier.fillMaxWidth()) {
-         val oddMedia = if (media.size % 2 == 0) null else media[0]
-         val evenMedia = if (media.size % 2 == 0) media else media.drop(1)
+         val oddAttachments = if (attachments.size % 2 == 0) null else attachments[0]
+         val evenAttachment = if (attachments.size % 2 == 0) attachments else attachments.drop(1)
 
-         if (oddMedia != null) {
-            AttachmentViewContent(oddMedia, deletable) { action ->
-               onAttachmentAction?.invoke(action, oddMedia)
+         if (oddAttachments != null) {
+            AttachmentViewContent(oddAttachments, deletable) { action ->
+               onAttachmentAction?.invoke(action, oddAttachments)
             }
          }
 
-         evenMedia.chunked(2).forEach {  (media1, media2) ->
+         evenAttachment.chunked(2).forEach {  (attachment1, attachment2) ->
             Row {
                Column(
                   Modifier
                      .weight(1f)
                      .padding(top = 4.dp, end = 2.dp)
                ) {
-                  AttachmentViewContent(media1, deletable) { action ->
-                     onAttachmentAction?.invoke(action, media1)
+                  AttachmentViewContent(attachment1, deletable) { action ->
+                     onAttachmentAction?.invoke(action, attachment1)
                   }
                }
                Column(
@@ -56,8 +54,8 @@ fun AttachmentsViewContent(
                      .weight(1f)
                      .padding(top = 4.dp, start = 2.dp)
                ) {
-                  AttachmentViewContent(media2, deletable) { action ->
-                     onAttachmentAction?.invoke(action, media2)
+                  AttachmentViewContent(attachment2, deletable) { action ->
+                     onAttachmentAction?.invoke(action, attachment2)
                   }
                }
             }
@@ -68,18 +66,18 @@ fun AttachmentsViewContent(
 
 @Composable
 fun AttachmentViewContent(
-   media: Media,
+   attachment: Attachment,
    deletable: Boolean,
    onAttachmentAction: ((AttachmentAction) -> Unit)? = null
 ) {
    val isVideo = when {
-      media.localPath != null -> {
-         val fileExtension = MimeTypeMap.getFileExtensionFromUrl(media.localPath)
+      attachment.localPath != null -> {
+         val fileExtension = MimeTypeMap.getFileExtensionFromUrl(attachment.localPath)
          val mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(fileExtension.lowercase(Locale.ROOT))
          mimeType?.startsWith("video/") == true
       }
-      media.contentType != null -> {
-         media.contentType.startsWith("video/")
+      attachment.contentType != null -> {
+         attachment.contentType.startsWith("video/")
       }
       else -> false
    }
@@ -98,7 +96,7 @@ fun AttachmentViewContent(
          .clickable { onAttachmentAction?.invoke(AttachmentAction.VIEW) }) {
       Image(
          painter = rememberGlidePainter(
-            media,
+            attachment,
             fadeIn = true,
             requestBuilder = {
                transforms(*transformations.toTypedArray())

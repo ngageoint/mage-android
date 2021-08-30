@@ -2,11 +2,10 @@ package mil.nga.giat.mage.form
 
 import android.content.Context
 import android.util.Log
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
+import androidx.lifecycle.*
 import com.google.android.gms.maps.model.LatLng
 import com.google.gson.JsonObject
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
@@ -15,6 +14,7 @@ import mil.nga.giat.mage.form.Form.Companion.fromJson
 import mil.nga.giat.mage.form.defaults.FormPreferences
 import mil.nga.giat.mage.form.field.*
 import mil.nga.giat.mage.observation.*
+import mil.nga.giat.mage.observation.edit.MediaAction
 import mil.nga.giat.mage.sdk.datastore.observation.*
 import mil.nga.giat.mage.sdk.datastore.user.*
 import mil.nga.giat.mage.sdk.event.IObservationEventListener
@@ -23,13 +23,15 @@ import mil.nga.giat.mage.sdk.exceptions.UserException
 import java.util.*
 import javax.inject.Inject
 
+@HiltViewModel
 open class FormViewModel @Inject constructor(
-  @ApplicationContext val context: Context,
+  @ApplicationContext val context: Context
 ) : ViewModel() {
 
   companion object {
     private val LOG_NAME = FormViewModel::class.java.name
   }
+  private var observeChanges = false
 
   protected val _observation = MutableLiveData<Observation>()
   val observation: LiveData<Observation> = _observation
@@ -41,6 +43,8 @@ open class FormViewModel @Inject constructor(
 
   val listener = object : IObservationEventListener {
     override fun onObservationUpdated(updated: Observation) {
+      if (!observeChanges) return
+
       val observation = _observation.value
       if (updated.id == observation?.id && observation?.lastModified != updated.lastModified) {
         GlobalScope.launch(Dispatchers.Main) {
@@ -139,8 +143,10 @@ open class FormViewModel @Inject constructor(
     return observationState.forms.value.isEmpty() && formDefinitions.isNotEmpty()
   }
 
-  fun setObservation(observationId: Long, defaultMapZoom: Float? = null, defaultMapCenter: LatLng? = null) {
+  fun setObservation(observationId: Long, observeChanges: Boolean = false, defaultMapZoom: Float? = null, defaultMapCenter: LatLng? = null) {
     if (_observationState.value != null) return
+
+    this.observeChanges = observeChanges
 
     try {
       val observation = ObservationHelper.getInstance(context).read(observationId)
@@ -148,6 +154,10 @@ open class FormViewModel @Inject constructor(
     } catch (e: ObservationException) {
       Log.e(LOG_NAME, "Problem reading observation.", e)
     }
+  }
+
+  fun setObservation(observation: Observation) {
+    createObservationState(observation)
   }
 
   protected open fun createObservationState(observation: Observation, defaultMapZoom: Float? = null, defaultMapCenter: LatLng? = null) {
@@ -162,24 +172,24 @@ open class FormViewModel @Inject constructor(
 
     val forms = mutableListOf<FormState>()
     for ((index, observationForm) in observation.forms.withIndex()) {
-      val form = formDefinitions[observationForm.formId]
-      if (form != null) {
+      val formDefinition = formDefinitions[observationForm.formId]
+      if (formDefinition != null) {
         val fields = mutableListOf<FieldState<*, out FieldValue>>()
-        for (field in form.fields) {
-          val value: Any? = if (field.type == FieldType.ATTACHMENT) {
-            observation.attachments.filter {
-              it.fieldName == field.name && it.observationFormId == observationForm.remoteId
-            }.map {
-              Media(attachment = it)
+        for (fieldDefinition in formDefinition.fields) {
+          val value: Any? = if (fieldDefinition.type == FieldType.ATTACHMENT) {
+            val attachments = observation.attachments.filter {
+              it.fieldName == fieldDefinition.name && it.observationFormId == observationForm.remoteId
             }
+            val value = observationForm.properties.find { it.key == fieldDefinition.name }?.value as? List<Attachment> ?: listOf()
+            attachments.plus(value)
           } else {
-            observationForm.properties.find { it.key == field.name }?.value
+            observationForm.properties.find { it.key == fieldDefinition.name }?.value
           }
-          val fieldState = FieldState.fromFormField(field, value)
+          val fieldState = FieldState.fromFormField(fieldDefinition, value)
           fields.add(fieldState)
         }
 
-        val formState = FormState(observationForm.id, observationForm.remoteId, event.remoteId, form, fields)
+        val formState = FormState(observationForm.id, observationForm.remoteId, event.remoteId, formDefinition, fields)
         formState.expanded.value = index == 0
         forms.add(formState)
       }
@@ -298,7 +308,6 @@ open class FormViewModel @Inject constructor(
       for (fieldState in formState.fields) {
         val answer = fieldState.answer
         if (answer != null) {
-          // TODO, attachment field value, how to serialize/deserialize
           properties.add(ObservationProperty(fieldState.definition.name, answer.serialize()))
         }
       }
@@ -327,6 +336,51 @@ open class FormViewModel @Inject constructor(
     return true
   }
 
+  fun draftObservation(): Observation {
+    val observation = _observation.value!!
+
+    observation.state = State.ACTIVE
+    observation.isDirty = true
+    observation.timestamp = observationState.value!!.timestampFieldState.answer!!.date
+
+    val location: ObservationLocation = observationState.value!!.geometryFieldState.answer!!.location
+    observation.geometry = location.geometry
+    observation.accuracy = location.accuracy
+
+    var provider = location.provider
+    if (provider == null || provider.trim { it <= ' ' }.isEmpty()) {
+      provider = "manual"
+    }
+    observation.provider = provider
+
+    if (!"manual".equals(provider, ignoreCase = true)) {
+      // TODO multi-form, what is locationDelta supposed to represent
+      observation.locationDelta = location.time.toString()
+    }
+
+    val observationForms: MutableCollection<ObservationForm> = ArrayList()
+    val formsState: List<FormState> = observationState.value?.forms?.value ?: emptyList()
+    for (formState in formsState) {
+      val properties: MutableCollection<ObservationProperty> = ArrayList()
+      for (fieldState in formState.fields) {
+        val answer = fieldState.answer
+        if (answer != null) {
+            properties.add(ObservationProperty(fieldState.definition.name, answer.serialize()))
+        }
+      }
+
+      val observationForm = ObservationForm()
+      observationForm.remoteId = formState.remoteId
+      observationForm.formId = formState.definition.id
+      observationForm.addProperties(properties)
+      observationForms.add(observationForm)
+    }
+
+    observation.forms = observationForms
+
+    return observation
+  }
+
   fun deleteObservation() {
     val observation = _observation.value
     ObservationHelper.getInstance(context).archive(observation)
@@ -353,26 +407,33 @@ open class FormViewModel @Inject constructor(
     observationState.value?.forms?.value = forms
   }
 
-  open fun addAttachment(media: Media, fieldState: AttachmentFieldState?) {
-    val attachments = fieldState?.answer?.media?.toMutableList() ?: mutableListOf()
-    attachments.add(media)
+  fun addAttachment(attachment: Attachment, action: MediaAction?) {
+    val fieldState = getAttachmentField(action)
+    attachment.fieldName = fieldState?.definition?.name
+    val attachments = fieldState?.answer?.attachments?.toMutableList() ?: mutableListOf()
+    attachments.add(attachment)
     fieldState?.answer = FieldValue.Attachment(attachments)
   }
 
-  fun deleteAttachment(media: Media, fieldState: FieldState<*, *>?) {
-    val attachmentFieldState = fieldState as? AttachmentFieldState
-    attachmentFieldState?.answer?.media?.let { attachments ->
+  fun getAttachmentField(action: MediaAction?): AttachmentFieldState? {
+    return observationState.value?.forms?.value?.getOrNull(action?.formIndex ?: -1)?.fields?.find {
+      it.definition.name == action?.fieldName
+    } as? AttachmentFieldState
+  }
 
-      if (media.url?.isNotEmpty() == true) {
+  fun deleteAttachment(attachment: Attachment, fieldState: FieldState<*, *>?) {
+    val attachmentFieldState = fieldState as? AttachmentFieldState
+    attachmentFieldState?.answer?.attachments?.let { attachments ->
+      if (attachment.url?.isNotEmpty() == true) {
         // remote attachment, mark for delete
-        attachments.find { it.name == media.name }?.let {
+        attachments.find { it.name == attachment.name }?.let {
           it.action = Media.ATTACHMENT_DELETE_ACTION
         }
 
         fieldState.answer = FieldValue.Attachment(attachments)
       } else {
         // local attachment, just remove from list
-        val filtered = attachments.filter { it.name != media.name }
+        val filtered = attachments.filter { it.name != attachment.name }
         fieldState.answer = FieldValue.Attachment(filtered)
       }
     }

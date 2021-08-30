@@ -29,7 +29,7 @@ import mil.nga.giat.mage.form.FormState
 import mil.nga.giat.mage.form.view.AttachmentsViewContent
 import mil.nga.giat.mage.form.view.FormHeaderContent
 import mil.nga.giat.mage.observation.edit.AttachmentAction
-import mil.nga.giat.mage.observation.edit.ObservationMediaAction
+import mil.nga.giat.mage.observation.edit.MediaActionType
 import mil.nga.giat.mage.sdk.datastore.observation.Attachment
 import mil.nga.giat.mage.utils.DateFormatFactory
 import java.util.*
@@ -43,8 +43,8 @@ fun FormEditContent(
   formState: FormState,
   onFormDelete: (() -> Unit)? = null,
   onFieldClick: ((FieldState<*, *>) -> Unit)? = null,
-  onAttachmentAction: ((AttachmentAction, Media, FieldState<*, *>) -> Unit)? = null,
-  onMediaAction: ((ObservationMediaAction, FieldState<*, *>) -> Unit)? = null
+  onAttachmentAction: ((AttachmentAction, Attachment, FieldState<*, *>) -> Unit)? = null,
+  onMediaAction: ((MediaActionType, FormField<*>) -> Unit)? = null
 ) {
   Card(
     Modifier.fillMaxWidth()
@@ -61,7 +61,7 @@ fun FormEditContent(
           FieldEditContent(
             fieldState,
             onClick = { onFieldClick?.invoke(fieldState) },
-            onMediaAction = { action -> onMediaAction?.invoke(action, fieldState) },
+            onMediaAction = { action -> onMediaAction?.invoke(action, fieldState.definition) },
             onAttachmentAction = { action, media -> onAttachmentAction?.invoke(action, media, fieldState) }
           )
         }
@@ -88,8 +88,8 @@ fun FormEditContent(
 @Composable
 fun FieldEditContent(
   fieldState: FieldState<*, out FieldValue>,
-  onMediaAction: ((ObservationMediaAction) -> Unit)? = null,
-  onAttachmentAction: ((AttachmentAction, Media) -> Unit)? = null,
+  onMediaAction: ((MediaActionType) -> Unit)? = null,
+  onAttachmentAction: ((AttachmentAction, Attachment) -> Unit)? = null,
   onClick: (() -> Unit)? = null
 ) {
   when (fieldState.definition.type) {
@@ -139,21 +139,21 @@ fun FieldEditContent(
 @Composable
 fun AttachmentEdit(
   fieldState: AttachmentFieldState,
-  onAttachmentAction: ((AttachmentAction, Media) -> Unit)? = null,
-  onMediaAction: ((ObservationMediaAction) -> Unit)? = null
+  onAttachmentAction: ((AttachmentAction, Attachment) -> Unit)? = null,
+  onMediaAction: ((MediaActionType) -> Unit)? = null
 ) {
-  val media = fieldState.answer?.media?.filter { it.action != Media.ATTACHMENT_DELETE_ACTION }
-  var size by remember { mutableStateOf(media?.size) }
+  val attachments = fieldState.answer?.attachments?.filter { it.action != Media.ATTACHMENT_DELETE_ACTION }
+  var size by remember { mutableStateOf(attachments?.size) }
   val error = fieldState.getError()
   val fieldDefinition = fieldState.definition as? AttachmentFormField
 
-  LaunchedEffect(media?.size) {
-    if (size != media?.size) {
+  LaunchedEffect(attachments?.size) {
+    if (size != attachments?.size) {
       fieldState.onFocusChange(true)
       fieldState.enableShowErrors()
     }
 
-    size = media?.size ?: 0
+    size = attachments?.size ?: 0
   }
 
   Column(Modifier.padding(bottom = 16.dp)) {
@@ -175,7 +175,7 @@ fun AttachmentEdit(
       }
 
       Column {
-        if (media == null || media.isEmpty()) {
+        if (attachments == null || attachments.isEmpty()) {
           CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.disabled) {
             Column(
               horizontalAlignment = Alignment.CenterHorizontally,
@@ -202,7 +202,7 @@ fun AttachmentEdit(
           }
         } else {
           AttachmentsViewContent(
-            media,
+            attachments,
             deletable = true,
             onAttachmentAction = onAttachmentAction
           )
@@ -219,7 +219,7 @@ fun AttachmentEdit(
           if (fieldDefinition?.allowedAttachmentTypes?.any { it == AttachmentType.IMAGE || it == AttachmentType.VIDEO } == true) {
             IconButton(
               modifier = Modifier.padding(horizontal = 4.dp),
-              onClick = { onMediaAction?.invoke(ObservationMediaAction.GALLERY) }
+              onClick = { onMediaAction?.invoke(MediaActionType.GALLERY) }
             ) {
               Icon(Icons.Default.Image, "Capture Gallery")
             }
@@ -228,7 +228,7 @@ fun AttachmentEdit(
           if (fieldDefinition?.allowedAttachmentTypes?.contains(AttachmentType.IMAGE) == true) {
             IconButton(
               modifier = Modifier.padding(horizontal = 4.dp),
-              onClick = { onMediaAction?.invoke(ObservationMediaAction.PHOTO) }
+              onClick = { onMediaAction?.invoke(MediaActionType.PHOTO) }
             ) {
               Icon(Icons.Default.PhotoCamera, "Capture Photo")
             }
@@ -237,7 +237,7 @@ fun AttachmentEdit(
           if (fieldDefinition?.allowedAttachmentTypes?.contains(AttachmentType.VIDEO) == true) {
             IconButton(
               modifier = Modifier.padding(horizontal = 4.dp),
-              onClick = { onMediaAction?.invoke(ObservationMediaAction.VIDEO) }
+              onClick = { onMediaAction?.invoke(MediaActionType.VIDEO) }
             ) {
               Icon(Icons.Default.Videocam, "Capture Video")
             }
@@ -246,7 +246,7 @@ fun AttachmentEdit(
           if (fieldDefinition?.allowedAttachmentTypes?.contains(AttachmentType.AUDIO) == true) {
             IconButton(
               modifier = Modifier.padding(horizontal = 4.dp),
-              onClick = { onMediaAction?.invoke(ObservationMediaAction.VOICE) }
+              onClick = { onMediaAction?.invoke(MediaActionType.VOICE) }
             ) {
               Icon(Icons.Default.Mic, "Capture Audio")
             }

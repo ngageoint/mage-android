@@ -5,6 +5,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import mil.nga.giat.mage.form.*
 import mil.nga.giat.mage.observation.ObservationLocation
+import mil.nga.giat.mage.sdk.datastore.observation.Attachment
 import java.util.*
 
 open class FieldState<F, T : FieldValue> (
@@ -59,10 +60,9 @@ open class FieldState<F, T : FieldValue> (
       return when (fieldDefinition.type) {
         FieldType.ATTACHMENT -> {
           val fieldState = AttachmentFieldState(fieldDefinition as AttachmentFormField)
-          val attachments = value as? List<Media>
+          val attachments = value as? List<Attachment>
           if (attachments != null) {
             fieldState.answer = FieldValue.Attachment(attachments)
-//            fieldState.attachments = attachments
           }
           fieldState
         }
