@@ -223,8 +223,6 @@ public class ObservationHelper extends DaoHelper<Observation> implements IEventD
 					// set all the ids as needed
 					Observation oldObservation = read(observation.getId());
 
-					Log.i(LOG_NAME, "Old Observation attachments " + oldObservation.getAttachments().size());
-
 					// if the observation is dirty, set the last_modified date!
 					// FIXME this is a server property and should not be set by the client,
 					// investigate why we are setting this

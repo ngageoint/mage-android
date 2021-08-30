@@ -12,7 +12,7 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import java.io.Serializable;
 
 @DatabaseTable(tableName = "attachments")
-public class Attachment implements Parcelable {
+public class Attachment implements Parcelable, Serializable {
 
 	@DatabaseField(generatedId = true, columnName="pk_id")
 	private Long id;
