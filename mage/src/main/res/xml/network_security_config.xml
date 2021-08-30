@@ -6,4 +6,7 @@
             <certificates src="system"/>
         </trust-anchors>
     </base-config>
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="true">192.168.86.48</domain>
+    </domain-config>
 </network-security-config>
