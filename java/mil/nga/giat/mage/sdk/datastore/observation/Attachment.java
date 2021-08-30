@@ -9,6 +9,8 @@ import com.j256.ormlite.table.DatabaseTable;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
+import java.io.Serializable;
+
 @DatabaseTable(tableName = "attachments")
 public class Attachment implements Parcelable {
 
@@ -17,6 +19,14 @@ public class Attachment implements Parcelable {
 
 	@DatabaseField(unique = true, columnName="remote_id")
 	private String remoteId;
+
+	private String action;
+
+	@DatabaseField(columnName="observation_form_id")
+	private String observationFormId;
+
+	@DatabaseField(columnName="field_name")
+	private String fieldName;
 
 	@DatabaseField(columnName="content_type")
 	private String contentType;
@@ -40,7 +50,7 @@ public class Attachment implements Parcelable {
 	private boolean dirty = Boolean.TRUE;
 
 	@DatabaseField(canBeNull = false, foreign = true, foreignAutoRefresh = true)
-	private Observation observation;
+	private transient Observation observation;
 
 	public Attachment() {
 		// ORMLite needs a no-arg constructor
@@ -69,6 +79,30 @@ public class Attachment implements Parcelable {
 
 	public void setRemoteId(String remoteId) {
 		this.remoteId = remoteId;
+	}
+
+	public String getAction() {
+		return action;
+	}
+
+	public void setAction(String action) {
+		this.action = action;
+	}
+
+	public String getObservationFormId() {
+		return observationFormId;
+	}
+
+	public void setObservationFormId(String observationFormId) {
+		this.observationFormId = observationFormId;
+	}
+
+	public String getFieldName() {
+		return fieldName;
+	}
+
+	public void setFieldName(String fieldName) {
+		this.fieldName = fieldName;
 	}
 
 	public String getContentType() {
@@ -144,9 +178,12 @@ public class Attachment implements Parcelable {
 	public Attachment(Parcel in) {
 		id = (Long)in.readValue(Long.class.getClassLoader());
 		remoteId = in.readString();
+		action = in.readString();
 		contentType = in.readString();
 		size = (Long)in.readValue(Long.class.getClassLoader());
 		name = in.readString();
+		fieldName = in.readString();
+		observationFormId = in.readString();
 		localPath = in.readString();
 		remotePath = in.readString();
 		url = in.readString();
@@ -161,9 +198,12 @@ public class Attachment implements Parcelable {
 	public void writeToParcel(Parcel out, int flags) {
 		out.writeValue(id);
 		out.writeString(remoteId);
+		out.writeString(action);
 		out.writeString(contentType);
 		out.writeValue(size);
 		out.writeString(name);
+		out.writeString(fieldName);
+		out.writeString(observationFormId);
 		out.writeString(localPath);
 		out.writeString(remotePath);
 		out.writeString(url);

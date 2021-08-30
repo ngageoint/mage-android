@@ -20,6 +20,7 @@ import java.util.Date;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationForm;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationProperty;
+import mil.nga.giat.mage.sdk.datastore.user.Event;
 import mil.nga.giat.mage.sdk.utils.GeometryUtility;
 import mil.nga.giat.mage.sdk.utils.ISO8601DateFormatFactory;
 import mil.nga.sf.Geometry;
@@ -49,11 +50,13 @@ public class ObservationSerializer implements JsonSerializer<Observation> {
 
 	@Override
 	public JsonElement serialize(Observation observation, Type type, JsonSerializationContext context) {
+		Event event = observation.getEvent();
 
 		JsonObject feature = new JsonObject();
-        feature.add("eventId", new JsonPrimitive(observation.getEvent().getRemoteId()));
-		feature.add("type", new JsonPrimitive("Feature"));
-		conditionalAdd("id", observation.getRemoteId(), feature);
+
+		feature.addProperty("id", observation.getRemoteId());
+        feature.addProperty("eventId", observation.getEvent().getRemoteId());
+		feature.addProperty("type", "Feature");
 		feature.add("geometry", new JsonParser().parse(GeometrySerializer.getGsonBuilder().toJson(observation.getGeometry())));
 
 		JsonObject properties = new JsonObject();
@@ -74,11 +77,22 @@ public class ObservationSerializer implements JsonSerializer<Observation> {
 		// serialize the observation's forms
 		JsonArray forms = new JsonArray();
 		for (ObservationForm form : observation.getForms()) {
+			JsonObject formDefinition = event.getFormMap().get(form.getFormId());
+			JsonArray fieldArray = formDefinition.get("fields").getAsJsonArray();
+
 			JsonObject jsonForm = new JsonObject();
+			jsonForm.addProperty("id", form.getRemoteId());
 			jsonForm.addProperty("formId", form.getFormId());
 
 			for (ObservationProperty property : form.getProperties()) {
-				conditionalAdd(property.getKey(), property.getValue(), jsonForm);
+				JsonObject fieldJson = null;
+				for (JsonElement fieldElement : fieldArray) {
+					if (property.getKey().equals(fieldElement.getAsJsonObject().get("name").getAsString())) {
+						fieldJson = fieldElement.getAsJsonObject();
+					}
+				}
+
+				conditionalAdd(property.getKey(), property.getValue(), jsonForm, fieldJson);
 			}
 
 			forms.add(jsonForm);
@@ -107,29 +121,49 @@ public class ObservationSerializer implements JsonSerializer<Observation> {
 	 *            Object to conditionally add to.
 	 * @return A reference to json object.
 	 */
-	private void conditionalAdd(String key, Object value, final JsonObject json) {
-		if (value != null) {
-			if (value instanceof Number) {
-				json.add(key, new JsonPrimitive((Number) value));
-			} else if (value instanceof Boolean) {
-				json.add(key, new JsonPrimitive((Boolean) value));
-			} else if (value instanceof Date) {
-				json.add(key, new JsonPrimitive(iso8601Format.format((Date) value)));
-			} else if (value instanceof ArrayList) {
-				JsonParser jsonParser = new JsonParser();
-				JsonArray choicesArray = jsonParser.parse(new Gson().toJson(value)).getAsJsonArray();
-				json.add(key, choicesArray);
-			} else if (value instanceof byte[]) {
-				byte[] bytes = (byte[]) value;
-				try {
-					Geometry geometry = GeometryUtility.toGeometry(bytes);
-					json.add(key, new JsonParser().parse(GeometrySerializer.getGsonBuilder().toJson(geometry)));
-				} catch (Exception e) {
-					Log.w(LOG_NAME, "Error converting byte array to geometry", e);
+	private void conditionalAdd(String key, Object value, final JsonObject json, final JsonObject definition) {
+		if (value == null) return;
+
+		String type = definition.get("type").getAsString();
+		if ("attachment".equals(type)) {
+			JsonParser jsonParser = new JsonParser();
+			JsonArray attachments = jsonParser.parse(new Gson().toJson(value)).getAsJsonArray();
+			for (JsonElement attachment : attachments) {
+				JsonElement id = attachment.getAsJsonObject().remove("remoteId");
+				if (id != null && !id.isJsonNull()) {
+					attachment.getAsJsonObject().add("id", new JsonPrimitive(id.getAsString()));
 				}
-			} else {
-				json.add(key, new JsonPrimitive(value.toString()));
 			}
+
+			json.add(key, attachments);
+		} else if ("date".equals(type)) {
+			json.add(key, new JsonPrimitive(iso8601Format.format((Date) value)));
+		} else if ("geometry".equals(type)) {
+			byte[] bytes = (byte[]) value;
+			try {
+				Geometry geometry = GeometryUtility.toGeometry(bytes);
+				json.add(key, new JsonParser().parse(GeometrySerializer.getGsonBuilder().toJson(geometry)));
+			} catch (Exception e) {
+				Log.w(LOG_NAME, "Error converting byte array to geometry", e);
+			}
+		} else if ("textarea".equals(type)) {
+			json.add(key, new JsonPrimitive(value.toString()));
+		} else if ("textfield".equals(type)) {
+			json.add(key, new JsonPrimitive(value.toString()));
+		} else if ("numberfield".equals(type)) {
+			json.add(key, new JsonPrimitive((Number) value));
+		} else if ("email".equals(type)) {
+			json.add(key, new JsonPrimitive(value.toString()));
+		} else if ("radio".equals(type)) {
+			json.add(key, new JsonPrimitive(value.toString()));
+		} else if ("checkbox".equals(type)) {
+			json.add(key, new JsonPrimitive((Boolean) value));
+		} else if ("dropdown".equals(type)) {
+			json.add(key, new JsonPrimitive(value.toString()));
+		} else if ("multiselectdropdown".equals(type)) {
+			JsonParser jsonParser = new JsonParser();
+			JsonArray choicesArray = jsonParser.parse(new Gson().toJson(value)).getAsJsonArray();
+			json.add(key, choicesArray);
 		}
 	}
 }

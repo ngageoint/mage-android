@@ -82,8 +82,8 @@ public class ObservationResource {
         Call<ResponseBody> getAttachment(@Path("eventId") String eventId, @Path("observationId") String observationId, @Path("attachmentId") String attachmentId);
 
         @Multipart
-        @POST("/api/events/{eventId}/observations/{observationId}/attachments")
-        Call<Attachment> createAttachment(@Path("eventId") String eventId, @Path("observationId") String observationId, @PartMap Map<String, RequestBody> parts);
+        @PUT("/api/events/{eventId}/observations/{observationId}/attachments/{attachmentId}")
+        Call<Attachment> createAttachment(@Path("eventId") String eventId, @Path("observationId") String observationId, @Path("attachmentId") String attachmentId, @PartMap Map<String, RequestBody> parts);
 
         @PUT("/api/events/{eventId}/observations/{observationId}/favorite")
         Call<Observation> favoriteObservation(@Path("eventId") String eventId, @Path("observationId") String observationId);
@@ -411,7 +411,7 @@ public class ObservationResource {
             RequestBody fileBody = RequestBody.create(MediaType.parse(mimeType), attachmentFile);
             parts.put("attachment\"; filename=\"" + attachmentFile.getName() + "\"", fileBody);
 
-            Response<Attachment> response = service.createAttachment(eventId, observationId, parts).execute();
+            Response<Attachment> response = service.createAttachment(eventId, observationId, attachment.getRemoteId(), parts).execute();
 
             if (response.isSuccessful()) {
                 Attachment returnedAttachment = response.body();

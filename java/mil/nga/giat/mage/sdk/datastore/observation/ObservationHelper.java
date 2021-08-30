@@ -18,6 +18,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+import mil.nga.giat.mage.sdk.Compatibility;
 import mil.nga.giat.mage.sdk.datastore.DaoHelper;
 import mil.nga.giat.mage.sdk.datastore.user.Event;
 import mil.nga.giat.mage.sdk.datastore.user.User;
@@ -270,51 +271,6 @@ public class ObservationHelper extends DaoHelper<Observation> implements IEventD
 						}
 					}
 
-
-//					Map<Long, ObservationForm> forms = observation.getFormsMap();
-//					Map<Long, ObservationForm> oldForms = oldObservation.getFormsMap();
-//					Collection<Long> commonForms = Sets.intersection(forms.keySet(), oldForms.keySet());
-
-					// Map database ids from old forms to new forms
-//					for (Long id : commonForms) {
-//						forms.get(id).setId(oldForms.get(id).getId());
-//					}
-
-					// TODO, delete old forms that were removed from this observation
-//					for (ObservationForm form : forms.values()) {
-//						form.setObservation(observation);
-//						observationFormDao.createOrUpdate(form);
-//
-//						Map<String, ObservationProperty> properties = form.getPropertiesMap();
-//						ObservationForm oldForm = oldForms.get(form.getId());
-//						if (oldForm != null) {
-//							Map<String, ObservationProperty> oldProperties = oldForm.getPropertiesMap();
-//							Collection<String> commonProperties = Sets.intersection(properties.keySet(), oldProperties.keySet());
-//
-//							// Map database ids from old properties to new properties
-//							for (String propertyKey : commonProperties) {
-//								properties.get(propertyKey).setId(oldProperties.get(propertyKey).getId());
-//							}
-//
-//							// Remove any properties that existed in the old form but do not exist
-//							// in the new form.
-//							for (String property : Sets.difference(oldProperties.keySet(), properties.keySet())) {
-//								observationPropertyDao.deleteById(oldProperties.get(property).getId());
-//							}
-//						}
-//
-//						for (ObservationProperty property : properties.values()) {
-//							property.setObservationForm(form);
-//							observationPropertyDao.createOrUpdate(property);
-//						}
-//					}
-
-					// Remove any forms that existed in the old observation but do not exist
-					// in the new observation.
-//					for (Long formId : Sets.difference(oldForms.keySet(), forms.keySet())) {
-//						observationFormDao.deleteById(oldForms.get(formId).getId());
-//					}
-
 					Map<String, ObservationFavorite> favorites = observation.getFavoritesMap();
 					Map<String, ObservationFavorite> oldFavorites = oldObservation.getFavoritesMap();
 					Collection<String> commonFavorites = Sets.intersection(favorites.keySet(), oldFavorites.keySet());
@@ -344,12 +300,19 @@ public class ObservationHelper extends DaoHelper<Observation> implements IEventD
 
 					Log.i(LOG_NAME, "Observation attachments " + observation.getAttachments().size());
 
-					// FIXME : make this run faster?
-					for (Attachment a : observation.getAttachments()) {
-						for (Attachment oa : oldObservation.getAttachments()) {
-							if (a.getRemoteId() != null && a.getRemoteId().equalsIgnoreCase(oa.getRemoteId())) {
-								a.setId(oa.getId());
-								break;
+					for (Attachment oldAttachment : oldObservation.getAttachments()) {
+						Attachment found = null;
+						for (Attachment attachment : observation.getAttachments()) {
+							if (attachment.getRemoteId().equals(oldAttachment.getRemoteId())) {
+								found = attachment;
+								attachment.setId(oldAttachment.getId());
+							}
+						}
+
+						// if no longer in attachments array response from server, remove it
+						if (!Compatibility.Companion.isServerVersion5(mApplicationContext)) {
+							if (found == null) {
+								AttachmentHelper.getInstance(mApplicationContext).delete(oldAttachment);
 							}
 						}
 					}

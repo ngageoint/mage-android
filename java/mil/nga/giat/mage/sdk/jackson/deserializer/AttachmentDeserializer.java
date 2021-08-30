@@ -33,6 +33,15 @@ public class AttachmentDeserializer extends Deserializer {
             if ("id".equals(name)) {
                 parser.nextToken();
                 attachment.setRemoteId(parser.getText());
+            } else if ("action".equals(name)) {
+                parser.nextToken();
+                attachment.setAction(parser.getText());
+            } else if ("observationFormId".equals(name)) {
+                parser.nextToken();
+                attachment.setObservationFormId(parser.getText());
+            } else if ("fieldName".equals(name)) {
+                parser.nextToken();
+                attachment.setFieldName(parser.getText());
             } else if ("contentType".equals(name)) {
                 parser.nextToken();
                 attachment.setContentType(parser.getText());
@@ -42,6 +51,9 @@ public class AttachmentDeserializer extends Deserializer {
             } else if ("name".equals(name)) {
                 parser.nextToken();
                 attachment.setName(parser.getText());
+            } else if ("localPath".equals(name)) {
+                parser.nextToken();
+                attachment.setLocalPath(parser.getText());
             } else if ("relativePath".equals(name)) {
                 parser.nextToken();
                 attachment.setRemotePath(parser.getText());

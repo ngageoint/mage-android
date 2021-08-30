@@ -12,12 +12,16 @@ import java.util.Map;
 @DatabaseTable(tableName = "observation_form")
 public class ObservationForm {
 	public static final String COLUMN_NAME_FORM_ID = "form_id";
+	public static final String COLUMN_NAME_REMOTE_ID = "remote_id";
 
 	@DatabaseField(generatedId = true)
 	private Long _id;
 
 	@DatabaseField(columnName = COLUMN_NAME_FORM_ID)
 	private Long formId;
+
+	@DatabaseField(unique = true, columnName=COLUMN_NAME_REMOTE_ID)
+	private String remoteId;
 
 	@DatabaseField(canBeNull = false, foreign = true, foreignAutoRefresh = true)
 	private Observation observation;
@@ -43,6 +47,14 @@ public class ObservationForm {
 
 	public void setFormId(Long formId) {
 		this.formId = formId;
+	}
+
+	public String getRemoteId() {
+		return remoteId;
+	}
+
+	public void setRemoteId(String remoteId) {
+		this.remoteId = remoteId;
 	}
 
 	public void setObservation(Observation observation) {

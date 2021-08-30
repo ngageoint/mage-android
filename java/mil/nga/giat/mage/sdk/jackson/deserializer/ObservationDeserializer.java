@@ -5,6 +5,9 @@ import android.util.Log;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -61,6 +64,16 @@ public class ObservationDeserializer extends Deserializer {
 
 	public Observation parseObservation(InputStream is) throws JsonParseException, IOException {
 		JsonParser parser = factory.createParser(is);
+		parser.nextToken();
+
+		Observation observation = parseObservation(parser);
+
+		parser.close();
+		return observation;
+	}
+
+	public Observation parseObservation(String json) throws JsonParseException, IOException {
+		JsonParser parser = factory.createParser(json);
 		parser.nextToken();
 
 		Observation observation = parseObservation(parser);
@@ -214,7 +227,10 @@ public class ObservationDeserializer extends Deserializer {
 		while (parser.nextToken() != JsonToken.END_OBJECT) {
 			String key = parser.getCurrentName();
 
-			if ("formId".equals(key)) {
+			if ("id".equals(key)) {
+				parser.nextToken();
+				form.setRemoteId(parser.getText());
+			} else if ("formId".equals(key)) {
 				parser.nextToken();
 				form.setFormId(parser.getLongValue());
 			} else {
@@ -243,12 +259,25 @@ public class ObservationDeserializer extends Deserializer {
 				property = new ObservationProperty(key, geometryBytes);
 			} else if (token == JsonToken.START_ARRAY) {
 				ArrayList<String> stringArrayList = new ArrayList<>();
+				ArrayList<Attachment> attachments = new ArrayList<>();
+
 				while (parser.nextToken() != JsonToken.END_ARRAY) {
-					String arrayValue = parser.getValueAsString();
-					stringArrayList.add(arrayValue);
+					if (parser.currentToken() == JsonToken.START_OBJECT) {
+						Attachment attachment = attachmentDeserializer.parseAttachment(parser);
+						attachments.add(attachment);
+					} else {
+						String arrayValue = parser.getValueAsString();
+						stringArrayList.add(arrayValue);
+					}
 				}
-				Serializable value = stringArrayList;
-				property = new ObservationProperty(key, value);
+
+				if (!stringArrayList.isEmpty()) {
+					Serializable value = stringArrayList;
+					property = new ObservationProperty(key, value);
+				} else if (!attachments.isEmpty()) {
+					Serializable value = attachments;
+					property = new ObservationProperty(key, value);
+				}
 			} else if (token != JsonToken.VALUE_NULL) {
 				Serializable value = parser.getText();
 				if (token.isNumeric()) {
