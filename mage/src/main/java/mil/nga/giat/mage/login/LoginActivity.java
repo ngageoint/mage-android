@@ -263,9 +263,7 @@ public class LoginActivity extends DaggerAppCompatActivity {
             if (message == null) {
                 message = "Please contact a MAGE administrator to activate your account.";
             }
-
             final Spanned s = addLinks(message, authentication);
-
             final AlertDialog d = new AlertDialog.Builder(this)
                     .setTitle("Account Created")
                     .setMessage(message + "\n\n" + s)
@@ -274,9 +272,7 @@ public class LoginActivity extends DaggerAppCompatActivity {
             ((TextView) d.findViewById(android.R.id.message)).setMovementMethod(LinkMovementMethod.getInstance());
         } else {
             String message = status.getMessage();
-
             final Spanned s = addLinks(message, authentication);
-
             final AlertDialog d = new AlertDialog.Builder(this)
                     .setTitle("Sign-in Failed")
                     .setMessage(s)
@@ -287,7 +283,23 @@ public class LoginActivity extends DaggerAppCompatActivity {
     }
 
     private Spanned addLinks(String message, Authentication authentication) {
-        final String emailLink = LinkGenerator.getEmailLink(this.preferences, message, null, authentication.getStrategy());
+        String strategy = null;
+        if(authentication != null) {
+            strategy = authentication.getStrategy();
+        }
+       return addLinks(message, null, strategy);
+    }
+
+    private Spanned addLinks(String message, LoginViewModel.Authorization authorization) {
+        String identifier = null;
+        if(authorization  != null && authorization.getStatus() != null && authorization.getStatus().getUser() != null) {
+             identifier = authorization.getStatus().getUser().getUsername();
+        }
+        return  addLinks(message, identifier, null);
+    }
+
+    private Spanned addLinks(String message, String identifier, String strategy) {
+        final String emailLink = LinkGenerator.getEmailLink(this.preferences, message, identifier, strategy);
         final String phoneLink = LinkGenerator.getPhoneLink(this.preferences);
 
         final Spanned s = Html.fromHtml(message + " <br /><br /> "
@@ -305,23 +317,32 @@ public class LoginActivity extends DaggerAppCompatActivity {
         if (status == AuthorizationStatus.Status.SUCCESSFUL_AUTHORIZATION) {
             loginComplete(authorization.getUserChanged());
         } else if (status == AuthorizationStatus.Status.FAILED_AUTHORIZATION) {
-            new AlertDialog.Builder(this)
+            final String message = getBaseContext().getString(R.string.device_registered_text);
+            final Spanned s = addLinks(message, authorization);
+            final AlertDialog d = new AlertDialog.Builder(this)
                     .setTitle("Registration Sent")
-                    .setMessage(R.string.device_registered_text)
+                    .setMessage(s)
                     .setPositiveButton(android.R.string.ok, null)
                     .show();
+            ((TextView) d.findViewById(android.R.id.message)).setMovementMethod(LinkMovementMethod.getInstance());
         } else if (status == AuthorizationStatus.Status.INVALID_SERVER) {
-            new AlertDialog.Builder(this)
+            final String message = "This app is not compatible with this server. Please update your context or talk to your MAGE administrator.";
+            final Spanned s = addLinks(message, authorization);
+            final AlertDialog d = new AlertDialog.Builder(this)
                     .setTitle("Application Compatibility Error")
-                    .setMessage("This app is not compatible with this server. Please update your context or talk to your MAGE administrator.")
+                    .setMessage(s)
                     .setPositiveButton(android.R.string.ok, null)
                     .show();
+            ((TextView) d.findViewById(android.R.id.message)).setMovementMethod(LinkMovementMethod.getInstance());
         } else {
-            new AlertDialog.Builder(this)
-                    .setTitle("Signin Failed")
-                    .setMessage(authorization.getStatus().getMessage())
+            final String message = authorization.getStatus().getMessage();
+            final Spanned s = addLinks(message, authorization);
+            final AlertDialog d = new AlertDialog.Builder(this)
+                    .setTitle("Sign-in Failed")
+                    .setMessage(s)
                     .setPositiveButton(android.R.string.ok, null)
                     .show();
+            ((TextView) d.findViewById(android.R.id.message)).setMovementMethod(LinkMovementMethod.getInstance());
         }
     }
 
