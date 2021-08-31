@@ -10,6 +10,9 @@ import android.graphics.Typeface;
 import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.text.Html;
+import android.text.Spanned;
+import android.text.method.LinkMovementMethod;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnTouchListener;
@@ -261,29 +264,31 @@ public class LoginActivity extends DaggerAppCompatActivity {
                 message = "Please contact a MAGE administrator to activate your account.";
             }
 
-            final Intent emailIntent = LinkGenerator.getEmailLink(this.preferences, message, null, authentication.getStrategy());
-            final Intent phoneIntent = LinkGenerator.getPhoneLink(this.preferences);
-            //TODO allow users to pick
-            //startActivity(Intent.createChooser(phoneIntent, "Send email..."));
+            final String emailLink = LinkGenerator.getEmailLink(this.preferences, message, null, authentication.getStrategy());
+            final String phoneLink = LinkGenerator.getPhoneLink(this.preferences);
 
-            new AlertDialog.Builder(this)
+            final Spanned s = Html.fromHtml("You may contact your MAGE administrator via <a href= " + emailLink + ">Email</a> or <a href=" + phoneLink + ">Phone</a> for further assistance.");
+
+            final AlertDialog d = new AlertDialog.Builder(this)
                     .setTitle("Account Created")
-                    .setMessage(message)
+                    .setMessage(message + "\n\n" + s)
                     .setPositiveButton(android.R.string.ok, null)
                     .show();
+            ((TextView) d.findViewById(android.R.id.message)).setMovementMethod(LinkMovementMethod.getInstance());
         } else {
             String message = status.getMessage();
 
-            final Intent emailIntent = LinkGenerator.getEmailLink(this.preferences, message, null, authentication.getStrategy());
-            final Intent phoneIntent = LinkGenerator.getPhoneLink(this.preferences);
-            //TODO allow users to pick
-            //startActivity(Intent.createChooser(phoneIntent, "Send email..."));
+            final String emailLink = LinkGenerator.getEmailLink(this.preferences, message, null, authentication.getStrategy());
+            final String phoneLink = LinkGenerator.getPhoneLink(this.preferences);
 
-            new AlertDialog.Builder(this)
+            final Spanned s = Html.fromHtml("You may contact your MAGE administrator via <a href= " + emailLink + ">Email</a> or <a href=" + phoneLink + ">Phone</a> for further assistance.");
+
+            final AlertDialog d = new AlertDialog.Builder(this)
                     .setTitle("Signin Failed")
-                    .setMessage(message)
+                    .setMessage(message + "\n\n" + s)
                     .setPositiveButton(android.R.string.ok, null)
                     .show();
+            ((TextView) d.findViewById(android.R.id.message)).setMovementMethod(LinkMovementMethod.getInstance());
         }
     }
 

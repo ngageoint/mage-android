@@ -1,6 +1,5 @@
 package mil.nga.giat.mage.login.contactinfo;
 
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
 
@@ -12,30 +11,30 @@ public class LinkGenerator {
     private LinkGenerator() {
     }
 
-    public static Intent getEmailLink(SharedPreferences preferences, String statusMessage, String identifier, String strategy) {
-        Intent emailIntent = null;
+    public static String getEmailLink(SharedPreferences preferences, String statusMessage, String identifier, String strategy) {
+        StringBuilder url = new StringBuilder();
 
         final String email = preferences.getString("gAdminContactInfoEmail", null);
         if (email != null) {
             EmailBuilder emailBuilder = new EmailBuilder(statusMessage, identifier, strategy);
             emailBuilder.build();
 
-            emailIntent = new Intent(Intent.ACTION_SENDTO, Uri.fromParts("mailto", email, null));
-            emailIntent.putExtra(Intent.EXTRA_SUBJECT, emailBuilder.getSubject());
-            emailIntent.putExtra(Intent.EXTRA_TEXT, emailBuilder.getBody());
+            url.append(Uri.fromParts("mailto", email, null).toString());
+            url.append("?subject=" + emailBuilder.getSubject());
+            url.append("&body=" + emailBuilder.getBody());
         }
 
-        return emailIntent;
+        return url.toString();
     }
 
-    public static Intent getPhoneLink(SharedPreferences preferences) {
-        Intent phoneIntent = null;
+    public static String getPhoneLink(SharedPreferences preferences) {
+        StringBuilder url = new StringBuilder();
 
         final String phone = preferences.getString("gAdminContactInfoPhone", null);
         if (phone != null) {
-            phoneIntent = new Intent(Intent.ACTION_DIAL, Uri.fromParts("tel", phone, null));
+            url.append(Uri.fromParts("tel", phone, null).toString());
         }
 
-        return phoneIntent;
+        return url.toString();
     }
 }
