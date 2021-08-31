@@ -264,10 +264,7 @@ public class LoginActivity extends DaggerAppCompatActivity {
                 message = "Please contact a MAGE administrator to activate your account.";
             }
 
-            final String emailLink = LinkGenerator.getEmailLink(this.preferences, message, null, authentication.getStrategy());
-            final String phoneLink = LinkGenerator.getPhoneLink(this.preferences);
-
-            final Spanned s = Html.fromHtml("You may contact your MAGE administrator via <a href= " + emailLink + ">Email</a> or <a href=" + phoneLink + ">Phone</a> for further assistance.");
+            final Spanned s = addLinks(message, authentication);
 
             final AlertDialog d = new AlertDialog.Builder(this)
                     .setTitle("Account Created")
@@ -278,18 +275,27 @@ public class LoginActivity extends DaggerAppCompatActivity {
         } else {
             String message = status.getMessage();
 
-            final String emailLink = LinkGenerator.getEmailLink(this.preferences, message, null, authentication.getStrategy());
-            final String phoneLink = LinkGenerator.getPhoneLink(this.preferences);
-
-            final Spanned s = Html.fromHtml("You may contact your MAGE administrator via <a href= " + emailLink + ">Email</a> or <a href=" + phoneLink + ">Phone</a> for further assistance.");
+            final Spanned s = addLinks(message, authentication);
 
             final AlertDialog d = new AlertDialog.Builder(this)
                     .setTitle("Signin Failed")
-                    .setMessage(message + "\n\n" + s)
+                    .setMessage(s)
                     .setPositiveButton(android.R.string.ok, null)
                     .show();
             ((TextView) d.findViewById(android.R.id.message)).setMovementMethod(LinkMovementMethod.getInstance());
         }
+    }
+
+    private Spanned addLinks(String message, Authentication authentication) {
+        final String emailLink = LinkGenerator.getEmailLink(this.preferences, message, null, authentication.getStrategy());
+        final String phoneLink = LinkGenerator.getPhoneLink(this.preferences);
+
+        final Spanned s = Html.fromHtml(message + " <br /><br /> "
+                + "You may contact your MAGE administrator via <a href= "
+                + emailLink + ">Email</a> or <a href="
+                + phoneLink + ">Phone</a> for further assistance.");
+
+        return s;
     }
 
     private void observeAuthorization(LoginViewModel.Authorization authorization) {
