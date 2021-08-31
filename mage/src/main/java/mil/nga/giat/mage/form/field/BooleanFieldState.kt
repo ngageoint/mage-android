@@ -11,7 +11,7 @@ class BooleanFieldState(definition: FormField<Boolean>) :
   )
 
 private fun errorMessage(definition: FormField<Boolean>, value: FieldValue.Boolean?): String {
-  return "Please enter a value"
+  return "${definition.title} is required"
 }
 
 private fun isValid(definition: FormField<Boolean>, value: FieldValue.Boolean?): Boolean {

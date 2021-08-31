@@ -269,24 +269,24 @@ fun CheckboxEdit(
 ) {
   val value = fieldState.answer?.boolean == true
 
-  Row(
-    Modifier
-      .padding(bottom = 16.dp)
-      .fillMaxWidth()) {
-    Checkbox(
-      checked = value,
-      onCheckedChange = onAnswer,
-      colors = CheckboxDefaults.colors(MaterialTheme.colors.primary),
-      modifier = Modifier
-        .padding(end = 8.dp)
-    )
+  Column(Modifier.padding(bottom = 16.dp)) {
+    Row(
+      Modifier
+        .fillMaxWidth()
+        .padding(bottom = 4.dp)) {
+      Checkbox(
+        checked = value,
+        onCheckedChange = onAnswer,
+        colors = CheckboxDefaults.colors(MaterialTheme.colors.primary),
+        modifier = Modifier.padding(end = 4.dp)
+      )
 
-    Text(text = fieldState.definition.title)
+      Text(text = fieldState.definition.title)
+    }
+
+    fieldState.getError()?.let { error -> TextFieldError(textError = error) }
   }
-
-  fieldState.getError()?.let { error -> TextFieldError(textError = error) }
 }
-
 
 @Composable
 fun DateEdit(
@@ -470,8 +470,8 @@ fun RadioEdit(
     CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
       Text(
         text = "${fieldState.definition.title}${if (fieldState.definition.required) " *" else ""}",
-        modifier = Modifier
-          .padding(bottom = 16.dp)
+        fontSize = 14.sp,
+        modifier = Modifier.padding(bottom = 8.dp)
       )
     }
 
@@ -492,6 +492,8 @@ fun RadioEdit(
         Text(text = choice.title)
       }
     }
+
+    fieldState.getError()?.let { error -> TextFieldError(textError = error) }
   }
 }
 
