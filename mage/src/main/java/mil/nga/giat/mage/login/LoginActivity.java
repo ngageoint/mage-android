@@ -278,7 +278,7 @@ public class LoginActivity extends DaggerAppCompatActivity {
             final Spanned s = addLinks(message, authentication);
 
             final AlertDialog d = new AlertDialog.Builder(this)
-                    .setTitle("Signin Failed")
+                    .setTitle("Sign-in Failed")
                     .setMessage(s)
                     .setPositiveButton(android.R.string.ok, null)
                     .show();

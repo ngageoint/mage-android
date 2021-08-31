@@ -32,7 +32,7 @@ public class EmailBuilder {
                 this.mySubject.append("Device ID issue");
             }
         } else {
-            if (upperStatusMsg.contains("APPROVED")) {
+            if (upperStatusMsg.contains("APPROVED") || upperStatusMsg.contains("ACTIVATE")) {
                 this.mySubject.append("Please activate my account");
             } else if (upperStatusMsg.contains("DISABLED")) {
                 this.mySubject.append("Please enable my account");
@@ -49,12 +49,7 @@ public class EmailBuilder {
         }
         if (this.myStrategy != null) {
             this.myBody.append("Authentication Method: ");
-            //TODO get check how title is accessed
-            //if (this.myStrategy.title != null) {
-           //     this.myBody.append(this.myStrategy.title);
-            //} else {
-                this.myBody.append(this.myStrategy);
-            //}
+            this.myBody.append(this.myStrategy);
             this.myBody.append('\n');
         }
 
