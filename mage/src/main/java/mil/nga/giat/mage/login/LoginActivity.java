@@ -266,7 +266,7 @@ public class LoginActivity extends DaggerAppCompatActivity {
             final Spanned s = addLinks(message, authentication);
             final AlertDialog d = new AlertDialog.Builder(this)
                     .setTitle("Account Created")
-                    .setMessage(message + "\n\n" + s)
+                    .setMessage(s)
                     .setPositiveButton(android.R.string.ok, null)
                     .show();
             ((TextView) d.findViewById(android.R.id.message)).setMovementMethod(LinkMovementMethod.getInstance());
