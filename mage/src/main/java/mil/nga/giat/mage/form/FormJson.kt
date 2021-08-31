@@ -32,7 +32,7 @@ class Form(
   @SerializedName("min") val min: Int?,
   @SerializedName("max") val max: Int?,
   @SerializedName("primaryField") val primaryMapField: String?,
-  @SerializedName("secondaryField") val secondaryMapField: String?,
+  @SerializedName("variantField") val secondaryMapField: String?,
   @SerializedName("primaryFeedField") val primaryFeedField: String?,
   @SerializedName("secondaryFeedField") val secondaryFeedField: String?,
   @SerializedName("fields") val fields: List<FormField<Any>>,
