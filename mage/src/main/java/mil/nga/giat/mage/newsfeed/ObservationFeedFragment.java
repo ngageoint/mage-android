@@ -33,8 +33,6 @@ import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.google.android.material.bottomsheet.BottomSheetDialog;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
 import com.j256.ormlite.android.AndroidDatabaseResults;
 import com.j256.ormlite.dao.CloseableIterator;
 import com.j256.ormlite.dao.Dao;
@@ -66,11 +64,10 @@ import mil.nga.giat.mage.observation.AttachmentGallery;
 import mil.nga.giat.mage.observation.AttachmentViewerActivity;
 import mil.nga.giat.mage.observation.ImportantDialog;
 import mil.nga.giat.mage.observation.ImportantRemoveDialog;
-import mil.nga.giat.mage.observation.ObservationEditActivity;
-import mil.nga.giat.mage.observation.ObservationFormPickerActivity;
 import mil.nga.giat.mage.observation.ObservationLocation;
-import mil.nga.giat.mage.observation.ObservationViewActivity;
+import mil.nga.giat.mage.observation.edit.ObservationEditActivity;
 import mil.nga.giat.mage.observation.sync.ObservationServerFetch;
+import mil.nga.giat.mage.observation.view.ObservationViewActivity;
 import mil.nga.giat.mage.sdk.datastore.DaoStore;
 import mil.nga.giat.mage.sdk.datastore.location.LocationHelper;
 import mil.nga.giat.mage.sdk.datastore.location.LocationProperty;
@@ -265,23 +262,9 @@ public class ObservationFeedFragment extends DaggerFragment implements IObservat
 					.setPositiveButton(android.R.string.ok, null)
 					.show();
 		} else if (location != null) {
-			Intent intent;
-
-			// show form picker or go to
-			JsonArray formDefinitions = EventHelper.getInstance(getActivity()).getCurrentEvent().getNonArchivedForms();
-			if (formDefinitions.size() == 0) {
-				intent = new Intent(getActivity(), ObservationEditActivity.class);
-			} else if (formDefinitions.size() == 1) {
-				JsonObject form = (JsonObject) formDefinitions.iterator().next();
-				intent = new Intent(getActivity(), ObservationEditActivity.class);
-				intent.putExtra(ObservationEditActivity.OBSERVATION_FORM_ID, form.get("id").getAsLong());
-			} else {
-				intent = new Intent(getActivity(), ObservationFormPickerActivity.class);
-			}
-
+			Intent intent = new Intent(getActivity(), ObservationEditActivity.class);
 			intent.putExtra(ObservationEditActivity.LOCATION, location);
 			startActivity(intent);
-
 		} else {
 			if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
 				new AlertDialog.Builder(getActivity(), R.style.AppCompatAlertDialogStyle)
@@ -539,22 +522,24 @@ public class ObservationFeedFragment extends DaggerFragment implements IObservat
 	}
 
 	public void onUpdateImportantClick(Observation observation) {
-		ImportantDialog dialog = ImportantDialog.newInstance(observation.getImportant());
-		dialog.setOnImportantListener(description -> {
+		ObservationImportant important = observation.getImportant();
+		String description = important != null ? important.getDescription() : null;
+		ImportantDialog dialog = ImportantDialog.newInstance(description);
+		dialog.setOnImportantListener(text -> {
 			ObservationHelper observationHelper = ObservationHelper.getInstance(context);
 			try {
-				ObservationImportant important = observation.getImportant();
-				if (important == null) {
-					important = new ObservationImportant();
+				ObservationImportant observationImportant = observation.getImportant();
+				if (observationImportant == null) {
+					observationImportant = new ObservationImportant();
 					observation.setImportant(important);
 				}
 
 				if (currentUser != null) {
-					important.setUserId(currentUser.getRemoteId());
+					observationImportant.setUserId(currentUser.getRemoteId());
 				}
 
-				important.setTimestamp(new Date());
-				important.setDescription(description);
+				observationImportant.setTimestamp(new Date());
+				observationImportant.setDescription(text);
 				observationHelper.addImportant(observation);
 			} catch (ObservationException e) {
 				Log.e(LOG_NAME, "Error updating important flag for observation: " + observation.getRemoteId());

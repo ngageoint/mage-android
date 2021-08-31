@@ -70,6 +70,6 @@ class VideoUrlLoader private constructor(private val context: Context) : ModelLo
     }
 
     override fun handles(model: Attachment): Boolean {
-        return model.contentType?.contains("video", ignoreCase = true) ?: false
+        return model.url != null && model.contentType?.contains("video", ignoreCase = true) ?: false
     }
 }

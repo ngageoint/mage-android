@@ -13,7 +13,6 @@ import androidx.lifecycle.ViewModelProvider
 import dagger.android.support.AndroidSupportInjection
 import kotlinx.android.synthetic.main.fragment_authentication_idp.*
 import mil.nga.giat.mage.R
-import mil.nga.giat.mage.form.FormDefaultActivity
 import mil.nga.giat.mage.login.LoginViewModel
 import mil.nga.giat.mage.login.idp.IdpLoginActivity.Companion.EXTRA_IDP_TOKEN
 import org.json.JSONObject

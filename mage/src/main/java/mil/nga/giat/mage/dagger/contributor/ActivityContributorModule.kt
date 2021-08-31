@@ -2,20 +2,25 @@ package mil.nga.giat.mage.dagger.contributor
 
 import dagger.Module
 import dagger.android.ContributesAndroidInjector
+import dagger.hilt.InstallIn
+import dagger.hilt.components.SingletonComponent
 import mil.nga.giat.mage.LandingActivity
 import mil.nga.giat.mage._server5.login.SignupActivity_server5
 import mil.nga.giat.mage.disclaimer.DisclaimerActivity
 import mil.nga.giat.mage.event.EventActivity
 import mil.nga.giat.mage.event.EventsActivity
-import mil.nga.giat.mage.form.FormDefaultActivity
+import mil.nga.giat.mage.form.defaults.FormDefaultActivity
 import mil.nga.giat.mage.login.LoginActivity
 import mil.nga.giat.mage.login.SignupActivity
 import mil.nga.giat.mage.login.idp.IdpLoginActivity
+import mil.nga.giat.mage.observation.edit.ObservationEditActivity
+import mil.nga.giat.mage.observation.view.ObservationViewActivity
 import mil.nga.giat.mage.preferences.LocationPreferencesActivity
 import mil.nga.giat.mage.profile.ChangePasswordActivity
 import mil.nga.giat.mage.profile.ProfileActivity
 
 @Module
+@InstallIn(SingletonComponent::class)
 abstract class ActivityContributorModule {
 
     @ContributesAndroidInjector

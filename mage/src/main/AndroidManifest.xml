@@ -152,7 +152,7 @@
             android:name=".event.EventActivity"
             android:theme="@style/AppTheme.NoActionBar" />
         <activity
-            android:name=".form.FormDefaultActivity"
+            android:name=".form.defaults.FormDefaultActivity"
             android:theme="@style/AppTheme.NoActionBar" />
         <activity
             android:name=".event.ChangeEventActivity"
@@ -195,17 +195,21 @@
             android:parentActivityName=".map.preference.MapPreferencesActivity"
             android:uiOptions="splitActionBarWhenNarrow" />
         <activity
-            android:name=".observation.ObservationViewActivity"
+            android:name=".observation.view.ObservationViewActivity"
             android:launchMode="singleTop"
             android:label="@string/observation_view"
             android:theme="@style/AppTheme.NoActionBar"/>
+
+        <!-- UI presentation for this activity is "compose-first". Compose will handle
+             configuration changes an recompose.  We can flag configChanges
+             indicating we will handle these on our own (really compose will).
+             This means things like snackbars created in our compose presentation
+             will persist across the configuration change.  -->
         <activity
-            android:name=".observation.ObservationFormPickerActivity"
+            android:name="mil.nga.giat.mage.observation.edit.ObservationEditActivity"
             android:theme="@style/AppTheme.NoActionBar"
-            android:uiOptions="splitActionBarWhenNarrow" />
-        <activity
-            android:name=".observation.ObservationEditActivity"
-            android:theme="@style/AppTheme.NoActionBar" />
+            android:configChanges="orientation|screenSize|screenLayout" />
+
         <activity android:name=".observation.AttachmentViewerActivity" />
         <activity android:name=".profile.ProfilePictureViewerActivity" />
         <activity android:name=".profile.ProfileActivity" />
@@ -215,7 +219,7 @@
             android:name=".people.PeopleActivity"
             android:label="Favorited by"
             android:launchMode="singleTop"
-            android:parentActivityName=".observation.ObservationViewActivity" />
+            android:parentActivityName=".observation.view.ObservationViewActivity" />
 
         <receiver android:name=".sdk.connectivity.NetworkChangeReceiver">
             <intent-filter>
