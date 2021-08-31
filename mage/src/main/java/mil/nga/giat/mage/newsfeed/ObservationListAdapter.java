@@ -23,6 +23,8 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.material.snackbar.Snackbar;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.j256.ormlite.android.AndroidDatabaseResults;
 import com.j256.ormlite.stmt.PreparedQuery;
 
@@ -44,6 +46,8 @@ import mil.nga.giat.mage.sdk.datastore.observation.ObservationFavorite;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationImportant;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationProperty;
+import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
+import mil.nga.giat.mage.sdk.datastore.user.Permission;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.exceptions.ObservationException;
@@ -76,6 +80,7 @@ public class ObservationListAdapter extends RecyclerView.Adapter<RecyclerView.Vi
     private PreparedQuery<Observation> query;
     private AttachmentGallery attachmentGallery;
     private User currentUser;
+    private boolean canFlagObservation = false;
     private ObservationActionListener observationActionListener;
     private String footerText;
 
@@ -143,6 +148,7 @@ public class ObservationListAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         this.context = context;
         this.attachmentGallery = attachmentGallery;
         this.observationActionListener = observationActionListener;
+        this.canFlagObservation = canFlagObservation();
     }
 
     public void setCursor(Cursor cursor, PreparedQuery<Observation> query) {
@@ -260,8 +266,14 @@ public class ObservationListAdapter extends RecyclerView.Adapter<RecyclerView.Vi
             vh.userTask = new UserTask(vh.userView);
             vh.userTask.execute(observation);
 
-            vh.importantButton.setOnClickListener(v -> observationActionListener.onObservationImportant(observation));
             setImportantView(observation.getImportant(), vh);
+            if (this.canFlagObservation) {
+                vh.importantButton.setOnClickListener(v -> observationActionListener.onObservationImportant(observation));
+                setImportantView(observation.getImportant(), vh);
+                vh.importantButton.setVisibility(View.VISIBLE);
+            } else {
+                vh.importantButton.setVisibility(View.GONE);
+            }
 
             ObservationError error = observation.getError();
             if (error != null) {
@@ -299,6 +311,36 @@ public class ObservationListAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         FooterViewHolder vh = (FooterViewHolder) holder;
 
         vh.footerText.setText(footerText);
+    }
+
+    private boolean canFlagObservation() {
+        boolean hasEventUpdatePermission = false;
+        try {
+            currentUser = UserHelper.getInstance(context).readCurrentUser();
+            hasEventUpdatePermission = currentUser.getRole().getPermissions().getPermissions().contains(Permission.UPDATE_EVENT);
+        } catch (Exception e) {
+            Log.e(LOG_NAME, "Cannot read current user");
+        }
+
+        return hasEventUpdatePermission || hasUpdatePermissionsInEventAcl();
+    }
+
+    private boolean hasUpdatePermissionsInEventAcl() {
+
+        boolean hasEventUpdatePermissionsInAcl = false;
+
+        if (currentUser != null) {
+            JsonObject acl = EventHelper.getInstance(context).getCurrentEvent().getAcl();
+            JsonElement userAccess = acl.get(currentUser.getRemoteId());
+            if (userAccess != null) {
+                JsonElement permissions = userAccess.getAsJsonObject().get("permissions");
+                if (permissions != null) {
+                    hasEventUpdatePermissionsInAcl = permissions.getAsJsonArray().toString().contains("update");
+                }
+            }
+        }
+
+        return hasEventUpdatePermissionsInAcl;
     }
 
     private void setImportantView(ObservationImportant important, ObservationViewHolder vh) {

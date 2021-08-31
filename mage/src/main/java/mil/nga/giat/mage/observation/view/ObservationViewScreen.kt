@@ -454,7 +454,6 @@ fun ObservationActions(
     horizontalArrangement = Arrangement.End
   ) {
 
-
     if (observationState?.permissions?.contains(ObservationPermission.FLAG) == true) {
       val isFlagged = observationState.important.value != null
       val flagTint = if (isFlagged) {
