@@ -20,6 +20,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import mil.nga.giat.mage._server5.form.view.AttachmentsViewContent_server5
 import mil.nga.giat.mage.coordinate.CoordinateFormatter
 import mil.nga.giat.mage.form.FormState
 import mil.nga.giat.mage.form.FormViewModel
@@ -29,6 +30,7 @@ import mil.nga.giat.mage.form.view.*
 import mil.nga.giat.mage.observation.ObservationPermission
 import mil.nga.giat.mage.observation.ObservationState
 import mil.nga.giat.mage.observation.ObservationStatusState
+import mil.nga.giat.mage.sdk.Compatibility
 import mil.nga.giat.mage.sdk.datastore.observation.Attachment
 import mil.nga.giat.mage.ui.theme.*
 import mil.nga.giat.mage.utils.DateFormatFactory
@@ -145,6 +147,11 @@ fun ObservationViewContent(
         onAction = onAction,
         onLocationClick = { onLocationClick?.invoke(it) }
       )
+
+      if (Compatibility.isServerVersion5(LocalContext.current)) {
+        val attachments by observationState.attachments
+        AttachmentsViewContent_server5(attachments)
+      }
 
       if (forms.isNotEmpty()) {
         Row(
