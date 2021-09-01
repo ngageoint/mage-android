@@ -98,13 +98,14 @@ fun FormHeaderContent(
       FormHeaderContent(formState)
     }
     Column(Modifier.padding(top = 8.dp)) {
-      IconButton(onClick = { onToggleExpand(!expanded) }) {
-        Icon(
-          imageVector = Icons.Default.ExpandMore,
-          contentDescription = "Expand",
-          tint = MaterialTheme.colors.primary,
-          modifier = Modifier.rotate(angle)
-        )
+      CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.disabled) {
+        IconButton(onClick = { onToggleExpand(!expanded) }) {
+          Icon(
+            imageVector = Icons.Default.ExpandMore,
+            contentDescription = "Expand",
+            modifier = Modifier.rotate(angle)
+          )
+        }
       }
     }
   }
@@ -112,8 +113,9 @@ fun FormHeaderContent(
 
 @Composable
 fun FormHeaderContent(
-  formState: FormState?
-) {
+  formState: FormState?,
+  primaryColor: Color = Color.Unspecified,
+  ) {
   val primaryState = formState?.fields?.find { it.definition.name == formState.definition.primaryFeedField }
   if (primaryState?.hasValue() == true) {
     Row {
@@ -121,7 +123,7 @@ fun FormHeaderContent(
         Text(
           fieldText(primaryState.answer, LocalContext.current),
           style = MaterialTheme.typography.h6,
-          color = MaterialTheme.colors.primary
+          color = primaryColor
         )
       }
     }
