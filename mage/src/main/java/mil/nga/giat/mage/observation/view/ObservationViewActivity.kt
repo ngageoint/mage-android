@@ -26,6 +26,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.android.synthetic.main.view_more_bottom_sheet.view.*
 import mil.nga.giat.mage.form.FormViewModel
 import mil.nga.giat.mage.observation.edit.ObservationEditActivity
+import mil.nga.giat.mage.people.PeopleActivity
 
 @AndroidEntryPoint
 class ObservationViewActivity : AppCompatActivity() {
@@ -81,6 +82,7 @@ class ObservationViewActivity : AppCompatActivity() {
       ObservationAction.EDIT -> onEditObservation()
       ObservationAction.FLAG -> onFlagObservation()
       ObservationAction.FAVORITE -> onFavoriteObservation()
+      ObservationAction.FAVORITED_BY -> onFavoritedBy()
       ObservationAction.DIRECTIONS -> onDirections()
       ObservationAction.MORE -> onMore()
     }
@@ -145,6 +147,13 @@ class ObservationViewActivity : AppCompatActivity() {
     }
 
     dialog.show(supportFragmentManager, "OBSERVATION_IMPORTANT")
+  }
+
+  private fun onFavoritedBy() {
+    val userIds = viewModel.observation.value?.favorites?.map { it.userId } ?: listOf()
+    val intent = Intent(this, PeopleActivity::class.java)
+    intent.putStringArrayListExtra(PeopleActivity.USER_REMOTE_IDS, ArrayList(userIds))
+    startActivity(intent)
   }
 
   private fun onFavoriteObservation() {

@@ -2,6 +2,7 @@ package mil.nga.giat.mage.observation.view
 
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -14,9 +15,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.capitalize
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -37,7 +40,7 @@ import mil.nga.giat.mage.utils.DateFormatFactory
 import java.util.*
 
 enum class ObservationAction {
-  EDIT, FLAG, FAVORITE, DIRECTIONS, MORE
+  EDIT, FLAG, FAVORITE, FAVORITED_BY, DIRECTIONS, MORE
 }
 
 @Composable
@@ -424,7 +427,7 @@ fun ObservationViewHeaderContent(
           if (location.provider != null) {
             CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
               Text(
-                text = location.provider.toUpperCase(Locale.ROOT),
+                text = location.provider.uppercase(Locale.ROOT),
                 style = MaterialTheme.typography.caption,
                 modifier = Modifier.padding(end = 2.dp)
               )
@@ -455,71 +458,90 @@ fun ObservationActions(
   onAction: ((ObservationAction) -> Unit)? = null
 ) {
   Row(
-    Modifier
+    verticalAlignment = Alignment.CenterVertically,
+    horizontalArrangement = Arrangement.SpaceBetween,
+    modifier = Modifier
       .fillMaxWidth()
       .padding(vertical = 4.dp),
-    horizontalArrangement = Arrangement.End
   ) {
+    Row(
+      verticalAlignment = Alignment.CenterVertically,
+      modifier = Modifier
+        .padding(start = 8.dp)
+        .clip(MaterialTheme.shapes.small)
+        .clickable { onAction?.invoke(ObservationAction.FAVORITED_BY) }
+        .padding(8.dp)
+    ) {
+      CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.disabled) {
+        Text(
+          text = "2 Favorites".uppercase(),
+          style = MaterialTheme.typography.subtitle2
+        )
+      }
+    }
+    
+    Row() {
 
-    if (observationState?.permissions?.contains(ObservationPermission.FLAG) == true) {
-      val isFlagged = observationState.important.value != null
-      val flagTint = if (isFlagged) {
-        Color(0XFFFF9100)
+      if (observationState?.permissions?.contains(ObservationPermission.FLAG) == true) {
+        val isFlagged = observationState.important.value != null
+        val flagTint = if (isFlagged) {
+          Color(0XFFFF9100)
+        } else {
+          MaterialTheme.colors.onSurface.copy(alpha = ContentAlpha.medium)
+        }
+
+        IconButton(
+          modifier = Modifier.padding(end = 8.dp),
+          onClick = { onAction?.invoke(ObservationAction.FLAG) }
+        ) {
+          Icon(
+            imageVector = if (isFlagged) Icons.Default.Flag else Icons.Outlined.Flag,
+            tint = flagTint,
+            contentDescription = "Flag",
+          )
+        }
+      }
+
+      val isFavorite = observationState?.favorite?.value == true
+      val favoriteTint = if (isFavorite) {
+        Color(0XFF7ED31F)
       } else {
         MaterialTheme.colors.onSurface.copy(alpha = ContentAlpha.medium)
       }
 
       IconButton(
         modifier = Modifier.padding(end = 8.dp),
-        onClick = { onAction?.invoke(ObservationAction.FLAG) }
+        onClick = { onAction?.invoke(ObservationAction.FAVORITE) }
       ) {
         Icon(
-          imageVector = if (isFlagged) Icons.Default.Flag else Icons.Outlined.Flag,
-          tint = flagTint,
-          contentDescription = "Flag",
+          imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Outlined.FavoriteBorder,
+          tint = favoriteTint,
+          contentDescription = "Favorite",
         )
       }
-    }
 
-    val isFavorite = observationState?.favorite?.value == true
-    val favoriteTint = if (isFavorite) {
-      Color(0XFF7ED31F)
-    } else {
-      MaterialTheme.colors.onSurface.copy(alpha = ContentAlpha.medium)
-    }
-
-    IconButton(
-      modifier = Modifier.padding(end = 8.dp),
-      onClick = { onAction?.invoke(ObservationAction.FAVORITE) }
-    ) {
-      Icon(
-        imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Outlined.FavoriteBorder,
-        tint = favoriteTint,
-        contentDescription = "Favorite",
-      )
-    }
-
-    IconButton(
-      modifier = Modifier.padding(end = 8.dp),
-      onClick = { onAction?.invoke(ObservationAction.DIRECTIONS) }
-    ) {
-      Icon(
-        imageVector = Icons.Outlined.Directions,
-        contentDescription = "Directions",
-        tint = MaterialTheme.colors.onSurface.copy(alpha = ContentAlpha.medium)
-      )
-    }
-
-    if (observationState?.permissions?.contains(ObservationPermission.DELETE) == true) {
       IconButton(
         modifier = Modifier.padding(end = 8.dp),
-        onClick = { onAction?.invoke(ObservationAction.MORE) }
+        onClick = { onAction?.invoke(ObservationAction.DIRECTIONS) }
       ) {
         Icon(
-          imageVector = Icons.Default.MoreVert,
-          contentDescription = "MoreVert",
+          imageVector = Icons.Outlined.Directions,
+          contentDescription = "Directions",
           tint = MaterialTheme.colors.onSurface.copy(alpha = ContentAlpha.medium)
         )
+      }
+
+      if (observationState?.permissions?.contains(ObservationPermission.DELETE) == true) {
+        IconButton(
+          modifier = Modifier.padding(end = 8.dp),
+          onClick = { onAction?.invoke(ObservationAction.MORE) }
+        ) {
+          Icon(
+            imageVector = Icons.Default.MoreVert,
+            contentDescription = "MoreVert",
+            tint = MaterialTheme.colors.onSurface.copy(alpha = ContentAlpha.medium)
+          )
+        }
       }
     }
   }
