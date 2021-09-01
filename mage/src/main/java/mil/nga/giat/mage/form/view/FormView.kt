@@ -172,15 +172,21 @@ fun AttachmentsFieldContent(
   fieldState: AttachmentFieldState,
   onAttachmentClick: ((Attachment) -> Unit)? = null
 ) {
-  val attachments = fieldState.answer?.attachments
-  if (attachments != null) {
-    CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
-      Text(fieldState.definition.title, fontSize = 14.sp)
-    }
+  val attachments = fieldState.answer?.attachments ?: listOf()
+  if (attachments.isNotEmpty()) {
+    Column(Modifier.padding(bottom = 16.dp)) {
+      CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
+        Text(
+          fieldState.definition.title,
+          fontSize = 14.sp,
+          modifier = Modifier.padding(bottom = 4.dp)
+        )
+      }
 
-    AttachmentsViewContent(attachments, onAttachmentAction = { _, attachment ->
-      onAttachmentClick?.invoke(attachment)
-    })
+      AttachmentsViewContent(attachments, onAttachmentAction = { _, attachment ->
+        onAttachmentClick?.invoke(attachment)
+      })
+    }
   }
 }
 

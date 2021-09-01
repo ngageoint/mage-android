@@ -27,36 +27,34 @@ fun AttachmentsViewContent(
    deletable: Boolean = false,
    onAttachmentAction: ((AttachmentAction, Attachment) -> Unit)? = null,
 ) {
-   if (attachments.isNotEmpty()) {
-      Column(Modifier.fillMaxWidth()) {
-         val oddAttachments = if (attachments.size % 2 == 0) null else attachments[0]
-         val evenAttachment = if (attachments.size % 2 == 0) attachments else attachments.drop(1)
+   Column(Modifier.fillMaxWidth()) {
+      val oddAttachments = if (attachments.size % 2 == 0) null else attachments[0]
+      val evenAttachment = if (attachments.size % 2 == 0) attachments else attachments.drop(1)
 
-         if (oddAttachments != null) {
-            AttachmentViewContent(oddAttachments, deletable) { action ->
-               onAttachmentAction?.invoke(action, oddAttachments)
-            }
+      if (oddAttachments != null) {
+         AttachmentViewContent(oddAttachments, deletable) { action ->
+            onAttachmentAction?.invoke(action, oddAttachments)
          }
+      }
 
-         evenAttachment.chunked(2).forEach {  (attachment1, attachment2) ->
-            Row {
-               Column(
-                  Modifier
-                     .weight(1f)
-                     .padding(top = 4.dp, end = 2.dp)
-               ) {
-                  AttachmentViewContent(attachment1, deletable) { action ->
-                     onAttachmentAction?.invoke(action, attachment1)
-                  }
+      evenAttachment.chunked(2).forEach {  (attachment1, attachment2) ->
+         Row {
+            Column(
+               Modifier
+                  .weight(1f)
+                  .padding(top = 4.dp, end = 2.dp)
+            ) {
+               AttachmentViewContent(attachment1, deletable) { action ->
+                  onAttachmentAction?.invoke(action, attachment1)
                }
-               Column(
-                  Modifier
-                     .weight(1f)
-                     .padding(top = 4.dp, start = 2.dp)
-               ) {
-                  AttachmentViewContent(attachment2, deletable) { action ->
-                     onAttachmentAction?.invoke(action, attachment2)
-                  }
+            }
+            Column(
+               Modifier
+                  .weight(1f)
+                  .padding(top = 4.dp, start = 2.dp)
+            ) {
+               AttachmentViewContent(attachment2, deletable) { action ->
+                  onAttachmentAction?.invoke(action, attachment2)
                }
             }
          }

@@ -144,7 +144,7 @@ fun AttachmentEdit(
   onAttachmentAction: ((AttachmentAction, Attachment) -> Unit)? = null,
   onMediaAction: ((MediaActionType) -> Unit)? = null
 ) {
-  val attachments = fieldState.answer?.attachments?.filter { it.action != Media.ATTACHMENT_DELETE_ACTION }
+  val attachments = fieldState.answer?.attachments?.filter { it.action != Media.ATTACHMENT_DELETE_ACTION } ?: listOf()
   var size by remember { mutableStateOf(attachments?.size) }
   val error = fieldState.getError()
   val fieldDefinition = fieldState.definition as? AttachmentFormField
@@ -177,7 +177,7 @@ fun AttachmentEdit(
       }
 
       Column {
-        if (attachments == null || attachments.isEmpty()) {
+        if (attachments.isEmpty()) {
           CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.disabled) {
             Column(
               horizontalAlignment = Alignment.CenterHorizontally,
