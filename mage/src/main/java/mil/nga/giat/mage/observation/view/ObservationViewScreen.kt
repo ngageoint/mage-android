@@ -112,7 +112,7 @@ fun ObservationViewTopBar(
     },
     navigationIcon = {
       IconButton(onClick = { onClose.invoke() }) {
-        Icon(Icons.Default.Close, "Cancel Edit")
+        Icon(Icons.Default.ArrowBack, "Cancel Edit")
       }
     }
   )
