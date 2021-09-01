@@ -97,7 +97,6 @@ class FormViewModel_server5 @Inject constructor(
       definition = definition,
       timestampFieldState = timestampFieldState,
       geometryFieldState = geometryFieldState,
-      eventName = event.name,
       userDisplayName = user?.displayName,
       forms = forms)
     _observationState.value = observationState
@@ -206,7 +205,6 @@ class FormViewModel_server5 @Inject constructor(
       permissions = permissions,
       timestampFieldState = timestampFieldState,
       geometryFieldState = geometryFieldState,
-      eventName = event.name,
       userDisplayName = user?.displayName,
       forms = forms,
       attachments = observation.attachments,

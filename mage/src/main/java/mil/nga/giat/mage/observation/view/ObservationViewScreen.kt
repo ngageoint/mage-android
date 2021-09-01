@@ -100,16 +100,7 @@ fun ObservationViewTopBar(
   TopAppBar(
     backgroundColor = MaterialTheme.colors.topAppBarBackground,
     contentColor = Color.White,
-    title = {
-      Column {
-        Text(title)
-        if (observationState?.eventName != null) {
-          CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
-            Text(observationState.eventName, fontSize = 14.sp)
-          }
-        }
-      }
-    },
+    title = { Text(title) },
     navigationIcon = {
       IconButton(onClick = { onClose.invoke() }) {
         Icon(Icons.Default.ArrowBack, "Cancel Edit")

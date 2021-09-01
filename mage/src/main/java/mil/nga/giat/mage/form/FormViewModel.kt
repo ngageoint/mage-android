@@ -137,7 +137,6 @@ open class FormViewModel @Inject constructor(
       definition = definition,
       timestampFieldState = timestampFieldState,
       geometryFieldState = geometryFieldState,
-      eventName = event.name,
       userDisplayName = user?.displayName,
       forms = forms)
     _observationState.value = observationState
@@ -270,12 +269,12 @@ open class FormViewModel @Inject constructor(
     } catch (ue: UserException) { null }
 
     val observationState = ObservationState(
+      id = observation.id,
       status = status,
       definition = definition,
       permissions = permissions,
       timestampFieldState = timestampFieldState,
       geometryFieldState = geometryFieldState,
-      eventName = event.name,
       userDisplayName = user?.displayName,
       forms = forms,
       attachments = observation.attachments,

@@ -72,7 +72,6 @@ fun ObservationEditScreen(
       topBar = {
         ObservationEditTopBar(
           isNewObservation = observationState?.id == null,
-          eventName = observationState?.eventName,
           onSave = {
             observationState?.let { state ->
               when (val result = state.validate()) {
@@ -162,22 +161,12 @@ fun ObservationEditScreen(
 @Composable
 fun ObservationEditTopBar(
   isNewObservation: Boolean,
-  eventName: String?,
   onSave: () -> Unit,
   onCancel: () -> Unit
 ) {
   val title = if (isNewObservation) "Create Observation" else "Observation Edit"
   TopAppBar(
-    title = {
-      Column {
-        Text(title)
-        if (eventName != null) {
-          CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
-            Text(eventName, fontSize = 14.sp)
-          }
-        }
-      }
-    },
+    title = { Text(title) },
     navigationIcon = {
       IconButton(onClick = { onCancel.invoke() }) {
         Icon(Icons.Default.Close, "Cancel Edit")

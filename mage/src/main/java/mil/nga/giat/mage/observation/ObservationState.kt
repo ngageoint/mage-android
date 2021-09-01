@@ -15,11 +15,11 @@ enum class ObservationPermission {
 
 // TODO multi-form, this state class has gotten rather big
 class ObservationState(
+  id: Long? = null,
   status: ObservationStatusState,
   val definition: ObservationDefinition,
   val timestampFieldState: DateFieldState,
   val geometryFieldState: GeometryFieldState,
-  val eventName: String,
   val userDisplayName: String?,
   val permissions: Set<ObservationPermission> = emptySet(),
   forms: List<FormState>,
@@ -27,7 +27,7 @@ class ObservationState(
   important: ObservationImportantState? = null,
   favorite: Boolean = false
 ) {
-  val id by mutableStateOf<Long?>(null)
+  val id by mutableStateOf(id)
   val status = mutableStateOf(status)
   val forms = mutableStateOf(forms)
   val attachments = mutableStateOf(attachments)
