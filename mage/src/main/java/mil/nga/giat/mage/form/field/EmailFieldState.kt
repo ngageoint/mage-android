@@ -22,7 +22,7 @@ private fun errorMessage(definition: FormField<String>, value: FieldValue.Text?)
 private fun isValid(definition: FormField<String>, value: FieldValue.Text?): Boolean {
   return if (!definition.required && !hasValue(value)) {
     true
-  } else if (definition.required || value?.text?.isBlank() == true) {
+  } else if (definition.required && value?.text?.isBlank() == true) {
     false
   } else value != null && Patterns.EMAIL_ADDRESS.matcher(value.text).matches()
 }

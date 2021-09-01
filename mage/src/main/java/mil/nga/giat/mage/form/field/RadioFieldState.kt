@@ -11,7 +11,7 @@ class RadioFieldState(definition: FormField<String>) :
   )
 
 private fun errorMessage(definition: FormField<String>, value: FieldValue.Text?): String {
-  return "Please pick a value"
+  return "${definition.title} is required"
 }
 
 private fun isValid(definition: FormField<String>, value: FieldValue.Text?): Boolean {

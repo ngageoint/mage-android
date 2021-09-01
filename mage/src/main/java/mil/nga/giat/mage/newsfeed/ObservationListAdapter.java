@@ -1,5 +1,7 @@
 package mil.nga.giat.mage.newsfeed;
 
+import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.content.Context;
 import android.database.Cursor;
 import android.graphics.Bitmap;
@@ -19,6 +21,10 @@ import androidx.core.content.ContextCompat;
 import androidx.core.graphics.drawable.DrawableCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.material.snackbar.Snackbar;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.j256.ormlite.android.AndroidDatabaseResults;
 import com.j256.ormlite.stmt.PreparedQuery;
 
@@ -31,6 +37,7 @@ import java.util.Date;
 import java.util.Locale;
 
 import mil.nga.giat.mage.R;
+import mil.nga.giat.mage.coordinate.CoordinateFormatter;
 import mil.nga.giat.mage.map.marker.ObservationBitmapFactory;
 import mil.nga.giat.mage.observation.AttachmentGallery;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
@@ -39,10 +46,13 @@ import mil.nga.giat.mage.sdk.datastore.observation.ObservationFavorite;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationImportant;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationProperty;
+import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
+import mil.nga.giat.mage.sdk.datastore.user.Permission;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.exceptions.ObservationException;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
+import mil.nga.sf.Point;
 
 /**
  * Created by wnewman on 10/30/17.
@@ -54,6 +64,7 @@ public class ObservationListAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         void onObservationClick(Observation observation);
         void onObservationImportant(Observation observation);
         void onObservationDirections(Observation observation);
+        void onObservationLocation(Observation observation);
     }
 
     private static final String LOG_NAME = ObservationListAdapter.class.getName();
@@ -69,6 +80,7 @@ public class ObservationListAdapter extends RecyclerView.Adapter<RecyclerView.Vi
     private PreparedQuery<Observation> query;
     private AttachmentGallery attachmentGallery;
     private User currentUser;
+    private boolean canFlagObservation = false;
     private ObservationActionListener observationActionListener;
     private String footerText;
 
@@ -85,6 +97,8 @@ public class ObservationListAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         private View syncBadge;
         private View errorBadge;
         private LinearLayout attachmentLayout;
+        private TextView locationView;
+        private View locationContainer;
         private ImageView favoriteButton;
         private TextView favoriteCount;
         private View directionsButton;
@@ -108,6 +122,8 @@ public class ObservationListAdapter extends RecyclerView.Adapter<RecyclerView.Vi
             syncBadge = view.findViewById(R.id.sync_status);
             errorBadge = view.findViewById(R.id.error_status);
             attachmentLayout = view.findViewById(R.id.image_gallery);
+            locationView = view.findViewById(R.id.location);
+            locationContainer = view.findViewById(R.id.location_container);
             favoriteButton = view.findViewById(R.id.favorite_button);
             favoriteCount = view.findViewById(R.id.favorite_count);
             directionsButton = view.findViewById(R.id.directions_button);
@@ -132,6 +148,7 @@ public class ObservationListAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         this.context = context;
         this.attachmentGallery = attachmentGallery;
         this.observationActionListener = observationActionListener;
+        this.canFlagObservation = canFlagObservation();
     }
 
     public void setCursor(Cursor cursor, PreparedQuery<Observation> query) {
@@ -249,8 +266,14 @@ public class ObservationListAdapter extends RecyclerView.Adapter<RecyclerView.Vi
             vh.userTask = new UserTask(vh.userView);
             vh.userTask.execute(observation);
 
-            vh.importantButton.setOnClickListener(v -> observationActionListener.onObservationImportant(observation));
             setImportantView(observation.getImportant(), vh);
+            if (this.canFlagObservation) {
+                vh.importantButton.setOnClickListener(v -> observationActionListener.onObservationImportant(observation));
+                setImportantView(observation.getImportant(), vh);
+                vh.importantButton.setVisibility(View.VISIBLE);
+            } else {
+                vh.importantButton.setVisibility(View.GONE);
+            }
 
             ObservationError error = observation.getError();
             if (error != null) {
@@ -270,6 +293,11 @@ public class ObservationListAdapter extends RecyclerView.Adapter<RecyclerView.Vi
                 attachmentGallery.addAttachments(vh.attachmentLayout, observation.getAttachments());
             }
 
+            Point centroid = observation.getGeometry().getCentroid();
+            String coordinates = new CoordinateFormatter(context).format(new LatLng(centroid.getY(), centroid.getX()));
+            vh.locationView.setText(coordinates);
+            vh.locationContainer.setOnClickListener(v -> onLocationClick(observation));
+
             vh.favoriteButton.setOnClickListener(v -> toggleFavorite(observation, vh));
             setFavoriteImage(observation.getFavorites(), vh, isFavorite(observation));
 
@@ -283,6 +311,36 @@ public class ObservationListAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         FooterViewHolder vh = (FooterViewHolder) holder;
 
         vh.footerText.setText(footerText);
+    }
+
+    private boolean canFlagObservation() {
+        boolean hasEventUpdatePermission = false;
+        try {
+            currentUser = UserHelper.getInstance(context).readCurrentUser();
+            hasEventUpdatePermission = currentUser.getRole().getPermissions().getPermissions().contains(Permission.UPDATE_EVENT);
+        } catch (Exception e) {
+            Log.e(LOG_NAME, "Cannot read current user");
+        }
+
+        return hasEventUpdatePermission || hasUpdatePermissionsInEventAcl();
+    }
+
+    private boolean hasUpdatePermissionsInEventAcl() {
+
+        boolean hasEventUpdatePermissionsInAcl = false;
+
+        if (currentUser != null) {
+            JsonObject acl = EventHelper.getInstance(context).getCurrentEvent().getAcl();
+            JsonElement userAccess = acl.get(currentUser.getRemoteId());
+            if (userAccess != null) {
+                JsonElement permissions = userAccess.getAsJsonObject().get("permissions");
+                if (permissions != null) {
+                    hasEventUpdatePermissionsInAcl = permissions.getAsJsonArray().toString().contains("update");
+                }
+            }
+        }
+
+        return hasEventUpdatePermissionsInAcl;
     }
 
     private void setImportantView(ObservationImportant important, ObservationViewHolder vh) {
@@ -356,6 +414,12 @@ public class ObservationListAdapter extends RecyclerView.Adapter<RecyclerView.Vi
     private void getDirections(Observation observation) {
         if (observationActionListener != null) {
             observationActionListener.onObservationDirections(observation);
+        }
+    }
+
+    private void onLocationClick(Observation observation) {
+        if (observationActionListener != null) {
+            observationActionListener.onObservationLocation(observation);
         }
     }
 

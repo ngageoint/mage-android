@@ -221,27 +221,27 @@ open class FormViewModel @Inject constructor(
     )
     geometryFieldState.answer = FieldValue.Location(ObservationLocation(observation))
 
-    val user: User? = try {
-      UserHelper.getInstance(context).read(observation.userId)
+    val currentUser: User? = try {
+      UserHelper.getInstance(context).readCurrentUser()
     } catch (ue: UserException) { null }
 
     val permissions = mutableSetOf<ObservationPermission>()
-    val userPermissions: Collection<Permission>? = user?.role?.permissions?.permissions
+    val userPermissions: Collection<Permission>? = currentUser?.role?.permissions?.permissions
     if (userPermissions?.contains(Permission.UPDATE_OBSERVATION_ALL) == true ||
       userPermissions?.contains(Permission.UPDATE_OBSERVATION_EVENT) == true) {
       permissions.add(ObservationPermission.EDIT)
     }
 
-    if (userPermissions?.contains(Permission.DELETE_OBSERVATION) == true || observation.userId.equals(user)) {
+    if (userPermissions?.contains(Permission.DELETE_OBSERVATION) == true || observation.userId.equals(currentUser)) {
       permissions.add(ObservationPermission.DELETE)
     }
 
-    if (userPermissions?.contains(Permission.UPDATE_EVENT) == true || hasUpdatePermissionsInEventAcl(user)) {
+    if (userPermissions?.contains(Permission.UPDATE_EVENT) == true || hasUpdatePermissionsInEventAcl(currentUser)) {
       permissions.add(ObservationPermission.FLAG)
     }
 
-    val isFavorite = if (user != null) {
-      val favorite = observation.favoritesMap[user.remoteId]
+    val isFavorite = if (currentUser != null) {
+      val favorite = observation.favoritesMap[currentUser.remoteId]
       favorite != null && favorite.isFavorite
     } else false
 
@@ -262,6 +262,10 @@ open class FormViewModel @Inject constructor(
         user = importantUser?.displayName
       )
     } else null
+
+    val user: User? = try {
+      UserHelper.getInstance(context).read(observation.userId)
+    } catch (ue: UserException) { null }
 
     val observationState = ObservationState(
       status = status,

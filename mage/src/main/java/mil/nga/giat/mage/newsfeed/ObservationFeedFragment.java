@@ -2,6 +2,8 @@ package mil.nga.giat.mage.newsfeed;
 
 import android.Manifest;
 import android.app.Dialog;
+import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -32,7 +34,9 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
+import com.google.android.gms.maps.model.LatLng;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
+import com.google.android.material.snackbar.Snackbar;
 import com.j256.ormlite.android.AndroidDatabaseResults;
 import com.j256.ormlite.dao.CloseableIterator;
 import com.j256.ormlite.dao.Dao;
@@ -57,6 +61,7 @@ import javax.inject.Inject;
 
 import dagger.android.support.DaggerFragment;
 import mil.nga.giat.mage.R;
+import mil.nga.giat.mage.coordinate.CoordinateFormatter;
 import mil.nga.giat.mage.dagger.module.ApplicationContext;
 import mil.nga.giat.mage.filter.ObservationFilterActivity;
 import mil.nga.giat.mage.location.LocationPolicy;
@@ -84,6 +89,7 @@ import mil.nga.giat.mage.sdk.event.IObservationEventListener;
 import mil.nga.giat.mage.sdk.exceptions.ObservationException;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
 import mil.nga.sf.Geometry;
+import mil.nga.sf.Point;
 
 public class ObservationFeedFragment extends DaggerFragment implements IObservationEventListener, ObservationListAdapter.ObservationActionListener, Observer<Location> {
 
@@ -575,6 +581,18 @@ public class ObservationFeedFragment extends DaggerFragment implements IObservat
 		Intent observationView = new Intent(context, ObservationViewActivity.class);
 		observationView.putExtra(ObservationViewActivity.OBSERVATION_ID, observation.getId());
 		startActivity(observationView);
+	}
+
+	@Override
+	public void onObservationLocation(Observation observation) {
+		Point centroid = observation.getGeometry().getCentroid();
+		String coordinates = new CoordinateFormatter(context).format(new LatLng(centroid.getY(), centroid.getX()));
+		ClipboardManager clipboard = (ClipboardManager) context.getSystemService(Context.CLIPBOARD_SERVICE);
+		ClipData clip = ClipData.newPlainText("Observation Location", coordinates);
+		if (clipboard == null || clip == null) return;
+		clipboard.setPrimaryClip(clip);
+
+		Snackbar.make(getView(), R.string.location_text_copy_message, Snackbar.LENGTH_SHORT).show();
 	}
 
 	@Override

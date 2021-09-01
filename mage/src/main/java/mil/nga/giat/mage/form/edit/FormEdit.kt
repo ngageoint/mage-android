@@ -5,6 +5,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActionScope
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.*
 
@@ -267,24 +269,24 @@ fun CheckboxEdit(
 ) {
   val value = fieldState.answer?.boolean == true
 
-  Row(
-    Modifier
-      .padding(bottom = 16.dp)
-      .fillMaxWidth()) {
-    Checkbox(
-      checked = value,
-      onCheckedChange = onAnswer,
-      colors = CheckboxDefaults.colors(MaterialTheme.colors.primary),
-      modifier = Modifier
-        .padding(end = 8.dp)
-    )
+  Column(Modifier.padding(bottom = 16.dp)) {
+    Row(
+      Modifier
+        .fillMaxWidth()
+        .padding(bottom = 4.dp)) {
+      Checkbox(
+        checked = value,
+        onCheckedChange = onAnswer,
+        colors = CheckboxDefaults.colors(MaterialTheme.colors.primary),
+        modifier = Modifier.padding(end = 4.dp)
+      )
 
-    Text(text = fieldState.definition.title)
+      Text(text = fieldState.definition.title)
+    }
+
+    fieldState.getError()?.let { error -> TextFieldError(textError = error) }
   }
-
-  fieldState.getError()?.let { error -> TextFieldError(textError = error) }
 }
-
 
 @Composable
 fun DateEdit(
@@ -327,6 +329,8 @@ fun TextEdit(
   fieldState: FieldState<String, out FieldValue.Text>,
   onAnswer: (String) -> Unit,
 ) {
+  val focusManager = LocalFocusManager.current
+
   val keyboardType = if (fieldState.definition.type == FieldType.EMAIL) {
     KeyboardType.Email
   } else {
@@ -340,6 +344,8 @@ fun TextEdit(
       label = { Text("${fieldState.definition.title}${if (fieldState.definition.required) " *" else ""}") },
       singleLine = fieldState.definition.type != FieldType.TEXTAREA,
       isError = fieldState.showErrors(),
+      keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
+      keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
       modifier = Modifier
         .fillMaxWidth()
         .onFocusChanged { focusState ->
@@ -348,8 +354,7 @@ fun TextEdit(
           if (!focused) {
             fieldState.enableShowErrors()
           }
-        },
-      keyboardOptions = KeyboardOptions(keyboardType = keyboardType)
+        }
     )
 
     fieldState.getError()?.let { error -> TextFieldError(textError = error) }
@@ -361,6 +366,8 @@ fun NumberEdit(
   fieldState: FieldState<Number, FieldValue.Number>,
   onAnswer: (String) -> Unit,
 ) {
+  val focusManager = LocalFocusManager.current
+
   Column(Modifier.padding(bottom = 16.dp)) {
     TextField(
       value = fieldState.answer?.number ?: "",
@@ -368,6 +375,8 @@ fun NumberEdit(
       label = { Text("${fieldState.definition.title}${if (fieldState.definition.required) " *" else ""}") },
       singleLine = fieldState.definition.type != FieldType.TEXTAREA,
       isError = fieldState.showErrors(),
+      keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+      keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
       modifier = Modifier
         .fillMaxWidth()
         .onFocusChanged { focusState ->
@@ -376,8 +385,7 @@ fun NumberEdit(
           if (!focused) {
             fieldState.enableShowErrors()
           }
-        },
-      keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+        }
     )
 
     fieldState.getError()?.let { error -> TextFieldError(textError = error) }
@@ -462,8 +470,8 @@ fun RadioEdit(
     CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
       Text(
         text = "${fieldState.definition.title}${if (fieldState.definition.required) " *" else ""}",
-        modifier = Modifier
-          .padding(bottom = 16.dp)
+        fontSize = 14.sp,
+        modifier = Modifier.padding(bottom = 8.dp)
       )
     }
 
@@ -484,6 +492,8 @@ fun RadioEdit(
         Text(text = choice.title)
       }
     }
+
+    fieldState.getError()?.let { error -> TextFieldError(textError = error) }
   }
 }
 

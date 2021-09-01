@@ -20,7 +20,6 @@ import mil.nga.giat.mage.sdk.datastore.user.Permission
 import mil.nga.giat.mage.sdk.datastore.user.User
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper
 import java.lang.Exception
-import javax.inject.Inject
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import dagger.hilt.android.AndroidEntryPoint

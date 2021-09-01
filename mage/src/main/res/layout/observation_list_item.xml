@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/observation_list_container"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:descendantFocusability="blocksDescendants"
@@ -13,7 +14,6 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
-        android:layout_marginStart="8dp"
         android:layout_marginEnd="8dp">
 
         <LinearLayout
@@ -37,7 +37,7 @@
                     android:layout_marginStart="16dp"
                     android:layout_marginEnd="16dp"
                     android:src="@drawable/ic_flag_white_24dp"
-                    android:tint="@color/md_black_1000"
+                    app:tint="@color/md_black_1000"
                     android:layout_gravity="center_vertical"
                     android:alpha=".87"/>
 
@@ -86,20 +86,21 @@
 
                         <RelativeLayout
                             android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginEnd="4dp">
+                            android:layout_height="wrap_content">
 
                             <ImageView
                                 android:id="@+id/sync_status"
-                                android:layout_width="20dip"
-                                android:layout_height="20dip"
+                                android:layout_width="20dp"
+                                android:layout_height="20dp"
                                 android:layout_gravity="top"
+                                android:layout_marginEnd="4dp"
                                 android:src="@drawable/sync_badge_24dp"/>
 
                             <ImageView
                                 android:id="@+id/error_status"
-                                android:layout_width="20dip"
-                                android:layout_height="20dip"
+                                android:layout_width="20dp"
+                                android:layout_height="20dp"
+                                android:layout_marginEnd="4dp"
                                 android:layout_gravity="center_vertical"
                                 android:src="@drawable/error_badge_24dp"/>
 
@@ -178,60 +179,97 @@
 
                 </HorizontalScrollView>
 
-                <LinearLayout
+                <RelativeLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="end"
-                    android:layout_marginEnd="12dp"
                     android:layout_marginTop="8dp"
+                    android:layout_marginStart="8dp"
+                    android:layout_marginEnd="8dp"
                     android:layout_marginBottom="12dp">
 
                     <LinearLayout
-                        android:id="@+id/favorite"
+                        android:id="@+id/location_container"
                         android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginEnd="16dp"
-                        android:orientation="horizontal">
+                        android:layout_height="match_parent"
+                        android:padding="8dp"
+                        android:orientation="horizontal"
+                        android:layout_alignParentStart="true"
+                        android:layout_centerInParent="true"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:background="?attr/selectableItemBackground">
 
-                        <androidx.appcompat.widget.AppCompatImageButton
-                            android:id="@+id/important_button"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:padding="12dip"
-                            android:tint="#8A000000"
-                            android:src="@drawable/ic_flag_outlined_white_24dp"
-                            android:background="?attr/selectableItemBackgroundBorderless"/>
-
-                        <androidx.appcompat.widget.AppCompatImageButton
-                            android:id="@+id/favorite_button"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:padding="12dip"
-                            android:tint="#8A000000"
-                            android:src="@drawable/ic_favorite_border_white_24dp"
-                            android:background="?attr/selectableItemBackgroundBorderless"/>
+                        <ImageView
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:layout_marginEnd="8dp"
+                            app:tint="?attr/colorPrimary"
+                            android:src="@drawable/ic_my_location_white_24dp">
+                        </ImageView>
 
                         <TextView
-                            android:id="@+id/favorite_count"
+                            android:id="@+id/location"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_gravity="center_vertical"
-                            android:layout_marginStart="-8dip"
-                            style="@style/ListTextSecondary" />
+                            android:textColor="?attr/colorPrimary"
+                            style="@style/TextAppearance.MaterialComponents.Body2">
+                        </TextView>
 
                     </LinearLayout>
 
-                    <androidx.appcompat.widget.AppCompatImageButton
-                        android:id="@+id/directions_button"
+                    <LinearLayout
                         android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:padding="12dip"
-                        android:tint="#8A000000"
-                        android:src="@drawable/ic_directions_outlined_white_24dp"
-                        android:background="?attr/selectableItemBackgroundBorderless"/>
+                        android:layout_height="match_parent"
+                        android:orientation="horizontal"
+                        android:layout_alignParentEnd="true">
 
-                </LinearLayout>
+                        <LinearLayout
+                            android:id="@+id/favorite"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal">
+
+                            <androidx.appcompat.widget.AppCompatImageButton
+                                android:id="@+id/important_button"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:padding="12dip"
+                                android:tint="#8A000000"
+                                android:src="@drawable/ic_flag_outlined_white_24dp"
+                                android:background="?attr/selectableItemBackgroundBorderless"/>
+
+                            <androidx.appcompat.widget.AppCompatImageButton
+                                android:id="@+id/favorite_button"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:padding="12dip"
+                                android:tint="#8A000000"
+                                android:src="@drawable/ic_favorite_border_white_24dp"
+                                android:background="?attr/selectableItemBackgroundBorderless"/>
+
+                            <TextView
+                                android:id="@+id/favorite_count"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_gravity="center_vertical"
+                                android:layout_marginStart="-8dip"
+                                style="@style/ListTextSecondary" />
+
+                            <androidx.appcompat.widget.AppCompatImageButton
+                                android:id="@+id/directions_button"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="0dp"
+                                android:padding="12dip"
+                                android:tint="#8A000000"
+                                android:src="@drawable/ic_directions_outlined_white_24dp"
+                                android:background="?attr/selectableItemBackgroundBorderless"/>
+
+                        </LinearLayout>
+
+                    </LinearLayout>
+
+                </RelativeLayout>
 
             </LinearLayout>
 

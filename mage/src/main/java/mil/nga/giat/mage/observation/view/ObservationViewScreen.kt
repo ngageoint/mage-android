@@ -322,7 +322,7 @@ fun ObservationViewHeaderContent(
           Column() {
             CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
               Text(
-                text = "Flagged by ${important.user}".toUpperCase(Locale.ROOT),
+                text = "Flagged by ${important.user}".uppercase(Locale.ROOT),
                 style = MaterialTheme.typography.overline,
                 fontWeight = FontWeight.SemiBold,
               )
@@ -348,7 +348,7 @@ fun ObservationViewHeaderContent(
             CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
               observationState?.userDisplayName?.let {
                 Text(
-                  text = it.toUpperCase(Locale.ROOT),
+                  text = it.uppercase(Locale.ROOT),
                   fontWeight = FontWeight.SemiBold,
                   style = MaterialTheme.typography.overline
                 )
@@ -362,7 +362,7 @@ fun ObservationViewHeaderContent(
 
               observationState?.timestampFieldState?.answer?.date?.let {
                 Text(
-                  text = dateFormat.format(it).toUpperCase(Locale.ROOT),
+                  text = dateFormat.format(it).uppercase(Locale.ROOT),
                   fontWeight = FontWeight.SemiBold,
                   style = MaterialTheme.typography.overline
                 )
@@ -453,7 +453,6 @@ fun ObservationActions(
       .padding(vertical = 4.dp),
     horizontalArrangement = Arrangement.End
   ) {
-
 
     if (observationState?.permissions?.contains(ObservationPermission.FLAG) == true) {
       val isFlagged = observationState.important.value != null
