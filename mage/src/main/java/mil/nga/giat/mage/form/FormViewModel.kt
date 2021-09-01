@@ -77,8 +77,10 @@ open class FormViewModel @Inject constructor(
       fromJson(jsonForm as JsonObject)?.let { form ->
         formDefinitions.add(form)
 
-        if (form.default) {
-          val defaultForm = FormPreferences(context, event.id, form.id).getDefaults()
+        form.min
+
+        val defaultForm = FormPreferences(context, event.id, form.id).getDefaults()
+        repeat((form.min ?: 0) + if (form.default) 1 else 0) {
           val formState = FormState.fromForm(eventId = event.remoteId, form = form, defaultForm = defaultForm)
           formState.expanded.value = index == 0
           forms.add(formState)
