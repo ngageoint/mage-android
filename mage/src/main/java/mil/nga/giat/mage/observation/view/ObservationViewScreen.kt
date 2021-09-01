@@ -424,17 +424,17 @@ fun ObservationViewHeaderContent(
             )
           }
 
-          if (location.provider != null) {
+          if (location.provider != null && location.provider.lowercase() != "manual") {
             CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
               Text(
-                text = location.provider.uppercase(Locale.ROOT),
+                text = location.provider.uppercase(),
                 style = MaterialTheme.typography.caption,
                 modifier = Modifier.padding(end = 2.dp)
               )
             }
           }
 
-          if (location.accuracy != null) {
+          if (location.accuracy != null && location.accuracy != 0.0f) {
             CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
               Text(
                 text = " \u00B1 ${location.accuracy}",
