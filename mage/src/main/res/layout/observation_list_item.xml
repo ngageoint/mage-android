@@ -130,6 +130,8 @@
                             android:layout_height="wrap_content"
                             android:layout_gravity="center_vertical"
                             style="@style/TextAppearance.MaterialComponents.Overline"
+                            android:ellipsize="end"
+                            android:maxLines="1"
                             android:alpha=".6"/>
 
                     </LinearLayout>

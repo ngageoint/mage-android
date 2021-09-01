@@ -52,6 +52,7 @@ import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.exceptions.ObservationException;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
+import mil.nga.giat.mage.utils.DateFormatFactory;
 import mil.nga.sf.Point;
 
 /**
@@ -253,8 +254,7 @@ public class ObservationListAdapter extends RecyclerView.Adapter<RecyclerView.Vi
             vh.secondaryPropertyTask.execute(observation);
 
             Date timestamp = observation.getTimestamp();
-            String pattern = DateUtils.isToday(timestamp.getTime()) ? SHORT_TIME_PATTERN : SHORT_DATE_PATTERN;
-            DateFormat dateFormat = new SimpleDateFormat(pattern, Locale.getDefault());
+            DateFormat dateFormat = DateFormatFactory.format("yyyy-MM-dd HH:mm zz", Locale.getDefault(), context);
             vh.timeView.setText(dateFormat.format(timestamp));
 
             vh.userView.setText("");
