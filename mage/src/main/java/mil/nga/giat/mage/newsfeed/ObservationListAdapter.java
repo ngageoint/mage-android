@@ -62,7 +62,6 @@ public class ObservationListAdapter extends RecyclerView.Adapter<RecyclerView.Vi
 
     public interface ObservationActionListener {
         void onObservationClick(Observation observation);
-        void onObservationImportant(Observation observation);
         void onObservationDirections(Observation observation);
         void onObservationLocation(Observation observation);
     }
@@ -80,7 +79,6 @@ public class ObservationListAdapter extends RecyclerView.Adapter<RecyclerView.Vi
     private PreparedQuery<Observation> query;
     private AttachmentGallery attachmentGallery;
     private User currentUser;
-    private boolean canFlagObservation = false;
     private ObservationActionListener observationActionListener;
     private String footerText;
 
@@ -93,7 +91,6 @@ public class ObservationListAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         private View importantView;
         private TextView importantOverline;
         private TextView importantDescription;
-        private ImageView importantButton;
         private View syncBadge;
         private View errorBadge;
         private LinearLayout attachmentLayout;
@@ -118,7 +115,6 @@ public class ObservationListAdapter extends RecyclerView.Adapter<RecyclerView.Vi
             importantView = view.findViewById(R.id.important);
             importantOverline = view.findViewById(R.id.important_overline);
             importantDescription = view.findViewById(R.id.important_description);
-            importantButton = view.findViewById(R.id.important_button);
             syncBadge = view.findViewById(R.id.sync_status);
             errorBadge = view.findViewById(R.id.error_status);
             attachmentLayout = view.findViewById(R.id.image_gallery);
@@ -148,7 +144,6 @@ public class ObservationListAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         this.context = context;
         this.attachmentGallery = attachmentGallery;
         this.observationActionListener = observationActionListener;
-        this.canFlagObservation = canFlagObservation();
     }
 
     public void setCursor(Cursor cursor, PreparedQuery<Observation> query) {
@@ -267,13 +262,6 @@ public class ObservationListAdapter extends RecyclerView.Adapter<RecyclerView.Vi
             vh.userTask.execute(observation);
 
             setImportantView(observation.getImportant(), vh);
-            if (this.canFlagObservation) {
-                vh.importantButton.setOnClickListener(v -> observationActionListener.onObservationImportant(observation));
-                setImportantView(observation.getImportant(), vh);
-                vh.importantButton.setVisibility(View.VISIBLE);
-            } else {
-                vh.importantButton.setVisibility(View.GONE);
-            }
 
             ObservationError error = observation.getError();
             if (error != null) {
@@ -313,36 +301,6 @@ public class ObservationListAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         vh.footerText.setText(footerText);
     }
 
-    private boolean canFlagObservation() {
-        boolean hasEventUpdatePermission = false;
-        try {
-            currentUser = UserHelper.getInstance(context).readCurrentUser();
-            hasEventUpdatePermission = currentUser.getRole().getPermissions().getPermissions().contains(Permission.UPDATE_EVENT);
-        } catch (Exception e) {
-            Log.e(LOG_NAME, "Cannot read current user");
-        }
-
-        return hasEventUpdatePermission || hasUpdatePermissionsInEventAcl();
-    }
-
-    private boolean hasUpdatePermissionsInEventAcl() {
-
-        boolean hasEventUpdatePermissionsInAcl = false;
-
-        if (currentUser != null) {
-            JsonObject acl = EventHelper.getInstance(context).getCurrentEvent().getAcl();
-            JsonElement userAccess = acl.get(currentUser.getRemoteId());
-            if (userAccess != null) {
-                JsonElement permissions = userAccess.getAsJsonObject().get("permissions");
-                if (permissions != null) {
-                    hasEventUpdatePermissionsInAcl = permissions.getAsJsonArray().toString().contains("update");
-                }
-            }
-        }
-
-        return hasEventUpdatePermissionsInAcl;
-    }
-
     private void setImportantView(ObservationImportant important, ObservationViewHolder vh) {
         boolean isImportant = important != null && important.isImportant();
         vh.importantView.setVisibility(isImportant ? View.VISIBLE : View.GONE);
@@ -356,14 +314,6 @@ public class ObservationListAdapter extends RecyclerView.Adapter<RecyclerView.Vi
             }
 
             vh.importantDescription.setText(important.getDescription());
-        }
-
-        if (isImportant) {
-            vh.importantButton.setImageDrawable(ContextCompat.getDrawable(context, R.drawable.ic_flag_white_24dp));
-            vh.importantButton.setColorFilter(ContextCompat.getColor(context, R.color.observation_flag_active));
-        } else {
-            vh.importantButton.setImageDrawable(ContextCompat.getDrawable(context, R.drawable.ic_flag_outlined_white_24dp));
-            vh.importantButton.setColorFilter(ContextCompat.getColor(context, R.color.observation_flag_inactive));
         }
     }
 

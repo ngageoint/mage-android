@@ -109,7 +109,7 @@
                         <TextView
                             android:id="@+id/user"
                             android:layout_gravity="center_vertical"
-                            android:layout_width="match_parent"
+                            android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             style="@style/TextAppearance.MaterialComponents.Overline"
                             android:alpha=".6"/>
@@ -230,19 +230,10 @@
                             android:orientation="horizontal">
 
                             <androidx.appcompat.widget.AppCompatImageButton
-                                android:id="@+id/important_button"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:padding="12dip"
-                                android:tint="#8A000000"
-                                android:src="@drawable/ic_flag_outlined_white_24dp"
-                                android:background="?attr/selectableItemBackgroundBorderless"/>
-
-                            <androidx.appcompat.widget.AppCompatImageButton
                                 android:id="@+id/favorite_button"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:padding="12dip"
+                                android:padding="16dip"
                                 android:tint="#8A000000"
                                 android:src="@drawable/ic_favorite_border_white_24dp"
                                 android:background="?attr/selectableItemBackgroundBorderless"/>
@@ -260,7 +251,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_marginStart="0dp"
-                                android:padding="12dip"
+                                android:padding="16dip"
                                 android:tint="#8A000000"
                                 android:src="@drawable/ic_directions_outlined_white_24dp"
                                 android:background="?attr/selectableItemBackgroundBorderless"/>
