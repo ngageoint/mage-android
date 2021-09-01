@@ -63,6 +63,7 @@ import mil.nga.giat.mage.sdk.exceptions.UserException;
 import mil.nga.giat.mage.sdk.login.AuthenticationStatus;
 import mil.nga.giat.mage.sdk.login.AuthorizationStatus;
 import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
+import mil.nga.giat.mage.sdk.utils.DeviceUuidFactory;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
 import mil.nga.giat.mage.sdk.utils.UserUtility;
 
@@ -287,15 +288,16 @@ public class LoginActivity extends DaggerAppCompatActivity {
         if(authentication != null) {
             strategy = authentication.getStrategy();
         }
-       return addLinks(message, null, strategy);
+        //TODO get user id
+        String identifier = null;
+        return addLinks(message, identifier, strategy);
     }
 
     private Spanned addLinks(String message, LoginViewModel.Authorization authorization) {
-        String identifier = null;
-        if(authorization  != null && authorization.getStatus() != null && authorization.getStatus().getUser() != null) {
-             identifier = authorization.getStatus().getUser().getUsername();
-        }
-        return  addLinks(message, identifier, null);
+        String identifier = new DeviceUuidFactory(getApplicationContext()).getDeviceUuid().toString();
+        //TODO get strategy
+        String strategy = null;
+        return  addLinks(message, identifier, strategy);
     }
 
     private Spanned addLinks(String message, String identifier, String strategy) {
