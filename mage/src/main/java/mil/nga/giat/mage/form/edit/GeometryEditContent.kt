@@ -3,6 +3,9 @@ package mil.nga.giat.mage.form.edit
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Place
+import androidx.compose.material.icons.outlined.Place
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -37,9 +40,16 @@ fun GeometryEdit(
       enabled = false,
       isError = fieldState.showErrors(),
       colors = TextFieldDefaults.textFieldColors(
+        disabledTrailingIconColor = MaterialTheme.colors.onSurface.copy(alpha = TextFieldDefaults.IconOpacity),
         disabledTextColor = LocalContentColor.current.copy(LocalContentAlpha.current),
         disabledLabelColor =  MaterialTheme.colors.onSurface.copy(ContentAlpha.medium)
       ),
+      trailingIcon = {
+        Icon(
+          imageVector = Icons.Outlined.Place,
+          contentDescription = "Map Marker",
+        )
+      },
       modifier = Modifier
         .fillMaxWidth()
         .clickable(onClick = {

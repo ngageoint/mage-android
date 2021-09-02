@@ -12,6 +12,7 @@ import androidx.compose.runtime.*
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.outlined.*
 import androidx.compose.ui.Alignment
 
 import androidx.compose.ui.Modifier
@@ -24,6 +25,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.sp
 import mil.nga.giat.mage.form.field.*
 import mil.nga.giat.mage.form.FormState
@@ -34,10 +37,6 @@ import mil.nga.giat.mage.observation.edit.MediaActionType
 import mil.nga.giat.mage.sdk.datastore.observation.Attachment
 import mil.nga.giat.mage.utils.DateFormatFactory
 import java.util.*
-
-// TODO multi-form
-// Check required fields for all types
-// Auto scroll to new form on add form, TODO test with compose beta8
 
 @Composable
 fun FormEditContent(
@@ -148,6 +147,14 @@ fun FieldEditContent(
         fieldState as NumberFieldState
       ) {
         fieldState.answer = FieldValue.Number(it)
+      }
+    }
+    FieldType.PASSWORD -> {
+      TextEdit(
+        modifier,
+        fieldState as TextFieldState
+      ) {
+        fieldState.answer = FieldValue.Text(it)
       }
     }
     FieldType.RADIO -> {
@@ -341,9 +348,16 @@ fun DateEdit(
       enabled = false,
       isError = fieldState.showErrors(),
       colors = TextFieldDefaults.textFieldColors(
+        disabledTrailingIconColor = MaterialTheme.colors.onSurface.copy(alpha = TextFieldDefaults.IconOpacity),
         disabledTextColor = LocalContentColor.current.copy(LocalContentAlpha.current),
         disabledLabelColor = labelColor
       ),
+      trailingIcon = {
+        Icon(
+          imageVector = Icons.Outlined.Today,
+          contentDescription = "Calendar",
+        )
+      },
       modifier = Modifier
         .fillMaxWidth()
         .clickable(onClick = {
@@ -372,6 +386,29 @@ fun TextEdit(
     KeyboardType.Text
   }
 
+  val icon: @Composable (() -> Unit) = if (fieldState.definition.type == FieldType.EMAIL) {
+    {
+      Icon(
+        imageVector = Icons.Outlined.Email,
+        contentDescription = "Email",
+      )
+    }
+  } else if (fieldState.definition.type == FieldType.PASSWORD) {
+    {
+      Icon(
+        imageVector = Icons.Outlined.Lock,
+        contentDescription = "Text",
+      )
+    }
+  } else {
+    {
+      Icon(
+        imageVector = Icons.Outlined.TextFields,
+        contentDescription = "Text",
+      )
+    }
+  }
+
   Column(modifier) {
     TextField(
       value = fieldState.answer?.text ?: "",
@@ -381,6 +418,8 @@ fun TextEdit(
       isError = fieldState.showErrors(),
       keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
       keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
+      visualTransformation = if (fieldState.definition.type == FieldType.PASSWORD) PasswordVisualTransformation() else VisualTransformation.None,
+      trailingIcon = icon,
       modifier = Modifier
         .fillMaxWidth()
         .onFocusChanged { focusState ->
@@ -413,6 +452,12 @@ fun NumberEdit(
       isError = fieldState.showErrors(),
       keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
       keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
+      trailingIcon = {
+        Icon(
+          imageVector = Icons.Outlined.Tag,
+          contentDescription = "Number",
+        )
+      },
       modifier = Modifier
         .fillMaxWidth()
         .onFocusChanged { focusState ->
@@ -445,10 +490,16 @@ fun MultiSelectEdit(
       enabled = false,
       isError = fieldState.showErrors(),
       colors = TextFieldDefaults.textFieldColors(
+        disabledTrailingIconColor = MaterialTheme.colors.onSurface.copy(alpha = TextFieldDefaults.IconOpacity),
         disabledTextColor = LocalContentColor.current.copy(LocalContentAlpha.current),
         disabledLabelColor =  labelColor
       ),
-
+      trailingIcon = {
+        Icon(
+          imageVector = Icons.Filled.ArrowDropDown,
+          contentDescription = "Dropdown",
+        )
+      },
       modifier = Modifier
         .fillMaxWidth()
         .clickable(onClick = {
@@ -480,9 +531,16 @@ fun SelectEdit(
       enabled = false,
       isError = fieldState.showErrors(),
       colors = TextFieldDefaults.textFieldColors(
+        disabledTrailingIconColor = MaterialTheme.colors.onSurface.copy(alpha = TextFieldDefaults.IconOpacity),
         disabledTextColor = LocalContentColor.current.copy(LocalContentAlpha.current),
-        disabledLabelColor =  labelColor//MaterialTheme.colors.onSurface.copy(ContentAlpha.medium)
+        disabledLabelColor =  labelColor
       ),
+      trailingIcon = {
+        Icon(
+          imageVector = Icons.Filled.ArrowDropDown,
+          contentDescription = "Dropdown",
+        )
+      },
       modifier = Modifier
         .fillMaxWidth()
         .clickable(onClick = {

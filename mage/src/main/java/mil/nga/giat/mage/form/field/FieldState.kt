@@ -130,7 +130,7 @@ open class FieldState<F, T : FieldValue> (
           }
           fieldState
         }
-        FieldType.TEXTAREA, FieldType.TEXTFIELD -> {
+        FieldType.TEXTAREA, FieldType.TEXTFIELD, FieldType.PASSWORD -> {
           val fieldState = TextFieldState(fieldDefinition as TextFormField)
           val text = default as? String ?: value as? String
           if (text != null) {
