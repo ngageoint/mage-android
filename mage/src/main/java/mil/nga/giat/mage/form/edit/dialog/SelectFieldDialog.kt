@@ -183,7 +183,7 @@ class SelectFieldDialog : DialogFragment() {
   }
 
   private fun getSelectedChoicesString(choices: List<String>): String {
-    return choices.joinToString(" | ")
+    return choices.joinToString(", ")
   }
 
   private fun checkSelected() {
