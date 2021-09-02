@@ -5,12 +5,13 @@ import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -21,16 +22,19 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import mil.nga.giat.mage.coordinate.CoordinateFormatter
+import mil.nga.giat.mage.form.FieldType
 import mil.nga.giat.mage.form.field.*
 import mil.nga.giat.mage.form.FormState
 import mil.nga.giat.mage.sdk.datastore.observation.Attachment
 import mil.nga.giat.mage.utils.DateFormatFactory
+import mil.nga.sf.Geometry
 import java.util.*
 
 @Composable
 fun FormContent(
   formState: FormState,
-  onAttachmentClick: ((Attachment) -> Unit)? = null
+  onAttachmentClick: ((Attachment) -> Unit)? = null,
+  onLocationClick: ((String) -> Unit)? = null
 ) {
   Card(
     Modifier
@@ -54,7 +58,8 @@ fun FormContent(
               .padding(bottom = 16.dp)
               .padding(horizontal = 16.dp),
             fieldState,
-            onAttachmentClick
+            onAttachmentClick,
+            onLocationClick
           )
         }
       }
@@ -128,7 +133,7 @@ fun FormHeaderContent(
     Row {
       CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.high) {
         Text(
-          fieldText(primaryState.answer, LocalContext.current),
+          fieldText(primaryState, LocalContext.current),
           style = MaterialTheme.typography.h6,
           color = primaryColor
         )
@@ -141,7 +146,7 @@ fun FormHeaderContent(
     Row {
       CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
         Text(
-          fieldText(secondaryState.answer, LocalContext.current),
+          fieldText(secondaryState, LocalContext.current),
           style = MaterialTheme.typography.subtitle1
         )
       }
@@ -153,38 +158,48 @@ fun FormHeaderContent(
 fun FieldContent(
   modifier: Modifier = Modifier,
   fieldState: FieldState<*, out FieldValue>,
-  onAttachmentClick: ((Attachment) -> Unit)? = null
+  onAttachmentClick: ((Attachment) -> Unit)? = null,
+  onLocationClick: ((String) -> Unit)? = null
 ) {
   when (fieldState) {
     is BooleanFieldState -> {
-      BooleanFieldContent(fieldState)
+      BooleanFieldContent(modifier, fieldState)
     }
     is DateFieldState -> {
-      DateFieldContent(fieldState)
+      DateFieldContent(modifier, fieldState)
     }
     is GeometryFieldState -> {
-      GeometryFieldContent(fieldState)
+      GeometryFieldContent(
+        modifier,
+        fieldState,
+        onLocationClick
+      )
     }
     is MultiSelectFieldState -> {
-      MultiFieldContent(fieldState)
+      MultiFieldContent(modifier, fieldState)
     }
     is AttachmentFieldState -> {
-      AttachmentsFieldContent(fieldState, onAttachmentClick)
+      AttachmentsFieldContent(
+        modifier,
+        fieldState,
+        onAttachmentClick
+      )
     }
     else -> {
-      StringFieldContent(modifier = modifier, fieldState)
+      StringFieldContent(modifier, fieldState)
     }
   }
 }
 
 @Composable
 fun AttachmentsFieldContent(
+  modifier: Modifier = Modifier,
   fieldState: AttachmentFieldState,
   onAttachmentClick: ((Attachment) -> Unit)? = null
 ) {
   val attachments = fieldState.answer?.attachments ?: listOf()
   if (attachments.isNotEmpty()) {
-    Column(Modifier.padding(bottom = 16.dp)) {
+    Column(modifier) {
       CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
         Text(
           fieldState.definition.title,
@@ -205,7 +220,7 @@ fun StringFieldContent(
   modifier: Modifier = Modifier,
   fieldState: FieldState<*, out FieldValue>
 ) {
-  val text = fieldText(fieldState.answer, LocalContext.current)
+  val text = fieldText(fieldState, LocalContext.current)
 
   if (text.isNotEmpty()) {
     Column(modifier = modifier) {
@@ -225,14 +240,14 @@ fun StringFieldContent(
 }
 
 @Composable
-fun BooleanFieldContent(fieldState: BooleanFieldState) {
+fun BooleanFieldContent(
+  modifier: Modifier = Modifier,
+  fieldState: BooleanFieldState
+) {
   val value = fieldState.answer?.boolean == true
 
   if (value) {
-    Column(
-      Modifier
-        .padding(bottom = 16.dp)
-    ) {
+    Column(modifier) {
       Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
@@ -255,7 +270,10 @@ fun BooleanFieldContent(fieldState: BooleanFieldState) {
 }
 
 @Composable
-fun DateFieldContent(fieldState: DateFieldState) {
+fun DateFieldContent(
+  modifier: Modifier = Modifier,
+  fieldState: DateFieldState
+) {
   val dateFormat =
     DateFormatFactory.format("yyyy-MM-dd HH:mm zz", Locale.getDefault(), LocalContext.current)
 
@@ -265,10 +283,7 @@ fun DateFieldContent(fieldState: DateFieldState) {
   } else ""
 
   if (text?.isNotEmpty() == true) {
-    Column(
-      Modifier
-        .padding(bottom = 16.dp)
-    ) {
+    Column(modifier) {
       Row(
         Modifier
           .padding(bottom = 4.dp)
@@ -288,13 +303,13 @@ fun DateFieldContent(fieldState: DateFieldState) {
 }
 
 @Composable
-fun MultiFieldContent(fieldState: MultiSelectFieldState) {
+fun MultiFieldContent(
+  modifier: Modifier,
+  fieldState: MultiSelectFieldState
+) {
   val value: Collection<String>? = fieldState.answer?.choices
   if (value?.isNotEmpty() == true) {
-    Column(
-      Modifier
-        .padding(bottom = 16.dp)
-    ) {
+    Column(modifier) {
       Row(
         Modifier
           .padding(bottom = 4.dp)
@@ -314,15 +329,16 @@ fun MultiFieldContent(fieldState: MultiSelectFieldState) {
 }
 
 @Composable
-fun GeometryFieldContent(fieldState: GeometryFieldState) {
-  val value = fieldState.answer?.location
-  if (value != null) {
-    val coordinates = CoordinateFormatter(LocalContext.current).format(value.centroidLatLng)
+fun GeometryFieldContent(
+  modifier: Modifier = Modifier,
+  fieldState: GeometryFieldState,
+  onLocationClick: ((String) -> Unit)? = null
+) {
+  val location = fieldState.answer?.location
+  if (location != null) {
+    val coordinates = CoordinateFormatter(LocalContext.current).format(location.centroidLatLng)
 
-    Column(
-      Modifier
-        .padding(bottom = 16.dp)
-    ) {
+    Column(modifier) {
       Row(
         Modifier
           .padding(bottom = 4.dp)
@@ -332,19 +348,42 @@ fun GeometryFieldContent(fieldState: GeometryFieldState) {
         }
       }
 
-      Row {
-        CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.high) {
-          Text(coordinates, fontSize = 16.sp)
-        }
+      Column(Modifier
+        .height(150.dp)
+        .fillMaxWidth()
+      ) {
+        val mapView = rememberMapViewWithLifecycle()
+        MapViewContent(mapView, location)
+      }
+
+      Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+          .padding(top = 4.dp)
+          .clickable { onLocationClick?.invoke(coordinates) }
+          .padding(8.dp)
+      ) {
+        Icon(
+          imageVector = Icons.Default.MyLocation,
+          tint = MaterialTheme.colors.primary,
+          contentDescription = "Location",
+          modifier = Modifier.padding(end = 4.dp).width(16.dp).height(16.dp)
+        )
+        Text(
+          text  = coordinates,fontSize = 14.sp,
+          color = MaterialTheme.colors.primary
+        )
       }
     }
   }
 }
 
 fun fieldText(
-  fieldValue: FieldValue?,
+  fieldState: FieldState<*, out FieldValue>,
   context: Context
 ): String {
+  val fieldValue = fieldState.answer
+
   return when (fieldValue) {
     is FieldValue.Boolean -> {
       fieldValue.boolean.toString()
@@ -363,7 +402,9 @@ fun fieldText(
       fieldValue.choices.joinToString(", ")
     }
     is FieldValue.Text -> {
-      fieldValue.text
+      if (fieldState.definition.type == FieldType.PASSWORD) {
+        "*".repeat((6..12).random())
+      } else fieldValue.text
     } else -> ""
   }
 }

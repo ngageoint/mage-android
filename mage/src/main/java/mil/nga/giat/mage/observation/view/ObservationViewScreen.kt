@@ -166,7 +166,11 @@ fun ObservationViewContent(
       }
 
       for (formState in forms) {
-        FormContent(formState, onAttachmentClick)
+        FormContent(
+          formState,
+          onAttachmentClick,
+          onLocationClick
+        )
       }
     }
   }

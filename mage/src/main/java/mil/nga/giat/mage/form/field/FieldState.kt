@@ -6,6 +6,7 @@ import androidx.compose.runtime.setValue
 import mil.nga.giat.mage.form.*
 import mil.nga.giat.mage.observation.ObservationLocation
 import mil.nga.giat.mage.sdk.datastore.observation.Attachment
+import mil.nga.giat.mage.sdk.utils.GeometryUtility
 import java.util.*
 
 open class FieldState<F, T : FieldValue> (
@@ -100,7 +101,21 @@ open class FieldState<F, T : FieldValue> (
         }
         FieldType.GEOMETRY -> {
           val fieldState = GeometryFieldState(fieldDefinition as GeometryFormField)
-          val location = default as? ObservationLocation ?: value as? ObservationLocation
+
+          val location = if (default != null) {
+            if (default is ByteArray) {
+              ObservationLocation(GeometryUtility.toGeometry(default))
+            } else {
+              default as? ObservationLocation
+            }
+          } else {
+            if (value is ByteArray) {
+              ObservationLocation(GeometryUtility.toGeometry(value))
+            } else {
+              value as? ObservationLocation
+            }
+          }
+
           if (location != null) {
             fieldState.answer = FieldValue.Location(location)
           }

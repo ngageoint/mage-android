@@ -70,7 +70,7 @@ fun FormEditContent(
           horizontalArrangement = Arrangement.End,
           modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 16.dp)
+            .padding(16.dp)
         ) {
           TextButton(
             onClick = { onFormDelete?.invoke() }
