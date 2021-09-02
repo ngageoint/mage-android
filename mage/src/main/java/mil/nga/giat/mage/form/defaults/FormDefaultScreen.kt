@@ -17,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.LiveData
+import mil.nga.giat.mage.form.FieldType
 import mil.nga.giat.mage.form.FormState
 import mil.nga.giat.mage.form.edit.FieldEditContent
 import mil.nga.giat.mage.form.field.FieldState
@@ -212,7 +213,11 @@ fun DefaultFormContent(
   formState: FormState,
   onFieldClick: ((FieldState<*, *>) -> Unit)? = null
 ) {
-  for (fieldState in formState.fields.sortedBy { it.definition.id }) {
+  val fields = formState.fields
+    .filter { it.definition.type != FieldType.ATTACHMENT }
+    .sortedBy { it.definition.id }
+
+  for (fieldState in fields) {
     FieldEditContent(
       modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 16.dp),
       fieldState = fieldState,
