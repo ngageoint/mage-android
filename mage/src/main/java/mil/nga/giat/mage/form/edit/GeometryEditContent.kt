@@ -17,6 +17,7 @@ import mil.nga.giat.mage.form.view.rememberMapViewWithLifecycle
 
 @Composable
 fun GeometryEdit(
+  modifier: Modifier = Modifier,
   fieldState: GeometryFieldState,
   formState: FormState? = null,
   onClick: (() -> Unit)? = null
@@ -28,7 +29,7 @@ fun GeometryEdit(
 
   val focusManager = LocalFocusManager.current
 
-  Column(Modifier.padding(bottom = 16.dp)) {
+  Column(modifier) {
     TextField(
       value = value,
       onValueChange = { },

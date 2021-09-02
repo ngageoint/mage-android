@@ -5,7 +5,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardActionScope
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.*
@@ -49,20 +48,17 @@ fun FormEditContent(
   onMediaAction: ((MediaActionType, FormField<*>) -> Unit)? = null
 ) {
   Card(Modifier.fillMaxWidth()) {
-    Column(
-      Modifier
-        .animateContentSize()
-        .padding(horizontal = 16.dp)
-    ) {
+    Column(Modifier.animateContentSize()) {
       FormHeaderContent(
-        modifier = Modifier.padding(vertical = 16.dp),
+        modifier = Modifier.padding(16.dp),
         formState = formState
       ) { formState.expanded.value = it }
 
       if (formState.expanded.value) {
         for (fieldState in formState.fields.sortedBy { it.definition.id }) {
           FieldEditContent(
-            fieldState,
+            modifier = Modifier.padding(bottom = 16.dp, start = 16.dp, end = 16.dp),
+            fieldState = fieldState,
             onClick = { onFieldClick?.invoke(fieldState) },
             onMediaAction = { action -> onMediaAction?.invoke(action, fieldState.definition) },
             onAttachmentAction = { action, media -> onAttachmentAction?.invoke(action, media, fieldState) }
@@ -90,6 +86,7 @@ fun FormEditContent(
 
 @Composable
 fun FieldEditContent(
+  modifier: Modifier = Modifier,
   fieldState: FieldState<*, out FieldValue>,
   onMediaAction: ((MediaActionType) -> Unit)? = null,
   onAttachmentAction: ((AttachmentAction, Attachment) -> Unit)? = null,
@@ -97,42 +94,75 @@ fun FieldEditContent(
 ) {
   when (fieldState.definition.type) {
     FieldType.ATTACHMENT -> {
-      AttachmentEdit(fieldState as AttachmentFieldState, onAttachmentAction, onMediaAction)
+      AttachmentEdit(
+        modifier,
+        fieldState as AttachmentFieldState,
+        onAttachmentAction,
+        onMediaAction)
     }
     FieldType.CHECKBOX -> {
-      CheckboxEdit(fieldState as BooleanFieldState) {
+      CheckboxEdit(
+        modifier,
+        fieldState as BooleanFieldState
+      ) {
         fieldState.answer = FieldValue.Boolean(it)
       }
     }
     FieldType.DATE -> {
-      DateEdit(fieldState as DateFieldState, onClick)
+      DateEdit(
+        modifier,
+        fieldState as DateFieldState,
+        onClick)
     }
     FieldType.DROPDOWN -> {
-      SelectEdit(fieldState as SelectFieldState, onClick)
+      SelectEdit(
+        modifier,
+        fieldState as SelectFieldState,
+        onClick
+      )
     }
     FieldType.EMAIL -> {
-      TextEdit(fieldState as EmailFieldState) {
+      TextEdit(
+        modifier,
+        fieldState as EmailFieldState
+      ) {
         fieldState.answer = FieldValue.Text(it)
       }
     }
     FieldType.GEOMETRY -> {
-      GeometryEdit(fieldState as GeometryFieldState, onClick = onClick)
+      GeometryEdit(
+        modifier,
+        fieldState as GeometryFieldState,
+        onClick = onClick
+      )
     }
     FieldType.MULTISELECTDROPDOWN -> {
-      MultiSelectEdit(fieldState as MultiSelectFieldState, onClick)
+      MultiSelectEdit(
+        modifier,
+        fieldState as MultiSelectFieldState,
+        onClick)
     }
     FieldType.NUMBERFIELD -> {
-      NumberEdit(fieldState as NumberFieldState) {
+      NumberEdit(
+        modifier,
+        fieldState as NumberFieldState
+      ) {
         fieldState.answer = FieldValue.Number(it)
       }
     }
     FieldType.RADIO -> {
-      RadioEdit(fieldState as RadioFieldState) {
+      RadioEdit(
+        modifier,
+        fieldState as RadioFieldState
+      ) {
         fieldState.answer = FieldValue.Text(it)
       }
     }
     FieldType.TEXTAREA, FieldType.TEXTFIELD -> {
-      TextEdit(fieldState as TextFieldState) {
+      TextEdit(
+        modifier,
+        fieldState as TextFieldState
+      ) {
         fieldState.answer = FieldValue.Text(it)
       }
     }
@@ -141,25 +171,26 @@ fun FieldEditContent(
 
 @Composable
 fun AttachmentEdit(
+  modifier: Modifier = Modifier,
   fieldState: AttachmentFieldState,
   onAttachmentAction: ((AttachmentAction, Attachment) -> Unit)? = null,
   onMediaAction: ((MediaActionType) -> Unit)? = null
 ) {
   val attachments = fieldState.answer?.attachments?.filter { it.action != Media.ATTACHMENT_DELETE_ACTION } ?: listOf()
-  var size by remember { mutableStateOf(attachments?.size) }
+  var size by remember { mutableStateOf(attachments.size) }
   val error = fieldState.getError()
   val fieldDefinition = fieldState.definition as? AttachmentFormField
 
-  LaunchedEffect(attachments?.size) {
-    if (size != attachments?.size) {
+  LaunchedEffect(attachments.size) {
+    if (size != attachments.size) {
       fieldState.onFocusChange(true)
       fieldState.enableShowErrors()
     }
 
-    size = attachments?.size ?: 0
+    size = attachments.size
   }
 
-  Column(Modifier.padding(bottom = 16.dp)) {
+  Column(modifier) {
     Column(
       Modifier
         .fillMaxWidth()
@@ -265,12 +296,13 @@ fun AttachmentEdit(
 
 @Composable
 fun CheckboxEdit(
+  modifier: Modifier = Modifier,
   fieldState: BooleanFieldState,
   onAnswer: (Boolean) -> Unit,
 ) {
   val value = fieldState.answer?.boolean == true
 
-  Column(Modifier.padding(bottom = 16.dp)) {
+  Column(modifier) {
     Row(
       Modifier
         .fillMaxWidth()
@@ -291,6 +323,7 @@ fun CheckboxEdit(
 
 @Composable
 fun DateEdit(
+  modifier: Modifier = Modifier,
   fieldState: DateFieldState,
   onClick: (() -> Unit)? = null
 ) {
@@ -300,7 +333,7 @@ fun DateEdit(
   val focusManager = LocalFocusManager.current
   val labelColor = if (fieldState.showErrors()) MaterialTheme.colors.error else MaterialTheme.colors.onSurface.copy(ContentAlpha.medium)
 
-  Column(Modifier.padding(bottom = 16.dp)) {
+  Column(modifier) {
     TextField(
       value = if (date != null) dateFormat.format(date) else "",
       onValueChange = { },
@@ -327,6 +360,7 @@ fun DateEdit(
 
 @Composable
 fun TextEdit(
+  modifier: Modifier = Modifier,
   fieldState: FieldState<String, out FieldValue.Text>,
   onAnswer: (String) -> Unit,
 ) {
@@ -338,7 +372,7 @@ fun TextEdit(
     KeyboardType.Text
   }
 
-  Column(Modifier.padding(bottom = 16.dp)) {
+  Column(modifier) {
     TextField(
       value = fieldState.answer?.text ?: "",
       onValueChange = onAnswer,
@@ -364,12 +398,13 @@ fun TextEdit(
 
 @Composable
 fun NumberEdit(
+  modifier: Modifier = Modifier,
   fieldState: FieldState<Number, FieldValue.Number>,
   onAnswer: (String) -> Unit,
 ) {
   val focusManager = LocalFocusManager.current
 
-  Column(Modifier.padding(bottom = 16.dp)) {
+  Column(modifier) {
     TextField(
       value = fieldState.answer?.number ?: "",
       onValueChange = { onAnswer(it) },
@@ -395,13 +430,14 @@ fun NumberEdit(
 
 @Composable
 fun MultiSelectEdit(
+  modifier: Modifier = Modifier,
   fieldState: MultiSelectFieldState,
   onClick: (() -> Unit)? = null
 ) {
   val focusManager = LocalFocusManager.current
   val labelColor = if (fieldState.showErrors()) MaterialTheme.colors.error else MaterialTheme.colors.onSurface.copy(ContentAlpha.medium)
 
-  Column(Modifier.padding(bottom = 16.dp)) {
+  Column(modifier) {
     TextField(
       value = fieldState.answer?.choices?.joinToString(", ") ?: "",
       onValueChange = { },
@@ -429,13 +465,14 @@ fun MultiSelectEdit(
 
 @Composable
 fun SelectEdit(
+  modifier: Modifier = Modifier,
   fieldState: SelectFieldState,
   onClick: (() -> Unit)? = null
 ) {
   val focusManager = LocalFocusManager.current
   val labelColor = if (fieldState.showErrors()) MaterialTheme.colors.error else MaterialTheme.colors.onSurface.copy(ContentAlpha.medium)
 
-  Column(Modifier.padding(bottom = 16.dp)) {
+  Column(modifier) {
     TextField(
       value = fieldState.answer?.text ?: "",
       onValueChange = { },
@@ -462,12 +499,13 @@ fun SelectEdit(
 
 @Composable
 fun RadioEdit(
+  modifier: Modifier = Modifier,
   fieldState: RadioFieldState,
   onAnswer: (String) -> Unit,
 ) {
   val definition = fieldState.definition as SingleChoiceFormField
 
-  Column(Modifier.padding(bottom = 16.dp)) {
+  Column(modifier) {
     CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
       Text(
         text = "${fieldState.definition.title}${if (fieldState.definition.required) " *" else ""}",
