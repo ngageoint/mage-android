@@ -24,7 +24,9 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.android.synthetic.main.view_more_bottom_sheet.view.*
+import mil.nga.giat.mage.form.FormState
 import mil.nga.giat.mage.form.FormViewModel
+import mil.nga.giat.mage.form.edit.dialog.FormReorderDialog
 import mil.nga.giat.mage.observation.edit.ObservationEditActivity
 import mil.nga.giat.mage.people.PeopleActivity
 
@@ -186,9 +188,28 @@ class ObservationViewActivity : AppCompatActivity() {
     val dialog = BottomSheetDialog(this)
     val view = layoutInflater.inflate(R.layout.view_more_bottom_sheet, null)
 
-    view.delete_button.setOnClickListener {
+    val formCount = viewModel.observationState.value?.forms?.value?.size ?: 0
+    view.reorder.visibility = if (formCount > 1) View.VISIBLE else View.GONE
+
+    view.delete.setOnClickListener {
       onDeleteObservation()
       dialog.dismiss()
+    }
+
+    view.edit.setOnClickListener {
+      onEditObservation()
+      dialog.dismiss()
+    }
+
+    view.reorder.setOnClickListener {
+      dialog.dismiss()
+      val reorderDialog = FormReorderDialog.newInstance()
+      reorderDialog.listener = object : FormReorderDialog.FormReorderDialogListener {
+        override fun onReorder(forms: List<FormState>) {
+          viewModel.reorderForms(forms)
+        }
+      }
+      reorderDialog.show(supportFragmentManager, "DIALOG_FORM_REORDER")
     }
 
     dialog.setContentView(view)
