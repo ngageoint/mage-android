@@ -48,15 +48,16 @@ fun FormEditContent(
   onAttachmentAction: ((AttachmentAction, Attachment, FieldState<*, *>) -> Unit)? = null,
   onMediaAction: ((MediaActionType, FormField<*>) -> Unit)? = null
 ) {
-  Card(
-    Modifier.fillMaxWidth()
-  ) {
+  Card(Modifier.fillMaxWidth()) {
     Column(
       Modifier
         .animateContentSize()
         .padding(horizontal = 16.dp)
     ) {
-      FormHeaderContent(formState) { formState.expanded.value = it }
+      FormHeaderContent(
+        modifier = Modifier.padding(vertical = 16.dp),
+        formState = formState
+      ) { formState.expanded.value = it }
 
       if (formState.expanded.value) {
         for (fieldState in formState.fields.sortedBy { it.definition.id }) {

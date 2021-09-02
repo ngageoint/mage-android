@@ -5,6 +5,7 @@ import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
@@ -36,16 +37,25 @@ fun FormContent(
       .fillMaxWidth()
       .padding(vertical = 8.dp)
   ) {
-    Column(
-      Modifier
-        .padding(horizontal = 16.dp)
-        .animateContentSize()
-    ) {
-      FormHeaderContent(formState) { formState.expanded.value = it }
+    Column(Modifier.animateContentSize()) {
+      FormHeaderContent(
+        modifier = Modifier.padding(16.dp),
+        formState = formState
+      ) { formState.expanded.value = it }
 
       if (formState.expanded.value) {
+        if (formState.fields.isNotEmpty()) {
+          Divider(Modifier.padding(bottom = 16.dp))
+        }
+
         for (fieldState in formState.fields.sortedBy { it.definition.id }) {
-          FieldContent(fieldState, onAttachmentClick)
+          FieldContent(
+            modifier = Modifier
+              .padding(bottom = 16.dp)
+              .padding(horizontal = 16.dp),
+            fieldState,
+            onAttachmentClick
+          )
         }
       }
     }
@@ -54,6 +64,7 @@ fun FormContent(
 
 @Composable
 fun FormHeaderContent(
+  modifier: Modifier = Modifier,
   formState: FormState,
   onToggleExpand: (Boolean) -> Unit
 ) {
@@ -67,12 +78,8 @@ fun FormHeaderContent(
     )
   )
 
-  Row {
-    Column(
-      Modifier
-        .weight(1f)
-        .padding(vertical = 16.dp)
-    ) {
+  Row(modifier = modifier) {
+    Column(Modifier.weight(1f)) {
       Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
@@ -82,8 +89,7 @@ fun FormHeaderContent(
           imageVector = Icons.Default.Description,
           contentDescription = "Form",
           tint = Color(android.graphics.Color.parseColor(formState.definition.hexColor)),
-          modifier = Modifier
-            .padding(end = 8.dp)
+          modifier = Modifier.padding(end = 8.dp)
         )
 
         CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
@@ -97,6 +103,7 @@ fun FormHeaderContent(
 
       FormHeaderContent(formState)
     }
+
     Column(Modifier.padding(top = 8.dp)) {
       CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.disabled) {
         IconButton(onClick = { onToggleExpand(!expanded) }) {
@@ -144,6 +151,7 @@ fun FormHeaderContent(
 
 @Composable
 fun FieldContent(
+  modifier: Modifier = Modifier,
   fieldState: FieldState<*, out FieldValue>,
   onAttachmentClick: ((Attachment) -> Unit)? = null
 ) {
@@ -164,7 +172,7 @@ fun FieldContent(
       AttachmentsFieldContent(fieldState, onAttachmentClick)
     }
     else -> {
-      StringFieldContent(fieldState)
+      StringFieldContent(modifier = modifier, fieldState)
     }
   }
 }
@@ -193,21 +201,25 @@ fun AttachmentsFieldContent(
 }
 
 @Composable
-fun StringFieldContent(fieldState: FieldState<*, out FieldValue>) {
+fun StringFieldContent(
+  modifier: Modifier = Modifier,
+  fieldState: FieldState<*, out FieldValue>
+) {
   val text = fieldText(fieldState.answer, LocalContext.current)
 
   if (text.isNotEmpty()) {
-    CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
-      Text(fieldState.definition.title, fontSize = 14.sp)
-    }
+    Column(modifier = modifier) {
+      CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
+        Text(fieldState.definition.title, fontSize = 14.sp)
+      }
 
-    CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.high) {
-      Text(
-        text,
-        fontSize = 16.sp,
-        style = MaterialTheme.typography.body1,
-        modifier = Modifier.padding(bottom = 16.dp)
-      )
+      CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.high) {
+        Text(
+          text,
+          fontSize = 16.sp,
+          style = MaterialTheme.typography.body1
+        )
+      }
     }
   }
 }
