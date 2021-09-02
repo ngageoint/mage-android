@@ -123,7 +123,13 @@ fun FieldEditContent(
     FieldType.EMAIL -> {
       TextEdit(
         modifier,
-        fieldState as EmailFieldState
+        fieldState as EmailFieldState,
+        icon = {
+          Icon(
+            imageVector = Icons.Outlined.Email,
+            contentDescription = "Email",
+          )
+        }
       ) {
         fieldState.answer = FieldValue.Text(it)
       }
@@ -152,7 +158,13 @@ fun FieldEditContent(
     FieldType.PASSWORD -> {
       TextEdit(
         modifier,
-        fieldState as TextFieldState
+        fieldState as TextFieldState,
+        icon = {
+          Icon(
+            imageVector = Icons.Outlined.Lock,
+            contentDescription = "Password",
+          )
+        }
       ) {
         fieldState.answer = FieldValue.Text(it)
       }
@@ -165,10 +177,30 @@ fun FieldEditContent(
         fieldState.answer = FieldValue.Text(it)
       }
     }
-    FieldType.TEXTAREA, FieldType.TEXTFIELD -> {
+    FieldType.TEXTFIELD -> {
       TextEdit(
         modifier,
-        fieldState as TextFieldState
+        fieldState as TextFieldState,
+        icon = {
+          Icon(
+            imageVector = Icons.Outlined.Title,
+            contentDescription = "Text",
+          )
+        }
+      ) {
+        fieldState.answer = FieldValue.Text(it)
+      }
+    }
+    FieldType.TEXTAREA -> {
+      TextEdit(
+        modifier,
+        fieldState as TextFieldState,
+        icon = {
+          Icon(
+            imageVector = Icons.Outlined.TextFields,
+            contentDescription = "Text",
+          )
+        }
       ) {
         fieldState.answer = FieldValue.Text(it)
       }
@@ -376,6 +408,7 @@ fun DateEdit(
 fun TextEdit(
   modifier: Modifier = Modifier,
   fieldState: FieldState<String, out FieldValue.Text>,
+  icon: @Composable (() -> Unit)? = null,
   onAnswer: (String) -> Unit,
 ) {
   val focusManager = LocalFocusManager.current
@@ -384,29 +417,6 @@ fun TextEdit(
     KeyboardType.Email
   } else {
     KeyboardType.Text
-  }
-
-  val icon: @Composable (() -> Unit) = if (fieldState.definition.type == FieldType.EMAIL) {
-    {
-      Icon(
-        imageVector = Icons.Outlined.Email,
-        contentDescription = "Email",
-      )
-    }
-  } else if (fieldState.definition.type == FieldType.PASSWORD) {
-    {
-      Icon(
-        imageVector = Icons.Outlined.Lock,
-        contentDescription = "Text",
-      )
-    }
-  } else {
-    {
-      Icon(
-        imageVector = Icons.Outlined.TextFields,
-        contentDescription = "Text",
-      )
-    }
   }
 
   Column(modifier) {
