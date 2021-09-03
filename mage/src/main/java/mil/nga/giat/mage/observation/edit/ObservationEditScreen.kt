@@ -220,17 +220,24 @@ fun ObservationEditContent(
   onDeleteForm: ((Int, FormState) -> Unit)? = null,
   onReorderForms: (() -> Unit)? = null
 ) {
+  val context = LocalContext.current
 
   if (observationState != null) {
     val forms by observationState.forms
     var initialized by remember { mutableStateOf(false) }
+    var previousForms by remember { mutableStateOf(forms) }
 
+    // TODO scroll to added element, not last
     LaunchedEffect(forms.size) {
-      if (initialized) {
-        listState.animateScrollToItem(forms.size + 1)
+      if (initialized && forms.size > previousForms.size) {
+        // find new form that was added, diff between forms and previous forms
+        val addedForm = forms.filterNot { previousForms.contains(it) }.first()
+        val scrollTo = forms.indexOf(addedForm) + 2 // account for 2 "header" items in list
+        listState.animateScrollToItem(scrollTo)
       }
 
       initialized = true
+      previousForms = forms
     }
 
     LazyColumn(
@@ -255,8 +262,8 @@ fun ObservationEditContent(
         )
       }
 
-      item {
-        if (isServerVersion5(LocalContext.current)) {
+      if (isServerVersion5(context)) {
+        item {
           val attachments by observationState.attachments
           AttachmentsViewContent_server5(attachments)
         }
