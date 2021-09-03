@@ -13,8 +13,6 @@ import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.snackbar.Snackbar
 import mil.nga.giat.mage.R
 import mil.nga.giat.mage.observation.AttachmentViewerActivity
-import mil.nga.giat.mage.observation.ImportantDialog
-import mil.nga.giat.mage.observation.ImportantRemoveDialog
 import mil.nga.giat.mage.sdk.datastore.observation.Attachment
 import mil.nga.giat.mage.sdk.datastore.user.Permission
 import mil.nga.giat.mage.sdk.datastore.user.User
@@ -81,12 +79,12 @@ class ObservationViewActivity : AppCompatActivity() {
 
   private fun onAction(action: ObservationAction) {
     when (action) {
-      ObservationAction.EDIT -> onEditObservation()
-      ObservationAction.FLAG -> onFlagObservation()
-      ObservationAction.FAVORITE -> onFavoriteObservation()
-      ObservationAction.FAVORITED_BY -> onFavoritedBy()
-      ObservationAction.DIRECTIONS -> onDirections()
-      ObservationAction.MORE -> onMore()
+      is ObservationAction.Edit -> onEditObservation()
+      is ObservationAction.Important -> onFlagObservation(action)
+      is ObservationAction.Favorite -> onFavoriteObservation()
+      is ObservationAction.FavoriteBy -> onFavoritedBy()
+      is ObservationAction.Directions -> onDirections()
+      is ObservationAction.More -> onMore()
     }
   }
 
@@ -107,48 +105,12 @@ class ObservationViewActivity : AppCompatActivity() {
     startActivity(intent)
   }
 
-  private fun onFlagObservation() {
-    val important = viewModel.observationState.value?.important?.value
-    if (important != null) {
-      val dialog = BottomSheetDialog(this)
-      val view = layoutInflater.inflate(R.layout.view_important_bottom_sheet, null)
-      view.findViewById<View>(R.id.update_button).setOnClickListener {
-        onUpdateFlag()
-        dialog.dismiss()
-      }
-      view.findViewById<View>(R.id.remove_button).setOnClickListener {
-        onRemoveFlag()
-        dialog.dismiss()
-      }
-      dialog.setContentView(view)
-      dialog.show()
-    } else {
-      val dialog = ImportantDialog.newInstance(important)
-      dialog.setOnImportantListener { description: String? ->
-        viewModel.flagObservation(description)
-      }
-
-      dialog.show(supportFragmentManager, "OBSERVATION_IMPORTANT")
-    }
-  }
-
-  private fun onUpdateFlag() {
-    val important = viewModel.observationState.value?.important?.value
-    val dialog = ImportantDialog.newInstance(important?.description)
-    dialog.setOnImportantListener { description: String? ->
-      viewModel.flagObservation(description)
-    }
-
-    dialog.show(supportFragmentManager, "OBSERVATION_IMPORTANT")
-  }
-
-  private fun onRemoveFlag() {
-    val dialog = ImportantRemoveDialog()
-    dialog.setOnRemoveImportantListener {
+  private fun onFlagObservation(action: ObservationAction.Important) {
+    if (action.type == ObservationAction.Important.Type.FLAG) {
+      viewModel.flagObservation(action.description)
+    } else if (action.type == ObservationAction.Important.Type.REMOVE) {
       viewModel.unflagObservation()
     }
-
-    dialog.show(supportFragmentManager, "OBSERVATION_IMPORTANT")
   }
 
   private fun onFavoritedBy() {

@@ -1,8 +1,9 @@
 package mil.nga.giat.mage.observation.view
 
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -19,10 +20,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.capitalize
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import mil.nga.giat.mage._server5.form.view.AttachmentsViewContent_server5
 import mil.nga.giat.mage.coordinate.CoordinateFormatter
 import mil.nga.giat.mage.form.FormState
@@ -39,8 +39,17 @@ import mil.nga.giat.mage.ui.theme.*
 import mil.nga.giat.mage.utils.DateFormatFactory
 import java.util.*
 
-enum class ObservationAction {
-  EDIT, FLAG, FAVORITE, FAVORITED_BY, DIRECTIONS, MORE
+sealed class ObservationAction() {
+  class Edit: ObservationAction()
+  class Favorite: ObservationAction()
+  class FavoriteBy: ObservationAction()
+  class Directions: ObservationAction()
+  class More: ObservationAction()
+  data class Important(val type: Type, val description: String? = null): ObservationAction() {
+    enum class Type {
+      FLAG, REMOVE, CANCEL
+    }
+  }
 }
 
 @Composable
@@ -74,7 +83,7 @@ fun ObservationViewScreen(
       floatingActionButton = {
         if (observationState?.permissions?.contains(ObservationPermission.EDIT) == true) {
           FloatingActionButton(
-            onClick = { onAction?.invoke(ObservationAction.EDIT) }
+            onClick = { onAction?.invoke(ObservationAction.Edit()) }
           ) {
             Icon(
               Icons.Default.Edit,
@@ -324,7 +333,7 @@ fun ObservationViewHeaderContent(
               .padding(end = 8.dp)
           )
 
-          Column() {
+          Column {
             CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
               Text(
                 text = "Flagged by ${important.user}".uppercase(Locale.ROOT),
@@ -442,9 +451,99 @@ fun ObservationViewHeaderContent(
 
       Divider(Modifier.fillMaxWidth())
 
+      Column(Modifier.fillMaxWidth().animateContentSize()) {
+        if (observationState?.editImportantState?.edit == true) {
+          ImportantEditContent(observationState = observationState,
+            onAnswer = {
+              observationState.editImportantState.description = it
+            },
+            onAction = {
+              if (it.type != ObservationAction.Important.Type.CANCEL) {
+                onAction?.invoke(it)
+              }
+
+              observationState.editImportantState.edit = false
+            }
+          )
+        }
+      }
+
       ObservationActions(observationState) { onAction?.invoke(it) }
     }
   }
+}
+
+@Composable
+fun ImportantEditContent(
+  observationState: ObservationState,
+  onAnswer: (String) -> Unit,
+  onAction: ((ObservationAction.Important) -> Unit)? = null
+) {
+  val focusManager = LocalFocusManager.current
+
+  Column(Modifier.padding(16.dp)) {
+    TextField(
+      value = observationState.editImportantState.description ?: "",
+      onValueChange = onAnswer,
+      label = { Text("Important Description") },
+      keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
+      modifier = Modifier.fillMaxWidth()
+    )
+
+    if (observationState.important.value != null) {
+      Row(
+        horizontalArrangement = Arrangement.End,
+        modifier = Modifier
+          .fillMaxWidth()
+          .padding(top = 16.dp)
+      ) {
+        TextButton(
+          onClick = { onAction?.invoke(ObservationAction.Important(ObservationAction.Important.Type.REMOVE)) },
+          modifier = Modifier.padding(end = 8.dp)
+        ) {
+          Text("REMOVE")
+        }
+
+        Button(
+          onClick = {
+            val action = ObservationAction.Important(
+              ObservationAction.Important.Type.FLAG,
+              observationState.editImportantState.description)
+            onAction?.invoke(action)
+          },
+        ) {
+          Text("UPDATE")
+        }
+      }
+    } else {
+      Row(
+        horizontalArrangement = Arrangement.End,
+        modifier = Modifier
+          .fillMaxWidth()
+          .padding(top = 16.dp)
+      ) {
+        TextButton(
+          onClick = { onAction?.invoke(ObservationAction.Important(ObservationAction.Important.Type.CANCEL)) },
+          modifier = Modifier.padding(end = 8.dp)
+        ) {
+          Text("CANCEL")
+        }
+
+        Button(
+          onClick = {
+            val action = ObservationAction.Important(
+              ObservationAction.Important.Type.FLAG,
+              observationState.editImportantState.description)
+            onAction?.invoke(action)
+          },
+        ) {
+          Text("FLAG AS IMPORTANT")
+        }
+      }
+    }
+  }
+
+  Divider()
 }
 
 @Composable
@@ -464,7 +563,7 @@ fun ObservationActions(
       modifier = Modifier
         .padding(start = 8.dp)
         .clip(MaterialTheme.shapes.small)
-        .clickable { onAction?.invoke(ObservationAction.FAVORITED_BY) }
+        .clickable { onAction?.invoke(ObservationAction.FavoriteBy()) }
         .padding(8.dp)
     ) {
       CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.disabled) {
@@ -475,8 +574,7 @@ fun ObservationActions(
       }
     }
     
-    Row() {
-
+    Row {
       if (observationState?.permissions?.contains(ObservationPermission.FLAG) == true) {
         val isFlagged = observationState.important.value != null
         val flagTint = if (isFlagged) {
@@ -487,7 +585,9 @@ fun ObservationActions(
 
         IconButton(
           modifier = Modifier.padding(end = 8.dp),
-          onClick = { onAction?.invoke(ObservationAction.FLAG) }
+          onClick = {
+            observationState.editImportantState.edit = !observationState.editImportantState.edit
+          }
         ) {
           Icon(
             imageVector = if (isFlagged) Icons.Default.Flag else Icons.Outlined.Flag,
@@ -506,7 +606,7 @@ fun ObservationActions(
 
       IconButton(
         modifier = Modifier.padding(end = 8.dp),
-        onClick = { onAction?.invoke(ObservationAction.FAVORITE) }
+        onClick = { onAction?.invoke(ObservationAction.Favorite()) }
       ) {
         Icon(
           imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Outlined.FavoriteBorder,
@@ -517,7 +617,7 @@ fun ObservationActions(
 
       IconButton(
         modifier = Modifier.padding(end = 8.dp),
-        onClick = { onAction?.invoke(ObservationAction.DIRECTIONS) }
+        onClick = { onAction?.invoke(ObservationAction.Directions()) }
       ) {
         Icon(
           imageVector = Icons.Outlined.Directions,
@@ -529,7 +629,7 @@ fun ObservationActions(
       if (observationState?.permissions?.contains(ObservationPermission.DELETE) == true) {
         IconButton(
           modifier = Modifier.padding(end = 8.dp),
-          onClick = { onAction?.invoke(ObservationAction.MORE) }
+          onClick = { onAction?.invoke(ObservationAction.More()) }
         ) {
           Icon(
             imageVector = Icons.Default.MoreVert,

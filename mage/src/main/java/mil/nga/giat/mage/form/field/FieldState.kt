@@ -1,6 +1,5 @@
 package mil.nga.giat.mage.form.field
 
-import android.content.Context
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -8,8 +7,6 @@ import mil.nga.giat.mage.form.*
 import mil.nga.giat.mage.observation.ObservationLocation
 import mil.nga.giat.mage.sdk.datastore.observation.Attachment
 import mil.nga.giat.mage.sdk.utils.GeometryUtility
-import mil.nga.giat.mage.utils.DateFormatFactory
-import java.util.*
 
 open class FieldState<F, T : FieldValue> (
   val definition: FormField<F>,

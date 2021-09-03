@@ -1,13 +1,10 @@
 package mil.nga.giat.mage.form.field
-import android.content.Context
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import mil.nga.giat.mage.observation.ObservationLocation
 import mil.nga.giat.mage.sdk.utils.GeometryUtility
 import mil.nga.giat.mage.sdk.utils.ISO8601DateFormatFactory
-import mil.nga.giat.mage.utils.DateFormatFactory
 import java.io.Serializable
-import java.util.*
 
 class Media {
   companion object {
