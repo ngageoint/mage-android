@@ -224,19 +224,17 @@ fun ObservationEditContent(
 
   if (observationState != null) {
     val forms by observationState.forms
-    var initialized by remember { mutableStateOf(false) }
-    var previousForms by remember { mutableStateOf(forms) }
+    var previousForms by remember { mutableStateOf<List<FormState>>(listOf()) }
 
     // TODO scroll to added element, not last
     LaunchedEffect(forms.size) {
-      if (initialized && forms.size > previousForms.size) {
+      if (forms.size > previousForms.size) {
         // find new form that was added, diff between forms and previous forms
         val addedForm = forms.filterNot { previousForms.contains(it) }.first()
         val scrollTo = forms.indexOf(addedForm) + 2 // account for 2 "header" items in list
         listState.animateScrollToItem(scrollTo)
       }
 
-      initialized = true
       previousForms = forms
     }
 
