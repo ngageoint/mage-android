@@ -48,6 +48,7 @@ import mil.nga.giat.mage.form.FormViewModel
 import mil.nga.giat.mage.sdk.datastore.user.EventHelper
 import mil.nga.giat.mage.sdk.gson.serializer.ObservationSerializer
 import mil.nga.giat.mage.sdk.jackson.deserializer.ObservationDeserializer
+import mil.nga.sf.Point
 import kotlin.collections.ArrayList
 
 @AndroidEntryPoint
@@ -83,6 +84,9 @@ open class ObservationEditActivity : AppCompatActivity() {
   private var currentMediaPath: String? = null
   private var attachmentMediaAction: MediaAction? = null
 
+  private var defaultMapLatLng = LatLng(0.0, 0.0)
+  private var defaultMapZoom: Float = 0f
+
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
 
@@ -92,8 +96,8 @@ open class ObservationEditActivity : AppCompatActivity() {
       ViewModelProvider(this).get(FormViewModel::class.java)
     }
 
-    val defaultMapLatLng = intent.getParcelableExtra(INITIAL_LOCATION) ?: LatLng(0.0, 0.0)
-    val defaultMapZoom = intent.getFloatExtra(INITIAL_ZOOM, 0.0f)
+    defaultMapLatLng = intent.getParcelableExtra(INITIAL_LOCATION) ?: LatLng(0.0, 0.0)
+    defaultMapZoom = intent.getFloatExtra(INITIAL_ZOOM, 0.0f)
 
     val draftObservation = savedInstanceState?.getString(DRAFT_OBSERVATION_JSON)
     if (draftObservation != null) {
@@ -463,7 +467,13 @@ open class ObservationEditActivity : AppCompatActivity() {
       }
       is GeometryFieldState -> {
         val clearable = fieldState.definition.name != viewModel.observationState.value?.geometryFieldState?.definition?.name
-        val dialog = GeometryFieldDialog.newInstance(fieldState.definition.title, fieldState.answer?.location, clearable)
+        val center = viewModel.observation.value?.geometry?.centroid ?: Point(0.0, 0.0)
+        val dialog = GeometryFieldDialog.newInstance(
+          title = fieldState.definition.title,
+          location = fieldState.answer?.location,
+          mapCenter = LatLng(center.y, center.x),
+          clearable = clearable)
+
         dialog.listener = object : GeometryFieldDialog.GeometryFieldDialogListener {
           override fun onLocation(location: ObservationLocation?) {
             fieldState.answer = if (location != null) FieldValue.Location(ObservationLocation(location)) else null

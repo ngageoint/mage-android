@@ -40,6 +40,7 @@ import mil.nga.giat.mage.observation.InputFilterDecimal
 import mil.nga.giat.mage.observation.MapShapeObservation
 import mil.nga.giat.mage.observation.ObservationLocation
 import mil.nga.giat.mage.observation.ObservationShapeStyle
+import mil.nga.giat.mage.observation.edit.ObservationEditActivity
 import mil.nga.mgrs.MGRS
 import mil.nga.mgrs.gzd.MGRSTileProvider
 import mil.nga.sf.*
@@ -104,6 +105,7 @@ class GeometryFieldDialog : DialogFragment(),
     companion object {
         private const val TITLE_KEY = "TITLE_KEY"
         private const val LOCATION_KEY = "LOCATION_KEY"
+        private const val INITIAL_LOCATION = "INITIAL_LOCATION"
         private const val CLEARABLE_KEY = "CLEARABLE_KEY"
         private const val MARKER_BITMAP_EXTRA = "MARKER_BITMAP"
         private const val NEW_OBSERVATION_EXTRA = "NEW_OBSERVATION"
@@ -113,12 +115,13 @@ class GeometryFieldDialog : DialogFragment(),
         private const val MGRS_COORDINATE_TAB_POSITION = 1
 
         @JvmOverloads
-        fun newInstance(title: String, location: ObservationLocation?, clearable: Boolean = false): GeometryFieldDialog {
+        fun newInstance(title: String, location: ObservationLocation?, mapCenter: LatLng? = null, clearable: Boolean = false): GeometryFieldDialog {
             val fragment = GeometryFieldDialog()
             val bundle = Bundle()
             bundle.putString(TITLE_KEY, title)
             bundle.putParcelable(LOCATION_KEY, location)
             bundle.putBoolean(CLEARABLE_KEY, clearable)
+            bundle.putParcelable(INITIAL_LOCATION, mapCenter)
 
             fragment.arguments = bundle
 
@@ -134,7 +137,12 @@ class GeometryFieldDialog : DialogFragment(),
         title = requireArguments().getString(TITLE_KEY, "Location")
         clearable = requireArguments().getBoolean(CLEARABLE_KEY)
 
-        val location = requireArguments().getParcelable(LOCATION_KEY) as? ObservationLocation
+        val initialLocation: LatLng? = arguments?.getParcelable(INITIAL_LOCATION)
+        if (initialLocation != null) {
+            this.location = ObservationLocation(ObservationLocation.MANUAL_PROVIDER, initialLocation)
+        }
+
+        val location = arguments?.getParcelable(LOCATION_KEY) as? ObservationLocation
         if (location != null) {
             this.location = location
         }
