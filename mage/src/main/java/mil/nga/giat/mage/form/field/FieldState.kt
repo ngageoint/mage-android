@@ -1,5 +1,6 @@
 package mil.nga.giat.mage.form.field
 
+import android.content.Context
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -7,6 +8,7 @@ import mil.nga.giat.mage.form.*
 import mil.nga.giat.mage.observation.ObservationLocation
 import mil.nga.giat.mage.sdk.datastore.observation.Attachment
 import mil.nga.giat.mage.sdk.utils.GeometryUtility
+import mil.nga.giat.mage.utils.DateFormatFactory
 import java.util.*
 
 open class FieldState<F, T : FieldValue> (
@@ -77,7 +79,7 @@ open class FieldState<F, T : FieldValue> (
         }
         FieldType.DATE -> {
           val fieldState = DateFieldState(fieldDefinition as DateFormField)
-          val date = default as? Date ?: value as? Date
+          val date = FieldValue.Date.parseValue(default ?: value)
           if (date != null) {
             fieldState.answer = FieldValue.Date(date)
           }
