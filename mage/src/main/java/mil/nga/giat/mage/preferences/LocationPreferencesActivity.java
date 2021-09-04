@@ -16,6 +16,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CompoundButton;
 
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SwitchCompat;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.ContextCompat;
@@ -24,14 +25,14 @@ import androidx.preference.PreferenceFragmentCompat;
 
 import javax.inject.Inject;
 
-import dagger.android.support.AndroidSupportInjection;
-import dagger.android.support.DaggerAppCompatActivity;
+import dagger.hilt.android.AndroidEntryPoint;
+import dagger.hilt.android.qualifiers.ApplicationContext;
 import mil.nga.giat.mage.MageApplication;
 import mil.nga.giat.mage.R;
-import mil.nga.giat.mage.dagger.module.ApplicationContext;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 
-public class LocationPreferencesActivity extends DaggerAppCompatActivity {
+@AndroidEntryPoint
+public class LocationPreferencesActivity extends AppCompatActivity {
 
     private final LocationPreferenceFragment preference = new LocationPreferenceFragment();
 
@@ -39,19 +40,15 @@ public class LocationPreferencesActivity extends DaggerAppCompatActivity {
     protected MageApplication application;
 
     @Inject
-    protected @ApplicationContext Context context;
+    protected @ApplicationContext
+    Context context;
 
     private Toolbar toolbar;
 
+    @AndroidEntryPoint
     public static class LocationPreferenceFragment extends PreferenceFragmentCompat {
         @Inject
         protected @ApplicationContext Context context;
-
-        @Override
-        public void onCreate(Bundle savedInstanceState) {
-            super.onCreate(savedInstanceState);
-            AndroidSupportInjection.inject(this);
-        }
 
         @Override
         public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {

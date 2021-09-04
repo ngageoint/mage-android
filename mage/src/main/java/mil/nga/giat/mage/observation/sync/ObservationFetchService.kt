@@ -5,15 +5,16 @@ import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.os.IBinder
-import dagger.android.AndroidInjection
+import dagger.hilt.android.AndroidEntryPoint
+import dagger.hilt.android.qualifiers.ApplicationContext
 import mil.nga.giat.mage.R
-import mil.nga.giat.mage.dagger.module.ApplicationContext
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
+@AndroidEntryPoint
 class ObservationFetchService : Service(), SharedPreferences.OnSharedPreferenceChangeListener  {
 
     @Inject @field:ApplicationContext
@@ -33,8 +34,6 @@ class ObservationFetchService : Service(), SharedPreferences.OnSharedPreferenceC
 
     override fun onCreate() {
         super.onCreate()
-
-        AndroidInjection.inject(this)
 
         observationFetchFrequency = getObservationFetchFrequency()
         preferences.registerOnSharedPreferenceChangeListener(this);

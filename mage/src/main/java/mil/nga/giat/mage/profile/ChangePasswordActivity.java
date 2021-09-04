@@ -10,6 +10,7 @@ import android.view.MenuItem;
 import android.view.View;
 
 import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
@@ -24,7 +25,7 @@ import java.util.List;
 
 import javax.inject.Inject;
 
-import dagger.android.support.DaggerAppCompatActivity;
+import dagger.hilt.android.AndroidEntryPoint;
 import mil.nga.giat.mage.MageApplication;
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.login.LoginActivity;
@@ -41,7 +42,8 @@ import retrofit2.Response;
  * Created by wnewman on 12/14/17.
  */
 
-public class ChangePasswordActivity extends DaggerAppCompatActivity {
+@AndroidEntryPoint
+public class ChangePasswordActivity extends AppCompatActivity {
 
     private static final String LOG_NAME = ChangePasswordActivity.class.getName();
 
@@ -59,7 +61,7 @@ public class ChangePasswordActivity extends DaggerAppCompatActivity {
     private TextInputEditText newPasswordConfirm;
     private TextInputLayout newPasswordConfirmLayout;
 
-    private Zxcvbn zxcvbn = new Zxcvbn();
+    private final Zxcvbn zxcvbn = new Zxcvbn();
 
     @Override
     public void onCreate(Bundle savedInstanceState) {

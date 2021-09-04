@@ -13,12 +13,13 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.Observer
-import dagger.android.AndroidInjection
+import dagger.hilt.android.AndroidEntryPoint
 import mil.nga.giat.mage.MageApplication
 import mil.nga.giat.mage.R
 import java.util.concurrent.*
 import javax.inject.Inject
 
+@AndroidEntryPoint
 open class LocationReportingService : LifecycleService(), Observer<Location>, LocationSaveTask.LocationDatabaseListener, LocationPushTask.LocationSyncListener, SharedPreferences.OnSharedPreferenceChangeListener {
 
     @Inject
@@ -43,8 +44,6 @@ open class LocationReportingService : LifecycleService(), Observer<Location>, Lo
 
     override fun onCreate() {
         super.onCreate()
-
-        AndroidInjection.inject(this)
 
         preferences.registerOnSharedPreferenceChangeListener(this)
 

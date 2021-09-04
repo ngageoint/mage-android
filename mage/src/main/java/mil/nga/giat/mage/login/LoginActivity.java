@@ -20,6 +20,7 @@ import android.widget.EditText;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.lifecycle.ViewModelProvider;
@@ -38,7 +39,7 @@ import java.util.TreeMap;
 
 import javax.inject.Inject;
 
-import dagger.android.support.DaggerAppCompatActivity;
+import dagger.hilt.android.AndroidEntryPoint;
 import mil.nga.giat.mage.LandingActivity;
 import mil.nga.giat.mage.MageApplication;
 import mil.nga.giat.mage.R;
@@ -62,12 +63,8 @@ import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
 import mil.nga.giat.mage.sdk.utils.UserUtility;
 
-/**
- * The login screen
- *
- * @author wiedemanns
- */
-public class LoginActivity extends DaggerAppCompatActivity {
+@AndroidEntryPoint
+public class LoginActivity extends AppCompatActivity {
 
    public static final String EXTRA_CONTINUE_SESSION = "CONTINUE_SESSION";
    public static final String EXTRA_CONTINUE_SESSION_WHILE_USING = "CONTINUE_SESSION_WHILE_USING";
@@ -78,8 +75,6 @@ public class LoginActivity extends DaggerAppCompatActivity {
    @Inject
    protected SharedPreferences preferences;
 
-   @Inject
-   protected ViewModelProvider.Factory viewModelFactory;
    private LoginViewModel viewModel;
 
    private TextView mServerURL;
@@ -197,7 +192,7 @@ public class LoginActivity extends DaggerAppCompatActivity {
       // Setup login based on last api pull
       configureLogin();
 
-      viewModel = new ViewModelProvider(this, viewModelFactory).get(LoginViewModel.class);
+      viewModel = new ViewModelProvider(this).get(LoginViewModel.class);
       viewModel.getApiStatus().observe(this, valid -> observeApi());
 
       viewModel.getAuthenticationState().observe(this, this::observeAuthenticationState);

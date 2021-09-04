@@ -3,12 +3,13 @@ package mil.nga.giat.mage._server5.login
 import android.os.Bundle
 import android.util.Patterns
 import android.view.View
-import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.android.synthetic.main.activity_signup.*
 import mil.nga.giat.mage.login.SignupActivity
 import mil.nga.giat.mage.login.SignupViewModel
 
+@AndroidEntryPoint
 class SignupActivity_server5: SignupActivity() {
 
    protected lateinit var viewModel_server5: SignupViewModel_server5
@@ -19,9 +20,9 @@ class SignupActivity_server5: SignupActivity() {
       captcha_view.visibility = View.GONE
       captcha_text_layout.visibility = View.GONE
 
-      viewModel_server5 = ViewModelProvider(this, viewModelFactory).get(SignupViewModel_server5::class.java)
-      viewModel_server5.signupState.observe(this, Observer { state: SignupViewModel.SignupState -> onSignupState(state) })
-      viewModel_server5.signupStatus.observe(this, Observer { status: SignupViewModel.SignupStatus? -> onSignup(status) })
+      viewModel_server5 = ViewModelProvider(this).get(SignupViewModel_server5::class.java)
+      viewModel_server5.signupState.observe(this, { state: SignupViewModel.SignupState -> onSignupState(state) })
+      viewModel_server5.signupStatus.observe(this, { status: SignupViewModel.SignupStatus? -> onSignup(status) })
    }
 
    override fun signup() {

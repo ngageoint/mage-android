@@ -13,22 +13,19 @@ import android.view.KeyEvent
 import android.view.View
 import android.view.inputmethod.InputMethodManager
 import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.ColorUtils
-import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
-import dagger.android.support.DaggerAppCompatActivity
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.android.synthetic.main.activity_signup.*
 import kotlinx.android.synthetic.main.mage_header.*
 import mil.nga.giat.mage.R
 import mil.nga.giat.mage.login.SignupViewModel.*
-import javax.inject.Inject
 
+@AndroidEntryPoint
+open class SignupActivity : AppCompatActivity() {
 
-open class SignupActivity : DaggerAppCompatActivity() {
-
-	@Inject
-   lateinit var viewModelFactory: ViewModelProvider.Factory
    protected lateinit var viewModel: SignupViewModel
 
    public override fun onCreate(savedInstanceState: Bundle?) {
@@ -75,11 +72,11 @@ open class SignupActivity : DaggerAppCompatActivity() {
          }
       }
 
-      viewModel = ViewModelProvider(this, viewModelFactory).get(SignupViewModel::class.java)
-      viewModel.signupState.observe(this, Observer { state: SignupState -> onSignupState(state) })
-      viewModel.signupStatus.observe(this, Observer { status: SignupStatus? -> onSignup(status) })
-      viewModel.captcha.observe(this, Observer { captcha: String? -> onCaptcha(captcha) })
-      viewModel.captchaState.observe(this, Observer { state: CaptchaState -> onCaptchaState(state) })
+      viewModel = ViewModelProvider(this).get(SignupViewModel::class.java)
+      viewModel.signupState.observe(this, { state: SignupState -> onSignupState(state) })
+      viewModel.signupStatus.observe(this, { status: SignupStatus? -> onSignup(status) })
+      viewModel.captcha.observe(this, { captcha: String? -> onCaptcha(captcha) })
+      viewModel.captchaState.observe(this, { state: CaptchaState -> onCaptchaState(state) })
 
    }
 

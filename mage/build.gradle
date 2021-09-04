@@ -84,13 +84,6 @@ android {
         buildConfigField "String", "SOURCE_REFSPEC", $/"${project.sourceRefspec}"/$
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
-
-        //TODO: remove this after migration to Hilt
-        javaCompileOptions {
-            annotationProcessorOptions {
-                arguments += ["dagger.hilt.disableModulesHaveInstallInCheck": "true"]
-            }
-        }
     }
 
     signingConfigs {
@@ -155,7 +148,6 @@ dependencies {
     ext {
         google_play_services_version = '17.0.1'
         lifecycle_version= '2.2.0'
-        dagger_version = '2.35.1'
         work_version = '1.0.0'
     }
 
@@ -185,10 +177,6 @@ dependencies {
         exclude group: 'com.google.guava', module: 'listenablefuture'
     }
 
-    implementation "com.google.dagger:dagger:$dagger_version"
-    implementation "com.google.dagger:dagger-android-support:$dagger_version"
-    kapt "com.google.dagger:dagger-compiler:$dagger_version"
-    kapt "com.google.dagger:dagger-android-processor:$dagger_version"
     implementation 'com.google.dagger:hilt-android:2.38.1'
     kapt 'com.google.dagger:hilt-compiler:2.38.1'
 

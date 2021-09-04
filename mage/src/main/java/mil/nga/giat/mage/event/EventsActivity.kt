@@ -5,10 +5,11 @@ import android.os.Bundle
 import android.preference.PreferenceManager
 import android.util.Log
 import android.view.View
+import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SearchView
 import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.LinearLayoutManager
-import dagger.android.support.DaggerAppCompatActivity
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.android.synthetic.main.activity_events.*
 import mil.nga.giat.mage.LandingActivity
 import mil.nga.giat.mage.MageApplication
@@ -21,7 +22,8 @@ import mil.nga.giat.mage.sdk.login.RecentEventTask
 import java.util.*
 import javax.inject.Inject
 
-class EventsActivity : DaggerAppCompatActivity(), EventsFetchFragment.EventsFetchListener {
+@AndroidEntryPoint
+class EventsActivity : AppCompatActivity(), EventsFetchFragment.EventsFetchListener {
 
     companion object {
         private val LOG_NAME = EventsActivity::class.java.name

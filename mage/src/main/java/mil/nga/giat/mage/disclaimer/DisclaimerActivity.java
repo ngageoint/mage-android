@@ -9,15 +9,18 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.widget.TextView;
 
+import androidx.appcompat.app.AppCompatActivity;
+
 import javax.inject.Inject;
 
-import dagger.android.support.DaggerAppCompatActivity;
+import dagger.hilt.android.AndroidEntryPoint;
 import mil.nga.giat.mage.MageApplication;
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.event.EventsActivity;
 import mil.nga.giat.mage.login.LoginActivity;
 
-public class DisclaimerActivity extends DaggerAppCompatActivity {
+@AndroidEntryPoint
+public class DisclaimerActivity extends AppCompatActivity {
 
 	@Inject
 	protected MageApplication application;
