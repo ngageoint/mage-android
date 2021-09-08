@@ -215,128 +215,125 @@ public class ObservationHelper extends DaoHelper<Observation> implements IEventD
 	@Override
 	public Observation update(final Observation observation) throws ObservationException {
 		Log.i(LOG_NAME, "Updating observation w/ id: " + observation.getId());
-		Observation updatedObservation = null;
+		Observation updatedObservation;
 		try {
-			updatedObservation = observationDao.callBatchTasks(new Callable<Observation>() {
-                @Override
-                public Observation call() throws Exception {
-					// set all the ids as needed
-					Observation oldObservation = read(observation.getId());
+			updatedObservation = observationDao.callBatchTasks(() -> {
+				// set all the ids as needed
+				Observation oldObservation = read(observation.getId());
 
-					// if the observation is dirty, set the last_modified date!
-					// FIXME this is a server property and should not be set by the client,
-					// investigate why we are setting this
-					if (observation.isDirty()) {
-						observation.setLastModified(new Date());
-					}
-
-					ObservationImportant important = observation.getImportant();
-					ObservationImportant oldImportant = oldObservation.getImportant();
-					if (oldImportant != null && oldImportant.isDirty()) {
-						observation.setImportant(oldImportant);
-					} else {
-						if (important != null) {
-							if (oldImportant != null) {
-								important.setId(oldImportant.getId());
-							}
-							observationImportantDao.createOrUpdate(important);
-						} else {
-							if (oldImportant != null) {
-								observationImportantDao.deleteById(oldImportant.getId());
-							}
-						}
-					}
-
-					observationDao.update(observation);
-
-					// TODO might not need to delete all forms/properties when server sets a unique form id
-					// Delete all forms for this observation and all properties
-					for (ObservationForm form : oldObservation.getForms()) {
-						for (ObservationProperty property : form.getProperties()) {
-							observationPropertyDao.deleteById(property.getId());
-						}
-
-						observationFormDao.deleteById(form.getId());
-					}
-
-					for (ObservationForm form : observation.getForms()) {
-						form.setObservation(observation);
-						observationFormDao.createOrUpdate(form);
-
-						for (ObservationProperty property : form.getProperties()) {
-							property.setObservationForm(form);
-							observationPropertyDao.createOrUpdate(property);
-						}
-					}
-
-					Map<String, ObservationFavorite> favorites = observation.getFavoritesMap();
-					Map<String, ObservationFavorite> oldFavorites = oldObservation.getFavoritesMap();
-					Collection<String> commonFavorites = Sets.intersection(favorites.keySet(), oldFavorites.keySet());
-
-					// Map database ids from old properties to new properties
-					for (String favoriteKey : commonFavorites) {
-						favorites.get(favoriteKey).setId(oldFavorites.get(favoriteKey).getId());
-					}
-
-					for (ObservationFavorite favorite : favorites.values()) {
-						ObservationFavorite oldFavorite = oldFavorites.get(favorite.getUserId());
-						// only update favorite if local is not dirty
-						if (oldFavorite == null || !oldFavorite.isDirty()) {
-							favorite.setObservation(observation);
-							observationFavoriteDao.createOrUpdate(favorite);
-						}
-					}
-
-					// Remove any favorites that existed in the old observation but do not exist
-					// in the new observation.
-					for (String favorite : Sets.difference(oldFavorites.keySet(), favorites.keySet())) {
-						// Only delete favorites that are not dirty
-						if (!oldFavorites.get(favorite).isDirty()) {
-							observationFavoriteDao.deleteById(oldFavorites.get(favorite).getId());
-						}
-					}
-
-					Log.i(LOG_NAME, "Observation attachments " + observation.getAttachments().size());
-
-					for (Attachment oldAttachment : oldObservation.getAttachments()) {
-						Attachment found = null;
-						for (Attachment attachment : observation.getAttachments()) {
-							if (attachment.getRemoteId().equals(oldAttachment.getRemoteId())) {
-								found = attachment;
-								attachment.setId(oldAttachment.getId());
-							}
-						}
-
-						// if no longer in attachments array response from server, remove it
-						if (!Compatibility.Companion.isServerVersion5(mApplicationContext)) {
-							if (found == null) {
-								AttachmentHelper.getInstance(mApplicationContext).delete(oldAttachment);
-							}
-						}
-					}
-
-					for (Attachment attachment : observation.getAttachments()) {
-						try {
-							attachment.setObservation(observation);
-							AttachmentHelper.getInstance(mApplicationContext).create(attachment);
-						} catch (Exception e) {
-							throw new ObservationException("There was a problem creating/updating the observations attachment: " + attachment + ".", e);
-						}
-					}
-
-					observationDao.refresh(observation);
-
-					if (observation.getRemoteId() != null) {
-						for (Attachment attachment : observation.getAttachments()) {
-							if (attachment.isDirty()) {
-								AttachmentHelper.getInstance(mApplicationContext).uploadableAttachment(attachment);
-							}
-						}
-					}
-
-					return observation;
+				// if the observation is dirty, set the last_modified date!
+				// FIXME this is a server property and should not be set by the client,
+				// investigate why we are setting this
+				if (observation.isDirty()) {
+					observation.setLastModified(new Date());
 				}
-            });
+
+				ObservationImportant important = observation.getImportant();
+				ObservationImportant oldImportant = oldObservation.getImportant();
+				if (oldImportant != null && oldImportant.isDirty()) {
+					observation.setImportant(oldImportant);
+				} else {
+					if (important != null) {
+						if (oldImportant != null) {
+							important.setId(oldImportant.getId());
+						}
+						observationImportantDao.createOrUpdate(important);
+					} else {
+						if (oldImportant != null) {
+							observationImportantDao.deleteById(oldImportant.getId());
+						}
+					}
+				}
+
+				observationDao.update(observation);
+
+				// TODO might not need to delete all forms/properties when server sets a unique form id
+				// Delete all forms for this observation and all properties
+				for (ObservationForm form : oldObservation.getForms()) {
+					for (ObservationProperty property : form.getProperties()) {
+						observationPropertyDao.deleteById(property.getId());
+					}
+
+					observationFormDao.deleteById(form.getId());
+				}
+
+				for (ObservationForm form : observation.getForms()) {
+					form.setObservation(observation);
+					observationFormDao.createOrUpdate(form);
+
+					for (ObservationProperty property : form.getProperties()) {
+						property.setObservationForm(form);
+						observationPropertyDao.createOrUpdate(property);
+					}
+				}
+
+				Map<String, ObservationFavorite> favorites = observation.getFavoritesMap();
+				Map<String, ObservationFavorite> oldFavorites = oldObservation.getFavoritesMap();
+				Collection<String> commonFavorites = Sets.intersection(favorites.keySet(), oldFavorites.keySet());
+
+				// Map database ids from old properties to new properties
+				for (String favoriteKey : commonFavorites) {
+					favorites.get(favoriteKey).setId(oldFavorites.get(favoriteKey).getId());
+				}
+
+				for (ObservationFavorite favorite : favorites.values()) {
+					ObservationFavorite oldFavorite = oldFavorites.get(favorite.getUserId());
+					// only update favorite if local is not dirty
+					if (oldFavorite == null || !oldFavorite.isDirty()) {
+						favorite.setObservation(observation);
+						observationFavoriteDao.createOrUpdate(favorite);
+					}
+				}
+
+				// Remove any favorites that existed in the old observation but do not exist
+				// in the new observation.
+				for (String favorite : Sets.difference(oldFavorites.keySet(), favorites.keySet())) {
+					// Only delete favorites that are not dirty
+					if (!oldFavorites.get(favorite).isDirty()) {
+						observationFavoriteDao.deleteById(oldFavorites.get(favorite).getId());
+					}
+				}
+
+				Log.i(LOG_NAME, "Observation attachments " + observation.getAttachments().size());
+
+				for (Attachment oldAttachment : oldObservation.getAttachments()) {
+					Attachment found = null;
+					for (Attachment attachment : observation.getAttachments()) {
+						if (attachment.getRemoteId().equals(oldAttachment.getRemoteId())) {
+							found = attachment;
+							attachment.setId(oldAttachment.getId());
+						}
+					}
+
+					// if no longer in attachments array response from server, remove it
+					if (!Compatibility.Companion.isServerVersion5(mApplicationContext)) {
+						if (found == null) {
+							AttachmentHelper.getInstance(mApplicationContext).delete(oldAttachment);
+						}
+					}
+				}
+
+				for (Attachment attachment : observation.getAttachments()) {
+					try {
+						attachment.setObservation(observation);
+						AttachmentHelper.getInstance(mApplicationContext).create(attachment);
+					} catch (Exception e) {
+						throw new ObservationException("There was a problem creating/updating the observations attachment: " + attachment + ".", e);
+					}
+				}
+
+				observationDao.refresh(observation);
+
+				if (observation.getRemoteId() != null) {
+					for (Attachment attachment : observation.getAttachments()) {
+						if (attachment.isDirty()) {
+							AttachmentHelper.getInstance(mApplicationContext).uploadableAttachment(attachment);
+						}
+					}
+				}
+
+				return observation;
+			});
 		} catch (Exception e) {
 			Log.e(LOG_NAME, "There was a problem updating the observation: " + observation + ".", e);
 			throw new ObservationException("There was a problem updating the observation: " + observation + ".", e);

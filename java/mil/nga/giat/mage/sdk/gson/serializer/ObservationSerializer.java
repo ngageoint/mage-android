@@ -150,6 +150,8 @@ public class ObservationSerializer implements JsonSerializer<Observation> {
 			json.add(key, new JsonPrimitive(value.toString()));
 		} else if ("textfield".equals(type)) {
 			json.add(key, new JsonPrimitive(value.toString()));
+		} else if ("password".equals(type)) {
+			json.add(key, new JsonPrimitive(value.toString()));
 		} else if ("numberfield".equals(type)) {
 			json.add(key, new JsonPrimitive((Number) value));
 		} else if ("email".equals(type)) {

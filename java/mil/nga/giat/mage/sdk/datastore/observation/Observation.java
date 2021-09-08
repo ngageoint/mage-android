@@ -71,7 +71,7 @@ public class Observation implements Comparable<Observation>, Temporal {
     @DatabaseField(canBeNull = false)
     private State state = State.ACTIVE;
 
-	  @DatabaseField(columnName = "geometry", canBeNull = false, dataType = DataType.BYTE_ARRAY)
+    @DatabaseField(columnName = "geometry", canBeNull = false, dataType = DataType.BYTE_ARRAY)
     private byte[] geometryBytes;
 
     @DatabaseField
@@ -86,7 +86,7 @@ public class Observation implements Comparable<Observation>, Temporal {
     @DatabaseField(canBeNull = false, foreign = true, foreignAutoRefresh = true)
     private Event event;
 
-    @ForeignCollectionField(eager = true)
+    @ForeignCollectionField(eager = true, maxEagerLevel = 2)
     private Collection<ObservationForm> forms = new ArrayList<>();
 
     @ForeignCollectionField(eager = true)
