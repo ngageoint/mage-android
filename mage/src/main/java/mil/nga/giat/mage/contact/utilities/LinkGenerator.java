@@ -1,4 +1,4 @@
-package mil.nga.giat.mage.login.contactinfo;
+package mil.nga.giat.mage.contact.utilities;
 
 import android.content.SharedPreferences;
 import android.net.Uri;

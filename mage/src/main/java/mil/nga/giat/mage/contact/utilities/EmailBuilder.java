@@ -1,4 +1,4 @@
-package mil.nga.giat.mage.login.contactinfo;
+package mil.nga.giat.mage.contact.utilities;
 
 public class EmailBuilder {
 
