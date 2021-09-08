@@ -3,6 +3,8 @@ package mil.nga.giat.mage.login.contactinfo;
 import android.content.SharedPreferences;
 import android.net.Uri;
 
+import java.net.URLEncoder;
+
 public class LinkGenerator {
 
     /**
@@ -20,8 +22,12 @@ public class LinkGenerator {
             emailBuilder.build();
 
             url.append(Uri.fromParts("mailto", email, null).toString());
-            url.append("?subject=" + emailBuilder.getSubject());
-            url.append("&body=" + emailBuilder.getBody());
+            try {
+                url.append("?subject=" + URLEncoder.encode(emailBuilder.getSubject(), "UTF-8"));
+                url.append("&body=" + URLEncoder.encode(emailBuilder.getBody(), "UTF-8"));
+            } catch (Exception e) {
+
+            }
         }
 
         return url.toString();
