@@ -11,6 +11,7 @@ import mil.nga.giat.mage.form.Form.Companion.fromJson
 import mil.nga.giat.mage.form.defaults.FormPreferences
 import mil.nga.giat.mage.form.field.*
 import mil.nga.giat.mage.observation.*
+import mil.nga.giat.mage.observation.edit.MediaAction
 import mil.nga.giat.mage.sdk.datastore.observation.*
 import mil.nga.giat.mage.sdk.datastore.user.*
 import mil.nga.giat.mage.sdk.exceptions.UserException
@@ -213,7 +214,7 @@ class FormViewModel_server5 @Inject constructor(
     _observationState.value = observationState
   }
 
-  fun addAttachment(attachment: Attachment) {
+  override fun addAttachment(attachment: Attachment, action: MediaAction?) {
     this.attachments.add(attachment)
 
     val attachments = observationState.value?.attachments?.value?.toMutableList() ?: mutableListOf()

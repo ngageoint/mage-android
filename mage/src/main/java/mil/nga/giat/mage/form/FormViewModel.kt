@@ -412,7 +412,7 @@ open class FormViewModel @Inject constructor(
     observationState.value?.forms?.value = forms
   }
 
-  fun addAttachment(attachment: Attachment, action: MediaAction?) {
+  open fun addAttachment(attachment: Attachment, action: MediaAction?) {
     val fieldState = getAttachmentField(action)
     attachment.fieldName = fieldState?.definition?.name
     val attachments = fieldState?.answer?.attachments?.toMutableList() ?: mutableListOf()

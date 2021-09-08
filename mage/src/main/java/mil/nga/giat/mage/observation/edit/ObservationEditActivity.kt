@@ -156,7 +156,7 @@ open class ObservationEditActivity : AppCompatActivity() {
     (viewModel as? FormViewModel_server5)?.let { viewModel ->
       savedInstanceState.getParcelableArrayList<Attachment>("attachmentsToCreate")?.let {
         for (attachment in it) {
-          viewModel.addAttachment(attachment)
+          viewModel.addAttachment(attachment, null)
         }
       }
     }
