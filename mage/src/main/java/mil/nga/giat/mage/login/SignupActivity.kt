@@ -130,7 +130,7 @@ open class SignupActivity : AppCompatActivity() {
 
          val dialog = AlertDialog.Builder(this)
             .setTitle("Signup Failed")
-            .setMessage(addLinks(message, "", ""))
+            .setMessage(addLinks(message, status.username, ""))
             .setPositiveButton(android.R.string.ok, null)
             .show()
 
@@ -227,8 +227,8 @@ open class SignupActivity : AppCompatActivity() {
 
    private fun addLinks(
       message: String?,
-      identifier: String,
-      strategy: String
+      identifier: String?,
+      strategy: String?
    ): Spanned? {
       val emailLink =
          LinkGenerator.getEmailLink(this.preferences, message, identifier, strategy)

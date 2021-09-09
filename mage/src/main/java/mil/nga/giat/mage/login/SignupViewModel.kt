@@ -39,7 +39,7 @@ open class SignupViewModel @Inject constructor(
    data class Account(val username: String, val displayName: String, val email: String, val phone: String, val password: String)
    var account: Account? =  null
 
-   data class SignupStatus(val success: Boolean, val user: JsonObject?, val error: SignupError? = null, val errorMessage: String? = null)
+   data class SignupStatus(val success: Boolean, val user: JsonObject?, val error: SignupError? = null, val errorMessage: String? = null, val username: String? = null)
 
    private val _captchaState = MutableLiveData<CaptchaState>()
    val captchaState: LiveData<CaptchaState> = _captchaState
@@ -92,14 +92,14 @@ open class SignupViewModel @Inject constructor(
                }
 
                val error = if (response.code() == 409) SignupError.INVALID_USERNAME else SignupError.INVALID_CAPTCHA
-               _signupStatus.value = SignupStatus(false, null, error, response.errorBody()?.string())
+               _signupStatus.value = SignupStatus(false, null, error, response.errorBody()?.string(), account.username)
             }
 
             _signupState.value = SignupState.COMPLETE
          }
 
          override fun onFailure(call: Call<JsonObject>, t: Throwable) {
-            _signupStatus.value = SignupStatus(false, null, null, t.localizedMessage)
+            _signupStatus.value = SignupStatus(false, null, null, t.localizedMessage, account.username)
          }
       })
 
