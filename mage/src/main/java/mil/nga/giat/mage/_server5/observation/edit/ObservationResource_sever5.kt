@@ -3,8 +3,8 @@ package mil.nga.giat.mage._server5.observation.edit
 import android.content.Context
 import android.preference.PreferenceManager
 import android.util.Log
+import dagger.hilt.android.qualifiers.ApplicationContext
 import mil.nga.giat.mage.R
-import mil.nga.giat.mage.dagger.module.ApplicationContext
 import mil.nga.giat.mage.sdk.datastore.DaoStore
 import mil.nga.giat.mage.sdk.datastore.observation.Attachment
 import mil.nga.giat.mage.sdk.http.HttpClientManager

@@ -6,7 +6,7 @@ import androidx.compose.runtime.setValue
 import mil.nga.giat.mage.form.*
 import mil.nga.giat.mage.observation.ObservationLocation
 import mil.nga.giat.mage.sdk.datastore.observation.Attachment
-import java.util.*
+import mil.nga.giat.mage.sdk.utils.GeometryUtility
 
 open class FieldState<F, T : FieldValue> (
   val definition: FormField<F>,
@@ -76,7 +76,7 @@ open class FieldState<F, T : FieldValue> (
         }
         FieldType.DATE -> {
           val fieldState = DateFieldState(fieldDefinition as DateFormField)
-          val date = default as? Date ?: value as? Date
+          val date = FieldValue.Date.parseValue(default ?: value)
           if (date != null) {
             fieldState.answer = FieldValue.Date(date)
           }
@@ -100,7 +100,21 @@ open class FieldState<F, T : FieldValue> (
         }
         FieldType.GEOMETRY -> {
           val fieldState = GeometryFieldState(fieldDefinition as GeometryFormField)
-          val location = default as? ObservationLocation ?: value as? ObservationLocation
+
+          val location = if (default != null) {
+            if (default is ByteArray) {
+              ObservationLocation(GeometryUtility.toGeometry(default))
+            } else {
+              default as? ObservationLocation
+            }
+          } else {
+            if (value is ByteArray) {
+              ObservationLocation(GeometryUtility.toGeometry(value))
+            } else {
+              value as? ObservationLocation
+            }
+          }
+
           if (location != null) {
             fieldState.answer = FieldValue.Location(location)
           }
@@ -130,7 +144,7 @@ open class FieldState<F, T : FieldValue> (
           }
           fieldState
         }
-        FieldType.TEXTAREA, FieldType.TEXTFIELD -> {
+        FieldType.TEXTAREA, FieldType.TEXTFIELD, FieldType.PASSWORD -> {
           val fieldState = TextFieldState(fieldDefinition as TextFormField)
           val text = default as? String ?: value as? String
           if (text != null) {

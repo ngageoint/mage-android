@@ -1,6 +1,6 @@
 package mil.nga.giat.mage.preferences;
 
-import android.app.ListFragment;
+import android.app.Application;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -21,25 +21,25 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.fragment.app.ListFragment;
 
 import java.util.Arrays;
 import java.util.List;
 
 import javax.inject.Inject;
 
-import dagger.android.AndroidInjection;
+import dagger.hilt.android.AndroidEntryPoint;
 import mil.nga.giat.mage.LandingActivity;
 import mil.nga.giat.mage.MageApplication;
 import mil.nga.giat.mage.R;
+import mil.nga.giat.mage.event.EventsFetchFragment;
 import mil.nga.giat.mage.login.LoginActivity;
 import mil.nga.giat.mage.sdk.datastore.DaoStore;
 
-/**
- * Clear Data screen
- *
- * @author wiedemanns
- */
-public class ClearDataPreferenceActivity extends AppCompatActivity {
+@AndroidEntryPoint
+public class ClearDataPreferenceActivity extends AppCompatActivity implements OnClearDataListener {
+	@Inject
+	MageApplication application;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -48,11 +48,15 @@ public class ClearDataPreferenceActivity extends AppCompatActivity {
 		getSupportActionBar().setTitle("MAGE Data");
 
 		ClearDataFragment fragment = new ClearDataFragment();
-		getFragmentManager().beginTransaction().replace(android.R.id.content, fragment).commit();
+		getSupportFragmentManager().beginTransaction().replace(android.R.id.content, fragment).commit();
+	}
+
+	@Override
+	public void onClearData() {
+		application.onLogout(true, null);
 	}
 
 	public static class ClearDataAdapter extends ArrayAdapter<String> {
-
 		List<String> values;
 
 		private ClearDataAdapter(Context context, List<String> values) {
@@ -78,18 +82,10 @@ public class ClearDataPreferenceActivity extends AppCompatActivity {
 	}
 
 
+	@AndroidEntryPoint
 	public static class ClearDataFragment extends ListFragment {
-		@Inject
-		MageApplication application;
-
 		private MenuItem clearDataButton;
-
-		@Override
-		public void onCreate(@Nullable Bundle savedInstanceState) {
-			super.onCreate(savedInstanceState);
-
-			AndroidInjection.inject(this);
-		}
+		private OnClearDataListener clearDataListener;
 
 		@Override
 		public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -134,6 +130,17 @@ public class ClearDataPreferenceActivity extends AppCompatActivity {
 			}
 		}
 
+		@Override
+		public void onAttach(Context context) {
+			super.onAttach(context);
+
+			if (context instanceof OnClearDataListener) {
+				clearDataListener = (OnClearDataListener) context;
+			} else {
+				throw new IllegalStateException("Activity must implement the 'OnClearDataListener' interface.");
+			}
+		}
+
 		public void onListItemClick(ListView listView, View view, int position, long id) {
 			SparseBooleanArray checkedItems = getListView().getCheckedItemPositions();
 
@@ -163,34 +170,31 @@ public class ClearDataPreferenceActivity extends AppCompatActivity {
 			new AlertDialog.Builder(getActivity())
 					.setTitle("Delete All Data")
 					.setMessage(R.string.clear_data_message)
-					.setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
-						public void onClick(DialogInterface dialog, int which) {
-							// stop doing stuff
-							application.onLogout(false, null);
+					.setPositiveButton(android.R.string.yes, (dialog, which) -> {
+						clearDataListener.onClearData();
 
-							SparseBooleanArray checkedItems = getListView().getCheckedItemPositions();
+						SparseBooleanArray checkedItems = getListView().getCheckedItemPositions();
 
-							if (checkedItems.indexOfKey(0) >= 0 && checkedItems.valueAt(checkedItems.indexOfKey(0))) {
-								// delete database
-								DaoStore.getInstance(view.getContext()).resetDatabase();
-							}
-
-							if (checkedItems.indexOfKey(1) >= 0 && checkedItems.valueAt(checkedItems.indexOfKey(1))) {
-								// clear preferences
-								PreferenceManager.getDefaultSharedPreferences(view.getContext()).edit().clear().apply();
-							}
-
-							if (checkedItems.indexOfKey(2) >= 0 && checkedItems.valueAt(checkedItems.indexOfKey(2))) {
-								// delete the application contents on the filesystem
-								LandingActivity.clearApplicationData(getActivity());
-							}
-
-							// go to login activity
-							startActivity(new Intent(getActivity(), LoginActivity.class));
-
-							// finish the activity
-							getActivity().finish();
+						if (checkedItems.indexOfKey(0) >= 0 && checkedItems.valueAt(checkedItems.indexOfKey(0))) {
+							// delete database
+							DaoStore.getInstance(view.getContext()).resetDatabase();
 						}
+
+						if (checkedItems.indexOfKey(1) >= 0 && checkedItems.valueAt(checkedItems.indexOfKey(1))) {
+							// clear preferences
+							PreferenceManager.getDefaultSharedPreferences(view.getContext()).edit().clear().apply();
+						}
+
+						if (checkedItems.indexOfKey(2) >= 0 && checkedItems.valueAt(checkedItems.indexOfKey(2))) {
+							// delete the application contents on the filesystem
+							LandingActivity.clearApplicationData(getActivity());
+						}
+
+						// go to login activity
+						startActivity(new Intent(getActivity(), LoginActivity.class));
+
+						// finish the activity
+						getActivity().finish();
 					})
 					.setNegativeButton(android.R.string.no, null)
 					.show();

@@ -27,6 +27,7 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
+import androidx.fragment.app.Fragment;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.Observer;
 import androidx.recyclerview.widget.DefaultItemAnimator;
@@ -35,7 +36,6 @@ import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.snackbar.Snackbar;
 import com.j256.ormlite.android.AndroidDatabaseResults;
 import com.j256.ormlite.dao.CloseableIterator;
@@ -59,16 +59,14 @@ import java.util.concurrent.TimeUnit;
 
 import javax.inject.Inject;
 
-import dagger.android.support.DaggerFragment;
+import dagger.hilt.android.AndroidEntryPoint;
+import dagger.hilt.android.qualifiers.ApplicationContext;
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.coordinate.CoordinateFormatter;
-import mil.nga.giat.mage.dagger.module.ApplicationContext;
 import mil.nga.giat.mage.filter.ObservationFilterActivity;
 import mil.nga.giat.mage.location.LocationPolicy;
 import mil.nga.giat.mage.observation.AttachmentGallery;
 import mil.nga.giat.mage.observation.AttachmentViewerActivity;
-import mil.nga.giat.mage.observation.ImportantDialog;
-import mil.nga.giat.mage.observation.ImportantRemoveDialog;
 import mil.nga.giat.mage.observation.ObservationLocation;
 import mil.nga.giat.mage.observation.edit.ObservationEditActivity;
 import mil.nga.giat.mage.observation.sync.ObservationServerFetch;
@@ -86,12 +84,12 @@ import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.event.IObservationEventListener;
-import mil.nga.giat.mage.sdk.exceptions.ObservationException;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
 import mil.nga.sf.Geometry;
 import mil.nga.sf.Point;
 
-public class ObservationFeedFragment extends DaggerFragment implements IObservationEventListener, ObservationListAdapter.ObservationActionListener, Observer<Location> {
+@AndroidEntryPoint
+public class ObservationFeedFragment extends Fragment implements IObservationEventListener, ObservationListAdapter.ObservationActionListener, Observer<Location> {
 
 	private static final String LOG_NAME = ObservationFeedFragment.class.getName();
 
@@ -504,70 +502,6 @@ public class ObservationFeedFragment extends DaggerFragment implements IObservat
 				Log.e(LOG_NAME, "Unable to change cursor", e);
 			}
 		});
-	}
-
-	public void onObservationImportant(Observation observation) {
-		ObservationImportant important = observation.getImportant();
-		boolean isImportant = important != null && important.isImportant();
-		if (isImportant) {
-			BottomSheetDialog dialog = new BottomSheetDialog(requireActivity());
-			View view = getLayoutInflater().inflate(R.layout.view_important_bottom_sheet, null);
-			view.findViewById(R.id.update_button).setOnClickListener(v -> {
-				onUpdateImportantClick(observation);
-				dialog.dismiss();
-			});
-			view.findViewById(R.id.remove_button).setOnClickListener(v -> {
-				onRemoveImportantClick(observation);
-				dialog.dismiss();
-			});
-			dialog.setContentView(view);
-			dialog.show();
-		} else {
-			onUpdateImportantClick(observation);
-		}
-	}
-
-	public void onUpdateImportantClick(Observation observation) {
-		ObservationImportant important = observation.getImportant();
-		String description = important != null ? important.getDescription() : null;
-		ImportantDialog dialog = ImportantDialog.newInstance(description);
-		dialog.setOnImportantListener(text -> {
-			ObservationHelper observationHelper = ObservationHelper.getInstance(context);
-			try {
-				ObservationImportant observationImportant = observation.getImportant();
-				if (observationImportant == null) {
-					observationImportant = new ObservationImportant();
-					observation.setImportant(important);
-				}
-
-				if (currentUser != null) {
-					observationImportant.setUserId(currentUser.getRemoteId());
-				}
-
-				observationImportant.setTimestamp(new Date());
-				observationImportant.setDescription(text);
-				observationHelper.addImportant(observation);
-			} catch (ObservationException e) {
-				Log.e(LOG_NAME, "Error updating important flag for observation: " + observation.getRemoteId());
-			}
-		});
-
-		dialog.show(getFragmentManager(), "important");
-	}
-
-
-	public void onRemoveImportantClick(Observation o) {
-		ImportantRemoveDialog dialog = new ImportantRemoveDialog();
-		dialog.setOnRemoveImportantListener(() -> {
-			ObservationHelper observationHelper = ObservationHelper.getInstance(context);
-			try {
-				observationHelper.removeImportant(o);
-			} catch (ObservationException e) {
-				Log.e(LOG_NAME, "Error removing important flag for observation: " + o.getRemoteId());
-			}
-		});
-
-		dialog.show(getFragmentManager(), "remove_important");
 	}
 
 	@Override

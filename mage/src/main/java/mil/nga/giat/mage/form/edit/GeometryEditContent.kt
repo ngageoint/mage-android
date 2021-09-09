@@ -3,6 +3,9 @@ package mil.nga.giat.mage.form.edit
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Place
+import androidx.compose.material.icons.outlined.Place
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -17,6 +20,7 @@ import mil.nga.giat.mage.form.view.rememberMapViewWithLifecycle
 
 @Composable
 fun GeometryEdit(
+  modifier: Modifier = Modifier,
   fieldState: GeometryFieldState,
   formState: FormState? = null,
   onClick: (() -> Unit)? = null
@@ -28,7 +32,7 @@ fun GeometryEdit(
 
   val focusManager = LocalFocusManager.current
 
-  Column(Modifier.padding(bottom = 16.dp)) {
+  Column(modifier) {
     TextField(
       value = value,
       onValueChange = { },
@@ -36,9 +40,16 @@ fun GeometryEdit(
       enabled = false,
       isError = fieldState.showErrors(),
       colors = TextFieldDefaults.textFieldColors(
+        disabledTrailingIconColor = MaterialTheme.colors.onSurface.copy(alpha = TextFieldDefaults.IconOpacity),
         disabledTextColor = LocalContentColor.current.copy(LocalContentAlpha.current),
         disabledLabelColor =  MaterialTheme.colors.onSurface.copy(ContentAlpha.medium)
       ),
+      trailingIcon = {
+        Icon(
+          imageVector = Icons.Outlined.Place,
+          contentDescription = "Map Marker",
+        )
+      },
       modifier = Modifier
         .fillMaxWidth()
         .clickable(onClick = {

@@ -2,6 +2,7 @@ package mil.nga.giat.mage.observation
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import mil.nga.giat.mage.form.Form
 import mil.nga.giat.mage.form.FormState
 import mil.nga.giat.mage.form.field.DateFieldState
@@ -15,11 +16,11 @@ enum class ObservationPermission {
 
 // TODO multi-form, this state class has gotten rather big
 class ObservationState(
+  id: Long? = null,
   status: ObservationStatusState,
   val definition: ObservationDefinition,
   val timestampFieldState: DateFieldState,
   val geometryFieldState: GeometryFieldState,
-  val eventName: String,
   val userDisplayName: String?,
   val permissions: Set<ObservationPermission> = emptySet(),
   forms: List<FormState>,
@@ -27,11 +28,12 @@ class ObservationState(
   important: ObservationImportantState? = null,
   favorite: Boolean = false
 ) {
-  val id by mutableStateOf<Long?>(null)
+  val id by mutableStateOf(id)
   val status = mutableStateOf(status)
   val forms = mutableStateOf(forms)
   val attachments = mutableStateOf(attachments)
   val important = mutableStateOf(important)
+  val editImportantState = ObservationEditImportantState(important?.description)
   val favorite = mutableStateOf(favorite)
 
   fun validate(): ObservationValidationResult {
@@ -87,6 +89,11 @@ class ObservationImportantState(
   val description: String? = null,
   val user: String? = null
 )
+
+class ObservationEditImportantState(description: String? = null) {
+  var edit by mutableStateOf(false)
+  var description by mutableStateOf(description)
+}
 
 sealed class ObservationValidationResult {
   object Valid : ObservationValidationResult()

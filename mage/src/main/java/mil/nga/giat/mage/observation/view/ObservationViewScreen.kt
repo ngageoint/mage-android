@@ -1,7 +1,9 @@
 package mil.nga.giat.mage.observation.view
 
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -14,12 +16,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import mil.nga.giat.mage._server5.form.view.AttachmentsViewContent_server5
 import mil.nga.giat.mage.coordinate.CoordinateFormatter
 import mil.nga.giat.mage.form.FormState
@@ -36,8 +39,17 @@ import mil.nga.giat.mage.ui.theme.*
 import mil.nga.giat.mage.utils.DateFormatFactory
 import java.util.*
 
-enum class ObservationAction {
-  EDIT, FLAG, FAVORITE, DIRECTIONS, MORE
+sealed class ObservationAction() {
+  class Edit: ObservationAction()
+  class Favorite: ObservationAction()
+  class FavoriteBy: ObservationAction()
+  class Directions: ObservationAction()
+  class More: ObservationAction()
+  data class Important(val type: Type, val description: String? = null): ObservationAction() {
+    enum class Type {
+      FLAG, REMOVE, CANCEL
+    }
+  }
 }
 
 @Composable
@@ -71,7 +83,7 @@ fun ObservationViewScreen(
       floatingActionButton = {
         if (observationState?.permissions?.contains(ObservationPermission.EDIT) == true) {
           FloatingActionButton(
-            onClick = { onAction?.invoke(ObservationAction.EDIT) }
+            onClick = { onAction?.invoke(ObservationAction.Edit()) }
           ) {
             Icon(
               Icons.Default.Edit,
@@ -97,19 +109,10 @@ fun ObservationViewTopBar(
   TopAppBar(
     backgroundColor = MaterialTheme.colors.topAppBarBackground,
     contentColor = Color.White,
-    title = {
-      Column {
-        Text(title)
-        if (observationState?.eventName != null) {
-          CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
-            Text(observationState.eventName, fontSize = 14.sp)
-          }
-        }
-      }
-    },
+    title = { Text(title) },
     navigationIcon = {
       IconButton(onClick = { onClose.invoke() }) {
-        Icon(Icons.Default.Close, "Cancel Edit")
+        Icon(Icons.Default.ArrowBack, "Cancel Edit")
       }
     }
   )
@@ -172,7 +175,11 @@ fun ObservationViewContent(
       }
 
       for (formState in forms) {
-        FormContent(formState, onAttachmentClick)
+        FormContent(
+          formState,
+          onAttachmentClick,
+          onLocationClick
+        )
       }
     }
   }
@@ -326,7 +333,7 @@ fun ObservationViewHeaderContent(
               .padding(end = 8.dp)
           )
 
-          Column() {
+          Column {
             CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
               Text(
                 text = "Flagged by ${important.user}".uppercase(Locale.ROOT),
@@ -377,7 +384,7 @@ fun ObservationViewHeaderContent(
             }
           }
 
-          FormHeaderContent(formState)
+          FormHeaderContent(formState, primaryColor = MaterialTheme.colors.primary)
         }
 
         ObservationIcon(formState)
@@ -421,17 +428,17 @@ fun ObservationViewHeaderContent(
             )
           }
 
-          if (location.provider != null) {
+          if (location.provider != null && location.provider.lowercase() != "manual") {
             CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
               Text(
-                text = location.provider.toUpperCase(Locale.ROOT),
+                text = location.provider.uppercase(),
                 style = MaterialTheme.typography.caption,
                 modifier = Modifier.padding(end = 2.dp)
               )
             }
           }
 
-          if (location.accuracy != null) {
+          if (location.accuracy != null && location.accuracy != 0.0f) {
             CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
               Text(
                 text = " \u00B1 ${location.accuracy}",
@@ -444,9 +451,99 @@ fun ObservationViewHeaderContent(
 
       Divider(Modifier.fillMaxWidth())
 
+      Column(Modifier.fillMaxWidth().animateContentSize()) {
+        if (observationState?.editImportantState?.edit == true) {
+          ImportantEditContent(observationState = observationState,
+            onAnswer = {
+              observationState.editImportantState.description = it
+            },
+            onAction = {
+              if (it.type != ObservationAction.Important.Type.CANCEL) {
+                onAction?.invoke(it)
+              }
+
+              observationState.editImportantState.edit = false
+            }
+          )
+        }
+      }
+
       ObservationActions(observationState) { onAction?.invoke(it) }
     }
   }
+}
+
+@Composable
+fun ImportantEditContent(
+  observationState: ObservationState,
+  onAnswer: (String) -> Unit,
+  onAction: ((ObservationAction.Important) -> Unit)? = null
+) {
+  val focusManager = LocalFocusManager.current
+
+  Column(Modifier.padding(16.dp)) {
+    TextField(
+      value = observationState.editImportantState.description ?: "",
+      onValueChange = onAnswer,
+      label = { Text("Important Description") },
+      keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
+      modifier = Modifier.fillMaxWidth()
+    )
+
+    if (observationState.important.value != null) {
+      Row(
+        horizontalArrangement = Arrangement.End,
+        modifier = Modifier
+          .fillMaxWidth()
+          .padding(top = 16.dp)
+      ) {
+        TextButton(
+          onClick = { onAction?.invoke(ObservationAction.Important(ObservationAction.Important.Type.REMOVE)) },
+          modifier = Modifier.padding(end = 8.dp)
+        ) {
+          Text("REMOVE")
+        }
+
+        Button(
+          onClick = {
+            val action = ObservationAction.Important(
+              ObservationAction.Important.Type.FLAG,
+              observationState.editImportantState.description)
+            onAction?.invoke(action)
+          },
+        ) {
+          Text("UPDATE")
+        }
+      }
+    } else {
+      Row(
+        horizontalArrangement = Arrangement.End,
+        modifier = Modifier
+          .fillMaxWidth()
+          .padding(top = 16.dp)
+      ) {
+        TextButton(
+          onClick = { onAction?.invoke(ObservationAction.Important(ObservationAction.Important.Type.CANCEL)) },
+          modifier = Modifier.padding(end = 8.dp)
+        ) {
+          Text("CANCEL")
+        }
+
+        Button(
+          onClick = {
+            val action = ObservationAction.Important(
+              ObservationAction.Important.Type.FLAG,
+              observationState.editImportantState.description)
+            onAction?.invoke(action)
+          },
+        ) {
+          Text("FLAG AS IMPORTANT")
+        }
+      }
+    }
+  }
+
+  Divider()
 }
 
 @Composable
@@ -455,71 +552,91 @@ fun ObservationActions(
   onAction: ((ObservationAction) -> Unit)? = null
 ) {
   Row(
-    Modifier
+    verticalAlignment = Alignment.CenterVertically,
+    horizontalArrangement = Arrangement.SpaceBetween,
+    modifier = Modifier
       .fillMaxWidth()
       .padding(vertical = 4.dp),
-    horizontalArrangement = Arrangement.End
   ) {
+    Row(
+      verticalAlignment = Alignment.CenterVertically,
+      modifier = Modifier
+        .padding(start = 8.dp)
+        .clip(MaterialTheme.shapes.small)
+        .clickable { onAction?.invoke(ObservationAction.FavoriteBy()) }
+        .padding(8.dp)
+    ) {
+      CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.disabled) {
+        Text(
+          text = "2 Favorites".uppercase(),
+          style = MaterialTheme.typography.subtitle2
+        )
+      }
+    }
+    
+    Row {
+      if (observationState?.permissions?.contains(ObservationPermission.FLAG) == true) {
+        val isFlagged = observationState.important.value != null
+        val flagTint = if (isFlagged) {
+          Color(0XFFFF9100)
+        } else {
+          MaterialTheme.colors.onSurface.copy(alpha = ContentAlpha.medium)
+        }
 
-    if (observationState?.permissions?.contains(ObservationPermission.FLAG) == true) {
-      val isFlagged = observationState.important.value != null
-      val flagTint = if (isFlagged) {
-        Color(0XFFFF9100)
+        IconButton(
+          modifier = Modifier.padding(end = 8.dp),
+          onClick = {
+            observationState.editImportantState.edit = !observationState.editImportantState.edit
+          }
+        ) {
+          Icon(
+            imageVector = if (isFlagged) Icons.Default.Flag else Icons.Outlined.Flag,
+            tint = flagTint,
+            contentDescription = "Flag",
+          )
+        }
+      }
+
+      val isFavorite = observationState?.favorite?.value == true
+      val favoriteTint = if (isFavorite) {
+        Color(0XFF7ED31F)
       } else {
         MaterialTheme.colors.onSurface.copy(alpha = ContentAlpha.medium)
       }
 
       IconButton(
         modifier = Modifier.padding(end = 8.dp),
-        onClick = { onAction?.invoke(ObservationAction.FLAG) }
+        onClick = { onAction?.invoke(ObservationAction.Favorite()) }
       ) {
         Icon(
-          imageVector = if (isFlagged) Icons.Default.Flag else Icons.Outlined.Flag,
-          tint = flagTint,
-          contentDescription = "Flag",
+          imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Outlined.FavoriteBorder,
+          tint = favoriteTint,
+          contentDescription = "Favorite",
         )
       }
-    }
 
-    val isFavorite = observationState?.favorite?.value == true
-    val favoriteTint = if (isFavorite) {
-      Color(0XFF7ED31F)
-    } else {
-      MaterialTheme.colors.onSurface.copy(alpha = ContentAlpha.medium)
-    }
-
-    IconButton(
-      modifier = Modifier.padding(end = 8.dp),
-      onClick = { onAction?.invoke(ObservationAction.FAVORITE) }
-    ) {
-      Icon(
-        imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Outlined.FavoriteBorder,
-        tint = favoriteTint,
-        contentDescription = "Favorite",
-      )
-    }
-
-    IconButton(
-      modifier = Modifier.padding(end = 8.dp),
-      onClick = { onAction?.invoke(ObservationAction.DIRECTIONS) }
-    ) {
-      Icon(
-        imageVector = Icons.Outlined.Directions,
-        contentDescription = "Directions",
-        tint = MaterialTheme.colors.onSurface.copy(alpha = ContentAlpha.medium)
-      )
-    }
-
-    if (observationState?.permissions?.contains(ObservationPermission.DELETE) == true) {
       IconButton(
         modifier = Modifier.padding(end = 8.dp),
-        onClick = { onAction?.invoke(ObservationAction.MORE) }
+        onClick = { onAction?.invoke(ObservationAction.Directions()) }
       ) {
         Icon(
-          imageVector = Icons.Default.MoreVert,
-          contentDescription = "MoreVert",
+          imageVector = Icons.Outlined.Directions,
+          contentDescription = "Directions",
           tint = MaterialTheme.colors.onSurface.copy(alpha = ContentAlpha.medium)
         )
+      }
+
+      if (observationState?.permissions?.contains(ObservationPermission.DELETE) == true) {
+        IconButton(
+          modifier = Modifier.padding(end = 8.dp),
+          onClick = { onAction?.invoke(ObservationAction.More()) }
+        ) {
+          Icon(
+            imageVector = Icons.Default.MoreVert,
+            contentDescription = "MoreVert",
+            tint = MaterialTheme.colors.onSurface.copy(alpha = ContentAlpha.medium)
+          )
+        }
       }
     }
   }

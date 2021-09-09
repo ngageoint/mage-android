@@ -41,7 +41,7 @@
             android:layout_marginStart="16dp"
             android:layout_marginEnd="16dp"
             android:layout_marginBottom="24dp"
-            android:text="The first form in this list is the primary form, which determines how MAGE displays the observation on the map and in the feed. THe forms will be displayed, as ordered. in all other views."/>
+            android:text="The first form in this list is the primary form, which determines how MAGE displays the observation on the map and in the feed. The forms will be displayed as ordered in all other views."/>
 
         <TextView
             android:layout_width="match_parent"

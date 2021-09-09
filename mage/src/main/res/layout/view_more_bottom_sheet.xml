@@ -3,6 +3,8 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:paddingTop="8dp"
+    android:paddingBottom="8dp"
     android:orientation="vertical"
     android:elevation="5dp"
     android:clipToPadding="true"
@@ -11,14 +13,12 @@
     app:layout_behavior="com.google.android.material.bottomsheet.BottomSheetBehavior">
 
     <LinearLayout
-        android:id="@+id/delete_button"
+        android:id="@+id/delete"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:layout_marginTop="16dp"
-        android:layout_marginBottom="8dp"
         android:paddingBottom="16dp"
-        android:paddingTop="8dp"
+        android:paddingTop="16dp"
         android:paddingStart="16dp"
         android:paddingEnd="16dp"
         android:clickable="true"
@@ -43,6 +43,80 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Delete Observation"
+                style="@style/ListTextPrimary"/>
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/edit"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:paddingTop="16dp"
+        android:paddingBottom="16dp"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:clickable="true"
+        android:background="?android:attr/selectableItemBackground">
+
+        <ImageView
+            android:layout_width="24dip"
+            android:layout_height="24dip"
+            android:layout_marginEnd="3dip"
+            android:layout_gravity="center_vertical"
+            app:tint="@color/md_black_1000"
+            android:alpha=".87"
+            android:src="@drawable/ic_mode_edit_black_24dp"/>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginStart="16dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Edit Observation"
+                style="@style/ListTextPrimary"/>
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/reorder"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:paddingTop="16dp"
+        android:paddingBottom="16dp"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:clickable="true"
+        android:background="?android:attr/selectableItemBackground">
+
+        <ImageView
+            android:layout_width="24dip"
+            android:layout_height="24dip"
+            android:layout_marginEnd="3dip"
+            android:layout_gravity="center_vertical"
+            app:tint="@color/md_black_1000"
+            android:alpha=".87"
+            android:src="@drawable/ic_baseline_swap_vert_24"/>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginStart="16dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Reorder Forms"
                 style="@style/ListTextPrimary"/>
 
         </LinearLayout>

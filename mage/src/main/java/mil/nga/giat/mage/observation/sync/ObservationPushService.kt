@@ -5,14 +5,15 @@ import android.content.Context
 import android.content.Intent
 import android.os.IBinder
 import androidx.work.*
-import dagger.android.AndroidInjection
-import mil.nga.giat.mage.dagger.module.ApplicationContext
+import dagger.hilt.android.AndroidEntryPoint
+import dagger.hilt.android.qualifiers.ApplicationContext
 import mil.nga.giat.mage.sdk.datastore.observation.Observation
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper
 import mil.nga.giat.mage.sdk.event.IObservationEventListener
 import java.util.*
 import javax.inject.Inject
 
+@AndroidEntryPoint
 class ObservationPushService : Service(), IObservationEventListener {
 
     @Inject @field:ApplicationContext
@@ -40,8 +41,6 @@ class ObservationPushService : Service(), IObservationEventListener {
 
     override fun onCreate() {
         super.onCreate()
-
-        AndroidInjection.inject(this)
 
         ObservationHelper.getInstance(context).addListener(this)
     }

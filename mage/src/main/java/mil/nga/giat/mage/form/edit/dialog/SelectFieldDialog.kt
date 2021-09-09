@@ -1,9 +1,7 @@
 package mil.nga.giat.mage.form.edit.dialog
 
 import android.os.Bundle
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
+import android.view.*
 import android.widget.ArrayAdapter
 import android.widget.ListView
 import androidx.appcompat.widget.SearchView
@@ -103,8 +101,11 @@ class SelectFieldDialog : DialogFragment() {
   override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
     toolbar.setNavigationIcon(R.drawable.ic_close_white_24dp)
     toolbar.setNavigationOnClickListener { dismiss() }
-    toolbar.inflateMenu(R.menu.edit_select_menu)
     toolbar.title = title
+
+    if (multi) {
+      toolbar.inflateMenu(R.menu.edit_select_menu)
+    }
 
     filteredChoices.addAll(choices)
 
@@ -183,7 +184,7 @@ class SelectFieldDialog : DialogFragment() {
   }
 
   private fun getSelectedChoicesString(choices: List<String>): String {
-    return choices.joinToString(" | ")
+    return choices.joinToString(", ")
   }
 
   private fun checkSelected() {
@@ -200,6 +201,11 @@ class SelectFieldDialog : DialogFragment() {
     listView.invalidateViews()
     selected_content.visibility = View.INVISIBLE
     selectedChoices.clear()
+
+    if (!multi) {
+      save()
+      dismiss()
+    }
   }
 
   private fun save() {

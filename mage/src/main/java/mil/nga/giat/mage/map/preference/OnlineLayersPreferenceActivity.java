@@ -20,6 +20,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.DefaultItemAnimator;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -33,7 +34,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import dagger.android.support.DaggerFragment;
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.map.cache.CacheOverlay;
 import mil.nga.giat.mage.map.cache.CacheProvider;
@@ -42,7 +42,6 @@ import mil.nga.giat.mage.sdk.datastore.layer.Layer;
 import mil.nga.giat.mage.sdk.datastore.layer.LayerHelper;
 import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
 import mil.nga.giat.mage.sdk.fetch.ImageryServerFetch;
-
 
 /**
  * This activity is the view component for online layers
@@ -91,7 +90,7 @@ public class OnlineLayersPreferenceActivity extends AppCompatActivity {
         }
     }
 
-    public static class OnlineLayersListFragment extends DaggerFragment implements CacheProvider.OnCacheOverlayListener {
+    public static class OnlineLayersListFragment extends Fragment implements CacheProvider.OnCacheOverlayListener {
 
         /**
          * This class is synchronized by only being accessed on the UI thread

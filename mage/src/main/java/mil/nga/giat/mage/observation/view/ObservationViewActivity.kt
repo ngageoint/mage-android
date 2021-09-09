@@ -13,8 +13,6 @@ import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.snackbar.Snackbar
 import mil.nga.giat.mage.R
 import mil.nga.giat.mage.observation.AttachmentViewerActivity
-import mil.nga.giat.mage.observation.ImportantDialog
-import mil.nga.giat.mage.observation.ImportantRemoveDialog
 import mil.nga.giat.mage.sdk.datastore.observation.Attachment
 import mil.nga.giat.mage.sdk.datastore.user.Permission
 import mil.nga.giat.mage.sdk.datastore.user.User
@@ -24,8 +22,11 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.android.synthetic.main.view_more_bottom_sheet.view.*
+import mil.nga.giat.mage.form.FormState
 import mil.nga.giat.mage.form.FormViewModel
+import mil.nga.giat.mage.form.edit.dialog.FormReorderDialog
 import mil.nga.giat.mage.observation.edit.ObservationEditActivity
+import mil.nga.giat.mage.people.PeopleActivity
 
 @AndroidEntryPoint
 class ObservationViewActivity : AppCompatActivity() {
@@ -78,11 +79,12 @@ class ObservationViewActivity : AppCompatActivity() {
 
   private fun onAction(action: ObservationAction) {
     when (action) {
-      ObservationAction.EDIT -> onEditObservation()
-      ObservationAction.FLAG -> onFlagObservation()
-      ObservationAction.FAVORITE -> onFavoriteObservation()
-      ObservationAction.DIRECTIONS -> onDirections()
-      ObservationAction.MORE -> onMore()
+      is ObservationAction.Edit -> onEditObservation()
+      is ObservationAction.Important -> onFlagObservation(action)
+      is ObservationAction.Favorite -> onFavoriteObservation()
+      is ObservationAction.FavoriteBy -> onFavoritedBy()
+      is ObservationAction.Directions -> onDirections()
+      is ObservationAction.More -> onMore()
     }
   }
 
@@ -103,48 +105,19 @@ class ObservationViewActivity : AppCompatActivity() {
     startActivity(intent)
   }
 
-  private fun onFlagObservation() {
-    val important = viewModel.observationState.value?.important?.value
-    if (important != null) {
-      val dialog = BottomSheetDialog(this)
-      val view = layoutInflater.inflate(R.layout.view_important_bottom_sheet, null)
-      view.findViewById<View>(R.id.update_button).setOnClickListener {
-        onUpdateFlag()
-        dialog.dismiss()
-      }
-      view.findViewById<View>(R.id.remove_button).setOnClickListener {
-        onRemoveFlag()
-        dialog.dismiss()
-      }
-      dialog.setContentView(view)
-      dialog.show()
-    } else {
-      val dialog = ImportantDialog.newInstance(important)
-      dialog.setOnImportantListener { description: String? ->
-        viewModel.flagObservation(description)
-      }
-
-      dialog.show(supportFragmentManager, "OBSERVATION_IMPORTANT")
-    }
-  }
-
-  private fun onUpdateFlag() {
-    val important = viewModel.observationState.value?.important?.value
-    val dialog = ImportantDialog.newInstance(important?.description)
-    dialog.setOnImportantListener { description: String? ->
-      viewModel.flagObservation(description)
-    }
-
-    dialog.show(supportFragmentManager, "OBSERVATION_IMPORTANT")
-  }
-
-  private fun onRemoveFlag() {
-    val dialog = ImportantRemoveDialog()
-    dialog.setOnRemoveImportantListener {
+  private fun onFlagObservation(action: ObservationAction.Important) {
+    if (action.type == ObservationAction.Important.Type.FLAG) {
+      viewModel.flagObservation(action.description)
+    } else if (action.type == ObservationAction.Important.Type.REMOVE) {
       viewModel.unflagObservation()
     }
+  }
 
-    dialog.show(supportFragmentManager, "OBSERVATION_IMPORTANT")
+  private fun onFavoritedBy() {
+    val userIds = viewModel.observation.value?.favorites?.map { it.userId } ?: listOf()
+    val intent = Intent(this, PeopleActivity::class.java)
+    intent.putStringArrayListExtra(PeopleActivity.USER_REMOTE_IDS, ArrayList(userIds))
+    startActivity(intent)
   }
 
   private fun onFavoriteObservation() {
@@ -177,9 +150,28 @@ class ObservationViewActivity : AppCompatActivity() {
     val dialog = BottomSheetDialog(this)
     val view = layoutInflater.inflate(R.layout.view_more_bottom_sheet, null)
 
-    view.delete_button.setOnClickListener {
+    val formCount = viewModel.observationState.value?.forms?.value?.size ?: 0
+    view.reorder.visibility = if (formCount > 1) View.VISIBLE else View.GONE
+
+    view.delete.setOnClickListener {
       onDeleteObservation()
       dialog.dismiss()
+    }
+
+    view.edit.setOnClickListener {
+      onEditObservation()
+      dialog.dismiss()
+    }
+
+    view.reorder.setOnClickListener {
+      dialog.dismiss()
+      val reorderDialog = FormReorderDialog.newInstance()
+      reorderDialog.listener = object : FormReorderDialog.FormReorderDialogListener {
+        override fun onReorder(forms: List<FormState>) {
+          viewModel.reorderForms(forms)
+        }
+      }
+      reorderDialog.show(supportFragmentManager, "DIALOG_FORM_REORDER")
     }
 
     dialog.setContentView(view)

@@ -72,7 +72,6 @@ fun ObservationEditScreen(
       topBar = {
         ObservationEditTopBar(
           isNewObservation = observationState?.id == null,
-          eventName = observationState?.eventName,
           onSave = {
             observationState?.let { state ->
               when (val result = state.validate()) {
@@ -162,22 +161,12 @@ fun ObservationEditScreen(
 @Composable
 fun ObservationEditTopBar(
   isNewObservation: Boolean,
-  eventName: String?,
   onSave: () -> Unit,
   onCancel: () -> Unit
 ) {
   val title = if (isNewObservation) "Create Observation" else "Observation Edit"
   TopAppBar(
-    title = {
-      Column {
-        Text(title)
-        if (eventName != null) {
-          CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
-            Text(eventName, fontSize = 14.sp)
-          }
-        }
-      }
-    },
+    title = { Text(title) },
     navigationIcon = {
       IconButton(onClick = { onCancel.invoke() }) {
         Icon(Icons.Default.Close, "Cancel Edit")
@@ -231,17 +220,22 @@ fun ObservationEditContent(
   onDeleteForm: ((Int, FormState) -> Unit)? = null,
   onReorderForms: (() -> Unit)? = null
 ) {
+  val context = LocalContext.current
 
   if (observationState != null) {
     val forms by observationState.forms
-    var initialized by remember { mutableStateOf(false) }
+    var previousForms by remember { mutableStateOf<List<FormState>>(listOf()) }
 
+    // TODO scroll to added element, not last
     LaunchedEffect(forms.size) {
-      if (initialized) {
-        listState.animateScrollToItem(forms.size + 1)
+      if (forms.size > previousForms.size) {
+        // find new form that was added, diff between forms and previous forms
+        val addedForm = forms.filterNot { previousForms.contains(it) }.first()
+        val scrollTo = forms.indexOf(addedForm) + 2 // account for 2 "header" items in list
+        listState.animateScrollToItem(scrollTo)
       }
 
-      initialized = true
+      previousForms = forms
     }
 
     LazyColumn(
@@ -266,8 +260,8 @@ fun ObservationEditContent(
         )
       }
 
-      item {
-        if (isServerVersion5(LocalContext.current)) {
+      if (isServerVersion5(context)) {
+        item {
           val attachments by observationState.attachments
           AttachmentsViewContent_server5(attachments)
         }
@@ -332,13 +326,15 @@ fun ObservationEditHeaderContent(
   ) {
     Column(Modifier.padding(top = 16.dp, start = 16.dp, end = 16.dp)) {
       DateEdit(
-        timestamp,
+        modifier = Modifier.padding(bottom = 16.dp),
+        fieldState = timestamp,
         onClick = onTimestampClick
       )
 
       GeometryEdit(
-        geometry,
-        formState,
+        modifier = Modifier.padding(bottom = 16.dp),
+        fieldState = geometry,
+        formState = formState,
         onClick = onLocationClick
       )
     }

@@ -3,7 +3,7 @@ package mil.nga.giat.mage._server5.login
 import android.content.Context
 import android.content.SharedPreferences
 import com.google.gson.JsonObject
-import mil.nga.giat.mage.dagger.module.ApplicationContext
+import dagger.hilt.android.qualifiers.ApplicationContext
 import mil.nga.giat.mage.login.SignupViewModel
 import retrofit2.Call
 import retrofit2.Callback

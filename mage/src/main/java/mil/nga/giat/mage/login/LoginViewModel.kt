@@ -7,8 +7,9 @@ import androidx.appcompat.app.AppCompatDelegate
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import mil.nga.giat.mage.R
-import mil.nga.giat.mage.dagger.module.ApplicationContext
 import mil.nga.giat.mage.sdk.datastore.DaoStore
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper
 import mil.nga.giat.mage.sdk.login.AuthenticationStatus
@@ -23,6 +24,7 @@ import org.apache.commons.lang3.StringUtils
 import java.util.*
 import javax.inject.Inject
 
+@HiltViewModel
 class LoginViewModel @Inject constructor(
     @ApplicationContext val context: Context,
     val preferences: SharedPreferences

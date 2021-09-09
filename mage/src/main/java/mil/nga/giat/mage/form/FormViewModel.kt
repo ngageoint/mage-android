@@ -6,10 +6,10 @@ import androidx.lifecycle.*
 import com.google.android.gms.maps.model.LatLng
 import com.google.gson.JsonObject
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
-import mil.nga.giat.mage.dagger.module.ApplicationContext
 import mil.nga.giat.mage.form.Form.Companion.fromJson
 import mil.nga.giat.mage.form.defaults.FormPreferences
 import mil.nga.giat.mage.form.field.*
@@ -77,8 +77,10 @@ open class FormViewModel @Inject constructor(
       fromJson(jsonForm as JsonObject)?.let { form ->
         formDefinitions.add(form)
 
-        if (form.default) {
-          val defaultForm = FormPreferences(context, event.id, form.id).getDefaults()
+        form.min
+
+        val defaultForm = FormPreferences(context, event.id, form.id).getDefaults()
+        repeat((form.min ?: 0) + if (form.default) 1 else 0) {
           val formState = FormState.fromForm(eventId = event.remoteId, form = form, defaultForm = defaultForm)
           formState.expanded.value = index == 0
           forms.add(formState)
@@ -135,7 +137,6 @@ open class FormViewModel @Inject constructor(
       definition = definition,
       timestampFieldState = timestampFieldState,
       geometryFieldState = geometryFieldState,
-      eventName = event.name,
       userDisplayName = user?.displayName,
       forms = forms)
     _observationState.value = observationState
@@ -268,12 +269,12 @@ open class FormViewModel @Inject constructor(
     } catch (ue: UserException) { null }
 
     val observationState = ObservationState(
+      id = observation.id,
       status = status,
       definition = definition,
       permissions = permissions,
       timestampFieldState = timestampFieldState,
       geometryFieldState = geometryFieldState,
-      eventName = event.name,
       userDisplayName = user?.displayName,
       forms = forms,
       attachments = observation.attachments,
@@ -411,7 +412,7 @@ open class FormViewModel @Inject constructor(
     observationState.value?.forms?.value = forms
   }
 
-  fun addAttachment(attachment: Attachment, action: MediaAction?) {
+  open fun addAttachment(attachment: Attachment, action: MediaAction?) {
     val fieldState = getAttachmentField(action)
     attachment.fieldName = fieldState?.definition?.name
     val attachments = fieldState?.answer?.attachments?.toMutableList() ?: mutableListOf()

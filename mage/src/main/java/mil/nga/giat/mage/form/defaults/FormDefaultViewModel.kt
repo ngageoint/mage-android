@@ -5,13 +5,15 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.google.gson.JsonObject
-import mil.nga.giat.mage.dagger.module.ApplicationContext
+import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import mil.nga.giat.mage.form.*
 import mil.nga.giat.mage.form.field.*
 import mil.nga.giat.mage.sdk.datastore.user.EventHelper
 import mil.nga.giat.mage.sdk.exceptions.EventException
 import javax.inject.Inject
 
+@HiltViewModel
 class FormDefaultViewModel @Inject constructor(
   @ApplicationContext val context: Context,
 ) : ViewModel() {

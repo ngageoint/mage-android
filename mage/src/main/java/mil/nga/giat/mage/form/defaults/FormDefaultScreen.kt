@@ -17,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.LiveData
+import mil.nga.giat.mage.form.FieldType
 import mil.nga.giat.mage.form.FormState
 import mil.nga.giat.mage.form.edit.FieldEditContent
 import mil.nga.giat.mage.form.field.FieldState
@@ -168,28 +169,33 @@ fun DefaultContent(
   onFieldClick: ((FieldState<*, *>) -> Unit)? = null
 ) {
   Card(Modifier.padding(bottom = 16.dp)) {
-    Column(Modifier.padding(16.dp)) {
+    Column {
       Text(
         text = "Custom Form Defaults",
         style = MaterialTheme.typography.h6,
-        modifier = Modifier.padding(bottom = 8.dp)
+        modifier = Modifier.padding(16.dp)
       )
 
       CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
         Text(
           text = "Personalize the default values MAGE will autofill when you add this form to an observation.",
           style = MaterialTheme.typography.body2,
-          modifier = Modifier.padding(bottom = 16.dp)
+          modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 16.dp)
         )
       }
 
-      DefaultFormContent(formState = formState, onFieldClick = onFieldClick)
+      DefaultFormContent(
+        formState = formState,
+        onFieldClick = onFieldClick
+      )
 
-      Divider(Modifier.padding(vertical = 16.dp))
+      Divider()
 
       Row(
         horizontalArrangement = Arrangement.End,
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier
+          .fillMaxWidth()
+          .padding(16.dp)
       ) {
         TextButton(
           onClick = { onReset?.invoke() },
@@ -207,12 +213,15 @@ fun DefaultFormContent(
   formState: FormState,
   onFieldClick: ((FieldState<*, *>) -> Unit)? = null
 ) {
-  for (fieldState in formState.fields.sortedBy { it.definition.id }) {
+  val fields = formState.fields
+    .filter { it.definition.type != FieldType.ATTACHMENT }
+    .sortedBy { it.definition.id }
+
+  for (fieldState in fields) {
     FieldEditContent(
-      fieldState,
-      onClick = {
-        onFieldClick?.invoke(fieldState)
-      }
+      modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 16.dp),
+      fieldState = fieldState,
+      onClick = { onFieldClick?.invoke(fieldState) }
     )
   }
 }

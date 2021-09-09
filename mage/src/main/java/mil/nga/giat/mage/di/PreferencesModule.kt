@@ -1,4 +1,4 @@
-package mil.nga.giat.mage.dagger.module
+package mil.nga.giat.mage.di
 
 import android.content.SharedPreferences
 import androidx.preference.PreferenceManager

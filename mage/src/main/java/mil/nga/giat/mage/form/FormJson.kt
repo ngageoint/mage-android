@@ -103,6 +103,8 @@ enum class FieldType(val typeClass: Class<out FormField<out Any>>) {
   NUMBERFIELD(NumberFormField::class.java),
   @SerializedName("email")
   EMAIL(TextFormField::class.java),
+  @SerializedName("password")
+  PASSWORD(TextFormField::class.java),
   @SerializedName("radio")
   RADIO(SingleChoiceFormField::class.java),
   @SerializedName("checkbox")

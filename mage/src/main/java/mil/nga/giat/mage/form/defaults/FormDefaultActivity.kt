@@ -5,8 +5,9 @@ import android.content.Intent
 import android.os.Bundle
 
 import androidx.activity.compose.setContent
+import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
-import dagger.android.support.DaggerAppCompatActivity
+import dagger.hilt.android.AndroidEntryPoint
 import mil.nga.giat.mage.form.ChoiceFormField
 import mil.nga.giat.mage.form.Form
 
@@ -19,7 +20,8 @@ import mil.nga.giat.mage.sdk.datastore.user.Event
 import java.util.*
 import javax.inject.Inject
 
-class FormDefaultActivity : DaggerAppCompatActivity() {
+@AndroidEntryPoint
+class FormDefaultActivity : AppCompatActivity() {
 
   companion object {
     private const val EVENT_ID_EXTRA = "EVENT_ID_EXTRA"
@@ -33,8 +35,6 @@ class FormDefaultActivity : DaggerAppCompatActivity() {
     }
   }
 
-  @Inject
-  lateinit var viewModelFactory: ViewModelProvider.Factory
   private lateinit var viewModel: FormDefaultViewModel
 
   public override fun onCreate(savedInstanceState: Bundle?) {
@@ -43,7 +43,7 @@ class FormDefaultActivity : DaggerAppCompatActivity() {
     require(intent.hasExtra(EVENT_ID_EXTRA)) { "EVENT_ID_EXTRA is required to launch FormDefaultActivity" }
     require(intent.hasExtra(FORM_ID_EXTRA)) { "FORM_ID_EXTRA is required to launch FormDefaultActivity" }
 
-    viewModel = ViewModelProvider(this, viewModelFactory).get(FormDefaultViewModel::class.java)
+    viewModel = ViewModelProvider(this).get(FormDefaultViewModel::class.java)
 
     viewModel.setForm(
       eventId = intent.getLongExtra(EVENT_ID_EXTRA, 0),

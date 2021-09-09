@@ -2,16 +2,16 @@ package mil.nga.giat.mage._server5.observation.edit
 
 import android.content.Context
 import android.util.Log
-import androidx.lifecycle.SavedStateHandle
 import com.google.android.gms.maps.model.LatLng
 import com.google.gson.JsonObject
 import dagger.hilt.android.lifecycle.HiltViewModel
-import mil.nga.giat.mage.dagger.module.ApplicationContext
+import dagger.hilt.android.qualifiers.ApplicationContext
 import mil.nga.giat.mage.form.*
 import mil.nga.giat.mage.form.Form.Companion.fromJson
 import mil.nga.giat.mage.form.defaults.FormPreferences
 import mil.nga.giat.mage.form.field.*
 import mil.nga.giat.mage.observation.*
+import mil.nga.giat.mage.observation.edit.MediaAction
 import mil.nga.giat.mage.sdk.datastore.observation.*
 import mil.nga.giat.mage.sdk.datastore.user.*
 import mil.nga.giat.mage.sdk.exceptions.UserException
@@ -97,7 +97,6 @@ class FormViewModel_server5 @Inject constructor(
       definition = definition,
       timestampFieldState = timestampFieldState,
       geometryFieldState = geometryFieldState,
-      eventName = event.name,
       userDisplayName = user?.displayName,
       forms = forms)
     _observationState.value = observationState
@@ -206,7 +205,6 @@ class FormViewModel_server5 @Inject constructor(
       permissions = permissions,
       timestampFieldState = timestampFieldState,
       geometryFieldState = geometryFieldState,
-      eventName = event.name,
       userDisplayName = user?.displayName,
       forms = forms,
       attachments = observation.attachments,
@@ -216,7 +214,7 @@ class FormViewModel_server5 @Inject constructor(
     _observationState.value = observationState
   }
 
-  fun addAttachment(attachment: Attachment) {
+  override fun addAttachment(attachment: Attachment, action: MediaAction?) {
     this.attachments.add(attachment)
 
     val attachments = observationState.value?.attachments?.value?.toMutableList() ?: mutableListOf()

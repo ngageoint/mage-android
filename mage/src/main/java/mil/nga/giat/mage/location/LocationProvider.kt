@@ -8,8 +8,8 @@ import android.location.LocationManager
 import android.os.Bundle
 import android.util.Log
 import androidx.lifecycle.LiveData
+import dagger.hilt.android.qualifiers.ApplicationContext
 import mil.nga.giat.mage.R
-import mil.nga.giat.mage.dagger.module.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
 
