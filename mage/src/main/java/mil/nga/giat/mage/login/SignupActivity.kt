@@ -3,15 +3,20 @@ package mil.nga.giat.mage.login
 import android.content.Context
 import android.content.DialogInterface
 import android.content.Intent
+import android.content.SharedPreferences
 import android.graphics.Color
 import android.graphics.Typeface
 import android.os.Bundle
 import android.text.Editable
+import android.text.Html
+import android.text.Spanned
 import android.text.TextWatcher
+import android.text.method.LinkMovementMethod
 import android.util.Patterns
 import android.view.KeyEvent
 import android.view.View
 import android.view.inputmethod.InputMethodManager
+import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
@@ -21,12 +26,16 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.android.synthetic.main.activity_signup.*
 import kotlinx.android.synthetic.main.mage_header.*
 import mil.nga.giat.mage.R
+import mil.nga.giat.mage.contact.utilities.LinkGenerator
 import mil.nga.giat.mage.login.SignupViewModel.*
+import javax.inject.Inject
 
 @AndroidEntryPoint
 open class SignupActivity : AppCompatActivity() {
 
    protected lateinit var viewModel: SignupViewModel
+   @Inject
+   protected lateinit var preferences: SharedPreferences
 
    public override fun onCreate(savedInstanceState: Bundle?) {
       super.onCreate(savedInstanceState)
@@ -109,18 +118,24 @@ open class SignupActivity : AppCompatActivity() {
 
       if (status.success) {
          val isActive = status.user!!.get("active").asBoolean
-         showSignupSuccessDialog(isActive)
+         val username = status.user!!.get("username").asString
+         showSignupSuccessDialog(isActive, username)
       } else {
          if (status.error == SignupError.INVALID_USERNAME) {
             captcha_text.setText("")
             username_layout.error = "Username not available"
          }
 
-         AlertDialog.Builder(this)
+         val message = status.errorMessage
+
+         val dialog = AlertDialog.Builder(this)
             .setTitle("Signup Failed")
-            .setMessage(status.errorMessage)
+            .setMessage(addLinks(message, "", ""))
             .setPositiveButton(android.R.string.ok, null)
             .show()
+
+         (dialog.findViewById<View>(android.R.id.message) as TextView).movementMethod =
+            LinkMovementMethod.getInstance()
       }
    }
 
@@ -194,16 +209,36 @@ open class SignupActivity : AppCompatActivity() {
       imm.hideSoftInputFromWindow(view.windowToken, 0)
    }
 
-   private fun showSignupSuccessDialog(isActive: Boolean) {
+   private fun showSignupSuccessDialog(isActive: Boolean, username: String) {
       val alertDialog = AlertDialog.Builder(this)
       alertDialog.setTitle(R.string.account_inactive_title)
       if (isActive) {
-         alertDialog.setMessage(getString(R.string.account_active_message))
+         val message = getString(R.string.account_active_message);
+         alertDialog.setMessage(addLinks(message, username, ""))
       } else {
-         alertDialog.setMessage(getString(R.string.account_inactive_message))
+         val message = getString(R.string.account_inactive_message);
+         alertDialog.setMessage(addLinks(message, username, ""))
       }
       alertDialog.setPositiveButton("Ok") { _: DialogInterface?, _: Int -> done() }
-      alertDialog.show()
+      val dialog = alertDialog.show()
+      (dialog.findViewById<View>(android.R.id.message) as TextView).movementMethod =
+         LinkMovementMethod.getInstance()
+   }
+
+   private fun addLinks(
+      message: String?,
+      identifier: String,
+      strategy: String
+   ): Spanned? {
+      val emailLink =
+         LinkGenerator.getEmailLink(this.preferences, message, identifier, strategy)
+      val phoneLink = LinkGenerator.getPhoneLink(this.preferences)
+      return Html.fromHtml(
+         message + " <br /><br /> "
+                 + "You may contact your MAGE administrator via <a href= "
+                 + emailLink + ">Email</a> or <a href="
+                 + phoneLink + ">Phone</a> for further assistance."
+      )
    }
 
    private fun toggleMask(visible: Boolean) {
