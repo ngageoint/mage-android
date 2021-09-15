@@ -7,9 +7,6 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Typeface;
 import android.os.Bundle;
-import android.text.Html;
-import android.text.Spanned;
-import android.text.method.LinkMovementMethod;
 import android.util.Patterns;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
@@ -30,15 +27,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-import javax.inject.Inject;
-
 import mil.nga.giat.mage.R;
-import mil.nga.giat.mage.contact.utilities.LinkGenerator;
+import mil.nga.giat.mage.contact.ContactDialog;
 import mil.nga.giat.mage.sdk.datastore.DaoStore;
 import mil.nga.giat.mage.sdk.datastore.observation.AttachmentHelper;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
 import mil.nga.giat.mage.sdk.preferences.ServerApi;
-import mil.nga.giat.mage.sdk.utils.DeviceUuidFactory;
 
 /**
  *
@@ -54,9 +48,6 @@ public class ServerUrlActivity extends AppCompatActivity implements ServerApi.Se
 
 	private static final String SERVER_URL_FRAGMENT_TAG = "SERVER_URL_FRAGMENT";
 	private ServerUrlFragment urlFragment;
-
-	@Inject
-	protected SharedPreferences preferences;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -186,16 +177,12 @@ public class ServerUrlActivity extends AppCompatActivity implements ServerApi.Se
 
 			String message = "Cannot connect to server.";
 			if (error == null) {
-				message = "Your MAGE application is not compatible with this server.  Please update your application or contact your MAGE administrator for support.";
+				message = "Application is not compatible with server.";
 
-				final Spanned s = addLinks(message);
-				final AlertDialog dialog = new AlertDialog.Builder(this)
-						.setTitle("Compatibility Error")
-						.setMessage(message)
-						.setPositiveButton(android.R.string.ok, null)
-						.create();
+				SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+				ContactDialog dialog = new ContactDialog(getApplicationContext(), sharedPreferences, "Compatibility Error");
+				dialog.setMessage("Your MAGE application is not compatible with this server.  Please update your application or contact your MAGE administrator for support.");
 				dialog.show();
-				((TextView) dialog.findViewById(android.R.id.message)).setMovementMethod(LinkMovementMethod.getInstance());
 			} else {
 				if (error.getCause() != null) {
 					message = error.getCause().getMessage();
@@ -211,18 +198,5 @@ public class ServerUrlActivity extends AppCompatActivity implements ServerApi.Se
 		Intent intent = new Intent(this, LoginActivity.class);
 		startActivity(intent);
 		finish();
-	}
-
-	private Spanned addLinks(final String message) {
-		final String identifier = new DeviceUuidFactory(getApplicationContext()).getDeviceUuid().toString();
-		final String emailLink = LinkGenerator.getEmailLink(this.preferences, message, identifier, null);
-		final String phoneLink = LinkGenerator.getPhoneLink(this.preferences);
-
-		final Spanned s = Html.fromHtml(message + " <br /><br /> "
-				+ "You may contact your MAGE administrator via <a href= "
-				+ emailLink + ">Email</a> or <a href="
-				+ phoneLink + ">Phone</a> for further assistance.");
-
-		return s;
 	}
 }
