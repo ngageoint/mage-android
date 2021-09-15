@@ -16,8 +16,8 @@ public class LinkGenerator {
     public static String getEmailLink(SharedPreferences preferences, String statusMessage, String identifier, String strategy) {
         StringBuilder url = new StringBuilder();
 
-        final String email = preferences.getString("gAdminContactInfoEmail", null);
-        if (email != null) {
+        final String email = preferences.getString("gContactinfoEmail", null);
+        if (email != null && !email.isEmpty()) {
             EmailBuilder emailBuilder = new EmailBuilder(statusMessage, identifier, strategy);
             emailBuilder.build();
 
@@ -36,8 +36,8 @@ public class LinkGenerator {
     public static String getPhoneLink(SharedPreferences preferences) {
         StringBuilder url = new StringBuilder();
 
-        final String phone = preferences.getString("gAdminContactInfoPhone", null);
-        if (phone != null) {
+        final String phone = preferences.getString("gContactinfoPhone", null);
+        if (phone != null && !phone.isEmpty()) {
             url.append(Uri.fromParts("tel", phone, null).toString());
         }
 

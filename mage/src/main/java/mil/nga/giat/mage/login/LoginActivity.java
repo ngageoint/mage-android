@@ -10,9 +10,6 @@ import android.graphics.Typeface;
 import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
-import android.text.Html;
-import android.text.Spanned;
-import android.text.method.LinkMovementMethod;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnTouchListener;
@@ -48,7 +45,7 @@ import mil.nga.giat.mage.MageApplication;
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage._server5.login.SignupActivity_server5;
 import mil.nga.giat.mage.cache.CacheUtils;
-import mil.nga.giat.mage.contact.utilities.LinkGenerator;
+import mil.nga.giat.mage.contact.ContactDialog;
 import mil.nga.giat.mage.disclaimer.DisclaimerActivity;
 import mil.nga.giat.mage.event.EventsActivity;
 import mil.nga.giat.mage.login.LoginViewModel.Authentication;
@@ -64,7 +61,6 @@ import mil.nga.giat.mage.sdk.exceptions.UserException;
 import mil.nga.giat.mage.sdk.login.AuthenticationStatus;
 import mil.nga.giat.mage.sdk.login.AuthorizationStatus;
 import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
-import mil.nga.giat.mage.sdk.utils.DeviceUuidFactory;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
 import mil.nga.giat.mage.sdk.utils.UserUtility;
 
@@ -260,52 +256,16 @@ public class LoginActivity extends AppCompatActivity {
                 message = "Please contact a MAGE administrator to activate your account.";
             }
 
-            final Spanned s = addLinks(message, authentication);
-            final AlertDialog d = new AlertDialog.Builder(this)
-                    .setTitle("Account Created")
-                    .setMessage(s)
-                    .setPositiveButton(android.R.string.ok, null)
-                    .show();
-            ((TextView) d.findViewById(android.R.id.message)).setMovementMethod(LinkMovementMethod.getInstance());
+            ContactDialog dialog = new ContactDialog(this, this.preferences, "Account Created");
+            dialog.setMessage(message);
+            dialog.setStrategy(authentication.getStrategy());
+            dialog.show();
         } else {
-            String message = status.getMessage();
-            final Spanned s = addLinks(message, authentication);
-            final AlertDialog d = new AlertDialog.Builder(this)
-                    .setTitle("Sign-in Failed")
-                    .setMessage(s)
-                    .setPositiveButton(android.R.string.ok, null)
-                    .show();
-            ((TextView) d.findViewById(android.R.id.message)).setMovementMethod(LinkMovementMethod.getInstance());
+            ContactDialog dialog = new ContactDialog(this, this.preferences, "Sign-in Failed");
+            dialog.setMessage(status.getMessage());
+            dialog.setStrategy(authentication.getStrategy());
+            dialog.show();
         }
-    }
-
-    private Spanned addLinks(String message, Authentication authentication) {
-        String strategy = null;
-        if(authentication != null) {
-            strategy = authentication.getStrategy();
-        }
-        //TODO get user id
-        String identifier = null;
-        return addLinks(message, identifier, strategy);
-    }
-
-    private Spanned addLinks(String message, LoginViewModel.Authorization authorization) {
-        String identifier = new DeviceUuidFactory(getApplicationContext()).getDeviceUuid().toString();
-        //TODO get strategy
-        String strategy = null;
-        return  addLinks(message, identifier, strategy);
-    }
-
-    private Spanned addLinks(String message, String identifier, String strategy) {
-        final String emailLink = LinkGenerator.getEmailLink(this.preferences, message, identifier, strategy);
-        final String phoneLink = LinkGenerator.getPhoneLink(this.preferences);
-
-        final Spanned s = Html.fromHtml(message + " <br /><br /> "
-                + "You may contact your MAGE administrator via <a href= "
-                + emailLink + ">Email</a> or <a href="
-                + phoneLink + ">Phone</a> for further assistance.");
-
-        return s;
     }
 
     private void observeAuthorization(LoginViewModel.Authorization authorization) {
@@ -315,23 +275,17 @@ public class LoginActivity extends AppCompatActivity {
         if (status == AuthorizationStatus.Status.SUCCESSFUL_AUTHORIZATION) {
             loginComplete(authorization.getUserChanged());
         } else if (status == AuthorizationStatus.Status.FAILED_AUTHORIZATION) {
-            new AlertDialog.Builder(this)
-                    .setTitle("Registration Sent")
-                    .setMessage(R.string.device_registered_text)
-                    .setPositiveButton(android.R.string.ok, null)
-                    .show();
+            ContactDialog dialog = new ContactDialog(this, this.preferences, "Registration Sent");
+            dialog.setMessage(getString(R.string.device_registered_text));
+            dialog.show();
         } else if (status == AuthorizationStatus.Status.INVALID_SERVER) {
-            new AlertDialog.Builder(this)
-                    .setTitle("Application Compatibility Error")
-                    .setMessage("This app is not compatible with this server. Please update your context or talk to your MAGE administrator.")
-                    .setPositiveButton(android.R.string.ok, null)
-                    .show();
+            ContactDialog dialog = new ContactDialog(this, this.preferences, "Application Compatibility Error");
+            dialog.setMessage("This app is not compatible with this server. Please update your context or talk to your MAGE administrator.");
+            dialog.show();
         } else {
-            new AlertDialog.Builder(this)
-                    .setTitle("Signin Failed")
-                    .setMessage(authorization.getStatus().getMessage())
-                    .setPositiveButton(android.R.string.ok, null)
-                    .show();
+            ContactDialog dialog = new ContactDialog(this, this.preferences, "Sign-in Failed");
+            dialog.setMessage(authorization.getStatus().getMessage());
+            dialog.show();
         }
     }
 
