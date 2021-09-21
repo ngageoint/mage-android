@@ -3,6 +3,14 @@ All notable changes to this project will be documented in this file.
 Adheres to [Semantic Versioning](http://semver.org/).
 
 ---
+## Changes Pending
+
+##### Features
+
+##### Bug Fixes
+* Filter archived forms in form picker
+* Fix signup crash for 5.x servers.
+
 ## [7.0](https://github.com/ngageoint/mage-android/releases/tag/7.0)
 
 ##### Release Notes
