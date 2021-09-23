@@ -53,15 +53,21 @@ class FormPickerBottomSheetFragment: BottomSheetDialogFragment() {
 
     // TODO get from ViewModel
     val jsonForms = EventHelper.getInstance(context).currentEvent.forms
-    val forms = mutableListOf<FormState>()
-    for (jsonForm in jsonForms) {
-      Form.fromJson(jsonForm as JsonObject)?.let { form ->
-        val formMax = form.max
-        val totalOfForm = viewModel.observationState.value?.forms?.value?.filter { it.definition.id == form.id }?.size ?: 0
-        val disabled = formMax != null && totalOfForm <= formMax
-        forms.add(FormState(form, disabled))
-      }
-    }
+
+    val forms = jsonForms
+       .asSequence()
+       .filterIsInstance<JsonObject>()
+       .map { Form.fromJson(it) }
+       .filterNotNull()
+       .filter { !it.archived }
+       .map { form ->
+         val formMax = form.max
+         val totalOfForm = viewModel.observationState.value?.forms?.value?.filter { it.definition.id == form.id }?.size ?: 0
+         val disabled = formMax != null && totalOfForm <= formMax
+
+         FormState(form, disabled)
+       }
+       .toList()
 
     recyclerView.adapter = FormAdapter(forms) { onForm(it.form) }
   }

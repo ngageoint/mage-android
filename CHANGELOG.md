@@ -3,6 +3,14 @@ All notable changes to this project will be documented in this file.
 Adheres to [Semantic Versioning](http://semver.org/).
 
 ---
+## Changes Pending
+
+##### Features
+
+##### Bug Fixes
+* Filter archived forms in form picker
+* Fix signup crash for 5.x servers.
+
 ## [7.0](https://github.com/ngageoint/mage-android/releases/tag/7.0)
 
 ##### Release Notes
@@ -11,7 +19,6 @@ Adheres to [Semantic Versioning](http://semver.org/).
 ##### Features
 * Multi form support:  Users will be able to add multiple forms to an observation when the server configuration allows.
 * Attachments as form fields: Users can create attachments in form fields when the server configuration allows.
-* Straight line navigation: Users can now navigate, within the app, to any feature on the map including users or observations
 
 ##### Bug Fixes
 
