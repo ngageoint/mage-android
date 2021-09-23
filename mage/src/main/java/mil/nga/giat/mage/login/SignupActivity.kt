@@ -1,8 +1,8 @@
 package mil.nga.giat.mage.login
 
 import android.content.Context
+import android.content.DialogInterface
 import android.content.Intent
-import android.content.SharedPreferences
 import android.graphics.Color
 import android.graphics.Typeface
 import android.os.Bundle
@@ -12,6 +12,7 @@ import android.util.Patterns
 import android.view.KeyEvent
 import android.view.View
 import android.view.inputmethod.InputMethodManager
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.ColorUtils
@@ -20,16 +21,12 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.android.synthetic.main.activity_signup.*
 import kotlinx.android.synthetic.main.mage_header.*
 import mil.nga.giat.mage.R
-import mil.nga.giat.mage.contact.ContactDialog
 import mil.nga.giat.mage.login.SignupViewModel.*
-import javax.inject.Inject
 
 @AndroidEntryPoint
 open class SignupActivity : AppCompatActivity() {
 
    protected lateinit var viewModel: SignupViewModel
-   @Inject
-   protected lateinit var preferences: SharedPreferences
 
    public override fun onCreate(savedInstanceState: Bundle?) {
       super.onCreate(savedInstanceState)
@@ -112,19 +109,18 @@ open class SignupActivity : AppCompatActivity() {
 
       if (status.success) {
          val isActive = status.user!!.get("active").asBoolean
-         val username = status.user!!.get("username").asString
-         showSignupSuccessDialog(isActive, username)
+         showSignupSuccessDialog(isActive)
       } else {
          if (status.error == SignupError.INVALID_USERNAME) {
             captcha_text.setText("")
             username_layout.error = "Username not available"
          }
 
-         val message = status.errorMessage
-
-         val dialog = ContactDialog(this, this.preferences, "Signup Failed");
-         dialog.setMessage(message);
-         dialog.show();
+         AlertDialog.Builder(this)
+            .setTitle("Signup Failed")
+            .setMessage(status.errorMessage)
+            .setPositiveButton(android.R.string.ok, null)
+            .show()
       }
    }
 
@@ -198,16 +194,16 @@ open class SignupActivity : AppCompatActivity() {
       imm.hideSoftInputFromWindow(view.windowToken, 0)
    }
 
-   private fun showSignupSuccessDialog(isActive: Boolean, username: String) {
-      val dialog = ContactDialog(this, this.preferences, getString(R.string.account_inactive_title));
+   private fun showSignupSuccessDialog(isActive: Boolean) {
+      val alertDialog = AlertDialog.Builder(this)
+      alertDialog.setTitle(R.string.account_inactive_title)
       if (isActive) {
-         val message = getString(R.string.account_active_message);
-         dialog.setMessage(message)
+         alertDialog.setMessage(getString(R.string.account_active_message))
       } else {
-         val message = getString(R.string.account_inactive_message);
-         dialog.setMessage(message)
+         alertDialog.setMessage(getString(R.string.account_inactive_message))
       }
-      dialog.show();
+      alertDialog.setPositiveButton("Ok") { _: DialogInterface?, _: Int -> done() }
+      alertDialog.show()
    }
 
    private fun toggleMask(visible: Boolean) {
