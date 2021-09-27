@@ -149,8 +149,6 @@ public class MageApplication extends Application implements LifecycleObserver, S
 	}
 
 	public void onLogin() {
-		createNotification();
-
 		//set up observation notifications
 		if (observationNotificationListener == null) {
 			observationNotificationListener = new ObservationNotificationListener(getApplicationContext());
@@ -256,71 +254,6 @@ public class MageApplication extends Application implements LifecycleObserver, S
 		notificationManager.cancel(ObservationNotificationListener.OBSERVATION_NOTIFICATION_ID);
 	}
 
-	public void createNotification() {
-		boolean tokenExpired = UserUtility.getInstance(getApplicationContext()).isTokenExpired();
-
-	    // Creates an explicit intent for an Activity in your app
-		Intent resultIntent = new Intent(this, LoginActivity.class);
-		// The stack builder object will contain an artificial back stack for the
-		// started Activity.
-		// This ensures that navigating backward from the Activity leads out of
-		// your application to the Home screen.
-		TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
-		// Adds the back stack for the Intent (but not the Intent itself)
-		stackBuilder.addParentStack(LoginActivity.class);
-		// Adds the Intent that starts the Activity to the top of the stack
-		stackBuilder.addNextIntent(resultIntent);
-		PendingIntent resultPendingIntent = stackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
-
-		String noticationMsg = tokenExpired ? "Your token has expired, please tap to login." : "You are currently logged into MAGE.";
-
-		Notification accountNotification = new NotificationCompat.Builder(this, MAGE_NOTIFICATION_CHANNEL_ID)
-				.setOngoing(true)
-				.setSortKey("1")
-				.setContentTitle("MAGE")
-				.setContentText(noticationMsg)
-				.setGroup(MAGE_NOTIFICATION_GROUP)
-				.setContentIntent(resultPendingIntent)
-				.setSmallIcon(R.drawable.ic_wand_white_50dp)
-				.addAction(R.drawable.ic_power_settings_new_white_24dp, "Logout", getLogoutPendingIntent())
-				.build();
-
-		NotificationCompat.InboxStyle style = new NotificationCompat.InboxStyle()
-				.addLine(noticationMsg)
-				.setBigContentTitle("MAGE");
-
-		if (isReportingLocation()) {
-			style.addLine("MAGE is currently reporting your location.");
-		}
-
-		// This summary notification supports "grouping" on versions older that Android.N
-		Notification summaryNotification = new NotificationCompat.Builder(this, MAGE_NOTIFICATION_CHANNEL_ID)
-				.setGroupSummary(true)
-				.setGroup(MAGE_NOTIFICATION_GROUP)
-				.setContentTitle("MAGE")
-				.setContentText(noticationMsg)
-				.setSmallIcon(R.drawable.ic_wand_white_50dp)
-				.setStyle(style)
-				.setContentIntent(resultPendingIntent)
-				.addAction(R.drawable.ic_power_settings_new_white_24dp, "Logout", getLogoutPendingIntent())
-				.build();
-
-		NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
-		notificationManager.notify(MAGE_ACCOUNT_NOTIFICATION_ID, accountNotification);
-		notificationManager.notify(MAGE_SUMMARY_NOTIFICATION_ID, summaryNotification);
-	}
-
-	private boolean isReportingLocation() {
-		return PreferenceManager.getDefaultSharedPreferences(this).getBoolean(getResources().getString(R.string.reportLocationKey), getResources().getBoolean(R.bool.reportLocationDefaultValue));
-	}
-
-	private PendingIntent getLogoutPendingIntent() {
-		Intent intent = new Intent(getApplicationContext(), LoginActivity.class);
-		intent.putExtra("LOGOUT", true);
-		intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-		return PendingIntent.getActivity(getApplicationContext(), 1, intent, 0);
-	}
-
 	private void startFetching() {
 		startService(new Intent(getApplicationContext(), LocationFetchService.class));
 		startService(new Intent(getApplicationContext(), ObservationFetchService.class));
@@ -368,10 +301,6 @@ public class MageApplication extends Application implements LifecycleObserver, S
 		if (locationReportingServiceIntent == null) {
 			locationReportingServiceIntent = new Intent(getApplicationContext(), LocationReportingService.class);
 			ContextCompat.startForegroundService(getApplicationContext(), locationReportingServiceIntent);
-
-			// NOTE this can go away when we remove support for < Android.N
-			// This will recreate the summary notification.
-			createNotification();
 		}
 	}
 
@@ -379,10 +308,6 @@ public class MageApplication extends Application implements LifecycleObserver, S
 		if (locationReportingServiceIntent != null) {
 			stopService(locationReportingServiceIntent);
 			locationReportingServiceIntent = null;
-
-			// NOTE this can go away when we remove support for < Android.N
-			// This will recreate the summary notification
-			createNotification();
 		}
 	}
 	@Override
@@ -449,7 +374,6 @@ public class MageApplication extends Application implements LifecycleObserver, S
 	private void invalidateSession(Activity activity, Boolean applicationInUse) {
 		destroyFetching();
 		destroyPushing();
-		createNotification();
 
 		ObservationFetchWorker.Companion.stopWork();
 
@@ -474,5 +398,4 @@ public class MageApplication extends Application implements LifecycleObserver, S
 
 		startActivity(intent);
 	}
-
 }

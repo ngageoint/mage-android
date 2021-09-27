@@ -102,7 +102,6 @@ public class LandingActivity extends AppCompatActivity implements NavigationView
     private BottomNavigationView bottomNavigationView;
     private List<Fragment> bottomNavigationFragments = new ArrayList<>();
 
-    private boolean locationPermissionGranted = false;
     private Uri openUri;
     private String openPath;
 
@@ -144,9 +143,8 @@ public class LandingActivity extends AppCompatActivity implements NavigationView
         setTitle();
         setRecentsEvents();
 
-        // Ask for permissions
-        locationPermissionGranted = ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
-        if (locationPermissionGranted) {
+        // Check location permission
+        if (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
             if (shouldReportLocation()) {
                 application.startLocationService();
             }
@@ -254,9 +252,7 @@ public class LandingActivity extends AppCompatActivity implements NavigationView
             recreate();
         }
 
-        if (shouldReportLocation() && locationPermissionGranted != (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED)) {
-            locationPermissionGranted = ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
-
+        if (shouldReportLocation() && (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED)) {
             // User allowed location service permission in settings, start location services.
             application.startLocationService();
         }
@@ -275,9 +271,7 @@ public class LandingActivity extends AppCompatActivity implements NavigationView
 
         switch (requestCode) {
             case PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION: {
-                locationPermissionGranted = grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED;
-
-                if (shouldReportLocation()) {
+                if (shouldReportLocation() && grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     application.startLocationService();
                 }
 

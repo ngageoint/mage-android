@@ -103,8 +103,6 @@ public class LocationPreferencesActivity extends AppCompatActivity {
                     } else {
                         application.stopLocationService();
                     }
-
-                    application.createNotification();
                 }
             });
 

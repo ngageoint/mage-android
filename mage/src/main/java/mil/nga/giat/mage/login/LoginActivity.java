@@ -160,7 +160,8 @@ public class LoginActivity extends AppCompatActivity {
          skipLogin();
       } else {
          // temporarily prune complete work on every login to ensure our unique work is rescheduled
-         WorkManager.getInstance().pruneWork();
+         WorkManager.getInstance(getApplicationContext()).pruneWork();
+         application.stopLocationService();
       }
 
       // no title bar

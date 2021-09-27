@@ -6,6 +6,7 @@ Adheres to [Semantic Versioning](http://semver.org/).
 ## Changes Pending
 
 ##### Features
+* Removed "logged in notification" for clarity.  MAGE location reporting notification now has a "logout" button.
 
 ##### Bug Fixes
 * Filter archived forms in form picker
