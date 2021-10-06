@@ -9,6 +9,7 @@ Adheres to [Semantic Versioning](http://semver.org/).
 
 ##### Bug Fixes
 
+
 ## [7.0.2](https://github.com/ngageoint/mage-android/releases/tag/7.0.2)
 
 ##### Features
