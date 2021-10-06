@@ -172,7 +172,6 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 	private static final int PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 1;
 
 	private static final int MARKER_REFRESH_INTERVAL_SECONDS = 300;
-	private static final int OBSERVATION_REFRESH_INTERVAL_SECONDS = 60;
 
 	private enum LocateState {
 		OFF,
@@ -204,7 +203,6 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 	protected LocationPolicy locationPolicy;
 	private LiveData<Location> locationProvider;
 
-	private RefreshMarkersRunnable refreshObservationsTask;
 	private RefreshMarkersRunnable refreshLocationsTask;
 	private RefreshMarkersRunnable refreshHistoricLocationsTask;
 
@@ -489,11 +487,6 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 	}
 
 	private void initializePeriodicTasks() {
-		if (refreshObservationsTask == null) {
-			refreshObservationsTask = new RefreshMarkersRunnable(observations, "timestamp", OBSERVATION_FILTER_TYPE, getTimeFilterId(), OBSERVATION_REFRESH_INTERVAL_SECONDS);
-            scheduleMarkerRefresh(refreshObservationsTask);
-		}
-
 		if (refreshLocationsTask == null) {
 			refreshLocationsTask = new RefreshMarkersRunnable(locations, "timestamp", LOCATION_FILTER_TYPE, getLocationTimeFilterId(), MARKER_REFRESH_INTERVAL_SECONDS);
 			scheduleMarkerRefresh(refreshLocationsTask);
@@ -506,11 +499,9 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 	}
 
 	private void stopPeriodicTasks() {
-		getView().removeCallbacks(refreshObservationsTask);
 		getView().removeCallbacks(refreshLocationsTask);
 		getView().removeCallbacks(refreshHistoricLocationsTask);
 
-		refreshObservationsTask = null;
 		refreshLocationsTask = null;
 		refreshHistoricLocationsTask = null;
 	}

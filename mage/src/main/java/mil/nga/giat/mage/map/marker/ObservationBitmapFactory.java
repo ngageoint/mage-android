@@ -175,10 +175,6 @@ public class ObservationBitmapFactory {
 					Log.e(LOG_NAME, "Cannot find icon.", e);
 				}
 			}
-
-			if (iconStream != null) {
-				Log.i(LOG_NAME, "path for icon stream: " + path.getAbsolutePath());
-			}
 		}
 
 		if (iconStream == null) {
