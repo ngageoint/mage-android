@@ -6,6 +6,12 @@ Adheres to [Semantic Versioning](http://semver.org/).
 ## Changes Pending
 
 ##### Features
+
+##### Bug Fixes
+
+## [7.0.1](https://github.com/ngageoint/mage-android/releases/tag/7.0.1)
+
+##### Features
 * Removed "logged in notification" for clarity.  MAGE location reporting notification now has a "logout" button.
 
 ##### Bug Fixes
