@@ -187,7 +187,7 @@ public class PeopleFeedFragment extends Fragment implements OnItemClickListener,
     }
 
     private int getTimeFilterId() {
-        return preferences.getInt(getResources().getString(R.string.activeLocationTimeFilterKey), getResources().getInteger(R.integer.time_filter_none));
+        return preferences.getInt(getResources().getString(R.string.activeLocationTimeFilterKey), getResources().getInteger(R.integer.time_filter_last_month));
     }
 
 	private int getCustomTimeNumber() {

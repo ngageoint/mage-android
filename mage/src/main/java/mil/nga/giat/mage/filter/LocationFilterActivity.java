@@ -39,7 +39,7 @@ public class LocationFilterActivity extends AppCompatActivity implements Compoun
 
 		SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
 
-		timeFilter = activeTimeFilter = preferences.getInt(getResources().getString(R.string.activeLocationTimeFilterKey), getResources().getInteger(R.integer.time_filter_none));
+		timeFilter = activeTimeFilter = preferences.getInt(getResources().getString(R.string.activeLocationTimeFilterKey), getResources().getInteger(R.integer.time_filter_last_month));
 		customTimeNumber = preferences.getInt(getResources().getString(R.string.customLocationTimeNumberFilterKey), 0);
 		customTimeUnit = preferences.getString(getResources().getString(R.string.customLocationTimeUnitFilterKey), getResources().getStringArray(R.array.timeUnitEntries)[0]);
 
@@ -134,7 +134,7 @@ public class LocationFilterActivity extends AppCompatActivity implements Compoun
 		View view = findViewById(android.R.id.content).findViewWithTag(timeFilter.toString());
 		if (view == null) {
 			view = findViewById(android.R.id.content).findViewWithTag("0");
-			timeFilter = activeTimeFilter = getResources().getInteger(R.integer.time_filter_none);
+			timeFilter = activeTimeFilter = getResources().getInteger(R.integer.time_filter_last_month);
 		}
 
 		showOrHideCustomWindow();

@@ -72,7 +72,9 @@ public class ObservationLoadTask extends AsyncTask<Void, Pair<MarkerOptions, Obs
                 Observation o = iterator.current();
                 Geometry geometry = o.getGeometry();
                 Point centroid = GeometryUtils.getCentroid(geometry);
-                MarkerOptions options = new MarkerOptions().position(new LatLng(centroid.getY(), centroid.getX())).icon(ObservationBitmapFactory.bitmapDescriptor(context, o));
+                MarkerOptions options = new MarkerOptions()
+                        .position(new LatLng(centroid.getY(), centroid.getX()))
+                        .icon(ObservationBitmapFactory.bitmapDescriptor(context, o));
 
                 publishProgress(new Pair<>(options, o));
             }

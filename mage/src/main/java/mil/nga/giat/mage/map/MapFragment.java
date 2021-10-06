@@ -1446,11 +1446,11 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 	}
 
 	private int getTimeFilterId() {
-		return preferences.getInt(getResources().getString(R.string.activeTimeFilterKey), getResources().getInteger(R.integer.time_filter_none));
+		return preferences.getInt(getResources().getString(R.string.activeTimeFilterKey), getResources().getInteger(R.integer.time_filter_last_month));
 	}
 
 	private int getLocationTimeFilterId() {
-		return preferences.getInt(getResources().getString(R.string.activeLocationTimeFilterKey), getResources().getInteger(R.integer.time_filter_none));
+		return preferences.getInt(getResources().getString(R.string.activeLocationTimeFilterKey), getResources().getInteger(R.integer.time_filter_last_month));
 	}
 
 	private int getCustomTimeNumber(String filterType) {
@@ -1515,7 +1515,6 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 	}
 
 	private String getFilterTitle() {
-
 		if (getTimeFilterId() != getResources().getInteger(R.integer.time_filter_none)
 				|| getLocationTimeFilterId() != getResources().getInteger(R.integer.time_filter_none)
 				|| preferences.getBoolean(getResources().getString(R.string.activeImportantFilterKey), false)

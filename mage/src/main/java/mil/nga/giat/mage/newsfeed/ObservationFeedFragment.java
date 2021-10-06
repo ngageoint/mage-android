@@ -449,7 +449,7 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 	}
 	
 	private int getTimeFilterId() {
-		return preferences.getInt(getResources().getString(R.string.activeTimeFilterKey), getResources().getInteger(R.integer.time_filter_none));
+		return preferences.getInt(getResources().getString(R.string.activeTimeFilterKey), getResources().getInteger(R.integer.time_filter_last_month));
 	}
 
 	@Override
