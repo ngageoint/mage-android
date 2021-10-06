@@ -159,7 +159,7 @@ public class MageApplication extends Application implements LifecycleObserver, S
 		startPushing();
 		startFetching();
 
-		ObservationFetchWorker.Companion.beginWork();
+		ObservationFetchWorker.Companion.beginWork(getApplicationContext());
 
 		// Pull static layers and features just once
 		loadOnlineAndOfflineLayers(false, null);
@@ -201,7 +201,7 @@ public class MageApplication extends Application implements LifecycleObserver, S
 		destroyNotification();
 		stopLocationService();
 
-		ObservationFetchWorker.Companion.stopWork();
+		ObservationFetchWorker.Companion.stopWork(getApplicationContext());
 
 		if (clearTokenInformationAndSendLogoutRequest) {
 			UserResource userResource = new UserResource(getApplicationContext());
@@ -375,7 +375,7 @@ public class MageApplication extends Application implements LifecycleObserver, S
 		destroyFetching();
 		destroyPushing();
 
-		ObservationFetchWorker.Companion.stopWork();
+		ObservationFetchWorker.Companion.stopWork(getApplicationContext());
 
 		// TODO JWT where else is disclaimer accepted set to false.
 		// Why not set to false if activity resumed onActivityResumed and token is invalid?

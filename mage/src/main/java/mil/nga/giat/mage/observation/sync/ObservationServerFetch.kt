@@ -38,38 +38,43 @@ class ObservationServerFetch(var context: Context) {
 
         try {
             val observations = observationResource.getObservations(event)
-            Log.d(LOG_NAME, "Fetched " + observations.size + " new observations")
-            for (observation in observations) {
-                val userId = observation.userId
-                if (userId != null) {
-                    val user = userHelper.read(userId)
-                    // TODO : test the timer to make sure users are updated as needed!
-                    val sixHoursInMilliseconds = (6 * 60 * 60 * 1000).toLong()
-                    if (user == null || Date().after(Date(user.fetchedDate.time + sixHoursInMilliseconds))) {
-                        // get any users that were not recognized or expired
-                        Log.d(LOG_NAME, "User for observation is null or stale, re-pulling")
-                        UserServerFetch(context).fetch(userId)
-                    }
-                }
+           Log.d(LOG_NAME, "Fetched " + observations.size + " new observations")
 
-                val oldObservation = observationHelper.read(observation.remoteId)
-                if (observation.state == State.ARCHIVE && oldObservation != null) {
-                    observationHelper.delete(oldObservation)
-                    Log.d(LOG_NAME, "Deleted observation with remote_id " + observation.remoteId)
-                } else if (observation.state != State.ARCHIVE && oldObservation == null) {
-                    val newObservation = observationHelper.create(observation, false)
-                    fetched.add(newObservation)
-                    Log.d(LOG_NAME, "Created observation with remote_id " + newObservation.remoteId)
-                } else if (observation.state != State.ARCHIVE && oldObservation != null && !oldObservation.isDirty) { // TODO : conflict resolution
-                    observation.id = oldObservation.id
-                    observationHelper.update(observation)
-                    Log.d(LOG_NAME, "Updated observation with remote_id " + observation.remoteId)
-                }
+           val iterator = observations.iterator()
+            while(iterator.hasNext()) {
+               val observation = iterator.next()
+
+               val userId = observation.userId
+               if (userId != null) {
+                  val user = userHelper.read(userId)
+                  // TODO : test the timer to make sure users are updated as needed!
+                  val sixHoursInMilliseconds = (6 * 60 * 60 * 1000).toLong()
+                  if (user == null || Date().after(Date(user.fetchedDate.time + sixHoursInMilliseconds))) {
+                     // get any users that were not recognized or expired
+                     Log.d(LOG_NAME, "User for observation is null or stale, re-pulling")
+                     UserServerFetch(context).fetch(userId)
+                  }
+               }
+
+               val oldObservation = observationHelper.read(observation.remoteId)
+               if (observation.state == State.ARCHIVE && oldObservation != null) {
+                  observationHelper.delete(oldObservation)
+                  Log.d(LOG_NAME, "Deleted observation with remote_id " + observation.remoteId)
+               } else if (observation.state != State.ARCHIVE && oldObservation == null) {
+                  val newObservation = observationHelper.create(observation, false)
+                  fetched.add(newObservation)
+                  Log.d(LOG_NAME, "Created observation with remote_id " + newObservation.remoteId)
+               } else if (observation.state != State.ARCHIVE && oldObservation != null && !oldObservation.isDirty) { // TODO : conflict resolution
+                  observation.id = oldObservation.id
+                  observationHelper.update(observation)
+                  Log.d(LOG_NAME, "Updated observation with remote_id " + observation.remoteId)
+               }
+
+               iterator.remove()
             }
         } catch(e: Exception) {
             Log.e(LOG_NAME, "Failed to fetch observations from the server", e)
         }
-
 
         if (notify) {
             createNotifications(fetched)
