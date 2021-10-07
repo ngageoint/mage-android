@@ -14,8 +14,8 @@ import android.widget.EditText;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.ViewModelProvider;
-import androidx.lifecycle.ViewModelProviders;
 import androidx.preference.PreferenceManager;
 
 import com.google.android.material.textfield.TextInputLayout;
@@ -26,9 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-import javax.inject.Inject;
-
-import dagger.android.support.DaggerAppCompatActivity;
+import dagger.hilt.android.AndroidEntryPoint;
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.network.Resource;
 import mil.nga.giat.mage.sdk.datastore.observation.AttachmentHelper;
@@ -38,7 +36,8 @@ import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
  *
  * Created by wnewman on 1/3/18.
  */
-public class ServerUrlActivity extends DaggerAppCompatActivity {
+@AndroidEntryPoint
+public class ServerUrlActivity extends AppCompatActivity {
 
 	private View apiStatusView;
 	private View serverUrlForm;
@@ -46,8 +45,6 @@ public class ServerUrlActivity extends DaggerAppCompatActivity {
 	private TextInputLayout serverUrlLayout;
 	private Button serverUrlButton;
 
-	@Inject
-	protected ViewModelProvider.Factory viewModelFactory;
 	private ServerUrlViewModel viewModel;
 
 	@Override
@@ -81,7 +78,7 @@ public class ServerUrlActivity extends DaggerAppCompatActivity {
 		serverUrlButton = findViewById(R.id.server_url_button);
 		serverUrlButton.setOnClickListener(v -> onChangeServerUrl());
 
-		viewModel = ViewModelProviders.of(this, viewModelFactory).get(ServerUrlViewModel.class);
+		viewModel = new ViewModelProvider(this).get(ServerUrlViewModel.class);
 		viewModel.getApi().observe(this, this::onApi);
 	}
 

@@ -1,15 +1,14 @@
 package mil.nga.giat.mage.data.event
 
 import android.content.Context
-import android.content.SharedPreferences
 import android.os.Environment
-import android.preference.PreferenceManager
 import android.util.Log
 import androidx.annotation.WorkerThread
+import androidx.preference.PreferenceManager
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import mil.nga.geopackage.factory.GeoPackageFactory
-import mil.nga.giat.mage.dagger.module.ApplicationContext
 import mil.nga.giat.mage.data.feed.FeedDao
 import mil.nga.giat.mage.glide.GlideApp
 import mil.nga.giat.mage.glide.model.Avatar.Companion.forUser
@@ -39,10 +38,10 @@ import javax.inject.Singleton
 
 @Singleton
 class EventRepository @Inject constructor(
-        @ApplicationContext private val context: Context,
-        private val mapLayerPreferences: MapLayerPreferences,
-        private val feedDao: FeedDao,
-        private val feedService: FeedService
+    @ApplicationContext private val context: Context,
+    private val mapLayerPreferences: MapLayerPreferences,
+    private val feedDao: FeedDao,
+    private val feedService: FeedService
 ) {
 
     companion object {

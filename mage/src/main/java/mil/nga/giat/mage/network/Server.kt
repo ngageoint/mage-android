@@ -1,8 +1,8 @@
 package mil.nga.giat.mage.network
 
 import android.content.Context
-import android.preference.PreferenceManager
-import mil.nga.giat.mage.dagger.module.ApplicationContext
+import androidx.preference.PreferenceManager
+import dagger.hilt.android.qualifiers.ApplicationContext
 import mil.nga.giat.mage.sdk.R
 
 class Server(@ApplicationContext val context: Context) {

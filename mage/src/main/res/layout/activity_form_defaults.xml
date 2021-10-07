@@ -83,10 +83,12 @@
                 android:layout_marginStart="16dp"
                 android:layout_marginEnd="16dp">
 
-                <fragment android:name="mil.nga.giat.mage.form.FormFragment"
-                    android:id="@+id/formFragment"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content" />
+<!--                TODO multi-form defaults for all forms? -->
+<!--                <androidx.fragment.app.FragmentContainerView-->
+<!--                    android:id="@+id/formFragment"-->
+<!--                    android:layout_width="match_parent"-->
+<!--                    android:layout_height="wrap_content"-->
+<!--                    android:name="mil.nga.giat.mage.form.FormFragment"/>-->
 
             </LinearLayout>
 

@@ -40,10 +40,10 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SearchView;
 import androidx.core.content.ContextCompat;
+import androidx.fragment.app.Fragment;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
-import androidx.lifecycle.ViewModelProviders;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -67,8 +67,6 @@ import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Collections2;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -86,7 +84,8 @@ import java.util.Set;
 
 import javax.inject.Inject;
 
-import dagger.android.support.DaggerFragment;
+import dagger.hilt.android.AndroidEntryPoint;
+import dagger.hilt.android.qualifiers.ApplicationContext;
 import mil.nga.geopackage.BoundingBox;
 import mil.nga.geopackage.GeoPackage;
 import mil.nga.geopackage.GeoPackageCache;
@@ -111,7 +110,6 @@ import mil.nga.geopackage.tiles.features.FeatureTiles;
 import mil.nga.geopackage.tiles.features.custom.NumberFeaturesTile;
 import mil.nga.geopackage.tiles.user.TileDao;
 import mil.nga.giat.mage.R;
-import mil.nga.giat.mage.dagger.module.ApplicationContext;
 import mil.nga.giat.mage.data.feed.FeedItem;
 import mil.nga.giat.mage.data.feed.FeedWithItems;
 import mil.nga.giat.mage.feed.item.FeedItemActivity;
@@ -138,10 +136,9 @@ import mil.nga.giat.mage.map.marker.ObservationMarkerCollection;
 import mil.nga.giat.mage.map.marker.PointCollection;
 import mil.nga.giat.mage.map.marker.StaticGeometryCollection;
 import mil.nga.giat.mage.map.preference.MapPreferencesActivity;
-import mil.nga.giat.mage.observation.ObservationEditActivity;
-import mil.nga.giat.mage.observation.ObservationFormPickerActivity;
 import mil.nga.giat.mage.observation.ObservationLocation;
-import mil.nga.giat.mage.observation.ObservationViewActivity;
+import mil.nga.giat.mage.observation.edit.ObservationEditActivity;
+import mil.nga.giat.mage.observation.view.ObservationViewActivity;
 import mil.nga.giat.mage.profile.ProfileActivity;
 import mil.nga.giat.mage.sdk.Temporal;
 import mil.nga.giat.mage.sdk.datastore.layer.Layer;
@@ -167,7 +164,8 @@ import mil.nga.sf.proj.Projection;
 import mil.nga.sf.proj.ProjectionConstants;
 import mil.nga.sf.proj.ProjectionFactory;
 
-public class MapFragment extends DaggerFragment implements
+@AndroidEntryPoint
+public class MapFragment extends Fragment implements
 		OnMapReadyCallback,
 		OnMapClickListener,
 		OnMapLongClickListener,
@@ -194,7 +192,6 @@ public class MapFragment extends DaggerFragment implements
 	private static final int PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 1;
 
 	private static final int MARKER_REFRESH_INTERVAL_SECONDS = 300;
-	private static final int OBSERVATION_REFRESH_INTERVAL_SECONDS = 60;
 
 	private enum LocateState {
 		OFF,
@@ -213,8 +210,6 @@ public class MapFragment extends DaggerFragment implements
 	@Inject
 	protected SharedPreferences preferences;
 
-	@Inject
-	protected ViewModelProvider.Factory viewModelFactory;
 	private MapViewModel viewModel;
 
 	private MapView mapView;
@@ -230,7 +225,6 @@ public class MapFragment extends DaggerFragment implements
 	protected LocationPolicy locationPolicy;
 	private LiveData<Location> locationProvider;
 
-	private RefreshMarkersRunnable refreshObservationsTask;
 	private RefreshMarkersRunnable refreshLocationsTask;
 	private RefreshMarkersRunnable refreshHistoricLocationsTask;
 
@@ -269,7 +263,7 @@ public class MapFragment extends DaggerFragment implements
 	public void onCreate(@Nullable Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 
-		viewModel = ViewModelProviders.of(this, viewModelFactory).get(MapViewModel.class);
+		viewModel = new ViewModelProvider(this).get(MapViewModel.class);
 	}
 
 	@Override
@@ -539,11 +533,6 @@ public class MapFragment extends DaggerFragment implements
 	}
 
 	private void initializePeriodicTasks() {
-		if (refreshObservationsTask == null) {
-			refreshObservationsTask = new RefreshMarkersRunnable(observations, "timestamp", OBSERVATION_FILTER_TYPE, getTimeFilterId(), OBSERVATION_REFRESH_INTERVAL_SECONDS);
-            scheduleMarkerRefresh(refreshObservationsTask);
-		}
-
 		if (refreshLocationsTask == null) {
 			refreshLocationsTask = new RefreshMarkersRunnable(locations, "timestamp", LOCATION_FILTER_TYPE, getLocationTimeFilterId(), MARKER_REFRESH_INTERVAL_SECONDS);
 			scheduleMarkerRefresh(refreshLocationsTask);
@@ -556,11 +545,9 @@ public class MapFragment extends DaggerFragment implements
 	}
 
 	private void stopPeriodicTasks() {
-		getView().removeCallbacks(refreshObservationsTask);
 		getView().removeCallbacks(refreshLocationsTask);
 		getView().removeCallbacks(refreshHistoricLocationsTask);
 
-		refreshObservationsTask = null;
 		refreshLocationsTask = null;
 		refreshHistoricLocationsTask = null;
 	}
@@ -1007,20 +994,7 @@ public class MapFragment extends DaggerFragment implements
 	}
 
 	private void newObservation(ObservationLocation location) {
-		Intent intent;
-
-		// show form picker or go to
-		JsonArray formDefinitions = EventHelper.getInstance(getActivity()).getCurrentEvent().getNonArchivedForms();
-		if (formDefinitions.size() == 0) {
-			intent = new Intent(getActivity(), ObservationEditActivity.class);
-		} else if (formDefinitions.size() == 1) {
-			JsonObject form = (JsonObject) formDefinitions.iterator().next();
-			intent = new Intent(getActivity(), ObservationEditActivity.class);
-			intent.putExtra(ObservationEditActivity.OBSERVATION_FORM_ID, form.get("id").getAsLong());
-		} else {
-			intent = new Intent(getActivity(), ObservationFormPickerActivity.class);
-		}
-
+		Intent intent = new Intent(getActivity(), ObservationEditActivity.class);
 		intent.putExtra(ObservationEditActivity.LOCATION, location);
 		intent.putExtra(ObservationEditActivity.INITIAL_LOCATION, map.getCameraPosition().target);
 		intent.putExtra(ObservationEditActivity.INITIAL_ZOOM, map.getCameraPosition().zoom);
@@ -1550,11 +1524,11 @@ public class MapFragment extends DaggerFragment implements
 	}
 
 	private int getTimeFilterId() {
-		return preferences.getInt(getResources().getString(R.string.activeTimeFilterKey), getResources().getInteger(R.integer.time_filter_none));
+		return preferences.getInt(getResources().getString(R.string.activeTimeFilterKey), getResources().getInteger(R.integer.time_filter_last_month));
 	}
 
 	private int getLocationTimeFilterId() {
-		return preferences.getInt(getResources().getString(R.string.activeLocationTimeFilterKey), getResources().getInteger(R.integer.time_filter_none));
+		return preferences.getInt(getResources().getString(R.string.activeLocationTimeFilterKey), getResources().getInteger(R.integer.time_filter_last_month));
 	}
 
 	private int getCustomTimeNumber(String filterType) {
@@ -1619,7 +1593,6 @@ public class MapFragment extends DaggerFragment implements
 	}
 
 	private String getFilterTitle() {
-
 		if (getTimeFilterId() != getResources().getInteger(R.integer.time_filter_none)
 				|| getLocationTimeFilterId() != getResources().getInteger(R.integer.time_filter_none)
 				|| preferences.getBoolean(getResources().getString(R.string.activeImportantFilterKey), false)

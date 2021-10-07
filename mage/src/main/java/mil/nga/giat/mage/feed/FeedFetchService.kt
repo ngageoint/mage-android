@@ -9,10 +9,10 @@ import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Observer
 import androidx.lifecycle.Transformations
-import dagger.android.AndroidInjection
+import dagger.hilt.android.AndroidEntryPoint
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
-import mil.nga.giat.mage.dagger.module.ApplicationContext
 import mil.nga.giat.mage.data.feed.Feed
 import mil.nga.giat.mage.data.feed.FeedDao
 import mil.nga.giat.mage.data.feed.FeedLocalDao
@@ -23,6 +23,7 @@ import mil.nga.giat.mage.sdk.datastore.user.UserHelper
 import mil.nga.giat.mage.sdk.event.IEventEventListener
 import java.util.Date
 
+@AndroidEntryPoint
 class FeedFetchService : LifecycleService() {
 
     companion object {
@@ -49,8 +50,6 @@ class FeedFetchService : LifecycleService() {
 
     override fun onCreate() {
         super.onCreate()
-
-        AndroidInjection.inject(this)
 
         UserHelper.getInstance(applicationContext).addListener(object: IEventEventListener {
             override fun onEventChanged() {
@@ -121,7 +120,7 @@ class FeedFetchService : LifecycleService() {
                 val elapsed = (now - lastSync)/1000
                 if (elapsed > it.feed.updateFrequency!!) MIN_FETCH_DELAY else it.feed.updateFrequency!! - elapsed
             }
-        }.min() ?: MIN_FETCH_DELAY
+        }.minOrNull() ?: MIN_FETCH_DELAY
 
         Log.d(LOG_NAME, "Fetch feed items in $delay seconds.")
 

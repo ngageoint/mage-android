@@ -5,13 +5,15 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.launch
-import mil.nga.giat.mage.dagger.module.ApplicationContext
 import mil.nga.giat.mage.data.event.EventRepository
 import mil.nga.giat.mage.network.Resource
 import mil.nga.giat.mage.sdk.datastore.user.Event
 import javax.inject.Inject
 
+@HiltViewModel
 class EventViewModel @Inject constructor(
     @ApplicationContext val context: Context,
     private val eventRepository: EventRepository
@@ -21,7 +23,7 @@ class EventViewModel @Inject constructor(
     val syncStatus: LiveData<Resource<out Event>> = _syncStatus
     fun syncEvent(event: Event): LiveData<Resource<out Event>> {
         viewModelScope.launch {
-            var result = eventRepository.syncEvent(event)
+            val result = eventRepository.syncEvent(event)
             _syncStatus.value = result
         }
 

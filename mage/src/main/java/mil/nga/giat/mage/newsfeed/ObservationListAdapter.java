@@ -1,5 +1,7 @@
 package mil.nga.giat.mage.newsfeed;
 
+import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.content.Context;
 import android.database.Cursor;
 import android.graphics.Bitmap;
@@ -19,6 +21,10 @@ import androidx.core.content.ContextCompat;
 import androidx.core.graphics.drawable.DrawableCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.material.snackbar.Snackbar;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.j256.ormlite.android.AndroidDatabaseResults;
 import com.j256.ormlite.stmt.PreparedQuery;
 
@@ -31,6 +37,7 @@ import java.util.Date;
 import java.util.Locale;
 
 import mil.nga.giat.mage.R;
+import mil.nga.giat.mage.coordinate.CoordinateFormatter;
 import mil.nga.giat.mage.map.marker.ObservationBitmapFactory;
 import mil.nga.giat.mage.observation.AttachmentGallery;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
@@ -39,10 +46,14 @@ import mil.nga.giat.mage.sdk.datastore.observation.ObservationFavorite;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationImportant;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationProperty;
+import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
+import mil.nga.giat.mage.sdk.datastore.user.Permission;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.exceptions.ObservationException;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
+import mil.nga.giat.mage.utils.DateFormatFactory;
+import mil.nga.sf.Point;
 
 /**
  * Created by wnewman on 10/30/17.
@@ -52,8 +63,8 @@ public class ObservationListAdapter extends RecyclerView.Adapter<RecyclerView.Vi
 
     public interface ObservationActionListener {
         void onObservationClick(Observation observation);
-        void onObservationImportant(Observation observation);
         void onObservationDirections(Observation observation);
+        void onObservationLocation(Observation observation);
     }
 
     private static final String LOG_NAME = ObservationListAdapter.class.getName();
@@ -81,10 +92,11 @@ public class ObservationListAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         private View importantView;
         private TextView importantOverline;
         private TextView importantDescription;
-        private ImageView importantButton;
         private View syncBadge;
         private View errorBadge;
         private LinearLayout attachmentLayout;
+        private TextView locationView;
+        private View locationContainer;
         private ImageView favoriteButton;
         private TextView favoriteCount;
         private View directionsButton;
@@ -104,10 +116,11 @@ public class ObservationListAdapter extends RecyclerView.Adapter<RecyclerView.Vi
             importantView = view.findViewById(R.id.important);
             importantOverline = view.findViewById(R.id.important_overline);
             importantDescription = view.findViewById(R.id.important_description);
-            importantButton = view.findViewById(R.id.important_button);
             syncBadge = view.findViewById(R.id.sync_status);
             errorBadge = view.findViewById(R.id.error_status);
             attachmentLayout = view.findViewById(R.id.image_gallery);
+            locationView = view.findViewById(R.id.location);
+            locationContainer = view.findViewById(R.id.location_container);
             favoriteButton = view.findViewById(R.id.favorite_button);
             favoriteCount = view.findViewById(R.id.favorite_count);
             directionsButton = view.findViewById(R.id.directions_button);
@@ -241,15 +254,13 @@ public class ObservationListAdapter extends RecyclerView.Adapter<RecyclerView.Vi
             vh.secondaryPropertyTask.execute(observation);
 
             Date timestamp = observation.getTimestamp();
-            String pattern = DateUtils.isToday(timestamp.getTime()) ? SHORT_TIME_PATTERN : SHORT_DATE_PATTERN;
-            DateFormat dateFormat = new SimpleDateFormat(pattern, Locale.getDefault());
+            DateFormat dateFormat = DateFormatFactory.format("yyyy-MM-dd HH:mm zz", Locale.getDefault(), context);
             vh.timeView.setText(dateFormat.format(timestamp));
 
             vh.userView.setText("");
             vh.userTask = new UserTask(vh.userView);
             vh.userTask.execute(observation);
 
-            vh.importantButton.setOnClickListener(v -> observationActionListener.onObservationImportant(observation));
             setImportantView(observation.getImportant(), vh);
 
             ObservationError error = observation.getError();
@@ -269,6 +280,11 @@ public class ObservationListAdapter extends RecyclerView.Adapter<RecyclerView.Vi
                 vh.attachmentLayout.setVisibility(View.VISIBLE);
                 attachmentGallery.addAttachments(vh.attachmentLayout, observation.getAttachments());
             }
+
+            Point centroid = observation.getGeometry().getCentroid();
+            String coordinates = new CoordinateFormatter(context).format(new LatLng(centroid.getY(), centroid.getX()));
+            vh.locationView.setText(coordinates);
+            vh.locationContainer.setOnClickListener(v -> onLocationClick(observation));
 
             vh.favoriteButton.setOnClickListener(v -> toggleFavorite(observation, vh));
             setFavoriteImage(observation.getFavorites(), vh, isFavorite(observation));
@@ -298,14 +314,6 @@ public class ObservationListAdapter extends RecyclerView.Adapter<RecyclerView.Vi
             }
 
             vh.importantDescription.setText(important.getDescription());
-        }
-
-        if (isImportant) {
-            vh.importantButton.setImageDrawable(ContextCompat.getDrawable(context, R.drawable.ic_flag_white_24dp));
-            vh.importantButton.setColorFilter(ContextCompat.getColor(context, R.color.observation_flag_active));
-        } else {
-            vh.importantButton.setImageDrawable(ContextCompat.getDrawable(context, R.drawable.ic_flag_outlined_white_24dp));
-            vh.importantButton.setColorFilter(ContextCompat.getColor(context, R.color.observation_flag_inactive));
         }
     }
 
@@ -356,6 +364,12 @@ public class ObservationListAdapter extends RecyclerView.Adapter<RecyclerView.Vi
     private void getDirections(Observation observation) {
         if (observationActionListener != null) {
             observationActionListener.onObservationDirections(observation);
+        }
+    }
+
+    private void onLocationClick(Observation observation) {
+        if (observationActionListener != null) {
+            observationActionListener.onObservationLocation(observation);
         }
     }
 

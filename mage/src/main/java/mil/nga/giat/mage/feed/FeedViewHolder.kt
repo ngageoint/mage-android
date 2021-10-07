@@ -9,6 +9,7 @@ import com.bumptech.glide.Glide
 import kotlinx.android.synthetic.main.feed_list_item.view.*
 import mil.nga.giat.mage.R
 import mil.nga.giat.mage.data.feed.ItemWithFeed
+import mil.nga.giat.mage.network.Server
 import mil.nga.giat.mage.utils.DateFormatFactory
 import java.util.*
 
@@ -22,8 +23,9 @@ class FeedViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
     fun bind(itemWithFeed: ItemWithFeed) {
         val feed = itemWithFeed.feed
 
+        val iconUrl = "${Server(itemView.context).baseUrl}/api/icons/${feed.mapStyle?.iconStyle?.id}/content"
         Glide.with(itemView.context)
-            .load(feed.mapStyle?.iconUrl)
+            .load(iconUrl)
             .placeholder(R.drawable.default_marker)
             .fitCenter()
             .into(itemView.icon)
@@ -39,8 +41,8 @@ class FeedViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
 
             if (feed.itemTemporalProperty != null) {
                 itemView.overline.visibility = View.VISIBLE
-                properties.asJsonObject.get(feed.itemTemporalProperty)?.asLong?.let {
-                    itemView.overline.text = dateFormat.format(it)
+                properties.asJsonObject.get(feed.itemTemporalProperty)?.asLong?.let { timestamp ->
+                    itemView.overline.text = dateFormat.format(timestamp)
                 }
             }
 

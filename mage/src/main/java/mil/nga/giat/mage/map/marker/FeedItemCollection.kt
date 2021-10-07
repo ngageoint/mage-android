@@ -1,22 +1,11 @@
 package mil.nga.giat.mage.map.marker
 
 import android.content.Context
-import android.graphics.Bitmap
-import android.graphics.Canvas
-import android.graphics.drawable.Drawable
-import android.util.TypedValue
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.LinearLayout
-import androidx.appcompat.content.res.AppCompatResources
-import androidx.core.content.ContextCompat
-import androidx.core.graphics.drawable.toBitmap
 import com.bumptech.glide.Glide
-import com.bumptech.glide.request.target.CustomTarget
-import com.bumptech.glide.request.target.Target.SIZE_ORIGINAL
-import com.bumptech.glide.request.transition.Transition
 import com.google.android.gms.maps.GoogleMap
-import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
@@ -35,8 +24,8 @@ import mil.nga.sf.GeometryType
 import mil.nga.sf.util.GeometryUtils
 import java.util.Locale
 import java.util.Date
-import com.bumptech.glide.request.target.Target
 import mil.nga.giat.mage.glide.target.MarkerTarget
+import mil.nga.giat.mage.network.Server
 
 class FeedItemCollection(val context: Context, val map: GoogleMap) {
 
@@ -44,7 +33,6 @@ class FeedItemCollection(val context: Context, val map: GoogleMap) {
     private var feedItemIdWithInfoWindow: String? = null
     private val infoWindowAdapter: GoogleMap.InfoWindowAdapter = InfoWindowAdapter(context)
     private val dateFormat = DateFormatFactory.format("yyyy-MM-dd HH:mm zz", Locale.getDefault(), context)
-    private val defaultMarker = AppCompatResources.getDrawable(context, R.drawable.default_marker)!!.toBitmap()
 
     fun setItems(feedWithItems: FeedWithItems) {
         var shapes = feedMap[feedWithItems.feed.id]
@@ -83,10 +71,10 @@ class FeedItemCollection(val context: Context, val map: GoogleMap) {
 
             val shape = GoogleMapShape(GeometryType.POINT, GoogleMapShapeType.MARKER, marker)
             shapes[feedItem.id] = shape
-
+            val iconUrl = "${Server(context).baseUrl}/api/icons/${feed.mapStyle?.iconStyle?.id}/content"
             Glide.with(context)
                .asBitmap()
-               .load(feed.mapStyle?.iconUrl)
+               .load(iconUrl)
                .error(R.drawable.default_marker)
                .into(MarkerTarget(context, marker, 24, 24))
         } else {
@@ -129,7 +117,7 @@ class FeedItemCollection(val context: Context, val map: GoogleMap) {
         return false
     }
 
-    fun itemForMarker(marker: Marker): FeedItem? {
+    fun itemForMarker(marker: Marker): FeedItem {
         return (marker.tag as ItemWithFeed).item
     }
 
@@ -140,7 +128,7 @@ class FeedItemCollection(val context: Context, val map: GoogleMap) {
             return null
         }
 
-        override fun getInfoWindow(marker: Marker?): View? {
+        override fun getInfoWindow(marker: Marker?): View {
             val view = layoutInflater.inflate(R.layout.feeditem_info_window, null) as LinearLayout
 
             val itemWithFeed = marker?.tag as ItemWithFeed
@@ -151,7 +139,6 @@ class FeedItemCollection(val context: Context, val map: GoogleMap) {
 
                 val temporalProperty = properties.asJsonObject.get(feed.itemTemporalProperty)
                 if (feed.itemTemporalProperty != null && temporalProperty?.asString?.isEmpty() == false) {
-
                     view.overline.visibility = View.VISIBLE
                     view.overline.text = dateFormat.format(Date(temporalProperty.asLong))
                     view.content.visibility = View.VISIBLE
@@ -174,6 +161,5 @@ class FeedItemCollection(val context: Context, val map: GoogleMap) {
 
             return view
         }
-
     }
 }

@@ -5,14 +5,15 @@ import android.content.Context
 import android.content.Intent
 import android.os.IBinder
 import androidx.work.*
-import dagger.android.AndroidInjection
-import mil.nga.giat.mage.dagger.module.ApplicationContext
+import dagger.hilt.android.AndroidEntryPoint
+import dagger.hilt.android.qualifiers.ApplicationContext
 import mil.nga.giat.mage.sdk.datastore.observation.Attachment
 import mil.nga.giat.mage.sdk.datastore.observation.AttachmentHelper
 import mil.nga.giat.mage.sdk.event.IAttachmentEventListener
 import java.util.*
 import javax.inject.Inject
 
+@AndroidEntryPoint
 class AttachmentPushService : Service(), IAttachmentEventListener {
 
     @Inject @field:ApplicationContext
@@ -40,8 +41,6 @@ class AttachmentPushService : Service(), IAttachmentEventListener {
 
     override fun onCreate() {
         super.onCreate()
-
-        AndroidInjection.inject(this)
 
         AttachmentHelper.getInstance(context).addListener(this)
     }

@@ -26,6 +26,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -34,7 +35,6 @@ import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.lifecycle.ViewModelProvider;
-import androidx.lifecycle.ViewModelProviders;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.MultiTransformation;
@@ -53,7 +53,7 @@ import java.util.List;
 
 import javax.inject.Inject;
 
-import dagger.android.support.DaggerAppCompatActivity;
+import dagger.hilt.android.AndroidEntryPoint;
 import mil.nga.geopackage.validate.GeoPackageValidate;
 import mil.nga.giat.mage.cache.GeoPackageCacheUtils;
 import mil.nga.giat.mage.data.feed.Feed;
@@ -83,7 +83,8 @@ import mil.nga.giat.mage.sdk.exceptions.UserException;
  * starts and stops much of the context. It also contains menus .
  *
  */
-public class LandingActivity extends DaggerAppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
+@AndroidEntryPoint
+public class LandingActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
 
     /**
      * Extra key for storing the local file path used to lauch MAGE
@@ -102,8 +103,6 @@ public class LandingActivity extends DaggerAppCompatActivity implements Navigati
     @Inject
     protected MageApplication application;
 
-    @Inject
-    protected ViewModelProvider.Factory viewModelFactory;
     private LandingViewModel viewModel;
 
     private int currentNightMode;
@@ -116,7 +115,6 @@ public class LandingActivity extends DaggerAppCompatActivity implements Navigati
     private BottomNavigationView bottomNavigationView;
     private List<Fragment> bottomNavigationFragments = new ArrayList<>();
 
-    private boolean locationPermissionGranted = false;
     private Uri openUri;
     private String openPath;
 
@@ -159,9 +157,8 @@ public class LandingActivity extends DaggerAppCompatActivity implements Navigati
         setTitle(event);
         setRecentEvents(event);
 
-        // Ask for permissions
-        locationPermissionGranted = ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
-        if (locationPermissionGranted) {
+        // Check location permission
+        if (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
             if (shouldReportLocation()) {
                 application.startLocationService();
             }
@@ -230,7 +227,7 @@ public class LandingActivity extends DaggerAppCompatActivity implements Navigati
         }
         switchBottomNavigationFragment(menuItem);
 
-        viewModel = ViewModelProviders.of(this, viewModelFactory).get(LandingViewModel.class);
+        viewModel = new ViewModelProvider(this).get(LandingViewModel.class);
         viewModel.getFeeds().observe(this, this::setFeeds);
         viewModel.setEvent(event.getRemoteId());
     }
@@ -268,9 +265,7 @@ public class LandingActivity extends DaggerAppCompatActivity implements Navigati
             recreate();
         }
 
-        if (shouldReportLocation() && locationPermissionGranted != (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED)) {
-            locationPermissionGranted = ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
-
+        if (shouldReportLocation() && (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED)) {
             // User allowed location service permission in settings, start location services.
             application.startLocationService();
         }
@@ -289,9 +284,7 @@ public class LandingActivity extends DaggerAppCompatActivity implements Navigati
 
         switch (requestCode) {
             case PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION: {
-                locationPermissionGranted = grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED;
-
-                if (shouldReportLocation()) {
+                if (shouldReportLocation() && grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     application.startLocationService();
                 }
 
@@ -340,26 +333,27 @@ public class LandingActivity extends DaggerAppCompatActivity implements Navigati
                 .add(R.id.feeds_group, Menu.NONE, i++, feed.getTitle())
                 .setIcon(R.drawable.ic_rss_feed_24);
 
-            if (feed.getMapStyle().getIconUrl() != null) {
-                int px = (int) Math.floor(TypedValue.applyDimension(
-                    TypedValue.COMPLEX_UNIT_DIP,
-                    24f,
-                    getResources().getDisplayMetrics()));
-
-                Glide.with(this)
-                    .asBitmap()
-                    .load(feed.getMapStyle().getIconUrl())
-                    .transform(new MultiTransformation<>(new FitCenter(), new PadToFrame()))
-                    .into(new CustomTarget<Bitmap>(px, px) {
-                        @Override
-                        public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
-                            item.setIcon(new BitmapDrawable(getResources(), resource));
-                        }
-
-                        @Override
-                        public void onLoadCleared(@Nullable Drawable placeholder) {}
-                    });
-            }
+            // TODO get feed icon when available
+//            if (feed.getMapStyle().getIconUrl() != null) {
+//                int px = (int) Math.floor(TypedValue.applyDimension(
+//                    TypedValue.COMPLEX_UNIT_DIP,
+//                    24f,
+//                    getResources().getDisplayMetrics()));
+//
+//                Glide.with(this)
+//                    .asBitmap()
+//                    .load(feed.getMapStyle().getIconUrl())
+//                    .transform(new MultiTransformation<>(new FitCenter(), new PadToFrame()))
+//                    .into(new CustomTarget<Bitmap>(px, px) {
+//                        @Override
+//                        public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
+//                            item.setIcon(new BitmapDrawable(getResources(), resource));
+//                        }
+//
+//                        @Override
+//                        public void onLoadCleared(@Nullable Drawable placeholder) {}
+//                    });
+//            }
 
             item.setOnMenuItemClickListener(menuItem -> {
                 drawerLayout.closeDrawer(GravityCompat.START);

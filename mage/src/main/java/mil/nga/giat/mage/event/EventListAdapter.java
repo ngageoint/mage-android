@@ -87,7 +87,7 @@ public class EventListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
         private SectionViewHolder(View view) {
             super(view);
 
-            sectionName = (TextView) view.findViewById(R.id.section_name);
+            sectionName = view.findViewById(R.id.section_name);
         }
     }
 
@@ -98,8 +98,8 @@ public class EventListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
         private EventViewHolder(View view) {
             super(view);
 
-            name = (TextView) view.findViewById(R.id.event_name);
-            description = (TextView) view.findViewById(R.id.event_description);
+            name = view.findViewById(R.id.event_name);
+            description = view.findViewById(R.id.event_description);
         }
     }
 
@@ -149,19 +149,14 @@ public class EventListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
 
         holder.name.setText(event.getName());
 
-        if (StringUtils.isNoneBlank(event.getDescription())) {
+        if (StringUtils.isEmpty(event.getDescription())) {
+            holder.description.setVisibility(View.GONE);
+        } else {
             holder.description.setVisibility(View.VISIBLE);
             holder.description.setText(event.getDescription());
-        } else {
-            holder.description.setVisibility(View.GONE);
         }
 
-        holder.itemView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                listener.onEventClick(event);
-            }
-        });
+        holder.itemView.setOnClickListener(v -> listener.onEventClick(event));
     }
 
     private void bindSectionViewHolder(SectionViewHolder holder, int position) {

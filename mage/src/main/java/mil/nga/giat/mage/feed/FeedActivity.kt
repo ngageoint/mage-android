@@ -3,22 +3,22 @@ package mil.nga.giat.mage.feed
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.ViewModelProviders
 import androidx.paging.PagedListAdapter
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.DividerItemDecoration.VERTICAL
 import androidx.recyclerview.widget.LinearLayoutManager
-import dagger.android.support.DaggerAppCompatActivity
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.android.synthetic.main.activity_feed.*
 import mil.nga.giat.mage.R
 import mil.nga.giat.mage.data.feed.Feed
 import mil.nga.giat.mage.data.feed.FeedItem
 import mil.nga.giat.mage.feed.item.FeedItemActivity
-import javax.inject.Inject
 
-class FeedActivity: DaggerAppCompatActivity() {
+@AndroidEntryPoint
+class FeedActivity: AppCompatActivity() {
     companion object {
         private const val FEED_ID_EXTRA = "FEED_ID_EXTRA"
 
@@ -28,9 +28,6 @@ class FeedActivity: DaggerAppCompatActivity() {
             return intent
         }
     }
-
-    @Inject
-    internal lateinit var viewModelFactory: ViewModelProvider.Factory
 
     lateinit var viewModel: FeedViewModel
 
@@ -50,7 +47,7 @@ class FeedActivity: DaggerAppCompatActivity() {
         recyclerView.layoutManager = LinearLayoutManager(this)
         recyclerView.addItemDecoration(DividerItemDecoration(recyclerView.context, VERTICAL))
 
-        viewModel = ViewModelProviders.of(this, viewModelFactory).get(FeedViewModel::class.java)
+        viewModel = ViewModelProvider(this).get(FeedViewModel::class.java)
         viewModel.setFeedId(feedId)
         viewModel.feed.observe(this, Observer { onFeed(it) })
         viewModel.feedItems.observe(this, Observer {

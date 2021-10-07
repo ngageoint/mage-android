@@ -20,7 +20,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import mil.nga.giat.mage.filter.Filter;
 import mil.nga.giat.mage.map.marker.ObservationClusterCollection.ObservationClusterItem;
-import mil.nga.giat.mage.observation.ObservationViewActivity;
+import mil.nga.giat.mage.observation.view.ObservationViewActivity;
 import mil.nga.giat.mage.sdk.Temporal;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.sf.Point;

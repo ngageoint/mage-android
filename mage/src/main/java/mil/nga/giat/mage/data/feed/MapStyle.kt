@@ -1,12 +1,19 @@
 package mil.nga.giat.mage.data.feed
 
 import androidx.room.ColumnInfo
+import androidx.room.Embedded
 import com.google.gson.annotations.SerializedName
 
+class IconStyle {
+    @SerializedName("id")
+    @ColumnInfo(name = "id")
+    var id: String? = null
+}
+
 class MapStyle {
-    @SerializedName("iconUrl")
-    @ColumnInfo(name = "icon_url")
-    var iconUrl: String? = null
+    @SerializedName("icon")
+    @Embedded(prefix = "icon_style_")
+    var iconStyle: IconStyle? = null
 
     @SerializedName("stroke")
     @ColumnInfo(name = "stroke")

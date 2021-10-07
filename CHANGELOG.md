@@ -3,13 +3,73 @@ All notable changes to this project will be documented in this file.
 Adheres to [Semantic Versioning](http://semver.org/).
 
 ---
-## 6.3.1 (TBD)
+## Changes Pending
 
 ##### Features
 
 ##### Bug Fixes
 
-## 6.3.0 (TBD)
+
+## [7.0.2](https://github.com/ngageoint/mage-android/releases/tag/7.0.2)
+
+##### Features
+* Default time filter for observations and user locations to 30 days.
+
+##### Bug Fixes
+
+## [7.0.1](https://github.com/ngageoint/mage-android/releases/tag/7.0.1)
+
+##### Features
+* Removed "logged in notification" for clarity.  MAGE location reporting notification now has a "logout" button.
+
+##### Bug Fixes
+* Filter archived forms in form picker
+* Fix signup crash for 5.x servers.
+
+## [7.0](https://github.com/ngageoint/mage-android/releases/tag/7.0)
+
+##### Release Notes
+* This version supports MAGE server versions 5.4 and 6.x 
+
+##### Features
+* Multi form support:  Users will be able to add multiple forms to an observation when the server configuration allows.
+* Attachments as form fields: Users can create attachments in form fields when the server configuration allows.
+
+##### Bug Fixes
+
+## [6.3.3](https://github.com/ngageoint/mage-android/releases/tag/6.3.3)
+
+##### Features
+* Local user signup captcha (Dependent on server version 6.0+)
+* Fix crash on older Android devices when viewing user profile
+* Fix crash on device rotation in observation edit activity
+* Update to latest google play services maps version
+
+##### Bug Fixes
+* Show full screen user avatar on tap from profile activity
+
+## [6.3.2](https://github.com/ngageoint/mage-android/releases/tag/6.3.2)
+
+##### Features
+* Show mgrs grid on observation geometry edit view if enabled
+
+##### Bug Fixes
+* Fix crash on wgs84/mgrs manual coordinate change
+* Fix duplication of login strategy fragments on device rotation
+* Update map clip in observation edit to reflect location updates from geometry edit
+
+## [6.3.1](https://github.com/ngageoint/mage-android/releases/tag/6.3.1)
+
+##### Features
+
+##### Bug Fixes
+* Fix crash in GeometryEditDialog when accessing child fragments
+* Fix crash when accessing the application context in event form defaults activity
+* Ignore invalid date/time in date form field default
+* Don't clear token after login on user change
+* Don't start location reporting if user token is invalid
+
+## [6.3.0](https://github.com/ngageoint/mage-android/releases/tag/6.3.0)
 
 ##### Features
 * Google authentication support is back. This includes updates for all third party authentication strategies to align with Google guidelines.

@@ -1,13 +1,11 @@
 package mil.nga.giat.mage.data.feed
 
 import android.content.Context
-import android.util.Log
-import android.view.View
 import androidx.annotation.WorkerThread
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.android.synthetic.main.activity_feed_item.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import mil.nga.giat.mage.dagger.module.ApplicationContext
 import mil.nga.giat.mage.network.Resource
 import mil.nga.giat.mage.network.api.FeedService
 import mil.nga.giat.mage.sdk.datastore.user.EventHelper

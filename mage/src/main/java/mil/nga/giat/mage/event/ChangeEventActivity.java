@@ -8,10 +8,10 @@ import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
 
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SearchView;
 import androidx.appcompat.widget.Toolbar;
 import androidx.lifecycle.ViewModelProvider;
-import androidx.lifecycle.ViewModelProviders;
 import androidx.recyclerview.widget.DefaultItemAnimator;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -20,9 +20,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import javax.inject.Inject;
-
-import dagger.android.support.DaggerAppCompatActivity;
+import dagger.hilt.android.AndroidEntryPoint;
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.network.Resource;
 import mil.nga.giat.mage.observation.sync.ObservationServerFetch;
@@ -37,7 +35,8 @@ import mil.nga.giat.mage.sdk.login.RecentEventTask;
  * Allows the user to switch events within the app
  */
 
-public class ChangeEventActivity extends DaggerAppCompatActivity {
+@AndroidEntryPoint
+public class ChangeEventActivity extends AppCompatActivity {
 
 	private static final String LOG_NAME = ChangeEventActivity.class.getName();
 
@@ -46,8 +45,6 @@ public class ChangeEventActivity extends DaggerAppCompatActivity {
 	private List<Event> events = new ArrayList<>();
 	private EventListAdapter eventListAdapter;
 
-	@Inject
-	protected ViewModelProvider.Factory viewModelFactory;
 	private EventViewModel viewModel;
 
 	@Override
@@ -99,7 +96,7 @@ public class ChangeEventActivity extends DaggerAppCompatActivity {
 			}
 		});
 
-		viewModel = ViewModelProviders.of(this, viewModelFactory).get(EventViewModel.class);
+		viewModel = new ViewModelProvider(this).get(EventViewModel.class);
 		viewModel.getSyncStatus().observe(this, resource -> finishEvent(resource));
 
 		try {

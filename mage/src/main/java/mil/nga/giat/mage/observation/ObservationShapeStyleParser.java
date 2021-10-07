@@ -7,6 +7,9 @@ import androidx.core.graphics.ColorUtils;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
+import mil.nga.giat.mage.form.FormState;
+import mil.nga.giat.mage.form.field.FieldState;
+import mil.nga.giat.mage.form.field.FieldValue;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationProperty;
 
@@ -80,7 +83,7 @@ public class ObservationShapeStyleParser {
             // Found the top level style
             JsonObject styleObject = styleField.getAsJsonObject();
 
-            ObservationProperty primaryProperty = observation.getPrimaryField();
+            ObservationProperty primaryProperty = observation.getPrimaryMapField();
             if (primaryProperty != null) {
                 String primary = primaryProperty.getValue().toString();
 
@@ -91,7 +94,7 @@ public class ObservationShapeStyleParser {
                     // Found the type level style
                     styleObject = primaryField.getAsJsonObject();
 
-                    ObservationProperty variantProperty = observation.getSecondaryField();
+                    ObservationProperty variantProperty = observation.getSecondaryMapField();
                     if (variantProperty != null) {
                         String variant = variantProperty.getValue().toString();
 
@@ -101,6 +104,77 @@ public class ObservationShapeStyleParser {
 
                             // Found the variant level style
                             styleObject = typeVariantField.getAsJsonObject();
+                        }
+                    }
+                }
+            }
+
+            // Get the style properties
+            String fill = styleObject.get(FILL_ELEMENT).getAsString();
+            String stroke = styleObject.get(STROKE_ELEMENT).getAsString();
+            float fillOpacity = styleObject.get(FILL_OPACITY_ELEMENT).getAsFloat();
+            float strokeOpacity = styleObject.get(STROKE_OPACITY_ELEMENT).getAsFloat();
+            float strokeWidth = styleObject.get(STROKE_WIDTH_ELEMENT).getAsFloat();
+
+            // Set the stroke width
+            style.setStrokeWidth(strokeWidth);
+
+            // Create and set the stroke color
+            int strokeColor = Color.parseColor(stroke);
+            int strokeColorWithAlpha = ColorUtils.setAlphaComponent(strokeColor, getAlpha(strokeOpacity));
+            style.setStrokeColor(strokeColorWithAlpha);
+
+            // Create and set the fill color
+            int fillColor = Color.parseColor(fill);
+            int fillColorWithAlpha = ColorUtils.setAlphaComponent(fillColor, getAlpha(fillOpacity));
+            style.setFillColor(fillColorWithAlpha);
+        }
+
+        return style;
+    }
+
+    public static ObservationShapeStyle getStyle(Context context, FormState formState) {
+
+        ObservationShapeStyle style = new ObservationShapeStyle(context);
+
+        // Check for a style
+        if (formState != null) {
+
+            // Found the top level style
+            JsonObject styleObject = formState.getDefinition().getStyle();
+
+            FieldValue.Text primaryValue = null;
+            for (FieldState<?, ?> fieldState : formState.getFields()) {
+                if (fieldState.getDefinition().getName().equals(formState.getDefinition().getPrimaryMapField()) &&
+                    fieldState.getAnswer() instanceof FieldValue.Text) {
+                    primaryValue = ((FieldValue.Text) fieldState.getAnswer());
+                    break;
+                }
+            }
+
+            FieldValue.Text secondaryValue = null;
+            for (FieldState<?, ?> fieldState : formState.getFields()) {
+                if (fieldState.getDefinition().getName().equals(formState.getDefinition().getSecondaryMapField()) &&
+                    fieldState.getAnswer() instanceof FieldValue.Text){
+                    secondaryValue = ((FieldValue.Text) fieldState.getAnswer());
+                    break;
+                }
+            }
+
+            if (primaryValue != null) {
+                // Check for a type within the style
+                JsonElement primaryElement = styleObject.get(primaryValue.getText());
+                if (primaryElement != null && !primaryElement.isJsonNull()) {
+
+                    // Found the type level style
+                    styleObject = primaryElement.getAsJsonObject();
+
+                    if (secondaryValue != null) {
+                        // Check for a variant within the style type
+                        JsonElement secondaryElement = styleObject.get(secondaryValue.getText());
+                        if (secondaryElement != null && !secondaryElement.isJsonNull()) {
+                            // Found the variant level style
+                            styleObject = secondaryElement.getAsJsonObject();
                         }
                     }
                 }

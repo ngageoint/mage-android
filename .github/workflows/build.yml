@@ -1,0 +1,68 @@
+name: Build
+
+on: 
+  workflow_dispatch:
+    inputs:
+      sdkBranch:
+        description: 'SDK GitHub branch to build'     
+        required: true
+        default: 'master'
+      appBranch:
+        description: 'App GitHub branch to build'     
+        required: true
+        default: 'master'
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+        path: app
+    - name: Setup JDK 11
+      uses: actions/setup-java@v1
+      with:
+        java-version: '11'
+    - name: Clone MAGE SDK
+      uses: actions/checkout@master
+      with:
+        repository: ngageoint/mage-android-sdk
+        path: 'sdk'
+        fetch-depth: 0
+    - name: Checkout SDK Branch
+      id: sdk_version
+      run: git checkout ${{ github.event.inputs.sdkBranch }}
+      working-directory: sdk
+    - name: Build SDK
+      run: |
+        ./gradlew clean assemble publishToMavenLocal
+      working-directory: sdk
+    - name: Checkout App Branch
+      run: git checkout ${{ github.event.inputs.appBranch }}
+      working-directory: app
+    - name: Setup Keystore
+      run: |
+        echo "${{ secrets.KEYSTORE }}" > release.b64
+        base64 -d release.b64 > release.keystore
+    - name: Create Version Code
+      id: version_code
+      run: |
+        echo ::set-output name=value::$(git rev-list --count HEAD)
+        echo "VERSION_CODE $(git rev-list --count HEAD)"
+      working-directory: app
+    - name: Build Application
+      run: |
+        ./gradlew clean assembleRelease \
+          -PKEYSTORE=../../release.keystore \
+          -PKEYSTORE_PASSWORD=${{ secrets.KEYSTORE_PASSWORD }} \
+          -PKEY_ALIAS=${{ secrets.KEY_ALIAS }} \
+          -PKEY_PASSWORD=${{ secrets.KEY_PASSWORD }} \
+          -PRELEASE_MAPS_API_KEY=${{ secrets.MAPS_API_KEY }} \
+          -PVERSION_CODE=${{ steps.version_code.outputs.value }}
+      working-directory: app
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: mage-defaults-release.apk
+        path: app/mage/build/outputs/apk/defaults/release/mage-defaults-release.apk

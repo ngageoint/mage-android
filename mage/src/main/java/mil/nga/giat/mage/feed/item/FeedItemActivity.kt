@@ -6,12 +6,10 @@ import android.content.Context
 import android.content.Intent
 import android.content.res.Configuration
 import android.os.Bundle
-import android.preference.PreferenceManager
-import android.util.TypedValue
 import android.view.View
-import androidx.lifecycle.Observer
+import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.ViewModelProviders
+import androidx.preference.PreferenceManager
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.bumptech.glide.Glide
@@ -23,13 +21,15 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MapStyleOptions
 import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.material.snackbar.Snackbar
-import dagger.android.support.DaggerAppCompatActivity
+import dagger.hilt.android.AndroidEntryPoint
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.android.synthetic.main.activity_feed_item.*
 import mil.nga.geopackage.map.geom.GoogleMapShapeConverter
 import mil.nga.giat.mage.R
 import mil.nga.giat.mage.data.feed.FeedItem
 import mil.nga.giat.mage.data.feed.ItemWithFeed
 import mil.nga.giat.mage.glide.target.MarkerTarget
+import mil.nga.giat.mage.network.Server
 import mil.nga.giat.mage.observation.ObservationLocation
 import mil.nga.giat.mage.utils.DateFormatFactory
 import mil.nga.sf.GeometryType
@@ -38,8 +38,8 @@ import java.text.DateFormat
 import java.util.*
 import javax.inject.Inject
 
-
-class FeedItemActivity: DaggerAppCompatActivity(), OnMapReadyCallback {
+@AndroidEntryPoint
+class FeedItemActivity: AppCompatActivity(), OnMapReadyCallback {
     companion object {
         private const val FEED_ID_EXTRA = "FEED_ID_EXTRA"
         private const val FEED_ITEM_ID_EXTRA = "FEED_ITEM_ID_EXTRA"
@@ -53,7 +53,9 @@ class FeedItemActivity: DaggerAppCompatActivity(), OnMapReadyCallback {
     }
 
     @Inject
-    internal lateinit var viewModelFactory: ViewModelProvider.Factory
+    @ApplicationContext
+    protected lateinit var context: Context
+
     private lateinit var viewModel: FeedItemViewModel
 
     private val adapter = FeedItemAdapter()
@@ -79,8 +81,8 @@ class FeedItemActivity: DaggerAppCompatActivity(), OnMapReadyCallback {
 
         recyclerView.addItemDecoration(DividerItemDecoration(recyclerView.context, DividerItemDecoration.VERTICAL))
 
-        viewModel = ViewModelProviders.of(this, viewModelFactory).get(FeedItemViewModel::class.java)
-        viewModel.getFeedItem(feedId, feedItemId).observe(this, Observer { onFeedItem(it) })
+        viewModel = ViewModelProvider(this).get(FeedItemViewModel::class.java)
+        viewModel.getFeedItem(feedId, feedItemId).observe(this, { onFeedItem(it) })
         dateFormat = DateFormatFactory.format("yyyy-MM-dd HH:mm zz", Locale.getDefault(), applicationContext)
 
         location_layout.setOnClickListener {
@@ -98,7 +100,7 @@ class FeedItemActivity: DaggerAppCompatActivity(), OnMapReadyCallback {
         val feed = itemWithFeed.feed
 
         val propertyFactory = FeedItemPropertyFactory(applicationContext)
-        val properties = if (itemWithFeed.item.properties?.isJsonNull == false) {
+        val properties: List<FeedItemProperty> = if (itemWithFeed.item.properties?.isJsonNull == false) {
             itemWithFeed.item.properties.asJsonObject.entrySet().map { property ->
                 propertyFactory.createFeedItemProperty(feed, property.toPair())
             }
@@ -108,8 +110,8 @@ class FeedItemActivity: DaggerAppCompatActivity(), OnMapReadyCallback {
         if (itemWithFeed.item.properties?.isJsonObject == true) {
             if (feed.itemTemporalProperty != null) {
                 overline.visibility = View.VISIBLE
-                itemWithFeed.item.properties.asJsonObject.get(feed.itemTemporalProperty)?.asLong?.let {
-                    overline.text = dateFormat.format(it)
+                itemWithFeed.item.properties.asJsonObject.get(feed.itemTemporalProperty)?.asLong?.let { timestamp ->
+                    overline.text = dateFormat.format(timestamp)
                 }
             }
 
@@ -135,8 +137,9 @@ class FeedItemActivity: DaggerAppCompatActivity(), OnMapReadyCallback {
             mapFragment.view?.visibility = View.GONE
 
             icon.visibility = View.VISIBLE
+            val iconUrl = "${Server(context).baseUrl}/api/icons/${feed.mapStyle?.iconStyle?.id}/content"
             Glide.with(this)
-               .load(feed.mapStyle?.iconUrl)
+               .load(iconUrl)
                .placeholder(R.drawable.default_marker)
                .fitCenter()
                .into(icon)
@@ -169,9 +172,10 @@ class FeedItemActivity: DaggerAppCompatActivity(), OnMapReadyCallback {
 
                 marker.tag = itemWithFeed.item
 
+                val iconUrl = "${Server(context).baseUrl}/api/icons/${itemWithFeed.feed.mapStyle?.iconStyle?.id}/content"
                 Glide.with(this)
                    .asBitmap()
-                   .load(itemWithFeed.feed.mapStyle?.iconUrl)
+                   .load(iconUrl)
                    .error(R.drawable.default_marker)
                    .into(MarkerTarget(applicationContext, marker, 24, 24))
             }

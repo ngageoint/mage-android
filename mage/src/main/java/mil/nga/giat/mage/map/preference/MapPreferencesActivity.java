@@ -1,14 +1,13 @@
 package mil.nga.giat.mage.map.preference;
 
-import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
 
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.ViewModelProvider;
-import androidx.lifecycle.ViewModelProviders;
 import androidx.preference.PreferenceCategory;
 import androidx.preference.PreferenceFragmentCompat;
 import androidx.preference.PreferenceScreen;
@@ -22,11 +21,7 @@ import java.util.Set;
 
 import javax.inject.Inject;
 
-import dagger.android.AndroidInjector;
-import dagger.android.DispatchingAndroidInjector;
-import dagger.android.HasAndroidInjector;
-import dagger.android.support.AndroidSupportInjection;
-import dagger.android.support.DaggerAppCompatActivity;
+import dagger.hilt.android.AndroidEntryPoint;
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.data.feed.Feed;
 import mil.nga.giat.mage.sdk.datastore.layer.Layer;
@@ -40,7 +35,8 @@ import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
  *
  * @author newmanw
  */
-public class MapPreferencesActivity extends DaggerAppCompatActivity {
+@AndroidEntryPoint
+public class MapPreferencesActivity extends AppCompatActivity {
 
 	public static String LOG_NAME = MapPreferencesActivity.class.getName();
 
@@ -49,13 +45,8 @@ public class MapPreferencesActivity extends DaggerAppCompatActivity {
 
 	private MapPreferenceFragment preference = new MapPreferenceFragment();
 
-	public static class MapPreferenceFragment extends PreferenceFragmentCompat implements HasAndroidInjector {
-
-		@Inject
-		DispatchingAndroidInjector<Object> androidInjector;
-
-		@Inject
-		protected ViewModelProvider.Factory viewModelFactory;
+	@AndroidEntryPoint
+	public static class MapPreferenceFragment extends PreferenceFragmentCompat {
 		private MapPreferencesViewModel viewModel;
 
 		@Inject
@@ -70,14 +61,8 @@ public class MapPreferencesActivity extends DaggerAppCompatActivity {
 		public void onCreate(@Nullable Bundle savedInstanceState) {
 			super.onCreate(savedInstanceState);
 
-			viewModel = ViewModelProviders.of(this, viewModelFactory).get(MapPreferencesViewModel.class);
+			viewModel = new ViewModelProvider(this).get(MapPreferencesViewModel.class);
 			viewModel.getFeeds().observe(this, this::onFeeds);
-		}
-
-		@Override
-		public void onAttach(Context context) {
-			AndroidSupportInjection.inject(this);
-			super.onAttach(context);
 		}
 
 		@Override
@@ -124,11 +109,6 @@ public class MapPreferencesActivity extends DaggerAppCompatActivity {
 
 			findPreference(getString(R.string.tileOverlaysKey)).setOnPreferenceClickListener(null);
 			findPreference(getString(R.string.onlineLayersKey)).setOnPreferenceClickListener(null);
-		}
-
-		@Override
-		public AndroidInjector<Object> androidInjector() {
-			return androidInjector;
 		}
 
 		private void onFeeds(List<Feed> feeds) {

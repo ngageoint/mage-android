@@ -21,6 +21,7 @@ import android.widget.ListView;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.fragment.app.Fragment;
 import androidx.loader.app.LoaderManager;
 import androidx.loader.content.Loader;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
@@ -39,9 +40,9 @@ import java.util.Date;
 
 import javax.inject.Inject;
 
-import dagger.android.support.DaggerFragment;
+import dagger.hilt.android.AndroidEntryPoint;
+import dagger.hilt.android.qualifiers.ApplicationContext;
 import mil.nga.giat.mage.R;
-import mil.nga.giat.mage.dagger.module.ApplicationContext;
 import mil.nga.giat.mage.filter.LocationFilterActivity;
 import mil.nga.giat.mage.location.LocationServerFetch;
 import mil.nga.giat.mage.profile.ProfileActivity;
@@ -53,7 +54,8 @@ import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.event.ILocationEventListener;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
 
-public class PeopleFeedFragment extends DaggerFragment implements OnItemClickListener, ILocationEventListener, LoaderManager.LoaderCallbacks<Cursor> {
+@AndroidEntryPoint
+public class PeopleFeedFragment extends Fragment implements OnItemClickListener, ILocationEventListener, LoaderManager.LoaderCallbacks<Cursor> {
 	
 	private static final String LOG_NAME = PeopleFeedFragment.class.getName();
 
@@ -185,7 +187,7 @@ public class PeopleFeedFragment extends DaggerFragment implements OnItemClickLis
     }
 
     private int getTimeFilterId() {
-        return preferences.getInt(getResources().getString(R.string.activeLocationTimeFilterKey), getResources().getInteger(R.integer.time_filter_none));
+        return preferences.getInt(getResources().getString(R.string.activeLocationTimeFilterKey), getResources().getInteger(R.integer.time_filter_last_month));
     }
 
 	private int getCustomTimeNumber() {

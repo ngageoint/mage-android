@@ -5,21 +5,23 @@ import android.content.SharedPreferences
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import mil.nga.giat.mage.R
-import mil.nga.giat.mage.dagger.module.ApplicationContext
 import mil.nga.giat.mage.data.MageDatabase
 import mil.nga.giat.mage.network.Resource
 import mil.nga.giat.mage.sdk.preferences.ServerApi
 import javax.inject.Inject
 
+@HiltViewModel
 class ServerUrlViewModel @Inject constructor(
-        @ApplicationContext val context: Context,
-        val preferences: SharedPreferences,
-        val database: MageDatabase
+    @ApplicationContext val context: Context,
+    val preferences: SharedPreferences,
+    val database: MageDatabase
 ): ViewModel() {
     private var serverApi = ServerApi(context)
 

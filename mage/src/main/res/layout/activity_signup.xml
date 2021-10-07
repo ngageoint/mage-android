@@ -1,11 +1,29 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical">
+    android:layout_height="match_parent">
 
     <RelativeLayout
+        android:id="@+id/progress"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone"
+        android:elevation="6dp"
+        android:background="#55000000">
+
+        <ProgressBar
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="-6dp"
+            android:indeterminate="true"
+            android:indeterminateTint="?colorPrimaryDark"
+            style="?android:attr/progressBarStyleHorizontal"/>
+
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:id="@+id/header"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
@@ -16,188 +34,258 @@
     <ScrollView
         android:id="@+id/signup"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
+        android:layout_height="match_parent"
+        android:layout_below="@id/header"
         android:layout_marginTop="8dp"
         android:fillViewport="true"
         android:orientation="vertical">
 
-        <RelativeLayout
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
+            android:orientation="vertical">
 
-            <!-- Loading spinner -->
-
-            <LinearLayout
-                android:id="@+id/signup_status"
-                android:layout_width="match_parent"
-                android:layout_height="fill_parent"
-                android:layout_gravity="center_horizontal|center_vertical"
-                android:gravity="center_horizontal|center_vertical"
-                android:orientation="vertical"
-                android:visibility="gone" >
-
-                <ProgressBar
-                    android:theme="@style/AppTheme.ProgressBar"
-                    style="?android:attr/progressBarStyleLarge"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content" />
-
-                <TextView
-                    android:id="@+id/login_message"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:fontFamily="sans-serif-light"
-                    android:text="Creating account..."
-                    android:textSize="26sp" />
-            </LinearLayout>
-
-            <!-- Singup Form -->
-
-            <LinearLayout
-                android:id="@+id/signup_form"
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/username_layout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:paddingBottom="24dip"
-                android:paddingLeft="24dip"
-                android:paddingRight="24dip" >
+                android:layout_marginBottom="8dp"
+                android:theme="@style/AppTheme.TextInputLayout"
+                app:errorTextAppearance="@style/AppTheme.ErrorTextAppearance">
 
-                <com.google.android.material.textfield.TextInputLayout
-                    android:id="@+id/username_layout"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:theme="@style/AppTheme.TextInputLayout"
-                    app:errorTextAppearance="@style/AppTheme.ErrorTextAppearance">
-
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/signup_username"
-                        android:layout_width="fill_parent"
-                        android:layout_height="wrap_content"
-                        android:hint="Username"
-                        android:inputType="textVisiblePassword|textNoSuggestions"
-                        android:maxLines="1" />
-
-                </com.google.android.material.textfield.TextInputLayout>
-
-                <com.google.android.material.textfield.TextInputLayout
-                    android:id="@+id/displayname_layout"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    app:errorTextAppearance="@style/AppTheme.ErrorTextAppearance"
-                    android:theme="@style/AppTheme.TextInputLayout">
-
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/signup_displayname"
-                        android:layout_width="fill_parent"
-                        android:layout_height="wrap_content"
-                        android:hint="Display Name"
-                        android:inputType="textPersonName|textCapSentences|textNoSuggestions"
-                        android:maxLines="1" />
-
-                </com.google.android.material.textfield.TextInputLayout>
-
-                <com.google.android.material.textfield.TextInputLayout
-                    android:id="@+id/email_layout"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    app:errorTextAppearance="@style/AppTheme.ErrorTextAppearance"
-                    android:theme="@style/AppTheme.TextInputLayout">
-
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/signup_email"
-                        android:layout_width="fill_parent"
-                        android:layout_height="wrap_content"
-                        android:hint="Email"
-                        android:inputType="textEmailAddress"
-                        android:maxLines="1" />
-
-                </com.google.android.material.textfield.TextInputLayout>
-
-                <com.google.android.material.textfield.TextInputLayout
-                    android:id="@+id/phone_layout"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    app:errorTextAppearance="@style/AppTheme.ErrorTextAppearance"
-                    android:theme="@style/AppTheme.TextInputLayout">
-
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/signup_phone"
-                        android:layout_width="fill_parent"
-                        android:layout_height="wrap_content"
-                        android:hint="Phone"
-                        android:inputType="phone"
-                        android:maxLines="1" />
-
-                </com.google.android.material.textfield.TextInputLayout>
-
-                <com.google.android.material.textfield.TextInputLayout
-                    android:id="@+id/password_layout"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    app:errorTextAppearance="@style/AppTheme.ErrorTextAppearance"
-                    app:passwordToggleEnabled="true"
-                    style="@style/AppTheme.TextInputLayout"
-                    android:theme="@style/AppTheme.TextInputLayout">
-
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/signup_password"
-                        android:layout_width="fill_parent"
-                        android:layout_height="wrap_content"
-                        android:hint="Password"
-                        android:inputType="textPassword"
-                        android:maxLines="1" />
-
-                </com.google.android.material.textfield.TextInputLayout>
-
-                <com.google.android.material.textfield.TextInputLayout
-                    android:id="@+id/confirmpassword_layout"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    app:errorTextAppearance="@style/AppTheme.ErrorTextAppearance"
-                    app:passwordToggleEnabled="true"
-                    style="@style/AppTheme.TextInputLayout"
-                    android:theme="@style/AppTheme.TextInputLayout">
-
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/signup_confirmpassword"
-                        android:layout_width="fill_parent"
-                        android:layout_height="wrap_content"
-                        android:hint="Confirm Password"
-                        android:inputType="textPassword"
-                        android:imeActionLabel="Sign up"
-                        android:maxLines="1" />
-
-                </com.google.android.material.textfield.TextInputLayout>
-
-                <fragment android:name="mil.nga.giat.mage.login.PasswordStrengthFragment"
-                    android:id="@+id/password_strength_fragment"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content" />
-
-                <Button
-                    android:id="@+id/local_signup_button"
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/signup_username"
                     android:layout_width="fill_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="20dp"
-                    android:onClick="signup"
+                    android:hint="Username"
+                    android:inputType="textVisiblePassword|textNoSuggestions"
+                    android:maxLines="1" />
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/displayname_layout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
+                app:errorTextAppearance="@style/AppTheme.ErrorTextAppearance"
+                android:theme="@style/AppTheme.TextInputLayout">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/signup_displayname"
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="Display Name"
+                    android:inputType="textPersonName|textCapSentences|textNoSuggestions"
+                    android:maxLines="1" />
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/email_layout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
+                app:errorTextAppearance="@style/AppTheme.ErrorTextAppearance"
+                android:theme="@style/AppTheme.TextInputLayout">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/signup_email"
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="Email"
+                    android:inputType="textEmailAddress"
+                    android:maxLines="1" />
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/phone_layout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
+                app:errorTextAppearance="@style/AppTheme.ErrorTextAppearance"
+                android:theme="@style/AppTheme.TextInputLayout">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/signup_phone"
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="Phone"
+                    android:inputType="phone"
+                    android:maxLines="1" />
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/password_layout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
+                app:errorTextAppearance="@style/AppTheme.ErrorTextAppearance"
+                app:passwordToggleEnabled="true"
+                style="@style/AppTheme.TextInputLayout"
+                android:theme="@style/AppTheme.TextInputLayout">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/signup_password"
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="Password"
+                    android:inputType="textPassword"
+                    android:maxLines="1" />
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/confirmpassword_layout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
+                app:errorTextAppearance="@style/AppTheme.ErrorTextAppearance"
+                app:passwordToggleEnabled="true"
+                style="@style/AppTheme.TextInputLayout"
+                android:theme="@style/AppTheme.TextInputLayout">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/signup_confirmpassword"
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="Confirm Password"
+                    android:inputType="textPassword"
+                    android:imeActionLabel="Sign up"
+                    android:maxLines="1" />
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <androidx.fragment.app.FragmentContainerView
+                android:name="mil.nga.giat.mage.login.PasswordStrengthFragment"
+                android:id="@+id/password_strength_fragment"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+            <RelativeLayout
+                android:id="@+id/captcha_view"
+                android:layout_width="match_parent"
+                android:layout_height="100dp"
+                android:layout_marginTop="32dp"
+                android:padding="2dp"
+                android:background="@drawable/captcha_border">
+
+                <WebView
+                    android:id="@+id/web_view"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:visibility="gone"
+                    android:layout_marginStart="56dp"
+                    android:layout_marginEnd="56dp"
+                    android:padding="4dp"/>
+
+                <ImageButton
+                    android:id="@+id/refresh_captcha"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:visibility="gone"
+                    android:layout_marginEnd="16dp"
+                    android:layout_alignParentEnd="true"
+                    android:layout_centerVertical="true"
+                    android:tint="@color/primary_icon"
+                    android:src="@drawable/ic_baseline_refresh_24"
+                    android:background="?attr/selectableItemBackgroundBorderless" />
+
+                <LinearLayout
+                    android:id="@+id/captcha_progress"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:visibility="gone"
+                    android:orientation="vertical"
+                    android:gravity="center"
+                    android:background="@color/background">
+
+                    <TextView
+                        android:id="@+id/captcha_progress_text"
+                        style="@style/ListTextSecondary"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:textSize="20sp"
+                        android:text="Generating Captcha...">
+                    </TextView>
+
+                    <ProgressBar
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
+                        android:indeterminate="true"
+                        android:gravity="center"
+                        android:indeterminateTint="@color/primary_icon"
+                        android:layout_gravity="center"
+                        android:layout_marginTop="8dp">
+                    </ProgressBar>
+
+                </LinearLayout>
+            </RelativeLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/captcha_text_layout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                app:errorTextAppearance="@style/AppTheme.ErrorTextAppearance"
+                style="@style/AppTheme.TextInputLayout"
+                android:theme="@style/AppTheme.TextInputLayout">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/captcha_text"
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="Captcha Text"
+                    android:inputType="textNoSuggestions"
+                    android:imeActionLabel="Captcha Text"
+                    android:maxLines="1" />
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="24dp"
+                android:layout_marginBottom="8dp">
+
+                <Button
+                    android:id="@+id/cancel_button"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="16dp"
+                    android:text="Cancel"
+                    android:theme="@style/AppTheme.PrimaryButton.NoShadow" />
+
+                <Button
+                    android:id="@+id/signup_button"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
                     android:text="Signup"
                     android:theme="@style/AppTheme.PrimaryButton.NoShadow" />
 
-                <TextView
-                    android:id="@+id/link_to_login"
-                    android:layout_width="fill_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="25dp"
-                    android:clickable="true"
-                    android:gravity="center"
-                    android:onClick="login"
-                    android:text="Have an account? Login here"
-                    android:textSize="20sp" />
             </LinearLayout>
-        </RelativeLayout>
 
+        </LinearLayout>
     </ScrollView>
 
-</LinearLayout>
+    <RelativeLayout
+        android:id="@+id/mask"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone"
+        android:clickable="true"
+        android:focusable="true"
+        android:background="#33000000">
+
+    </RelativeLayout>
+
+</RelativeLayout>
 

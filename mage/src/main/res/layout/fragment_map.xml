@@ -132,7 +132,7 @@
         android:theme="@style/AppTheme.PrimaryFAB"
         app:layout_anchor="@+id/mgrs_bottom_sheet"
         app:layout_anchorGravity="top|end"
-        android:src="@drawable/ic_add_black_24dp" />
+        android:src="@drawable/ic_baseline_add_location_24" />
 
     <LinearLayout
         android:id="@+id/mgrs_bottom_sheet"

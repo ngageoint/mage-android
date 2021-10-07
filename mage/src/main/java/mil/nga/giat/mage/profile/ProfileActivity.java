@@ -1,7 +1,6 @@
 package mil.nga.giat.mage.profile;
 
 import android.Manifest;
-import android.annotation.TargetApi;
 import android.app.Dialog;
 import android.content.ActivityNotFoundException;
 import android.content.ClipData;
@@ -37,9 +36,7 @@ import androidx.core.graphics.ColorUtils;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.MapView;
-import com.google.android.gms.maps.MapsInitializer;
-import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
@@ -59,13 +56,14 @@ import java.util.Map;
 
 import javax.inject.Inject;
 
-import dagger.android.support.DaggerAppCompatActivity;
+import dagger.hilt.android.AndroidEntryPoint;
 import mil.nga.giat.mage.BuildConfig;
 import mil.nga.giat.mage.MageApplication;
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.glide.GlideApp;
 import mil.nga.giat.mage.glide.model.Avatar;
 import mil.nga.giat.mage.login.LoginActivity;
+import mil.nga.giat.mage.map.MapAndViewProvider;
 import mil.nga.giat.mage.map.marker.LocationBitmapFactory;
 import mil.nga.giat.mage.sdk.datastore.location.Location;
 import mil.nga.giat.mage.sdk.datastore.location.LocationHelper;
@@ -81,7 +79,8 @@ import mil.nga.giat.mage.widget.CoordinateView;
 import mil.nga.sf.Point;
 import mil.nga.sf.util.GeometryUtils;
 
-public class ProfileActivity extends DaggerAppCompatActivity implements OnMapReadyCallback {
+@AndroidEntryPoint
+public class ProfileActivity extends AppCompatActivity implements MapAndViewProvider.OnMapAndViewReadyListener {
 
 	private static final String LOG_NAME = ProfileActivity.class.getName();
 
@@ -105,12 +104,13 @@ public class ProfileActivity extends DaggerAppCompatActivity implements OnMapRea
 	private Location location;
 	private boolean isCurrentUser;
 	
-	private MapView mapView;
 	private LatLng latLng = new LatLng(0, 0);
 	private String coordinate;
 	private BitmapDescriptor icon;
 	BottomSheetDialog profileActionDialog;
 	BottomSheetDialog avatarActionsDialog;
+
+	private SupportMapFragment mapFragment;
 
 	private TextView phone;
 	private TextView email;
@@ -119,7 +119,7 @@ public class ProfileActivity extends DaggerAppCompatActivity implements OnMapRea
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 
-		setContentView(R.layout.fragment_profile);
+		setContentView(R.layout.activity_profile);
 		getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
 		final Context context = getApplicationContext();
@@ -147,11 +147,8 @@ public class ProfileActivity extends DaggerAppCompatActivity implements OnMapRea
 			Log.e(LOG_NAME, "Problem finding user.", ue);
 		}
 
-		MapsInitializer.initialize(context);
-
-		mapView = findViewById(R.id.mapView);
-		mapView.onCreate(savedInstanceState);
-		mapView.getMapAsync(this);
+		mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
+		new MapAndViewProvider(mapFragment).getMapAndViewAsync(this);
 
 		final String displayName = user.getDisplayName();
 
@@ -247,30 +244,6 @@ public class ProfileActivity extends DaggerAppCompatActivity implements OnMapRea
 
 			sheetView.findViewById(R.id.logout_layout).setOnClickListener(v -> logout());
 		}
-	}
-
-	@Override
-	public void onResume() {
-		super.onResume();
-		mapView.onResume();
-	}
-
-	@Override
-	public void onPause() {
-		super.onPause();
-		mapView.onPause();
-	}
-
-	@Override
-	public void onDestroy() {
-		mapView.onDestroy();
-		super.onDestroy();
-	}
-
-	@Override
-	public void onLowMemory() {
-		super.onLowMemory();
-		mapView.onLowMemory();
 	}
 
 	@Override
@@ -448,7 +421,7 @@ public class ProfileActivity extends DaggerAppCompatActivity implements OnMapRea
 	}
 
 	@Override
-	public void onMapReady(GoogleMap map) {
+	public void onMapAndViewReady(GoogleMap map) {
 		SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
 		map.setMapType(preferences.getInt(getString(R.string.baseLayerKey), getResources().getInteger(R.integer.baseLayerDefaultValue)));
 
@@ -482,7 +455,7 @@ public class ProfileActivity extends DaggerAppCompatActivity implements OnMapRea
 						new LatLng(latLng.latitude - latitudePadding, latLng.longitude),
 						new LatLng(latLng.latitude + latitudePadding, latLng.longitude));
 
-				int minDimension = Math.min(mapView.getWidth(), mapView.getHeight());
+				int minDimension = Math.min(mapFragment.getView().getWidth(), mapFragment.getView().getHeight());
 				int padding = (int) Math.floor(minDimension / 5f);
 				map.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds, padding));
 			} else {
@@ -660,15 +633,12 @@ public class ProfileActivity extends DaggerAppCompatActivity implements OnMapRea
 		return uris;
 	}
 
-	@TargetApi(16)
 	private List<Uri> getClipDataUris(Intent intent) {
 		List<Uri> uris = new ArrayList<>();
-		if (Build.VERSION.SDK_INT >= 16) {
-			ClipData cd = intent.getClipData();
-			if (cd != null) {
-				for (int i = 0; i < cd.getItemCount(); i++) {
-					uris.add(cd.getItemAt(i).getUri());
-				}
+		ClipData cd = intent.getClipData();
+		if (cd != null) {
+			for (int i = 0; i < cd.getItemCount(); i++) {
+				uris.add(cd.getItemAt(i).getUri());
 			}
 		}
 		return uris;

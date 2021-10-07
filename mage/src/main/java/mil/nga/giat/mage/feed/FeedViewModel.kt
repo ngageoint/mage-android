@@ -4,19 +4,20 @@ import android.content.Context
 import androidx.lifecycle.*
 import androidx.paging.LivePagedListBuilder
 import androidx.paging.PagedList
+import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
-import mil.nga.giat.mage.dagger.module.ApplicationContext
 import mil.nga.giat.mage.data.feed.*
 import mil.nga.giat.mage.network.Resource
-import mil.nga.giat.mage.sdk.datastore.user.EventHelper
 import javax.inject.Inject
 
+@HiltViewModel
 class FeedViewModel @Inject constructor(
-        @ApplicationContext val context: Context,
-        private val feedDao: FeedDao,
-        private val feedItemDao: FeedItemDao,
-        private val feedRepository: FeedRepository
+    @ApplicationContext val context: Context,
+    private val feedDao: FeedDao,
+    private val feedItemDao: FeedItemDao,
+    private val feedRepository: FeedRepository
 ): ViewModel() {
 
     companion object {

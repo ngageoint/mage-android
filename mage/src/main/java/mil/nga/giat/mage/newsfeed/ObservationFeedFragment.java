@@ -2,6 +2,8 @@ package mil.nga.giat.mage.newsfeed;
 
 import android.Manifest;
 import android.app.Dialog;
+import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -25,6 +27,7 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
+import androidx.fragment.app.Fragment;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.Observer;
 import androidx.recyclerview.widget.DefaultItemAnimator;
@@ -32,9 +35,8 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
-import com.google.android.material.bottomsheet.BottomSheetDialog;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.material.snackbar.Snackbar;
 import com.j256.ormlite.android.AndroidDatabaseResults;
 import com.j256.ormlite.dao.CloseableIterator;
 import com.j256.ormlite.dao.Dao;
@@ -57,20 +59,18 @@ import java.util.concurrent.TimeUnit;
 
 import javax.inject.Inject;
 
-import dagger.android.support.DaggerFragment;
+import dagger.hilt.android.AndroidEntryPoint;
+import dagger.hilt.android.qualifiers.ApplicationContext;
 import mil.nga.giat.mage.R;
-import mil.nga.giat.mage.dagger.module.ApplicationContext;
+import mil.nga.giat.mage.coordinate.CoordinateFormatter;
 import mil.nga.giat.mage.filter.ObservationFilterActivity;
 import mil.nga.giat.mage.location.LocationPolicy;
 import mil.nga.giat.mage.observation.AttachmentGallery;
 import mil.nga.giat.mage.observation.AttachmentViewerActivity;
-import mil.nga.giat.mage.observation.ImportantDialog;
-import mil.nga.giat.mage.observation.ImportantRemoveDialog;
-import mil.nga.giat.mage.observation.ObservationEditActivity;
-import mil.nga.giat.mage.observation.ObservationFormPickerActivity;
 import mil.nga.giat.mage.observation.ObservationLocation;
-import mil.nga.giat.mage.observation.ObservationViewActivity;
+import mil.nga.giat.mage.observation.edit.ObservationEditActivity;
 import mil.nga.giat.mage.observation.sync.ObservationServerFetch;
+import mil.nga.giat.mage.observation.view.ObservationViewActivity;
 import mil.nga.giat.mage.sdk.datastore.DaoStore;
 import mil.nga.giat.mage.sdk.datastore.location.LocationHelper;
 import mil.nga.giat.mage.sdk.datastore.location.LocationProperty;
@@ -84,11 +84,12 @@ import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.event.IObservationEventListener;
-import mil.nga.giat.mage.sdk.exceptions.ObservationException;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
 import mil.nga.sf.Geometry;
+import mil.nga.sf.Point;
 
-public class ObservationFeedFragment extends DaggerFragment implements IObservationEventListener, ObservationListAdapter.ObservationActionListener, Observer<Location> {
+@AndroidEntryPoint
+public class ObservationFeedFragment extends Fragment implements IObservationEventListener, ObservationListAdapter.ObservationActionListener, Observer<Location> {
 
 	private static final String LOG_NAME = ObservationFeedFragment.class.getName();
 
@@ -265,23 +266,9 @@ public class ObservationFeedFragment extends DaggerFragment implements IObservat
 					.setPositiveButton(android.R.string.ok, null)
 					.show();
 		} else if (location != null) {
-			Intent intent;
-
-			// show form picker or go to
-			JsonArray formDefinitions = EventHelper.getInstance(getActivity()).getCurrentEvent().getNonArchivedForms();
-			if (formDefinitions.size() == 0) {
-				intent = new Intent(getActivity(), ObservationEditActivity.class);
-			} else if (formDefinitions.size() == 1) {
-				JsonObject form = (JsonObject) formDefinitions.iterator().next();
-				intent = new Intent(getActivity(), ObservationEditActivity.class);
-				intent.putExtra(ObservationEditActivity.OBSERVATION_FORM_ID, form.get("id").getAsLong());
-			} else {
-				intent = new Intent(getActivity(), ObservationFormPickerActivity.class);
-			}
-
+			Intent intent = new Intent(getActivity(), ObservationEditActivity.class);
 			intent.putExtra(ObservationEditActivity.LOCATION, location);
 			startActivity(intent);
-
 		} else {
 			if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
 				new AlertDialog.Builder(getActivity(), R.style.AppCompatAlertDialogStyle)
@@ -462,7 +449,7 @@ public class ObservationFeedFragment extends DaggerFragment implements IObservat
 	}
 	
 	private int getTimeFilterId() {
-		return preferences.getInt(getResources().getString(R.string.activeTimeFilterKey), getResources().getInteger(R.integer.time_filter_none));
+		return preferences.getInt(getResources().getString(R.string.activeTimeFilterKey), getResources().getInteger(R.integer.time_filter_last_month));
 	}
 
 	@Override
@@ -517,68 +504,6 @@ public class ObservationFeedFragment extends DaggerFragment implements IObservat
 		});
 	}
 
-	public void onObservationImportant(Observation observation) {
-		ObservationImportant important = observation.getImportant();
-		boolean isImportant = important != null && important.isImportant();
-		if (isImportant) {
-			BottomSheetDialog dialog = new BottomSheetDialog(requireActivity());
-			View view = getLayoutInflater().inflate(R.layout.view_important_bottom_sheet, null);
-			view.findViewById(R.id.update_button).setOnClickListener(v -> {
-				onUpdateImportantClick(observation);
-				dialog.dismiss();
-			});
-			view.findViewById(R.id.remove_button).setOnClickListener(v -> {
-				onRemoveImportantClick(observation);
-				dialog.dismiss();
-			});
-			dialog.setContentView(view);
-			dialog.show();
-		} else {
-			onUpdateImportantClick(observation);
-		}
-	}
-
-	public void onUpdateImportantClick(Observation observation) {
-		ImportantDialog dialog = ImportantDialog.newInstance(observation.getImportant());
-		dialog.setOnImportantListener(description -> {
-			ObservationHelper observationHelper = ObservationHelper.getInstance(context);
-			try {
-				ObservationImportant important = observation.getImportant();
-				if (important == null) {
-					important = new ObservationImportant();
-					observation.setImportant(important);
-				}
-
-				if (currentUser != null) {
-					important.setUserId(currentUser.getRemoteId());
-				}
-
-				important.setTimestamp(new Date());
-				important.setDescription(description);
-				observationHelper.addImportant(observation);
-			} catch (ObservationException e) {
-				Log.e(LOG_NAME, "Error updating important flag for observation: " + observation.getRemoteId());
-			}
-		});
-
-		dialog.show(getFragmentManager(), "important");
-	}
-
-
-	public void onRemoveImportantClick(Observation o) {
-		ImportantRemoveDialog dialog = new ImportantRemoveDialog();
-		dialog.setOnRemoveImportantListener(() -> {
-			ObservationHelper observationHelper = ObservationHelper.getInstance(context);
-			try {
-				observationHelper.removeImportant(o);
-			} catch (ObservationException e) {
-				Log.e(LOG_NAME, "Error removing important flag for observation: " + o.getRemoteId());
-			}
-		});
-
-		dialog.show(getFragmentManager(), "remove_important");
-	}
-
 	@Override
 	public void onObservationDirections(Observation observation) {
 		Intent intent = new Intent(android.content.Intent.ACTION_VIEW, observation.getGoogleMapsUri());
@@ -590,6 +515,18 @@ public class ObservationFeedFragment extends DaggerFragment implements IObservat
 		Intent observationView = new Intent(context, ObservationViewActivity.class);
 		observationView.putExtra(ObservationViewActivity.OBSERVATION_ID, observation.getId());
 		startActivity(observationView);
+	}
+
+	@Override
+	public void onObservationLocation(Observation observation) {
+		Point centroid = observation.getGeometry().getCentroid();
+		String coordinates = new CoordinateFormatter(context).format(new LatLng(centroid.getY(), centroid.getX()));
+		ClipboardManager clipboard = (ClipboardManager) context.getSystemService(Context.CLIPBOARD_SERVICE);
+		ClipData clip = ClipData.newPlainText("Observation Location", coordinates);
+		if (clipboard == null || clip == null) return;
+		clipboard.setPrimaryClip(clip);
+
+		Snackbar.make(getView(), R.string.location_text_copy_message, Snackbar.LENGTH_SHORT).show();
 	}
 
 	@Override

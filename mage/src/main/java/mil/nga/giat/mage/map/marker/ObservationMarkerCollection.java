@@ -15,9 +15,9 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
-import org.ocpsoft.prettytime.PrettyTime;
-
+import java.text.DateFormat;
 import java.util.Date;
+import java.util.Locale;
 
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.filter.Filter;
@@ -29,6 +29,7 @@ import mil.nga.giat.mage.observation.MapShapeObservation;
 import mil.nga.giat.mage.sdk.Temporal;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationProperty;
+import mil.nga.giat.mage.utils.DateFormatFactory;
 import mil.nga.sf.Geometry;
 import mil.nga.sf.Point;
 import mil.nga.sf.util.GeometryUtils;
@@ -40,6 +41,7 @@ public class ObservationMarkerCollection implements PointCollection<Observation>
     private Context context;
     private Date latestObservationDate = new Date(0);
     protected Pair<String, Circle> observationAccuracyCircle = null;
+    private DateFormat dateFormat;
 
     private boolean visible = true;
 
@@ -58,6 +60,7 @@ public class ObservationMarkerCollection implements PointCollection<Observation>
     public ObservationMarkerCollection(Context context, GoogleMap map) {
         this.map = map;
         this.context = context;
+        dateFormat = DateFormatFactory.format("yyyy-MM-dd HH:mm zz", Locale.getDefault(), context);
 
         mapObservationManager = new MapObservationManager(context, map);
     }
@@ -234,19 +237,29 @@ public class ObservationMarkerCollection implements PointCollection<Observation>
             }
 
             LayoutInflater inflater = LayoutInflater.from(context);
-            View v = inflater.inflate(R.layout.observation_infowindow, null);
+            View view = inflater.inflate(R.layout.observation_infowindow, null);
+            view.findViewById(R.id.content).setVisibility(View.VISIBLE);
 
-			ObservationProperty primaryField = observation.getPrimaryField();
+            TextView overline = view.findViewById(R.id.overline);
+            overline.setText(dateFormat.format(observation.getTimestamp()));
 
-			String type = primaryField != null ? primaryField.getValue().toString() : "Observation";
+            ObservationProperty primaryProperty = observation.getPrimaryFeedField();
+            String primaryField = primaryProperty != null ? primaryProperty.getValue().toString() : null;
+            if (primaryField != null) {
+                TextView primary = view.findViewById(R.id.primary);
+                primary.setVisibility(View.VISIBLE);
+                primary.setText(primaryField);
+            }
 
-            TextView primary = v.findViewById(R.id.observation_primary);
-            primary.setText(type);
+            ObservationProperty secondaryProperty = observation.getSecondaryFeedField();
+            String secondaryField = secondaryProperty != null ? secondaryProperty.getValue().toString() : null;
+            if (secondaryField != null) {
+                TextView secondary = view.findViewById(R.id.secondary);
+                secondary.setVisibility(View.VISIBLE);
+                secondary.setText(secondaryField);
+            }
 
-            TextView date = v.findViewById(R.id.observation_date);
-            date.setText(new PrettyTime().format(observation.getTimestamp()));
-
-            return v;
+            return view;
         }
 
         @Override

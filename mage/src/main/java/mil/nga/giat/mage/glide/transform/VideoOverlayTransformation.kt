@@ -27,8 +27,9 @@ class VideoOverlayTransformation(private val context: Context) : BitmapTransform
         val canvas = Canvas(bitmap)
         canvas.drawBitmap(toTransform, Matrix(), null)
 
+        val minDimension = width.coerceAtMost(height)
         val play = BitmapFactory.decodeResource(context.resources, R.drawable.ic_play_circle_filled_100dp)
-        val playScaled = Bitmap.createScaledBitmap(play, width / 2, height / 2, false)
+        val playScaled = Bitmap.createScaledBitmap(play, minDimension / 2, minDimension / 2, false)
         canvas.drawBitmap(playScaled, ((canvas.width - playScaled.width) / 2).toFloat(), ((canvas.height - playScaled.height) / 2).toFloat(), null)
 
         return bitmap

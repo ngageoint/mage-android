@@ -2,16 +2,16 @@ package mil.nga.giat.mage.event
 
 import android.content.Intent
 import android.os.Bundle
-import android.preference.PreferenceManager
 import android.util.Log
 import android.view.View
+import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SearchView
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.ViewModelProviders
+import androidx.preference.PreferenceManager
 import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.LinearLayoutManager
-import dagger.android.support.DaggerAppCompatActivity
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.android.synthetic.main.activity_events.*
 import mil.nga.giat.mage.LandingActivity
 import mil.nga.giat.mage.MageApplication
@@ -24,7 +24,8 @@ import mil.nga.giat.mage.sdk.datastore.user.UserHelper
 import mil.nga.giat.mage.sdk.login.RecentEventTask
 import javax.inject.Inject
 
-class EventsActivity : DaggerAppCompatActivity(), EventsFetchFragment.EventsFetchListener {
+@AndroidEntryPoint
+class EventsActivity : AppCompatActivity(), EventsFetchFragment.EventsFetchListener {
 
     companion object {
         private val LOG_NAME = EventsActivity::class.java.name
@@ -34,8 +35,6 @@ class EventsActivity : DaggerAppCompatActivity(), EventsFetchFragment.EventsFetc
     @Inject
     lateinit var application: MageApplication
 
-    @Inject
-    protected lateinit var viewModelFactory: ViewModelProvider.Factory
     private lateinit var viewModel: EventViewModel
 
     private var events = emptyList<Event>()
@@ -69,7 +68,7 @@ class EventsActivity : DaggerAppCompatActivity(), EventsFetchFragment.EventsFetc
 
         eventsFetchFragment = fragment
 
-        viewModel = ViewModelProviders.of(this, viewModelFactory).get(EventViewModel::class.java)
+        viewModel = ViewModelProvider(this).get(EventViewModel::class.java)
         viewModel.syncStatus.observe(this, Observer {
             finishEvent(it)
         })

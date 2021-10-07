@@ -98,7 +98,7 @@
                     android:layout_height="wrap_content"
                     android:paddingStart="8dp"
                     android:paddingEnd="8dp"
-                    android:layout_marginBottom="16dp"
+                    android:layout_marginBottom="8dp"
                     android:background="@color/background_dialog">
 
                     <LinearLayout
@@ -110,84 +110,52 @@
 
                 </HorizontalScrollView>
 
-
                 <com.google.android.material.card.MaterialCardView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_margin="8dp"
+                    android:layout_marginStart="8dp"
+                    android:layout_marginEnd="8dp"
                     android:background="@color/background_dialog">
 
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:orientation="vertical">
+                        android:orientation="vertical"
+                        android:layout_margin="16dp">
 
-                        <mil.nga.giat.mage.form.field.EditDate
-                            android:id="@+id/date"
+<!--                        <mil.nga.giat.mage.observation.form.date.DateEditComposeView-->
+<!--                            android:id="@+id/date"-->
+<!--                            android:layout_width="match_parent"-->
+<!--                            android:layout_height="wrap_content"/>-->
+
+                        <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="8dp"
-                            android:layout_marginBottom="5dp"
-                            android:paddingStart="8dp"
-                            android:paddingEnd="8dp"/>
+                            android:orientation="vertical">
 
-                        <FrameLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content">
+<!--                            <mil.nga.giat.mage.observation.form.geometry.GeometryEditComposeView-->
+<!--                                android:id="@+id/geometry"-->
+<!--                                android:layout_width="match_parent"-->
+<!--                                android:layout_height="wrap_content"/>-->
 
-                            <LinearLayout
+                            <fragment
+                                android:id="@+id/map"
+                                android:name="com.google.android.gms.maps.MapFragment"
                                 android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:orientation="vertical"
-                                android:paddingStart="8dp"
-                                android:paddingEnd="8dp"
-                                android:layout_marginBottom="8dp"
-                                android:layout_marginStart="4dp">
+                                android:layout_height="120dp"
+                                app:uiScrollGestures="false"
+                                app:uiZoomGestures="false"/>
 
-                                <LinearLayout
-                                    android:layout_width="match_parent"
-                                    android:layout_height="wrap_content"
-                                    android:orientation="vertical">
-
-                                    <mil.nga.giat.mage.form.field.EditGeometry
-                                        android:id="@+id/geometry"
-                                        android:layout_width="match_parent"
-                                        android:layout_height="wrap_content"/>
-
-                                    <fragment
-                                        android:id="@+id/map"
-                                        android:name="com.google.android.gms.maps.MapFragment"
-                                        android:layout_width="match_parent"
-                                        android:layout_height="100dp" />
-
-                                </LinearLayout>
-                            </LinearLayout>
-
-                            <!-- Put clickable transparent view over the map and lat/lng, This will prevent map gestures. -->
-                            <RelativeLayout
-                                android:id="@+id/geometry_edit"
-                                android:layout_width="match_parent"
-                                android:layout_height="match_parent"
-                                android:clickable="true"
-                                android:background="?attr/selectableItemBackground">
-                            </RelativeLayout>
-
-                        </FrameLayout>
+                        </LinearLayout>
 
                     </LinearLayout>
 
-
                 </com.google.android.material.card.MaterialCardView>
 
-                <LinearLayout
+                <mil.nga.giat.mage.observation.form.FormsEditComposeView
                     android:id="@+id/forms"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical">
-
-                    <!-- Dynamically populated with forms -->
-
-                </LinearLayout>
+                    android:layout_height="match_parent"/>
 
             </LinearLayout>
 
@@ -195,15 +163,15 @@
 
     </androidx.core.widget.NestedScrollView>
 
-
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/save_button"
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/add_form"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="end|bottom"
         android:layout_marginBottom="16dp"
         android:layout_marginEnd="16dp"
-        android:theme="@style/AppTheme.PrimaryFAB"
-        android:src="@drawable/ic_save_white_24dp" />
+        style="@style/Mage.ExtendedFAB"
+        android:text="Add Form"
+        app:icon="@drawable/ic_baseline_note_add_24" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

@@ -423,7 +423,7 @@ public class ObservationLocation implements Parcelable {
         return getCameraUpdate(view, false, DEFAULT_POINT_ZOOM, paddingPercentage);
     }
 
-    CameraUpdate getCameraUpdate(View view, boolean zoomToAccuracy, float paddingPercentage) {
+    public CameraUpdate getCameraUpdate(View view, boolean zoomToAccuracy, float paddingPercentage) {
         return getCameraUpdate(view, zoomToAccuracy, DEFAULT_POINT_ZOOM, paddingPercentage);
     }
 

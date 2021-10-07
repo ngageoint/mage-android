@@ -3,24 +3,28 @@ package mil.nga.giat.mage.login
 import android.content.Context
 import android.content.SharedPreferences
 import android.util.Log
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import mil.nga.giat.mage.R
-import mil.nga.giat.mage.dagger.module.ApplicationContext
 import mil.nga.giat.mage.sdk.datastore.DaoStore
-import mil.nga.giat.mage.sdk.datastore.user.User
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper
 import mil.nga.giat.mage.sdk.login.AuthenticationStatus
 import mil.nga.giat.mage.sdk.login.AuthenticationTask
 import mil.nga.giat.mage.sdk.login.AuthorizationStatus
 import mil.nga.giat.mage.sdk.login.AuthorizationTask
+import mil.nga.giat.mage.sdk.preferences.PreferenceHelper
 import mil.nga.giat.mage.sdk.preferences.ServerApi
+import mil.nga.giat.mage.sdk.utils.ISO8601DateFormatFactory
 import mil.nga.giat.mage.sdk.utils.PasswordUtility
 import org.apache.commons.lang3.StringUtils
 import java.util.*
 import javax.inject.Inject
 
+@HiltViewModel
 class LoginViewModel @Inject constructor(
     @ApplicationContext val context: Context,
     val preferences: SharedPreferences
@@ -37,7 +41,8 @@ class LoginViewModel @Inject constructor(
         SUCCESS, ERROR, LOADING
     }
 
-    private var currentUsername: String? = null
+    private val iso8601Format = ISO8601DateFormatFactory.ISO8601()
+
     private var localCredentials: Array<String>? = null
 
     private val _authenticationState = MutableLiveData<AuthenticationState>()
@@ -59,7 +64,7 @@ class LoginViewModel @Inject constructor(
             } else {
                 AuthenticationState.ERROR
             }
-        }.execute(*credentials)
+        }.execute(*credentials, strategy)
 
         _authenticationStatus.value = null
         _authenticationState.value = AuthenticationState.LOADING
@@ -75,7 +80,7 @@ class LoginViewModel @Inject constructor(
                     setupDisconnectedLogin()
                 }
 
-                val userChanged = completeAuthorization(strategy, it.user)
+                val userChanged = completeAuthorization(strategy, it)
                 _authorizationStatus.value = Authorization(it, userChanged)
 
             } else {
@@ -107,14 +112,12 @@ class LoginViewModel @Inject constructor(
                 _apiStatus.value = valid
             }
         }
-
-        _apiStatus.value = null
     }
 
     private fun setupDisconnectedLogin() {
         localCredentials?.let {
             val username = it[0]
-            val password = it[0]
+            val password = it[1]
             val editor = preferences.edit()
             editor.putString(context.getString(R.string.usernameKey), username).apply()
             try {
@@ -128,13 +131,22 @@ class LoginViewModel @Inject constructor(
         localCredentials = null
     }
 
-    private fun completeAuthorization(strategy: String, user: User): Boolean {
+    private fun completeAuthorization(strategy: String, status: AuthorizationStatus): Boolean {
+        val user = status.user;
         val previousUser = preferences.getString(context.getString(R.string.sessionUserKey), null)
         val previousStrategy = preferences.getString(context.getString(R.string.sessionStrategyKey), null)
-        val userChanged = (strategy != previousStrategy) || (user.username != previousUser)
+        val sessionChanged =
+            (previousStrategy != null && strategy != previousStrategy) ||
+            (previousUser != null && user.username != previousUser)
 
-        if (userChanged) {
+        if (sessionChanged) {
             DaoStore.getInstance(context).resetDatabase()
+
+            val preferenceHelper = PreferenceHelper.getInstance(context)
+            preferenceHelper.initialize(true, mil.nga.giat.mage.sdk.R.xml::class.java, R.xml::class.java)
+
+            val dayNightTheme = preferences.getInt(context.resources.getString(R.string.dayNightThemeKey), context.resources.getInteger(R.integer.dayNightThemeDefaultValue))
+            AppCompatDelegate.setDefaultNightMode(dayNightTheme)
         }
 
         user.fetchedDate = Date()
@@ -142,11 +154,15 @@ class LoginViewModel @Inject constructor(
         val currentUser = userHelper.createOrUpdate(user)
         userHelper.setCurrentUser(currentUser)
 
+        // Successful login, put the token information in the shared preferences
         preferences.edit()
-            .putString(context.getString(R.string.sessionUserKey), user.username)
-            .putString(context.getString(R.string.sessionStrategyKey), strategy)
-            .apply()
+           .putString(context.getString(R.string.sessionUserKey), user.username)
+           .putString(context.getString(R.string.sessionStrategyKey), strategy)
+           .putString(context.getString(R.string.tokenKey), status.token.trim { it <= ' ' })
+           .putString(context.getString(R.string.tokenExpirationDateKey), iso8601Format.format(status.tokenExpiration))
+           .putLong(context.getString(R.string.tokenExpirationLengthKey), status.tokenExpiration.time - Date().time)
+           .apply()
 
-        return userChanged
+        return sessionChanged
     }
 }
