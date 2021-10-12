@@ -376,7 +376,7 @@ fun ObservationViewHeaderContent(
             }
           }
 
-          FormHeaderContent(formState, primaryColor = MaterialTheme.colors.primary)
+          FormHeaderContent(formState)
         }
       }
 
