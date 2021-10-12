@@ -11,6 +11,7 @@ import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SearchView;
 import androidx.appcompat.widget.Toolbar;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.DefaultItemAnimator;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -19,7 +20,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import dagger.hilt.android.AndroidEntryPoint;
 import mil.nga.giat.mage.R;
+import mil.nga.giat.mage.network.Resource;
 import mil.nga.giat.mage.observation.sync.ObservationServerFetch;
 import mil.nga.giat.mage.sdk.datastore.user.Event;
 import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
@@ -32,6 +35,7 @@ import mil.nga.giat.mage.sdk.login.RecentEventTask;
  * Allows the user to switch events within the app
  */
 
+@AndroidEntryPoint
 public class ChangeEventActivity extends AppCompatActivity {
 
 	private static final String LOG_NAME = ChangeEventActivity.class.getName();
@@ -40,6 +44,8 @@ public class ChangeEventActivity extends AppCompatActivity {
 
 	private List<Event> events = new ArrayList<>();
 	private EventListAdapter eventListAdapter;
+
+	private EventViewModel viewModel;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -65,12 +71,7 @@ public class ChangeEventActivity extends AppCompatActivity {
 
 		RecyclerView recyclerView = findViewById(R.id.recycler_view);
 
-		eventListAdapter = new EventListAdapter(events, recentEvents, new EventListAdapter.OnEventClickListener() {
-			@Override
-			public void onEventClick(Event event) {
-				chooseEvent(event);
-			}
-		});
+		eventListAdapter = new EventListAdapter(events, recentEvents, event -> chooseEvent(event));
 
 		RecyclerView.LayoutManager mLayoutManager = new LinearLayoutManager(getApplicationContext());
 		recyclerView.setLayoutManager(mLayoutManager);
@@ -94,6 +95,9 @@ public class ChangeEventActivity extends AppCompatActivity {
 				return true;
 			}
 		});
+
+		viewModel = new ViewModelProvider(this).get(EventViewModel.class);
+		viewModel.getSyncStatus().observe(this, resource -> finishEvent(resource));
 
 		try {
 			Long eventId = getIntent().getLongExtra(EVENT_ID_EXTRA, -1);
@@ -119,18 +123,12 @@ public class ChangeEventActivity extends AppCompatActivity {
 		TextView message = findViewById(R.id.event_message);
 		message.setText("Loading " + event.getName());
 
-		EventServerFetch eventFetch = new EventServerFetch(getApplicationContext(), event.getRemoteId());
-		eventFetch.setEventFetchListener(new EventServerFetch.EventFetchListener() {
-			@Override
-			public void onEventFetched(boolean status, Exception e) {
-				finishEvent(event);
-			}
-		});
-		eventFetch.execute();
+		viewModel.syncEvent(event);
 	}
 
-	private void finishEvent(final Event event) {
+	private void finishEvent(Resource<? extends Event> resource) {
 		// Send chosen event to the server
+		Event event = resource.getData();
 		List<String> userRecentEventInfo = new ArrayList<>();
 		userRecentEventInfo.add(event.getRemoteId());
 		new RecentEventTask(getApplicationContext(), status -> {
@@ -151,13 +149,7 @@ public class ChangeEventActivity extends AppCompatActivity {
 			sp.putBoolean(getString(R.string.reportLocationKey), false).apply();
 		}
 
-
-		AsyncTask.execute(new Runnable() {
-			@Override
-			public void run() {
-				new ObservationServerFetch(getApplicationContext()).fetch(false);
-			}
-		});
+		AsyncTask.execute(() -> new ObservationServerFetch(getApplicationContext()).fetch(false));
 
 		setResult(RESULT_OK);
 		finish();

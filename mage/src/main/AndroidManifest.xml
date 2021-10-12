@@ -174,11 +174,6 @@
             android:label="@string/fetch_settings"
             android:parentActivityName=".LandingActivity" />
         <activity
-            android:name=".preferences.ClearDataPreferenceActivity"
-            android:label="Clear Data"
-            android:parentActivityName=".LandingActivity"
-            android:uiOptions="splitActionBarWhenNarrow" />
-        <activity
             android:name=".map.preference.MapPreferencesActivity"
             android:label="@string/map_settings"
             android:parentActivityName=".LandingActivity" />
@@ -220,6 +215,12 @@
             android:label="Favorited by"
             android:launchMode="singleTop"
             android:parentActivityName=".observation.view.ObservationViewActivity" />
+        <activity
+            android:name=".feed.FeedActivity"
+            android:theme="@style/AppTheme.NoActionBar"/>
+        <activity
+            android:name=".feed.item.FeedItemActivity"
+            android:theme="@style/AppTheme.NoActionBar"/>
 
         <receiver android:name=".sdk.connectivity.NetworkChangeReceiver">
             <intent-filter>
@@ -246,6 +247,10 @@
 
         <service
             android:name=".observation.sync.AttachmentPushService"
+            android:exported="false" />
+
+        <service
+            android:name=".feed.FeedFetchService"
             android:exported="false" />
 
         <meta-data

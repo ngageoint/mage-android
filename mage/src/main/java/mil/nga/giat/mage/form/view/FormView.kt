@@ -9,10 +9,12 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.MyLocation
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
@@ -23,11 +25,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import mil.nga.giat.mage.coordinate.CoordinateFormatter
 import mil.nga.giat.mage.form.FieldType
-import mil.nga.giat.mage.form.field.*
 import mil.nga.giat.mage.form.FormState
+import mil.nga.giat.mage.form.field.*
 import mil.nga.giat.mage.sdk.datastore.observation.Attachment
 import mil.nga.giat.mage.utils.DateFormatFactory
-import mil.nga.sf.Geometry
 import java.util.*
 
 @Composable
@@ -126,16 +127,14 @@ fun FormHeaderContent(
 @Composable
 fun FormHeaderContent(
   formState: FormState?,
-  primaryColor: Color = Color.Unspecified,
-  ) {
+) {
   val primaryState = formState?.fields?.find { it.definition.name == formState.definition.primaryFeedField }
   if (primaryState?.hasValue() == true) {
     Row {
       CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.high) {
         Text(
           fieldText(primaryState, LocalContext.current),
-          style = MaterialTheme.typography.h6,
-          color = primaryColor
+          style = MaterialTheme.typography.h6
         )
       }
     }

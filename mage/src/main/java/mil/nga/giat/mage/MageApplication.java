@@ -3,10 +3,8 @@ package mil.nga.giat.mage;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.Application;
-import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
-import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -18,9 +16,6 @@ import android.preference.PreferenceManager;
 import android.util.Log;
 
 import androidx.appcompat.app.AppCompatDelegate;
-import androidx.core.app.NotificationCompat;
-import androidx.core.app.NotificationManagerCompat;
-import androidx.core.app.TaskStackBuilder;
 import androidx.core.content.ContextCompat;
 import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.LifecycleObserver;
@@ -28,6 +23,7 @@ import androidx.lifecycle.OnLifecycleEvent;
 import androidx.lifecycle.ProcessLifecycleOwner;
 
 import dagger.hilt.android.HiltAndroidApp;
+import mil.nga.giat.mage.feed.FeedFetchService;
 import mil.nga.giat.mage.location.LocationFetchService;
 import mil.nga.giat.mage.location.LocationReportingService;
 import mil.nga.giat.mage.login.AccountStateActivity;
@@ -239,12 +235,6 @@ public class MageApplication extends Application implements LifecycleObserver, S
 		} catch (UserException e) {
 			e.printStackTrace();
 		}
-
-		Boolean deleteAllDataOnLogout = sharedPreferences.getBoolean(getApplicationContext().getString(R.string.deleteAllDataOnLogoutKey), getResources().getBoolean(R.bool.deleteAllDataOnLogoutDefaultValue));
-
-		if (deleteAllDataOnLogout) {
-			LandingActivity.deleteAllData(getApplicationContext());
-		}
 	}
 
 	private void destroyNotification() {
@@ -257,6 +247,7 @@ public class MageApplication extends Application implements LifecycleObserver, S
 	private void startFetching() {
 		startService(new Intent(getApplicationContext(), LocationFetchService.class));
 		startService(new Intent(getApplicationContext(), ObservationFetchService.class));
+		startService(new Intent(getApplicationContext(), FeedFetchService.class));
 	}
 
 	/**
@@ -265,6 +256,7 @@ public class MageApplication extends Application implements LifecycleObserver, S
 	private void destroyFetching() {
 		stopService(new Intent(getApplicationContext(), LocationFetchService.class));
 		stopService(new Intent(getApplicationContext(), ObservationFetchService.class));
+		stopService(new Intent(getApplicationContext(), FeedFetchService.class));
 	}
 
 	/**

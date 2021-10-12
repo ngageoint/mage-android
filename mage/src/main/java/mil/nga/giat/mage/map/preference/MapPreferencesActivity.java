@@ -1,33 +1,29 @@
 package mil.nga.giat.mage.map.preference;
 
-import android.app.Activity;
 import android.content.Intent;
-import android.graphics.drawable.Drawable;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
 
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.content.res.AppCompatResources;
-import androidx.core.content.ContextCompat;
-import androidx.core.graphics.drawable.DrawableCompat;
-import androidx.preference.Preference;
+import androidx.lifecycle.ViewModelProvider;
+import androidx.preference.PreferenceCategory;
 import androidx.preference.PreferenceFragmentCompat;
+import androidx.preference.PreferenceScreen;
+import androidx.preference.SwitchPreferenceCompat;
 
-import com.google.common.base.Predicate;
 import com.google.common.collect.Collections2;
 
-import org.apache.commons.lang3.StringUtils;
-
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import javax.inject.Inject;
+
+import dagger.hilt.android.AndroidEntryPoint;
 import mil.nga.giat.mage.R;
-import mil.nga.giat.mage.map.cache.CacheOverlay;
-import mil.nga.giat.mage.map.cache.CacheOverlayFilter;
-import mil.nga.giat.mage.map.cache.CacheProvider;
+import mil.nga.giat.mage.data.feed.Feed;
 import mil.nga.giat.mage.sdk.datastore.layer.Layer;
 import mil.nga.giat.mage.sdk.datastore.layer.LayerHelper;
 import mil.nga.giat.mage.sdk.datastore.user.Event;
@@ -39,6 +35,7 @@ import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
  *
  * @author newmanw
  */
+@AndroidEntryPoint
 public class MapPreferencesActivity extends AppCompatActivity {
 
 	public static String LOG_NAME = MapPreferencesActivity.class.getName();
@@ -48,7 +45,25 @@ public class MapPreferencesActivity extends AppCompatActivity {
 
 	private MapPreferenceFragment preference = new MapPreferenceFragment();
 
+	@AndroidEntryPoint
 	public static class MapPreferenceFragment extends PreferenceFragmentCompat {
+		private MapPreferencesViewModel viewModel;
+
+		@Inject
+		protected SharedPreferences preferences;
+
+		@Inject
+		protected MapLayerPreferences mapLayerPreferences;
+
+		private Event event;
+
+		@Override
+		public void onCreate(@Nullable Bundle savedInstanceState) {
+			super.onCreate(savedInstanceState);
+
+			viewModel = new ViewModelProvider(this).get(MapPreferencesViewModel.class);
+			viewModel.getFeeds().observe(this, this::onFeeds);
+		}
 
 		@Override
 		public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
@@ -59,37 +74,27 @@ public class MapPreferencesActivity extends AppCompatActivity {
 		public void onResume() {
 			super.onResume();
 
-			findPreference(getString(R.string.tileOverlaysKey)).setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
-				@Override
-				public boolean onPreferenceClick(Preference preference) {
-					Intent intent = new Intent(getActivity(), TileOverlayPreferenceActivity.class);
-					getActivity().startActivityForResult(intent, TILE_OVERLAY_ACTIVITY);
-					return true;
-				}
+			event = EventHelper.getInstance(getActivity().getApplicationContext()).getCurrentEvent();
+			viewModel.setEvent(event.getRemoteId());
+
+			findPreference(getString(R.string.tileOverlaysKey)).setOnPreferenceClickListener(preference -> {
+				Intent intent = new Intent(getActivity(), TileOverlayPreferenceActivity.class);
+				getActivity().startActivityForResult(intent, TILE_OVERLAY_ACTIVITY);
+				return true;
 			});
 
-			findPreference(getString(R.string.onlineLayersKey)).setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
-				@Override
-				public boolean onPreferenceClick(Preference preference) {
-					Intent intent = new Intent(getActivity(), OnlineLayersPreferenceActivity.class);
-					getActivity().startActivityForResult(intent, ONLINE_LAYERS_OVERLAY_ACTIVITY);
-					return true;
-				}
+			findPreference(getString(R.string.onlineLayersKey)).setOnPreferenceClickListener(preference -> {
+				Intent intent = new Intent(getActivity(), OnlineLayersPreferenceActivity.class);
+				getActivity().startActivityForResult(intent, ONLINE_LAYERS_OVERLAY_ACTIVITY);
+				return true;
 			});
-
-			Event event = EventHelper.getInstance(getActivity().getApplicationContext()).getCurrentEvent();
 
 			// TODO : Remove the below and rework OverlayPreference to have a 'entities' similar to a list preference, these would be the 'display values'
 			try {
 				List<Layer> layers = LayerHelper.getInstance(getContext()).readByEvent(event, "GeoPackage");
 				layers.addAll(LayerHelper.getInstance(getContext()).readByEvent(event, "Feature"));
 				layers.addAll(LayerHelper.getInstance(getContext()).readByEvent(event, "Imagery"));
-				Collection<Layer> available = Collections2.filter(layers, new Predicate<Layer>() {
-					@Override
-					public boolean apply(Layer layer) {
-						return !layer.isLoaded();
-					}
-				});
+				Collection<Layer> available = Collections2.filter(layers, layer -> !layer.isLoaded());
 
 				OverlayPreference p = (OverlayPreference) findPreference(getResources().getString(R.string.tileOverlaysKey));
 				p.setAvailableDownloads(!available.isEmpty());
@@ -104,6 +109,32 @@ public class MapPreferencesActivity extends AppCompatActivity {
 
 			findPreference(getString(R.string.tileOverlaysKey)).setOnPreferenceClickListener(null);
 			findPreference(getString(R.string.onlineLayersKey)).setOnPreferenceClickListener(null);
+		}
+
+		private void onFeeds(List<Feed> feeds) {
+			PreferenceScreen screen = getPreferenceScreen();
+			Set<String> enabledFeeds = mapLayerPreferences.getEnabledFeeds(event.getRemoteId());
+
+			for (Feed feed : feeds) {
+				PreferenceCategory category = (PreferenceCategory) screen.getPreference(screen.getPreferenceCount() - 1);
+				SwitchPreferenceCompat feedPreference = mapLayerPreferences.mapFeedPreference(feed, getActivity(), enabledFeeds.contains(feed.getId()));
+				feedPreference.setOnPreferenceClickListener( preference -> {
+					onFeedClick(feed, feedPreference.isChecked());
+					return true;
+				});
+				category.addPreference(feedPreference);
+			}
+		}
+
+		private void onFeedClick(Feed feed, boolean on) {
+			Set<String> feeds = mapLayerPreferences.getEnabledFeeds(event.getRemoteId());
+			if (on) {
+				feeds.add(feed.getId());
+			} else {
+				feeds.remove(feed.getId());
+			}
+
+			mapLayerPreferences.setEnabledFeeds(event.getRemoteId(), feeds);
 		}
 	}
 

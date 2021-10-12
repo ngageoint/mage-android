@@ -7,26 +7,25 @@ import android.os.Bundle
 import android.util.Log
 import android.view.View
 import androidx.activity.compose.setContent
+import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.snackbar.Snackbar
+import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.android.synthetic.main.view_more_bottom_sheet.view.*
 import mil.nga.giat.mage.R
+import mil.nga.giat.mage.form.FormState
+import mil.nga.giat.mage.form.FormViewModel
+import mil.nga.giat.mage.form.edit.dialog.FormReorderDialog
 import mil.nga.giat.mage.observation.AttachmentViewerActivity
+import mil.nga.giat.mage.observation.edit.ObservationEditActivity
+import mil.nga.giat.mage.people.PeopleActivity
 import mil.nga.giat.mage.sdk.datastore.observation.Attachment
 import mil.nga.giat.mage.sdk.datastore.user.Permission
 import mil.nga.giat.mage.sdk.datastore.user.User
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper
-import java.lang.Exception
-import androidx.appcompat.app.AlertDialog
-import androidx.appcompat.app.AppCompatActivity
-import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.android.synthetic.main.view_more_bottom_sheet.view.*
-import mil.nga.giat.mage.form.FormState
-import mil.nga.giat.mage.form.FormViewModel
-import mil.nga.giat.mage.form.edit.dialog.FormReorderDialog
-import mil.nga.giat.mage.observation.edit.ObservationEditActivity
-import mil.nga.giat.mage.people.PeopleActivity
 
 @AndroidEntryPoint
 class ObservationViewActivity : AppCompatActivity() {

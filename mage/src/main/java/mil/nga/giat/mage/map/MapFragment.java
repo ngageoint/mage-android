@@ -43,6 +43,7 @@ import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.Observer;
+import androidx.lifecycle.ViewModelProvider;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -72,6 +73,7 @@ import org.apache.commons.lang3.StringUtils;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -108,6 +110,9 @@ import mil.nga.geopackage.tiles.features.FeatureTiles;
 import mil.nga.geopackage.tiles.features.custom.NumberFeaturesTile;
 import mil.nga.geopackage.tiles.user.TileDao;
 import mil.nga.giat.mage.R;
+import mil.nga.giat.mage.data.feed.FeedItem;
+import mil.nga.giat.mage.data.feed.FeedWithItems;
+import mil.nga.giat.mage.feed.item.FeedItemActivity;
 import mil.nga.giat.mage.filter.DateTimeFilter;
 import mil.nga.giat.mage.filter.Filter;
 import mil.nga.giat.mage.filter.FilterActivity;
@@ -124,6 +129,7 @@ import mil.nga.giat.mage.map.cache.StaticFeatureCacheOverlay;
 import mil.nga.giat.mage.map.cache.URLCacheOverlay;
 import mil.nga.giat.mage.map.cache.WMSCacheOverlay;
 import mil.nga.giat.mage.map.cache.XYZDirectoryCacheOverlay;
+import mil.nga.giat.mage.map.marker.FeedItemCollection;
 import mil.nga.giat.mage.map.marker.LocationMarkerCollection;
 import mil.nga.giat.mage.map.marker.MyHistoricalLocationMarkerCollection;
 import mil.nga.giat.mage.map.marker.ObservationMarkerCollection;
@@ -159,8 +165,22 @@ import mil.nga.sf.proj.ProjectionConstants;
 import mil.nga.sf.proj.ProjectionFactory;
 
 @AndroidEntryPoint
-public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapClickListener, OnMapLongClickListener, OnMarkerClickListener, OnInfoWindowClickListener, GoogleMap.OnCameraMoveListener, GoogleMap.OnCameraIdleListener, GoogleMap.OnCameraMoveStartedListener, OnClickListener, LocationSource, OnCacheOverlayListener,
-		IObservationEventListener, ILocationEventListener, IUserEventListener, Observer<Location> {
+public class MapFragment extends Fragment implements
+		OnMapReadyCallback,
+		OnMapClickListener,
+		OnMapLongClickListener,
+		OnMarkerClickListener,
+		OnInfoWindowClickListener,
+		GoogleMap.OnInfoWindowCloseListener,
+		GoogleMap.OnCameraMoveListener,
+		GoogleMap.OnCameraIdleListener,
+		GoogleMap.OnCameraMoveStartedListener,
+		OnClickListener, LocationSource,
+		OnCacheOverlayListener,
+		IObservationEventListener,
+		ILocationEventListener,
+		IUserEventListener,
+		Observer<Location> {
 
 	private static final String LOG_NAME = MapFragment.class.getName();
 
@@ -190,6 +210,8 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 	@Inject
 	protected SharedPreferences preferences;
 
+	private MapViewModel viewModel;
+
 	private MapView mapView;
 	private GoogleMap map;
 	private View searchLayout;
@@ -212,6 +234,9 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 	private StaticGeometryCollection staticGeometryCollection;
 	private List<Marker> searchMarkers = new ArrayList<>();
 
+	private FeedItemCollection feedItems;
+	private Map<String, LiveData<FeedWithItems>> feeds = Collections.emptyMap();
+
 	private Map<String, CacheOverlay> cacheOverlays = new HashMap<>();
 
 	// GeoPackage cache of open GeoPackage connections
@@ -233,6 +258,13 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 	private TextView mgrs100dKmTextView;
 	private TextView mgrsEastingTextView;
 	private TextView mgrsNorthingTextView;
+
+	@Override
+	public void onCreate(@Nullable Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+
+		viewModel = new ViewModelProvider(this).get(MapViewModel.class);
+	}
 
 	@Override
 	public View onCreateView(@NonNull LayoutInflater  inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -291,6 +323,13 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 	}
 
 	@Override
+	public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+		super.onViewCreated(view, savedInstanceState);
+
+		viewModel.getItems().observe(getViewLifecycleOwner(), this::onFeedItems);
+	}
+
+	@Override
 	public void onChanged(@Nullable Location location) {
 		if (locationChangedListener != null) {
 			locationChangedListener.onLocationChanged(location);
@@ -321,6 +360,10 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 		if (locations != null) {
 			locations.clear();
 			locations = null;
+		}
+
+		if (feedItems != null) {
+			feedItems.clear();
 		}
 
 		if (historicLocations != null) {
@@ -384,6 +427,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 			observations = new ObservationMarkerCollection(getActivity(), map);
 			historicLocations = new MyHistoricalLocationMarkerCollection(context, map);
 			locations = new LocationMarkerCollection(getActivity(), map);
+			feedItems = new FeedItemCollection(getActivity(), map);
 		}
 
 		int dayNightMode = getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK;
@@ -474,6 +518,8 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 		}
 
 		((AppCompatActivity) getActivity()).getSupportActionBar().setSubtitle(getFilterTitle());
+
+		viewModel.setEvent(currentEvent.getRemoteId());
 	}
 
 	private void resetMapBearing() {
@@ -596,6 +642,14 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 			locations.clear();
 		}
 
+		if (feedItems != null) {
+			feedItems.clear();
+		}
+
+		for (LiveData<FeedWithItems> liveData : feeds.values()) {
+			liveData.removeObservers(getViewLifecycleOwner());
+		}
+
 		CacheProvider.getInstance(getActivity().getApplicationContext()).unregisterCacheOverlayListener(this);
 
 		if (map != null) {
@@ -606,6 +660,23 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 			if (mgrsTileOverlay != null) {
 				mgrsTileOverlay.remove();
 			}
+		}
+	}
+
+	private void onFeedItems(Map<String, LiveData<FeedWithItems>> feeds) {
+		for (LiveData<FeedWithItems> liveData : this.feeds.values()) {
+			liveData.removeObservers(getViewLifecycleOwner());
+		}
+
+		this.feeds = feeds;
+		for (LiveData<FeedWithItems> liveData : feeds.values()) {
+			liveData.observe(getViewLifecycleOwner(), this::onFeedItems);
+		}
+	}
+
+	private void onFeedItems(FeedWithItems items) {
+		if (items != null) {
+			feedItems.setItems(items);
 		}
 	}
 
@@ -803,6 +874,18 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 			startActivity(profileView);
 			return;
 		}
+
+		FeedItem feedItem = feedItems.itemForMarker(marker);
+		if (feedItem != null) {
+			Intent intent = FeedItemActivity.Companion.intent(context, feedItem);
+			startActivity(intent);
+			return;
+		}
+	}
+
+	@Override
+	public void onInfoWindowClose(Marker marker) {
+		feedItems.onInfoWindowClose(marker);
 	}
 
 	@Override
@@ -830,6 +913,10 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 		}
 
 		if (locations.onMarkerClick(marker)) {
+			return true;
+		}
+
+		if (feedItems.onMarkerClick(marker)) {
 			return true;
 		}
 
