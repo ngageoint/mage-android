@@ -208,8 +208,6 @@ dependencies {
     implementation("androidx.paging:paging-runtime-ktx:$paging_version")
     implementation("androidx.paging:paging-compose:1.0.0-alpha13")
 
-//        api project(':sdk') // uncomment me to build locally, and see top-level build.gradle
-    api 'mil.nga.giat.mage:mage-android-sdk:6.4.1' // comment me to build locally
     api 'com.google.maps.android:android-maps-utils:0.6.2'
     api 'mil.nga.geopackage.map:geopackage-android-map:3.4.0'
     api 'org.ocpsoft.prettytime:prettytime:3.2.5.Final'
@@ -242,12 +240,6 @@ dependencies {
     androidTestImplementation 'androidx.test:rules:' + runnerVersion
     androidTestImplementation 'androidx.test.espresso:espresso-core:' +espressoVersion
     androidTestImplementation 'androidx.test.espresso:espresso-contrib:' + espressoVersion
-}
-
-task sdkVersion {
-    group = 'android'
-    description = 'Print the MAGE SDK version'
-    println configurations.api.allDependencies.find { it.name == 'mage-android-sdk'}.version
 }
 
 task androidArtifactVersion {
