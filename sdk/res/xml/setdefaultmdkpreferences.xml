@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- This data is not fronted by a screen.  It is here to populate shared preferences by default -->
+<androidx.preference.PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" >
+
+    <!-- How often to push observations? -->
+    <mil.nga.giat.mage.sdk.preferences.IntegerEditTextPreference
+        android:defaultValue="@integer/observationPushFrequencyDefaultValue"
+        android:key="@string/observationPushFrequencyKey" />
+    
+    <!-- Option for some deployments.  Delete all data when logging out. -->
+    <CheckBoxPreference
+        android:defaultValue="@bool/deleteAllDataOnLogoutDefaultValue"
+        android:key="@string/deleteAllDataOnLogoutKey" />
+
+    <!-- Option for some deployments.  no Sever CA? -->
+    <CheckBoxPreference
+        android:defaultValue="@bool/noServerCADefaultValue"
+        android:key="@string/noServerCAKey" />
+
+</androidx.preference.PreferenceScreen>
