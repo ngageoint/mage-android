@@ -2,13 +2,15 @@ package mil.nga.giat.mage.form
 
 import android.content.Context
 import android.util.Log
-import androidx.lifecycle.*
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.google.android.gms.maps.model.LatLng
 import com.google.gson.JsonObject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import mil.nga.giat.mage.form.Form.Companion.fromJson
 import mil.nga.giat.mage.form.defaults.FormPreferences
@@ -47,7 +49,7 @@ open class FormViewModel @Inject constructor(
 
       val observation = _observation.value
       if (updated.id == observation?.id && observation?.lastModified != updated.lastModified) {
-        GlobalScope.launch(Dispatchers.Main) {
+        viewModelScope.launch(Dispatchers.Main) {
           createObservationState(updated)
         }
       }

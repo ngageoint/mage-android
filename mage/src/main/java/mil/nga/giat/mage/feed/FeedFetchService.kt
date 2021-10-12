@@ -1,18 +1,11 @@
 package mil.nga.giat.mage.feed
 
-import android.content.Context
 import android.content.Intent
-import android.os.Handler
 import android.os.IBinder
 import android.util.Log
-import androidx.lifecycle.LifecycleService
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.Observer
-import androidx.lifecycle.Transformations
+import androidx.lifecycle.*
 import dagger.hilt.android.AndroidEntryPoint
-import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import mil.nga.giat.mage.data.feed.Feed
 import mil.nga.giat.mage.data.feed.FeedDao
 import mil.nga.giat.mage.data.feed.FeedLocalDao
@@ -31,9 +24,6 @@ class FeedFetchService : LifecycleService() {
         private const val MIN_FETCH_DELAY = 5L
     }
 
-    @Inject @field:ApplicationContext
-    lateinit var context: Context
-
     @Inject
     lateinit var feedDao: FeedDao
 
@@ -44,9 +34,8 @@ class FeedFetchService : LifecycleService() {
     lateinit var feedRepository: FeedRepository
 
     private val eventId = MutableLiveData<String>()
-    private val feedHandler = Handler()
-    private var feedTask: FeedTask? = null
     private var polling = false
+    private var pollJob: Job? = null
 
     override fun onCreate() {
         super.onCreate()
@@ -96,18 +85,12 @@ class FeedFetchService : LifecycleService() {
 
     private fun startPoll() {
         polling = true
-        scheduleFetch(0)
+        pollJob = poll()
     }
 
     private fun stopPoll() {
-        feedTask?.let { feedHandler.removeCallbacks(it) }
+        pollJob?.cancel()
         polling = false
-    }
-
-    private fun scheduleFetch(delay: Long) {
-        feedTask = FeedTask().apply {
-            feedHandler.postDelayed(this, delay)
-        }
     }
 
     private fun getFetchDelay(): Long {
@@ -141,19 +124,20 @@ class FeedFetchService : LifecycleService() {
         return null
     }
 
-    inner class FeedTask: Runnable {
-        override fun run() {
-            GlobalScope.launch {
-                try {
-                    val feed = getNextFeed()
-                    if (feed != null) {
-                        Log.d(LOG_NAME, "Sync feed items for feed ${feed.title}")
-                        feedRepository.syncFeed(feed)
-                    }
-                } finally {
-                    scheduleFetch(getFetchDelay() * 1000)
-                }
+    private fun poll(): Job {
+        return lifecycleScope.launch(Dispatchers.IO) {
+            while (isActive) {
+                fetchFeed()
+                delay(timeMillis = getFetchDelay() * 1000)
             }
+        }
+    }
+
+    private suspend fun fetchFeed() {
+        val feed = getNextFeed()
+        if (feed != null) {
+            Log.d(LOG_NAME, "Sync feed items for feed ${feed.title}")
+            feedRepository.syncFeed(feed)
         }
     }
 }

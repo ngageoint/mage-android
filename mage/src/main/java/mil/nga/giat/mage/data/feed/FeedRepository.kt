@@ -3,7 +3,6 @@ package mil.nga.giat.mage.data.feed
 import android.content.Context
 import androidx.annotation.WorkerThread
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.android.synthetic.main.activity_feed_item.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import mil.nga.giat.mage.network.Resource

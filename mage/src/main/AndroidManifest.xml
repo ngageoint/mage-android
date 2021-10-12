@@ -216,9 +216,11 @@
             android:launchMode="singleTop"
             android:parentActivityName=".observation.view.ObservationViewActivity" />
         <activity
-            android:name=".feed.FeedActivity"/>
+            android:name=".feed.FeedActivity"
+            android:theme="@style/AppTheme.NoActionBar"/>
         <activity
-            android:name=".feed.item.FeedItemActivity"/>
+            android:name=".feed.item.FeedItemActivity"
+            android:theme="@style/AppTheme.NoActionBar"/>
 
         <receiver android:name=".sdk.connectivity.NetworkChangeReceiver">
             <intent-filter>

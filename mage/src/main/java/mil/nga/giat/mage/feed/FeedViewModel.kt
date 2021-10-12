@@ -1,54 +1,69 @@
 package mil.nga.giat.mage.feed
 
+import android.app.Application
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.content.Context
 import androidx.lifecycle.*
-import androidx.paging.LivePagedListBuilder
-import androidx.paging.PagedList
+import androidx.paging.*
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import mil.nga.giat.mage.R
 import mil.nga.giat.mage.data.feed.*
-import mil.nga.giat.mage.network.Resource
+import mil.nga.giat.mage.feed.item.SnackbarState
 import javax.inject.Inject
 
 @HiltViewModel
 class FeedViewModel @Inject constructor(
-    @ApplicationContext val context: Context,
+    private val application: Application,
     private val feedDao: FeedDao,
     private val feedItemDao: FeedItemDao,
     private val feedRepository: FeedRepository
 ): ViewModel() {
-
-    companion object {
-        private const val FEED_ITEM_PAGE_SIZE = 30
-    }
-
-    data class FeedWithPagedItems(val feed: Feed, val pagedItems: PagedList<FeedItem>)
+    private val _snackbar = MutableStateFlow(SnackbarState())
+    val snackbar: StateFlow<SnackbarState>
+        get() = _snackbar.asStateFlow()
 
     private val _feedId = MutableLiveData<String>()
     val feed: LiveData<Feed> = Transformations.switchMap(_feedId) { feedId ->
         feedDao.feed(feedId)
     }
 
-    val feedItems: LiveData<FeedWithPagedItems> = Transformations.switchMap(feed) { feed ->
-        Transformations.map(LivePagedListBuilder(feedItemDao.pagedItems(feed.id), FEED_ITEM_PAGE_SIZE).build()) { pagedList ->
-            FeedWithPagedItems(feed, pagedList)
-        }
+    val feedItems: LiveData<Flow<PagingData<FeedItemState>>> = Transformations.map(feed) { feed ->
+        Pager(PagingConfig(pageSize = 20)) {
+            feedItemDao.pagingSource(feed.id)
+        }.flow.map {
+            it.map { feedItem ->
+                FeedItemState.fromItem(ItemWithFeed(feed, feedItem), application)
+            }
+        }.cachedIn(viewModelScope)
     }
 
     fun setFeedId(feedId: String) {
         _feedId.postValue(feedId)
     }
 
-    private val _refresh = MutableLiveData<Resource<*>>()
-    val refresh: LiveData<Resource<*>> = _refresh
+    private val _isRefreshing = MutableStateFlow(false)
+    val isRefreshing: StateFlow<Boolean>
+        get() = _isRefreshing.asStateFlow()
     fun refresh() {
         val feed = this.feed.value ?: return
-        GlobalScope.launch {
-            _refresh.postValue(Resource.loading(null))
-            val resource = feedRepository.syncFeed(feed)
-            _refresh.postValue(resource)
+        viewModelScope.launch(Dispatchers.IO) {
+            _isRefreshing.emit(true)
+            feedRepository.syncFeed(feed)
+            _isRefreshing.emit(false)
+        }
+    }
+
+    fun copyToClipBoard(text: String) {
+        val clipboard = application.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager?
+        val clip = ClipData.newPlainText("Feed Item Location", text)
+
+        if (clipboard != null && clip != null) {
+            clipboard.setPrimaryClip(clip)
+            _snackbar.value = SnackbarState(application.getString(R.string.location_text_copy_message))
         }
     }
 }

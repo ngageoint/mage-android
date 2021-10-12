@@ -71,12 +71,20 @@ class FeedItemCollection(val context: Context, val map: GoogleMap) {
 
             val shape = GoogleMapShape(GeometryType.POINT, GoogleMapShapeType.MARKER, marker)
             shapes[feedItem.id] = shape
-            val iconUrl = "${Server(context).baseUrl}/api/icons/${feed.mapStyle?.iconStyle?.id}/content"
-            Glide.with(context)
-               .asBitmap()
-               .load(iconUrl)
-               .error(R.drawable.default_marker)
-               .into(MarkerTarget(context, marker, 24, 24))
+
+            if (feed.mapStyle?.iconStyle?.id != null) {
+                Glide.with(context)
+                    .asBitmap()
+                    .load("${Server(context).baseUrl}/api/icons/${feed.mapStyle?.iconStyle?.id}/content")
+                    .error(R.drawable.default_marker)
+                    .into(MarkerTarget(context, marker, 24, 24))
+            } else {
+                Glide.with(context)
+                    .asBitmap()
+                    .load(R.drawable.default_marker)
+                    .into(MarkerTarget(context, marker, 24, 24))
+            }
+
         } else {
             // TODO set style
             val shape = GoogleMapShapeConverter.addShapeToMap(map, GoogleMapShapeConverter().toShape(geometry))

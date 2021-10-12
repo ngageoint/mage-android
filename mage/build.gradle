@@ -34,7 +34,7 @@ def googleMapsApiReleaseKey = hasProperty('RELEASE_MAPS_API_KEY') ? RELEASE_MAPS
 def googleMapsApiDebugKey = hasProperty('DEBUG_MAPS_API_KEY') ? DEBUG_MAPS_API_KEY : ''
 
 android {
-    compileSdkVersion 30
+    compileSdkVersion 31
     flavorDimensions "default"
 
     dataBinding {
@@ -155,8 +155,8 @@ dependencies {
         google_play_services_version = '17.0.1'
         lifecycle_version= '2.2.0'
         work_version = '1.0.0'
-        room_version = '2.2.5'
-        paging_version = '2.1.2'
+        room_version = '2.3.0'
+        paging_version = '3.0.1'
     }
 
     // this block allows the mage-android-wear-bridge to be pulled in dynamically when that flavor is built
@@ -177,7 +177,6 @@ dependencies {
     api 'com.google.android.material:material:1.0.0'
     api 'androidx.cardview:cardview:1.0.0'
     api 'androidx.preference:preference-ktx:1.1.1'
-    api "androidx.paging:paging-runtime-ktx:$paging_version"
     api 'androidx.preference:preference-ktx:1.1.1'
     implementation "androidx.lifecycle:lifecycle-extensions:$lifecycle_version"
     implementation "com.google.android.gms:play-services-maps:$google_play_services_version"
@@ -194,16 +193,20 @@ dependencies {
         exclude group: 'com.google.guava', module: 'listenablefuture'
     }
 
-    implementation 'androidx.compose.ui:ui:1.0.0'
-    implementation 'androidx.compose.ui:ui-tooling:1.0.0'
-    implementation 'androidx.compose.foundation:foundation:1.0.0'
-    implementation 'androidx.compose.material:material:1.0.0'
-    implementation 'androidx.compose.material:material-icons-core:1.0.0'
-    implementation 'androidx.compose.material:material-icons-extended:1.0.0'
-    implementation 'androidx.activity:activity-compose:1.3.0'
+    implementation 'androidx.compose.ui:ui:1.0.3'
+    implementation 'androidx.compose.ui:ui-tooling:1.0.3'
+    implementation 'androidx.compose.foundation:foundation:1.0.3'
+    implementation 'androidx.compose.runtime:runtime-livedata:1.0.3'
+    implementation 'androidx.compose.runtime:runtime-rxjava2:1.0.3'
+    implementation 'androidx.compose.material:material:1.0.3'
+    implementation 'androidx.compose.material:material-icons-core:1.0.3'
+    implementation 'androidx.compose.material:material-icons-extended:1.0.3'
+    implementation 'androidx.activity:activity-compose:1.3.1'
     implementation 'androidx.lifecycle:lifecycle-viewmodel-compose:1.0.0-alpha07'
-    implementation 'androidx.compose.runtime:runtime-livedata:1.0.0'
-    implementation 'androidx.compose.runtime:runtime-rxjava2:1.0.0'
+    implementation "com.google.accompanist:accompanist-swiperefresh:0.19.0"
+
+    implementation("androidx.paging:paging-runtime-ktx:$paging_version")
+    implementation("androidx.paging:paging-compose:1.0.0-alpha13")
 
 //        api project(':sdk') // uncomment me to build locally, and see top-level build.gradle
     api 'mil.nga.giat.mage:mage-android-sdk:6.4.1' // comment me to build locally

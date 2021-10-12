@@ -7,6 +7,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import mil.nga.giat.mage.data.event.EventRepository
 import mil.nga.giat.mage.network.Resource
@@ -22,9 +23,9 @@ class EventViewModel @Inject constructor(
     private val _syncStatus = MutableLiveData<Resource<out Event>>()
     val syncStatus: LiveData<Resource<out Event>> = _syncStatus
     fun syncEvent(event: Event): LiveData<Resource<out Event>> {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             val result = eventRepository.syncEvent(event)
-            _syncStatus.value = result
+            _syncStatus.postValue(result)
         }
 
         return syncStatus

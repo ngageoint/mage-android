@@ -5,12 +5,11 @@ import android.content.SharedPreferences
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import mil.nga.giat.mage.R
 import mil.nga.giat.mage.data.MageDatabase
 import mil.nga.giat.mage.network.Resource
@@ -30,12 +29,10 @@ class ServerUrlViewModel @Inject constructor(
     fun setUrl(url: String) {
         serverApi.validateServerApi(url) { valid, error ->
             if (valid) {
-                GlobalScope.launch {
-                    withContext(Dispatchers.IO) {
-                        database.destroy(context)
-                        preferences.edit().putString(context.getString(R.string.serverURLKey), url).apply()
-                        _api.postValue(Resource.success(valid))
-                    }
+                viewModelScope.launch(Dispatchers.IO) {
+                    database.destroy(context)
+                    preferences.edit().putString(context.getString(R.string.serverURLKey), url).apply()
+                    _api.postValue(Resource.success(valid))
                 }
             } else {
                 if (error == null) {

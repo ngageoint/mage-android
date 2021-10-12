@@ -1,8 +1,7 @@
 package mil.nga.giat.mage.data.feed
 
 import androidx.lifecycle.LiveData
-import androidx.paging.DataSource
-import androidx.paging.PagedList
+import androidx.paging.PagingSource
 import androidx.room.*
 
 @Dao
@@ -32,7 +31,7 @@ interface FeedItemDao {
     fun feedWithItems(feedId: String): LiveData<FeedWithItems>
 
     @Query("SELECT * FROM feed_item WHERE feed_id = :feedId ORDER BY timestamp DESC, id ASC")
-    fun pagedItems(feedId: String): DataSource.Factory<Int, FeedItem>
+    fun pagingSource(feedId: String): PagingSource<Int, FeedItem>
 
     @Query("SELECT * FROM feed_item JOIN feed ON feed.id = feed_item.feed_id AND feed.id = :feedId WHERE feed_item.id = :feedItemId")
     fun item(feedId: String, feedItemId: String): LiveData<ItemWithFeed>
