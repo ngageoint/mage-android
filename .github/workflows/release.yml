@@ -12,30 +12,10 @@ jobs:
     - uses: actions/checkout@v2
       with:
         fetch-depth: 0
-        path: app
-    - name: Setup JDK 1.8
+    - name: Setup JDK 11
       uses: actions/setup-java@v1
       with:
-        java-version: 1.8
-    - name: Clone MAGE SDK
-      uses: actions/checkout@master
-      with:
-        repository: ngageoint/mage-android-sdk
-        path: 'sdk'
-        fetch-depth: 0
-    - name: Get SDK Version
-      id: sdk_version
-      run: |
-        echo ::set-output name=value::$(./gradlew -q sdkVersion)
-      working-directory: app
-    - name: Checkout SDK Release
-      run: |
-        git checkout "tags/${{steps.sdk_version.outputs.value}}"
-      working-directory: sdk
-    - name: Build SDK
-      run: |
-        ./gradlew clean assemble publishToMavenLocal
-      working-directory: sdk
+        java-version: 11
     - name: Setup Keystore
       run: |
         echo "${{ secrets.KEYSTORE }}" > release.b64
@@ -46,7 +26,6 @@ jobs:
         git checkout master
         echo ::set-output name=value::$(git rev-list --count HEAD)
         echo "VERSION_CODE $(git rev-list --count HEAD)"
-      working-directory: app
     - name: Build Application
       run: |
         ./gradlew clean assembleRelease \
@@ -56,7 +35,6 @@ jobs:
           -PKEY_PASSWORD=${{ secrets.KEY_PASSWORD }} \
           -PRELEASE_MAPS_API_KEY=${{ secrets.MAPS_API_KEY }} \
           -PVERSION_CODE=${{ steps.version_code.outputs.value }}
-      working-directory: app
     - name: Get Upload URL
       id: url
       run:   |
