@@ -2,6 +2,7 @@ package mil.nga.giat.mage.sdk
 
 import android.content.Context
 import androidx.preference.PreferenceManager
+import mil.nga.giat.mage.R
 
 class Compatibility {
 

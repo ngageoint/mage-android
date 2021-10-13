@@ -17,6 +17,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.Map;
 
+import mil.nga.giat.mage.R;
 import mil.nga.geopackage.GeoPackageManager;
 import mil.nga.geopackage.factory.GeoPackageFactory;
 import mil.nga.giat.mage.sdk.datastore.layer.Layer;
@@ -232,7 +233,7 @@ public class EventServerFetch extends AsyncTask<Void, Void, Exception> {
             return e;
         }
 
-        String baseUrl = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(mil.nga.giat.mage.sdk.R.string.serverURLKey), context.getString(mil.nga.giat.mage.sdk.R.string.serverURLDefaultValue));
+        String baseUrl = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.serverURLKey), context.getString(R.string.serverURLDefaultValue));
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl(baseUrl)
                 .addConverterFactory(GsonConverterFactory.create(LayerDeserializer.getGsonBuilder(event)))

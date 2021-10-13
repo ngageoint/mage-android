@@ -17,7 +17,7 @@ import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
-import mil.nga.giat.mage.sdk.R;
+import mil.nga.giat.mage.R;
 
 /**
  * Loads the default configuration from the local property files, and also loads

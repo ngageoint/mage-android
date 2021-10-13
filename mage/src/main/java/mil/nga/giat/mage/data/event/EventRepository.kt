@@ -9,13 +9,13 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import mil.nga.geopackage.factory.GeoPackageFactory
+import mil.nga.giat.mage.R
 import mil.nga.giat.mage.data.feed.FeedDao
 import mil.nga.giat.mage.glide.GlideApp
 import mil.nga.giat.mage.glide.model.Avatar.Companion.forUser
 import mil.nga.giat.mage.map.preference.MapLayerPreferences
 import mil.nga.giat.mage.network.Resource
 import mil.nga.giat.mage.network.api.FeedService
-import mil.nga.giat.mage.sdk.R
 import mil.nga.giat.mage.sdk.datastore.layer.Layer
 import mil.nga.giat.mage.sdk.datastore.layer.LayerHelper
 import mil.nga.giat.mage.sdk.datastore.user.*

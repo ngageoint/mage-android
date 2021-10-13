@@ -8,9 +8,9 @@ import androidx.exifinterface.media.ExifInterface
 import androidx.preference.PreferenceManager
 import androidx.work.Worker
 import androidx.work.WorkerParameters
+import mil.nga.giat.mage.R
 import mil.nga.giat.mage._server5.observation.edit.ObservationResource_server5
 import mil.nga.giat.mage.sdk.Compatibility
-import mil.nga.giat.mage.sdk.R
 import mil.nga.giat.mage.sdk.datastore.observation.Attachment
 import mil.nga.giat.mage.sdk.datastore.observation.AttachmentHelper
 import mil.nga.giat.mage.sdk.http.HttpClientManager
@@ -141,7 +141,6 @@ class AttachmentSyncWorker(var context: Context, params: WorkerParameters) :
             val service = retrofit.create(ObservationResource.ObservationService::class.java)
             service.createAttachment(eventId, observationId, attachment.remoteId, parts).execute()
          }
-
 
          if (response.isSuccessful) {
             val returnedAttachment = response.body()

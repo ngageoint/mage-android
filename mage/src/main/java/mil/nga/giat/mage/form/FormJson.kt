@@ -3,7 +3,6 @@ package mil.nga.giat.mage.form
 import android.util.Log
 import androidx.databinding.BaseObservable
 import androidx.databinding.Bindable
-import androidx.databinding.library.baseAdapters.BR
 import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.google.gson.*
@@ -69,7 +68,7 @@ open class FormField<T>(
   open var value: T? = null
     set(value) {
       field = value
-      notifyPropertyChanged(BR.value)
+//      notifyPropertyChanged(BR.value)
     }
 
   override fun equals(other: Any?): Boolean {

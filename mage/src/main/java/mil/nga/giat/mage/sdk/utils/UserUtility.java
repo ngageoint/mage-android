@@ -10,7 +10,7 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.util.Date;
 
-import mil.nga.giat.mage.sdk.R;
+import mil.nga.giat.mage.R;
 
 /**
  * Utility that currently deals mostly with the user's token information.

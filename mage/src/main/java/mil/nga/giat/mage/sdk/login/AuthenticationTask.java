@@ -1,5 +1,10 @@
 package mil.nga.giat.mage.sdk.login;
 
+import static mil.nga.giat.mage.sdk.login.AuthenticationStatus.Status.ACCOUNT_CREATED;
+import static mil.nga.giat.mage.sdk.login.AuthenticationStatus.Status.DISCONNECTED_AUTHENTICATION;
+import static mil.nga.giat.mage.sdk.login.AuthenticationStatus.Status.FAILED_AUTHENTICATION;
+import static mil.nga.giat.mage.sdk.login.AuthenticationStatus.Status.SUCCESSFUL_AUTHENTICATION;
+
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
@@ -11,17 +16,12 @@ import com.google.gson.JsonObject;
 import java.text.DateFormat;
 import java.util.Date;
 
-import mil.nga.giat.mage.sdk.R;
+import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.sdk.connectivity.ConnectivityUtility;
 import mil.nga.giat.mage.sdk.http.resource.UserResource;
 import mil.nga.giat.mage.sdk.utils.ISO8601DateFormatFactory;
 import mil.nga.giat.mage.sdk.utils.PasswordUtility;
 import retrofit2.Response;
-
-import static mil.nga.giat.mage.sdk.login.AuthenticationStatus.Status.ACCOUNT_CREATED;
-import static mil.nga.giat.mage.sdk.login.AuthenticationStatus.Status.DISCONNECTED_AUTHENTICATION;
-import static mil.nga.giat.mage.sdk.login.AuthenticationStatus.Status.FAILED_AUTHENTICATION;
-import static mil.nga.giat.mage.sdk.login.AuthenticationStatus.Status.SUCCESSFUL_AUTHENTICATION;
 
 /**
  * Performs username/password authentication.

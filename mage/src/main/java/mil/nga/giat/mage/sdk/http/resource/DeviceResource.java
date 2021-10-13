@@ -8,7 +8,7 @@ import android.util.Log;
 
 import com.google.gson.JsonObject;
 
-import mil.nga.giat.mage.sdk.R;
+import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.sdk.http.HttpClientManager;
 import okhttp3.OkHttpClient;
 import retrofit2.Call;

@@ -143,7 +143,9 @@ class LoginViewModel @Inject constructor(
             DaoStore.getInstance(context).resetDatabase()
 
             val preferenceHelper = PreferenceHelper.getInstance(context)
-            preferenceHelper.initialize(true, mil.nga.giat.mage.sdk.R.xml::class.java, R.xml::class.java)
+            // TODO MAKE SURE SDK xml is initialized
+//            preferenceHelper.initialize(true, mil.nga.giat.mage.sdk.R.xml::class.java, R.xml::class.java)
+            preferenceHelper.initialize(true, R.xml::class.java)
 
             val dayNightTheme = preferences.getInt(context.resources.getString(R.string.dayNightThemeKey), context.resources.getInteger(R.integer.dayNightThemeDefaultValue))
             AppCompatDelegate.setDefaultNightMode(dayNightTheme)
