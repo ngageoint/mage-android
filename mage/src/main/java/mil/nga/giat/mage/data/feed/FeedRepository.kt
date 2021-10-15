@@ -23,7 +23,7 @@ class FeedRepository @Inject constructor(
         val resource = try {
             val event = EventHelper.getInstance(context).currentEvent
 
-            val response = feedService.getFeedItems(event.remoteId, feed.id).execute()
+            val response = feedService.getFeedItems(event.remoteId, feed.id)
             if (response.isSuccessful) {
                 val content = response.body()!!
                 saveFeed(feed, content)

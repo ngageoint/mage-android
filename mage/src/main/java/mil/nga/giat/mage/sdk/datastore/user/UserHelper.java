@@ -42,6 +42,7 @@ public class UserHelper extends DaoHelper<User> implements IEventDispatcher<IEve
 	private final Dao<User, Long> userDao;
 	private final Dao<UserLocal, Long> userLocalDao;
 	private final Dao<UserTeam, Long> userTeamDao;
+	private final Dao<TeamEvent, Long> teamEventDao;
 	private final Dao<Location, Long> locationDao;
 
 	private static Collection<IUserEventListener> userListeners = new CopyOnWriteArrayList<>();
@@ -79,6 +80,7 @@ public class UserHelper extends DaoHelper<User> implements IEventDispatcher<IEve
 			userDao = daoStore.getUserDao();
 			userLocalDao = daoStore.getUserLocalDao();
             userTeamDao = daoStore.getUserTeamDao();
+			teamEventDao = daoStore.getTeamEventDao();
 			locationDao = daoStore.getLocationDao();
 		} catch (SQLException sqle) {
 			Log.e(LOG_NAME, "Unable to communicate with User database.", sqle);
@@ -430,6 +432,33 @@ public class UserHelper extends DaoHelper<User> implements IEventDispatcher<IEve
         }
         return createdUserTeam;
     }
+
+	public Collection<User> getUsersInEvent(Event event) {
+		Collection<User> users = new ArrayList<>();
+		try {
+			QueryBuilder<TeamEvent, Long> teamEventQuery = teamEventDao.queryBuilder();
+			teamEventQuery.selectColumns("team_id");
+			Where<TeamEvent, Long> teamEventWhere = teamEventQuery.where();
+			teamEventWhere.eq("event_id", event.getId());
+
+			QueryBuilder<UserTeam, Long> userTeamQuery = userTeamDao.queryBuilder();
+			userTeamQuery.selectColumns("user_id");
+			Where<UserTeam, Long> userTeamWhere = userTeamQuery.where();
+			userTeamWhere.in("team_id", teamEventQuery);
+
+			QueryBuilder<User, Long> teamQuery = userDao.queryBuilder();
+			teamQuery.where().in("_id", userTeamQuery);
+
+			users = teamQuery.query();
+			if (users == null) {
+				users = new ArrayList<>();
+			}
+		} catch (SQLException sqle) {
+			Log.e(LOG_NAME, "Error getting users for event: " + event, sqle);
+		}
+
+		return users;
+	}
 
     public Collection<User> getUsersByTeam(Team team) {
         Collection<User> users = new ArrayList<>();
