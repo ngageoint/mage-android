@@ -48,7 +48,7 @@ public class LayerResource {
 
     private static final String LOG_NAME = LayerResource.class.getName();
 
-    private Context context;
+    private final Context context;
 
     public LayerResource(Context context) {
         this.context = context;

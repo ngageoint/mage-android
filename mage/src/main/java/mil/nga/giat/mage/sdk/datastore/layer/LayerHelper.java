@@ -23,9 +23,7 @@ import mil.nga.giat.mage.sdk.exceptions.LayerException;
  * A utility class for accessing {@link Layer} data from the physical data
  * model. The details of ORM DAOs and Lazy Loading should not be exposed past
  * this class.
- * 
- * @author wiedemanns
- * 
+ *
  */
 public class LayerHelper extends DaoHelper<Layer> implements IEventDispatcher<ILayerEventListener> {
 
@@ -33,11 +31,9 @@ public class LayerHelper extends DaoHelper<Layer> implements IEventDispatcher<IL
 
     private final Dao<Layer, Long> layerDao;
 
-    private Collection<ILayerEventListener> listeners = new CopyOnWriteArrayList<ILayerEventListener>();
-    
-    private Context context;
+    private final Collection<ILayerEventListener> listeners = new CopyOnWriteArrayList();
 
-    /**
+	/**
      * Singleton.
      */
     private static LayerHelper mLayerHelper;
@@ -64,9 +60,8 @@ public class LayerHelper extends DaoHelper<Layer> implements IEventDispatcher<IL
      */
     private LayerHelper(Context context) {
         super(context);
-        this.context = context;
 
-        try {
+		try {
             layerDao = daoStore.getLayerDao();
         } catch (SQLException sqle) {
             Log.e(LOG_NAME, "Unable to communicate with Layers database.", sqle);
@@ -209,17 +204,6 @@ public class LayerHelper extends DaoHelper<Layer> implements IEventDispatcher<IL
 		} catch (Exception e) {
 			Log.e(LOG_NAME, "Unable to delete layer: " + pPrimaryKey, e);
 			throw new LayerException("Unable to delete layer: " + pPrimaryKey, e);
-		}
-	}
-
-    public void deleteAll() throws LayerException {
-		try {
-			Collection<Layer> layers = layerDao.queryForAll();
-			for (Layer layer : layers) {
-				delete(layer.getId());
-			}
-		} catch (SQLException e) {
-			Log.e(LOG_NAME, "Error deleting layers");
 		}
 	}
 

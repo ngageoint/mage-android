@@ -9,7 +9,7 @@ public interface IUserDispatcher {
 	 * @return
 	 * @throws Exception
 	 */
-	public boolean addListener(final IUserEventListener listener) throws Exception;
+    boolean addListener(final IUserEventListener listener) throws Exception;
 
 	/**
 	 * Removes the listener
@@ -18,5 +18,5 @@ public interface IUserDispatcher {
 	 * @return
 	 * @throws Exception
 	 */
-	public boolean removeListener(final IUserEventListener listener) throws Exception;
+    boolean removeListener(final IUserEventListener listener) throws Exception;
 }

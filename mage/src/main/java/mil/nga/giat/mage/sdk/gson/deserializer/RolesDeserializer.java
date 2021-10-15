@@ -25,7 +25,7 @@ public class RolesDeserializer implements JsonDeserializer<Collection<Role>> {
 
 	private static final String LOG_NAME = RolesDeserializer.class.getName();
 
-	private Gson roleDeserializer;
+	private final Gson roleDeserializer;
 
 	public RolesDeserializer() {
 		roleDeserializer = RoleDeserializer.getGsonBuilder();

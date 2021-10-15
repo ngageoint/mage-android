@@ -2,9 +2,6 @@ package mil.nga.giat.mage.sdk.exceptions;
 
 /**
  * A generic User exception.
- * 
- * @author wiedemanns
- * 
  */
 public class UserException extends Exception {
 

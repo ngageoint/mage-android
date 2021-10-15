@@ -20,9 +20,9 @@ import mil.nga.giat.mage.sdk.utils.MediaUtility;
 
 public class UpdateProfileTask extends AsyncTask<String, Void, User> {
 	
-	private User user;
-	private Context context;
-	private UserResource userResource;
+	private final User user;
+	private final Context context;
+	private final UserResource userResource;
 	
 	private static final SecureRandom random = new SecureRandom();
 	

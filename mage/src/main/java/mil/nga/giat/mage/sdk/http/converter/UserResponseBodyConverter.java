@@ -19,7 +19,7 @@ import retrofit2.Converter;
  */
 public class UserResponseBodyConverter implements Converter<ResponseBody, User> {
 
-    private Context context;
+    private final Context context;
 
     public UserResponseBodyConverter(Context context) {
         this.context = context;

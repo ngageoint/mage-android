@@ -6,7 +6,6 @@ import android.util.Log;
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.stmt.QueryBuilder;
 
-import java.security.SecureRandom;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -22,11 +21,9 @@ public class AttachmentHelper extends DaoHelper<Attachment> implements IEventDis
 
 	private static final String LOG_NAME = AttachmentHelper.class.getName();
 
-	private static final SecureRandom random = new SecureRandom();
-
 	private final Dao<Attachment, Long> attachmentDao;
 
-	private Collection<IAttachmentEventListener> listeners = new CopyOnWriteArrayList<IAttachmentEventListener>();
+	private final Collection<IAttachmentEventListener> listeners = new CopyOnWriteArrayList();
 
 	/**
 	 * Singleton.
@@ -140,25 +137,6 @@ public class AttachmentHelper extends DaoHelper<Attachment> implements IEventDis
 		for (IAttachmentEventListener listener : listeners) {
 			listener.onAttachmentUpdated(attachment);
 		}
-
-		return attachment;
-	}
-
-	/**
-	 * Removes this attachments local path.
-	 *
-	 * The localPath member cannot be set to null (removed) from the update method.
-	 * This is to protect from overriding a local path value when we pull updates for this
-	 * attachment from the server since localPath does not come from the server and
-	 * will always be null.
-	 *
-	 * @param attachment
-	 * @return the attachment
-	 * @throws SQLException
-	 */
-	public Attachment removeLocalPath(Attachment attachment) throws SQLException {
-		attachment.setLocalPath(null);
-		attachmentDao.update(attachment);
 
 		return attachment;
 	}

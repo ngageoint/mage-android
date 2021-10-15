@@ -67,7 +67,7 @@ public class AuthorizationStatus {
 	}
 
 	public static class Builder {
-		private Status status;
+		private final Status status;
 		private User user;
 		private String token;
 		private Date tokenExpiration;

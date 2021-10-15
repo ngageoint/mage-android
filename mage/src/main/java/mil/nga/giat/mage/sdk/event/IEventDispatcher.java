@@ -17,7 +17,7 @@ public interface IEventDispatcher<T extends IEventListener> {
 	 * @return
 	 * @throws Exception
 	 */
-	public boolean addListener(final T listener) throws Exception;
+    boolean addListener(final T listener) throws Exception;
 
 	/**
 	 * Removes the listener
@@ -26,5 +26,5 @@ public interface IEventDispatcher<T extends IEventListener> {
 	 * @return
 	 * @throws Exception
 	 */
-	public boolean removeListener(final T listener) throws Exception;
+    boolean removeListener(final T listener) throws Exception;
 }

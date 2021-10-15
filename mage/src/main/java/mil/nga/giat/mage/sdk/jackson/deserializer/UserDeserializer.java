@@ -35,8 +35,8 @@ public class UserDeserializer extends Deserializer {
     private static final String LOG_NAME = UserDeserializer.class.getName();
 
 	private RoleHelper roleHelper = null;
-	private Map<String, Role> roles = new HashMap<>();
-	private DateFormat iso8601Format = ISO8601DateFormatFactory.ISO8601();
+	private final Map<String, Role> roles = new HashMap<>();
+	private final DateFormat iso8601Format = ISO8601DateFormatFactory.ISO8601();
 
 	public UserDeserializer(Context context) {
 		this.roleHelper = RoleHelper.getInstance(context);

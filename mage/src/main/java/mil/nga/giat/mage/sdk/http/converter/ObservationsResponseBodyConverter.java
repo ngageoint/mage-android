@@ -19,7 +19,7 @@ import retrofit2.Converter;
  */
 public class ObservationsResponseBodyConverter implements Converter<ResponseBody, Collection<Observation>> {
 
-    private Event event;
+    private final Event event;
 
     public ObservationsResponseBodyConverter(Event event) {
         this.event = event;

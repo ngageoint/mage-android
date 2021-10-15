@@ -22,8 +22,8 @@ import retrofit2.converter.gson.GsonConverterFactory;
  */
 public final class ObservationImportantConverterFactory extends Converter.Factory {
 
-    private Gson gson;
-    private Event event;
+    private final Gson gson;
+    private final Event event;
 
     public static ObservationImportantConverterFactory create(Event event) {
         return new ObservationImportantConverterFactory(ObservationSerializer.getGsonBuilder(), event);

@@ -4,8 +4,6 @@ import android.content.Context;
 import android.util.Log;
 
 import com.j256.ormlite.dao.Dao;
-import com.j256.ormlite.stmt.DeleteBuilder;
-import com.j256.ormlite.stmt.QueryBuilder;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -20,9 +18,7 @@ import mil.nga.giat.mage.sdk.exceptions.RoleException;
  * A utility class for accessing {@link Role} data from the physical data model.
  * The details of ORM DAOs and Lazy Loading should not be exposed past this
  * class.
- * 
- * @author wiedemanns
- * 
+ *
  */
 public class RoleHelper extends DaoHelper<Role> {
 
@@ -108,16 +104,6 @@ public class RoleHelper extends DaoHelper<Role> {
         }
         return role;
     }
-	
-	public void deleteAll() throws RoleException {
-		try {
-			DeleteBuilder<Role, Long> db = roleDao.deleteBuilder();
-			db.delete();
-		} catch (SQLException sqle) {
-			Log.e(LOG_NAME, "There was a problem deleting all roles.", sqle);
-			throw new RoleException("There was a problem deleting all roles.", sqle);
-		}
-	}
 
 	@Override
 	public Role read(Long id) throws RoleException {
@@ -128,19 +114,6 @@ public class RoleHelper extends DaoHelper<Role> {
 			throw new RoleException("Unable to query for existence for id = '" + id + "'", sqle);
 		}
 
-	}
-
-	public Role readAdmin() throws RoleException {
-		Role adminRole = null;
-		try {
-			QueryBuilder<Role, Long> queryBuilder = roleDao.queryBuilder();
-			queryBuilder.where().eq("name", Role.ADMIN_ROLE_NAME);
-			adminRole = roleDao.queryForFirst(queryBuilder.prepare());
-		} catch (SQLException sqle) {
-			Log.e(LOG_NAME, "Unable to query for " + Role.ADMIN_ROLE_NAME + ".", sqle);
-			throw new RoleException("Unable to query for " + Role.ADMIN_ROLE_NAME + ".", sqle);
-		}
-		return adminRole;
 	}
 	
     @Override

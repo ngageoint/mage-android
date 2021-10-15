@@ -17,7 +17,7 @@ import retrofit2.Retrofit;
  */
 public final class UserConverterFactory extends Converter.Factory {
 
-    private Context context;
+    private final Context context;
 
     public static UserConverterFactory create(Context context) {
         return new UserConverterFactory(context);

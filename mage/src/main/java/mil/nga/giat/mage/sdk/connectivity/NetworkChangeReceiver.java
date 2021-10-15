@@ -49,17 +49,17 @@ public class NetworkChangeReceiver extends BroadcastReceiver implements IEventDi
 	
 	private static final String LOG_NAME = NetworkChangeReceiver.class.getName();
 
-	private static Collection<IConnectivityEventListener> listeners = new CopyOnWriteArrayList<IConnectivityEventListener>();
+	private static final Collection<IConnectivityEventListener> listeners = new CopyOnWriteArrayList<IConnectivityEventListener>();
 
-	private static ScheduledExecutorService connectionFutureWorker = Executors.newSingleThreadScheduledExecutor();
+	private static final ScheduledExecutorService connectionFutureWorker = Executors.newSingleThreadScheduledExecutor();
 	private static ScheduledFuture<?> connectionDataFuture = null;
 	private static Boolean oldConnectionAvailabilityState = null;	
 	
-	private static ScheduledExecutorService wifiFutureWorker = Executors.newSingleThreadScheduledExecutor();
+	private static final ScheduledExecutorService wifiFutureWorker = Executors.newSingleThreadScheduledExecutor();
 	private static ScheduledFuture<?> wifiFuture = null;
 	private static Boolean oldWifiAvailabilityState = null;
 
-	private static ScheduledExecutorService mobileFutureWorker = Executors.newSingleThreadScheduledExecutor();
+	private static final ScheduledExecutorService mobileFutureWorker = Executors.newSingleThreadScheduledExecutor();
 	private static ScheduledFuture<?> mobileDataFuture = null;
 	private static Boolean oldMobileDataAvailabilityState = null;
 	

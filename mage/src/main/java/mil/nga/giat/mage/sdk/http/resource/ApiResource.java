@@ -25,7 +25,7 @@ public class ApiResource {
 
     private static final String LOG_NAME = ApiResource.class.getName();
 
-    private Context context;
+    private final Context context;
 
     public ApiResource(Context context) {
         this.context = context;

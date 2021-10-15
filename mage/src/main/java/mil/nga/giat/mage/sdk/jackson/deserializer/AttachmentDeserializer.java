@@ -1,6 +1,5 @@
 package mil.nga.giat.mage.sdk.jackson.deserializer;
 
-import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 
@@ -11,7 +10,7 @@ import mil.nga.giat.mage.sdk.datastore.observation.Attachment;
 
 public class AttachmentDeserializer extends Deserializer {
 
-    public Attachment parseAttachment(InputStream is) throws JsonParseException, IOException {
+    public Attachment parseAttachment(InputStream is) throws IOException {
         JsonParser parser = factory.createParser(is);
         parser.nextToken();
 
@@ -21,7 +20,7 @@ public class AttachmentDeserializer extends Deserializer {
         return attachment;
     }
 
-    Attachment parseAttachment(JsonParser parser) throws JsonParseException, IOException {
+    Attachment parseAttachment(JsonParser parser) throws IOException {
         Attachment attachment = new Attachment();
         attachment.setDirty(false);
 

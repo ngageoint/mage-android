@@ -15,7 +15,7 @@ import mil.nga.giat.mage.sdk.datastore.staticfeature.StaticFeatureProperty;
 
 public class StaticFeatureDeserializer extends Deserializer {
 
-	private GeometryDeserializer geometryDeserializer = new GeometryDeserializer();
+	private final GeometryDeserializer geometryDeserializer = new GeometryDeserializer();
 
 	public List<StaticFeature> parseStaticFeatures(InputStream is, Layer layer) throws IOException {
 		List<StaticFeature> features = new ArrayList<StaticFeature>();

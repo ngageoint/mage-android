@@ -32,9 +32,7 @@ import mil.nga.giat.mage.sdk.exceptions.UserException;
  * A utility class for accessing {@link Observation} data from the physical data
  * model. The details of ORM DAOs and Lazy Loading should not be exposed past
  * this class.
- * 
- * @author travis
- * 
+ *
  */
 public class ObservationHelper extends DaoHelper<Observation> implements IEventDispatcher<IObservationEventListener> {
 
@@ -46,7 +44,7 @@ public class ObservationHelper extends DaoHelper<Observation> implements IEventD
 	private final Dao<ObservationImportant, Long> observationImportantDao;
 	private final Dao<ObservationFavorite, Long> observationFavoriteDao;
 
-	private Collection<IObservationEventListener> listeners = new CopyOnWriteArrayList<>();
+	private final Collection<IObservationEventListener> listeners = new CopyOnWriteArrayList<>();
 	
 	/**
 	 * Singleton.
@@ -196,15 +194,6 @@ public class ObservationHelper extends DaoHelper<Observation> implements IEventD
 
         return observation;
     }
-
-	public ObservationFavorite readFavorite(Long id) throws ObservationException {
-		try {
-			return observationFavoriteDao.queryForId(id);
-		} catch (SQLException sqle) {
-			Log.e(LOG_NAME, "Unable to query for existence for id = '" + id + "'", sqle);
-			throw new ObservationException("Unable to query for existence for id = '" + id + "'", sqle);
-		}
-	}
 
 	/**
 	 * We have to realign all the foreign ids so the update works correctly

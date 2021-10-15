@@ -14,7 +14,6 @@ import mil.nga.giat.mage.sdk.datastore.user.Event;
 import mil.nga.giat.mage.sdk.datastore.user.Team;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.gson.deserializer.EventsDeserializer;
-import mil.nga.giat.mage.sdk.gson.deserializer.TeamsDeserializer;
 import mil.nga.giat.mage.sdk.http.HttpClientManager;
 import retrofit2.Call;
 import retrofit2.Response;
@@ -25,8 +24,6 @@ import retrofit2.http.Path;
 
 /***
  * RESTful communication for events
- *
- * @author newmanw
  */
 
 public class EventResource {
@@ -41,7 +38,7 @@ public class EventResource {
 
     private static final String LOG_NAME = EventResource.class.getName();
 
-    private Context context;
+    private final Context context;
 
     public EventResource(Context context) {
         this.context = context;
@@ -70,30 +67,5 @@ public class EventResource {
         }
 
         return events;
-    }
-
-    public Map<Team, Collection<User>> getTeams(String eventId) throws IOException {
-        Map<Team, Collection<User>> teams = new HashMap<>();
-
-        String baseUrl = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.serverURLKey), context.getString(R.string.serverURLDefaultValue));
-        Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl(baseUrl)
-                .addConverterFactory(GsonConverterFactory.create(TeamsDeserializer.getGsonBuilder(context)))
-                .client(HttpClientManager.getInstance().httpClient())
-                .build();
-
-        EventService service = retrofit.create(EventService.class);
-        Response<Map<Team, Collection<User>>> response = service.getTeams(eventId).execute();
-
-        if (response.isSuccessful()) {
-            teams = response.body();
-        } else {
-            Log.e(LOG_NAME, "Bad request.");
-            if (response.errorBody() != null) {
-                Log.e(LOG_NAME, response.errorBody().string());
-            }
-        }
-
-        return teams;
     }
 }

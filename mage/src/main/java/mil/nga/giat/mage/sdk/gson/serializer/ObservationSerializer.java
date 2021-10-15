@@ -14,7 +14,6 @@ import com.google.gson.JsonSerializer;
 
 import java.lang.reflect.Type;
 import java.text.DateFormat;
-import java.util.ArrayList;
 import java.util.Date;
 
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
@@ -29,7 +28,7 @@ import mil.nga.sf.Geometry;
 public class ObservationSerializer implements JsonSerializer<Observation> {
 	private static final String LOG_NAME = ObservationSerializer.class.getName();
 
-	private DateFormat iso8601Format = ISO8601DateFormatFactory.ISO8601();
+	private final DateFormat iso8601Format = ISO8601DateFormatFactory.ISO8601();
 
 	public ObservationSerializer() {
 		super();

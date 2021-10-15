@@ -4,11 +4,11 @@ import mil.nga.giat.mage.sdk.datastore.observation.Attachment;
 
 public interface IAttachmentEventListener extends IEventListener {
 
-	public void onAttachmentCreated(final Attachment attachment);
+	void onAttachmentCreated(final Attachment attachment);
 
-	public void onAttachmentUpdated(final Attachment attachment);
+	void onAttachmentUpdated(final Attachment attachment);
 
-	public void onAttachmentDeleted(final Attachment attachment);
+	void onAttachmentDeleted(final Attachment attachment);
 
-	public void onAttachmentUploadable(final Attachment attachment);
+	void onAttachmentUploadable(final Attachment attachment);
 }

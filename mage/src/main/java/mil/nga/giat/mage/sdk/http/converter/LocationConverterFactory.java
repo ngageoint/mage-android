@@ -22,9 +22,9 @@ import retrofit2.Retrofit;
  */
 public final class LocationConverterFactory extends Converter.Factory {
 
-    private Gson gson;
-    private Event event;
-    private boolean groupByUser;
+    private final Gson gson;
+    private final Event event;
+    private final boolean groupByUser;
 
     public static LocationConverterFactory create(Event event, boolean groupByUser) {
         return new LocationConverterFactory(LocationSerializer.getGsonBuilder(), event, groupByUser);

@@ -149,9 +149,7 @@ class EventsActivity : AppCompatActivity(), EventsFetchFragment.EventsFetchListe
             val event = resource.data
             val userRecentEventInfo = ArrayList<String>()
             userRecentEventInfo.add(event.remoteId)
-            RecentEventTask(applicationContext) {
-                // No need to check if this failed
-            }.execute(*userRecentEventInfo.toTypedArray())
+            RecentEventTask(applicationContext).execute(*userRecentEventInfo.toTypedArray())
 
             try {
                 val userHelper = UserHelper.getInstance(applicationContext)

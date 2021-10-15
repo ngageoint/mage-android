@@ -35,11 +35,11 @@ public class HttpClientManager implements IEventDispatcher<ISessionEventListener
 
     private static HttpClientManager instance;
 
-    private Application context;
-    private String userAgent;
+    private final Application context;
+    private final String userAgent;
     private OkHttpClient client;
 
-    private Collection<ISessionEventListener> listeners = new CopyOnWriteArrayList<>();
+    private final Collection<ISessionEventListener> listeners = new CopyOnWriteArrayList<>();
 
     public static synchronized HttpClientManager initialize(Application context) {
         if (instance != null) {

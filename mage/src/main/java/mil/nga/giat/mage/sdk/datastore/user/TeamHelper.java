@@ -21,9 +21,6 @@ import mil.nga.giat.mage.sdk.exceptions.TeamException;
  * A utility class for accessing {@link Team} data from the physical data model.
  * The details of ORM DAOs and Lazy Loading should not be exposed past this
  * class.
- *
- * @author wiedemanns
- *
  */
 public class TeamHelper extends DaoHelper<Team> {
 

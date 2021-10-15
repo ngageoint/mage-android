@@ -18,7 +18,7 @@ import retrofit2.Retrofit;
  */
 public final class FeatureConverterFactory extends Converter.Factory {
 
-    private Layer layer;
+    private final Layer layer;
 
     public static FeatureConverterFactory create(Layer layer) {
         return new FeatureConverterFactory(layer);

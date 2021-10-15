@@ -9,6 +9,6 @@ public interface IStaticFeatureEventListener extends IEventListener {
 	 * 
 	 * @param layer
 	 */
-	public void onStaticFeaturesCreated(final Layer layer);
+    void onStaticFeaturesCreated(final Layer layer);
 
 }

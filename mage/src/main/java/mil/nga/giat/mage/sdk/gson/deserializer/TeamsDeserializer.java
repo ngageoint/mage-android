@@ -34,10 +34,10 @@ public class TeamsDeserializer implements JsonDeserializer<Map<Team, Collection<
 
     private static final String LOG_NAME = TeamsDeserializer.class.getName();
 
-    private UserHelper userHelper;
-    private UserDeserializer userDeserializer;
-    private Gson teamDeserializer;
-    private JsonFactory factory = new JsonFactory();
+    private final UserHelper userHelper;
+    private final UserDeserializer userDeserializer;
+    private final Gson teamDeserializer;
+    private final JsonFactory factory = new JsonFactory();
 
 
     public TeamsDeserializer(Context context) {

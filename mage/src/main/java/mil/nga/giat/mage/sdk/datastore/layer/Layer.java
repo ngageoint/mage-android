@@ -48,7 +48,7 @@ public class Layer implements Comparable<Layer> {
 	private Event event;
 
 	@ForeignCollectionField(eager = false)
-	private Collection<StaticFeature> staticFeatures = new ArrayList<>();
+	private final Collection<StaticFeature> staticFeatures = new ArrayList<>();
 
 	@DatabaseField
 	private String url;

@@ -2,12 +2,8 @@ package mil.nga.giat.mage.sdk.jackson.deserializer;
 
 import android.util.Log;
 
-import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -35,9 +31,9 @@ public class ObservationDeserializer extends Deserializer {
 
 	private static final String LOG_NAME = ObservationDeserializer.class.getName();
 
-	private GeometryDeserializer geometryDeserializer = new GeometryDeserializer();
-	private AttachmentDeserializer attachmentDeserializer = new AttachmentDeserializer();
-	private DateFormat iso8601Format = ISO8601DateFormatFactory.ISO8601();
+	private final GeometryDeserializer geometryDeserializer = new GeometryDeserializer();
+	private final AttachmentDeserializer attachmentDeserializer = new AttachmentDeserializer();
+	private final DateFormat iso8601Format = ISO8601DateFormatFactory.ISO8601();
 
     private Event event = null;
 
@@ -45,7 +41,7 @@ public class ObservationDeserializer extends Deserializer {
         this.event = event;
     }
 
-	public List<Observation> parseObservations(InputStream is) throws JsonParseException, IOException {
+	public List<Observation> parseObservations(InputStream is) throws IOException {
 		List<Observation> observations = new ArrayList<>();
 
 		JsonParser parser = factory.createParser(is);
@@ -62,7 +58,7 @@ public class ObservationDeserializer extends Deserializer {
 		return observations;
 	}
 
-	public Observation parseObservation(InputStream is) throws JsonParseException, IOException {
+	public Observation parseObservation(InputStream is) throws IOException {
 		JsonParser parser = factory.createParser(is);
 		parser.nextToken();
 
@@ -72,7 +68,7 @@ public class ObservationDeserializer extends Deserializer {
 		return observation;
 	}
 
-	public Observation parseObservation(String json) throws JsonParseException, IOException {
+	public Observation parseObservation(String json) throws IOException {
 		JsonParser parser = factory.createParser(json);
 		parser.nextToken();
 
@@ -82,7 +78,7 @@ public class ObservationDeserializer extends Deserializer {
 		return observation;
 	}
 
-	private Observation parseObservation(JsonParser parser) throws JsonParseException, IOException {
+	private Observation parseObservation(JsonParser parser) throws IOException {
 		Observation observation = new Observation();
         observation.setEvent(event);
 
@@ -139,7 +135,7 @@ public class ObservationDeserializer extends Deserializer {
 		return observation;
 	}
 
-	private State parseState(JsonParser parser) throws JsonParseException, IOException {
+	private State parseState(JsonParser parser) throws IOException {
 		State state = State.ACTIVE;
 
 		if (parser.getCurrentToken() != JsonToken.START_OBJECT)
@@ -154,7 +150,7 @@ public class ObservationDeserializer extends Deserializer {
 					try {
 						state = State.valueOf(stateString.trim().toUpperCase());
 					} catch (Exception e) {
-						Log.e(LOG_NAME, "Could not parse state: " + String.valueOf(stateString));
+						Log.e(LOG_NAME, "Could not parse state: " + stateString);
 					}
 				}
 			} else {
@@ -166,7 +162,7 @@ public class ObservationDeserializer extends Deserializer {
 		return state;
 	}
 
-	private Collection<ObservationProperty> parseProperties(JsonParser parser, Observation observation) throws JsonParseException, IOException {
+	private Collection<ObservationProperty> parseProperties(JsonParser parser, Observation observation) throws IOException {
 		Collection<ObservationProperty> properties = new ArrayList<>();
 
 		if (parser.getCurrentToken() != JsonToken.START_OBJECT)
@@ -339,7 +335,7 @@ public class ObservationDeserializer extends Deserializer {
 			if ("userId".equals(name)) {
 				important.setUserId(parser.getText());
 			} else if ("timestamp".equals(name)) {
-				String dateTimeString = parser.getText().toString();
+				String dateTimeString = parser.getText();
 				try {
 					Date d = iso8601Format.parse(dateTimeString);
 					important.setTimestamp(d);

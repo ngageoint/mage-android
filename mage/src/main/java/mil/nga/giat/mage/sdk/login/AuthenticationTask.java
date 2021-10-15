@@ -35,10 +35,10 @@ public class AuthenticationTask extends AsyncTask<String, Void, AuthenticationSt
 
 	private static final String LOG_NAME = AuthenticationTask.class.getName();
 
-	private Context applicationContext;
-	private AuthenticationDelegate delegate;
+	private final Context applicationContext;
+	private final AuthenticationDelegate delegate;
 	private boolean allowDisconnectedLogin = false;
-	private DateFormat iso8601Format = ISO8601DateFormatFactory.ISO8601();
+	private final DateFormat iso8601Format = ISO8601DateFormatFactory.ISO8601();
 
 	public AuthenticationTask(Context applicationContext, AuthenticationDelegate delegate) {
 		this(applicationContext, false, delegate);

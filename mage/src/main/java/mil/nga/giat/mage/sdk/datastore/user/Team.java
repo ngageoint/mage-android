@@ -24,7 +24,7 @@ public class Team {
     @DatabaseField
     private String description;
 
-    private Collection<User> users = new ArrayList<>();
+    private final Collection<User> users = new ArrayList<>();
 	
 	public Team() {
 		// ORMLite needs a no-arg constructor

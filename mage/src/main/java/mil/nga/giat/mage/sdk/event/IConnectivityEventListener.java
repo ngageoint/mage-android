@@ -3,15 +3,15 @@ package mil.nga.giat.mage.sdk.event;
 
 public interface IConnectivityEventListener extends IEventListener {
 
-	public void onAllDisconnected();
+	void onAllDisconnected();
 	
-	public void onAnyConnected();
+	void onAnyConnected();
 	
-	public void onWifiConnected();
+	void onWifiConnected();
 	
-	public void onWifiDisconnected();
+	void onWifiDisconnected();
 	
-	public void onMobileDataConnected();
+	void onMobileDataConnected();
 	
-	public void onMobileDataDisconnected();
+	void onMobileDataDisconnected();
 }

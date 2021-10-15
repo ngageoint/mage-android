@@ -25,12 +25,12 @@ public class StaticFeatureHelper extends DaoHelper<StaticFeature> implements IEv
 
 	private static final String LOG_NAME = StaticFeatureHelper.class.getName();
 	
-	private Context context;
+	private final Context context;
 
 	private final Dao<StaticFeature, Long> staticFeatureDao;
 	private final Dao<StaticFeatureProperty, Long> staticFeaturePropertyDao;
 
-	private Collection<IStaticFeatureEventListener> listeners = new CopyOnWriteArrayList<IStaticFeatureEventListener>();
+	private final Collection<IStaticFeatureEventListener> listeners = new CopyOnWriteArrayList<IStaticFeatureEventListener>();
 
 	/**
 	 * Singleton.

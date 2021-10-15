@@ -16,20 +16,14 @@ import mil.nga.giat.mage.sdk.http.resource.UserResource;
  */
 public class RecentEventTask extends AsyncTask<String, Void, Boolean> {
 
-    public interface RecentEventDelegate {
-        void onRecentEventComplete(Boolean status);
-    }
-
     private static final String LOG_NAME = RecentEventTask.class.getName();
 
-    private Context applicationContext;
-    private RecentEventDelegate delegate;
-    private UserHelper userHelper;
-    private UserResource userResource;
+    private final Context applicationContext;
+    private final UserHelper userHelper;
+    private final UserResource userResource;
 
-    public RecentEventTask(Context applicationContext, RecentEventDelegate delegate) {
+    public RecentEventTask(Context applicationContext) {
         this.applicationContext = applicationContext;
-        this.delegate = delegate;
         userHelper = UserHelper.getInstance(applicationContext);
         userResource = new UserResource(applicationContext);
     }

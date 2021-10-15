@@ -5,7 +5,6 @@ import android.util.Log;
 
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.misc.TransactionManager;
-import com.j256.ormlite.stmt.DeleteBuilder;
 import com.j256.ormlite.stmt.QueryBuilder;
 import com.j256.ormlite.stmt.Where;
 
@@ -32,9 +31,7 @@ import mil.nga.giat.mage.sdk.exceptions.UserException;
  * A utility class for accessing {@link Location} data from the physical data
  * model. The details of ORM DAOs and Lazy Loading should not be exposed past
  * this class.
- * 
- * @author wiedemanns
- * 
+ *
  */
 public class LocationHelper extends DaoHelper<Location> implements IEventDispatcher<ILocationEventListener> {
 
@@ -43,9 +40,9 @@ public class LocationHelper extends DaoHelper<Location> implements IEventDispatc
 	private final Dao<Location, Long> locationDao;
 	private final Dao<LocationProperty, Long> locationPropertyDao;
 	
-	private Collection<ILocationEventListener> listeners = new CopyOnWriteArrayList<>();
+	private final Collection<ILocationEventListener> listeners = new CopyOnWriteArrayList<>();
 
-	private Context context;
+	private final Context context;
 	
 	/**
 	 * Singleton.
@@ -357,17 +354,6 @@ public class LocationHelper extends DaoHelper<Location> implements IEventDispatc
 		}
 
 		return deletedLocations.size();
-	}
-	
-	public void deleteAll() throws UserException {
-
-		try {
-			DeleteBuilder<Location, Long> db = locationDao.deleteBuilder();
-			db.delete();
-		} catch (SQLException sqle) {
-			Log.e(LOG_NAME, "There was a problem deleting locations.", sqle);
-			throw new UserException("There was a problem deleting locations.", sqle);
-		}
 	}
 	
 	@Override

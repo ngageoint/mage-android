@@ -9,9 +9,9 @@ import org.json.JSONObject;
 
 public class ObservationErrorClassPersister extends StringType {
 
-	private static String ERROR_STATUS_CODE_KEY = "ERROR_STATUS_CODE_KEY";
-	private static String ERROR_MESSAGE_KEY = "ERROR_MESSAGE_KEY";
-	private static String ERROR_DESCRIPTION_KEY = "ERROR_DESCRIPTION_KEY";
+	private static final String ERROR_STATUS_CODE_KEY = "ERROR_STATUS_CODE_KEY";
+	private static final String ERROR_MESSAGE_KEY = "ERROR_MESSAGE_KEY";
+	private static final String ERROR_DESCRIPTION_KEY = "ERROR_DESCRIPTION_KEY";
 
 	private static final ObservationErrorClassPersister INSTANCE = new ObservationErrorClassPersister();
 

@@ -5,5 +5,5 @@ package mil.nga.giat.mage.sdk.event;
  */
 public interface IEventEventListener extends IEventListener {
 
-	public void onEventChanged();
+	void onEventChanged();
 }

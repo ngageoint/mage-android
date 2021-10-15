@@ -3,8 +3,6 @@ package mil.nga.giat.mage.sdk.datastore.user;
 import android.content.Context;
 import android.util.Log;
 
-import com.google.common.base.Function;
-import com.google.common.collect.Collections2;
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.stmt.DeleteBuilder;
 import com.j256.ormlite.stmt.PreparedQuery;
@@ -19,8 +17,6 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import mil.nga.giat.mage.sdk.datastore.DaoHelper;
-import mil.nga.giat.mage.sdk.datastore.location.Location;
-import mil.nga.giat.mage.sdk.datastore.location.LocationHelper;
 import mil.nga.giat.mage.sdk.event.IEventDispatcher;
 import mil.nga.giat.mage.sdk.event.IEventEventListener;
 import mil.nga.giat.mage.sdk.event.IUserDispatcher;
@@ -31,9 +27,6 @@ import mil.nga.giat.mage.sdk.exceptions.UserException;
  * A utility class for accessing {@link User} data from the physical data model.
  * The details of ORM DAOs and Lazy Loading should not be exposed past this
  * class.
- * 
- * @author wiedemanns
- * 
  */
 public class UserHelper extends DaoHelper<User> implements IEventDispatcher<IEventEventListener>, IUserDispatcher {
 
@@ -43,10 +36,9 @@ public class UserHelper extends DaoHelper<User> implements IEventDispatcher<IEve
 	private final Dao<UserLocal, Long> userLocalDao;
 	private final Dao<UserTeam, Long> userTeamDao;
 	private final Dao<TeamEvent, Long> teamEventDao;
-	private final Dao<Location, Long> locationDao;
 
-	private static Collection<IUserEventListener> userListeners = new CopyOnWriteArrayList<>();
-	private static Collection<IEventEventListener> eventListeners = new CopyOnWriteArrayList<>();
+	private static final Collection<IUserEventListener> userListeners = new CopyOnWriteArrayList<>();
+	private static final Collection<IEventEventListener> eventListeners = new CopyOnWriteArrayList<>();
 	
 	/**
 	 * Singleton.
@@ -81,7 +73,6 @@ public class UserHelper extends DaoHelper<User> implements IEventDispatcher<IEve
 			userLocalDao = daoStore.getUserLocalDao();
             userTeamDao = daoStore.getUserTeamDao();
 			teamEventDao = daoStore.getTeamEventDao();
-			locationDao = daoStore.getLocationDao();
 		} catch (SQLException sqle) {
 			Log.e(LOG_NAME, "Unable to communicate with User database.", sqle);
 
@@ -231,42 +222,6 @@ public class UserHelper extends DaoHelper<User> implements IEventDispatcher<IEve
 		return user;
 	}
 
-	/**
-	 * Remove any users from the database that are not in this user list.
-	 *
-	 * @param users list of users that should remain in the database, all others will be removed
-	 */
-	public void reconcileUsers(Collection<User> users) throws UserException {
-		Collection<String> userIds = Collections2.transform(users, new Function<User, String>() {
-			@Override
-			public String apply(User user) {
-				return user.getRemoteId();
-			}
-		});
-
-		try {
-			DeleteBuilder<User, Long> userDeleteBuilder = userDao.deleteBuilder();
-			userDeleteBuilder.where().notIn(User.COLUMN_NAME_REMOTE_ID, userIds);
-			int deleted = userDeleteBuilder.delete();
-			Log.i(LOG_NAME, "Deleted " + deleted + " users from database that no longer exist on the MAGE server");
-
-			DeleteBuilder<UserLocal, Long> userLocalDeleteBuilder = userLocalDao.deleteBuilder();
-			userLocalDeleteBuilder.where().notIn(UserLocal.COLUMN_NAME_ID, userDao.queryBuilder().selectColumns(User.COLUMN_NAME_USER_LOCAL_ID));
-			userLocalDeleteBuilder.delete();
-
-			QueryBuilder<Location, Long> qb = locationDao.queryBuilder();
-			QueryBuilder<User, Long> userQb = userDao.queryBuilder().selectColumns(User.COLUMN_NAME_USER_LOCAL_ID);
-			userQb.where().in(User.COLUMN_NAME_REMOTE_ID, userIds);
-
-			qb.where().notIn(Location.COLUMN_NAME_USER_ID, userQb);
-			deleted = LocationHelper.getInstance(mApplicationContext).delete(qb.query());
-			Log.i(LOG_NAME, "Deleted " + deleted + " locations from " + userIds.size() + " users.");
-		} catch (Exception e) {
-			Log.e(LOG_NAME, "Unable to reconcile users '" + users.toString(), e);
-			throw new UserException("Unable to update UserLocal table", e);
-		}
-	}
-
 	public User setCurrentUser(User user) throws UserException {
 		try {
 			clearCurrentUser();
@@ -397,23 +352,6 @@ public class UserHelper extends DaoHelper<User> implements IEventDispatcher<IEve
 		}
 	}
 
-	/**
-	* Delete all users that are flagged as isCurrentUser.
-	*
-	* @throws UserException
-	*             If current users can't be deleted.
-	*/
-	public void deleteCurrentUser() throws UserException {
-		try {
-			DeleteBuilder<UserLocal, Long> db = userLocalDao.deleteBuilder();
-			db.where().eq(UserLocal.COLUMN_NAME_CURRENT_USER, Boolean.TRUE);
-			db.delete();
-		} catch (SQLException sqle) {
-			Log.e(LOG_NAME, "There was a problem deleting active userlocal.", sqle);
-			throw new UserException("There was a problem deleting active userlocal.", sqle);
-		}
-	}
-
     public void deleteUserTeams() {
         try {
             DeleteBuilder<UserTeam, Long> db = userTeamDao.deleteBuilder();
@@ -459,28 +397,6 @@ public class UserHelper extends DaoHelper<User> implements IEventDispatcher<IEve
 
 		return users;
 	}
-
-    public Collection<User> getUsersByTeam(Team team) {
-        Collection<User> users = new ArrayList<>();
-        try {
-            QueryBuilder<UserTeam, Long> userTeamQuery = userTeamDao.queryBuilder();
-            userTeamQuery.selectColumns("user_id");
-            Where<UserTeam, Long> where = userTeamQuery.where();
-            where.eq("team_id", team.getId());
-
-            QueryBuilder<User, Long> teamQuery = userDao.queryBuilder();
-            teamQuery.where().in("_id", userTeamQuery);
-
-            users = teamQuery.query();
-            if(users == null) {
-                users = new ArrayList<>();
-            }
-
-        } catch (SQLException sqle) {
-            Log.e(LOG_NAME, "There was a problem getting users for the team: " + team, sqle);
-        }
-        return users;
-    }
 
 	@Override
 	public boolean addListener(IEventEventListener listener) {

@@ -18,7 +18,7 @@ import retrofit2.Retrofit;
  */
 public final class ObservationsConverterFactory extends Converter.Factory {
 
-    private Event event;
+    private final Event event;
 
     public static ObservationsConverterFactory create(Event event) {
         return new ObservationsConverterFactory(event);

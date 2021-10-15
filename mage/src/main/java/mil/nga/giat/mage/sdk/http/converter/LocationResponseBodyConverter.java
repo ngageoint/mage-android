@@ -19,8 +19,8 @@ import retrofit2.Converter;
  */
 public class LocationResponseBodyConverter implements Converter<ResponseBody, List<Location>> {
 
-    private Event event;
-    private boolean groupByUser;
+    private final Event event;
+    private final boolean groupByUser;
 
     public LocationResponseBodyConverter(Event event, boolean groupByUser) {
         this.event = event;

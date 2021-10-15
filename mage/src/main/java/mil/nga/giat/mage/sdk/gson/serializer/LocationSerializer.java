@@ -30,7 +30,7 @@ import mil.nga.giat.mage.sdk.utils.ISO8601DateFormatFactory;
  */
 public class LocationSerializer implements JsonSerializer<Collection<Location>> {
 
-    private DateFormat iso8601Format = ISO8601DateFormatFactory.ISO8601();
+    private final DateFormat iso8601Format = ISO8601DateFormatFactory.ISO8601();
 
 	@Override
 	public JsonElement serialize(Collection<Location> locations, Type locationType, JsonSerializationContext context) {

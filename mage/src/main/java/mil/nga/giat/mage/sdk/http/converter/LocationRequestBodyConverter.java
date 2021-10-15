@@ -7,6 +7,7 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.lang.reflect.Type;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import mil.nga.giat.mage.sdk.datastore.location.Location;
@@ -26,7 +27,7 @@ import retrofit2.Converter;
 public class LocationRequestBodyConverter implements Converter<List<Location>, RequestBody> {
 
     private static final MediaType MEDIA_TYPE = MediaType.parse("application/json; charset=UTF-8");
-    private static final Charset UTF_8 = Charset.forName("UTF-8");
+    private static final Charset UTF_8 = StandardCharsets.UTF_8;
 
     private final Gson gson;
     private final Type type;

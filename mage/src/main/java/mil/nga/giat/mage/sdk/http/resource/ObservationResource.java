@@ -6,43 +6,26 @@ import android.util.Log;
 
 import com.google.gson.JsonObject;
 
-import org.apache.commons.lang3.StringUtils;
-
-import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.HttpURLConnection;
 import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Map;
 
 import mil.nga.giat.mage.R;
-import mil.nga.giat.mage.sdk.datastore.DaoStore;
 import mil.nga.giat.mage.sdk.datastore.observation.Attachment;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
-import mil.nga.giat.mage.sdk.datastore.observation.ObservationError;
-import mil.nga.giat.mage.sdk.datastore.observation.ObservationFavorite;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
-import mil.nga.giat.mage.sdk.datastore.observation.ObservationImportant;
 import mil.nga.giat.mage.sdk.datastore.user.Event;
-import mil.nga.giat.mage.sdk.exceptions.ObservationException;
 import mil.nga.giat.mage.sdk.http.HttpClientManager;
-import mil.nga.giat.mage.sdk.http.converter.AttachmentConverterFactory;
-import mil.nga.giat.mage.sdk.http.converter.ObservationConverterFactory;
-import mil.nga.giat.mage.sdk.http.converter.ObservationImportantConverterFactory;
 import mil.nga.giat.mage.sdk.http.converter.ObservationsConverterFactory;
 import mil.nga.giat.mage.sdk.utils.ISO8601DateFormatFactory;
-import mil.nga.giat.mage.sdk.utils.MediaUtility;
-import okhttp3.MediaType;
 import okhttp3.RequestBody;
 import okhttp3.ResponseBody;
 import retrofit2.Call;
 import retrofit2.Response;
 import retrofit2.Retrofit;
-import retrofit2.converter.gson.GsonConverterFactory;
 import retrofit2.http.Body;
 import retrofit2.http.DELETE;
 import retrofit2.http.GET;
@@ -74,9 +57,6 @@ public class ObservationResource {
         @POST("/api/events/{eventId}/observations/{observationId}/states")
         Call<JsonObject> archiveObservation(@Path("eventId") String eventId, @Path("observationId") String observationId, @Body JsonObject state);
 
-        @GET("/api/events/{eventId}/form/icons.zip")
-        Call<ResponseBody> getObservationIcons(@Path("eventId") String eventId);
-
         @Streaming
         @GET("/api/events/{eventId}/observations/{observationId}/attachments/{attachmentId}")
         Call<ResponseBody> getAttachment(@Path("eventId") String eventId, @Path("observationId") String observationId, @Path("attachmentId") String attachmentId);
@@ -100,7 +80,7 @@ public class ObservationResource {
 
     private static final String LOG_NAME = ObservationResource.class.getName();
 
-    private Context context;
+    private final Context context;
 
     public ObservationResource(Context context) {
         this.context = context;
@@ -144,227 +124,6 @@ public class ObservationResource {
         return observations;
     }
 
-    public Observation saveObservation(Observation observation) {
-        if (StringUtils.isEmpty(observation.getRemoteId())) {
-            return createObservation(observation);
-        } else {
-            return updateObservation(observation);
-        }
-    }
-
-    private Observation createObservation(Observation observation) {
-        ObservationHelper observationHelper = ObservationHelper.getInstance(context);
-
-        try {
-            String baseUrl = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.serverURLKey), context.getString(R.string.serverURLDefaultValue));
-            Retrofit retrofit = new Retrofit.Builder()
-                    .baseUrl(baseUrl)
-                    .addConverterFactory(ObservationConverterFactory.create(observation.getEvent()))
-                    .client(HttpClientManager.getInstance().httpClient())
-                    .build();
-
-            ObservationService service = retrofit.create(ObservationService.class);
-            Response<Observation> response = service.createObservationId(observation.getEvent().getRemoteId()).execute();
-
-            if (response.isSuccessful()) {
-                Observation returnedObservation = response.body();
-                observation.setRemoteId(returnedObservation.getRemoteId());
-                observation.setUrl(returnedObservation.getUrl());
-
-                try {
-                    observation = observationHelper.update(observation);
-
-                    // Got the observation id from the server, lets send the observation
-                    observation = updateObservation(observation);
-                } catch (ObservationException oe) {
-                    Log.e(LOG_NAME, "Problem updating observation after server response", oe);
-                }
-            } else {
-                Log.e(LOG_NAME, "Bad request.");
-
-                ObservationError observationError = new ObservationError();
-                observationError.setStatusCode(response.code());
-                observationError.setDescription(response.message());
-
-                if (response.errorBody() != null) {
-                    String errorBody = response.errorBody().string();
-                    Log.e(LOG_NAME, errorBody);
-
-                    observationError.setMessage(errorBody);
-                }
-
-                try {
-                    observationHelper.update(observation);
-                } catch (ObservationException oe) {
-                    Log.e(LOG_NAME, "Problem updating observation error", oe);
-                }
-            }
-        } catch (IOException e) {
-            Log.e(LOG_NAME, "Failure getting observation id from server.", e);
-
-            ObservationError observationError = new ObservationError();
-            observationError.setMessage("The Internet connection appears to be offline.");
-            observation.setError(observationError);
-            try {
-                observationHelper.update(observation);
-            } catch (ObservationException oe) {
-                Log.e(LOG_NAME, "Problem updating observation error", oe);
-            }
-        }
-
-        return observation;
-    }
-
-    private Observation updateObservation(Observation observation) {
-
-        ObservationHelper observationHelper = ObservationHelper.getInstance(context);
-        Observation savedObservation = null;
-
-        try {
-            String baseUrl = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.serverURLKey), context.getString(R.string.serverURLDefaultValue));
-            Retrofit retrofit = new Retrofit.Builder()
-                    .baseUrl(baseUrl)
-                    .addConverterFactory(ObservationConverterFactory.create(observation.getEvent()))
-                    .client(HttpClientManager.getInstance().httpClient())
-                    .build();
-
-            ObservationService service = retrofit.create(ObservationService.class);
-            Response<Observation> response = service.updateObservation(observation.getEvent().getRemoteId(), observation.getRemoteId(), observation).execute();
-
-            if (response.isSuccessful()) {
-                Observation returnedObservation = response.body();
-                returnedObservation.setDirty(Boolean.FALSE);
-                returnedObservation.setId(observation.getId());
-
-                try {
-                    savedObservation = observationHelper.update(returnedObservation);
-                } catch (ObservationException oe) {
-                    Log.e(LOG_NAME, "Problem updating observation after server response", oe);
-                }
-            } else {
-                Log.e(LOG_NAME, "Bad request.");
-
-                ObservationError observationError = new ObservationError();
-                observationError.setStatusCode(response.code());
-                observationError.setDescription(response.message());
-
-                if (response.errorBody() != null) {
-                    String errorBody = response.errorBody().string();
-                    Log.e(LOG_NAME, errorBody);
-
-                    observationError.setMessage(errorBody);
-                }
-
-                try {
-                    observation.setError(observationError);
-                    observationHelper.update(observation);
-                } catch (ObservationException oe) {
-                    Log.e(LOG_NAME, "Problem updating observation error", oe);
-                }
-            }
-        } catch (IOException e) {
-            Log.e(LOG_NAME, "Failure saving observation.", e);
-
-            ObservationError observationError = new ObservationError();
-            observationError.setMessage("The Internet connection appears to be offline.");
-            observation.setError(observationError);
-            try {
-                observationHelper.update(observation);
-            } catch (ObservationException oe) {
-                Log.e(LOG_NAME, "Problem updating observation error", oe);
-            }
-        }
-
-        return savedObservation;
-    }
-
-    public void archiveObservation(Observation observation) {
-        ObservationHelper observationHelper = ObservationHelper.getInstance(context);
-
-        try {
-            String baseUrl = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.serverURLKey), context.getString(R.string.serverURLDefaultValue));
-            Retrofit retrofit = new Retrofit.Builder()
-                    .baseUrl(baseUrl)
-                    .addConverterFactory(GsonConverterFactory.create())
-                    .client(HttpClientManager.getInstance().httpClient())
-                    .build();
-
-            JsonObject state = new JsonObject();
-            state.addProperty("name", "archive");
-
-            ObservationService service = retrofit.create(ObservationService.class);
-            Response<JsonObject> response = service.archiveObservation(observation.getEvent().getRemoteId(), observation.getRemoteId(), state).execute();
-
-            if (response.isSuccessful()) {
-                try {
-                    observationHelper.delete(observation);
-                } catch (ObservationException oe) {
-                    Log.e(LOG_NAME, "Problem deleting observation after server archive response", oe);
-                }
-            } else if (response.code() == HttpURLConnection.HTTP_NOT_FOUND) {
-                try {
-                    // Observation does not exist on the server, delete it
-                    observationHelper.delete(observation);
-                } catch (ObservationException e) {
-                    Log.e(LOG_NAME, "Problem deleting local observation", e);
-                }
-            } else {
-                Log.e(LOG_NAME, "Bad request.");
-
-                ObservationError observationError = new ObservationError();
-                observationError.setStatusCode(response.code());
-                observationError.setDescription(response.message());
-
-                if (response.errorBody() != null) {
-                    String errorBody = response.errorBody().string();
-                    Log.e(LOG_NAME, errorBody);
-
-                    observationError.setMessage(errorBody);
-                }
-
-                try {
-                    observationHelper.update(observation);
-                } catch (ObservationException oe) {
-                    Log.e(LOG_NAME, "Problem updating observation error", oe);
-                }
-            }
-        } catch (IOException e) {
-            Log.e(LOG_NAME, "Failure archiving observation.", e);
-
-            ObservationError observationError = new ObservationError();
-            observationError.setMessage("The Internet connection appears to be offline.");
-            observation.setError(observationError);
-            try {
-                observationHelper.update(observation);
-            } catch (ObservationException oe) {
-                Log.e(LOG_NAME, "Problem archiving observation error", oe);
-            }
-        }
-    }
-
-    public InputStream getObservationIcons(String eventId) throws IOException {
-        String baseUrl = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.serverURLKey), context.getString(R.string.serverURLDefaultValue));
-        Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl(baseUrl)
-                .client(HttpClientManager.getInstance().httpClient())
-                .build();
-
-        ObservationService service = retrofit.create(ObservationService.class);
-        Response<ResponseBody> response = service.getObservationIcons(eventId).execute();
-
-        InputStream inputStream = null;
-        if (response.isSuccessful()) {
-            inputStream = response.body().byteStream();
-        } else {
-            Log.e(LOG_NAME, "Bad request.");
-            if (response.errorBody() != null) {
-                Log.e(LOG_NAME, response.errorBody().string());
-            }
-        }
-
-        return inputStream;
-    }
-
     public ResponseBody getAttachment(Attachment attachment) throws IOException {
         String baseUrl = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.serverURLKey), context.getString(R.string.serverURLDefaultValue));
         Retrofit retrofit = new Retrofit.Builder()
@@ -389,132 +148,5 @@ public class ObservationResource {
         }
 
         return null;
-    }
-
-    public Attachment createAttachment(Attachment attachment) {
-        try {
-            String baseUrl = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.serverURLKey), context.getString(R.string.serverURLDefaultValue));
-            Retrofit retrofit = new Retrofit.Builder()
-                    .baseUrl(baseUrl)
-                    .addConverterFactory(AttachmentConverterFactory.create())
-                    .client(HttpClientManager.getInstance().httpClient())
-                    .build();
-
-            ObservationService service = retrofit.create(ObservationService.class);
-
-            String eventId = attachment.getObservation().getEvent().getRemoteId();
-            String observationId = attachment.getObservation().getRemoteId();
-
-            Map<String, RequestBody> parts = new HashMap<>();
-            File attachmentFile = new File(attachment.getLocalPath());
-            String mimeType = MediaUtility.getMimeType(attachment.getLocalPath());
-            RequestBody fileBody = RequestBody.create(MediaType.parse(mimeType), attachmentFile);
-            parts.put("attachment\"; filename=\"" + attachmentFile.getName() + "\"", fileBody);
-
-            Response<Attachment> response = service.createAttachment(eventId, observationId, attachment.getRemoteId(), parts).execute();
-
-            if (response.isSuccessful()) {
-                Attachment returnedAttachment = response.body();
-                attachment.setContentType(returnedAttachment.getContentType());
-                attachment.setName(returnedAttachment.getName());
-                attachment.setRemoteId(returnedAttachment.getRemoteId());
-                attachment.setRemotePath(returnedAttachment.getRemotePath());
-                attachment.setSize(returnedAttachment.getSize());
-                attachment.setUrl(returnedAttachment.getUrl());
-                attachment.setDirty(returnedAttachment.isDirty());
-
-                DaoStore.getInstance(context).getAttachmentDao().update(attachment);
-            } else {
-                Log.e(LOG_NAME, "Bad request.");
-                if (response.errorBody() != null) {
-                    Log.e(LOG_NAME, response.errorBody().string());
-                }
-            }
-        } catch (Exception e) {
-            Log.e(LOG_NAME, "Failure saving observation.", e);
-        }
-
-        return attachment;
-    }
-
-    public Observation toogleFavorite(ObservationFavorite favorite) {
-        ObservationHelper observationHelper = ObservationHelper.getInstance(context);
-        Observation observation = favorite.getObservation();
-        Observation savedObservation = null;
-
-        try {
-            String baseUrl = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.serverURLKey), context.getString(R.string.serverURLDefaultValue));
-            Retrofit retrofit = new Retrofit.Builder()
-                    .baseUrl(baseUrl)
-                    .addConverterFactory(ObservationConverterFactory.create(observation.getEvent()))
-                    .client(HttpClientManager.getInstance().httpClient())
-                    .build();
-
-            ObservationService service = retrofit.create(ObservationService.class);
-
-            Response<Observation> response;
-            if (favorite.isFavorite()) {
-                response = service.favoriteObservation(observation.getEvent().getRemoteId(), observation.getRemoteId()).execute();
-            } else {
-                response = service.unfavoriteObservation(observation.getEvent().getRemoteId(), observation.getRemoteId()).execute();
-            }
-
-            if (response.isSuccessful()) {
-                Observation updatedObservation = response.body();
-                observation.setLastModified(updatedObservation.getLastModified());
-                observationHelper.updateFavorite(favorite);
-            } else {
-                Log.e(LOG_NAME, "Bad request.");
-                if (response.errorBody() != null) {
-                    Log.e(LOG_NAME, response.errorBody().string());
-                }
-            }
-        } catch (Exception e) {
-            Log.e(LOG_NAME, "Failure toogling observation favorite.", e);
-        }
-
-        return savedObservation;
-    }
-
-    public Observation toogleImportant(Observation observation) {
-        ObservationHelper observationHelper = ObservationHelper.getInstance(context);
-        ObservationImportant important = observation.getImportant();
-        Observation savedObservation = null;
-
-        try {
-            String baseUrl = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.serverURLKey), context.getString(R.string.serverURLDefaultValue));
-            Retrofit retrofit = new Retrofit.Builder()
-                    .baseUrl(baseUrl)
-                    .addConverterFactory(ObservationImportantConverterFactory.create(observation.getEvent()))
-                    .client(HttpClientManager.getInstance().httpClient())
-                    .build();
-
-            ObservationService service = retrofit.create(ObservationService.class);
-
-            Response<Observation> response;
-            if (important.isImportant()) {
-                JsonObject jsonImportant = new JsonObject();
-                jsonImportant.addProperty("description", important.getDescription());
-
-                response = service.addImportant(observation.getEvent().getRemoteId(), observation.getRemoteId(), jsonImportant).execute();
-            } else {
-                response = service.removeImportant(observation.getEvent().getRemoteId(), observation.getRemoteId()).execute();
-            }
-
-            if (response.isSuccessful()) {
-                Observation returnedObservation = response.body();
-                observation.setLastModified(returnedObservation.getLastModified());
-                observationHelper.updateImportant(observation);
-            } else {
-                Log.e(LOG_NAME, "Bad request.");
-                if (response.errorBody() != null) {
-                    Log.e(LOG_NAME, response.errorBody().string());
-                }
-            }
-        } catch (Exception e) {
-            Log.e(LOG_NAME, "Failure toogling observation important.", e);
-        }
-
-        return savedObservation;
     }
 }

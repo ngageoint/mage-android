@@ -21,7 +21,7 @@ public class ImageryServerFetch extends AbstractServerFetch {
     private static final String LOG_NAME = ImageryServerFetch.class.getName();
     private static final String TYPE = "Imagery";
 
-    private AtomicBoolean isCanceled = new AtomicBoolean(false);
+    private final AtomicBoolean isCanceled = new AtomicBoolean(false);
 
     private final LayerResource layerResource;
 

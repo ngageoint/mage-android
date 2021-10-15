@@ -33,7 +33,7 @@ public class StaticFeatureServerFetch extends AbstractServerFetch {
 		void onStaticLayersLoaded(Collection<Layer> layers);
 	}
 
-	private LayerResource layerResource;
+	private final LayerResource layerResource;
 
 	public StaticFeatureServerFetch(Context context) {
 		super(context);
@@ -150,7 +150,7 @@ public class StaticFeatureServerFetch extends AbstractServerFetch {
 									if (filename != null) {
 										filename = filename.trim();
 										while (filename.startsWith("/")) {
-											filename = filename.substring(1, filename.length());
+											filename = filename.substring(1);
 										}
 									}
 

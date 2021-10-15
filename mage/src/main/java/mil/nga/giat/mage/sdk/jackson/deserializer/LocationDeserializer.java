@@ -25,8 +25,8 @@ public class LocationDeserializer extends Deserializer {
 
     private static final String LOG_NAME = LocationDeserializer.class.getName();
 	
-	private GeometryDeserializer geometryDeserializer = new GeometryDeserializer();
-    private DateFormat iso8601Format = ISO8601DateFormatFactory.ISO8601();
+	private final GeometryDeserializer geometryDeserializer = new GeometryDeserializer();
+    private final DateFormat iso8601Format = ISO8601DateFormatFactory.ISO8601();
 
 	private Event event = null;
 

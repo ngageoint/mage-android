@@ -17,10 +17,6 @@ import mil.nga.giat.mage.sdk.datastore.user.TeamHelper;
 import mil.nga.giat.mage.sdk.http.resource.EventResource;
 import mil.nga.giat.mage.sdk.http.resource.RoleResource;
 
-/**
- * Created by wnewman on 2/21/18.
- */
-
 public class EventsServerFetch extends AsyncTask<Void, Void, Exception> {
 
     public interface EventsFetchListener {
@@ -29,7 +25,7 @@ public class EventsServerFetch extends AsyncTask<Void, Void, Exception> {
 
     private static final String LOG_NAME = EventsServerFetch.class.getName();
 
-    private Context context;
+    private final Context context;
     private EventsFetchListener listener;
 
     public EventsServerFetch(Context context) {
@@ -55,11 +51,7 @@ public class EventsServerFetch extends AsyncTask<Void, Void, Exception> {
         e = fetchAndSaveEvents();
         end = System.currentTimeMillis();
         Log.d(LOG_NAME, "Pulled and saved events in " + (end - start) / 1000 + " seconds");
-        if (e != null) {
-            return e;
-        }
-
-        return null;
+        return e;
     }
 
     @Override

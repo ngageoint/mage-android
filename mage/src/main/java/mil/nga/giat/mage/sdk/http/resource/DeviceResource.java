@@ -34,7 +34,7 @@ public class DeviceResource {
 
     private static final String LOG_NAME = DeviceResource.class.getName();
 
-    private Context context;
+    private final Context context;
 
     public DeviceResource(Context context) {
         this.context = context;

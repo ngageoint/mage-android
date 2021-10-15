@@ -42,7 +42,7 @@ public class LocationResource {
 
     private static final String LOG_NAME = LocationResource.class.getName();
 
-    private Context context;
+    private final Context context;
 
     public LocationResource(Context context) {
         this.context = context;

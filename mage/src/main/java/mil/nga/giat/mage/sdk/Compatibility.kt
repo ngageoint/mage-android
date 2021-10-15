@@ -21,7 +21,7 @@ class Compatibility {
             }
          }
 
-         return false;
+         return false
       }
 
       fun isServerVersion5(applicationContext: Context): Boolean {

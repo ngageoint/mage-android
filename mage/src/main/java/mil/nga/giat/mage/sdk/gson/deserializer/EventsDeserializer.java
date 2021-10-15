@@ -34,9 +34,9 @@ public class EventsDeserializer implements JsonDeserializer<Map<Event, Collectio
 
     private static final String LOG_NAME = EventsDeserializer.class.getName();
 
-    private TeamHelper teamHelper;
-    private Gson teamDeserializer;
-    private Gson eventDeserializer;
+    private final TeamHelper teamHelper;
+    private final Gson teamDeserializer;
+    private final Gson eventDeserializer;
 
     public EventsDeserializer(Context context) {
         teamHelper = TeamHelper.getInstance(context);

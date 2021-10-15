@@ -17,8 +17,6 @@ public abstract class ConnectivityAwareIntentService extends IntentService imple
 
 	protected boolean isCanceled = false;
 
-	private static final String LOG_NAME = ConnectivityAwareIntentService.class.getName();
-
 	@Override
 	public void onError(Throwable error) {
 				

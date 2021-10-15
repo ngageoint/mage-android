@@ -32,7 +32,7 @@ public class ServerApi {
     private static final String SERVER_API_PREFERENCE_PREFIX = "g";
     private static final String SERVER_API_AUTHENTICATION_STRATEGIES_KEY = "authenticationStrategies";
 
-    private Context context;
+    private final Context context;
 
     public ServerApi(Context context) {
         this.context = context;
@@ -47,7 +47,7 @@ public class ServerApi {
                 try {
                     if (response.isSuccessful()) {
                         JSONObject apiJson = new JSONObject(response.body().string());
-                        removeValues(SERVER_API_PREFERENCE_PREFIX);
+                        removeValues();
                         populateValues(SERVER_API_PREFERENCE_PREFIX, apiJson);
                         parseAuthenticationStrategies(apiJson);
 
@@ -124,7 +124,7 @@ public class ServerApi {
                     SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
                     SharedPreferences.Editor editor = sharedPreferences.edit();
                     String keyString = sharedPreferenceName + Character.toUpperCase(key.charAt(0)) + ((key.length() > 1) ? key.substring(1) : "");
-                    Log.i(LOG_NAME, keyString + " is " + String.valueOf(sharedPreferences.getAll().get(keyString)) + ".  Setting it to " + String.valueOf(value) + ".");
+                    Log.i(LOG_NAME, keyString + " is " + sharedPreferences.getAll().get(keyString) + ".  Setting it to " + value + ".");
 
                     if(value instanceof Number) {
                         if(value instanceof Long) {
@@ -138,7 +138,7 @@ public class ServerApi {
                         } else if(value instanceof Short) {
                             editor.putInt(keyString, ((Short)value).intValue());
                         } else {
-                            Log.e(LOG_NAME, keyString + " with value " + String.valueOf(value) + " is not of valid number type. Skipping this key-value pair.");
+                            Log.e(LOG_NAME, keyString + " with value " + value + " is not of valid number type. Skipping this key-value pair.");
                         }
                     } else if(value instanceof Boolean) {
                         editor.putBoolean(keyString, (Boolean) value);
@@ -151,7 +151,7 @@ public class ServerApi {
                         try {
                             editor.putString(keyString, value.toString());
                         } catch(Exception e) {
-                            Log.e(LOG_NAME, keyString + " with value " + String.valueOf(value) + " is not of valid type. Skipping this key-value pair.");
+                            Log.e(LOG_NAME, keyString + " with value " + value + " is not of valid type. Skipping this key-value pair.");
                         }
                     }
 
@@ -163,7 +163,7 @@ public class ServerApi {
         }
     }
 
-    private void removeValues(String sharedPreferenceName) {
+    private void removeValues() {
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
         SharedPreferences.Editor editor = sharedPreferences.edit();
         for (String key : sharedPreferences.getAll().keySet()) {

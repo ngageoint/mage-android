@@ -22,9 +22,6 @@ import mil.nga.giat.mage.R;
 /**
  * Loads the default configuration from the local property files, and also loads
  * the server configuration.
- * 
- * @author wiedemanns
- * 
  */
 public class PreferenceHelper implements SharedPreferences.OnSharedPreferenceChangeListener {
 
@@ -130,28 +127,6 @@ public class PreferenceHelper implements SharedPreferences.OnSharedPreferenceCha
 		return  strategies;
 	}
 
-	public boolean containsLocalAuthentication() {
-		SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(mContext);
-		for (String key : sharedPreferences.getAll().keySet()) {
-			if (key.startsWith("gAuthenticationStrategiesLocal")) {
-				return true;
-			}
-		}
-
-		return false;
-	}
-
-	public boolean containsGoogleAuthentication() {
-		SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(mContext);
-		for (String key : sharedPreferences.getAll().keySet()) {
-			if (key.startsWith("gAuthenticationStrategiesGoogle")) {
-				return true;
-			}
-		}
-
-		return false;
-	}
-
 	private synchronized void initializeLocal(Integer... xmlFiles) {
 		for (int id : xmlFiles) {
 			Log.d(LOG_NAME, "Loading resources from: " + mContext.getResources().getResourceEntryName(id));
@@ -164,6 +139,6 @@ public class PreferenceHelper implements SharedPreferences.OnSharedPreferenceCha
 		Map<String, ?> sharedPreferenceMap = sharedPreferences.getAll();
 		Object value = sharedPreferenceMap.get(key);
 		String valueType = (value == null) ? null : value.getClass().getName();
-		Log.d(LOG_NAME, "SharedPreferences changed. Now contains (key, value, type): (" + String.valueOf(key) + ", " + String.valueOf(value) + ", " + String.valueOf(valueType) + ")");
+		Log.d(LOG_NAME, "SharedPreferences changed. Now contains (key, value, type): (" + key + ", " + value + ", " + valueType + ")");
 	}
 }

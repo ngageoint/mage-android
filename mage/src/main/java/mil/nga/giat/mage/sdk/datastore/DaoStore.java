@@ -37,9 +37,6 @@ import mil.nga.giat.mage.sdk.datastore.user.UserTeam;
  * This is an implementation of OrmLite android database Helper. Go here to get
  * daos that you may need. Manage your table creation and update strategies here
  * as well.
- * 
- * @author travis, wiedemanns
- * 
  */
 public class DaoStore extends OrmLiteSqliteOpenHelper {
 
@@ -97,34 +94,6 @@ public class DaoStore extends OrmLiteSqliteOpenHelper {
 	 */
 	public DaoStore(Context context) {
 		super(context, DATABASE_NAME, null, DATABASE_VERSION);
-	}
-
-	public boolean isDatabaseEmpty() {
-		long countOfAllRecords = 0l;
-		try {
-			countOfAllRecords += getObservationDao().countOf();
-			countOfAllRecords += getObservationFormDao().countOf();
-			countOfAllRecords += getObservationPropertyDao().countOf();
-			countOfAllRecords += getObservationImportantDao().countOf();
-			countOfAllRecords += getObservationFavoriteDao().countOf();
-			countOfAllRecords += getAttachmentDao().countOf();
-			countOfAllRecords += getUserDao().countOf();
-			countOfAllRecords += getUserLocalDao().countOf();
-			countOfAllRecords += getRoleDao().countOf();
-            countOfAllRecords += getEventDao().countOf();
-            countOfAllRecords += getTeamDao().countOf();
-            countOfAllRecords += getUserTeamDao().countOf();
-            countOfAllRecords += getTeamEventDao().countOf();
-			countOfAllRecords += getLocationDao().countOf();
-			countOfAllRecords += getLocationPropertyDao().countOf();
-			countOfAllRecords += getLayerDao().countOf();
-			countOfAllRecords += getStaticFeatureDao().countOf();
-			countOfAllRecords += getStaticFeaturePropertyDao().countOf();
-		} catch (SQLException sqle) {
-			sqle.printStackTrace();
-			return false;
-		}
-		return countOfAllRecords == 0;
 	}
 
 	private void createTables() throws SQLException {

@@ -32,10 +32,10 @@ public class AuthorizationTask extends AsyncTask<String, Void, AuthorizationStat
 
 	private static final String LOG_NAME = AuthorizationTask.class.getName();
 
-	private DateFormat iso8601Format = ISO8601DateFormatFactory.ISO8601();
-	private Context applicationContext;
-	private AuthorizationDelegate delegate;
-	private UserDeserializer userDeserializer;
+	private final DateFormat iso8601Format = ISO8601DateFormatFactory.ISO8601();
+	private final Context applicationContext;
+	private final AuthorizationDelegate delegate;
+	private final UserDeserializer userDeserializer;
 
 	public AuthorizationTask(Context applicationContext, AuthorizationDelegate delegate) {
 		this.applicationContext = applicationContext;

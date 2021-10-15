@@ -44,7 +44,7 @@ public class AuthenticationStatus {
 	}
 
 	public static class Builder {
-		private Status status;
+		private final Status status;
 		private String token = "";
 		private String message = null;
 

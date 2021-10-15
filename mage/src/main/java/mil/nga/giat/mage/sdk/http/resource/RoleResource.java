@@ -33,7 +33,7 @@ public class RoleResource {
 
     private static final String LOG_NAME = RoleResource.class.getName();
 
-    private Context context;
+    private final Context context;
 
     public RoleResource(Context context) {
         this.context = context;

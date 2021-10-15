@@ -19,7 +19,7 @@ import retrofit2.Converter;
  */
 public class FeatureResponseBodyConverter implements Converter<ResponseBody, List<StaticFeature>> {
 
-    private Layer layer;
+    private final Layer layer;
 
     public FeatureResponseBodyConverter(Layer layer) {
         this.layer = layer;

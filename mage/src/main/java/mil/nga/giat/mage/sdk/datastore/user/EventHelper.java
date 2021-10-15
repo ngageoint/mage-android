@@ -27,9 +27,6 @@ import mil.nga.giat.mage.sdk.exceptions.UserException;
  * A utility class for accessing {@link Event} data from the physical data model.
  * The details of ORM DAOs and Lazy Loading should not be exposed past this
  * class.
- *
- * @author wiedemanns
- *
  */
 public class EventHelper extends DaoHelper<Event> {
 
