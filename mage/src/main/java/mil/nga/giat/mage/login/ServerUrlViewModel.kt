@@ -27,6 +27,7 @@ class ServerUrlViewModel @Inject constructor(
     private val _api = MutableLiveData<Resource<Boolean>>()
     val api: LiveData<Resource<Boolean>> = _api
     fun setUrl(url: String) {
+        _api.value = Resource.loading(null)
         serverApi.validateServerApi(url) { valid, error ->
             if (valid) {
                 viewModelScope.launch(Dispatchers.IO) {

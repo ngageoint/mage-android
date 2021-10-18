@@ -107,8 +107,6 @@ public class LoginActivity extends AppCompatActivity {
 
       // IMPORTANT: load the configuration from preferences files and server
       PreferenceHelper preferenceHelper = PreferenceHelper.getInstance(getApplicationContext());
-      // TODO make sure sdk config is loaded
-//      preferenceHelper.initialize(false, mil.nga.giat.mage.sdk.R.xml.class, R.xml.class);
       preferenceHelper.initialize(false, R.xml.class);
 
       // check if the database needs to be upgraded, and if so log them out
