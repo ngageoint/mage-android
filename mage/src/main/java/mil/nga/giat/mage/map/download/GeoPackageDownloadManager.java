@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import mil.nga.giat.mage.R;
 import mil.nga.geopackage.GeoPackageManager;
 import mil.nga.geopackage.factory.GeoPackageFactory;
 import mil.nga.giat.mage.map.cache.CacheOverlay;
@@ -54,7 +55,7 @@ public class GeoPackageDownloadManager {
 
     public GeoPackageDownloadManager(Context context, GeoPackageDownloadListener listener) {
         this.context = context;
-        baseUrl = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(mil.nga.giat.mage.sdk.R.string.serverURLKey), context.getString(mil.nga.giat.mage.sdk.R.string.serverURLDefaultValue));
+        baseUrl = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.serverURLKey), context.getString(R.string.serverURLDefaultValue));
         this.listener = listener;
         layerHelper = LayerHelper.getInstance(context);
         downloadManager = (DownloadManager) context.getSystemService(Context.DOWNLOAD_SERVICE);
@@ -69,7 +70,7 @@ public class GeoPackageDownloadManager {
     }
 
     public void downloadGeoPackage(Layer layer) {
-        String token = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(mil.nga.giat.mage.sdk.R.string.tokenKey), null);
+        String token = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.tokenKey), null);
         final Event event = EventHelper.getInstance(context).getCurrentEvent();
 
         DownloadManager.Request request = new DownloadManager.Request(Uri.parse(String.format("%s/api/events/%s/layers/%s", baseUrl, event.getRemoteId(), layer.getRemoteId())));

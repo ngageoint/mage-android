@@ -8,7 +8,6 @@ import kotlinx.coroutines.withContext
 import mil.nga.giat.mage.network.Resource
 import mil.nga.giat.mage.network.api.FeedService
 import mil.nga.giat.mage.sdk.datastore.user.EventHelper
-import java.lang.Exception
 import java.util.*
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -20,29 +19,27 @@ class FeedRepository @Inject constructor(
     private val feedItemDao: FeedItemDao,
     private val feedService: FeedService
 ) {
-    suspend fun syncFeed(feed: Feed): Resource<out FeedContent> {
-        return withContext(Dispatchers.IO) {
-            val resource = try {
-                val event = EventHelper.getInstance(context).currentEvent
+    suspend fun syncFeed(feed: Feed) = withContext(Dispatchers.IO) {
+        val resource = try {
+            val event = EventHelper.getInstance(context).currentEvent
 
-                val response = feedService.getFeedItems(event.remoteId, feed.id).execute()
-                if (response.isSuccessful) {
-                    val content = response.body()!!
-                    saveFeed(feed, content)
-                    Resource.success(content)
-                } else {
-                    Resource.error(response.message(), null)
-                }
-            } catch (e: Exception) {
-                Resource.error(e.localizedMessage, null)
+            val response = feedService.getFeedItems(event.remoteId, feed.id)
+            if (response.isSuccessful) {
+                val content = response.body()!!
+                saveFeed(feed, content)
+                Resource.success(content)
+            } else {
+                Resource.error(response.message(), null)
             }
-
-            val local = FeedLocal(feed.id)
-            local.lastSync = Date().time
-            feedLocalDao.upsert(local)
-
-            resource
+        } catch (e: Exception) {
+            Resource.error(e.localizedMessage ?: e.toString(), null)
         }
+
+        val local = FeedLocal(feed.id)
+        local.lastSync = Date().time
+        feedLocalDao.upsert(local)
+
+        resource
     }
 
     @WorkerThread

@@ -131,9 +131,7 @@ public class ChangeEventActivity extends AppCompatActivity {
 		Event event = resource.getData();
 		List<String> userRecentEventInfo = new ArrayList<>();
 		userRecentEventInfo.add(event.getRemoteId());
-		new RecentEventTask(getApplicationContext(), status -> {
-			// no-op, don't care if server didn't get event selection
-		}).execute(userRecentEventInfo.toArray(new String[userRecentEventInfo.size()]));
+		new RecentEventTask(getApplicationContext()).execute(userRecentEventInfo.toArray(new String[userRecentEventInfo.size()]));
 
 		try {
 			UserHelper userHelper = UserHelper.getInstance(getApplicationContext());

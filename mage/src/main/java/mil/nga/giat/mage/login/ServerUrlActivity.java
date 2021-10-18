@@ -127,25 +127,23 @@ public class ServerUrlActivity extends AppCompatActivity {
 			apiStatusView.setVisibility(View.VISIBLE);
 			serverUrlForm.setVisibility(View.GONE);
 		} else {
-			apiStatusView.setVisibility(View.GONE);
-			serverUrlForm.setVisibility(View.VISIBLE);
-			serverUrlButton.setEnabled(true);
-
 			if (resource.getStatus() == Resource.Status.SUCCESS) {
-				if (resource.getData()) {
-					// finish this activity back to the login activity
+				if (resource.getData() != null) {
 					done();
 				} else {
 					new AlertDialog.Builder(this)
-							.setTitle("Compatibility Error")
-							.setMessage("Your MAGE application is not compatible with this server.  Please update your application or contact your MAGE administrator for support.")
-							.setPositiveButton(android.R.string.ok, null)
-							.create()
-							.show();
+						.setTitle("Compatibility Error")
+						.setMessage("Your MAGE application is not compatible with this server.  Please update your application or contact your MAGE administrator for support.")
+						.setPositiveButton(android.R.string.ok, null)
+						.create()
+						.show();
 
 					serverUrlLayout.setError("Application is not compatible with server.");
 				}
 			} else {
+				apiStatusView.setVisibility(View.GONE);
+				serverUrlForm.setVisibility(View.VISIBLE);
+				serverUrlButton.setEnabled(true);
 				serverUrlLayout.setError(resource.getMessage());
 			}
 		}

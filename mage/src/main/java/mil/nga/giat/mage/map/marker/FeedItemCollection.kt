@@ -19,13 +19,12 @@ import mil.nga.giat.mage.data.feed.Feed
 import mil.nga.giat.mage.data.feed.FeedItem
 import mil.nga.giat.mage.data.feed.FeedWithItems
 import mil.nga.giat.mage.data.feed.ItemWithFeed
+import mil.nga.giat.mage.glide.target.MarkerTarget
+import mil.nga.giat.mage.network.Server
 import mil.nga.giat.mage.utils.DateFormatFactory
 import mil.nga.sf.GeometryType
 import mil.nga.sf.util.GeometryUtils
-import java.util.Locale
-import java.util.Date
-import mil.nga.giat.mage.glide.target.MarkerTarget
-import mil.nga.giat.mage.network.Server
+import java.util.*
 
 class FeedItemCollection(val context: Context, val map: GoogleMap) {
 
@@ -35,42 +34,62 @@ class FeedItemCollection(val context: Context, val map: GoogleMap) {
     private val dateFormat = DateFormatFactory.format("yyyy-MM-dd HH:mm zz", Locale.getDefault(), context)
 
     fun setItems(feedWithItems: FeedWithItems) {
-        var shapes = feedMap[feedWithItems.feed.id]
-        if (shapes == null) {
-            shapes = mutableMapOf()
-            feedMap[feedWithItems.feed.id] = shapes
-        } else {
-            shapes.values.forEach {
-                it.remove()
-            }
-            shapes.clear()
-        }
+        val shapes = feedMap[feedWithItems.feed.id] ?: mutableMapOf()
+        feedMap[feedWithItems.feed.id] = shapes
 
-        feedWithItems.items.forEach {
-            add(feedWithItems.feed, it, shapes)
+        if (feedWithItems.feed.itemsHaveIdentity) {
+            val update = mutableMapOf<String, Pair<FeedItem, GoogleMapShape>>()
+            val add = mutableListOf<FeedItem>()
+            feedWithItems.items.forEach { item ->
+                val shape = shapes.remove(item.id)
+                if (shape == null) add.add(item) else update[item.id] = Pair(item, shape)
+            }
+
+            shapes.values.forEach { it.remove() }
+            shapes.clear()
+
+            add.forEach { item ->
+                add(feedWithItems.feed, item)?.let { shape ->
+                    shapes[item.id] = shape
+                }
+            }
+
+            update.values.forEach { (item, shape) ->
+                update(item, shape)?.let {
+                    shapes[item.id] = it
+                }
+            }
+        } else {
+            shapes.values.forEach { it.remove() }
+            shapes.clear()
+
+            feedWithItems.items.forEach { item ->
+                add(feedWithItems.feed, item)?.let { shape ->
+                    shapes[item.id] = shape
+                }
+            }
         }
     }
 
-    private fun add(feed: Feed, feedItem: FeedItem, shapes: MutableMap<String, GoogleMapShape>) {
-        if (feedItem.geometry == null) return
+    private fun add(feed: Feed, feedItem: FeedItem): GoogleMapShape? {
+        if (feedItem.geometry == null) return null
 
         val geometry = feedItem.geometry
 
-        if (geometry.geometryType == GeometryType.POINT) {
+        return if (geometry.geometryType == GeometryType.POINT) {
             val point = GeometryUtils.getCentroid(geometry)
 
             val marker = map.addMarker(MarkerOptions()
                 .position(LatLng(point.y, point.x))
                 .visible(false))
 
-            marker.tag = ItemWithFeed(feed, feedItem)
+            marker?.tag = ItemWithFeed(feed, feedItem)
             if (feedItemIdWithInfoWindow == feedItem.id) {
                 map.setInfoWindowAdapter(infoWindowAdapter)
-                marker.showInfoWindow()
+                marker?.showInfoWindow()
             }
 
             val shape = GoogleMapShape(GeometryType.POINT, GoogleMapShapeType.MARKER, marker)
-            shapes[feedItem.id] = shape
 
             if (feed.mapStyle?.iconStyle?.id != null) {
                 Glide.with(context)
@@ -85,10 +104,25 @@ class FeedItemCollection(val context: Context, val map: GoogleMap) {
                     .into(MarkerTarget(context, marker, 24, 24))
             }
 
+            shape
         } else {
             // TODO set style
-            val shape = GoogleMapShapeConverter.addShapeToMap(map, GoogleMapShapeConverter().toShape(geometry))
-            shapes[feedItem.id] = shape
+            GoogleMapShapeConverter.addShapeToMap(map, GoogleMapShapeConverter().toShape(geometry))
+        }
+    }
+
+    fun update(item: FeedItem, shape: GoogleMapShape): GoogleMapShape? {
+        val marker = shape.shape as? Marker ?: return null
+        val geometry = item.geometry ?: return null
+
+        return if (geometry.geometryType == GeometryType.POINT) {
+            val point = GeometryUtils.getCentroid(geometry)
+            marker.position = LatLng(point.y, point.x)
+            shape
+        } else {
+            // TODO set style
+            shape.remove()
+            GoogleMapShapeConverter.addShapeToMap(map, GoogleMapShapeConverter().toShape(geometry))
         }
     }
 

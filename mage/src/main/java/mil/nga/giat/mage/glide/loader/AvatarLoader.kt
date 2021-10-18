@@ -1,15 +1,15 @@
 package mil.nga.giat.mage.glide.loader
 
 import android.content.Context
-import android.preference.PreferenceManager
 import android.text.TextUtils
+import androidx.preference.PreferenceManager
 import com.bumptech.glide.load.Options
 import com.bumptech.glide.load.model.GlideUrl
 import com.bumptech.glide.load.model.ModelLoader
 import com.bumptech.glide.load.model.ModelLoaderFactory
 import com.bumptech.glide.load.model.MultiModelLoaderFactory
+import mil.nga.giat.mage.R
 import mil.nga.giat.mage.glide.model.Avatar
-import mil.nga.giat.mage.sdk.R
 import okhttp3.HttpUrl
 import java.io.File
 import java.io.InputStream

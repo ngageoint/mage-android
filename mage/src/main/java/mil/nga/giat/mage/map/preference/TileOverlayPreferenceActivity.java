@@ -378,7 +378,7 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
         private void fetchRemoteGeopackageLayers() {
             Context context = getContext();
             Event event = EventHelper.getInstance(context).getCurrentEvent();
-            String baseUrl = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(mil.nga.giat.mage.sdk.R.string.serverURLKey), context.getString(mil.nga.giat.mage.sdk.R.string.serverURLDefaultValue));
+            String baseUrl = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.serverURLKey), context.getString(R.string.serverURLDefaultValue));
             Retrofit retrofit = new Retrofit.Builder()
                     .baseUrl(baseUrl)
                     .addConverterFactory(GsonConverterFactory.create(LayerDeserializer.getGsonBuilder(event)))
