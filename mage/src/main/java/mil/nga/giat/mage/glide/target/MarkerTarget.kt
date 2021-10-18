@@ -10,7 +10,7 @@ import com.bumptech.glide.request.transition.Transition
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.Marker
 
-class MarkerTarget(context: Context, private val marker: Marker, width: Int, height: Int) :
+class MarkerTarget(context: Context, private val marker: Marker?, width: Int, height: Int) :
    CustomTarget<Bitmap>(
       TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, width.toFloat(), context.resources.displayMetrics).toInt(),
       TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, height.toFloat(), context.resources.displayMetrics).toInt()
@@ -38,7 +38,7 @@ class MarkerTarget(context: Context, private val marker: Marker, width: Int, hei
    }
 
    private fun setIcon(resource: Bitmap) {
-      if (marker.tag != null) {  // if tag is null marker has been removed from map
+      if (marker?.tag != null) {  // if tag is null marker has been removed from map
          marker.setIcon(BitmapDescriptorFactory.fromBitmap(resource))
          marker.isVisible = true
       }
