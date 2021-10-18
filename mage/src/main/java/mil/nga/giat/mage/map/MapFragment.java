@@ -1,8 +1,6 @@
 package mil.nga.giat.mage.map;
 
 import android.Manifest;
-import android.animation.Animator;
-import android.animation.AnimatorListenerAdapter;
 import android.app.Activity;
 import android.app.Dialog;
 import android.content.Context;
@@ -65,6 +63,7 @@ import com.google.android.gms.maps.model.TileOverlayOptions;
 import com.google.android.gms.maps.model.TileProvider;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.android.material.snackbar.Snackbar;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Collections2;
 
@@ -172,7 +171,6 @@ public class MapFragment extends Fragment implements
 		OnMarkerClickListener,
 		OnInfoWindowClickListener,
 		GoogleMap.OnInfoWindowCloseListener,
-		GoogleMap.OnCameraMoveListener,
 		GoogleMap.OnCameraIdleListener,
 		GoogleMap.OnCameraMoveStartedListener,
 		OnClickListener, LocationSource,
@@ -243,7 +241,7 @@ public class MapFragment extends Fragment implements
 	private GeoPackageCache geoPackageCache;
 	private BoundingBox addedCacheBoundingBox;
 
-	private FloatingActionButton compassButton;
+	private FloatingActionButton reportLocationButton;
 	private FloatingActionButton searchButton;
 	private FloatingActionButton zoomToLocationButton;
 
@@ -277,8 +275,9 @@ public class MapFragment extends Fragment implements
 		availableLayerDownloadsIcon = view.findViewById(R.id.available_layer_downloads);
 		zoomToLocationButton = view.findViewById(R.id.zoom_button);
 
-		compassButton = view.findViewById(R.id.compass_button);
-		compassButton.setOnClickListener(v -> resetMapBearing());
+		reportLocationButton = view.findViewById(R.id.report_location);
+		reportLocationButton.setOnClickListener(v -> toggleReportLocation());
+		updateReportLocationButton(preferences.getBoolean(getResources().getString(R.string.reportLocationKey), false));
 
 		searchButton = view.findViewById(R.id.map_search_button);
 		if (Geocoder.isPresent()) {
@@ -422,7 +421,6 @@ public class MapFragment extends Fragment implements
 			map.setOnInfoWindowClickListener(this);
 			map.setOnCameraIdleListener(this);
 			map.setOnCameraMoveStartedListener(this);
-			map.setOnCameraMoveListener(this);
 
 			observations = new ObservationMarkerCollection(getActivity(), map);
 			historicLocations = new MyHistoricalLocationMarkerCollection(context, map);
@@ -463,7 +461,6 @@ public class MapFragment extends Fragment implements
 			switch (locateState) {
 				case OFF:
 					zoomToLocationButton.setSelected(false);
-					resetMapBearing();
 					break;
 				case FOLLOW:
 					zoomToLocationButton.setSelected(true);
@@ -522,14 +519,26 @@ public class MapFragment extends Fragment implements
 		viewModel.setEvent(currentEvent.getRemoteId());
 	}
 
-	private void resetMapBearing() {
-		if (map == null) return;
+	private void updateReportLocationButton(Boolean reportLocation) {
+		if (reportLocation) {
+			reportLocationButton.setColorFilter(getResources().getColor(R.color.md_green_500));
+			reportLocationButton.setImageResource(R.drawable.ic_my_location_white_24dp);
+		} else {
+			reportLocationButton.setColorFilter(getResources().getColor(R.color.md_red_500));
+			reportLocationButton.setImageResource(R.drawable.ic_outline_location_disabled_24);
+		}
+	}
 
-		CameraPosition cameraPosition = new CameraPosition.Builder(map.getCameraPosition())
-				.bearing(0)
-				.build();
+	private void toggleReportLocation() {
+		String key = getResources().getString(R.string.reportLocationKey);
+		boolean reportLocation = !preferences.getBoolean(key, false);
+		preferences.edit().putBoolean(key, reportLocation).apply();
+		updateReportLocationButton(reportLocation);
 
-		map.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
+		String text = reportLocation ?
+				getResources().getString(R.string.report_location_start) :
+				getResources().getString(R.string.report_location_stop);
+		Snackbar.make(getActivity().findViewById(R.id.coordinator_layout), text, Snackbar.LENGTH_SHORT).show();
 	}
 
 	private void initializePeriodicTasks() {
@@ -1046,28 +1055,6 @@ public class MapFragment extends Fragment implements
 		if (reason == REASON_GESTURE) {
 			locateState = LocateState.OFF;
 			zoomToLocationButton.setSelected(false);
-			resetMapBearing();
-		}
-	}
-
-	@Override
-	public void onCameraMove() {
-		float bearing = map.getCameraPosition().bearing;
-		if (bearing != 0) {
-			compassButton.animate().alpha(1f).setDuration(0).setListener(null);
-			compassButton.show();
-			compassButton.setRotation(bearing);
-		} else {
-			compassButton
-				.animate()
-				.alpha(0f)
-				.setDuration(500)
-				.setListener(new AnimatorListenerAdapter() {
-					@Override
-					public void onAnimationEnd(Animator animation) {
-						compassButton.hide();
-					}
-			});
 		}
 	}
 

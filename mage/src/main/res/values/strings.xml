@@ -143,5 +143,7 @@
     <string name="location_edit_error_rectangle_min_points">Rectangle must have four points</string>
     <string name="location_edit_error_polygon_kinks">Polygon cannot intersect itself</string>
 
+    <string name="report_location_start">You are now reporting your location</string>
+    <string name="report_location_stop">You are no longer reporting your location</string>
 
 </resources>
