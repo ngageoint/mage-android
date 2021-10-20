@@ -86,6 +86,7 @@ public class StaticFeatureServerFetch extends AbstractServerFetch {
 			}
 
 			for (Layer remoteLayer : remoteLayers) {
+				remoteLayer.setEvent(event);
 				if (!localLayers.contains(remoteLayer)) {
 					layerHelper.create(remoteLayer);
 				} else {

@@ -147,12 +147,13 @@ class EventRepository @Inject constructor(
          layerHelper.deleteAll("GeoPackage")
          val manager = GeoPackageFactory.getManager(context)
          for (layer in layers) { // Check if geopackage has been downloaded as part of another event
-            val relativePath = String.format("MAGE/geopackages/%s/%s", layer.remoteId, layer.fileName)
+             val relativePath = String.format("MAGE/geopackages/%s/%s", layer.remoteId, layer.fileName)
             val file = File(context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), relativePath)
             if (file.exists() && manager.existsAtExternalFile(file)) {
                layer.isLoaded = true
                layer.relativePath = relativePath
             }
+            layer.event = event
             layerHelper.create(layer)
          }
       }

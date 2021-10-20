@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.Context
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
+import com.google.gson.reflect.TypeToken
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -15,6 +16,10 @@ import mil.nga.giat.mage.data.gson.GeometryTypeAdapterFactory
 import mil.nga.giat.mage.network.LiveDataCallAdapterFactory
 import mil.nga.giat.mage.network.Server
 import mil.nga.giat.mage.network.api.*
+import mil.nga.giat.mage.sdk.datastore.layer.Layer
+import mil.nga.giat.mage.sdk.datastore.user.Team
+import mil.nga.giat.mage.sdk.datastore.user.User
+import mil.nga.giat.mage.sdk.gson.deserializer.LayersDeserializer
 import mil.nga.giat.mage.sdk.gson.deserializer.TeamsDeserializer
 import mil.nga.giat.mage.sdk.http.HttpClientManager
 import mil.nga.giat.mage.sdk.http.resource.EventResource
@@ -43,18 +48,19 @@ class NetworkModule {
 
     @Provides
     @Singleton
-    fun provideGson(): Gson {
+    fun provideGson(application: Application): Gson {
         return GsonBuilder()
             .setExclusionStrategies(AnnotationExclusionStrategy())
+            .registerTypeAdapter(object : TypeToken<java.util.Collection<Layer>>() {}.type, LayersDeserializer())
+            .registerTypeAdapter(object : TypeToken<java.util.Map<Team, java.util.Collection<User>>>() {}.type, TeamsDeserializer(application))
             .registerTypeAdapterFactory(GeometryTypeAdapterFactory())
             .registerTypeAdapter(Date::class.java, DateTimestampTypeAdapter())
             .create()
     }
 
     @Provides
-    fun provideRetrofit(gson: Gson, okHttpClient: OkHttpClient, server: Server, application: Application): Retrofit {
-        return Retrofit.Builder()
-            .addConverterFactory(GsonConverterFactory.create(TeamsDeserializer.getGsonBuilder(application)))
+    fun provideRetrofit(gson: Gson, okHttpClient: OkHttpClient, server: Server): Retrofit {
+         return Retrofit.Builder()
             .addConverterFactory(GsonConverterFactory.create(gson))
             .addCallAdapterFactory(LiveDataCallAdapterFactory())
             .baseUrl(server.baseUrl)

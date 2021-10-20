@@ -9,25 +9,13 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 
 import java.lang.reflect.Type;
-import java.util.HashMap;
-import java.util.Map;
 
 import mil.nga.giat.mage.sdk.datastore.layer.Layer;
-import mil.nga.giat.mage.sdk.datastore.user.Event;
 
 /**
  * JSON to {@link Layer}
- * 
- * @author wiedemanns
- * 
  */
 public class LayerDeserializer implements JsonDeserializer<Layer> {
-
-	private Event event = null;
-
-	public LayerDeserializer(Event event) {
-		this.event = event;
-	}
 
 	/**
 	 * Convenience method for returning a Gson object with a registered GSon
@@ -35,9 +23,9 @@ public class LayerDeserializer implements JsonDeserializer<Layer> {
 	 * 
 	 * @return A Gson object that can be used to convert Json into a {@link Layer}.
 	 */
-	public static Gson getGsonBuilder(Event event) {
+	public static Gson getGsonBuilder() {
 		GsonBuilder gsonBuilder = new GsonBuilder();
-		gsonBuilder.registerTypeAdapter(Layer.class, new LayerDeserializer(event));
+		gsonBuilder.registerTypeAdapter(Layer.class, new LayerDeserializer());
 		return gsonBuilder.create();
 	}
 
@@ -47,7 +35,6 @@ public class LayerDeserializer implements JsonDeserializer<Layer> {
 
 		JsonObject feature = json.getAsJsonObject();
 
-		layer.setEvent(event);
 		layer.setRemoteId(feature.get("id").getAsString());
 		layer.setType(feature.get("type").getAsString());
 		layer.setName(feature.get("name").getAsString());

@@ -60,7 +60,7 @@ public class LayerResource {
         String baseUrl = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.serverURLKey), context.getString(R.string.serverURLDefaultValue));
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl(baseUrl)
-                .addConverterFactory(GsonConverterFactory.create(LayerDeserializer.getGsonBuilder(event)))
+                .addConverterFactory(GsonConverterFactory.create(LayerDeserializer.getGsonBuilder()))
                 .client(HttpClientManager.getInstance().httpClient())
                 .build();
 
@@ -85,7 +85,7 @@ public class LayerResource {
         String baseUrl = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.serverURLKey), context.getString(R.string.serverURLDefaultValue));
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl(baseUrl)
-                .addConverterFactory(GsonConverterFactory.create(LayerDeserializer.getGsonBuilder(event)))
+                .addConverterFactory(GsonConverterFactory.create(LayerDeserializer.getGsonBuilder()))
                 .client(HttpClientManager.getInstance().httpClient())
                 .build();
 
