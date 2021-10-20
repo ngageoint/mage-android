@@ -220,6 +220,7 @@ public class ProfileActivity extends AppCompatActivity implements MapAndViewProv
 		GlideApp.with(this)
 				.load(Avatar.Companion.forUser(user))
 				.circleCrop()
+				.placeholder(R.drawable.ic_person_gray_24dp)
 				.fallback(R.drawable.ic_person_gray_24dp)
 				.error(R.drawable.ic_person_gray_24dp)
 				.into(imageView);

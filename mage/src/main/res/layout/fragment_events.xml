@@ -10,22 +10,22 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
-        <androidx.appcompat.widget.Toolbar
+        <com.google.android.material.appbar.MaterialToolbar
             android:id="@+id/toolbar"
             android:layout_height="wrap_content"
             android:layout_width="match_parent"
-            app:titleTextColor="@color/md_white_1000"
-            app:subtitleTextColor="@color/md_white_1000"
-            android:background="?attr/colorPrimary"/>
+            style="@style/Widget.MaterialComponents.Toolbar.PrimarySurface"
+            android:elevation="0dp"/>
 
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:paddingBottom="16dp"
-            android:paddingLeft="16dp"
-            android:paddingRight="16dp"
-            android:text="You are part of multiple events.  The observations you create and your reported location will be part of the selected event."
-            android:textColor="@android:color/white"/>
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:textColor="?attr/colorOnPrimary"
+            android:background="?attr/colorPrimary"
+            android:text="You are part of multiple events.  The observations you create and your reported location will be part of the selected event." />
 
     </com.google.android.material.appbar.AppBarLayout>
 
@@ -74,7 +74,7 @@
         <View
             android:layout_width="match_parent"
             android:layout_height="1dp"
-            android:background="#1E000000"/>
+            android:background="@color/divider" />
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/recycler_view"

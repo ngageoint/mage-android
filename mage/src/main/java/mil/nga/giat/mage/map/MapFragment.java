@@ -538,7 +538,20 @@ public class MapFragment extends Fragment implements
 		String text = reportLocation ?
 				getResources().getString(R.string.report_location_start) :
 				getResources().getString(R.string.report_location_stop);
-		Snackbar.make(getActivity().findViewById(R.id.coordinator_layout), text, Snackbar.LENGTH_SHORT).show();
+
+		Snackbar snackbar = Snackbar.make(getActivity().findViewById(R.id.coordinator_layout), text, Snackbar.LENGTH_SHORT);
+
+
+		snackbar.setAnchorView(getActivity().findViewById(R.id.new_observation_button));
+
+		final ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) snackbar.getView().getLayoutParams();
+		params.setMargins(0,
+				100,
+				0,
+				100);
+		snackbar.getView().setLayoutParams(params);
+
+		snackbar.show();
 	}
 
 	private void initializePeriodicTasks() {

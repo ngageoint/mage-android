@@ -119,11 +119,10 @@ fun ObservationViewContent(
   onAttachmentClick: ((Attachment) -> Unit)? = null
 ) {
   if (observationState != null) {
-
     Surface(
       color = MaterialTheme.colors.surface,
       contentColor = contentColorFor(MaterialTheme.colors.surface),
-      elevation = 2.dp
+      elevation = 4.dp
     ) {
       val status by observationState.status
       ObservationViewStatusContent(status)

@@ -25,5 +25,4 @@ local.properties
 *.iml
 
 # mage
-sdk
 bridge
