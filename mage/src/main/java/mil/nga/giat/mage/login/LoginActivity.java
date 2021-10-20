@@ -45,6 +45,7 @@ import mil.nga.giat.mage.MageApplication;
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage._server5.login.SignupActivity_server5;
 import mil.nga.giat.mage.cache.CacheUtils;
+import mil.nga.giat.mage.contact.ContactDialog;
 import mil.nga.giat.mage.disclaimer.DisclaimerActivity;
 import mil.nga.giat.mage.event.EventsActivity;
 import mil.nga.giat.mage.login.LoginViewModel.Authentication;
@@ -256,17 +257,15 @@ public class LoginActivity extends AppCompatActivity {
                 message = "Please contact a MAGE administrator to activate your account.";
             }
 
-            new AlertDialog.Builder(this)
-                    .setTitle("Account Created")
-                    .setMessage(message)
-                    .setPositiveButton(android.R.string.ok, null)
-                    .show();
+            ContactDialog dialog = new ContactDialog(this, this.preferences, "Account Created");
+            dialog.setMessage(message);
+            dialog.setStrategy(authentication.getStrategy());
+            dialog.show();
         } else {
-            new AlertDialog.Builder(this)
-                    .setTitle("Signin Failed")
-                    .setMessage(status.getMessage())
-                    .setPositiveButton(android.R.string.ok, null)
-                    .show();
+            ContactDialog dialog = new ContactDialog(this, this.preferences, "Sign-in Failed");
+            dialog.setMessage(status.getMessage());
+            dialog.setStrategy(authentication.getStrategy());
+            dialog.show();
         }
     }
 
@@ -277,23 +276,17 @@ public class LoginActivity extends AppCompatActivity {
         if (status == AuthorizationStatus.Status.SUCCESSFUL_AUTHORIZATION) {
             loginComplete(authorization.getUserChanged());
         } else if (status == AuthorizationStatus.Status.FAILED_AUTHORIZATION) {
-            new AlertDialog.Builder(this)
-                    .setTitle("Registration Sent")
-                    .setMessage(R.string.device_registered_text)
-                    .setPositiveButton(android.R.string.ok, null)
-                    .show();
+            ContactDialog dialog = new ContactDialog(this, this.preferences, "Registration Sent");
+            dialog.setMessage(getString(R.string.device_registered_text));
+            dialog.show();
         } else if (status == AuthorizationStatus.Status.INVALID_SERVER) {
-            new AlertDialog.Builder(this)
-                    .setTitle("Application Compatibility Error")
-                    .setMessage("This app is not compatible with this server. Please update your context or talk to your MAGE administrator.")
-                    .setPositiveButton(android.R.string.ok, null)
-                    .show();
+            ContactDialog dialog = new ContactDialog(this, this.preferences, "Application Compatibility Error");
+            dialog.setMessage("This app is not compatible with this server. Please update your context or talk to your MAGE administrator.");
+            dialog.show();
         } else {
-            new AlertDialog.Builder(this)
-                    .setTitle("Signin Failed")
-                    .setMessage(authorization.getStatus().getMessage())
-                    .setPositiveButton(android.R.string.ok, null)
-                    .show();
+            ContactDialog dialog = new ContactDialog(this, this.preferences, "Sign-in Failed");
+            dialog.setMessage(authorization.getStatus().getMessage());
+            dialog.show();
         }
     }
 
