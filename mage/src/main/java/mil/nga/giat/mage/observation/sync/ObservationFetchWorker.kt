@@ -7,11 +7,11 @@ import mil.nga.giat.mage.sdk.utils.UserUtility
 import java.util.*
 import java.util.concurrent.TimeUnit
 
-class ObservationFetchWorker(var context: Context, params: WorkerParameters) : Worker(context, params) {
+class ObservationFetchWorker(val context: Context, params: WorkerParameters) : Worker(context, params) {
 
     companion object {
         private val LOG_NAME = ObservationFetchWorker::class.java.simpleName
-        private val OBSERVATION_FETCH_WORK= "mil.nga.mage.OBSERVATION_FETCH_WORK"
+        private const val OBSERVATION_FETCH_WORK= "mil.nga.mage.OBSERVATION_FETCH_WORK"
 
         private fun workRequest(): PeriodicWorkRequest {
             val constraints = Constraints.Builder()
@@ -23,20 +23,20 @@ class ObservationFetchWorker(var context: Context, params: WorkerParameters) : W
                     .build()
         }
 
-        fun beginWork(): UUID {
+        fun beginWork(context: Context): UUID {
             val request = workRequest()
-            WorkManager.getInstance().enqueueUniquePeriodicWork(OBSERVATION_FETCH_WORK, ExistingPeriodicWorkPolicy.KEEP, request)
+            WorkManager.getInstance(context).enqueueUniquePeriodicWork(OBSERVATION_FETCH_WORK, ExistingPeriodicWorkPolicy.KEEP, request)
             return request.id
         }
 
-        fun stopWork() {
-            WorkManager.getInstance().cancelUniqueWork(OBSERVATION_FETCH_WORK);
+        fun stopWork(context: Context) {
+            WorkManager.getInstance(context).cancelUniqueWork(OBSERVATION_FETCH_WORK);
         }
     }
 
     override fun doWork(): Result {
         // Check token
-        if (UserUtility.getInstance(context).isTokenExpired()) {
+        if (UserUtility.getInstance(context).isTokenExpired) {
             Log.d(LOG_NAME, "Token expired, turn off observation fetch worker.")
             return Result.failure();
         }

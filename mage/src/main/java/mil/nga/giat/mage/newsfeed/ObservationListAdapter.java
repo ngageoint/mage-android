@@ -1,14 +1,11 @@
 package mil.nga.giat.mage.newsfeed;
 
-import android.content.ClipData;
-import android.content.ClipboardManager;
 import android.content.Context;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
-import android.text.format.DateUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -22,16 +19,12 @@ import androidx.core.graphics.drawable.DrawableCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.material.snackbar.Snackbar;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
 import com.j256.ormlite.android.AndroidDatabaseResults;
 import com.j256.ormlite.stmt.PreparedQuery;
 
 import java.lang.ref.WeakReference;
 import java.sql.SQLException;
 import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Locale;
@@ -46,8 +39,6 @@ import mil.nga.giat.mage.sdk.datastore.observation.ObservationFavorite;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationImportant;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationProperty;
-import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
-import mil.nga.giat.mage.sdk.datastore.user.Permission;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.exceptions.ObservationException;
@@ -68,9 +59,6 @@ public class ObservationListAdapter extends RecyclerView.Adapter<RecyclerView.Vi
     }
 
     private static final String LOG_NAME = ObservationListAdapter.class.getName();
-
-    private static final String SHORT_TIME_PATTERN = "h:mm a";
-    private static final String SHORT_DATE_PATTERN = "MMM d";
 
     private static final int TYPE_OBSERVATION = 1;
     private static final int TYPE_FOOTER = 2;

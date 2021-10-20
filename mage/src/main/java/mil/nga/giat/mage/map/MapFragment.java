@@ -1,8 +1,6 @@
 package mil.nga.giat.mage.map;
 
 import android.Manifest;
-import android.animation.Animator;
-import android.animation.AnimatorListenerAdapter;
 import android.app.Activity;
 import android.app.Dialog;
 import android.content.Context;
@@ -43,6 +41,7 @@ import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.Observer;
+import androidx.lifecycle.ViewModelProvider;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -64,6 +63,7 @@ import com.google.android.gms.maps.model.TileOverlayOptions;
 import com.google.android.gms.maps.model.TileProvider;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.android.material.snackbar.Snackbar;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Collections2;
 
@@ -72,6 +72,7 @@ import org.apache.commons.lang3.StringUtils;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -108,6 +109,9 @@ import mil.nga.geopackage.tiles.features.FeatureTiles;
 import mil.nga.geopackage.tiles.features.custom.NumberFeaturesTile;
 import mil.nga.geopackage.tiles.user.TileDao;
 import mil.nga.giat.mage.R;
+import mil.nga.giat.mage.data.feed.FeedItem;
+import mil.nga.giat.mage.data.feed.FeedWithItems;
+import mil.nga.giat.mage.feed.item.FeedItemActivity;
 import mil.nga.giat.mage.filter.DateTimeFilter;
 import mil.nga.giat.mage.filter.Filter;
 import mil.nga.giat.mage.filter.FilterActivity;
@@ -124,6 +128,7 @@ import mil.nga.giat.mage.map.cache.StaticFeatureCacheOverlay;
 import mil.nga.giat.mage.map.cache.URLCacheOverlay;
 import mil.nga.giat.mage.map.cache.WMSCacheOverlay;
 import mil.nga.giat.mage.map.cache.XYZDirectoryCacheOverlay;
+import mil.nga.giat.mage.map.marker.FeedItemCollection;
 import mil.nga.giat.mage.map.marker.LocationMarkerCollection;
 import mil.nga.giat.mage.map.marker.MyHistoricalLocationMarkerCollection;
 import mil.nga.giat.mage.map.marker.ObservationMarkerCollection;
@@ -159,8 +164,21 @@ import mil.nga.sf.proj.ProjectionConstants;
 import mil.nga.sf.proj.ProjectionFactory;
 
 @AndroidEntryPoint
-public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapClickListener, OnMapLongClickListener, OnMarkerClickListener, OnInfoWindowClickListener, GoogleMap.OnCameraMoveListener, GoogleMap.OnCameraIdleListener, GoogleMap.OnCameraMoveStartedListener, OnClickListener, LocationSource, OnCacheOverlayListener,
-		IObservationEventListener, ILocationEventListener, IUserEventListener, Observer<Location> {
+public class MapFragment extends Fragment implements
+		OnMapReadyCallback,
+		OnMapClickListener,
+		OnMapLongClickListener,
+		OnMarkerClickListener,
+		OnInfoWindowClickListener,
+		GoogleMap.OnInfoWindowCloseListener,
+		GoogleMap.OnCameraIdleListener,
+		GoogleMap.OnCameraMoveStartedListener,
+		OnClickListener, LocationSource,
+		OnCacheOverlayListener,
+		IObservationEventListener,
+		ILocationEventListener,
+		IUserEventListener,
+		Observer<Location> {
 
 	private static final String LOG_NAME = MapFragment.class.getName();
 
@@ -172,7 +190,6 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 	private static final int PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 1;
 
 	private static final int MARKER_REFRESH_INTERVAL_SECONDS = 300;
-	private static final int OBSERVATION_REFRESH_INTERVAL_SECONDS = 60;
 
 	private enum LocateState {
 		OFF,
@@ -191,6 +208,8 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 	@Inject
 	protected SharedPreferences preferences;
 
+	private MapViewModel viewModel;
+
 	private MapView mapView;
 	private GoogleMap map;
 	private View searchLayout;
@@ -204,7 +223,6 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 	protected LocationPolicy locationPolicy;
 	private LiveData<Location> locationProvider;
 
-	private RefreshMarkersRunnable refreshObservationsTask;
 	private RefreshMarkersRunnable refreshLocationsTask;
 	private RefreshMarkersRunnable refreshHistoricLocationsTask;
 
@@ -214,13 +232,16 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 	private StaticGeometryCollection staticGeometryCollection;
 	private List<Marker> searchMarkers = new ArrayList<>();
 
+	private FeedItemCollection feedItems;
+	private Map<String, LiveData<FeedWithItems>> feeds = Collections.emptyMap();
+
 	private Map<String, CacheOverlay> cacheOverlays = new HashMap<>();
 
 	// GeoPackage cache of open GeoPackage connections
 	private GeoPackageCache geoPackageCache;
 	private BoundingBox addedCacheBoundingBox;
 
-	private FloatingActionButton compassButton;
+	private FloatingActionButton reportLocationButton;
 	private FloatingActionButton searchButton;
 	private FloatingActionButton zoomToLocationButton;
 
@@ -237,6 +258,13 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 	private TextView mgrsNorthingTextView;
 
 	@Override
+	public void onCreate(@Nullable Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+
+		viewModel = new ViewModelProvider(this).get(MapViewModel.class);
+	}
+
+	@Override
 	public View onCreateView(@NonNull LayoutInflater  inflater, ViewGroup container, Bundle savedInstanceState) {
 		View view = inflater.inflate(R.layout.fragment_map, container, false);
 
@@ -247,8 +275,9 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 		availableLayerDownloadsIcon = view.findViewById(R.id.available_layer_downloads);
 		zoomToLocationButton = view.findViewById(R.id.zoom_button);
 
-		compassButton = view.findViewById(R.id.compass_button);
-		compassButton.setOnClickListener(v -> resetMapBearing());
+		reportLocationButton = view.findViewById(R.id.report_location);
+		reportLocationButton.setOnClickListener(v -> toggleReportLocation());
+		updateReportLocationButton(preferences.getBoolean(getResources().getString(R.string.reportLocationKey), false));
 
 		searchButton = view.findViewById(R.id.map_search_button);
 		if (Geocoder.isPresent()) {
@@ -293,6 +322,13 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 	}
 
 	@Override
+	public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+		super.onViewCreated(view, savedInstanceState);
+
+		viewModel.getItems().observe(getViewLifecycleOwner(), this::onFeedItems);
+	}
+
+	@Override
 	public void onChanged(@Nullable Location location) {
 		if (locationChangedListener != null) {
 			locationChangedListener.onLocationChanged(location);
@@ -323,6 +359,10 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 		if (locations != null) {
 			locations.clear();
 			locations = null;
+		}
+
+		if (feedItems != null) {
+			feedItems.clear();
 		}
 
 		if (historicLocations != null) {
@@ -381,11 +421,11 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 			map.setOnInfoWindowClickListener(this);
 			map.setOnCameraIdleListener(this);
 			map.setOnCameraMoveStartedListener(this);
-			map.setOnCameraMoveListener(this);
 
 			observations = new ObservationMarkerCollection(getActivity(), map);
 			historicLocations = new MyHistoricalLocationMarkerCollection(context, map);
 			locations = new LocationMarkerCollection(getActivity(), map);
+			feedItems = new FeedItemCollection(getActivity(), map);
 		}
 
 		int dayNightMode = getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK;
@@ -421,7 +461,6 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 			switch (locateState) {
 				case OFF:
 					zoomToLocationButton.setSelected(false);
-					resetMapBearing();
 					break;
 				case FOLLOW:
 					zoomToLocationButton.setSelected(true);
@@ -476,24 +515,33 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 		}
 
 		((AppCompatActivity) getActivity()).getSupportActionBar().setSubtitle(getFilterTitle());
+
+		viewModel.setEvent(currentEvent.getRemoteId());
 	}
 
-	private void resetMapBearing() {
-		if (map == null) return;
+	private void updateReportLocationButton(Boolean reportLocation) {
+		if (reportLocation) {
+			reportLocationButton.setColorFilter(getResources().getColor(R.color.md_green_500));
+			reportLocationButton.setImageResource(R.drawable.ic_my_location_white_24dp);
+		} else {
+			reportLocationButton.setColorFilter(getResources().getColor(R.color.md_red_500));
+			reportLocationButton.setImageResource(R.drawable.ic_outline_location_disabled_24);
+		}
+	}
 
-		CameraPosition cameraPosition = new CameraPosition.Builder(map.getCameraPosition())
-				.bearing(0)
-				.build();
+	private void toggleReportLocation() {
+		String key = getResources().getString(R.string.reportLocationKey);
+		boolean reportLocation = !preferences.getBoolean(key, false);
+		preferences.edit().putBoolean(key, reportLocation).apply();
+		updateReportLocationButton(reportLocation);
 
-		map.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
+		String text = reportLocation ?
+				getResources().getString(R.string.report_location_start) :
+				getResources().getString(R.string.report_location_stop);
+		Snackbar.make(getActivity().findViewById(R.id.coordinator_layout), text, Snackbar.LENGTH_SHORT).show();
 	}
 
 	private void initializePeriodicTasks() {
-		if (refreshObservationsTask == null) {
-			refreshObservationsTask = new RefreshMarkersRunnable(observations, "timestamp", OBSERVATION_FILTER_TYPE, getTimeFilterId(), OBSERVATION_REFRESH_INTERVAL_SECONDS);
-            scheduleMarkerRefresh(refreshObservationsTask);
-		}
-
 		if (refreshLocationsTask == null) {
 			refreshLocationsTask = new RefreshMarkersRunnable(locations, "timestamp", LOCATION_FILTER_TYPE, getLocationTimeFilterId(), MARKER_REFRESH_INTERVAL_SECONDS);
 			scheduleMarkerRefresh(refreshLocationsTask);
@@ -506,11 +554,9 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 	}
 
 	private void stopPeriodicTasks() {
-		getView().removeCallbacks(refreshObservationsTask);
 		getView().removeCallbacks(refreshLocationsTask);
 		getView().removeCallbacks(refreshHistoricLocationsTask);
 
-		refreshObservationsTask = null;
 		refreshLocationsTask = null;
 		refreshHistoricLocationsTask = null;
 	}
@@ -605,6 +651,14 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 			locations.clear();
 		}
 
+		if (feedItems != null) {
+			feedItems.clear();
+		}
+
+		for (LiveData<FeedWithItems> liveData : feeds.values()) {
+			liveData.removeObservers(getViewLifecycleOwner());
+		}
+
 		CacheProvider.getInstance(getActivity().getApplicationContext()).unregisterCacheOverlayListener(this);
 
 		if (map != null) {
@@ -615,6 +669,23 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 			if (mgrsTileOverlay != null) {
 				mgrsTileOverlay.remove();
 			}
+		}
+	}
+
+	private void onFeedItems(Map<String, LiveData<FeedWithItems>> feeds) {
+		for (LiveData<FeedWithItems> liveData : this.feeds.values()) {
+			liveData.removeObservers(getViewLifecycleOwner());
+		}
+
+		this.feeds = feeds;
+		for (LiveData<FeedWithItems> liveData : feeds.values()) {
+			liveData.observe(getViewLifecycleOwner(), this::onFeedItems);
+		}
+	}
+
+	private void onFeedItems(FeedWithItems items) {
+		if (items != null) {
+			feedItems.setItems(items);
 		}
 	}
 
@@ -812,6 +883,18 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 			startActivity(profileView);
 			return;
 		}
+
+		FeedItem feedItem = feedItems.itemForMarker(marker);
+		if (feedItem != null) {
+			Intent intent = FeedItemActivity.Companion.intent(context, feedItem);
+			startActivity(intent);
+			return;
+		}
+	}
+
+	@Override
+	public void onInfoWindowClose(Marker marker) {
+		feedItems.onInfoWindowClose(marker);
 	}
 
 	@Override
@@ -839,6 +922,10 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 		}
 
 		if (locations.onMarkerClick(marker)) {
+			return true;
+		}
+
+		if (feedItems.onMarkerClick(marker)) {
 			return true;
 		}
 
@@ -968,28 +1055,6 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 		if (reason == REASON_GESTURE) {
 			locateState = LocateState.OFF;
 			zoomToLocationButton.setSelected(false);
-			resetMapBearing();
-		}
-	}
-
-	@Override
-	public void onCameraMove() {
-		float bearing = map.getCameraPosition().bearing;
-		if (bearing != 0) {
-			compassButton.animate().alpha(1f).setDuration(0).setListener(null);
-			compassButton.show();
-			compassButton.setRotation(bearing);
-		} else {
-			compassButton
-				.animate()
-				.alpha(0f)
-				.setDuration(500)
-				.setListener(new AnimatorListenerAdapter() {
-					@Override
-					public void onAnimationEnd(Animator animation) {
-						compassButton.hide();
-					}
-			});
 		}
 	}
 
@@ -1446,11 +1511,11 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 	}
 
 	private int getTimeFilterId() {
-		return preferences.getInt(getResources().getString(R.string.activeTimeFilterKey), getResources().getInteger(R.integer.time_filter_none));
+		return preferences.getInt(getResources().getString(R.string.activeTimeFilterKey), getResources().getInteger(R.integer.time_filter_last_month));
 	}
 
 	private int getLocationTimeFilterId() {
-		return preferences.getInt(getResources().getString(R.string.activeLocationTimeFilterKey), getResources().getInteger(R.integer.time_filter_none));
+		return preferences.getInt(getResources().getString(R.string.activeLocationTimeFilterKey), getResources().getInteger(R.integer.time_filter_last_month));
 	}
 
 	private int getCustomTimeNumber(String filterType) {
@@ -1515,7 +1580,6 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, OnMapCl
 	}
 
 	private String getFilterTitle() {
-
 		if (getTimeFilterId() != getResources().getInteger(R.integer.time_filter_none)
 				|| getLocationTimeFilterId() != getResources().getInteger(R.integer.time_filter_none)
 				|| preferences.getBoolean(getResources().getString(R.string.activeImportantFilterKey), false)

@@ -167,7 +167,7 @@ public class AttachmentViewerActivity extends AppCompatActivity {
 				findViewById(R.id.video).setVisibility(View.VISIBLE);
 
 				// TODO pass token in header
-				String token = PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).getString(getApplicationContext().getString(mil.nga.giat.mage.sdk.R.string.tokenKey), null);
+				String token = PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).getString(getApplicationContext().getString(R.string.tokenKey), null);
 				Uri uri = Uri.parse(url + "?access_token=" + token);
 
 				final VideoView videoView = findViewById(R.id.video);
@@ -201,7 +201,7 @@ public class AttachmentViewerActivity extends AppCompatActivity {
 				findViewById(R.id.progress).setVisibility(View.VISIBLE);
 				findViewById(R.id.video).setVisibility(View.VISIBLE);
 
-				String token = PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).getString(getApplicationContext().getString(mil.nga.giat.mage.sdk.R.string.tokenKey), null);
+				String token = PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).getString(getApplicationContext().getString(R.string.tokenKey), null);
 				Uri uri = Uri.parse(url + "?access_token=" + token);
 
 				final VideoView videoView = findViewById(R.id.video);

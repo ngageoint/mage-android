@@ -1,9 +1,12 @@
 package mil.nga.giat.mage.observation.view
 
 import androidx.compose.animation.animateContentSize
-import androidx.compose.foundation.*
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -18,24 +21,22 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import mil.nga.giat.mage._server5.form.view.AttachmentsViewContent_server5
 import mil.nga.giat.mage.coordinate.CoordinateFormatter
-import mil.nga.giat.mage.form.FormState
 import mil.nga.giat.mage.form.FormViewModel
-import mil.nga.giat.mage.map.marker.ObservationBitmapFactory
-import mil.nga.giat.mage.form.field.FieldValue
 import mil.nga.giat.mage.form.view.*
 import mil.nga.giat.mage.observation.ObservationPermission
 import mil.nga.giat.mage.observation.ObservationState
 import mil.nga.giat.mage.observation.ObservationStatusState
 import mil.nga.giat.mage.sdk.Compatibility
 import mil.nga.giat.mage.sdk.datastore.observation.Attachment
-import mil.nga.giat.mage.ui.theme.*
+import mil.nga.giat.mage.ui.theme.MageTheme
+import mil.nga.giat.mage.ui.theme.importantBackground
+import mil.nga.giat.mage.ui.theme.topAppBarBackground
 import mil.nga.giat.mage.utils.DateFormatFactory
 import java.util.*
 
@@ -65,10 +66,7 @@ fun ObservationViewScreen(
   MageTheme {
     Scaffold(
       topBar = {
-        ObservationViewTopBar(
-          observationState = observationState,
-          onClose = { onClose?.invoke() }
-        )
+        ObservationViewTopBar() { onClose?.invoke() }
       },
       content = {
         Column {
@@ -99,17 +97,12 @@ fun ObservationViewScreen(
 
 @Composable
 fun ObservationViewTopBar(
-  observationState: ObservationState?,
   onClose: () -> Unit
 ) {
-  val formState = observationState?.forms?.value?.firstOrNull()
-  val primary = formState?.fields?.find { it.definition.name == formState.definition.primaryMapField }?.answer as? FieldValue.Text
-  val title = primary?.text ?: "Observation"
-
   TopAppBar(
     backgroundColor = MaterialTheme.colors.topAppBarBackground,
     contentColor = Color.White,
-    title = { Text(title) },
+    title = { Text("Observation") },
     navigationIcon = {
       IconButton(onClick = { onClose.invoke() }) {
         Icon(Icons.Default.ArrowBack, "Cancel Edit")
@@ -351,13 +344,12 @@ fun ObservationViewHeaderContent(
         }
       }
 
-      Row(modifier = Modifier
-        .padding(top = 16.dp, start = 16.dp, bottom = 16.dp)
+      Row(
+        modifier = Modifier.padding(top = 16.dp, start = 16.dp, bottom = 16.dp)
       ) {
         Column(Modifier.weight(1f)) {
           Row(
-            modifier = Modifier
-              .padding(bottom = 16.dp)
+            modifier = Modifier.padding(bottom = 16.dp)
           ) {
             CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
               observationState?.userDisplayName?.let {
@@ -384,10 +376,8 @@ fun ObservationViewHeaderContent(
             }
           }
 
-          FormHeaderContent(formState, primaryColor = MaterialTheme.colors.primary)
+          FormHeaderContent(formState)
         }
-
-        ObservationIcon(formState)
       }
 
       observationState?.geometryFieldState?.answer?.location?.let { location ->
@@ -639,26 +629,5 @@ fun ObservationActions(
         }
       }
     }
-  }
-}
-
-@Composable
-fun ObservationIcon(
-  formState: FormState?
-) {
-  val primary = formState?.fields?.find { it.definition.name == formState.definition.primaryMapField }?.answer as? FieldValue.Text
-  val secondary = formState?.fields?.find { it.definition.name == formState.definition.secondaryMapField }?.answer as? FieldValue.Text
-  val bitmap = ObservationBitmapFactory.bitmap(LocalContext.current, formState?.eventId, formState?.definition?.id, primary, secondary)
-
-  Box(modifier = Modifier
-    .padding(start = 16.dp, end = 16.dp)
-  ) {
-    Image(
-      bitmap = bitmap.asImageBitmap(),
-      contentDescription = "Observation Icon",
-      modifier = Modifier
-        .width(40.dp)
-        .height(40.dp)
-    )
   }
 }

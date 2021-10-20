@@ -7,10 +7,10 @@ import androidx.work.Worker
 import androidx.work.WorkerParameters
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
+import mil.nga.giat.mage.R
 import mil.nga.giat.mage.form.FieldType
 import mil.nga.giat.mage.form.Form
 import mil.nga.giat.mage.form.field.Media
-import mil.nga.giat.mage.sdk.R
 import mil.nga.giat.mage.sdk.datastore.observation.*
 import mil.nga.giat.mage.sdk.exceptions.ObservationException
 import mil.nga.giat.mage.sdk.http.HttpClientManager

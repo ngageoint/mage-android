@@ -45,7 +45,7 @@ public class ObservationFilterActivity extends AppCompatActivity implements Comp
 
 		SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
 
-		timeFilter = activeTimeFilter = preferences.getInt(getResources().getString(R.string.activeTimeFilterKey), getResources().getInteger(R.integer.time_filter_none));
+		timeFilter = activeTimeFilter = preferences.getInt(getResources().getString(R.string.activeTimeFilterKey), getResources().getInteger(R.integer.time_filter_last_month));
 		customTimeNumber = preferences.getInt(getResources().getString(R.string.customObservationTimeNumberFilterKey), 0);
 		customTimeUnit = preferences.getString(getResources().getString(R.string.customObservationTimeUnitFilterKey), getResources().getStringArray(R.array.timeUnitEntries)[0]);
 
@@ -146,7 +146,7 @@ public class ObservationFilterActivity extends AppCompatActivity implements Comp
 		View view = findViewById(android.R.id.content).findViewWithTag(timeFilter.toString());
 		if (view == null) {
 			view = findViewById(android.R.id.content).findViewWithTag("0");
-			timeFilter = activeTimeFilter = getResources().getInteger(R.integer.time_filter_none);
+			timeFilter = activeTimeFilter = getResources().getInteger(R.integer.time_filter_last_month);
 		}
 
 		((RadioButton) view).setChecked(true);

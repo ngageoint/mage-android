@@ -19,7 +19,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Stack;
 
-import mil.nga.giat.mage.event.EventServerFetch;
+import mil.nga.giat.mage.data.event.EventRepository;
 import mil.nga.giat.mage.form.field.FieldValue;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationProperty;
@@ -94,9 +94,8 @@ public class ObservationBitmapFactory {
 	private static InputStream getIconStream(Context context, Observation observation) {
 		InputStream iconStream = null;
 		if (observation != null) {
-
 			// make path from type and variant
-			File path = new File(new File(new File(context.getFilesDir() + EventServerFetch.OBSERVATION_ICON_PATH), observation.getEvent().getRemoteId()), "icons");
+			File path = new File(new File(new File(context.getFilesDir() + EventRepository.Companion.getOBSERVATION_ICON_PATH()), observation.getEvent().getRemoteId()), "icons");
 
 			Stack<String> iconProperties = new Stack<>();
 
@@ -152,7 +151,7 @@ public class ObservationBitmapFactory {
 		if (eventId != null) {
 
 			// make path from type and variant
-			File path = new File(new File(new File(context.getFilesDir() + EventServerFetch.OBSERVATION_ICON_PATH), eventId), "icons");
+			File path = new File(new File(new File(context.getFilesDir() + EventRepository.Companion.getOBSERVATION_ICON_PATH()), eventId), "icons");
 
 			Stack<String> iconProperties = new Stack<>();
 
@@ -174,10 +173,6 @@ public class ObservationBitmapFactory {
 				} catch (FileNotFoundException e) {
 					Log.e(LOG_NAME, "Cannot find icon.", e);
 				}
-			}
-
-			if (iconStream != null) {
-				Log.i(LOG_NAME, "path for icon stream: " + path.getAbsolutePath());
 			}
 		}
 

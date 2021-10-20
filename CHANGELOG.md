@@ -8,6 +8,21 @@ Adheres to [Semantic Versioning](http://semver.org/).
 ##### Features
 
 ##### Bug Fixes
+
+
+## [7.0.2](https://github.com/ngageoint/mage-android/releases/tag/7.0.2)
+
+##### Features
+* Default time filter for observations and user locations to 30 days.
+
+##### Bug Fixes
+
+## [7.0.1](https://github.com/ngageoint/mage-android/releases/tag/7.0.1)
+
+##### Features
+* Removed "logged in notification" for clarity.  MAGE location reporting notification now has a "logout" button.
+
+##### Bug Fixes
 * Filter archived forms in form picker
 * Fix signup crash for 5.x servers.
 

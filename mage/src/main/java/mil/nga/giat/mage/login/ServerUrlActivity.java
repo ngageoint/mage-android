@@ -2,7 +2,6 @@ package mil.nga.giat.mage.login;
 
 
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Typeface;
@@ -16,7 +15,7 @@ import android.widget.TextView;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.fragment.app.FragmentManager;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.preference.PreferenceManager;
 
 import com.google.android.material.textfield.TextInputLayout;
@@ -27,18 +26,18 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
+import dagger.hilt.android.AndroidEntryPoint;
 import mil.nga.giat.mage.R;
-import mil.nga.giat.mage.contact.ContactDialog;
-import mil.nga.giat.mage.sdk.datastore.DaoStore;
+import mil.nga.giat.mage.network.Resource;
 import mil.nga.giat.mage.sdk.datastore.observation.AttachmentHelper;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
-import mil.nga.giat.mage.sdk.preferences.ServerApi;
 
 /**
  *
  * Created by wnewman on 1/3/18.
  */
-public class ServerUrlActivity extends AppCompatActivity implements ServerApi.ServerApiListener {
+@AndroidEntryPoint
+public class ServerUrlActivity extends AppCompatActivity {
 
 	private View apiStatusView;
 	private View serverUrlForm;
@@ -46,8 +45,7 @@ public class ServerUrlActivity extends AppCompatActivity implements ServerApi.Se
 	private TextInputLayout serverUrlLayout;
 	private Button serverUrlButton;
 
-	private static final String SERVER_URL_FRAGMENT_TAG = "SERVER_URL_FRAGMENT";
-	private ServerUrlFragment urlFragment;
+	private ServerUrlViewModel viewModel;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -55,22 +53,17 @@ public class ServerUrlActivity extends AppCompatActivity implements ServerApi.Se
 
 		setContentView(R.layout.activity_server_url);
 
-		TextView appName = (TextView) findViewById(R.id.mage);
+		TextView appName = findViewById(R.id.mage);
 		appName.setTypeface(Typeface.createFromAsset(getAssets(),"fonts/GondolaMage-Regular.otf"));
 
 		apiStatusView = findViewById(R.id.api_status);
 		serverUrlForm = findViewById(R.id.server_url_form);
 
-		serverUrlLayout = (TextInputLayout) findViewById(R.id.server_url_layout);
+		serverUrlLayout = findViewById(R.id.server_url_layout);
 
-		serverUrlTextView = (EditText) findViewById(R.id.server_url);
-		Button cancelButton = (Button) findViewById(R.id.cancel_button);
-		cancelButton.setOnClickListener(new View.OnClickListener() {
-			@Override
-			public void onClick(View v) {
-				done();
-			}
-		});
+		serverUrlTextView = findViewById(R.id.server_url);
+		Button cancelButton =  findViewById(R.id.cancel_button);
+		cancelButton.setOnClickListener(v -> done());
 
 		SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
 		String serverUrl = sharedPreferences.getString(getString(R.string.serverURLKey), getString(R.string.serverURLDefaultValue));
@@ -82,29 +75,11 @@ public class ServerUrlActivity extends AppCompatActivity implements ServerApi.Se
 		}
 		serverUrlTextView.setSelection(serverUrlTextView.getText().length());
 
-		serverUrlButton = (Button) findViewById(R.id.server_url_button);
-		serverUrlButton.setOnClickListener(new View.OnClickListener() {
-			@Override
-			public void onClick(View v) {
-				onChangeServerUrl();
-			}
-		});
+		serverUrlButton = findViewById(R.id.server_url_button);
+		serverUrlButton.setOnClickListener(v -> onChangeServerUrl());
 
-
-		FragmentManager fragmentManager = getSupportFragmentManager();
-		urlFragment = (ServerUrlFragment) fragmentManager.findFragmentByTag(SERVER_URL_FRAGMENT_TAG);
-
-		// If the Fragment is non-null, then it is being retained over a configuration change.
-		if (urlFragment == null) {
-			urlFragment = new ServerUrlFragment();
-			fragmentManager.beginTransaction().add(urlFragment, SERVER_URL_FRAGMENT_TAG).commit();
-		}
-
-		if (urlFragment.isValidatingApi()) {
-			serverUrlButton.setEnabled(false);
-			apiStatusView.setVisibility(View.VISIBLE);
-			serverUrlForm.setVisibility(View.GONE);
-		}
+		viewModel = new ViewModelProvider(this).get(ServerUrlViewModel.class);
+		viewModel.getApi().observe(this, this::onApi);
 	}
 
 	private void onChangeServerUrl() {
@@ -123,12 +98,7 @@ public class ServerUrlActivity extends AppCompatActivity implements ServerApi.Se
 			new AlertDialog.Builder(this)
 					.setTitle("You Have Unsaved Data")
 					.setMessage(String.format("You have %s.  All unsaved observations will be lost if you continue.", StringUtils.join(warnings, " and ")))
-					.setPositiveButton("Continue", new DialogInterface.OnClickListener() {
-						@Override
-						public void onClick(DialogInterface dialog, int which) {
-							changeServerURL();
-						}
-					})
+					.setPositiveButton("Continue", (dialog, which) -> changeServerURL())
 					.setNegativeButton(android.R.string.cancel, null)
 					.create()
 					.show();
@@ -148,48 +118,34 @@ public class ServerUrlActivity extends AppCompatActivity implements ServerApi.Se
 		imm.hideSoftInputFromWindow(serverUrlTextView.getWindowToken(), 0);
 
 		serverUrlTextView.setText(url);
-		serverUrlButton.setEnabled(false);
-		apiStatusView.setVisibility(View.VISIBLE);
-		serverUrlForm.setVisibility(View.GONE);
-
-		urlFragment.validateApi(url);
+		viewModel.setUrl(url);
 	}
 
-	@Override
-	public void onApi(boolean valid, Exception error) {
-		if (valid) {
-			// Clear the database
-			final DaoStore daoStore = DaoStore.getInstance(getApplicationContext());
-			if (!daoStore.isDatabaseEmpty()) {
-				daoStore.resetDatabase();
-			}
-
-			SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-			SharedPreferences.Editor editor = sharedPreferences.edit();
-			editor.putString(getString(R.string.serverURLKey), serverUrlTextView.getText().toString()).apply();
-
-			// finish this activity back to the login activity
-			done();
+	public void onApi(Resource<Boolean> resource) {
+		if (resource.getStatus() == Resource.Status.LOADING) {
+			serverUrlButton.setEnabled(false);
+			apiStatusView.setVisibility(View.VISIBLE);
+			serverUrlForm.setVisibility(View.GONE);
 		} else {
-			apiStatusView.setVisibility(View.GONE);
-			serverUrlForm.setVisibility(View.VISIBLE);
-			serverUrlButton.setEnabled(true);
+			if (resource.getStatus() == Resource.Status.SUCCESS) {
+				if (resource.getData() != null) {
+					done();
+				} else {
+					new AlertDialog.Builder(this)
+							.setTitle("Compatibility Error")
+							.setMessage("Your MAGE application is not compatible with this server.  Please update your application or contact your MAGE administrator for support.")
+							.setPositiveButton(android.R.string.ok, null)
+							.create()
+							.show();
 
-			String message = "Cannot connect to server.";
-			if (error == null) {
-				message = "Application is not compatible with server.";
-
-				SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-				ContactDialog dialog = new ContactDialog(getApplicationContext(), sharedPreferences, "Compatibility Error");
-				dialog.setMessage("Your MAGE application is not compatible with this server.  Please update your application or contact your MAGE administrator for support.");
-				dialog.show();
-			} else {
-				if (error.getCause() != null) {
-					message = error.getCause().getMessage();
+					serverUrlLayout.setError("Application is not compatible with server.");
 				}
+			} else {
+				apiStatusView.setVisibility(View.GONE);
+				serverUrlForm.setVisibility(View.VISIBLE);
+				serverUrlButton.setEnabled(true);
+				serverUrlLayout.setError(resource.getMessage());
 			}
-
-			serverUrlLayout.setError(message);
 		}
 	}
 
