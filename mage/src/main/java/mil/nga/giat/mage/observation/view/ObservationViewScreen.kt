@@ -555,14 +555,17 @@ fun ObservationActions(
         .clickable { onAction?.invoke(ObservationAction.FavoriteBy()) }
         .padding(8.dp)
     ) {
-      CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.disabled) {
-        Text(
-          text = "2 Favorites".uppercase(),
-          style = MaterialTheme.typography.subtitle2
-        )
+      val favorites = observationState?.favorites?.value ?: 0
+      if (favorites > 0) {
+        CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.disabled) {
+          Text(
+            text = "$favorites Favorites".uppercase(),
+            style = MaterialTheme.typography.subtitle2
+          )
+        }
       }
     }
-    
+
     Row {
       if (observationState?.permissions?.contains(ObservationPermission.FLAG) == true) {
         val isFlagged = observationState.important.value != null

@@ -247,6 +247,7 @@ open class FormViewModel @Inject constructor(
       val favorite = observation.favoritesMap[currentUser.remoteId]
       favorite != null && favorite.isFavorite
     } else false
+    val favorites = observation.favoritesMap.size
 
     val status = ObservationStatusState(observation.isDirty, observation.lastModified, observation.error?.message)
     val definition =  ObservationDefinition(
@@ -281,7 +282,8 @@ open class FormViewModel @Inject constructor(
       forms = forms,
       attachments = observation.attachments,
       important = importantState,
-      favorite = isFavorite)
+      favorite = isFavorite,
+      favorites = favorites)
 
     _observationState.value = observationState
   }
