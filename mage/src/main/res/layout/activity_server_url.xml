@@ -29,8 +29,6 @@
             android:id="@+id/server_url_layout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:passwordToggleEnabled="true"
-            app:passwordToggleTint="?attr/colorPrimary"
             app:errorTextAppearance="@style/AppTheme.ErrorTextAppearance"
             android:theme="@style/AppTheme.TextInputLayout">
 
