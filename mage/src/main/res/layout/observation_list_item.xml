@@ -140,7 +140,7 @@
 
                     <TextView
                         android:id="@+id/primary"
-                        style="@style/TextAppearance.Mage.Headline5"
+                        style="@style/TextAppearance.MaterialComponents.Headline6"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_gravity="bottom"
@@ -198,6 +198,7 @@
                         android:orientation="horizontal"
                         android:layout_alignParentStart="true"
                         android:layout_centerInParent="true"
+                        android:gravity="center"
                         android:clickable="true"
                         android:focusable="true"
                         android:background="?attr/selectableItemBackground">
@@ -206,7 +207,7 @@
                             android:layout_width="24dp"
                             android:layout_height="24dp"
                             android:layout_marginEnd="8dp"
-                            app:tint="@color/icon"
+                            app:tint="@color/primary_icon"
                             android:src="@drawable/ic_my_location_white_24dp">
                         </ImageView>
 
@@ -214,6 +215,7 @@
                             android:id="@+id/location"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
+                            android:textColor="@color/primary_icon"
                             style="@style/TextAppearance.MaterialComponents.Body2">
                         </TextView>
 
