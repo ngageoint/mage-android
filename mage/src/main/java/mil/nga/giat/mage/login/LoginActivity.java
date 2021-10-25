@@ -344,6 +344,9 @@ public class LoginActivity extends AppCompatActivity {
          } else if ("ldap".equals(authenticationType)) {
             Fragment loginFragment = LdapLoginFragment.Companion.newInstance(entry.getKey(), entry.getValue());
             transaction.add(R.id.third_party_auth, loginFragment, authenticationName);
+         } else {
+            Fragment loginFragment = IdpLoginFragment.Companion.newInstance(entry.getKey(), entry.getValue());
+            transaction.add(R.id.third_party_auth, loginFragment, authenticationName);
          }
       }
 
