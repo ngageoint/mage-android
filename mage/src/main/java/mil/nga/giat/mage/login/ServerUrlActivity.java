@@ -28,6 +28,7 @@ import java.util.Locale;
 
 import dagger.hilt.android.AndroidEntryPoint;
 import mil.nga.giat.mage.R;
+import mil.nga.giat.mage.contact.ContactDialog;
 import mil.nga.giat.mage.network.Resource;
 import mil.nga.giat.mage.sdk.datastore.observation.AttachmentHelper;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
@@ -131,12 +132,10 @@ public class ServerUrlActivity extends AppCompatActivity {
 				if (resource.getData() != null) {
 					done();
 				} else {
-					new AlertDialog.Builder(this)
-						.setTitle("Compatibility Error")
-						.setMessage("Your MAGE application is not compatible with this server.  Please update your application or contact your MAGE administrator for support.")
-						.setPositiveButton(android.R.string.ok, null)
-						.create()
-						.show();
+					SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+					ContactDialog dialog = new ContactDialog(getApplicationContext(), sharedPreferences, "Compatibility Error");
+					dialog.setMessage("Your MAGE application is not compatible with this server.  Please update your application or contact your MAGE administrator for support.");
+					dialog.show();
 
 					serverUrlLayout.setError("Application is not compatible with server.");
 				}
