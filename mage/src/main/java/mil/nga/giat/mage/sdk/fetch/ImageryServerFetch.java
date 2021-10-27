@@ -65,6 +65,7 @@ public class ImageryServerFetch extends AbstractServerFetch {
                 if (isCanceled.get()) {
                     break;
                 }
+                remoteLayer.setEvent(event);
                 remoteLayer.setLoaded(true);
 
                 if (!localLayers.contains(remoteLayer)) {

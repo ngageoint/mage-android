@@ -1,14 +1,13 @@
 <resources xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <style name="AppTheme" parent="Theme.AppCompat.DayNight.DarkActionBar">
+    <style name="AppTheme" parent="Theme.MaterialComponents.Light.DarkActionBar">
         <item name="colorPrimary">@color/md_blue_600</item>
-        <item name="colorPrimaryDark">@color/md_blue_800</item>
-        <item name="colorAccent">@color/md_blue_600</item>
-
-        <item name="android:windowBackground">@color/background</item>
-
+        <item name="colorPrimaryVariant">@color/md_blue_800</item>
+        <item name="colorSecondary">@color/md_blue_600</item>
+        <item name="colorOnSurface">#DE000000</item>
+        <item name="android:statusBarColor">@color/md_blue_800</item>
+        <item name="android:colorBackground">@color/background</item>
         <item name="preferenceTheme">@style/PreferenceThemeOverlay.v14.Material</item>
-
         <item name="dialogTheme">@style/AppTheme.Dialog.Fullscreen</item>
     </style>
 
@@ -43,12 +42,16 @@
         <item name="colorAccent">@color/md_white_1000</item>
     </style>
 
-    <style name="AppTheme.Toolbar">
+    <style name="AppTheme.Toolbar" parent="AppTheme">
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
 
+<!--        <item name="android:windowTranslucentStatus">true</item>-->
+<!--        <item name="android:windowTranslucentNavigation">true</item>-->
+<!--        <item name="android:navigationBarColor">@android:color/transparent</item>-->
+
         <item name="android:windowDrawsSystemBarBackgrounds">true</item>
-        <item name="android:statusBarColor">@android:color/transparent</item>
+<!--        <item name="android:statusBarColor">@android:color/transparent</item>-->
         <item name="android:actionOverflowButtonStyle">@style/AppTheme.Toolbar.Overflow</item>
     </style>
 
@@ -90,16 +93,15 @@
         <item name="colorControlActivated">?attr/colorPrimary</item>
     </style>
 
-    <style name="AppTheme.AlternateFAB" parent="Widget.AppCompat.Button">
-        <item name="android:tint">@color/md_blue_600</item>
-        <item name="colorAccent">@color/md_white_1000</item>
-
+    <style name="AppTheme.AlternateFAB" parent="Widget.MaterialComponents.FloatingActionButton">
+        <item name="colorSecondary">@color/md_white_1000</item>
+        <item name="colorOnSecondary">@color/md_blue_600</item>
         <item name="colorButtonNormal">@color/md_blue_600</item>
     </style>
 
-    <style name="AppTheme.PrimaryFAB" parent="Widget.AppCompat.Button">
-        <item name="android:tint">@color/md_white_1000</item>
-        <item name="colorAccent">@color/md_orange_A700</item>
+    <style name="AppTheme.PrimaryFAB" parent="Widget.MaterialComponents.FloatingActionButton">
+        <item name="colorSecondary">@color/md_orange_A700</item>
+        <item name="colorOnSecondary">@color/md_white_1000</item>
     </style>
 
     <style name="AppTheme.AvailableDownloadsFAB" parent="Widget.AppCompat.Button">
@@ -231,10 +233,6 @@
 
     <style name="customCheckBoxStyle" parent="@android:style/Widget.CompoundButton.CheckBox">
         <item name="android:textColor">@android:color/white</item>
-    </style>
-
-    <style name="TextAppearance.Mage.Headline5" parent="TextAppearance.MaterialComponents.Headline5">
-        <item name="android:textColor">?attr/colorPrimary</item>
     </style>
 
     <style name="TextAppearance.Mage.Overline.Dark" parent="TextAppearance.MaterialComponents.Overline">

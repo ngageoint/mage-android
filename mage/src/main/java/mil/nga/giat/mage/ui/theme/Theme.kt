@@ -1,18 +1,11 @@
 package mil.nga.giat.mage.ui.theme
 
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.runtime.Composable
 import androidx.compose.material.Colors
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.darkColors
 import androidx.compose.material.lightColors
-import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.Stable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 
 private val LightColorPalette = lightColors(
@@ -23,8 +16,8 @@ private val LightColorPalette = lightColors(
 )
 
 private val DarkColorPalette = darkColors(
-  primary = BlueGrey700,
-  primaryVariant = BlueGrey900,
+  primary = Grey900,
+  primaryVariant = Grey900,
   secondary = BlueA200,
   error = Red300
 )

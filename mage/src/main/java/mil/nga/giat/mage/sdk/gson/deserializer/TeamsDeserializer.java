@@ -2,7 +2,6 @@ package mil.nga.giat.mage.sdk.gson.deserializer;
 
 import android.content.Context;
 
-import com.fasterxml.jackson.core.JsonFactory;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
@@ -26,19 +25,12 @@ import mil.nga.giat.mage.sdk.jackson.deserializer.UserDeserializer;
 
 /**
  * JSON to {@link Team}
- *
- * @author newmanw
- *
  */
 public class TeamsDeserializer implements JsonDeserializer<Map<Team, Collection<User>>> {
-
-    private static final String LOG_NAME = TeamsDeserializer.class.getName();
 
     private final UserHelper userHelper;
     private final UserDeserializer userDeserializer;
     private final Gson teamDeserializer;
-    private final JsonFactory factory = new JsonFactory();
-
 
     public TeamsDeserializer(Context context) {
         userHelper = UserHelper.getInstance(context);

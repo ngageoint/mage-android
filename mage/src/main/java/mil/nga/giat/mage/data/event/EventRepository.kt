@@ -153,6 +153,7 @@ class EventRepository @Inject constructor(
                layer.isLoaded = true
                layer.relativePath = relativePath
             }
+            layer.event = event
             layerHelper.create(layer)
          }
       }

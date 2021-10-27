@@ -1,12 +1,6 @@
 # MAGE Android
 
-11/16/2015
-
-This is the MAGE client for Android devices.
-
-![MAGE](screenshots/composite.png)
-
-Depends on the [MAGE Android SDK](https://github.com/ngageoint/mage-android-sdk).
+MAGE client for Android devices.
 
 ## About
 
@@ -164,10 +158,6 @@ limitations under the License.
 
 ## Acknowledgements
 
-MAGE Android makes use of the following open source projects:
-- **Android Action Bar Icons**  
-This product includes software licensed under the Creative Commons BY 2.5 License http://creativecommons.org/licenses/by/2.5/
-
 - **Android Sanselan**  
 This product includes software licensed under the MIT License http://opensource.org/licenses/mit-license.php
 
@@ -177,14 +167,6 @@ This product includes software licensed under the Apache License version 2.0 htt
 
 - **Apache Commons**  
 *Copyright © 2005-2015 The Apache Software Foundation*  
-This product includes software licensed under the Apache License version 2.0 http://www.apache.org/licenses/LICENSE-2.0
-
-- **Font Awesome**  
-*Dave Gandy - http://fontawesome.io*  
-This product includes software licensed under the SIL OFL 1.1 http://scripts.sil.org/OFL the MIT License http://opensource.org/licenses/mit-license.php and the Creative Commons BY 3.0 License http://creativecommons.org/licenses/by/3.0/
-
-- **Geocoder Plus**  
-*Copyright 2011 Bricolsoft Consulting*  
 This product includes software licensed under the Apache License version 2.0 http://www.apache.org/licenses/LICENSE-2.0
 
 - **Glide**  

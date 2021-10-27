@@ -26,7 +26,8 @@ class ObservationState(
   forms: List<FormState>,
   attachments: Collection<Attachment> = emptyList(),
   important: ObservationImportantState? = null,
-  favorite: Boolean = false
+  favorite: Boolean = false,
+  favorites: Int = 0
 ) {
   val id by mutableStateOf(id)
   val status = mutableStateOf(status)
@@ -35,6 +36,7 @@ class ObservationState(
   val important = mutableStateOf(important)
   val editImportantState = ObservationEditImportantState(important?.description)
   val favorite = mutableStateOf(favorite)
+  val favorites = mutableStateOf(favorites)
 
   fun validate(): ObservationValidationResult {
     if (definition.minObservationForms != null && definition.minObservationForms > forms.value.size) {

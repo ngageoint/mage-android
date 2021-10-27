@@ -33,7 +33,7 @@ jobs:
     - name: Build Application
       run: |
         ./gradlew clean assembleRelease \
-          -PKEYSTORE=../../release.keystore \
+          -PKEYSTORE=../release.keystore \
           -PKEYSTORE_PASSWORD=${{ secrets.KEYSTORE_PASSWORD }} \
           -PKEY_ALIAS=${{ secrets.KEY_ALIAS }} \
           -PKEY_PASSWORD=${{ secrets.KEY_PASSWORD }} \
@@ -43,4 +43,4 @@ jobs:
       uses: actions/upload-artifact@v2
       with:
         name: mage-defaults-release.apk
-        path: app/mage/build/outputs/apk/defaults/release/mage-defaults-release.apk
+        path: mage/build/outputs/apk/defaults/release/mage-defaults-release.apk

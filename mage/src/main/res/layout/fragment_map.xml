@@ -3,11 +3,13 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="?attr/colorPrimaryVariant">
 
     <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        android:background="?attr/colorPrimaryVariant">
 
         <com.google.android.gms.maps.MapView
             android:id="@+id/mapView"
@@ -71,7 +73,7 @@
         android:layout_marginTop="16dp"
         android:layout_marginBottom="16dp"
         android:layout_marginStart="16dp"
-        android:tint="@color/toggle_button_selected"
+        app:tint="@color/toggle_button_selected"
         app:backgroundTint="@color/toggle_button"
         android:theme="@style/AppTheme.AlternateFAB"
         android:src="@drawable/ic_search_black_24dp" />
@@ -91,13 +93,14 @@
         android:id="@+id/available_layer_downloads"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="top|start"
+        android:layout_gravity="top|end"
         android:layout_marginTop="12dp"
-        android:layout_marginStart="54dp"
+        android:layout_marginEnd="10dp"
         app:fabCustomSize="24dp"
         app:maxImageSize="14dp"
         android:padding="32dp"
         android:scaleType="fitXY"
+        app:tint="@color/md_white_1000"
         android:src="@drawable/baseline_cloud_download_white_24" />
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
@@ -108,7 +111,7 @@
         android:layout_marginTop="88dp"
         android:layout_marginStart="16dp"
         app:backgroundTint="@color/toggle_button"
-        android:tint="@color/toggle_button_selected"
+        app:tint="@color/toggle_button_selected"
         android:theme="@style/AppTheme.AlternateFAB"
         android:src="@drawable/ic_outline_near_me_24" />
 
@@ -128,6 +131,8 @@
         android:id="@+id/new_observation_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:paddingTop="16dp"
+        android:layout_marginTop="16dp"
         android:layout_marginBottom="16dp"
         android:layout_marginEnd="16dp"
         android:theme="@style/AppTheme.PrimaryFAB"
