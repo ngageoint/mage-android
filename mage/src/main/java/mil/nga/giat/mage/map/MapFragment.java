@@ -2,19 +2,19 @@ package mil.nga.giat.mage.map;
 
 import android.Manifest;
 import android.app.Activity;
-import android.app.Dialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.location.Geocoder;
 import android.location.Location;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.provider.Settings;
 import android.text.SpannableString;
 import android.text.util.Linkify;
 import android.util.Log;
@@ -277,7 +277,6 @@ public class MapFragment extends Fragment implements
 
 		reportLocationButton = view.findViewById(R.id.report_location);
 		reportLocationButton.setOnClickListener(v -> toggleReportLocation());
-		updateReportLocationButton(preferences.getBoolean(getResources().getString(R.string.reportLocationKey), false));
 
 		searchButton = view.findViewById(R.id.map_search_button);
 		if (Geocoder.isPresent()) {
@@ -455,30 +454,7 @@ public class MapFragment extends Fragment implements
 		UserHelper.getInstance(context).addListener(this);
 		CacheProvider.getInstance(context).registerCacheOverlayListener(this);
 
-		zoomToLocationButton.setOnClickListener(v -> {
-			locateState = locateState.next();
-
-			switch (locateState) {
-				case OFF:
-					zoomToLocationButton.setSelected(false);
-					break;
-				case FOLLOW:
-					zoomToLocationButton.setSelected(true);
-
-					Location location = locationProvider.getValue();
-					if (location != null) {
-						CameraPosition cameraPosition = new CameraPosition.Builder()
-								.target(new LatLng(location.getLatitude(), location.getLongitude()))
-								.zoom(17)
-								.bearing(45)
-								.build();
-
-						map.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
-					}
-
-					break;
-			}
-		});
+		zoomToLocationButton.setOnClickListener(v -> zoomToLocation());
 
 		ObservationLoadTask observationLoad = new ObservationLoadTask(context, observations);
 		observationLoad.addFilter(getTemporalFilter("timestamp", getTimeFilterId(), OBSERVATION_FILTER_TYPE));
@@ -519,21 +495,89 @@ public class MapFragment extends Fragment implements
 		viewModel.setEvent(currentEvent.getRemoteId());
 	}
 
-	private void updateReportLocationButton(Boolean reportLocation) {
+	private void updateReportLocationButton() {
+		boolean reportLocation = ContextCompat.checkSelfPermission(getActivity().getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED &&
+				preferences.getBoolean(getResources().getString(R.string.reportLocationKey), false) &&
+				UserHelper.getInstance(getActivity().getApplicationContext()).isCurrentUserPartOfCurrentEvent();
+
+		reportLocationButton.setSelected(reportLocation);
 		if (reportLocation) {
-			reportLocationButton.setColorFilter(getResources().getColor(R.color.md_green_500));
 			reportLocationButton.setImageResource(R.drawable.ic_my_location_white_24dp);
 		} else {
-			reportLocationButton.setColorFilter(getResources().getColor(R.color.md_red_500));
 			reportLocationButton.setImageResource(R.drawable.ic_outline_location_disabled_24);
 		}
 	}
 
+	private void zoomToLocation() {
+		if (ContextCompat.checkSelfPermission(getActivity().getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+			new AlertDialog.Builder(getActivity())
+					.setTitle(getActivity().getResources().getString(R.string.location_access_observation_title))
+					.setMessage(getActivity().getResources().getString(R.string.location_access_zoom_message))
+					.setPositiveButton(R.string.settings, (dialog, which) -> {
+						Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+						intent.setData(Uri.fromParts("package", getActivity().getApplicationContext().getPackageName(), null));
+						startActivity(intent);
+					})
+					.setNegativeButton(android.R.string.cancel, null)
+					.show();
+
+			return;
+		}
+
+		locateState = locateState.next();
+
+		switch (locateState) {
+			case OFF:
+				zoomToLocationButton.setSelected(false);
+				break;
+			case FOLLOW:
+				zoomToLocationButton.setSelected(true);
+
+				Location location = locationProvider.getValue();
+				if (location != null) {
+					CameraPosition cameraPosition = new CameraPosition.Builder()
+						.target(new LatLng(location.getLatitude(), location.getLongitude()))
+						.zoom(17)
+						.bearing(45)
+						.build();
+
+					map.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
+				}
+
+				break;
+		}
+	}
+
 	private void toggleReportLocation() {
+		if (ContextCompat.checkSelfPermission(getActivity().getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+			new AlertDialog.Builder(getActivity())
+				.setTitle(getActivity().getResources().getString(R.string.location_access_observation_title))
+				.setMessage(getActivity().getResources().getString(R.string.location_access_report_message))
+				.setPositiveButton(R.string.settings, (dialog, which) -> {
+					Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+					intent.setData(Uri.fromParts("package", getActivity().getApplicationContext().getPackageName(), null));
+					startActivity(intent);
+				})
+				.setNegativeButton(android.R.string.cancel, null)
+				.show();
+
+			return;
+		}
+
+		if (!UserHelper.getInstance(getActivity().getApplicationContext()).isCurrentUserPartOfCurrentEvent()) {
+			new AlertDialog.Builder(getActivity())
+				.setTitle(getActivity().getResources().getString(R.string.no_event_title))
+				.setMessage(getActivity().getResources().getString(R.string.location_no_event_message))
+				.setPositiveButton(android.R.string.ok, null)
+				.show();
+
+			return;
+		}
+
 		String key = getResources().getString(R.string.reportLocationKey);
 		boolean reportLocation = !preferences.getBoolean(key, false);
 		preferences.edit().putBoolean(key, reportLocation).apply();
-		updateReportLocationButton(reportLocation);
+		updateReportLocationButton();
 
 		String text = reportLocation ?
 				getResources().getString(R.string.report_location_start) :
@@ -583,6 +627,8 @@ public class MapFragment extends Fragment implements
 	@Override
 	public void onResume() {
 		super.onResume();
+
+		updateReportLocationButton();
 
 		try {
 			currentUser = UserHelper.getInstance(getActivity().getApplicationContext()).readCurrentUser();
@@ -742,8 +788,8 @@ public class MapFragment extends Fragment implements
 
 		if (!UserHelper.getInstance(getActivity().getApplicationContext()).isCurrentUserPartOfCurrentEvent()) {
 			new AlertDialog.Builder(getActivity())
-				.setTitle(getActivity().getResources().getString(R.string.location_no_event_title))
-				.setMessage(getActivity().getResources().getString(R.string.location_no_event_message))
+				.setTitle(getActivity().getResources().getString(R.string.no_event_title))
+				.setMessage(getActivity().getResources().getString(R.string.observation_no_event_message))
 				.setPositiveButton(android.R.string.ok, null)
 				.show();
 		} else if (location != null) {
@@ -759,11 +805,8 @@ public class MapFragment extends Fragment implements
 				new AlertDialog.Builder(getActivity())
 						.setTitle(getActivity().getResources().getString(R.string.location_access_observation_title))
 						.setMessage(getActivity().getResources().getString(R.string.location_access_observation_message))
-						.setPositiveButton(android.R.string.ok, new Dialog.OnClickListener() {
-							@Override
-							public void onClick(DialogInterface dialog, int which) {
-								requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION);
-							}
+						.setPositiveButton(android.R.string.ok, (dialog, which) -> {
+							requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION);
 						})
 						.show();
 			}
@@ -771,10 +814,9 @@ public class MapFragment extends Fragment implements
 	}
 
 	@Override
-	public void onRequestPermissionsResult(int requestCode, @NonNull String permissions[], @NonNull int[] grantResults) {
+	public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
 		switch (requestCode) {
 			case PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION: {
-				// If request is cancelled, the result arrays are empty.
 				if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
 					onNewObservation();
 				}
@@ -1003,8 +1045,8 @@ public class MapFragment extends Fragment implements
 		hideKeyboard();
 		if(!UserHelper.getInstance(getActivity().getApplicationContext()).isCurrentUserPartOfCurrentEvent()) {
 			new AlertDialog.Builder(getActivity())
-				.setTitle(getActivity().getResources().getString(R.string.location_no_event_title))
-				.setMessage(getActivity().getResources().getString(R.string.location_no_event_message))
+				.setTitle(getActivity().getResources().getString(R.string.no_event_title))
+				.setMessage(getActivity().getResources().getString(R.string.observation_no_event_message))
 				.setPositiveButton(android.R.string.ok, null)
 				.show();
 		} else {
@@ -1207,12 +1249,7 @@ public class MapFragment extends Fragment implements
 	private void addStaticFeatureOverlay(Map<String, CacheOverlay> enabledCacheOverlays, final StaticFeatureCacheOverlay cacheOverlay) {
 		try {
 			final Layer layer = LayerHelper.getInstance(getActivity().getApplicationContext()).read(cacheOverlay.getId());
-			new Handler(Looper.getMainLooper()).post(new Runnable() {
-				@Override
-				public void run() {
-					new StaticFeatureLoadTask(getActivity().getApplicationContext(), staticGeometryCollection, map).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, layer);
-				}
-			});
+			new Handler(Looper.getMainLooper()).post(() -> new StaticFeatureLoadTask(getActivity().getApplicationContext(), staticGeometryCollection, map).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, layer));
 		} catch (LayerException e) {
 			Log.e(LOG_NAME, "Problem updating static features.", e);
 		}

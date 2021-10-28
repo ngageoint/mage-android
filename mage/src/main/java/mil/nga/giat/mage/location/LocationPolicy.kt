@@ -12,18 +12,15 @@ class LocationPolicy @Inject constructor(val locationProvider: LocationProvider)
 
     var bestLocation: Location? = null
 
-    val bestLocationObserver = { location: Location ->
+    private val bestLocationObserver = { location: Location ->
         if (isBetterLocation(location, bestLocation)) {
             bestLocation = location
             bestLocationProvider.setValue(location)
         }
     }
 
-    private val LOCATION_STALE_INTERVAL = 1000 * 60 * 2
-    private val LOCATION_ACCURACY_THRESHOLD = 200
-
     init {
-        bestLocationProvider.addSource<Location>(locationProvider, bestLocationObserver)
+        bestLocationProvider.addSource(locationProvider, bestLocationObserver)
     }
 
     private fun isBetterLocation(location: Location, currentBestLocation: Location?): Boolean {
@@ -67,4 +64,8 @@ class LocationPolicy @Inject constructor(val locationProvider: LocationProvider)
     }
 
 
+    companion object {
+        private const val LOCATION_STALE_INTERVAL = 1000 * 60 * 2
+        private const val LOCATION_ACCURACY_THRESHOLD = 200
+    }
 }

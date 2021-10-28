@@ -45,7 +45,7 @@ constructor(@ApplicationContext val context: Context, val preferences: SharedPre
                 setValue(it)
             }
         } catch (e: SecurityException) {
-            Log.e(LOG_NAME, "Could not get users location", e)
+            Log.i(LOG_NAME, "Error requesting location updates")
         }
     }
 

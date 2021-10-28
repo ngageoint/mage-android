@@ -15,7 +15,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import mil.nga.giat.mage.filter.Filter;
-import mil.nga.giat.mage.location.LocationPushTask;
+import mil.nga.giat.mage.data.location.LocationRepository;
 import mil.nga.giat.mage.sdk.Temporal;
 import mil.nga.giat.mage.sdk.datastore.location.Location;
 import mil.nga.giat.mage.sdk.datastore.user.User;
@@ -42,7 +42,7 @@ public class MyHistoricalLocationMarkerCollection implements PointCollection<Pai
 		public int compare(Location lhs, Location rhs) {
 			return lhs.getTimestamp().compareTo(rhs.getTimestamp());
 		}
-	}).expectedSize(LocationPushTask.Companion.getMinNumberOfLocationsToKeep()).create();
+	}).expectedSize(LocationRepository.Companion.getMinNumberOfLocationsToKeep()).create();
 
 	public MyHistoricalLocationMarkerCollection(Context context, GoogleMap map) {
 		this.context = context;
@@ -78,7 +78,7 @@ public class MyHistoricalLocationMarkerCollection implements PointCollection<Pai
 
 			locationQueue.add(location);
 
-			while (locationQueue.size() > LocationPushTask.Companion.getMinNumberOfLocationsToKeep()) {
+			while (locationQueue.size() > LocationRepository.Companion.getMinNumberOfLocationsToKeep()) {
 				Location locationToRemove = locationQueue.poll();
 
 				Marker markerToRemove = locationIdToMarker.remove(locationToRemove.getId());

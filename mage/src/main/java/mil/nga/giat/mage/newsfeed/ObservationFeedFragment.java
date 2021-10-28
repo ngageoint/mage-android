@@ -261,8 +261,8 @@ public class ObservationFeedFragment extends Fragment implements IObservationEve
 
 		if(!UserHelper.getInstance(context).isCurrentUserPartOfCurrentEvent()) {
 			new AlertDialog.Builder(getActivity(), R.style.AppCompatAlertDialogStyle)
-					.setTitle(getActivity().getResources().getString(R.string.location_no_event_title))
-					.setMessage(getActivity().getResources().getString(R.string.location_no_event_message))
+					.setTitle(getActivity().getResources().getString(R.string.no_event_title))
+					.setMessage(getActivity().getResources().getString(R.string.observation_no_event_message))
 					.setPositiveButton(android.R.string.ok, null)
 					.show();
 		} else if (location != null) {

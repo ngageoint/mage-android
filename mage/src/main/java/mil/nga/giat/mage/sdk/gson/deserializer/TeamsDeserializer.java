@@ -11,17 +11,19 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.reflect.TypeToken;
+import com.google.gson.stream.JsonReader;
 
+import java.io.StringReader;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
+import mil.nga.giat.mage.network.gson.UserDeserializer;
 import mil.nga.giat.mage.sdk.datastore.user.Team;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
-import mil.nga.giat.mage.sdk.jackson.deserializer.UserDeserializer;
 
 /**
  * JSON to {@link Team}
@@ -70,7 +72,8 @@ public class TeamsDeserializer implements JsonDeserializer<Map<Team, Collection<
             JsonObject jsonUser = userElement.getAsJsonObject();
 
             try {
-                User user = userDeserializer.parseUser(jsonUser.toString());
+                JsonReader reader = new JsonReader(new StringReader(jsonUser.toString()));
+                User user = userDeserializer.read(reader);
                 User existingUser = userHelper.read(user.getRemoteId());
                 if (existingUser != null) {
                     user.setId(existingUser.getId());

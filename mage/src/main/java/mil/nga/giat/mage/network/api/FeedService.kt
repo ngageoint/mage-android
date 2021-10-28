@@ -10,7 +10,7 @@ import retrofit2.http.Path
 interface FeedService {
 
     @GET("/api/events/{eventId}/feeds")
-    suspend fun getFeeds(@Path("eventId") eventId: String): Response<Array<Feed>>
+    suspend fun getFeeds(@Path("eventId") eventId: String): Response<List<Feed>>
 
     @POST("/api/events/{eventId}/feeds/{feedId}/content")
     suspend fun getFeedItems(@Path("eventId") eventId: String, @Path("feedId") feedId: String): Response<FeedContent>

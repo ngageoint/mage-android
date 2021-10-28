@@ -155,10 +155,6 @@
             android:name=".form.defaults.FormDefaultActivity"
             android:theme="@style/AppTheme.NoActionBar" />
         <activity
-            android:name=".event.ChangeEventActivity"
-            android:theme="@style/AppTheme.NoActionBar"
-            android:parentActivityName=".LandingActivity" />
-        <activity
             android:name=".help.HelpActivity"
             android:theme="@style/AppTheme.NoActionBar.White"
             android:parentActivityName=".LandingActivity" />

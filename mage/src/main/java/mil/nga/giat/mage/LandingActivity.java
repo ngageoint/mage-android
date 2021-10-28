@@ -8,15 +8,10 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
-import android.graphics.Bitmap;
-import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
 import android.provider.Settings;
 import android.util.Log;
-import android.util.TypedValue;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -24,7 +19,6 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
@@ -35,12 +29,8 @@ import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.preference.PreferenceManager;
 
-import com.bumptech.glide.Glide;
-import com.bumptech.glide.load.MultiTransformation;
-import com.bumptech.glide.load.resource.bitmap.FitCenter;
-import com.bumptech.glide.request.target.CustomTarget;
-import com.bumptech.glide.request.transition.Transition;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.navigation.NavigationView;
 import com.google.common.collect.Iterables;
@@ -57,12 +47,11 @@ import dagger.hilt.android.AndroidEntryPoint;
 import mil.nga.geopackage.validate.GeoPackageValidate;
 import mil.nga.giat.mage.cache.GeoPackageCacheUtils;
 import mil.nga.giat.mage.data.feed.Feed;
-import mil.nga.giat.mage.event.ChangeEventActivity;
 import mil.nga.giat.mage.event.EventActivity;
+import mil.nga.giat.mage.event.EventsActivity;
 import mil.nga.giat.mage.feed.FeedActivity;
 import mil.nga.giat.mage.glide.GlideApp;
 import mil.nga.giat.mage.glide.model.Avatar;
-import mil.nga.giat.mage.glide.transform.PadToFrame;
 import mil.nga.giat.mage.help.HelpActivity;
 import mil.nga.giat.mage.login.LoginActivity;
 import mil.nga.giat.mage.map.MapFragment;
@@ -87,7 +76,7 @@ import mil.nga.giat.mage.sdk.exceptions.UserException;
 public class LandingActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
 
     /**
-     * Extra key for storing the local file path used to lauch MAGE
+     * Extra key for storing the local file path used to launch MAGE
      */
     public static final String EXTRA_OPEN_FILE_PATH = "extra_open_file_path";
 
@@ -96,9 +85,7 @@ public class LandingActivity extends AppCompatActivity implements NavigationView
     private static final int PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 100;
     private static final int PERMISSIONS_REQUEST_ACCESS_STORAGE= 200;
     private static final int PERMISSIONS_REQUEST_OPEN_FILE = 300;
-    private static final int PERMISSIONS_REQUEST_FOREGROUND_SERVICE = 400;
-    private static final int AUTHENTICATE_REQUEST = 500;
-    private static final int CHANGE_EVENT_REQUEST = 600;
+    private static final int CHANGE_EVENT_REQUEST = 400;
 
     @Inject
     protected MageApplication application;
@@ -157,28 +144,14 @@ public class LandingActivity extends AppCompatActivity implements NavigationView
         setTitle(event);
         setRecentEvents(event);
 
-        // Check location permission
-        if (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-            if (shouldReportLocation()) {
+        if (shouldReportLocation()) {
+            if (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
                 application.startLocationService();
-            }
-        } else {
-            if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.ACCESS_FINE_LOCATION)) {
-                new AlertDialog.Builder(LandingActivity.this, R.style.AppCompatAlertDialogStyle)
-                        .setTitle(R.string.location_access_rational_title)
-                        .setMessage(R.string.location_access_rational_message)
-                        .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                ActivityCompat.requestPermissions(LandingActivity.this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION);
-                            }
-                        })
-                        .create()
-                        .show();
-
             } else {
                 ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION);
             }
+        } else {
+            application.stopLocationService();
         }
 
         getSupportActionBar().setHomeAsUpIndicator(R.drawable.ic_menu_white_24dp);
@@ -265,9 +238,10 @@ public class LandingActivity extends AppCompatActivity implements NavigationView
             recreate();
         }
 
-        if (shouldReportLocation() && (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED)) {
-            // User allowed location service permission in settings, start location services.
-            application.startLocationService();
+        if (shouldReportLocation()) {
+            if (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+                application.startLocationService();
+            }
         }
     }
 
@@ -284,8 +258,10 @@ public class LandingActivity extends AppCompatActivity implements NavigationView
 
         switch (requestCode) {
             case PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION: {
-                if (shouldReportLocation() && grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     application.startLocationService();
+                } else {
+                    application.stopLocationService();
                 }
 
                 break;
@@ -384,8 +360,8 @@ public class LandingActivity extends AppCompatActivity implements NavigationView
 
                 item.setOnMenuItemClickListener(menuItem -> {
                     drawerLayout.closeDrawer(GravityCompat.START);
-                    Intent intent = new Intent(LandingActivity.this, ChangeEventActivity.class);
-                    intent.putExtra(ChangeEventActivity.EVENT_ID_EXTRA, recentEvent.getId());
+                    Intent intent = new Intent(LandingActivity.this, EventsActivity.class);
+                    intent.putExtra(EventsActivity.Companion.getEVENT_ID_EXTRA(), recentEvent.getId());
                     startActivityForResult(intent, CHANGE_EVENT_REQUEST);
                     return true;
                 });
@@ -397,7 +373,8 @@ public class LandingActivity extends AppCompatActivity implements NavigationView
 
             item.setOnMenuItemClickListener(menuItem -> {
                 drawerLayout.closeDrawer(GravityCompat.START);
-                Intent intent = new Intent(LandingActivity.this, ChangeEventActivity.class);
+                Intent intent = new Intent(LandingActivity.this, EventsActivity.class);
+                intent.putExtra(EventsActivity.Companion.getCLOSABLE_EXTRA(), true);
                 startActivityForResult(intent, CHANGE_EVENT_REQUEST);
                 return true;
             });
@@ -417,11 +394,6 @@ public class LandingActivity extends AppCompatActivity implements NavigationView
                 })
                 .setNegativeButton(android.R.string.cancel, null)
                 .show();
-    }
-
-    private boolean shouldReportLocation() {
-        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
-        return preferences.getBoolean(getString(R.string.reportLocationKey), getResources().getBoolean(R.bool.reportLocationDefaultValue));
     }
 
     @Override
@@ -469,10 +441,8 @@ public class LandingActivity extends AppCompatActivity implements NavigationView
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case android.R.id.home:
-                drawerLayout.openDrawer(GravityCompat.START);
-                break;
+        if (item.getItemId() == android.R.id.home) {
+            drawerLayout.openDrawer(GravityCompat.START);
         }
 
         return super.onOptionsItemSelected(item);
@@ -518,6 +488,13 @@ public class LandingActivity extends AppCompatActivity implements NavigationView
             FragmentManager fragmentManager = getSupportFragmentManager();
             fragmentManager.beginTransaction().replace(R.id.navigation_content, fragment).commit();
         }
+    }
+
+    private boolean shouldReportLocation() {
+        boolean reportLocation = PreferenceManager.getDefaultSharedPreferences(this).getBoolean(getString(R.string.reportLocationKey), getResources().getBoolean(R.bool.reportLocationDefaultValue));
+        boolean inEvent = UserHelper.getInstance(getApplicationContext()).isCurrentUserPartOfCurrentEvent();
+
+        return reportLocation && inEvent;
     }
 
     /**

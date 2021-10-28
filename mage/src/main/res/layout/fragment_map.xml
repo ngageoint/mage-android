@@ -122,8 +122,7 @@
         android:layout_gravity="top|start"
         android:layout_marginTop="160dp"
         android:layout_marginStart="16dp"
-        app:backgroundTint="@color/toggle_button"
-        android:tint="@color/toggle_button_selected"
+        app:tint="@color/report_location"
         android:theme="@style/AppTheme.AlternateFAB"
         android:src="@drawable/ic_my_location_white_24dp" />
 

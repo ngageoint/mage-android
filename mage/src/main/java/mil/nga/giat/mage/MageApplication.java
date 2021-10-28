@@ -78,8 +78,6 @@ public class MageApplication extends Application implements LifecycleObserver, S
 	private Intent observationPushServiceIntent;
 	private Intent attachmentPushServiceIntent;
 
-	private Intent locationReportingServiceIntent;
-
 	private ObservationNotificationListener observationNotificationListener = null;
 
 	private Activity runningActivity;
@@ -290,18 +288,15 @@ public class MageApplication extends Application implements LifecycleObserver, S
 	}
 
 	public void startLocationService() {
-		if (locationReportingServiceIntent == null) {
-			locationReportingServiceIntent = new Intent(getApplicationContext(), LocationReportingService.class);
-			ContextCompat.startForegroundService(getApplicationContext(), locationReportingServiceIntent);
-		}
+		Intent intent = new Intent(getApplicationContext(), LocationReportingService.class);
+		ContextCompat.startForegroundService(getApplicationContext(), intent);
 	}
 
 	public void stopLocationService() {
-		if (locationReportingServiceIntent != null) {
-			stopService(locationReportingServiceIntent);
-			locationReportingServiceIntent = null;
-		}
+		Intent intent = new Intent(getApplicationContext(), LocationReportingService.class);
+		stopService(intent);
 	}
+
 	@Override
 	public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
 		if (getString(R.string.reportLocationKey).equalsIgnoreCase(key) && !UserUtility.getInstance(getApplicationContext()).isTokenExpired()) {

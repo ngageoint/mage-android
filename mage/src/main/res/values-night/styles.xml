@@ -23,6 +23,10 @@
     <style name="AppTheme.PrimaryDialog" parent="Theme.AppCompat.Dialog.Alert">
     </style>
 
+    <style name="AppCompatAlertDialogStyle" parent="ThemeOverlay.MaterialComponents.Dialog.Alert">
+        <item name="colorPrimary">?attr/colorOnSurface</item>
+    </style>
+
     <style name="CheckBoxDark" parent="Widget.AppCompat.CompoundButton.CheckBox">
         <item name="buttonTint">@color/button_tint_dark</item>
     </style>

@@ -3,18 +3,22 @@ package mil.nga.giat.mage.feed
 import android.content.Intent
 import android.os.IBinder
 import android.util.Log
-import androidx.lifecycle.*
+import androidx.lifecycle.LifecycleService
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.Observer
+import androidx.lifecycle.Transformations
+import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.*
 import mil.nga.giat.mage.data.feed.Feed
 import mil.nga.giat.mage.data.feed.FeedDao
 import mil.nga.giat.mage.data.feed.FeedLocalDao
 import mil.nga.giat.mage.data.feed.FeedRepository
-import javax.inject.Inject
 import mil.nga.giat.mage.sdk.datastore.user.EventHelper
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper
 import mil.nga.giat.mage.sdk.event.IEventEventListener
-import java.util.Date
+import java.util.*
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class FeedFetchService : LifecycleService() {
@@ -40,9 +44,13 @@ class FeedFetchService : LifecycleService() {
     override fun onCreate() {
         super.onCreate()
 
+
+
         UserHelper.getInstance(applicationContext).addListener(object: IEventEventListener {
             override fun onEventChanged() {
-                setEvent()
+                lifecycleScope.launch(Dispatchers.Main) {
+                    setEvent()
+                }
             }
 
             override fun onError(error: Throwable?) {}

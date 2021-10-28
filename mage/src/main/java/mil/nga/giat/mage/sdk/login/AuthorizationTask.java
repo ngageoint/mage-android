@@ -5,15 +5,17 @@ import android.os.AsyncTask;
 import android.util.Log;
 
 import com.google.gson.JsonObject;
+import com.google.gson.stream.JsonReader;
 
+import java.io.StringReader;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.util.Date;
 
+import mil.nga.giat.mage.network.gson.UserDeserializer;
 import mil.nga.giat.mage.sdk.Compatibility;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.http.resource.DeviceResource;
-import mil.nga.giat.mage.sdk.jackson.deserializer.UserDeserializer;
 import mil.nga.giat.mage.sdk.utils.DeviceUuidFactory;
 import mil.nga.giat.mage.sdk.utils.ISO8601DateFormatFactory;
 import retrofit2.Response;
@@ -81,7 +83,8 @@ public class AuthorizationTask extends AsyncTask<String, Void, AuthorizationStat
 			}
 
 			JsonObject userJson = authorization.getAsJsonObject("user");
-			User user = userDeserializer.parseUser(userJson.toString());
+			JsonReader reader = new JsonReader(new StringReader(userJson.toString()));
+			User user = userDeserializer.read(reader);
 			return new AuthorizationStatus.Builder(AuthorizationStatus.Status.SUCCESSFUL_AUTHORIZATION)
 					.authorization(user, token)
 					.tokenExpiration(tokenExpiration)

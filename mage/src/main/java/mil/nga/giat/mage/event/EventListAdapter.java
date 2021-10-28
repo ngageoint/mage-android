@@ -42,13 +42,8 @@ public class EventListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
 
     private static Predicate<Event> eventFilterPredicate(String text){
         final String lowerCaseText = text.toLowerCase();
-        return new Predicate<Event>() {
-            @Override
-            public boolean apply(Event event) {
-                return event.getName().toLowerCase().contains(lowerCaseText) ||
-                        event.getDescription().toLowerCase().contains(lowerCaseText);
-            }
-        };
+        return event -> event.getName().toLowerCase().contains(lowerCaseText) ||
+                event.getDescription().toLowerCase().contains(lowerCaseText);
     }
 
     EventListAdapter(List<Event> events, List<Event> recentEvents, OnEventClickListener listener) {

@@ -16,10 +16,7 @@ import mil.nga.giat.mage.glide.GlideApp
 import mil.nga.giat.mage.glide.model.Avatar
 import mil.nga.giat.mage.map.preference.MapLayerPreferences
 import mil.nga.giat.mage.network.Resource
-import mil.nga.giat.mage.network.api.FeedService
-import mil.nga.giat.mage.network.api.LayerService
-import mil.nga.giat.mage.network.api.ObservationService
-import mil.nga.giat.mage.network.api.TeamService
+import mil.nga.giat.mage.network.api.*
 import mil.nga.giat.mage.sdk.datastore.layer.LayerHelper
 import mil.nga.giat.mage.sdk.datastore.user.*
 import mil.nga.giat.mage.sdk.utils.ZipUtility
@@ -33,12 +30,32 @@ class EventRepository @Inject constructor(
    @ApplicationContext private val context: Context,
    private val mapLayerPreferences: MapLayerPreferences,
    private val feedDao: FeedDao,
+   private val roleService: RoleService,
    private val feedService: FeedService,
    private val teamService: TeamService,
    private val layerService: LayerService,
+   private val eventService: EventService,
    private val observationService: ObservationService,
    private val userRepository: UserRepository
 ) {
+
+   private val roleHelper = RoleHelper.getInstance(context)
+   private val teamHelper = TeamHelper.getInstance(context)
+   private val eventHelper = EventHelper.getInstance(context)
+
+   suspend fun syncEvents(): Resource<List<Event>> {
+      return withContext(Dispatchers.IO) {
+         try {
+            syncRoles()
+            val events = fetchEvents()
+            Resource.success(events)
+         } catch(e: Exception) {
+            Log.e(LOG_NAME, "Error fetching events", e)
+            Resource.error(e.localizedMessage ?: e.toString(), emptyList())
+         }
+      }
+   }
+
    suspend fun syncEvent(event: Event): Resource<out Event> {
       val resource = withContext(Dispatchers.IO) {
          try {
@@ -61,6 +78,36 @@ class EventRepository @Inject constructor(
       return resource
    }
 
+   private suspend fun syncRoles() {
+      val response = roleService.getRoles()
+      if (response.isSuccessful) {
+         val roles = response.body()!!
+         for (role in roles) {
+            roleHelper.createOrUpdate(role)
+         }
+      }
+   }
+
+   private suspend fun fetchEvents(): List<Event> {
+      teamHelper.deleteTeamEvents()
+
+      val response = eventService.getEvents()
+      return if (response.isSuccessful) {
+         val events = response.body()!!
+         for (event in events.keys) {
+            try {
+               eventHelper.createOrUpdate(event)
+            } catch (e: java.lang.Exception) {
+               Log.e(LOG_NAME, "Error saving event to database", e)
+            }
+         }
+
+         eventHelper.syncEvents(events.keys)
+
+         events.keys.toList()
+      } else emptyList()
+   }
+
    private suspend fun syncTeams(event: Event): List<User> {
       val iconUsers = mutableListOf<User>()
 
@@ -71,7 +118,6 @@ class EventRepository @Inject constructor(
 
          val userHelper = UserHelper.getInstance(context)
          userHelper.deleteUserTeams()
-
 
          val teamHelper = TeamHelper.getInstance(context)
          for (team in teams.keys) {

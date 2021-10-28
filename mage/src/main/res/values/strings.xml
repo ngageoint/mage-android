@@ -64,39 +64,45 @@
 
     <string name="reauthentication_message"><b>You</b> were logged in as &lt;b>%s&lt;/b>, and your MAGE session has expired. Please login to resume using MAGE.</string>
 
-    <string name="location_services_enabled_summary">Click to configure GPS sensitivy and tracking options</string>
+    <string name="location_services_enabled_summary">Click to configure GPS sensitivity and tracking options</string>
     <string name="location_services_disabled_summary">MAGE location services have been disabled. Click here to go to settings and enabled the location permission</string>
 
-    <string name="location_no_event_title"><font color='#DD000000'>Not a member of this event</font></string>
-    <string name="location_no_event_message">You are an administrator and not a member of the current event.  You can not create an observation in this event.</string>
+    <string name="no_event_title">Not a member of this event</string>
+    <string name="observation_no_event_message">You are an administrator and not a member of the current event.  You can not create an observation in this event.</string>
+    <string name="location_no_event_message">You are an administrator and not a member of the current event.  You can not report your location in this event.</string>
 
-    <string name="location_missing_title"><font color='#DD000000'>No Location Available</font></string>
+    <string name="location_missing_title">No Location Available</string>
     <string name="location_missing_message">The device has not received a location yet.  To make an observation manually, long press on the map.</string>
 
-    <string name="location_access_rational_title">Use <font color='#DD000000'>MAGE</font> location services</string>
-    <string name="location_access_rational_message">MAGE shares your location with the team, and enables you to add observations at your current position</string>
-    <string name="location_access_observation_title"><font color='#DD000000'>Location Services Disabled</font></string>
-    <string name="location_access_observation_message"><font color='#DD000000'>MAGE</font> has been denied access to location services.  To create an observation at your current location please go into your devices settings and enable the Location permission, otherwise long press on the map.</string>
+    <string name="location_access_rational_title">How MAGE uses your location</string>
+    <string name="location_access_rational_message">With location access enabled you can choose to share your location with members of your team.  You can also locate yourself on the map as well create observations at your current location.</string>
+    <string name="location_access_observation_title">Location Services Disabled</string>
+    <string name="location_access_observation_message">MAGE has been denied access to location services.  To create an observation at your current location please go into your devices settings and enable the Location permission, otherwise long press on the map.</string>
+    <string name="location_access_report_message">MAGE has been denied access to location services.  To report your location please go into your devices settings and enable the Location permission.</string>
+    <string name="location_access_zoom_message">MAGE has been denied access to location services.  To zoom to your location please go into your devices settings and enable the Location permission.</string>
 
-    <string name="cache_access_rational_title">Use <font color='#DD000000'>MAGE</font> Offline Maps</string>
+    <string name="cache_access_rational_title">Use MAGE Offline Maps</string>
     <string name="cache_access_rational_message">MAGE is looking for offline maps that may reside in external storage on your device. Please allow MAGE to access external media to view this map.</string>
-    <string name="cache_access_title"><font color='#DD000000'>Storage Permission Denied</font></string>
-    <string name="cache_access_message"><font color='#DD000000'>MAGE</font> has been denied access to external storage.  To access map caches that reside in external storage please go into the MAGE application settings on your device and enable the Storage permission.</string>
+    <string name="cache_access_title">Storage Permission Denied</string>
+    <string name="cache_access_message">MAGE has been denied access to external storage.  To access map caches that reside in external storage please go into the MAGE application settings on your device and enable the Storage permission.</string>
 
-    <string name="camera_access_title"><font color='#DD000000'>Camera or Storage Permission Denied</font></string>
-    <string name="camera_access_message"><font color='#DD000000'>MAGE</font> has been denied access to the camera or external storage.  To create attachments please go into the MAGE application settings on your device and enable the Camera and Storage permissions.</string>
+    <string name="camera_access_title">Camera or Storage Permission Denied</string>
+    <string name="camera_access_message">MAGE has been denied access to the camera or external storage.  To create attachments please go into the MAGE application settings on your device and enable the Camera and Storage permissions.</string>
 
-    <string name="audio_access_title"><font color='#DD000000'>Microphone or Storage Permission Denied</font></string>
-    <string name="audio_access_message"><font color='#DD000000'>MAGE</font> has been denied access to the microphone or external storage.  To create attachments please go into the MAGE application settings on your device and enable the Microphone permission.</string>
+    <string name="audio_access_title">Microphone or Storage Permission Denied</string>
+    <string name="audio_access_message">MAGE has been denied access to the microphone or external storage.  To create attachments please go into the MAGE application settings on your device and enable the Microphone permission.</string>
 
-    <string name="gallery_access_title"><font color='#DD000000'>Storage Permission Denied</font></string>
-    <string name="gallery_access_message"><font color='#DD000000'>MAGE</font> has been denied access to external storage.  To pick media from the Gallery please go into the MAGE application settings on your device and enable the Storage permission.</string>
+    <string name="gallery_access_title">Storage Permission Denied</string>
+    <string name="gallery_access_message">MAGE has been denied access to external storage.  To pick media from the Gallery please go into the MAGE application settings on your device and enable the Storage permission.</string>
 
-    <string name="storage_access_title"><font color='#DD000000'>Storage Permission Denied</font></string>
-    <string name="storage_access_message"><font color='#DD000000'>MAGE</font> has been denied access to external storage.  To save media from MAGE please go into the MAGE application settings on your device and enable the Storage permission.</string>
+    <string name="storage_access_title">Storage Permission Denied</string>
+    <string name="storage_access_message">MAGE has been denied access to external storage.  To save media from MAGE please go into the MAGE application settings on your device and enable the Storage permission.</string>
 
-    <string name="offline_layers_access_title"><font color='#DD000000'>Storage Permission Denied</font></string>
-    <string name="offline_layers_access_message"><font color='#DD000000'>MAGE</font> has been denied access to read external storage. Please enable if you would like access to offline layers that reside in external storage.</string>
+    <string name="offline_layers_access_title">Storage Permission Denied</string>
+    <string name="offline_layers_access_message">MAGE has been denied access to read external storage. Please enable if you would like access to offline layers that reside in external storage.</string>
+
+    <string name="location_access_title">Location Permission Denied</string>
+    <string name="location_access_message">MAGE has been denied access to your location. Please go into the MAGE application settings on your device and enable the Location permission.</string>
 
     <string name="important_flagged_by">%s flagged as important.</string>
 

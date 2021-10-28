@@ -6,7 +6,10 @@ import android.content.pm.PackageManager;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
+import com.google.gson.reflect.TypeToken;
 
 import java.io.File;
 import java.io.IOException;
@@ -14,15 +17,16 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import mil.nga.giat.mage.R;
+import mil.nga.giat.mage.network.gson.UserDeserializer;
+import mil.nga.giat.mage.network.gson.UsersDeserializer;
 import mil.nga.giat.mage.sdk.datastore.user.Event;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.http.HttpClientManager;
-import mil.nga.giat.mage.sdk.http.converter.UserConverterFactory;
-import mil.nga.giat.mage.sdk.http.converter.UsersConverterFactory;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
@@ -142,10 +146,14 @@ public class UserResource {
     public Collection<User> getUsers() throws IOException {
         Collection<User> users = new ArrayList<>();
 
+        Gson gson = new GsonBuilder()
+            .registerTypeAdapter(new TypeToken<List<User>>(){}.getType(), new UsersDeserializer(context))
+            .create();
+
         String baseUrl = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.serverURLKey), context.getString(R.string.serverURLDefaultValue));
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl(baseUrl)
-                .addConverterFactory(UsersConverterFactory.create(context))
+                .addConverterFactory(GsonConverterFactory.create(gson))
                 .client(HttpClientManager.getInstance().httpClient())
                 .build();
 
@@ -211,9 +219,14 @@ public class UserResource {
         User user = null;
 
         String baseUrl = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.serverURLKey), context.getString(R.string.serverURLDefaultValue));
+
+        Gson gson = new GsonBuilder()
+                .registerTypeAdapter(new TypeToken<User>(){}.getType(), new UserDeserializer(context))
+                .create();
+
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl(baseUrl)
-                .addConverterFactory(UserConverterFactory.create(context))
+                .addConverterFactory(GsonConverterFactory.create(gson))
                 .client(HttpClientManager.getInstance().httpClient())
                 .build();
 
@@ -234,9 +247,14 @@ public class UserResource {
 
     public User addRecentEvent(User user, Event event) throws IOException {
         String baseUrl = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.serverURLKey), context.getString(R.string.serverURLDefaultValue));
+
+        Gson gson = new GsonBuilder()
+            .registerTypeAdapter(new TypeToken<User>(){}.getType(), new UserDeserializer(context))
+            .create();
+
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl(baseUrl)
-                .addConverterFactory(UserConverterFactory.create(context))
+                .addConverterFactory(GsonConverterFactory.create(gson))
                 .client(HttpClientManager.getInstance().httpClient())
                 .build();
 
@@ -259,9 +277,13 @@ public class UserResource {
         try {
             String baseUrl = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.serverURLKey), context.getString(R.string.serverURLDefaultValue));
 
+            Gson gson = new GsonBuilder()
+                    .registerTypeAdapter(new TypeToken<User>(){}.getType(), new UserDeserializer(context))
+                    .create();
+
             Retrofit retrofit = new Retrofit.Builder()
                     .baseUrl(baseUrl)
-                    .addConverterFactory(UserConverterFactory.create(context))
+                    .addConverterFactory(GsonConverterFactory.create(gson))
                     .client(HttpClientManager.getInstance().httpClient())
                     .build();
 
