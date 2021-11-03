@@ -15,12 +15,17 @@ import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.core.content.ContextCompat;
+import androidx.hilt.work.HiltWorkerFactory;
 import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.LifecycleObserver;
 import androidx.lifecycle.OnLifecycleEvent;
 import androidx.lifecycle.ProcessLifecycleOwner;
+import androidx.work.Configuration;
+
+import javax.inject.Inject;
 
 import dagger.hilt.android.HiltAndroidApp;
 import mil.nga.giat.mage.feed.FeedFetchService;
@@ -57,7 +62,7 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 @HiltAndroidApp
-public class MageApplication extends Application implements LifecycleObserver, SharedPreferences.OnSharedPreferenceChangeListener, ISessionEventListener, Application.ActivityLifecycleCallbacks {
+public class MageApplication extends Application implements Configuration.Provider, LifecycleObserver, SharedPreferences.OnSharedPreferenceChangeListener, ISessionEventListener, Application.ActivityLifecycleCallbacks {
 
 	private static final String LOG_NAME = MageApplication.class.getName();
 
@@ -81,6 +86,17 @@ public class MageApplication extends Application implements LifecycleObserver, S
 	private ObservationNotificationListener observationNotificationListener = null;
 
 	private Activity runningActivity;
+
+	@Inject
+	HiltWorkerFactory workerFactory;
+
+	@NonNull
+	@Override
+	public Configuration getWorkManagerConfiguration() {
+		return new Configuration.Builder()
+				.setWorkerFactory(workerFactory)
+				.build();
+	}
 
 	@Override
 	public void onCreate() {

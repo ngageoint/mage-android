@@ -15,8 +15,13 @@ import mil.nga.giat.mage.data.gson.GeometryTypeAdapterFactory
 import mil.nga.giat.mage.network.LiveDataCallAdapterFactory
 import mil.nga.giat.mage.network.Server
 import mil.nga.giat.mage.network.api.*
-import mil.nga.giat.mage.network.gson.UserDeserializer
+import mil.nga.giat.mage.network.gson.LocationsTypeAdapter
+import mil.nga.giat.mage.network.gson.user.UserTypeAdapter
+import mil.nga.giat.mage.network.gson.observation.ObservationTypeAdapter
+import mil.nga.giat.mage.network.gson.observation.ObservationsTypeAdapter
 import mil.nga.giat.mage.sdk.datastore.layer.Layer
+import mil.nga.giat.mage.sdk.datastore.location.Location
+import mil.nga.giat.mage.sdk.datastore.observation.Observation
 import mil.nga.giat.mage.sdk.datastore.user.Event
 import mil.nga.giat.mage.sdk.datastore.user.Role
 import mil.nga.giat.mage.sdk.datastore.user.Team
@@ -55,9 +60,12 @@ class NetworkModule {
    fun provideGson(application: Application): GsonConverterFactory {
       val gson = GsonBuilder()
          .setExclusionStrategies(AnnotationExclusionStrategy())
-         .registerTypeAdapter(object : TypeToken<User>() {}.type, UserDeserializer(application))
+         .registerTypeAdapter(object : TypeToken<User>() {}.type, UserTypeAdapter(application))
+         .registerTypeAdapter(object : TypeToken<Observation>() {}.type, ObservationTypeAdapter(application))
          .registerTypeAdapter(object : TypeToken<java.util.Collection<Role>>() {}.type, RolesDeserializer())
          .registerTypeAdapter(object : TypeToken<java.util.Collection<Layer>>() {}.type, LayersDeserializer())
+         .registerTypeAdapter(object : TypeToken<java.util.List<Location>>() {}.type, LocationsTypeAdapter(application))
+         .registerTypeAdapter(object : TypeToken<java.util.List<Observation>>() {}.type, ObservationsTypeAdapter(application))
          .registerTypeAdapter(object : TypeToken<java.util.Map<Team, java.util.Collection<User>>>() {}.type, TeamsDeserializer(application))
          .registerTypeAdapter(object : TypeToken<java.util.Map<Event, java.util.Collection<Team>>>() {}.type, EventsDeserializer(application))
          .registerTypeAdapterFactory(GeometryTypeAdapterFactory())
@@ -109,6 +117,11 @@ class NetworkModule {
    @Provides
    fun provideObservationService(retrofit: Retrofit): ObservationService {
       return retrofit.create(ObservationService::class.java)
+   }
+
+   @Provides
+   fun provideLocationService(retrofit: Retrofit): LocationService {
+      return retrofit.create(LocationService::class.java)
    }
 
    @Provides

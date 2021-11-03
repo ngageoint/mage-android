@@ -20,7 +20,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-import mil.nga.giat.mage.network.gson.UserDeserializer;
+import mil.nga.giat.mage.network.gson.user.UserTypeAdapter;
 import mil.nga.giat.mage.sdk.datastore.user.Team;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
@@ -31,12 +31,12 @@ import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 public class TeamsDeserializer implements JsonDeserializer<Map<Team, Collection<User>>> {
 
     private final UserHelper userHelper;
-    private final UserDeserializer userDeserializer;
+    private final UserTypeAdapter userTypeAdapter;
     private final Gson teamDeserializer;
 
     public TeamsDeserializer(Context context) {
         userHelper = UserHelper.getInstance(context);
-        userDeserializer = new UserDeserializer(context);
+        userTypeAdapter = new UserTypeAdapter(context);
         teamDeserializer = TeamDeserializer.getGsonBuilder();
     }
 
@@ -73,7 +73,7 @@ public class TeamsDeserializer implements JsonDeserializer<Map<Team, Collection<
 
             try {
                 JsonReader reader = new JsonReader(new StringReader(jsonUser.toString()));
-                User user = userDeserializer.read(reader);
+                User user = userTypeAdapter.read(reader);
                 User existingUser = userHelper.read(user.getRemoteId());
                 if (existingUser != null) {
                     user.setId(existingUser.getId());

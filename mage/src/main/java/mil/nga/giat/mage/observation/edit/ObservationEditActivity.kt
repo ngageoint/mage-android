@@ -10,45 +10,41 @@ import android.os.Bundle
 import android.provider.MediaStore
 import android.provider.Settings
 import android.util.Log
+import android.webkit.MimeTypeMap
 import android.widget.Toast
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.lifecycle.ViewModelProvider
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.material.snackbar.Snackbar
+import dagger.hilt.android.AndroidEntryPoint
 import mil.nga.giat.mage.BuildConfig
 import mil.nga.giat.mage.R
 import mil.nga.giat.mage._server5.observation.edit.FormViewModel_server5
 import mil.nga.giat.mage.form.*
-import mil.nga.giat.mage.observation.AttachmentViewerActivity
-import mil.nga.giat.mage.observation.ObservationLocation
-import mil.nga.giat.mage.observation.edit.FormPickerBottomSheetFragment.OnFormClickListener
+import mil.nga.giat.mage.form.FormViewModel
 import mil.nga.giat.mage.form.edit.dialog.DateFieldDialog
 import mil.nga.giat.mage.form.edit.dialog.FormReorderDialog
 import mil.nga.giat.mage.form.edit.dialog.GeometryFieldDialog
 import mil.nga.giat.mage.form.edit.dialog.SelectFieldDialog
 import mil.nga.giat.mage.form.edit.dialog.SelectFieldDialog.Companion.newInstance
 import mil.nga.giat.mage.form.field.*
+import mil.nga.giat.mage.network.gson.observation.ObservationTypeAdapter
+import mil.nga.giat.mage.observation.AttachmentViewerActivity
+import mil.nga.giat.mage.observation.ObservationLocation
+import mil.nga.giat.mage.observation.edit.FormPickerBottomSheetFragment.OnFormClickListener
 import mil.nga.giat.mage.sdk.Compatibility.Companion.isServerVersion5
 import mil.nga.giat.mage.sdk.datastore.observation.Attachment
+import mil.nga.giat.mage.sdk.datastore.user.EventHelper
 import mil.nga.giat.mage.sdk.utils.MediaUtility
+import mil.nga.sf.Point
 import java.io.File
 import java.io.IOException
 import java.util.*
-import android.webkit.MimeTypeMap
-import androidx.appcompat.app.AppCompatActivity
-import com.google.gson.Gson
-import com.google.gson.JsonObject
-import com.google.gson.JsonPrimitive
-import dagger.hilt.android.AndroidEntryPoint
-import mil.nga.giat.mage.form.FormViewModel
-import mil.nga.giat.mage.sdk.datastore.user.EventHelper
-import mil.nga.giat.mage.sdk.gson.serializer.ObservationSerializer
-import mil.nga.giat.mage.sdk.jackson.deserializer.ObservationDeserializer
-import mil.nga.sf.Point
 import kotlin.collections.ArrayList
 
 @AndroidEntryPoint
@@ -143,7 +139,7 @@ open class ObservationEditActivity : AppCompatActivity() {
     }
 
     val observation = viewModel.draftObservation()
-    val json = ObservationSerializer.getGsonBuilder().toJson(observation)
+    val json = ObservationTypeAdapter(applicationContext).toJson(observation)
     outState.putString(DRAFT_OBSERVATION_JSON, json)
     if (observation.id != null) {
       outState.putLong(DRAFT_OBSERVATION_ID, observation.id)
@@ -162,8 +158,8 @@ open class ObservationEditActivity : AppCompatActivity() {
     }
 
     val draftObservation = savedInstanceState.getString(DRAFT_OBSERVATION_JSON)!!
-    val event = EventHelper.getInstance(applicationContext).currentEvent
-    val observation = ObservationDeserializer(event).parseObservation(draftObservation)
+    val observation = ObservationTypeAdapter(applicationContext).fromJson(draftObservation)
+    observation.event = EventHelper.getInstance(applicationContext).currentEvent
     if (savedInstanceState.containsKey(DRAFT_OBSERVATION_ID)) {
       observation.id = savedInstanceState.getLong(DRAFT_OBSERVATION_ID)
     }

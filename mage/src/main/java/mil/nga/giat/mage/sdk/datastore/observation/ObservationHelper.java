@@ -286,18 +286,20 @@ public class ObservationHelper extends DaoHelper<Observation> implements IEventD
 				Log.i(LOG_NAME, "Observation attachments " + observation.getAttachments().size());
 
 				for (Attachment oldAttachment : oldObservation.getAttachments()) {
-					Attachment found = null;
-					for (Attachment attachment : observation.getAttachments()) {
-						if (attachment.getRemoteId().equals(oldAttachment.getRemoteId())) {
-							found = attachment;
-							attachment.setId(oldAttachment.getId());
+					if (oldAttachment.getRemoteId() != null) {
+						Attachment found = null;
+						for (Attachment attachment : observation.getAttachments()) {
+							if (oldAttachment.getRemoteId().equals(attachment.getRemoteId())) {
+								found = attachment;
+								attachment.setId(oldAttachment.getId());
+							}
 						}
-					}
 
-					// if no longer in attachments array response from server, remove it
-					if (!Compatibility.Companion.isServerVersion5(mApplicationContext)) {
-						if (found == null) {
-							AttachmentHelper.getInstance(mApplicationContext).delete(oldAttachment);
+						// if no longer in attachments array response from server, remove it
+						if (!Compatibility.Companion.isServerVersion5(mApplicationContext)) {
+							if (found == null) {
+								AttachmentHelper.getInstance(mApplicationContext).delete(oldAttachment);
+							}
 						}
 					}
 				}

@@ -57,7 +57,7 @@ import mil.nga.giat.mage.login.LoginActivity;
 import mil.nga.giat.mage.map.MapFragment;
 import mil.nga.giat.mage.map.cache.CacheProvider;
 import mil.nga.giat.mage.newsfeed.ObservationFeedFragment;
-import mil.nga.giat.mage.newsfeed.PeopleFeedFragment;
+import mil.nga.giat.mage.newsfeed.UserFeedFragment;
 import mil.nga.giat.mage.preferences.GeneralPreferencesActivity;
 import mil.nga.giat.mage.profile.ProfileActivity;
 import mil.nga.giat.mage.sdk.datastore.user.Event;
@@ -126,7 +126,7 @@ public class LandingActivity extends AppCompatActivity implements NavigationView
 
         bottomNavigationFragments.add(new MapFragment());
         bottomNavigationFragments.add(new ObservationFeedFragment());
-        bottomNavigationFragments.add(new PeopleFeedFragment());
+        bottomNavigationFragments.add(new UserFeedFragment());
 
         // TODO investigate moving this call
         // its here because this is the first activity started after login and it ensures

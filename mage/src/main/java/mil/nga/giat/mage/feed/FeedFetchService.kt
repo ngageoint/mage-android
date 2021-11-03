@@ -5,7 +5,6 @@ import android.os.IBinder
 import android.util.Log
 import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.Observer
 import androidx.lifecycle.Transformations
 import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
@@ -68,7 +67,7 @@ class FeedFetchService : LifecycleService() {
 
         Transformations.switchMap(eventId) {
             feedDao.feedsLiveData(it)
-        }.observe(this, Observer {
+        }.observe(this, {
             if (!polling && it.isNotEmpty()) {
                 stopPoll()
                 startPoll()

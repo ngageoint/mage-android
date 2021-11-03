@@ -4,8 +4,6 @@ import android.content.Context;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 import mil.nga.giat.mage.R;
@@ -20,22 +18,16 @@ import retrofit2.Call;
 import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.http.Body;
-import retrofit2.http.GET;
 import retrofit2.http.POST;
 import retrofit2.http.Path;
 
 /***
  * RESTful communication for locations
- *
- * @author newmanw
  */
 
 public class LocationResource {
 
     public interface LocationService {
-        @GET("/api/events/{eventId}/locations/users")
-        Call<List<Location>> getLocations(@Path("eventId") String eventId);
-
         @POST("/api/events/{eventId}/locations")
         Call<List<Location>> createLocations(@Path("eventId") String eventId, @Body List<Location> locations);
     }
@@ -46,36 +38,6 @@ public class LocationResource {
 
     public LocationResource(Context context) {
         this.context = context;
-    }
-
-    public Collection<Location> getLocations(Event event) {
-        Collection<Location> locations = new ArrayList<Location>();
-
-        String baseUrl = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.serverURLKey), context.getString(R.string.serverURLDefaultValue));
-        Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl(baseUrl)
-                .addConverterFactory(LocationConverterFactory.create(event, true))
-                .client(HttpClientManager.getInstance().httpClient())
-                .build();
-
-        try {
-            LocationService service = retrofit.create(LocationService.class);
-            Call<List<Location>> call = service.getLocations(event.getRemoteId());
-            Response<List<Location>> response = call.execute();
-
-            if (response.isSuccessful()) {
-                locations = response.body();
-            } else {
-                Log.e(LOG_NAME, "Bad request.");
-                if (response.errorBody() != null) {
-                    Log.e(LOG_NAME, response.errorBody().string());
-                }
-            }
-        } catch (Exception e) {
-            Log.e(LOG_NAME, "There was a failure while performing an Location Fetch operation.", e);
-        }
-
-        return locations;
     }
 
     /**

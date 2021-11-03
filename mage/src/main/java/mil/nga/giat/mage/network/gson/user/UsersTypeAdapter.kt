@@ -1,4 +1,4 @@
-package mil.nga.giat.mage.network.gson
+package mil.nga.giat.mage.network.gson.user
 
 import android.content.Context
 import com.google.gson.TypeAdapter
@@ -7,8 +7,8 @@ import com.google.gson.stream.JsonToken
 import com.google.gson.stream.JsonWriter
 import mil.nga.giat.mage.sdk.datastore.user.User
 
-class UsersDeserializer(val context: Context): TypeAdapter<List<User>>() {
-   private val userDeserializer = UserDeserializer(context)
+class UsersTypeAdapter(val context: Context): TypeAdapter<List<User>>() {
+   private val userTypeAdapter = UserTypeAdapter(context)
 
    override fun write(out: JsonWriter, value: List<User>) {
       throw UnsupportedOperationException()
@@ -18,21 +18,18 @@ class UsersDeserializer(val context: Context): TypeAdapter<List<User>>() {
       val users = mutableListOf<User>()
 
       if (reader.peek() != JsonToken.BEGIN_ARRAY) {
+         reader.skipValue()
          return users
       }
 
       reader.beginArray()
 
       while (reader.hasNext()) {
-         users.add(userDeserializer.read(reader))
+         users.add(userTypeAdapter.read(reader))
       }
 
       reader.endArray()
 
       return users
-   }
-
-   companion object {
-      private val LOG_NAME = UsersDeserializer::class.java.name
    }
 }

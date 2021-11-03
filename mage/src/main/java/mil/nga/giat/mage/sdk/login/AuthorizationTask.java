@@ -12,7 +12,7 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.util.Date;
 
-import mil.nga.giat.mage.network.gson.UserDeserializer;
+import mil.nga.giat.mage.network.gson.user.UserTypeAdapter;
 import mil.nga.giat.mage.sdk.Compatibility;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.http.resource.DeviceResource;
@@ -37,12 +37,12 @@ public class AuthorizationTask extends AsyncTask<String, Void, AuthorizationStat
 	private final DateFormat iso8601Format = ISO8601DateFormatFactory.ISO8601();
 	private final Context applicationContext;
 	private final AuthorizationDelegate delegate;
-	private final UserDeserializer userDeserializer;
+	private final UserTypeAdapter userTypeAdapter;
 
 	public AuthorizationTask(Context applicationContext, AuthorizationDelegate delegate) {
 		this.applicationContext = applicationContext;
 		this.delegate = delegate;
-		userDeserializer = new UserDeserializer(applicationContext);
+		userTypeAdapter = new UserTypeAdapter(applicationContext);
 	}
 
 	/**
@@ -84,7 +84,7 @@ public class AuthorizationTask extends AsyncTask<String, Void, AuthorizationStat
 
 			JsonObject userJson = authorization.getAsJsonObject("user");
 			JsonReader reader = new JsonReader(new StringReader(userJson.toString()));
-			User user = userDeserializer.read(reader);
+			User user = userTypeAdapter.read(reader);
 			return new AuthorizationStatus.Builder(AuthorizationStatus.Status.SUCCESSFUL_AUTHORIZATION)
 					.authorization(user, token)
 					.tokenExpiration(tokenExpiration)

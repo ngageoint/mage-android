@@ -9,13 +9,16 @@ import android.util.Log
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import mil.nga.giat.mage.network.api.LocationService
 import mil.nga.giat.mage.sdk.datastore.DaoStore
 import mil.nga.giat.mage.sdk.datastore.location.LocationHelper
 import mil.nga.giat.mage.sdk.datastore.location.LocationProperty
+import mil.nga.giat.mage.sdk.datastore.user.EventHelper
 import mil.nga.giat.mage.sdk.datastore.user.User
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper
 import mil.nga.giat.mage.sdk.exceptions.LocationException
 import mil.nga.giat.mage.sdk.exceptions.UserException
+import mil.nga.giat.mage.sdk.fetch.UserServerFetch
 import mil.nga.giat.mage.sdk.http.resource.LocationResource
 import mil.nga.sf.Point
 import java.sql.SQLException
@@ -25,8 +28,13 @@ import javax.inject.Singleton
 
 @Singleton
 class LocationRepository @Inject constructor(
-   @ApplicationContext private val context: Context
+   @ApplicationContext private val context: Context,
+   private val locationService: LocationService
 ) {
+
+   private val userFetch: UserServerFetch = UserServerFetch(context)
+   private val userHelper: UserHelper = UserHelper.getInstance(context)
+   private val locationHelper: LocationHelper = LocationHelper.getInstance(context)
    private var batteryStatus: Intent? = context.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
 
    suspend fun saveLocation(gpsLocation: Location) = withContext(Dispatchers.IO) {
@@ -145,6 +153,66 @@ class LocationRepository @Inject constructor(
       }
 
       success
+   }
+
+   suspend fun fetch() = withContext(Dispatchers.IO) {
+      var currentUser: User? = null
+      try {
+         currentUser = userHelper.readCurrentUser()
+      } catch (e: UserException) {
+         Log.e(LOG_NAME, "Error reading current user.", e)
+      }
+
+      val event = EventHelper.getInstance(context).currentEvent
+      try {
+         val response = locationService.getLocations(event.remoteId)
+         if (response.isSuccessful) {
+            val foo = response.body()!!
+            val locations = foo.map {
+               it.event = event
+               it
+            }
+
+            for (location in locations) {
+               // make sure that the user exists and is persisted in the local data-store
+               var userId: String? = null
+               val userIdProperty = location.propertiesMap["userId"]
+               if (userIdProperty != null) {
+                  userId = userIdProperty.value.toString()
+               }
+               if (userId != null) {
+                  var user: User? = userHelper.read(userId)
+                  // TODO : test the timer to make sure users are updated as needed!
+                  val sixHoursInMilliseconds = (6 * 60 * 60 * 1000).toLong()
+                  if (user == null || Date().after(Date(user.fetchedDate.time + sixHoursInMilliseconds))) {
+                     // get any users that were not recognized or expired
+                     Log.d(LOG_NAME, "User for location is null or stale, re-pulling")
+                     userFetch.fetch(userId)
+                     user = userHelper.read(userId)
+                  }
+                  location.user = user
+
+                  // if there is no existing location, create one
+                  val l = locationHelper.read(location.remoteId)
+                  if (l == null) {
+                     // delete old location and create new one
+                     if (user != null) {
+                        // don't pull your own locations
+                        if (user != currentUser) {
+                           userId = user.id.toString()
+                           val newLocation = locationHelper.create(location)
+                           locationHelper.deleteUserLocations(userId, true, newLocation.event)
+                        }
+                     } else {
+                        Log.w(LOG_NAME, "A location with no user was found and discarded.  User id: $userId")
+                     }
+                  }
+               }
+            }
+         } else {}
+      } catch(e: Exception) {
+         Log.e(LOG_NAME, "Failed to fetch user locations from server", e)
+      }
    }
 
    companion object {

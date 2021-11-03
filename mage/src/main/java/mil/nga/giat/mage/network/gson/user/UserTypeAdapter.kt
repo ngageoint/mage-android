@@ -1,4 +1,4 @@
-package mil.nga.giat.mage.network.gson
+package mil.nga.giat.mage.network.gson.user
 
 import android.content.Context
 import android.util.Log
@@ -6,6 +6,7 @@ import com.google.gson.TypeAdapter
 import com.google.gson.stream.JsonReader
 import com.google.gson.stream.JsonToken
 import com.google.gson.stream.JsonWriter
+import mil.nga.giat.mage.network.gson.nextStringOrNull
 import mil.nga.giat.mage.sdk.datastore.user.*
 import mil.nga.giat.mage.sdk.exceptions.RoleException
 import mil.nga.giat.mage.sdk.utils.ISO8601DateFormatFactory
@@ -14,7 +15,7 @@ import java.io.IOException
 import java.text.ParseException
 import java.util.*
 
-class UserDeserializer(val context: Context): TypeAdapter<User>() {
+class UserTypeAdapter(val context: Context): TypeAdapter<User>() {
    private val iso8601Format = ISO8601DateFormatFactory.ISO8601()
    private val roleHelper = RoleHelper.getInstance(context)
 
@@ -26,6 +27,7 @@ class UserDeserializer(val context: Context): TypeAdapter<User>() {
       val user = User()
 
       if (reader.peek() != JsonToken.BEGIN_OBJECT) {
+         reader.skipValue()
          return user
       }
 
@@ -35,9 +37,9 @@ class UserDeserializer(val context: Context): TypeAdapter<User>() {
             "id" -> user.remoteId = reader.nextString()
             "username" -> user.username = reader.nextString()
             "displayName" -> user.displayName = reader.nextString()
-            "email" -> user.email = reader.nextString()
-            "avatarUrl" -> user.avatarUrl = reader.nextString()
-            "iconUrl" -> user.iconUrl = reader.nextString()
+            "email" -> user.email = reader.nextStringOrNull()
+            "avatarUrl" -> user.avatarUrl = reader.nextStringOrNull()
+            "iconUrl" -> user.iconUrl = reader.nextStringOrNull()
             "phones" -> user.primaryPhone = parsePrimaryPhone(reader)
             "role" -> user.role = readRole(reader)
             "roleId" -> user.role = readRoleId(reader)
@@ -59,6 +61,7 @@ class UserDeserializer(val context: Context): TypeAdapter<User>() {
    @Throws(IOException::class)
    private fun parsePrimaryPhone(reader: JsonReader): String? {
       if (reader.peek() != JsonToken.BEGIN_ARRAY) {
+         reader.skipValue()
          return null
       }
 
@@ -82,6 +85,7 @@ class UserDeserializer(val context: Context): TypeAdapter<User>() {
       val phone = Phone()
 
       if (reader.peek() != JsonToken.BEGIN_OBJECT) {
+         reader.skipValue()
          return phone
       }
 
@@ -117,6 +121,7 @@ class UserDeserializer(val context: Context): TypeAdapter<User>() {
    @Throws(IOException::class)
    private fun readRole(reader: JsonReader): Role? {
       if (reader.peek() != JsonToken.BEGIN_OBJECT) {
+         reader.skipValue()
          return null
       }
 
@@ -128,7 +133,7 @@ class UserDeserializer(val context: Context): TypeAdapter<User>() {
          when(reader.nextName()) {
             "id" -> role.remoteId = reader.nextString()
             "name" -> role.name = reader.nextString()
-            "description" -> role.description = reader.nextString()
+            "description" -> role.description = reader.nextStringOrNull()
             "permissions" -> readPermissions(reader)
             else -> reader.skipValue()
          }
@@ -146,6 +151,7 @@ class UserDeserializer(val context: Context): TypeAdapter<User>() {
       val permissions: MutableCollection<Permission> = ArrayList()
 
       if (reader.peek() != JsonToken.BEGIN_ARRAY) {
+         reader.skipValue()
          return null
       }
 
@@ -168,6 +174,7 @@ class UserDeserializer(val context: Context): TypeAdapter<User>() {
    @Throws(IOException::class)
    private fun readRecentEventIds(reader: JsonReader): String? {
       if (reader.peek() != JsonToken.BEGIN_ARRAY) {
+         reader.skipValue()
          return null
       }
 
@@ -185,6 +192,6 @@ class UserDeserializer(val context: Context): TypeAdapter<User>() {
    }
 
    companion object {
-      private val LOG_NAME = UserDeserializer::class.java.name
+      private val LOG_NAME = UserTypeAdapter::class.java.name
    }
 }

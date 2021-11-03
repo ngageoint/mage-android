@@ -21,8 +21,8 @@ import java.util.List;
 import java.util.Map;
 
 import mil.nga.giat.mage.R;
-import mil.nga.giat.mage.network.gson.UserDeserializer;
-import mil.nga.giat.mage.network.gson.UsersDeserializer;
+import mil.nga.giat.mage.network.gson.user.UserTypeAdapter;
+import mil.nga.giat.mage.network.gson.user.UsersTypeAdapter;
 import mil.nga.giat.mage.sdk.datastore.user.Event;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
@@ -147,7 +147,7 @@ public class UserResource {
         Collection<User> users = new ArrayList<>();
 
         Gson gson = new GsonBuilder()
-            .registerTypeAdapter(new TypeToken<List<User>>(){}.getType(), new UsersDeserializer(context))
+            .registerTypeAdapter(new TypeToken<List<User>>(){}.getType(), new UsersTypeAdapter(context))
             .create();
 
         String baseUrl = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.serverURLKey), context.getString(R.string.serverURLDefaultValue));
@@ -221,7 +221,7 @@ public class UserResource {
         String baseUrl = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.serverURLKey), context.getString(R.string.serverURLDefaultValue));
 
         Gson gson = new GsonBuilder()
-                .registerTypeAdapter(new TypeToken<User>(){}.getType(), new UserDeserializer(context))
+                .registerTypeAdapter(new TypeToken<User>(){}.getType(), new UserTypeAdapter(context))
                 .create();
 
         Retrofit retrofit = new Retrofit.Builder()
@@ -249,7 +249,7 @@ public class UserResource {
         String baseUrl = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.serverURLKey), context.getString(R.string.serverURLDefaultValue));
 
         Gson gson = new GsonBuilder()
-            .registerTypeAdapter(new TypeToken<User>(){}.getType(), new UserDeserializer(context))
+            .registerTypeAdapter(new TypeToken<User>(){}.getType(), new UserTypeAdapter(context))
             .create();
 
         Retrofit retrofit = new Retrofit.Builder()
@@ -278,7 +278,7 @@ public class UserResource {
             String baseUrl = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.serverURLKey), context.getString(R.string.serverURLDefaultValue));
 
             Gson gson = new GsonBuilder()
-                    .registerTypeAdapter(new TypeToken<User>(){}.getType(), new UserDeserializer(context))
+                    .registerTypeAdapter(new TypeToken<User>(){}.getType(), new UserTypeAdapter(context))
                     .create();
 
             Retrofit retrofit = new Retrofit.Builder()

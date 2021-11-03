@@ -1,81 +1,90 @@
 package mil.nga.giat.mage.observation.sync
 
-import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
-import android.os.IBinder
+import android.util.Log
+import androidx.lifecycle.LifecycleService
+import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 import mil.nga.giat.mage.R
-import java.util.concurrent.Executors
-import java.util.concurrent.ScheduledExecutorService
-import java.util.concurrent.ScheduledFuture
-import java.util.concurrent.TimeUnit
+import mil.nga.giat.mage.data.observation.ObservationRepository
 import javax.inject.Inject
 
 @AndroidEntryPoint
-class ObservationFetchService : Service(), SharedPreferences.OnSharedPreferenceChangeListener  {
+class ObservationFetchService : LifecycleService(), SharedPreferences.OnSharedPreferenceChangeListener  {
 
-    @Inject @field:ApplicationContext
+    @Inject @ApplicationContext
     lateinit var context: Context
 
     @Inject
     lateinit var preferences: SharedPreferences
 
-    private var observationFetchFrequency: Long = 0;
-    private var executor: ScheduledExecutorService
-    private var future: ScheduledFuture<*>? = null
-    private var intialFetch = true;
+    @Inject
+    lateinit var observationRepository: ObservationRepository
 
-    init {
-        executor = Executors.newScheduledThreadPool(1);
-    }
+    private var observationFetchFrequency: Long = 0
+    private var initialFetch = true
+    private var pollJob: Job? = null
 
     override fun onCreate() {
         super.onCreate()
 
         observationFetchFrequency = getObservationFetchFrequency()
-        preferences.registerOnSharedPreferenceChangeListener(this);
+        preferences.registerOnSharedPreferenceChangeListener(this)
     }
 
     override fun onDestroy() {
         super.onDestroy()
 
-        preferences.unregisterOnSharedPreferenceChangeListener(this);
-        stopFetch()
+        preferences.unregisterOnSharedPreferenceChangeListener(this)
+        stopPoll()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         super.onStartCommand(intent, flags, startId)
 
-        stopFetch()
-        scheduleFetch()
+        if (pollJob?.isActive != true) {
+            startPoll()
+        }
 
         return START_NOT_STICKY
     }
 
-    override fun onBind(intent: Intent?): IBinder? {
-        return null
-    }
-
     override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences?, key: String?) {
         if (key.equals(getString(R.string.observationFetchFrequencyKey), ignoreCase = true)) {
-            observationFetchFrequency = getObservationFetchFrequency();
-            stopFetch()
-            scheduleFetch()
+            observationFetchFrequency = getObservationFetchFrequency()
+            stopPoll()
+            startPoll()
         }
     }
 
-    private fun scheduleFetch() {
-        future = executor.scheduleAtFixedRate({
-            ObservationServerFetch(context).fetch(notify = !intialFetch)
-            intialFetch = false;
-        }, 0, getObservationFetchFrequency(), TimeUnit.MILLISECONDS)
+    private fun startPoll() {
+        pollJob = poll()
     }
 
-    private fun stopFetch() {
-        future?.cancel(true)
+    private fun stopPoll() {
+        pollJob?.cancel()
+    }
+
+    private fun poll(): Job {
+        return lifecycleScope.launch {
+            while (isActive) {
+                try {
+                    observationRepository.fetch(notify = !initialFetch)
+                    initialFetch = false
+                } catch (e: Exception) {
+                    Log.i("Wha", "Who")
+                }
+
+                delay(timeMillis = getObservationFetchFrequency())
+            }
+        }
     }
 
     private fun getObservationFetchFrequency(): Long {

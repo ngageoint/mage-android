@@ -161,7 +161,7 @@ class LoginViewModel @Inject constructor(
            .putString(context.getString(R.string.tokenKey), status.token.trim { it <= ' ' })
            .putString(context.getString(R.string.tokenExpirationDateKey), iso8601Format.format(status.tokenExpiration))
            .putLong(context.getString(R.string.tokenExpirationLengthKey), status.tokenExpiration.time - Date().time)
-           .apply()
+           .commit()
 
         return sessionChanged
     }
