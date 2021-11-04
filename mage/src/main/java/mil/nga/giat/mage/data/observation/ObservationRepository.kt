@@ -31,7 +31,6 @@ import java.util.*
 import javax.inject.Inject
 import javax.inject.Singleton
 
-@Singleton
 class ObservationRepository @Inject constructor(
    @ApplicationContext private val context: Context,
    private val observationService: ObservationService

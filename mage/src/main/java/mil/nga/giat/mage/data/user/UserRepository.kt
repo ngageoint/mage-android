@@ -17,7 +17,6 @@ import java.io.File
 import javax.inject.Inject
 import javax.inject.Singleton
 
-@Singleton
 class UserRepository @Inject constructor(
    @ApplicationContext private val context: Context,
    private val userService: UserService

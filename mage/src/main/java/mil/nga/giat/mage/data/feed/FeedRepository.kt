@@ -12,7 +12,6 @@ import java.util.*
 import javax.inject.Inject
 import javax.inject.Singleton
 
-@Singleton
 class FeedRepository @Inject constructor(
     @ApplicationContext private val  context: Context,
     private val feedLocalDao: FeedLocalDao,

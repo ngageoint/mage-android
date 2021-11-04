@@ -26,7 +26,6 @@ import java.util.*
 import javax.inject.Inject
 import javax.inject.Singleton
 
-@Singleton
 class LocationRepository @Inject constructor(
    @ApplicationContext private val context: Context,
    private val locationService: LocationService

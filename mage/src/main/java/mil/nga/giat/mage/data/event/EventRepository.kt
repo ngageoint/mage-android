@@ -25,7 +25,6 @@ import java.util.*
 import javax.inject.Inject
 import javax.inject.Singleton
 
-@Singleton
 class EventRepository @Inject constructor(
    @ApplicationContext private val context: Context,
    private val mapLayerPreferences: MapLayerPreferences,

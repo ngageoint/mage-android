@@ -43,8 +43,6 @@ class FeedFetchService : LifecycleService() {
     override fun onCreate() {
         super.onCreate()
 
-
-
         UserHelper.getInstance(applicationContext).addListener(object: IEventEventListener {
             override fun onEventChanged() {
                 lifecycleScope.launch(Dispatchers.Main) {
