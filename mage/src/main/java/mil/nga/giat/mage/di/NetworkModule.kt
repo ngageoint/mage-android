@@ -2,6 +2,7 @@ package mil.nga.giat.mage.di
 
 import android.app.Application
 import android.content.Context
+import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.reflect.TypeToken
 import dagger.Module
@@ -16,9 +17,9 @@ import mil.nga.giat.mage.network.LiveDataCallAdapterFactory
 import mil.nga.giat.mage.network.Server
 import mil.nga.giat.mage.network.api.*
 import mil.nga.giat.mage.network.gson.LocationsTypeAdapter
-import mil.nga.giat.mage.network.gson.user.UserTypeAdapter
 import mil.nga.giat.mage.network.gson.observation.ObservationTypeAdapter
 import mil.nga.giat.mage.network.gson.observation.ObservationsTypeAdapter
+import mil.nga.giat.mage.network.gson.user.UserTypeAdapter
 import mil.nga.giat.mage.sdk.datastore.layer.Layer
 import mil.nga.giat.mage.sdk.datastore.location.Location
 import mil.nga.giat.mage.sdk.datastore.observation.Observation
@@ -57,8 +58,8 @@ class NetworkModule {
 
    @Provides
    @Singleton
-   fun provideGson(application: Application): GsonConverterFactory {
-      val gson = GsonBuilder()
+   fun provideGson(application: Application): Gson {
+      return GsonBuilder()
          .setExclusionStrategies(AnnotationExclusionStrategy())
          .registerTypeAdapter(object : TypeToken<User>() {}.type, UserTypeAdapter(application))
          .registerTypeAdapter(object : TypeToken<Observation>() {}.type, ObservationTypeAdapter(application))
@@ -71,18 +72,16 @@ class NetworkModule {
          .registerTypeAdapterFactory(GeometryTypeAdapterFactory())
          .registerTypeAdapter(Date::class.java, DateTimestampTypeAdapter())
          .create()
-
-      return GsonConverterFactory.create(gson)
    }
 
    @Provides
    fun provideRetrofit(
-      gsonConverterFactory: GsonConverterFactory,
+      gson: Gson,
       okHttpClient: OkHttpClient,
       server: Server
    ): Retrofit {
       return Retrofit.Builder()
-         .addConverterFactory(gsonConverterFactory)
+         .addConverterFactory(GsonConverterFactory.create(gson))
          .addCallAdapterFactory(LiveDataCallAdapterFactory())
          .baseUrl(server.baseUrl)
          .client(okHttpClient)
