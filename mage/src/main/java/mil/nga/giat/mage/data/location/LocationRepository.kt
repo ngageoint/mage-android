@@ -24,7 +24,6 @@ import mil.nga.sf.Point
 import java.sql.SQLException
 import java.util.*
 import javax.inject.Inject
-import javax.inject.Singleton
 
 class LocationRepository @Inject constructor(
    @ApplicationContext private val context: Context,
@@ -208,7 +207,9 @@ class LocationRepository @Inject constructor(
                   }
                }
             }
-         } else {}
+         }
+
+         response
       } catch(e: Exception) {
          Log.e(LOG_NAME, "Failed to fetch user locations from server", e)
       }
