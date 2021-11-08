@@ -17,11 +17,13 @@ import mil.nga.giat.mage.network.LiveDataCallAdapterFactory
 import mil.nga.giat.mage.network.Server
 import mil.nga.giat.mage.network.api.*
 import mil.nga.giat.mage.network.gson.LocationsTypeAdapter
+import mil.nga.giat.mage.network.gson.observation.AttachmentTypeAdapter
 import mil.nga.giat.mage.network.gson.observation.ObservationTypeAdapter
 import mil.nga.giat.mage.network.gson.observation.ObservationsTypeAdapter
 import mil.nga.giat.mage.network.gson.user.UserTypeAdapter
 import mil.nga.giat.mage.sdk.datastore.layer.Layer
 import mil.nga.giat.mage.sdk.datastore.location.Location
+import mil.nga.giat.mage.sdk.datastore.observation.Attachment
 import mil.nga.giat.mage.sdk.datastore.observation.Observation
 import mil.nga.giat.mage.sdk.datastore.user.Event
 import mil.nga.giat.mage.sdk.datastore.user.Role
@@ -36,8 +38,12 @@ import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.util.*
+import javax.inject.Qualifier
 import javax.inject.Singleton
 
+@Qualifier
+@Retention(AnnotationRetention.BINARY)
+annotation class server5
 
 @InstallIn(SingletonComponent::class)
 @Module
@@ -63,6 +69,7 @@ class NetworkModule {
          .setExclusionStrategies(AnnotationExclusionStrategy())
          .registerTypeAdapter(object : TypeToken<User>() {}.type, UserTypeAdapter(application))
          .registerTypeAdapter(object : TypeToken<Observation>() {}.type, ObservationTypeAdapter(application))
+         .registerTypeAdapter(object : TypeToken<Attachment>() {}.type, AttachmentTypeAdapter(application))
          .registerTypeAdapter(object : TypeToken<java.util.Collection<Role>>() {}.type, RolesDeserializer())
          .registerTypeAdapter(object : TypeToken<java.util.Collection<Layer>>() {}.type, LayersDeserializer())
          .registerTypeAdapter(object : TypeToken<java.util.List<Location>>() {}.type, LocationsTypeAdapter(application))
@@ -116,6 +123,17 @@ class NetworkModule {
    @Provides
    fun provideObservationService(retrofit: Retrofit): ObservationService {
       return retrofit.create(ObservationService::class.java)
+   }
+
+   @Provides
+   fun provideAttachmentService(retrofit: Retrofit): AttachmentService {
+      return retrofit.create(AttachmentService::class.java)
+   }
+
+   @Provides
+   @server5
+   fun provideAttachmentService_server5(retrofit: Retrofit): AttachmentService_server5 {
+      return retrofit.create(AttachmentService_server5::class.java)
    }
 
    @Provides

@@ -12,6 +12,7 @@ import mil.nga.giat.mage.sdk.datastore.observation.Observation
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationFavorite
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper
 import mil.nga.giat.mage.sdk.datastore.observation.State
+import java.io.IOException
 import java.net.HttpURLConnection
 
 @HiltWorker
@@ -80,8 +81,9 @@ class ObservationSyncWorker @AssistedInject constructor(
             } else {
                 save(observation).withFlag(result)
             }
-        } catch(e: Exception) {
+        } catch(e: IOException) {
             Log.e(LOG_NAME, "Failed to sync observation with server", e)
+            result = RESULT_FAILURE_FLAG
         }
 
         return result

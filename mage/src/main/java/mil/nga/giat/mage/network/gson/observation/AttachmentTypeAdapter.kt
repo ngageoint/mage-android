@@ -3,6 +3,7 @@ package mil.nga.giat.mage.network.gson.observation
 import android.content.Context
 import com.google.gson.TypeAdapter
 import com.google.gson.stream.JsonReader
+import com.google.gson.stream.JsonToken
 import com.google.gson.stream.JsonWriter
 import mil.nga.giat.mage.network.gson.nextLongOrNull
 import mil.nga.giat.mage.network.gson.nextStringOrNull
@@ -17,7 +18,7 @@ class AttachmentTypeAdapter(val context: Context): TypeAdapter<Attachment>() {
       val attachment = Attachment()
       attachment.isDirty = false
 
-      if (reader.peek() != com.google.gson.stream.JsonToken.BEGIN_OBJECT) {
+      if (reader.peek() != JsonToken.BEGIN_OBJECT) {
          reader.skipValue()
          return attachment
       }
