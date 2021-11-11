@@ -13,7 +13,7 @@ import mil.nga.mgrs.MGRS;
 
 public class CoordinateFormatter {
     private CoordinateSystem coordinateSystem;
-    private DecimalFormat latLngFormat = new DecimalFormat("###.#####");
+    private DecimalFormat latLngFormat = new DecimalFormat("###.00000");
 
     public CoordinateFormatter(Context context) {
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);

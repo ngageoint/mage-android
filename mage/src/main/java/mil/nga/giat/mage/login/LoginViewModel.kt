@@ -7,8 +7,9 @@ import androidx.appcompat.app.AppCompatDelegate
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import mil.nga.giat.mage.R
-import mil.nga.giat.mage.dagger.module.ApplicationContext
 import mil.nga.giat.mage.sdk.datastore.DaoStore
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper
 import mil.nga.giat.mage.sdk.login.AuthenticationStatus
@@ -23,6 +24,7 @@ import org.apache.commons.lang3.StringUtils
 import java.util.*
 import javax.inject.Inject
 
+@HiltViewModel
 class LoginViewModel @Inject constructor(
     @ApplicationContext val context: Context,
     val preferences: SharedPreferences
@@ -141,7 +143,7 @@ class LoginViewModel @Inject constructor(
             DaoStore.getInstance(context).resetDatabase()
 
             val preferenceHelper = PreferenceHelper.getInstance(context)
-            preferenceHelper.initialize(true, mil.nga.giat.mage.sdk.R.xml::class.java, R.xml::class.java)
+            preferenceHelper.initialize(true, R.xml::class.java)
 
             val dayNightTheme = preferences.getInt(context.resources.getString(R.string.dayNightThemeKey), context.resources.getInteger(R.integer.dayNightThemeDefaultValue))
             AppCompatDelegate.setDefaultNightMode(dayNightTheme)
@@ -159,7 +161,7 @@ class LoginViewModel @Inject constructor(
            .putString(context.getString(R.string.tokenKey), status.token.trim { it <= ' ' })
            .putString(context.getString(R.string.tokenExpirationDateKey), iso8601Format.format(status.tokenExpiration))
            .putLong(context.getString(R.string.tokenExpirationLengthKey), status.tokenExpiration.time - Date().time)
-           .apply()
+           .commit()
 
         return sessionChanged
     }

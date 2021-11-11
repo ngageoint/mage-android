@@ -6,13 +6,15 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.google.gson.JsonObject
-import mil.nga.giat.mage.dagger.module.ApplicationContext
+import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import mil.nga.giat.mage.sdk.http.resource.UserResource
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 import javax.inject.Inject
 
+@HiltViewModel
 open class SignupViewModel @Inject constructor(
    @ApplicationContext val context: Context,
    val preferences: SharedPreferences
@@ -37,7 +39,7 @@ open class SignupViewModel @Inject constructor(
    data class Account(val username: String, val displayName: String, val email: String, val phone: String, val password: String)
    var account: Account? =  null
 
-   data class SignupStatus(val success: Boolean, val user: JsonObject?, val error: SignupError? = null, val errorMessage: String? = null)
+   data class SignupStatus(val success: Boolean, val user: JsonObject?, val error: SignupError? = null, val errorMessage: String? = null, val username: String? = null)
 
    private val _captchaState = MutableLiveData<CaptchaState>()
    val captchaState: LiveData<CaptchaState> = _captchaState
@@ -90,14 +92,14 @@ open class SignupViewModel @Inject constructor(
                }
 
                val error = if (response.code() == 409) SignupError.INVALID_USERNAME else SignupError.INVALID_CAPTCHA
-               _signupStatus.value = SignupStatus(false, null, error, response.errorBody()?.string())
+               _signupStatus.value = SignupStatus(false, null, error, response.errorBody()?.string(), account.username)
             }
 
             _signupState.value = SignupState.COMPLETE
          }
 
          override fun onFailure(call: Call<JsonObject>, t: Throwable) {
-            _signupStatus.value = SignupStatus(false, null, null, t.localizedMessage)
+            _signupStatus.value = SignupStatus(false, null, null, t.localizedMessage, account.username)
          }
       })
 

@@ -56,7 +56,7 @@ import java.util.Map;
 
 import javax.inject.Inject;
 
-import dagger.android.support.DaggerAppCompatActivity;
+import dagger.hilt.android.AndroidEntryPoint;
 import mil.nga.giat.mage.BuildConfig;
 import mil.nga.giat.mage.MageApplication;
 import mil.nga.giat.mage.R;
@@ -79,7 +79,8 @@ import mil.nga.giat.mage.widget.CoordinateView;
 import mil.nga.sf.Point;
 import mil.nga.sf.util.GeometryUtils;
 
-public class ProfileActivity extends DaggerAppCompatActivity implements MapAndViewProvider.OnMapAndViewReadyListener {
+@AndroidEntryPoint
+public class ProfileActivity extends AppCompatActivity implements MapAndViewProvider.OnMapAndViewReadyListener {
 
 	private static final String LOG_NAME = ProfileActivity.class.getName();
 
@@ -219,6 +220,7 @@ public class ProfileActivity extends DaggerAppCompatActivity implements MapAndVi
 		GlideApp.with(this)
 				.load(Avatar.Companion.forUser(user))
 				.circleCrop()
+				.placeholder(R.drawable.ic_person_gray_24dp)
 				.fallback(R.drawable.ic_person_gray_24dp)
 				.error(R.drawable.ic_person_gray_24dp)
 				.into(imageView);

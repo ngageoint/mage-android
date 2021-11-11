@@ -1,18 +1,18 @@
 import org.ajoberstar.grgit.Grgit
 
 plugins {
+    id 'com.android.application'
+    id 'kotlin-android'
+    id 'kotlin-android-extensions'
+    id 'kotlin-kapt'
+    id 'maven-publish'
     id 'org.ajoberstar.grgit' version '4.1.0'
+    id 'dagger.hilt.android.plugin'
 }
-apply plugin: 'com.android.application'
-apply plugin: 'kotlin-android'
-apply plugin: 'kotlin-android-extensions'
-apply plugin: 'kotlin-kapt'
-apply plugin: 'maven-publish'
+
 group 'mil.nga.giat.mage'
-archivesBaseName = 'mage-android'
-version '6.3.3'
+version '7.1.0'
 ext {
-    versionCode = 85
     sourceRefspec = Grgit.open(currentDir: project.rootDir).head().id
 
     //Test resources
@@ -32,19 +32,13 @@ kapt {
 def serverURL = hasProperty('SERVER_URL') ? SERVER_URL : ''
 def googleMapsApiReleaseKey = hasProperty('RELEASE_MAPS_API_KEY') ? RELEASE_MAPS_API_KEY : ''
 def googleMapsApiDebugKey = hasProperty('DEBUG_MAPS_API_KEY') ? DEBUG_MAPS_API_KEY : ''
-def signedApkPath = hasProperty('SIGNED_APK_PATH') ? SIGNED_APK_PATH : "${project.buildDir}/outputs/apk/defaults/release/${archivesBaseName}-defaults-release.apk"
-def signedDebugApkPath = hasProperty('SIGNED_DEBUG_APK_PATH') ? SIGNED_DEBUG_APK_PATH : "${project.buildDir}/outputs/apk/defaults/debug/${archivesBaseName}-defaults-debug.apk"
 
 android {
-    compileSdkVersion 30
+    compileSdkVersion 31
     flavorDimensions "default"
 
     dataBinding {
         enabled = true
-    }
-
-    dexOptions {
-        javaMaxHeapSize "4g"
     }
 
     sourceSets {
@@ -61,10 +55,19 @@ android {
         jvmTarget = "1.8"
     }
 
+    buildFeatures {
+        compose true
+    }
+
+    composeOptions {
+        kotlinCompilerVersion = "1.4.32"
+        kotlinCompilerExtensionVersion = "1.0.0"
+    }
+
     defaultConfig {
         applicationId "mil.nga.giat.mage"
         versionName project.version
-        versionCode project.versionCode as int
+        versionCode VERSION_CODE as int
         minSdkVersion 22
         targetSdkVersion 30
         multiDexEnabled true
@@ -79,12 +82,31 @@ android {
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    kapt {
+        arguments {
+            arg("room.schemaLocation", "$projectDir/schemas".toString())
+        }
+    }
+
+    signingConfigs {
+        release {
+            if (project.hasProperty('KEYSTORE')) {
+                storeFile file(KEYSTORE)
+                storePassword KEYSTORE_PASSWORD
+                keyAlias KEY_ALIAS
+                keyPassword KEY_PASSWORD
+            }
+        }
+    }
+
     buildTypes {
         release {
             minifyEnabled false
+            signingConfig signingConfigs.release
             proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.txt"
             resValue "string", "GOOGLE_MAPS_ANDROID_API_KEY", googleMapsApiReleaseKey
         }
+
         debug {
             applicationIdSuffix ".debug"
             versionNameSuffix "-debug"
@@ -124,39 +146,10 @@ android {
     useLibrary 'android.test.mock'
 }
 
-afterEvaluate {
-    publishing {
-        publications {
-            defaultsApk(MavenPublication) {
-                artifactId archivesBaseName
-                pom.packaging 'apk'
-                artifact "${project.buildDir}/outputs/apk/defaults/release/${archivesBaseName}-defaults-release-unsigned.apk", {
-                    classifier 'unsigned'
-                }
-                if (file(signedApkPath).exists()) {
-                    artifact signedApkPath
-                }
-                if (file(signedDebugApkPath).exists()) {
-                    artifact signedDebugApkPath, {
-                        classifier 'debug'
-                    }
-                }
-                if (project.hasProperty('SKIP_DEBUG_SIGNING')) {
-                    artifact "${project.buildDir}/outputs/apk/defaults/debug/${archivesBaseName}-defaults-debug-unsigned.apk", {
-                        classifier 'debug-unsigned'
-                    }
-                }
-            }
-        }
-    }
-}
-
 dependencies {
     ext {
-        google_play_services_version = '17.0.0'
-        lifecycle_version= '2.2.0'
-        dagger_version = '2.32'
-        work_version = '1.0.0'
+        lifecycle_version= '2.4.0-rc01'
+        room_version = '2.3.0'
     }
 
     // this block allows the mage-android-wear-bridge to be pulled in dynamically when that flavor is built
@@ -169,49 +162,85 @@ dependencies {
         }
     }
 
-    api 'androidx.constraintlayout:constraintlayout:2.0.1'
-    api 'androidx.vectordrawable:vectordrawable-animated:1.1.0'
-    api 'androidx.mediarouter:mediarouter:1.1.0'
-    api 'androidx.recyclerview:recyclerview:1.1.0'
-    api 'androidx.appcompat:appcompat:1.2.0'
-    api 'com.google.android.material:material:1.0.0'
-    api 'androidx.cardview:cardview:1.0.0'
-    api 'androidx.preference:preference:1.1.1'
-    implementation "androidx.lifecycle:lifecycle-extensions:$lifecycle_version"
-    implementation "com.google.android.gms:play-services-maps:$google_play_services_version"
+    implementation "androidx.core:core-ktx:1.6.0"
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.1'
+    implementation 'androidx.coordinatorlayout:coordinatorlayout:1.1.0'
+    implementation 'androidx.vectordrawable:vectordrawable-animated:1.1.0'
+    implementation 'androidx.mediarouter:mediarouter:1.2.5'
+    implementation 'androidx.recyclerview:recyclerview:1.2.1'
+    implementation 'androidx.appcompat:appcompat:1.3.1'
+    implementation 'androidx.cardview:cardview:1.0.0'
+    implementation 'androidx.browser:browser:1.3.0'
+    implementation 'androidx.preference:preference-ktx:1.1.1'
+    implementation 'androidx.preference:preference-ktx:1.1.1'
+    implementation "com.google.android.gms:play-services-maps:17.0.1"
+    implementation 'com.google.maps.android:maps-ktx:2.4.0'
 
-    implementation ('androidx.browser:browser:1.3.0-alpha05') {
-        exclude group: 'com.google.guava', module: 'listenablefuture'
-    }
+    implementation ('androidx.browser:browser:1.3.0')
 
-    implementation "com.google.dagger:dagger:$dagger_version"
-    implementation "com.google.dagger:dagger-android-support:$dagger_version"
-    kapt "com.google.dagger:dagger-compiler:$dagger_version"
-    kapt "com.google.dagger:dagger-android-processor:$dagger_version"
+    implementation 'com.google.dagger:hilt-android:2.38.1'
+    kapt 'com.google.dagger:hilt-compiler:2.38.1'
+    implementation 'androidx.hilt:hilt-work:1.0.0'
+    kapt 'androidx.hilt:hilt-compiler:1.0.0'
+    annotationProcessor 'androidx.hilt:hilt-compiler:1.0.0'
 
-    implementation ('androidx.work:work-runtime-ktx:2.4.0') {
-        exclude group: 'com.google.guava', module: 'listenablefuture'
-    }
+    implementation 'com.google.android.material:material:1.4.0'
+    implementation "androidx.swiperefreshlayout:swiperefreshlayout:1.1.0"
 
-//        api project(':sdk') // uncomment me to build locally, and see top-level build.gradle
-    api 'mil.nga.giat.mage:mage-android-sdk:6.4.0' // comment me to build locally
-    api 'com.google.maps.android:android-maps-utils:0.6.2'
-    api 'mil.nga.geopackage.map:geopackage-android-map:3.4.0'
-    api 'org.ocpsoft.prettytime:prettytime:3.2.5.Final'
+    implementation 'androidx.compose.ui:ui:1.0.4'
+    implementation 'androidx.compose.ui:ui-tooling:1.0.4'
+    implementation 'androidx.compose.foundation:foundation:1.0.4'
+    implementation 'androidx.compose.runtime:runtime-livedata:1.0.4'
+    implementation 'androidx.compose.runtime:runtime-rxjava2:1.0.4'
+    implementation 'androidx.compose.material:material:1.0.4'
+    implementation 'androidx.compose.material:material-icons-core:1.0.4'
+    implementation 'androidx.compose.material:material-icons-extended:1.0.4'
+    implementation 'androidx.activity:activity-compose:1.3.1'
+    implementation "androidx.lifecycle:lifecycle-viewmodel-compose:$lifecycle_version"
+    implementation "androidx.lifecycle:lifecycle-livedata-ktx:$lifecycle_version"
+    implementation "com.google.accompanist:accompanist-swiperefresh:0.19.0"
 
-    implementation 'com.github.bumptech.glide:glide:4.9.0'
-    implementation 'com.github.bumptech.glide:okhttp3-integration:4.9.0'
-    kapt 'com.github.bumptech.glide:compiler:4.9.0'
+    implementation('androidx.paging:paging-runtime-ktx:3.0.1')
+    implementation("androidx.paging:paging-compose:1.0.0-alpha14")
 
-    api 'com.google.android:flexbox:2.0.1'
-    api 'com.nulab-inc:zxcvbn:1.2.3'
-    api (name:'mgrs-0.0.2-release', ext:'aar')
+    implementation ('androidx.work:work-runtime-ktx:2.7.0')
 
-    implementation "androidx.core:core-ktx:1.3.1"
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+    implementation 'com.squareup.retrofit2:retrofit:2.9.0'
+    implementation 'com.squareup.retrofit2:converter-gson:2.9.0'
+    implementation 'com.squareup.retrofit2:converter-jackson:2.9.0'
+    implementation 'com.squareup.okhttp3:okhttp:3.14.9'
+    implementation 'com.squareup.okhttp3:okhttp-urlconnection:3.11.0'
+
+    implementation "androidx.room:room-runtime:$room_version"
+    kapt "androidx.room:room-compiler:$room_version"
+    implementation "androidx.room:room-ktx:$room_version"
+    implementation 'com.j256.ormlite:ormlite-android:5.1'
+
+    implementation 'com.google.maps.android:android-maps-utils:0.6.2'
+    implementation 'mil.nga.geopackage:geopackage-android:3.4.0'
+    implementation 'mil.nga.geopackage.map:geopackage-android-map:3.4.0'
+    implementation 'org.ocpsoft.prettytime:prettytime:3.2.5.Final'
+    implementation (name:'mgrs-0.0.2-release', ext:'aar')
+    implementation 'com.mapbox.mapboxsdk:mapbox-sdk-geojson:4.6.0'
+
+    implementation 'com.github.bumptech.glide:glide:4.12.0'
+    implementation 'com.github.bumptech.glide:okhttp3-integration:4.12.0'
+    implementation "com.google.accompanist:accompanist-glide:0.15.0"
+    kapt 'com.github.bumptech.glide:compiler:4.12.0'
+
+    implementation 'com.google.android:flexbox:2.0.1'
+    implementation 'com.nulab-inc:zxcvbn:1.2.3'
+
+    implementation 'androidx.exifinterface:exifinterface:1.3.3'
+
+    implementation 'com.google.code.gson:gson:2.8.7'
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.10.1'
+
+    implementation 'com.google.guava:guava:31.0-android'
+    implementation 'org.apache.commons:commons-lang3:3.3.2'
+    implementation (name:'sanselanandroid', ext:'jar')
 
     // Testing-only dependencies
-    androidTestImplementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
     androidTestImplementation 'androidx.test:core:' +coreVersion
     androidTestImplementation 'androidx.test:core-ktx:' + coreVersion
     androidTestImplementation 'androidx.test.ext:junit:' + extJUnitVersion
@@ -230,43 +259,5 @@ task androidArtifactVersion {
         println "applicationId: ${appExt.defaultConfig.applicationId}"
         println "versionCode: ${appExt.defaultConfig.versionCode}"
         println "versionName: ${appExt.defaultConfig.versionName}"
-    }
-}
-
-configure extensions.android, {
-    if (project.hasProperty('RELEASE_STORE_FILE') && file(project.getProperty('RELEASE_STORE_FILE')).exists()) {
-        println 'found release key store for signing'
-        signingConfigs {
-            release {
-                storeFile file(RELEASE_STORE_FILE)
-                storePassword RELEASE_STORE_PASSWORD
-                keyAlias RELEASE_KEY_ALIAS
-                keyPassword RELEASE_KEY_PASSWORD
-            }
-        }
-        buildTypes {
-            release {
-                signingConfig signingConfigs.release
-            }
-        }
-    } else {
-        println 'no release key store configured - will skip signing'
-    }
-
-    if (project.hasProperty('SKIP_DEBUG_SIGNING')) {
-        buildTypes {
-            debug {
-                signingConfig null
-            }
-        }
-    } else if (project.hasProperty('DEBUG_STORE_FILE') && file(project.getProperty('DEBUG_STORE_FILE')).exists()) {
-        signingConfigs {
-            debug {
-                storeFile file(DEBUG_STORE_FILE)
-                storePassword DEBUG_STORE_PASSWORD
-                keyAlias DEBUG_KEY_ALIAS
-                keyPassword DEBUG_KEY_PASSWORD
-            }
-        }
     }
 }

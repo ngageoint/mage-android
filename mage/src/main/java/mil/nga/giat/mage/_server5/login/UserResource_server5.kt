@@ -3,8 +3,8 @@ package mil.nga.giat.mage._server5.login
 import android.content.Context
 import androidx.preference.PreferenceManager
 import com.google.gson.JsonObject
+import dagger.hilt.android.qualifiers.ApplicationContext
 import mil.nga.giat.mage.R
-import mil.nga.giat.mage.dagger.module.ApplicationContext
 import mil.nga.giat.mage.sdk.http.HttpClientManager
 import retrofit2.Call
 import retrofit2.Callback

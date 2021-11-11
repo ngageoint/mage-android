@@ -50,7 +50,7 @@ public class AttachmentGallery {
         }
     }
 
-    void addAttachment(ViewGroup gallery, final Attachment a) {
+    public void addAttachment(ViewGroup gallery, final Attachment a) {
         final AppCompatImageView iv = new AppCompatImageView(context);
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(width, height);
         iv.setLayoutParams(lp);
@@ -87,13 +87,15 @@ public class AttachmentGallery {
             transformations.add(new VideoOverlayTransformation(context));
         }
 
+        BitmapTransformation[] foo = transformations.toArray(new BitmapTransformation[]{});
+
         GlideApp.with(context)
                 .asBitmap()
                 .load(a)
                 .placeholder(progress)
                 .fallback(R.drawable.ic_attachment_200dp)
                 .error(R.drawable.ic_attachment_200dp)
-                .transforms(transformations.toArray(new BitmapTransformation[]{}))
+                .transforms(foo)
                 .into(iv);
     }
 }

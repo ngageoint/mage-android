@@ -8,8 +8,8 @@ import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.widget.LinearLayout
 import androidx.databinding.ObservableField
-import mil.nga.giat.mage.databinding.ViewStraightLineNavigationBinding
 import com.google.android.gms.maps.model.LatLng
+import mil.nga.giat.mage.databinding.ViewStraightLineNavigationBinding
 
 
 class StraightLineNavigationData {

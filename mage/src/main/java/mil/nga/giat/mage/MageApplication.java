@@ -3,10 +3,8 @@ package mil.nga.giat.mage;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.Application;
-import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
-import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -17,19 +15,20 @@ import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatDelegate;
-import androidx.core.app.NotificationCompat;
-import androidx.core.app.NotificationManagerCompat;
-import androidx.core.app.TaskStackBuilder;
 import androidx.core.content.ContextCompat;
+import androidx.hilt.work.HiltWorkerFactory;
 import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.LifecycleObserver;
 import androidx.lifecycle.OnLifecycleEvent;
 import androidx.lifecycle.ProcessLifecycleOwner;
+import androidx.work.Configuration;
 
-import dagger.android.AndroidInjector;
-import dagger.android.support.DaggerApplication;
-import mil.nga.giat.mage.dagger.DaggerMageComponent;
+import javax.inject.Inject;
+
+import dagger.hilt.android.HiltAndroidApp;
+import mil.nga.giat.mage.feed.FeedFetchService;
 import mil.nga.giat.mage.location.LocationFetchService;
 import mil.nga.giat.mage.location.LocationReportingService;
 import mil.nga.giat.mage.login.AccountStateActivity;
@@ -62,7 +61,8 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-public class MageApplication extends DaggerApplication implements LifecycleObserver, SharedPreferences.OnSharedPreferenceChangeListener, ISessionEventListener, Application.ActivityLifecycleCallbacks {
+@HiltAndroidApp
+public class MageApplication extends Application implements Configuration.Provider, LifecycleObserver, SharedPreferences.OnSharedPreferenceChangeListener, ISessionEventListener, Application.ActivityLifecycleCallbacks {
 
 	private static final String LOG_NAME = MageApplication.class.getName();
 
@@ -83,16 +83,20 @@ public class MageApplication extends DaggerApplication implements LifecycleObser
 	private Intent observationPushServiceIntent;
 	private Intent attachmentPushServiceIntent;
 
-	private Intent locationReportingServiceIntent;
-
 	private ObservationNotificationListener observationNotificationListener = null;
 
 	private Activity runningActivity;
 
-    @Override
-    protected AndroidInjector<? extends DaggerApplication> applicationInjector() {
-    	return DaggerMageComponent.factory().create(this);
-    }
+	@Inject
+	HiltWorkerFactory workerFactory;
+
+	@NonNull
+	@Override
+	public Configuration getWorkManagerConfiguration() {
+		return new Configuration.Builder()
+				.setWorkerFactory(workerFactory)
+				.build();
+	}
 
 	@Override
 	public void onCreate() {
@@ -155,8 +159,6 @@ public class MageApplication extends DaggerApplication implements LifecycleObser
 	}
 
 	public void onLogin() {
-		createNotification();
-
 		//set up observation notifications
 		if (observationNotificationListener == null) {
 			observationNotificationListener = new ObservationNotificationListener(getApplicationContext());
@@ -167,7 +169,7 @@ public class MageApplication extends DaggerApplication implements LifecycleObser
 		startPushing();
 		startFetching();
 
-		ObservationFetchWorker.Companion.beginWork();
+		ObservationFetchWorker.Companion.beginWork(getApplicationContext());
 
 		// Pull static layers and features just once
 		loadOnlineAndOfflineLayers(false, null);
@@ -209,7 +211,7 @@ public class MageApplication extends DaggerApplication implements LifecycleObser
 		destroyNotification();
 		stopLocationService();
 
-		ObservationFetchWorker.Companion.stopWork();
+		ObservationFetchWorker.Companion.stopWork(getApplicationContext());
 
 		if (clearTokenInformationAndSendLogoutRequest) {
 			UserResource userResource = new UserResource(getApplicationContext());
@@ -247,12 +249,6 @@ public class MageApplication extends DaggerApplication implements LifecycleObser
 		} catch (UserException e) {
 			e.printStackTrace();
 		}
-
-		Boolean deleteAllDataOnLogout = sharedPreferences.getBoolean(getApplicationContext().getString(R.string.deleteAllDataOnLogoutKey), getResources().getBoolean(R.bool.deleteAllDataOnLogoutDefaultValue));
-
-		if (deleteAllDataOnLogout) {
-			LandingActivity.deleteAllData(getApplicationContext());
-		}
 	}
 
 	private void destroyNotification() {
@@ -262,74 +258,10 @@ public class MageApplication extends DaggerApplication implements LifecycleObser
 		notificationManager.cancel(ObservationNotificationListener.OBSERVATION_NOTIFICATION_ID);
 	}
 
-	public void createNotification() {
-		boolean tokenExpired = UserUtility.getInstance(getApplicationContext()).isTokenExpired();
-
-	    // Creates an explicit intent for an Activity in your app
-		Intent resultIntent = new Intent(this, LoginActivity.class);
-		// The stack builder object will contain an artificial back stack for the
-		// started Activity.
-		// This ensures that navigating backward from the Activity leads out of
-		// your application to the Home screen.
-		TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
-		// Adds the back stack for the Intent (but not the Intent itself)
-		stackBuilder.addParentStack(LoginActivity.class);
-		// Adds the Intent that starts the Activity to the top of the stack
-		stackBuilder.addNextIntent(resultIntent);
-		PendingIntent resultPendingIntent = stackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
-
-		String noticationMsg = tokenExpired ? "Your token has expired, please tap to login." : "You are currently logged into MAGE.";
-
-		Notification accountNotification = new NotificationCompat.Builder(this, MAGE_NOTIFICATION_CHANNEL_ID)
-				.setOngoing(true)
-				.setSortKey("1")
-				.setContentTitle("MAGE")
-				.setContentText(noticationMsg)
-				.setGroup(MAGE_NOTIFICATION_GROUP)
-				.setContentIntent(resultPendingIntent)
-				.setSmallIcon(R.drawable.ic_wand_white_50dp)
-				.addAction(R.drawable.ic_power_settings_new_white_24dp, "Logout", getLogoutPendingIntent())
-				.build();
-
-		NotificationCompat.InboxStyle style = new NotificationCompat.InboxStyle()
-				.addLine(noticationMsg)
-				.setBigContentTitle("MAGE");
-
-		if (isReportingLocation()) {
-			style.addLine("MAGE is currently reporting your location.");
-		}
-
-		// This summary notification supports "grouping" on versions older that Android.N
-		Notification summaryNotification = new NotificationCompat.Builder(this, MAGE_NOTIFICATION_CHANNEL_ID)
-				.setGroupSummary(true)
-				.setGroup(MAGE_NOTIFICATION_GROUP)
-				.setContentTitle("MAGE")
-				.setContentText(noticationMsg)
-				.setSmallIcon(R.drawable.ic_wand_white_50dp)
-				.setStyle(style)
-				.setContentIntent(resultPendingIntent)
-				.addAction(R.drawable.ic_power_settings_new_white_24dp, "Logout", getLogoutPendingIntent())
-				.build();
-
-		NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
-		notificationManager.notify(MAGE_ACCOUNT_NOTIFICATION_ID, accountNotification);
-		notificationManager.notify(MAGE_SUMMARY_NOTIFICATION_ID, summaryNotification);
-	}
-
-	private boolean isReportingLocation() {
-		return PreferenceManager.getDefaultSharedPreferences(this).getBoolean(getResources().getString(R.string.reportLocationKey), getResources().getBoolean(R.bool.reportLocationDefaultValue));
-	}
-
-	private PendingIntent getLogoutPendingIntent() {
-		Intent intent = new Intent(getApplicationContext(), LoginActivity.class);
-		intent.putExtra("LOGOUT", true);
-		intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-		return PendingIntent.getActivity(getApplicationContext(), 1, intent, 0);
-	}
-
 	private void startFetching() {
 		startService(new Intent(getApplicationContext(), LocationFetchService.class));
 		startService(new Intent(getApplicationContext(), ObservationFetchService.class));
+		startService(new Intent(getApplicationContext(), FeedFetchService.class));
 	}
 
 	/**
@@ -338,6 +270,7 @@ public class MageApplication extends DaggerApplication implements LifecycleObser
 	private void destroyFetching() {
 		stopService(new Intent(getApplicationContext(), LocationFetchService.class));
 		stopService(new Intent(getApplicationContext(), ObservationFetchService.class));
+		stopService(new Intent(getApplicationContext(), FeedFetchService.class));
 	}
 
 	/**
@@ -371,26 +304,15 @@ public class MageApplication extends DaggerApplication implements LifecycleObser
 	}
 
 	public void startLocationService() {
-		if (locationReportingServiceIntent == null) {
-			locationReportingServiceIntent = new Intent(getApplicationContext(), LocationReportingService.class);
-			ContextCompat.startForegroundService(getApplicationContext(), locationReportingServiceIntent);
-
-			// NOTE this can go away when we remove support for < Android.N
-			// This will recreate the summary notification.
-			createNotification();
-		}
+		Intent intent = new Intent(getApplicationContext(), LocationReportingService.class);
+		ContextCompat.startForegroundService(getApplicationContext(), intent);
 	}
 
 	public void stopLocationService() {
-		if (locationReportingServiceIntent != null) {
-			stopService(locationReportingServiceIntent);
-			locationReportingServiceIntent = null;
-
-			// NOTE this can go away when we remove support for < Android.N
-			// This will recreate the summary notification
-			createNotification();
-		}
+		Intent intent = new Intent(getApplicationContext(), LocationReportingService.class);
+		stopService(intent);
 	}
+
 	@Override
 	public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
 		if (getString(R.string.reportLocationKey).equalsIgnoreCase(key) && !UserUtility.getInstance(getApplicationContext()).isTokenExpired()) {
@@ -455,9 +377,8 @@ public class MageApplication extends DaggerApplication implements LifecycleObser
 	private void invalidateSession(Activity activity, Boolean applicationInUse) {
 		destroyFetching();
 		destroyPushing();
-		createNotification();
 
-		ObservationFetchWorker.Companion.stopWork();
+		ObservationFetchWorker.Companion.stopWork(getApplicationContext());
 
 		// TODO JWT where else is disclaimer accepted set to false.
 		// Why not set to false if activity resumed onActivityResumed and token is invalid?
@@ -480,5 +401,4 @@ public class MageApplication extends DaggerApplication implements LifecycleObser
 
 		startActivity(intent);
 	}
-
 }

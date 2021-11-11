@@ -2,7 +2,6 @@ package mil.nga.giat.mage.map.navigation.bearing
 import android.animation.TypeEvaluator
 import android.animation.ValueAnimator
 import android.content.Context
-import android.content.SharedPreferences
 import android.graphics.Bitmap
 import android.graphics.Color
 import android.hardware.Sensor
@@ -13,8 +12,6 @@ import android.location.Location
 import android.view.ViewGroup
 import android.view.animation.AccelerateDecelerateInterpolator
 import android.widget.LinearLayout
-import android.widget.RelativeLayout
-import androidx.databinding.ObservableField
 import androidx.preference.PreferenceManager
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.model.LatLng
@@ -43,10 +40,10 @@ interface StraightLineNavigationDelegate {
 }
 
 class StraightLineNavigation(
-        private var delegate: StraightLineNavigationDelegate,
-        private var mapView: GoogleMap,
-        private var view: ViewGroup,
-        private var context: Context
+    private var delegate: StraightLineNavigationDelegate,
+    private var mapView: GoogleMap,
+    private var view: ViewGroup,
+    private var context: Context
 ) : SensorEventListener  {
     private val FIVE_SECONDS = 500000000
     private var sensorManager: SensorManager? = null
@@ -67,7 +64,7 @@ class StraightLineNavigation(
     private var straightLineNav: StraightLineNavigationView? = null
     private var straightLineNavigationData: StraightLineNavigationData = StraightLineNavigationData()
 
-    val relativeBearingColor: Int
+    private val relativeBearingColor: Int
         get(): Int {
             val hexColor = PreferenceManager.getDefaultSharedPreferences(context)
                 .getString(context.resources.getString(R.string.relativeBearingColorKey), context.resources.getString(R.string.relativeBearingColorDefaultValue))
@@ -78,14 +75,13 @@ class StraightLineNavigation(
             }
         }
 
-    val headingColor: Int
+    private val headingColor: Int
         get(): Int {
-            val hexColor = PreferenceManager.getDefaultSharedPreferences(context)
-                .getString(context.resources.getString(R.string.headingColorKey), context.resources.getString(R.string.headingColorDefaultValue))
+            val hexColor = PreferenceManager.getDefaultSharedPreferences(context).getString(context.resources.getString(R.string.headingColorKey), context.resources.getString(R.string.headingColorDefaultValue))
             return try {
                 Color.parseColor(hexColor)
             } catch (ignored: IllegalArgumentException) {
-                Color.RED;
+                Color.RED
             }
         }
 
@@ -96,10 +92,7 @@ class StraightLineNavigation(
         straightLineNavigationData.currentLocation.set(userLocation)
         straightLineNavigationData.destinationMarker = markerImage
         straightLineNav = StraightLineNavigationView(context).also {
-            val layoutParams = RelativeLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT,
-                    LinearLayout.LayoutParams.MATCH_PARENT
-            )
+            val layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
             it.layoutParams = layoutParams
             it.delegate = delegate
             view.addView(it)
@@ -180,7 +173,7 @@ class StraightLineNavigation(
         lastHeadingLocation = null
     }
 
-    fun updateNavigationLines(userLocation: Location, destinationCoordinate: LatLng) {
+    private fun updateNavigationLines(userLocation: Location, destinationCoordinate: LatLng) {
         lastDestinationLocation = destinationCoordinate;
         lastUserLocation = userLocation
         if (relativeBearingLine != null)
@@ -202,7 +195,7 @@ class StraightLineNavigation(
         updateHeadingLine(lastUserLocation!!)
     }
 
-    fun updateHeadingLine(userLocation: Location) {
+    private fun updateHeadingLine(userLocation: Location) {
         lastUserLocation = userLocation
 
         if (lastHeadingLocation == null) {

@@ -82,18 +82,4 @@
                 android:targetPackage="@string/applicationId"/>
         </Preference>
     </PreferenceCategory>
-    <PreferenceCategory
-        android:title="Content">
-        <Preference
-            android:key="@string/clearDataKey"
-            android:title="Erase All Data"
-            android:icon="@drawable/ic_delete_preference_24dp">
-        <intent
-                android:action="android.intent.action.VIEW"
-                android:targetClass="mil.nga.giat.mage.preferences.ClearDataPreferenceActivity"
-                android:targetPackage="@string/applicationId"/>
-        </Preference>
-
-    </PreferenceCategory>
-
 </PreferenceScreen>

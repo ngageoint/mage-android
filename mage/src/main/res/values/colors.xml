@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="background">@android:color/white</color>
-    <color name="background_card">#19000000</color>
+    <color name="background">#EEEEEE</color>
+    <color name="background_card">@color/md_white_1000</color>
+
     <color name="background_dialog">@android:color/white</color>
     <color name="background_transparent">#E7EEEEEE</color>
 
@@ -16,7 +17,7 @@
 
     <color name="setting_sub_toolbar">@color/md_blue_200</color>
 
-    <color name="icon">#8A000000</color>
+    <color name="icon">#99000000</color>
     <color name="primary_icon">@color/md_blue_600</color>
 
     <color name="divider">#19000000</color>

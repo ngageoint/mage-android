@@ -1,12 +1,8 @@
 package mil.nga.giat.mage.map;
 
 import android.Manifest;
-import android.animation.Animator;
-import android.animation.AnimatorListenerAdapter;
 import android.app.Activity;
-import android.app.Dialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
@@ -14,10 +10,12 @@ import android.content.res.Configuration;
 import android.hardware.SensorManager;
 import android.location.Geocoder;
 import android.location.Location;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.provider.Settings;
 import android.text.SpannableString;
 import android.text.util.Linkify;
 import android.util.Log;
@@ -42,8 +40,10 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SearchView;
 import androidx.core.content.ContextCompat;
 import androidx.databinding.DataBindingUtil;
+import androidx.fragment.app.Fragment;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.Observer;
+import androidx.lifecycle.ViewModelProvider;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -65,16 +65,16 @@ import com.google.android.gms.maps.model.TileOverlayOptions;
 import com.google.android.gms.maps.model.TileProvider;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.android.material.snackbar.Snackbar;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Collections2;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
 
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -85,7 +85,8 @@ import java.util.Set;
 
 import javax.inject.Inject;
 
-import dagger.android.support.DaggerFragment;
+import dagger.hilt.android.AndroidEntryPoint;
+import dagger.hilt.android.qualifiers.ApplicationContext;
 import mil.nga.geopackage.BoundingBox;
 import mil.nga.geopackage.GeoPackage;
 import mil.nga.geopackage.GeoPackageCache;
@@ -110,8 +111,10 @@ import mil.nga.geopackage.tiles.features.FeatureTiles;
 import mil.nga.geopackage.tiles.features.custom.NumberFeaturesTile;
 import mil.nga.geopackage.tiles.user.TileDao;
 import mil.nga.giat.mage.R;
-import mil.nga.giat.mage.dagger.module.ApplicationContext;
+import mil.nga.giat.mage.data.feed.FeedItem;
+import mil.nga.giat.mage.data.feed.FeedWithItems;
 import mil.nga.giat.mage.databinding.FragmentMapBinding;
+import mil.nga.giat.mage.feed.item.FeedItemActivity;
 import mil.nga.giat.mage.filter.DateTimeFilter;
 import mil.nga.giat.mage.filter.Filter;
 import mil.nga.giat.mage.filter.FilterActivity;
@@ -128,6 +131,7 @@ import mil.nga.giat.mage.map.cache.StaticFeatureCacheOverlay;
 import mil.nga.giat.mage.map.cache.URLCacheOverlay;
 import mil.nga.giat.mage.map.cache.WMSCacheOverlay;
 import mil.nga.giat.mage.map.cache.XYZDirectoryCacheOverlay;
+import mil.nga.giat.mage.map.marker.FeedItemCollection;
 import mil.nga.giat.mage.map.marker.LocationMarkerCollection;
 import mil.nga.giat.mage.map.marker.MyHistoricalLocationMarkerCollection;
 import mil.nga.giat.mage.map.marker.ObservationBitmapFactory;
@@ -138,10 +142,9 @@ import mil.nga.giat.mage.map.navigation.bearing.StraightLineNavigation;
 import mil.nga.giat.mage.map.navigation.bearing.StraightLineNavigationDelegate;
 import mil.nga.giat.mage.map.preference.MapPreferencesActivity;
 import mil.nga.giat.mage.newsfeed.ObservationListAdapter;
-import mil.nga.giat.mage.observation.ObservationEditActivity;
-import mil.nga.giat.mage.observation.ObservationFormPickerActivity;
 import mil.nga.giat.mage.observation.ObservationLocation;
-import mil.nga.giat.mage.observation.ObservationViewActivity;
+import mil.nga.giat.mage.observation.edit.ObservationEditActivity;
+import mil.nga.giat.mage.observation.view.ObservationViewActivity;
 import mil.nga.giat.mage.profile.ProfileActivity;
 import mil.nga.giat.mage.sdk.Temporal;
 import mil.nga.giat.mage.sdk.datastore.layer.Layer;
@@ -168,8 +171,24 @@ import mil.nga.sf.proj.Projection;
 import mil.nga.sf.proj.ProjectionConstants;
 import mil.nga.sf.proj.ProjectionFactory;
 
-public class MapFragment extends DaggerFragment implements OnMapReadyCallback, OnMapClickListener, OnMapLongClickListener, OnMarkerClickListener, OnInfoWindowClickListener, GoogleMap.OnCameraMoveListener, GoogleMap.OnCameraIdleListener, GoogleMap.OnCameraMoveStartedListener, OnClickListener, LocationSource, OnCacheOverlayListener,
-		IObservationEventListener, ILocationEventListener, IUserEventListener, ObservationListAdapter.ObservationActionListener, Observer<Location>, StraightLineNavigationDelegate {
+@AndroidEntryPoint
+public class MapFragment extends Fragment implements
+		OnMapReadyCallback,
+		OnMapClickListener,
+		OnMapLongClickListener,
+		OnMarkerClickListener,
+		OnInfoWindowClickListener,
+		GoogleMap.OnInfoWindowCloseListener,
+		GoogleMap.OnCameraIdleListener,
+		GoogleMap.OnCameraMoveStartedListener,
+		OnClickListener, LocationSource,
+		OnCacheOverlayListener,
+		IObservationEventListener,
+		ILocationEventListener,
+		IUserEventListener,
+		StraightLineNavigationDelegate,
+		ObservationListAdapter.ObservationActionListener,
+		Observer<Location> {
 
 	private static final String LOG_NAME = MapFragment.class.getName();
 
@@ -181,78 +200,6 @@ public class MapFragment extends DaggerFragment implements OnMapReadyCallback, O
 	private static final int PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 1;
 
 	private static final int MARKER_REFRESH_INTERVAL_SECONDS = 300;
-	private static final int OBSERVATION_REFRESH_INTERVAL_SECONDS = 60;
-
-	@Override
-	public void onObservationClick(Observation observation) {
-		Intent intent = new Intent(context, ObservationViewActivity.class);
-		intent.putExtra(ObservationViewActivity.OBSERVATION_ID, observation.getId());
-		intent.putExtra(ObservationViewActivity.INITIAL_LOCATION, map.getCameraPosition().target);
-		intent.putExtra(ObservationViewActivity.INITIAL_ZOOM, map.getCameraPosition().zoom);
-		startActivity(intent);
-	}
-
-	@Override
-	public void onObservationImportant(Observation observation) {
-	}
-
-	@Override
-	public void onObservationDirections(Observation observation) {
-		// present a dialog to pick between android system map and straight line
-		new AlertDialog.Builder(getActivity())
-			.setTitle(getActivity().getResources().getString(R.string.navigation_choice_title))
-			.setItems(R.array.navigationOptions, new DialogInterface.OnClickListener() {
-				@Override
-				public void onClick(DialogInterface dialog, int which) {
-					switch (which) {
-						case 0:
-							Intent intent = new Intent(android.content.Intent.ACTION_VIEW, observation.getGoogleMapsUri());
-							startActivity(intent);
-							break;
-						case 1:
-							Location location = null;
-							if (locationProvider.getValue() == null) {
-								if (ContextCompat.checkSelfPermission(getActivity().getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-									new AlertDialog.Builder(getActivity())
-											.setTitle(getActivity().getResources().getString(R.string.location_missing_title))
-											.setMessage(getActivity().getResources().getString(R.string.location_missing_message))
-											.setPositiveButton(android.R.string.ok, null)
-											.show();
-								} else {
-									new AlertDialog.Builder(getActivity())
-											.setTitle(getActivity().getResources().getString(R.string.location_access_observation_title))
-											.setMessage(getActivity().getResources().getString(R.string.location_access_observation_message))
-											.setPositiveButton(android.R.string.ok, new Dialog.OnClickListener() {
-												@Override
-												public void onClick(DialogInterface dialog, int which) {
-													requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION);
-												}
-											})
-											.show();
-								}
-							} else {
-								location = locationProvider.getValue();
-								Point centroid = observation.getGeometry().getCentroid();
-								LatLng latLng = new LatLng(centroid.getY(), centroid.getX());
-								straightLineNavigation.startNavigation(sensorManager, location, latLng, ObservationBitmapFactory.bitmap(context, observation));
-								featureBottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
-								nvaigationBottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
-							}
-							break;
-					}
-
-				}
-			})
-			.setNegativeButton(android.R.string.cancel, null)
-			.show();
-	}
-
-	@Override
-	public void cancelStraightLineNavigation() {
-		straightLineNavigation.stopNavigation();
-//		newObservationButton.setTranslationY((-48 * getResources().getDisplayMetrics().density + 0.5f));
-//		mgrsBottomSheetBehavior.setPeekHeight((int) (50 * getResources().getDisplayMetrics().density + 0.5f));
-	}
 
 	private enum LocateState {
 		OFF,
@@ -271,6 +218,8 @@ public class MapFragment extends DaggerFragment implements OnMapReadyCallback, O
 	@Inject
 	protected SharedPreferences preferences;
 
+	private MapViewModel viewModel;
+
 	private MapView mapView;
 	private GoogleMap map;
 	private View searchLayout;
@@ -286,7 +235,6 @@ public class MapFragment extends DaggerFragment implements OnMapReadyCallback, O
 	protected LocationPolicy locationPolicy;
 	private LiveData<Location> locationProvider;
 
-	private RefreshMarkersRunnable refreshObservationsTask;
 	private RefreshMarkersRunnable refreshLocationsTask;
 	private RefreshMarkersRunnable refreshHistoricLocationsTask;
 
@@ -296,28 +244,34 @@ public class MapFragment extends DaggerFragment implements OnMapReadyCallback, O
 	private StaticGeometryCollection staticGeometryCollection;
 	private List<Marker> searchMarkers = new ArrayList<>();
 
+	private FeedItemCollection feedItems;
+	private Map<String, LiveData<FeedWithItems>> feeds = Collections.emptyMap();
+
 	private Map<String, CacheOverlay> cacheOverlays = new HashMap<>();
 
 	// GeoPackage cache of open GeoPackage connections
 	private GeoPackageCache geoPackageCache;
 	private BoundingBox addedCacheBoundingBox;
 
-	private FloatingActionButton compassButton;
+	private FloatingActionButton reportLocationButton;
 	private FloatingActionButton searchButton;
 	private FloatingActionButton zoomToLocationButton;
-	private FloatingActionButton newObservationButton;
 
 	private boolean showMgrs;
 	private TileOverlay mgrsTileOverlay;
 	private TextView mgrsChip;
-	private Boolean mgrsChipExpanded = false;
 
-	private BottomSheetBehavior featureBottomSheetBehavior;
-	private View featureBottomSheet;
-	private BottomSheetBehavior nvaigationBottomSheetBehavior;
-	private View navigationBottomSheet;
+	private BottomSheetBehavior<View> featureBottomSheetBehavior;
+
 	private View availableLayerDownloadsIcon;
 	private FragmentMapBinding binding;
+
+	@Override
+	public void onCreate(@Nullable Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+
+		viewModel = new ViewModelProvider(this).get(MapViewModel.class);
+	}
 
 	@Override
 	public View onCreateView(@NonNull LayoutInflater  inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -331,10 +285,8 @@ public class MapFragment extends DaggerFragment implements OnMapReadyCallback, O
 		availableLayerDownloadsIcon = view.findViewById(R.id.available_layer_downloads);
 		zoomToLocationButton = view.findViewById(R.id.zoom_button);
 
-		compassButton = view.findViewById(R.id.compass_button);
-		compassButton.setOnClickListener(v -> resetMapBearing());
-
-		newObservationButton = view.findViewById(R.id.new_observation_button);
+		reportLocationButton = view.findViewById(R.id.report_location);
+		reportLocationButton.setOnClickListener(v -> toggleReportLocation());
 
 		searchButton = view.findViewById(R.id.map_search_button);
 		if (Geocoder.isPresent()) {
@@ -361,19 +313,13 @@ public class MapFragment extends DaggerFragment implements OnMapReadyCallback, O
 		mapView.onCreate(mapState);
 
 		mgrsChip = view.findViewById(R.id.mgrs_chip);
-		view.findViewById(R.id.mgrs_chip_container).setOnClickListener(v -> toggleMgrsChip());
 
-		featureBottomSheet = view.findViewById(R.id.observation_bottom_sheet);
+		View featureBottomSheet = view.findViewById(R.id.observation_bottom_sheet);
 		featureBottomSheetBehavior = BottomSheetBehavior.from(featureBottomSheet);
 		featureBottomSheetBehavior.setFitToContents(true);
 		featureBottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
 
-		navigationBottomSheet = view.findViewById(R.id.straight_line_nav_container);
-		nvaigationBottomSheetBehavior = BottomSheetBehavior.from(navigationBottomSheet);
-		nvaigationBottomSheetBehavior.setFitToContents(true);
-		nvaigationBottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
-
-		featureBottomSheetBehavior.setBottomSheetCallback(new BottomSheetBehavior.BottomSheetCallback() {
+		featureBottomSheetBehavior.addBottomSheetCallback(new BottomSheetBehavior.BottomSheetCallback() {
 			// this only is called when the user interacts with the sheet, not when we make it EXPANDED programmatically
 			@Override
 			public void onStateChanged(@NonNull View view, int newState) {
@@ -383,9 +329,7 @@ public class MapFragment extends DaggerFragment implements OnMapReadyCallback, O
 			}
 
 			@Override
-			public void onSlide(@NonNull View view, float v) {
-
-			}
+			public void onSlide(@NonNull View view, float v) { }
 		});
 
 		// Initialize the GeoPackage cache with a GeoPackage manager
@@ -400,6 +344,76 @@ public class MapFragment extends DaggerFragment implements OnMapReadyCallback, O
 	void unselectObservation() {
 		featureBottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
 		binding.setChosenObservation(null);
+	}
+
+	@Override
+	public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+		super.onViewCreated(view, savedInstanceState);
+
+		viewModel.getItems().observe(getViewLifecycleOwner(), this::onFeedItems);
+	}
+
+	@Override
+	public void onObservationClick(Observation observation) {
+		Intent intent = new Intent(context, ObservationViewActivity.class);
+		intent.putExtra(ObservationViewActivity.OBSERVATION_ID, observation.getId());
+		intent.putExtra(ObservationViewActivity.INITIAL_LOCATION, map.getCameraPosition().target);
+		intent.putExtra(ObservationViewActivity.INITIAL_ZOOM, map.getCameraPosition().zoom);
+		startActivity(intent);
+	}
+
+	@Override
+	public void onObservationDirections(@NonNull Observation observation) {
+		featureBottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
+
+		// present a dialog to pick between android system map and straight line
+		new AlertDialog.Builder(getActivity())
+				.setTitle(getActivity().getResources().getString(R.string.navigation_choice_title))
+				.setItems(R.array.navigationOptions, (dialog, which) -> {
+					switch (which) {
+						case 0:
+							Intent intent = new Intent(Intent.ACTION_VIEW, observation.getGoogleMapsUri());
+							startActivity(intent);
+							break;
+						case 1:
+							Location location;
+							if (locationProvider.getValue() == null) {
+								if (ContextCompat.checkSelfPermission(getActivity().getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+									new AlertDialog.Builder(getActivity())
+											.setTitle(getActivity().getResources().getString(R.string.location_missing_title))
+											.setMessage(getActivity().getResources().getString(R.string.location_missing_message))
+											.setPositiveButton(android.R.string.ok, null)
+											.show();
+								} else {
+									new AlertDialog.Builder(getActivity())
+											.setTitle(getActivity().getResources().getString(R.string.location_access_observation_title))
+											.setMessage(getActivity().getResources().getString(R.string.location_access_observation_message))
+											.setPositiveButton(android.R.string.ok, (dialog1, which1) -> requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION))
+											.show();
+								}
+							} else {
+								location = locationProvider.getValue();
+								Point centroid = observation.getGeometry().getCentroid();
+								LatLng latLng = new LatLng(centroid.getY(), centroid.getX());
+								straightLineNavigation.startNavigation(sensorManager, location, latLng, ObservationBitmapFactory.bitmap(context, observation));
+								featureBottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
+							}
+							break;
+					}
+
+				})
+				.setNegativeButton(android.R.string.cancel, null)
+				.show();
+	}
+
+	@Override
+	public void cancelStraightLineNavigation() {
+		straightLineNavigation.stopNavigation();
+	}
+
+	@Override
+	public void onObservationLocation(@NonNull Observation observation) {
+
 	}
 
 	@Override
@@ -436,6 +450,10 @@ public class MapFragment extends DaggerFragment implements OnMapReadyCallback, O
 		if (locations != null) {
 			locations.clear();
 			locations = null;
+		}
+
+		if (feedItems != null) {
+			feedItems.clear();
 		}
 
 		if (historicLocations != null) {
@@ -494,11 +512,11 @@ public class MapFragment extends DaggerFragment implements OnMapReadyCallback, O
 			map.setOnInfoWindowClickListener(this);
 			map.setOnCameraIdleListener(this);
 			map.setOnCameraMoveStartedListener(this);
-			map.setOnCameraMoveListener(this);
 
 			observations = new ObservationMarkerCollection(getActivity(), map, this);
 			historicLocations = new MyHistoricalLocationMarkerCollection(context, map);
 			locations = new LocationMarkerCollection(getActivity(), map);
+			feedItems = new FeedItemCollection(getActivity(), map);
 
 			straightLineNavigation = new StraightLineNavigation(this, map, getActivity().findViewById(R.id.straight_line_nav_container), context);
 			sensorManager = (SensorManager)getActivity().getSystemService(Context.SENSOR_SERVICE);
@@ -531,33 +549,7 @@ public class MapFragment extends DaggerFragment implements OnMapReadyCallback, O
 		UserHelper.getInstance(context).addListener(this);
 		CacheProvider.getInstance(context).registerCacheOverlayListener(this);
 
-		zoomToLocationButton.setOnClickListener(v -> {
-			locateState = locateState.next();
-
-			switch (locateState) {
-				case OFF:
-					zoomToLocationButton.setSelected(false);
-					resetMapBearing();
-					break;
-				case FOLLOW:
-					zoomToLocationButton.setSelected(true);
-
-					Location location = locationProvider.getValue();
-					if (location != null) {
-						CameraPosition cameraPosition = new CameraPosition.Builder()
-								.target(new LatLng(location.getLatitude(), location.getLongitude()))
-								.zoom(17)
-								.bearing(45)
-								.build();
-
-						map.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
-					}
-
-					startHeading();
-
-					break;
-			}
-		});
+		zoomToLocationButton.setOnClickListener(v -> zoomToLocation());
 
 		ObservationLoadTask observationLoad = new ObservationLoadTask(context, observations);
 		observationLoad.addFilter(getTemporalFilter("timestamp", getTimeFilterId(), OBSERVATION_FILTER_TYPE));
@@ -593,11 +585,112 @@ public class MapFragment extends DaggerFragment implements OnMapReadyCallback, O
 
 		initializePeriodicTasks();
 
+		getActivity().findViewById(R.id.mgrs_chip_container).setVisibility(showMgrs ? View.VISIBLE : View.GONE);
 		if (showMgrs) {
 			mgrsTileOverlay = map.addTileOverlay(new TileOverlayOptions().tileProvider(new MGRSTileProvider(getContext())));
 		}
 
 		((AppCompatActivity) getActivity()).getSupportActionBar().setSubtitle(getFilterTitle());
+
+		viewModel.setEvent(currentEvent.getRemoteId());
+	}
+
+	private void updateReportLocationButton() {
+		boolean reportLocation = ContextCompat.checkSelfPermission(getActivity().getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED &&
+				preferences.getBoolean(getResources().getString(R.string.reportLocationKey), false) &&
+				UserHelper.getInstance(getActivity().getApplicationContext()).isCurrentUserPartOfCurrentEvent();
+
+		reportLocationButton.setSelected(reportLocation);
+		if (reportLocation) {
+			reportLocationButton.setImageResource(R.drawable.ic_my_location_white_24dp);
+		} else {
+			reportLocationButton.setImageResource(R.drawable.ic_outline_location_disabled_24);
+		}
+	}
+
+	private void zoomToLocation() {
+		if (ContextCompat.checkSelfPermission(getActivity().getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+			new AlertDialog.Builder(getActivity())
+					.setTitle(getActivity().getResources().getString(R.string.location_access_observation_title))
+					.setMessage(getActivity().getResources().getString(R.string.location_access_zoom_message))
+					.setPositiveButton(R.string.settings, (dialog, which) -> {
+						Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+						intent.setData(Uri.fromParts("package", getActivity().getApplicationContext().getPackageName(), null));
+						startActivity(intent);
+					})
+					.setNegativeButton(android.R.string.cancel, null)
+					.show();
+
+			return;
+		}
+
+		locateState = locateState.next();
+
+		switch (locateState) {
+			case OFF:
+				zoomToLocationButton.setSelected(false);
+				break;
+			case FOLLOW:
+				zoomToLocationButton.setSelected(true);
+
+				Location location = locationProvider.getValue();
+				if (location != null) {
+					CameraPosition cameraPosition = new CameraPosition.Builder()
+						.target(new LatLng(location.getLatitude(), location.getLongitude()))
+						.zoom(17)
+						.bearing(45)
+						.build();
+
+					map.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
+				}
+
+				break;
+		}
+	}
+
+	private void toggleReportLocation() {
+		if (ContextCompat.checkSelfPermission(getActivity().getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+			new AlertDialog.Builder(getActivity())
+				.setTitle(getActivity().getResources().getString(R.string.location_access_observation_title))
+				.setMessage(getActivity().getResources().getString(R.string.location_access_report_message))
+				.setPositiveButton(R.string.settings, (dialog, which) -> {
+					Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+					intent.setData(Uri.fromParts("package", getActivity().getApplicationContext().getPackageName(), null));
+					startActivity(intent);
+				})
+				.setNegativeButton(android.R.string.cancel, null)
+				.show();
+
+			return;
+		}
+
+		if (!UserHelper.getInstance(getActivity().getApplicationContext()).isCurrentUserPartOfCurrentEvent()) {
+			new AlertDialog.Builder(getActivity())
+				.setTitle(getActivity().getResources().getString(R.string.no_event_title))
+				.setMessage(getActivity().getResources().getString(R.string.location_no_event_message))
+				.setPositiveButton(android.R.string.ok, null)
+				.show();
+
+			return;
+		}
+
+		String key = getResources().getString(R.string.reportLocationKey);
+		boolean reportLocation = !preferences.getBoolean(key, false);
+		preferences.edit().putBoolean(key, reportLocation).apply();
+		updateReportLocationButton();
+
+		String text = reportLocation ?
+				getResources().getString(R.string.report_location_start) :
+				getResources().getString(R.string.report_location_stop);
+
+		Snackbar snackbar = Snackbar.make(getActivity().findViewById(R.id.coordinator_layout), text, Snackbar.LENGTH_SHORT);
+		snackbar.setAnchorView(getActivity().findViewById(R.id.new_observation_button));
+
+		final ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) snackbar.getView().getLayoutParams();
+		params.setMargins(0, 100, 0, 100);
+		snackbar.getView().setLayoutParams(params);
+
+		snackbar.show();
 	}
 
 	private void startHeading() {
@@ -611,22 +704,16 @@ public class MapFragment extends DaggerFragment implements OnMapReadyCallback, O
 			new AlertDialog.Builder(getActivity())
 					.setTitle(getActivity().getResources().getString(R.string.always_show_heading_title))
 					.setMessage(getActivity().getResources().getString(R.string.always_show_heading_message))
-					.setPositiveButton(getActivity().getResources().getString(R.string.yes), new Dialog.OnClickListener() {
-						@Override
-						public void onClick(DialogInterface dialog, int which) {
-							SharedPreferences.Editor edit = preferences.edit();
-							edit.putBoolean(context.getResources().getString(R.string.showHeadingKey), true);
-							edit.apply();
-							startHeading();
-						}
+					.setPositiveButton(getActivity().getResources().getString(R.string.yes), (dialog, which) -> {
+						SharedPreferences.Editor edit = preferences.edit();
+						edit.putBoolean(context.getResources().getString(R.string.showHeadingKey), true);
+						edit.apply();
+						startHeading();
 					})
-					.setNegativeButton(getActivity().getResources().getString(R.string.no), new Dialog.OnClickListener() {
-						@Override
-						public void onClick(DialogInterface dialog, int which) {
-							SharedPreferences.Editor edit = preferences.edit();
-							edit.putBoolean(context.getResources().getString(R.string.showHeadingKey), false);
-							edit.apply();
-						}
+					.setNegativeButton(getActivity().getResources().getString(R.string.no), (dialog, which) -> {
+						SharedPreferences.Editor edit = preferences.edit();
+						edit.putBoolean(context.getResources().getString(R.string.showHeadingKey), false);
+						edit.apply();
 					})
 					.show();
 		}
@@ -643,11 +730,6 @@ public class MapFragment extends DaggerFragment implements OnMapReadyCallback, O
 	}
 
 	private void initializePeriodicTasks() {
-		if (refreshObservationsTask == null) {
-			refreshObservationsTask = new RefreshMarkersRunnable(observations, "timestamp", OBSERVATION_FILTER_TYPE, getTimeFilterId(), OBSERVATION_REFRESH_INTERVAL_SECONDS);
-            scheduleMarkerRefresh(refreshObservationsTask);
-		}
-
 		if (refreshLocationsTask == null) {
 			refreshLocationsTask = new RefreshMarkersRunnable(locations, "timestamp", LOCATION_FILTER_TYPE, getLocationTimeFilterId(), MARKER_REFRESH_INTERVAL_SECONDS);
 			scheduleMarkerRefresh(refreshLocationsTask);
@@ -660,11 +742,9 @@ public class MapFragment extends DaggerFragment implements OnMapReadyCallback, O
 	}
 
 	private void stopPeriodicTasks() {
-		getView().removeCallbacks(refreshObservationsTask);
 		getView().removeCallbacks(refreshLocationsTask);
 		getView().removeCallbacks(refreshHistoricLocationsTask);
 
-		refreshObservationsTask = null;
 		refreshLocationsTask = null;
 		refreshHistoricLocationsTask = null;
 	}
@@ -678,6 +758,8 @@ public class MapFragment extends DaggerFragment implements OnMapReadyCallback, O
 	@Override
 	public void onResume() {
 		super.onResume();
+
+		updateReportLocationButton();
 
 		try {
 			currentUser = UserHelper.getInstance(getActivity().getApplicationContext()).readCurrentUser();
@@ -756,6 +838,14 @@ public class MapFragment extends DaggerFragment implements OnMapReadyCallback, O
 			locations.clear();
 		}
 
+		if (feedItems != null) {
+			feedItems.clear();
+		}
+
+		for (LiveData<FeedWithItems> liveData : feeds.values()) {
+			liveData.removeObservers(getViewLifecycleOwner());
+		}
+
 		CacheProvider.getInstance(getActivity().getApplicationContext()).unregisterCacheOverlayListener(this);
 
 		if (map != null) {
@@ -766,6 +856,23 @@ public class MapFragment extends DaggerFragment implements OnMapReadyCallback, O
 			if (mgrsTileOverlay != null) {
 				mgrsTileOverlay.remove();
 			}
+		}
+	}
+
+	private void onFeedItems(Map<String, LiveData<FeedWithItems>> feeds) {
+		for (LiveData<FeedWithItems> liveData : this.feeds.values()) {
+			liveData.removeObservers(getViewLifecycleOwner());
+		}
+
+		this.feeds = feeds;
+		for (LiveData<FeedWithItems> liveData : feeds.values()) {
+			liveData.observe(getViewLifecycleOwner(), this::onFeedItems);
+		}
+	}
+
+	private void onFeedItems(FeedWithItems items) {
+		if (items != null) {
+			feedItems.setItems(items);
 		}
 	}
 
@@ -809,8 +916,8 @@ public class MapFragment extends DaggerFragment implements OnMapReadyCallback, O
 
 		if (!UserHelper.getInstance(getActivity().getApplicationContext()).isCurrentUserPartOfCurrentEvent()) {
 			new AlertDialog.Builder(getActivity())
-				.setTitle(getActivity().getResources().getString(R.string.location_no_event_title))
-				.setMessage(getActivity().getResources().getString(R.string.location_no_event_message))
+				.setTitle(getActivity().getResources().getString(R.string.no_event_title))
+				.setMessage(getActivity().getResources().getString(R.string.observation_no_event_message))
 				.setPositiveButton(android.R.string.ok, null)
 				.show();
 		} else if (location != null) {
@@ -826,11 +933,8 @@ public class MapFragment extends DaggerFragment implements OnMapReadyCallback, O
 				new AlertDialog.Builder(getActivity())
 						.setTitle(getActivity().getResources().getString(R.string.location_access_observation_title))
 						.setMessage(getActivity().getResources().getString(R.string.location_access_observation_message))
-						.setPositiveButton(android.R.string.ok, new Dialog.OnClickListener() {
-							@Override
-							public void onClick(DialogInterface dialog, int which) {
-								requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION);
-							}
+						.setPositiveButton(android.R.string.ok, (dialog, which) -> {
+							requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION);
 						})
 						.show();
 			}
@@ -838,10 +942,9 @@ public class MapFragment extends DaggerFragment implements OnMapReadyCallback, O
 	}
 
 	@Override
-	public void onRequestPermissionsResult(int requestCode, @NonNull String permissions[], @NonNull int[] grantResults) {
+	public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
 		switch (requestCode) {
 			case PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION: {
-				// If request is cancelled, the result arrays are empty.
 				if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
 					onNewObservation();
 				}
@@ -851,7 +954,7 @@ public class MapFragment extends DaggerFragment implements OnMapReadyCallback, O
 	}
 
 	@Override
-	public void onObservationCreated(Collection<Observation> o, Boolean sendUserNotifcations) {
+	public void onObservationCreated(Collection<Observation> o, Boolean sendUserNotifications) {
 		if (observations != null) {
 			ObservationTask task = new ObservationTask(getActivity(), ObservationTask.Type.ADD, observations);
 			task.addFilter(getTemporalFilter("last_modified", getTimeFilterId(), OBSERVATION_FILTER_TYPE));
@@ -953,6 +1056,18 @@ public class MapFragment extends DaggerFragment implements OnMapReadyCallback, O
 			startActivity(profileView);
 			return;
 		}
+
+		FeedItem feedItem = feedItems.itemForMarker(marker);
+		if (feedItem != null) {
+			Intent intent = FeedItemActivity.Companion.intent(context, feedItem);
+			startActivity(intent);
+			return;
+		}
+	}
+
+	@Override
+	public void onInfoWindowClose(Marker marker) {
+		feedItems.onInfoWindowClose(marker);
 	}
 
 	public void showObservationBottomSheet(Observation observation) {
@@ -987,6 +1102,10 @@ public class MapFragment extends DaggerFragment implements OnMapReadyCallback, O
 		}
 
 		if (locations.onMarkerClick(marker)) {
+			return true;
+		}
+
+		if (feedItems.onMarkerClick(marker)) {
 			return true;
 		}
 
@@ -1052,8 +1171,8 @@ public class MapFragment extends DaggerFragment implements OnMapReadyCallback, O
 		hideKeyboard();
 		if(!UserHelper.getInstance(getActivity().getApplicationContext()).isCurrentUserPartOfCurrentEvent()) {
 			new AlertDialog.Builder(getActivity())
-				.setTitle(getActivity().getResources().getString(R.string.location_no_event_title))
-				.setMessage(getActivity().getResources().getString(R.string.location_no_event_message))
+				.setTitle(getActivity().getResources().getString(R.string.no_event_title))
+				.setMessage(getActivity().getResources().getString(R.string.observation_no_event_message))
 				.setPositiveButton(android.R.string.ok, null)
 				.show();
 		} else {
@@ -1065,20 +1184,7 @@ public class MapFragment extends DaggerFragment implements OnMapReadyCallback, O
 	}
 
 	private void newObservation(ObservationLocation location) {
-		Intent intent;
-
-		// show form picker or go to
-		JsonArray formDefinitions = EventHelper.getInstance(getActivity()).getCurrentEvent().getNonArchivedForms();
-		if (formDefinitions.size() == 0) {
-			intent = new Intent(getActivity(), ObservationEditActivity.class);
-		} else if (formDefinitions.size() == 1) {
-			JsonObject form = (JsonObject) formDefinitions.iterator().next();
-			intent = new Intent(getActivity(), ObservationEditActivity.class);
-			intent.putExtra(ObservationEditActivity.OBSERVATION_FORM_ID, form.get("id").getAsLong());
-		} else {
-			intent = new Intent(getActivity(), ObservationFormPickerActivity.class);
-		}
-
+		Intent intent = new Intent(getActivity(), ObservationEditActivity.class);
 		intent.putExtra(ObservationEditActivity.LOCATION, location);
 		intent.putExtra(ObservationEditActivity.INITIAL_LOCATION, map.getCameraPosition().target);
 		intent.putExtra(ObservationEditActivity.INITIAL_ZOOM, map.getCameraPosition().zoom);
@@ -1090,22 +1196,19 @@ public class MapFragment extends DaggerFragment implements OnMapReadyCallback, O
 		// close keyboard
 		hideKeyboard();
 		switch (view.getId()) {
-		case R.id.map_settings: {
-			Intent intent = new Intent(getActivity(), MapPreferencesActivity.class);
-			startActivity(intent);
-			break;
-		}
-		}
+			case R.id.map_settings: {
+				Intent intent = new Intent(getActivity(), MapPreferencesActivity.class);
+				startActivity(intent);
+				break;
+			}
+			}
 	}
 
 	@Override
 	public void activate(OnLocationChangedListener listener) {
-		Log.i(LOG_NAME, "map location, activate");
-
 		locationChangedListener = listener;
 		Location location = locationProvider.getValue();
 		if (location != null) {
-			Log.i(LOG_NAME, "map location, activate we have a location, let our listener know");
 			locationChangedListener.onLocationChanged(location);
 		}
 
@@ -1114,8 +1217,6 @@ public class MapFragment extends DaggerFragment implements OnMapReadyCallback, O
 
 	@Override
 	public void deactivate() {
-		Log.i(LOG_NAME, "map location, deactivate");
-
 		locationProvider.removeObserver(this);
 		locationChangedListener = null;
 	}
@@ -1130,48 +1231,34 @@ public class MapFragment extends DaggerFragment implements OnMapReadyCallback, O
 		if (reason == REASON_GESTURE) {
 			locateState = LocateState.OFF;
 			zoomToLocationButton.setSelected(false);
-			resetMapBearing();
-		}
-	}
-
-	@Override
-	public void onCameraMove() {
-		float bearing = map.getCameraPosition().bearing;
-		if (bearing != 0) {
-			compassButton.animate().alpha(1f).setDuration(0).setListener(null);
-			compassButton.show();
-			compassButton.setRotation(bearing);
-		} else {
-			compassButton
-				.animate()
-				.alpha(0f)
-				.setDuration(500)
-				.setListener(new AnimatorListenerAdapter() {
-					@Override
-					public void onAnimationEnd(Animator animation) {
-						compassButton.hide();
-					}
-			});
 		}
 	}
 
 	private void setMgrsCode() {
 		if (mgrsTileOverlay != null) {
+			float zoom = map.getCameraPosition().zoom;
 			LatLng center = map.getCameraPosition().target;
 			MGRS mgrs = MGRS.from(new mil.nga.mgrs.wgs84.LatLng(center.latitude, center.longitude));
 
-			if (mgrsChipExpanded) {
-				mgrsChip.setText(mgrs.format(5));
+			if (zoom > 9) {
+				int accuracy = 5;
+				if (zoom < 12) {
+					accuracy = 2;
+				} else if (zoom < 15) {
+					accuracy = 3;
+				} else if (zoom < 17) {
+					accuracy = 4;
+				}
+
+				mgrsChip.setText(mgrs.format(accuracy));
+			} else if (zoom > 5) {
+				String text = String.format(Locale.getDefault(),"%s%c%c%c", mgrs.getZone(), mgrs.getBand(), mgrs.getE100k(), mgrs.getN100k());
+				mgrsChip.setText(text);
 			} else {
-				String partialMgrs = String.format(Locale.getDefault(),"%s%c%c%c", mgrs.getZone(), mgrs.getBand(), mgrs.getE100k(), mgrs.getN100k());
-				mgrsChip.setText(partialMgrs);
+				String text = String.format(Locale.getDefault(),"%s%c", mgrs.getZone(), mgrs.getBand());
+				mgrsChip.setText(text);
 			}
 		}
-	}
-
-	private void toggleMgrsChip() {
-		mgrsChipExpanded = !mgrsChipExpanded;
-		setMgrsCode();
 	}
 
 	@Override
@@ -1297,12 +1384,7 @@ public class MapFragment extends DaggerFragment implements OnMapReadyCallback, O
 	private void addStaticFeatureOverlay(Map<String, CacheOverlay> enabledCacheOverlays, final StaticFeatureCacheOverlay cacheOverlay) {
 		try {
 			final Layer layer = LayerHelper.getInstance(getActivity().getApplicationContext()).read(cacheOverlay.getId());
-			new Handler(Looper.getMainLooper()).post(new Runnable() {
-				@Override
-				public void run() {
-					new StaticFeatureLoadTask(getActivity().getApplicationContext(), staticGeometryCollection, map).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, layer);
-				}
-			});
+			new Handler(Looper.getMainLooper()).post(() -> new StaticFeatureLoadTask(getActivity().getApplicationContext(), staticGeometryCollection, map).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, layer));
 		} catch (LayerException e) {
 			Log.e(LOG_NAME, "Problem updating static features.", e);
 		}
@@ -1614,11 +1696,11 @@ public class MapFragment extends DaggerFragment implements OnMapReadyCallback, O
 	}
 
 	private int getTimeFilterId() {
-		return preferences.getInt(getResources().getString(R.string.activeTimeFilterKey), getResources().getInteger(R.integer.time_filter_none));
+		return preferences.getInt(getResources().getString(R.string.activeTimeFilterKey), getResources().getInteger(R.integer.time_filter_last_month));
 	}
 
 	private int getLocationTimeFilterId() {
-		return preferences.getInt(getResources().getString(R.string.activeLocationTimeFilterKey), getResources().getInteger(R.integer.time_filter_none));
+		return preferences.getInt(getResources().getString(R.string.activeLocationTimeFilterKey), getResources().getInteger(R.integer.time_filter_last_month));
 	}
 
 	private int getCustomTimeNumber(String filterType) {
@@ -1683,7 +1765,6 @@ public class MapFragment extends DaggerFragment implements OnMapReadyCallback, O
 	}
 
 	private String getFilterTitle() {
-
 		if (getTimeFilterId() != getResources().getInteger(R.integer.time_filter_none)
 				|| getLocationTimeFilterId() != getResources().getInteger(R.integer.time_filter_none)
 				|| preferences.getBoolean(getResources().getString(R.string.activeImportantFilterKey), false)

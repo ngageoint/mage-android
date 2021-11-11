@@ -1,5 +1,2 @@
 include ':mage'
-// clone mage-android-sdk into this project dir and uncomment following two lines to build sdk as submodule
-include ':sdk'
-project(':sdk').projectDir = new File('../mage-android-sdk/sdk')
 //include ':bridge' // uncomment me to build wearable locally

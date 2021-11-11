@@ -37,7 +37,7 @@ public class PeopleActivity extends AppCompatActivity implements PeopleRecyclerA
 
         recyclerView = (RecyclerView) findViewById(R.id.recycler_view);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
-        recyclerView.addItemDecoration(new DividerItemDecoration(this, R.drawable.people_feed_divider));
+        recyclerView.addItemDecoration(new DividerItemDecoration(this, R.drawable.list_inset_divider));
         recyclerView.setItemAnimator(new DefaultItemAnimator());
 
         Collection<String> userIds = getIntent().getStringArrayListExtra(USER_REMOTE_IDS);

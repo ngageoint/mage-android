@@ -9,7 +9,6 @@ import android.view.View
 import android.widget.LinearLayout
 import androidx.core.content.ContextCompat
 import androidx.databinding.BindingAdapter
-import kotlinx.android.synthetic.main.view_observation_bottom_sheet.view.*
 import mil.nga.giat.mage.R
 import mil.nga.giat.mage.databinding.ViewObservationBottomSheetBinding
 import mil.nga.giat.mage.map.marker.ObservationBitmapFactory
@@ -70,10 +69,10 @@ class ObservationBottomSheet @JvmOverloads constructor(
 
     init {
         binding.directionsButton.setOnClickListener {
-            observationActionListener?.onObservationDirections(binding.observation)
+            observationActionListener?.onObservationDirections(binding.observation!!)
         }
         binding.moreDetailsButton.setOnClickListener {
-            observationActionListener?.onObservationClick(binding.observation)
+            observationActionListener?.onObservationClick(binding.observation!!)
         }
         binding.favoriteButton.setOnClickListener {
             binding.observation?.let {
@@ -121,9 +120,9 @@ class ObservationBottomSheet @JvmOverloads constructor(
             )
         }
         val favorites = observation.favorites
-        var favoriteCount = favorites.count { it.isFavorite }
-        binding.favoriteCount.setVisibility(if (favoriteCount > 0) View.VISIBLE else View.GONE)
-        binding.favoriteCount.setText(String.format(Locale.getDefault(), "%d", favoriteCount))
+        val favoriteCount = favorites.count { it.isFavorite }
+        binding.favoriteCount.visibility = if (favoriteCount > 0) View.VISIBLE else View.GONE
+        binding.favoriteCount.text = String.format(Locale.getDefault(), "%d", favoriteCount)
     }
 
     private fun toggleFavorite(observation: Observation) {

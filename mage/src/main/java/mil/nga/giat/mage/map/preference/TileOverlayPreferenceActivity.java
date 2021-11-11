@@ -378,10 +378,10 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
         private void fetchRemoteGeopackageLayers() {
             Context context = getContext();
             Event event = EventHelper.getInstance(context).getCurrentEvent();
-            String baseUrl = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(mil.nga.giat.mage.sdk.R.string.serverURLKey), context.getString(mil.nga.giat.mage.sdk.R.string.serverURLDefaultValue));
+            String baseUrl = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.serverURLKey), context.getString(R.string.serverURLDefaultValue));
             Retrofit retrofit = new Retrofit.Builder()
                     .baseUrl(baseUrl)
-                    .addConverterFactory(GsonConverterFactory.create(LayerDeserializer.getGsonBuilder(event)))
+                    .addConverterFactory(GsonConverterFactory.create(LayerDeserializer.getGsonBuilder()))
                     .client(HttpClientManager.getInstance().httpClient())
                     .build();
 
@@ -391,14 +391,14 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
                 Response<Collection<Layer>> response =
                         service.getLayers(event.getRemoteId(), "GeoPackage").execute();
                 if (response.isSuccessful()) {
-                    saveGeopackageLayers(response.body());
+                    saveGeopackageLayers(response.body(), event);
                 }
             }catch (IOException e){
                 Log.w(LOG_NAME, "Failed to fect geopackages",e);
             }
         }
 
-        private void saveGeopackageLayers(Collection<Layer> remoteLayers) {
+        private void saveGeopackageLayers(Collection<Layer> remoteLayers, Event event) {
             Context context = getActivity().getApplicationContext();
             LayerHelper layerHelper = LayerHelper.getInstance(context);
             try {
@@ -412,6 +412,7 @@ public class TileOverlayPreferenceActivity extends AppCompatActivity {
 
                 GeoPackageManager manager = GeoPackageFactory.getManager(context);
                 for (Layer remoteLayer : remoteLayers) {
+                    remoteLayer.setEvent(event);
                     // Check if its loaded
                     File file = new File(context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS),
                             String.format("MAGE/geopackages/%s/%s", remoteLayer.getRemoteId(), remoteLayer.getFileName()));

@@ -3,9 +3,37 @@ All notable changes to this project will be documented in this file.
 Adheres to [Semantic Versioning](http://semver.org/).
 
 ---
-## 6.3.4 (TBD)
+## Changes Pending
 
 ##### Features
+
+##### Bug Fixes
+
+
+## [7.0.2](https://github.com/ngageoint/mage-android/releases/tag/7.0.2)
+
+##### Features
+* Default time filter for observations and user locations to 30 days.
+
+##### Bug Fixes
+
+## [7.0.1](https://github.com/ngageoint/mage-android/releases/tag/7.0.1)
+
+##### Features
+* Removed "logged in notification" for clarity.  MAGE location reporting notification now has a "logout" button.
+
+##### Bug Fixes
+* Filter archived forms in form picker
+* Fix signup crash for 5.x servers.
+
+## [7.0](https://github.com/ngageoint/mage-android/releases/tag/7.0)
+
+##### Release Notes
+* This version supports MAGE server versions 5.4 and 6.x 
+
+##### Features
+* Multi form support:  Users will be able to add multiple forms to an observation when the server configuration allows.
+* Attachments as form fields: Users can create attachments in form fields when the server configuration allows.
 
 ##### Bug Fixes
 

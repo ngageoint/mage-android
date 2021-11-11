@@ -8,8 +8,8 @@ import android.location.LocationManager
 import android.os.Bundle
 import android.util.Log
 import androidx.lifecycle.LiveData
+import dagger.hilt.android.qualifiers.ApplicationContext
 import mil.nga.giat.mage.R
-import mil.nga.giat.mage.dagger.module.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -45,7 +45,7 @@ constructor(@ApplicationContext val context: Context, val preferences: SharedPre
                 setValue(it)
             }
         } catch (e: SecurityException) {
-            Log.e(LOG_NAME, "Could not get users location", e)
+            Log.i(LOG_NAME, "Error requesting location updates")
         }
     }
 

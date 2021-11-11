@@ -19,7 +19,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Stack;
 
-import mil.nga.giat.mage.event.EventServerFetch;
+import mil.nga.giat.mage.data.event.EventRepository;
+import mil.nga.giat.mage.form.field.FieldValue;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationProperty;
 
@@ -48,6 +49,30 @@ public class ObservationBitmapFactory {
 		return bitmap;
 	}
 
+	@TargetApi(Build.VERSION_CODES.JELLY_BEAN)
+	public static Bitmap bitmap(Context context, String eventId, Long formId, FieldValue.Text primary, FieldValue.Text secondary) {
+		InputStream iconStream = getIconStream(context, eventId, formId, primary, secondary);
+
+		// scale the image to a good size
+		Bitmap bitmap = BitmapFactory.decodeStream(iconStream);
+		Integer maxDimension = Math.max(bitmap.getWidth(), bitmap.getHeight());
+		float density = context.getResources().getDisplayMetrics().xdpi; //context.getResources().getDisplayMetrics().densityDpi;
+		double scale = (density/3.5) / maxDimension;
+		int outWidth = Double.valueOf(scale*Integer.valueOf(bitmap.getWidth()).doubleValue()).intValue();
+		int outHeight = Double.valueOf(scale*Integer.valueOf(bitmap.getHeight()).doubleValue()).intValue();
+		bitmap = Bitmap.createScaledBitmap(bitmap, outWidth, outHeight, true);
+
+		Closeables.closeQuietly(iconStream);
+
+		return bitmap;
+	}
+
+
+	public static BitmapDescriptor bitmapDescriptor(Context context, String eventId, Long formId, FieldValue.Text primary, FieldValue.Text secondary) {
+		Bitmap bitmap = bitmap(context, eventId, formId, primary, secondary);
+		return BitmapDescriptorFactory.fromBitmap(bitmap);
+	}
+
 	public static BitmapDescriptor bitmapDescriptor(Context context, Observation observation) {
 		Bitmap bitmap = bitmap(context, observation);
 		return BitmapDescriptorFactory.fromBitmap(bitmap);
@@ -69,9 +94,8 @@ public class ObservationBitmapFactory {
 	private static InputStream getIconStream(Context context, Observation observation) {
 		InputStream iconStream = null;
 		if (observation != null) {
-
 			// make path from type and variant
-			File path = new File(new File(new File(context.getFilesDir() + EventServerFetch.OBSERVATION_ICON_PATH), observation.getEvent().getRemoteId()), "icons");
+			File path = new File(new File(new File(context.getFilesDir() + EventRepository.Companion.getOBSERVATION_ICON_PATH()), observation.getEvent().getRemoteId()), "icons");
 
 			Stack<String> iconProperties = new Stack<>();
 
@@ -116,6 +140,55 @@ public class ObservationBitmapFactory {
 
 		return iconStream;
 	}
+
+	/**
+	 * Figure out which icon to navigate to
+	 *
+	 * @return
+	 */
+	private static InputStream getIconStream(Context context, String eventId, Long formId, FieldValue.Text primary, FieldValue.Text secondary) {
+		InputStream iconStream = null;
+		if (eventId != null) {
+
+			// make path from type and variant
+			File path = new File(new File(new File(context.getFilesDir() + EventRepository.Companion.getOBSERVATION_ICON_PATH()), eventId), "icons");
+
+			Stack<String> iconProperties = new Stack<>();
+
+			if (secondary != null) {
+				iconProperties.add(secondary.getText());
+			}
+
+			if (primary != null) {
+				iconProperties.add(primary.getText());
+			}
+
+			iconProperties.add(formId.toString());
+
+			path = recurseGetIconPath(iconProperties, path, 0);
+
+			if (path != null && path.exists() && path.isFile()) {
+				try {
+					iconStream = new FileInputStream(path);
+				} catch (FileNotFoundException e) {
+					Log.e(LOG_NAME, "Cannot find icon.", e);
+				}
+			}
+		}
+
+		if (iconStream == null) {
+			Log.i(LOG_NAME, "Could not find icon, using default " + DEFAULT_ASSET);
+
+			try {
+				iconStream = context.getAssets().open(DEFAULT_ASSET);
+			} catch (IOException e) {
+				Log.e(LOG_NAME, "Cannot find default icon.", e);
+			}
+		}
+
+		return iconStream;
+	}
+
 
 	private static File recurseGetIconPath(Stack<String> iconProperties, File path, int i) {
 

@@ -1,25 +1,28 @@
 package mil.nga.giat.mage.observation.sync
 
 import android.content.Context
-import android.preference.PreferenceManager
 import android.util.Log
-import androidx.work.Worker
+import androidx.hilt.work.HiltWorker
+import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
-import com.google.gson.JsonObject
-import mil.nga.giat.mage.sdk.R
-import mil.nga.giat.mage.sdk.datastore.observation.*
-import mil.nga.giat.mage.sdk.exceptions.ObservationException
-import mil.nga.giat.mage.sdk.http.HttpClientManager
-import mil.nga.giat.mage.sdk.http.converter.ObservationConverterFactory
-import mil.nga.giat.mage.sdk.http.converter.ObservationImportantConverterFactory
-import mil.nga.giat.mage.sdk.http.resource.ObservationResource
-import retrofit2.Response
-import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedInject
+import mil.nga.giat.mage.data.observation.ObservationRepository
+import mil.nga.giat.mage.sdk.datastore.observation.Observation
+import mil.nga.giat.mage.sdk.datastore.observation.ObservationFavorite
+import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper
+import mil.nga.giat.mage.sdk.datastore.observation.State
 import java.io.IOException
 import java.net.HttpURLConnection
 
-class ObservationSyncWorker(var context: Context, params: WorkerParameters) : Worker(context, params) {
+@HiltWorker
+class ObservationSyncWorker @AssistedInject constructor(
+    @Assisted context: Context,
+    @Assisted params: WorkerParameters,
+    private val observationRepository: ObservationRepository
+) : CoroutineWorker(context, params) {
+
+    private val observationHelper = ObservationHelper.getInstance(applicationContext)
 
     private fun Result.withFlag(flag: Int): Int {
         return when(this) {
@@ -45,7 +48,7 @@ class ObservationSyncWorker(var context: Context, params: WorkerParameters) : Wo
         private const val RESULT_RETRY_FLAG = 2
     }
 
-    override fun doWork(): Result {
+    override suspend fun doWork(): Result {
         var result = RESULT_SUCCESS_FLAG
 
         try {
@@ -59,10 +62,9 @@ class ObservationSyncWorker(var context: Context, params: WorkerParameters) : Wo
         return if (result.containsFlag(RESULT_RETRY_FLAG)) Result.retry() else Result.success()
     }
 
-    private fun syncObservations(): Int {
+    private suspend fun syncObservations(): Int {
         var result = RESULT_SUCCESS_FLAG
 
-        val observationHelper = ObservationHelper.getInstance(applicationContext)
         for (observation in observationHelper.dirty) {
             result = syncObservation(observation).withFlag(result)
         }
@@ -70,7 +72,7 @@ class ObservationSyncWorker(var context: Context, params: WorkerParameters) : Wo
         return result
     }
 
-    private fun syncObservation(observation: Observation): Int {
+    private suspend fun syncObservation(observation: Observation): Int {
         var result = RESULT_SUCCESS_FLAG
 
         try {
@@ -79,34 +81,35 @@ class ObservationSyncWorker(var context: Context, params: WorkerParameters) : Wo
             } else {
                 save(observation).withFlag(result)
             }
-        } catch(e: Exception) {
+        } catch(e: IOException) {
             Log.e(LOG_NAME, "Failed to sync observation with server", e)
+            result = RESULT_FAILURE_FLAG
         }
 
         return result
     }
 
-    private fun syncObservationImportant(): Int {
+    private suspend fun syncObservationImportant(): Int {
         var result = RESULT_SUCCESS_FLAG
 
-        for (observation in ObservationHelper.getInstance(context).dirtyImportant) {
+        for (observation in observationHelper.dirtyImportant) {
             result = updateImportant(observation).withFlag(result)
         }
 
         return result
     }
 
-    private fun syncObservationFavorites(): Int {
+    private suspend fun syncObservationFavorites(): Int {
         var result = RESULT_SUCCESS_FLAG
 
-        for (favorite in ObservationHelper.getInstance(context).dirtyFavorites) {
+        for (favorite in observationHelper.dirtyFavorites) {
             result = updateFavorite(favorite).withFlag(result)
         }
 
         return result
     }
 
-    private fun save(observation: Observation): Result {
+    private suspend fun save(observation: Observation): Result {
         return if (observation.remoteId.isNullOrEmpty()) {
             create(observation)
         } else {
@@ -114,221 +117,50 @@ class ObservationSyncWorker(var context: Context, params: WorkerParameters) : Wo
         }
     }
 
-    private fun create(observation: Observation): Result {
-        val baseUrl = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.serverURLKey), context.getString(R.string.serverURLDefaultValue))
-        val retrofit = Retrofit.Builder()
-                .baseUrl(baseUrl!!)
-                .addConverterFactory(ObservationConverterFactory.create(observation.event))
-                .client(HttpClientManager.getInstance().httpClient())
-                .build()
-
-        val service = retrofit.create<ObservationResource.ObservationService>(ObservationResource.ObservationService::class.java)
-        val response = service.createObservationId(observation.event.remoteId).execute()
-
-        if (response.isSuccessful) {
-            val returnedObservation = response.body()
-            observation.remoteId = returnedObservation?.remoteId
-            observation.url = returnedObservation?.url
-
-            // Got the observation id from the server, lets send the observation
-            val result = update(observation)
-            if (result is Result.Success) {
-                return if (response.code() == HttpURLConnection.HTTP_UNAUTHORIZED) Result.failure() else Result.retry()
-            }
-
-            return result
+    private suspend fun create(observation: Observation): Result {
+        val response = observationRepository.create(observation)
+        return if (response.isSuccessful) {
+            Result.success()
         } else {
-            Log.e(LOG_NAME, "Bad request.")
-
-            val observationError = ObservationError()
-            observationError.statusCode = response.code()
-            observationError.description = response.message()
-
-            response.errorBody()?.string()?.let {
-                Log.e(LOG_NAME, it)
-                observationError.message = it
-            }
-
-            ObservationHelper.getInstance(context).update(observation)
-
-            return if (response.code() == HttpURLConnection.HTTP_UNAUTHORIZED) Result.failure() else Result.retry()
+            if (response.code() == HttpURLConnection.HTTP_UNAUTHORIZED) Result.failure() else Result.retry()
         }
     }
 
-    private fun update(observation: Observation): Result {
-        val baseUrl = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.serverURLKey), context.getString(R.string.serverURLDefaultValue))
-        val retrofit = Retrofit.Builder()
-                .baseUrl(baseUrl!!)
-                .addConverterFactory(ObservationConverterFactory.create(observation.event))
-                .client(HttpClientManager.getInstance().httpClient())
-                .build()
-
-        val service = retrofit.create<ObservationResource.ObservationService>(ObservationResource.ObservationService::class.java)
-        val response = service.updateObservation(observation.event.remoteId, observation.remoteId, observation).execute()
-
-        if (response.isSuccessful) {
-            val returnedObservation = response.body()
-            returnedObservation?.isDirty = false
-            returnedObservation?.id = observation.id
-
-            ObservationHelper.getInstance(context).update(returnedObservation)
-
-            return Result.success()
+    private suspend fun update(observation: Observation): Result {
+        val response = observationRepository.update(observation)
+        return if (response.isSuccessful) {
+            Result.success()
         } else {
-            Log.e(LOG_NAME, "Bad request.")
-
-            val observationError = ObservationError()
-            observationError.statusCode = response.code()
-            observationError.description = response.message()
-
-            response.errorBody()?.string()?.let {
-                Log.e(LOG_NAME, it)
-                observationError.message = it
-            }
-
-            observation.error = observationError
-            ObservationHelper.getInstance(context).update(observation)
-
-            return if (response.code() == HttpURLConnection.HTTP_UNAUTHORIZED) Result.failure() else Result.retry()
+            if (response.code() == HttpURLConnection.HTTP_UNAUTHORIZED) Result.failure() else Result.retry()
         }
     }
 
-    private fun archive(observation: Observation): Result {
-        val observationHelper = ObservationHelper.getInstance(context)
-
-        val baseUrl = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.serverURLKey), context.getString(R.string.serverURLDefaultValue))
-        val retrofit = Retrofit.Builder()
-                .baseUrl(baseUrl!!)
-                .addConverterFactory(GsonConverterFactory.create())
-                .client(HttpClientManager.getInstance().httpClient())
-                .build()
-
-        val state = JsonObject()
-        state.addProperty("name", "archive")
-
-        val service = retrofit.create<ObservationResource.ObservationService>(ObservationResource.ObservationService::class.java)
-
-        try {
-            val response = service.archiveObservation(observation.event.remoteId, observation.remoteId, state).execute()
-
-            if (response.isSuccessful) {
-                observationHelper.delete(observation)
-                return Result.success()
-            } else if(response.code() == HttpURLConnection.HTTP_NOT_FOUND) {
-                observationHelper.delete(observation)
-                return Result.success()
-            } else if (response.code() == HttpURLConnection.HTTP_UNAUTHORIZED) {
-                return Result.failure()
-            } else {
-                Log.e(LOG_NAME, "Bad request.")
-
-                val observationError = ObservationError()
-                observationError.statusCode = response.code()
-                observationError.description = response.message()
-
-                response.errorBody()?.string()?.let {
-                    Log.e(LOG_NAME, it)
-                    observationError.message = it
-                }
-
-                observationHelper.update(observation)
-                return Result.retry()
-            }
-        } catch (e: IOException) {
-            Log.e(LOG_NAME, "Failure archiving observation.", e)
-
-            val observationError = ObservationError()
-            observationError.message = "The Internet connection appears to be offline."
-            observation.error = observationError
-            try {
-                observationHelper.update(observation)
-            } catch (oe: ObservationException) {
-                Log.e(LOG_NAME, "Problem archiving observation error", oe)
-            }
-
-            return Result.retry()
+    private suspend fun archive(observation: Observation): Result {
+        val response = observationRepository.archive(observation)
+        return when {
+            response.isSuccessful -> Result.success()
+            response.code() == HttpURLConnection.HTTP_NOT_FOUND -> Result.success()
+            response.code() == HttpURLConnection.HTTP_UNAUTHORIZED -> Result.failure()
+            else -> Result.retry()
         }
     }
 
-    private fun updateImportant(observation: Observation): Result {
-        val observationHelper = ObservationHelper.getInstance(context)
+    private suspend fun updateImportant(observation: Observation): Result {
+        val response = observationRepository.updateImportant(observation)
 
-        try {
-            val baseUrl = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.serverURLKey), context.getString(R.string.serverURLDefaultValue))
-            val retrofit = Retrofit.Builder()
-                    .baseUrl(baseUrl!!)
-                    .addConverterFactory(ObservationImportantConverterFactory.create(observation.event))
-                    .client(HttpClientManager.getInstance().httpClient())
-                    .build()
-
-            val service = retrofit.create<ObservationResource.ObservationService>(ObservationResource.ObservationService::class.java)
-
-            val response = if (observation.important?.isImportant == true) {
-                val jsonImportant = JsonObject()
-                jsonImportant.addProperty("description", observation.important?.description)
-                service.addImportant(observation.event.remoteId, observation.remoteId, jsonImportant).execute()
-            } else {
-                service.removeImportant(observation.event.remoteId, observation.remoteId).execute()
-            }
-
-            if (response.isSuccessful) {
-                val returnedObservation = response.body()
-                observation.lastModified = returnedObservation?.lastModified
-                observationHelper.updateImportant(observation)
-
-                return Result.success()
-            } else {
-                Log.e(LOG_NAME, "Bad request.")
-                response.errorBody()?.string()?.let {
-                    Log.e(LOG_NAME, it)
-                }
-
-                return if (response.code() == HttpURLConnection.HTTP_UNAUTHORIZED) Result.failure() else Result.retry()
-            }
-        } catch (e: IOException) {
-            Log.e(LOG_NAME, "Failure toogling observation important.", e)
-            return Result.retry()
+        return if (response.isSuccessful) {
+            Result.success()
+        } else {
+            if (response.code() == HttpURLConnection.HTTP_UNAUTHORIZED) Result.failure() else Result.retry()
         }
     }
 
-    private fun updateFavorite(favorite: ObservationFavorite): Result {
-        val observationHelper = ObservationHelper.getInstance(context)
-        val observation = favorite.observation
-
-        try {
-            val baseUrl = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.serverURLKey), context.getString(R.string.serverURLDefaultValue))
-            val retrofit = Retrofit.Builder()
-                    .baseUrl(baseUrl!!)
-                    .addConverterFactory(ObservationConverterFactory.create(observation.event))
-                    .client(HttpClientManager.getInstance().httpClient())
-                    .build()
-
-            val service = retrofit.create<ObservationResource.ObservationService>(ObservationResource.ObservationService::class.java)
-
-            val response: Response<Observation>
-            if (favorite.isFavorite()) {
-                response = service.favoriteObservation(observation.event.remoteId, observation.remoteId).execute()
-            } else {
-                response = service.unfavoriteObservation(observation.event.remoteId, observation.remoteId).execute()
-            }
-
-            if (response.isSuccessful) {
-                val updatedObservation = response.body()
-                observation.lastModified = updatedObservation?.lastModified
-                observationHelper.updateFavorite(favorite)
-
-                return Result.success()
-            } else {
-                Log.e(LOG_NAME, "Bad request.")
-                response.errorBody()?.string()?.let {
-                    Log.e(LOG_NAME, it)
-                }
-
-                return if (response.code() == HttpURLConnection.HTTP_UNAUTHORIZED) Result.failure() else Result.retry()
-            }
-        } catch (e: IOException) {
-            Log.e(LOG_NAME, "Failure toogling observation favorite.", e)
-            return Result.retry()
+    private suspend fun updateFavorite(favorite: ObservationFavorite): Result {
+        val response = observationRepository.updateFavorite(favorite)
+        return if (response.isSuccessful) {
+            Result.success()
+        } else {
+            if (response.code() == HttpURLConnection.HTTP_UNAUTHORIZED) Result.failure() else Result.retry()
         }
     }
 }

@@ -20,7 +20,7 @@ class ImageFileLoader private constructor(private val fileLoader: ModelLoader<Fi
             if (!File(it).exists()) return false
 
             val fileExtension = MimeTypeMap.getFileExtensionFromUrl(it)
-            val mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(fileExtension.toLowerCase())
+            val mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(fileExtension.lowercase())
             return mimeType?.contains("image", ignoreCase = true) ?: false
         }
 

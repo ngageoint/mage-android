@@ -3,14 +3,12 @@
     android:id="@+id/coordinator_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:background="@color/background_card">
+    android:orientation="vertical">
 
     <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
         android:id="@+id/swipeContainer"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
-
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/recycler_view"
@@ -28,6 +26,6 @@
         android:theme="@style/AppTheme.PrimaryFAB"
         android:layout_marginEnd="16dp"
         android:layout_marginBottom="16dp"
-        android:src="@drawable/ic_add_black_24dp" />
+        android:src="@drawable/ic_baseline_add_location_24" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

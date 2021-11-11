@@ -3,15 +3,14 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:minWidth="300dp">
+    android:layout_height="wrap_content">
 
     <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
         <androidx.appcompat.widget.Toolbar
-            android:id="@+id/searchToolbar"
+            android:id="@+id/toolbar"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
@@ -41,20 +40,47 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:layout_marginStart="16dp"
-        android:layout_marginEnd="16dp"
-        android:layout_marginTop="8dp"
-        android:layout_marginBottom="8dp">
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="4dp"
+        android:layout_marginBottom="4dp">
 
-        <TextView
-            android:id="@+id/selectedChoicesTextView"
+        <LinearLayout
+            android:id="@+id/selected_content"
+            android:visibility="invisible"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Selected"
+                style="@style/ListTextSecondary"/>
+
+            <TextView
+                android:id="@+id/selected_choices"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:singleLine="true"
+                android:ellipsize="end"
+                style="@style/ListTextPrimary"/>
+
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/clear"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textSize="12sp"
-            android:singleLine="true"
-            android:ellipsize="end"/>
+            style="@style/Widget.AppCompat.Button.Borderless"
+            android:text="CLEAR" />
 
     </LinearLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#1E000000"/>
 
     <RelativeLayout
         android:layout_width="match_parent"
@@ -64,39 +90,9 @@
         <ListView
             android:id="@+id/listView"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
+            android:layout_height="wrap_content"
+            android:divider="@drawable/list_inset_divider"/>
 
     </RelativeLayout>
-
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:background="#1E000000"/>
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="8dp"
-        android:layout_marginEnd="12dp"
-        android:gravity="end"
-        android:orientation="horizontal">
-
-        <Button
-            android:id="@+id/cancel"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="CANCEL"
-            android:textColor="?attr/colorAccent"
-            style="@style/Widget.AppCompat.Button.ButtonBar.AlertDialog"/>
-
-        <Button
-            android:id="@+id/ok"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="OK"
-            android:textColor="?attr/colorAccent"
-            style="@style/Widget.AppCompat.Button.ButtonBar.AlertDialog"/>
-
-    </LinearLayout>
 
 </LinearLayout>

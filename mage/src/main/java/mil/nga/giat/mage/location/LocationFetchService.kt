@@ -1,39 +1,37 @@
 package mil.nga.giat.mage.location
 
-import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
-import android.os.IBinder
-import dagger.android.AndroidInjection
+import androidx.lifecycle.LifecycleService
+import androidx.lifecycle.lifecycleScope
+import dagger.hilt.android.AndroidEntryPoint
+import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 import mil.nga.giat.mage.R
-import mil.nga.giat.mage.dagger.module.ApplicationContext
-import java.util.concurrent.Executors
-import java.util.concurrent.ScheduledExecutorService
-import java.util.concurrent.ScheduledFuture
-import java.util.concurrent.TimeUnit
+import mil.nga.giat.mage.data.location.LocationRepository
 import javax.inject.Inject
 
-class LocationFetchService : Service(), SharedPreferences.OnSharedPreferenceChangeListener  {
+@AndroidEntryPoint
+class LocationFetchService : LifecycleService(), SharedPreferences.OnSharedPreferenceChangeListener  {
 
-    @Inject @field:ApplicationContext
+    @Inject @ApplicationContext
     lateinit var context: Context
 
     @Inject
     lateinit var preferences: SharedPreferences
 
-    private var locationFetchFrequency: Long = 0
-    private var executor: ScheduledExecutorService
-    private var future: ScheduledFuture<*>? = null
+    @Inject
+    lateinit var locationRepository: LocationRepository
 
-    init {
-        executor = Executors.newScheduledThreadPool(1)
-    }
+    private var locationFetchFrequency: Long = 0
+    private var pollJob: Job? = null
 
     override fun onCreate() {
         super.onCreate()
-
-        AndroidInjection.inject(this)
 
         locationFetchFrequency = getLocationFetchFrequency()
         preferences.registerOnSharedPreferenceChangeListener(this)
@@ -42,8 +40,9 @@ class LocationFetchService : Service(), SharedPreferences.OnSharedPreferenceChan
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         super.onStartCommand(intent, flags, startId)
 
-        stopFetch()
-        scheduleFetch()
+        if (pollJob?.isActive != true) {
+            startPoll()
+        }
 
         return START_NOT_STICKY
     }
@@ -52,29 +51,32 @@ class LocationFetchService : Service(), SharedPreferences.OnSharedPreferenceChan
         super.onDestroy()
 
         preferences.unregisterOnSharedPreferenceChangeListener(this)
-        stopFetch()
-    }
-
-    override fun onBind(intent: Intent?): IBinder? {
-        return null
+        stopPoll()
     }
 
     override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences?, key: String?) {
         if (key.equals(getString(R.string.userFetchFrequencyKey), ignoreCase = true)) {
             locationFetchFrequency = getLocationFetchFrequency()
-            stopFetch()
-            scheduleFetch()
+            stopPoll()
+            startPoll()
         }
     }
 
-    private fun scheduleFetch() {
-        future = executor.scheduleAtFixedRate({
-            LocationServerFetch(context).fetch()
-        }, 0, getLocationFetchFrequency(), TimeUnit.MILLISECONDS)
+    private fun startPoll() {
+        pollJob = poll()
     }
 
-    private fun stopFetch() {
-        future?.cancel(true)
+    private fun stopPoll() {
+        pollJob?.cancel()
+    }
+
+    private fun poll(): Job {
+        return lifecycleScope.launch {
+            while (isActive) {
+                locationRepository.fetch()
+                delay(timeMillis = getLocationFetchFrequency())
+            }
+        }
     }
 
     private fun getLocationFetchFrequency(): Long {

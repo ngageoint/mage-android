@@ -2,46 +2,44 @@ package mil.nga.giat.mage.event
 
 import android.content.Intent
 import android.os.Bundle
-import android.preference.PreferenceManager
 import android.util.Log
 import android.view.View
+import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SearchView
+import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.LinearLayoutManager
-import dagger.android.support.DaggerAppCompatActivity
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.android.synthetic.main.activity_events.*
 import mil.nga.giat.mage.LandingActivity
 import mil.nga.giat.mage.MageApplication
 import mil.nga.giat.mage.R
 import mil.nga.giat.mage.login.LoginActivity
+import mil.nga.giat.mage.network.Resource
 import mil.nga.giat.mage.sdk.datastore.user.Event
 import mil.nga.giat.mage.sdk.datastore.user.EventHelper
-import mil.nga.giat.mage.sdk.datastore.user.UserHelper
-import mil.nga.giat.mage.sdk.login.RecentEventTask
-import java.util.*
 import javax.inject.Inject
 
-class EventsActivity : DaggerAppCompatActivity(), EventsFetchFragment.EventsFetchListener {
-
-    companion object {
-        private val LOG_NAME = EventsActivity::class.java.name
-        private const val EVENTS_FETCH_FRAGMENT_TAG = "EVENTS_FETCH_FRAGMENT_TAG"
-    }
+@AndroidEntryPoint
+class EventsActivity : AppCompatActivity() {
 
     @Inject
     lateinit var application: MageApplication
 
-    private var events = emptyList<Event>()
-
-    private lateinit var eventsFetchFragment: EventsFetchFragment
+    private lateinit var viewModel: EventViewModel
 
     public override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         setContentView(R.layout.activity_events)
-
-        toolbar.title = "Welcome to MAGE"
         setSupportActionBar(toolbar)
+
+        if (intent.getBooleanExtra(CLOSABLE_EXTRA, false)) {
+            supportActionBar?.setHomeAsUpIndicator(R.drawable.ic_close_white_24dp)
+            supportActionBar?.setDisplayHomeAsUpEnabled(true)
+        }
+
+        toolbar.title = "Events"
 
         loadingStatus.visibility = View.VISIBLE
 
@@ -49,72 +47,65 @@ class EventsActivity : DaggerAppCompatActivity(), EventsFetchFragment.EventsFetc
         searchView.setIconifiedByDefault(false)
         searchView.clearFocus()
 
-        dismissButton.setOnClickListener {
-            dismiss()
-        }
+        dismissButton.setOnClickListener { dismiss() }
 
-        var fragment = supportFragmentManager.findFragmentByTag(EVENTS_FETCH_FRAGMENT_TAG) as EventsFetchFragment?
-        // If the Fragment is non-null, then it is being retained over a configuration change.
-        if (fragment == null) {
-            fragment = EventsFetchFragment()
-            supportFragmentManager.beginTransaction().add(fragment, EVENTS_FETCH_FRAGMENT_TAG).commit()
-        }
+        viewModel = ViewModelProvider(this).get(EventViewModel::class.java)
+        viewModel.syncStatus.observe(this, { onEventSynced(it) })
 
-        eventsFetchFragment = fragment
-    }
-
-    override fun onResume() {
-        super.onResume()
-
-        eventsFetchFragment.loadEvents()
-    }
-
-    override fun onEventsFetched(status: Boolean, error: Exception?) {
+        // TODO what to do if user is not in this event
+        // TODO all this should be in view model, either pick event and go or load events
+        var event: Event? = null
         try {
-            events = EventHelper.getInstance(application).readAll()
-        } catch (e: Exception) {
-            Log.e(LOG_NAME, "Could not get events!")
+            val eventId = intent.getLongExtra(EVENT_ID_EXTRA, -1)
+            event = EventHelper.getInstance(application).read(eventId)
+        } catch (e: java.lang.Exception) {
+            Log.e(LOG_NAME, "Could not read event", e)
         }
 
-        if (events.isEmpty()) {
-            Log.e(LOG_NAME, "User is part of no event!")
-            application.onLogout(true, null)
-
-            searchView.visibility = View.GONE
-            loadingStatus.visibility = View.GONE
-            dismissButton.visibility = View.VISIBLE
-            noEventsText.visibility = if (status) View.VISIBLE else View.GONE
-            noConnectionText.visibility = if (status) View.GONE else View.VISIBLE
+        if (event != null) {
+            chooseEvent(event)
         } else {
-            eventsFetched()
+            viewModel.events.observe(this, { onEvents(it)})
         }
     }
 
-    private fun eventsFetched() {
-        if (events.size == 1) {
-            chooseEvent(events[0])
-        } else {
-            val recentEvents = EventHelper.getInstance(application).recentEvents
-            val eventListAdapter = EventListAdapter(events, recentEvents, EventListAdapter.OnEventClickListener { event -> chooseEvent(event) })
+    private fun onEvents(resource: Resource<List<Event>>) {
+        val events: Collection<Event>? = resource.data
 
-            searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
-                override fun onQueryTextSubmit(query: String): Boolean {
-                    return false
-                }
+        when {
+            events?.size == 1 -> chooseEvent(events.first())
+            events?.isNotEmpty() == true -> {
+                val recentEvents = EventHelper.getInstance(application).recentEvents
+                val eventListAdapter = EventListAdapter(events.toMutableList(), recentEvents) { event -> chooseEvent(event) }
 
-                override fun onQueryTextChange(text: String): Boolean {
-                    eventListAdapter.filter(text)
-                    return true
-                }
-            })
+                searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+                    override fun onQueryTextSubmit(query: String): Boolean {
+                        return false
+                    }
 
-            recyclerView.layoutManager = LinearLayoutManager(applicationContext)
-            recyclerView.itemAnimator = DefaultItemAnimator()
-            recyclerView.addItemDecoration(EventItemDecorator(applicationContext))
-            recyclerView.adapter = eventListAdapter
+                    override fun onQueryTextChange(text: String): Boolean {
+                        eventListAdapter.filter(text)
+                        return true
+                    }
+                })
 
-            eventsAppBar.visibility = View.VISIBLE
-            loadingStatus.visibility = View.GONE
+                recyclerView.layoutManager = LinearLayoutManager(applicationContext)
+                recyclerView.itemAnimator = DefaultItemAnimator()
+                recyclerView.addItemDecoration(EventItemDecorator(applicationContext))
+                recyclerView.adapter = eventListAdapter
+
+                eventsAppBar.visibility = View.VISIBLE
+                loadingStatus.visibility = View.GONE
+            }
+            else -> {
+                application.onLogout(true, null)
+
+                searchView.visibility = View.GONE
+                loadingStatus.visibility = View.GONE
+                dismissButton.visibility = View.VISIBLE
+                noEventsText.visibility = if (resource.status == Resource.Status.ERROR) View.VISIBLE else View.GONE
+                noConnectionText.visibility = if (resource.status == Resource.Status.ERROR) View.GONE else View.VISIBLE
+            }
         }
     }
 
@@ -129,35 +120,14 @@ class EventsActivity : DaggerAppCompatActivity(), EventsFetchFragment.EventsFetc
         loadingStatus.visibility = View.VISIBLE
 
         loadingText.text = "Loading ${event.name}"
-
-        val eventFetch = EventServerFetch(applicationContext, event.remoteId)
-        eventFetch.setEventFetchListener { _, _ -> finishEvent(event) }
-        eventFetch.execute()
+        viewModel.syncEvent(event)
     }
 
-    private fun finishEvent(event: Event) {
-        // Send chosen event to the server
-        val userRecentEventInfo = ArrayList<String>()
-        userRecentEventInfo.add(event.remoteId)
-        RecentEventTask(applicationContext) {
-            // No need to check if this failed
-        }.execute(*userRecentEventInfo.toTypedArray())
-
-        try {
-            val userHelper = UserHelper.getInstance(applicationContext)
-            val user = userHelper.readCurrentUser()
-            userHelper.setCurrentEvent(user, event)
-        } catch (e: Exception) {
-            Log.e(LOG_NAME, "Could not set current event.")
+    private fun onEventSynced(resource: Resource<out Event> ) {
+        if (resource.data != null) {
+            viewModel.setEvent(resource.data)
         }
 
-        // disable pushing locations
-        if (!UserHelper.getInstance(applicationContext).isCurrentUserPartOfCurrentEvent) {
-            val editor = PreferenceManager.getDefaultSharedPreferences(applicationContext).edit()
-            editor.putBoolean(getString(R.string.reportLocationKey), false).apply()
-        }
-
-        // start up the landing activity!
         val launchIntent = Intent(applicationContext, LandingActivity::class.java)
         val extras = intent.extras
         if (extras != null) {
@@ -166,5 +136,12 @@ class EventsActivity : DaggerAppCompatActivity(), EventsFetchFragment.EventsFetc
 
         startActivity(launchIntent)
         finish()
+    }
+
+    companion object {
+        private val LOG_NAME = EventsActivity::class.java.name
+
+        @JvmStatic val EVENT_ID_EXTRA = "EVENT_ID_EXTRA"
+        @JvmStatic val CLOSABLE_EXTRA = "CLOSABLE_EXTRA"
     }
 }

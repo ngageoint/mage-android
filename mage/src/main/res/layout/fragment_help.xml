@@ -9,21 +9,20 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
-        <androidx.appcompat.widget.Toolbar
+        <com.google.android.material.appbar.MaterialToolbar
             android:id="@+id/toolbar"
             android:layout_height="wrap_content"
             android:layout_width="match_parent"
-            app:titleTextColor="@color/md_white_1000"
-            app:subtitleTextColor="@color/md_white_1000"
-            android:background="?attr/colorPrimary"/>
+            style="@style/Widget.MaterialComponents.Toolbar.Primary"
+            android:elevation="0dp"/>
 
         <com.google.android.material.tabs.TabLayout
             android:id="@+id/tab_layout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="?attr/colorPrimary"
-            android:minHeight="?attr/actionBarSize"
-            android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"/>
+            app:tabTextColor="@color/md_white_1000"
+            app:tabIndicatorColor="@android:color/white" />
 
     </com.google.android.material.appbar.AppBarLayout>
 

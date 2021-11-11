@@ -5,4 +5,8 @@
     <item android:id="@+id/apply"
           android:title="Apply"
           app:showAsAction="always" />
+
+    <item android:id="@+id/clear"
+        android:title="Clear"
+        app:showAsAction="never" />
 </menu>

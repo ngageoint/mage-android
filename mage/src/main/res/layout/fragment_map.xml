@@ -81,7 +81,20 @@
             app:maxImageSize="14dp"
             android:padding="32dp"
             android:scaleType="fitXY"
+            app:tint="@color/md_white_1000"
             android:src="@drawable/baseline_cloud_download_white_24" />
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/report_location"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="top|start"
+            android:layout_marginTop="88dp"
+            android:layout_marginStart="16dp"
+            app:backgroundTint="@color/toggle_button"
+            android:tint="@color/toggle_button_selected"
+            android:theme="@style/AppTheme.AlternateFAB"
+            android:src="@drawable/ic_my_location_black_24dp" />
 
         <com.google.android.material.floatingactionbutton.FloatingActionButton
             android:id="@+id/zoom_button"
@@ -93,7 +106,7 @@
             app:backgroundTint="@color/toggle_button"
             android:tint="@color/toggle_button_selected"
             android:theme="@style/AppTheme.AlternateFAB"
-            android:src="@drawable/ic_my_location_black_24dp" />
+            android:src="@drawable/ic_outline_near_me_24" />
 
         <com.google.android.material.floatingactionbutton.FloatingActionButton
             android:id="@+id/compass_button"
@@ -128,8 +141,9 @@
             android:layout_marginBottom="16dp"
             android:layout_marginEnd="16dp"
             android:theme="@style/AppTheme.PrimaryFAB"
-            app:layout_anchor="@+id/straight_line_nav_container"
-            app:layout_anchorGravity="top|end"
+            app:layout_anchor="@id/straight_line_nav_container"
+            app:layout_anchorGravity="end|bottom"
+            app:layout_dodgeInsetEdges="bottom"
             android:src="@drawable/ic_add_black_24dp" />
 
         <FrameLayout
@@ -138,8 +152,7 @@
             android:layout_height="wrap_content"
             android:layout_gravity="bottom|start"
             android:layout_marginBottom="32dp"
-            android:clickable="true"
-            android:focusable="true"
+            app:layout_dodgeInsetEdges="bottom"
             android:background="?android:attr/selectableItemBackground">
 
             <LinearLayout
@@ -154,11 +167,7 @@
                     android:layout_height="18dp"
                     android:layout_marginEnd="4dp"
                     android:src="@drawable/ic_my_location_white_24dp"
-                    app:tint="@color/md_white_1000"
-                    android:shadowColor="@color/md_black_1000"
-                    android:shadowDx="-2"
-                    android:shadowDy="-2"
-                    android:shadowRadius="1"/>
+                    app:tint="@color/md_white_1000" />
 
                 <TextView
                     android:id="@+id/mgrs_chip"
@@ -180,19 +189,17 @@
             android:id="@+id/straight_line_nav_container"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:clipChildren="false"
-            android:clipToPadding="false"
-            app:layout_insetEdge="top"
-            app:layout_behavior="com.google.android.material.bottomsheet.BottomSheetBehavior" />
+            app:layout_insetEdge="bottom"
+            android:layout_gravity="bottom"/>
 
         <mil.nga.giat.mage.observation.ObservationBottomSheet
             android:id="@+id/observation_bottom_sheet"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:layout_insetEdge="bottom"
             android:background="@color/md_white_1000"
             app:behavior_hideable="true"
             app:behavior_skipCollapsed="true"
+            app:layout_insetEdge="bottom"
             app:layout_behavior="com.google.android.material.bottomsheet.BottomSheetBehavior"
             app:observation="@{chosenObservation}" />
 

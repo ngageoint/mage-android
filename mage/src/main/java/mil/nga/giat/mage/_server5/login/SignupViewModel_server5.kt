@@ -3,13 +3,15 @@ package mil.nga.giat.mage._server5.login
 import android.content.Context
 import android.content.SharedPreferences
 import com.google.gson.JsonObject
-import mil.nga.giat.mage.dagger.module.ApplicationContext
+import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import mil.nga.giat.mage.login.SignupViewModel
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 import javax.inject.Inject
 
+@HiltViewModel
 class SignupViewModel_server5 @Inject constructor(
    @ApplicationContext context: Context,
    preferences: SharedPreferences

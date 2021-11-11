@@ -18,8 +18,6 @@ import mil.nga.giat.mage.login.AccountStateActivity
  */
 class IdpLoginActivity : FragmentActivity() {
     companion object {
-        private val LOG_NAME = IdpLoginActivity::class.java.name
-
         private const val KEY_AUTHORIZATION_STARTED = "AUTHORIZATION_STARTED"
         private const val EXTRA_SERVER_URL = "EXTRA_SERVER_URL"
         private const val EXTRA_IDP_STRATEGY = "EXTRA_IDP_STRATEGY"

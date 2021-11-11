@@ -28,8 +28,6 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginEnd="16dp"
-                android:layout_marginStart="16dp"
                 android:layout_marginBottom="8dp"
                 android:orientation="vertical">
 
@@ -37,6 +35,7 @@
                     android:id="@+id/tabs"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:layout_marginBottom="8dp"
                     android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
                     app:tabIndicatorColor="@android:color/white"
                     app:tabMaxWidth="0dp"
@@ -47,15 +46,17 @@
                     android:id="@+id/wgs84CoordinateFragment"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:name="mil.nga.giat.mage.form.field.dialog.GeometryFieldDialog$WGS84CoordinateFragment" />
+                    android:layout_marginStart="16dp"
+                    android:layout_marginEnd="16dp"
+                    android:name="mil.nga.giat.mage.form.edit.dialog.GeometryFieldDialog$WGS84CoordinateFragment" />
 
                 <androidx.fragment.app.FragmentContainerView
                     android:id="@+id/mgrsCoordinateFragment"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:name="mil.nga.giat.mage.form.field.dialog.GeometryFieldDialog$MGRSCoordinateFragment" />
+                    android:layout_marginStart="16dp"
+                    android:layout_marginEnd="16dp"
+                    android:name="mil.nga.giat.mage.form.edit.dialog.GeometryFieldDialog$MGRSCoordinateFragment" />
 
                 <TextView
                     android:id="@+id/hintText"

@@ -12,10 +12,10 @@ import com.bumptech.glide.load.model.ModelLoader
 import com.bumptech.glide.load.model.ModelLoaderFactory
 import com.bumptech.glide.load.model.MultiModelLoaderFactory
 import com.bumptech.glide.signature.ObjectKey
+import mil.nga.giat.mage.R
 import mil.nga.giat.mage.sdk.datastore.observation.Attachment
 import java.io.ByteArrayOutputStream
 import java.nio.ByteBuffer
-
 
 /**
  * Created by wnewman
@@ -36,7 +36,8 @@ class VideoUrlLoader private constructor(private val context: Context) : ModelLo
         override fun loadData(priority: Priority, callback: DataFetcher.DataCallback<in ByteBuffer>) {
             val mediaMetadataRetriever = MediaMetadataRetriever()
 
-            val token = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(mil.nga.giat.mage.sdk.R.string.tokenKey), "")
+            val token = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(
+                R.string.tokenKey), "")
 
             try {
                 mediaMetadataRetriever.setDataSource(model.url, mapOf("Authorization" to "Bearer $token"))
@@ -70,6 +71,6 @@ class VideoUrlLoader private constructor(private val context: Context) : ModelLo
     }
 
     override fun handles(model: Attachment): Boolean {
-        return model.contentType?.contains("video", ignoreCase = true) ?: false
+        return model.url != null && model.contentType?.contains("video", ignoreCase = true) ?: false
     }
 }

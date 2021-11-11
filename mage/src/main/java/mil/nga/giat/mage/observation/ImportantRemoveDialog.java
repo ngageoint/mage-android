@@ -6,6 +6,8 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatDialogFragment;
 
@@ -30,23 +32,21 @@ public class ImportantRemoveDialog extends AppCompatDialogFragment {
         this.onRemoveImportantListener = onRemoveImportantListener;
     }
 
+    @NonNull
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
         LayoutInflater inflater = getActivity().getLayoutInflater();
         View view = inflater.inflate(R.layout.fragment_observation_remove_important, null);
 
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity())
-                .setTitle("Remove Important Observation Flag")
+                .setTitle("Remove Important Flag")
                 .setView(view);
 
-        builder.setPositiveButton("Remove Important Flag", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        if (onRemoveImportantListener != null) {
-                            onRemoveImportantListener.onRemoveImportant();
-                        }
-                    }
-                })
+        builder.setPositiveButton("Remove Flag", (dialog, which) -> {
+            if (onRemoveImportantListener != null) {
+                onRemoveImportantListener.onRemoveImportant();
+            }
+        })
                 .setNegativeButton(android.R.string.cancel, null);
 
         return builder.create();

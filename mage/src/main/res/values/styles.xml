@@ -1,16 +1,21 @@
 <resources xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <style name="AppTheme" parent="Theme.AppCompat.DayNight.DarkActionBar">
+    <style name="AppTheme" parent="Theme.MaterialComponents.Light.DarkActionBar">
         <item name="colorPrimary">@color/md_blue_600</item>
-        <item name="colorPrimaryDark">@color/md_blue_800</item>
-        <item name="colorAccent">@color/md_blue_600</item>
-
-        <item name="android:windowBackground">@color/background</item>
-
+        <item name="colorPrimaryVariant">@color/md_blue_800</item>
+        <item name="colorSecondary">@color/md_blue_600</item>
+        <item name="colorOnSurface">#DE000000</item>
+        <item name="android:statusBarColor">@color/md_blue_800</item>
+        <item name="android:colorBackground">@color/background</item>
         <item name="preferenceTheme">@style/PreferenceThemeOverlay.v14.Material</item>
+        <item name="dialogTheme">@style/AppTheme.Dialog.Fullscreen</item>
     </style>
 
     <style name="AppTheme.Dialog.Fullscreen" parent="AppTheme">
+        <item name="dialogTheme">@style/AppTheme.AppCompat.Dialog.Fullscreen</item>
+    </style>
+
+    <style name="AppTheme.AppCompat.Dialog.Fullscreen" parent="Theme.AppCompat.Dialog">
         <item name="android:windowNoTitle">true</item>
         <item name="android:windowFullscreen">false</item>
         <item name="android:windowIsFloating">false</item>
@@ -37,12 +42,16 @@
         <item name="colorAccent">@color/md_white_1000</item>
     </style>
 
-    <style name="AppTheme.Toolbar">
+    <style name="AppTheme.Toolbar" parent="AppTheme">
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
 
+<!--        <item name="android:windowTranslucentStatus">true</item>-->
+<!--        <item name="android:windowTranslucentNavigation">true</item>-->
+<!--        <item name="android:navigationBarColor">@android:color/transparent</item>-->
+
         <item name="android:windowDrawsSystemBarBackgrounds">true</item>
-        <item name="android:statusBarColor">@android:color/transparent</item>
+<!--        <item name="android:statusBarColor">@android:color/transparent</item>-->
         <item name="android:actionOverflowButtonStyle">@style/AppTheme.Toolbar.Overflow</item>
     </style>
 
@@ -84,16 +93,15 @@
         <item name="colorControlActivated">?attr/colorPrimary</item>
     </style>
 
-    <style name="AppTheme.AlternateFAB" parent="Widget.AppCompat.Button">
-        <item name="android:tint">@color/md_blue_600</item>
-        <item name="colorAccent">@color/md_white_1000</item>
-
+    <style name="AppTheme.AlternateFAB" parent="Widget.MaterialComponents.FloatingActionButton">
+        <item name="colorSecondary">@color/md_white_1000</item>
+        <item name="colorOnSecondary">@color/md_blue_600</item>
         <item name="colorButtonNormal">@color/md_blue_600</item>
     </style>
 
-    <style name="AppTheme.PrimaryFAB" parent="Widget.AppCompat.Button">
-        <item name="android:tint">@color/md_white_1000</item>
-        <item name="colorAccent">@color/md_orange_A700</item>
+    <style name="AppTheme.PrimaryFAB" parent="Widget.MaterialComponents.FloatingActionButton">
+        <item name="colorSecondary">@color/md_orange_A700</item>
+        <item name="colorOnSecondary">@color/md_white_1000</item>
     </style>
 
     <style name="AppTheme.AvailableDownloadsFAB" parent="Widget.AppCompat.Button">
@@ -215,8 +223,7 @@
         <item name="android:background">#333333</item>
     </style>
 
-    <style name="AppCompatAlertDialogStyle" parent="Theme.AppCompat.Light.Dialog.Alert">
-        <item name="android:textColorPrimary">#89000000</item>
+    <style name="AppCompatAlertDialogStyle" parent="ThemeOverlay.MaterialComponents.Dialog.Alert">
     </style>
 
     <style name="AppTheme.PrimaryDialog" parent="Theme.AppCompat.Light.Dialog.Alert">
@@ -227,14 +234,22 @@
         <item name="android:textColor">@android:color/white</item>
     </style>
 
-    <style name="TextAppearance.Mage.Headline5" parent="TextAppearance.MaterialComponents.Headline5">
-        <item name="android:textColor">?attr/colorPrimary</item>
+    <style name="TextAppearance.Mage.Overline.Dark" parent="TextAppearance.MaterialComponents.Overline">
+        <item name="android:textColor">@color/md_black_1000</item>
+        <item name="android:alpha">.6</item>
     </style>
 
-    <style name="TextAppearance.Mage.Overline.Dark" parent="TextAppearance.MaterialComponents.Overline">
-    <item name="android:textColor">@color/md_black_1000</item>
-    <item name="android:alpha">.6</item>
-</style>
+    <style name="Mage.ExtendedFAB" parent="Widget.AppCompat.Button.Colored">
+        <item name="backgroundTint">@color/md_orange_A700</item>
+        <item name="android:paddingLeft">20dp</item>
+        <item name="android:paddingRight">20dp</item>
+        <item name="android:paddingTop">12dp</item>
+        <item name="android:paddingBottom">12dp</item>
+        <item name="android:minHeight">48dp</item>
+        <item name="android:textSize">15sp</item>
+        <item name="cornerRadius">32dp</item>
+        <item name="android:layout_marginBottom">16dp</item>
+    </style>
 
 
 </resources>

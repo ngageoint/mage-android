@@ -1,29 +1,29 @@
 package mil.nga.giat.mage.event
 
-import android.content.Context
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
+import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import dagger.android.support.DaggerAppCompatActivity
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.android.synthetic.main.activity_event.*
 import kotlinx.android.synthetic.main.recycler_form_list_item.view.*
 import mil.nga.giat.mage.MageApplication
 import mil.nga.giat.mage.R
-import mil.nga.giat.mage.dagger.module.ApplicationContext
 import mil.nga.giat.mage.form.Form
-import mil.nga.giat.mage.form.FormDefaultActivity
+import mil.nga.giat.mage.form.defaults.FormDefaultActivity
 import mil.nga.giat.mage.sdk.datastore.user.Event
 import mil.nga.giat.mage.sdk.datastore.user.EventHelper
 import mil.nga.giat.mage.sdk.exceptions.EventException
 import javax.inject.Inject
 
-class EventActivity : DaggerAppCompatActivity() {
+@AndroidEntryPoint
+class EventActivity : AppCompatActivity() {
 
     companion object {
         private val LOG_NAME = EventActivity::class.java.name
