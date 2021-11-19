@@ -14,14 +14,11 @@ import mil.nga.giat.mage.R
 import org.json.JSONException
 import org.json.JSONObject
 
-
-class AuthenticationButton : AppCompatButton {
-
-    private val LOG_NAME = AuthenticationButton::class.java.name
-
-    constructor(context: Context) : super(context)
-    constructor(context: Context, attrs: AttributeSet) : super(context, attrs)
-    constructor(context: Context, attrs: AttributeSet, defStyle: Int) : super(context, attrs, defStyle)
+class AuthenticationButton @JvmOverloads constructor(
+    context: Context,
+    attrs: AttributeSet? = null,
+    defStyle: Int = android.R.attr.buttonStyle
+) : AppCompatButton(context, attrs, defStyle) {
 
     fun bind(strategy: JSONObject?) {
         configure(strategy)
@@ -37,16 +34,17 @@ class AuthenticationButton : AppCompatButton {
                 try {
                     this.setTextColor(Color.parseColor(strategy.getString("textColor")))
                 } catch(e: Exception) {
-                    Log.e(LOG_NAME, "Failed to parse text color " + strategy.getString("textColor"), e);
+                    Log.e(LOG_NAME, "Failed to parse text color " + strategy.getString("textColor"), e)
                 }
             }
 
             if (strategy?.has("buttonColor") == true) {
                 try {
-                    val csl = ColorStateList(arrayOf(intArrayOf()), intArrayOf(Color.parseColor(strategy.getString("buttonColor"))))
+                    val color: Int = Color.parseColor(strategy.getString("buttonColor")) or 0xFF000000.toInt()
+                    val csl = ColorStateList(arrayOf(intArrayOf()), intArrayOf(color))
                     ViewCompat.setBackgroundTintList(this, csl)
                 } catch(e: Exception) {
-                    Log.e(LOG_NAME, "Failed to parse button color " + strategy.getString("buttonColor"), e);
+                    Log.e(LOG_NAME, "Failed to parse button color " + strategy.getString("buttonColor"), e)
                 }
             }
 
@@ -97,5 +95,9 @@ class AuthenticationButton : AppCompatButton {
         val ld = ContextCompat.getDrawable(context, R.drawable.authentication_remote_icon)!!.mutate() as LayerDrawable
         ld.setDrawableByLayerId(R.id.icon, drawable)
         this.setCompoundDrawablesWithIntrinsicBounds(ld, null, null, null)
+    }
+
+    companion object {
+        private val LOG_NAME = AuthenticationButton::class.java.name
     }
 }
