@@ -139,7 +139,7 @@ import mil.nga.giat.mage.map.marker.ObservationMarkerCollection;
 import mil.nga.giat.mage.map.marker.PointCollection;
 import mil.nga.giat.mage.map.marker.StaticGeometryCollection;
 import mil.nga.giat.mage.map.navigation.bearing.StraightLineNavigation;
-import mil.nga.giat.mage.map.navigation.bearing.StraightLineNavigationDelegate;
+import mil.nga.giat.mage.map.navigation.bearing.StraightLineNavigationListener;
 import mil.nga.giat.mage.map.preference.MapPreferencesActivity;
 import mil.nga.giat.mage.newsfeed.ObservationListAdapter;
 import mil.nga.giat.mage.observation.ObservationLocation;
@@ -186,7 +186,7 @@ public class MapFragment extends Fragment implements
 		IObservationEventListener,
 		ILocationEventListener,
 		IUserEventListener,
-		StraightLineNavigationDelegate,
+        StraightLineNavigationListener,
 		ObservationListAdapter.ObservationActionListener,
 		Observer<Location> {
 
@@ -518,7 +518,7 @@ public class MapFragment extends Fragment implements
 			locations = new LocationMarkerCollection(getActivity(), map);
 			feedItems = new FeedItemCollection(getActivity(), map);
 
-			straightLineNavigation = new StraightLineNavigation(this, map, getActivity().findViewById(R.id.straight_line_nav_container), this.getActivity().getBaseContext(), context);
+			straightLineNavigation = new StraightLineNavigation(this, map, getActivity().findViewById(R.id.straight_line_nav_container), this.getActivity(), context);
 			sensorManager = (SensorManager)getActivity().getSystemService(Context.SENSOR_SERVICE);
 		}
 

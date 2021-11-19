@@ -28,6 +28,7 @@
                 android:layout_alignParentEnd="true"
                 android:layout_marginTop="4dp"
                 android:layout_marginEnd="4dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
                 android:src="@drawable/ic_baseline_cancel_24"
                 app:tint="@color/icon" />
 
@@ -75,8 +76,8 @@
 
                     <androidx.appcompat.widget.AppCompatImageView
                         android:id="@+id/destination_direction_image"
-                        android:layout_width="16dp"
-                        android:layout_height="16dp"
+                        android:layout_width="18dp"
+                        android:layout_height="18dp"
                         android:alpha=".87"
                         app:tint="@{data.headingColor}"
                         android:layout_centerHorizontal="true"
@@ -92,12 +93,10 @@
                 android:gravity="center">
 
                 <TextView
-                    android:id="@+id/distance_to_target"
-                    style="@style/TextAppearance.MaterialComponents.Headline6"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@{data.distanceToTarget}"
-                    tools:text="2.3nmi" />
+                    style="@style/TextAppearance.MaterialComponents.Headline6"
+                    android:text="@{data.distanceToTarget}" />
 
                 <TextView
                     style="@style/TextAppearance.MaterialComponents.Headline6"
@@ -105,7 +104,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginStart="4dp"
                     android:layout_marginEnd="4dp"
-                    android:textColor="@color/md_green_500"
+                    android:textColor="@{data.headingColor}"
                     android:text="@" />
 
                 <TextView
@@ -114,7 +113,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
-                    android:textColor="@color/md_green_500"
+                    android:textColor="@{data.headingColor}"
                     android:text="@{data.formattedRelativeBearing}"
                     tools:text="Relative Bearing" />
 
@@ -143,7 +142,7 @@
                     android:layout_height="wrap_content"
                     android:layout_gravity="center_horizontal"
                     android:text="@{data.formattedHeading}"
-                    android:textColor="@color/md_red_500"
+                    android:textColor="@{data.bearingColor}"
                     tools:text="Heading" />
 
             </LinearLayout>

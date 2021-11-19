@@ -12,14 +12,13 @@ import androidx.annotation.ColorInt
 import androidx.databinding.BindingAdapter
 import androidx.databinding.ObservableField
 import com.google.android.gms.maps.model.LatLng
-import mil.nga.giat.mage.R
 import mil.nga.giat.mage.databinding.ViewStraightLineNavigationBinding
-
 
 class StraightLineNavigationData {
     var heading: ObservableField<Double> = ObservableField()
     var headingColor: ObservableField<Int> = ObservableField()
     var relativeBearing: ObservableField<Double> = ObservableField()
+    var bearingColor: ObservableField<Int> = ObservableField()
     var currentLocation: ObservableField<Location> = ObservableField()
     var destinationCoordinate: ObservableField<LatLng> = ObservableField()
     var destinationMarker: Bitmap? = null
@@ -69,7 +68,7 @@ class StraightLineNavigationView @JvmOverloads constructor(
     defStyleRes: Int = 0
 ) : LinearLayout(context, attrs, defStyle, defStyleRes) {
 
-    var delegate: StraightLineNavigationDelegate? = null
+    var listener: StraightLineNavigationListener? = null
     private val binding: ViewStraightLineNavigationBinding =
             ViewStraightLineNavigationBinding.inflate(LayoutInflater.from(context), this, true)
 
@@ -81,7 +80,7 @@ class StraightLineNavigationView @JvmOverloads constructor(
         }
 
         binding.cancelButton.setOnClickListener {
-            delegate?.cancelStraightLineNavigation()
+            listener?.cancelStraightLineNavigation()
         }
     }
 

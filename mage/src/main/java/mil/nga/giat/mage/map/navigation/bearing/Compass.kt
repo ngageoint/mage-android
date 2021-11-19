@@ -33,15 +33,15 @@ fun CompassMarkerView.bindDegreeLabel(degreeLabel: String) {
 @BindingAdapter("android:bearing")
 fun CompassMarkerView.bindBearing(bearing: Double) {
     binding.data?.bearing?.set(bearing)
-    val height: Int = when {
+
+    val height = when {
         bearing % 90.0 == 0.0 -> 25
         bearing % 30 == 0.0 -> 18
         bearing % 10.0 == 0.0 -> 12
         else -> 8
     }
 
-    var width = 5
-    if (bearing == 0.0) width = 7
+    val width = if (bearing == 0.0) 7 else 5
 
     binding.capsule.layoutParams = binding.capsule.layoutParams.apply {
         this.height = height
@@ -54,13 +54,11 @@ fun CompassMarkerView.bindCurrentHeading(currentHeading: Double) {
     val start = (binding.data?.currentHeading?.get()?.toFloat() ?: 0.0f) - (binding.data?.bearing?.get()?.toFloat() ?: 0.0f)
     var end = currentHeading.toFloat() - (binding.data?.bearing?.get()?.toFloat() ?: 0.0f)
 
-    // this means we are rotating from just west of north, to just east of north
     if (start - end > 180) {
+        // this means we are rotating from just west of north, to just east of north
         end += 360.0f
-    }
-
-    // this means we are rotating from just east of north, to just west of north
-    else if (end - start > 180) {
+    } else if (end - start > 180) {
+        // this means we are rotating from just east of north, to just west of north
         end -= 360.0f
     }
     val valueAnimator = ValueAnimator.ofFloat(start, end)
@@ -114,7 +112,7 @@ open class CompassTargetView @JvmOverloads constructor(
             return try {
                 Color.parseColor(hexColor)
             } catch (ignored: IllegalArgumentException) {
-                Color.GREEN;
+                Color.GREEN
             }
         }
 
@@ -146,7 +144,7 @@ open class CompassBearingView @JvmOverloads constructor(
             return try {
                 Color.parseColor(hexColor)
             } catch (ignored: IllegalArgumentException) {
-                Color.RED;
+                Color.RED
             }
         }
 
@@ -170,13 +168,11 @@ fun CompassView.bindCurrentHeading(currentHeading: Double) {
     val start = 360.0f - (binding.data?.currentHeading?.get()?.toFloat() ?: 0.0f)
     var end = 360.0f - currentHeading.toFloat()
 
-    // this means we are rotating from just west of north, to just east of north
     if (start - end > 180) {
+        // this means we are rotating from just west of north, to just east of north
         end += 360.0f
-    }
-
-    // this means we are rotating from just east of north, to just west of north
-    else if (end - start > 180) {
+    } else if (end - start > 180) {
+        // this means we are rotating from just east of north, to just west of north
         end -= 360.0f
     }
     val valueAnimator = ValueAnimator.ofFloat(start, end)

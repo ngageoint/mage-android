@@ -35,25 +35,22 @@ class LatLngEvaluator: TypeEvaluator<Pair<LatLng, LatLng>> {
     }
 }
 
-interface StraightLineNavigationDelegate {
+interface StraightLineNavigationListener {
     fun cancelStraightLineNavigation()
 }
 
 class StraightLineNavigation(
-    private var delegate: StraightLineNavigationDelegate,
+    private var listener: StraightLineNavigationListener,
     private var mapView: GoogleMap,
     private var view: ViewGroup,
     private var context: Context,
     private var applicationContext: Context
 ) : SensorEventListener  {
-    private val FIVE_SECONDS = 500000000
     private var sensorManager: SensorManager? = null
     private var accelerometerReading: FloatArray? = null
     private var magnetometerReading: FloatArray? = null
 
-    private var headingLineOptions: PolylineOptions? = null
     private var headingLine: Polyline? = null
-    private var relativeBearingLineOptions: PolylineOptions? = null
     private var relativeBearingLine: Polyline? = null
     private var navigationModeEnabled: Boolean = false
     private var headingModeEnabled: Boolean = false
@@ -72,7 +69,7 @@ class StraightLineNavigation(
             return try {
                 Color.parseColor(hexColor)
             } catch (ignored: IllegalArgumentException) {
-                Color.GREEN;
+                Color.GREEN
             }
         }
 
@@ -91,12 +88,13 @@ class StraightLineNavigation(
         straightLineNavigationData.destinationCoordinate.set(destinationCoordinate)
         straightLineNavigationData.heading.set(0.0)
         straightLineNavigationData.headingColor.set(headingColor)
+        straightLineNavigationData.bearingColor.set(relativeBearingColor)
         straightLineNavigationData.currentLocation.set(userLocation)
         straightLineNavigationData.destinationMarker = markerImage
         straightLineNav = StraightLineNavigationView(context).also {
             val layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
             it.layoutParams = layoutParams
-            it.delegate = delegate
+            it.listener = listener
             view.addView(it)
             it.populate(straightLineNavigationData)
         }
@@ -150,8 +148,8 @@ class StraightLineNavigation(
     }
 
     fun stopHeading() {
-        headingModeEnabled = false;
-        headingLine?.remove();
+        headingModeEnabled = false
+        headingLine?.remove()
         sensorManager?.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)?.also { accelerometer ->
             sensorManager?.unregisterListener(this, accelerometer)
         }
@@ -180,18 +178,17 @@ class StraightLineNavigation(
         val previousHeading = straightLineNavigationData.heading.get()?.toFloat() ?: 0f
         val previousDirection = previousBearing - previousHeading
 
-        lastDestinationLocation = destinationCoordinate;
+        lastDestinationLocation = destinationCoordinate
         lastUserLocation = userLocation
         relativeBearingLine?.remove()
-
-        relativeBearingLineOptions = PolylineOptions()
-            .add(destinationCoordinate)
-            .add(LatLng(userLocation.latitude, userLocation.longitude))
-            .color(relativeBearingColor)
-            .zIndex(2.0f)
-            .width(15.0f)
-
-        relativeBearingLine = mapView.addPolyline(relativeBearingLineOptions)
+        relativeBearingLine = mapView.addPolyline(
+            PolylineOptions()
+                .add(destinationCoordinate)
+                .add(LatLng(userLocation.latitude, userLocation.longitude))
+                .color(relativeBearingColor)
+                .zIndex(2.0f)
+                .width(15.0f)
+        )
         val targetLocation = Location("")
         targetLocation.latitude = destinationCoordinate.latitude
         targetLocation.longitude = destinationCoordinate.longitude
@@ -218,13 +215,14 @@ class StraightLineNavigation(
         lastUserLocation = userLocation
 
         if (lastHeadingLocation == null) {
-            headingLineOptions = PolylineOptions()
-                .add(calculateBearingPoint(userLocation, lastAngle))
-                .add(LatLng(userLocation.latitude, userLocation.longitude))
-                .color(headingColor)
-                .zIndex(1.0f)
-                .width(30.0f)
-            headingLine = mapView.addPolyline(headingLineOptions)
+            headingLine = mapView.addPolyline(
+                PolylineOptions()
+                    .add(calculateBearingPoint(userLocation, lastAngle))
+                    .add(LatLng(userLocation.latitude, userLocation.longitude))
+                    .color(headingColor)
+                    .zIndex(1.0f)
+                    .width(30.0f)
+            )
         } else {
             val bearingLineAnimator = ValueAnimator.ofObject(LatLngEvaluator(),
                     Pair(LatLng(userLocation.latitude, userLocation.longitude), LatLng(userLocation.latitude, userLocation.longitude)),
@@ -305,4 +303,8 @@ class StraightLineNavigation(
     }
 
     override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
+
+    companion object {
+        private const val FIVE_SECONDS = 500000000
+    }
 }

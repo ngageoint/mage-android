@@ -40,19 +40,22 @@
 
                 <TextView
                     android:id="@+id/name"
-                    style="@style/ListTextPrimary"
+                    style="@style/TextAppearance.MaterialComponents.Body1"
+                    android:alpha=".87"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content" />
 
                 <TextView
                     android:id="@+id/date"
-                    style="@style/ListTextSecondaryDark"
+                    style="@style/TextAppearance.MaterialComponents.Body1"
+                    android:alpha=".6"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content" />
 
                 <TextView
                     android:id="@+id/teams"
-                    style="@style/ListTextSecondary"
+                    style="@style/TextAppearance.MaterialComponents.Body2"
+                    android:alpha=".6"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content" />
 
