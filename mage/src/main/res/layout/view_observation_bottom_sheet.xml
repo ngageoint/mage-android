@@ -1,0 +1,236 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <data>
+        <import type="android.view.View"/>
+        <import type="mil.nga.giat.mage.sdk.datastore.observation.Observation"/>
+        <variable name="observation" type="mil.nga.giat.mage.sdk.datastore.observation.Observation"/>
+        <variable name="observationUser" type="mil.nga.giat.mage.sdk.datastore.user.User"/>
+        <variable name="importantUser" type="mil.nga.giat.mage.sdk.datastore.user.User"/>
+        <variable name="observationDateFormatted" type="String"/>
+    </data>
+
+    <LinearLayout
+        android:id="@+id/observation_list_container"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/background_card"
+        android:clickable="true"
+        android:descendantFocusability="blocksDescendants"
+        android:focusable="true"
+        android:orientation="vertical">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <LinearLayout
+                android:id="@+id/important"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@color/md_orange_A400"
+                android:orientation="horizontal"
+                android:paddingTop="8dp"
+                android:paddingEnd="16dp"
+                android:paddingBottom="8dp">
+
+                <ImageView
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:layout_gravity="center_vertical"
+                    android:layout_marginStart="16dp"
+                    android:layout_marginEnd="16dp"
+                    android:alpha=".87"
+                    android:src="@drawable/ic_flag_white_24dp"
+                    app:tint="@color/md_black_1000" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/important_overline"
+                        style="@style/TextAppearance.Mage.Overline.Dark"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center_vertical"
+                        android:text="@{importantUser.displayName}"/>
+
+                    <TextView
+                        android:id="@+id/important_description"
+                        style="@style/ListTextPrimaryOnDark"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@{observation.important.description}"/>
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:layout_marginTop="16dp"
+                android:layout_marginEnd="16dp"
+                android:orientation="horizontal">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="16dp"
+                        android:orientation="horizontal">
+
+                        <RelativeLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="4dp">
+
+                            <ImageView
+                                android:id="@+id/sync_status"
+                                android:layout_width="20dip"
+                                android:layout_height="20dip"
+                                android:layout_gravity="top"
+                                android:src="@drawable/sync_badge_24dp" />
+
+                            <ImageView
+                                android:id="@+id/error_status"
+                                android:layout_width="20dip"
+                                android:layout_height="20dip"
+                                android:layout_gravity="center_vertical"
+                                android:src="@drawable/error_badge_24dp" />
+
+                        </RelativeLayout>
+
+                        <TextView
+                            android:id="@+id/user"
+                            android:text="@{observationUser.displayName}"
+                            style="@style/TextAppearance.MaterialComponents.Overline"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center_vertical"
+                            android:alpha=".6" />
+
+                        <TextView
+                            style="@style/TextAppearance.MaterialComponents.Overline"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center_vertical"
+                            android:layout_marginStart="4dp"
+                            android:layout_marginEnd="4dp"
+                            android:alpha=".6"
+                            android:text="\u2022" />
+
+                        <TextView
+                            android:id="@+id/time"
+                            style="@style/TextAppearance.MaterialComponents.Overline"
+                            android:text="@{observationDateFormatted}"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center_vertical"
+                            android:alpha=".6" />
+
+                    </LinearLayout>
+
+                    <TextView
+                        android:id="@+id/primary"
+                        style="@style/TextAppearance.MaterialComponents.Headline5"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="bottom"
+                        android:ellipsize="end"
+                        android:maxLines="1"
+                        android:text="@{observation.primaryFeedField.value.toString()}"/>
+
+                    <TextView
+                        android:id="@+id/secondary"
+                        style="@style/ListTextPrimary"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:alpha=".6"
+                        android:text="@{observation.secondaryFeedField.value.toString()}"/>
+                </LinearLayout>
+
+                <ImageView
+                    android:id="@+id/observation_marker"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:layout_marginStart="16dp"
+                    android:src="@drawable/ic_place_white_48dp" />
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:layout_marginEnd="12dp"
+                    android:layout_marginBottom="12dp"
+                    android:gravity="end"
+                    android:orientation="horizontal">
+
+                    <LinearLayout
+                        android:id="@+id/favorite"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="16dp"
+                        android:orientation="horizontal">
+
+                        <androidx.appcompat.widget.AppCompatImageButton
+                            android:id="@+id/favorite_button"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:background="?attr/selectableItemBackgroundBorderless"
+                            android:padding="12dip"
+                            android:src="@drawable/ic_favorite_border_white_24dp"
+                            android:tint="#8A000000" />
+
+                        <TextView
+                            android:id="@+id/favorite_count"
+                            style="@style/ListTextSecondary"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center_vertical"
+                            android:layout_marginStart="-8dip" />
+
+                    </LinearLayout>
+
+                    <androidx.appcompat.widget.AppCompatImageButton
+                        android:id="@+id/directions_button"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:padding="12dip"
+                        android:src="@drawable/ic_directions_outlined_white_24dp"
+                        android:tint="#8A000000" />
+
+                </LinearLayout>
+
+                <Button
+                    android:id="@+id/more_details_button"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="16dp"
+                    android:layout_marginEnd="16dp"
+                    android:layout_marginBottom="8dp"
+                    android:text="More Details"
+                    android:theme="@style/AppTheme.PrimaryButton.NoShadow" />
+
+            </LinearLayout>
+        </LinearLayout>
+    </LinearLayout>
+</layout>

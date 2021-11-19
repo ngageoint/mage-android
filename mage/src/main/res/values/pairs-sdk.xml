@@ -54,6 +54,18 @@
 
     <!-- ************************************************************* -->
 
+    <!-- *************** set in navigationpreferences.xml ************** -->
+
+    <string name="showHeadingKey">showHeading</string>
+
+    <string name="headingColorKey">headingColor</string>
+    <string name="headingColorDefaultValue">#FF0000</string>
+
+    <string name="relativeBearingColorKey">relativeBearingColor</string>
+    <string name="relativeBearingColorDefaultValue">#00FF00</string>
+
+    <!-- ************************************************************* -->
+
     <!-- *************** set in locationpreferences.xml ************** -->
 
     <string name="reportLocationKey">reportLocation</string>

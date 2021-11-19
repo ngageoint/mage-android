@@ -163,7 +163,6 @@ class ObservationRepository @Inject constructor(
 
       try {
          val lastModifiedDate = observationHelper.getLatestCleanLastModified(context, event)
-
          val response = observationService.getObservations(event.remoteId, iso8601Format.format(lastModifiedDate))
          if (response.isSuccessful) {
             val observations = response.body()!!.map {

@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
+import android.hardware.SensorManager;
 import android.location.Geocoder;
 import android.location.Location;
 import android.net.Uri;
@@ -38,6 +39,7 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SearchView;
 import androidx.core.content.ContextCompat;
+import androidx.databinding.DataBindingUtil;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.Observer;
@@ -111,6 +113,7 @@ import mil.nga.geopackage.tiles.user.TileDao;
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.data.feed.FeedItem;
 import mil.nga.giat.mage.data.feed.FeedWithItems;
+import mil.nga.giat.mage.databinding.FragmentMapBinding;
 import mil.nga.giat.mage.feed.item.FeedItemActivity;
 import mil.nga.giat.mage.filter.DateTimeFilter;
 import mil.nga.giat.mage.filter.Filter;
@@ -131,10 +134,14 @@ import mil.nga.giat.mage.map.cache.XYZDirectoryCacheOverlay;
 import mil.nga.giat.mage.map.marker.FeedItemCollection;
 import mil.nga.giat.mage.map.marker.LocationMarkerCollection;
 import mil.nga.giat.mage.map.marker.MyHistoricalLocationMarkerCollection;
+import mil.nga.giat.mage.map.marker.ObservationBitmapFactory;
 import mil.nga.giat.mage.map.marker.ObservationMarkerCollection;
 import mil.nga.giat.mage.map.marker.PointCollection;
 import mil.nga.giat.mage.map.marker.StaticGeometryCollection;
+import mil.nga.giat.mage.map.navigation.bearing.StraightLineNavigation;
+import mil.nga.giat.mage.map.navigation.bearing.StraightLineNavigationDelegate;
 import mil.nga.giat.mage.map.preference.MapPreferencesActivity;
+import mil.nga.giat.mage.newsfeed.ObservationListAdapter;
 import mil.nga.giat.mage.observation.ObservationLocation;
 import mil.nga.giat.mage.observation.edit.ObservationEditActivity;
 import mil.nga.giat.mage.observation.view.ObservationViewActivity;
@@ -159,6 +166,7 @@ import mil.nga.mgrs.MGRS;
 import mil.nga.mgrs.gzd.MGRSTileProvider;
 import mil.nga.sf.Geometry;
 import mil.nga.sf.GeometryType;
+import mil.nga.sf.Point;
 import mil.nga.sf.proj.Projection;
 import mil.nga.sf.proj.ProjectionConstants;
 import mil.nga.sf.proj.ProjectionFactory;
@@ -178,6 +186,8 @@ public class MapFragment extends Fragment implements
 		IObservationEventListener,
 		ILocationEventListener,
 		IUserEventListener,
+		StraightLineNavigationDelegate,
+		ObservationListAdapter.ObservationActionListener,
 		Observer<Location> {
 
 	private static final String LOG_NAME = MapFragment.class.getName();
@@ -214,6 +224,8 @@ public class MapFragment extends Fragment implements
 	private GoogleMap map;
 	private View searchLayout;
 	private SearchView searchView;
+	private StraightLineNavigation straightLineNavigation;
+	private SensorManager sensorManager;
 	private LocateState locateState = LocateState.OFF;
 	protected User currentUser = null;
 	private long currentEventId = -1;
@@ -247,15 +259,12 @@ public class MapFragment extends Fragment implements
 
 	private boolean showMgrs;
 	private TileOverlay mgrsTileOverlay;
-	private BottomSheetBehavior mgrsBottomSheetBehavior;
+	private TextView mgrsChip;
+
+	private BottomSheetBehavior<View> featureBottomSheetBehavior;
+
 	private View availableLayerDownloadsIcon;
-	private View mgrsBottomSheet;
-	private View mgrsCursor;
-	private TextView mgrsTextView;
-	private TextView mgrsGzdTextView;
-	private TextView mgrs100dKmTextView;
-	private TextView mgrsEastingTextView;
-	private TextView mgrsNorthingTextView;
+	private FragmentMapBinding binding;
 
 	@Override
 	public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -267,6 +276,7 @@ public class MapFragment extends Fragment implements
 	@Override
 	public View onCreateView(@NonNull LayoutInflater  inflater, ViewGroup container, Bundle savedInstanceState) {
 		View view = inflater.inflate(R.layout.fragment_map, container, false);
+		binding = DataBindingUtil.bind(view);
 
 		setHasOptionsMenu(true);
 
@@ -302,14 +312,25 @@ public class MapFragment extends Fragment implements
 		Bundle mapState = (savedInstanceState != null) ? savedInstanceState.getBundle(MAP_VIEW_STATE): null;
 		mapView.onCreate(mapState);
 
-		mgrsBottomSheet = view.findViewById(R.id.mgrs_bottom_sheet);
-		mgrsBottomSheetBehavior = BottomSheetBehavior.from(mgrsBottomSheet);
-		mgrsCursor = view.findViewById(R.id.mgrs_grid_cursor);
-		mgrsTextView = mgrsBottomSheet.findViewById(R.id.mgrs_code);
-		mgrsGzdTextView = mgrsBottomSheet.findViewById(R.id.mgrs_gzd_zone);
-		mgrs100dKmTextView = mgrsBottomSheet.findViewById(R.id.mgrs_grid_zone);
-		mgrsEastingTextView = mgrsBottomSheet.findViewById(R.id.mgrs_easting);
-		mgrsNorthingTextView = mgrsBottomSheet.findViewById(R.id.mgrs_northing);
+		mgrsChip = view.findViewById(R.id.mgrs_chip);
+
+		View featureBottomSheet = view.findViewById(R.id.observation_bottom_sheet);
+		featureBottomSheetBehavior = BottomSheetBehavior.from(featureBottomSheet);
+		featureBottomSheetBehavior.setFitToContents(true);
+		featureBottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
+
+		featureBottomSheetBehavior.addBottomSheetCallback(new BottomSheetBehavior.BottomSheetCallback() {
+			// this only is called when the user interacts with the sheet, not when we make it EXPANDED programmatically
+			@Override
+			public void onStateChanged(@NonNull View view, int newState) {
+				if (newState == BottomSheetBehavior.STATE_HIDDEN) {
+					unselectObservation();
+				}
+			}
+
+			@Override
+			public void onSlide(@NonNull View view, float v) { }
+		});
 
 		// Initialize the GeoPackage cache with a GeoPackage manager
 		GeoPackageManager geoPackageManager = GeoPackageFactory.getManager(getActivity().getApplicationContext());
@@ -320,11 +341,79 @@ public class MapFragment extends Fragment implements
 		return view;
 	}
 
+	void unselectObservation() {
+		featureBottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
+		binding.setChosenObservation(null);
+	}
+
 	@Override
 	public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
 		super.onViewCreated(view, savedInstanceState);
 
 		viewModel.getItems().observe(getViewLifecycleOwner(), this::onFeedItems);
+	}
+
+	@Override
+	public void onObservationClick(Observation observation) {
+		Intent intent = new Intent(context, ObservationViewActivity.class);
+		intent.putExtra(ObservationViewActivity.OBSERVATION_ID, observation.getId());
+		intent.putExtra(ObservationViewActivity.INITIAL_LOCATION, map.getCameraPosition().target);
+		intent.putExtra(ObservationViewActivity.INITIAL_ZOOM, map.getCameraPosition().zoom);
+		startActivity(intent);
+	}
+
+	@Override
+	public void onObservationDirections(@NonNull Observation observation) {
+		featureBottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
+
+		// present a dialog to pick between android system map and straight line
+		new AlertDialog.Builder(getActivity())
+				.setTitle(getActivity().getResources().getString(R.string.navigation_choice_title))
+				.setItems(R.array.navigationOptions, (dialog, which) -> {
+					switch (which) {
+						case 0:
+							Intent intent = new Intent(Intent.ACTION_VIEW, observation.getGoogleMapsUri());
+							startActivity(intent);
+							break;
+						case 1:
+							Location location;
+							if (locationProvider.getValue() == null) {
+								if (ContextCompat.checkSelfPermission(getActivity().getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+									new AlertDialog.Builder(getActivity())
+											.setTitle(getActivity().getResources().getString(R.string.location_missing_title))
+											.setMessage(getActivity().getResources().getString(R.string.location_missing_message))
+											.setPositiveButton(android.R.string.ok, null)
+											.show();
+								} else {
+									new AlertDialog.Builder(getActivity())
+											.setTitle(getActivity().getResources().getString(R.string.location_access_observation_title))
+											.setMessage(getActivity().getResources().getString(R.string.location_access_observation_message))
+											.setPositiveButton(android.R.string.ok, (dialog1, which1) -> requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION))
+											.show();
+								}
+							} else {
+								location = locationProvider.getValue();
+								Point centroid = observation.getGeometry().getCentroid();
+								LatLng latLng = new LatLng(centroid.getY(), centroid.getX());
+								straightLineNavigation.startNavigation(sensorManager, location, latLng, ObservationBitmapFactory.bitmap(context, observation));
+								featureBottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
+							}
+							break;
+					}
+
+				})
+				.setNegativeButton(android.R.string.cancel, null)
+				.show();
+	}
+
+	@Override
+	public void cancelStraightLineNavigation() {
+		straightLineNavigation.stopNavigation();
+	}
+
+	@Override
+	public void onObservationLocation(@NonNull Observation observation) {
+
 	}
 
 	@Override
@@ -341,6 +430,9 @@ public class MapFragment extends Fragment implements
 				.build();
 
 			map.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
+		}
+		if (preferences.getBoolean(context.getResources().getString(R.string.showHeadingKey), false)) {
+			startHeading();
 		}
 	}
 
@@ -421,10 +513,13 @@ public class MapFragment extends Fragment implements
 			map.setOnCameraIdleListener(this);
 			map.setOnCameraMoveStartedListener(this);
 
-			observations = new ObservationMarkerCollection(getActivity(), map);
+			observations = new ObservationMarkerCollection(getActivity(), map, this);
 			historicLocations = new MyHistoricalLocationMarkerCollection(context, map);
 			locations = new LocationMarkerCollection(getActivity(), map);
 			feedItems = new FeedItemCollection(getActivity(), map);
+
+			straightLineNavigation = new StraightLineNavigation(this, map, getActivity().findViewById(R.id.straight_line_nav_container), this.getActivity().getBaseContext(), context);
+			sensorManager = (SensorManager)getActivity().getSystemService(Context.SENSOR_SERVICE);
 		}
 
 		int dayNightMode = getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK;
@@ -474,6 +569,11 @@ public class MapFragment extends Fragment implements
 		locations.setVisibility(preferences.getBoolean(getResources().getString(R.string.showLocationsKey), true));
 		historicLocations.setVisibility(preferences.getBoolean(getResources().getString(R.string.showMyLocationHistoryKey), false));
 
+		// maybe need to turn off heading
+		if (!preferences.getBoolean(getResources().getString(R.string.showHeadingKey), false)) {
+			straightLineNavigation.stopHeading();
+		}
+
 		// Check if any map preferences changed that I care about
 		if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
 			map.setMyLocationEnabled(true);
@@ -485,7 +585,7 @@ public class MapFragment extends Fragment implements
 
 		initializePeriodicTasks();
 
-		mgrsCursor.setVisibility(showMgrs ? View.VISIBLE : View.GONE);
+		getActivity().findViewById(R.id.mgrs_chip_container).setVisibility(showMgrs ? View.VISIBLE : View.GONE);
 		if (showMgrs) {
 			mgrsTileOverlay = map.addTileOverlay(new TileOverlayOptions().tileProvider(new MGRSTileProvider(getContext())));
 		}
@@ -584,18 +684,49 @@ public class MapFragment extends Fragment implements
 				getResources().getString(R.string.report_location_stop);
 
 		Snackbar snackbar = Snackbar.make(getActivity().findViewById(R.id.coordinator_layout), text, Snackbar.LENGTH_SHORT);
-
-
 		snackbar.setAnchorView(getActivity().findViewById(R.id.new_observation_button));
 
 		final ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) snackbar.getView().getLayoutParams();
-		params.setMargins(0,
-				100,
-				0,
-				100);
+		params.setMargins(0, 100, 0, 100);
 		snackbar.getView().setLayoutParams(params);
 
 		snackbar.show();
+	}
+
+	private void startHeading() {
+		if (preferences.contains(context.getResources().getString(R.string.showHeadingKey))) {
+			Location location = locationProvider.getValue();
+			if (location != null && straightLineNavigation != null && preferences.getBoolean(context.getResources().getString(R.string.showHeadingKey), false)) {
+				straightLineNavigation.startHeading(sensorManager, location);
+			}
+		} else {
+			// show a dialog asking them what they want to do and set the preference
+			new AlertDialog.Builder(getActivity())
+					.setTitle(getActivity().getResources().getString(R.string.always_show_heading_title))
+					.setMessage(getActivity().getResources().getString(R.string.always_show_heading_message))
+					.setPositiveButton(getActivity().getResources().getString(R.string.yes), (dialog, which) -> {
+						SharedPreferences.Editor edit = preferences.edit();
+						edit.putBoolean(context.getResources().getString(R.string.showHeadingKey), true);
+						edit.apply();
+						startHeading();
+					})
+					.setNegativeButton(getActivity().getResources().getString(R.string.no), (dialog, which) -> {
+						SharedPreferences.Editor edit = preferences.edit();
+						edit.putBoolean(context.getResources().getString(R.string.showHeadingKey), false);
+						edit.apply();
+					})
+					.show();
+		}
+	}
+
+	private void resetMapBearing() {
+		if (map == null) return;
+
+		CameraPosition cameraPosition = new CameraPosition.Builder(map.getCameraPosition())
+				.bearing(0)
+				.build();
+
+		map.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
 	}
 
 	private void initializePeriodicTasks() {
@@ -638,10 +769,7 @@ public class MapFragment extends Fragment implements
 
 		mapView.onResume();
 
-        // Don't wait for map to show up to init these values, otherwise bottomsheet will jitter
         showMgrs = preferences.getBoolean(getResources().getString(R.string.showMGRSKey), false);
-        mgrsBottomSheetBehavior.setHideable(!showMgrs);
-        mgrsBottomSheetBehavior.setState(showMgrs ? BottomSheetBehavior.STATE_COLLAPSED : BottomSheetBehavior.STATE_HIDDEN);
 
 		if (map == null) {
 			mapView.getMapAsync(this);
@@ -826,7 +954,7 @@ public class MapFragment extends Fragment implements
 	}
 
 	@Override
-	public void onObservationCreated(Collection<Observation> o, Boolean sendUserNotifcations) {
+	public void onObservationCreated(Collection<Observation> o, Boolean sendUserNotifications) {
 		if (observations != null) {
 			ObservationTask task = new ObservationTask(getActivity(), ObservationTask.Type.ADD, observations);
 			task.addFilter(getTemporalFilter("last_modified", getTimeFilterId(), OBSERVATION_FILTER_TYPE));
@@ -921,16 +1049,6 @@ public class MapFragment extends Fragment implements
 
 	@Override
 	public void onInfoWindowClick(Marker marker) {
-		Observation observation = observations.pointForMarker(marker);
-		if (observation != null) {
-			Intent intent = new Intent(context, ObservationViewActivity.class);
-			intent.putExtra(ObservationViewActivity.OBSERVATION_ID, observation.getId());
-			intent.putExtra(ObservationViewActivity.INITIAL_LOCATION, map.getCameraPosition().target);
-			intent.putExtra(ObservationViewActivity.INITIAL_ZOOM, map.getCameraPosition().zoom);
-			startActivity(intent);
-			return;
-		}
-
 		Pair<mil.nga.giat.mage.sdk.datastore.location.Location, User> pair = locations.pointForMarker(marker);
 		if (pair != null) {
 			Intent profileView = new Intent(context, ProfileActivity.class);
@@ -950,6 +1068,13 @@ public class MapFragment extends Fragment implements
 	@Override
 	public void onInfoWindowClose(Marker marker) {
 		feedItems.onInfoWindowClose(marker);
+	}
+
+	public void showObservationBottomSheet(Observation observation) {
+		binding.setChosenObservation(observation);
+		binding.observationBottomSheet.requestLayout();
+		featureBottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+		binding.observationBottomSheet.setObservationActionListener(this);
 	}
 
 	@Override
@@ -1007,6 +1132,7 @@ public class MapFragment extends Fragment implements
 		// remove old accuracy circle
 		locations.offMarkerClick();
 		observations.offMarkerClick();
+		unselectObservation();
 
 		observations.onMapClick(latLng);
 
@@ -1070,22 +1196,19 @@ public class MapFragment extends Fragment implements
 		// close keyboard
 		hideKeyboard();
 		switch (view.getId()) {
-		case R.id.map_settings: {
-			Intent intent = new Intent(getActivity(), MapPreferencesActivity.class);
-			startActivity(intent);
-			break;
-		}
-		}
+			case R.id.map_settings: {
+				Intent intent = new Intent(getActivity(), MapPreferencesActivity.class);
+				startActivity(intent);
+				break;
+			}
+			}
 	}
 
 	@Override
 	public void activate(OnLocationChangedListener listener) {
-		Log.i(LOG_NAME, "map location, activate");
-
 		locationChangedListener = listener;
 		Location location = locationProvider.getValue();
 		if (location != null) {
-			Log.i(LOG_NAME, "map location, activate we have a location, let our listener know");
 			locationChangedListener.onLocationChanged(location);
 		}
 
@@ -1094,8 +1217,6 @@ public class MapFragment extends Fragment implements
 
 	@Override
 	public void deactivate() {
-		Log.i(LOG_NAME, "map location, deactivate");
-
 		locationProvider.removeObserver(this);
 		locationChangedListener = null;
 	}
@@ -1115,14 +1236,28 @@ public class MapFragment extends Fragment implements
 
 	private void setMgrsCode() {
 		if (mgrsTileOverlay != null) {
+			float zoom = map.getCameraPosition().zoom;
 			LatLng center = map.getCameraPosition().target;
-
 			MGRS mgrs = MGRS.from(new mil.nga.mgrs.wgs84.LatLng(center.latitude, center.longitude));
-			mgrsTextView.setText(mgrs.format(5));
-			mgrsGzdTextView.setText(String.format(Locale.getDefault(),"%s%c", mgrs.getZone(), mgrs.getBand()));
-			mgrs100dKmTextView.setText(String.format(Locale.getDefault(),"%c%c", mgrs.getE100k(), mgrs.getN100k()));
-			mgrsEastingTextView.setText(String.format(Locale.getDefault(),"%05d", mgrs.getEasting()));
-			mgrsNorthingTextView.setText(String.format(Locale.getDefault(),"%05d", mgrs.getNorthing()));
+
+			if (zoom > 9) {
+				int accuracy = 5;
+				if (zoom < 12) {
+					accuracy = 2;
+				} else if (zoom < 15) {
+					accuracy = 3;
+				} else if (zoom < 17) {
+					accuracy = 4;
+				}
+
+				mgrsChip.setText(mgrs.format(accuracy));
+			} else if (zoom > 5) {
+				String text = String.format(Locale.getDefault(),"%s%c%c%c", mgrs.getZone(), mgrs.getBand(), mgrs.getE100k(), mgrs.getN100k());
+				mgrsChip.setText(text);
+			} else {
+				String text = String.format(Locale.getDefault(),"%s%c", mgrs.getZone(), mgrs.getBand());
+				mgrsChip.setText(text);
+			}
 		}
 	}
 

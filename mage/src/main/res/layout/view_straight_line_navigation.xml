@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+    <data>
+        <import type="mil.nga.giat.mage.map.navigation.bearing.StraightLineNavigationData"/>
+        <variable name="data" type="mil.nga.giat.mage.map.navigation.bearing.StraightLineNavigationData"/>
+    </data>
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/linearLayout"
+        android:layout_width="match_parent"
+        android:layout_height="175dp"
+        android:clipChildren="true">
+
+        <RelativeLayout
+            android:layout_width="0dp"
+            android:layout_height="60dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            android:background="@color/background_card">
+
+            <androidx.appcompat.widget.AppCompatImageButton
+                android:id="@+id/cancel_button"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_alignParentEnd="true"
+                android:layout_marginTop="4dp"
+                android:layout_marginEnd="4dp"
+                android:src="@drawable/ic_baseline_cancel_24"
+                app:tint="@color/icon" />
+
+        </RelativeLayout>
+
+        <mil.nga.giat.mage.map.navigation.bearing.CompassView
+            android:id="@+id/compass"
+            android:layout_width="350dp"
+            android:layout_height="350dp"
+            android:background="@drawable/compass_background"
+            android:currentHeading="@{data.heading}"
+            android:targetBearing="@{data.relativeBearing}"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"/>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="8dp"
+            android:gravity="center_horizontal"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent">
+
+            <RelativeLayout
+                android:layout_width="60dp"
+                android:layout_height="60dp">
+
+                <androidx.appcompat.widget.AppCompatImageView
+                    android:id="@+id/destination_marker_image"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:layout_marginBottom="16dp"
+                    android:layout_centerInParent="true"
+                    android:alpha=".87"
+                    android:src="@drawable/ic_place_black_24dp" />
+
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:id="@+id/destination_direction">
+
+                    <androidx.appcompat.widget.AppCompatImageView
+                        android:id="@+id/destination_direction_image"
+                        android:layout_width="16dp"
+                        android:layout_height="16dp"
+                        android:alpha=".87"
+                        app:tint="@{data.headingColor}"
+                        android:layout_centerHorizontal="true"
+                        android:src="@drawable/ic_baseline_navigation_24" />
+                </RelativeLayout>
+
+            </RelativeLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center">
+
+                <TextView
+                    android:id="@+id/distance_to_target"
+                    style="@style/TextAppearance.MaterialComponents.Headline6"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@{data.distanceToTarget}"
+                    tools:text="2.3nmi" />
+
+                <TextView
+                    style="@style/TextAppearance.MaterialComponents.Headline6"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="4dp"
+                    android:layout_marginEnd="4dp"
+                    android:textColor="@color/md_green_500"
+                    android:text="@" />
+
+                <TextView
+                    android:id="@+id/targetBearing"
+                    style="@style/TextAppearance.MaterialComponents.Headline6"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:textColor="@color/md_green_500"
+                    android:text="@{data.formattedRelativeBearing}"
+                    tools:text="Relative Bearing" />
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center">
+
+                <TextView
+                    android:id="@+id/speed"
+                    style="@style/TextAppearance.MaterialComponents.Subtitle1"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="8dp"
+                    android:layout_gravity="center_horizontal"
+                    android:text="@{data.formattedSpeed}"
+                    tools:text="4.3kn" />
+
+                <TextView
+                    android:id="@+id/bearing"
+                    style="@style/TextAppearance.MaterialComponents.Subtitle1"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_horizontal"
+                    android:text="@{data.formattedHeading}"
+                    android:textColor="@color/md_red_500"
+                    tools:text="Heading" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</layout>

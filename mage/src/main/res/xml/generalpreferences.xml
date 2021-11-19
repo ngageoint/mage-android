@@ -37,6 +37,11 @@
         android:summary="%s"
         android:title="Coordinate System"
         android:icon="@drawable/ic_place_preference_24dp" />
+    <Preference
+        android:title="Navigation"
+        android:icon="@drawable/ic_my_location_preference_24dp"
+        android:fragment="mil.nga.giat.mage.preferences.GeneralPreferencesActivity$NavigationPreferencesFragment">
+    </Preference>
     <mil.nga.giat.mage.sdk.preferences.IntegerListPreference
         android:defaultValue="@integer/dayNightThemeDefaultValue"
         android:entries="@array/dayNightThemes"
@@ -51,7 +56,7 @@
         android:summary="Receive notifications for new observations"
         android:title="Notifications"
         android:icon="@drawable/ic_notifications_none_preference_24dp">
-    </SwitchPreferenceCompat>t>
+    </SwitchPreferenceCompat>
     <PreferenceCategory
         android:title="MEDIA">
         <mil.nga.giat.mage.sdk.preferences.IntegerListPreference

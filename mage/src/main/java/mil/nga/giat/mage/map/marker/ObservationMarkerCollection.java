@@ -21,6 +21,7 @@ import java.util.Locale;
 
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.filter.Filter;
+import mil.nga.giat.mage.map.MapFragment;
 import mil.nga.giat.mage.observation.MapMarkerObservation;
 import mil.nga.giat.mage.observation.MapObservation;
 import mil.nga.giat.mage.observation.MapObservationManager;
@@ -39,6 +40,7 @@ public class ObservationMarkerCollection implements PointCollection<Observation>
 
     private GoogleMap map;
     private Context context;
+    private MapFragment mapFragment;
     private Date latestObservationDate = new Date(0);
     protected Pair<String, Circle> observationAccuracyCircle = null;
     private DateFormat dateFormat;
@@ -57,9 +59,10 @@ public class ObservationMarkerCollection implements PointCollection<Observation>
 
     protected GoogleMap.InfoWindowAdapter infoWindowAdapter = new ObservationInfoWindowAdapter();
 
-    public ObservationMarkerCollection(Context context, GoogleMap map) {
+    public ObservationMarkerCollection(Context context, GoogleMap map, MapFragment mapFragment) {
         this.map = map;
         this.context = context;
+        this.mapFragment = mapFragment;
         dateFormat = DateFormatFactory.format("yyyy-MM-dd HH:mm zz", Locale.getDefault(), context);
 
         mapObservationManager = new MapObservationManager(context, map);
@@ -139,9 +142,10 @@ public class ObservationMarkerCollection implements PointCollection<Observation>
                     }
                 }
             }
-
-            map.setInfoWindowAdapter(infoWindowAdapter);
-            marker.showInfoWindow();
+            mapFragment.showObservationBottomSheet(pointForMarker(marker));
+//            show the bottom sheet thing here
+//            map.setInfoWindowAdapter(infoWindowAdapter);
+//            marker.showInfoWindow();
             handled = true;
         }
 
