@@ -4,7 +4,6 @@ import android.animation.ValueAnimator
 import android.content.Context
 import android.graphics.Color
 import android.util.AttributeSet
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.animation.AccelerateDecelerateInterpolator
 import android.widget.LinearLayout
@@ -52,12 +51,14 @@ fun CompassMarkerView.bindBearing(bearing: Double) {
 
 @BindingAdapter("android:currentHeading")
 fun CompassMarkerView.bindCurrentHeading(currentHeading: Double) {
-    var start = (binding.data?.currentHeading?.get()?.toFloat() ?: 0.0f) - (binding.data?.bearing?.get()?.toFloat() ?: 0.0f)
+    val start = (binding.data?.currentHeading?.get()?.toFloat() ?: 0.0f) - (binding.data?.bearing?.get()?.toFloat() ?: 0.0f)
     var end = currentHeading.toFloat() - (binding.data?.bearing?.get()?.toFloat() ?: 0.0f)
+
     // this means we are rotating from just west of north, to just east of north
     if (start - end > 180) {
         end += 360.0f
     }
+
     // this means we are rotating from just east of north, to just west of north
     else if (end - start > 180) {
         end -= 360.0f
@@ -76,10 +77,10 @@ fun CompassMarkerView.bindCurrentHeading(currentHeading: Double) {
 }
 
 open class CompassMarkerView @JvmOverloads constructor(
-        context: Context,
-        attrs: AttributeSet? = null,
-        defStyle: Int = 0,
-        defStyleRes: Int = 0
+    context: Context,
+    attrs: AttributeSet? = null,
+    defStyle: Int = 0,
+    defStyleRes: Int = 0
 ) : LinearLayout(context, attrs, defStyle, defStyleRes) {
     val binding: ViewCompassMarkerBinding =
             ViewCompassMarkerBinding.inflate(LayoutInflater.from(context), this, true)
@@ -100,16 +101,15 @@ fun CompassTargetView.bindBearing(bearing: Double) {
 }
 
 open class CompassTargetView @JvmOverloads constructor(
-        context: Context,
-        attrs: AttributeSet? = null,
-        defStyle: Int = 0,
-        defStyleRes: Int = 0
+    context: Context,
+    attrs: AttributeSet? = null,
+    defStyle: Int = 0,
+    defStyleRes: Int = 0
 ) : CompassMarkerView(context, attrs, defStyle, defStyleRes) {
 
     val relativeBearingColor: Int
         get(): Int {
-            val hexColor = PreferenceManager.getDefaultSharedPreferences(context)
-                .getString(context.resources.getString(R.string.relativeBearingColorKey), context.resources.getString(
+            val hexColor = PreferenceManager.getDefaultSharedPreferences(context).getString(context.resources.getString(R.string.relativeBearingColorKey), context.resources.getString(
                     R.string.relativeBearingColorDefaultValue))
             return try {
                 Color.parseColor(hexColor)
@@ -133,16 +133,15 @@ fun CompassBearingView.bindCurrentHeading(currentHeading: Double) {
 }
 
 open class CompassBearingView @JvmOverloads constructor(
-        context: Context,
-        attrs: AttributeSet? = null,
-        defStyle: Int = 0,
-        defStyleRes: Int = 0
+    context: Context,
+    attrs: AttributeSet? = null,
+    defStyle: Int = 0,
+    defStyleRes: Int = 0
 ) : CompassMarkerView(context, attrs, defStyle, defStyleRes) {
 
     val headingColor: Int
         get(): Int {
-            val hexColor = PreferenceManager.getDefaultSharedPreferences(context)
-                .getString(context.resources.getString(R.string.headingColorKey), context.resources.getString(
+            val hexColor = PreferenceManager.getDefaultSharedPreferences(context).getString(context.resources.getString(R.string.headingColorKey), context.resources.getString(
                     R.string.headingColorDefaultValue))
             return try {
                 Color.parseColor(hexColor)
@@ -168,12 +167,14 @@ fun CompassView.bindTargetBearing(targetBearing: Double) {
 
 @BindingAdapter("android:currentHeading")
 fun CompassView.bindCurrentHeading(currentHeading: Double) {
-    var start = 360.0f - (binding.data?.currentHeading?.get()?.toFloat() ?: 0.0f)
+    val start = 360.0f - (binding.data?.currentHeading?.get()?.toFloat() ?: 0.0f)
     var end = 360.0f - currentHeading.toFloat()
+
     // this means we are rotating from just west of north, to just east of north
     if (start - end > 180) {
         end += 360.0f
     }
+
     // this means we are rotating from just east of north, to just west of north
     else if (end - start > 180) {
         end -= 360.0f
@@ -189,11 +190,12 @@ fun CompassView.bindCurrentHeading(currentHeading: Double) {
     valueAnimator.duration = 500
     valueAnimator.start()
 }
+
 class CompassView @JvmOverloads constructor(
-        context: Context,
-        attrs: AttributeSet? = null,
-        defStyle: Int = 0,
-        defStyleRes: Int = 0
+    context: Context,
+    attrs: AttributeSet? = null,
+    defStyle: Int = 0,
+    defStyleRes: Int = 0
 ) : RelativeLayout(context, attrs, defStyle, defStyleRes) {
     val binding: ViewCompassBinding =
             ViewCompassBinding.inflate(LayoutInflater.from(context), this, true)

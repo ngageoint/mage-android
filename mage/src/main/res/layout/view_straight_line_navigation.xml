@@ -10,20 +10,31 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/linearLayout"
         android:layout_width="match_parent"
-        android:layout_height="170dp"
+        android:layout_height="175dp"
         android:clipChildren="true">
 
-        <androidx.constraintlayout.widget.Guideline
-            android:id="@+id/guideline"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            app:layout_constraintGuide_begin="80dp"/>
+        <RelativeLayout
+            android:layout_width="0dp"
+            android:layout_height="60dp"
+            android:background="@color/background_card"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent">
+
+            <ImageButton
+                android:id="@+id/cancel_button"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_alignParentEnd="true"
+                android:src="@drawable/ic_baseline_cancel_24"
+                app:tint="@android:color/darker_gray" />
+
+        </RelativeLayout>
 
         <mil.nga.giat.mage.map.navigation.bearing.CompassView
             android:id="@+id/compass"
-            android:layout_width="250dp"
-            android:layout_height="250dp"
+            android:layout_width="350dp"
+            android:layout_height="350dp"
             android:background="@drawable/compass_background"
             android:currentHeading="@{data.heading}"
             android:targetBearing="@{data.relativeBearing}"
@@ -32,116 +43,110 @@
             app:layout_constraintTop_toTopOf="parent"/>
 
         <LinearLayout
-            android:id="@+id/linearLayout2"
-            android:layout_width="0dp"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@color/md_white_1000"
-            android:orientation="horizontal"
-            android:paddingTop="10dp"
-            android:paddingBottom="10dp"
+            android:orientation="vertical"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="8dp"
+            android:gravity="center_horizontal"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="@+id/guideline">
+            app:layout_constraintStart_toStartOf="parent">
+
+            <RelativeLayout
+                android:layout_width="60dp"
+                android:layout_height="60dp">
+
+                <androidx.appcompat.widget.AppCompatImageView
+                    android:id="@+id/destination_marker_image"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:layout_marginBottom="16dp"
+                    android:layout_centerInParent="true"
+                    android:alpha=".87"
+                    android:src="@drawable/ic_place_black_24dp" />
+
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:id="@+id/destination_direction">
+
+                    <androidx.appcompat.widget.AppCompatImageView
+                        android:id="@+id/destination_direction_image"
+                        android:layout_width="16dp"
+                        android:layout_height="16dp"
+                        android:alpha=".87"
+                        app:tint="@{data.headingColor}"
+                        android:layout_centerHorizontal="true"
+                        android:src="@drawable/ic_baseline_navigation_24" />
+                </RelativeLayout>
+
+            </RelativeLayout>
 
             <LinearLayout
-                android:layout_width="65dp"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_gravity="center_vertical"
-                android:layout_marginLeft="4dp"
-                android:orientation="vertical">
-
-                <ImageView
-                    android:layout_width="36dip"
-                    android:layout_height="36dp"
-                    android:layout_gravity="center"
-                    android:alpha=".87"
-                    android:src="@drawable/baseline_speed_black_36" />
+                android:orientation="horizontal"
+                android:gravity="center">
 
                 <TextView
-                    android:id="@+id/speed"
-                    style="@style/TextAppearance.MaterialComponents.Caption"
+                    android:id="@+id/distance_to_target"
+                    style="@style/TextAppearance.MaterialComponents.Headline6"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_gravity="center_horizontal"
-                    android:text="@{data.formattedSpeed}"
-                    tools:text="4.3kn" />
+                    android:text="@{data.distanceToTarget}"
+                    tools:text="2.3nmi" />
+
+                <TextView
+                    style="@style/TextAppearance.MaterialComponents.Headline6"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="4dp"
+                    android:layout_marginEnd="4dp"
+                    android:textColor="@color/md_green_500"
+                    android:text="@" />
+
+                <TextView
+                    android:id="@+id/targetBearing"
+                    style="@style/TextAppearance.MaterialComponents.Headline6"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:textColor="@color/md_green_500"
+                    android:text="@{data.formattedRelativeBearing}"
+                    tools:text="Relative Bearing" />
+
             </LinearLayout>
 
             <LinearLayout
-                android:layout_width="0dp"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="10dp"
-                android:layout_weight="1"
-                android:orientation="vertical">
+                android:orientation="horizontal"
+                android:gravity="center">
+
+                <TextView
+                    android:id="@+id/speed"
+                    style="@style/TextAppearance.MaterialComponents.Subtitle1"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="8dp"
+                    android:layout_gravity="center_horizontal"
+                    android:text="@{data.formattedSpeed}"
+                    tools:text="4.3kn" />
 
                 <TextView
                     android:id="@+id/bearing"
-                    style="@style/TextAppearance.MaterialComponents.Headline3"
+                    style="@style/TextAppearance.MaterialComponents.Subtitle1"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center_horizontal"
                     android:text="@{data.formattedHeading}"
+                    android:textColor="@color/md_red_500"
                     tools:text="Heading" />
 
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="center_horizontal"
-                    android:orientation="horizontal">
-
-                    <ImageView
-                        android:layout_width="16dip"
-                        android:layout_height="16dp"
-                        android:layout_gravity="center"
-                        android:alpha=".87"
-                        android:src="@drawable/ic_my_location_black_24dp" />
-
-                    <TextView
-                        android:id="@+id/targetBearing"
-                        style="@style/TextAppearance.MaterialComponents.Overline"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_gravity="center"
-                        android:text="@{data.formattedRelativeBearing}"
-                        tools:text="Relative Bearing" />
-                </LinearLayout>
             </LinearLayout>
 
-            <LinearLayout
-                android:layout_width="65dp"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center_vertical"
-                android:layout_marginEnd="4dp"
-                android:orientation="vertical">
-
-                <ImageView
-                    android:id="@+id/destination_marker_image"
-                    android:layout_width="36dip"
-                    android:layout_height="36dp"
-                    android:layout_gravity="center"
-                    android:alpha=".87"
-                    android:src="@drawable/baseline_speed_black_36" />
-
-                <TextView
-                    android:id="@+id/distance_to_target"
-                    style="@style/TextAppearance.MaterialComponents.Caption"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center_horizontal"
-                    android:text="@{data.distanceToTarget}"
-                    tools:text="2.3nmi" />
-            </LinearLayout>
         </LinearLayout>
-        <ImageButton
-            android:id="@+id/cancel_button"
-            android:layout_width="24dip"
-            android:layout_height="24dp"
-            android:src="@drawable/ic_baseline_cancel_24"
-            android:tint="@android:color/darker_gray"
-            android:layout_marginEnd="8dp"
-            android:translationY="-10dp"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="@+id/guideline"/>
+
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>

@@ -89,6 +89,7 @@ class StraightLineNavigation(
         lastDestinationLocation = destinationCoordinate
         straightLineNavigationData.destinationCoordinate.set(destinationCoordinate)
         straightLineNavigationData.heading.set(0.0)
+        straightLineNavigationData.headingColor.set(headingColor)
         straightLineNavigationData.currentLocation.set(userLocation)
         straightLineNavigationData.destinationMarker = markerImage
         straightLineNav = StraightLineNavigationView(context).also {
@@ -174,16 +175,21 @@ class StraightLineNavigation(
     }
 
     private fun updateNavigationLines(userLocation: Location, destinationCoordinate: LatLng) {
+        val previousBearing = straightLineNavigationData.relativeBearing.get()?.toFloat() ?: 0f
+        val previousHeading = straightLineNavigationData.heading.get()?.toFloat() ?: 0f
+        val previousDirection = previousBearing - previousHeading
+
         lastDestinationLocation = destinationCoordinate;
         lastUserLocation = userLocation
-        if (relativeBearingLine != null)
-            relativeBearingLine?.remove()
+        relativeBearingLine?.remove()
+
         relativeBearingLineOptions = PolylineOptions()
             .add(destinationCoordinate)
             .add(LatLng(userLocation.latitude, userLocation.longitude))
             .color(relativeBearingColor)
             .zIndex(2.0f)
             .width(15.0f)
+
         relativeBearingLine = mapView.addPolyline(relativeBearingLineOptions)
         val targetLocation = Location("")
         targetLocation.latitude = destinationCoordinate.latitude
@@ -193,6 +199,18 @@ class StraightLineNavigation(
         straightLineNav?.populate(straightLineNavigationData)
 
         updateHeadingLine(lastUserLocation!!)
+
+        val bearing = straightLineNavigationData.relativeBearing.get()?.toFloat() ?: 0f
+        val heading = straightLineNavigationData.heading.get()?.toFloat() ?: 0f
+        val direction = bearing - heading
+
+        val valueAnimator = ValueAnimator.ofFloat(previousDirection, direction)
+        valueAnimator.addUpdateListener {
+            straightLineNav?.rotateDirectionIcon(it.animatedValue as Float)
+        }
+        valueAnimator.interpolator = AccelerateDecelerateInterpolator()
+        valueAnimator.duration = 500
+        valueAnimator.start()
     }
 
     private fun updateHeadingLine(userLocation: Location) {
@@ -285,6 +303,5 @@ class StraightLineNavigation(
         }
     }
 
-    override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {
-    }
+    override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
 }

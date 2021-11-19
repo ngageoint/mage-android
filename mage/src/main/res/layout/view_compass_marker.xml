@@ -16,6 +16,9 @@
             android:gravity="center"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:layout_marginBottom="6dp"
+            style="@style/TextAppearance.MaterialComponents.Body1"
             android:rotation="@{data.currentHeading.floatValue() - data.bearing.floatValue()}"
             android:text='@{data.bearing % 30.0 == 0.0 ? String.format("%.0f", data.bearing) : ""}'>
         </TextView>
