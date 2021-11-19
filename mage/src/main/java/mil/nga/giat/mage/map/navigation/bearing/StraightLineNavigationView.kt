@@ -12,6 +12,7 @@ import androidx.annotation.ColorInt
 import androidx.databinding.BindingAdapter
 import androidx.databinding.ObservableField
 import com.google.android.gms.maps.model.LatLng
+import mil.nga.giat.mage.R
 import mil.nga.giat.mage.databinding.ViewStraightLineNavigationBinding
 
 
@@ -62,10 +63,10 @@ class StraightLineNavigationData {
 }
 
 class StraightLineNavigationView @JvmOverloads constructor(
-        context: Context,
-        attrs: AttributeSet? = null,
-        defStyle: Int = 0,
-        defStyleRes: Int = 0
+    context: Context,
+    attrs: AttributeSet? = null,
+    defStyle: Int = 0,
+    defStyleRes: Int = 0
 ) : LinearLayout(context, attrs, defStyle, defStyleRes) {
 
     var delegate: StraightLineNavigationDelegate? = null

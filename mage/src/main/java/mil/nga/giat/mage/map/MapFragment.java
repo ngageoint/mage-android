@@ -518,7 +518,7 @@ public class MapFragment extends Fragment implements
 			locations = new LocationMarkerCollection(getActivity(), map);
 			feedItems = new FeedItemCollection(getActivity(), map);
 
-			straightLineNavigation = new StraightLineNavigation(this, map, getActivity().findViewById(R.id.straight_line_nav_container), context);
+			straightLineNavigation = new StraightLineNavigation(this, map, getActivity().findViewById(R.id.straight_line_nav_container), this.getActivity().getBaseContext(), context);
 			sensorManager = (SensorManager)getActivity().getSystemService(Context.SENSOR_SERVICE);
 		}
 

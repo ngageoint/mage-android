@@ -43,7 +43,8 @@ class StraightLineNavigation(
     private var delegate: StraightLineNavigationDelegate,
     private var mapView: GoogleMap,
     private var view: ViewGroup,
-    private var context: Context
+    private var context: Context,
+    private var applicationContext: Context
 ) : SensorEventListener  {
     private val FIVE_SECONDS = 500000000
     private var sensorManager: SensorManager? = null
@@ -66,8 +67,8 @@ class StraightLineNavigation(
 
     private val relativeBearingColor: Int
         get(): Int {
-            val hexColor = PreferenceManager.getDefaultSharedPreferences(context)
-                .getString(context.resources.getString(R.string.relativeBearingColorKey), context.resources.getString(R.string.relativeBearingColorDefaultValue))
+            val hexColor = PreferenceManager.getDefaultSharedPreferences(applicationContext)
+                .getString(applicationContext.resources.getString(R.string.relativeBearingColorKey), applicationContext.resources.getString(R.string.relativeBearingColorDefaultValue))
             return try {
                 Color.parseColor(hexColor)
             } catch (ignored: IllegalArgumentException) {
@@ -77,7 +78,7 @@ class StraightLineNavigation(
 
     private val headingColor: Int
         get(): Int {
-            val hexColor = PreferenceManager.getDefaultSharedPreferences(context).getString(context.resources.getString(R.string.headingColorKey), context.resources.getString(R.string.headingColorDefaultValue))
+            val hexColor = PreferenceManager.getDefaultSharedPreferences(applicationContext).getString(applicationContext.resources.getString(R.string.headingColorKey), applicationContext.resources.getString(R.string.headingColorDefaultValue))
             return try {
                 Color.parseColor(hexColor)
             } catch (ignored: IllegalArgumentException) {
