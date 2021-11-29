@@ -1,5 +1,7 @@
 package mil.nga.giat.mage.filter;
 
+import androidx.annotation.Nullable;
+
 import com.j256.ormlite.stmt.QueryBuilder;
 import com.j256.ormlite.stmt.Where;
 
@@ -9,9 +11,9 @@ import java.util.Date;
 import mil.nga.giat.mage.sdk.Temporal;
 
 public class DateTimeFilter implements Filter<Temporal> {
-	private Date start;
-	private Date end;
-	private String columnName;
+	private final Date start;
+	private final Date end;
+	private final String columnName;
 
 	public DateTimeFilter(Date start, Date end, String columnName) {
 		this.start = start;
@@ -19,6 +21,7 @@ public class DateTimeFilter implements Filter<Temporal> {
 		this.columnName = columnName;
 	}
 
+	@Nullable
 	@Override
 	public QueryBuilder<? extends Temporal, Long> query() {
 		return null;

@@ -67,8 +67,8 @@ class StraightLineNavigationView @JvmOverloads constructor(
     defStyle: Int = 0,
     defStyleRes: Int = 0
 ) : LinearLayout(context, attrs, defStyle, defStyleRes) {
+    var cancel: (() -> Unit)? = null
 
-    var listener: StraightLineNavigationListener? = null
     private val binding: ViewStraightLineNavigationBinding =
             ViewStraightLineNavigationBinding.inflate(LayoutInflater.from(context), this, true)
 
@@ -80,7 +80,7 @@ class StraightLineNavigationView @JvmOverloads constructor(
         }
 
         binding.cancelButton.setOnClickListener {
-            listener?.cancelStraightLineNavigation()
+            cancel?.invoke()
         }
     }
 

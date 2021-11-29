@@ -302,7 +302,7 @@ fun FeedItemMapContent(
                visible(false)
             }
 
-            marker.tag = "FEED_ITEM"
+            marker?.tag = "FEED_ITEM"
             Glide.with(context)
                .asBitmap()
                .load(iconUrl)

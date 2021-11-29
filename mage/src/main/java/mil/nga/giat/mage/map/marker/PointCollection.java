@@ -4,21 +4,17 @@ import com.google.android.gms.maps.GoogleMap.OnCameraIdleListener;
 import com.google.android.gms.maps.GoogleMap.OnMapClickListener;
 import com.google.android.gms.maps.GoogleMap.OnMarkerClickListener;
 import com.google.android.gms.maps.model.Marker;
-import com.google.android.gms.maps.model.MarkerOptions;
 
 import java.util.Date;
 
-import mil.nga.giat.mage.filter.Filter;
-import mil.nga.giat.mage.sdk.Temporal;
-
 public interface PointCollection<T> extends OnCameraIdleListener, OnMarkerClickListener, OnMapClickListener {
-	public void add(MarkerOptions options, T point);
+	public void add(T point);
 
 	public void remove(T point);
 
 	public void refresh(T point);
 
-	public void refreshMarkerIcons(Filter<Temporal> filter);
+	public void refreshMarkerIcons();
 
 	public int count();
 

@@ -159,8 +159,8 @@ class FeedItemCollection(val context: Context, val map: GoogleMap) {
         return false
     }
 
-    fun itemForMarker(marker: Marker): FeedItem {
-        return (marker.tag as ItemWithFeed).item
+    fun itemForMarker(marker: Marker): FeedItem? {
+        return (marker.tag as? ItemWithFeed)?.item
     }
 
     private inner class InfoWindowAdapter(val context: Context): GoogleMap.InfoWindowAdapter {

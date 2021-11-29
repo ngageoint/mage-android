@@ -35,10 +35,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 import mil.nga.giat.mage.R;
-import mil.nga.giat.mage.filter.Filter;
 import mil.nga.giat.mage.glide.GlideApp;
 import mil.nga.giat.mage.glide.model.Avatar;
-import mil.nga.giat.mage.sdk.Temporal;
 import mil.nga.giat.mage.sdk.datastore.location.Location;
 import mil.nga.giat.mage.sdk.datastore.location.LocationProperty;
 import mil.nga.giat.mage.sdk.datastore.user.User;
@@ -69,7 +67,7 @@ public class LocationMarkerCollection implements PointCollection<Pair<Location, 
 	}
 
 	@Override
-	public void add(MarkerOptions options, Pair<Location, User> pair) {
+	public void add(Pair<Location, User> pair) {
 		Location location = pair.first;
 		User user = pair.second;
 
@@ -90,6 +88,9 @@ public class LocationMarkerCollection implements PointCollection<Pair<Location, 
 				}
 			}
 
+			Point point = GeometryUtils.getCentroid(location.getGeometry());
+			LatLng latLng = new LatLng(point.getY(), point.getX());
+			MarkerOptions options = new MarkerOptions().position(latLng).icon(LocationBitmapFactory.bitmapDescriptor(context, location, user));
 			options.visible(visible);
 
 			marker = map.addMarker(options);
@@ -191,28 +192,24 @@ public class LocationMarkerCollection implements PointCollection<Pair<Location, 
 	}
 
 	@Override
-	public void refreshMarkerIcons(Filter<Temporal> filter) {
+	public void refreshMarkerIcons() {
 		Collection<Marker> markers = new ArrayList<>(userIdToMarker.values());
 		for (Marker m : markers) {
 			Pair<Location, User> pair = markerIdToPair.get(m.getId());
 			Location location = pair.first;
 			User user = pair.second;
 			if (location != null) {
-				if (filter != null && !filter.passesFilter(location)) {
-					remove(pair);
-				} else {
-					boolean showWindow = m.isInfoWindowShown();
-					try {
-						// make sure to set the Anchor after this call as well, because the size of the icon might have changed
-						m.setIcon(LocationBitmapFactory.bitmapDescriptor(context, location, user));
-						m.setAnchor(0.5f, 1.0f);
-					} catch (Exception ue) {
-						Log.e(LOG_NAME, "Error refreshing the icon for user: " + user.getId(), ue);
-					}
+				boolean showWindow = m.isInfoWindowShown();
+				try {
+					// make sure to set the Anchor after this call as well, because the size of the icon might have changed
+					m.setIcon(LocationBitmapFactory.bitmapDescriptor(context, location, user));
+					m.setAnchor(0.5f, 1.0f);
+				} catch (Exception ue) {
+					Log.e(LOG_NAME, "Error refreshing the icon for user: " + user.getId(), ue);
+				}
 
-					if (showWindow) {
-						m.showInfoWindow();
-					}
+				if (showWindow) {
+					m.showInfoWindow();
 				}
 			}
 		}

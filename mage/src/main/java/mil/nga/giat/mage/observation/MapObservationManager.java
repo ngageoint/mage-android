@@ -72,18 +72,6 @@ public class MapObservationManager {
      * @return map observation
      */
     public MapObservation addToMap(Observation observation, boolean visible) {
-        return addToMap(observation, null, true);
-    }
-
-    /**
-     * Add an observation to the map as a marker or shape
-     *
-     * @param observation observation
-     * @param markerOptions marker options
-     * @param visible     visible state
-     * @return map observation
-     */
-    public MapObservation addToMap(Observation observation, MarkerOptions markerOptions, boolean visible) {
 
         MapObservation observationShape = null;
 
@@ -91,10 +79,8 @@ public class MapObservationManager {
 
         if (geometry.getGeometryType() == GeometryType.POINT) {
             Point point = GeometryUtils.getCentroid(geometry);
-            if(markerOptions == null) {
-                markerOptions = getMarkerOptions(observation, visible);
-                markerOptions.position(new LatLng(point.getY(), point.getX()));
-            }
+            MarkerOptions markerOptions = getMarkerOptions(observation, visible);
+            markerOptions.position(new LatLng(point.getY(), point.getX()));
             Marker marker = map.addMarker(markerOptions);
 
             observationShape = new MapMarkerObservation(observation, marker);

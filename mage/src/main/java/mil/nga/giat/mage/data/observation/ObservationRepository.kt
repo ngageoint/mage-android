@@ -3,6 +3,7 @@ package mil.nga.giat.mage.data.observation
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import android.os.Build
 import android.util.Log
 import androidx.core.app.NotificationCompat
@@ -10,34 +11,54 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.preference.PreferenceManager
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
+import com.j256.ormlite.dao.CloseableIterator
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.buffer
+import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.withContext
 import mil.nga.giat.mage.LandingActivity
 import mil.nga.giat.mage.MageApplication
 import mil.nga.giat.mage.R
+import mil.nga.giat.mage.filter.DateTimeFilter
+import mil.nga.giat.mage.filter.FavoriteFilter
+import mil.nga.giat.mage.filter.Filter
+import mil.nga.giat.mage.filter.ImportantFilter
 import mil.nga.giat.mage.form.FieldType
 import mil.nga.giat.mage.form.Form
 import mil.nga.giat.mage.form.field.Media
 import mil.nga.giat.mage.network.api.ObservationService
+import mil.nga.giat.mage.sdk.Temporal
+import mil.nga.giat.mage.sdk.datastore.DaoStore
 import mil.nga.giat.mage.sdk.datastore.observation.*
 import mil.nga.giat.mage.sdk.datastore.user.EventHelper
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper
+import mil.nga.giat.mage.sdk.event.IObservationEventListener
 import mil.nga.giat.mage.sdk.fetch.UserServerFetch
 import mil.nga.giat.mage.sdk.utils.ISO8601DateFormatFactory
 import retrofit2.Response
 import java.net.HttpURLConnection
 import java.util.*
 import javax.inject.Inject
-import javax.inject.Singleton
 
 class ObservationRepository @Inject constructor(
    @ApplicationContext private val context: Context,
+   private val preferences: SharedPreferences,
    private val observationService: ObservationService
 ) {
 
+   sealed class ObservationEvent {
+      data class ObservationCreateEvent(val observation: Observation): ObservationEvent()
+      data class ObservationUpdateEvent(val observation: Observation): ObservationEvent()
+      data class ObservationDeleteEvent(val observation: Observation): ObservationEvent()
+   }
+
    private val iso8601Format = ISO8601DateFormatFactory.ISO8601()
    private val userHelper: UserHelper = UserHelper.getInstance(context)
+   private val eventHelper: EventHelper = EventHelper.getInstance(context)
    private val observationHelper: ObservationHelper = ObservationHelper.getInstance(context)
 
    suspend fun create(observation: Observation) = withContext(Dispatchers.IO) {
@@ -56,6 +77,128 @@ class ObservationRepository @Inject constructor(
       }
 
       response
+   }
+
+   fun getObservationEvents(): Flow<ObservationEvent> = channelFlow {
+      val observationHelper = ObservationHelper.getInstance(context)
+      val observationListener = object: IObservationEventListener {
+         override fun onObservationCreated(observations: Collection<Observation>, sendUserNotifcations: Boolean) {
+            observations.forEach {
+               trySend(ObservationEvent.ObservationCreateEvent(it))
+            }
+         }
+
+         override fun onObservationUpdated(observation: Observation) {
+            trySend(ObservationEvent.ObservationUpdateEvent(observation))
+         }
+
+         override fun onObservationDeleted(observation: Observation) {
+            trySend(ObservationEvent.ObservationDeleteEvent(observation))
+         }
+
+         override fun onError(error: Throwable) {}
+      }
+
+      observationHelper.addListener(observationListener)
+
+      readObservations().use {
+         while (it.hasNext()) {
+            send(ObservationEvent.ObservationCreateEvent(it.current()))
+         }
+      }
+
+      awaitClose { observationHelper.removeListener(observationListener) }
+   }.buffer(capacity = Channel.UNLIMITED)
+
+   private fun readObservations(): CloseableIterator<Observation> {
+      val event = eventHelper.currentEvent
+      val dao = DaoStore.getInstance(context).observationDao
+      val query = dao.queryBuilder()
+      val where = query
+         .orderBy("timestamp", false)
+         .where()
+         .eq("event_id", event.id)
+
+      val temporalFilter = getTemporalFilter()
+      if (temporalFilter != null) {
+         temporalFilter.query()?.let { query.join(it) }
+         temporalFilter.and(where)
+      }
+
+      if (preferences.getBoolean(context.resources.getString(R.string.activeImportantFilterKey), false)) {
+         val filter = ImportantFilter(context)
+         filter.query()?.let { query.join(it) }
+         filter.and(where)
+      }
+
+      if (preferences.getBoolean(context.resources.getString(R.string.activeFavoritesFilterKey), false)) {
+         val filter = FavoriteFilter(context)
+         filter.query()?.let { query.join(it) }
+         filter.and(where)
+      }
+
+      return dao.iterator(query.prepare())
+   }
+
+   private fun getTemporalFilter(): Filter<Temporal>? {
+      var filter: Filter<Temporal>? = null
+
+      val date: Date? = when (getTimeFilterId()) {
+         context.resources.getInteger(R.integer.time_filter_last_month) -> {
+            val calendar = Calendar.getInstance()
+            calendar.add(Calendar.MONTH, -1)
+            calendar.time
+         }
+         context.resources.getInteger(R.integer.time_filter_last_week) -> {
+            val calendar = Calendar.getInstance()
+            calendar.add(Calendar.DAY_OF_MONTH, -7)
+            calendar.time
+         }
+         context.resources.getInteger(R.integer.time_filter_last_24_hours) -> {
+            val calendar = Calendar.getInstance()
+            calendar.add(Calendar.HOUR, -24)
+            calendar.time
+         }
+         context.resources.getInteger(R.integer.time_filter_today) -> {
+            val calendar = Calendar.getInstance()
+            calendar.set(Calendar.HOUR_OF_DAY, 0)
+            calendar.set(Calendar.MINUTE, 0)
+            calendar.set(Calendar.SECOND, 0)
+            calendar.set(Calendar.MILLISECOND, 0)
+            calendar.time
+         }
+         context.resources.getInteger(R.integer.time_filter_custom) -> {
+            val calendar = Calendar.getInstance()
+            val customFilterTimeUnit = getCustomTimeUnit()
+            val customTimeNumber = getCustomTimeNumber()
+            when (customFilterTimeUnit) {
+               "Hours" -> calendar.add(Calendar.HOUR_OF_DAY, -1 * customTimeNumber)
+               "Days" -> calendar.add(Calendar.DAY_OF_MONTH, -1 * customTimeNumber)
+               "Months" -> calendar.add(Calendar.MONTH, -1 * customTimeNumber)
+               else -> calendar.add(Calendar.MINUTE, -1 * customTimeNumber)
+            }
+
+            calendar.time
+         } else -> null
+      }
+
+      if (date != null) {
+         filter = DateTimeFilter(date, null, "last_modified")
+      }
+
+      return filter
+   }
+
+   private fun getCustomTimeNumber(): Int {
+      return preferences.getInt(context.resources.getString(R.string.customObservationTimeNumberFilterKey), 0)
+   }
+
+   private fun getCustomTimeUnit(): String? {
+      return preferences.getString(context.resources.getString(R.string.customObservationTimeUnitFilterKey), context.resources.getStringArray(R.array.timeUnitEntries)[0])
+   }
+
+   private fun getTimeFilterId(): Int {
+      return preferences.getInt(context.resources.getString(R.string.activeTimeFilterKey), context.resources.getInteger(R.integer.time_filter_last_month))
    }
 
    suspend fun update(observation: Observation) = withContext(Dispatchers.IO) {

@@ -35,18 +35,13 @@ class LatLngEvaluator: TypeEvaluator<Pair<LatLng, LatLng>> {
     }
 }
 
-interface StraightLineNavigationListener {
-    fun cancelStraightLineNavigation()
-}
-
 class StraightLineNavigation(
-    private var listener: StraightLineNavigationListener,
-    private var mapView: GoogleMap,
-    private var view: ViewGroup,
-    private var context: Context,
-    private var applicationContext: Context
+    private val sensorManager: SensorManager?,
+    private val mapView: GoogleMap,
+    private val view: ViewGroup,
+    private val context: Context,
+    private val applicationContext: Context
 ) : SensorEventListener  {
-    private var sensorManager: SensorManager? = null
     private var accelerometerReading: FloatArray? = null
     private var magnetometerReading: FloatArray? = null
 
@@ -83,7 +78,7 @@ class StraightLineNavigation(
             }
         }
 
-    fun startNavigation(sensorManager: SensorManager, userLocation: Location, destinationCoordinate: LatLng, markerImage: Bitmap? = null) {
+    fun startNavigation(userLocation: Location, destinationCoordinate: LatLng, markerImage: Bitmap? = null) {
         lastDestinationLocation = destinationCoordinate
         straightLineNavigationData.destinationCoordinate.set(destinationCoordinate)
         straightLineNavigationData.heading.set(0.0)
@@ -94,14 +89,12 @@ class StraightLineNavigation(
         straightLineNav = StraightLineNavigationView(context).also {
             val layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
             it.layoutParams = layoutParams
-            it.listener = listener
+            it.cancel = { stopNavigation() }
             view.addView(it)
             it.populate(straightLineNavigationData)
         }
 
-        this.sensorManager = sensorManager
-
-        sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)?.also { accelerometer ->
+        sensorManager?.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)?.let { accelerometer ->
             sensorManager.registerListener(
                     this,
                     accelerometer,
@@ -109,7 +102,7 @@ class StraightLineNavigation(
                     SensorManager.SENSOR_DELAY_NORMAL
             )
         }
-        sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD)?.also { magneticField ->
+        sensorManager?.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD)?.let { magneticField ->
             sensorManager.registerListener(
                     this,
                     magneticField,
@@ -124,9 +117,8 @@ class StraightLineNavigation(
         updateNavigationLines(userLocation, destinationCoordinate)
     }
 
-    fun startHeading(sensorManager: SensorManager, userLocation: Location) {
-        this.sensorManager = sensorManager
-        sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)?.also { accelerometer ->
+    fun startHeading(userLocation: Location) {
+        sensorManager?.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)?.let { accelerometer ->
             sensorManager.registerListener(
                 this,
                 accelerometer,
@@ -134,7 +126,7 @@ class StraightLineNavigation(
                 SensorManager.SENSOR_DELAY_NORMAL
             )
         }
-        sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD)?.also { magneticField ->
+        sensorManager?.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD)?.let { magneticField ->
             sensorManager.registerListener(
                 this,
                 magneticField,
@@ -151,10 +143,10 @@ class StraightLineNavigation(
         headingModeEnabled = false
         headingLine?.remove()
         sensorManager?.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)?.also { accelerometer ->
-            sensorManager?.unregisterListener(this, accelerometer)
+            sensorManager.unregisterListener(this, accelerometer)
         }
         sensorManager?.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD)?.also { magneticField ->
-            sensorManager?.unregisterListener(this, magneticField)
+            sensorManager.unregisterListener(this, magneticField)
         }
     }
 
@@ -164,10 +156,10 @@ class StraightLineNavigation(
         relativeBearingLine?.remove()
         headingLine?.remove()
         sensorManager?.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)?.also { accelerometer ->
-            sensorManager?.unregisterListener(this, accelerometer)
+            sensorManager.unregisterListener(this, accelerometer)
         }
         sensorManager?.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD)?.also { magneticField ->
-            sensorManager?.unregisterListener(this, magneticField)
+            sensorManager.unregisterListener(this, magneticField)
         }
         view.removeView(straightLineNav)
         lastHeadingLocation = null

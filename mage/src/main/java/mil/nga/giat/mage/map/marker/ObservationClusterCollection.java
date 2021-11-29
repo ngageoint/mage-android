@@ -2,12 +2,10 @@ package mil.nga.giat.mage.map.marker;
 
 import android.content.Context;
 import android.content.Intent;
-import android.util.Log;
 
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
-import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.maps.android.clustering.ClusterItem;
 import com.google.maps.android.clustering.ClusterManager;
 import com.google.maps.android.clustering.ClusterManager.OnClusterItemClickListener;
@@ -18,10 +16,8 @@ import java.util.Date;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import mil.nga.giat.mage.filter.Filter;
 import mil.nga.giat.mage.map.marker.ObservationClusterCollection.ObservationClusterItem;
 import mil.nga.giat.mage.observation.view.ObservationViewActivity;
-import mil.nga.giat.mage.sdk.Temporal;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.sf.Point;
 import mil.nga.sf.util.GeometryUtils;
@@ -49,15 +45,15 @@ public class ObservationClusterCollection implements PointCollection<Observation
     }
 
     @Override
-    public void add(MarkerOptions options, Observation o) {
-        ObservationClusterItem item = new ObservationClusterItem(o);
-        items.put(o.getId(), item);
-        observations.put(o.getId(), o);
+    public void add(Observation observation) {
+        ObservationClusterItem item = new ObservationClusterItem(observation);
+        items.put(observation.getId(), item);
+        observations.put(observation.getId(), observation);
         clusterManager.addItem(item);
         clusterManager.cluster();
 
-        if (o.getLastModified().after(latestObservationDate)) {
-            latestObservationDate = o.getLastModified();
+        if (observation.getLastModified().after(latestObservationDate)) {
+            latestObservationDate = observation.getLastModified();
         }
     }
 
@@ -67,9 +63,8 @@ public class ObservationClusterCollection implements PointCollection<Observation
     }
 
     @Override
-    public void refreshMarkerIcons(Filter<Temporal> filter) {
-    	// TODO : figure this out?
-    	Log.d(LOG_NAME, "TODO: refreshme");
+    public void refreshMarkerIcons() {
+    	// TODO refresh marker icons
     }
 
     @Override

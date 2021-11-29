@@ -3,19 +3,32 @@ package mil.nga.giat.mage.data.location
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.location.Location
+import android.content.SharedPreferences
 import android.os.BatteryManager
 import android.util.Log
+import com.j256.ormlite.dao.CloseableIterator
+import com.j256.ormlite.stmt.Where
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.buffer
+import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.withContext
+import mil.nga.giat.mage.R
+import mil.nga.giat.mage.filter.DateTimeFilter
+import mil.nga.giat.mage.filter.Filter
 import mil.nga.giat.mage.network.api.LocationService
+import mil.nga.giat.mage.sdk.Temporal
 import mil.nga.giat.mage.sdk.datastore.DaoStore
+import mil.nga.giat.mage.sdk.datastore.location.Location
 import mil.nga.giat.mage.sdk.datastore.location.LocationHelper
 import mil.nga.giat.mage.sdk.datastore.location.LocationProperty
 import mil.nga.giat.mage.sdk.datastore.user.EventHelper
 import mil.nga.giat.mage.sdk.datastore.user.User
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper
+import mil.nga.giat.mage.sdk.event.ILocationEventListener
 import mil.nga.giat.mage.sdk.exceptions.LocationException
 import mil.nga.giat.mage.sdk.exceptions.UserException
 import mil.nga.giat.mage.sdk.fetch.UserServerFetch
@@ -27,15 +40,21 @@ import javax.inject.Inject
 
 class LocationRepository @Inject constructor(
    @ApplicationContext private val context: Context,
+   private val preferences: SharedPreferences,
    private val locationService: LocationService
 ) {
+
+   sealed class LocationEvent {
+      data class LocationCreateEvent(val location: Location, val user: User): LocationEvent()
+      data class LocationUpdateEvent(val location: Location, val user: User): LocationEvent()
+   }
 
    private val userFetch: UserServerFetch = UserServerFetch(context)
    private val userHelper: UserHelper = UserHelper.getInstance(context)
    private val locationHelper: LocationHelper = LocationHelper.getInstance(context)
    private var batteryStatus: Intent? = context.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
 
-   suspend fun saveLocation(gpsLocation: Location) = withContext(Dispatchers.IO) {
+   suspend fun saveLocation(gpsLocation: android.location.Location) = withContext(Dispatchers.IO) {
       Log.v(LOG_NAME, "Saving GPS location to database.")
 
       if (gpsLocation.time > 0) {
@@ -151,6 +170,130 @@ class LocationRepository @Inject constructor(
       }
 
       success
+   }
+
+   fun getLocationEvents(): Flow<LocationEvent> = channelFlow {
+      val currentUser: User? = try {
+         userHelper.readCurrentUser()
+      } catch (ignore: UserException) { null }
+
+      val locationListener = object: ILocationEventListener {
+         override fun onLocationCreated(locations: Collection<Location>) {
+            locations
+               .filter { currentUser?.remoteId != it.user.remoteId }
+               .forEach {
+                  trySend(LocationEvent.LocationCreateEvent(it, it.user))
+               }
+         }
+
+         override fun onLocationUpdated(location: Location) {
+            if (currentUser?.remoteId != location.user.remoteId) {
+               trySend(LocationEvent.LocationUpdateEvent(location, location.user))
+            }
+         }
+
+         override fun onLocationDeleted(location: MutableCollection<Location>) {}
+         override fun onError(error: Throwable?) {}
+      }
+
+      locationHelper.addListener(locationListener)
+
+      readLocations().use {
+         while (it.hasNext()) {
+            val location = it.current()
+            send(LocationEvent.LocationCreateEvent(location, location.user))
+         }
+      }
+
+      awaitClose { locationHelper.removeListener(locationListener) }
+   }.buffer(capacity = Channel.UNLIMITED)
+
+   private fun readLocations(): CloseableIterator<Location> {
+      val dao = DaoStore.getInstance(context).locationDao
+      val query = dao.queryBuilder()
+      val where: Where<out Temporal?, Long> = query.where()
+
+      val currentUser: User? = try {
+         userHelper.readCurrentUser()
+      } catch (ignore: UserException) { null }
+
+      if (currentUser != null) {
+         where
+            .ne("user_id", currentUser.id)
+            .and()
+            .eq("event_id", currentUser.userLocal.currentEvent.id)
+      }
+
+      val temporalFilter = getTemporalFilter()
+      if (temporalFilter != null) {
+         temporalFilter.query()?.let { query.join(it) }
+         temporalFilter.and(where)
+      }
+
+      query.orderBy("timestamp", false)
+
+      return dao.iterator(query.prepare())
+   }
+
+   private fun getTemporalFilter(): Filter<Temporal>? {
+      var filter: Filter<Temporal>? = null
+
+      val date: Date? = when (getLocationTimeFilterId()) {
+         context.resources.getInteger(R.integer.time_filter_last_month) -> {
+            val calendar = Calendar.getInstance()
+            calendar.add(Calendar.MONTH, -1)
+            calendar.time
+         }
+         context.resources.getInteger(R.integer.time_filter_last_week) -> {
+            val calendar = Calendar.getInstance()
+            calendar.add(Calendar.DAY_OF_MONTH, -7)
+            calendar.time
+         }
+         context.resources.getInteger(R.integer.time_filter_last_24_hours) -> {
+            val calendar = Calendar.getInstance()
+            calendar.add(Calendar.HOUR, -24)
+            calendar.time
+         }
+         context.resources.getInteger(R.integer.time_filter_today) -> {
+            val calendar = Calendar.getInstance()
+            calendar.set(Calendar.HOUR_OF_DAY, 0)
+            calendar.set(Calendar.MINUTE, 0)
+            calendar.set(Calendar.SECOND, 0)
+            calendar.set(Calendar.MILLISECOND, 0)
+            calendar.time
+         }
+         context.resources.getInteger(R.integer.time_filter_custom) -> {
+            val calendar = Calendar.getInstance()
+            val customFilterTimeUnit = getCustomTimeUnit()
+            val customTimeNumber = getCustomTimeNumber()
+            when (customFilterTimeUnit) {
+               "Hours" -> calendar.add(Calendar.HOUR_OF_DAY, -1 * customTimeNumber)
+               "Days" -> calendar.add(Calendar.DAY_OF_MONTH, -1 * customTimeNumber)
+               "Months" -> calendar.add(Calendar.MONTH, -1 * customTimeNumber)
+               else -> calendar.add(Calendar.MINUTE, -1 * customTimeNumber)
+            }
+
+            calendar.time
+         } else -> null
+      }
+
+      if (date != null) {
+         filter = DateTimeFilter(date, null, "timestamp")
+      }
+
+      return filter
+   }
+
+   private fun getCustomTimeUnit(): String? {
+      return preferences.getString(context.resources.getString(R.string.customLocationTimeUnitFilterKey), context.resources.getStringArray(R.array.timeUnitEntries)[0])
+   }
+
+   private fun getCustomTimeNumber(): Int {
+      return preferences.getInt(context.resources.getString(R.string.customLocationTimeNumberFilterKey), 0)
+   }
+
+   private fun getLocationTimeFilterId(): Int {
+      return preferences.getInt(context.resources.getString(R.string.activeLocationTimeFilterKey), context.resources.getInteger(R.integer.time_filter_last_month))
    }
 
    suspend fun fetch() = withContext(Dispatchers.IO) {

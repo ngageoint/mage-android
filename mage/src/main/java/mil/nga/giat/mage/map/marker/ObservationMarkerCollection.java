@@ -13,21 +13,17 @@ import com.google.android.gms.maps.model.Circle;
 import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
-import com.google.android.gms.maps.model.MarkerOptions;
 
 import java.text.DateFormat;
 import java.util.Date;
 import java.util.Locale;
 
 import mil.nga.giat.mage.R;
-import mil.nga.giat.mage.filter.Filter;
-import mil.nga.giat.mage.map.MapFragment;
 import mil.nga.giat.mage.observation.MapMarkerObservation;
 import mil.nga.giat.mage.observation.MapObservation;
 import mil.nga.giat.mage.observation.MapObservationManager;
 import mil.nga.giat.mage.observation.MapObservations;
 import mil.nga.giat.mage.observation.MapShapeObservation;
-import mil.nga.giat.mage.sdk.Temporal;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationProperty;
 import mil.nga.giat.mage.utils.DateFormatFactory;
@@ -40,7 +36,6 @@ public class ObservationMarkerCollection implements PointCollection<Observation>
 
     private GoogleMap map;
     private Context context;
-    private MapFragment mapFragment;
     private Date latestObservationDate = new Date(0);
     protected Pair<String, Circle> observationAccuracyCircle = null;
     private DateFormat dateFormat;
@@ -59,23 +54,22 @@ public class ObservationMarkerCollection implements PointCollection<Observation>
 
     protected GoogleMap.InfoWindowAdapter infoWindowAdapter = new ObservationInfoWindowAdapter();
 
-    public ObservationMarkerCollection(Context context, GoogleMap map, MapFragment mapFragment) {
+    // TODO cannot contain map fragment
+    public ObservationMarkerCollection(Context context, GoogleMap map) {
         this.map = map;
         this.context = context;
-        this.mapFragment = mapFragment;
         dateFormat = DateFormatFactory.format("yyyy-MM-dd HH:mm zz", Locale.getDefault(), context);
 
         mapObservationManager = new MapObservationManager(context, map);
     }
 
     @Override
-    public void add(MarkerOptions options, Observation observation) {
+    public void add(Observation observation) {
         // If I got an observation that I already have remove it
         mapObservations.remove(observation.getId());
 
         // Add the new observation to the map and maintain it
-        options.visible(visible);
-        MapObservation mapObservation = mapObservationManager.addToMap(observation, options, visible);
+        MapObservation mapObservation = mapObservationManager.addToMap(observation, visible);
         mapObservations.add(mapObservation);
 
         if (observation.getLastModified().after(latestObservationDate)) {
@@ -113,9 +107,6 @@ public class ObservationMarkerCollection implements PointCollection<Observation>
 
     @Override
     public boolean onMarkerClick(Marker marker) {
-
-        boolean handled = false;
-
         Observation observation = mapObservations.getMarkerObservation(marker.getId());
         if (observation != null) {
             final Geometry g = observation.getGeometry();
@@ -142,37 +133,27 @@ public class ObservationMarkerCollection implements PointCollection<Observation>
                     }
                 }
             }
-            mapFragment.showObservationBottomSheet(pointForMarker(marker));
-//            show the bottom sheet thing here
-//            map.setInfoWindowAdapter(infoWindowAdapter);
-//            marker.showInfoWindow();
-            handled = true;
+            return true;
         }
 
-        return handled;
+        return false;
     }
 
     @Override
-    public void refresh(Observation observation) {
-
-    }
+    public void refresh(Observation observation) { }
 
     @Override
-    public void refreshMarkerIcons(Filter<Temporal> filter) {
+    public void refreshMarkerIcons() {
         for (MapMarkerObservation mapMarkerObservation : mapObservations.getMarkers()) {
             Marker marker = mapMarkerObservation.getMarker();
             Observation observation = mapMarkerObservation.getObservation();
 			if (observation != null) {
-                if (filter != null && !filter.passesFilter(observation)) {
-                    this.remove(observation);
-                } else {
-                    boolean showWindow = marker.isInfoWindowShown();
-                    // make sure to set the Anchor after this call as well, because the size of the icon might have changed
-                    marker.setIcon(ObservationBitmapFactory.bitmapDescriptor(context, observation));
-                    marker.setAnchor(0.5f, 1.0f);
-                    if (showWindow) {
-                        marker.showInfoWindow();
-                    }
+                boolean showWindow = marker.isInfoWindowShown();
+                // make sure to set the Anchor after this call as well, because the size of the icon might have changed
+                marker.setIcon(ObservationBitmapFactory.bitmapDescriptor(context, observation));
+                marker.setAnchor(0.5f, 1.0f);
+                if (showWindow) {
+                    marker.showInfoWindow();
                 }
             }
         }
