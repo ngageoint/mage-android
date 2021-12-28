@@ -122,7 +122,7 @@ class UserFeedViewModel @Inject constructor(
             when (customFilterTimeUnit) {
                "Hours" -> calendar.add(Calendar.HOUR, -1 * customTimeNumber)
                "Days" -> calendar.add(Calendar.DAY_OF_MONTH, -1 * customTimeNumber)
-               "Months" -> calendar.add(Calendar.MONTH, -1 * customTimeNumber)
+               "Months" -> calendar.add(Calendar.MINUTE, -1 * customTimeNumber)
                else -> calendar.add(Calendar.MINUTE, -1 * customTimeNumber)
             }
          } else -> {

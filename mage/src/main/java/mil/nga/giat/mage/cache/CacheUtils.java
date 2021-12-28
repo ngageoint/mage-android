@@ -37,7 +37,7 @@ public class CacheUtils {
 
             // If no extension, add a GeoPackage extension
             if(GeoPackageIOUtils.getFileExtension(new File(name)) == null){
-                name += "." + GeoPackageConstants.GEOPACKAGE_EXTENSION;
+                name += "." + GeoPackageConstants.EXTENSION;
             }
 
             // Verify that the file is a cache file by its extension

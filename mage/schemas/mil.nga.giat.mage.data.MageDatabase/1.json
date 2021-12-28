@@ -172,25 +172,13 @@
       },
       {
         "tableName": "feed_item",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `geometry` BLOB, `properties` TEXT, `feed_id` TEXT NOT NULL, `timestamp` INTEGER, PRIMARY KEY(`id`, `feed_id`), FOREIGN KEY(`feed_id`) REFERENCES `feed`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `feed_id` TEXT NOT NULL, `timestamp` INTEGER, `geometry` BLOB, `properties` TEXT, PRIMARY KEY(`id`, `feed_id`), FOREIGN KEY(`feed_id`) REFERENCES `feed`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "id",
             "columnName": "id",
             "affinity": "TEXT",
             "notNull": true
-          },
-          {
-            "fieldPath": "geometry",
-            "columnName": "geometry",
-            "affinity": "BLOB",
-            "notNull": false
-          },
-          {
-            "fieldPath": "properties",
-            "columnName": "properties",
-            "affinity": "TEXT",
-            "notNull": false
           },
           {
             "fieldPath": "feedId",
@@ -202,6 +190,18 @@
             "fieldPath": "timestamp",
             "columnName": "timestamp",
             "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "geometry",
+            "columnName": "geometry",
+            "affinity": "BLOB",
+            "notNull": false
+          },
+          {
+            "fieldPath": "properties",
+            "columnName": "properties",
+            "affinity": "TEXT",
             "notNull": false
           }
         ],

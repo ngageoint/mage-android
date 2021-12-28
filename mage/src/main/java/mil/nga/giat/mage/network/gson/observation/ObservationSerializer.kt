@@ -40,9 +40,11 @@ class ObservationSerializer : JsonSerializer<Observation> {
       // serialize the observation's forms
       val forms = JsonArray()
       for (form in observation.forms) {
-         val formDefinition = event.formMap[form.formId]
-         val fields = formDefinition?.get("fields")?.asJsonArray ?: JsonArray()
+         val formDefinition = event.forms.find { it.formId ==  form.formId }?.json?.let {
+            JsonParser.parseString(it).asJsonObject
+         }
 
+         val fields = formDefinition?.get("fields")?.asJsonArray ?: JsonArray()
          val jsonForm = JsonObject()
          jsonForm.addProperty("id", form.remoteId)
          jsonForm.addProperty("formId", form.formId)

@@ -30,8 +30,10 @@ import dagger.hilt.android.AndroidEntryPoint;
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.contact.ContactDialog;
 import mil.nga.giat.mage.network.Resource;
+import mil.nga.giat.mage.sdk.datastore.DaoStore;
 import mil.nga.giat.mage.sdk.datastore.observation.AttachmentHelper;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
+import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
 
 /**
  *
@@ -149,6 +151,10 @@ public class ServerUrlActivity extends AppCompatActivity {
 	}
 
 	private void done() {
+		DaoStore.getInstance(getApplicationContext()).resetDatabase();
+		PreferenceHelper preferenceHelper = PreferenceHelper.getInstance(getApplicationContext());
+		preferenceHelper.initialize(true, R.xml.class);
+
 		// finish this activity back to the login activity
 		Intent intent = new Intent(this, LoginActivity.class);
 		startActivity(intent);

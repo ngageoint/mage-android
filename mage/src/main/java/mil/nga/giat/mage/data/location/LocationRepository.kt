@@ -6,16 +6,14 @@ import android.content.IntentFilter
 import android.content.SharedPreferences
 import android.os.BatteryManager
 import android.util.Log
-import com.j256.ormlite.dao.CloseableIterator
 import com.j256.ormlite.stmt.Where
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.ProducerScope
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.buffer
-import kotlinx.coroutines.flow.channelFlow
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.flowOn
 import mil.nga.giat.mage.R
 import mil.nga.giat.mage.filter.DateTimeFilter
 import mil.nga.giat.mage.filter.Filter
@@ -33,6 +31,7 @@ import mil.nga.giat.mage.sdk.exceptions.LocationException
 import mil.nga.giat.mage.sdk.exceptions.UserException
 import mil.nga.giat.mage.sdk.fetch.UserServerFetch
 import mil.nga.giat.mage.sdk.http.resource.LocationResource
+import mil.nga.giat.mage.sdk.utils.UserUtility
 import mil.nga.sf.Point
 import java.sql.SQLException
 import java.util.*
@@ -43,16 +42,15 @@ class LocationRepository @Inject constructor(
    private val preferences: SharedPreferences,
    private val locationService: LocationService
 ) {
-
-   sealed class LocationEvent {
-      data class LocationCreateEvent(val location: Location, val user: User): LocationEvent()
-      data class LocationUpdateEvent(val location: Location, val user: User): LocationEvent()
-   }
-
    private val userFetch: UserServerFetch = UserServerFetch(context)
    private val userHelper: UserHelper = UserHelper.getInstance(context)
    private val locationHelper: LocationHelper = LocationHelper.getInstance(context)
+   private val locationDao = DaoStore.getInstance(context).locationDao
    private var batteryStatus: Intent? = context.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
+
+   private var refreshTime: Long = 0
+   private var refreshJob: Job? = null
+   private var oldestLocation: Location? = null
 
    suspend fun saveLocation(gpsLocation: android.location.Location) = withContext(Dispatchers.IO) {
       Log.v(LOG_NAME, "Saving GPS location to database.")
@@ -82,7 +80,7 @@ class LocationRepository @Inject constructor(
 
          if (user != null && user.currentEvent != null) {
             try {
-               val location = mil.nga.giat.mage.sdk.datastore.location.Location(
+               val location = Location(
                   "Feature",
                   user,
                   locationProperties,
@@ -101,114 +99,114 @@ class LocationRepository @Inject constructor(
    }
 
    suspend fun pushLocations(): Boolean = withContext(Dispatchers.IO) {
-      val locationResource = LocationResource(context)
-      val locationHelper = LocationHelper.getInstance(context)
+      if (!UserUtility.getInstance(context).isTokenExpired) {
+         val locationResource = LocationResource(context)
+         val locationHelper = LocationHelper.getInstance(context)
 
-      var currentUser: User? = null
-      try {
-         currentUser = UserHelper.getInstance(context).readCurrentUser()
-      } catch (e: UserException) {
-         e.printStackTrace()
-      }
-
-      var success = true
-      var locations = locationHelper.getCurrentUserLocations(LOCATION_PUSH_BATCH_SIZE, false)
-      while (locations.isNotEmpty()) {
-
-         // Send locations for the current event
-         val event = locations[0].event
-
-         val eventLocations = ArrayList<mil.nga.giat.mage.sdk.datastore.location.Location>()
-         for (l in locations) {
-            if (event == l.event) {
-               eventLocations.add(l)
-            }
-         }
-
+         var currentUser: User? = null
          try {
-            if (locationResource.createLocations(event, eventLocations)) {
-               // We've sync-ed locations to the server, lets remove the locations we synced from the database
-               Log.d(LOG_NAME, "Pushed " + eventLocations.size + " locations.")
+            currentUser = UserHelper.getInstance(context).readCurrentUser()
+         } catch (e: UserException) {
+            e.printStackTrace()
+         }
 
-               // Delete location where:
-               // * user is current user
-               // * remote id is set. (have been sent to server)
-               // * past the lower n amount
-               try {
-                  if (currentUser != null) {
-                     val locationDao = DaoStore.getInstance(context).locationDao
-                     val queryBuilder = locationDao.queryBuilder()
-                     val where = queryBuilder.where().eq("user_id", currentUser.id)
-                     where.and().isNotNull("remote_id").and().eq("event_id", event.id)
-                     queryBuilder.orderBy("timestamp", false)
-                     val pushedLocations = queryBuilder.query()
+         var success = true
+         var locations = locationHelper.getCurrentUserLocations(LOCATION_PUSH_BATCH_SIZE, false)
+         while (locations.isNotEmpty()) {
 
-                     if (pushedLocations.size > minNumberOfLocationsToKeep) {
-                        val locationsToDelete = pushedLocations.subList(
-                           minNumberOfLocationsToKeep, pushedLocations.size)
+            // Send locations for the current event
+            val event = locations[0].event
 
-                        try {
-                           LocationHelper.getInstance(context).delete(locationsToDelete)
-                        } catch (e: LocationException) {
-                           Log.e(LOG_NAME, "Could not delete locations.", e)
-                        }
-
-                     }
-                  }
-               } catch (e: SQLException) {
-                  Log.e(LOG_NAME, "Problem deleting locations.", e)
+            val eventLocations = ArrayList<Location>()
+            for (l in locations) {
+               if (event == l.event) {
+                  eventLocations.add(l)
                }
-            } else {
-               Log.e(LOG_NAME, "Failed to push locations.")
-               success = false
             }
 
-            locations = locationHelper.getCurrentUserLocations(LOCATION_PUSH_BATCH_SIZE, false)
-         } catch (e: Exception) {
-            Log.e(LOG_NAME, "Failed to push user locations to the server", e)
-         }
-      }
+            try {
+               if (locationResource.createLocations(event, eventLocations)) {
+                  // We've sync-ed locations to the server, lets remove the locations we synced from the database
+                  Log.d(LOG_NAME, "Pushed " + eventLocations.size + " locations.")
 
-      success
+                  // Delete location where:
+                  // * user is current user
+                  // * remote id is set. (have been sent to server)
+                  // * past the lower n amount
+                  try {
+                     if (currentUser != null) {
+                        val locationDao = DaoStore.getInstance(context).locationDao
+                        val queryBuilder = locationDao.queryBuilder()
+                        val where = queryBuilder.where().eq("user_id", currentUser.id)
+                        where.and().isNotNull("remote_id").and().eq("event_id", event.id)
+                        queryBuilder.orderBy("timestamp", false)
+                        val pushedLocations = queryBuilder.query()
+
+                        if (pushedLocations.size > minNumberOfLocationsToKeep) {
+                           val locationsToDelete = pushedLocations.subList(
+                              minNumberOfLocationsToKeep, pushedLocations.size)
+
+                           try {
+                              LocationHelper.getInstance(context).delete(locationsToDelete)
+                           } catch (e: LocationException) {
+                              Log.e(LOG_NAME, "Could not delete locations.", e)
+                           }
+
+                        }
+                     }
+                  } catch (e: SQLException) {
+                     Log.e(LOG_NAME, "Problem deleting locations.", e)
+                  }
+               } else {
+                  Log.e(LOG_NAME, "Failed to push locations.")
+                  success = false
+               }
+
+               locations = locationHelper.getCurrentUserLocations(LOCATION_PUSH_BATCH_SIZE, false)
+            } catch (e: Exception) {
+               Log.e(LOG_NAME, "Failed to push user locations to the server", e)
+            }
+         }
+
+         success
+      } else {
+         false
+      }
    }
 
-   fun getLocationEvents(): Flow<LocationEvent> = channelFlow {
-      val currentUser: User? = try {
-         userHelper.readCurrentUser()
-      } catch (ignore: UserException) { null }
-
+   fun getLocations(): Flow<List<Location>> = callbackFlow {
       val locationListener = object: ILocationEventListener {
          override fun onLocationCreated(locations: Collection<Location>) {
-            locations
-               .filter { currentUser?.remoteId != it.user.remoteId }
-               .forEach {
-                  trySend(LocationEvent.LocationCreateEvent(it, it.user))
-               }
+            trySend(query(this@callbackFlow))
          }
 
          override fun onLocationUpdated(location: Location) {
-            if (currentUser?.remoteId != location.user.remoteId) {
-               trySend(LocationEvent.LocationUpdateEvent(location, location.user))
-            }
+            trySend(query(this@callbackFlow))
          }
 
          override fun onLocationDeleted(location: MutableCollection<Location>) {}
          override fun onError(error: Throwable?) {}
       }
-
       locationHelper.addListener(locationListener)
 
-      readLocations().use {
-         while (it.hasNext()) {
-            val location = it.current()
-            send(LocationEvent.LocationCreateEvent(location, location.user))
+      val locationFilterKey = context.resources.getString(R.string.activeLocationTimeFilterKey)
+      val preferencesListener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
+         if (locationFilterKey == key) {
+            trySend(query(this@callbackFlow))
          }
       }
+      preferences.registerOnSharedPreferenceChangeListener(preferencesListener)
 
-      awaitClose { locationHelper.removeListener(locationListener) }
-   }.buffer(capacity = Channel.UNLIMITED)
+      trySend(query(this))
 
-   private fun readLocations(): CloseableIterator<Location> {
+      awaitClose {
+         locationHelper.removeListener(locationListener)
+         preferences.unregisterOnSharedPreferenceChangeListener(preferencesListener)
+      }
+
+   }.flowOn(Dispatchers.IO)
+
+   private fun query(scope: ProducerScope<List<Location>>): List<Location> {
       val dao = DaoStore.getInstance(context).locationDao
       val query = dao.queryBuilder()
       val where: Where<out Temporal?, Long> = query.where()
@@ -224,15 +222,34 @@ class LocationRepository @Inject constructor(
             .eq("event_id", currentUser.userLocal.currentEvent.id)
       }
 
-      val temporalFilter = getTemporalFilter()
-      if (temporalFilter != null) {
-         temporalFilter.query()?.let { query.join(it) }
-         temporalFilter.and(where)
+      getTemporalFilter()?.let { filter ->
+         filter.query()?.let { query.join(it) }
+         filter.and(where)
       }
 
       query.orderBy("timestamp", false)
 
-      return dao.iterator(query.prepare())
+      val iterator = locationDao.iterator(query.prepare())
+
+      val locations = mutableListOf<Location>()
+      while(iterator.hasNext()) {
+         locations.add(iterator.current())
+      }
+
+      locations.lastOrNull()?.let { location ->
+         if (oldestLocation == null || oldestLocation?.timestamp?.after(location.timestamp) == true) {
+            oldestLocation = location
+
+            refreshJob?.cancel()
+            refreshJob = scope.launch {
+               delay(location.timestamp.time - refreshTime)
+               oldestLocation = null
+               scope.trySend(query(scope))
+            }
+         }
+      }
+
+      return locations
    }
 
    private fun getTemporalFilter(): Filter<Temporal>? {

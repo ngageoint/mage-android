@@ -3,13 +3,15 @@ package mil.nga.giat.mage.form.view
 import android.content.res.Configuration
 import android.graphics.Color
 import android.os.Bundle
-import androidx.preference.PreferenceManager
 import androidx.compose.runtime.*
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.content.res.ResourcesCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import androidx.preference.PreferenceManager
+import com.bumptech.glide.Glide
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.MapView
 import com.google.android.gms.maps.model.*
@@ -17,12 +19,12 @@ import com.google.maps.android.ktx.*
 import kotlinx.coroutines.launch
 import mil.nga.geopackage.map.geom.GoogleMapShapeConverter
 import mil.nga.giat.mage.R
-import mil.nga.giat.mage.map.marker.ObservationBitmapFactory
-import mil.nga.giat.mage.observation.MapShapeObservation
-import mil.nga.giat.mage.observation.ObservationLocation
-import mil.nga.giat.mage.observation.ObservationShapeStyleParser
 import mil.nga.giat.mage.form.FormState
 import mil.nga.giat.mage.form.field.FieldValue
+import mil.nga.giat.mage.glide.target.MarkerTarget
+import mil.nga.giat.mage.map.annotation.MapAnnotation
+import mil.nga.giat.mage.map.annotation.ShapeStyle
+import mil.nga.giat.mage.observation.ObservationLocation
 import mil.nga.sf.GeometryType
 import mil.nga.sf.util.GeometryUtils
 
@@ -31,15 +33,18 @@ data class MapState(val center: LatLng?, val zoom: Float?)
 @Composable
 fun MapViewContent(
   map: MapView,
+  mapState: MapState,
   formState: FormState?,
-  location: ObservationLocation,
-  mapState: MapState
+  location: ObservationLocation
 ) {
   val context = LocalContext.current
   var mapInitialized by remember(map) { mutableStateOf(false) }
 
   val primaryFieldState = formState?.fields?.find { it.definition.name == formState.definition.primaryMapField }
+  val primary = (primaryFieldState?.answer as? FieldValue.Text)?.text
+
   val secondaryFieldState = formState?.fields?.find { it.definition.name == formState.definition.secondaryMapField }
+  val secondary = (secondaryFieldState?.answer as? FieldValue.Text)?.text
 
   LaunchedEffect(map, mapInitialized) {
     if (!mapInitialized) {
@@ -66,24 +71,30 @@ fun MapViewContent(
 
   val scope = rememberCoroutineScope()
   AndroidView({ map }) { mapView ->
-    val primary = primaryFieldState?.answer as? FieldValue.Text
-    val secondary = secondaryFieldState?.answer as? FieldValue.Text
-
     scope.launch {
       val googleMap = mapView.awaitMap()
       googleMap.clear()
       if (location.geometry.geometryType == GeometryType.POINT) {
         val centroid = GeometryUtils.getCentroid(location.geometry)
         val point = LatLng(centroid.y, centroid.x)
-        googleMap.addMarker {
+        val marker = googleMap.addMarker {
           position(point)
-          icon(ObservationBitmapFactory.bitmapDescriptor(context, formState?.eventId, formState?.definition?.id, primary, secondary))
+          visible(false)
+        }
+        marker?.tag = formState?.id
+
+        if (formState != null) {
+          Glide.with(context)
+            .asBitmap()
+            .load(MapAnnotation.fromObservationProperties(formState.id ?: 0, location.geometry, location.time, location.accuracy, formState.eventId, formState.definition.id, primary, secondary, context))
+            .error(R.drawable.default_marker)
+            .into(MarkerTarget(context, marker, 32, 32))
         }
 
         if (!location.provider.equals(ObservationLocation.MANUAL_PROVIDER, true) && location.accuracy != null) {
           googleMap.addCircle {
-            fillColor(context.resources.getColor(R.color.accuracy_circle_fill))
-            strokeColor(context.resources.getColor(R.color.accuracy_circle_stroke))
+            fillColor(ResourcesCompat.getColor(context.resources, R.color.accuracy_circle_fill, null))
+            strokeColor(ResourcesCompat.getColor(context.resources, R.color.accuracy_circle_stroke, null))
             strokeWidth(2f)
             center(point)
             radius(location.accuracy.toDouble())
@@ -91,14 +102,13 @@ fun MapViewContent(
         }
       } else {
         val shape = GoogleMapShapeConverter().toShape(location.geometry).shape
-        val style = ObservationShapeStyleParser.getStyle(context, formState)
+        val style = ShapeStyle.fromForm(formState, context)
 
         if (shape is PolylineOptions) {
           googleMap.addPolyline {
             addAll(shape.points)
             width(style.strokeWidth)
             color(style.strokeColor)
-            geodesic(MapShapeObservation.GEODESIC)
           }
         } else if (shape is PolygonOptions) {
           googleMap.addPolygon {
@@ -110,7 +120,6 @@ fun MapViewContent(
             strokeWidth(style.strokeWidth)
             strokeColor(style.strokeColor)
             fillColor(style.fillColor)
-            geodesic(MapShapeObservation.GEODESIC)
           }
         }
       }
@@ -168,7 +177,6 @@ fun MapViewContent(
         if (shape is PolylineOptions) {
           googleMap.addPolyline {
             addAll(shape.points)
-            geodesic(MapShapeObservation.GEODESIC)
           }
         } else if (shape is PolygonOptions) {
           googleMap.addPolygon {
@@ -176,8 +184,6 @@ fun MapViewContent(
             for (hole in shape.holes) {
               addHole(hole)
             }
-
-            geodesic(MapShapeObservation.GEODESIC)
           }
         }
       }

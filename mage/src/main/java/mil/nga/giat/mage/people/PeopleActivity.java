@@ -55,7 +55,7 @@ public class PeopleActivity extends AppCompatActivity implements PeopleRecyclerA
     @Override
     public void onPersonClick(User person) {
         Intent intent = new Intent(this, ProfileActivity.class);
-        intent.putExtra(ProfileActivity.USER_ID, person.getRemoteId());
+        intent.putExtra(ProfileActivity.USER_ID, person.getId());
         startActivity(intent);
     }
 }

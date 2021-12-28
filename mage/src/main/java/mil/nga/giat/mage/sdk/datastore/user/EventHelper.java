@@ -4,6 +4,7 @@ import android.content.Context;
 import android.util.Log;
 
 import com.j256.ormlite.dao.Dao;
+import com.j256.ormlite.misc.TransactionManager;
 import com.j256.ormlite.stmt.DeleteBuilder;
 import com.j256.ormlite.stmt.QueryBuilder;
 import com.j256.ormlite.stmt.Where;
@@ -16,8 +17,10 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.Callable;
 
 import mil.nga.giat.mage.sdk.datastore.DaoHelper;
+import mil.nga.giat.mage.sdk.datastore.DaoStore;
 import mil.nga.giat.mage.sdk.datastore.location.LocationHelper;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
 import mil.nga.giat.mage.sdk.exceptions.EventException;
@@ -33,6 +36,7 @@ public class EventHelper extends DaoHelper<Event> {
     private static final String LOG_NAME = EventHelper.class.getName();
 
     private final Dao<Event, Long> eventDao;
+    private final Dao<Form, Long> formDao;
     private final Dao<TeamEvent, Long> teamEventDao;
 
     /**
@@ -65,6 +69,7 @@ public class EventHelper extends DaoHelper<Event> {
 
         try {
             eventDao = daoStore.getEventDao();
+            formDao = daoStore.getFormDao();
             teamEventDao = daoStore.getTeamEventDao();
         } catch (SQLException sqle) {
             Log.e(LOG_NAME, "Unable to communicate with Event database.", sqle);
@@ -122,14 +127,29 @@ public class EventHelper extends DaoHelper<Event> {
         return event;
     }
 
-    public Event update(Event pEvent) throws EventException {
+
+    @Override
+    public Event update(Event event) throws EventException {
         try {
-            eventDao.update(pEvent);
+            TransactionManager.callInTransaction(DaoStore.getInstance(mApplicationContext).getConnectionSource(), (Callable<Void>) () -> {
+                DeleteBuilder<Form, Long> deleteBuilder = formDao.deleteBuilder();
+                deleteBuilder.where().eq(Form.Companion.getColumnNameEventId(), event.getId());
+                deleteBuilder.delete();
+
+                eventDao.update(event);
+
+                for (Form form : event.getForms()) {
+                    form.event = event;
+                    formDao.create(form);
+                }
+
+                return null;
+            });
         } catch (SQLException sqle) {
-            Log.e(LOG_NAME, "There was a problem creating event: " + pEvent);
-            throw new EventException("There was a problem creating event: " + pEvent, sqle);
+            Log.e(LOG_NAME, "There was a problem creating event: " + event);
+            throw new EventException("There was a problem creating event: " + event, sqle);
         }
-		return pEvent;
+		return event;
     }
 
     public Event createOrUpdate(Event event) {
@@ -137,17 +157,39 @@ public class EventHelper extends DaoHelper<Event> {
             Event oldEvent = read(event.getRemoteId());
             if (oldEvent == null) {
                 event = create(event);
+
+                for (Form form : event.getForms()) {
+                    form.event = event;
+                    formDao.create(form);
+                }
                 Log.d(LOG_NAME, "Created event with remote_id " + event.getRemoteId());
             } else {
-                // perform update?
                 event.setId(oldEvent.getId());
                 update(event);
                 Log.d(LOG_NAME, "Updated event with remote_id " + event.getRemoteId());
             }
-        } catch (EventException ee) {
-            Log.e(LOG_NAME, "There was a problem reading user: " + event, ee);
+        } catch (Exception e) {
+            Log.e(LOG_NAME, "There was a problem reading user: " + event, e);
         }
         return event;
+    }
+
+    public Form getForm(Long formId) {
+        Form form = null;
+        try {
+            List<Form> forms = formDao.queryBuilder()
+                .where()
+                .eq("formId", formId)
+                .query();
+
+            if (forms != null && forms.size() > 0) {
+                form = forms.get(0);
+            }
+        } catch (SQLException sqle) {
+            Log.e(LOG_NAME, "Error pulling form with id: " + formId, sqle);
+        }
+
+        return form;
     }
 
     public List<Event> getEventsByTeam(Team pTeam) {

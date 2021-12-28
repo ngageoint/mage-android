@@ -21,9 +21,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import mil.nga.giat.mage.R;
+import mil.nga.geopackage.GeoPackageFactory;
 import mil.nga.geopackage.GeoPackageManager;
-import mil.nga.geopackage.factory.GeoPackageFactory;
+import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.map.cache.CacheOverlay;
 import mil.nga.giat.mage.map.cache.CacheProvider;
 import mil.nga.giat.mage.sdk.datastore.layer.Layer;

@@ -51,6 +51,14 @@ class Form(
         null
       }
     }
+
+    fun fromJson(json: String?): Form? {
+      return try {
+        gson.fromJson(json, Form::class.java)
+      } catch (e: Exception) {
+        null
+      }
+    }
   }
 }
 

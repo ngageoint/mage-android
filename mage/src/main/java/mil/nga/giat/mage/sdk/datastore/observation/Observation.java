@@ -1,12 +1,8 @@
 package mil.nga.giat.mage.sdk.datastore.observation;
 
-import android.net.Uri;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
 import com.j256.ormlite.field.DataType;
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.field.ForeignCollectionField;
@@ -16,20 +12,16 @@ import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
-import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 
 import mil.nga.giat.mage.sdk.Temporal;
 import mil.nga.giat.mage.sdk.datastore.user.Event;
 import mil.nga.giat.mage.sdk.utils.GeometryUtility;
 import mil.nga.sf.Geometry;
-import mil.nga.sf.Point;
-import mil.nga.sf.util.GeometryUtils;
 
 @DatabaseTable(tableName = "observations")
 public class Observation implements Comparable<Observation>, Temporal {
@@ -275,21 +267,6 @@ public class Observation implements Comparable<Observation>, Temporal {
     }
 
     /**
-     * A convenience method used for returning an Observation's properties in a
-     * more useful data-structure.
-     *
-     * @return
-     */
-    public final Map<Long, ObservationForm> getFormsMap() {
-        Map<Long, ObservationForm> formsMap = new HashMap<>();
-        for (ObservationForm form : forms) {
-            formsMap.put(form.getId(), form);
-        }
-
-        return formsMap;
-    }
-
-    /**
      * A convenience method used for returning an Observation's favorites in a
      * more useful data-structure.
      *
@@ -304,17 +281,6 @@ public class Observation implements Comparable<Observation>, Temporal {
         }
 
         return favoritesMap;
-    }
-
-    public Uri getGoogleMapsUri() {
-        DecimalFormat latLngFormat = new DecimalFormat("###.#####");
-        String uriString = "http://maps.google.com/maps";
-
-        Geometry geometry = getGeometry();
-        Point point = GeometryUtils.getCentroid(geometry);
-        uriString += String.format("?daddr=%1$s,%2$s",  latLngFormat.format(point.getY()), latLngFormat.format(point.getX()));
-
-        return Uri.parse(uriString);
     }
 
     @Override
@@ -355,72 +321,6 @@ public class Observation implements Comparable<Observation>, Temporal {
 
     public void setTimestamp(Date timestamp) {
     this.timestamp = timestamp;
-    }
-
-    public ObservationProperty getPrimaryMapField() {
-        return getField("primaryField");
-    }
-
-    public ObservationProperty getSecondaryMapField() {
-        return getField("variantField");
-    }
-
-    public ObservationProperty getPrimaryFeedField() {
-        return getField("primaryFeedField");
-    }
-
-    public ObservationProperty getSecondaryFeedField() {
-        return getField("secondaryFeedField");
-    }
-
-    public ObservationProperty getField(String name) {
-        ObservationProperty field = null;
-        Collection<ObservationForm> forms = getForms();
-        if (forms != null && forms.size() > 0) {
-            ObservationForm form = forms.iterator().next();
-            JsonObject eventForm = getEventForm(form.getFormId());
-            if (eventForm != null) {
-                JsonElement fieldName = eventForm.get(name);
-                if (fieldName != null && !fieldName.isJsonNull()) {
-                    field = form.getPropertiesMap().get(fieldName.getAsString());
-                }
-
-            }
-        }
-
-        return field;
-    }
-
-    public JsonElement getStyle() {
-        JsonElement style = null;
-        Collection<ObservationForm> forms = getForms();
-        if (forms != null && forms.size() > 0) {
-            ObservationForm form = forms.iterator().next();
-            JsonObject eventForm = getEventForm(form.getFormId());
-            if (eventForm != null) {
-                style = eventForm.get("style");
-            }
-        }
-
-        return style;
-    }
-
-    private JsonObject getEventForm(Long formId) {
-        Iterator<JsonElement> iterator = event.getForms().iterator();
-        while (iterator.hasNext()) {
-            JsonObject formJson = (JsonObject) iterator.next();
-            Long id = formJson.get("id").getAsLong();
-            if (id.equals(formId)) {
-                return formJson;
-            }
-        }
-
-        return null;
-    }
-
-    public boolean hasValidationError() {
-        ObservationError observationError = getError();
-        return observationError != null && observationError.getStatusCode() != null;
     }
 
     public String errorMessage() {

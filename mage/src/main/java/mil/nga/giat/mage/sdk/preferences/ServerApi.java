@@ -10,8 +10,8 @@ import org.json.JSONObject;
 
 import java.util.Iterator;
 
-import mil.nga.giat.mage.sdk.Compatibility;
 import mil.nga.giat.mage.R;
+import mil.nga.giat.mage.sdk.Compatibility;
 import mil.nga.giat.mage.sdk.http.resource.ApiResource;
 import okhttp3.ResponseBody;
 import retrofit2.Call;

@@ -9,7 +9,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import mil.nga.geopackage.factory.GeoPackageFactory
+import mil.nga.geopackage.GeoPackageFactory
 import mil.nga.giat.mage.data.feed.FeedDao
 import mil.nga.giat.mage.data.user.UserRepository
 import mil.nga.giat.mage.glide.GlideApp
@@ -23,7 +23,6 @@ import mil.nga.giat.mage.sdk.utils.ZipUtility
 import java.io.File
 import java.util.*
 import javax.inject.Inject
-import javax.inject.Singleton
 
 class EventRepository @Inject constructor(
    @ApplicationContext private val context: Context,
@@ -208,7 +207,7 @@ class EventRepository @Inject constructor(
    private suspend fun syncFeeds(event: Event) {
       val response = feedService.getFeeds(event.remoteId)
       if (response.isSuccessful) {
-         var enabledFeeds = mapLayerPreferences.getEnabledFeeds(event.remoteId).toMutableSet()
+         var enabledFeeds = mapLayerPreferences.getEnabledFeeds(event.id).toMutableSet()
          val feeds = response.body()!!
          for (feed in feeds) {
             feed.eventRemoteId = event.remoteId
@@ -219,8 +218,8 @@ class EventRepository @Inject constructor(
          }
 
          val feedIds = feeds.map { it.id }
-         enabledFeeds = enabledFeeds.intersect(feedIds).toMutableSet()
-         mapLayerPreferences.setEnabledFeeds(event.remoteId, enabledFeeds)
+         enabledFeeds = enabledFeeds.intersect(feedIds.toSet()).toMutableSet()
+         mapLayerPreferences.setEnabledFeeds(event.id, enabledFeeds)
          feedDao.preserveFeeds(event.remoteId, feedIds)
       }
    }

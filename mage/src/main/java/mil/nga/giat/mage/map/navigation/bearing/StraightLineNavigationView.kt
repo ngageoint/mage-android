@@ -2,7 +2,6 @@ package mil.nga.giat.mage.map.navigation.bearing
 
 
 import android.content.Context
-import android.graphics.Bitmap
 import android.location.Location
 import android.util.AttributeSet
 import android.view.LayoutInflater
@@ -11,7 +10,9 @@ import android.widget.LinearLayout
 import androidx.annotation.ColorInt
 import androidx.databinding.BindingAdapter
 import androidx.databinding.ObservableField
+import com.bumptech.glide.Glide
 import com.google.android.gms.maps.model.LatLng
+import mil.nga.giat.mage.R
 import mil.nga.giat.mage.databinding.ViewStraightLineNavigationBinding
 
 class StraightLineNavigationData {
@@ -21,7 +22,7 @@ class StraightLineNavigationData {
     var bearingColor: ObservableField<Int> = ObservableField()
     var currentLocation: ObservableField<Location> = ObservableField()
     var destinationCoordinate: ObservableField<LatLng> = ObservableField()
-    var destinationMarker: Bitmap? = null
+    var mapFeature: Any? = null
     val formattedHeading: ObservableField<String>
         get(): ObservableField<String> {
             return ObservableField(if (heading.get() == null) "" else String.format("%.1f\u00B0", heading.get()))
@@ -75,8 +76,12 @@ class StraightLineNavigationView @JvmOverloads constructor(
     fun populate(data: StraightLineNavigationData) {
         binding.data = data
 
-        data.destinationMarker?.let {
-            binding.destinationMarkerImage.setImageBitmap(it)
+        data.mapFeature?.let {
+            Glide.with(context)
+                .asBitmap()
+                .load(it)
+                .error(R.drawable.default_marker)
+                .into(binding.destinationMarkerImage)
         }
 
         binding.cancelButton.setOnClickListener {

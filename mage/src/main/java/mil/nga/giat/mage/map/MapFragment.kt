@@ -3,10 +3,7 @@ package mil.nga.giat.mage.map
 import android.Manifest
 import android.app.Activity
 import android.app.Application
-import android.content.Context
-import android.content.DialogInterface
-import android.content.Intent
-import android.content.SharedPreferences
+import android.content.*
 import android.content.pm.PackageManager
 import android.content.res.ColorStateList
 import android.content.res.Configuration
@@ -14,13 +11,8 @@ import android.hardware.SensorManager
 import android.location.Geocoder
 import android.net.Uri
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
 import android.provider.Settings
-import android.text.SpannableString
-import android.text.util.Linkify
 import android.util.Log
-import android.util.Pair
 import android.view.*
 import android.view.ViewGroup.MarginLayoutParams
 import android.view.inputmethod.InputMethodManager
@@ -32,7 +24,6 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SearchView
 import androidx.core.content.ContextCompat
-import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.*
 import androidx.lifecycle.Observer
@@ -41,20 +32,19 @@ import com.google.android.gms.maps.GoogleMap.OnCameraMoveStartedListener
 import com.google.android.gms.maps.LocationSource.OnLocationChangedListener
 import com.google.android.gms.maps.model.*
 import com.google.android.material.bottomsheet.BottomSheetBehavior
-import com.google.android.material.bottomsheet.BottomSheetBehavior.BottomSheetCallback
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.snackbar.Snackbar
 import com.google.maps.android.ktx.*
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.android.synthetic.main.fragment_map.view.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.flowOn
 import mil.nga.geopackage.BoundingBox
 import mil.nga.geopackage.GeoPackage
 import mil.nga.geopackage.GeoPackageCache
-import mil.nga.geopackage.extension.link.FeatureTileTableLinker
-import mil.nga.geopackage.extension.scale.TileTableScaling
-import mil.nga.geopackage.factory.GeoPackageFactory
+import mil.nga.geopackage.GeoPackageFactory
+import mil.nga.geopackage.extension.nga.link.FeatureTileTableLinker
+import mil.nga.geopackage.extension.nga.scale.TileTableScaling
 import mil.nga.geopackage.map.geom.GoogleMapShapeConverter
 import mil.nga.geopackage.map.tiles.overlay.FeatureOverlay
 import mil.nga.geopackage.map.tiles.overlay.FeatureOverlayQuery
@@ -64,41 +54,42 @@ import mil.nga.geopackage.tiles.features.DefaultFeatureTiles
 import mil.nga.geopackage.tiles.features.FeatureTiles
 import mil.nga.geopackage.tiles.features.custom.NumberFeaturesTile
 import mil.nga.giat.mage.R
-import mil.nga.giat.mage.data.feed.FeedWithItems
-import mil.nga.giat.mage.data.layer.LayerRepository
-import mil.nga.giat.mage.data.location.LocationRepository.LocationEvent
-import mil.nga.giat.mage.data.observation.ObservationRepository.ObservationEvent
-import mil.nga.giat.mage.databinding.FragmentMapBinding
+import mil.nga.giat.mage.coordinate.CoordinateFormatter
 import mil.nga.giat.mage.feed.item.FeedItemActivity
 import mil.nga.giat.mage.filter.FilterActivity
+import mil.nga.giat.mage.geopackage.media.GeoPackageMediaActivity
+import mil.nga.giat.mage.glide.transform.LocationAgeTransformation
 import mil.nga.giat.mage.location.LocationPolicy
 import mil.nga.giat.mage.map.Geocoder.SearchResult
+import mil.nga.giat.mage.map.MapViewModel.FeedState
+import mil.nga.giat.mage.map.annotation.MapAnnotation
 import mil.nga.giat.mage.map.cache.*
 import mil.nga.giat.mage.map.cache.CacheProvider.OnCacheOverlayListener
-import mil.nga.giat.mage.map.marker.*
+import mil.nga.giat.mage.map.detail.*
+import mil.nga.giat.mage.map.feature.FeatureCollection
+import mil.nga.giat.mage.map.feature.FeedCollection
+import mil.nga.giat.mage.map.feature.StaticFeatureCollection
 import mil.nga.giat.mage.map.navigation.bearing.StraightLineNavigation
 import mil.nga.giat.mage.map.preference.MapPreferencesActivity
-import mil.nga.giat.mage.newsfeed.ObservationListAdapter.ObservationActionListener
 import mil.nga.giat.mage.observation.ObservationLocation
 import mil.nga.giat.mage.observation.edit.ObservationEditActivity
 import mil.nga.giat.mage.observation.view.ObservationViewActivity
 import mil.nga.giat.mage.profile.ProfileActivity
 import mil.nga.giat.mage.sdk.connectivity.ConnectivityUtility
 import mil.nga.giat.mage.sdk.datastore.layer.LayerHelper
-import mil.nga.giat.mage.sdk.datastore.location.Location
 import mil.nga.giat.mage.sdk.datastore.location.LocationHelper
-import mil.nga.giat.mage.sdk.datastore.observation.Observation
 import mil.nga.giat.mage.sdk.datastore.user.EventHelper
 import mil.nga.giat.mage.sdk.datastore.user.User
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper
-import mil.nga.giat.mage.sdk.event.IUserEventListener
 import mil.nga.giat.mage.sdk.exceptions.LayerException
 import mil.nga.giat.mage.sdk.exceptions.UserException
+import mil.nga.giat.mage.utils.googleMapsUri
 import mil.nga.mgrs.MGRS
 import mil.nga.mgrs.gzd.MGRSTileProvider
+import mil.nga.proj.ProjectionConstants
+import mil.nga.proj.ProjectionFactory
+import mil.nga.sf.Geometry
 import mil.nga.sf.GeometryType
-import mil.nga.sf.proj.ProjectionConstants
-import mil.nga.sf.proj.ProjectionFactory
 import java.util.*
 import javax.inject.Inject
 import kotlin.collections.set
@@ -108,8 +99,6 @@ class MapFragment : Fragment(),
    View.OnClickListener,
    LocationSource,
    OnCacheOverlayListener,
-   IUserEventListener,
-   ObservationActionListener,
    Observer<android.location.Location>
 {
    private enum class LocateState {
@@ -143,12 +132,12 @@ class MapFragment : Fragment(),
    lateinit var locationPolicy: LocationPolicy
 
    private var locationProvider: LiveData<android.location.Location>? = null
-   private var observations: PointCollection<Observation>? = null
-   private var locations: PointCollection<Pair<Location?, User?>>? = null
-   private val staticGeometryCollection = StaticGeometryCollection()
+   private var observations: FeatureCollection<Long>? = null
+   private var locations: FeatureCollection<Long>? = null
+   private var feeds: FeedCollection? = null
+   private var staticFeatureCollection: StaticFeatureCollection? = null
    private var searchMarker: Marker? = null
-   private var feedItems: FeedItemCollection? = null
-   private var feeds: Map<String, LiveData<FeedWithItems>> = emptyMap()
+   private var feedLiveData: Map<String, LiveData<FeedState>> = emptyMap()
    private var cacheOverlays: MutableMap<String, CacheOverlay?> = HashMap()
 
    private var cacheBoundingBox: BoundingBox? = null
@@ -162,8 +151,8 @@ class MapFragment : Fragment(),
    private lateinit var mgrsChip: TextView
 
    private lateinit var featureBottomSheetBehavior: BottomSheetBehavior<View>
+
    private lateinit var availableLayerDownloadsIcon: View
-   private var binding: FragmentMapBinding? = null
 
    override fun onCreate(savedInstanceState: Bundle?) {
       super.onCreate(savedInstanceState)
@@ -177,7 +166,48 @@ class MapFragment : Fragment(),
       savedInstanceState: Bundle?
    ): View? {
       val view = inflater.inflate(R.layout.fragment_map, container, false)
-      binding = DataBindingUtil.bind(view)
+
+      viewModel.observationMap.observe(viewLifecycleOwner, Observer { state ->
+         view.bottom_sheet_compose.setContent {
+            ObservationMapDetails(state) { onObservationAction(it) }
+         }
+      })
+
+      viewModel.location.observe(viewLifecycleOwner, Observer { state ->
+         view.bottom_sheet_compose.setContent {
+            UserMapDetails(state) { onUserAction(it) }
+         }
+      })
+
+      viewModel.feedItem.observe(viewLifecycleOwner, Observer { state ->
+         view.bottom_sheet_compose.setContent {
+            FeatureDetails(state, onAction = {
+               onFeedItemAction(it)
+            })
+         }
+      })
+
+      viewModel.staticFeature.observe(viewLifecycleOwner, Observer { state ->
+         view.bottom_sheet_compose.setContent {
+            MapStaticFeatureDetails(state) { onStaticFeatureAction(it) }
+         }
+      })
+
+      viewModel.geoPackageFeature.observe(viewLifecycleOwner, Observer {
+         view.bottom_sheet_compose.setContent {
+            GeoPackageFeatureDetails(it) { onGeoPackageFeatureAction(it) }
+         }
+      })
+
+      view.user_phone_view.setContent {
+         UserPhoneDetails(viewModel.userPhone) { action ->
+            when (action) {
+               is UserPhoneAction.Call -> onUserCall(action.user)
+               is UserPhoneAction.Message -> onUserMessage(action.user)
+               is UserPhoneAction.Dismiss -> viewModel.selectUserPhone(null)
+            }
+         }
+      }
 
       setHasOptionsMenu(true)
 
@@ -209,30 +239,24 @@ class MapFragment : Fragment(),
       mapView.onCreate(mapState)
       mgrsChip = view.findViewById(R.id.mgrs_chip)
 
-      val featureBottomSheet = view.findViewById<View>(R.id.observation_bottom_sheet)
+      val featureBottomSheet = view.findViewById<View>(R.id.feature_bottom_sheet)
       featureBottomSheetBehavior = BottomSheetBehavior.from(featureBottomSheet)
-      featureBottomSheetBehavior.isFitToContents = true
       featureBottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
-      featureBottomSheetBehavior.addBottomSheetCallback(object : BottomSheetCallback() {
-         // this only is called when the user interacts with the sheet, not when we make it EXPANDED programmatically
-         override fun onStateChanged(view: View, newState: Int) {
+      featureBottomSheetBehavior.addBottomSheetCallback(object : BottomSheetBehavior.BottomSheetCallback() {
+         override fun onStateChanged(bottomSheet: View, newState: Int) {
             if (newState == BottomSheetBehavior.STATE_HIDDEN) {
-               unselectObservation()
+               deselectMarker()
+               viewModel.deselectFeature()
             }
          }
 
-         override fun onSlide(view: View, v: Float) {}
+         override fun onSlide(bottomSheet: View, slideOffset: Float) {}
       })
 
       locationProvider = locationPolicy.bestLocationProvider
       geoPackageCache = GeoPackageCache(GeoPackageFactory.getManager(application))
 
       return view
-   }
-
-   fun unselectObservation() {
-      featureBottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
-      binding?.chosenObservation = null
    }
 
    @OptIn(ExperimentalCoroutinesApi::class)
@@ -249,7 +273,7 @@ class MapFragment : Fragment(),
 
       val isRestore = savedInstanceState != null
       lifecycleScope.launch {
-         repeatOnLifecycle(Lifecycle.State.STARTED) {
+         repeatOnLifecycle(Lifecycle.State.RESUMED) {
             val googleMap = mapView.awaitMap()
             map = googleMap
             updateMapView()
@@ -257,17 +281,19 @@ class MapFragment : Fragment(),
             if (!isRestore) {
                googleMap.uiSettings.isMyLocationButtonEnabled = false
 
-               observations = ObservationMarkerCollection(application, googleMap)
-               locations = LocationMarkerCollection(application, googleMap)
-               feedItems = FeedItemCollection(application, googleMap)
+               feeds = FeedCollection(application, googleMap, 32)
+               observations = FeatureCollection(application, googleMap, 32)
+               locations = FeatureCollection(application, googleMap, 42) {
+                  mutableListOf(LocationAgeTransformation(application, it.timestamp))
+               }
+               staticFeatureCollection = StaticFeatureCollection(application, googleMap)
 
                val sensorManager = requireActivity().getSystemService(Context.SENSOR_SERVICE) as? SensorManager
                straightLineNavigation = StraightLineNavigation(
                   sensorManager,
                   googleMap,
                   requireActivity().findViewById(R.id.straight_line_nav_container),
-                  requireActivity(),
-                  application
+                  requireActivity()
                )
 
                onMapReady(googleMap)
@@ -286,78 +312,60 @@ class MapFragment : Fragment(),
             }
 
             launch {
-               googleMap.infoWindowClickEvents().collect { onInfoWindowClick(it) }
-            }
-
-            launch {
-               googleMap.infoWindowCloseEvents().collect { onInfoWindowClose(it) }
+               googleMap.cameraMoveStartedEvents().collect { onCameraMoveStarted(it) }
             }
 
             launch {
                googleMap.cameraIdleEvents().collect { onCameraIdle() }
             }
 
-            launch {
-               googleMap.cameraEvents().collect { // TODO use non deprecated method when reason code is added
-                  if (it is CameraMoveStartedEvent) {
-                     onCameraMoveStarted(it.reason)
-                  }
-               }
-            }
+            viewModel.observations.observe(viewLifecycleOwner, Observer { annotations ->
+               onObservations(annotations)
+            })
 
-            launch {
-               viewModel.observationEvents.collect { event ->
-                  when(event) {
-                     is ObservationEvent.ObservationCreateEvent -> {
-                        observations?.add(event.observation)
-                     }
-                     is ObservationEvent.ObservationUpdateEvent -> {
-                        observations?.remove(event.observation)
-                        observations?.add(event.observation)
-                     }
-                     is ObservationEvent.ObservationDeleteEvent -> {
-                        observations?.remove(event.observation)
-                     }
-                  }
-               }
-            }
+            viewModel.locations.observe(viewLifecycleOwner, Observer { annotations ->
+               onLocations(annotations)
+            })
 
-            launch {
-               viewModel.locationEvents.collect { event ->
-                  when(event) {
-                     is LocationEvent.LocationCreateEvent -> {
-                        locations?.add(Pair(event.location, event.user))
-                     }
-                     is LocationEvent.LocationUpdateEvent -> {
-                        locations?.remove(Pair(event.location, event.user))
-                        locations?.add(Pair(event.location, event.user))
-                     }
-                  }
-               }
-            }
+            viewModel.featureLayers.observe(viewLifecycleOwner, Observer { layers ->
+               onStaticLayers(layers)
+            })
 
             launch(Dispatchers.IO) {
                while(isActive) {
-                  if (locations?.isVisible == true) {
-                     locations?.refreshMarkerIcons()
-                  }
-
                   delay(MARKER_REFRESH_INTERVAL.toLong())
+
+                  if (locations?.isVisible == true) {
+                     launch(Dispatchers.Main) {
+                        locations?.refreshMarkerIcons()
+                     }
+                  }
                }
             }
          }
       }
    }
 
-   override fun onObservationClick(observation: Observation) {
+   private fun onObservationAction(action: Any) {
+      when(action) {
+         is ObservationAction.Favorite -> onObservationFavorite(action.observation)
+         is ObservationAction.Directions -> onDirections(action.geometry, action.image)
+         is ObservationAction.Location -> onLocation(action.geometry)
+         is ObservationAction.Details -> onObservationDetails(action.id)
+      }
+   }
+
+   private fun onObservationDetails(id: Long) {
+      featureBottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
+
       val intent = Intent(context, ObservationViewActivity::class.java)
-      intent.putExtra(ObservationViewActivity.OBSERVATION_ID, observation.id)
+      intent.putExtra(ObservationViewActivity.OBSERVATION_ID, id)
       intent.putExtra(ObservationViewActivity.INITIAL_LOCATION, map?.cameraPosition?.target)
       intent.putExtra(ObservationViewActivity.INITIAL_ZOOM, map?.cameraPosition?.zoom)
       startActivity(intent)
    }
 
-   override fun onObservationDirections(observation: Observation) {
+   private fun onDirections(geometry: Geometry, icon: Any? = null) {
       featureBottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
 
       // present a dialog to pick between android system map and straight line
@@ -366,7 +374,7 @@ class MapFragment : Fragment(),
          .setItems(R.array.navigationOptions) { _: DialogInterface?, which: Int ->
             when (which) {
                0 -> {
-                  val intent = Intent(Intent.ACTION_VIEW, observation.googleMapsUri)
+                  val intent = Intent(Intent.ACTION_VIEW, geometry.googleMapsUri())
                   startActivity(intent)
                }
                1 -> {
@@ -388,9 +396,9 @@ class MapFragment : Fragment(),
                            .show()
                      }
                   } else {
-                     val centroid = observation.geometry.centroid
+                     val centroid = geometry.centroid
                      val latLng = LatLng(centroid.y, centroid.x)
-                     straightLineNavigation?.startNavigation(location, latLng, ObservationBitmapFactory.bitmap(context, observation))
+                     straightLineNavigation?.startNavigation(location, latLng, icon)
                      featureBottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
                   }
                }
@@ -400,7 +408,105 @@ class MapFragment : Fragment(),
          .show()
    }
 
-   override fun onObservationLocation(observation: Observation) {}
+   private fun onObservationFavorite(observationMap: ObservationMapState) {
+      viewModel.toggleFavorite(observationMap)
+   }
+
+   private fun onLocation(geometry: Geometry) {
+      val point = geometry.centroid
+      val location = CoordinateFormatter(requireContext()).format(LatLng(point.y, point.x))
+
+      val clipboard = requireContext().getSystemService(AppCompatActivity.CLIPBOARD_SERVICE) as? ClipboardManager
+      val clip = ClipData.newPlainText("Observation Location", location)
+      if (clipboard == null || clip == null) return
+      clipboard.setPrimaryClip(clip)
+
+      Snackbar.make(requireActivity().findViewById(android.R.id.content), R.string.location_text_copy_message, Snackbar.LENGTH_SHORT).show()
+   }
+
+   private fun onUserAction(action: Any) {
+      when(action) {
+         is UserAction.Details -> onUserDetails(action.id)
+         is UserAction.Directions -> onDirections(action.geometry)
+         is UserAction.Location -> onLocation(action.geometry)
+         is UserAction.Phone -> onUserPhone(action.user)
+         is UserAction.Email -> onUserEmail(action.user)
+      }
+   }
+
+   private fun onUserDetails(id: Long) {
+      featureBottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
+
+      val profileView = Intent(context, ProfileActivity::class.java)
+      profileView.putExtra(ProfileActivity.USER_ID, id)
+      activity?.startActivity(profileView)
+   }
+
+   private fun onUserEmail(user: UserMapState) {
+      val intent = Intent(Intent.ACTION_VIEW)
+      intent.data = Uri.parse("mailto:" + user.email)
+      startActivity(intent)
+   }
+
+   private fun onUserPhone(user: UserMapState) {
+      featureBottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
+      viewModel.selectUserPhone(user)
+   }
+
+   private fun onUserCall(user: User) {
+      val callIntent = Intent(Intent.ACTION_DIAL)
+      callIntent.data = Uri.parse("tel:" + user.primaryPhone)
+      startActivity(callIntent)
+   }
+
+   private fun onUserMessage(user: User) {
+      val intent = Intent(Intent.ACTION_VIEW)
+      intent.data = Uri.parse("sms:" + user.primaryPhone)
+      startActivity(intent)
+   }
+
+   private fun onFeedItemAction(action: Any) {
+      when(action) {
+         is FeatureAction.Details<*> -> onFeedItemDetails(action.id)
+         is FeatureAction.Location -> onLocation(action.geometry)
+         is FeatureAction.Directions -> onDirections(action.geometry, action.image)
+      }
+   }
+
+   private fun onFeedItemDetails(feedItemId: Any?) {
+      (feedItemId as? FeedItemId)?.let { id ->
+         featureBottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
+
+         val intent = FeedItemActivity.intent(application, id.feedId, id.itemId)
+         startActivity(intent)
+      }
+   }
+
+   private fun onGeoPackageFeatureAction(action: Any) {
+      when(action) {
+         is GeoPackageFeatureAction.Location -> onLocation(action.geometry)
+         is GeoPackageFeatureAction.Directions -> onDirections(action.geometry, action.icon)
+         is GeoPackageFeatureAction.Media -> onGeoPackageMedia(action)
+      }
+   }
+
+   private fun onGeoPackageMedia(action: GeoPackageFeatureAction.Media) {
+      val intent = GeoPackageMediaActivity.intent(
+         application,
+         action.geoPackage,
+         action.mediaTable,
+         action.mediaId
+      )
+
+      startActivity(intent)
+   }
+
+   private fun onStaticFeatureAction(action: Any) {
+      when(action) {
+         is StaticFeatureAction.Location -> onLocation(action.geometry)
+         is StaticFeatureAction.Directions -> onDirections(action.geometry, action.icon)
+      }
+   }
 
    override fun onChanged(location: android.location.Location?) {
       if (location == null) return
@@ -431,7 +537,8 @@ class MapFragment : Fragment(),
       locations?.clear()
       locations = null
 
-      feedItems?.clear()
+      feeds?.clear()
+      feeds = null
 
       searchMarker?.remove()
 
@@ -441,7 +548,7 @@ class MapFragment : Fragment(),
       geoPackageCache.closeAll()
       cacheOverlays.clear()
 
-      staticGeometryCollection.clear()
+      staticFeatureCollection?.clear()
 
       currentUser = null
       map = null
@@ -485,7 +592,6 @@ class MapFragment : Fragment(),
          locations?.clear()
       }
 
-      UserHelper.getInstance(context).addListener(this)
       CacheProvider.getInstance(context).registerCacheOverlayListener(this)
 
       zoomToLocationButton.setOnClickListener { zoomToLocation() }
@@ -514,7 +620,7 @@ class MapFragment : Fragment(),
       }
       (activity as AppCompatActivity?)?.supportActionBar?.subtitle = getFilterTitle()
 
-      currentEvent?.remoteId?.let {
+      currentEvent?.id?.let {
          viewModel.setEvent(it)
       }
    }
@@ -539,6 +645,14 @@ class MapFragment : Fragment(),
 
          map?.animateCamera(CameraUpdateFactory.newCameraPosition(position))
       }
+   }
+
+   private fun onObservations(annotations: List<MapAnnotation<Long>>) {
+      observations?.add(annotations)
+   }
+
+   private fun onLocations(annotations: List<MapAnnotation<Long>>) {
+      locations?.add(annotations)
    }
 
    private fun updateReportLocationButton() {
@@ -710,13 +824,12 @@ class MapFragment : Fragment(),
 
       mapView.onPause()
 
-      UserHelper.getInstance(context).removeListener(this)
-
       observations?.clear()
       locations?.clear()
-      feedItems?.clear()
+      feeds?.clear()
+      staticFeatureCollection?.clear()
 
-      feeds.values.forEach {
+      feedLiveData.values.forEach {
          it.removeObservers(viewLifecycleOwner)
       }
 
@@ -729,22 +842,24 @@ class MapFragment : Fragment(),
       }
    }
 
-   private fun onFeedItems(feeds: Map<String, LiveData<FeedWithItems>>) {
-      feeds.values.forEach {
+   private fun onFeedItems(feedLiveData: Map<String, LiveData<FeedState>>) {
+      feedLiveData.values.forEach {
          it.removeObservers(viewLifecycleOwner)
       }
 
-      this.feeds = feeds
-      feeds.values.forEach {
-         it.observe(viewLifecycleOwner, Observer { items: FeedWithItems? ->
+      this.feeds?.clear()
+      this.feedLiveData = feedLiveData
+
+      feedLiveData.values.forEach {
+         it.observe(viewLifecycleOwner, Observer { items: FeedState? ->
             onFeedItems(items)
          })
       }
    }
 
-   private fun onFeedItems(items: FeedWithItems?) {
+   private fun onFeedItems(items: FeedState?) {
       if (items != null) {
-         feedItems?.setItems(items)
+         feeds?.add(items)
       }
    }
 
@@ -821,72 +936,60 @@ class MapFragment : Fragment(),
       }
    }
 
-   override fun onUserCreated(user: User) {}
-   override fun onUserUpdated(user: User) {}
-   override fun onUserIconUpdated(user: User) {
-      Handler(Looper.getMainLooper()).post {
-         locations?.refresh(Pair(Location(), user))
-      }
+   private fun showObservationBottomSheet(annotation: MapAnnotation<Long>) {
+      viewModel.selectObservation(annotation.id)
+      featureBottomSheetBehavior.state = BottomSheetBehavior.STATE_COLLAPSED
    }
 
-   override fun onUserAvatarUpdated(user: User) {}
-
-   private fun onInfoWindowClick(marker: Marker) {
-      locations?.pointForMarker(marker)?.let {
-         val profileView = Intent(context, ProfileActivity::class.java)
-         profileView.putExtra(ProfileActivity.USER_ID, it.second?.remoteId)
-         startActivity(profileView)
-         return
-      }
-
-      feedItems?.itemForMarker(marker)?.let {
-         val intent = FeedItemActivity.intent(application, it)
-         startActivity(intent)
-         return
-      }
+   private fun showUserBottomSheet(annotation: MapAnnotation<Long>) {
+      viewModel.selectUser(annotation.id)
+      featureBottomSheetBehavior.state = BottomSheetBehavior.STATE_COLLAPSED
    }
 
-   private fun onInfoWindowClose(marker: Marker) {
-      feedItems?.onInfoWindowClose(marker)
+   private fun showFeedItemBottomSheet(annotation: MapAnnotation<String>) {
+      viewModel.selectFeedItem(FeedItemId(annotation.layer, annotation.id))
+      featureBottomSheetBehavior.state = BottomSheetBehavior.STATE_COLLAPSED
    }
 
-   private fun showObservationBottomSheet(observation: Observation?) {
-      binding?.chosenObservation = observation
-      binding?.observationBottomSheet?.requestLayout()
-      binding?.observationBottomSheet?.observationActionListener = this
-      featureBottomSheetBehavior.state = BottomSheetBehavior.STATE_EXPANDED
+   private fun showStaticFeatureBottomSheet(annotation: MapAnnotation<Long>) {
+      viewModel.selectStaticFeature(StaticFeatureId(annotation.layer.toLong(), annotation.id))
+      featureBottomSheetBehavior.state = BottomSheetBehavior.STATE_COLLAPSED
+   }
+
+   private fun showGeopackageBottomSheet(featureMap: GeoPackageFeatureMapState) {
+      viewModel.selectGeoPackageFeature(featureMap)
+      featureBottomSheetBehavior.state = BottomSheetBehavior.STATE_COLLAPSED
    }
 
    private fun onMarkerClick(marker: Marker): Boolean {
       hideKeyboard()
-      observations?.offMarkerClick()
+      deselectMarker()
 
-      // search marker
       if (searchMarker?.id == marker.id) {
          searchMarker?.showInfoWindow()
          return true
       }
 
-      // You can only have one marker click listener per map.
-      // Lets listen here and shell out the click event to all
-      // my marker collections. Each one need to handle
-      // gracefully if it does not actually contain the marker
-      if (observations?.onMarkerClick(marker) == true) {
-         observations?.pointForMarker(marker)?.let {
-            showObservationBottomSheet(it)
-         }
+      observations?.mapAnnotation(marker, "observation")?.let { annotation ->
+         showObservationBottomSheet(annotation)
          return true
       }
 
-      if (locations?.onMarkerClick(marker) == true) {
+      locations?.mapAnnotation(marker, "location")?.let { annotation ->
+         showUserBottomSheet(annotation)
          return true
       }
 
-      if (feedItems?.onMarkerClick(marker) == true) {
+      staticFeatureCollection?.onMarkerClick(marker)?.let { annotation ->
+         showStaticFeatureBottomSheet(annotation)
          return true
       }
 
-      // static layer
+      feeds?.onMarkerClick(marker)?.let { annotation ->
+         showFeedItemBottomSheet(annotation)
+         return true
+      }
+
       val snippet = marker.snippet
       if (snippet != null) {
          val markerInfoWindow = LayoutInflater.from(activity).inflate(R.layout.static_feature_infowindow, null, false)
@@ -898,43 +1001,44 @@ class MapFragment : Fragment(),
             .show()
       }
 
+      featureBottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
+
       return true
    }
 
    private fun onMapClick(latLng: LatLng) {
       hideKeyboard()
+      deselectMarker()
 
+      observations?.onMapClick(latLng)?.let {
+         showObservationBottomSheet(it)
+         return
+      }
+
+      staticFeatureCollection?.onMapClick(latLng)?.let {
+         showStaticFeatureBottomSheet(it)
+         return
+      }
+
+      val features = cacheOverlays.values.flatMap { overlay ->
+         overlay?.getFeaturesNearClick(latLng, mapView, map, application) ?: emptyList()
+      }
+
+      features.firstOrNull()?.let { feature ->
+         feature.geometry?.let { map?.center(it) }
+         showGeopackageBottomSheet(feature)
+
+         return
+      }
+
+      featureBottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
+   }
+
+   private fun deselectMarker() {
       locations?.offMarkerClick()
       observations?.offMarkerClick()
-
-      unselectObservation()
-      observations?.onMapClick(latLng)
-      staticGeometryCollection.onMapClick(map, latLng, activity)
-
-      if (cacheOverlays.isNotEmpty()) {
-         val clickMessage = StringBuilder()
-         for (cacheOverlay in cacheOverlays.values) {
-            val message = cacheOverlay?.onMapClick(latLng, mapView, map)
-            if (message != null) {
-               if (clickMessage.isNotEmpty()) {
-                  clickMessage.append("\n\n")
-               }
-               clickMessage.append(message)
-            }
-         }
-
-         if (clickMessage.isNotEmpty()) {
-            val text = SpannableString(clickMessage.toString())
-            Linkify.addLinks(text, Linkify.WEB_URLS)
-            val view = layoutInflater.inflate(R.layout.view_feature_details, null)
-            val textView = view.findViewById<TextView>(R.id.text)
-            textView.text = text
-            AlertDialog.Builder(requireActivity())
-               .setView(view)
-               .setPositiveButton(android.R.string.ok, null)
-               .show()
-         }
-      }
+      feeds?.offMarkerClick()
+      staticFeatureCollection?.offMarkerClick()
    }
 
    private fun onMapLongClick(point: LatLng) {
@@ -1025,6 +1129,13 @@ class MapFragment : Fragment(),
       }
    }
 
+   private fun onStaticLayers(layers: Map<Long, List<MapAnnotation<Long>>>) {
+      staticFeatureCollection?.clear()
+      layers.forEach { (id, annotations) ->
+         staticFeatureCollection?.add(id.toString(), annotations)
+      }
+   }
+
    override fun onCacheOverlay(overlays: List<CacheOverlay>) {
       // Add all overlays that are in the preferences
       val currentEvent = EventHelper.getInstance(activity).currentEvent
@@ -1039,15 +1150,9 @@ class MapFragment : Fragment(),
       // Reset the bounding box for newly added caches
       cacheBoundingBox = null
       for (cacheOverlay in cacheOverlays) {
-         if (cacheOverlay is StaticFeatureCacheOverlay) {
-            staticGeometryCollection.removeLayer(cacheOverlay.id)
-         }
-
          // If this cache overlay potentially replaced by a new version
-         if (cacheOverlay.isAdded) {
-            if (cacheOverlay.type == CacheOverlayType.GEOPACKAGE) {
-               geoPackageCache.close(cacheOverlay.name)
-            }
+         if (cacheOverlay.isAdded && cacheOverlay.type == CacheOverlayType.GEOPACKAGE) {
+            geoPackageCache.close(cacheOverlay.name)
          }
 
          // The user has asked for this overlay
@@ -1056,7 +1161,6 @@ class MapFragment : Fragment(),
                is URLCacheOverlay -> addURLCacheOverlay(enabledCacheOverlays, cacheOverlay)
                is GeoPackageCacheOverlay -> addGeoPackageCacheOverlay(enabledCacheOverlays, enabledGeoPackages, cacheOverlay)
                is XYZDirectoryCacheOverlay -> addXYZDirectoryCacheOverlay(enabledCacheOverlays, cacheOverlay)
-               is StaticFeatureCacheOverlay -> addStaticFeatureOverlay(cacheOverlay)
             }
          }
          cacheOverlay.isAdded = false
@@ -1125,33 +1229,6 @@ class MapFragment : Fragment(),
             // Add the cache overlay to the enabled cache overlays
             enabledCacheOverlays[urlCacheOverlay.cacheName] = urlCacheOverlay
          }
-      }
-   }
-
-   private fun addStaticFeatureOverlay(overlay: StaticFeatureCacheOverlay) {
-      lifecycleScope.launch {
-         viewModel.getStaticFeatureEvents(overlay.id)
-            .flowWithLifecycle(lifecycle, Lifecycle.State.STARTED)
-            .flowOn(Dispatchers.IO)
-            .collect { event ->
-               when(event) {
-                  is LayerRepository.StaticFeatureEvent.Point -> {
-                     map?.addMarker(event.options)?.let {
-                        staticGeometryCollection.addMarker(event.layerId, it)
-                     }
-                  }
-                  is LayerRepository.StaticFeatureEvent.Polyline -> {
-                     map?.addPolyline(event.options)?.let {
-                        staticGeometryCollection.addPolyline(event.layerId, it, event.content)
-                     }
-                  }
-                  is LayerRepository.StaticFeatureEvent.Polygon -> {
-                     map?.addPolygon(event.options)?.let {
-                        staticGeometryCollection.addPolygon(event.layerId, it, event.content)
-                     }
-                  }
-               }
-            }
       }
    }
 
@@ -1316,6 +1393,7 @@ class MapFragment : Fragment(),
             cacheOverlays.remove(linkedTileTable.cacheName)
          }
       }
+
       if (cacheOverlay == null) {
          // Add the features to the map
          val featureDao = geoPackage.getFeatureDao(featureTableCacheOverlay.name)
@@ -1326,17 +1404,17 @@ class MapFragment : Fragment(),
                activity, geoPackage, featureDao,
                resources.displayMetrics.density
             )
-            val maxFeaturesPerTile = if (featureDao.geometryType == GeometryType.POINT) {
+
+            featureTiles.maxFeaturesPerTile = if (featureDao.geometryType == GeometryType.POINT) {
                resources.getInteger(R.integer.geopackage_feature_tiles_max_points_per_tile)
             } else {
                resources.getInteger(R.integer.geopackage_feature_tiles_max_features_per_tile)
             }
 
-            featureTiles.maxFeaturesPerTile = maxFeaturesPerTile
-            val numberFeaturesTile = NumberFeaturesTile(activity)
             // Adjust the max features number tile draw paint attributes here as needed to
             // change how tiles are drawn when more than the max features exist in a tile
-            featureTiles.maxFeaturesTileDraw = numberFeaturesTile
+            featureTiles.maxFeaturesTileDraw = NumberFeaturesTile(activity)
+
             // Adjust the feature tiles draw paint attributes here as needed to change how
             // features are drawn on tiles
             val featureOverlay = FeatureOverlay(featureTiles)
@@ -1435,8 +1513,6 @@ class MapFragment : Fragment(),
       val xyz = "${position?.target?.longitude?.toString()},${position?.target?.latitude?.toString()},${position?.zoom?.toString()}"
       preferences.edit().putString(resources.getString(R.string.recentMapXYZKey), xyz).apply()
    }
-
-   override fun onError(error: Throwable) {}
 
    private fun getFilterTitle(): String {
       val timeFilterId = preferences.getInt(resources.getString(R.string.activeTimeFilterKey), resources.getInteger(R.integer.time_filter_last_month))

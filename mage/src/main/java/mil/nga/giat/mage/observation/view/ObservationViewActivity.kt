@@ -26,6 +26,7 @@ import mil.nga.giat.mage.sdk.datastore.observation.Attachment
 import mil.nga.giat.mage.sdk.datastore.user.Permission
 import mil.nga.giat.mage.sdk.datastore.user.User
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper
+import mil.nga.giat.mage.utils.googleMapsUri
 
 @AndroidEntryPoint
 class ObservationViewActivity : AppCompatActivity() {
@@ -125,7 +126,7 @@ class ObservationViewActivity : AppCompatActivity() {
 
   private fun onDirections() {
     val observation = viewModel.observation.value
-    val intent = Intent(Intent.ACTION_VIEW, observation?.googleMapsUri)
+    val intent = Intent(Intent.ACTION_VIEW, observation?.geometry?.googleMapsUri())
     startActivity(intent)
   }
 

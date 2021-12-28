@@ -75,7 +75,7 @@ class UserFeedFragment : Fragment() {
 
    private fun userClick(user: User) {
       val profileView = Intent(context, ProfileActivity::class.java)
-      profileView.putExtra(ProfileActivity.USER_ID, user.remoteId)
+      profileView.putExtra(ProfileActivity.USER_ID, user.id)
       activity?.startActivity(profileView)
    }
 }

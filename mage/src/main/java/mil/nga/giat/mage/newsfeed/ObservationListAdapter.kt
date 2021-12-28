@@ -2,7 +2,6 @@ package mil.nga.giat.mage.newsfeed
 
 import android.content.Context
 import android.database.Cursor
-import android.graphics.Bitmap
 import android.graphics.PorterDuff
 import android.os.AsyncTask
 import android.util.Log
@@ -15,14 +14,16 @@ import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.DrawableCompat
 import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.Glide
 import com.google.android.gms.maps.model.LatLng
 import com.j256.ormlite.android.AndroidDatabaseResults
 import com.j256.ormlite.stmt.PreparedQuery
 import mil.nga.giat.mage.R
 import mil.nga.giat.mage.coordinate.CoordinateFormatter
-import mil.nga.giat.mage.map.marker.ObservationBitmapFactory
+import mil.nga.giat.mage.map.annotation.MapAnnotation
 import mil.nga.giat.mage.observation.AttachmentGallery
 import mil.nga.giat.mage.sdk.datastore.observation.*
+import mil.nga.giat.mage.sdk.datastore.user.EventHelper
 import mil.nga.giat.mage.sdk.datastore.user.User
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper
 import mil.nga.giat.mage.sdk.exceptions.ObservationException
@@ -68,7 +69,6 @@ class ObservationListAdapter(
       val favoriteButton: ImageView = view.findViewById(R.id.favorite_button)
       val favoriteCount: TextView = view.findViewById(R.id.favorite_count)
       val directionsButton: View = view.findViewById(R.id.directions_button)
-      var iconTask: IconTask? = null
       var userTask: UserTask? = null
       var primaryPropertyTask: PropertyTask? = null
       var secondaryPropertyTask: PropertyTask? = null
@@ -115,9 +115,6 @@ class ObservationListAdapter(
 
    override fun onViewRecycled(holder: RecyclerView.ViewHolder) {
       if (holder is ObservationViewHolder) {
-         if (holder.iconTask != null) {
-            holder.iconTask?.cancel(false)
-         }
          if (holder.userTask != null) {
             holder.userTask?.cancel(false)
          }
@@ -144,15 +141,18 @@ class ObservationListAdapter(
          DrawableCompat.setTintMode(markerPlaceholder, PorterDuff.Mode.SRC_IN)
          vh.markerView.setImageDrawable(markerPlaceholder)
 
-         vh.iconTask = IconTask(vh.markerView)
-         vh.iconTask?.execute(observation)
+         Glide.with(context)
+            .asBitmap()
+            .load(MapAnnotation.fromObservation(observation, context))
+            .error(R.drawable.default_marker)
+            .into(vh.markerView)
 
          vh.primaryView.text = ""
-         vh.primaryPropertyTask = PropertyTask(PropertyTask.Type.PRIMARY, vh.primaryView)
+         vh.primaryPropertyTask = PropertyTask(context, PropertyTask.Type.PRIMARY, vh.primaryView)
          vh.primaryPropertyTask?.execute(observation)
 
          vh.secondaryView.text = ""
-         vh.secondaryPropertyTask = PropertyTask(PropertyTask.Type.SECONDARY, vh.secondaryView)
+         vh.secondaryPropertyTask = PropertyTask(context, PropertyTask.Type.SECONDARY, vh.secondaryView)
          vh.secondaryPropertyTask?.execute(observation)
 
          vh.userView.text = ""
@@ -269,23 +269,6 @@ class ObservationListAdapter(
       observationActionListener?.onObservationLocation(observation)
    }
 
-   internal inner class IconTask(imageView: ImageView) : AsyncTask<Observation?, Void?, Bitmap>() {
-      private val reference: WeakReference<ImageView> = WeakReference(imageView)
-
-      override fun doInBackground(vararg observations: Observation?): Bitmap {
-         return ObservationBitmapFactory.bitmap(context, observations[0])
-      }
-
-      override fun onPostExecute(b: Bitmap) {
-         val bitmap = if (isCancelled) null else b
-
-         val imageView = reference.get()
-         if (imageView != null && bitmap != null) {
-            imageView.setImageBitmap(bitmap)
-         }
-      }
-   }
-
    internal inner class UserTask(textView: TextView) : AsyncTask<Observation?, Void?, User?>() {
       private val reference: WeakReference<TextView> = WeakReference(textView)
 
@@ -313,13 +296,19 @@ class ObservationListAdapter(
       }
    }
 
-   private class PropertyTask(private val type: Type, textView: TextView) : AsyncTask<Observation?, Void?, ObservationProperty>() {
+   private class PropertyTask(private val context: Context, private val type: Type, textView: TextView) : AsyncTask<Observation?, Void?, ObservationProperty>() {
       enum class Type { PRIMARY, SECONDARY }
 
       private val reference: WeakReference<TextView> = WeakReference(textView)
 
       override fun doInBackground(vararg observations: Observation?): ObservationProperty? {
-         return if (type == Type.PRIMARY) observations[0]?.primaryFeedField else observations[0]?.secondaryFeedField
+         val field = observations[0]?.forms?.firstOrNull()?.let { observationForm ->
+            val form = EventHelper.getInstance(context).getForm(observationForm.formId)
+            val fieldName = if (type == Type.PRIMARY) form.primaryFeedField else form.secondaryFeedField
+            observationForm.properties.find { it.key == fieldName }
+         }
+
+         return field
       }
 
       override fun onPostExecute(p: ObservationProperty?) {

@@ -113,7 +113,7 @@ public class MapPreferencesActivity extends AppCompatActivity {
 
 		private void onFeeds(List<Feed> feeds) {
 			PreferenceScreen screen = getPreferenceScreen();
-			Set<String> enabledFeeds = mapLayerPreferences.getEnabledFeeds(event.getRemoteId());
+			Set<String> enabledFeeds = mapLayerPreferences.getEnabledFeeds(event.getId());
 
 			for (Feed feed : feeds) {
 				PreferenceCategory category = (PreferenceCategory) screen.getPreference(screen.getPreferenceCount() - 1);
@@ -127,14 +127,14 @@ public class MapPreferencesActivity extends AppCompatActivity {
 		}
 
 		private void onFeedClick(Feed feed, boolean on) {
-			Set<String> feeds = mapLayerPreferences.getEnabledFeeds(event.getRemoteId());
+			Set<String> feeds = mapLayerPreferences.getEnabledFeeds(event.getId());
 			if (on) {
 				feeds.add(feed.getId());
 			} else {
 				feeds.remove(feed.getId());
 			}
 
-			mapLayerPreferences.setEnabledFeeds(event.getRemoteId(), feeds);
+			mapLayerPreferences.setEnabledFeeds(event.getId(), feeds);
 		}
 	}
 

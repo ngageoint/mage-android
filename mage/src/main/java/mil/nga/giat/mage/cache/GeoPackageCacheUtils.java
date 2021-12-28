@@ -6,8 +6,8 @@ import android.util.Log;
 
 import java.io.File;
 
+import mil.nga.geopackage.GeoPackageFactory;
 import mil.nga.geopackage.GeoPackageManager;
-import mil.nga.geopackage.factory.GeoPackageFactory;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
 
 /**

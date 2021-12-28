@@ -58,8 +58,10 @@ class EventActivity : AppCompatActivity() {
         }
 
         viewManager = LinearLayoutManager(this)
+
+
         val forms = event?.forms?.mapNotNull {
-            Form.fromJson(it?.asJsonObject)
+            Form.fromJson(it.json)
         } ?: emptyList()
 
         viewAdapter = FormAdapter(forms, { onFormClicked(it) })

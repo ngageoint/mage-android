@@ -36,6 +36,7 @@ import mil.nga.giat.mage.sdk.Compatibility
 import mil.nga.giat.mage.sdk.datastore.observation.Attachment
 import mil.nga.giat.mage.ui.theme.MageTheme
 import mil.nga.giat.mage.ui.theme.importantBackground
+import mil.nga.giat.mage.ui.theme.linkColor
 import mil.nga.giat.mage.ui.theme.topAppBarBackground
 import mil.nga.giat.mage.utils.DateFormatFactory
 import java.util.*
@@ -66,7 +67,7 @@ fun ObservationViewScreen(
   MageTheme {
     Scaffold(
       topBar = {
-        ObservationViewTopBar() { onClose?.invoke() }
+        ObservationViewTopBar { onClose?.invoke() }
       },
       content = {
         Column {
@@ -387,7 +388,7 @@ fun ObservationViewHeaderContent(
         ) {
           val mapView = rememberMapViewWithLifecycle()
           val mapState = MapState(observationState.geometryFieldState.defaultMapCenter, observationState.geometryFieldState.defaultMapZoom)
-          MapViewContent(mapView, formState, location, mapState)
+          MapViewContent(mapView, mapState, formState, location)
         }
 
         val locationText = CoordinateFormatter(LocalContext.current).format(location.centroidLatLng)
@@ -401,7 +402,7 @@ fun ObservationViewHeaderContent(
           Icon(
             imageVector = Icons.Default.GpsFixed,
             contentDescription = "Location",
-            tint = MaterialTheme.colors.primary,
+            tint = MaterialTheme.colors.linkColor,
             modifier = Modifier
               .height(24.dp)
               .width(24.dp)
@@ -411,7 +412,7 @@ fun ObservationViewHeaderContent(
           CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.high) {
             Text(
               text = locationText,
-              color = MaterialTheme.colors.primary,
+              color = MaterialTheme.colors.linkColor,
               style = MaterialTheme.typography.body2,
               modifier = Modifier.padding(end = 8.dp)
             )

@@ -34,14 +34,15 @@ import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 import androidx.core.graphics.ColorUtils;
 
+import com.bumptech.glide.Glide;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.SupportMapFragment;
-import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.MapStyleOptions;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 
@@ -62,9 +63,11 @@ import mil.nga.giat.mage.MageApplication;
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.glide.GlideApp;
 import mil.nga.giat.mage.glide.model.Avatar;
+import mil.nga.giat.mage.glide.target.MarkerTarget;
+import mil.nga.giat.mage.glide.transform.LocationAgeTransformation;
 import mil.nga.giat.mage.login.LoginActivity;
 import mil.nga.giat.mage.map.MapAndViewProvider;
-import mil.nga.giat.mage.map.marker.LocationBitmapFactory;
+import mil.nga.giat.mage.map.annotation.MapAnnotation;
 import mil.nga.giat.mage.sdk.datastore.location.Location;
 import mil.nga.giat.mage.sdk.datastore.location.LocationHelper;
 import mil.nga.giat.mage.sdk.datastore.location.LocationProperty;
@@ -106,7 +109,6 @@ public class ProfileActivity extends AppCompatActivity implements MapAndViewProv
 	
 	private LatLng latLng = new LatLng(0, 0);
 	private String coordinate;
-	private BitmapDescriptor icon;
 	BottomSheetDialog profileActionDialog;
 	BottomSheetDialog avatarActionsDialog;
 
@@ -124,14 +126,13 @@ public class ProfileActivity extends AppCompatActivity implements MapAndViewProv
 
 		final Context context = getApplicationContext();
 
-		String userToLoad = getIntent().getStringExtra(USER_ID);
+		long userId = getIntent().getLongExtra(USER_ID, -1);
 		try {
-			user = UserHelper.getInstance(context).readCurrentUser();
-
-			if (userToLoad != null) {
-				user = UserHelper.getInstance(context).read(userToLoad);
+			if (userId != -1) {
+				user = UserHelper.getInstance(context).read(userId);
 				isCurrentUser = false;
 			} else {
+				user = UserHelper.getInstance(context).readCurrentUser();
 				isCurrentUser = true;
 			}
 
@@ -141,7 +142,6 @@ public class ProfileActivity extends AppCompatActivity implements MapAndViewProv
 				location = locations.get(0);
 				Point point = GeometryUtils.getCentroid(location.getGeometry());
 				latLng = new LatLng(point.getY(), point.getX());
-				icon = LocationBitmapFactory.bitmapDescriptor(context, location, user);
 			}
 		} catch (UserException ue) {
 			Log.e(LOG_NAME, "Problem finding user.", ue);
@@ -159,12 +159,9 @@ public class ProfileActivity extends AppCompatActivity implements MapAndViewProv
 
 		phone = findViewById(R.id.phone);
 		View phoneLayout = findViewById(R.id.phone_layout);
-		phoneLayout.setOnLongClickListener(new View.OnLongClickListener() {
-			@Override
-			public boolean onLongClick(View v) {
-				onPhoneLongCLick(v);
-				return true;
-			}
+		phoneLayout.setOnLongClickListener(v -> {
+			onPhoneLongCLick(v);
+			return true;
 		});
 
 		if (StringUtils.isNotBlank(user.getPrimaryPhone())) {
@@ -359,6 +356,8 @@ public class ProfileActivity extends AppCompatActivity implements MapAndViewProv
 
 	@Override
 	public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
+		super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
 		switch (requestCode) {
 			case PERMISSIONS_REQUEST_CAMERA: {
 				Map<String, Integer> grants = new HashMap<>();
@@ -370,7 +369,7 @@ public class ProfileActivity extends AppCompatActivity implements MapAndViewProv
 				}
 
 				if (grants.get(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED &&
-					grants.get(Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
+						grants.get(Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
 					launchCameraIntent();
 				} else if ((!ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.CAMERA) && grants.get(Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) ||
 						(!ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) && grants.get(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) ||
@@ -433,17 +432,30 @@ public class ProfileActivity extends AppCompatActivity implements MapAndViewProv
 			map.setMapStyle(MapStyleOptions.loadRawResourceStyle(getApplicationContext(), R.raw.map_theme_night));
 		}
 
-
-		if (latLng != null && icon != null) {
-			map.addMarker(new MarkerOptions()
+		if (latLng != null) {
+			Marker marker = map.addMarker(new MarkerOptions()
 				.position(latLng)
-				.icon(icon));
+				.visible(false));
+
+			if (location != null) {
+				marker.setTag(location.getId());
+			}
+
+			LocationAgeTransformation transformation = new LocationAgeTransformation(application, location.getTimestamp().getTime());
+
+			MapAnnotation feature = MapAnnotation.Companion.fromUser(user, location);
+			Glide.with(this)
+					.asBitmap()
+					.load(feature)
+					.transform(transformation)
+					.error(R.drawable.default_marker)
+					.into(new MarkerTarget(getApplicationContext(), marker, 32, 32, true));
 
 			LocationProperty accuracyProperty = location.getPropertiesMap().get("accuracy");
 			if (accuracyProperty != null) {
 				float accuracy = Float.parseFloat(accuracyProperty.getValue().toString());
 
-				int color = LocationBitmapFactory.locationColor(getApplicationContext(), location);
+				int color = transformation.locationColor();
 				map.addCircle(new CircleOptions()
 					.center(latLng)
 					.radius(accuracy)

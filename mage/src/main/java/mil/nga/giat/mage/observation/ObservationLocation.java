@@ -18,6 +18,7 @@ import java.util.List;
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.sdk.datastore.observation.Observation;
 import mil.nga.giat.mage.sdk.utils.GeometryUtility;
+import mil.nga.proj.ProjectionConstants;
 import mil.nga.sf.CompoundCurve;
 import mil.nga.sf.Geometry;
 import mil.nga.sf.GeometryCollection;
@@ -30,7 +31,6 @@ import mil.nga.sf.MultiPolygon;
 import mil.nga.sf.Point;
 import mil.nga.sf.Polygon;
 import mil.nga.sf.PolyhedralSurface;
-import mil.nga.sf.proj.ProjectionConstants;
 import mil.nga.sf.util.GeometryEnvelopeBuilder;
 import mil.nga.sf.util.GeometryUtils;
 
