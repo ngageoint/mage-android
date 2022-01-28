@@ -47,11 +47,11 @@ open class SignupViewModel @Inject constructor(
    protected val _signupState = MutableLiveData<SignupState>()
    val signupState: LiveData<SignupState> = _signupState
 
-   protected val _signupStatus = MutableLiveData<SignupStatus>()
-   val signupStatus: LiveData<SignupStatus> = _signupStatus
+   protected val _signupStatus = MutableLiveData<SignupStatus?>()
+   val signupStatus: LiveData<SignupStatus?> = _signupStatus
 
-   private val _captcha = MutableLiveData<String>()
-   val captcha: LiveData<String> = _captcha
+   private val _captcha = MutableLiveData<String?>()
+   val captcha: LiveData<String?> = _captcha
 
    private var captchaToken: String? = ""
 
