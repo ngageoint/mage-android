@@ -1,13 +1,13 @@
 package mil.nga.giat.mage.form.defaults
 
-import android.content.Context
+import android.app.Application
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import com.google.gson.JsonObject
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
-import mil.nga.giat.mage.form.*
+import mil.nga.giat.mage.form.Form
+import mil.nga.giat.mage.form.FormField
+import mil.nga.giat.mage.form.FormState
 import mil.nga.giat.mage.form.field.*
 import mil.nga.giat.mage.sdk.datastore.user.EventHelper
 import mil.nga.giat.mage.sdk.exceptions.EventException
@@ -15,29 +15,28 @@ import javax.inject.Inject
 
 @HiltViewModel
 class FormDefaultViewModel @Inject constructor(
-  @ApplicationContext val context: Context,
+  val application: Application,
 ) : ViewModel() {
 
   private val _formState = MutableLiveData<FormState?>()
   val formState: LiveData<FormState?> = _formState
 
-  private var formJson: JsonObject? = null
+  private var formJson: String? = null
   private var formPreferences: FormPreferences? = null
 
   fun setForm(eventId: Long, formId: Long) {
-    formPreferences = FormPreferences(context, eventId, formId)
+    formPreferences = FormPreferences(application, eventId, formId)
 
     // TODO get this in background coroutine
-    val eventHelper: EventHelper = EventHelper.getInstance(context)
+    val eventHelper: EventHelper = EventHelper.getInstance(application)
     try {
       val event = eventHelper.read(eventId)
-      formJson = event?.formMap?.get(formId)
-
+      formJson = eventHelper.getForm(formId)?.json
       Form.fromJson(formJson)?.let { form ->
-        val defaultForm = FormPreferences(context, event.id, form.id).getDefaults()
+        val defaultForm = FormPreferences(application, event.id, form.id).getDefaults()
         _formState.value = FormState.fromForm(eventId = event.remoteId, form = form, defaultForm = defaultForm)
-
       }
+
     } catch (e: EventException) { }
   }
 

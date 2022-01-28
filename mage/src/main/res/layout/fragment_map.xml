@@ -1,194 +1,205 @@
-<layout
+<androidx.coordinatorlayout.widget.CoordinatorLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto">
-    
-    <data>
-        <import type="android.view.View"/>
-        <variable
-            name="chosenObservation"
-            type="mil.nga.giat.mage.sdk.datastore.observation.Observation"/>
-    </data>
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/coordinator_layout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
 
-    <androidx.coordinatorlayout.widget.CoordinatorLayout
-        android:id="@+id/coordinator_layout"
+    <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-        <RelativeLayout
+        <com.google.android.gms.maps.MapView
+            android:id="@+id/mapView"
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
+            android:layout_height="match_parent"
+            app:uiCompass="false"
+            app:uiRotateGestures="true"
+            app:uiTiltGestures="true"/>
 
-            <com.google.android.gms.maps.MapView
-                android:id="@+id/mapView"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                app:uiCompass="false"
-                app:uiRotateGestures="true"
-                app:uiTiltGestures="true"/>
+        <RelativeLayout
+            android:id="@+id/search_layout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="80dp"
+            android:layout_marginRight="80dp"
+            android:layout_marginTop="20dp"
+            android:orientation="horizontal"
+            android:visibility="gone">
 
-            <RelativeLayout
-                android:id="@+id/search_layout"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginLeft="80dp"
-                android:layout_marginRight="80dp"
-                android:layout_marginTop="20dp"
-                android:orientation="horizontal"
-                android:visibility="gone">
+                <LinearLayout
+                    android:id="@+id/search_container"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:background="@drawable/map_search_foreground">
 
-                    <LinearLayout
-                        android:id="@+id/search_container"
+                    <androidx.appcompat.widget.SearchView
+                        android:id="@+id/search_view"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal"
-                        android:background="@drawable/map_search_foreground">
+                        app:queryHint="Search address"
+                        app:searchIcon="@null"
+                        android:textColor="#A8000000"
+                        android:imeActionLabel="Search"
+                        android:imeOptions="actionSearch"
+                        android:inputType="text" />
 
-                        <androidx.appcompat.widget.SearchView
-                            android:id="@+id/search_view"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            app:queryHint="Search address"
-                            app:searchIcon="@null"
-                            android:textColor="#A8000000"
-                            android:imeActionLabel="Search"
-                            android:imeOptions="actionSearch"
-                            android:inputType="text" />
-
-                    </LinearLayout>
-
-            </RelativeLayout>
+                </LinearLayout>
 
         </RelativeLayout>
 
-        <com.google.android.material.floatingactionbutton.FloatingActionButton
-            android:id="@+id/map_search_button"
+    </RelativeLayout>
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/map_search_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|start"
+        android:layout_marginTop="16dp"
+        android:layout_marginBottom="16dp"
+        android:layout_marginStart="16dp"
+        app:tint="@color/toggle_button_selected"
+        app:backgroundTint="@color/toggle_button"
+        android:theme="@style/AppTheme.AlternateFAB"
+        android:src="@drawable/ic_search_black_24dp" />
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/map_settings"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|end"
+        android:layout_margin="16dp"
+        app:pressedTranslationZ="0dp"
+        android:theme="@style/AppTheme.AlternateFAB"
+        android:src="@drawable/ic_layers_black_24dp" />
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/available_layer_downloads"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|end"
+        android:layout_marginTop="12dp"
+        android:layout_marginEnd="10dp"
+        app:fabCustomSize="24dp"
+        app:maxImageSize="14dp"
+        android:padding="32dp"
+        android:scaleType="fitXY"
+        app:tint="@color/md_white_1000"
+        android:src="@drawable/baseline_cloud_download_white_24" />
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/zoom_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|start"
+        android:layout_marginTop="88dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginBottom="16dp"
+        app:backgroundTint="@color/toggle_button"
+        android:tint="@color/toggle_button_selected"
+        android:theme="@style/AppTheme.AlternateFAB"
+        android:src="@drawable/ic_outline_near_me_24" />
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/report_location"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|start"
+        android:layout_marginTop="160dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginBottom="16dp"
+        android:theme="@style/AppTheme.AlternateFAB"
+        android:src="@drawable/ic_my_location_black_24dp" />
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/new_observation_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp"
+        android:layout_marginEnd="16dp"
+        android:theme="@style/AppTheme.PrimaryFAB"
+        app:layout_anchor="@id/straight_line_nav_container"
+        app:layout_anchorGravity="end|bottom"
+        app:layout_dodgeInsetEdges="bottom"
+        android:src="@drawable/ic_add_black_24dp" />
+
+    <FrameLayout
+        android:id="@+id/mgrs_chip_container"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|start"
+        android:layout_marginBottom="32dp"
+        app:layout_dodgeInsetEdges="bottom"
+        android:background="?android:attr/selectableItemBackground">
+
+        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="top|start"
-            android:layout_marginTop="16dp"
-            android:layout_marginBottom="16dp"
-            android:layout_marginStart="16dp"
-            app:tint="@color/toggle_button_selected"
-            app:backgroundTint="@color/toggle_button"
-            android:theme="@style/AppTheme.AlternateFAB"
-            android:src="@drawable/ic_search_black_24dp" />
+            android:orientation="horizontal"
+            android:padding="8dp"
+            android:gravity="center">
 
+            <ImageView
+                android:layout_width="18dp"
+                android:layout_height="18dp"
+                android:layout_marginEnd="4dp"
+                android:src="@drawable/ic_my_location_white_24dp"
+                app:tint="@color/md_white_1000" />
 
-        <com.google.android.material.floatingactionbutton.FloatingActionButton
-            android:id="@+id/map_settings"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="top|end"
-            android:layout_margin="16dp"
-            app:pressedTranslationZ="0dp"
-            android:theme="@style/AppTheme.AlternateFAB"
-            android:src="@drawable/ic_layers_black_24dp" />
-
-        <com.google.android.material.floatingactionbutton.FloatingActionButton
-            android:id="@+id/available_layer_downloads"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="top|end"
-            android:layout_marginTop="12dp"
-            android:layout_marginEnd="10dp"
-            app:fabCustomSize="24dp"
-            app:maxImageSize="14dp"
-            android:padding="32dp"
-            android:scaleType="fitXY"
-            app:tint="@color/md_white_1000"
-            android:src="@drawable/baseline_cloud_download_white_24" />
-
-        <com.google.android.material.floatingactionbutton.FloatingActionButton
-            android:id="@+id/zoom_button"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="top|start"
-            android:layout_marginTop="88dp"
-            android:layout_marginStart="16dp"
-            app:backgroundTint="@color/toggle_button"
-            android:tint="@color/toggle_button_selected"
-            android:theme="@style/AppTheme.AlternateFAB"
-            android:src="@drawable/ic_outline_near_me_24" />
-
-        <com.google.android.material.floatingactionbutton.FloatingActionButton
-            android:id="@+id/report_location"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="top|start"
-            android:layout_marginTop="160dp"
-            android:layout_marginStart="16dp"
-            android:theme="@style/AppTheme.AlternateFAB"
-            android:src="@drawable/ic_my_location_black_24dp" />
-
-        <com.google.android.material.floatingactionbutton.FloatingActionButton
-            android:id="@+id/new_observation_button"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            android:layout_marginEnd="16dp"
-            android:theme="@style/AppTheme.PrimaryFAB"
-            app:layout_anchor="@id/straight_line_nav_container"
-            app:layout_anchorGravity="end|bottom"
-            app:layout_dodgeInsetEdges="bottom"
-            android:src="@drawable/ic_add_black_24dp" />
-
-        <FrameLayout
-            android:id="@+id/mgrs_chip_container"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="bottom|start"
-            android:layout_marginBottom="32dp"
-            app:layout_dodgeInsetEdges="bottom"
-            android:background="?android:attr/selectableItemBackground">
-
-            <LinearLayout
+            <TextView
+                android:id="@+id/mgrs_chip"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:padding="8dp"
-                android:gravity="center">
+                android:shadowColor="@color/md_black_1000"
+                android:shadowDx="-2"
+                android:shadowDy="-2"
+                android:shadowRadius="1"
+                android:textColor="@color/md_white_1000"
+                android:alpha=".87"
+                style="@style/TextAppearance.MaterialComponents.Headline6">
+            </TextView>
 
-                <ImageView
-                    android:layout_width="18dp"
-                    android:layout_height="18dp"
-                    android:layout_marginEnd="4dp"
-                    android:src="@drawable/ic_my_location_white_24dp"
-                    app:tint="@color/md_white_1000" />
+        </LinearLayout>
+    </FrameLayout>
 
-                <TextView
-                    android:id="@+id/mgrs_chip"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:shadowColor="@color/md_black_1000"
-                    android:shadowDx="-2"
-                    android:shadowDy="-2"
-                    android:shadowRadius="1"
-                    android:textColor="@color/md_white_1000"
-                    android:alpha=".87"
-                    style="@style/TextAppearance.MaterialComponents.Headline6">
-                </TextView>
+    <FrameLayout
+        android:id="@+id/straight_line_nav_container"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_insetEdge="bottom"
+        android:layout_gravity="bottom"/>
 
-            </LinearLayout>
-        </FrameLayout>
+    <FrameLayout
+        android:id="@+id/feature_bottom_sheet"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/md_white_1000"
+        app:behavior_hideable="true"
+        app:layout_insetEdge="bottom"
+        app:behavior_peekHeight="280dp"
+        app:layout_behavior="com.google.android.material.bottomsheet.BottomSheetBehavior" >
 
-        <FrameLayout
-            android:id="@+id/straight_line_nav_container"
+        <androidx.core.widget.NestedScrollView
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            app:layout_insetEdge="bottom"
-            android:layout_gravity="bottom"/>
+            android:layout_height="wrap_content">
 
-        <mil.nga.giat.mage.observation.ObservationBottomSheet
-            android:id="@+id/observation_bottom_sheet"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="@color/md_white_1000"
-            app:behavior_hideable="true"
-            app:behavior_skipCollapsed="true"
-            app:layout_insetEdge="bottom"
-            app:layout_behavior="com.google.android.material.bottomsheet.BottomSheetBehavior"
-            app:observation="@{chosenObservation}" />
+            <androidx.compose.ui.platform.ComposeView
+                android:id="@+id/bottom_sheet_compose"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
 
-    </androidx.coordinatorlayout.widget.CoordinatorLayout>
-</layout>
+            </androidx.compose.ui.platform.ComposeView>
+
+        </androidx.core.widget.NestedScrollView>
+
+    </FrameLayout>
+
+    <androidx.compose.ui.platform.ComposeView
+        android:id="@+id/user_phone_view"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/md_white_1000" />
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

@@ -41,7 +41,6 @@ import mil.nga.giat.mage.coordinate.CoordinateFormatter
 import mil.nga.giat.mage.feed.FeedItemState
 import mil.nga.giat.mage.form.view.rememberMapViewWithLifecycle
 import mil.nga.giat.mage.glide.target.MarkerTarget
-import mil.nga.giat.mage.observation.MapShapeObservation
 import mil.nga.giat.mage.ui.theme.MageTheme
 import mil.nga.giat.mage.ui.theme.topAppBarBackground
 import mil.nga.sf.Geometry
@@ -172,7 +171,7 @@ fun FeedItemHeaderContent(
    ) {
       Column {
          Row {
-            if (true && (itemState.date != null || itemState.primary != null || itemState.secondary != null)) {
+            if (itemState.date != null || itemState.primary != null || itemState.secondary != null) {
                Column(
                   modifier = Modifier.weight(1f).padding(16.dp),
                   verticalArrangement = Arrangement.Center,
@@ -313,7 +312,6 @@ fun FeedItemMapContent(
             if (shape is PolylineOptions) {
                googleMap.addPolyline {
                   addAll(shape.points)
-                  geodesic(MapShapeObservation.GEODESIC)
                }
             } else if (shape is PolygonOptions) {
                googleMap.addPolygon {
@@ -321,8 +319,6 @@ fun FeedItemMapContent(
                   for (hole in shape.holes) {
                      addHole(hole)
                   }
-
-                  geodesic(MapShapeObservation.GEODESIC)
                }
             }
          }

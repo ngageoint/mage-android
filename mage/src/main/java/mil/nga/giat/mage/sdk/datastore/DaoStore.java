@@ -26,6 +26,7 @@ import mil.nga.giat.mage.sdk.datastore.observation.ObservationProperty;
 import mil.nga.giat.mage.sdk.datastore.staticfeature.StaticFeature;
 import mil.nga.giat.mage.sdk.datastore.staticfeature.StaticFeatureProperty;
 import mil.nga.giat.mage.sdk.datastore.user.Event;
+import mil.nga.giat.mage.sdk.datastore.user.Form;
 import mil.nga.giat.mage.sdk.datastore.user.Role;
 import mil.nga.giat.mage.sdk.datastore.user.Team;
 import mil.nga.giat.mage.sdk.datastore.user.TeamEvent;
@@ -45,7 +46,7 @@ public class DaoStore extends OrmLiteSqliteOpenHelper {
 	private static final String DATABASE_NAME = "mage.db";
 	private static final String LOG_NAME = DaoStore.class.getName();
 	// Making this public so we can check if it has been upgraded and log the user out
-	public static final int DATABASE_VERSION = 21;
+	public static final int DATABASE_VERSION = 22;
 
 	// Observation DAOS
 	private Dao<Observation, Long> observationDao;
@@ -59,7 +60,8 @@ public class DaoStore extends OrmLiteSqliteOpenHelper {
 	private Dao<User, Long> userDao;
 	private Dao<Role, Long> roleDao;
     private Dao<Event, Long> eventDao;
-    private Dao<Team, Long> teamDao;
+	private Dao<Form, Long> formDao;
+	private Dao<Team, Long> teamDao;
 	private Dao<UserLocal, Long> userLocalDao;
     private Dao<UserTeam, Long> userTeamDao;
     private Dao<TeamEvent, Long> teamEventDao;
@@ -108,7 +110,8 @@ public class DaoStore extends OrmLiteSqliteOpenHelper {
 		TableUtils.createTable(connectionSource, UserLocal.class);
 		TableUtils.createTable(connectionSource, Role.class);
         TableUtils.createTable(connectionSource, Event.class);
-        TableUtils.createTable(connectionSource, Team.class);
+		TableUtils.createTable(connectionSource, Form.class);
+		TableUtils.createTable(connectionSource, Team.class);
         TableUtils.createTable(connectionSource, UserTeam.class);
         TableUtils.createTable(connectionSource, TeamEvent.class);
 		TableUtils.createTable(connectionSource, Location.class);
@@ -144,7 +147,8 @@ public class DaoStore extends OrmLiteSqliteOpenHelper {
 
 		TableUtils.dropTable(connectionSource, Role.class, Boolean.TRUE);
         TableUtils.dropTable(connectionSource, Event.class, Boolean.TRUE);
-        TableUtils.dropTable(connectionSource, Team.class, Boolean.TRUE);
+		TableUtils.dropTable(connectionSource, Form.class, Boolean.TRUE);
+		TableUtils.dropTable(connectionSource, Team.class, Boolean.TRUE);
         TableUtils.dropTable(connectionSource, UserTeam.class, Boolean.TRUE);
         TableUtils.dropTable(connectionSource, TeamEvent.class, Boolean.TRUE);
 		TableUtils.dropTable(connectionSource, Location.class, Boolean.TRUE);
@@ -190,6 +194,7 @@ public class DaoStore extends OrmLiteSqliteOpenHelper {
 		userDao = null;
 		roleDao = null;
 		eventDao = null;
+		formDao = null;
 		teamDao = null;
 		userLocalDao = null;
 		userTeamDao = null;
@@ -332,6 +337,19 @@ public class DaoStore extends OrmLiteSqliteOpenHelper {
         }
         return eventDao;
     }
+
+	/**
+	 * Getter for the FormDao
+	 *
+	 * @return This instance's EventDao
+	 * @throws SQLException
+	 */
+	public Dao<Form, Long> getFormDao() throws SQLException {
+		if (formDao == null) {
+			formDao = getDao(Form.class);
+		}
+		return formDao;
+	}
 
     /**
      * Getter for the TeamDao

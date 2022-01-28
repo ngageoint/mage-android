@@ -7,7 +7,6 @@ import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
 import dagger.hilt.android.AndroidEntryPoint
-import mil.nga.giat.mage.data.feed.FeedItem
 import mil.nga.giat.mage.feed.FeedItemState
 
 @AndroidEntryPoint
@@ -42,15 +41,11 @@ class FeedItemActivity: AppCompatActivity() {
         private const val FEED_ID_EXTRA = "FEED_ID_EXTRA"
         private const val FEED_ITEM_ID_EXTRA = "FEED_ITEM_ID_EXTRA"
 
-        fun intent(context: Context, item: FeedItem): Intent {
-            return intent(context, item.feedId, item.id)
-        }
-
         fun intent(context: Context, item: FeedItemState): Intent {
-            return intent(context, item.feedId, item.id)
+            return intent(context, item.id.feedId, item.id.itemId)
         }
 
-        private fun intent(context: Context, feedId: String, itemId: String): Intent {
+        fun intent(context: Context, feedId: String, itemId: String): Intent {
             val intent = Intent(context, FeedItemActivity::class.java)
             intent.putExtra(FEED_ID_EXTRA, feedId)
             intent.putExtra(FEED_ITEM_ID_EXTRA, itemId)

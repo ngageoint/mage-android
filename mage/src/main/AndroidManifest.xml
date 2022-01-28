@@ -224,6 +224,8 @@
         <activity
             android:name=".feed.item.FeedItemActivity"
             android:theme="@style/AppTheme.NoActionBar"/>
+        <activity android:name=".geopackage.media.GeoPackageMediaActivity"
+            android:theme="@style/AppTheme.NoActionBar"/>
 
         <receiver android:name=".sdk.connectivity.NetworkChangeReceiver">
             <intent-filter>

@@ -12,19 +12,17 @@ import com.bumptech.glide.load.model.GlideUrl
 import com.bumptech.glide.module.AppGlideModule
 import mil.nga.giat.mage.glide.loader.*
 import mil.nga.giat.mage.glide.model.Avatar
+import mil.nga.giat.mage.map.annotation.MapAnnotation
 import mil.nga.giat.mage.sdk.datastore.observation.Attachment
 import mil.nga.giat.mage.sdk.http.HttpClientManager
 import java.io.InputStream
 import java.nio.ByteBuffer
 
-/**
- * Created by wnewman
- */
 @GlideModule
 class MageGlideModule : AppGlideModule() {
 
     companion object {
-        private val DEFAULT_DISK_CACHE_SIZE = 250 * 1024 * 1024
+        private const val DEFAULT_DISK_CACHE_SIZE = 250 * 1024 * 1024
     }
 
     override fun applyOptions(context: Context, builder: GlideBuilder) {
@@ -40,5 +38,6 @@ class MageGlideModule : AppGlideModule() {
         registry.append(Attachment::class.java, InputStream::class.java, ImageUrlLoader.Factory(context))
         registry.append(Attachment::class.java, InputStream::class.java, ImageFileLoader.Factory())
         registry.append(Avatar::class.java, InputStream::class.java, AvatarLoader.Factory(context))
+        registry.append(MapAnnotation::class.java, InputStream::class.java, MapIconLoader.Factory())
     }
 }

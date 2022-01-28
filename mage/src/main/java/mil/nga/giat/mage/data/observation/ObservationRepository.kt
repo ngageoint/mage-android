@@ -8,18 +8,17 @@ import android.os.Build
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import androidx.lifecycle.MutableLiveData
 import androidx.preference.PreferenceManager
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
-import com.j256.ormlite.dao.CloseableIterator
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.ProducerScope
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.buffer
-import kotlinx.coroutines.flow.channelFlow
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.flowOn
 import mil.nga.giat.mage.LandingActivity
 import mil.nga.giat.mage.MageApplication
 import mil.nga.giat.mage.R
@@ -49,17 +48,16 @@ class ObservationRepository @Inject constructor(
    private val preferences: SharedPreferences,
    private val observationService: ObservationService
 ) {
-
-   sealed class ObservationEvent {
-      data class ObservationCreateEvent(val observation: Observation): ObservationEvent()
-      data class ObservationUpdateEvent(val observation: Observation): ObservationEvent()
-      data class ObservationDeleteEvent(val observation: Observation): ObservationEvent()
-   }
-
    private val iso8601Format = ISO8601DateFormatFactory.ISO8601()
    private val userHelper: UserHelper = UserHelper.getInstance(context)
    private val eventHelper: EventHelper = EventHelper.getInstance(context)
    private val observationHelper: ObservationHelper = ObservationHelper.getInstance(context)
+   private val observationDao = DaoStore.getInstance(context).observationDao
+
+   private var refreshTime: Long = 0
+   private var refreshJob: Job? = null
+   private var oldestObservation: Observation? = null
+   private val refresh = MutableLiveData<Boolean>()
 
    suspend fun create(observation: Observation) = withContext(Dispatchers.IO) {
       var response = observationService.createObservationId(observation.event.remoteId)
@@ -79,38 +77,42 @@ class ObservationRepository @Inject constructor(
       response
    }
 
-   fun getObservationEvents(): Flow<ObservationEvent> = channelFlow {
+   fun getObservations(): Flow<List<Observation>> = callbackFlow {
       val observationHelper = ObservationHelper.getInstance(context)
       val observationListener = object: IObservationEventListener {
          override fun onObservationCreated(observations: Collection<Observation>, sendUserNotifcations: Boolean) {
-            observations.forEach {
-               trySend(ObservationEvent.ObservationCreateEvent(it))
-            }
+            trySend(query(this@callbackFlow))
          }
 
          override fun onObservationUpdated(observation: Observation) {
-            trySend(ObservationEvent.ObservationUpdateEvent(observation))
+            trySend(query(this@callbackFlow))
          }
 
          override fun onObservationDeleted(observation: Observation) {
-            trySend(ObservationEvent.ObservationDeleteEvent(observation))
+            trySend(query(this@callbackFlow))
          }
 
          override fun onError(error: Throwable) {}
       }
-
       observationHelper.addListener(observationListener)
 
-      readObservations().use {
-         while (it.hasNext()) {
-            send(ObservationEvent.ObservationCreateEvent(it.current()))
+      val observationFilterKey = context.resources.getString(R.string.activeTimeFilterKey)
+      val preferencesListener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
+         if (observationFilterKey == key) {
+            trySend(query(this))
          }
       }
+      preferences.registerOnSharedPreferenceChangeListener(preferencesListener)
 
-      awaitClose { observationHelper.removeListener(observationListener) }
-   }.buffer(capacity = Channel.UNLIMITED)
+      send(query(this))
 
-   private fun readObservations(): CloseableIterator<Observation> {
+      awaitClose {
+         observationHelper.removeListener(observationListener)
+         preferences.unregisterOnSharedPreferenceChangeListener(preferencesListener)
+      }
+   }.flowOn(Dispatchers.IO)
+
+   private fun query(scope: ProducerScope<List<Observation>>): List<Observation> {
       val event = eventHelper.currentEvent
       val dao = DaoStore.getInstance(context).observationDao
       val query = dao.queryBuilder()
@@ -119,25 +121,42 @@ class ObservationRepository @Inject constructor(
          .where()
          .eq("event_id", event.id)
 
-      val temporalFilter = getTemporalFilter()
-      if (temporalFilter != null) {
-         temporalFilter.query()?.let { query.join(it) }
-         temporalFilter.and(where)
-      }
-
-      if (preferences.getBoolean(context.resources.getString(R.string.activeImportantFilterKey), false)) {
-         val filter = ImportantFilter(context)
+      getTemporalFilter()?.let { filter ->
          filter.query()?.let { query.join(it) }
          filter.and(where)
       }
 
-      if (preferences.getBoolean(context.resources.getString(R.string.activeFavoritesFilterKey), false)) {
-         val filter = FavoriteFilter(context)
+      getImportantFilter()?.let { filter ->
          filter.query()?.let { query.join(it) }
          filter.and(where)
       }
 
-      return dao.iterator(query.prepare())
+      getFavoriteFilter()?.let { filter ->
+         filter.query()?.let { query.join(it) }
+         filter.and(where)
+      }
+
+      val iterator = observationDao.iterator(query.prepare())
+
+      val observations = mutableListOf<Observation>()
+      while(iterator.hasNext()) {
+         observations.add(iterator.current())
+      }
+
+      observations.lastOrNull()?.let { observation ->
+         if (oldestObservation == null || oldestObservation?.timestamp?.after(observation.lastModified) == true) {
+            oldestObservation = observation
+
+            refreshJob?.cancel()
+            refreshJob = scope.launch {
+               delay(observation.lastModified.time - refreshTime)
+               oldestObservation = null
+               scope.trySend(query(scope))
+            }
+         }
+      }
+
+      return observations
    }
 
    private fun getTemporalFilter(): Filter<Temporal>? {
@@ -184,9 +203,22 @@ class ObservationRepository @Inject constructor(
 
       if (date != null) {
          filter = DateTimeFilter(date, null, "last_modified")
+         refreshTime = date.time
       }
 
       return filter
+   }
+
+   private fun getImportantFilter(): Filter<Observation>? {
+      return if (preferences.getBoolean(context.resources.getString(R.string.activeImportantFilterKey), false)) {
+         ImportantFilter(context)
+      } else null
+   }
+
+   private fun getFavoriteFilter(): Filter<Observation>? {
+      return if (preferences.getBoolean(context.resources.getString(R.string.activeFavoritesFilterKey), false)) {
+         FavoriteFilter(context)
+      } else null
    }
 
    private fun getCustomTimeNumber(): Int {
@@ -212,22 +244,24 @@ class ObservationRepository @Inject constructor(
 
          // Mark new attachments as dirty and set local path for upload
          for (observationForm in observation.forms) {
-            val formDefinition = Form.fromJson(observation.event.formMap[observationForm.formId])
-            for (observationProperty in observationForm.properties) {
-               val fieldDefinition = formDefinition?.fields?.find { it.name == observationProperty.key }
-               if (fieldDefinition?.type == FieldType.ATTACHMENT) {
-                  for (attachment in observationProperty.value as List<Attachment>) {
-                     if (attachment.action == Media.ATTACHMENT_ADD_ACTION) {
-                        val returnedAttachment = returnedObservation?.attachments?.find { returnedAttachment ->
-                           attachment.url == null &&
-                             attachment.name == returnedAttachment.name &&
-                             attachment.fieldName == returnedAttachment.fieldName &&
-                             attachment.contentType == returnedAttachment.contentType
-                        }
+            eventHelper.getForm(observationForm.formId)?.json?.let { formJson ->
+               val formDefinition = Form.fromJson(formJson)
+               for (observationProperty in observationForm.properties) {
+                  val fieldDefinition = formDefinition?.fields?.find { it.name == observationProperty.key }
+                  if (fieldDefinition?.type == FieldType.ATTACHMENT) {
+                     for (attachment in observationProperty.value as List<Attachment>) {
+                        if (attachment.action == Media.ATTACHMENT_ADD_ACTION) {
+                           val returnedAttachment = returnedObservation?.attachments?.find { returnedAttachment ->
+                              attachment.url == null &&
+                                      attachment.name == returnedAttachment.name &&
+                                      attachment.fieldName == returnedAttachment.fieldName &&
+                                      attachment.contentType == returnedAttachment.contentType
+                           }
 
-                        if (returnedAttachment != null) {
-                           returnedAttachment.localPath = attachment.localPath
-                           returnedAttachment.isDirty = true
+                           if (returnedAttachment != null) {
+                              returnedAttachment.localPath = attachment.localPath
+                              returnedAttachment.isDirty = true
+                           }
                         }
                      }
                   }
@@ -358,10 +392,8 @@ class ObservationRepository @Inject constructor(
    }
 
    private fun createNotifications(observations: Collection<Observation>) {
-      // are we configured to fire notifications?
       val preferences = PreferenceManager.getDefaultSharedPreferences(context)
-      val notificationsEnabled = preferences.getBoolean(context.getString(R.string.notificationsEnabledKey), context.resources.getBoolean(
-         R.bool.notificationsEnabledDefaultValue))
+      val notificationsEnabled = preferences.getBoolean(context.getString(R.string.notificationsEnabledKey), context.resources.getBoolean(R.bool.notificationsEnabledDefaultValue))
       if (observations.isEmpty() || !notificationsEnabled) {
          return
       }
@@ -400,8 +432,23 @@ class ObservationRepository @Inject constructor(
             val pendingIntent = PendingIntent.getActivity(context, 0, intent, 0)
 
             val information = mutableListOf<String>()
-            observation.primaryFeedField?.value?.let { information.add(it.toString()) }
-            observation.secondaryFeedField?.value?.let { information.add(it.toString()) }
+            observation.forms.firstOrNull()?.let { observationForm ->
+               eventHelper.getForm(observationForm.formId)?.let { form ->
+                  if (form.primaryFeedField != null) {
+                     val property = observationForm.properties.find { it.key == form.primaryFeedField }
+                     property?.value?.toString()?.let {
+                        information.add(it)
+                     }
+                  }
+
+                  if (form.secondaryFeedField != null) {
+                     val property = observationForm.properties.find { it.key == form.secondaryFeedField }
+                     property?.value?.toString()?.let {
+                        information.add(it)
+                     }
+                  }
+               }
+            }
 
             val content = if (information.isNotEmpty()) "${information.joinToString(", ")} was created in ${observation.event.name}" else "Observation was created in ${observation.event.name}"
 

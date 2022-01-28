@@ -167,9 +167,9 @@ open class FormViewModel @Inject constructor(
     _observation.value = observation
 
     val formDefinitions = mutableMapOf<Long, Form>()
-    for (jsonForm in event.forms) {
-      fromJson(jsonForm as JsonObject)?.let { form ->
-        formDefinitions.put(form.id, form)
+    for (form in event.forms) {
+      fromJson(form.json)?.let {
+        formDefinitions.put(it.id, it)
       }
     }
 

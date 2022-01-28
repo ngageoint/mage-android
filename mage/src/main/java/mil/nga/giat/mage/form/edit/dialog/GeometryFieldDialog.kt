@@ -35,17 +35,15 @@ import kotlinx.android.synthetic.main.dialog_geometry_field.*
 import mil.nga.geopackage.map.geom.*
 import mil.nga.giat.mage.R
 import mil.nga.giat.mage.coordinate.CoordinateSystem
-import mil.nga.giat.mage.map.MapUtils
+import mil.nga.giat.mage.map.annotation.ShapeStyle
+import mil.nga.giat.mage.map.hasKinks
 import mil.nga.giat.mage.observation.InputFilterDecimal
-import mil.nga.giat.mage.observation.MapShapeObservation
 import mil.nga.giat.mage.observation.ObservationLocation
-import mil.nga.giat.mage.observation.ObservationShapeStyle
-import mil.nga.giat.mage.observation.edit.ObservationEditActivity
 import mil.nga.mgrs.MGRS
 import mil.nga.mgrs.gzd.MGRSTileProvider
+import mil.nga.proj.ProjectionConstants
 import mil.nga.sf.*
 import mil.nga.sf.Polygon
-import mil.nga.sf.proj.ProjectionConstants
 import mil.nga.sf.util.GeometryEnvelopeBuilder
 import mil.nga.sf.util.GeometryUtils
 import java.text.DecimalFormat
@@ -216,7 +214,7 @@ class GeometryFieldDialog : DialogFragment(),
 
         tabs.addOnTabSelectedListener(this)
 
-        val style = ObservationShapeStyle(context)
+        val style = ShapeStyle(requireContext())
         editMarkerOptions = getEditMarkerOptions()
         editPolylineOptions = getEditPolylineOptions(style)
         editPolygonOptions = getEditPolygonOptions(style)
@@ -244,7 +242,7 @@ class GeometryFieldDialog : DialogFragment(),
         if (dayNightMode == Configuration.UI_MODE_NIGHT_NO) {
             map.setMapStyle(null)
         } else {
-            map.setMapStyle(MapStyleOptions.loadRawResourceStyle(context, R.raw.map_theme_night))
+            map.setMapStyle(MapStyleOptions.loadRawResourceStyle(requireContext(), R.raw.map_theme_night))
         }
 
         // Don't wait for map to show up to init these values, otherwise bottomsheet will jitter
@@ -284,7 +282,9 @@ class GeometryFieldDialog : DialogFragment(),
                 .commit()
 
             if (!wgs84CoordinateFragment.setLatLng(mgrsCoordinateFragment.getLatLng())) {
-                map.moveCamera(CameraUpdateFactory.newLatLng(wgs84CoordinateFragment.getLatLng()))
+                wgs84CoordinateFragment.getLatLng()?.let {
+                    map.moveCamera(CameraUpdateFactory.newLatLng(it))
+                }
             }
 
             mgrsTileOverlay?.remove()
@@ -295,7 +295,9 @@ class GeometryFieldDialog : DialogFragment(),
                 .commit()
 
             if (!mgrsCoordinateFragment.setLatLng(wgs84CoordinateFragment.getLatLng())) {
-                map.moveCamera(CameraUpdateFactory.newLatLng(mgrsCoordinateFragment.getLatLng()))
+                mgrsCoordinateFragment.getLatLng()?.let {
+                    map.moveCamera(CameraUpdateFactory.newLatLng(it))
+                }
             }
 
             mgrsTileOverlay = map.addTileOverlay(TileOverlayOptions().tileProvider(MGRSTileProvider(context)))
@@ -959,7 +961,7 @@ class GeometryFieldDialog : DialogFragment(),
      *
      * @param latLng lat lng point
      */
-    private fun updateLatitudeLongitudeText(latLng: LatLng) {
+    private fun updateLatitudeLongitudeText(latLng: LatLng?) {
         wgs84CoordinateFragment.setLatLng(latLng)
         mgrsCoordinateFragment.setLatLng(latLng)
     }
@@ -1009,7 +1011,7 @@ class GeometryFieldDialog : DialogFragment(),
             geometry = shapeConverter.toGeometry(shapeMarkers?.shape)
 
             // validate polygon does not intersect itself
-            if (shapeType == GeometryType.POLYGON && MapUtils.polygonHasKinks(geometry as Polygon)) {
+            if ((geometry as? Polygon)?.hasKinks() == true) {
                 Snackbar.make(coordinatorLayout, getString(R.string.location_edit_error_polygon_kinks), Snackbar.LENGTH_SHORT).show()
                 return null
             }
@@ -1024,14 +1026,14 @@ class GeometryFieldDialog : DialogFragment(),
      *
      * @param marker selected marker
      */
-    private fun findRectangleCorners(marker: Marker) {
+    private fun findRectangleCorners(marker: Marker?) {
         clearRectangleCorners()
         if (shapeMarkers != null && isRectangle) {
             val markers = getShapeMarkers()
             var afterMatchesX = rectangleSameXSide1
             for (i in markers.indices) {
                 val shapeMarker = markers[i]
-                if (shapeMarker.id == marker.id) {
+                if (shapeMarker.id == marker?.id) {
                     val beforeIndex = if (i > 0) i - 1 else markers.size - 1
                     val afterIndex = if (i < markers.size - 1) i + 1 else 0
                     val before = markers[beforeIndex]
@@ -1054,12 +1056,15 @@ class GeometryFieldDialog : DialogFragment(),
      *
      * @param marker modified marker
      */
-    private fun updateRectangleCorners(marker: Marker) {
-        if (rectangleSameXMarker != null) {
-            rectangleSameXMarker!!.position = LatLng(rectangleSameXMarker!!.position.latitude, marker.position.longitude)
-        }
-        if (rectangleSameYMarker != null) {
-            rectangleSameYMarker!!.position = LatLng(marker.position.latitude, rectangleSameYMarker!!.position.longitude)
+    private fun updateRectangleCorners(marker: Marker?) {
+        if (marker != null) {
+            rectangleSameXMarker?.apply {
+                position = LatLng(position.latitude, marker.position.longitude)
+            }
+
+            rectangleSameYMarker?.apply {
+                position = LatLng(marker.position.latitude, position.longitude)
+            }
         }
     }
 
@@ -1076,16 +1081,16 @@ class GeometryFieldDialog : DialogFragment(),
      *
      * @param marker marker to select
      */
-    private fun selectShapeMarker(marker: Marker) {
+    private fun selectShapeMarker(marker: Marker?) {
         clearRectangleCorners()
-        if (selectedMarker != null && selectedMarker!!.id != marker.id) {
-            selectedMarker!!.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.ic_shape_edit))
-            selectedMarker!!.zIndex = 0.0f
+        if (selectedMarker != null && selectedMarker?.id != marker?.id) {
+            selectedMarker?.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.ic_shape_edit))
+            selectedMarker?.zIndex = 0.0f
         }
         selectedMarker = marker
-        updateLatitudeLongitudeText(marker.position)
-        marker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.ic_shape_edit_selected))
-        marker.zIndex = 1.0f
+        updateLatitudeLongitudeText(marker?.position)
+        marker?.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.ic_shape_edit_selected))
+        marker?.zIndex = 1.0f
         findRectangleCorners(marker)
     }
 
@@ -1094,13 +1099,11 @@ class GeometryFieldDialog : DialogFragment(),
      *
      * @param selectedMarker selected marker
      */
-    private fun updateShape(selectedMarker: Marker) {
+    private fun updateShape(selectedMarker: Marker?) {
         updateRectangleCorners(selectedMarker)
-        if (shapeMarkers != null) {
-            shapeMarkers!!.update()
-            if (shapeMarkers!!.isEmpty) {
-                shapeMarkers = null
-            }
+        shapeMarkers?.update()
+        if (shapeMarkers?.isEmpty == true) {
+            shapeMarkers = null
         }
     }
 
@@ -1178,11 +1181,10 @@ class GeometryFieldDialog : DialogFragment(),
      * @param style observation shape style
      * @return edit polyline options
      */
-    private fun getEditPolylineOptions(style: ObservationShapeStyle): PolylineOptions {
+    private fun getEditPolylineOptions(style: ShapeStyle): PolylineOptions {
         val polylineOptions = PolylineOptions()
         polylineOptions.width(style.strokeWidth)
         polylineOptions.color(style.strokeColor)
-        polylineOptions.geodesic(MapShapeObservation.GEODESIC)
         return polylineOptions
     }
 
@@ -1192,12 +1194,11 @@ class GeometryFieldDialog : DialogFragment(),
      * @param style observation shape style
      * @return edit polygon options
      */
-    private fun getEditPolygonOptions(style: ObservationShapeStyle): PolygonOptions {
+    private fun getEditPolygonOptions(style: ShapeStyle): PolygonOptions {
         val polygonOptions = PolygonOptions()
         polygonOptions.strokeWidth(style.strokeWidth)
         polygonOptions.strokeColor(style.strokeColor)
         polygonOptions.fillColor(style.fillColor)
-        polygonOptions.geodesic(MapShapeObservation.GEODESIC)
         return polygonOptions
     }
 

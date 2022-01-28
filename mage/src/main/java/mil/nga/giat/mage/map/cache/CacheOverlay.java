@@ -1,5 +1,7 @@
 package mil.nga.giat.mage.map.cache;
 
+import android.content.Context;
+
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapView;
 import com.google.android.gms.maps.model.LatLng;
@@ -7,8 +9,9 @@ import com.google.android.gms.maps.model.LatLng;
 import org.apache.commons.lang3.builder.CompareToBuilder;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
+
+import mil.nga.giat.mage.map.GeoPackageFeatureMapState;
 
 /**
  * Abstract cache overlay
@@ -172,6 +175,10 @@ public abstract class CacheOverlay implements Comparable<CacheOverlay> {
      */
     public String onMapClick(LatLng latLng, MapView mapView, GoogleMap map) {
         return null;
+    }
+
+    public List<GeoPackageFeatureMapState> getFeaturesNearClick(LatLng latLng, MapView mapView, GoogleMap map, Context context) {
+        return new ArrayList<>();
     }
 
     /**

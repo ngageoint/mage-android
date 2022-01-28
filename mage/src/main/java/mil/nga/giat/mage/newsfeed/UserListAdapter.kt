@@ -18,20 +18,23 @@ import com.j256.ormlite.stmt.PreparedQuery
 import mil.nga.giat.mage.R
 import mil.nga.giat.mage.glide.GlideApp
 import mil.nga.giat.mage.glide.model.Avatar.Companion.forUser
+import mil.nga.giat.mage.map.annotation.MapAnnotation
 import mil.nga.giat.mage.sdk.datastore.location.Location
 import mil.nga.giat.mage.sdk.datastore.user.EventHelper
 import mil.nga.giat.mage.sdk.datastore.user.Team
 import mil.nga.giat.mage.sdk.datastore.user.TeamHelper
 import mil.nga.giat.mage.sdk.datastore.user.User
+import mil.nga.giat.mage.utils.DateFormatFactory
 import org.apache.commons.lang3.StringUtils
-import org.ocpsoft.prettytime.PrettyTime
 import java.sql.SQLException
+import java.util.*
 
 class UserListAdapter(
    private val context: Context,
    userFeedState: UserFeedState,
    private val userClickListener: (User) -> Unit
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+   val dateFormat = DateFormatFactory.format("yyyy-MM-dd HH:mm zz", Locale.getDefault(), context)
 
    private var cursor: Cursor = userFeedState.cursor
    private val query: PreparedQuery<Location> = userFeedState.query
@@ -94,13 +97,13 @@ class UserListAdapter(
             .circleCrop()
             .into(vh.avatarView)
 
+         val feature = MapAnnotation.fromUser(user, location)
          GlideApp.with(context)
-            .load(user.userLocal.localIconPath)
-            .centerCrop()
+            .load(feature)
             .into(vh.iconView)
 
          vh.nameView.text = user.displayName
-         val timeText = PrettyTime().format(location.timestamp)
+         val timeText = dateFormat.format(location.timestamp)
 
          vh.dateView.text = timeText
 

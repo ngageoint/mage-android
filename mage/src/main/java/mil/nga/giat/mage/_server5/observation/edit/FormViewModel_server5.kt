@@ -3,17 +3,21 @@ package mil.nga.giat.mage._server5.observation.edit
 import android.content.Context
 import android.util.Log
 import com.google.android.gms.maps.model.LatLng
-import com.google.gson.JsonObject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import mil.nga.giat.mage.form.*
 import mil.nga.giat.mage.form.Form.Companion.fromJson
 import mil.nga.giat.mage.form.defaults.FormPreferences
-import mil.nga.giat.mage.form.field.*
+import mil.nga.giat.mage.form.field.DateFieldState
+import mil.nga.giat.mage.form.field.FieldState
+import mil.nga.giat.mage.form.field.FieldValue
+import mil.nga.giat.mage.form.field.GeometryFieldState
 import mil.nga.giat.mage.observation.*
 import mil.nga.giat.mage.observation.edit.MediaAction
 import mil.nga.giat.mage.sdk.datastore.observation.*
-import mil.nga.giat.mage.sdk.datastore.user.*
+import mil.nga.giat.mage.sdk.datastore.user.Permission
+import mil.nga.giat.mage.sdk.datastore.user.User
+import mil.nga.giat.mage.sdk.datastore.user.UserHelper
 import mil.nga.giat.mage.sdk.exceptions.UserException
 import java.util.*
 import javax.inject.Inject
@@ -32,11 +36,10 @@ class FormViewModel_server5 @Inject constructor(
   override fun createObservation(timestamp: Date, location: ObservationLocation, defaultMapZoom: Float?, defaultMapCenter: LatLng?): Boolean {
     if (_observationState.value != null) return false
 
-    val jsonForms = event.forms
     val forms = mutableListOf<FormState>()
     val formDefinitions = mutableListOf<Form>()
-    for ((index, jsonForm) in jsonForms.withIndex()) {
-      fromJson(jsonForm as JsonObject)?.let { form ->
+    for ((index, eventForm) in event.forms.withIndex()) {
+      fromJson(eventForm.json)?.let { form ->
         formDefinitions.add(form)
 
         if (form.default) {
@@ -108,9 +111,9 @@ class FormViewModel_server5 @Inject constructor(
     _observation.value = observation
 
     val formDefinitions = mutableMapOf<Long, Form>()
-    for (jsonForm in event.forms) {
-      fromJson(jsonForm as JsonObject)?.let { form ->
-        formDefinitions.put(form.id, form)
+    for (form in event.forms) {
+      fromJson(form.json)?.let { it ->
+        formDefinitions.put(it.id, it)
       }
     }
 

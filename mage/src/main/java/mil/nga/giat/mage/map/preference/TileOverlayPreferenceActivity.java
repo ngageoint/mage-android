@@ -42,8 +42,8 @@ import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import mil.nga.geopackage.GeoPackageFactory;
 import mil.nga.geopackage.GeoPackageManager;
-import mil.nga.geopackage.factory.GeoPackageFactory;
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.cache.CacheUtils;
 import mil.nga.giat.mage.map.cache.CacheOverlay;

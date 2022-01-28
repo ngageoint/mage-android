@@ -18,7 +18,6 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
@@ -185,12 +184,9 @@ public class LandingActivity extends AppCompatActivity implements NavigationView
         }
 
         bottomNavigationView = findViewById(R.id.bottom_navigation);
-        bottomNavigationView.setOnNavigationItemSelectedListener(new BottomNavigationView.OnNavigationItemSelectedListener() {
-            @Override
-            public boolean onNavigationItemSelected(@NonNull MenuItem item) {
-                switchBottomNavigationFragment(item);
-                return true;
-            }
+        bottomNavigationView.setOnNavigationItemSelectedListener(item -> {
+            switchBottomNavigationFragment(item);
+            return true;
         });
 
         MenuItem menuItem = bottomNavigationView.getMenu().findItem(R.id.map_tab);
@@ -229,7 +225,6 @@ public class LandingActivity extends AppCompatActivity implements NavigationView
         } catch (UserException e) {
             Log.e(LOG_NAME, "Error pulling current user from the database", e);
         }
-
 
         // This activity is 'singleTop' and as such will not recreate itself based on a uiMode configuration change.
         // Force this by check if the uiMode has changed.

@@ -1,5 +1,7 @@
 package mil.nga.giat.mage.network.gson
 
+import com.google.gson.JsonElement
+import com.google.gson.JsonObject
 import com.google.gson.stream.JsonReader
 import com.google.gson.stream.JsonToken
 
@@ -58,4 +60,32 @@ fun JsonReader.nextNumberOrNull(): Number? {
          }
       }
    }
+}
+
+fun JsonElement.asJsonObjectOrNull(): JsonObject? {
+   return if (isJsonObject) asJsonObject else null
+}
+
+fun JsonElement.asStringOrNull(): String? {
+   return if (isJsonNull) null else asString
+}
+
+fun JsonElement.asIntOrNull(): Int? {
+   return if (isJsonNull) null else asInt
+}
+
+fun JsonElement.asLongOrNull(): Long? {
+   return if (isJsonNull) null else asLong
+}
+
+fun JsonElement.asDoubleOrNull(): Double? {
+   return if (isJsonNull) null else asDouble
+}
+
+fun JsonElement.asFloatOrNull(): Float? {
+   return if (isJsonNull) null else asFloat
+}
+
+fun JsonElement.asBooleanOrNull(): Boolean? {
+   return if (isJsonNull) null else asBoolean
 }

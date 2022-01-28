@@ -45,6 +45,7 @@ public abstract class GeoPackageTableCacheOverlay extends CacheOverlay {
      */
     protected GeoPackageTableCacheOverlay(String name, String geoPackage, String cacheName, CacheOverlayType type, int count, int minZoom, Integer maxZoom) {
         super(name, cacheName, type, false);
+
         this.geoPackage = geoPackage;
         this.count = count;
         this.minZoom = minZoom;

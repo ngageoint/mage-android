@@ -2,7 +2,6 @@ package mil.nga.giat.mage.map.navigation.bearing
 import android.animation.TypeEvaluator
 import android.animation.ValueAnimator
 import android.content.Context
-import android.graphics.Bitmap
 import android.graphics.Color
 import android.hardware.Sensor
 import android.hardware.SensorEvent
@@ -39,8 +38,7 @@ class StraightLineNavigation(
     private val sensorManager: SensorManager?,
     private val mapView: GoogleMap,
     private val view: ViewGroup,
-    private val context: Context,
-    private val applicationContext: Context
+    private val context: Context
 ) : SensorEventListener  {
     private var accelerometerReading: FloatArray? = null
     private var magnetometerReading: FloatArray? = null
@@ -59,8 +57,7 @@ class StraightLineNavigation(
 
     private val relativeBearingColor: Int
         get(): Int {
-            val hexColor = PreferenceManager.getDefaultSharedPreferences(applicationContext)
-                .getString(applicationContext.resources.getString(R.string.relativeBearingColorKey), applicationContext.resources.getString(R.string.relativeBearingColorDefaultValue))
+            val hexColor = PreferenceManager.getDefaultSharedPreferences(context).getString(context.resources.getString(R.string.relativeBearingColorKey), context.resources.getString(R.string.relativeBearingColorDefaultValue))
             return try {
                 Color.parseColor(hexColor)
             } catch (ignored: IllegalArgumentException) {
@@ -70,7 +67,7 @@ class StraightLineNavigation(
 
     private val headingColor: Int
         get(): Int {
-            val hexColor = PreferenceManager.getDefaultSharedPreferences(applicationContext).getString(applicationContext.resources.getString(R.string.headingColorKey), applicationContext.resources.getString(R.string.headingColorDefaultValue))
+            val hexColor = PreferenceManager.getDefaultSharedPreferences(context).getString(context.resources.getString(R.string.headingColorKey), context.resources.getString(R.string.headingColorDefaultValue))
             return try {
                 Color.parseColor(hexColor)
             } catch (ignored: IllegalArgumentException) {
@@ -78,14 +75,14 @@ class StraightLineNavigation(
             }
         }
 
-    fun startNavigation(userLocation: Location, destinationCoordinate: LatLng, markerImage: Bitmap? = null) {
+    fun startNavigation(userLocation: Location, destinationCoordinate: LatLng, icon: Any? = null) {
         lastDestinationLocation = destinationCoordinate
         straightLineNavigationData.destinationCoordinate.set(destinationCoordinate)
         straightLineNavigationData.heading.set(0.0)
+        straightLineNavigationData.mapFeature = icon
         straightLineNavigationData.headingColor.set(headingColor)
         straightLineNavigationData.bearingColor.set(relativeBearingColor)
         straightLineNavigationData.currentLocation.set(userLocation)
-        straightLineNavigationData.destinationMarker = markerImage
         straightLineNav = StraightLineNavigationView(context).also {
             val layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
             it.layoutParams = layoutParams

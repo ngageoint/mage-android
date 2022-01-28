@@ -3,6 +3,7 @@ package mil.nga.giat.mage.feed
 import android.content.Context
 import com.google.gson.JsonElement
 import mil.nga.giat.mage.data.feed.ItemWithFeed
+import mil.nga.giat.mage.map.FeedItemId
 import mil.nga.giat.mage.network.Server
 import mil.nga.giat.mage.utils.DateFormatFactory
 import mil.nga.sf.Geometry
@@ -10,8 +11,7 @@ import java.text.DateFormat
 import java.util.*
 
 data class FeedItemState(
-   val id: String,
-   val feedId: String,
+   val id: FeedItemId,
    val title: String?,
    val date: String?,
    val primary: String?,
@@ -52,8 +52,7 @@ data class FeedItemState(
          }
 
          return FeedItemState(
-            id = item.id,
-            feedId = feed.id,
+            FeedItemId(feed.id, item.id),
             title = feed.title,
             date = date,
             primary = primary,

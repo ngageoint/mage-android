@@ -9,7 +9,7 @@ val BlueA200 = Color(0xFF448AFF)
 val OrangeA400 = Color(0xFFFF9100)
 val OrangeA700 = Color(0xFFFF6D00)
 
-val Grey900 = Color(0xFF212121)
+val Grey800 = Color(0xFF424242)
 
 val Red300 = Color(0xFFE57373)
 val Red800 = Color(0xFFC62828)

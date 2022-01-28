@@ -1,18 +1,17 @@
 package mil.nga.giat.mage.sdk.datastore.user;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.j256.ormlite.field.DataType;
 import com.j256.ormlite.field.DatabaseField;
+import com.j256.ormlite.field.ForeignCollectionField;
 import com.j256.ormlite.table.DatabaseTable;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.Collection;
 
 @DatabaseTable(tableName = "events")
 public class Event {
@@ -37,22 +36,24 @@ public class Event {
 	@DatabaseField
 	private Integer maxObservationForms;
 
-    @DatabaseField
-	private String forms;
-
 	@DatabaseField
 	private String acl;
+
+	@DatabaseField(dataType = DataType.SERIALIZABLE)
+	private String style;
+
+	@ForeignCollectionField
+	private Collection<Form> forms = new ArrayList<>();
 	
 	public Event() {
 		// ORMLite needs a no-arg constructor
 	}
 
-	public Event(String remoteId, String name, String description, String forms, String acl) {
+	public Event(String remoteId, String name, String description, String acl) {
 		super();
 		this.remoteId = remoteId;
 		this.name = name;
 		this.description = description;
-		this.forms = forms;
 		this.acl = acl;
 	}
 
@@ -96,37 +97,24 @@ public class Event {
 		this.maxObservationForms = maxObservationForms;
 	}
 
-	public JsonArray getForms() {
-        return new JsonParser().parse(forms).getAsJsonArray();
+	public Collection<Form> getForms() {
+		return forms;
 	}
 
-	public JsonArray getNonArchivedForms() {
-		JsonArray jsonForms = getForms();
-		Iterator<JsonElement> iterator = jsonForms.iterator();
-
-		while (iterator.hasNext()) {
-			JsonObject jsonForm = iterator.next().getAsJsonObject();
-			if (jsonForm.has("archived") && jsonForm.get("archived").getAsBoolean()) {
-				iterator.remove();
-			}
-		}
-
-		return jsonForms;
-	}
-
-	public Map<Long, JsonObject> getFormMap() {
-		Map<Long, JsonObject> formMap = new HashMap<>();
-		Iterator<JsonElement> iterator = new JsonParser().parse(forms).getAsJsonArray().iterator();
-		while (iterator.hasNext()) {
-			JsonObject form = (JsonObject) iterator.next();
-			formMap.put(form.get("id").getAsLong(), form);
-		}
-
-		return formMap;
+	public void setForms(Collection<Form> forms) {
+		this.forms = forms;
 	}
 
 	public JsonObject getAcl() {
-		return new JsonParser().parse(acl).getAsJsonObject();
+		return JsonParser.parseString(acl).getAsJsonObject();
+	}
+
+	public String getStyle() {
+		return style;
+	}
+
+	public void setStyle(String style) {
+		this.style = style;
 	}
 
 	@Override

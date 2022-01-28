@@ -11,9 +11,6 @@ import mil.nga.giat.mage.R
 import java.nio.charset.Charset
 import java.security.MessageDigest
 
-/**
- * Created by wnewman on 2/23/16.
- */
 class VideoOverlayTransformation(private val context: Context) : BitmapTransformation() {
 
     companion object {

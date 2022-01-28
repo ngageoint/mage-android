@@ -33,8 +33,8 @@ class MapAndViewProvider(
       mapFragment.getMapAsync(this)
    }
 
-   override fun onMapReady(googleMap: GoogleMap?) {
-      map = googleMap ?: return
+   override fun onMapReady(googleMap: GoogleMap) {
+      map = googleMap
       isMapReady = true
       checkReady()
    }

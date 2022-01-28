@@ -2,6 +2,8 @@ package mil.nga.giat.mage.sdk.utils;
 
 import android.util.Log;
 
+import androidx.annotation.Nullable;
+
 import java.io.IOException;
 import java.nio.ByteOrder;
 
@@ -24,10 +26,17 @@ public class GeometryUtility {
      * @param geometryBytes geometry bytes
      * @return geometry
      */
+    @Nullable
     public static Geometry toGeometry(byte[] geometryBytes) {
         ByteReader reader = new ByteReader(geometryBytes);
         reader.setByteOrder(ByteOrder.BIG_ENDIAN);
-        Geometry geometry = GeometryReader.readGeometry(reader);
+        Geometry geometry = null;
+        try {
+            geometry = GeometryReader.readGeometry(reader);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
         return geometry;
     }
 

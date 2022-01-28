@@ -188,6 +188,27 @@ public class StaticFeatureHelper extends DaoHelper<StaticFeature> implements IEv
 		return staticFeatures;
 	}
 
+	public StaticFeature readFeature(Long layerId, Long id) throws StaticFeatureException {
+		StaticFeature staticFeature = null;
+		try {
+			List<StaticFeature> results = staticFeatureDao.queryBuilder()
+					.where()
+					.eq(StaticFeature.STATIC_FEATURE_LAYER_ID, layerId)
+					.and()
+					.eq(StaticFeature.STATIC_FEATURE_ID, id)
+					.query();
+
+			if (results != null && results.size() > 0) {
+				staticFeature = results.get(0);
+			}
+		} catch (SQLException sqle) {
+			Log.e(LOG_NAME, "Unable to query for feature with layer id: " + layerId + " and id: " + id, sqle);
+			throw new StaticFeatureException("Unable to query for feature with layer id: " + layerId + " and id: " + id, sqle);
+		}
+
+		return staticFeature;
+	}
+
 	public void deleteAll(Long layerId) throws StaticFeatureException {
 		List<StaticFeature> features = readAll(layerId);
 		Collection<Long> ids = new ArrayList<>(features.size());

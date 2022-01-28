@@ -37,6 +37,7 @@ import mil.nga.giat.mage.observation.view.ObservationViewActivity
 import mil.nga.giat.mage.sdk.datastore.location.LocationHelper
 import mil.nga.giat.mage.sdk.datastore.observation.Observation
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper
+import mil.nga.giat.mage.utils.googleMapsUri
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -196,7 +197,7 @@ class ObservationFeedFragment : Fragment() {
    }
 
    private fun observationDirections(observation: Observation) {
-      val intent = Intent(Intent.ACTION_VIEW, observation.googleMapsUri)
+      val intent = Intent(Intent.ACTION_VIEW, observation.geometry.googleMapsUri())
       startActivity(intent)
    }
 

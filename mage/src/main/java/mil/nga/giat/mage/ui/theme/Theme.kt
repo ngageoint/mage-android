@@ -1,10 +1,7 @@
 package mil.nga.giat.mage.ui.theme
 
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.material.Colors
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.darkColors
-import androidx.compose.material.lightColors
+import androidx.compose.material.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 
@@ -16,10 +13,11 @@ private val LightColorPalette = lightColors(
 )
 
 private val DarkColorPalette = darkColors(
-  primary = Grey900,
-  primaryVariant = Grey900,
+  primary = Grey800,
+  primaryVariant = Grey800,
   secondary = BlueA200,
-  error = Red300
+  error = Red300,
+  onPrimary = Color.White
 )
 
 @Composable
@@ -37,3 +35,6 @@ fun MageTheme(
 
 val Colors.topAppBarBackground: Color @Composable get() = primary
 val Colors.importantBackground: Color @Composable get() = OrangeA400
+val Colors.linkColor: Color @Composable get() {
+ return if (isSystemInDarkTheme()) MaterialTheme.colors.onSurface.copy(alpha = ContentAlpha.medium) else primary
+}

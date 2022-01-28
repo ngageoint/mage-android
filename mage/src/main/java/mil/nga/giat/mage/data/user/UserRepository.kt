@@ -15,7 +15,6 @@ import mil.nga.giat.mage.sdk.utils.MediaUtility
 import okhttp3.ResponseBody
 import java.io.File
 import javax.inject.Inject
-import javax.inject.Singleton
 
 class UserRepository @Inject constructor(
    @ApplicationContext private val context: Context,

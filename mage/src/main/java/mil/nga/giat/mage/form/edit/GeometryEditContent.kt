@@ -1,12 +1,14 @@
 package mil.nga.giat.mage.form.edit
 
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Place
 import androidx.compose.material.icons.outlined.Place
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
@@ -68,7 +70,7 @@ fun GeometryEdit(
           .height(150.dp)
       ) {
         val mapView = rememberMapViewWithLifecycle()
-        MapViewContent(mapView, formState, location, MapState(fieldState.defaultMapCenter, fieldState.defaultMapZoom))
+        MapViewContent(mapView, MapState(fieldState.defaultMapCenter, fieldState.defaultMapZoom), formState, location)
       }
     }
 

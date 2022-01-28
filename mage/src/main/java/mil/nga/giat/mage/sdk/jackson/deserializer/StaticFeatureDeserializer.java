@@ -73,15 +73,14 @@ public class StaticFeatureDeserializer extends Deserializer {
 	}
 
 	private Collection<StaticFeatureProperty> parseProperties(JsonParser parser) throws IOException {
-		Collection<StaticFeatureProperty> properties = new ArrayList<StaticFeatureProperty>();
+		Collection<StaticFeatureProperty> properties = new ArrayList<>();
 		return parseProperties(parser, properties, "");
 	}
 
 	private Collection<StaticFeatureProperty> parseProperties(JsonParser parser, Collection<StaticFeatureProperty> properties, String keyPrefix) throws IOException {
 		while (parser.nextToken() != JsonToken.END_OBJECT) {
 			String key = keyPrefix + parser.getCurrentName().toLowerCase();
-			JsonToken token = parser.nextToken();
-			if (token == JsonToken.START_OBJECT) {
+			if (parser.nextToken() == JsonToken.START_OBJECT) {
 				parseProperties(parser, properties, key);
 			} else {
 				String value = parser.getText();
