@@ -48,8 +48,8 @@ class LoginViewModel @Inject constructor(
     private val _authenticationState = MutableLiveData<AuthenticationState>()
     val authenticationState: LiveData<AuthenticationState> = _authenticationState
 
-    private val _authenticationStatus = MutableLiveData<Authentication>()
-    val authenticationStatus: LiveData<Authentication> = _authenticationStatus
+    private val _authenticationStatus = MutableLiveData<Authentication?>()
+    val authenticationStatus: LiveData<Authentication?> = _authenticationStatus
 
     fun authenticate(strategy: String, credentials: Array<String>, allowDisconnectedLogin: Boolean = false) {
         AuthenticationTask(context, allowDisconnectedLogin) {
@@ -70,10 +70,10 @@ class LoginViewModel @Inject constructor(
         _authenticationState.value = AuthenticationState.LOADING
     }
 
-    private val _authorizationStatus = MutableLiveData<Authorization>()
-    val authorizationStatus: LiveData<Authorization> = _authorizationStatus
+    private val _authorizationStatus = MutableLiveData<Authorization?>()
+    val authorizationStatus: LiveData<Authorization?> = _authorizationStatus
 
-    fun authorize(strategy: String, token: String, status: AuthenticationStatus? = null) {
+    fun authorize(strategy: String, token: String) {
         AuthorizationTask(context) {
             if (it.status == AuthorizationStatus.Status.SUCCESSFUL_AUTHORIZATION) {
                 if ("local" == strategy) {

@@ -240,7 +240,7 @@ public class LoginActivity extends AppCompatActivity {
         AuthenticationStatus status = authentication.getStatus();
 
         if (status.getStatus() == AuthenticationStatus.Status.SUCCESSFUL_AUTHENTICATION) {
-            viewModel.authorize(authentication.getStrategy(), status.getToken(), status);
+            viewModel.authorize(authentication.getStrategy(), status.getToken());
         } else if (status.getStatus() == AuthenticationStatus.Status.DISCONNECTED_AUTHENTICATION) {
             new AlertDialog.Builder(this)
                     .setTitle("Disconnected Login")
