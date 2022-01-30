@@ -3,21 +3,22 @@ package mil.nga.giat.mage.observation.edit
 import android.content.res.ColorStateList
 import android.graphics.Color
 import android.graphics.PorterDuff
-import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import android.os.Bundle
-import android.view.ViewGroup
 import android.view.LayoutInflater
 import android.view.View
+import android.view.ViewGroup
 import androidx.core.widget.ImageViewCompat
 import androidx.lifecycle.ViewModelProvider
-import mil.nga.giat.mage.R
-import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.google.gson.JsonObject
+import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.bottomsheet.BottomSheetDialogFragment
+import com.google.gson.JsonParser
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.android.synthetic.main.view_form_picker_item.view.*
+import mil.nga.giat.mage.R
 import mil.nga.giat.mage.form.Form
 import mil.nga.giat.mage.form.FormViewModel
+import mil.nga.giat.mage.network.gson.asJsonObjectOrNull
 import mil.nga.giat.mage.sdk.datastore.user.EventHelper
 
 @AndroidEntryPoint
@@ -56,10 +57,12 @@ class FormPickerBottomSheetFragment: BottomSheetDialogFragment() {
 
     val forms = jsonForms
        .asSequence()
-       .filterIsInstance<JsonObject>()
-       .map { Form.fromJson(it) }
+       .map { form ->
+         JsonParser.parseString(form.json).asJsonObjectOrNull()?.let { json ->
+           Form.fromJson(json)
+         }
+       }
        .filterNotNull()
-       .filter { !it.archived }
        .map { form ->
          val formMax = form.max
          val totalOfForm = viewModel.observationState.value?.forms?.value?.filter { it.definition.id == form.id }?.size ?: 0

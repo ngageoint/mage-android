@@ -7,7 +7,6 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.android.gms.maps.model.LatLng
-import com.google.gson.JsonObject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
@@ -72,21 +71,19 @@ open class FormViewModel @Inject constructor(
   open fun createObservation(timestamp: Date, location: ObservationLocation, defaultMapZoom: Float? = null, defaultMapCenter: LatLng? = null): Boolean {
     if (_observationState.value != null) return false
 
-    val jsonForms = event.forms
     val forms = mutableListOf<FormState>()
     val formDefinitions = mutableListOf<Form>()
-    for ((index, jsonForm) in jsonForms.withIndex()) {
-      fromJson(jsonForm as JsonObject)?.let { form ->
-        formDefinitions.add(form)
+    event.forms.mapNotNull { form ->
+      fromJson(form.json)
+    }
+    .forEachIndexed { index, form ->
+      formDefinitions.add(form)
 
-        form.min
-
-        val defaultForm = FormPreferences(context, event.id, form.id).getDefaults()
-        repeat((form.min ?: 0) + if (form.default) 1 else 0) {
-          val formState = FormState.fromForm(eventId = event.remoteId, form = form, defaultForm = defaultForm)
-          formState.expanded.value = index == 0
-          forms.add(formState)
-        }
+      val defaultForm = FormPreferences(context, event.id, form.id).getDefaults()
+      repeat((form.min ?: 0) + if (form.default) 1 else 0) {
+        val formState = FormState.fromForm(eventId = event.remoteId, form = form, defaultForm = defaultForm)
+        formState.expanded.value = index == 0
+        forms.add(formState)
       }
     }
 
@@ -166,15 +163,12 @@ open class FormViewModel @Inject constructor(
   protected open fun createObservationState(observation: Observation, defaultMapZoom: Float? = null, defaultMapCenter: LatLng? = null) {
     _observation.value = observation
 
-    val formDefinitions = mutableMapOf<Long, Form>()
-    for (form in event.forms) {
-      fromJson(form.json)?.let {
-        formDefinitions.put(it.id, it)
-      }
-    }
+    val formDefinitions = event.forms
+      .mapNotNull { fromJson(it.json) }
+      .associateBy { it.id }
 
     val forms = mutableListOf<FormState>()
-    for ((index, observationForm) in observation.forms.withIndex()) {
+    observation.forms.forEachIndexed { index, observationForm ->
       val formDefinition = formDefinitions[observationForm.formId]
       if (formDefinition != null) {
         val fields = mutableListOf<FieldState<*, out FieldValue>>()

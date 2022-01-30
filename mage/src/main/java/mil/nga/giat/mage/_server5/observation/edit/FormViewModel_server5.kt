@@ -38,16 +38,17 @@ class FormViewModel_server5 @Inject constructor(
 
     val forms = mutableListOf<FormState>()
     val formDefinitions = mutableListOf<Form>()
-    for ((index, eventForm) in event.forms.withIndex()) {
-      fromJson(eventForm.json)?.let { form ->
-        formDefinitions.add(form)
+    event.forms.mapNotNull { form ->
+      fromJson(form.json)
+    }
+    .forEachIndexed { index, form ->
+      formDefinitions.add(form)
 
-        if (form.default) {
-          val defaultForm = FormPreferences(context, event.id, form.id).getDefaults()
-          val formState = FormState.fromForm(eventId = event.remoteId, form = form, defaultForm = defaultForm)
-          formState.expanded.value = index == 0
-          forms.add(formState)
-        }
+      val defaultForm = FormPreferences(context, event.id, form.id).getDefaults()
+      repeat((form.min ?: 0) + if (form.default) 1 else 0) {
+        val formState = FormState.fromForm(eventId = event.remoteId, form = form, defaultForm = defaultForm)
+        formState.expanded.value = index == 0
+        forms.add(formState)
       }
     }
 
@@ -118,7 +119,7 @@ class FormViewModel_server5 @Inject constructor(
     }
 
     val forms = mutableListOf<FormState>()
-    for ((index, observationForm) in observation.forms.withIndex()) {
+    observation.forms.forEachIndexed { index, observationForm ->
       val form = formDefinitions[observationForm.formId]
       if (form != null) {
         val fields = mutableListOf<FieldState<*, out FieldValue>>()
