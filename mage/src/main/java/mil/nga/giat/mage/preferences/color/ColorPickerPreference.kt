@@ -6,7 +6,7 @@ import android.util.AttributeSet
 import androidx.core.graphics.drawable.DrawableCompat
 import androidx.preference.DialogPreference
 
-class ColorPickerPreference(context: Context?, attrs: AttributeSet?) : DialogPreference(context, attrs) {
+class ColorPickerPreference(context: Context, attrs: AttributeSet) : DialogPreference(context, attrs) {
     var defaultColor: String = "#FF0000"
     var color: String
         get(): String {
@@ -15,7 +15,9 @@ class ColorPickerPreference(context: Context?, attrs: AttributeSet?) : DialogPre
         set(value) {
             persistString(value)
             notifyChanged()
-            DrawableCompat.setTint(icon, Color.parseColor(value))
+            icon?.let {
+                DrawableCompat.setTint(it, Color.parseColor(value))
+            }
         }
 
     override fun setDefaultValue(defaultValue: Any?) {
@@ -28,6 +30,8 @@ class ColorPickerPreference(context: Context?, attrs: AttributeSet?) : DialogPre
 
     override fun onSetInitialValue(defaultValue: Any?) {
         super.onSetInitialValue(defaultValue)
-        DrawableCompat.setTint(icon, Color.parseColor(color))
+        icon?.let {
+            DrawableCompat.setTint(it, Color.parseColor(color))
+        }
     }
 }
