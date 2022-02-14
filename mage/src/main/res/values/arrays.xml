@@ -54,13 +54,15 @@
     </string-array>
 
     <string-array name="coordinateSystems">
-        <item>Lat/Lng</item>
+        <item>Latitude, Longitude</item>
         <item>MGRS</item>
+        <item>Degrees, Minutes, Seconds</item>
     </string-array>
 
     <string-array name="coordinateSystemValues">
         <item>0</item>
         <item>1</item>
+        <item>2</item>
     </string-array>
 
     <string-array name="clearDataEntries">

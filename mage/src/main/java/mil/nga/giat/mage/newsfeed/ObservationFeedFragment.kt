@@ -209,7 +209,7 @@ class ObservationFeedFragment : Fragment() {
 
    private fun observationLocation(observation: Observation) {
       val centroid = observation.geometry.centroid
-      val coordinates = CoordinateFormatter(context).format(LatLng(centroid.y, centroid.x))
+      val coordinates = CoordinateFormatter(requireContext()).format(LatLng(centroid.y, centroid.x))
       val clipboard: ClipboardManager? = context?.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
       val clip = ClipData.newPlainText("Observation Location", coordinates)
       if (clipboard == null || clip == null) return

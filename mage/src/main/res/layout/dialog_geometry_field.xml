@@ -36,7 +36,9 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="8dp"
-                    android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
+                    android:theme="@style/ThemeOverlay.AppCompat.ActionBar"
+                    app:tabTextColor="@color/md_white_1000"
+                    app:tabBackground="?attr/colorPrimary"
                     app:tabIndicatorColor="@android:color/white"
                     app:tabMaxWidth="0dp"
                     app:tabGravity="fill"
@@ -57,6 +59,14 @@
                     android:layout_marginStart="16dp"
                     android:layout_marginEnd="16dp"
                     android:name="mil.nga.giat.mage.form.edit.dialog.GeometryFieldDialog$MGRSCoordinateFragment" />
+
+                <androidx.fragment.app.FragmentContainerView
+                    android:id="@+id/dmsCoordinateFragment"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="16dp"
+                    android:layout_marginEnd="16dp"
+                    android:name="mil.nga.giat.mage.form.edit.dialog.GeometryFieldDialog$DMSCoordinateFragment" />
 
                 <TextView
                     android:id="@+id/hintText"

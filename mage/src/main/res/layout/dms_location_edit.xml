@@ -6,7 +6,7 @@
     android:orientation="horizontal">
 
     <com.google.android.material.textfield.TextInputLayout
-        android:id="@+id/location_edit_latitude_layout"
+        android:id="@+id/location_edit_dms_latitude_layout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginEnd="4dp"
@@ -16,18 +16,17 @@
         android:theme="@style/AppTheme.White">
 
         <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/location_edit_latitude"
+            android:id="@+id/location_edit_dms_latitude"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Latitude"
+            android:hint="Latitude DMS"
             android:imeOptions="actionDone"
-            android:inputType="numberDecimal|numberSigned"
             android:theme="@style/AppTheme.White" />
 
     </com.google.android.material.textfield.TextInputLayout>
 
     <com.google.android.material.textfield.TextInputLayout
-        android:id="@+id/location_edit_longitude_layout"
+        android:id="@+id/location_edit_dms_longitude_layout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginStart="4dp"
@@ -37,12 +36,11 @@
         android:theme="@style/AppTheme.White">
 
         <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/location_edit_longitude"
+            android:id="@+id/location_edit_dms_longitude"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Longitude"
+            android:hint="Longitude DMS"
             android:imeOptions="actionDone"
-            android:inputType="numberDecimal|numberSigned"
             android:theme="@style/AppTheme.White" />
 
     </com.google.android.material.textfield.TextInputLayout>
