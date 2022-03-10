@@ -5,9 +5,13 @@ import com.google.gson.JsonElement
 import mil.nga.giat.mage.data.feed.ItemWithFeed
 import mil.nga.giat.mage.map.FeedItemId
 import mil.nga.giat.mage.network.Server
+import mil.nga.giat.mage.network.gson.asLongOrNull
+import mil.nga.giat.mage.network.gson.asStringOrNull
+import mil.nga.giat.mage.sdk.utils.ISO8601DateFormatFactory
 import mil.nga.giat.mage.utils.DateFormatFactory
 import mil.nga.sf.Geometry
 import java.text.DateFormat
+import java.text.ParseException
 import java.util.*
 
 data class FeedItemState(
@@ -35,8 +39,18 @@ data class FeedItemState(
          } else emptyList()
 
          val date = if (feed.itemTemporalProperty != null) {
-            val timestamp = item.properties?.asJsonObject?.get(feed.itemTemporalProperty)?.asLong
-            if (timestamp != null) dateFormat.format(timestamp) else ""
+            val temporalElement = item.properties?.asJsonObject?.get(feed.itemTemporalProperty)
+            val timestamp = temporalElement?.asLongOrNull() ?: run {
+               temporalElement?.asStringOrNull()?.let { date ->
+                  try {
+                     ISO8601DateFormatFactory.ISO8601().parse(date)?.time
+                  } catch (ignore: ParseException) { null }
+               }
+            }
+
+            if (timestamp != null) {
+               dateFormat.format(Date(timestamp))
+            } else ""
          } else null
 
          val primary = if (feed.itemPrimaryProperty != null) {
@@ -71,8 +85,9 @@ data class FeedItemState(
             if (type == "number") {
                val format = propertySchema.get("format")?.asString
                if (format == "date") {
-                  val timestamp = property.second.asNumber.toLong()
-                  dateFormat.format(Date(timestamp))
+                  property.second.asLongOrNull()?.let {
+                     dateFormat.format(Date(it))
+                  }
                } else {
                   property.second.asString
                }

@@ -18,7 +18,6 @@ import mil.nga.giat.mage.profile.ProfileActivity;
 import mil.nga.giat.mage.sdk.datastore.user.User;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
-import mil.nga.giat.mage.widget.DividerItemDecoration;
 
 public class PeopleActivity extends AppCompatActivity implements PeopleRecyclerAdapter.OnPersonClickListener {
 
@@ -37,7 +36,6 @@ public class PeopleActivity extends AppCompatActivity implements PeopleRecyclerA
 
         recyclerView = (RecyclerView) findViewById(R.id.recycler_view);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
-        recyclerView.addItemDecoration(new DividerItemDecoration(this, R.drawable.list_inset_divider));
         recyclerView.setItemAnimator(new DefaultItemAnimator());
 
         Collection<String> userIds = getIntent().getStringArrayListExtra(USER_REMOTE_IDS);

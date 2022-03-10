@@ -25,6 +25,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SearchView
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.*
 import androidx.lifecycle.Observer
 import com.google.android.gms.maps.*
@@ -53,6 +54,9 @@ import mil.nga.geopackage.tiles.TileBoundingBoxUtils
 import mil.nga.geopackage.tiles.features.DefaultFeatureTiles
 import mil.nga.geopackage.tiles.features.FeatureTiles
 import mil.nga.geopackage.tiles.features.custom.NumberFeaturesTile
+import mil.nga.giat.mage.LandingViewModel
+import mil.nga.giat.mage.LandingViewModel.Navigable
+import mil.nga.giat.mage.LandingViewModel.NavigableType
 import mil.nga.giat.mage.R
 import mil.nga.giat.mage.coordinate.CoordinateFormatter
 import mil.nga.giat.mage.feed.item.FeedItemActivity
@@ -90,6 +94,7 @@ import mil.nga.proj.ProjectionConstants
 import mil.nga.proj.ProjectionFactory
 import mil.nga.sf.Geometry
 import mil.nga.sf.GeometryType
+import mil.nga.sf.Point
 import java.util.*
 import javax.inject.Inject
 import kotlin.collections.set
@@ -115,7 +120,9 @@ class MapFragment : Fragment(),
    @Inject
    lateinit var preferences: SharedPreferences
 
-   private lateinit var viewModel: MapViewModel
+   private val viewModel: MapViewModel by activityViewModels()
+   private val landingViewModel: LandingViewModel by activityViewModels()
+
    private lateinit var mapView: MapView
    private var map: GoogleMap? = null
 
@@ -153,12 +160,6 @@ class MapFragment : Fragment(),
    private lateinit var featureBottomSheetBehavior: BottomSheetBehavior<View>
 
    private lateinit var availableLayerDownloadsIcon: View
-
-   override fun onCreate(savedInstanceState: Bundle?) {
-      super.onCreate(savedInstanceState)
-
-      viewModel = ViewModelProvider(this).get(MapViewModel::class.java)
-   }
 
    override fun onCreateView(
       inflater: LayoutInflater,
@@ -294,7 +295,9 @@ class MapFragment : Fragment(),
                   googleMap,
                   requireActivity().findViewById(R.id.straight_line_nav_container),
                   requireActivity()
-               )
+               )  {
+                  landingViewModel.stopNavigation()
+               }
 
                onMapReady(googleMap)
             }
@@ -331,6 +334,10 @@ class MapFragment : Fragment(),
                onStaticLayers(layers)
             })
 
+            landingViewModel.navigateTo.observe(viewLifecycleOwner, Observer {
+               navigateTo(it)
+            })
+
             launch(Dispatchers.IO) {
                while(isActive) {
                   delay(MARKER_REFRESH_INTERVAL.toLong())
@@ -349,9 +356,16 @@ class MapFragment : Fragment(),
    private fun onObservationAction(action: Any) {
       when(action) {
          is ObservationAction.Favorite -> onObservationFavorite(action.observation)
-         is ObservationAction.Directions -> onDirections(action.geometry, action.image)
          is ObservationAction.Location -> onLocation(action.geometry)
          is ObservationAction.Details -> onObservationDetails(action.id)
+         is ObservationAction.Directions -> {
+            onDirections(Navigable(
+               action.id,
+               NavigableType.OBSERVATION,
+               action.geometry,
+               action.image
+            ))
+         }
       }
    }
 
@@ -365,7 +379,7 @@ class MapFragment : Fragment(),
       startActivity(intent)
    }
 
-   private fun onDirections(geometry: Geometry, icon: Any? = null) {
+   private fun onDirections(navigable: Navigable<Any>) {
       featureBottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
 
       // present a dialog to pick between android system map and straight line
@@ -374,10 +388,11 @@ class MapFragment : Fragment(),
          .setItems(R.array.navigationOptions) { _: DialogInterface?, which: Int ->
             when (which) {
                0 -> {
-                  val intent = Intent(Intent.ACTION_VIEW, geometry.googleMapsUri())
+                  val intent = Intent(Intent.ACTION_VIEW, navigable.geometry.googleMapsUri())
                   startActivity(intent)
                }
                1 -> {
+                  // TODO might be ok to start with null location and let user know
                   val location: android.location.Location? = locationProvider?.value
                   if (location == null) {
                      if (ContextCompat.checkSelfPermission(application, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
@@ -396,16 +411,29 @@ class MapFragment : Fragment(),
                            .show()
                      }
                   } else {
-                     val centroid = geometry.centroid
-                     val latLng = LatLng(centroid.y, centroid.x)
-                     straightLineNavigation?.startNavigation(location, latLng, icon)
-                     featureBottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
+                     landingViewModel.startNavigation(navigable)
                   }
                }
             }
          }
          .setNegativeButton(android.R.string.cancel, null)
          .show()
+   }
+
+   private fun navigateTo(navigable: Navigable<Any>?) {
+      if (navigable != null) {
+         val location = locationProvider?.value!!
+         val centroid = navigable.geometry.centroid
+         val latLng = LatLng(centroid.y, centroid.x)
+
+         if (straightLineNavigation?.isNavigating() == true) {
+            straightLineNavigation?.updateDestination(latLng)
+         } else {
+            straightLineNavigation?.startNavigation(location, latLng, navigable.icon)
+            featureBottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
+            map?.center(Point(location.longitude, location.latitude), 16f)
+         }
+      }
    }
 
    private fun onObservationFavorite(observationMap: ObservationMapState) {
@@ -427,10 +455,17 @@ class MapFragment : Fragment(),
    private fun onUserAction(action: Any) {
       when(action) {
          is UserAction.Details -> onUserDetails(action.id)
-         is UserAction.Directions -> onDirections(action.geometry)
          is UserAction.Location -> onLocation(action.geometry)
          is UserAction.Phone -> onUserPhone(action.user)
          is UserAction.Email -> onUserEmail(action.user)
+         is UserAction.Directions -> {
+            onDirections(Navigable(
+               action.id,
+               NavigableType.USER,
+               action.geometry,
+               action.icon
+            ))
+         }
       }
    }
 
@@ -469,7 +504,14 @@ class MapFragment : Fragment(),
       when(action) {
          is FeatureAction.Details<*> -> onFeedItemDetails(action.id)
          is FeatureAction.Location -> onLocation(action.geometry)
-         is FeatureAction.Directions -> onDirections(action.geometry, action.image)
+         is FeatureAction.Directions<*> -> {
+            onDirections(Navigable(
+               action.id,
+               NavigableType.FEED,
+               action.geometry,
+               action.image
+            ))
+         }
       }
    }
 
@@ -485,8 +527,15 @@ class MapFragment : Fragment(),
    private fun onGeoPackageFeatureAction(action: Any) {
       when(action) {
          is GeoPackageFeatureAction.Location -> onLocation(action.geometry)
-         is GeoPackageFeatureAction.Directions -> onDirections(action.geometry, action.icon)
          is GeoPackageFeatureAction.Media -> onGeoPackageMedia(action)
+         is GeoPackageFeatureAction.Directions -> {
+            onDirections(Navigable(
+               "geopackage",
+               NavigableType.OTHER,
+               action.geometry,
+               action.icon
+            ))
+         }
       }
    }
 
@@ -504,7 +553,14 @@ class MapFragment : Fragment(),
    private fun onStaticFeatureAction(action: Any) {
       when(action) {
          is StaticFeatureAction.Location -> onLocation(action.geometry)
-         is StaticFeatureAction.Directions -> onDirections(action.geometry, action.icon)
+         is StaticFeatureAction.Directions -> {
+            onDirections(Navigable(
+               "feature",
+               NavigableType.OTHER,
+               action.geometry,
+               action.icon
+            ))
+         }
       }
    }
 
@@ -512,6 +568,7 @@ class MapFragment : Fragment(),
       if (location == null) return
 
       locationChangedListener?.onLocationChanged(location)
+      straightLineNavigation?.updateUserLocation(location)
 
       if (locateState == LocateState.FOLLOW) {
          val cameraPosition = CameraPosition.Builder()
@@ -649,10 +706,28 @@ class MapFragment : Fragment(),
 
    private fun onObservations(annotations: List<MapAnnotation<Long>>) {
       observations?.add(annotations)
+
+      landingViewModel.navigateTo.value?.let { navigable ->
+         if (navigable.type == NavigableType.OBSERVATION) {
+            annotations.find { it.id == navigable.id }?.let { annotation ->
+               val centroid = annotation.geometry.centroid
+               straightLineNavigation?.updateDestination(LatLng(centroid.y, centroid.x))
+            }
+         }
+      }
    }
 
    private fun onLocations(annotations: List<MapAnnotation<Long>>) {
       locations?.add(annotations)
+
+      landingViewModel.navigateTo.value?.let { navigable ->
+         if (navigable.type == NavigableType.USER) {
+            annotations.find { it.id == navigable.id }?.let { annotation ->
+               val centroid = annotation.geometry.centroid
+               straightLineNavigation?.updateDestination(LatLng(centroid.y, centroid.x))
+            }
+         }
+      }
    }
 
    private fun updateReportLocationButton() {
@@ -857,9 +932,18 @@ class MapFragment : Fragment(),
       }
    }
 
-   private fun onFeedItems(items: FeedState?) {
-      if (items != null) {
-         feeds?.add(items)
+   private fun onFeedItems(feedState: FeedState?) {
+      if (feedState != null) {
+         feeds?.add(feedState)
+
+         landingViewModel.navigateTo.value?.let { navigable ->
+            if (navigable.type == NavigableType.FEED) {
+               feedState.items.find { FeedItemId(feedState.feed.id, it.id) == navigable.id }?.let { annotation ->
+                  val centroid = annotation.geometry.centroid
+                  straightLineNavigation?.updateDestination(LatLng(centroid.y, centroid.x))
+               }
+            }
+         }
       }
    }
 

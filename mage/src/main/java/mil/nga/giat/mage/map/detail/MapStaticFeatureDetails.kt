@@ -33,7 +33,7 @@ fun MapStaticFeatureDetails(
                featureMapState,
                onAction = { action ->
                   when (action) {
-                     is FeatureAction.Directions -> {
+                     is FeatureAction.Directions<*> -> {
                         onAction?.invoke(StaticFeatureAction.Directions(action.geometry, action.image))
 
                      }

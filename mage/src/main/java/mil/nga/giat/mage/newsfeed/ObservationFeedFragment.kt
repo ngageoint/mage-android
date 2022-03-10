@@ -1,10 +1,8 @@
 package mil.nga.giat.mage.newsfeed
 
 import android.Manifest
-import android.content.ClipData
-import android.content.ClipboardManager
-import android.content.Context
-import android.content.Intent
+import android.app.Application
+import android.content.*
 import android.content.pm.PackageManager
 import android.location.Location
 import android.os.Bundle
@@ -14,8 +12,8 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.LiveData
-import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -23,10 +21,14 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
+import mil.nga.giat.mage.LandingViewModel
+import mil.nga.giat.mage.LandingViewModel.Navigable
+import mil.nga.giat.mage.LandingViewModel.NavigableType
 import mil.nga.giat.mage.R
 import mil.nga.giat.mage.coordinate.CoordinateFormatter
 import mil.nga.giat.mage.filter.ObservationFilterActivity
 import mil.nga.giat.mage.location.LocationPolicy
+import mil.nga.giat.mage.map.annotation.MapAnnotation
 import mil.nga.giat.mage.newsfeed.ObservationFeedViewModel.RefreshState
 import mil.nga.giat.mage.newsfeed.ObservationListAdapter.ObservationActionListener
 import mil.nga.giat.mage.observation.AttachmentGallery
@@ -42,7 +44,12 @@ import javax.inject.Inject
 
 @AndroidEntryPoint
 class ObservationFeedFragment : Fragment() {
-   private lateinit var viewModel: ObservationFeedViewModel
+   @Inject
+   lateinit var application: Application
+
+   private val viewModel: ObservationFeedViewModel by activityViewModels()
+   private val landingViewModel: LandingViewModel by activityViewModels()
+
    private lateinit var recyclerView: RecyclerView
    private lateinit var swipeContainer: SwipeRefreshLayout
    private lateinit var attachmentGallery:  AttachmentGallery
@@ -56,8 +63,6 @@ class ObservationFeedFragment : Fragment() {
       super.onCreate(savedInstanceState)
 
       locationProvider = locationPolicy.bestLocationProvider
-
-      viewModel = ViewModelProvider(this).get(ObservationFeedViewModel::class.java)
    }
 
    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
@@ -197,8 +202,28 @@ class ObservationFeedFragment : Fragment() {
    }
 
    private fun observationDirections(observation: Observation) {
-      val intent = Intent(Intent.ACTION_VIEW, observation.geometry.googleMapsUri())
-      startActivity(intent)
+      val icon = MapAnnotation.fromObservation(observation, application)
+
+      AlertDialog.Builder(requireActivity())
+         .setTitle(application.resources.getString(R.string.navigation_choice_title))
+         .setItems(R.array.navigationOptions) { _: DialogInterface?, which: Int ->
+            when (which) {
+               0 -> {
+                  val intent = Intent(Intent.ACTION_VIEW, observation.geometry.googleMapsUri())
+                  startActivity(intent)
+               }
+               1 -> {
+                  landingViewModel.startNavigation(Navigable(
+                     observation.id.toString(),
+                     NavigableType.OBSERVATION,
+                     observation.geometry,
+                     icon
+                  ))
+               }
+            }
+         }
+         .setNegativeButton(android.R.string.cancel, null)
+         .show()
    }
 
    private fun observationClick(observation: Observation) {

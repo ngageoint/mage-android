@@ -7,10 +7,13 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import mil.nga.giat.mage.network.Resource
 import mil.nga.giat.mage.network.api.FeedService
+import mil.nga.giat.mage.network.gson.asLongOrNull
+import mil.nga.giat.mage.network.gson.asStringOrNull
 import mil.nga.giat.mage.sdk.datastore.user.EventHelper
+import mil.nga.giat.mage.sdk.utils.ISO8601DateFormatFactory
+import java.text.ParseException
 import java.util.*
 import javax.inject.Inject
-import javax.inject.Singleton
 
 class FeedRepository @Inject constructor(
     @ApplicationContext private val  context: Context,
@@ -52,7 +55,14 @@ class FeedRepository @Inject constructor(
 
             item.timestamp = null
             if (feed.itemTemporalProperty != null) {
-                item.timestamp = item.properties?.asJsonObject?.get(feed.itemTemporalProperty)?.asLong
+                val temporalElement = item.properties?.asJsonObject?.get(feed.itemTemporalProperty)
+                item.timestamp = temporalElement?.asLongOrNull() ?: run {
+                    temporalElement?.asStringOrNull()?.let { date ->
+                        try {
+                            ISO8601DateFormatFactory.ISO8601().parse(date)?.time
+                        } catch (ignore: ParseException) { null }
+                    }
+                }
             }
 
             feedItemDao.upsert(item)

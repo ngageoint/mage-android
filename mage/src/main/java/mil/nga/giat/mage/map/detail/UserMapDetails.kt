@@ -18,7 +18,7 @@ import mil.nga.sf.Geometry
 sealed class UserAction {
    class Email(val user: UserMapState): UserAction()
    class Phone(val user: UserMapState): UserAction()
-   class Directions(val geometry: Geometry, val icon: Any?): UserAction()
+   class Directions(val id: Long, val geometry: Geometry, val icon: Any?): UserAction()
    class Location(val geometry: Geometry): UserAction()
    class Details(val id: Long): UserAction()
 }
@@ -47,8 +47,8 @@ fun UserMapDetails(
                is FeatureAction.Details<*> -> {
                   onAction?.invoke(UserAction.Details(userState.id))
                }
-               is FeatureAction.Directions -> {
-                  onAction?.invoke(UserAction.Directions(action.geometry, action.image))
+               is FeatureAction.Directions<*> -> {
+                  onAction?.invoke(UserAction.Directions(userState.id, action.geometry, action.image))
                }
                is FeatureAction.Location -> {
                   onAction?.invoke(UserAction.Location(action.geometry))

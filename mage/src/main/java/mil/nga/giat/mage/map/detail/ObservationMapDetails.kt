@@ -20,7 +20,7 @@ import mil.nga.sf.Geometry
 
 sealed class ObservationAction {
    class Details(val id: Long): ObservationAction()
-   class Directions(val geometry: Geometry, val image: Any?): ObservationAction()
+   class Directions(val id: Long, val geometry: Geometry, val image: Any?): ObservationAction()
    class Favorite(val observation: ObservationMapState): ObservationAction()
    class Location(val geometry: Geometry): ObservationAction()
 }
@@ -53,8 +53,8 @@ fun ObservationMapDetails(
                is FeatureAction.Details<*> -> {
                   onAction?.invoke(ObservationAction.Details(observationMapState.id))
                }
-               is FeatureAction.Directions -> {
-                  onAction?.invoke(ObservationAction.Directions(action.geometry, action.image))
+               is FeatureAction.Directions<*> -> {
+                  onAction?.invoke(ObservationAction.Directions(observationMapState.id, action.geometry, action.image))
                }
                is FeatureAction.Location -> {
                   onAction?.invoke(ObservationAction.Location(action.geometry))

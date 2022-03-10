@@ -16,13 +16,19 @@ class IconStyle(
 
    companion object {
       fun fromObservation(observation: Observation, context: Context): IconStyle {
-         val iconFile = observationIcon(observation, context)
-         return IconStyle(Uri.fromFile(iconFile))
+         val iconUri = observationIcon(observation, context)?.let { file ->
+            Uri.fromFile(file)
+         }
+
+         return IconStyle(iconUri)
       }
 
       fun fromObservationProperties(eventId: String, formId: Long?, primary: String?, secondary: String?, context: Context): IconStyle {
-         val iconFile = observationIcon(eventId, formId, primary, secondary, context)
-         return IconStyle(Uri.fromFile(iconFile))
+         val iconUri = observationIcon(eventId, formId, primary, secondary, context)?.let { file ->
+            Uri.fromFile(file)
+         }
+
+         return IconStyle(iconUri)
       }
 
       fun fromStaticFeature(feature: StaticFeature): IconStyle {

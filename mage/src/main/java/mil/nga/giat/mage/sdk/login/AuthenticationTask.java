@@ -99,30 +99,36 @@ public class AuthenticationTask extends AsyncTask<String, Void, AuthenticationSt
 			parameters.addProperty("password", password);
 			Response<JsonObject> signin = userResource.signin(strategy, parameters);
 
-			if (signin.isSuccessful()) {
-				JsonObject json = signin.body();
-				String token = json.get("token").getAsString();
+			if (signin != null) {
+				if (signin.isSuccessful()) {
+					JsonObject json = signin.body();
+					String token = json.get("token").getAsString();
 
-				return new AuthenticationStatus.Builder(SUCCESSFUL_AUTHENTICATION)
-						.token(token)
-						.build();
-			} else if (signin.code() == 403) {
-				String errorMessage = "User account is not approved, please contact your MAGE administrator to approve your account.";
-				if (signin.errorBody() != null) {
-					errorMessage = signin.errorBody().string();
+					return new AuthenticationStatus.Builder(SUCCESSFUL_AUTHENTICATION)
+							.token(token)
+							.build();
+				} else if ( signin.code() == 403) {
+					String errorMessage = "User account is not approved, please contact your MAGE administrator to approve your account.";
+					if (signin.errorBody() != null) {
+						errorMessage = signin.errorBody().string();
+					}
+
+					return new AuthenticationStatus.Builder(ACCOUNT_CREATED)
+							.message(errorMessage)
+							.build();
+				} else {
+					String errorMessage = "Please check your username and password and try again.";
+					if (signin.errorBody() != null) {
+						errorMessage = signin.errorBody().string();
+					}
+
+					return new AuthenticationStatus.Builder(FAILED_AUTHENTICATION)
+							.message(errorMessage)
+							.build();
 				}
-
-				return new AuthenticationStatus.Builder(ACCOUNT_CREATED)
-						.message(errorMessage)
-						.build();
 			} else {
-				String errorMessage = "Please check your username and password and try again.";
-				if (signin.errorBody() != null) {
-					errorMessage = signin.errorBody().string();
-				}
-
 				return new AuthenticationStatus.Builder(FAILED_AUTHENTICATION)
-						.message(errorMessage)
+						.message("Error connecting to server, please contact your MAGE administrator")
 						.build();
 			}
 		} catch (Exception e) {

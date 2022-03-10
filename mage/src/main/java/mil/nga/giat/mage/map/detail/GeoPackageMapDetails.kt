@@ -47,7 +47,7 @@ fun GeoPackageFeatureDetails(
          featureMapState,
          onAction = { action ->
             when (action) {
-               is FeatureAction.Directions -> {
+               is FeatureAction.Directions<*> -> {
                   onAction?.invoke(GeoPackageFeatureAction.Directions(action.geometry, action.image))
 
                }

@@ -7,34 +7,47 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.DrawableCompat
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.gms.maps.model.LatLng
 import com.google.common.collect.Collections2
 import com.j256.ormlite.android.AndroidDatabaseResults
 import com.j256.ormlite.stmt.PreparedQuery
 import mil.nga.giat.mage.R
+import mil.nga.giat.mage.coordinate.CoordinateFormatter
 import mil.nga.giat.mage.glide.GlideApp
 import mil.nga.giat.mage.glide.model.Avatar.Companion.forUser
-import mil.nga.giat.mage.map.annotation.MapAnnotation
 import mil.nga.giat.mage.sdk.datastore.location.Location
+import mil.nga.giat.mage.sdk.datastore.location.LocationHelper
 import mil.nga.giat.mage.sdk.datastore.user.EventHelper
 import mil.nga.giat.mage.sdk.datastore.user.Team
 import mil.nga.giat.mage.sdk.datastore.user.TeamHelper
 import mil.nga.giat.mage.sdk.datastore.user.User
 import mil.nga.giat.mage.utils.DateFormatFactory
+import mil.nga.sf.util.GeometryUtils
 import org.apache.commons.lang3.StringUtils
 import java.sql.SQLException
+import java.text.DateFormat
 import java.util.*
+
+sealed class UserAction {
+   class Coordinates(val location: String): UserAction()
+   class Email(val email: String): UserAction()
+   class Phone(val phone: String): UserAction()
+   class Directions(val user: User, val location: Location): UserAction()
+}
 
 class UserListAdapter(
    private val context: Context,
    userFeedState: UserFeedState,
+   private val userAction: (UserAction) -> Unit,
    private val userClickListener: (User) -> Unit
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
-   val dateFormat = DateFormatFactory.format("yyyy-MM-dd HH:mm zz", Locale.getDefault(), context)
+   val dateFormat: DateFormat = DateFormatFactory.format("yyyy-MM-dd HH:mm zz", Locale.getDefault(), context)
 
    private var cursor: Cursor = userFeedState.cursor
    private val query: PreparedQuery<Location> = userFeedState.query
@@ -45,10 +58,13 @@ class UserListAdapter(
    private class PersonViewHolder(view: View) : RecyclerView.ViewHolder(view) {
       private val cardView: View = view.findViewById(R.id.card)
       val avatarView: ImageView = view.findViewById(R.id.avatarImageView)
-      val iconView: ImageView = view.findViewById(R.id.iconImageView)
       val nameView: TextView = view.findViewById(R.id.name)
       val dateView: TextView = view.findViewById(R.id.date)
       val teamsView: TextView = view.findViewById(R.id.teams)
+      val location: TextView = view.findViewById(R.id.location)
+      val email: ImageButton = view.findViewById(R.id.email_button)
+      val phone: ImageButton = view.findViewById(R.id.phone_button)
+      val directions: ImageButton = view.findViewById(R.id.directions_button)
 
       fun bind(user: User, listener: (User) -> Unit) {
          cardView.setOnClickListener { listener.invoke(user) }
@@ -97,21 +113,35 @@ class UserListAdapter(
             .circleCrop()
             .into(vh.avatarView)
 
-         val feature = MapAnnotation.fromUser(user, location)
-         GlideApp.with(context)
-            .load(feature)
-            .into(vh.iconView)
-
          vh.nameView.text = user.displayName
          val timeText = dateFormat.format(location.timestamp)
 
          vh.dateView.text = timeText
 
          val userTeams: MutableCollection<Team> = teamHelper.getTeamsByUser(user)
-         val eventTeams = teamHelper.getTeamsByEvent(eventHelper.currentEvent)
-         userTeams.retainAll(eventTeams)
+         val event = eventHelper.currentEvent
+         val eventTeams = teamHelper.getTeamsByEvent(event)
+         userTeams.retainAll(eventTeams.toSet())
          val teamNames = Collections2.transform(userTeams) { team: Team -> team.name }
          vh.teamsView.text = StringUtils.join(teamNames, ", ")
+
+         val locations = LocationHelper.getInstance(context).getUserLocations(user.id, event.id, 1, true)
+         locations?.first()?.let { location ->
+            val point = GeometryUtils.getCentroid(location.geometry)
+            val coordinates = CoordinateFormatter(context).format(LatLng(point.y, point.x))
+            vh.location.text = coordinates
+            vh.location.setOnClickListener { userAction(UserAction.Coordinates(coordinates)) }
+            vh.directions.setOnClickListener { userAction(UserAction.Directions(user, location)) }
+         }
+
+         vh.email.setOnClickListener { userAction(UserAction.Email(user.email)) }
+
+         user.primaryPhone?.let {
+            vh.phone.visibility = View.VISIBLE
+            vh.phone.setOnClickListener { userAction(UserAction.Phone(user.primaryPhone)) }
+         } ?: run {
+            vh.phone.visibility = View.GONE
+         }
       } catch (e: SQLException) {
          Log.e(LOG_NAME, "Could not set location view information.", e)
       }

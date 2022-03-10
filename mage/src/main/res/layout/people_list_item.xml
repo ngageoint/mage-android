@@ -1,76 +1,173 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content">
+    android:layout_height="wrap_content"
+    android:descendantFocusability="blocksDescendants"
+    android:orientation="vertical"
+    android:background="?android:attr/selectableItemBackground">
 
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/card"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
-        android:layout_marginStart="8dp"
         android:layout_marginEnd="8dp"
-        android:focusable="true"
+        android:layout_marginStart="8dp"
         android:clickable="true"
-        android:background="?android:attr/selectableItemBackground"
+        android:focusable="true"
         app:cardBackgroundColor="@color/background_card">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginBottom="16dp">
-
-            <ImageView
-                android:id="@+id/avatarImageView"
-                android:layout_width="40dip"
-                android:layout_height="40dip"
-                android:layout_marginTop="16dp"
-                android:layout_marginLeft="16dp"
-                android:layout_marginRight="16dp" />
+            android:orientation="vertical">
 
             <LinearLayout
-                android:layout_width="0dp"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:orientation="vertical"
-                android:layout_marginTop="13dp">
+                android:orientation="horizontal"
+                android:layout_marginTop="16dp"
+                android:layout_marginStart="16dp"
+                android:layout_marginEnd="16dp">
 
-                <TextView
-                    android:id="@+id/name"
-                    style="@style/TextAppearance.MaterialComponents.Body1"
-                    android:alpha=".87"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content" />
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
 
-                <TextView
-                    android:id="@+id/date"
-                    style="@style/TextAppearance.MaterialComponents.Body1"
-                    android:alpha=".6"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content" />
+                    <TextView
+                        android:id="@+id/date"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center_vertical"
+                        android:layout_marginBottom="16dp"
+                        style="@style/TextAppearance.MaterialComponents.Overline"
+                        android:ellipsize="end"
+                        android:maxLines="1"
+                        android:alpha=".6"/>
 
-                <TextView
-                    android:id="@+id/teams"
-                    style="@style/TextAppearance.MaterialComponents.Body2"
-                    android:alpha=".6"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content" />
+                    <TextView
+                        android:id="@+id/name"
+                        style="@style/TextAppearance.MaterialComponents.Headline6"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="bottom"
+                        android:ellipsize="end"
+                        android:maxLines="1" />
+
+                    <TextView
+                        android:id="@+id/teams"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        style="@style/ListTextPrimary"
+                        android:alpha=".6"/>
+                </LinearLayout>
+
+                <ImageView
+                    android:id="@+id/avatarImageView"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:layout_marginStart="16dp"
+                    android:src="@drawable/ic_place_white_48dp"/>
 
             </LinearLayout>
 
-            <ImageView
-                android:id="@+id/iconImageView"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:layout_marginTop="16dp"
-                android:layout_marginLeft="16dp"
-                android:layout_marginRight="16dp"/>
+            <LinearLayout
+                android:id="@+id/actions"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:layout_marginStart="8dp"
+                    android:layout_marginEnd="8dp">
+
+                    <LinearLayout
+                        android:id="@+id/location_container"
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:padding="8dp"
+                        android:orientation="horizontal"
+                        android:layout_alignParentStart="true"
+                        android:layout_centerInParent="true"
+                        android:gravity="center"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:background="?attr/selectableItemBackground">
+
+                        <ImageView
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:layout_marginEnd="8dp"
+                            app:tint="@color/primary_icon"
+                            android:src="@drawable/ic_my_location_white_24dp">
+                        </ImageView>
+
+                        <TextView
+                            android:id="@+id/location"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textColor="@color/primary_icon"
+                            style="@style/TextAppearance.MaterialComponents.Body2">
+                        </TextView>
+
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:orientation="horizontal"
+                        android:layout_alignParentEnd="true">
+
+                        <LinearLayout
+                            android:id="@+id/favorite"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal">
+
+                            <androidx.appcompat.widget.AppCompatImageButton
+                                android:id="@+id/email_button"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:padding="16dip"
+                                android:tint="#8A000000"
+                                android:src="@drawable/ic_outline_email_white_24"
+                                android:background="?attr/selectableItemBackgroundBorderless"/>
+
+                            <androidx.appcompat.widget.AppCompatImageButton
+                                android:id="@+id/phone_button"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:padding="16dip"
+                                android:tint="#8A000000"
+                                android:src="@drawable/ic_outline_phone_white_24"
+                                android:background="?attr/selectableItemBackgroundBorderless"/>
+
+                            <androidx.appcompat.widget.AppCompatImageButton
+                                android:id="@+id/directions_button"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="0dp"
+                                android:padding="16dip"
+                                android:tint="#8A000000"
+                                android:src="@drawable/ic_directions_outlined_white_24dp"
+                                android:background="?attr/selectableItemBackgroundBorderless"/>
+
+                        </LinearLayout>
+
+                    </LinearLayout>
+
+                </RelativeLayout>
+
+            </LinearLayout>
 
         </LinearLayout>
 
     </com.google.android.material.card.MaterialCardView>
 
-</FrameLayout>
+</LinearLayout>

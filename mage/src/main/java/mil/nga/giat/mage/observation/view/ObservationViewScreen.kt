@@ -41,7 +41,7 @@ import mil.nga.giat.mage.ui.theme.topAppBarBackground
 import mil.nga.giat.mage.utils.DateFormatFactory
 import java.util.*
 
-sealed class ObservationAction() {
+sealed class ObservationAction {
   class Edit: ObservationAction()
   class Favorite: ObservationAction()
   class FavoriteBy: ObservationAction()

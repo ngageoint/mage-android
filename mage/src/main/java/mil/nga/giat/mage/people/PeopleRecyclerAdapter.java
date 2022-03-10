@@ -13,18 +13,17 @@ import androidx.core.graphics.drawable.RoundedBitmapDrawableFactory;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.request.target.BitmapImageViewTarget;
-import com.google.common.base.Function;
 import com.google.common.collect.Collections2;
 
 import org.apache.commons.lang3.StringUtils;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.glide.GlideApp;
 import mil.nga.giat.mage.glide.model.Avatar;
+import mil.nga.giat.mage.sdk.datastore.user.Event;
 import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
 import mil.nga.giat.mage.sdk.datastore.user.Team;
 import mil.nga.giat.mage.sdk.datastore.user.TeamHelper;
@@ -38,8 +37,9 @@ public class PeopleRecyclerAdapter extends RecyclerView.Adapter<PeopleRecyclerAd
     public interface OnPersonClickListener {
         void onPersonClick(User person);
     }
-    
-    private List<User> people = new ArrayList<>();
+
+    private Event event;
+    private List<User> people;
     private Context context;
     private TeamHelper teamHelper;
     private Collection<Team> eventTeams;
@@ -49,7 +49,8 @@ public class PeopleRecyclerAdapter extends RecyclerView.Adapter<PeopleRecyclerAd
         this.context = context;
         this.people = people;
         this.teamHelper = TeamHelper.getInstance(context);
-        eventTeams = teamHelper.getTeamsByEvent(EventHelper.getInstance(context).getCurrentEvent());
+        this.event = EventHelper.getInstance(context).getCurrentEvent();
+        eventTeams = teamHelper.getTeamsByEvent(event);
     }
 
     public void setOnPersonClickListener(OnPersonClickListener personClickListener) {
@@ -58,7 +59,7 @@ public class PeopleRecyclerAdapter extends RecyclerView.Adapter<PeopleRecyclerAd
 
     @Override
     public PersonViewHolder onCreateViewHolder(ViewGroup viewGroup, int position) {
-        View view = LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.recycler_people_list_item, viewGroup, false);
+        View view = LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.favorite_user_list_item, viewGroup, false);
         PersonViewHolder viewHolder = new PersonViewHolder(view);
         return viewHolder;
     }
@@ -67,12 +68,9 @@ public class PeopleRecyclerAdapter extends RecyclerView.Adapter<PeopleRecyclerAd
     public void onBindViewHolder(final PersonViewHolder viewHolder, int i) {
         final User user = people.get(i);
 
-        viewHolder.itemView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (personClickListener != null) {
-                    personClickListener.onPersonClick(user);
-                }
+        viewHolder.card.setOnClickListener(v -> {
+            if (personClickListener != null) {
+                personClickListener.onPersonClick(user);
             }
         });
 
@@ -94,31 +92,15 @@ public class PeopleRecyclerAdapter extends RecyclerView.Adapter<PeopleRecyclerAd
         GlideApp.with(context)
                 .load(userLocal.getLocalIconPath())
                 .centerCrop()
-                .into(viewHolder.icon);
+                .into(viewHolder.avatar);
 
         viewHolder.name.setText(user.getDisplayName());
 
         Collection<Team> userTeams = teamHelper.getTeamsByUser(user);
         userTeams.retainAll(eventTeams);
-        Collection<String> teamNames = Collections2.transform(userTeams, new Function<Team, String>() {
-            @Override
-            public String apply(Team team) {
-                return team.getName();
-            }
-        });
+        Collection<String> teamNames = Collections2.transform(userTeams, team -> team.getName());
 
         viewHolder.teams.setText(StringUtils.join(teamNames, ", "));
-
-        View.OnClickListener clickListener = new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if (personClickListener != null) {
-                    PersonViewHolder holder = (PersonViewHolder) view.getTag();
-                    int position = holder.getLayoutPosition();
-                    personClickListener.onPersonClick(people.get(position));
-                }
-            }
-        };
     }
 
     @Override
@@ -127,20 +109,18 @@ public class PeopleRecyclerAdapter extends RecyclerView.Adapter<PeopleRecyclerAd
     }
 
     public class PersonViewHolder extends RecyclerView.ViewHolder {
-        protected ImageView avatar;
-        protected ImageView icon;
+        protected View card;
         protected TextView name;
         protected TextView teams;
+        protected ImageView avatar;
 
         public PersonViewHolder(View view) {
             super(view);
 
+            card = view.findViewById(R.id.card);
             avatar = (ImageView) view.findViewById(R.id.avatarImageView);
-            icon = (ImageView) view.findViewById(R.id.iconImageView);
             name = (TextView) view.findViewById(R.id.name);
             teams = (TextView) view.findViewById(R.id.teams);
-
-            view.findViewById(R.id.date).setVisibility(View.GONE);
         }
     }
 }

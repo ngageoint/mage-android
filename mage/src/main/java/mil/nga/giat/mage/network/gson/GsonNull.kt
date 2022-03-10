@@ -71,21 +71,31 @@ fun JsonElement.asStringOrNull(): String? {
 }
 
 fun JsonElement.asIntOrNull(): Int? {
-   return if (isJsonNull) null else asInt
+   return if (isJsonNull) null else {
+      if (asJsonPrimitive.isNumber) asInt else null
+   }
 }
 
 fun JsonElement.asLongOrNull(): Long? {
-   return if (isJsonNull) null else asLong
+   return if (isJsonNull) null else {
+      if (asJsonPrimitive.isNumber) asLong else null
+   }
 }
 
 fun JsonElement.asDoubleOrNull(): Double? {
-   return if (isJsonNull) null else asDouble
+   return if (isJsonNull) null else {
+      if (asJsonPrimitive.isNumber) asDouble else null
+   }
 }
 
 fun JsonElement.asFloatOrNull(): Float? {
-   return if (isJsonNull) null else asFloat
+   return if (isJsonNull) null else {
+      if (asJsonPrimitive.isNumber) asFloat else null
+   }
 }
 
 fun JsonElement.asBooleanOrNull(): Boolean? {
-   return if (isJsonNull) null else asBoolean
+   return if (isJsonNull) null else {
+      if (asJsonPrimitive.isBoolean) asBoolean else null
+   }
 }

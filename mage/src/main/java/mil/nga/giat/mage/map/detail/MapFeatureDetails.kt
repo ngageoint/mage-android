@@ -28,16 +28,16 @@ import mil.nga.giat.mage.ui.theme.MageTheme
 import mil.nga.giat.mage.ui.theme.linkColor
 import mil.nga.sf.Geometry
 
-sealed class FeatureAction<T> {
-   class Directions(val geometry: Geometry, val image: Any?): FeatureAction<Any>()
+sealed class FeatureAction<T: Any> {
+   class Directions<T: Any>(val id: T, val geometry: Geometry, val image: Any?): FeatureAction<Any>()
    class Location(val geometry: Geometry): FeatureAction<Any>()
-   class Details<T>(val id: T): FeatureAction<T>()
+   class Details<T: Any>(val id: T): FeatureAction<T>()
 }
 
 val LocalHeaderColor = compositionLocalOf { Color.Unspecified }
 
 @Composable
-fun <I> FeatureDetails(
+fun <I: Any> FeatureDetails(
    featureMapState: FeatureMapState<I>?,
    header: (@Composable () -> Unit)? = null,
    headerColor: Color? = null,
@@ -53,7 +53,7 @@ fun <I> FeatureDetails(
 }
 
 @Composable
-private fun <I> FeatureContent(
+private fun <I: Any> FeatureContent(
    featureMapState: FeatureMapState<I>?,
    header: (@Composable () -> Unit)? = null,
    headerColor: Color,
@@ -109,7 +109,7 @@ private fun DragHandle() {
 }
 
 @Composable
-private fun <I> FeatureHeaderContent(
+private fun <I: Any> FeatureHeaderContent(
    featureMapState: FeatureMapState<I>,
    actions: (@Composable () -> Unit)? = null,
    onAction: ((Any) -> Unit)?
@@ -181,7 +181,7 @@ private fun <I> FeatureHeaderContent(
 }
 
 @Composable
-private fun <I> FeatureActions(
+private fun <I: Any> FeatureActions(
    featureMapState: FeatureMapState<I>,
    actions: (@Composable () -> Unit)? = null,
    onAction: ((Any) -> Unit)? = null
@@ -231,7 +231,7 @@ private fun <I> FeatureActions(
             IconButton(
                modifier = Modifier.padding(end = 8.dp),
                onClick = {
-                  onAction?.invoke(FeatureAction.Directions(geometry, featureMapState.image))
+                  onAction?.invoke(FeatureAction.Directions(featureMapState.id, geometry, featureMapState.image))
                }
             ) {
                Icon(

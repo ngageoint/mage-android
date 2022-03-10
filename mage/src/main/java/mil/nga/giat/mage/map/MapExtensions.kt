@@ -21,10 +21,10 @@ import kotlin.math.sqrt
  *
  * @return
  */
-fun GoogleMap.center(geometry: Geometry) {
+fun GoogleMap.center(geometry: Geometry, zoom: Float? = null) {
    if (geometry.geometryType == GeometryType.POINT) {
       val point = geometry.centroid
-      animateCamera(CameraUpdateFactory.newLatLng(LatLng(point.y, point.x)))
+      animateCamera(CameraUpdateFactory.newLatLngZoom(LatLng(point.y, point.x), zoom ?: this.cameraPosition.zoom))
    } else {
       val copy = geometry.copy()
       GeometryUtils.minimizeGeometry(copy, ProjectionConstants.WGS84_HALF_WORLD_LON_WIDTH)
@@ -38,7 +38,6 @@ fun GoogleMap.center(geometry: Geometry) {
       animateCamera(CameraUpdateFactory.newLatLngBounds(boundsBuilder.build(), 100))
    }
 }
-
 
 /**
  * Get the map point to line distance tolerance
