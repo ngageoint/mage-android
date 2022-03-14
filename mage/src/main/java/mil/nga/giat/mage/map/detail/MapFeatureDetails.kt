@@ -74,7 +74,7 @@ private fun <I: Any> FeatureContent(
             Button(
                modifier = Modifier
                   .fillMaxWidth()
-                  .padding(vertical = 8.dp),
+                  .padding(vertical = 8.dp, horizontal = 16.dp),
                onClick = {
                   onAction?.invoke(FeatureAction.Details(featureMapState.id))
                }
