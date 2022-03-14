@@ -16,7 +16,6 @@ import android.util.Log
 import android.view.*
 import android.view.ViewGroup.MarginLayoutParams
 import android.view.inputmethod.InputMethodManager
-import android.webkit.WebView
 import android.widget.ImageButton
 import android.widget.TextView
 import android.widget.Toast
@@ -144,6 +143,7 @@ class MapFragment : Fragment(),
    private var feeds: FeedCollection? = null
    private var staticFeatureCollection: StaticFeatureCollection? = null
    private var searchMarker: Marker? = null
+   private var selectedMarker: Marker? = null
    private var feedLiveData: Map<String, LiveData<FeedState>> = emptyMap()
    private var cacheOverlays: MutableMap<String, CacheOverlay?> = HashMap()
 
@@ -1046,6 +1046,11 @@ class MapFragment : Fragment(),
    }
 
    private fun onMarkerClick(marker: Marker): Boolean {
+      // TODO check if marker is already selected?
+      if (selectedMarker?.id == marker.id) {
+         return true
+      }
+
       hideKeyboard()
       deselectMarker()
 
@@ -1055,34 +1060,27 @@ class MapFragment : Fragment(),
       }
 
       observations?.mapAnnotation(marker, "observation")?.let { annotation ->
+         selectedMarker = marker
          showObservationBottomSheet(annotation)
          return true
       }
 
       locations?.mapAnnotation(marker, "location")?.let { annotation ->
+         selectedMarker = marker
          showUserBottomSheet(annotation)
          return true
       }
 
       staticFeatureCollection?.onMarkerClick(marker)?.let { annotation ->
+         selectedMarker = marker
          showStaticFeatureBottomSheet(annotation)
          return true
       }
 
       feeds?.onMarkerClick(marker)?.let { annotation ->
+         selectedMarker = marker
          showFeedItemBottomSheet(annotation)
          return true
-      }
-
-      val snippet = marker.snippet
-      if (snippet != null) {
-         val markerInfoWindow = LayoutInflater.from(activity).inflate(R.layout.static_feature_infowindow, null, false)
-         val webView = markerInfoWindow.findViewById<WebView>(R.id.static_feature_infowindow_content)
-         webView.loadData(snippet, "text/html; charset=UTF-8", null)
-         AlertDialog.Builder(requireActivity())
-            .setView(markerInfoWindow)
-            .setPositiveButton(android.R.string.ok, null)
-            .show()
       }
 
       featureBottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
@@ -1119,6 +1117,8 @@ class MapFragment : Fragment(),
    }
 
    private fun deselectMarker() {
+      selectedMarker = null
+
       locations?.offMarkerClick()
       observations?.offMarkerClick()
       feeds?.offMarkerClick()

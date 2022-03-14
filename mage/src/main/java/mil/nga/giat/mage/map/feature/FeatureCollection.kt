@@ -59,7 +59,6 @@ class FeatureCollection<T>(
             } else {
                val marker = existingAnnotation.feature as Marker
                marker.position = LatLng(centroid.y, centroid.x)
-               loadIcon(marker, annotation)
                marker
             }
 
