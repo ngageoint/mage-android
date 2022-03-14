@@ -98,7 +98,7 @@
         android:layout_marginStart="16dp"
         android:layout_marginBottom="16dp"
         app:backgroundTint="@color/toggle_button"
-        android:tint="@color/toggle_button_selected"
+        app:tint="@color/toggle_button_selected"
         android:theme="@style/AppTheme.AlternateFAB"
         android:src="@drawable/ic_outline_near_me_24" />
 
