@@ -1,6 +1,5 @@
 package mil.nga.giat.mage.login;
 
-
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -35,10 +34,6 @@ import mil.nga.giat.mage.sdk.datastore.observation.AttachmentHelper;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
 import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
 
-/**
- *
- * Created by wnewman on 1/3/18.
- */
 @AndroidEntryPoint
 public class ServerUrlActivity extends AppCompatActivity {
 
@@ -135,8 +130,11 @@ public class ServerUrlActivity extends AppCompatActivity {
 					done();
 				} else {
 					SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-					ContactDialog dialog = new ContactDialog(getApplicationContext(), sharedPreferences, "Compatibility Error");
-					dialog.setMessage("Your MAGE application is not compatible with this server.  Please update your application or contact your MAGE administrator for support.");
+					ContactDialog dialog = new ContactDialog(
+							getApplicationContext(),
+							sharedPreferences,
+							"Compatibility Error",
+							"Your MAGE application is not compatible with this server.  Please update your application or contact your MAGE administrator for support.");
 					dialog.show();
 
 					serverUrlLayout.setError("Application is not compatible with server.");

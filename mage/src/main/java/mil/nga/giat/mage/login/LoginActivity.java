@@ -257,14 +257,17 @@ public class LoginActivity extends AppCompatActivity {
                 message = "Please contact a MAGE administrator to activate your account.";
             }
 
-            ContactDialog dialog = new ContactDialog(this, this.preferences, "Account Created");
-            dialog.setMessage(message);
-            dialog.setStrategy(authentication.getStrategy());
+            ContactDialog dialog = new ContactDialog(this, this.preferences, "Account Created", message);
+            dialog.setAuthenticationStrategy(authentication.getStrategy());
             dialog.show();
         } else {
-            ContactDialog dialog = new ContactDialog(this, this.preferences, "Sign-in Failed");
-            dialog.setMessage(status.getMessage());
-            dialog.setStrategy(authentication.getStrategy());
+            String message = status.getMessage();
+            if (message == null) {
+                message = "Authentication error, please contact your MAGE administrator for assistance.";
+            }
+
+            ContactDialog dialog = new ContactDialog(this, this.preferences, "Sign in Failed", message);
+            dialog.setAuthenticationStrategy(authentication.getStrategy());
             dialog.show();
         }
     }
@@ -276,16 +279,28 @@ public class LoginActivity extends AppCompatActivity {
         if (status == AuthorizationStatus.Status.SUCCESSFUL_AUTHORIZATION) {
             loginComplete(authorization.getUserChanged());
         } else if (status == AuthorizationStatus.Status.FAILED_AUTHORIZATION) {
-            ContactDialog dialog = new ContactDialog(this, this.preferences, "Registration Sent");
-            dialog.setMessage(getString(R.string.device_registered_text));
+            ContactDialog dialog = new ContactDialog(this, this.preferences, "Registration Sent", getString(R.string.device_registered_text));
+            User user = authorization.getStatus().getUser();
+            if (user != null) {
+                dialog.setUsername(user.getUsername());
+            }
             dialog.show();
         } else if (status == AuthorizationStatus.Status.INVALID_SERVER) {
-            ContactDialog dialog = new ContactDialog(this, this.preferences, "Application Compatibility Error");
-            dialog.setMessage("This app is not compatible with this server. Please update your context or talk to your MAGE administrator.");
+            ContactDialog dialog = new ContactDialog(this, this.preferences, "Application Compatibility Error", "This app is not compatible with this server. Please update your context or talk to your MAGE administrator.");
             dialog.show();
         } else {
-            ContactDialog dialog = new ContactDialog(this, this.preferences, "Sign-in Failed");
-            dialog.setMessage(authorization.getStatus().getMessage());
+            String message = authorization.getStatus().getMessage();
+            if (message == null) {
+                message = "Authorization error, please contact your MAGE administrator for assistance";
+            }
+
+            ContactDialog dialog = new ContactDialog(this, this.preferences, "Sign-in Failed", message);
+
+            User user = authorization.getStatus().getUser();
+            if (user != null) {
+                dialog.setUsername(user.getUsername());
+            }
+
             dialog.show();
         }
     }

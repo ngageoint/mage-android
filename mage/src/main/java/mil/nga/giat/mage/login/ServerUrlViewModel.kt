@@ -1,13 +1,12 @@
 package mil.nga.giat.mage.login
 
-import android.content.Context
+import android.app.Application
 import android.content.SharedPreferences
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import mil.nga.giat.mage.R
@@ -18,11 +17,11 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ServerUrlViewModel @Inject constructor(
-    @ApplicationContext val context: Context,
+    val application: Application,
     val preferences: SharedPreferences,
     val database: MageDatabase
 ): ViewModel() {
-    private var serverApi = ServerApi(context)
+    private var serverApi = ServerApi(application)
 
     private val _api = MutableLiveData<Resource<Boolean>>()
     val api: LiveData<Resource<Boolean>> = _api
@@ -31,8 +30,8 @@ class ServerUrlViewModel @Inject constructor(
         serverApi.validateServerApi(url) { valid, error ->
             if (valid) {
                 viewModelScope.launch(Dispatchers.IO) {
-                    database.destroy(context)
-                    preferences.edit().putString(context.getString(R.string.serverURLKey), url).apply()
+                    database.destroy(application)
+                    preferences.edit().putString(application.getString(R.string.serverURLKey), url).apply()
                     _api.postValue(Resource.success(valid))
                 }
             } else {

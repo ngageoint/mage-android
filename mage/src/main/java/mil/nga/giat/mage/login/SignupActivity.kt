@@ -73,11 +73,10 @@ open class SignupActivity : AppCompatActivity() {
       }
 
       viewModel = ViewModelProvider(this).get(SignupViewModel::class.java)
-      viewModel.signupState.observe(this, { state: SignupState -> onSignupState(state) })
-      viewModel.signupStatus.observe(this, { status: SignupStatus? -> onSignup(status) })
-      viewModel.captcha.observe(this, { captcha: String? -> onCaptcha(captcha) })
-      viewModel.captchaState.observe(this, { state: CaptchaState -> onCaptchaState(state) })
-
+      viewModel.signupState.observe(this) { state: SignupState -> onSignupState(state) }
+      viewModel.signupStatus.observe(this) { status: SignupStatus? -> onSignup(status) }
+      viewModel.captcha.observe(this) { captcha: String? -> onCaptcha(captcha) }
+      viewModel.captchaState.observe(this) { state: CaptchaState -> onCaptchaState(state) }
    }
 
    protected fun onSignupState(state: SignupState) {

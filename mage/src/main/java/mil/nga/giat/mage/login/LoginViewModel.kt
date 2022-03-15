@@ -1,6 +1,6 @@
 package mil.nga.giat.mage.login
 
-import android.content.Context
+import android.app.Application
 import android.content.SharedPreferences
 import android.util.Log
 import androidx.appcompat.app.AppCompatDelegate
@@ -8,7 +8,6 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
 import mil.nga.giat.mage.R
 import mil.nga.giat.mage.sdk.datastore.DaoStore
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper
@@ -26,7 +25,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class LoginViewModel @Inject constructor(
-    @ApplicationContext val context: Context,
+    val application: Application,
     val preferences: SharedPreferences
 ): ViewModel() {
 
@@ -52,7 +51,7 @@ class LoginViewModel @Inject constructor(
     val authenticationStatus: LiveData<Authentication?> = _authenticationStatus
 
     fun authenticate(strategy: String, credentials: Array<String>, allowDisconnectedLogin: Boolean = false) {
-        AuthenticationTask(context, allowDisconnectedLogin) {
+        AuthenticationTask(application, allowDisconnectedLogin) {
             _authenticationStatus.value = Authentication(strategy, it)
 
             if (strategy == "local" && it.status == AuthenticationStatus.Status.SUCCESSFUL_AUTHENTICATION) {
@@ -74,7 +73,7 @@ class LoginViewModel @Inject constructor(
     val authorizationStatus: LiveData<Authorization?> = _authorizationStatus
 
     fun authorize(strategy: String, token: String) {
-        AuthorizationTask(context) {
+        AuthorizationTask(application) {
             if (it.status == AuthorizationStatus.Status.SUCCESSFUL_AUTHORIZATION) {
                 if ("local" == strategy) {
                     setupDisconnectedLogin()
@@ -106,7 +105,7 @@ class LoginViewModel @Inject constructor(
             return
         }
 
-        val serverApi = ServerApi(context)
+        val serverApi = ServerApi(application)
         serverApi.validateServerApi(url) { valid, _ ->
             if (authenticationState.value != AuthenticationState.LOADING) {
                 _apiStatus.value = valid
@@ -119,10 +118,10 @@ class LoginViewModel @Inject constructor(
             val username = it[0]
             val password = it[1]
             val editor = preferences.edit()
-            editor.putString(context.getString(R.string.usernameKey), username).apply()
+            editor.putString(application.getString(R.string.usernameKey), username).apply()
             try {
                 val hashedPassword = PasswordUtility.getSaltedHash(password)
-                editor.putString(context.getString(R.string.passwordHashKey), hashedPassword).commit()
+                editor.putString(application.getString(R.string.passwordHashKey), hashedPassword).commit()
             } catch (e: Exception) {
                 Log.e(LOG_NAME, "Could not hash password", e)
             }
@@ -133,34 +132,34 @@ class LoginViewModel @Inject constructor(
 
     private fun completeAuthorization(strategy: String, status: AuthorizationStatus): Boolean {
         val user = status.user;
-        val previousUser = preferences.getString(context.getString(R.string.sessionUserKey), null)
-        val previousStrategy = preferences.getString(context.getString(R.string.sessionStrategyKey), null)
+        val previousUser = preferences.getString(application.getString(R.string.sessionUserKey), null)
+        val previousStrategy = preferences.getString(application.getString(R.string.sessionStrategyKey), null)
         val sessionChanged =
             (previousStrategy != null && strategy != previousStrategy) ||
             (previousUser != null && user.username != previousUser)
 
         if (sessionChanged) {
-            DaoStore.getInstance(context).resetDatabase()
+            DaoStore.getInstance(application).resetDatabase()
 
-            val preferenceHelper = PreferenceHelper.getInstance(context)
+            val preferenceHelper = PreferenceHelper.getInstance(application)
             preferenceHelper.initialize(true, R.xml::class.java)
 
-            val dayNightTheme = preferences.getInt(context.resources.getString(R.string.dayNightThemeKey), context.resources.getInteger(R.integer.dayNightThemeDefaultValue))
+            val dayNightTheme = preferences.getInt(application.resources.getString(R.string.dayNightThemeKey), application.resources.getInteger(R.integer.dayNightThemeDefaultValue))
             AppCompatDelegate.setDefaultNightMode(dayNightTheme)
         }
 
         user.fetchedDate = Date()
-        val userHelper = UserHelper.getInstance(context)
+        val userHelper = UserHelper.getInstance(application)
         val currentUser = userHelper.createOrUpdate(user)
         userHelper.setCurrentUser(currentUser)
 
         // Successful login, put the token information in the shared preferences
         preferences.edit()
-           .putString(context.getString(R.string.sessionUserKey), user.username)
-           .putString(context.getString(R.string.sessionStrategyKey), strategy)
-           .putString(context.getString(R.string.tokenKey), status.token.trim { it <= ' ' })
-           .putString(context.getString(R.string.tokenExpirationDateKey), iso8601Format.format(status.tokenExpiration))
-           .putLong(context.getString(R.string.tokenExpirationLengthKey), status.tokenExpiration.time - Date().time)
+           .putString(application.getString(R.string.sessionUserKey), user.username)
+           .putString(application.getString(R.string.sessionStrategyKey), strategy)
+           .putString(application.getString(R.string.tokenKey), status.token.trim { it <= ' ' })
+           .putString(application.getString(R.string.tokenExpirationDateKey), iso8601Format.format(status.tokenExpiration))
+           .putLong(application.getString(R.string.tokenExpirationLengthKey), status.tokenExpiration.time - Date().time)
            .commit()
 
         return sessionChanged

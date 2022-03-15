@@ -79,8 +79,6 @@ public class AuthenticationTask extends AsyncTask<String, Void, AuthenticationSt
 						sharedPreferences.edit().putString(applicationContext.getString(R.string.tokenExpirationDateKey), iso8601Format.format(tokenExpiration)).apply();
 
 						return new AuthenticationStatus.Builder(DISCONNECTED_AUTHENTICATION).build();
-					} else {
-						return new AuthenticationStatus.Builder(FAILED_AUTHENTICATION).build();
 					}
 				}
 			} catch (Exception e) {
@@ -88,7 +86,7 @@ public class AuthenticationTask extends AsyncTask<String, Void, AuthenticationSt
 			}
 
 			return new AuthenticationStatus.Builder(FAILED_AUTHENTICATION)
-					.message("No Internet Connection")
+					.message("We could not reach the server, please check your network connection and try again.")
 					.build();
 		}
 
