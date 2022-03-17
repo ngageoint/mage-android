@@ -1,2 +1,20 @@
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
+        google()
+        mavenCentral()
+    }
+}
+
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.PREFER_SETTINGS)
+    repositories {
+        google()
+        mavenLocal()
+        mavenCentral()
+    }
+}
+
+rootProject.name = "MAGE"
 include ':mage'
 //include ':bridge' // uncomment me to build wearable locally
