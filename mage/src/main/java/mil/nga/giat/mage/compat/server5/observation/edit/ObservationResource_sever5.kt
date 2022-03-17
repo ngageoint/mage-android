@@ -1,4 +1,4 @@
-package mil.nga.giat.mage._server5.observation.edit
+package mil.nga.giat.mage.compat.server5.observation.edit
 
 import android.content.Context
 import dagger.hilt.android.qualifiers.ApplicationContext

@@ -24,7 +24,7 @@ import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
 import mil.nga.giat.mage.BuildConfig
 import mil.nga.giat.mage.R
-import mil.nga.giat.mage._server5.observation.edit.FormViewModel_server5
+import mil.nga.giat.mage.compat.server5.observation.edit.FormViewModel_server5
 import mil.nga.giat.mage.form.*
 import mil.nga.giat.mage.form.FormViewModel
 import mil.nga.giat.mage.form.edit.dialog.DateFieldDialog

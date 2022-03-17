@@ -1,4 +1,4 @@
-package mil.nga.giat.mage._server5.form.view
+package mil.nga.giat.mage.compat.server5.form.view
 
 import android.webkit.MimeTypeMap
 import androidx.compose.foundation.*
@@ -24,7 +24,7 @@ import mil.nga.giat.mage.sdk.datastore.observation.Attachment
 import java.util.*
 
 @Composable
-fun AttachmentsViewContent_server5(
+fun AttachmentsViewContentServer5(
    attachments: Collection<Attachment>,
    onClick: ((Attachment) -> Unit)? = null
 ) {

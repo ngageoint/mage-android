@@ -25,7 +25,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import mil.nga.giat.mage._server5.form.view.AttachmentsViewContent_server5
+import mil.nga.giat.mage.compat.server5.form.view.AttachmentsViewContentServer5
 import mil.nga.giat.mage.coordinate.CoordinateFormatter
 import mil.nga.giat.mage.form.FormViewModel
 import mil.nga.giat.mage.form.view.*
@@ -146,7 +146,7 @@ fun ObservationViewContent(
 
       if (Compatibility.isServerVersion5(LocalContext.current)) {
         val attachments by observationState.attachments
-        AttachmentsViewContent_server5(attachments)
+        AttachmentsViewContentServer5(attachments)
       }
 
       if (forms.isNotEmpty()) {

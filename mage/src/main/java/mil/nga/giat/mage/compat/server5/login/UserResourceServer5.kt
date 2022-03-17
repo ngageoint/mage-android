@@ -1,4 +1,4 @@
-package mil.nga.giat.mage._server5.login
+package mil.nga.giat.mage.compat.server5.login
 
 import android.content.Context
 import androidx.preference.PreferenceManager
@@ -14,11 +14,11 @@ import retrofit2.http.Body
 import retrofit2.http.POST
 import javax.inject.Inject
 
-class UserResource_server5 @Inject constructor(
+class UserResourceServer5 @Inject constructor(
    @ApplicationContext val context: Context
 ) {
 
-   interface UserService_server5 {
+   interface UserServiceServer5 {
       @POST("/api/users")
       fun createUser(@Body body: JsonObject?): Call<JsonObject>
    }
@@ -41,7 +41,7 @@ class UserResource_server5 @Inject constructor(
       json.addProperty("password", password)
       json.addProperty("passwordconfirm", password)
 
-      val service = retrofit.create(UserService_server5::class.java)
+      val service = retrofit.create(UserServiceServer5::class.java)
       service.createUser(json).enqueue(callback)
    }
 

@@ -1,4 +1,4 @@
-package mil.nga.giat.mage._server5.login
+package mil.nga.giat.mage.compat.server5.login
 
 import android.content.Context
 import android.content.SharedPreferences
@@ -12,13 +12,13 @@ import retrofit2.Response
 import javax.inject.Inject
 
 @HiltViewModel
-class SignupViewModel_server5 @Inject constructor(
+class SignupViewModelServer5 @Inject constructor(
    @ApplicationContext context: Context,
    preferences: SharedPreferences
 ): SignupViewModel(context, preferences) {
 
    fun signup(account: Account) {
-      val userResource = UserResource_server5(context)
+      val userResource = UserResourceServer5(context)
       userResource.create(account.username, account.displayName, account.email, account.phone, account.password, object: Callback<JsonObject> {
          override fun onResponse(call: Call<JsonObject>, response: Response<JsonObject>) {
             if (response.isSuccessful) {

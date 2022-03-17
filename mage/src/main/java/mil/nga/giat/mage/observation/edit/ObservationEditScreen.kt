@@ -16,12 +16,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import kotlinx.android.parcel.Parcelize
 import kotlinx.coroutines.launch
-import mil.nga.giat.mage._server5.form.view.AttachmentsViewContent_server5
-import mil.nga.giat.mage.form.Form
-import mil.nga.giat.mage.form.FormField
+import mil.nga.giat.mage.compat.server5.form.view.AttachmentsViewContentServer5
 import mil.nga.giat.mage.form.FormState
 import mil.nga.giat.mage.form.FormViewModel
 import mil.nga.giat.mage.form.edit.DateEdit
@@ -263,7 +260,7 @@ fun ObservationEditContent(
       if (isServerVersion5(context)) {
         item {
           val attachments by observationState.attachments
-          AttachmentsViewContent_server5(attachments)
+          AttachmentsViewContentServer5(attachments)
         }
       }
 

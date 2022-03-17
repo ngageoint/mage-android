@@ -43,7 +43,7 @@ import dagger.hilt.android.AndroidEntryPoint;
 import mil.nga.giat.mage.LandingActivity;
 import mil.nga.giat.mage.MageApplication;
 import mil.nga.giat.mage.R;
-import mil.nga.giat.mage._server5.login.SignupActivity_server5;
+import mil.nga.giat.mage.compat.server5.login.SignupActivityServer5;
 import mil.nga.giat.mage.cache.CacheUtils;
 import mil.nga.giat.mage.contact.ContactDialog;
 import mil.nga.giat.mage.disclaimer.DisclaimerActivity;
@@ -430,7 +430,7 @@ public class LoginActivity extends AppCompatActivity {
     public void signup(View view) {
         Intent intent;
         if (Compatibility.Companion.isServerVersion5(getApplicationContext())) {
-            intent = new Intent(getApplicationContext(), SignupActivity_server5.class);
+            intent = new Intent(getApplicationContext(), SignupActivityServer5.class);
 
         } else {
             intent = new Intent(getApplicationContext(), SignupActivity.class);

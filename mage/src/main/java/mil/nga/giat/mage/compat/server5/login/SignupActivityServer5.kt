@@ -1,4 +1,4 @@
-package mil.nga.giat.mage._server5.login
+package mil.nga.giat.mage.compat.server5.login
 
 import android.os.Bundle
 import android.util.Patterns
@@ -10,9 +10,9 @@ import mil.nga.giat.mage.login.SignupActivity
 import mil.nga.giat.mage.login.SignupViewModel
 
 @AndroidEntryPoint
-class SignupActivity_server5: SignupActivity() {
+class SignupActivityServer5: SignupActivity() {
 
-   protected lateinit var viewModel_server5: SignupViewModel_server5
+   protected lateinit var viewModelServer5: SignupViewModelServer5
 
    override fun onCreate(savedInstanceState: Bundle?) {
       super.onCreate(savedInstanceState)
@@ -20,9 +20,9 @@ class SignupActivity_server5: SignupActivity() {
       captcha_view.visibility = View.GONE
       captcha_text_layout.visibility = View.GONE
 
-      viewModel_server5 = ViewModelProvider(this).get(SignupViewModel_server5::class.java)
-      viewModel_server5.signupState.observe(this, { state: SignupViewModel.SignupState -> onSignupState(state) })
-      viewModel_server5.signupStatus.observe(this, { status: SignupViewModel.SignupStatus? -> onSignup(status) })
+      viewModelServer5 = ViewModelProvider(this).get(SignupViewModelServer5::class.java)
+      viewModelServer5.signupState.observe(this, { state: SignupViewModel.SignupState -> onSignupState(state) })
+      viewModelServer5.signupStatus.observe(this, { status: SignupViewModel.SignupStatus? -> onSignup(status) })
    }
 
    override fun signup() {
@@ -72,8 +72,6 @@ class SignupActivity_server5: SignupActivity() {
 
       hideKeyboard()
 
-      viewModel_server5.signup(SignupViewModel.Account(username, displayName, email, phone, password))
+      viewModelServer5.signup(SignupViewModel.Account(username, displayName, email, phone, password))
    }
-
-
 }
