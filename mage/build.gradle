@@ -104,14 +104,14 @@ android {
         release {
             minifyEnabled true
             signingConfig signingConfigs.release
-            proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.txt"
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             resValue "string", "GOOGLE_MAPS_ANDROID_API_KEY", googleMapsApiReleaseKey
         }
 
         debug {
+            minifyEnabled false
             applicationIdSuffix ".debug"
             versionNameSuffix "-debug"
-            minifyEnabled false
             resValue "string", "GOOGLE_MAPS_ANDROID_API_KEY", googleMapsApiDebugKey
             resValue "string", "applicationId", defaultConfig.applicationId + applicationIdSuffix
         }
@@ -131,7 +131,6 @@ android {
             excludes += ['META-INF/LICENSE', 'META-INF/LICENSE.txt', 'META-INF/NOTICE', 'META-INF/NOTICE.txt', 'META-INF/INDEX.LIST']
         }
     }
-
 
     testOptions {
         unitTests {

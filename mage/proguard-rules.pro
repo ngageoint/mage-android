@@ -18,17 +18,9 @@
 #-keepclassmembers class fqcn.of.javascript.interface.for.webview {
 #   public *;
 #}
--dontwarn com.google.**
--dontwarn com.fasterxml.**
--dontwarn org.apache.**
 
--keep public class * extends com.bumptech.glide.module.AppGlideModule
--keep class com.bumptech.glide.GeneratedAppGlideModuleImpl
-
--keep class org.sqlite.** { *; }
--keep class org.sqlite.database.** { *; }
--keep class mil.nga.giat.mage.sdk.datastore.** { *; }
--keepclassmembers class mil.nga.giat.mage.sdk.datastore.** { *; }
+-dontobfuscate
+-dontshrink
 
 -assumenosideeffects class android.util.Log {
     public static boolean isLoggable(java.lang.String, int);
@@ -37,4 +29,8 @@
     public static int e(...);
     public static int d(...);
     public static int i(...);
+}
+
+-assumenosideeffects class java.lang.Exception {
+    public void printStackTrace();
 }
