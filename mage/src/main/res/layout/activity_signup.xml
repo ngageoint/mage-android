@@ -126,7 +126,6 @@
                 android:layout_marginBottom="8dp"
                 app:errorTextAppearance="@style/AppTheme.ErrorTextAppearance"
                 app:passwordToggleEnabled="true"
-                style="@style/AppTheme.TextInputLayout"
                 android:theme="@style/AppTheme.TextInputLayout">
 
                 <com.google.android.material.textfield.TextInputEditText
@@ -146,7 +145,6 @@
                 android:layout_marginBottom="8dp"
                 app:errorTextAppearance="@style/AppTheme.ErrorTextAppearance"
                 app:passwordToggleEnabled="true"
-                style="@style/AppTheme.TextInputLayout"
                 android:theme="@style/AppTheme.TextInputLayout">
 
                 <com.google.android.material.textfield.TextInputEditText
