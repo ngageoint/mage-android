@@ -30,6 +30,7 @@ import com.google.android.gms.maps.model.LatLng
 import mil.nga.giat.mage.R
 import mil.nga.giat.mage.coordinate.CoordinateFormatter
 import mil.nga.giat.mage.ui.theme.MageTheme
+import mil.nga.giat.mage.ui.theme.linkColor
 import mil.nga.giat.mage.ui.theme.topAppBarBackground
 import java.util.*
 
@@ -228,7 +229,7 @@ fun FeedItemContent(
                   Icon(
                      imageVector = Icons.Default.GpsFixed,
                      contentDescription = "Location",
-                     tint = MaterialTheme.colors.primary,
+                     tint = MaterialTheme.colors.linkColor,
                      modifier = Modifier
                         .height(24.dp)
                         .width(24.dp)
@@ -238,7 +239,7 @@ fun FeedItemContent(
                   CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.high) {
                      Text(
                         text = locationText,
-                        color = MaterialTheme.colors.primary,
+                        color = MaterialTheme.colors.linkColor,
                         style = MaterialTheme.typography.body2,
                         modifier = Modifier.padding(end = 8.dp)
                      )
