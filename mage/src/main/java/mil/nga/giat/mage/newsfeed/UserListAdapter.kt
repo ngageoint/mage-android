@@ -134,12 +134,17 @@ class UserListAdapter(
             vh.directions.setOnClickListener { userAction(UserAction.Directions(user, location)) }
          }
 
-         vh.email.setOnClickListener { userAction(UserAction.Email(user.email)) }
+         if (user.email?.isNotEmpty() == true) {
+            vh.email.visibility = View.VISIBLE
+            vh.email.setOnClickListener { userAction(UserAction.Email(user.email)) }
+         } else {
+            vh.email.visibility = View.GONE
+         }
 
-         user.primaryPhone?.let {
+         if (user.primaryPhone?.isNotEmpty() == true) {
             vh.phone.visibility = View.VISIBLE
             vh.phone.setOnClickListener { userAction(UserAction.Phone(user.primaryPhone)) }
-         } ?: run {
+         } else {
             vh.phone.visibility = View.GONE
          }
       } catch (e: SQLException) {
