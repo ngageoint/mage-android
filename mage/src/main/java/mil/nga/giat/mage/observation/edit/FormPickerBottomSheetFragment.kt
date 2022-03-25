@@ -63,6 +63,7 @@ class FormPickerBottomSheetFragment: BottomSheetDialogFragment() {
          }
        }
        .filterNotNull()
+       .filter { !it.archived }
        .map { form ->
          val formMax = form.max
          val totalOfForm = viewModel.observationState.value?.forms?.value?.filter { it.definition.id == form.id }?.size ?: 0
