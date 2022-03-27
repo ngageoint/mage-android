@@ -7,8 +7,8 @@ import android.graphics.Typeface
 import android.net.Uri
 import android.os.Bundle
 import android.widget.TextView
-import kotlinx.android.synthetic.main.activity_account_created.*
 import mil.nga.giat.mage.R
+import mil.nga.giat.mage.databinding.ActivityAccountCreatedBinding
 
 class AccountStateActivity: Activity() {
     companion object {
@@ -23,10 +23,13 @@ class AccountStateActivity: Activity() {
         }
     }
 
+    private lateinit var binding: ActivityAccountCreatedBinding
+
     override fun onCreate(savedInstanceBundle: Bundle?) {
         super.onCreate(savedInstanceBundle)
 
-        setContentView(R.layout.activity_account_created)
+        binding = ActivityAccountCreatedBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
         val appName = findViewById<TextView>(R.id.mage)
         appName.typeface = Typeface.createFromAsset(assets, "fonts/GondolaMage-Regular.otf")
@@ -35,13 +38,13 @@ class AccountStateActivity: Activity() {
         val accountEnabled = intent.getBooleanExtra(EXTRA_ACCOUNT_ENABLED, false)
 
         if (!accountActive) {
-            status.text = getString(R.string.account_inactive_title)
-            message.text = getString(R.string.account_inactive_message)
+            binding.status.text = getString(R.string.account_inactive_title)
+            binding.message.text = getString(R.string.account_inactive_message)
         } else if (!accountEnabled) {
-            status.text = getString(R.string.account_disabled_title)
-            message.text = getString(R.string.account_disabled_message)
+            binding.status.text = getString(R.string.account_disabled_title)
+            binding.message.text = getString(R.string.account_disabled_message)
         }
 
-        ok.setOnClickListener { finish() }
+        binding.ok.setOnClickListener { finish() }
     }
 }

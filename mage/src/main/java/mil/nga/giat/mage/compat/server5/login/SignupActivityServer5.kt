@@ -5,7 +5,7 @@ import android.util.Patterns
 import android.view.View
 import androidx.lifecycle.ViewModelProvider
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.android.synthetic.main.activity_signup.*
+import mil.nga.giat.mage.databinding.ActivitySignupBinding
 import mil.nga.giat.mage.login.SignupActivity
 import mil.nga.giat.mage.login.SignupViewModel
 
@@ -17,8 +17,8 @@ class SignupActivityServer5: SignupActivity() {
    override fun onCreate(savedInstanceState: Bundle?) {
       super.onCreate(savedInstanceState)
 
-      captcha_view.visibility = View.GONE
-      captcha_text_layout.visibility = View.GONE
+      binding.captchaView.visibility = View.GONE
+      binding.captchaTextLayout.visibility = View.GONE
 
       viewModelServer5 = ViewModelProvider(this).get(SignupViewModelServer5::class.java)
       viewModelServer5.signupState.observe(this, { state: SignupViewModel.SignupState -> onSignupState(state) })
@@ -26,47 +26,47 @@ class SignupActivityServer5: SignupActivity() {
    }
 
    override fun signup() {
-      displayname_layout.error = null
-      username_layout.error = null
-      email_layout.error = null
-      password_layout.error = null
-      confirmpassword_layout.error = null
+      binding.displaynameLayout.error = null
+      binding.usernameLayout.error = null
+      binding.emailLayout.error = null
+      binding.passwordLayout.error = null
+      binding.confirmpasswordLayout.error = null
 
-      val displayName: String = signup_displayname.text.toString()
-      val username: String = signup_username.text.toString()
-      val email: String = signup_email.text.toString()
-      val phone: String = signup_phone.text.toString()
+      val displayName: String = binding.signupDisplayname.text.toString()
+      val username: String = binding.signupUsername.text.toString()
+      val email: String = binding.signupEmail.text.toString()
+      val phone: String = binding.signupPhone.text.toString()
 
       // are the inputs valid?
       if (displayName.isEmpty()) {
-         displayname_layout.error = "Display name can not be blank"
+         binding.displaynameLayout.error = "Display name can not be blank"
          return
       }
       if (username.isEmpty()) {
-         username_layout.error = "Username can not be blank"
+         binding.usernameLayout.error = "Username can not be blank"
          return
       }
 
       if (email.isNotEmpty() && !Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-         email_layout.error = "Please enter a valid email address"
+         binding.emailLayout.error = "Please enter a valid email address"
          return
       }
 
-      val password: String = signup_password.text.toString()
-      val confirmpassword: String = signup_confirmpassword.text.toString()
+      val password: String = binding.signupPassword.text.toString()
+      val confirmpassword: String = binding.signupConfirmpassword.text.toString()
       if (password.isEmpty()) {
-         password_layout.error = "Password can not be blank"
+         binding.passwordLayout.error = "Password can not be blank"
          return
       }
 
       if (confirmpassword.isEmpty()) {
-         confirmpassword_layout.error = "Enter password again"
+         binding.confirmpasswordLayout.error = "Enter password again"
          return
       }
 
       if (password != confirmpassword) {
-         password_layout.error = "Passwords do not match"
-         confirmpassword_layout.error = "Passwords do not match"
+         binding.passwordLayout.error = "Passwords do not match"
+         binding.confirmpasswordLayout.error = "Passwords do not match"
          return
       }
 

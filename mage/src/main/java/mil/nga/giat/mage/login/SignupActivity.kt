@@ -18,34 +18,35 @@ import androidx.core.content.ContextCompat
 import androidx.core.graphics.ColorUtils
 import androidx.lifecycle.ViewModelProvider
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.android.synthetic.main.activity_signup.*
-import kotlinx.android.synthetic.main.mage_header.*
 import mil.nga.giat.mage.R
+import mil.nga.giat.mage.databinding.ActivitySignupBinding
 import mil.nga.giat.mage.login.SignupViewModel.*
 
 @AndroidEntryPoint
 open class SignupActivity : AppCompatActivity() {
 
+   protected lateinit var binding: ActivitySignupBinding
    protected lateinit var viewModel: SignupViewModel
 
    public override fun onCreate(savedInstanceState: Bundle?) {
       super.onCreate(savedInstanceState)
 
-      setContentView(R.layout.activity_signup)
+      binding = ActivitySignupBinding.inflate(layoutInflater)
+      setContentView(binding.root)
 
-      mage.typeface = Typeface.createFromAsset(assets, "fonts/GondolaMage-Regular.otf")
+      binding.header.mage.typeface = Typeface.createFromAsset(assets, "fonts/GondolaMage-Regular.otf")
 
-      signup_button.setOnClickListener { signup() }
-      cancel_button.setOnClickListener { cancel() }
-      refresh_captcha.setOnClickListener { getCaptcha() }
+      binding.signupButton.setOnClickListener { signup() }
+      binding.cancelButton.setOnClickListener { cancel() }
+      binding.refreshCaptcha.setOnClickListener { getCaptcha() }
 
-      signup_username.setOnFocusChangeListener { _: View, hasFocus: Boolean ->
+      binding.signupUsername.setOnFocusChangeListener { _: View, hasFocus: Boolean ->
          if (!hasFocus) {
             getCaptcha()
          }
       }
 
-      signup_password.addTextChangedListener(object : TextWatcher {
+      binding.signupPassword.addTextChangedListener(object : TextWatcher {
          override fun beforeTextChanged(s: CharSequence, start: Int, count: Int, after: Int) {}
          override fun onTextChanged(s: CharSequence, start: Int, before: Int, count: Int) {}
          override fun afterTextChanged(s: Editable) {
@@ -63,7 +64,7 @@ open class SignupActivity : AppCompatActivity() {
          }
       })
 
-      captcha_text.setOnKeyListener { _, keyCode, _ ->
+      binding.captchaText.setOnKeyListener { _, keyCode, _ ->
          if (keyCode == KeyEvent.KEYCODE_ENTER) {
             signup()
             return@setOnKeyListener true
@@ -88,18 +89,18 @@ open class SignupActivity : AppCompatActivity() {
    }
 
    private fun onCaptchaState(state: CaptchaState) {
-      captcha_progress.visibility = if (state == CaptchaState.LOADING) View.VISIBLE else View.GONE
+      binding.captchaProgress.visibility = if (state == CaptchaState.LOADING) View.VISIBLE else View.GONE
    }
 
    private fun onCaptcha(captcha: String?) {
       if (captcha != null) {
-         web_view.visibility = View.VISIBLE
-         refresh_captcha.visibility = View.VISIBLE
+         binding.webView.visibility = View.VISIBLE
+         binding.refreshCaptcha.visibility = View.VISIBLE
          val html = "<html><body style=\"background-color: ${backgroundColor()};\"><div style=\"width: 100%; height:100%;\" ><img src=\"$captcha\" width=\"100%\" height=\"100%\"\"/></div></body></html>"
-         web_view.loadDataWithBaseURL(null, html, "text/html; charset=utf-8", "utf8", null)
+         binding.webView.loadDataWithBaseURL(null, html, "text/html; charset=utf-8", "utf8", null)
       } else {
-         web_view.visibility = View.GONE
-         refresh_captcha.visibility = View.VISIBLE
+         binding.webView.visibility = View.GONE
+         binding.refreshCaptcha.visibility = View.VISIBLE
       }
    }
 
@@ -111,8 +112,8 @@ open class SignupActivity : AppCompatActivity() {
          showSignupSuccessDialog(isActive)
       } else {
          if (status.error == SignupError.INVALID_USERNAME) {
-            captcha_text.setText("")
-            username_layout.error = "Username not available"
+            binding.captchaText.setText("")
+            binding.usernameLayout.error = "Username not available"
          }
 
          AlertDialog.Builder(this)
@@ -124,53 +125,53 @@ open class SignupActivity : AppCompatActivity() {
    }
 
    open protected fun signup() {
-      displayname_layout.error = null
-      username_layout.error = null
-      email_layout.error = null
-      password_layout.error = null
-      confirmpassword_layout.error = null
+      binding.displaynameLayout.error = null
+      binding.usernameLayout.error = null
+      binding.emailLayout.error = null
+      binding.passwordLayout.error = null
+      binding.confirmpasswordLayout.error = null
 
-      val displayName: String = signup_displayname.text.toString()
-      val username: String = signup_username.text.toString()
-      val email: String = signup_email.text.toString()
-      val phone: String = signup_phone.text.toString()
+      val displayName: String = binding.signupDisplayname.text.toString()
+      val username: String = binding.signupUsername.text.toString()
+      val email: String = binding.signupEmail.text.toString()
+      val phone: String = binding.signupPhone.text.toString()
 
       // are the inputs valid?
       if (displayName.isEmpty()) {
-         displayname_layout.error = "Display name can not be blank"
+         binding.displaynameLayout.error = "Display name can not be blank"
          return
       }
       if (username.isEmpty()) {
-         username_layout.error = "Username can not be blank"
+         binding.usernameLayout.error = "Username can not be blank"
          return
       }
 
       if (email.isNotEmpty() && !Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-         email_layout.error = "Please enter a valid email address"
+         binding.emailLayout.error = "Please enter a valid email address"
          return
       }
 
-      val password: String = signup_password.text.toString()
-      val confirmpassword: String = signup_confirmpassword.text.toString()
+      val password: String = binding.signupPassword.text.toString()
+      val confirmpassword: String = binding.signupConfirmpassword.text.toString()
       if (password.isEmpty()) {
-         password_layout.error = "Password can not be blank"
+         binding.passwordLayout.error = "Password can not be blank"
          return
       }
 
       if (confirmpassword.isEmpty()) {
-         confirmpassword_layout.error = "Enter password again"
+         binding.confirmpasswordLayout.error = "Enter password again"
          return
       }
 
       if (password != confirmpassword) {
-         password_layout.error = "Passwords do not match"
-         confirmpassword_layout.error = "Passwords do not match"
+         binding.passwordLayout.error = "Passwords do not match"
+         binding.confirmpasswordLayout.error = "Passwords do not match"
          return
       }
 
-      val captchaText = captcha_text.text.toString()
+      val captchaText = binding.captchaText.text.toString()
       if (captchaText.isEmpty()) {
-         captcha_text_layout.error = "Captcha text cannot be blank"
+         binding.captchaTextLayout.error = "Captcha text cannot be blank"
          return
       }
 
@@ -180,7 +181,7 @@ open class SignupActivity : AppCompatActivity() {
    }
 
    private fun getCaptcha() {
-      viewModel.getCaptcha(signup_username.text.toString(), backgroundColor())
+      viewModel.getCaptcha(binding.signupUsername.text.toString(), backgroundColor())
    }
 
    private fun cancel() {
@@ -206,8 +207,8 @@ open class SignupActivity : AppCompatActivity() {
    }
 
    private fun toggleMask(visible: Boolean) {
-      mask.visibility = if (visible) View.VISIBLE else View.GONE
-      progress.visibility = if (visible) View.VISIBLE else View.GONE
+      binding.mask.visibility = if (visible) View.VISIBLE else View.GONE
+      binding.progress.visibility = if (visible) View.VISIBLE else View.GONE
    }
 
    private fun backgroundColor(): String {

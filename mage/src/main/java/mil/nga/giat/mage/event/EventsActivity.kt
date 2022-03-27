@@ -10,10 +10,10 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.LinearLayoutManager
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.android.synthetic.main.activity_events.*
 import mil.nga.giat.mage.LandingActivity
 import mil.nga.giat.mage.MageApplication
 import mil.nga.giat.mage.R
+import mil.nga.giat.mage.databinding.ActivityEventsBinding
 import mil.nga.giat.mage.login.LoginActivity
 import mil.nga.giat.mage.network.Resource
 import mil.nga.giat.mage.sdk.datastore.user.Event
@@ -26,28 +26,31 @@ class EventsActivity : AppCompatActivity() {
     @Inject
     lateinit var application: MageApplication
 
+    private lateinit var binding: ActivityEventsBinding
     private lateinit var viewModel: EventViewModel
 
     public override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        setContentView(R.layout.activity_events)
-        setSupportActionBar(toolbar)
+        binding = ActivityEventsBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+
+        setSupportActionBar(binding.toolbar)
 
         if (intent.getBooleanExtra(CLOSABLE_EXTRA, false)) {
             supportActionBar?.setHomeAsUpIndicator(R.drawable.ic_close_white_24dp)
             supportActionBar?.setDisplayHomeAsUpEnabled(true)
         }
 
-        toolbar.title = "Events"
+        binding.toolbar.title = "Events"
 
-        loadingStatus.visibility = View.VISIBLE
+        binding.loadingStatus.visibility = View.VISIBLE
 
-        searchView.isIconified = false
-        searchView.setIconifiedByDefault(false)
-        searchView.clearFocus()
+        binding.searchView.isIconified = false
+        binding.searchView.setIconifiedByDefault(false)
+        binding.searchView.clearFocus()
 
-        dismissButton.setOnClickListener { dismiss() }
+        binding.dismissButton.setOnClickListener { dismiss() }
 
         viewModel = ViewModelProvider(this).get(EventViewModel::class.java)
         viewModel.syncStatus.observe(this, { onEventSynced(it) })
@@ -78,7 +81,7 @@ class EventsActivity : AppCompatActivity() {
                 val recentEvents = EventHelper.getInstance(application).recentEvents
                 val eventListAdapter = EventListAdapter(events.toMutableList(), recentEvents) { event -> chooseEvent(event) }
 
-                searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+                binding.searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
                     override fun onQueryTextSubmit(query: String): Boolean {
                         return false
                     }
@@ -89,22 +92,22 @@ class EventsActivity : AppCompatActivity() {
                     }
                 })
 
-                recyclerView.layoutManager = LinearLayoutManager(applicationContext)
-                recyclerView.itemAnimator = DefaultItemAnimator()
-                recyclerView.addItemDecoration(EventItemDecorator(applicationContext))
-                recyclerView.adapter = eventListAdapter
+                binding.recyclerView.layoutManager = LinearLayoutManager(applicationContext)
+                binding.recyclerView.itemAnimator = DefaultItemAnimator()
+                binding.recyclerView.addItemDecoration(EventItemDecorator(applicationContext))
+                binding.recyclerView.adapter = eventListAdapter
 
-                eventsAppBar.visibility = View.VISIBLE
-                loadingStatus.visibility = View.GONE
+                binding.eventsAppBar.visibility = View.VISIBLE
+                binding.loadingStatus.visibility = View.GONE
             }
             else -> {
                 application.onLogout(true, null)
 
-                searchView.visibility = View.GONE
-                loadingStatus.visibility = View.GONE
-                dismissButton.visibility = View.VISIBLE
-                noEventsText.visibility = if (resource.status == Resource.Status.ERROR) View.VISIBLE else View.GONE
-                noConnectionText.visibility = if (resource.status == Resource.Status.ERROR) View.GONE else View.VISIBLE
+                binding.searchView.visibility = View.GONE
+                binding.loadingStatus.visibility = View.GONE
+                binding.dismissButton.visibility = View.VISIBLE
+                binding.noEventsText.visibility = if (resource.status == Resource.Status.ERROR) View.VISIBLE else View.GONE
+                binding.noConnectionText.visibility = if (resource.status == Resource.Status.ERROR) View.GONE else View.VISIBLE
             }
         }
     }
@@ -115,11 +118,11 @@ class EventsActivity : AppCompatActivity() {
     }
 
     private fun chooseEvent(event: Event) {
-        eventsAppBar.visibility = View.GONE
-        eventsContent.visibility = View.GONE
-        loadingStatus.visibility = View.VISIBLE
+        binding.eventsAppBar.visibility = View.GONE
+        binding.eventsContent.visibility = View.GONE
+        binding.loadingStatus.visibility = View.VISIBLE
 
-        loadingText.text = "Loading ${event.name}"
+        binding.loadingText.text = "Loading ${event.name}"
         viewModel.syncEvent(event)
     }
 

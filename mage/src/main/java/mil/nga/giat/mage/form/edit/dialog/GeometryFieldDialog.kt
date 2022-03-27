@@ -31,10 +31,11 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.tabs.TabLayout
 import com.google.android.material.textfield.TextInputLayout
-import kotlinx.android.synthetic.main.dialog_geometry_field.*
 import mil.nga.geopackage.map.geom.*
 import mil.nga.giat.mage.R
 import mil.nga.giat.mage.coordinate.*
+import mil.nga.giat.mage.databinding.DateTimeDialogBinding
+import mil.nga.giat.mage.databinding.DialogGeometryFieldBinding
 import mil.nga.giat.mage.map.annotation.ShapeStyle
 import mil.nga.giat.mage.map.hasKinks
 import mil.nga.giat.mage.observation.InputFilterDecimal
@@ -71,6 +72,7 @@ class GeometryFieldDialog : DialogFragment(),
         fun onLocation(location: ObservationLocation?)
     }
 
+    private lateinit var binding: DialogGeometryFieldBinding
     var listener: GeometryFieldDialogListener? = null
 
     private var title = "Location"
@@ -157,7 +159,8 @@ class GeometryFieldDialog : DialogFragment(),
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-        return inflater.inflate(R.layout.dialog_geometry_field, container, false)
+        binding = DialogGeometryFieldBinding.inflate(inflater, container, false)
+        return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -170,15 +173,15 @@ class GeometryFieldDialog : DialogFragment(),
         val dmsCoordinateFragment = childFragmentManager.findFragmentById(R.id.dmsCoordinateFragment) as DMSCoordinateFragment
         this.dmsCoordinateFragment = dmsCoordinateFragment
 
-        toolbar.setNavigationIcon(R.drawable.ic_close_white_24dp)
-        toolbar.setNavigationOnClickListener { dismiss() }
-        toolbar.title = title
-        toolbar.inflateMenu(R.menu.location_edit_menu)
+        binding.toolbar.setNavigationIcon(R.drawable.ic_close_white_24dp)
+        binding.toolbar.setNavigationOnClickListener { dismiss() }
+        binding.toolbar.title = title
+        binding.toolbar.inflateMenu(R.menu.location_edit_menu)
         if (!clearable) {
-            toolbar.menu.removeItem(R.id.clear)
+            binding.toolbar.menu.removeItem(R.id.clear)
         }
 
-        toolbar.setOnMenuItemClickListener {
+        binding.toolbar.setOnMenuItemClickListener {
             when (it.itemId) {
                 R.id.clear -> {
                     listener?.onLocation(null)
@@ -193,9 +196,9 @@ class GeometryFieldDialog : DialogFragment(),
             }
         }
 
-        tabs.addTab(tabs.newTab().setText("Lat/Lng"), WGS84_COORDINATE_TAB_POSITION)
-        tabs.addTab(tabs.newTab().setText("MGRS"), MGRS_COORDINATE_TAB_POSITION)
-        tabs.addTab(tabs.newTab().setText("DMS"), DMS_COORDINATE_TAB_POSITION)
+        binding.tabs.addTab(binding.tabs.newTab().setText("Lat/Lng"), WGS84_COORDINATE_TAB_POSITION)
+        binding.tabs.addTab(binding.tabs.newTab().setText("MGRS"), MGRS_COORDINATE_TAB_POSITION)
+        binding.tabs.addTab(binding.tabs.newTab().setText("DMS"), DMS_COORDINATE_TAB_POSITION)
 
         val preferences = PreferenceManager.getDefaultSharedPreferences(requireContext())
         val defaultCoordinateSystem = preferences.getInt(resources.getString(R.string.coordinateSystemViewKey), CoordinateSystem.WGS84.preferenceValue)
@@ -207,7 +210,7 @@ class GeometryFieldDialog : DialogFragment(),
                     .hide(dmsCoordinateFragment)
                     .commit()
 
-                tabs.getTabAt(MGRS_COORDINATE_TAB_POSITION)?.select()
+                binding.tabs.getTabAt(MGRS_COORDINATE_TAB_POSITION)?.select()
             }
             CoordinateSystem.WGS84 -> {
                 childFragmentManager.beginTransaction()
@@ -216,7 +219,7 @@ class GeometryFieldDialog : DialogFragment(),
                     .hide(dmsCoordinateFragment)
                     .commit()
 
-                tabs.getTabAt(WGS84_COORDINATE_TAB_POSITION)?.select()
+                binding.tabs.getTabAt(WGS84_COORDINATE_TAB_POSITION)?.select()
             }
             CoordinateSystem.DMS -> {
                 childFragmentManager.beginTransaction()
@@ -225,11 +228,11 @@ class GeometryFieldDialog : DialogFragment(),
                     .hide(mgrsCoordinateFragment)
                     .commit()
 
-                tabs.getTabAt(DMS_COORDINATE_TAB_POSITION)?.select()
+                binding.tabs.getTabAt(DMS_COORDINATE_TAB_POSITION)?.select()
             }
         }
 
-        tabs.addOnTabSelectedListener(this)
+        binding.tabs.addOnTabSelectedListener(this)
 
         val style = ShapeStyle(requireContext())
         editMarkerOptions = getEditMarkerOptions()
@@ -528,7 +531,7 @@ class GeometryFieldDialog : DialogFragment(),
     private fun setupMap() {
         map.moveCamera(location.getCameraUpdate(mapFragment.view))
 
-        if (tabs.selectedTabPosition == MGRS_COORDINATE_TAB_POSITION) {
+        if (binding.tabs.selectedTabPosition == MGRS_COORDINATE_TAB_POSITION) {
             mgrsTileOverlay = map.addTileOverlay(TileOverlayOptions().tileProvider(MGRSTileProvider(context)))
         }
 
@@ -541,10 +544,10 @@ class GeometryFieldDialog : DialogFragment(),
         map.setOnMarkerClickListener(this)
         map.setOnMarkerDragListener(this)
 
-        setupMapButton(editPointButton)
-        setupMapButton(editLineButton)
-        setupMapButton(editRectangleButton)
-        setupMapButton(editPolygonButton)
+        setupMapButton(binding.editPointButton)
+        setupMapButton(binding.editLineButton)
+        setupMapButton(binding.editRectangleButton)
+        setupMapButton(binding.editPolygonButton)
 
         val geometry = location.geometry
         setShapeType(geometry)
@@ -562,7 +565,7 @@ class GeometryFieldDialog : DialogFragment(),
      * Clear the focus from the coordinate text entries
      */
     private fun clearCoordinateFocus() {
-        when (tabs.selectedTabPosition) {
+        when (binding.tabs.selectedTabPosition) {
             WGS84_COORDINATE_TAB_POSITION -> wgs84CoordinateFragment.clearFocus()
             MGRS_COORDINATE_TAB_POSITION -> mgrsCoordinateFragment.clearFocus()
             DMS_COORDINATE_TAB_POSITION -> dmsCoordinateFragment.clearFocus()
@@ -636,10 +639,10 @@ class GeometryFieldDialog : DialogFragment(),
      * Set the shape type selection to match the current shape type
      */
     private fun setShapeTypeSelection() {
-        editPointButton.isSelected = shapeType == GeometryType.POINT
-        editLineButton.isSelected = shapeType == GeometryType.LINESTRING
-        editRectangleButton.isSelected = shapeType == GeometryType.POLYGON && isRectangle
-        editPolygonButton.isSelected = shapeType == GeometryType.POLYGON && !isRectangle
+        binding.editPointButton.isSelected = shapeType == GeometryType.POINT
+        binding.editLineButton.isSelected = shapeType == GeometryType.LINESTRING
+        binding.editRectangleButton.isSelected = shapeType == GeometryType.POLYGON && isRectangle
+        binding.editPolygonButton.isSelected = shapeType == GeometryType.POLYGON && !isRectangle
     }
 
     override fun onClick(v: View) {
@@ -861,7 +864,7 @@ class GeometryFieldDialog : DialogFragment(),
         return if (selectedMarker != null) {
              selectedMarker!!.position
         } else {
-            val tabPosition = tabs.selectedTabPosition
+            val tabPosition = binding.tabs.selectedTabPosition
             if (tabPosition == WGS84_COORDINATE_TAB_POSITION) {
                 wgs84CoordinateFragment.clearFocus()
                 newPointPosition = wgs84CoordinateFragment.getLatLng()
@@ -900,11 +903,11 @@ class GeometryFieldDialog : DialogFragment(),
             shapeMarkers = null
         }
         if (geometry.geometryType == GeometryType.POINT) {
-            locationEditMarker.setImageBitmap(markerBitmap)
+            binding.locationEditMarker.setImageBitmap(markerBitmap)
             val point = geometry as Point
             updateLatitudeLongitudeText(LatLng(point.y, point.x))
         } else {
-            locationEditMarker.setImageBitmap(null)
+            binding.locationEditMarker.setImageBitmap(null)
             val shape = shapeConverter.toShape(geometry)
             shapeMarkers = shapeConverter.addShapeToMapAsMarkers(map, shape, null,
                     editMarkerOptions, editMarkerOptions, null, editPolylineOptions, editPolygonOptions)
@@ -939,7 +942,7 @@ class GeometryFieldDialog : DialogFragment(),
     private fun updateHint(dragging: Boolean) {
 
         var locationEditHasFocus = false
-        val tabPosition = tabs.selectedTabPosition
+        val tabPosition = binding.tabs.selectedTabPosition
         if (tabPosition == WGS84_COORDINATE_TAB_POSITION) {
             locationEditHasFocus = wgs84CoordinateFragment.hasFocus()
         } else if (tabPosition == MGRS_COORDINATE_TAB_POSITION) {
@@ -992,7 +995,7 @@ class GeometryFieldDialog : DialogFragment(),
             }
         }
 
-        hintText.text = hint
+        binding.hintText.text = hint
     }
 
     /**
@@ -1011,7 +1014,7 @@ class GeometryFieldDialog : DialogFragment(),
      */
     private fun updateLocation() {
         // Save coordinate system used for edit
-        val coordinateSystem = CoordinateSystem.fromPreference(tabs.selectedTabPosition)
+        val coordinateSystem = CoordinateSystem.fromPreference(binding.tabs.selectedTabPosition)
         val editor = PreferenceManager.getDefaultSharedPreferences(requireContext()).edit()
         editor.putInt(resources.getString(R.string.coordinateSystemEditKey), coordinateSystem.preferenceValue).apply()
 
@@ -1030,10 +1033,10 @@ class GeometryFieldDialog : DialogFragment(),
         // validate shape has minimum number of points
         if (shapeType == GeometryType.POLYGON && (!multipleShapeMarkerPositions() || getShapeMarkers().size < 3)) {
             val errorMessage = if (isRectangle) getString(R.string.location_edit_error_rectangle_min_points) else getString(R.string.location_edit_error_polygon_min_points)
-            Snackbar.make(coordinatorLayout, errorMessage, Snackbar.LENGTH_SHORT).show()
+            Snackbar.make(binding.coordinatorLayout, errorMessage, Snackbar.LENGTH_SHORT).show()
             return null
         } else if (shapeType == GeometryType.LINESTRING && !multipleShapeMarkerPositions()) {
-            Snackbar.make(coordinatorLayout, getString(R.string.location_edit_error_linestring_min_points), Snackbar.LENGTH_SHORT).show()
+            Snackbar.make(binding.coordinatorLayout, getString(R.string.location_edit_error_linestring_min_points), Snackbar.LENGTH_SHORT).show()
             return null
         }
 
@@ -1044,7 +1047,7 @@ class GeometryFieldDialog : DialogFragment(),
         } else {
             // general shape validity test
             if (shapeMarkers?.isValid != true) {
-                Snackbar.make(coordinatorLayout, getString(R.string.location_edit_error_shape), Snackbar.LENGTH_SHORT).show()
+                Snackbar.make(binding.coordinatorLayout, getString(R.string.location_edit_error_shape), Snackbar.LENGTH_SHORT).show()
                 return null
             }
 
@@ -1052,7 +1055,7 @@ class GeometryFieldDialog : DialogFragment(),
 
             // validate polygon does not intersect itself
             if ((geometry as? Polygon)?.hasKinks() == true) {
-                Snackbar.make(coordinatorLayout, getString(R.string.location_edit_error_polygon_kinks), Snackbar.LENGTH_SHORT).show()
+                Snackbar.make(binding.coordinatorLayout, getString(R.string.location_edit_error_polygon_kinks), Snackbar.LENGTH_SHORT).show()
                 return null
             }
         }

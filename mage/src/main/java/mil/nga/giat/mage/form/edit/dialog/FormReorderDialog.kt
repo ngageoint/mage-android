@@ -11,8 +11,6 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.ViewModelProviders
-import kotlinx.android.synthetic.main.dialog_form_reorder.*
-import kotlinx.android.synthetic.main.dialog_select_field.toolbar
 import mil.nga.giat.mage.R
 import mil.nga.giat.mage.form.FormState
 import mil.nga.giat.mage.form.FormViewModel
@@ -21,12 +19,9 @@ import android.view.MotionEvent
 import android.widget.ImageView
 import androidx.core.widget.ImageViewCompat
 import androidx.recyclerview.widget.*
-import kotlinx.android.synthetic.main.view_form_reorder_item.view.*
+import mil.nga.giat.mage.databinding.DialogFormReorderBinding
+import mil.nga.giat.mage.databinding.ViewFormReorderItemBinding
 import java.util.*
-
-/**
- * Created by wnewman on 2/9/17.
- */
 
 class FormReorderDialog : DialogFragment() {
 
@@ -45,6 +40,7 @@ class FormReorderDialog : DialogFragment() {
     }
   }
 
+  private lateinit var binding: DialogFormReorderBinding
   var listener: FormReorderDialogListener? = null
   private lateinit var viewModel: FormViewModel
   private lateinit var itemTouchHelper: ItemTouchHelper
@@ -91,16 +87,17 @@ class FormReorderDialog : DialogFragment() {
     inflater: LayoutInflater,
     container: ViewGroup?,
     savedInstanceState: Bundle?
-  ): View? {
-    return inflater.inflate(R.layout.dialog_form_reorder, container, false)
+  ): View {
+    binding = DialogFormReorderBinding.inflate(inflater, container, false)
+    return binding.root
   }
 
   override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-    toolbar.setNavigationIcon(R.drawable.ic_close_white_24dp)
-    toolbar.setNavigationOnClickListener { dismiss() }
-    toolbar.inflateMenu(R.menu.form_reorder_menu)
+    binding.toolbar.setNavigationIcon(R.drawable.ic_close_white_24dp)
+    binding.toolbar.setNavigationOnClickListener { dismiss() }
+    binding.toolbar.inflateMenu(R.menu.form_reorder_menu)
 
-    toolbar.setOnMenuItemClickListener { item ->
+    binding.toolbar.setOnMenuItemClickListener { item ->
       when (item.itemId) {
         R.id.apply -> {
           apply()
@@ -112,13 +109,13 @@ class FormReorderDialog : DialogFragment() {
 
     viewModel.observationState.observe(viewLifecycleOwner, { onObservationState(it) })
 
-    recyclerView.layoutManager = LinearLayoutManager(requireContext())
-    recyclerView.itemAnimator = DefaultItemAnimator()
-    recyclerView.addItemDecoration(DividerItemDecoration(requireContext(), DividerItemDecoration.VERTICAL))
+    binding.recyclerView.layoutManager = LinearLayoutManager(requireContext())
+    binding.recyclerView.itemAnimator = DefaultItemAnimator()
+    binding.recyclerView.addItemDecoration(DividerItemDecoration(requireContext(), DividerItemDecoration.VERTICAL))
 
     itemTouchHelper = ItemTouchHelper(itemTouchHelperCallback)
-    itemTouchHelper.attachToRecyclerView(recyclerView)
-    recyclerView.adapter = adapter
+    itemTouchHelper.attachToRecyclerView(binding.recyclerView)
+    binding.recyclerView.adapter = adapter
   }
 
   private fun onObservationState(observationState: ObservationState) {
@@ -139,17 +136,17 @@ class FormReorderDialog : DialogFragment() {
       fun startDrag(viewHolder: RecyclerView.ViewHolder)
     }
 
-    class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
-      val name: TextView = view.name
-      val primary: TextView = view.primary
-      val secondary: TextView = view.secondary
-      val formIcon: ImageView = view.form_icon
-      val dragIcon: ImageView = view.drag_icon
+    class ViewHolder(binding: ViewFormReorderItemBinding) : RecyclerView.ViewHolder(binding.root) {
+      val name: TextView = binding.name
+      val primary: TextView = binding.primary
+      val secondary: TextView = binding.secondary
+      val formIcon: ImageView = binding.formIcon
+      val dragIcon: ImageView = binding.dragIcon
     }
 
     override fun onCreateViewHolder(viewGroup: ViewGroup, viewType: Int): ViewHolder {
-      val view = LayoutInflater.from(viewGroup.context).inflate(R.layout.view_form_reorder_item, viewGroup, false)
-      return ViewHolder(view)
+      val binding = ViewFormReorderItemBinding.inflate(LayoutInflater.from(viewGroup.context), viewGroup, false)
+      return ViewHolder(binding)
     }
 
     override fun getItemCount() = forms.size

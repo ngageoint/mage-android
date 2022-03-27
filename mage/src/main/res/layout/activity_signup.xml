@@ -23,11 +23,12 @@
     </RelativeLayout>
 
     <RelativeLayout
-        android:id="@+id/header"
+        android:id="@+id/header_container"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
-        <include layout="@layout/mage_header" />
+        <include android:id="@+id/header"
+            layout="@layout/mage_header" />
 
     </RelativeLayout>
 
@@ -35,7 +36,7 @@
         android:id="@+id/signup"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_below="@id/header"
+        android:layout_below="@id/header_container"
         android:layout_marginTop="8dp"
         android:fillViewport="true"
         android:orientation="vertical">

@@ -14,9 +14,7 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProviders
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.android.synthetic.main.fragment_authentication_mage.*
-import kotlinx.android.synthetic.main.fragment_authentication_mage.view.*
-import mil.nga.giat.mage.R
+import mil.nga.giat.mage.databinding.FragmentAuthenticationMageBinding
 import mil.nga.giat.mage.login.LoginViewModel
 import org.json.JSONObject
 import java.util.*
@@ -46,6 +44,8 @@ class MageLoginFragment : Fragment() {
     @Inject
     protected lateinit var preferences: SharedPreferences
 
+    private lateinit var binding: FragmentAuthenticationMageBinding
+
     private lateinit var viewModel: LoginViewModel
 
     private lateinit var strategy: JSONObject
@@ -62,12 +62,12 @@ class MageLoginFragment : Fragment() {
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-        val view = inflater.inflate(R.layout.fragment_authentication_mage, container, false)
+        binding = FragmentAuthenticationMageBinding.inflate(inflater, container, false)
 
-        view.username.addTextChangedListener(object: TextWatcher {
+        binding.username.addTextChangedListener(object: TextWatcher {
             override fun afterTextChanged(s: Editable?) {
                 if (s?.isNotBlank() == true) {
-                    view.username_layout.error = null
+                    binding.usernameLayout.error = null
                 }
             }
 
@@ -77,10 +77,10 @@ class MageLoginFragment : Fragment() {
 
         })
 
-        view.password.addTextChangedListener(object: TextWatcher {
+        binding.password.addTextChangedListener(object: TextWatcher {
             override fun afterTextChanged(s: Editable?) {
                 if (s?.isNotBlank() == true) {
-                    view.password_layout.error = null
+                    binding.passwordLayout.error = null
                 }
             }
 
@@ -89,7 +89,7 @@ class MageLoginFragment : Fragment() {
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
         })
 
-        view.password.setOnKeyListener { _, keyCode, _ ->
+        binding.password.setOnKeyListener { _, keyCode, _ ->
             if (keyCode == KeyEvent.KEYCODE_ENTER) {
                 login()
                 true
@@ -98,9 +98,9 @@ class MageLoginFragment : Fragment() {
             }
         }
 
-        view.login_button.setOnClickListener { login() }
+        binding.loginButton.setOnClickListener { login() }
 
-        return view
+        return binding.root
     }
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
@@ -120,19 +120,19 @@ class MageLoginFragment : Fragment() {
         }
 
         // reset errors
-        username_layout.error = null
-        password_layout.error = null
+        binding.usernameLayout.error = null
+        binding.passwordLayout.error = null
 
-        val username = username.text.toString()
-        val password = password.text.toString()
+        val username = binding.username.text.toString()
+        val password = binding.password.text.toString()
 
         if (username.isEmpty()) {
-            username_layout.error = "Username cannot be blank"
+            binding.usernameLayout.error = "Username cannot be blank"
             return
         }
 
         if (password.isEmpty()) {
-            password_layout.error  = "Password cannot be blank"
+            binding.passwordLayout.error  = "Password cannot be blank"
             return
         }
 
@@ -141,8 +141,8 @@ class MageLoginFragment : Fragment() {
 
     private fun observeLogin(authentication: LoginViewModel.Authentication?) {
         if (authentication != null) {
-            username_layout.error = null
-            password_layout.error = null
+            binding.usernameLayout.error = null
+            binding.passwordLayout.error = null
         }
     }
 }

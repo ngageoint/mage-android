@@ -9,9 +9,7 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.android.synthetic.main.fragment_authentication_ldap.*
-import kotlinx.android.synthetic.main.fragment_authentication_ldap.view.*
-import mil.nga.giat.mage.R
+import mil.nga.giat.mage.databinding.FragmentAuthenticationLdapBinding
 import mil.nga.giat.mage.login.LoginViewModel
 import org.json.JSONException
 import org.json.JSONObject
@@ -33,6 +31,8 @@ class LdapLoginFragment: Fragment() {
             }
         }
     }
+
+    private lateinit var binding: FragmentAuthenticationLdapBinding
 
     private lateinit var viewModel: LoginViewModel
 
@@ -62,34 +62,35 @@ class LdapLoginFragment: Fragment() {
         viewModel.authenticationStatus.observe(viewLifecycleOwner, { observeLogin(it) })
     }
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-        return inflater.inflate(R.layout.fragment_authentication_ldap, container, false)
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
+        binding = FragmentAuthenticationLdapBinding.inflate(inflater, container, false)
+        return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        view.authentication_button.bind(strategy)
-        view.authentication_button.setOnClickListener { login() }
+        binding.authenticationButton.bind(strategy)
+        binding.authenticationButton.setOnClickListener { login() }
 
         try {
             val title = strategy.getString("title")
-            username_layout.hint = String.format("%s username", title)
-            password_layout.hint = String.format("%s password", title)
+            binding.usernameLayout.hint = String.format("%s username", title)
+            binding.passwordLayout.hint = String.format("%s password", title)
         } catch (ignore: JSONException) {}
     }
 
     private fun login() {
-        username_layout.error = null
-        password_layout.error = null
+        binding.usernameLayout.error = null
+        binding.passwordLayout.error = null
 
-        val username = username.text.toString()
+        val username = binding.username.text.toString()
         if (TextUtils.isEmpty(username)) {
-            username_layout.error = "Username cannot be blank"
+            binding.usernameLayout.error = "Username cannot be blank"
             return
         }
 
-        val password = password.text.toString()
+        val password = binding.password.text.toString()
         if (TextUtils.isEmpty(password)) {
-            password_layout.error = "Password cannot be blank"
+            binding.passwordLayout.error = "Password cannot be blank"
             return
         }
 
@@ -98,8 +99,8 @@ class LdapLoginFragment: Fragment() {
 
     private fun observeLogin(authentication: LoginViewModel.Authentication?) {
         if (authentication != null) {
-            username_layout.error = null
-            password_layout.error = null
+            binding.usernameLayout.error = null
+            binding.passwordLayout.error = null
         }
     }
 }

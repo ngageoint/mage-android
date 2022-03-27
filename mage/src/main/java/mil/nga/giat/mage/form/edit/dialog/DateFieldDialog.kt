@@ -11,17 +11,12 @@ import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.FragmentPagerAdapter
-import androidx.viewpager.widget.ViewPager
 import com.google.android.material.tabs.TabLayout
-import kotlinx.android.synthetic.main.date_time_dialog.toolbar
 import mil.nga.giat.mage.R
+import mil.nga.giat.mage.databinding.DateTimeDialogBinding
 import mil.nga.giat.mage.utils.DateFormatFactory
 import java.text.DateFormat
 import java.util.*
-
-/**
- * Created by wnewman on 2/9/17.
- */
 
 class DateFieldDialog: DialogFragment() {
 
@@ -30,7 +25,7 @@ class DateFieldDialog: DialogFragment() {
     }
 
     companion object {
-        private val CALENDAR_INSTANCE = "CALENDAR"
+        private const val CALENDAR_INSTANCE = "CALENDAR"
         private const val TITLE_KEY = "TITLE_KEY"
         private const val TIMESTAMP_KEY = "TIMESTAMP_KEY"
         private const val CLEARABLE_KEY = "CLEARABLE_KEY"
@@ -51,6 +46,7 @@ class DateFieldDialog: DialogFragment() {
         }
     }
 
+    private lateinit var binding: DateTimeDialogBinding
     var listener: DateFieldDialogListener? = null
 
     private var title = "Date"
@@ -89,8 +85,7 @@ class DateFieldDialog: DialogFragment() {
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-        val localInflater = inflater.cloneInContext(context)
-        val view = localInflater.inflate(R.layout.date_time_dialog, container, false)
+        binding = DateTimeDialogBinding.inflate(inflater, container, false)
 
         if (savedInstanceState != null) {
             calendar = savedInstanceState.getSerializable(CALENDAR_INSTANCE) as Calendar
@@ -100,17 +95,14 @@ class DateFieldDialog: DialogFragment() {
             timePickerFragment = manager.getFragment(savedInstanceState, TimePickerFragment::class.java.name) as TimePickerFragment?
         }
 
-        val tabLayout = view.findViewById<View>(R.id.tab_layout) as TabLayout
-        tabLayout.tabGravity = TabLayout.GRAVITY_FILL
-        tabLayout.tabMode = TabLayout.MODE_FIXED
+        binding.tabLayout.tabGravity = TabLayout.GRAVITY_FILL
+        binding.tabLayout.tabMode = TabLayout.MODE_FIXED
 
-        val dateTab = tabLayout.newTab().setText(dateFormat!!.format(calendar.time))
-        tabLayout.addTab(dateTab)
+        val dateTab = binding.tabLayout.newTab().setText(dateFormat!!.format(calendar.time))
+        binding.tabLayout.addTab(dateTab)
 
-        val timeTab = tabLayout.newTab().setText(timeFormat!!.format(calendar.time))
-        tabLayout.addTab(timeTab)
-
-        val viewPager = view.findViewById<View>(R.id.pager) as ViewPager
+        val timeTab = binding.tabLayout.newTab().setText(timeFormat!!.format(calendar.time))
+        binding.tabLayout.addTab(timeTab)
 
         if (datePickerFragment == null) {
             datePickerFragment = DatePickerFragment.newInstance(calendar.time)
@@ -134,32 +126,32 @@ class DateFieldDialog: DialogFragment() {
         }
 
         val adapter = DateTimePagerAdapter(childFragmentManager, listOf(datePickerFragment as Fragment, timePickerFragment as Fragment))
-        viewPager.adapter = adapter
-        viewPager.addOnPageChangeListener(TabLayout.TabLayoutOnPageChangeListener(tabLayout))
+        binding.pager.adapter = adapter
+        binding.pager.addOnPageChangeListener(TabLayout.TabLayoutOnPageChangeListener(binding.tabLayout))
 
-        tabLayout.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
+        binding.tabLayout.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
             override fun onTabSelected(tab: TabLayout.Tab) {
-                viewPager.currentItem = tab.position
+                binding.pager.currentItem = tab.position
             }
 
             override fun onTabUnselected(tab: TabLayout.Tab) {}
             override fun onTabReselected(tab: TabLayout.Tab) {}
         })
 
-        return view
+        return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        toolbar.setNavigationIcon(R.drawable.ic_close_white_24dp)
-        toolbar.setNavigationOnClickListener { dismiss() }
-        toolbar.inflateMenu(R.menu.location_edit_menu)
-        toolbar.title = title
+        binding.toolbar.setNavigationIcon(R.drawable.ic_close_white_24dp)
+        binding.toolbar.setNavigationOnClickListener { dismiss() }
+        binding.toolbar.inflateMenu(R.menu.location_edit_menu)
+        binding.toolbar.title = title
         if (!clearable) {
-            toolbar.menu.removeItem(R.id.clear)
+            binding.toolbar.menu.removeItem(R.id.clear)
         }
-        toolbar.setOnMenuItemClickListener {
+        binding.toolbar.setOnMenuItemClickListener {
             when (it.itemId) {
                 R.id.clear -> {
                     listener?.onDate(null)

@@ -422,7 +422,7 @@ public class LandingActivity extends AppCompatActivity implements NavigationView
          case R.id.event_navigation: {
             Event event = EventHelper.getInstance(getApplicationContext()).getCurrentEvent();
             Intent intent = new Intent(LandingActivity.this, EventActivity.class);
-            intent.putExtra(EventActivity.Companion.getEVENT_ID_EXTRA(), event.getId());
+            intent.putExtra(EventActivity.EVENT_ID_EXTRA, event.getId());
             startActivityForResult(intent, CHANGE_EVENT_REQUEST);
             break;
          }

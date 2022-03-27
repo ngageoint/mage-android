@@ -16,8 +16,6 @@ import android.util.Log
 import android.view.*
 import android.view.ViewGroup.MarginLayoutParams
 import android.view.inputmethod.InputMethodManager
-import android.widget.ImageButton
-import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -32,11 +30,9 @@ import com.google.android.gms.maps.GoogleMap.OnCameraMoveStartedListener
 import com.google.android.gms.maps.LocationSource.OnLocationChangedListener
 import com.google.android.gms.maps.model.*
 import com.google.android.material.bottomsheet.BottomSheetBehavior
-import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.snackbar.Snackbar
 import com.google.maps.android.ktx.*
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.android.synthetic.main.fragment_map.view.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collect
 import mil.nga.geopackage.BoundingBox
@@ -58,6 +54,7 @@ import mil.nga.giat.mage.LandingViewModel.Navigable
 import mil.nga.giat.mage.LandingViewModel.NavigableType
 import mil.nga.giat.mage.R
 import mil.nga.giat.mage.coordinate.CoordinateFormatter
+import mil.nga.giat.mage.databinding.FragmentMapBinding
 import mil.nga.giat.mage.feed.item.FeedItemActivity
 import mil.nga.giat.mage.filter.FilterActivity
 import mil.nga.giat.mage.geopackage.media.GeoPackageMediaActivity
@@ -119,14 +116,12 @@ class MapFragment : Fragment(),
    @Inject
    lateinit var preferences: SharedPreferences
 
+   private lateinit var binding: FragmentMapBinding
+
    private val viewModel: MapViewModel by activityViewModels()
    private val landingViewModel: LandingViewModel by activityViewModels()
 
-   private lateinit var mapView: MapView
    private var map: GoogleMap? = null
-
-   private lateinit var searchLayout: View
-   private lateinit var searchView: SearchView
 
    private var straightLineNavigation: StraightLineNavigation? = null
    private var locateState = LocateState.OFF
@@ -149,39 +144,33 @@ class MapFragment : Fragment(),
 
    private var cacheBoundingBox: BoundingBox? = null
    private lateinit var geoPackageCache: GeoPackageCache
-   private lateinit var reportLocationButton: FloatingActionButton
-   private lateinit var searchButton: FloatingActionButton
-   private lateinit var zoomToLocationButton: FloatingActionButton
 
    private var showMgrs = false
    private var mgrsTileOverlay: TileOverlay? = null
-   private lateinit var mgrsChip: TextView
 
    private lateinit var featureBottomSheetBehavior: BottomSheetBehavior<View>
-
-   private lateinit var availableLayerDownloadsIcon: View
 
    override fun onCreateView(
       inflater: LayoutInflater,
       container: ViewGroup?,
       savedInstanceState: Bundle?
-   ): View? {
-      val view = inflater.inflate(R.layout.fragment_map, container, false)
+   ): View {
+      binding = FragmentMapBinding.inflate(inflater, container, false)
 
       viewModel.observationMap.observe(viewLifecycleOwner, Observer { state ->
-         view.bottom_sheet_compose.setContent {
+         binding.bottomSheetCompose.setContent {
             ObservationMapDetails(state) { onObservationAction(it) }
          }
       })
 
       viewModel.location.observe(viewLifecycleOwner, Observer { state ->
-         view.bottom_sheet_compose.setContent {
+         binding.bottomSheetCompose.setContent {
             UserMapDetails(state) { onUserAction(it) }
          }
       })
 
       viewModel.feedItem.observe(viewLifecycleOwner, Observer { state ->
-         view.bottom_sheet_compose.setContent {
+         binding.bottomSheetCompose.setContent {
             FeatureDetails(state, onAction = {
                onFeedItemAction(it)
             })
@@ -189,18 +178,18 @@ class MapFragment : Fragment(),
       })
 
       viewModel.staticFeature.observe(viewLifecycleOwner, Observer { state ->
-         view.bottom_sheet_compose.setContent {
+         binding.bottomSheetCompose.setContent {
             MapStaticFeatureDetails(state) { onStaticFeatureAction(it) }
          }
       })
 
       viewModel.geoPackageFeature.observe(viewLifecycleOwner, Observer {
-         view.bottom_sheet_compose.setContent {
+         binding.bottomSheetCompose.setContent {
             GeoPackageFeatureDetails(it) { onGeoPackageFeatureAction(it) }
          }
       })
 
-      view.user_phone_view.setContent {
+      binding.userPhoneView.setContent {
          UserPhoneDetails(viewModel.userPhone) { action ->
             when (action) {
                is UserPhoneAction.Call -> onUserCall(action.user)
@@ -212,36 +201,26 @@ class MapFragment : Fragment(),
 
       setHasOptionsMenu(true)
 
-      availableLayerDownloadsIcon = view.findViewById(R.id.available_layer_downloads)
-      zoomToLocationButton = view.findViewById(R.id.zoom_button)
-      reportLocationButton = view.findViewById(R.id.report_location)
-      reportLocationButton.setOnClickListener { toggleReportLocation() }
-      searchButton = view.findViewById(R.id.map_search_button)
+      binding.reportLocation.setOnClickListener { toggleReportLocation() }
       if (Geocoder.isPresent()) {
-         searchButton.setOnClickListener { search() }
+         binding.mapSearchButton.setOnClickListener { search() }
       } else {
-         searchButton.hide()
+         binding.mapSearchButton.hide()
       }
 
-      view.findViewById<View>(R.id.new_observation_button).setOnClickListener { onNewObservation() }
+      binding.newObservationButton.setOnClickListener { onNewObservation() }
 
-      searchLayout = view.findViewById(R.id.search_layout)
-      searchView = view.findViewById(R.id.search_view)
-      searchView.setIconifiedByDefault(false)
-      searchView.isIconified = false
-      searchView.clearFocus()
+      binding.searchView.setIconifiedByDefault(false)
+      binding.searchView.isIconified = false
+      binding.searchView.clearFocus()
 
       MapsInitializer.initialize(requireContext())
-      val mapSettings = view.findViewById<ImageButton>(R.id.map_settings)
-      mapSettings.setOnClickListener(this)
-      mapView = view.findViewById(R.id.mapView)
+      binding.mapSettings.setOnClickListener(this)
       val mapState = savedInstanceState?.getBundle(MAP_VIEW_STATE)
 
-      mapView.onCreate(mapState)
-      mgrsChip = view.findViewById(R.id.mgrs_chip)
+      binding.mapView.onCreate(mapState)
 
-      val featureBottomSheet = view.findViewById<View>(R.id.feature_bottom_sheet)
-      featureBottomSheetBehavior = BottomSheetBehavior.from(featureBottomSheet)
+      featureBottomSheetBehavior = BottomSheetBehavior.from(binding.featureBottomSheet)
       featureBottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
       featureBottomSheetBehavior.addBottomSheetCallback(object : BottomSheetBehavior.BottomSheetCallback() {
          override fun onStateChanged(bottomSheet: View, newState: Int) {
@@ -257,7 +236,7 @@ class MapFragment : Fragment(),
       locationProvider = locationPolicy.bestLocationProvider
       geoPackageCache = GeoPackageCache(GeoPackageFactory.getManager(application))
 
-      return view
+      return binding.root
    }
 
    @OptIn(ExperimentalCoroutinesApi::class)
@@ -275,7 +254,7 @@ class MapFragment : Fragment(),
       val isRestore = savedInstanceState != null
       lifecycleScope.launch {
          repeatOnLifecycle(Lifecycle.State.RESUMED) {
-            val googleMap = mapView.awaitMap()
+            val googleMap = binding.mapView.awaitMap()
             map = googleMap
             updateMapView()
 
@@ -586,7 +565,7 @@ class MapFragment : Fragment(),
 
    override fun onDestroyView() {
       super.onDestroyView()
-      mapView.onDestroy()
+      binding.mapView.onDestroy()
 
       observations?.clear()
       observations = null
@@ -651,7 +630,7 @@ class MapFragment : Fragment(),
 
       CacheProvider.getInstance(context).registerCacheOverlayListener(this)
 
-      zoomToLocationButton.setOnClickListener { zoomToLocation() }
+      binding.zoomButton.setOnClickListener { zoomToLocation() }
 
       // Set visibility on map markers as preferences may have changed
       observations?.setVisibility(preferences.getBoolean(resources.getString(R.string.showObservationsKey), true))
@@ -736,11 +715,11 @@ class MapFragment : Fragment(),
            UserHelper.getInstance(application).isCurrentUserPartOfCurrentEvent
 
       if (reportLocation) {
-         reportLocationButton.imageTintList = ColorStateList.valueOf(ContextCompat.getColor(application, R.color.md_green_500))
-         reportLocationButton.setImageResource(R.drawable.ic_my_location_white_24dp)
+         binding.reportLocation.imageTintList = ColorStateList.valueOf(ContextCompat.getColor(application, R.color.md_green_500))
+         binding.reportLocation.setImageResource(R.drawable.ic_my_location_white_24dp)
       } else {
-         reportLocationButton.imageTintList = ColorStateList.valueOf(ContextCompat.getColor(application, R.color.md_red_500))
-         reportLocationButton.setImageResource(R.drawable.ic_outline_location_disabled_24)
+         binding.reportLocation.imageTintList = ColorStateList.valueOf(ContextCompat.getColor(application, R.color.md_red_500))
+         binding.reportLocation.setImageResource(R.drawable.ic_outline_location_disabled_24)
       }
    }
 
@@ -761,9 +740,9 @@ class MapFragment : Fragment(),
 
       locateState = locateState.next()
       when (locateState) {
-         LocateState.OFF -> zoomToLocationButton.isSelected = false
+         LocateState.OFF -> binding.zoomButton.isSelected = false
          LocateState.FOLLOW -> {
-            zoomToLocationButton.isSelected = true
+            binding.zoomButton.isSelected = true
             val location = locationProvider?.value
             if (location != null) {
                val cameraPosition = CameraPosition.Builder()
@@ -847,7 +826,7 @@ class MapFragment : Fragment(),
 
    override fun onLowMemory() {
       super.onLowMemory()
-      mapView.onLowMemory()
+      binding.mapView.onLowMemory()
    }
 
    override fun onResume() {
@@ -861,7 +840,7 @@ class MapFragment : Fragment(),
          Log.e(LOG_NAME, "Could not find current user.", ue)
       }
 
-      mapView.onResume()
+      binding.mapView.onResume()
       showMgrs = preferences.getBoolean(resources.getString(R.string.showMGRSKey), false)
 
       try {
@@ -870,17 +849,17 @@ class MapFragment : Fragment(),
             !it.isLoaded
          }
 
-         availableLayerDownloadsIcon.visibility = if (available) View.GONE else View.VISIBLE
+         binding.availableLayerDownloads.visibility = if (available) View.GONE else View.VISIBLE
       } catch (e: LayerException) {
          Log.e(LOG_NAME, "Error reading layers", e)
       }
 
-      searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+      binding.searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
          override fun onQueryTextSubmit(text: String): Boolean {
             if (text.isNotBlank()) {
                viewModel.search(text)
             }
-            searchView.clearFocus()
+            binding.searchView.clearFocus()
             return true
          }
 
@@ -897,7 +876,7 @@ class MapFragment : Fragment(),
    override fun onPause() {
       super.onPause()
 
-      mapView.onPause()
+      binding.mapView.onPause()
 
       observations?.clear()
       locations?.clear()
@@ -948,16 +927,16 @@ class MapFragment : Fragment(),
    }
 
    private fun search() {
-      if (searchLayout.visibility == View.VISIBLE) {
-         searchView.clearFocus()
-         searchView.onActionViewCollapsed()
-         searchButton.isSelected = false
-         searchLayout.visibility = View.GONE
+      if (binding.searchLayout.visibility == View.VISIBLE) {
+         binding.searchView.clearFocus()
+         binding.searchView.onActionViewCollapsed()
+         binding.mapSearchButton.isSelected = false
+         binding.searchLayout.visibility = View.GONE
       } else {
-         searchView.requestFocus()
-         searchView.onActionViewExpanded()
-         searchButton.isSelected = true
-         searchLayout.visibility = View.VISIBLE
+         binding.searchView.requestFocus()
+         binding.searchView.onActionViewExpanded()
+         binding.mapSearchButton.isSelected = true
+         binding.searchLayout.visibility = View.VISIBLE
       }
    }
 
@@ -1103,7 +1082,7 @@ class MapFragment : Fragment(),
       }
 
       val features = cacheOverlays.values.flatMap { overlay ->
-         overlay?.getFeaturesNearClick(latLng, mapView, map, application) ?: emptyList()
+         overlay?.getFeaturesNearClick(latLng, binding.mapView, map, application) ?: emptyList()
       }
 
       features.firstOrNull()?.let { feature ->
@@ -1181,7 +1160,7 @@ class MapFragment : Fragment(),
    private fun onCameraMoveStarted(reason: Int) {
       if (reason == OnCameraMoveStartedListener.REASON_GESTURE) {
          locateState = LocateState.OFF
-         zoomToLocationButton.isSelected = false
+         binding.zoomButton.isSelected = false
       }
    }
 
@@ -1209,7 +1188,7 @@ class MapFragment : Fragment(),
             }
          }
 
-         mgrsChip.text = text
+         binding.mgrsChip.text = text
       }
    }
 

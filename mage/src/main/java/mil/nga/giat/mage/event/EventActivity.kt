@@ -4,17 +4,15 @@ import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.MenuItem
-import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.android.synthetic.main.activity_event.*
-import kotlinx.android.synthetic.main.recycler_form_list_item.view.*
 import mil.nga.giat.mage.MageApplication
-import mil.nga.giat.mage.R
+import mil.nga.giat.mage.databinding.ActivityEventBinding
+import mil.nga.giat.mage.databinding.RecyclerFormListItemBinding
 import mil.nga.giat.mage.form.Form
 import mil.nga.giat.mage.form.defaults.FormDefaultActivity
 import mil.nga.giat.mage.sdk.datastore.user.Event
@@ -28,9 +26,10 @@ class EventActivity : AppCompatActivity() {
     companion object {
         private val LOG_NAME = EventActivity::class.java.name
 
-        val EVENT_ID_EXTRA = "EVENT_ID_EXTRA"
+        const val EVENT_ID_EXTRA = "EVENT_ID_EXTRA"
     }
 
+    private lateinit var binding: ActivityEventBinding
     private lateinit var viewAdapter: RecyclerView.Adapter<*>
     private lateinit var viewManager: RecyclerView.LayoutManager
 
@@ -44,9 +43,10 @@ class EventActivity : AppCompatActivity() {
 
         require(intent.hasExtra(EVENT_ID_EXTRA)) {"EVENT_ID_EXTRA is required to launch EventActivity"}
 
-        setContentView(R.layout.activity_event)
+        binding = ActivityEventBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
-        setSupportActionBar(toolbar);
+        setSupportActionBar(binding.toolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
         val eventHelper: EventHelper = EventHelper.getInstance(applicationContext)
@@ -66,15 +66,15 @@ class EventActivity : AppCompatActivity() {
 
         viewAdapter = FormAdapter(forms, { onFormClicked(it) })
 
-        recyclerView.apply {
+        binding.recyclerView.apply {
             layoutManager = viewManager
             adapter = viewAdapter
             setHasFixedSize(true)
-            addItemDecoration(DividerItemDecoration(getContext(), DividerItemDecoration.VERTICAL))
+            addItemDecoration(DividerItemDecoration(context, DividerItemDecoration.VERTICAL))
         }
 
-        eventName.text = event?.name
-        eventDescription.text = event?.description
+        binding.eventName.text = event?.name
+        binding.eventDescription.text = event?.description
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
@@ -90,9 +90,9 @@ class EventActivity : AppCompatActivity() {
         startActivity(FormDefaultActivity.intent(applicationContext, event!!, form))
     }
 
-    class FormViewHolder(val view: View, val onClickListener: (Form) -> Unit) : RecyclerView.ViewHolder(view) {
+    class FormViewHolder(val binding: RecyclerFormListItemBinding, val onClickListener: (Form) -> Unit) : RecyclerView.ViewHolder(binding.root) {
         fun bind(form: Form) = with(itemView) {
-            nameView.text = form.name
+            binding.nameView.text = form.name
             itemView.setOnClickListener{ onClickListener(form) }
         }
     }
@@ -101,8 +101,8 @@ class EventActivity : AppCompatActivity() {
         private val forms = forms.filterNot { it.archived }
 
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): FormViewHolder {
-            val view = LayoutInflater.from(parent.context).inflate(R.layout.recycler_form_list_item, parent, false)
-            return FormViewHolder(view, onClickListener)
+            val binding = RecyclerFormListItemBinding.inflate(LayoutInflater.from(parent.context), parent, false)
+            return FormViewHolder(binding, onClickListener)
         }
 
         override fun onBindViewHolder(holder: FormViewHolder, position: Int) {

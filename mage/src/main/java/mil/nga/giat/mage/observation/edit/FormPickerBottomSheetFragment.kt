@@ -14,8 +14,9 @@ import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.google.gson.JsonParser
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.android.synthetic.main.view_form_picker_item.view.*
 import mil.nga.giat.mage.R
+import mil.nga.giat.mage.databinding.FragmentFormPickerBottomSheetBinding
+import mil.nga.giat.mage.databinding.ViewFormPickerItemBinding
 import mil.nga.giat.mage.form.Form
 import mil.nga.giat.mage.form.FormViewModel
 import mil.nga.giat.mage.network.gson.asJsonObjectOrNull
@@ -32,7 +33,8 @@ class FormPickerBottomSheetFragment: BottomSheetDialogFragment() {
 
   var formPickerListener: OnFormClickListener? = null
 
-  protected lateinit var viewModel: FormViewModel
+  private lateinit var binding: FragmentFormPickerBottomSheetBinding
+  private lateinit var viewModel: FormViewModel
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
@@ -44,8 +46,9 @@ class FormPickerBottomSheetFragment: BottomSheetDialogFragment() {
     inflater: LayoutInflater,
     container: ViewGroup?,
     savedInstanceState: Bundle?
-  ): View? {
-    return inflater.inflate(R.layout.fragment_form_picker_bottom_sheet, container, false)
+  ): View {
+    binding = FragmentFormPickerBottomSheetBinding.inflate(inflater, container, false)
+    return binding.root
   }
 
   override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -84,8 +87,8 @@ class FormPickerBottomSheetFragment: BottomSheetDialogFragment() {
   private class FormAdapter(private val forms: List<FormState>, private val onFormClicked: (FormState) -> Unit) : RecyclerView.Adapter<FormViewHolder>()  {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): FormViewHolder {
-      val view = LayoutInflater.from(parent.context).inflate(R.layout.view_form_picker_item, parent, false)
-      return FormViewHolder(view) { position -> onFormClicked(forms[position]) }
+      val binding = ViewFormPickerItemBinding.inflate(LayoutInflater.from(parent.context), parent, false)
+      return FormViewHolder(binding) { position -> onFormClicked(forms[position]) }
     }
 
     override fun onBindViewHolder(holder: FormViewHolder, position: Int) {
@@ -96,30 +99,30 @@ class FormPickerBottomSheetFragment: BottomSheetDialogFragment() {
     override fun getItemCount() = forms.size
   }
 
-  private class FormViewHolder(val view: View, onFormClicked: (Int) -> Unit) : RecyclerView.ViewHolder(view) {
+  private class FormViewHolder(val binding: ViewFormPickerItemBinding, onFormClicked: (Int) -> Unit) : RecyclerView.ViewHolder(binding.root) {
     init {
-      view.setOnClickListener { onFormClicked(adapterPosition) }
+      binding.root.setOnClickListener { onFormClicked(adapterPosition) }
     }
 
     fun bindForm(formState: FormState) {
-      view.form_name.text = formState.form.name
-      view.form_description.text = formState.form.description
+      binding.formName.text = formState.form.name
+      binding.formDescription.text = formState.form.description
 
       if (formState.disabled) {
-        view.form_name.alpha = .38f
-        view.form_description.alpha = .38f
+        binding.formName.alpha = .38f
+        binding.formDescription.alpha = .38f
 
         val color = formState.form.hexColor.replace("#", "#60")
-        ImageViewCompat.setImageTintMode(view.form_icon, PorterDuff.Mode.SRC_ATOP)
-        ImageViewCompat.setImageTintList(view.form_icon, ColorStateList.valueOf(Color.parseColor(color)))
+        ImageViewCompat.setImageTintMode(binding.formIcon, PorterDuff.Mode.SRC_ATOP)
+        ImageViewCompat.setImageTintList(binding.formIcon, ColorStateList.valueOf(Color.parseColor(color)))
       } else {
-        view.form_name.alpha = .87f
-        view.form_description.alpha = .60f
+        binding.formName.alpha = .87f
+        binding.formDescription.alpha = .60f
 
         // Lets add a tiny bit of transparency to soften things up.
         val color = formState.form.hexColor.replace("#", "#DE")
-        ImageViewCompat.setImageTintMode(view.form_icon, PorterDuff.Mode.SRC_ATOP)
-        ImageViewCompat.setImageTintList(view.form_icon, ColorStateList.valueOf(Color.parseColor(color)))
+        ImageViewCompat.setImageTintMode(binding.formIcon, PorterDuff.Mode.SRC_ATOP)
+        ImageViewCompat.setImageTintList(binding.formIcon, ColorStateList.valueOf(Color.parseColor(color)))
       }
     }
   }
