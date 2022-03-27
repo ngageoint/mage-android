@@ -7,24 +7,30 @@
         <item name="colorSecondary">@color/md_blue_700</item>
         <item name="colorSurface">@color/md_grey_900</item>
         <item name="colorOnSurface">#DEFFFFFF</item>
+        <item name="colorOnPrimarySurface">#DEFFFFFF</item>
         <item name="colorOnPrimary">#DEFFFFFF</item>
         <item name="android:colorBackground">@color/background</item>
         <item name="android:statusBarColor">@color/md_black_1000</item>
         <item name="android:textColorTertiary">#A8FFFFFF</item>
-        <item name="preferenceTheme">@style/PreferenceThemeOverlay.v14.Material</item>
+        <item name="materialAlertDialogTheme">@style/AppTheme.AlertDialogTheme</item>
+        <item name="alertDialogTheme">@style/AppTheme.AlertDialogTheme</item>
     </style>
 
-    <!--TODO Remove this style-->
-    <style name="AppTheme.PrimaryAccent">
-        <item name="colorAccent">?attr/colorPrimaryDark</item>
+    <style name="AppTheme.AlertDialogTheme" parent="ThemeOverlay.MaterialComponents.MaterialAlertDialog">
+        <item name="buttonBarNegativeButtonStyle">@style/NegativeButtonStyle</item>
+        <item name="buttonBarPositiveButtonStyle">@style/PositiveButtonStyle</item>
     </style>
 
-    <!--TODO Remove this style-->
-    <style name="AppTheme.PrimaryDialog" parent="Theme.AppCompat.Dialog.Alert">
+    <style name="NegativeButtonStyle" parent="Widget.MaterialComponents.Button.TextButton.Dialog">
+        <item name="android:textColor">@color/md_white_1000</item>
     </style>
 
-    <style name="AppCompatAlertDialogStyle" parent="ThemeOverlay.MaterialComponents.Dialog.Alert">
-        <item name="colorPrimary">?attr/colorOnSurface</item>
+    <style name="PositiveButtonStyle" parent="Widget.MaterialComponents.Button.TextButton.Dialog">
+        <item name="android:textColor">@color/md_white_1000</item>
+    </style>
+
+    <style name="NeutralButtonStyle" parent="Widget.MaterialComponents.Button.TextButton.Dialog">
+        <item name="android:textColor">@color/md_white_1000</item>
     </style>
 
     <style name="CheckBoxDark" parent="Widget.AppCompat.CompoundButton.CheckBox">
