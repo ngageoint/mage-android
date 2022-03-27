@@ -106,8 +106,8 @@ class EventsActivity : AppCompatActivity() {
                 binding.searchView.visibility = View.GONE
                 binding.loadingStatus.visibility = View.GONE
                 binding.dismissButton.visibility = View.VISIBLE
-                binding.noEventsText.visibility = if (resource.status == Resource.Status.ERROR) View.VISIBLE else View.GONE
-                binding.noConnectionText.visibility = if (resource.status == Resource.Status.ERROR) View.GONE else View.VISIBLE
+                binding.noEventsText.visibility = if (resource.status == Resource.Status.ERROR) View.GONE else View.VISIBLE
+                binding.noConnectionText.visibility = if (resource.status == Resource.Status.ERROR) View.VISIBLE else View.GONE
             }
         }
     }
