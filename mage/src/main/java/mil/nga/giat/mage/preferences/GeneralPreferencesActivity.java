@@ -49,57 +49,10 @@ public class GeneralPreferencesActivity extends AppCompatActivity implements
 		return true;
 	}
 
-	public static class NavigationPreferencesFragment extends ColorPreferenceFragment implements Preference.OnPreferenceChangeListener {
-
+	public static class NavigationPreferencesFragment extends ColorPreferenceFragment {
 		@Override
 		public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
 			setPreferencesFromResource(R.xml.navigationpreferences, rootKey);
-//			addPreferencesFromResource(R.xml.navigationpreferences);
-
-//			dayNightThemePreference = findPreference(getResources().getString(R.string.dayNightThemeKey));
-		}
-
-//		@Override
-//		public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-//			final Context contextThemeWrapper = new ContextThemeWrapper(getActivity(), R.style.AppTheme);
-//			LayoutInflater localInflater = inflater.cloneInContext(contextThemeWrapper);
-//			return super.onCreateView(localInflater, container, savedInstanceState);
-//		}
-//
-//		@Override
-//		public void onDisplayPreferenceDialog(Preference preference) {
-//			DialogFragment dialog = null;
-//			if (preference instanceof ColorPickerPreference) {
-//				dialog = new ColorPreferenceDialog((ColorPickerPreference)preference);
-//			}
-//
-//			if (dialog != null) {
-//				dialog.setTargetFragment(this, 0);
-//				dialog.show(getChildFragmentManager(), FRAGMENT_TAG);
-//			} else {
-//				super.onDisplayPreferenceDialog(preference);
-//			}
-//		}
-
-		//		@Override
-//		public void onResume() {
-//			super.onResume();
-//
-//			dayNightThemePreference.setOnPreferenceChangeListener(this);
-//		}
-//
-//		@Override
-//		public void onPause() {
-//			super.onPause();
-//
-//			dayNightThemePreference.setOnPreferenceChangeListener(null);
-//		}
-
-		@Override
-		public boolean onPreferenceChange(Preference preference, Object newValue) {
-//			AppCompatDelegate.setDefaultNightMode(Integer.parseInt(newValue.toString()));
-			getActivity().recreate();
-			return true;
 		}
 	}
 

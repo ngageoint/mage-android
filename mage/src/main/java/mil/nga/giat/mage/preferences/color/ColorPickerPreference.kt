@@ -1,16 +1,23 @@
 package mil.nga.giat.mage.preferences.color
 
 import android.content.Context
+import android.content.res.TypedArray
 import android.graphics.Color
 import android.util.AttributeSet
 import androidx.core.graphics.drawable.DrawableCompat
 import androidx.preference.DialogPreference
+import androidx.preference.Preference
 
-class ColorPickerPreference(context: Context, attrs: AttributeSet) : DialogPreference(context, attrs) {
-    var defaultColor: String = "#FF0000"
+class ColorPickerPreference(
+    context: Context,
+    attrs: AttributeSet?
+) : DialogPreference(context, attrs) {
+
+    private var defaultValue: String? = null
+
     var color: String
         get(): String {
-            return getPersistedString(defaultColor)
+            return getPersistedString(defaultValue)
         }
         set(value) {
             persistString(value)
@@ -20,12 +27,9 @@ class ColorPickerPreference(context: Context, attrs: AttributeSet) : DialogPrefe
             }
         }
 
-    override fun setDefaultValue(defaultValue: Any?) {
-        super.setDefaultValue(defaultValue)
-        if (defaultValue != null && defaultValue is String)
-            defaultColor = defaultValue
-        else
-            defaultColor = "#FF0000"
+    override fun onGetDefaultValue(a: TypedArray, index: Int): Any? {
+        defaultValue = a.getString(index)
+        return defaultValue
     }
 
     override fun onSetInitialValue(defaultValue: Any?) {
