@@ -250,7 +250,7 @@ class GeoPackageFeatureTableCacheOverlay(
                      for (i in 0 until featureRow.columnCount()) {
                         val value = featureRow.getValue(i)
                         var columnName = featureRow.getColumnName(i)
-                        if (dataColumnsDao != null) {
+                        if (dataColumnsDao.isTable) {
                            val dataColumn =
                               dataColumnsDao.getDataColumn(featureRow.table.tableName, columnName)
                            if (dataColumn != null) {
@@ -306,7 +306,7 @@ class GeoPackageFeatureTableCacheOverlay(
                         for (i in 0 until row.columnCount()) {
                            val value = row.getValue(i)
                            var columnName = row.getColumnName(i)
-                           if (dataColumnsDao != null) {
+                           if (dataColumnsDao.isTable) {
                               val dataColumn = dataColumnsDao.getDataColumn(row.table.tableName, columnName)
                               if (dataColumn != null) {
                                  columnName = dataColumn.name
@@ -320,10 +320,10 @@ class GeoPackageFeatureTableCacheOverlay(
                         attributes.add(GeoPackageAttribute(attributeProperties))
                      }
 
-                     val featureStyle = styles.getFeatureStyle(featureRow)
-                     val style = featureStyle.style
+                     val featureStyle = styles?.getFeatureStyle(featureRow)
+                     val style = featureStyle?.style
 
-                     val icon = if (featureStyle.hasIcon()) {
+                     val icon = if (featureStyle?.hasIcon() == true) {
                         featureStyle.icon.dataBitmap
                      } else null
 
