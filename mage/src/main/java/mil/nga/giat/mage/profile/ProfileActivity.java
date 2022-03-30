@@ -1,6 +1,7 @@
 package mil.nga.giat.mage.profile;
 
 import android.Manifest;
+import android.app.Activity;
 import android.app.Dialog;
 import android.content.ActivityNotFoundException;
 import android.content.ClipData;
@@ -78,12 +79,15 @@ import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
 import mil.nga.giat.mage.sdk.profile.UpdateProfileTask;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
+import mil.nga.giat.mage.utils.GeometryKt;
 import mil.nga.giat.mage.widget.CoordinateView;
 import mil.nga.sf.Point;
 import mil.nga.sf.util.GeometryUtils;
 
 @AndroidEntryPoint
 public class ProfileActivity extends AppCompatActivity implements MapAndViewProvider.OnMapAndViewReadyListener {
+
+	public enum ResultType { NAVIGATE }
 
 	private static final String LOG_NAME = ProfileActivity.class.getName();
 
@@ -94,7 +98,9 @@ public class ProfileActivity extends AppCompatActivity implements MapAndViewProv
 	private static final int PERMISSIONS_REQUEST_CAMERA = 300;
 	private static final int PERMISSIONS_REQUEST_STORAGE = 400;
 
-	public static String USER_ID = "USER_ID";
+	public static String USER_ID_EXTRA = "USER_ID_EXTRA";
+	public static String RESULT_TYPE_EXTRA = "RESULT_TYPE_EXTRA";
+
 
 	@Inject
 	MageApplication application;
@@ -126,7 +132,7 @@ public class ProfileActivity extends AppCompatActivity implements MapAndViewProv
 
 		final Context context = getApplicationContext();
 
-		long userId = getIntent().getLongExtra(USER_ID, -1);
+		long userId = getIntent().getLongExtra(USER_ID_EXTRA, -1);
 		try {
 			if (userId != -1) {
 				user = UserHelper.getInstance(context).read(userId);
@@ -174,12 +180,9 @@ public class ProfileActivity extends AppCompatActivity implements MapAndViewProv
 
 		email = findViewById(R.id.email);
 		View emailLayout = findViewById(R.id.email_layout);
-		emailLayout.setOnLongClickListener(new View.OnLongClickListener() {
-			@Override
-			public boolean onLongClick(View v) {
-				onEmailLongCLick(v);
-				return true;
-			}
+		emailLayout.setOnLongClickListener(v -> {
+			onEmailLongCLick(v);
+			return true;
 		});
 
 		if (StringUtils.isNotBlank(user.getEmail())) {
@@ -537,8 +540,29 @@ public class ProfileActivity extends AppCompatActivity implements MapAndViewProv
 	}
 
 	public void onLocationClick(View view) {
-		Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("geo:37.7749,-122.4194"));
-		startActivity(Intent.createChooser(intent, "Map"));
+		new AlertDialog.Builder(this)
+				.setTitle(getResources().getString(R.string.navigation_choice_title))
+				.setItems(R.array.navigationOptions, new DialogInterface.OnClickListener() {
+					@Override
+					public void onClick(DialogInterface dialog, int which) {
+						switch (which) {
+							case 0: {
+								Intent intent = new Intent(Intent.ACTION_VIEW, GeometryKt.googleMapsUri(location.getGeometry()));
+								startActivity(intent);
+								break;
+							}
+							case 1: {
+								Intent intent = new Intent();
+								intent.putExtra(USER_ID_EXTRA, user.getId());
+								intent.putExtra(RESULT_TYPE_EXTRA, ResultType.NAVIGATE);
+								setResult(Activity.RESULT_OK, intent);
+								finish();
+							}
+						}
+					}
+				})
+				.setNegativeButton(android.R.string.cancel, null)
+				.show();
 	}
 
 	private void onLocationLongCLick(final View view) {

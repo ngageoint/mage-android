@@ -1,5 +1,6 @@
 package mil.nga.giat.mage.newsfeed
 
+import android.app.Activity
 import android.app.Application
 import android.content.*
 import android.net.Uri
@@ -18,7 +19,6 @@ import dagger.hilt.android.AndroidEntryPoint
 import mil.nga.giat.mage.LandingViewModel
 import mil.nga.giat.mage.R
 import mil.nga.giat.mage.filter.LocationFilterActivity
-import mil.nga.giat.mage.map.annotation.MapAnnotation
 import mil.nga.giat.mage.profile.ProfileActivity
 import mil.nga.giat.mage.sdk.datastore.location.Location
 import mil.nga.giat.mage.sdk.datastore.user.User
@@ -37,26 +37,22 @@ class UserFeedFragment : Fragment() {
    private lateinit var swipeContainer: SwipeRefreshLayout
 
    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-      viewModel.userFeedState.observe(viewLifecycleOwner, { userFeedState: UserFeedState ->
+      viewModel.userFeedState.observe(viewLifecycleOwner) { userFeedState: UserFeedState ->
          recyclerView.adapter = UserListAdapter(
             requireContext(),
             userFeedState,
-            userAction = { action ->
-               onUserAction(action)
-            },
-            userClickListener = { user ->
-               onUserClick(user)
-            }
+            userAction = { onUserAction(it) },
+            userClickListener = { onUserClick(it) }
          )
 
          (activity as AppCompatActivity?)?.supportActionBar?.subtitle = userFeedState.filterText
-      })
+      }
 
-      viewModel.refreshState.observe(viewLifecycleOwner, { state: RefreshState ->
+      viewModel.refreshState.observe(viewLifecycleOwner) { state: RefreshState ->
          if (state === RefreshState.COMPLETE) {
             swipeContainer.isRefreshing = false
          }
-      })
+      }
    }
 
    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
@@ -89,10 +85,23 @@ class UserFeedFragment : Fragment() {
       }
    }
 
+   override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+      super.onActivityResult(requestCode, resultCode, data)
+
+      if (requestCode == USER_VIEW_REQUEST_CODE) {
+         if (resultCode == Activity.RESULT_OK) {
+            if (data != null) {
+               val resultType = data.getSerializableExtra(ProfileActivity.RESULT_TYPE_EXTRA) as ProfileActivity.ResultType
+               onUserResult(resultType, data)
+            }
+         }
+      }
+   }
+
    private fun onUserClick(user: User) {
-      val profileView = Intent(context, ProfileActivity::class.java)
-      profileView.putExtra(ProfileActivity.USER_ID, user.id)
-      activity?.startActivity(profileView)
+      val intent = Intent(context, ProfileActivity::class.java)
+      intent.putExtra(ProfileActivity.USER_ID_EXTRA, user.id)
+      startActivityForResult(intent, USER_VIEW_REQUEST_CODE)
    }
 
    private fun onUserAction(action: UserAction) {
@@ -105,8 +114,6 @@ class UserFeedFragment : Fragment() {
    }
 
    private fun onUserDirections(user: User, location: Location) {
-      val icon = MapAnnotation.fromUser(user, location)
-
       AlertDialog.Builder(requireActivity())
          .setTitle(application.resources.getString(R.string.navigation_choice_title))
          .setItems(R.array.navigationOptions) { _: DialogInterface?, which: Int ->
@@ -116,14 +123,7 @@ class UserFeedFragment : Fragment() {
                   startActivity(intent)
                }
                1 -> {
-                  landingViewModel.startNavigation(
-                     LandingViewModel.Navigable(
-                        user.id.toString(),
-                        LandingViewModel.NavigableType.OBSERVATION,
-                        location.geometry,
-                        icon
-                     )
-                  )
+                  landingViewModel.startUserNavigation(user.id)
                }
             }
          }
@@ -149,5 +149,16 @@ class UserFeedFragment : Fragment() {
       if (clipboard == null || clip == null) return
       clipboard.setPrimaryClip(clip)
       Snackbar.make(requireView(), R.string.location_text_copy_message, Snackbar.LENGTH_SHORT).show()
+   }
+
+   private fun onUserResult(result: ProfileActivity.ResultType, data: Intent) {
+      if (result == ProfileActivity.ResultType.NAVIGATE) {
+         val userId = data.getLongExtra(ProfileActivity.USER_ID_EXTRA, -1)
+         landingViewModel.startUserNavigation(userId)
+      }
+   }
+
+   companion object {
+      private const val USER_VIEW_REQUEST_CODE = 100
    }
 }

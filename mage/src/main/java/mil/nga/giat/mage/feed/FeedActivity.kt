@@ -39,6 +39,17 @@ class FeedActivity: AppCompatActivity() {
         }
     }
 
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+
+        if (resultCode == RESULT_OK) {
+            if (requestCode == FEED_ITEM_VIEW_REQUEST) {
+                val resultType = data?.getSerializableExtra(FeedItemActivity.FEED_ITEM_RESULT_TYPE) as? FeedItemActivity.ResultType
+                onFeedItemResult(resultType, data)
+            }
+        }
+    }
+
     private fun onItemAction(action: FeedItemAction) {
         when(action) {
             is FeedItemAction.Click -> onItemClick(action.item)
@@ -49,7 +60,7 @@ class FeedActivity: AppCompatActivity() {
 
     private fun onItemClick(item: FeedItemState) {
         val intent = FeedItemActivity.intent(this, item)
-        startActivity(intent)
+        startActivityForResult(intent, FEED_ITEM_VIEW_REQUEST)
     }
 
     private fun onLocationClick(location: String) {
@@ -67,7 +78,7 @@ class FeedActivity: AppCompatActivity() {
                     }
                     1 -> {
                         val data = Intent()
-                        data.putExtra(FEED_RESULT_TYPE, ResultType.NAVIGATE)
+                        data.putExtra(FEED_ITEM_RESULT_TYPE, ResultType.NAVIGATE)
                         data.putExtra(FEED_ID_EXTRA, item.id.feedId)
                         data.putExtra(FEED_ITEM_ID_EXTRA, item.id.itemId)
                         setResult(Activity.RESULT_OK, data)
@@ -79,10 +90,23 @@ class FeedActivity: AppCompatActivity() {
             .show()
     }
 
+    private fun onFeedItemResult(resultType: FeedItemActivity.ResultType?, intent: Intent?) {
+        if (resultType == FeedItemActivity.ResultType.NAVIGATE) {
+            val data = Intent()
+            data.putExtra(FEED_ITEM_RESULT_TYPE, ResultType.NAVIGATE)
+            data.putExtra(FEED_ID_EXTRA, intent?.getStringExtra(FEED_ID_EXTRA))
+            data.putExtra(FEED_ITEM_ID_EXTRA, intent?.getStringExtra(FEED_ITEM_ID_EXTRA))
+            setResult(Activity.RESULT_OK, data)
+            finish()
+        }
+    }
+
     companion object {
-        const val FEED_RESULT_TYPE ="FEED_RESULT_TYPE"
+        const val FEED_ITEM_RESULT_TYPE = "FEED_RESULT_TYPE"
         const val FEED_ID_EXTRA = "FEED_ID_EXTRA"
         const val FEED_ITEM_ID_EXTRA = "FEED_ITEM_ID_EXTRA"
+
+        const val FEED_ITEM_VIEW_REQUEST = 100
 
         fun intent(context: Context, feed: Feed): Intent {
             val intent = Intent(context, FeedActivity::class.java)

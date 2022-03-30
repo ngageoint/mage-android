@@ -42,11 +42,11 @@ import mil.nga.giat.mage.utils.DateFormatFactory
 import java.util.*
 
 sealed class ObservationAction {
-  class Edit: ObservationAction()
-  class Favorite: ObservationAction()
-  class FavoriteBy: ObservationAction()
-  class Directions: ObservationAction()
-  class More: ObservationAction()
+  object Edit : ObservationAction()
+  object Favorite : ObservationAction()
+  object FavoriteBy : ObservationAction()
+  object Directions : ObservationAction()
+  object More : ObservationAction()
   data class Important(val type: Type, val description: String? = null): ObservationAction() {
     enum class Type {
       FLAG, REMOVE, CANCEL
@@ -82,7 +82,7 @@ fun ObservationViewScreen(
       floatingActionButton = {
         if (observationState?.permissions?.contains(ObservationPermission.EDIT) == true) {
           FloatingActionButton(
-            onClick = { onAction?.invoke(ObservationAction.Edit()) }
+            onClick = { onAction?.invoke(ObservationAction.Edit) }
           ) {
             Icon(
               Icons.Default.Edit,
@@ -553,7 +553,7 @@ fun ObservationActions(
       modifier = Modifier
         .padding(start = 8.dp)
         .clip(MaterialTheme.shapes.small)
-        .clickable { onAction?.invoke(ObservationAction.FavoriteBy()) }
+        .clickable { onAction?.invoke(ObservationAction.FavoriteBy) }
         .padding(8.dp)
     ) {
       val favorites = observationState?.favorites?.value ?: 0
@@ -599,7 +599,7 @@ fun ObservationActions(
 
       IconButton(
         modifier = Modifier.padding(end = 8.dp),
-        onClick = { onAction?.invoke(ObservationAction.Favorite()) }
+        onClick = { onAction?.invoke(ObservationAction.Favorite) }
       ) {
         Icon(
           imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Outlined.FavoriteBorder,
@@ -610,7 +610,7 @@ fun ObservationActions(
 
       IconButton(
         modifier = Modifier.padding(end = 8.dp),
-        onClick = { onAction?.invoke(ObservationAction.Directions()) }
+        onClick = { onAction?.invoke(ObservationAction.Directions) }
       ) {
         Icon(
           imageVector = Icons.Outlined.Directions,
@@ -622,7 +622,7 @@ fun ObservationActions(
       if (observationState?.permissions?.contains(ObservationPermission.DELETE) == true) {
         IconButton(
           modifier = Modifier.padding(end = 8.dp),
-          onClick = { onAction?.invoke(ObservationAction.More()) }
+          onClick = { onAction?.invoke(ObservationAction.More) }
         ) {
           Icon(
             imageVector = Icons.Default.MoreVert,

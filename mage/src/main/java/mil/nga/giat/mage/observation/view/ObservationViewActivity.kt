@@ -1,7 +1,9 @@
 package mil.nga.giat.mage.observation.view
 
+import android.app.Activity
 import android.content.ClipData
 import android.content.ClipboardManager
+import android.content.DialogInterface
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
@@ -34,10 +36,13 @@ class ObservationViewActivity : AppCompatActivity() {
   companion object {
     private val LOG_NAME = ObservationViewActivity::class.java.name
 
-    const val OBSERVATION_ID = "OBSERVATION_ID"
-    const val INITIAL_LOCATION = "INITIAL_LOCATION"
-    const val INITIAL_ZOOM = "INITIAL_ZOOM"
+    const val OBSERVATION_RESULT_TYPE ="OBSERVATION_RESULT_TYPE"
+    const val OBSERVATION_ID_EXTRA = "OBSERVATION_ID"
+    const val INITIAL_LOCATION_EXTRA = "INITIAL_LOCATION"
+    const val INITIAL_ZOOM_EXTRA = "INITIAL_ZOOM"
   }
+
+  enum class ResultType { NAVIGATE }
 
   private var currentUser: User? = null
   private var hasEventUpdatePermission = false
@@ -52,11 +57,11 @@ class ObservationViewActivity : AppCompatActivity() {
 
     viewModel = ViewModelProvider(this).get(FormViewModel::class.java)
 
-    defaultMapZoom = intent.getFloatExtra(INITIAL_ZOOM, 0.0f)
-    defaultMapCenter = intent.getParcelableExtra(INITIAL_LOCATION) ?: LatLng(0.0, 0.0)
+    defaultMapZoom = intent.getFloatExtra(INITIAL_ZOOM_EXTRA, 0.0f)
+    defaultMapCenter = intent.getParcelableExtra(INITIAL_LOCATION_EXTRA) ?: LatLng(0.0, 0.0)
 
-    require(intent?.getLongExtra(OBSERVATION_ID, -1L) != -1L) { "OBSERVATION_ID is required to launch ObservationViewActivity" }
-    val observationId = intent.getLongExtra(OBSERVATION_ID, -1L)
+    require(intent?.getLongExtra(OBSERVATION_ID_EXTRA, -1L) != -1L) { "OBSERVATION_ID is required to launch ObservationViewActivity" }
+    val observationId = intent.getLongExtra(OBSERVATION_ID_EXTRA, -1L)
     viewModel.setObservation(observationId, observeChanges = true, defaultMapZoom, defaultMapCenter)
 
     try {
@@ -125,9 +130,27 @@ class ObservationViewActivity : AppCompatActivity() {
   }
 
   private fun onDirections() {
-    val observation = viewModel.observation.value
-    val intent = Intent(Intent.ACTION_VIEW, observation?.geometry?.googleMapsUri())
-    startActivity(intent)
+    viewModel.observation.value?.let { observation ->
+      AlertDialog.Builder(this)
+        .setTitle(application.resources.getString(R.string.navigation_choice_title))
+        .setItems(R.array.navigationOptions) { _: DialogInterface?, which: Int ->
+          when (which) {
+            0 -> {
+              val intent = Intent(Intent.ACTION_VIEW, observation.geometry.googleMapsUri())
+              startActivity(intent)
+            }
+            1 -> {
+              val intent = Intent()
+              intent.putExtra(OBSERVATION_ID_EXTRA, observation.id)
+              intent.putExtra(OBSERVATION_RESULT_TYPE, ResultType.NAVIGATE)
+              setResult(Activity.RESULT_OK, intent)
+              finish()
+            }
+          }
+        }
+        .setNegativeButton(android.R.string.cancel, null)
+        .show()
+    }
   }
 
   private fun onLocationClick(location: String) {

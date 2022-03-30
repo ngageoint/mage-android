@@ -50,7 +50,6 @@ import mil.nga.geopackage.tiles.features.DefaultFeatureTiles
 import mil.nga.geopackage.tiles.features.FeatureTiles
 import mil.nga.geopackage.tiles.features.custom.NumberFeaturesTile
 import mil.nga.giat.mage.LandingViewModel
-import mil.nga.giat.mage.LandingViewModel.Navigable
 import mil.nga.giat.mage.LandingViewModel.NavigableType
 import mil.nga.giat.mage.R
 import mil.nga.giat.mage.coordinate.CoordinateFormatter
@@ -252,8 +251,8 @@ class MapFragment : Fragment(),
       })
 
       val isRestore = savedInstanceState != null
-      lifecycleScope.launch {
-         repeatOnLifecycle(Lifecycle.State.RESUMED) {
+      viewLifecycleOwner.lifecycleScope.launch {
+         viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.RESUMED) {
             val googleMap = binding.mapView.awaitMap()
             map = googleMap
             updateMapView()
@@ -338,12 +337,14 @@ class MapFragment : Fragment(),
          is ObservationAction.Location -> onLocation(action.geometry)
          is ObservationAction.Details -> onObservationDetails(action.id)
          is ObservationAction.Directions -> {
-            onDirections(Navigable(
-               action.id,
-               NavigableType.OBSERVATION,
-               action.geometry,
-               action.image
-            ))
+            onDirections(
+               LandingViewModel.Navigable(
+                  action.id,
+                  NavigableType.OBSERVATION,
+                  action.geometry,
+                  action.image
+               )
+            )
          }
       }
    }
@@ -352,18 +353,18 @@ class MapFragment : Fragment(),
       featureBottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
 
       val intent = Intent(context, ObservationViewActivity::class.java)
-      intent.putExtra(ObservationViewActivity.OBSERVATION_ID, id)
-      intent.putExtra(ObservationViewActivity.INITIAL_LOCATION, map?.cameraPosition?.target)
-      intent.putExtra(ObservationViewActivity.INITIAL_ZOOM, map?.cameraPosition?.zoom)
+      intent.putExtra(ObservationViewActivity.OBSERVATION_ID_EXTRA, id)
+      intent.putExtra(ObservationViewActivity.INITIAL_LOCATION_EXTRA, map?.cameraPosition?.target)
+      intent.putExtra(ObservationViewActivity.INITIAL_ZOOM_EXTRA, map?.cameraPosition?.zoom)
       startActivity(intent)
    }
 
-   private fun onDirections(navigable: Navigable<Any>) {
+   private fun onDirections(navigable: LandingViewModel.Navigable<Any>) {
       featureBottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
 
       // present a dialog to pick between android system map and straight line
       AlertDialog.Builder(requireActivity())
-         .setTitle(application.resources.getString(R.string.navigation_choice_title))
+         .setTitle( application.resources.getString(R.string.navigation_choice_title))
          .setItems(R.array.navigationOptions) { _: DialogInterface?, which: Int ->
             when (which) {
                0 -> {
@@ -399,7 +400,7 @@ class MapFragment : Fragment(),
          .show()
    }
 
-   private fun navigateTo(navigable: Navigable<Any>?) {
+   private fun navigateTo(navigable: LandingViewModel.Navigable<*>?) {
       if (navigable != null) {
          val location = locationProvider?.value!!
          val centroid = navigable.geometry.centroid
@@ -438,12 +439,14 @@ class MapFragment : Fragment(),
          is UserAction.Phone -> onUserPhone(action.user)
          is UserAction.Email -> onUserEmail(action.user)
          is UserAction.Directions -> {
-            onDirections(Navigable(
-               action.id,
-               NavigableType.USER,
-               action.geometry,
-               action.icon
-            ))
+            onDirections(
+               LandingViewModel.Navigable(
+                  action.id,
+                  NavigableType.USER,
+                  action.geometry,
+                  action.icon
+               )
+            )
          }
       }
    }
@@ -452,7 +455,7 @@ class MapFragment : Fragment(),
       featureBottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
 
       val profileView = Intent(context, ProfileActivity::class.java)
-      profileView.putExtra(ProfileActivity.USER_ID, id)
+      profileView.putExtra(ProfileActivity.USER_ID_EXTRA, id)
       activity?.startActivity(profileView)
    }
 
@@ -484,12 +487,14 @@ class MapFragment : Fragment(),
          is FeatureAction.Details<*> -> onFeedItemDetails(action.id)
          is FeatureAction.Location -> onLocation(action.geometry)
          is FeatureAction.Directions<*> -> {
-            onDirections(Navigable(
-               action.id,
-               NavigableType.FEED,
-               action.geometry,
-               action.image
-            ))
+            onDirections(
+               LandingViewModel.Navigable(
+                  action.id,
+                  NavigableType.FEED,
+                  action.geometry,
+                  action.image
+               )
+            )
          }
       }
    }
@@ -508,12 +513,14 @@ class MapFragment : Fragment(),
          is GeoPackageFeatureAction.Location -> onLocation(action.geometry)
          is GeoPackageFeatureAction.Media -> onGeoPackageMedia(action)
          is GeoPackageFeatureAction.Directions -> {
-            onDirections(Navigable(
-               "geopackage",
-               NavigableType.OTHER,
-               action.geometry,
-               action.icon
-            ))
+            onDirections(
+               LandingViewModel.Navigable(
+                  "geopackage",
+                  NavigableType.OTHER,
+                  action.geometry,
+                  action.icon
+               )
+            )
          }
       }
    }
@@ -533,12 +540,14 @@ class MapFragment : Fragment(),
       when(action) {
          is StaticFeatureAction.Location -> onLocation(action.geometry)
          is StaticFeatureAction.Directions -> {
-            onDirections(Navigable(
-               "feature",
-               NavigableType.OTHER,
-               action.geometry,
-               action.icon
-            ))
+            onDirections(
+               LandingViewModel.Navigable(
+                  "feature",
+                  NavigableType.OTHER,
+                  action.geometry,
+                  action.icon
+               )
+            )
          }
       }
    }

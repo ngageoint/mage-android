@@ -113,7 +113,7 @@ public class LandingActivity extends AppCompatActivity implements NavigationView
            if (result.getResultCode() == Activity.RESULT_OK) {
               Intent data = result.getData();
               if (data != null) {
-                 FeedActivity.ResultType resultType = (FeedActivity.ResultType) data.getSerializableExtra(FeedActivity.FEED_RESULT_TYPE);
+                 FeedActivity.ResultType resultType = (FeedActivity.ResultType) data.getSerializableExtra(FeedActivity.FEED_ITEM_RESULT_TYPE);
                  onFeedResult(resultType, data);
               }
            }

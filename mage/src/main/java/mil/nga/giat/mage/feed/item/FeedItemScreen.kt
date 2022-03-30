@@ -10,10 +10,12 @@ import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.GpsFixed
+import androidx.compose.material.icons.outlined.Directions
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -48,12 +50,17 @@ import mil.nga.sf.GeometryType
 import mil.nga.sf.util.GeometryUtils
 import java.util.*
 
+sealed class FeedItemAction {
+   class Location(val location: String) : FeedItemAction()
+   class Directions(val feedItem: FeedItemState) : FeedItemAction()
+}
+
 @Composable
 fun FeedItemScreen(
    feedItemLiveData: LiveData<FeedItemState>,
    snackbar: StateFlow<SnackbarState>,
    onClose: (() -> Unit)? = null,
-   onLocationClick: ((String) -> Unit)? = null
+   onAction: ((FeedItemAction) -> Unit)? = null
 ) {
    val itemState by feedItemLiveData.observeAsState()
    val snackbarState by snackbar.collectAsState()
@@ -75,7 +82,7 @@ fun FeedItemScreen(
             Column {
                FeedItemContent(
                   itemState = itemState,
-                  onLocationClick = onLocationClick
+                  onAction = onAction
                )
             }
          }
@@ -102,7 +109,7 @@ fun FeedItemTopBar(
 @Composable
 fun FeedItemContent(
    itemState: FeedItemState?,
-   onLocationClick: ((String) -> Unit)? = null
+   onAction: ((FeedItemAction) -> Unit)? = null
 ) {
    if (itemState != null) {
       Column(
@@ -115,7 +122,7 @@ fun FeedItemContent(
          if (itemState.date?.isNotEmpty() == true || itemState.primary?.isNotEmpty() == true || itemState.secondary?.isNotEmpty() == true) {
             FeedItemHeaderContent(
                itemState = itemState,
-               onLocationClick = { onLocationClick?.invoke(it) }
+               onAction
             )
          }
 
@@ -162,7 +169,7 @@ fun FeedItemContent(
 @Composable
 fun FeedItemHeaderContent(
    itemState: FeedItemState,
-   onLocationClick: ((String) -> Unit)? = null
+   onAction: ((FeedItemAction) -> Unit)? = null
 ) {
    Card(
       Modifier
@@ -173,7 +180,9 @@ fun FeedItemHeaderContent(
          Row {
             if (itemState.date != null || itemState.primary != null || itemState.secondary != null) {
                Column(
-                  modifier = Modifier.weight(1f).padding(16.dp),
+                  modifier = Modifier
+                     .weight(1f)
+                     .padding(16.dp),
                   verticalArrangement = Arrangement.Center,
                ) {
                   if (itemState.date != null) {
@@ -226,34 +235,61 @@ fun FeedItemHeaderContent(
                val mapView = rememberMapViewWithLifecycle()
                FeedItemMapContent(mapView, geometry, itemState.iconUrl)
             }
+         }
 
-            val locationText = CoordinateFormatter(LocalContext.current).format(LatLng(geometry.centroid.y, geometry.centroid.x))
-            Row(
-               verticalAlignment = Alignment.CenterVertically,
+         FeedItemActions(itemState, onAction)
+      }
+   }
+}
+
+@Composable
+fun FeedItemActions(
+   itemState: FeedItemState,
+   onAction: ((FeedItemAction) -> Unit)? = null
+) {
+   Row(
+      horizontalArrangement = Arrangement.SpaceBetween,
+      modifier = Modifier
+         .fillMaxWidth()
+         .padding(vertical = 4.dp, horizontal = 8.dp)
+   ) {
+      itemState.geometry?.let { geometry ->
+         val locationText = CoordinateFormatter(LocalContext.current).format(LatLng(geometry.centroid.y, geometry.centroid.x))
+         Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+               .clip(MaterialTheme.shapes.medium)
+               .height(48.dp)
+               .clickable { onAction?.invoke(FeedItemAction.Location(locationText)) }
+               .padding(8.dp)
+         ) {
+            Icon(
+               imageVector = Icons.Default.GpsFixed,
+               contentDescription = "Location",
+               tint = MaterialTheme.colors.primary,
                modifier = Modifier
-                  .fillMaxWidth()
-                  .clickable { onLocationClick?.invoke(locationText) }
-                  .padding(16.dp)
-            ) {
-               Icon(
-                  imageVector = Icons.Default.GpsFixed,
-                  contentDescription = "Location",
-                  tint = MaterialTheme.colors.primary,
-                  modifier = Modifier
-                     .height(24.dp)
-                     .width(24.dp)
-                     .padding(end = 4.dp)
-               )
+                  .height(24.dp)
+                  .width(24.dp)
+                  .padding(end = 4.dp)
+            )
 
-               CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.high) {
-                  Text(
-                     text = locationText,
-                     color = MaterialTheme.colors.primary,
-                     style = MaterialTheme.typography.body2,
-                     modifier = Modifier.padding(end = 8.dp)
-                  )
-               }
+            CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.high) {
+               Text(
+                  text = locationText,
+                  color = MaterialTheme.colors.primary,
+                  style = MaterialTheme.typography.body2
+               )
             }
+         }
+
+         IconButton(
+            onClick = { onAction?.invoke(FeedItemAction.Directions(itemState)) }
+         ) {
+            Icon(
+               imageVector = Icons.Outlined.Directions,
+               contentDescription = "Directions",
+               tint = MaterialTheme.colors.onSurface.copy(alpha = ContentAlpha.medium)
+            )
          }
       }
    }
@@ -327,28 +363,3 @@ fun FeedItemMapContent(
       }
    }
 }
-
-
-//@Composable
-//fun FeedItemIcon(
-//   feedItem: ItemWithFeed
-//) {
-//   val iconUrl = "${Server(LocalContext.current).baseUrl}/api/icons/${feedItem.feed.mapStyle?.iconStyle?.id}/content"
-//   Box(modifier = Modifier
-//      .height(24.dp)
-//      .width(24.dp)
-//      .background(Color.Cyan)
-//   ) {
-//      Image(
-//         painter = rememberGlidePainter(
-//            iconUrl,
-//            fadeIn = true,
-//            requestBuilder = {
-//               error(R.drawable.default_marker)
-//            }
-//         ),
-//         contentDescription = "Feed Item Icon",
-//         Modifier.fillMaxSize()
-//      )
-//   }
-//}

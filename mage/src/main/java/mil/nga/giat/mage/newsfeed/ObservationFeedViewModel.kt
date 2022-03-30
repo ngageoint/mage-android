@@ -13,9 +13,13 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
+import mil.nga.giat.mage.LandingViewModel
 import mil.nga.giat.mage.R
 import mil.nga.giat.mage.data.observation.ObservationRepository
+import mil.nga.giat.mage.map.FeedItemId
+import mil.nga.giat.mage.map.annotation.MapAnnotation
 import mil.nga.giat.mage.sdk.datastore.DaoStore
 import mil.nga.giat.mage.sdk.datastore.observation.Observation
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper

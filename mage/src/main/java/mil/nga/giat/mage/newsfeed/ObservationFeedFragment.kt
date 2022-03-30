@@ -1,6 +1,7 @@
 package mil.nga.giat.mage.newsfeed
 
 import android.Manifest
+import android.app.Activity
 import android.app.Application
 import android.content.*
 import android.content.pm.PackageManager
@@ -22,13 +23,10 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
 import mil.nga.giat.mage.LandingViewModel
-import mil.nga.giat.mage.LandingViewModel.Navigable
-import mil.nga.giat.mage.LandingViewModel.NavigableType
 import mil.nga.giat.mage.R
 import mil.nga.giat.mage.coordinate.CoordinateFormatter
 import mil.nga.giat.mage.filter.ObservationFilterActivity
 import mil.nga.giat.mage.location.LocationPolicy
-import mil.nga.giat.mage.map.annotation.MapAnnotation
 import mil.nga.giat.mage.newsfeed.ObservationFeedViewModel.RefreshState
 import mil.nga.giat.mage.newsfeed.ObservationListAdapter.ObservationActionListener
 import mil.nga.giat.mage.observation.AttachmentGallery
@@ -91,21 +89,33 @@ class ObservationFeedFragment : Fragment() {
    }
 
    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-      viewModel.observationFeedState.observe(viewLifecycleOwner, { feedState ->
-         recyclerView.adapter = ObservationListAdapter(requireContext(), feedState, attachmentGallery, object: ObservationActionListener {
-            override fun onObservationClick(observation: Observation) { observationClick(observation) }
-            override fun onObservationDirections(observation: Observation) { observationDirections(observation) }
-            override fun onObservationLocation(observation: Observation) { observationLocation(observation) }
-         })
+      viewModel.observationFeedState.observe(viewLifecycleOwner) { feedState ->
+         recyclerView.adapter = ObservationListAdapter(
+            requireContext(),
+            feedState,
+            attachmentGallery,
+            object : ObservationActionListener {
+               override fun onObservationClick(observation: Observation) {
+                  observationClick(observation)
+               }
+
+               override fun onObservationDirections(observation: Observation) {
+                  observationDirections(observation)
+               }
+
+               override fun onObservationLocation(observation: Observation) {
+                  observationLocation(observation)
+               }
+            })
 
          (activity as AppCompatActivity?)?.supportActionBar?.subtitle = feedState.filterText
-      })
+      }
 
-      viewModel.refreshState.observe(viewLifecycleOwner, { state: RefreshState ->
+      viewModel.refreshState.observe(viewLifecycleOwner) { state: RefreshState ->
          if (state === RefreshState.COMPLETE) {
             swipeContainer.isRefreshing = false
          }
-      })
+      }
    }
 
    override fun onResume() {
@@ -140,10 +150,22 @@ class ObservationFeedFragment : Fragment() {
    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
       when (requestCode) {
          PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION -> {
-
             // If request is cancelled, the result arrays are empty.
             if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                onNewObservation()
+            }
+         }
+      }
+   }
+
+   override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+      super.onActivityResult(requestCode, resultCode, data)
+
+      if (requestCode == OBSERVATION_VIEW_REQUEST_CODE) {
+         if (resultCode == Activity.RESULT_OK) {
+            if (data != null) {
+               val resultType = data.getSerializableExtra(ObservationViewActivity.OBSERVATION_RESULT_TYPE) as ObservationViewActivity.ResultType
+               onObservationResult(resultType, data)
             }
          }
       }
@@ -202,8 +224,6 @@ class ObservationFeedFragment : Fragment() {
    }
 
    private fun observationDirections(observation: Observation) {
-      val icon = MapAnnotation.fromObservation(observation, application)
-
       AlertDialog.Builder(requireActivity())
          .setTitle(application.resources.getString(R.string.navigation_choice_title))
          .setItems(R.array.navigationOptions) { _: DialogInterface?, which: Int ->
@@ -213,12 +233,7 @@ class ObservationFeedFragment : Fragment() {
                   startActivity(intent)
                }
                1 -> {
-                  landingViewModel.startNavigation(Navigable(
-                     observation.id.toString(),
-                     NavigableType.OBSERVATION,
-                     observation.geometry,
-                     icon
-                  ))
+                  landingViewModel.startObservationNavigation(observation.id)
                }
             }
          }
@@ -227,9 +242,9 @@ class ObservationFeedFragment : Fragment() {
    }
 
    private fun observationClick(observation: Observation) {
-      val observationView = Intent(context, ObservationViewActivity::class.java)
-      observationView.putExtra(ObservationViewActivity.OBSERVATION_ID, observation.id)
-      startActivity(observationView)
+      val intent = Intent(context, ObservationViewActivity::class.java)
+      intent.putExtra(ObservationViewActivity.OBSERVATION_ID_EXTRA, observation.id)
+      startActivityForResult(intent, OBSERVATION_VIEW_REQUEST_CODE)
    }
 
    private fun observationLocation(observation: Observation) {
@@ -242,7 +257,15 @@ class ObservationFeedFragment : Fragment() {
       Snackbar.make(requireView(), R.string.location_text_copy_message, Snackbar.LENGTH_SHORT).show()
    }
 
+   private fun onObservationResult(resultType: ObservationViewActivity.ResultType, intent: Intent) {
+      if (resultType == ObservationViewActivity.ResultType.NAVIGATE) {
+         val observationId = intent.getLongExtra(ObservationViewActivity.OBSERVATION_ID_EXTRA, -1)
+         landingViewModel.startObservationNavigation(observationId)
+      }
+   }
+
    companion object {
-      private const val PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 1
+      private const val PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 100
+      private const val OBSERVATION_VIEW_REQUEST_CODE = 200
    }
 }
