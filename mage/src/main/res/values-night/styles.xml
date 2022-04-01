@@ -73,11 +73,6 @@
         <item name="passwordToggleTint">@android:color/white</item>
     </style>
 
-    <style name="AppTheme.PrimaryButton.NoShadow">
-        <item name="colorSecondary">?attr/colorPrimary</item>
-        <item name="android:buttonStyle">@style/AppTheme.NoShadowButton</item>
-    </style>
-
     <style name="ListSubheader">
         <item name="android:textStyle">normal</item>
         <item name="android:fontFamily">sans-serif-medium</item>

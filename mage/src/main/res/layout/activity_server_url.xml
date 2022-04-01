@@ -55,16 +55,14 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:layout_marginEnd="8dp"
-                android:text="Cancel"
-                android:theme="@style/AppTheme.PrimaryButton.NoShadow"/>
+                android:text="Cancel" />
 
             <Button
                 android:id="@+id/server_url_button"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Set URL"
-                android:theme="@style/AppTheme.PrimaryButton.NoShadow"/>
+                android:text="Set URL" />
 
         </LinearLayout>
 

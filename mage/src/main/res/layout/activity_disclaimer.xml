@@ -49,8 +49,7 @@
                 android:layout_marginRight="5dp"
                 android:layout_weight="1"
                 android:onClick="exit"
-                android:text="Exit"
-                android:theme="@style/AppTheme.PrimaryButton.NoShadow"/>
+                android:text="Exit" />
 
             <Button
                 android:layout_width="wrap_content"
@@ -59,8 +58,7 @@
                 android:layout_marginRight="5dp"
                 android:layout_weight="1"
                 android:onClick="agree"
-                android:text="Agree"
-                android:theme="@style/AppTheme.PrimaryButton.NoShadow"/>
+                android:text="Agree" />
 
         </LinearLayout>
     </LinearLayout>
