@@ -4,7 +4,7 @@ import android.app.Application
 import androidx.lifecycle.*
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import mil.nga.giat.mage.data.feed.Feed
 import mil.nga.giat.mage.data.feed.FeedDao
@@ -92,17 +92,16 @@ class LandingViewModel @Inject constructor(
 
    fun startFeedNavigation(feedId: String, itemId: String) {
       viewModelScope.launch {
-         feedItemDao.item(feedId, itemId).asFlow().collect { itemWithFeed ->
-            val icon = MapAnnotation.fromFeedItem(itemWithFeed, application)
-            _navigateTo.postValue(
-               Navigable(
-                  FeedItemId(itemWithFeed.feed.id, itemWithFeed.item.id),
-                  NavigableType.FEED,
-                  itemWithFeed.item.geometry!!,
-                  icon
-               )
+         val itemWithFeed = feedItemDao.item(feedId, itemId).first()
+         val icon = MapAnnotation.fromFeedItem(itemWithFeed, application)
+         _navigateTo.postValue(
+            Navigable(
+               FeedItemId(itemWithFeed.feed.id, itemWithFeed.item.id),
+               NavigableType.FEED,
+               itemWithFeed.item.geometry!!,
+               icon
             )
-         }
+         )
       }
    }
 

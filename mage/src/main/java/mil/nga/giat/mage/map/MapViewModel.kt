@@ -5,6 +5,7 @@ import androidx.lifecycle.*
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.transform
 import kotlinx.coroutines.launch
 import mil.nga.giat.mage.data.feed.Feed
@@ -253,9 +254,10 @@ class MapViewModel @Inject constructor(
     val feedItem: LiveData<FeatureMapState<FeedItemId>?> = feedItemId.switchMap { id ->
         liveData {
             if (id != null) {
-                emitSource(feedItemDao.item(id.feedId, id.itemId).map {
+                val liveData = feedItemDao.item(id.feedId, id.itemId).map {
                     feedItemToState(it)
-                })
+                }.asLiveData()
+                emitSource(liveData)
             } else {
                 emit(null)
             }

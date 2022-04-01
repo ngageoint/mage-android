@@ -7,10 +7,9 @@ import android.content.Context
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.Transformations
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.asLiveData
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.*
 import mil.nga.giat.mage.R
 import mil.nga.giat.mage.data.feed.FeedItemDao
 import mil.nga.giat.mage.feed.FeedItemState
@@ -28,9 +27,9 @@ class FeedItemViewModel @Inject constructor(
       get() = _snackbar.asStateFlow()
 
    fun getFeedItem(feedId: String, feedItemId: String): LiveData<FeedItemState> {
-      return Transformations.map(feedItemDao.item(feedId, feedItemId)) {
+      return feedItemDao.item(feedId, feedItemId).map {
          FeedItemState.fromItem(it, application)
-      }
+      }.asLiveData()
    }
 
    fun copyToClipBoard(text: String) {
