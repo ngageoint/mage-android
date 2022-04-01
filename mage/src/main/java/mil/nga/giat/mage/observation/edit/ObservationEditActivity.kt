@@ -508,7 +508,7 @@ open class ObservationEditActivity : AppCompatActivity() {
     }
   }
 
-  private fun onAttachmentAction(action: AttachmentAction, attachment: Attachment, fieldState: FieldState<*, *>) {
+  private fun onAttachmentAction(action: AttachmentAction, attachment: Attachment, fieldState: FieldState<*, *>?) {
     when (action) {
       AttachmentAction.VIEW -> viewAttachment(attachment)
       AttachmentAction.DELETE -> deleteAttachment(attachment, fieldState)

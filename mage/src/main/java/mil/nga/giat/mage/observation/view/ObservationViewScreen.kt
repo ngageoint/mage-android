@@ -146,7 +146,9 @@ fun ObservationViewContent(
 
       if (Compatibility.isServerVersion5(LocalContext.current)) {
         val attachments by observationState.attachments
-        AttachmentsViewContentServer5(attachments)
+        AttachmentsViewContentServer5(attachments) {
+          onAttachmentClick?.invoke(it)
+        }
       }
 
       if (forms.isNotEmpty()) {

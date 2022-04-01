@@ -1,22 +1,28 @@
 package mil.nga.giat.mage.compat.server5.form.view
 
+import android.graphics.Bitmap
+import android.graphics.drawable.Drawable
 import android.webkit.MimeTypeMap
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.bumptech.glide.Glide
 import com.bumptech.glide.load.resource.bitmap.BitmapTransformation
 import com.bumptech.glide.load.resource.bitmap.CenterCrop
+import com.bumptech.glide.request.target.CustomTarget
+import com.bumptech.glide.request.transition.Transition
 import com.google.accompanist.glide.rememberGlidePainter
 import mil.nga.giat.mage.glide.transform.VideoOverlayTransformation
 import mil.nga.giat.mage.observation.edit.AttachmentAction
@@ -78,11 +84,24 @@ fun AttachmentViewContent_server5(
       else -> false
    }
 
-   val transformations: MutableList<BitmapTransformation> = mutableListOf()
-   transformations.add(CenterCrop())
+   val transformations: MutableList<BitmapTransformation> = mutableListOf(CenterCrop())
    if (isVideo) {
       transformations.add(VideoOverlayTransformation(LocalContext.current))
    }
+
+   var bitmap by remember { mutableStateOf<Bitmap?>(null)}
+
+   Glide.with(LocalContext.current)
+      .asBitmap()
+      .load(attachment)
+      .transform(*transformations.toTypedArray())
+      .into(object : CustomTarget<Bitmap>(100, 100) {
+         override fun onResourceReady(resource: Bitmap, transition: Transition<in Bitmap>?) {
+            bitmap = resource
+         }
+
+         override fun onLoadCleared(placeholder: Drawable?) {}
+      })
 
    Box(
       Modifier
@@ -91,17 +110,14 @@ fun AttachmentViewContent_server5(
          .padding(vertical = 8.dp, horizontal = 4.dp)
          .clip(MaterialTheme.shapes.large)
          .clickable { onAttachmentAction?.invoke(AttachmentAction.VIEW) }) {
-      Image(
-         painter = rememberGlidePainter(
-            attachment,
-            fadeIn = true,
-            requestBuilder = {
-               transforms(*transformations.toTypedArray())
-            }
-         ),
-         contentDescription = "Attachment Preview",
-         Modifier.fillMaxSize()
-      )
+
+      bitmap?.let { image ->
+         Image(
+            bitmap = image.asImageBitmap(),
+            contentDescription = "Attachment Preview",
+            modifier = Modifier.fillMaxSize()
+         )
+      }
 
       if (deletable) {
          FloatingActionButton(

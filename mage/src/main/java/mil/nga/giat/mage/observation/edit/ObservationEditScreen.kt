@@ -55,7 +55,7 @@ fun ObservationEditScreen(
   onDeleteForm: ((Int) -> Unit)? = null,
   onReorderForms: (() -> Unit)? = null,
   onFieldClick: ((FieldState<*, *>) -> Unit)? = null,
-  onAttachmentAction: ((AttachmentAction, Attachment, FieldState<*, *>) -> Unit)? = null,
+  onAttachmentAction: ((AttachmentAction, Attachment, FieldState<*, *>?) -> Unit)? = null,
   onMediaAction: ((MediaAction) -> Unit)? = null
 ) {
   val observationState by viewModel.observationState.observeAsState()
@@ -213,7 +213,7 @@ fun ObservationEditContent(
   listState: LazyListState,
   onFieldClick: ((FieldState<*, *>) -> Unit)? = null,
   onMediaAction: ((MediaAction) -> Unit)? = null,
-  onAttachmentAction: ((AttachmentAction, Attachment, FieldState<*, *>) -> Unit)? = null,
+  onAttachmentAction: ((AttachmentAction, Attachment, FieldState<*, *>?) -> Unit)? = null,
   onDeleteForm: ((Int, FormState) -> Unit)? = null,
   onReorderForms: (() -> Unit)? = null
 ) {
@@ -260,7 +260,9 @@ fun ObservationEditContent(
       if (isServerVersion5(context)) {
         item {
           val attachments by observationState.attachments
-          AttachmentsViewContentServer5(attachments)
+          AttachmentsViewContentServer5(attachments) {
+            onAttachmentAction?.invoke(AttachmentAction.VIEW, it, null)
+          }
         }
       }
 
