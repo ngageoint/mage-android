@@ -3,6 +3,7 @@ package mil.nga.giat.mage.event
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
+import android.view.MenuItem
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SearchView
@@ -19,6 +20,7 @@ import mil.nga.giat.mage.network.Resource
 import mil.nga.giat.mage.sdk.datastore.user.Event
 import mil.nga.giat.mage.sdk.datastore.user.EventHelper
 import javax.inject.Inject
+
 
 @AndroidEntryPoint
 class EventsActivity : AppCompatActivity() {
@@ -70,6 +72,16 @@ class EventsActivity : AppCompatActivity() {
         } else {
             viewModel.events.observe(this, { onEvents(it)})
         }
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        val id: Int = item.itemId
+        if (id == android.R.id.home) {
+            finish()
+            return true
+        }
+
+        return super.onOptionsItemSelected(item)
     }
 
     private fun onEvents(resource: Resource<List<Event>>) {
