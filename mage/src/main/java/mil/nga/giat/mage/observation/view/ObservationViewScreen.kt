@@ -560,9 +560,10 @@ fun ObservationActions(
     ) {
       val favorites = observationState?.favorites?.value ?: 0
       if (favorites > 0) {
+        val favoriteLabel = if (favorites > 1) "favorites" else "favorite"
         CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.disabled) {
           Text(
-            text = "$favorites Favorites".uppercase(),
+            text = "$favorites $favoriteLabel".uppercase(),
             style = MaterialTheme.typography.subtitle2
           )
         }
