@@ -23,7 +23,6 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.app.AppCompatDelegate;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -83,8 +82,6 @@ public class LandingActivity extends AppCompatActivity implements NavigationView
     */
    public static final String EXTRA_OPEN_FILE_PATH = "extra_open_file_path";
 
-   private static final String BOTTOM_NAVIGATION_ITEM = "BOTTOM_NAVIGATION_ITEM";
-
    private static final int PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 100;
    private static final int PERMISSIONS_REQUEST_ACCESS_STORAGE= 200;
    private static final int PERMISSIONS_REQUEST_OPEN_FILE = 300;
@@ -105,7 +102,6 @@ public class LandingActivity extends AppCompatActivity implements NavigationView
    private BottomNavigationView bottomNavigationView;
    private List<Fragment> bottomNavigationFragments = new ArrayList<>();
 
-   private Uri openUri;
    private String openPath;
 
    ActivityResultLauncher<Intent> feedIntentLauncher = registerForActivityResult(
@@ -217,10 +213,7 @@ public class LandingActivity extends AppCompatActivity implements NavigationView
       });
 
       viewModel = new ViewModelProvider(this).get(LandingViewModel.class);
-
       viewModel.getNavigationTab().observe(this, this::onNavigationTab);
-      viewModel.setNavigationTab(LandingViewModel.NavigationTab.MAP);
-
       viewModel.getFeeds().observe(this, this::setFeeds);
       viewModel.setEvent(event.getRemoteId());
    }
@@ -228,6 +221,22 @@ public class LandingActivity extends AppCompatActivity implements NavigationView
    @Override
    protected void onResume() {
       super.onResume();
+
+      MenuItem selectedItem = bottomNavigationView.getMenu().findItem(bottomNavigationView.getSelectedItemId());
+      switch (selectedItem.getItemId()) {
+         case R.id.map_tab: {
+            viewModel.setNavigationTab(LandingViewModel.NavigationTab.MAP);
+            break;
+         }
+         case R.id.observations_tab: {
+            viewModel.setNavigationTab(LandingViewModel.NavigationTab.OBSERVATIONS);
+            break;
+         }
+         case R.id.people_tab: {
+            viewModel.setNavigationTab(LandingViewModel.NavigationTab.PEOPLE);
+            break;
+         }
+      }
 
       View headerView = navigationView.getHeaderView(0);
       try {
@@ -262,13 +271,6 @@ public class LandingActivity extends AppCompatActivity implements NavigationView
             application.startLocationService();
          }
       }
-   }
-
-   @Override
-   protected void onSaveInstanceState(Bundle outState) {
-      super.onSaveInstanceState(outState);
-
-      outState.putInt(BOTTOM_NAVIGATION_ITEM, bottomNavigationView.getSelectedItemId());
    }
 
    @Override

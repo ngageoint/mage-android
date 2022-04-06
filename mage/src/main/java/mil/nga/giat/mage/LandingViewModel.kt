@@ -22,8 +22,7 @@ import javax.inject.Inject
 class LandingViewModel @Inject constructor(
    private val application: Application,
    private val feedDao: FeedDao,
-   private val feedItemDao: FeedItemDao,
-   private val savedStateHandle: SavedStateHandle,
+   private val feedItemDao: FeedItemDao
 ): ViewModel() {
 
    enum class NavigationTab { MAP, OBSERVATIONS, PEOPLE }
@@ -35,9 +34,10 @@ class LandingViewModel @Inject constructor(
    val locationHelper: LocationHelper = LocationHelper.getInstance(application)
    val observationHelper: ObservationHelper = ObservationHelper.getInstance(application)
 
-   val navigationTab: LiveData<NavigationTab> = savedStateHandle.getLiveData("navigation_tab")
+   private val _navigationTab = MutableLiveData<NavigationTab>()
+   val navigationTab: LiveData<NavigationTab> = _navigationTab
    fun setNavigationTab(tab: NavigationTab) {
-      savedStateHandle.set("navigation_tab", tab)
+      _navigationTab.value = tab
    }
 
    private val eventId = MutableLiveData<String>()
