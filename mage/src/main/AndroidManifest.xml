@@ -64,6 +64,7 @@
             android:name=".disclaimer.DisclaimerActivity"
             android:label="@string/app_name"
             android:noHistory="true"
+            android:theme="@style/AppTheme.NoActionBar"
             android:windowSoftInputMode="adjustResize" />
         <activity
             android:name=".login.LoginActivity"
