@@ -40,8 +40,6 @@ class IdpLoginActivity : FragmentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        setContentView(R.layout.activity_idp)
-
         serverURL = intent.getStringExtra(EXTRA_SERVER_URL)
         idpStrategy = intent.getStringExtra(EXTRA_IDP_STRATEGY)
         idpURL = String.format("%s/auth/%s/signin?state=mobile", serverURL, idpStrategy)
@@ -77,7 +75,7 @@ class IdpLoginActivity : FragmentActivity() {
         if (intent.data != null) {
             handleAuthenticationComplete()
         } else {
-            handlAuthenticationCanceled()
+            handleAuthenticationCanceled()
         }
     }
 
@@ -110,12 +108,12 @@ class IdpLoginActivity : FragmentActivity() {
                 finish()
             }
             else -> {
-                handlAuthenticationCanceled()
+                handleAuthenticationCanceled()
             }
         }
     }
 
-    private fun handlAuthenticationCanceled() {
+    private fun handleAuthenticationCanceled() {
         finish()
     }
 

@@ -373,9 +373,6 @@ public class OnlineLayersPreferenceActivity extends AppCompatActivity {
             TextView summary = view.findViewById(R.id.online_layers_summary);
             summary.setText(layer.getUrl());
 
-            View progressBar = view.findViewById(R.id.online_layers_progressBar);
-            progressBar.setVisibility(layer.isLoaded() ? View.GONE : View.VISIBLE);
-
             final View sw = view.findViewById(R.id.online_layers_toggle);
 
             if (URLUtil.isHttpUrl(layer.getUrl())) {

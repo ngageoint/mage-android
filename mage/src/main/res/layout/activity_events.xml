@@ -8,12 +8,14 @@
         android:id="@+id/eventsAppBar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:background="?attr/colorPrimary"
         android:visibility="gone">
 
         <com.google.android.material.appbar.MaterialToolbar
             android:id="@+id/toolbar"
             android:layout_height="wrap_content"
             android:layout_width="match_parent"
+            app:title="Events"
             style="@style/Widget.MaterialComponents.Toolbar.PrimarySurface"
             android:elevation="0dp"/>
 
@@ -24,7 +26,6 @@
             android:paddingStart="16dp"
             android:paddingEnd="16dp"
             android:textColor="?attr/colorOnPrimary"
-            android:background="?attr/colorPrimary"
             android:text="You are part of multiple events.  The observations you create and your reported location will be part of the selected event."/>
 
     </com.google.android.material.appbar.AppBarLayout>
@@ -52,7 +53,7 @@
         <View
             android:layout_width="match_parent"
             android:layout_height="1dp"
-            android:background="#1E000000"/>
+            android:background="@color/divider"/>
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/recyclerView"
@@ -102,27 +103,32 @@
         android:id="@+id/loadingStatus"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_marginStart="16dp"
-        android:layout_marginEnd="16dp"
         android:background="@color/background">
 
         <TextView
             android:id="@+id/loadingText"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
+            android:layout_marginBottom="16dp"
             android:gravity="center"
+            android:layout_above="@id/progress"
             android:layout_centerInParent="true"
             android:fontFamily="sans-serif-light"
             android:text="Loading Events..."
             android:textSize="26sp"/>
 
-        <ProgressBar
-            android:layout_width="wrap_content"
+        <com.google.android.material.progressindicator.CircularProgressIndicator
+            android:id="@+id/progress"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_above="@id/loadingText"
             android:layout_centerHorizontal="true"
-            android:theme="@style/AppTheme.ProgressBar"
-            style="?android:attr/progressBarStyleLarge"/>
+            android:layout_centerInParent="true"
+            android:layout_marginStart="32dp"
+            android:layout_marginEnd="32dp"
+            android:indeterminate="true"/>
+
     </RelativeLayout>
 
 </RelativeLayout>

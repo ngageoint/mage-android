@@ -140,8 +140,7 @@
             android:label="@string/app_name"/>
         <activity
             android:name=".event.EventsActivity"
-            android:theme="@style/AppTheme.NoActionBar"
-            android:label="@string/app_name"/>
+            android:theme="@style/AppTheme.NoActionBar" />
         <activity
             android:name=".filter.FilterActivity"
             android:label="@string/app_name" />

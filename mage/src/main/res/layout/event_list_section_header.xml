@@ -12,6 +12,7 @@
         android:id="@+id/section_name"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        style="@style/ListSubheaderPrimary" />
+        android:alpha=".60"
+        style="@style/TextAppearance.MaterialComponents.Subtitle2" />
 
 </LinearLayout>

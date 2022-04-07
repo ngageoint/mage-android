@@ -14,6 +14,13 @@
         <item name="android:textColorTertiary">#A8FFFFFF</item>
         <item name="materialAlertDialogTheme">@style/AppTheme.AlertDialogTheme</item>
         <item name="alertDialogTheme">@style/AppTheme.AlertDialogTheme</item>
+        <item name="linearProgressIndicatorStyle">@style/AppTheme.ProgressBar</item>
+        <item name="circularProgressIndicatorStyle">@style/AppTheme.ProgressBar</item>
+    </style>
+
+    <style name="AppTheme.NoActionBar">
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
     </style>
 
     <style name="AppTheme.AlertDialogTheme" parent="ThemeOverlay.MaterialComponents.MaterialAlertDialog">
@@ -46,8 +53,8 @@
         <item name="trackTint">@color/switch_track_tint_dark</item>
     </style>
 
-    <style name="AppTheme.ProgressBar" parent="Widget.AppCompat.ProgressBar">
-        <item name="colorControlActivated">@android:color/white</item>
+    <style name="AppTheme.ProgressBar" parent="Widget.MaterialComponents.CircularProgressIndicator">
+        <item name="indicatorColor">@android:color/white</item>
     </style>
 
     <style name="AppTheme.PrimaryFAB" parent="Widget.MaterialComponents.FloatingActionButton">

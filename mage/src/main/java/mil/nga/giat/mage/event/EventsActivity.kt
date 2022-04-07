@@ -21,7 +21,6 @@ import mil.nga.giat.mage.sdk.datastore.user.Event
 import mil.nga.giat.mage.sdk.datastore.user.EventHelper
 import javax.inject.Inject
 
-
 @AndroidEntryPoint
 class EventsActivity : AppCompatActivity() {
 
@@ -44,8 +43,6 @@ class EventsActivity : AppCompatActivity() {
             supportActionBar?.setDisplayHomeAsUpEnabled(true)
         }
 
-        binding.toolbar.title = "Events"
-
         binding.loadingStatus.visibility = View.VISIBLE
 
         binding.searchView.isIconified = false
@@ -55,7 +52,7 @@ class EventsActivity : AppCompatActivity() {
         binding.dismissButton.setOnClickListener { dismiss() }
 
         viewModel = ViewModelProvider(this).get(EventViewModel::class.java)
-        viewModel.syncStatus.observe(this, { onEventSynced(it) })
+        viewModel.syncStatus.observe(this) { onEventSynced(it) }
 
         // TODO what to do if user is not in this event
         // TODO all this should be in view model, either pick event and go or load events

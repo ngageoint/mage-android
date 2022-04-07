@@ -12,13 +12,12 @@
         android:elevation="6dp"
         android:background="#55000000">
 
-        <ProgressBar
+        <com.google.android.material.progressindicator.LinearProgressIndicator
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="-6dp"
+            android:layout_marginTop="0dp"
             android:indeterminate="true"
-            android:indeterminateTint="?colorPrimaryDark"
-            style="?android:attr/progressBarStyleHorizontal"/>
+            app:indicatorColor="?attr/colorPrimaryVariant" />
 
     </RelativeLayout>
 
@@ -213,15 +212,15 @@
                         android:text="Generating Captcha...">
                     </TextView>
 
-                    <ProgressBar
-                        android:layout_width="32dp"
-                        android:layout_height="32dp"
+                    <com.google.android.material.progressindicator.LinearProgressIndicator
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:layout_marginStart="32dp"
+                        android:layout_marginEnd="32dp"
                         android:indeterminate="true"
                         android:gravity="center"
-                        android:indeterminateTint="@color/primary_icon"
-                        android:layout_gravity="center"
-                        android:layout_marginTop="8dp">
-                    </ProgressBar>
+                        android:layout_gravity="center" />
 
                 </LinearLayout>
             </RelativeLayout>
