@@ -123,7 +123,7 @@
         app:layout_anchor="@id/straight_line_nav_container"
         app:layout_anchorGravity="end|bottom"
         app:layout_dodgeInsetEdges="bottom"
-        android:src="@drawable/ic_add_black_24dp" />
+        android:src="@drawable/ic_baseline_add_location_24" />
 
     <FrameLayout
         android:id="@+id/mgrs_chip_container"
