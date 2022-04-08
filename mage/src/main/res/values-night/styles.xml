@@ -12,6 +12,7 @@
         <item name="android:colorBackground">@color/background</item>
         <item name="android:statusBarColor">@color/md_black_1000</item>
         <item name="android:textColorTertiary">#A8FFFFFF</item>
+        <item name="borderlessButtonStyle">@style/Widget.App.Button.TextButton</item>
         <item name="materialAlertDialogTheme">@style/AppTheme.AlertDialogTheme</item>
         <item name="alertDialogTheme">@style/AppTheme.AlertDialogTheme</item>
         <item name="linearProgressIndicatorStyle">@style/AppTheme.ProgressBar</item>
@@ -26,6 +27,14 @@
     <style name="AppTheme.AlertDialogTheme" parent="ThemeOverlay.MaterialComponents.MaterialAlertDialog">
         <item name="buttonBarNegativeButtonStyle">@style/NegativeButtonStyle</item>
         <item name="buttonBarPositiveButtonStyle">@style/PositiveButtonStyle</item>
+    </style>
+
+    <style name="Widget.App.Button.TextButton" parent="Widget.MaterialComponents.Button.TextButton">
+        <item name="materialThemeOverlay">@style/ThemeOverlay.App.Button.TextButton</item>
+    </style>
+
+    <style name="ThemeOverlay.App.Button.TextButton" parent="">
+        <item name="colorPrimary">@android:color/white</item>
     </style>
 
     <style name="NegativeButtonStyle" parent="Widget.MaterialComponents.Button.TextButton.Dialog">
