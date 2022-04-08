@@ -584,16 +584,14 @@ fun RadioEdit(
 
     definition.choices.forEach { choice ->
       Row(
-        Modifier
-          .padding(bottom = 8.dp)
-          .fillMaxWidth()) {
-
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.fillMaxWidth()
+      ) {
         RadioButton(
           selected = (fieldState.answer?.text == choice.title),
           onClick = { onAnswer.invoke(choice.title) },
           colors = RadioButtonDefaults.colors(MaterialTheme.colors.primary),
-          modifier = Modifier
-            .padding(end = 8.dp)
+          modifier = Modifier.padding(end = 4.dp)
         )
 
         Text(text = choice.title)
