@@ -343,7 +343,8 @@ fun CheckboxEdit(
 
   Column(modifier) {
     Row(
-      Modifier
+      verticalAlignment = Alignment.CenterVertically,
+      modifier = Modifier
         .fillMaxWidth()
         .padding(bottom = 4.dp)) {
       Checkbox(
