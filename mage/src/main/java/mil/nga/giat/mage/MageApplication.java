@@ -119,8 +119,7 @@ public class MageApplication extends Application implements Configuration.Provid
 
 		SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
 		int dayNightTheme = preferences.getInt(getResources().getString(R.string.dayNightThemeKey), getResources().getInteger(R.integer.dayNightThemeDefaultValue));
-//		AppCompatDelegate.setDefaultNightMode(dayNightTheme);
-		AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
+		AppCompatDelegate.setDefaultNightMode(dayNightTheme);
 
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
 			NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="background">#EEEEEE</color>
+    <color name="background">@color/md_grey_100</color>
     <color name="background_card">@color/md_white_1000</color>
 
     <color name="background_dialog">@android:color/white</color>

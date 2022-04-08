@@ -18,69 +18,76 @@
 
         </androidx.appcompat.widget.Toolbar>
 
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="16dp"
+            android:layout_marginStart="8dp"
+            android:layout_marginEnd="8dp"
+            app:cardElevation="1dp">
+
+            <androidx.appcompat.widget.SearchView
+                android:id="@+id/searchView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingTop="8dp"
+                android:paddingBottom="8dp"
+                app:queryBackground="@android:color/transparent"
+                app:defaultQueryHint="Search choices"/>
+
+        </com.google.android.material.card.MaterialCardView>
+
     </com.google.android.material.appbar.AppBarLayout>
 
-    <androidx.appcompat.widget.SearchView
-        android:id="@+id/searchView"
+    <androidx.appcompat.widget.Toolbar
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:paddingTop="8dp"
-        android:paddingBottom="8dp"
-        app:queryBackground="@android:color/transparent"
-        app:defaultQueryHint="Search all values">
-
-    </androidx.appcompat.widget.SearchView>
-
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:background="#1E000000"/>
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:layout_marginStart="8dp"
-        android:layout_marginTop="4dp"
-        android:layout_marginBottom="4dp">
+        android:background="@color/background">
 
         <LinearLayout
-            android:id="@+id/selected_content"
-            android:visibility="invisible"
-            android:layout_width="0dp"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:orientation="vertical">
+            android:orientation="horizontal">
 
-            <TextView
-                android:layout_width="match_parent"
+            <LinearLayout
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:text="Selected"
-                style="@style/ListTextSecondary"/>
+                android:layout_weight="1"
+                android:orientation="vertical">
 
-            <TextView
-                android:id="@+id/selected_choices"
-                android:layout_width="match_parent"
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Selected"
+                    android:alpha=".40"
+                    style="@style/TextAppearance.MaterialComponents.Subtitle2"/>
+
+                <TextView
+                    android:id="@+id/selected_choices"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:singleLine="true"
+                    android:ellipsize="end"
+                    android:alpha=".60"
+                    style="@style/TextAppearance.MaterialComponents.Subtitle2"/>
+
+            </LinearLayout>
+            
+            <Button
+                android:id="@+id/clear"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:singleLine="true"
-                android:ellipsize="end"
-                style="@style/ListTextPrimary"/>
+                style="?attr/borderlessButtonStyle"
+                android:text="CLEAR" />
 
         </LinearLayout>
 
-        <Button
-            android:id="@+id/clear"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            style="?attr/borderlessButtonStyle"
-            android:text="CLEAR" />
+    </androidx.appcompat.widget.Toolbar>
 
-    </LinearLayout>
-
-    <View
+    <com.google.android.material.divider.MaterialDivider
         android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:background="#1E000000"/>
+        android:layout_height="1dp"/>
 
     <RelativeLayout
         android:layout_width="match_parent"

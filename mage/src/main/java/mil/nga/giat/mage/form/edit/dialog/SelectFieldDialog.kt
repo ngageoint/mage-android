@@ -127,7 +127,6 @@ class SelectFieldDialog : DialogFragment() {
 
     if (selectedChoices.isNotEmpty()) {
       checkSelected()
-      binding.selectedContent.visibility = View.VISIBLE
       binding.selectedChoices.text = getSelectedChoicesString(selectedChoices)
     }
 
@@ -150,7 +149,6 @@ class SelectFieldDialog : DialogFragment() {
         save()
       }
 
-      binding.selectedContent.visibility = if (selectedChoices.isEmpty()) View.INVISIBLE else View.VISIBLE
       binding.selectedChoices.text = getSelectedChoicesString(selectedChoices)
     }
 
@@ -197,8 +195,8 @@ class SelectFieldDialog : DialogFragment() {
   private fun clearSelected() {
     binding.listView.clearChoices()
     binding.listView.invalidateViews()
-    binding.selectedContent.visibility = View.INVISIBLE
     selectedChoices.clear()
+    binding.selectedChoices.text = ""
 
     if (!multi) {
       save()
