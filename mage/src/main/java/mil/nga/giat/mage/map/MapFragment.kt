@@ -858,7 +858,7 @@ class MapFragment : Fragment(),
             !it.isLoaded
          }
 
-         binding.availableLayerDownloads.visibility = if (available) View.GONE else View.VISIBLE
+         binding.availableLayerDownloads.visibility = if (available) View.VISIBLE else View.GONE
       } catch (e: LayerException) {
          Log.e(LOG_NAME, "Error reading layers", e)
       }
