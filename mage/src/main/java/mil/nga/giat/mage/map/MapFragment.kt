@@ -854,7 +854,7 @@ class MapFragment : Fragment(),
 
       try {
          val event = EventHelper.getInstance(application).currentEvent
-         val available = LayerHelper.getInstance(application).readByEvent(event, "GeoPackage").any {
+         val available = LayerHelper.getInstance(application).readByEvent(event, null).any {
             !it.isLoaded
          }
 
