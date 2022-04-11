@@ -40,10 +40,15 @@ public class EventListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
     private List<Event> filteredRecentEvents = new ArrayList<>();
     private OnEventClickListener listener;
 
-    private static Predicate<Event> eventFilterPredicate(String text){
+    private static Predicate<Event> eventFilterPredicate(String text) {
         final String lowerCaseText = text.toLowerCase();
-        return event -> event.getName().toLowerCase().contains(lowerCaseText) ||
-                event.getDescription().toLowerCase().contains(lowerCaseText);
+
+        return event -> {
+            String name = event.getName();
+            String description = event.getDescription();
+            return (name != null && name.toLowerCase().contains(lowerCaseText)) ||
+                    (description != null && description.toLowerCase().contains(lowerCaseText));
+        };
     }
 
     EventListAdapter(List<Event> events, List<Event> recentEvents, OnEventClickListener listener) {
