@@ -105,8 +105,12 @@ public class PreferenceHelper implements SharedPreferences.OnSharedPreferenceCha
 		// add back in the server url and database version
 		editor
 			.putString(mContext.getString(R.string.serverURLKey), oldServerURL)
-			.putInt(mContext.getString(R.string.databaseVersionKey), oldDatabaseVersion)
-			.apply();
+			.putInt(mContext.getString(R.string.databaseVersionKey), oldDatabaseVersion);
+
+		boolean reportLocation = sharedPreferences.getBoolean("gLocationServiceEnabled", true);
+		editor.putBoolean(mContext.getString(R.string.reportLocationKey), reportLocation);
+
+		editor.apply();
 
 		sharedPreferences.registerOnSharedPreferenceChangeListener(this);
 	}

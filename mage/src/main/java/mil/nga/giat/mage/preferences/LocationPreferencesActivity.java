@@ -43,8 +43,6 @@ public class LocationPreferencesActivity extends AppCompatActivity {
     protected @ApplicationContext
     Context context;
 
-    private Toolbar toolbar;
-
     @AndroidEntryPoint
     public static class LocationPreferenceFragment extends PreferenceFragmentCompat {
         @Inject
@@ -75,52 +73,23 @@ public class LocationPreferencesActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.activity_location_preferences);
-
-        toolbar = findViewById(R.id.toolbar);
     }
 
     @Override
     public void onResume() {
         super.onResume();
 
-        boolean locationServicesEnabled = false;
-        if (android.os.Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
-            toolbar.inflateMenu(R.menu.fetch_preferences_menu);
-            toolbar.setVisibility(View.VISIBLE);
+        boolean serverLocationEnabled = PreferenceManager.getDefaultSharedPreferences(this).getBoolean("gLocationServiceEnabled", true);
+        findViewById(R.id.no_content_frame_disabled).setVisibility(serverLocationEnabled ? View.GONE : View.VISIBLE);
 
-            locationServicesEnabled = PreferenceManager.getDefaultSharedPreferences(this).getBoolean(getResources().getString(R.string.locationServiceEnabledKey), getResources().getBoolean(R.bool.locationServiceEnabledDefaultValue));
-
-            SwitchCompat locationServicesEnabledSwitch = toolbar.findViewById(R.id.toolbar_switch);
-            locationServicesEnabledSwitch.setChecked(locationServicesEnabled);
-            locationServicesEnabledSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-                @Override
-                public void onCheckedChanged(CompoundButton buttonView, boolean locationServicesEnabled) {
-                    PreferenceManager.getDefaultSharedPreferences(LocationPreferencesActivity.this).edit().putBoolean(getResources().getString(R.string.locationServiceEnabledKey), locationServicesEnabled).commit();
-                    updateView(locationServicesEnabled);
-
-                    if (locationServicesEnabled) {
-                        application.startLocationService();
-                    } else {
-                        application.stopLocationService();
-                    }
-                }
-            });
-
-            updateView(locationServicesEnabled);
-
-        } else {
-            toolbar.setVisibility(View.GONE);
-            locationServicesEnabled = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
-            findViewById(R.id.no_content_frame_l).setVisibility(locationServicesEnabled ? View.GONE : View.VISIBLE);
-        }
+        boolean locationServicesEnabled = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
+        findViewById(R.id.no_content_frame).setVisibility(locationServicesEnabled ? View.GONE : View.VISIBLE);
 
         getSupportFragmentManager().beginTransaction().replace(R.id.content_frame, preference).commit();
     }
 
-
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
-		// Handle presses on the action bar items
 		switch (item.getItemId()) {
 			case android.R.id.home:
 				onBackPressed();
@@ -134,10 +103,5 @@ public class LocationPreferencesActivity extends AppCompatActivity {
         Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
         intent.setData(Uri.fromParts("package", getPackageName(), null));
         startActivity(intent);
-    }
-
-    private void updateView(boolean locationServicesEnabled) {
-        toolbar.setTitle(locationServicesEnabled ? "On" : "Off");
-        findViewById(R.id.no_content_frame_pre_m).setVisibility(locationServicesEnabled ? View.GONE : View.VISIBLE);
     }
 }

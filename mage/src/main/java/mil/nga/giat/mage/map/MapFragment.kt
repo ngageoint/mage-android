@@ -790,15 +790,21 @@ class MapFragment : Fragment(),
          return
       }
 
-      val key = resources.getString(R.string.reportLocationKey)
-      val reportLocation = !preferences.getBoolean(key, false)
-      preferences.edit().putBoolean(key, reportLocation).apply()
-      updateReportLocationButton()
+      val locationServiceEnabled: Boolean = preferences.getBoolean("gLocationServiceEnabled", true)
+      val message = if (locationServiceEnabled) {
+         val key = resources.getString(R.string.reportLocationKey)
+         val reportLocation = !preferences.getBoolean(key, false)
+         preferences.edit().putBoolean(key, reportLocation).apply()
+         updateReportLocationButton()
 
-      val text = if (reportLocation) resources.getString(R.string.report_location_start) else resources.getString(
+         if (reportLocation) resources.getString(R.string.report_location_start) else resources.getString(
             R.string.report_location_stop
          )
-      val snackbar = Snackbar.make(requireActivity().findViewById(R.id.coordinator_layout), text, Snackbar.LENGTH_SHORT)
+      } else {
+         resources.getString(R.string.report_location_disabled)
+      }
+
+      val snackbar = Snackbar.make(requireActivity().findViewById(R.id.coordinator_layout), message, Snackbar.LENGTH_SHORT)
       snackbar.anchorView = requireActivity().findViewById(R.id.new_observation_button)
 
       val params = snackbar.view.layoutParams as MarginLayoutParams

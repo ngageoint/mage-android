@@ -1,22 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/select_parent"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical">
 
-    <androidx.appcompat.widget.Toolbar
-        android:id="@+id/toolbar"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
-        app:popupTheme="@style/ThemeOverlay.AppCompat.Light"
-        app:contentInsetStart="72dp"
-        android:background="@color/md_blue_200"/>
-
     <FrameLayout
-        android:id="@+id/no_content_frame_l"
+        android:id="@+id/no_content_frame"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:visibility="gone">
@@ -25,8 +15,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:layout_gravity="center_horizontal"
-            android:layout_marginTop="48dp">
+            android:layout_marginTop="36dp">
 
             <TextView
                 android:layout_width="wrap_content"
@@ -34,7 +23,8 @@
                 android:layout_marginStart="16dp"
                 android:layout_marginEnd="16dp"
                 android:gravity="center"
-                android:textSize="16sp"
+                style="@style/TextAppearance.MaterialComponents.Headline5"
+                android:alpha=".60"
                 android:text="MAGE Location services are turned off.  Please update the application permissions for MAGE to allow the 'Location' permission. "/>
 
             <Button
@@ -51,7 +41,7 @@
     </FrameLayout>
 
     <FrameLayout
-        android:id="@+id/no_content_frame_pre_m"
+        android:id="@+id/no_content_frame_disabled"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:visibility="gone">
@@ -59,8 +49,7 @@
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal"
-            android:layout_marginTop="48dp">
+            android:layout_marginTop="36dp">
 
             <TextView
                 android:layout_width="wrap_content"
@@ -68,8 +57,9 @@
                 android:layout_marginStart="16dp"
                 android:layout_marginEnd="16dp"
                 android:gravity="center"
-                android:textSize="16sp"
-                android:text="Location services are turned off.  Turn on location services to configure options."/>
+                style="@style/TextAppearance.MaterialComponents.Headline5"
+                android:alpha=".60"
+                android:text="@string/report_location_disabled"/>
 
         </LinearLayout>
 
