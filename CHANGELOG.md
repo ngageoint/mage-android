@@ -9,6 +9,16 @@ Adheres to [Semantic Versioning](http://semver.org/).
 
 ##### Bug Fixes
 
+## [7.1.0](https://github.com/ngageoint/mage-android/releases/tag/7.1.0)
+
+##### Features
+* Added multiple form support to observations.
+* Attachments have been moved into form fields, allowing for more structured observations. 
+* You can now choose to display and enter coordinates in Degree Minute Seconds, Latitude Longitude or MGRS.
+* Navigating to observations and others users within MAGE is now possible.
+* Bottom sheet UI/UX for all map content
+
+##### Bug Fixes
 
 ## [7.0.2](https://github.com/ngageoint/mage-android/releases/tag/7.0.2)
 
