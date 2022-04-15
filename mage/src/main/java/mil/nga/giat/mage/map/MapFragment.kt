@@ -719,16 +719,25 @@ class MapFragment : Fragment(),
    }
 
    private fun updateReportLocationButton() {
-      val reportLocation = ContextCompat.checkSelfPermission(application, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED &&
-           preferences.getBoolean(resources.getString(R.string.reportLocationKey), false) &&
-           UserHelper.getInstance(application).isCurrentUserPartOfCurrentEvent
+      val serverLocationServiceDisabled = preferences.getBoolean("gLocationServiceDisabled", false)
+      val locationPermissionGranted = ContextCompat.checkSelfPermission(application, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+      val memberOfEvent = UserHelper.getInstance(application).isCurrentUserPartOfCurrentEvent
 
-      if (reportLocation) {
-         binding.reportLocation.imageTintList = ColorStateList.valueOf(ContextCompat.getColor(application, R.color.md_green_500))
-         binding.reportLocation.setImageResource(R.drawable.ic_my_location_white_24dp)
-      } else {
+      if (serverLocationServiceDisabled || !memberOfEvent) {
+         binding.reportLocation.imageTintList = ColorStateList.valueOf(ContextCompat.getColor(application, R.color.md_grey_500))
+         binding.reportLocation.setImageResource(R.drawable.ic_outline_location_disabled_24)
+      } else if (!locationPermissionGranted) {
          binding.reportLocation.imageTintList = ColorStateList.valueOf(ContextCompat.getColor(application, R.color.md_red_500))
          binding.reportLocation.setImageResource(R.drawable.ic_outline_location_disabled_24)
+      } else {
+         val reportingLocation = preferences.getBoolean(resources.getString(R.string.reportLocationKey), false)
+         if (reportingLocation) {
+            binding.reportLocation.imageTintList = ColorStateList.valueOf(ContextCompat.getColor(application, R.color.md_green_500))
+            binding.reportLocation.setImageResource(R.drawable.ic_my_location_white_24dp)
+         } else {
+            binding.reportLocation.imageTintList = ColorStateList.valueOf(ContextCompat.getColor(application, R.color.md_red_500))
+            binding.reportLocation.setImageResource(R.drawable.ic_outline_location_disabled_24)
+         }
       }
    }
 
@@ -790,19 +799,20 @@ class MapFragment : Fragment(),
          return
       }
 
-      val locationServiceEnabled: Boolean = preferences.getBoolean("gLocationServiceEnabled", true)
-      val message = if (locationServiceEnabled) {
+      val serverLocationServiceDisabled: Boolean = preferences.getBoolean("gLocationServiceDisabled", false)
+      val message = if (serverLocationServiceDisabled) {
+         resources.getString(R.string.report_location_disabled)
+      } else {
          val key = resources.getString(R.string.reportLocationKey)
          val reportLocation = !preferences.getBoolean(key, false)
          preferences.edit().putBoolean(key, reportLocation).apply()
-         updateReportLocationButton()
 
          if (reportLocation) resources.getString(R.string.report_location_start) else resources.getString(
             R.string.report_location_stop
          )
-      } else {
-         resources.getString(R.string.report_location_disabled)
       }
+
+      updateReportLocationButton()
 
       val snackbar = Snackbar.make(requireActivity().findViewById(R.id.coordinator_layout), message, Snackbar.LENGTH_SHORT)
       snackbar.anchorView = requireActivity().findViewById(R.id.new_observation_button)

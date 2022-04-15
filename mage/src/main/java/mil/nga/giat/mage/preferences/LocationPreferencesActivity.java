@@ -79,8 +79,8 @@ public class LocationPreferencesActivity extends AppCompatActivity {
     public void onResume() {
         super.onResume();
 
-        boolean serverLocationEnabled = PreferenceManager.getDefaultSharedPreferences(this).getBoolean("gLocationServiceEnabled", true);
-        findViewById(R.id.no_content_frame_disabled).setVisibility(serverLocationEnabled ? View.GONE : View.VISIBLE);
+        boolean serverLocationServiceDisabled = PreferenceManager.getDefaultSharedPreferences(this).getBoolean("gLocationServiceDisabled", false);
+        findViewById(R.id.no_content_frame_disabled).setVisibility(serverLocationServiceDisabled ? View.VISIBLE : View.GONE);
 
         boolean locationServicesEnabled = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
         findViewById(R.id.no_content_frame).setVisibility(locationServicesEnabled ? View.GONE : View.VISIBLE);
