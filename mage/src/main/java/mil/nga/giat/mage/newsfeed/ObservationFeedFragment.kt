@@ -9,6 +9,7 @@ import android.location.Location
 import android.os.Bundle
 import android.os.Parcelable
 import android.view.*
+import android.widget.Button
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
@@ -64,14 +65,14 @@ class ObservationFeedFragment : Fragment() {
    }
 
    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-      val rootView = inflater.inflate(R.layout.fragment_news_feed, container, false)
+      val view = inflater.inflate(R.layout.fragment_news_feed, container, false)
 
       setHasOptionsMenu(true)
-      swipeContainer = rootView.findViewById(R.id.swipeContainer)
+      swipeContainer = view.findViewById(R.id.swipeContainer)
       swipeContainer.setColorSchemeResources(R.color.md_blue_600, R.color.md_orange_A200)
       swipeContainer.setOnRefreshListener { viewModel.refresh() }
 
-      rootView.findViewById<View>(R.id.new_observation_button).setOnClickListener { onNewObservation() }
+      view.findViewById<View>(R.id.new_observation_button).setOnClickListener { onNewObservation() }
 
       attachmentGallery = AttachmentGallery(context, 200, 200)
       attachmentGallery.addOnAttachmentClickListener { attachment ->
@@ -81,11 +82,13 @@ class ObservationFeedFragment : Fragment() {
          startActivity(intent)
       }
 
-      recyclerView = rootView.findViewById(R.id.recycler_view)
+      recyclerView = view.findViewById(R.id.recycler_view)
       recyclerView.layoutManager = LinearLayoutManager(activity)
       recyclerView.itemAnimator = DefaultItemAnimator()
 
-      return rootView
+      view.findViewById<Button>(R.id.filter).setOnClickListener { filter() }
+
+      return view
    }
 
    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -109,6 +112,10 @@ class ObservationFeedFragment : Fragment() {
             })
 
          (activity as AppCompatActivity?)?.supportActionBar?.subtitle = feedState.filterText
+
+         val numberOfItems = recyclerView.adapter?.itemCount ?: 0
+         view.findViewById<View>(R.id.recycler_view).visibility = if (numberOfItems > 1) View.VISIBLE else View.INVISIBLE
+         view.findViewById<View>(R.id.no_content).visibility = if (numberOfItems > 1) View.GONE else View.VISIBLE
       }
 
       viewModel.refreshState.observe(viewLifecycleOwner) { state: RefreshState ->
@@ -139,8 +146,7 @@ class ObservationFeedFragment : Fragment() {
    override fun onOptionsItemSelected(item: MenuItem): Boolean {
       return when (item.itemId) {
          R.id.filter_button -> {
-            val intent = Intent(activity, ObservationFilterActivity::class.java)
-            startActivity(intent)
+            filter()
             true
          }
          else -> super.onOptionsItemSelected(item)
@@ -169,6 +175,11 @@ class ObservationFeedFragment : Fragment() {
             }
          }
       }
+   }
+
+   private fun filter() {
+      val intent = Intent(activity, ObservationFilterActivity::class.java)
+      startActivity(intent)
    }
 
    private fun onNewObservation() {

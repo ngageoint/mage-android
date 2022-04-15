@@ -10,16 +10,22 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.GpsFixed
 import androidx.compose.material.icons.outlined.Directions
+import androidx.compose.material.icons.rounded.RssFeed
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.paging.CombinedLoadStates
+import androidx.paging.LoadState
+import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.items
 import com.google.accompanist.glide.rememberGlidePainter
@@ -59,55 +65,37 @@ fun FeedScreen(
       }
    }
 
-   feedItems?.collectAsLazyPagingItems()?.let { lazyItems ->
-      MageTheme {
-         Scaffold(
-            scaffoldState = scaffoldState,
-            topBar = {
-               FeedItemTopBar(
-                  title = feed?.title,
-                  onClose = { onClose?.invoke() }
-               )
-            },
-            content = {
-               SwipeRefresh(
-                  state = rememberSwipeRefreshState(isRefreshing),
-                  onRefresh = { onRefresh?.invoke() },
-                  indicator = { state, trigger ->
-                     SwipeRefreshIndicator(
-                        state = state,
-                        refreshTriggerDistance = trigger,
-                        contentColor = MaterialTheme.colors.primary,
-                     )
-                  }
-               ) {
-                  LazyColumn(
-                     modifier = Modifier
-                        .background(Color(0x19000000))
-                        .padding(horizontal = 8.dp),
-                     contentPadding = PaddingValues(top = 16.dp)
-                  ) {
-                     items(lazyItems) { item ->
-                        if (item != null) {
-                           FeedItemContent(
-                              itemState = item,
-                              onLocationClick = { onItemAction?.invoke(FeedItemAction.Location(it)) },
-                              onDirectionsClick = {
-                                 onItemAction?.invoke(
-                                    FeedItemAction.Directions(
-                                       item
-                                    )
-                                 )
-                              },
-                              onItemClick = { onItemAction?.invoke(FeedItemAction.Click(item)) }
-                           )
-                        }
-                     }
+   MageTheme {
+      Scaffold(
+         scaffoldState = scaffoldState,
+         topBar = {
+            FeedItemTopBar(
+               title = feed?.title,
+               onClose = { onClose?.invoke() }
+            )
+         },
+         content = {
+            SwipeRefresh(
+               state = rememberSwipeRefreshState(isRefreshing),
+               onRefresh = { onRefresh?.invoke() },
+               indicator = { state, trigger ->
+                  SwipeRefreshIndicator(
+                     state = state,
+                     refreshTriggerDistance = trigger,
+                     contentColor = MaterialTheme.colors.primary,
+                  )
+               }
+            ) {
+               feedItems?.collectAsLazyPagingItems()?.let { items ->
+                  if (items.itemCount == 0) {
+                     FeedNoContent()
+                  } else {
+                     FeedContent(items, onItemAction)
                   }
                }
             }
-         )
-      }
+         }
+      )
    }
 }
 
@@ -135,6 +123,77 @@ fun FeedItemTopBar(
 }
 
 @Composable
+private fun FeedContent(
+   feedItems: LazyPagingItems<FeedItemState>,
+   onItemAction: ((FeedItemAction) -> Unit)?
+) {
+   LazyColumn(
+      modifier = Modifier
+         .background(Color(0x19000000))
+         .padding(horizontal = 8.dp),
+      contentPadding = PaddingValues(top = 16.dp)
+   ) {
+      items(feedItems) { item ->
+         if (item != null) {
+            FeedItemContent(
+               itemState = item,
+               onLocationClick = { onItemAction?.invoke(FeedItemAction.Location(it)) },
+               onDirectionsClick = {
+                  onItemAction?.invoke(
+                     FeedItemAction.Directions(
+                        item
+                     )
+                  )
+               },
+               onItemClick = { onItemAction?.invoke(FeedItemAction.Click(item)) }
+            )
+         }
+      }
+   }
+}
+
+@Composable
+private fun FeedNoContent() {
+   LazyColumn(
+      verticalArrangement = Arrangement.Center,
+      horizontalAlignment = Alignment.CenterHorizontally,
+      modifier = Modifier
+         .padding(horizontal = 32.dp)
+         .padding(bottom = 72.dp) // Offset by AppBar height + icon padding to give a centered feel
+         .fillMaxHeight()
+         .fillMaxWidth()
+   ) {
+      item {
+         Icon(
+            imageVector = Icons.Rounded.RssFeed,
+            contentDescription = "No Feed Items Icon",
+            tint = Color.Black,
+            modifier = Modifier
+               .alpha(ContentAlpha.disabled)
+               .height(200.dp)
+               .width(200.dp)
+               .padding(bottom = 16.dp)
+         )
+
+         CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
+            Text(
+               text = "No Feed Items",
+               textAlign = TextAlign.Center,
+               style = MaterialTheme.typography.h4,
+               modifier = Modifier.padding(bottom = 8.dp)
+            )
+
+            Text(
+               text = "This feed currently contains no data.",
+               textAlign = TextAlign.Center,
+               style = MaterialTheme.typography.body1
+            )
+         }
+      }
+   }
+}
+
+@Composable
 fun FeedItemContent(
    itemState: FeedItemState,
    onItemClick: (() -> Unit)? = null,
@@ -152,7 +211,9 @@ fun FeedItemContent(
             modifier = Modifier.padding(vertical = 16.dp)
          ) {
             Column(
-               modifier = Modifier.weight(1f).padding(horizontal = 16.dp),
+               modifier = Modifier
+                  .weight(1f)
+                  .padding(horizontal = 16.dp),
                verticalArrangement = Arrangement.Center,
             ) {
                if (itemState.date == null && itemState.primary == null && itemState.secondary == null)  {

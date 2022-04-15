@@ -34,11 +34,11 @@ class FeedViewModel @Inject constructor(
     val feedItems: LiveData<Flow<PagingData<FeedItemState>>> = Transformations.map(feed) { feed ->
         Pager(PagingConfig(pageSize = 20)) {
             feedItemDao.pagingSource(feed.id)
-        }.flow.map {
+        }.flow.cachedIn(viewModelScope).map {
             it.map { feedItem ->
                 FeedItemState.fromItem(ItemWithFeed(feed, feedItem), application)
             }
-        }.cachedIn(viewModelScope)
+        }
     }
 
     fun setFeedId(feedId: String) {

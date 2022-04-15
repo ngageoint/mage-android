@@ -6,6 +6,8 @@ import android.content.*
 import android.net.Uri
 import android.os.Bundle
 import android.view.*
+import android.widget.Button
+import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
@@ -36,25 +38,6 @@ class UserFeedFragment : Fragment() {
    private lateinit var recyclerView: RecyclerView
    private lateinit var swipeContainer: SwipeRefreshLayout
 
-   override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-      viewModel.userFeedState.observe(viewLifecycleOwner) { userFeedState: UserFeedState ->
-         recyclerView.adapter = UserListAdapter(
-            requireContext(),
-            userFeedState,
-            userAction = { onUserAction(it) },
-            userClickListener = { onUserClick(it) }
-         )
-
-         (activity as AppCompatActivity?)?.supportActionBar?.subtitle = userFeedState.filterText
-      }
-
-      viewModel.refreshState.observe(viewLifecycleOwner) { state: RefreshState ->
-         if (state === RefreshState.COMPLETE) {
-            swipeContainer.isRefreshing = false
-         }
-      }
-   }
-
    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
       val view = inflater.inflate(R.layout.fragment_feed_people, container, false)
       setHasOptionsMenu(true)
@@ -67,7 +50,32 @@ class UserFeedFragment : Fragment() {
       recyclerView.layoutManager = LinearLayoutManager(activity)
       recyclerView.itemAnimator = DefaultItemAnimator()
 
+      view.findViewById<Button>(R.id.filter).setOnClickListener { filter() }
+
       return view
+   }
+
+   override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+      viewModel.userFeedState.observe(viewLifecycleOwner) { userFeedState: UserFeedState ->
+         recyclerView.adapter = UserListAdapter(
+            requireContext(),
+            userFeedState,
+            userAction = { onUserAction(it) },
+            userClickListener = { onUserClick(it) }
+         )
+
+         (activity as AppCompatActivity?)?.supportActionBar?.subtitle = userFeedState.filterText
+
+         val numberOfItems = recyclerView.adapter?.itemCount ?: 1
+         view.findViewById<View>(R.id.recycler_view).visibility = if (numberOfItems > 1) View.VISIBLE else View.INVISIBLE
+         view.findViewById<View>(R.id.no_content).visibility = if (numberOfItems > 1) View.GONE else View.VISIBLE
+      }
+
+      viewModel.refreshState.observe(viewLifecycleOwner) { state: RefreshState ->
+         if (state === RefreshState.COMPLETE) {
+            swipeContainer.isRefreshing = false
+         }
+      }
    }
 
    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
@@ -77,8 +85,7 @@ class UserFeedFragment : Fragment() {
    override fun onOptionsItemSelected(item: MenuItem): Boolean {
       return when (item.itemId) {
          R.id.filter_button -> {
-            val intent = Intent(context, LocationFilterActivity::class.java)
-            startActivity(intent)
+            filter()
             true
          }
          else -> super.onOptionsItemSelected(item)
@@ -96,6 +103,11 @@ class UserFeedFragment : Fragment() {
             }
          }
       }
+   }
+
+   private fun filter() {
+      val intent = Intent(context, LocationFilterActivity::class.java)
+      startActivity(intent)
    }
 
    private fun onUserClick(user: User) {
