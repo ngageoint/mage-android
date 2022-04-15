@@ -87,7 +87,7 @@ fun FeedScreen(
                }
             ) {
                feedItems?.collectAsLazyPagingItems()?.let { items ->
-                  if (items.itemCount == 0) {
+                  if (items.itemCount == 0 || true) {
                      FeedNoContent()
                   } else {
                      FeedContent(items, onItemAction)
@@ -167,7 +167,7 @@ private fun FeedNoContent() {
          Icon(
             imageVector = Icons.Rounded.RssFeed,
             contentDescription = "No Feed Items Icon",
-            tint = Color.Black,
+            tint = MaterialTheme.colors.onSurface,
             modifier = Modifier
                .alpha(ContentAlpha.disabled)
                .height(200.dp)

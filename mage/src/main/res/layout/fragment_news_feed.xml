@@ -39,8 +39,8 @@
                 android:layout_width="180dp"
                 android:layout_height="180dp"
                 android:layout_marginBottom="8dp"
-                app:tint="@color/md_black_1000"
-                android:alpha=".4"
+                app:tint="@color/icon"
+                android:alpha=".6"
                 android:src="@drawable/ic_outline_not_listed_location_24">
 
             </ImageView>
