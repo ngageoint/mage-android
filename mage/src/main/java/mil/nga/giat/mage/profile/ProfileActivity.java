@@ -350,10 +350,7 @@ public class ProfileActivity extends AppCompatActivity implements MapAndViewProv
 		Intent intent = new Intent();
 		intent.setType("image/*");
 		intent.setAction(Intent.ACTION_GET_CONTENT);
-		Log.i(LOG_NAME, "build version sdk int: " + Build.VERSION.SDK_INT);
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
-			intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
-		}
+		intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
 		startActivityForResult(intent, GALLERY_ACTIVITY_REQUEST_CODE);
 	}
 

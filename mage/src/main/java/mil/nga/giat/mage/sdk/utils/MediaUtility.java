@@ -360,12 +360,7 @@ public class MediaUtility {
 	 * @author paulburke
      */
     public static String getPath(final Context context, final Uri uri) {
-
-
-        final boolean isKitKat = Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT;
-
-        // DocumentProvider
-        if (isKitKat && isDocumentUri(context, uri)) {
+        if (isDocumentUri(context, uri)) {
 
             // ExternalStorageProvider
             if (isExternalStorageDocument(uri)) {
@@ -477,11 +472,11 @@ public class MediaUtility {
         return null;
     }
 
-	@TargetApi(Build.VERSION_CODES.KITKAT) private static boolean isDocumentUri(Context context, Uri uri){
+	private static boolean isDocumentUri(Context context, Uri uri){
 		return DocumentsContract.isDocumentUri(context, uri);
 	}
 
-	@TargetApi(Build.VERSION_CODES.KITKAT) private static String getDocumentId(Uri documentUri){
+	private static String getDocumentId(Uri documentUri){
 		return DocumentsContract.getDocumentId(documentUri);
 	}
 
@@ -530,14 +525,8 @@ public class MediaUtility {
 	 * @param uri
 	 * @return
 	 */
-	@TargetApi(Build.VERSION_CODES.KITKAT)
 	public static String getDisplayName(Context context, Uri uri) {
-
-		String name = null;
-
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-			name = getDisplayNameColumn(context, uri, null, null);
-		}
+		String name = getDisplayNameColumn(context, uri, null, null);
 
 		if (name == null) {
 			name = uri.getPath();

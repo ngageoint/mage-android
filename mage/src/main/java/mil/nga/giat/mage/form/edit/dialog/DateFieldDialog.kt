@@ -244,13 +244,8 @@ class DateFieldDialog: DialogFragment() {
 
             val timePicker = view.findViewById<View>(R.id.time_picker) as TimePicker
             timePicker.setIs24HourView(true)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                timePicker.hour = calendar.get(Calendar.HOUR_OF_DAY)
-                timePicker.minute = calendar.get(Calendar.MINUTE)
-            } else {
-                timePicker.currentHour = calendar.get(Calendar.HOUR_OF_DAY)
-                timePicker.currentMinute = calendar.get(Calendar.MINUTE)
-            }
+            timePicker.hour = calendar.get(Calendar.HOUR_OF_DAY)
+            timePicker.minute = calendar.get(Calendar.MINUTE)
 
             timePicker.setOnTimeChangedListener { view, hourOfDay, minute ->
                 if (onTimeChangedListener != null) {
