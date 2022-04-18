@@ -4,7 +4,7 @@
     <item
         android:id="@+id/filter_button"
         app:showAsAction="ifRoom"
-        android:icon="@drawable/ic_filter_white_24dp"
+        android:icon="@drawable/ic_baseline_filter_alt_24"
         android:title="Filter"/>
 
 </menu>
