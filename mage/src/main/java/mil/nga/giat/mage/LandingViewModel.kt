@@ -34,6 +34,12 @@ class LandingViewModel @Inject constructor(
    val locationHelper: LocationHelper = LocationHelper.getInstance(application)
    val observationHelper: ObservationHelper = ObservationHelper.getInstance(application)
 
+   private val _filterText = MutableLiveData<String>()
+   val filterText: LiveData<String> = _filterText
+   fun setFilterText(subtitle: String) {
+      _filterText.value = subtitle
+   }
+
    private val _navigationTab = MutableLiveData<NavigationTab>()
    val navigationTab: LiveData<NavigationTab> = _navigationTab
    fun setNavigationTab(tab: NavigationTab) {

@@ -2,9 +2,7 @@ package mil.nga.giat.mage;
 
 import android.Manifest;
 import android.app.Activity;
-import android.app.Dialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
@@ -23,17 +21,14 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.view.GravityCompat;
-import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.preference.PreferenceManager;
 
-import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.navigation.NavigationView;
 import com.google.common.collect.Iterables;
 
@@ -49,6 +44,7 @@ import dagger.hilt.android.AndroidEntryPoint;
 import mil.nga.geopackage.validate.GeoPackageValidate;
 import mil.nga.giat.mage.cache.GeoPackageCacheUtils;
 import mil.nga.giat.mage.data.feed.Feed;
+import mil.nga.giat.mage.databinding.ActivityLandingBinding;
 import mil.nga.giat.mage.event.EventActivity;
 import mil.nga.giat.mage.event.EventsActivity;
 import mil.nga.giat.mage.feed.FeedActivity;
@@ -72,7 +68,6 @@ import mil.nga.giat.mage.sdk.exceptions.UserException;
 /**
  * This is the Activity that holds other fragments. Map, feeds, etc. It
  * starts and stops much of the context. It also contains menus .
- *
  */
 @AndroidEntryPoint
 public class LandingActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
@@ -96,13 +91,11 @@ public class LandingActivity extends AppCompatActivity implements NavigationView
 
    private static final String LOG_NAME = LandingActivity.class.getName();
 
-   private NavigationView navigationView;
-
-   private DrawerLayout drawerLayout;
-   private BottomNavigationView bottomNavigationView;
    private List<Fragment> bottomNavigationFragments = new ArrayList<>();
 
    private String openPath;
+
+   private ActivityLandingBinding binding;
 
    ActivityResultLauncher<Intent> feedIntentLauncher = registerForActivityResult(
      new ActivityResultContracts.StartActivityForResult(),
@@ -127,11 +120,10 @@ public class LandingActivity extends AppCompatActivity implements NavigationView
          googleBug.edit().putBoolean("fixed", true).apply();
       }
 
-      setContentView(R.layout.activity_landing);
+      binding = ActivityLandingBinding.inflate(getLayoutInflater());
+      setContentView(binding.getRoot());
 
-      drawerLayout = findViewById(R.id.drawer_layout);
-      navigationView = findViewById(R.id.navigation);
-      navigationView.setNavigationItemSelectedListener(this);
+      binding.navigation.setNavigationItemSelectedListener(this);
 
       currentNightMode = getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK;
 
@@ -148,12 +140,11 @@ public class LandingActivity extends AppCompatActivity implements NavigationView
 
       CacheProvider.getInstance(getApplicationContext()).refreshTileOverlays();
 
-      Toolbar toolbar = findViewById(R.id.toolbar);
-      setSupportActionBar(toolbar);
-
       Event event = EventHelper.getInstance(getApplicationContext()).getCurrentEvent();
-      setTitle(event);
+      onTitle(event);
       setRecentEvents(event);
+
+      setSupportActionBar(binding.toolbar);
 
       if (shouldReportLocation()) {
          if (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
@@ -165,11 +156,11 @@ public class LandingActivity extends AppCompatActivity implements NavigationView
          application.stopLocationService();
       }
 
-      getSupportActionBar().setHomeAsUpIndicator(R.drawable.ic_menu_white_24dp);
-      getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+      binding.toolbar.setNavigationIcon(R.drawable.ic_menu_white_24dp);
+      binding.toolbar.setNavigationOnClickListener(v -> binding.drawerLayout.openDrawer(GravityCompat.START));
 
-      View headerView = navigationView.getHeaderView(0);
-      headerView.setOnClickListener(v -> onNavigationItemSelected(navigationView.getMenu().findItem(R.id.profile_navigation)));
+      View headerView = binding.navigation.getHeaderView(0);
+      headerView.setOnClickListener(v -> onNavigationItemSelected(binding.navigation.getMenu().findItem(R.id.profile_navigation)));
 
       // Check if MAGE was launched with a local file
       openPath = getIntent().getStringExtra(EXTRA_OPEN_FILE_PATH);
@@ -179,12 +170,7 @@ public class LandingActivity extends AppCompatActivity implements NavigationView
                new AlertDialog.Builder(this, R.style.AppCompatAlertDialogStyle)
                        .setTitle(R.string.cache_access_rational_title)
                        .setMessage(R.string.cache_access_rational_message)
-                       .setPositiveButton(android.R.string.ok, new Dialog.OnClickListener() {
-                          @Override
-                          public void onClick(DialogInterface dialog, int which) {
-                             ActivityCompat.requestPermissions(LandingActivity.this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, PERMISSIONS_REQUEST_OPEN_FILE);
-                          }
-                       })
+                       .setPositiveButton(android.R.string.ok, (dialog, which) -> ActivityCompat.requestPermissions(LandingActivity.this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, PERMISSIONS_REQUEST_OPEN_FILE))
                        .show();
             } else {
                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, PERMISSIONS_REQUEST_OPEN_FILE);
@@ -195,8 +181,7 @@ public class LandingActivity extends AppCompatActivity implements NavigationView
          }
       }
 
-      bottomNavigationView = findViewById(R.id.bottom_navigation);
-      bottomNavigationView.setOnItemSelectedListener(item -> {
+      binding.bottomNavigation.setOnItemSelectedListener(item -> {
          switch (item.getItemId()) {
             case R.id.map_tab:
                viewModel.setNavigationTab(LandingViewModel.NavigationTab.MAP);
@@ -213,6 +198,7 @@ public class LandingActivity extends AppCompatActivity implements NavigationView
       });
 
       viewModel = new ViewModelProvider(this).get(LandingViewModel.class);
+      viewModel.getFilterText().observe(this, this::setSubtitle);
       viewModel.getNavigationTab().observe(this, this::onNavigationTab);
       viewModel.getFeeds().observe(this, this::setFeeds);
       viewModel.setEvent(event.getRemoteId());
@@ -222,7 +208,7 @@ public class LandingActivity extends AppCompatActivity implements NavigationView
    protected void onResume() {
       super.onResume();
 
-      MenuItem selectedItem = bottomNavigationView.getMenu().findItem(bottomNavigationView.getSelectedItemId());
+      MenuItem selectedItem = binding.bottomNavigation.getMenu().findItem(binding.bottomNavigation.getSelectedItemId());
       switch (selectedItem.getItemId()) {
          case R.id.map_tab: {
             viewModel.setNavigationTab(LandingViewModel.NavigationTab.MAP);
@@ -238,7 +224,7 @@ public class LandingActivity extends AppCompatActivity implements NavigationView
          }
       }
 
-      View headerView = navigationView.getHeaderView(0);
+      View headerView = binding.navigation.getHeaderView(0);
       try {
          final ImageView avatarImageView = headerView.findViewById(R.id.avatar_image_view);
          User user = UserHelper.getInstance(getApplicationContext()).readCurrentUser();
@@ -314,12 +300,8 @@ public class LandingActivity extends AppCompatActivity implements NavigationView
       }
    }
 
-   private void setTitle(Event event) {
-      getSupportActionBar().setTitle(event.getName());
-   }
-
    private void setFeeds(List<Feed> feeds) {
-      Menu menu = navigationView.getMenu();
+      Menu menu = binding.navigation.getMenu();
       Menu feedsMenu = menu.findItem(R.id.feeds_item).getSubMenu();
       feedsMenu.removeGroup(R.id.feeds_group);
 
@@ -353,7 +335,7 @@ public class LandingActivity extends AppCompatActivity implements NavigationView
 //            }
 
          item.setOnMenuItemClickListener(menuItem -> {
-            drawerLayout.closeDrawer(GravityCompat.START);
+            binding.drawerLayout.closeDrawer(GravityCompat.START);
             Intent intent = FeedActivity.Companion.intent(LandingActivity.this, feed);
             feedIntentLauncher.launch(intent);
             return true;
@@ -362,7 +344,7 @@ public class LandingActivity extends AppCompatActivity implements NavigationView
    }
 
    private void setRecentEvents(Event event) {
-      Menu menu = navigationView.getMenu();
+      Menu menu = binding.navigation.getMenu();
 
       Menu recentEventsMenu = menu.findItem(R.id.recents_events_item).getSubMenu();
       recentEventsMenu.removeGroup(R.id.events_group);
@@ -380,7 +362,7 @@ public class LandingActivity extends AppCompatActivity implements NavigationView
                     .setIcon(R.drawable.ic_restore_black_24dp);
 
             item.setOnMenuItemClickListener(menuItem -> {
-               drawerLayout.closeDrawer(GravityCompat.START);
+               binding.drawerLayout.closeDrawer(GravityCompat.START);
                Intent intent = new Intent(LandingActivity.this, EventsActivity.class);
                intent.putExtra(EventsActivity.Companion.getEVENT_ID_EXTRA(), recentEvent.getId());
                startActivityForResult(intent, CHANGE_EVENT_REQUEST);
@@ -393,7 +375,7 @@ public class LandingActivity extends AppCompatActivity implements NavigationView
                  .setIcon(R.drawable.ic_event_note_white_24dp);
 
          item.setOnMenuItemClickListener(menuItem -> {
-            drawerLayout.closeDrawer(GravityCompat.START);
+            binding.drawerLayout.closeDrawer(GravityCompat.START);
             Intent intent = new Intent(LandingActivity.this, EventsActivity.class);
             intent.putExtra(EventsActivity.Companion.getCLOSABLE_EXTRA(), true);
             startActivityForResult(intent, CHANGE_EVENT_REQUEST);
@@ -419,7 +401,7 @@ public class LandingActivity extends AppCompatActivity implements NavigationView
 
    @Override
    public boolean onNavigationItemSelected(MenuItem menuItem) {
-      drawerLayout.closeDrawer(GravityCompat.START);
+      binding.drawerLayout.closeDrawer(GravityCompat.START);
 
       switch (menuItem.getItemId()) {
          case R.id.event_navigation: {
@@ -461,30 +443,13 @@ public class LandingActivity extends AppCompatActivity implements NavigationView
    }
 
    @Override
-   public boolean onOptionsItemSelected(MenuItem item) {
-      if (item.getItemId() == android.R.id.home) {
-         drawerLayout.openDrawer(GravityCompat.START);
-      }
-
-      return super.onOptionsItemSelected(item);
-   }
-
-   @Override
-   public void onBackPressed() {
-      if (drawerLayout.isDrawerOpen(GravityCompat.START)) {
-         drawerLayout.closeDrawer(GravityCompat.START);
-      } else {
-         super.onBackPressed();
-      }
-   }
-   @Override
    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
       super.onActivityResult(requestCode, resultCode, data);
 
       if (requestCode == CHANGE_EVENT_REQUEST) {
          if (resultCode == RESULT_OK) {
             Event event = EventHelper.getInstance(getApplicationContext()).getCurrentEvent();
-            setTitle(event);
+            onTitle(event);
             setRecentEvents(event);
             viewModel.setEvent(event.getRemoteId());
          }
@@ -499,19 +464,27 @@ public class LandingActivity extends AppCompatActivity implements NavigationView
       }
    }
 
+   private void onTitle(Event event) {
+      binding.toolbar.setTitle(event.getName());
+   }
+
+   private void setSubtitle(String subtitle) {
+      binding.toolbar.setSubtitle(subtitle);
+   }
+
    private void onNavigationTab(LandingViewModel.NavigationTab tab) {
       Fragment fragment = null;
       switch (tab) {
          case MAP:
-            bottomNavigationView.getMenu().getItem(0).setChecked(true);
+            binding.bottomNavigation.getMenu().getItem(0).setChecked(true);
             fragment = bottomNavigationFragments.get(0);
             break;
          case OBSERVATIONS:
-            bottomNavigationView.getMenu().getItem(1).setChecked(true);
+            binding.bottomNavigation.getMenu().getItem(1).setChecked(true);
             fragment = bottomNavigationFragments.get(1);
             break;
          case PEOPLE:
-            bottomNavigationView.getMenu().getItem(2).setChecked(true);
+            binding.bottomNavigation.getMenu().getItem(2).setChecked(true);
             fragment = bottomNavigationFragments.get(2);
             break;
       }

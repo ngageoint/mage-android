@@ -7,9 +7,7 @@ import android.net.Uri
 import android.os.Bundle
 import android.view.*
 import android.widget.Button
-import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
-import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.recyclerview.widget.DefaultItemAnimator
@@ -64,7 +62,7 @@ class UserFeedFragment : Fragment() {
             userClickListener = { onUserClick(it) }
          )
 
-         (activity as AppCompatActivity?)?.supportActionBar?.subtitle = userFeedState.filterText
+         landingViewModel.setFilterText(userFeedState.filterText)
 
          val numberOfItems = recyclerView.adapter?.itemCount ?: 1
          view.findViewById<View>(R.id.recycler_view).visibility = if (numberOfItems > 1) View.VISIBLE else View.INVISIBLE

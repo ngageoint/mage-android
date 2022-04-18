@@ -11,7 +11,6 @@ import android.os.Parcelable
 import android.view.*
 import android.widget.Button
 import androidx.appcompat.app.AlertDialog
-import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
@@ -111,7 +110,7 @@ class ObservationFeedFragment : Fragment() {
                }
             })
 
-         (activity as AppCompatActivity?)?.supportActionBar?.subtitle = feedState.filterText
+         landingViewModel.setFilterText(feedState.filterText)
 
          val numberOfItems = recyclerView.adapter?.itemCount ?: 0
          view.findViewById<View>(R.id.recycler_view).visibility = if (numberOfItems > 1) View.VISIBLE else View.INVISIBLE

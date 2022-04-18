@@ -149,6 +149,11 @@ class MapFragment : Fragment(),
 
    private lateinit var featureBottomSheetBehavior: BottomSheetBehavior<View>
 
+   override fun onCreate(savedInstanceState: Bundle?) {
+      super.onCreate(savedInstanceState)
+      setHasOptionsMenu(true)
+   }
+
    override fun onCreateView(
       inflater: LayoutInflater,
       container: ViewGroup?,
@@ -197,8 +202,6 @@ class MapFragment : Fragment(),
             }
          }
       }
-
-      setHasOptionsMenu(true)
 
       binding.reportLocation.setOnClickListener { toggleReportLocation() }
       if (Geocoder.isPresent()) {
@@ -663,7 +666,7 @@ class MapFragment : Fragment(),
       if (showMgrs) {
          mgrsTileOverlay = googleMap.addTileOverlay(TileOverlayOptions().tileProvider(MGRSTileProvider(application)))
       }
-      (activity as AppCompatActivity?)?.supportActionBar?.subtitle = getFilterTitle()
+      landingViewModel.setFilterText(getFilterTitle())
 
       currentEvent?.id?.let {
          viewModel.setEvent(it)
