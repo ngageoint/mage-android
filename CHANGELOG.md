@@ -9,6 +9,14 @@ Adheres to [Semantic Versioning](http://semver.org/).
 
 ##### Bug Fixes
 
+## [7.1.1](https://github.com/ngageoint/mage-android/releases/tag/7.1.1)
+
+##### Features
+* Added empty states to all feed views
+* Integrate location service disabled flag from server api. 
+
+##### Bug Fixes
+
 ## [7.1.0](https://github.com/ngageoint/mage-android/releases/tag/7.1.0)
 
 ##### Features
