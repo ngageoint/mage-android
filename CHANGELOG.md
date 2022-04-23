@@ -9,6 +9,13 @@ Adheres to [Semantic Versioning](http://semver.org/).
 
 ##### Bug Fixes
 
+## [7.1.2](https://github.com/ngageoint/mage-android/releases/tag/7.1.2)
+
+##### Features
+
+##### Bug Fixes
+* Update work manager observation and attachment sync to use APPEND_OR_REPLACE
+
 ## [7.1.1](https://github.com/ngageoint/mage-android/releases/tag/7.1.1)
 
 ##### Features
