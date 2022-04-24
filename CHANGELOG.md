@@ -14,7 +14,7 @@ Adheres to [Semantic Versioning](http://semver.org/).
 ##### Features
 
 ##### Bug Fixes
-* Update work manager observation and attachment sync to use APPEND_OR_REPLACE
+* Revert work manager version in an attempt to track down sync issues.
 
 ## [7.1.1](https://github.com/ngageoint/mage-android/releases/tag/7.1.1)
 
