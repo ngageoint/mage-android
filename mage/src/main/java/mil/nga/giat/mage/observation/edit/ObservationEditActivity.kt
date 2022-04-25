@@ -139,7 +139,7 @@ open class ObservationEditActivity : AppCompatActivity() {
     }
 
     val observation = viewModel.draftObservation()
-    val json = ObservationTypeAdapter(applicationContext).toJson(observation)
+    val json = ObservationTypeAdapter().toJson(observation)
     outState.putString(DRAFT_OBSERVATION_JSON, json)
     if (observation.id != null) {
       outState.putLong(DRAFT_OBSERVATION_ID, observation.id)
@@ -158,7 +158,7 @@ open class ObservationEditActivity : AppCompatActivity() {
     }
 
     val draftObservation = savedInstanceState.getString(DRAFT_OBSERVATION_JSON)!!
-    val observation = ObservationTypeAdapter(applicationContext).fromJson(draftObservation)
+    val observation = ObservationTypeAdapter().fromJson(draftObservation)
     observation.event = EventHelper.getInstance(applicationContext).currentEvent
     if (savedInstanceState.containsKey(DRAFT_OBSERVATION_ID)) {
       observation.id = savedInstanceState.getLong(DRAFT_OBSERVATION_ID)
