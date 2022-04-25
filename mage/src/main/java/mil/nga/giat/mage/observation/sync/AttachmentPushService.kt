@@ -34,7 +34,7 @@ class AttachmentPushService : Service(), IAttachmentEventListener {
 
         fun beginWork(): UUID {
             val request = workRequest()
-            WorkManager.getInstance().beginUniqueWork(ATTACHMENT_SYNC_WORK, ExistingWorkPolicy.APPEND, request).enqueue()
+            WorkManager.getInstance().beginUniqueWork(ATTACHMENT_SYNC_WORK, ExistingWorkPolicy.APPEND_OR_REPLACE, request).enqueue()
             return request.id
         }
     }
