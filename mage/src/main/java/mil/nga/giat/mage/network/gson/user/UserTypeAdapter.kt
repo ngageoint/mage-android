@@ -133,7 +133,7 @@ class UserTypeAdapter(val context: Context): TypeAdapter<User>() {
             "id" -> role.remoteId = reader.nextString()
             "name" -> role.name = reader.nextString()
             "description" -> role.description = reader.nextStringOrNull()
-            "permissions" -> readPermissions(reader)
+            "permissions" -> role.permissions = readPermissions(reader)
             else -> reader.skipValue()
          }
       }

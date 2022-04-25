@@ -8,7 +8,7 @@ public class Permissions implements Serializable {
 
 	private static final long serialVersionUID = -1912604919150929355L;
 
-	private Collection<Permission> permissions = new ArrayList<Permission>();
+	private Collection<Permission> permissions = new ArrayList<>();
 
 	public Permissions() {
 

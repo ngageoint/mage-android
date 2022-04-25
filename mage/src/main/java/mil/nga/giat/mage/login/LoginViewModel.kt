@@ -129,7 +129,7 @@ class LoginViewModel @Inject constructor(
     }
 
     private fun completeAuthorization(strategy: String, status: AuthorizationStatus): Boolean {
-        val user = status.user;
+        val user = status.user
         val previousUser = preferences.getString(application.getString(R.string.sessionUserKey), null)
         val previousStrategy = preferences.getString(application.getString(R.string.sessionStrategyKey), null)
         val sessionChanged =
