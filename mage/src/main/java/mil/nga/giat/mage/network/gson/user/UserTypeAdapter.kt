@@ -16,7 +16,6 @@ import java.text.ParseException
 import java.util.*
 
 class UserTypeAdapter(val context: Context): TypeAdapter<User>() {
-   private val iso8601Format = ISO8601DateFormatFactory.ISO8601()
    private val roleHelper = RoleHelper.getInstance(context)
 
    override fun write(out: JsonWriter, value: User) {
@@ -46,7 +45,7 @@ class UserTypeAdapter(val context: Context): TypeAdapter<User>() {
             "recentEventIds" -> user.setRecentEventIds(readRecentEventIds(reader))
             "lastUpdated" -> {
                try {
-                  user.lastModified = iso8601Format.parse(reader.nextString())
+                  user.lastModified = ISO8601DateFormatFactory.ISO8601().parse(reader.nextString())
                } catch (e: ParseException) { }
             }
             else -> reader.skipValue()

@@ -10,8 +10,6 @@ import java.lang.reflect.Type
 import java.util.*
 
 class ObservationSerializer : JsonSerializer<Observation> {
-   private val iso8601Format = ISO8601DateFormatFactory.ISO8601()
-
    override fun serialize(observation: Observation, type: Type, context: JsonSerializationContext): JsonElement {
       val event = observation.event
 
@@ -26,7 +24,7 @@ class ObservationSerializer : JsonSerializer<Observation> {
       )
 
       val properties = JsonObject()
-      properties.addProperty("timestamp", iso8601Format.format(observation.timestamp))
+      properties.addProperty("timestamp", ISO8601DateFormatFactory.ISO8601().format(observation.timestamp))
       if (observation.accuracy != null) {
          properties.addProperty("accuracy", observation.accuracy)
       }
@@ -101,7 +99,7 @@ class ObservationSerializer : JsonSerializer<Observation> {
          }
          "date" -> {
             val timestamp = value as? Date ?: return null
-            JsonPrimitive(iso8601Format.format(timestamp))
+            JsonPrimitive(ISO8601DateFormatFactory.ISO8601().format(timestamp))
          }
          "multiselectdropdown" -> {
             JsonParser.parseString(Gson().toJson(value)).asJsonArray

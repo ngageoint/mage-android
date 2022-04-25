@@ -1,6 +1,5 @@
 package mil.nga.giat.mage.network.gson
 
-import android.content.Context
 import android.util.Log
 import com.google.gson.TypeAdapter
 import com.google.gson.stream.JsonReader
@@ -13,9 +12,8 @@ import java.io.IOException
 import java.io.Serializable
 import java.text.ParseException
 
-class LocationsTypeAdapter(val context: Context): TypeAdapter<List<Location>>() {
-   private val iso8601Format = ISO8601DateFormatFactory.ISO8601()
-   private val geometryDeserializer = GeometryTypeAdapter(context)
+class LocationsTypeAdapter: TypeAdapter<List<Location>>() {
+   private val geometryDeserializer = GeometryTypeAdapter()
 
    override fun write(out: JsonWriter, value: List<Location>) {
       throw UnsupportedOperationException()
@@ -115,7 +113,7 @@ class LocationsTypeAdapter(val context: Context): TypeAdapter<List<Location>>() 
       // timestamp is special pull it out of properties and set it at the top level
       propertiesMap["timestamp"]?.value?.toString()?.let {
          try {
-            location.timestamp = iso8601Format.parse(it)
+            location.timestamp = ISO8601DateFormatFactory.ISO8601().parse(it)
          } catch (e: ParseException) {
             Log.w(LOG_NAME, "Unable to parse date: " + it + " for location: " + location.remoteId, e)
          }

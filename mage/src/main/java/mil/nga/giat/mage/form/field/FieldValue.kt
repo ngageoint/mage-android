@@ -25,8 +25,7 @@ sealed class FieldValue {
           is java.util.Date -> value
           is String -> {
             try {
-              val dateFormat = ISO8601DateFormatFactory.ISO8601()
-              dateFormat.parse(value)
+              ISO8601DateFormatFactory.ISO8601().parse(value)
             } catch(e: Exception) { null }
           }
           else -> null

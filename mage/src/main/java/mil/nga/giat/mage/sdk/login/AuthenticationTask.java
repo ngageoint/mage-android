@@ -38,7 +38,6 @@ public class AuthenticationTask extends AsyncTask<String, Void, AuthenticationSt
 	private final Context applicationContext;
 	private final AuthenticationDelegate delegate;
 	private boolean allowDisconnectedLogin = false;
-	private final DateFormat iso8601Format = ISO8601DateFormatFactory.ISO8601();
 
 	public AuthenticationTask(Context applicationContext, AuthenticationDelegate delegate) {
 		this(applicationContext, false, delegate);
@@ -76,7 +75,7 @@ public class AuthenticationTask extends AsyncTask<String, Void, AuthenticationSt
 						// put the token expiration information in the shared preferences
 						long tokenExpirationLength = Math.max(sharedPreferences.getLong(applicationContext.getString(R.string.tokenExpirationLengthKey), 0), 0);
 						Date tokenExpiration = new Date(System.currentTimeMillis() + tokenExpirationLength);
-						sharedPreferences.edit().putString(applicationContext.getString(R.string.tokenExpirationDateKey), iso8601Format.format(tokenExpiration)).apply();
+						sharedPreferences.edit().putString(applicationContext.getString(R.string.tokenExpirationDateKey), ISO8601DateFormatFactory.ISO8601().format(tokenExpiration)).apply();
 
 						return new AuthenticationStatus.Builder(DISCONNECTED_AUTHENTICATION).build();
 					}

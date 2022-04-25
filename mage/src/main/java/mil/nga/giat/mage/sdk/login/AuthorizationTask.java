@@ -34,7 +34,6 @@ public class AuthorizationTask extends AsyncTask<String, Void, AuthorizationStat
 
 	private static final String LOG_NAME = AuthorizationTask.class.getName();
 
-	private final DateFormat iso8601Format = ISO8601DateFormatFactory.ISO8601();
 	private final Context applicationContext;
 	private final AuthorizationDelegate delegate;
 	private final UserTypeAdapter userTypeAdapter;
@@ -77,7 +76,7 @@ public class AuthorizationTask extends AsyncTask<String, Void, AuthorizationStat
 			String token = authorization.get("token").getAsString();
 			Date tokenExpiration = null;
 			try {
-				tokenExpiration = iso8601Format.parse(authorization.get("expirationDate").getAsString().trim());
+				tokenExpiration = ISO8601DateFormatFactory.ISO8601().parse(authorization.get("expirationDate").getAsString().trim());
 			} catch (ParseException e) {
 				Log.e(LOG_NAME, "Problem parsing token expiration date.", e);
 			}

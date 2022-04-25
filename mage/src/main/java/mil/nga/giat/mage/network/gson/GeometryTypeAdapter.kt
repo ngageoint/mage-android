@@ -1,6 +1,5 @@
 package mil.nga.giat.mage.network.gson
 
-import android.content.Context
 import com.google.gson.JsonArray
 import com.google.gson.JsonParser
 import com.google.gson.TypeAdapter
@@ -9,7 +8,7 @@ import com.google.gson.stream.JsonToken
 import com.google.gson.stream.JsonWriter
 import mil.nga.sf.*
 
-class GeometryTypeAdapter(val context: Context): TypeAdapter<Geometry>() {
+class GeometryTypeAdapter: TypeAdapter<Geometry>() {
    override fun write(out: JsonWriter, value: Geometry) {
       throw UnsupportedOperationException()
    }

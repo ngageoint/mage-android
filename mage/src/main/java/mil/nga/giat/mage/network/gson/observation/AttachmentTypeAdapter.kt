@@ -1,6 +1,5 @@
 package mil.nga.giat.mage.network.gson.observation
 
-import android.content.Context
 import com.google.gson.TypeAdapter
 import com.google.gson.stream.JsonReader
 import com.google.gson.stream.JsonToken
@@ -9,7 +8,7 @@ import mil.nga.giat.mage.network.gson.nextLongOrNull
 import mil.nga.giat.mage.network.gson.nextStringOrNull
 import mil.nga.giat.mage.sdk.datastore.observation.Attachment
 
-class AttachmentTypeAdapter(val context: Context): TypeAdapter<Attachment>() {
+class AttachmentTypeAdapter: TypeAdapter<Attachment>() {
    override fun write(out: JsonWriter, value: Attachment) {
       throw UnsupportedOperationException()
    }

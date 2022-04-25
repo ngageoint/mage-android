@@ -40,8 +40,6 @@ class LoginViewModel @Inject constructor(
         SUCCESS, ERROR, LOADING
     }
 
-    private val iso8601Format = ISO8601DateFormatFactory.ISO8601()
-
     private var localCredentials: Array<String>? = null
 
     private val _authenticationState = MutableLiveData<AuthenticationState>()
@@ -158,7 +156,7 @@ class LoginViewModel @Inject constructor(
            .putString(application.getString(R.string.sessionUserKey), user.username)
            .putString(application.getString(R.string.sessionStrategyKey), strategy)
            .putString(application.getString(R.string.tokenKey), status.token.trim { it <= ' ' })
-           .putString(application.getString(R.string.tokenExpirationDateKey), iso8601Format.format(status.tokenExpiration))
+           .putString(application.getString(R.string.tokenExpirationDateKey), ISO8601DateFormatFactory.ISO8601().format(status.tokenExpiration))
            .putLong(application.getString(R.string.tokenExpirationLengthKey), status.tokenExpiration.time - Date().time)
            .commit()
 

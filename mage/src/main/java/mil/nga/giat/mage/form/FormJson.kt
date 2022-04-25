@@ -316,15 +316,13 @@ class AttachmentTypeAdapter : TypeAdapter<AttachmentType>() {
 class DateTypeAdapter : TypeAdapter<Date>() {
   private val LOG_NAME = DateTypeAdapter::class.java.name
 
-  private val dateFormat = ISO8601DateFormatFactory.ISO8601()
-
   override fun write(out: JsonWriter, value: Date?) {
     if (value == null) {
       out.nullValue()
       return
     }
 
-    val dateString = dateFormat.format(value)
+    val dateString = ISO8601DateFormatFactory.ISO8601().format(value)
     out.value(dateString)
   }
 
@@ -336,7 +334,7 @@ class DateTypeAdapter : TypeAdapter<Date>() {
 
     val json = `in`.nextString()
     return try {
-      dateFormat.parse(json)
+      ISO8601DateFormatFactory.ISO8601().parse(json)
     } catch (e: ParseException) {
       Log.e(LOG_NAME, "Error parsing Date", e)
       null

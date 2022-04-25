@@ -21,7 +21,6 @@ import mil.nga.giat.mage.R;
 public class UserUtility {
 
 	private static final String LOG_NAME = UserUtility.class.getName();
-    private final DateFormat iso8601Format = ISO8601DateFormatFactory.ISO8601();
 
 	private UserUtility() {
 	}
@@ -47,7 +46,7 @@ public class UserUtility {
 		String tokenExpirationDateString = PreferenceManager.getDefaultSharedPreferences(mContext).getString(mContext.getString(R.string.tokenExpirationDateKey), null);
 		if (tokenExpirationDateString != null && !tokenExpirationDateString.isEmpty()) {
 			try {
-				return new Date().after(iso8601Format.parse(tokenExpirationDateString));
+				return new Date().after(ISO8601DateFormatFactory.ISO8601().parse(tokenExpirationDateString));
 			} catch (ParseException pe) {
 				Log.e(LOG_NAME, "Problem paring token date.", pe);
 			}

@@ -26,7 +26,6 @@ public class LocationDeserializer extends Deserializer {
     private static final String LOG_NAME = LocationDeserializer.class.getName();
 	
 	private final GeometryDeserializer geometryDeserializer = new GeometryDeserializer();
-    private final DateFormat iso8601Format = ISO8601DateFormatFactory.ISO8601();
 
 	private Event event = null;
 
@@ -127,7 +126,7 @@ public class LocationDeserializer extends Deserializer {
 		LocationProperty timestamp = propertiesMap.get("timestamp");
 		if (timestamp != null) {
 			try {
-				Date d = iso8601Format.parse(timestamp.getValue().toString());
+				Date d = ISO8601DateFormatFactory.ISO8601().parse(timestamp.getValue().toString());
 				location.setTimestamp(d);
 			} catch (ParseException pe) {
 				Log.w(LOG_NAME, "Unable to parse date: " + timestamp + " for location: " + location.getRemoteId(), pe);

@@ -1,6 +1,5 @@
 package mil.nga.giat.mage.network.gson.observation
 
-import android.content.Context
 import android.util.Log
 import com.google.gson.stream.JsonReader
 import com.google.gson.stream.JsonToken
@@ -12,10 +11,9 @@ import java.io.IOException
 import java.text.ParseException
 import java.util.*
 
-class ObservationDeserializer(val context: Context) {
-   private val iso8601Format = ISO8601DateFormatFactory.ISO8601()
-   private val geometryDeserializer = GeometryTypeAdapter(context)
-   private val attachmentDeserializer = AttachmentTypeAdapter(context)
+class ObservationDeserializer {
+   private val geometryDeserializer = GeometryTypeAdapter()
+   private val attachmentDeserializer = AttachmentTypeAdapter()
 
    fun read(reader: JsonReader): Observation {
       val observation = Observation()
@@ -37,7 +35,7 @@ class ObservationDeserializer(val context: Context) {
             "deviceId" -> observation.deviceId = reader.nextStringOrNull()
             "lastModified" -> {
                try {
-                  observation.lastModified = iso8601Format.parse(reader.nextString())
+                  observation.lastModified = ISO8601DateFormatFactory.ISO8601().parse(reader.nextString())
                } catch (e: Exception) {
                   Log.e(LOG_NAME, "Error parsing observation date.", e)
                }
@@ -106,7 +104,7 @@ class ObservationDeserializer(val context: Context) {
             "timestamp" -> {
                val timestamp = reader.nextString()
                try {
-                  observation.timestamp = iso8601Format.parse(timestamp)
+                  observation.timestamp = ISO8601DateFormatFactory.ISO8601().parse(timestamp)
                } catch (e: ParseException) {
                   Log.e(LOG_NAME, "Unable to parse date: " + timestamp + " for observation: " + observation.remoteId, e)
                }
@@ -276,7 +274,7 @@ class ObservationDeserializer(val context: Context) {
             "description" -> important.description = reader.nextStringOrNull()
             "timestamp" -> {
                try {
-                  important.timestamp = iso8601Format.parse(reader.nextString())
+                  important.timestamp = ISO8601DateFormatFactory.ISO8601().parse(reader.nextString())
                } catch (e: Exception) {
                   Log.e(LOG_NAME, "Unable to parse observation important date", e)
                }

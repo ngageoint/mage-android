@@ -48,7 +48,6 @@ class ObservationRepository @Inject constructor(
    private val preferences: SharedPreferences,
    private val observationService: ObservationService
 ) {
-   private val iso8601Format = ISO8601DateFormatFactory.ISO8601()
    private val userHelper: UserHelper = UserHelper.getInstance(context)
    private val eventHelper: EventHelper = EventHelper.getInstance(context)
    private val observationHelper: ObservationHelper = ObservationHelper.getInstance(context)
@@ -253,9 +252,9 @@ class ObservationRepository @Inject constructor(
                         if (attachment.action == Media.ATTACHMENT_ADD_ACTION) {
                            val returnedAttachment = returnedObservation?.attachments?.find { returnedAttachment ->
                               attachment.url == null &&
-                                      attachment.name == returnedAttachment.name &&
-                                      attachment.fieldName == returnedAttachment.fieldName &&
-                                      attachment.contentType == returnedAttachment.contentType
+                              attachment.name == returnedAttachment.name &&
+                              attachment.fieldName == returnedAttachment.fieldName &&
+                              attachment.contentType == returnedAttachment.contentType
                            }
 
                            if (returnedAttachment != null) {
@@ -340,6 +339,7 @@ class ObservationRepository @Inject constructor(
 
       try {
          val lastModifiedDate = observationHelper.getLatestCleanLastModified(context, event)
+         val iso8601Format = ISO8601DateFormatFactory.ISO8601()
          val response = observationService.getObservations(event.remoteId, iso8601Format.format(lastModifiedDate))
          if (response.isSuccessful) {
             val observations = response.body()!!.map {

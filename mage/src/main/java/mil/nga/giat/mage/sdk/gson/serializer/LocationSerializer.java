@@ -30,8 +30,6 @@ import mil.nga.giat.mage.sdk.utils.ISO8601DateFormatFactory;
  */
 public class LocationSerializer implements JsonSerializer<Collection<Location>> {
 
-    private final DateFormat iso8601Format = ISO8601DateFormatFactory.ISO8601();
-
 	@Override
 	public JsonElement serialize(Collection<Location> locations, Type locationType, JsonSerializationContext context) {
 		// create required components
@@ -44,7 +42,7 @@ public class LocationSerializer implements JsonSerializer<Collection<Location>> 
 
 			jsonLocation.add("geometry", new JsonParser().parse(GeometrySerializer.getGsonBuilder().toJson(location.getGeometry())));
 			jsonLocation.add("properties", jsonProperties);
-			jsonProperties.add("timestamp", new JsonPrimitive(iso8601Format.format(location.getTimestamp())));
+			jsonProperties.add("timestamp", new JsonPrimitive(ISO8601DateFormatFactory.ISO8601().format(location.getTimestamp())));
 
 			// properties
 			for (LocationProperty property : location.getProperties()) {
