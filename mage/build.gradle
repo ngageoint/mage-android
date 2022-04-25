@@ -102,7 +102,7 @@ android {
 
     buildTypes {
         release {
-            minifyEnabled false
+            minifyEnabled true
             signingConfig signingConfigs.release
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             resValue "string", "GOOGLE_MAPS_ANDROID_API_KEY", googleMapsApiReleaseKey
