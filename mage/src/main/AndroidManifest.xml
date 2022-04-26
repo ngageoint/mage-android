@@ -47,7 +47,12 @@
         <provider
             android:name="androidx.startup.InitializationProvider"
             android:authorities="${applicationId}.androidx-startup"
-            tools:node="remove">
+            android:exported="false"
+            tools:node="merge">
+            <meta-data
+                android:name="androidx.work.WorkManagerInitializer"
+                android:value="androidx.startup"
+                tools:node="remove" />
         </provider>
 
         <provider
@@ -244,14 +249,6 @@
 
         <service
             android:name=".observation.sync.ObservationFetchService"
-            android:exported="false" />
-
-        <service
-            android:name=".observation.sync.ObservationPushService"
-            android:exported="false" />
-
-        <service
-            android:name=".observation.sync.AttachmentPushService"
             android:exported="false" />
 
         <service

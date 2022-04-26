@@ -24,10 +24,16 @@ import androidx.lifecycle.LifecycleObserver;
 import androidx.lifecycle.OnLifecycleEvent;
 import androidx.lifecycle.ProcessLifecycleOwner;
 import androidx.work.Configuration;
+import androidx.work.Constraints;
+import androidx.work.ExistingWorkPolicy;
+import androidx.work.NetworkType;
+import androidx.work.OneTimeWorkRequest;
+import androidx.work.WorkManager;
 
 import javax.inject.Inject;
 
 import dagger.hilt.android.HiltAndroidApp;
+import kotlin.Unit;
 import mil.nga.giat.mage.feed.FeedFetchService;
 import mil.nga.giat.mage.location.LocationFetchService;
 import mil.nga.giat.mage.location.LocationReportingService;
@@ -37,10 +43,12 @@ import mil.nga.giat.mage.login.ServerUrlActivity;
 import mil.nga.giat.mage.login.SignupActivity;
 import mil.nga.giat.mage.login.idp.IdpLoginActivity;
 import mil.nga.giat.mage.observation.ObservationNotificationListener;
-import mil.nga.giat.mage.observation.sync.AttachmentPushService;
+import mil.nga.giat.mage.observation.sync.AttachmentSyncListener;
+import mil.nga.giat.mage.observation.sync.AttachmentSyncWorker;
 import mil.nga.giat.mage.observation.sync.ObservationFetchService;
 import mil.nga.giat.mage.observation.sync.ObservationFetchWorker;
-import mil.nga.giat.mage.observation.sync.ObservationPushService;
+import mil.nga.giat.mage.observation.sync.ObservationSyncListener;
+import mil.nga.giat.mage.observation.sync.ObservationSyncWorker;
 import mil.nga.giat.mage.sdk.datastore.DaoStore;
 import mil.nga.giat.mage.sdk.datastore.layer.LayerHelper;
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
@@ -70,7 +78,6 @@ public class MageApplication extends Application implements Configuration.Provid
 	public static final int MAGE_ACCOUNT_NOTIFICATION_ID = 101;
 	public static final int MAGE_OBSERVATION_NOTIFICATION_PREFIX = 10000;
 
-
 	public static final String MAGE_NOTIFICATION_GROUP = "mil.nga.mage.MAGE_NOTIFICATION_GROUP";
 	public static final String MAGE_OBSERVATION_NOTIFICATION_GROUP = "mil.nga.mage.MAGE_OBSERVATION_NOTIFICATION_GROUP";
 	public static final String MAGE_NOTIFICATION_CHANNEL_ID = "mil.nga.mage.MAGE_NOTIFICATION_CHANNEL";
@@ -79,9 +86,6 @@ public class MageApplication extends Application implements Configuration.Provid
 	public interface OnLogoutListener {
 		void onLogout();
 	}
-
-	private Intent observationPushServiceIntent;
-	private Intent attachmentPushServiceIntent;
 
 	private ObservationNotificationListener observationNotificationListener = null;
 
@@ -102,11 +106,21 @@ public class MageApplication extends Application implements Configuration.Provid
 	public void onCreate() {
 		super.onCreate();
 
-		//This ensures the singleton is created with the correct context, which needs to be the
-		//application context
-		DaoStore.getInstance(this.getApplicationContext());
-		LayerHelper.getInstance(this.getApplicationContext());
-		StaticFeatureHelper.getInstance(this.getApplicationContext());
+		// This ensures the singleton is created with the correct context, which needs to be the
+		// application context
+		DaoStore.getInstance(getApplicationContext());
+		LayerHelper.getInstance(getApplicationContext());
+		StaticFeatureHelper.getInstance(getApplicationContext());
+
+		new ObservationSyncListener(getApplicationContext(), () -> {
+			ObservationSyncWorker.Companion.scheduleWork(getApplicationContext());
+			return Unit.INSTANCE;
+		});
+
+		new AttachmentSyncListener(getApplicationContext(), () -> {
+			AttachmentSyncWorker.Companion.scheduleWork(getApplicationContext());
+			return Unit.INSTANCE;
+		});
 
 		ProcessLifecycleOwner.get().getLifecycle().addObserver(this);
 
@@ -142,7 +156,6 @@ public class MageApplication extends Application implements Configuration.Provid
 
 		// Start fetching and pushing observations and locations
 		if (!UserUtility.getInstance(getApplicationContext()).isTokenExpired()) {
-			startPushing();
 			startFetching();
 		}
 	}
@@ -155,7 +168,6 @@ public class MageApplication extends Application implements Configuration.Provid
 		HttpClientManager.getInstance().removeListener(this);
 
 		destroyFetching();
-		destroyPushing();
 	}
 
 	public void onLogin() {
@@ -165,8 +177,7 @@ public class MageApplication extends Application implements Configuration.Provid
 			ObservationHelper.getInstance(getApplicationContext()).addListener(observationNotificationListener);
 		}
 
-		// Start fetching and pushing observations and locations
-		startPushing();
+		// Start fetching observations and locations
 		startFetching();
 
 		ObservationFetchWorker.Companion.beginWork(getApplicationContext());
@@ -273,36 +284,6 @@ public class MageApplication extends Application implements Configuration.Provid
 		stopService(new Intent(getApplicationContext(), FeedFetchService.class));
 	}
 
-	/**
-	 * Start Tasks responsible for pushing Observations and Attachments to the server.
-	 */
-	private void startPushing() {
-		if (observationPushServiceIntent == null) {
-			observationPushServiceIntent = new Intent(getApplicationContext(), ObservationPushService.class);
-			startService(observationPushServiceIntent);
-		}
-
-		if (attachmentPushServiceIntent == null) {
-			attachmentPushServiceIntent = new Intent(getApplicationContext(), AttachmentPushService.class);
-			startService(attachmentPushServiceIntent);
-		}
-	}
-
-	/**
-	 * Stop Tasks responsible for pushing Observations and Attachments to the server.
-	 */
-	private void destroyPushing() {
-		if (observationPushServiceIntent != null) {
-			stopService(observationPushServiceIntent);
-			observationPushServiceIntent = null;
-		}
-
-		if (attachmentPushServiceIntent != null) {
-			stopService(attachmentPushServiceIntent);
-			attachmentPushServiceIntent = null;
-		}
-	}
-
 	public void startLocationService() {
 		Intent intent = new Intent(getApplicationContext(), LocationReportingService.class);
 		ContextCompat.startForegroundService(getApplicationContext(), intent);
@@ -326,9 +307,7 @@ public class MageApplication extends Application implements Configuration.Provid
 	}
 
 	@Override
-	public void onError(Throwable error) {
-		// TODO Auto-generated method stub
-	}
+	public void onError(Throwable error) {}
 
 	@Override
 	public void onTokenExpired() {
@@ -336,14 +315,10 @@ public class MageApplication extends Application implements Configuration.Provid
 	}
 
 	@Override
-	public void onActivityCreated(Activity activity, Bundle savedInstanceState) {
-
-	}
+	public void onActivityCreated(Activity activity, Bundle savedInstanceState) {}
 
 	@Override
-	public void onActivityStarted(Activity activity) {
-
-	}
+	public void onActivityStarted(Activity activity) {}
 
 	@Override
 	public void onActivityResumed(Activity activity) {
@@ -360,23 +335,16 @@ public class MageApplication extends Application implements Configuration.Provid
 	}
 
 	@Override
-	public void onActivityStopped(Activity activity) {
-
-	}
+	public void onActivityStopped(Activity activity) {}
 
 	@Override
-	public void onActivitySaveInstanceState(Activity activity, Bundle outState) {
-
-	}
+	public void onActivitySaveInstanceState(Activity activity, Bundle outState) {}
 
 	@Override
-	public void onActivityDestroyed(Activity activity) {
-
-	}
+	public void onActivityDestroyed(Activity activity) {}
 
 	private void invalidateSession(Activity activity, Boolean applicationInUse) {
 		destroyFetching();
-		destroyPushing();
 
 		ObservationFetchWorker.Companion.stopWork(getApplicationContext());
 
