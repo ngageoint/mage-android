@@ -5,7 +5,6 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="horizontal"
-    android:background="@color/background"
     android:gravity="center_vertical">
 
     <LinearLayout
@@ -51,7 +50,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 style="@style/TextAppearance.MaterialComponents.Headline6"
-                android:textColor="?attr/colorPrimary"
+                android:alpha=".87"
                 android:maxLines="1"
                 android:ellipsize="end" />
 
@@ -75,6 +74,6 @@
         android:layout_marginStart="16dp"
         android:layout_marginEnd="16dp"
         android:layout_gravity="center"
-        app:tint="#99000000"
+        app:tint="@color/icon"
         android:src="@drawable/ic_baseline_reorder_24"/>
 </LinearLayout>
