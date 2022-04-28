@@ -289,7 +289,8 @@ fun AttachmentEdit(
           horizontalArrangement = Arrangement.End,
           modifier = Modifier.fillMaxWidth()
         ) {
-          if (fieldDefinition?.allowedAttachmentTypes?.any { it == AttachmentType.IMAGE || it == AttachmentType.VIDEO } == true) {
+          val restrict = fieldDefinition?.allowedAttachmentTypes?.isNotEmpty() == true
+          if (!restrict || fieldDefinition?.allowedAttachmentTypes?.any { it == AttachmentType.IMAGE || it == AttachmentType.VIDEO } == true) {
             IconButton(
               modifier = Modifier.padding(horizontal = 4.dp),
               onClick = { onMediaAction?.invoke(MediaActionType.GALLERY) }
@@ -298,7 +299,7 @@ fun AttachmentEdit(
             }
           }
 
-          if (fieldDefinition?.allowedAttachmentTypes?.contains(AttachmentType.IMAGE) == true) {
+          if (!restrict || fieldDefinition?.allowedAttachmentTypes?.contains(AttachmentType.IMAGE) == true) {
             IconButton(
               modifier = Modifier.padding(horizontal = 4.dp),
               onClick = { onMediaAction?.invoke(MediaActionType.PHOTO) }
@@ -307,7 +308,7 @@ fun AttachmentEdit(
             }
           }
 
-          if (fieldDefinition?.allowedAttachmentTypes?.contains(AttachmentType.VIDEO) == true) {
+          if (!restrict || fieldDefinition?.allowedAttachmentTypes?.contains(AttachmentType.VIDEO) == true) {
             IconButton(
               modifier = Modifier.padding(horizontal = 4.dp),
               onClick = { onMediaAction?.invoke(MediaActionType.VIDEO) }
@@ -316,7 +317,7 @@ fun AttachmentEdit(
             }
           }
 
-          if (fieldDefinition?.allowedAttachmentTypes?.contains(AttachmentType.AUDIO) == true) {
+          if (!restrict || fieldDefinition?.allowedAttachmentTypes?.contains(AttachmentType.AUDIO) == true) {
             IconButton(
               modifier = Modifier.padding(horizontal = 4.dp),
               onClick = { onMediaAction?.invoke(MediaActionType.VOICE) }
