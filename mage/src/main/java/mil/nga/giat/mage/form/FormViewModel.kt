@@ -408,6 +408,7 @@ open class FormViewModel @Inject constructor(
 
   fun reorderForms(forms: List<FormState>) {
     observationState.value?.forms?.value = forms
+    saveObservation()
   }
 
   open fun addAttachment(attachment: Attachment, action: MediaAction?) {
