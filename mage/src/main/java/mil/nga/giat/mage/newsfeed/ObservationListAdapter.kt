@@ -166,11 +166,9 @@ class ObservationListAdapter(
          setImportantView(observation.important, vh)
          val error = observation.error
          if (error != null) {
-            val hasValidationError = error.statusCode != null
-            vh.syncBadge.visibility = if (hasValidationError) View.GONE else View.VISIBLE
-            vh.errorBadge.visibility = if (hasValidationError) View.VISIBLE else View.GONE
+            vh.errorBadge.visibility = if (error.statusCode != null) View.VISIBLE else View.GONE
          } else {
-            vh.syncBadge.visibility = View.GONE
+            vh.syncBadge.visibility = if (observation.isDirty) View.VISIBLE else View.GONE
             vh.errorBadge.visibility = View.GONE
          }
 
