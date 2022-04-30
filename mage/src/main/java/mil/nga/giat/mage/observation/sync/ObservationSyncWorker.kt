@@ -3,10 +3,10 @@ package mil.nga.giat.mage.observation.sync
 import android.content.Context
 import android.util.Log
 import androidx.hilt.work.HiltWorker
-import androidx.work.CoroutineWorker
-import androidx.work.WorkerParameters
+import androidx.work.*
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
+import mil.nga.giat.mage.MageApplication
 import mil.nga.giat.mage.data.observation.ObservationRepository
 import mil.nga.giat.mage.sdk.datastore.observation.Observation
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationFavorite
@@ -23,30 +23,6 @@ class ObservationSyncWorker @AssistedInject constructor(
 ) : CoroutineWorker(context, params) {
 
     private val observationHelper = ObservationHelper.getInstance(applicationContext)
-
-    private fun Result.withFlag(flag: Int): Int {
-        return when(this) {
-            is Result.Failure -> RESULT_FAILURE_FLAG or flag
-            is Result.Retry -> RESULT_RETRY_FLAG or flag
-            else -> RESULT_SUCCESS_FLAG or flag
-        }
-    }
-
-    private fun Int.containsFlag(flag: Int): Boolean {
-        return (this or flag) == this
-    }
-
-    private fun Int.withFlag(flag: Int): Int {
-        return this or flag
-    }
-
-    companion object {
-        private val LOG_NAME = ObservationSyncWorker::class.java.simpleName
-
-        private const val RESULT_SUCCESS_FLAG = 0
-        private const val RESULT_FAILURE_FLAG = 1
-        private const val RESULT_RETRY_FLAG = 2
-    }
 
     override suspend fun doWork(): Result {
         var result = RESULT_SUCCESS_FLAG
@@ -161,6 +137,48 @@ class ObservationSyncWorker @AssistedInject constructor(
             Result.success()
         } else {
             if (response.code() == HttpURLConnection.HTTP_UNAUTHORIZED) Result.failure() else Result.retry()
+        }
+    }
+
+    private fun Result.withFlag(flag: Int): Int {
+        return when(this) {
+            is Result.Failure -> RESULT_FAILURE_FLAG or flag
+            is Result.Retry -> RESULT_RETRY_FLAG or flag
+            else -> RESULT_SUCCESS_FLAG or flag
+        }
+    }
+
+    private fun Int.containsFlag(flag: Int): Boolean {
+        return (this or flag) == this
+    }
+
+    private fun Int.withFlag(flag: Int): Int {
+        return this or flag
+    }
+
+    companion object {
+        private val LOG_NAME = ObservationSyncWorker::class.java.simpleName
+
+        private const val OBSERVATION_SYNC_WORK = "mil.nga.mage.OBSERVATION_SYNC_WORK"
+
+        private const val RESULT_SUCCESS_FLAG = 0
+        private const val RESULT_FAILURE_FLAG = 1
+        private const val RESULT_RETRY_FLAG = 2
+
+        fun scheduleWork(context: Context) {
+            val constraints = Constraints.Builder()
+                .setRequiredNetworkType(NetworkType.CONNECTED)
+                .build()
+
+            val request = OneTimeWorkRequest.Builder(ObservationSyncWorker::class.java)
+                .setConstraints(constraints)
+                .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
+                .build()
+
+            WorkManager
+                .getInstance(context)
+                .beginUniqueWork(OBSERVATION_SYNC_WORK, ExistingWorkPolicy.KEEP, request)
+                .enqueue()
         }
     }
 }

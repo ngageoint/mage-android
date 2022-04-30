@@ -3,8 +3,7 @@ package mil.nga.giat.mage.observation.sync
 import android.content.Context
 import android.util.Log
 import androidx.hilt.work.HiltWorker
-import androidx.work.CoroutineWorker
-import androidx.work.WorkerParameters
+import androidx.work.*
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import mil.nga.giat.mage.data.observation.AttachmentRepository
@@ -29,14 +28,6 @@ class AttachmentSyncWorker @AssistedInject constructor(
 
    private fun Int.containsFlag(flag: Int): Boolean {
       return (this or flag) == this
-   }
-
-   companion object {
-      private val LOG_NAME = AttachmentSyncWorker::class.java.simpleName
-
-      private const val RESULT_SUCCESS_FLAG = 0
-      private const val RESULT_FAILURE_FLAG = 1
-      private const val RESULT_RETRY_FLAG = 2
    }
 
    override suspend fun doWork(): Result {
@@ -78,5 +69,31 @@ class AttachmentSyncWorker @AssistedInject constructor(
       }
 
       return result
+   }
+
+
+   companion object {
+      private val LOG_NAME = AttachmentSyncWorker::class.java.simpleName
+
+      private const val RESULT_SUCCESS_FLAG = 0
+      private const val RESULT_FAILURE_FLAG = 1
+      private const val RESULT_RETRY_FLAG = 2
+
+      private const val ATTACHMENT_SYNC_WORK = "mil.nga.mage.ATTACHMENT_SYNC_WORK"
+
+      fun scheduleWork(context: Context) {
+         val constraints = Constraints.Builder()
+            .setRequiredNetworkType(NetworkType.CONNECTED)
+            .build()
+
+         val request = OneTimeWorkRequest.Builder(ObservationSyncWorker::class.java)
+            .setConstraints(constraints)
+            .build()
+
+         WorkManager
+            .getInstance(context)
+            .beginUniqueWork(ATTACHMENT_SYNC_WORK, ExistingWorkPolicy.KEEP, request)
+            .enqueue()
+      }
    }
 }
