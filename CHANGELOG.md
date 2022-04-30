@@ -9,6 +9,15 @@ Adheres to [Semantic Versioning](http://semver.org/).
 
 ##### Bug Fixes
 
+## [7.1.3](https://github.com/ngageoint/mage-android/releases/tag/7.1.3)
+
+##### Features
+* Re-work observation and attachment sync to remove services.
+* Sync and error badge redesign for observation feed items
+
+##### Bug Fixes
+* Feeds list shows feed items once sync'ed
+
 ## [7.1.2](https://github.com/ngageoint/mage-android/releases/tag/7.1.2)
 
 ##### Features
