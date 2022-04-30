@@ -60,43 +60,6 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:scrollbars="vertical" />
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:layout_marginTop="16dp"
-            android:layout_marginStart="16dp"
-            android:layout_marginEnd="16dp">
-
-            <TextView
-                android:id="@+id/noEventsText"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:text="You are not in any events.  You must be part of an event to use MAGE.  Contact your administrator to be added to an event."
-                android:visibility="gone"/>
-
-            <TextView
-                android:id="@+id/noConnectionText"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="24dp"
-                android:text="There was a problem getting your information from the server.  Check your connection and try again later."
-                android:visibility="gone"/>
-
-            <Button
-                android:id="@+id/dismissButton"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_below="@id/noEventsText"
-                android:layout_marginTop="32dp"
-                android:text="OK"
-                android:visibility="gone" />
-
-        </LinearLayout>
-
-
     </LinearLayout>
 
     <RelativeLayout
@@ -130,5 +93,62 @@
             android:indeterminate="true"/>
 
     </RelativeLayout>
+
+    <FrameLayout
+        android:id="@+id/no_content"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginBottom="56dp"
+        android:visibility="gone">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginStart="32dp"
+            android:layout_marginEnd="32dp"
+            android:gravity="center"
+            android:orientation="vertical">
+
+            <ImageView
+                android:layout_width="180dp"
+                android:layout_height="180dp"
+                android:layout_marginBottom="8dp"
+                app:tint="@color/icon"
+                android:alpha=".6"
+                android:src="@drawable/ic_baseline_calendar_month_24">
+
+            </ImageView>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center_horizontal"
+                android:layout_marginBottom="8dp"
+                style="@style/TextAppearance.MaterialComponents.Headline4"
+                android:alpha=".87"
+                android:text="No Events"/>
+
+            <TextView
+                android:id="@+id/no_content_message"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="24dp"
+                android:gravity="center_horizontal"
+                style="@style/TextAppearance.MaterialComponents.Body1"
+                android:textSize="16sp"
+                android:alpha=".87"
+                android:text="You must be a member of at least one event to use MAGE.  Ask your administrator to add you to an event."/>
+
+            <Button
+                android:id="@+id/exit"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Exit"
+                style="?attr/materialButtonStyle" />
+
+        </LinearLayout>
+
+    </FrameLayout>
 
 </RelativeLayout>

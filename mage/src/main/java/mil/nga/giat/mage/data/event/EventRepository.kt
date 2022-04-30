@@ -41,16 +41,18 @@ class EventRepository @Inject constructor(
    private val teamHelper = TeamHelper.getInstance(context)
    private val eventHelper = EventHelper.getInstance(context)
 
-   suspend fun syncEvents(): Resource<List<Event>> {
+   suspend fun getEvents(forceUpdate: Boolean): List<Event> {
       return withContext(Dispatchers.IO) {
-         try {
-            syncRoles()
-            val events = fetchEvents()
-            Resource.success(events)
-         } catch(e: Exception) {
-            Log.e(LOG_NAME, "Error fetching events", e)
-            Resource.error(e.localizedMessage ?: e.toString(), emptyList())
+         if (forceUpdate) {
+            try {
+               syncRoles()
+               fetchEvents()
+            } catch(e: Exception) {
+               Log.e(LOG_NAME, "Error fetching events", e)
+            }
          }
+
+         eventHelper.readAll()
       }
    }
 

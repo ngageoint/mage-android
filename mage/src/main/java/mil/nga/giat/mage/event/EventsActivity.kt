@@ -49,7 +49,7 @@ class EventsActivity : AppCompatActivity() {
         binding.searchView.setIconifiedByDefault(false)
         binding.searchView.clearFocus()
 
-        binding.dismissButton.setOnClickListener { dismiss() }
+        binding.exit.setOnClickListener { dismiss() }
 
         viewModel = ViewModelProvider(this).get(EventViewModel::class.java)
         viewModel.syncStatus.observe(this) { onEventSynced(it) }
@@ -67,7 +67,7 @@ class EventsActivity : AppCompatActivity() {
         if (event != null) {
             chooseEvent(event)
         } else {
-            viewModel.events.observe(this, { onEvents(it)})
+            viewModel.events.observe(this) { onEvents(it) }
         }
     }
 
@@ -81,12 +81,10 @@ class EventsActivity : AppCompatActivity() {
         return super.onOptionsItemSelected(item)
     }
 
-    private fun onEvents(resource: Resource<List<Event>>) {
-        val events: Collection<Event>? = resource.data
-
+    private fun onEvents(events: List<Event>) {
         when {
-            events?.size == 1 -> chooseEvent(events.first())
-            events?.isNotEmpty() == true -> {
+            events.size == 1 -> chooseEvent(events.first())
+            events.isNotEmpty() -> {
                 val recentEvents = EventHelper.getInstance(application).recentEvents
                 val eventListAdapter = EventListAdapter(events.toMutableList(), recentEvents) { event -> chooseEvent(event) }
 
@@ -110,18 +108,15 @@ class EventsActivity : AppCompatActivity() {
                 binding.loadingStatus.visibility = View.GONE
             }
             else -> {
-                application.onLogout(true, null)
-
                 binding.searchView.visibility = View.GONE
                 binding.loadingStatus.visibility = View.GONE
-                binding.dismissButton.visibility = View.VISIBLE
-                binding.noEventsText.visibility = if (resource.status == Resource.Status.ERROR) View.GONE else View.VISIBLE
-                binding.noConnectionText.visibility = if (resource.status == Resource.Status.ERROR) View.VISIBLE else View.GONE
+                binding.noContent.visibility = View.VISIBLE
             }
         }
     }
 
     private fun dismiss() {
+        application.onLogout(true, null)
         startActivity(Intent(applicationContext, LoginActivity::class.java))
         finish()
     }

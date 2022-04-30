@@ -22,9 +22,9 @@ class EventViewModel @Inject constructor(
 
     val userHelper: UserHelper = UserHelper.getInstance(context)
 
-    val events: LiveData<Resource<List<Event>>> = liveData {
-        val resource = eventRepository.syncEvents()
-        emit(resource)
+    val events: LiveData<List<Event>> = liveData {
+        val events = eventRepository.getEvents(forceUpdate = true)
+        emit(events)
     }
 
     private val _syncStatus = MutableLiveData<Resource<out Event>>()
