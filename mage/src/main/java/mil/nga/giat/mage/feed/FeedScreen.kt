@@ -87,7 +87,7 @@ fun FeedScreen(
                }
             ) {
                feedItems?.collectAsLazyPagingItems()?.let { items ->
-                  if (items.itemCount == 0 || true) {
+                  if (items.itemCount == 0) {
                      FeedNoContent()
                   } else {
                      FeedContent(items, onItemAction)
