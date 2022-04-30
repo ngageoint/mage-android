@@ -7,23 +7,23 @@ import mil.nga.giat.mage.sdk.event.IObservationEventListener
 
 class ObservationSyncListener(
    val context: Context,
-   val onSync : () -> Unit
+   val sync : () -> Unit
 ): IObservationEventListener {
 
    init {
       ObservationHelper.getInstance(context).addListener(this)
-      onSync()
+      sync()
    }
 
    override fun onObservationCreated(
       observations: MutableCollection<Observation>?,
       sendUserNotifcations: Boolean?
    ) {
-      onSync()
+      sync()
    }
 
    override fun onObservationUpdated(observation: Observation?) {
-      onSync()
+      sync()
    }
 
    override fun onObservationDeleted(observation: Observation?) {}
