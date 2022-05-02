@@ -1,12 +1,15 @@
 package mil.nga.giat.mage.observation.sync
 
+import android.app.Notification
 import android.content.Context
 import android.util.Log
+import androidx.core.app.NotificationCompat
 import androidx.hilt.work.HiltWorker
 import androidx.work.*
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import mil.nga.giat.mage.MageApplication
+import mil.nga.giat.mage.R
 import mil.nga.giat.mage.data.observation.ObservationRepository
 import mil.nga.giat.mage.sdk.datastore.observation.Observation
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationFavorite
@@ -36,6 +39,18 @@ class ObservationSyncWorker @AssistedInject constructor(
         }
 
         return if (result.containsFlag(RESULT_RETRY_FLAG)) Result.retry() else Result.success()
+    }
+
+    override suspend fun getForegroundInfo(): ForegroundInfo {
+        val notification = NotificationCompat.Builder(applicationContext, MageApplication.MAGE_NOTIFICATION_CHANNEL_ID)
+            .setSmallIcon(R.drawable.ic_sync_preference_24dp)
+            .setContentTitle("Sync Observations")
+            .setContentText("Pushing observation updates to MAGE.")
+            .setPriority(NotificationCompat.PRIORITY_MAX)
+            .setAutoCancel(true)
+            .build()
+
+        return ForegroundInfo(OBSERVATION_SYNC_NOTIFICATION_ID, notification)
     }
 
     private suspend fun syncObservations(): Int {
@@ -160,6 +175,7 @@ class ObservationSyncWorker @AssistedInject constructor(
         private val LOG_NAME = ObservationSyncWorker::class.java.simpleName
 
         private const val OBSERVATION_SYNC_WORK = "mil.nga.mage.OBSERVATION_SYNC_WORK"
+        private const val OBSERVATION_SYNC_NOTIFICATION_ID = 100
 
         private const val RESULT_SUCCESS_FLAG = 0
         private const val RESULT_FAILURE_FLAG = 1
@@ -177,7 +193,7 @@ class ObservationSyncWorker @AssistedInject constructor(
 
             WorkManager
                 .getInstance(context)
-                .beginUniqueWork(OBSERVATION_SYNC_WORK, ExistingWorkPolicy.KEEP, request)
+                .beginUniqueWork(OBSERVATION_SYNC_WORK, ExistingWorkPolicy.APPEND_OR_REPLACE, request)
                 .enqueue()
         }
     }

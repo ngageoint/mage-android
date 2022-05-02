@@ -42,6 +42,7 @@ import mil.nga.giat.mage.login.LoginActivity;
 import mil.nga.giat.mage.login.ServerUrlActivity;
 import mil.nga.giat.mage.login.SignupActivity;
 import mil.nga.giat.mage.login.idp.IdpLoginActivity;
+import mil.nga.giat.mage.network.Server;
 import mil.nga.giat.mage.observation.ObservationNotificationListener;
 import mil.nga.giat.mage.observation.sync.AttachmentSyncListener;
 import mil.nga.giat.mage.observation.sync.AttachmentSyncWorker;
@@ -94,6 +95,9 @@ public class MageApplication extends Application implements Configuration.Provid
 	@Inject
 	HiltWorkerFactory workerFactory;
 
+	@Inject
+	Server server;
+
 	@NonNull
 	@Override
 	public Configuration getWorkManagerConfiguration() {
@@ -124,7 +128,7 @@ public class MageApplication extends Application implements Configuration.Provid
 
 		ProcessLifecycleOwner.get().getLifecycle().addObserver(this);
 
-		HttpClientManager.initialize(this);
+		HttpClientManager.initialize(this, server);
 
 		// setup the screen unlock stuff
 		registerReceiver(ScreenChangeReceiver.getInstance(), new IntentFilter(Intent.ACTION_SCREEN_ON));

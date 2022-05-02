@@ -9,14 +9,17 @@ import android.preference.PreferenceManager;
 import android.util.Log;
 
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.Collection;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 
 import mil.nga.giat.mage.R;
+import mil.nga.giat.mage.network.Server;
 import mil.nga.giat.mage.sdk.event.IEventDispatcher;
 import mil.nga.giat.mage.sdk.event.ISessionEventListener;
 import mil.nga.giat.mage.sdk.utils.UserUtility;
+import okhttp3.HttpUrl;
 import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -38,10 +41,11 @@ public class HttpClientManager implements IEventDispatcher<ISessionEventListener
     private final Application context;
     private final String userAgent;
     private OkHttpClient client;
+    private Server server;
 
     private final Collection<ISessionEventListener> listeners = new CopyOnWriteArrayList<>();
 
-    public static synchronized HttpClientManager initialize(Application context) {
+    public static synchronized HttpClientManager initialize(Application context, Server server) {
         if (instance != null) {
             throw new Error("attempt to initialize " + HttpClientManager.class.getName() + " singleton more than once");
         }
@@ -49,7 +53,7 @@ public class HttpClientManager implements IEventDispatcher<ISessionEventListener
         String userAgent = System.getProperty("http.agent");
         userAgent = userAgent == null ? "" : userAgent;
 
-        instance = new HttpClientManager(context, userAgent);
+        instance = new HttpClientManager(context, userAgent, server);
 
         return instance;
     }
@@ -58,9 +62,10 @@ public class HttpClientManager implements IEventDispatcher<ISessionEventListener
         return instance;
     }
 
-    private HttpClientManager(Application context, String userAgent) {
+    private HttpClientManager(Application context, String userAgent, Server server) {
         this.context = context;
         this.userAgent = userAgent;
+        this.server = server;
 
         initializeClient();
     }
@@ -71,39 +76,36 @@ public class HttpClientManager implements IEventDispatcher<ISessionEventListener
                 .readTimeout(60, TimeUnit.SECONDS)
                 .writeTimeout(60, TimeUnit.SECONDS);
 
-        builder.addInterceptor(new Interceptor() {
-            @Override
-            public Response intercept(Chain chain) throws IOException {
-                Request.Builder builder = chain.request().newBuilder();
+        builder.addInterceptor(chain -> {
+            Request.Builder builder1 = chain.request().newBuilder();
 
-                // add token
-                String token = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.tokenKey), null);
-                if (token != null && !token.trim().isEmpty()) {
-                    builder.addHeader("Authorization", "Bearer " + token);
-                }
-
-                builder.addHeader("User-Agent", userAgent);
-
-                Response response = chain.proceed(builder.build());
-
-                int statusCode = response.code();
-                if (statusCode == HTTP_UNAUTHORIZED) {
-                    // If token has not expired yet, expire it and send notification to listeners
-                    if (hasToken()) {
-                        UserUtility.getInstance(context).clearTokenInformation();
-
-                        for (ISessionEventListener listener : listeners) {
-                            listener.onTokenExpired();
-                        }
-                    }
-
-                    Log.w(LOG_NAME, "TOKEN EXPIRED");
-                } else if (statusCode == HTTP_NOT_FOUND) {
-                    Log.w(LOG_NAME, "404 Not Found.");
-                }
-
-                return response;
+            // add token
+            String token = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.tokenKey), null);
+            if (token != null && !token.trim().isEmpty()) {
+                builder1.addHeader("Authorization", "Bearer " + token);
             }
+
+            builder1.addHeader("User-Agent", userAgent);
+
+            Response response = chain.proceed(builder1.build());
+
+            int statusCode = response.code();
+            if (statusCode == HTTP_UNAUTHORIZED) {
+                // If token has not expired yet, expire it and send notification to listeners
+                if (hasToken()) {
+                    UserUtility.getInstance(context).clearTokenInformation();
+
+                    for (ISessionEventListener listener : listeners) {
+                        listener.onTokenExpired();
+                    }
+                }
+
+                Log.w(LOG_NAME, "TOKEN EXPIRED");
+            } else if (statusCode == HTTP_NOT_FOUND) {
+                Log.w(LOG_NAME, "404 Not Found.");
+            }
+
+            return response;
         });
 
         client = builder.build();

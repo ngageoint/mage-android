@@ -16,14 +16,18 @@ class ObservationSyncListener(
    }
 
    override fun onObservationCreated(
-      observations: MutableCollection<Observation>?,
+      observations: MutableCollection<Observation>,
       sendUserNotifcations: Boolean?
    ) {
-      sync()
+      if (observations.any { it.isDirty }) {
+         sync()
+      }
    }
 
-   override fun onObservationUpdated(observation: Observation?) {
-      sync()
+   override fun onObservationUpdated(observation: Observation) {
+      if (observation.isDirty) {
+         sync()
+      }
    }
 
    override fun onObservationDeleted(observation: Observation?) {}

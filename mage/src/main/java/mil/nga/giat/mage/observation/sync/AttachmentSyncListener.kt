@@ -15,7 +15,7 @@ class AttachmentSyncListener(
       sync()
    }
 
-   override fun onAttachmentUploadable(attachment: Attachment?) {
+   override fun onAttachmentUploadable(attachment: Attachment) {
       sync()
    }
 
