@@ -124,7 +124,7 @@ open class FormViewModel @Inject constructor(
       defaultMapZoom = defaultMapZoom,
       defaultMapCenter = defaultMapCenter
     )
-    geometryFieldState.answer = FieldValue.Location(ObservationLocation(location.geometry))
+    geometryFieldState.answer = FieldValue.Location(ObservationLocation(location.geometry, location.provider, location.accuracy))
 
     val definition =  ObservationDefinition(
       event.minObservationForms,

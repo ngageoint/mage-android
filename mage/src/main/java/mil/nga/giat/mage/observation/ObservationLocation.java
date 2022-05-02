@@ -129,6 +129,12 @@ public class ObservationLocation implements Parcelable {
         this(null, geometry);
     }
 
+    public ObservationLocation(Geometry geometry, String provider, Float accuracy) {
+        setGeometry(geometry);
+        setProvider(provider);
+        setAccuracy(accuracy);
+    }
+
     /**
      * Constructor with specified provider and geometry
      *
