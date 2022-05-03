@@ -225,7 +225,7 @@ fun ObservationEditContent(
 
     // TODO scroll to added element, not last
     LaunchedEffect(forms.size) {
-      if (forms.size > previousForms.size) {
+      if (previousForms.isNotEmpty() && forms.size > previousForms.size) {
         // find new form that was added, diff between forms and previous forms
         val addedForm = forms.filterNot { previousForms.contains(it) }.first()
         val scrollTo = forms.indexOf(addedForm) + 2 // account for 2 "header" items in list
