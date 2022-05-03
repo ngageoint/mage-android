@@ -29,7 +29,8 @@ fun GeometryEdit(
 ) {
   val geometry = fieldState.answer?.location
   val value = if (geometry != null) {
-    CoordinateFormatter(LocalContext.current).format(geometry.centroidLatLng)
+    val accuracy = geometry.accuracy?.let { "± ${it}m" } ?: ""
+    "${CoordinateFormatter(LocalContext.current).format(geometry.centroidLatLng)} $accuracy"
   } else ""
 
   val focusManager = LocalFocusManager.current
