@@ -28,7 +28,7 @@ class FormState(
   }
 
   companion object {
-    fun fromForm(id: Long? = null, remoteId: String? = null, eventId: String, form: Form, defaultForm: Form? = null): FormState {
+    fun fromForm(remoteId: String? = null, eventId: String, form: Form, defaultForm: Form? = null): FormState {
       val defaultFields = defaultForm?.fields?.associateTo(mutableMapOf()) {
         it.name to it.value
       }
@@ -39,7 +39,7 @@ class FormState(
         fields.add(fieldState)
       }
 
-      return FormState(id, remoteId, eventId, form, fields)
+      return FormState(form.id, remoteId, eventId, form, fields)
     }
   }
 }
