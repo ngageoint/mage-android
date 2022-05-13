@@ -1,4 +1,4 @@
-package mil.nga.giat.mage.observation;
+package mil.nga.giat.mage.observation.attachment;
 
 import android.Manifest;
 import android.app.Dialog;
@@ -54,7 +54,6 @@ import okhttp3.ResponseBody;
 
 public class AttachmentViewerActivity extends AppCompatActivity {
 
-	public final static String EDITABLE = "EDITABLE";
 	public final static String ATTACHMENT_ID = "ATTACHMENT_ID";
 	public final static String ATTACHMENT_PATH = "ATTACHMENT_PATH";
 	private static final String LOG_NAME = AttachmentViewerActivity.class.getName();

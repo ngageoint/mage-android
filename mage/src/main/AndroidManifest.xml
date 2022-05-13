@@ -214,7 +214,11 @@
             android:theme="@style/AppTheme.NoActionBar"
             android:configChanges="orientation|screenSize|screenLayout" />
 
-        <activity android:name=".observation.AttachmentViewerActivity" />
+        <activity android:name=".observation.attachment.AttachmentViewActivity"
+            android:theme="@style/AppTheme.NoActionBar"/>
+
+        <activity android:name=".observation.attachment.AttachmentViewerActivity" />
+
         <activity android:name=".profile.ProfilePictureViewerActivity" />
         <activity android:name=".profile.ProfileActivity" />
         <activity android:name=".profile.ChangePasswordActivity"

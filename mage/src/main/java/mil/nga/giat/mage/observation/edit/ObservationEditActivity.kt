@@ -34,8 +34,9 @@ import mil.nga.giat.mage.form.edit.dialog.SelectFieldDialog
 import mil.nga.giat.mage.form.edit.dialog.SelectFieldDialog.Companion.newInstance
 import mil.nga.giat.mage.form.field.*
 import mil.nga.giat.mage.network.gson.observation.ObservationTypeAdapter
-import mil.nga.giat.mage.observation.AttachmentViewerActivity
+import mil.nga.giat.mage.observation.attachment.AttachmentViewerActivity
 import mil.nga.giat.mage.observation.ObservationLocation
+import mil.nga.giat.mage.observation.attachment.AttachmentViewActivity
 import mil.nga.giat.mage.observation.edit.FormPickerBottomSheetFragment.OnFormClickListener
 import mil.nga.giat.mage.sdk.Compatibility.Companion.isServerVersion5
 import mil.nga.giat.mage.sdk.datastore.observation.Attachment
@@ -516,15 +517,14 @@ open class ObservationEditActivity : AppCompatActivity() {
   }
 
   private fun viewAttachment(attachment: Attachment) {
-    val intent = Intent(applicationContext, AttachmentViewerActivity::class.java)
+    val intent = Intent(applicationContext, AttachmentViewActivity::class.java)
 
     if (attachment.id != null) {
-      intent.putExtra(AttachmentViewerActivity.ATTACHMENT_ID, attachment.id)
+      intent.putExtra(AttachmentViewActivity.ATTACHMENT_ID_EXTRA, attachment.id)
     } else {
-      intent.putExtra(AttachmentViewerActivity.ATTACHMENT_PATH, attachment.localPath)
+      intent.putExtra(AttachmentViewActivity.ATTACHMENT_PATH_EXTRA, attachment.localPath)
     }
 
-    intent.putExtra(AttachmentViewerActivity.EDITABLE, false)
     startActivity(intent)
   }
 

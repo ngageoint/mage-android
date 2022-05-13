@@ -1,4 +1,4 @@
-package mil.nga.giat.mage.observation;
+package mil.nga.giat.mage.observation.attachment;
 
 import android.content.Context;
 import android.view.View;

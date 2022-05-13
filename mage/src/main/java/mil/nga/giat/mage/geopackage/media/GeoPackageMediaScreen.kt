@@ -137,8 +137,7 @@ private fun MediaVideo(
    DisposableEffect(
       AndroidView(
          modifier = Modifier
-            .fillMaxWidth()
-            .background(Color.Red),
+            .fillMaxWidth(),
          factory = { context ->
             val videoView = VideoView(context).apply {
                layoutParams = LinearLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT)
