@@ -4,6 +4,7 @@ import android.content.Context
 import android.util.Log
 import androidx.hilt.work.HiltWorker
 import androidx.work.*
+import androidx.work.PeriodicWorkRequest.MIN_PERIODIC_INTERVAL_MILLIS
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import mil.nga.giat.mage.data.observation.ObservationRepository
@@ -43,7 +44,7 @@ class ObservationFetchWorker @AssistedInject constructor(
                 .setRequiredNetworkType(NetworkType.CONNECTED)
                 .build()
 
-            return PeriodicWorkRequestBuilder<ObservationFetchWorker>(1, TimeUnit.MINUTES)
+            return PeriodicWorkRequestBuilder<ObservationFetchWorker>(MIN_PERIODIC_INTERVAL_MILLIS, TimeUnit.MILLISECONDS)
                 .setConstraints(constraints)
                 .build()
         }
