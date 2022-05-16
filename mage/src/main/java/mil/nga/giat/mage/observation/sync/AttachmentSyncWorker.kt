@@ -13,6 +13,7 @@ import mil.nga.giat.mage.data.observation.AttachmentRepository
 import mil.nga.giat.mage.sdk.datastore.observation.AttachmentHelper
 import java.io.IOException
 import java.net.HttpURLConnection
+import java.util.concurrent.TimeUnit
 
 @HiltWorker
 class AttachmentSyncWorker @AssistedInject constructor(
@@ -98,6 +99,7 @@ class AttachmentSyncWorker @AssistedInject constructor(
          val request = OneTimeWorkRequest.Builder(AttachmentSyncWorker::class.java)
             .setConstraints(constraints)
             .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
+            .setBackoffCriteria(BackoffPolicy.LINEAR, 15, TimeUnit.SECONDS)
             .build()
 
          WorkManager

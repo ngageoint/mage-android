@@ -17,6 +17,7 @@ import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper
 import mil.nga.giat.mage.sdk.datastore.observation.State
 import java.io.IOException
 import java.net.HttpURLConnection
+import java.util.concurrent.TimeUnit
 
 @HiltWorker
 class ObservationSyncWorker @AssistedInject constructor(
@@ -183,6 +184,7 @@ class ObservationSyncWorker @AssistedInject constructor(
             val request = OneTimeWorkRequest.Builder(ObservationSyncWorker::class.java)
                 .setConstraints(constraints)
                 .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
+                .setBackoffCriteria(BackoffPolicy.LINEAR, 15, TimeUnit.SECONDS)
                 .build()
 
             WorkManager
