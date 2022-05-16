@@ -35,6 +35,7 @@ class ObservationSyncWorker @AssistedInject constructor(
             result = syncObservationImportant().withFlag(result)
             result = syncObservationFavorites().withFlag(result)
         } catch (e: Exception) {
+            result = RESULT_RETRY_FLAG
             Log.e(LOG_NAME, "Error trying to sync observations with server", e)
         }
 
@@ -64,20 +65,13 @@ class ObservationSyncWorker @AssistedInject constructor(
     }
 
     private suspend fun syncObservation(observation: Observation): Int {
-        var result = RESULT_SUCCESS_FLAG
+        val result = RESULT_SUCCESS_FLAG
 
-        try {
-            result = if (observation.state == State.ARCHIVE) {
-                archive(observation).withFlag(result)
-            } else {
-                save(observation).withFlag(result)
-            }
-        } catch(e: IOException) {
-            Log.e(LOG_NAME, "Failed to sync observation with server", e)
-            result = RESULT_FAILURE_FLAG
+        return if (observation.state == State.ARCHIVE) {
+            archive(observation).withFlag(result)
+        } else {
+            save(observation).withFlag(result)
         }
-
-        return result
     }
 
     private suspend fun syncObservationImportant(): Int {

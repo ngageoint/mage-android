@@ -9,6 +9,14 @@ Adheres to [Semantic Versioning](http://semver.org/).
 
 ##### Bug Fixes
 
+## [7.1.4](https://github.com/ngageoint/mage-android/releases/tag/7.1.4)
+
+##### Features
+
+##### Bug Fixes
+* Fix crash when trying to add an attachment from the gallery if attachment field has no restrictions.
+* In the event of an exception when pushing observations changes to the server send work manager a retry request.
+
 ## [7.1.3](https://github.com/ngageoint/mage-android/releases/tag/7.1.3)
 
 ##### Features

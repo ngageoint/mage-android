@@ -22,12 +22,11 @@ class AttachmentSyncWorker @AssistedInject constructor(
 ) : CoroutineWorker(context, params) {
 
    override suspend fun doWork(): Result {
-      var result = RESULT_SUCCESS_FLAG
-
-      try {
-         result = syncAttachments()
+      val result = try {
+         syncAttachments()
       } catch (e: Exception) {
          Log.e(LOG_NAME, "Failed to sync attachments", e)
+         RESULT_RETRY_FLAG
       }
 
       return if (result.containsFlag(RESULT_RETRY_FLAG)) {
@@ -54,21 +53,16 @@ class AttachmentSyncWorker @AssistedInject constructor(
 
       val attachmentHelper = AttachmentHelper.getInstance(applicationContext)
       for (attachment in attachmentHelper.dirtyAttachments.filter { !it.observation.remoteId.isNullOrEmpty() && it.url.isNullOrEmpty() }) {
-         try {
-            val response = attachmentRepository.syncAttachment(attachment)
-            result = if (response.isSuccessful) {
-               Result.success()
+         val response = attachmentRepository.syncAttachment(attachment)
+         result = if (response.isSuccessful) {
+            Result.success()
+         } else {
+            if (response.code() == HttpURLConnection.HTTP_UNAUTHORIZED) {
+               Result.failure()
             } else {
-               if (response.code() == HttpURLConnection.HTTP_UNAUTHORIZED) {
-                  Result.failure()
-               } else {
-                  Result.retry()
-               }
-            }.withFlag(result)
-         } catch (e: IOException) {
-            Log.e(LOG_NAME, "Failed to sync attachment", e)
-            Result.failure().withFlag(result)
-         }
+               Result.retry()
+            }
+         }.withFlag(result)
       }
 
       return result
