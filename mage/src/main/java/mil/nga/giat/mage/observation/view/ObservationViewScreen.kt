@@ -13,9 +13,7 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.Directions
 import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material.icons.outlined.Flag
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -47,6 +45,7 @@ sealed class ObservationAction {
   object FavoriteBy : ObservationAction()
   object Directions : ObservationAction()
   object More : ObservationAction()
+  object Sync: ObservationAction()
   data class Important(val type: Type, val description: String? = null): ObservationAction() {
     enum class Type {
       FLAG, REMOVE, CANCEL
@@ -126,7 +125,12 @@ fun ObservationViewContent(
       elevation = 4.dp
     ) {
       val status by observationState.status
-      ObservationViewStatusContent(status)
+      ObservationViewStatusContent(
+        status,
+        onSync = {
+          onAction?.invoke(ObservationAction.Sync)
+        }
+      )
     }
 
     Column(
@@ -182,13 +186,16 @@ fun ObservationViewContent(
 
 @Composable
 fun ObservationViewStatusContent(
-  status: ObservationStatusState
+  status: ObservationStatusState,
+  onSync: () -> Unit
 ) {
   if (status.dirty) {
     if (status.error != null) {
       ObservationErrorStatus(error = status.error)
     } else {
-      ObservationLocalStatus()
+      ObservationLocalStatus(status) {
+        onSync()
+      }
     }
   } else if (status.lastModified != null) {
     ObservationSyncStatus(syncDate = status.lastModified)
@@ -228,29 +235,72 @@ fun ObservationSyncStatus(
 }
 
 @Composable
-fun ObservationLocalStatus() {
-  Row(
-    verticalAlignment = Alignment.CenterVertically,
-    horizontalArrangement = Arrangement.Center,
-    modifier = Modifier
-      .fillMaxWidth()
-      .padding(vertical = 8.dp)
-  ) {
-    Icon(
-      imageVector = Icons.Default.Sync,
-      contentDescription = "Local",
-      tint = Color(0xFFFFA726),
-      modifier = Modifier
-        .width(24.dp)
-        .height(24.dp)
-        .padding(end = 8.dp)
-    )
+fun ObservationLocalStatus(
+  status: ObservationStatusState,
+  onSync: () -> Unit
+) {
+  var syncing by remember { mutableStateOf(false) }
 
-    Text(
-      text = "Saved locally, will be submitted",
-      style = MaterialTheme.typography.body2,
-      color = Color(0xFFFFA726)
-    )
+  if (syncing && status.dirty) {
+    CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.disabled) {
+      Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+          .fillMaxWidth()
+          .padding(horizontal = 16.dp, vertical = 12.dp)
+      ) {
+        Icon(
+          imageVector = Icons.Default.Sync,
+          contentDescription = "Local",
+          modifier = Modifier
+            .width(24.dp)
+            .height(24.dp)
+            .padding(end = 8.dp)
+        )
+
+        Text(
+          text = "Pushing changes...",
+          style = MaterialTheme.typography.body1
+        )
+      }
+    }
+  } else {
+    Row(
+      verticalAlignment = Alignment.CenterVertically,
+      horizontalArrangement = Arrangement.SpaceBetween,
+      modifier = Modifier
+        .fillMaxWidth()
+        .padding(horizontal = 16.dp)
+    ) {
+      Row(
+        verticalAlignment = Alignment.CenterVertically,
+      ) {
+        Icon(
+          imageVector = Icons.Default.Sync,
+          contentDescription = "Local",
+          tint = Color(0xFFFFA726),
+          modifier = Modifier
+            .width(24.dp)
+            .height(24.dp)
+            .padding(end = 8.dp)
+        )
+
+        Text(
+          text = "Changes Queued",
+          style = MaterialTheme.typography.body1,
+          color = Color(0xFFFFA726)
+        )
+      }
+
+      TextButton(
+        onClick = {
+          syncing = true
+          onSync()
+        }
+      ) {
+        Text(text = "SYNC NOW")
+      }
+    }
   }
 }
 
@@ -443,7 +493,10 @@ fun ObservationViewHeaderContent(
 
       Divider(Modifier.fillMaxWidth())
 
-      Column(Modifier.fillMaxWidth().animateContentSize()) {
+      Column(
+        Modifier
+          .fillMaxWidth()
+          .animateContentSize()) {
         if (observationState?.editImportantState?.edit == true) {
           ImportantEditContent(observationState = observationState,
             onAnswer = {

@@ -90,6 +90,7 @@ class ObservationViewActivity : AppCompatActivity() {
       is ObservationAction.FavoriteBy -> onFavoritedBy()
       is ObservationAction.Directions -> onDirections()
       is ObservationAction.More -> onMore()
+      is ObservationAction.Sync -> onSync()
     }
   }
 
@@ -154,7 +155,7 @@ class ObservationViewActivity : AppCompatActivity() {
   }
 
   private fun onLocationClick(location: String) {
-    val clipboard = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
+    val clipboard = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager?
     val clip = ClipData.newPlainText("Observation Location", location)
     if (clipboard == null || clip == null) return
     clipboard.setPrimaryClip(clip)
@@ -199,6 +200,10 @@ class ObservationViewActivity : AppCompatActivity() {
 
     dialog.setContentView(binding.root)
     dialog.show()
+  }
+
+  private fun onSync() {
+    viewModel.syncObservation()
   }
 
   private fun onDeleteObservation() {

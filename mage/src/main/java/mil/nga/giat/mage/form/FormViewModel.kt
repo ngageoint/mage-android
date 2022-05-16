@@ -16,6 +16,7 @@ import mil.nga.giat.mage.form.defaults.FormPreferences
 import mil.nga.giat.mage.form.field.*
 import mil.nga.giat.mage.observation.*
 import mil.nga.giat.mage.observation.edit.MediaAction
+import mil.nga.giat.mage.observation.sync.ObservationSyncWorker
 import mil.nga.giat.mage.sdk.datastore.observation.*
 import mil.nga.giat.mage.sdk.datastore.user.*
 import mil.nga.giat.mage.sdk.event.IObservationEventListener
@@ -387,6 +388,10 @@ open class FormViewModel @Inject constructor(
   fun deleteObservation() {
     val observation = _observation.value
     ObservationHelper.getInstance(context).archive(observation)
+  }
+
+  fun syncObservation() {
+    ObservationSyncWorker.scheduleWork(context)
   }
 
   fun addForm(form: Form) {
