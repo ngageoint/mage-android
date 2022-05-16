@@ -409,7 +409,7 @@ open class ObservationEditActivity : AppCompatActivity() {
   private fun launchGalleryIntent(mediaAction: MediaAction?) {
     val fieldDefinition = viewModel.getAttachmentField(mediaAction)?.definition as? AttachmentFormField
 
-    val types = if (fieldDefinition == null) {
+    val types = if (fieldDefinition == null || fieldDefinition.allowedAttachmentTypes.isEmpty()) {
       listOf("image/*", "video/*")
     } else {
       val allowed = mutableListOf<String>()
