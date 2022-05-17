@@ -204,6 +204,7 @@ class FormViewModel_server5 @Inject constructor(
     } else null
 
     val observationState = ObservationState(
+      id = observation.id,
       status = status,
       definition = definition,
       permissions = permissions,
