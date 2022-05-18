@@ -7,6 +7,8 @@ import androidx.hilt.work.HiltWorker
 import androidx.work.*
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import mil.nga.giat.mage.MageApplication
 import mil.nga.giat.mage.R
 import mil.nga.giat.mage.data.observation.AttachmentRepository
@@ -23,17 +25,16 @@ class AttachmentSyncWorker @AssistedInject constructor(
 ) : CoroutineWorker(context, params) {
 
    override suspend fun doWork(): Result {
-      val result = try {
-         syncAttachments()
-      } catch (e: Exception) {
-         Log.e(LOG_NAME, "Failed to sync attachments", e)
-         RESULT_RETRY_FLAG
-      }
+      // Lock to ensure previous running work will complete when cancelled before new work is started.
+      return mutex.withLock {
+         val result = try {
+            syncAttachments()
+         } catch (e: Exception) {
+            Log.e(LOG_NAME, "Failed to sync attachments", e)
+            RESULT_RETRY_FLAG
+         }
 
-      return if (result.containsFlag(RESULT_RETRY_FLAG)) {
-         Result.retry()
-      } else {
-         Result.success()
+         if (result.containsFlag(RESULT_RETRY_FLAG)) Result.retry() else Result.success()
       }
    }
 
@@ -91,6 +92,8 @@ class AttachmentSyncWorker @AssistedInject constructor(
       private const val ATTACHMENT_SYNC_WORK = "mil.nga.mage.ATTACHMENT_SYNC_WORK"
       private const val ATTACHMENT_SYNC_NOTIFICATION_ID = 200
 
+      private val mutex = Mutex()
+
       fun scheduleWork(context: Context) {
          val constraints = Constraints.Builder()
             .setRequiredNetworkType(NetworkType.CONNECTED)
@@ -104,7 +107,7 @@ class AttachmentSyncWorker @AssistedInject constructor(
 
          WorkManager
             .getInstance(context)
-            .beginUniqueWork(ATTACHMENT_SYNC_WORK, ExistingWorkPolicy.APPEND_OR_REPLACE, request)
+            .beginUniqueWork(ATTACHMENT_SYNC_WORK, ExistingWorkPolicy.REPLACE, request)
             .enqueue()
       }
    }

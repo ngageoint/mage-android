@@ -1,6 +1,5 @@
 package mil.nga.giat.mage.observation.sync
 
-import android.app.Notification
 import android.content.Context
 import android.util.Log
 import androidx.core.app.NotificationCompat
@@ -8,6 +7,8 @@ import androidx.hilt.work.HiltWorker
 import androidx.work.*
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import mil.nga.giat.mage.MageApplication
 import mil.nga.giat.mage.R
 import mil.nga.giat.mage.data.observation.ObservationRepository
@@ -15,7 +16,6 @@ import mil.nga.giat.mage.sdk.datastore.observation.Observation
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationFavorite
 import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper
 import mil.nga.giat.mage.sdk.datastore.observation.State
-import java.io.IOException
 import java.net.HttpURLConnection
 import java.util.concurrent.TimeUnit
 
@@ -29,18 +29,21 @@ class ObservationSyncWorker @AssistedInject constructor(
     private val observationHelper = ObservationHelper.getInstance(applicationContext)
 
     override suspend fun doWork(): Result {
-        var result = RESULT_SUCCESS_FLAG
+        // Lock to ensure previous running work will complete when cancelled before new work is started.
+        return mutex.withLock {
+            var result = RESULT_SUCCESS_FLAG
 
-        try {
-            result = syncObservations().withFlag(result)
-            result = syncObservationImportant().withFlag(result)
-            result = syncObservationFavorites().withFlag(result)
-        } catch (e: Exception) {
-            result = RESULT_RETRY_FLAG
-            Log.e(LOG_NAME, "Error trying to sync observations with server", e)
+            try {
+                result = syncObservations().withFlag(result)
+                result = syncObservationImportant().withFlag(result)
+                result = syncObservationFavorites().withFlag(result)
+            } catch (e: Exception) {
+                result = RESULT_RETRY_FLAG
+                Log.e(LOG_NAME, "Error trying to sync observations with server", e)
+            }
+
+            if (result.containsFlag(RESULT_RETRY_FLAG)) Result.retry() else Result.success()
         }
-
-        return if (result.containsFlag(RESULT_RETRY_FLAG)) Result.retry() else Result.success()
     }
 
     override suspend fun getForegroundInfo(): ForegroundInfo {
@@ -176,6 +179,8 @@ class ObservationSyncWorker @AssistedInject constructor(
         private const val RESULT_FAILURE_FLAG = 1
         private const val RESULT_RETRY_FLAG = 2
 
+        private val mutex = Mutex()
+
         fun scheduleWork(context: Context) {
             val constraints = Constraints.Builder()
                 .setRequiredNetworkType(NetworkType.CONNECTED)
@@ -189,7 +194,7 @@ class ObservationSyncWorker @AssistedInject constructor(
 
             WorkManager
                 .getInstance(context)
-                .beginUniqueWork(OBSERVATION_SYNC_WORK, ExistingWorkPolicy.APPEND_OR_REPLACE, request)
+                .beginUniqueWork(OBSERVATION_SYNC_WORK, ExistingWorkPolicy.REPLACE, request)
                 .enqueue()
         }
     }
