@@ -12,9 +12,9 @@ Adheres to [Semantic Versioning](http://semver.org/).
 ## [7.1.4](https://github.com/ngageoint/mage-android/releases/tag/7.1.4)
 
 ##### Features
-* Ensure new observation and attachment sync requests run immediatly by changing the work manager policy to REPLACE.
+* Ensure new observation and attachment sync requests run immediately by changing the work manager policy to REPLACE.
   To ensure that work is in fact unique and that no 2 work task are running at the same time a mutex has been placed around
-  the buisness logic for sync.
+  the business logic for sync.
 * Added a sync now button to the observation view screen to allow users to try and forcefully sync and observation. 
 
 ##### Bug Fixes
