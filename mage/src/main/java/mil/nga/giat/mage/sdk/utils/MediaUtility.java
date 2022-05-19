@@ -114,7 +114,8 @@ public class MediaUtility {
 	    c.sendBroadcast(mediaScanIntent);
 	}
 
-	public static File copyMediaFromUri(Context context, Uri uri) throws IOException {
+	public static File
+	copyMediaFromUri(Context context, Uri uri) throws IOException {
 		InputStream is = null;
 		OutputStream os = null;
 		try {
@@ -164,44 +165,55 @@ public class MediaUtility {
 	}
 
 	public static File createImageFile() throws IOException {
-		// Create an image file name
 		String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
 		String imageFileName = "MAGE_" + timeStamp;
-		File pictures = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
-		File directory = new File(pictures, "MAGE");
-
-		if (!directory.exists()) {
-			directory.mkdirs();
-		}
+		File directory = getPublicAttachmentsDirectory(Environment.DIRECTORY_PICTURES);
 
 		return File.createTempFile(
-				imageFileName,  /* prefix */
-				".jpg",         /* suffix */
-				directory      /* directory */
+				imageFileName,
+				".jpg",
+				directory
 		);
 	}
 
 	public static File createVideoFile() throws IOException {
-		// Create an image file name
 		String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
 		String imageFileName = "MAGE_" + timeStamp;
-		File movies = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MOVIES);
-		File directory = new File(movies, "MAGE");
-
-		if (!directory.exists()) {
-			directory.mkdirs();
-		}
+		File directory = getPublicAttachmentsDirectory(Environment.DIRECTORY_MOVIES);
 
 		return File.createTempFile(
-				imageFileName,  /* prefix */
-				".mp4",         /* suffix */
-				directory      /* directory */
+				imageFileName,
+				".mp4",
+				directory
+		);
+	}
+
+	public static File createAudioFile() throws IOException {
+		String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+		String imageFileName = "MAGE_" + timeStamp;
+		File directory = getPublicAttachmentsDirectory(Environment.DIRECTORY_MUSIC);
+
+		return File.createTempFile(
+				imageFileName,
+				".mp4",
+				directory
+		);
+	}
+
+	public static File createFile(String extension) throws IOException {
+		String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+		String imageFileName = "MAGE_" + timeStamp;
+		File directory = getPublicAttachmentsDirectory(Environment.DIRECTORY_DOWNLOADS);
+
+		return File.createTempFile(
+				imageFileName,
+				"." + extension,
+				directory
 		);
 	}
 
 	public static File getPublicAttachmentsDirectory(String type) {
-		File pictures = Environment.getExternalStoragePublicDirectory(type);
-		File directory = new File(pictures, "MAGE");
+		File directory = new File(Environment.getExternalStoragePublicDirectory(type), "MAGE");
 
 		if (!directory.exists()) {
 			directory.mkdirs();

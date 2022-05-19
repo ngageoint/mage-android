@@ -7,7 +7,10 @@ import android.util.Log
 import androidx.exifinterface.media.ExifInterface
 import androidx.preference.PreferenceManager
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
 import mil.nga.giat.mage.R
 import mil.nga.giat.mage.di.server5
@@ -21,7 +24,8 @@ import mil.nga.giat.mage.sdk.utils.MediaUtility
 import okhttp3.MediaType
 import okhttp3.RequestBody
 import java.io.File
-import java.util.*
+import java.io.InputStream
+import java.io.OutputStream
 import javax.inject.Inject
 
 class AttachmentRepository @Inject constructor(
@@ -29,6 +33,8 @@ class AttachmentRepository @Inject constructor(
    private val attachmentService: AttachmentService,
    @server5 private val attachmentService_server5: AttachmentService_server5
 ) {
+
+   private val attachmentHelper = AttachmentHelper.getInstance(context)
 
    suspend fun syncAttachment(attachment: Attachment) = withContext(Dispatchers.IO) {
       Log.d(LOG_NAME, "Staging attachment with id: ${attachment.id}")
@@ -124,6 +130,84 @@ class AttachmentRepository @Inject constructor(
             newExif.saveAttributes()
          }
       }
+   }
+
+   suspend fun download(attachment: Attachment, progressChannel: Channel<Float>) = withContext(Dispatchers.IO) {
+      val destination: File = when {
+         attachment.contentType.startsWith("image/") -> {
+            MediaUtility.createImageFile()
+         }
+         attachment.contentType.startsWith("video/") -> {
+            MediaUtility.createVideoFile()
+         }
+         attachment.contentType.startsWith("audio/") -> {
+            MediaUtility.createAudioFile()
+         }
+         else -> {
+            MediaUtility.createFile(MediaUtility.getFileExtension(attachment.name))
+         }
+      }
+
+      try {
+         val observation = attachment.observation
+         val event = observation.event
+         val response = attachmentService.download(event.remoteId, observation.remoteId, attachment.remoteId)
+
+         if (response.isSuccessful) {
+            val body = response.body()!!
+            val contentLength = body.contentLength()
+
+            attachment.localPath = destination.absolutePath
+            streamFile(body.byteStream(), destination.outputStream(), contentLength, progressChannel)
+
+            val updateAttachment: Attachment = attachmentHelper.read(attachment.id)
+            updateAttachment.localPath = attachment.localPath
+            attachmentHelper.update(updateAttachment)
+         }
+
+         destination
+      } catch (e: CancellationException) {
+         destination.delete()
+         null
+      } finally {
+         progressChannel.close()
+      }
+   }
+
+   private suspend fun streamFile(
+      input: InputStream,
+      output: OutputStream,
+      length: Long,
+      progressChannel: Channel<Float>
+   ) {
+      withContext(Dispatchers.IO) {
+         input.use { input ->
+            output.use { output ->
+               var bytesCopied: Long = 0
+               val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
+               var bytes = input.read(buffer)
+               while (bytes >= 0 && isActive) {
+                  output.write(buffer, 0, bytes)
+                  bytesCopied += bytes
+                  val progress = ((bytesCopied.toDouble() / length.toDouble())).toFloat()
+                  progressChannel.send(progress)
+                  bytes = input.read(buffer)
+               }
+            }
+         }
+      }
+   }
+
+   suspend fun copyToCacheDir(file: File) = withContext(Dispatchers.IO) {
+      val directory = File(context.cacheDir, "attachments")
+
+      if (!directory.exists()) {
+         directory.mkdirs()
+      }
+
+      val target = File(directory, file.name)
+
+      file.copyTo(target)
    }
 
    companion object {

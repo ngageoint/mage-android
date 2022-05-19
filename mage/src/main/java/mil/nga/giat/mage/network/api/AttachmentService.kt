@@ -9,7 +9,7 @@ import retrofit2.http.*
 interface AttachmentService {
    @Streaming
    @GET("/api/events/{eventId}/observations/{observationId}/attachments/{attachmentId}")
-   suspend fun getAttachment(
+   suspend fun download(
       @Path("eventId") eventId: String,
       @Path("observationId") observationId: String,
       @Path("attachmentId") attachmentId: String

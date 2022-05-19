@@ -1,7 +1,5 @@
 package mil.nga.giat.mage.observation.attachment
 
-import android.content.res.ColorStateList
-import android.net.Uri
 import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.MediaController
@@ -12,6 +10,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
@@ -19,28 +19,81 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.lifecycle.LiveData
 import androidx.swiperefreshlayout.widget.CircularProgressDrawable
 import com.google.accompanist.glide.rememberGlidePainter
-import mil.nga.giat.mage.R
 import mil.nga.giat.mage.ui.theme.MageTheme
 import mil.nga.giat.mage.ui.theme.topAppBarBackground
 
 @Composable
 fun AttachmentViewScreen(
-   liveData: LiveData<AttachmentState>,
-   onClose: (() -> Unit)? = null
+   viewModel: AttachmentViewModel,
+   onShare: () -> Unit,
+   onClose: () -> Unit,
+   onOpen: () -> Unit,
+   onCancelDownload: () -> Unit
 ) {
+   val attachmentState by viewModel.attachmentUri.observeAsState()
+   val downloadProgress by viewModel.downloadProgress.observeAsState()
+
    MageTheme {
       Scaffold(
          topBar = {
-            TopBar { onClose?.invoke() }
+            TopBar(
+               onShare = onShare,
+               onClose = onClose
+            )
          },
          content = {
-            val state by liveData.observeAsState()
-            state?.let { AttachmentContent(it) }
+            attachmentState?.let { AttachmentContent(it, onOpen) }
+         }
+      )
+
+      DownloadDialog(downloadProgress) {
+         onCancelDownload()
+      }
+   }
+}
+
+@Composable
+private fun DownloadDialog(
+   progress: Float?,
+   onCancel: () -> Unit
+) {
+   if (progress != null) {
+      AlertDialog(
+         onDismissRequest = {
+            onCancel()
+         },
+         title = {
+            Text(
+               text = "Downloading Attachment",
+               style = MaterialTheme.typography.h6,
+            )
+         },
+         text = {
+            Column(Modifier.padding(horizontal = 16.dp)) {
+               LinearProgressIndicator(
+                  progress = progress
+               )
+            }
+         },
+         buttons = {
+            Row(
+               horizontalArrangement = Arrangement.End,
+               modifier = Modifier
+                  .fillMaxWidth()
+                  .padding(end = 16.dp)
+            ) {
+               TextButton(
+                  onClick = { onCancel() }
+               ) {
+                  Text("Cancel")
+               }
+            }
+
          }
       )
    }
@@ -48,6 +101,7 @@ fun AttachmentViewScreen(
 
 @Composable
 private fun TopBar(
+   onShare: () -> Unit,
    onClose: () -> Unit
 ) {
    TopAppBar(
@@ -58,28 +112,35 @@ private fun TopBar(
          IconButton(onClick = { onClose.invoke() }) {
             Icon(Icons.Default.ArrowBack, "Cancel Edit")
          }
+      },
+      actions = {
+         IconButton(
+            onClick = onShare,
+         ) {
+            Icon(
+               imageVector = Icons.Default.Share,
+               contentDescription = "Share Attachment",
+               tint = Color.White
+            )
+         }
       }
    )
 }
 
-
 @Composable
-private fun AttachmentContent(state: AttachmentState) {
-   when {
-      state.contentType.startsWith("image") -> AttachmentImageContent(state)
-      state.contentType.startsWith("video") -> AttachmentMediaContent(state)
-      state.contentType.startsWith("audio") -> AttachmentMediaContent(state)
+private fun AttachmentContent(
+   state: AttachmentState,
+   onOpen: () -> Unit
+) {
+   when (state) {
+      is AttachmentState.ImageState -> AttachmentImageContent(state)
+      is AttachmentState.MediaState -> AttachmentMediaContent(state)
+      is AttachmentState.OtherState -> AttachmentOtherContent(state, onOpen)
    }
 }
 
 @Composable
-private fun AttachmentImageContent(state: AttachmentState) {
-   val request: Any = when(state) {
-      is AttachmentFile -> state.uri
-      is AttachmentModel -> state.attachment
-      is AttachmentUrl -> state.uri
-   }
-
+private fun AttachmentImageContent(state: AttachmentState.ImageState) {
    val progress = CircularProgressDrawable(LocalContext.current)
    progress.strokeWidth = 10f
    progress.centerRadius = 80f
@@ -94,7 +155,7 @@ private fun AttachmentImageContent(state: AttachmentState) {
    ) {
       Image(
          painter = rememberGlidePainter(
-            request,
+            state.model,
             fadeIn = true,
             requestBuilder = {
                placeholder(progress)
@@ -108,14 +169,8 @@ private fun AttachmentImageContent(state: AttachmentState) {
 
 @Composable
 private fun AttachmentMediaContent(
-   state: AttachmentState,
+   state: AttachmentState.MediaState,
 ) {
-   val uri = when(state) {
-      is AttachmentFile -> state.uri
-      is AttachmentUrl -> state.uri
-      is AttachmentModel -> Uri.parse(state.attachment.url)
-   }
-
    val mediaController = MediaController(LocalContext.current)
 
    var loading by remember { mutableStateOf(true) }
@@ -132,7 +187,7 @@ private fun AttachmentMediaContent(
             mediaController.setMediaPlayer(videoView)
 
             videoView.setMediaController(mediaController)
-            videoView.setVideoURI(uri)
+            videoView.setVideoURI(state.uri)
             videoView.setOnPreparedListener {
                loading = false
                videoView.start()
@@ -166,6 +221,60 @@ private fun AttachmentMediaContent(
          }
 
          CircularProgressIndicator()
+      }
+   }
+}
+
+@Composable
+private fun AttachmentOtherContent(
+   state: AttachmentState.OtherState,
+   onOpen: () -> Unit
+) {
+   Column(
+      verticalArrangement = Arrangement.Center,
+      horizontalAlignment = Alignment.CenterHorizontally,
+      modifier = Modifier
+         .fillMaxSize()
+         .padding(16.dp)
+   ) {
+
+      CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
+         Icon(
+            imageVector = Icons.Default.VisibilityOff,
+            contentDescription = "Media Icon",
+            tint = MaterialTheme.colors.primary.copy(LocalContentAlpha.current),
+            modifier = Modifier
+               .height(164.dp)
+               .width(164.dp)
+               .padding(bottom = 16.dp)
+         )
+      }
+
+      CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
+         Text(
+            text = "Preview Not Available",
+            textAlign = TextAlign.Center,
+            style = MaterialTheme.typography.h5,
+            modifier = Modifier.padding(bottom = 8.dp),
+         )
+
+         Text(
+            text = "You may be able to view this content in another application",
+            textAlign = TextAlign.Center,
+            style = MaterialTheme.typography.subtitle2,
+            modifier = Modifier.padding(bottom = 32.dp)
+         )
+      }
+
+      OutlinedButton(
+         modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp),
+         onClick = {
+            onOpen.invoke()
+         }
+      ) {
+         Text(text = "OPEN WITH")
       }
    }
 }
