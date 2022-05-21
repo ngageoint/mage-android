@@ -46,7 +46,7 @@ class AttachmentRepository @Inject constructor(
 
       val parts = HashMap<String, RequestBody>()
       val attachmentFile = File(attachment.localPath)
-      val mimeType = MediaUtility.getMimeType(attachment.localPath)
+      val mimeType = MediaUtility.getMimeType(attachment.localPath) ?: "application/octet-stream"
       val fileBody = RequestBody.create(MediaType.parse(mimeType), attachmentFile)
       parts["attachment\"; filename=\"" + attachmentFile.name + "\""] = fileBody
 
